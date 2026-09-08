@@ -1,0 +1,22 @@
+POMIAR JEZYKA — innerText 10 ekranow paczki D4b (1440, jasny, EN)
+linii z polskimi znakami: 28 · unikalnych: 8
+
+KAZDA z nich to INTERFEJS albo format daty, ZERO z DANYCH:
+  16x  Przypisany właściciel
+   4x  Obciążenie
+   2x  09 paź 2026
+   2x  16 paź 2026
+   1x  02 paź 2026
+   1x  23 paź 2026
+   1x  30 paź 2026
+   1x  Stan na 8.09.2026 · osób 9 · popyt 360 h · podaż 2704 h · obłożenie 13 % · przeciążonych tygodni 2 · zaległość 73 h u 5 os.
+
+Zrodla:
+  „Przypisany właściciel" — literal w src/components/Initiatives/initiativeRegisterProjection.ts:336
+     (fallback, gdy initiativeOwnerId agregatu jest UUID-em; 16 wystapien = 8 wierszy x 2 ekrany)
+  „Obciążenie"           — etykieta zakladki Menu 2 modulu Inicjatywy
+  daty „09 paź 2026"     — polski format listy dat
+  banner Zasobow         — zdanie podsumowania arkusza obciazenia
+
+DANE (tytuly inicjatyw, zadan, decyzji, RAID, raportow) sa w calosci po angielsku —
+pilnuja tego asercje --verify D3 i D4 („pola tekstowe ... z polskimi znakami" = 0).

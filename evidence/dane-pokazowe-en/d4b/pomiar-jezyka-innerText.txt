@@ -1,0 +1,3234 @@
+===== 01a-inicjatywy-lista-aktywne-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Priority
+All priorities
+Critical
+High
+Medium
+Low
+Status
+Active
+All
+New initiative
+Wszystkie
+11
+Pending approval
+1
+In execution
+4
+INITIATIVE
+	
+STATUS
+	
+NEXT GATE
+	
+READINESS
+	
+OWNER
+	
+AREA / AXIS
+	
+NEXT ACTION
+	
+EXPECTED IMPACT
+	
+PLANNED WINDOW
+	
+HEALTH
+	
+UPDATED
+	
+
+
+Skills Matrix and Upskilling
+No single record of machine sign-off; cover for absence is arranged from memory and eleven roles have no backup.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+A live skills matrix for 340 production roles, feeding shift planning and closing eleven single points of failure.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Warehouse Automation Pilot
+Handling cost per unit rose 11% in two years while order lines grew only 4%; picking walks the full aisle.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Goods-to-person shuttle for the 400 fastest-moving SKUs in one Leeds aisle, sized to prove the business case.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+MES Rollout Line 3
+Line 3 production data reaches the ERP a day late, so schedule adherence cannot be managed within the shift.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Extends the existing MES from Lines 1-2 to Rotherham Line 3, replacing paper travellers with live reporting.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Predictive Maintenance for CNC Line
+Unplanned CNC stoppages cost 640 production hours in 2025 and are invisible until the machine stops.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Condition-based maintenance on Leeds CNC cells 1-6, replacing the fixed 12-week service calendar.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Shift Handover Digitisation
+The June audit found 30% of open issues were lost at handover because the record is verbal plus a paper logbook.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A structured digital shift handover with open-issue carry-forward and a searchable history.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Scrap Reduction Programme
+Scrap at 3.4% of material cost against a 2.1% benchmark is about GBP 640k a year of avoidable loss.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A focused programme on the five largest scrap codes, each with an owner, a baseline and a weekly countermeasure review.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Supplier Quality Gate
+Two thirds of 2026 non-conformances come from bought-in castings; goods-in is a visual check with no feedback loop.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A documented goods-in quality gate with risk-based sampling and a monthly defect feedback loop to suppliers.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Energy Monitoring and ISO 50001
+14.2 GWh a year is metered at four points only, so no department can be held to an energy budget.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+Sub-metering of the twelve largest loads, energy per production hour, and ISO 50001 certification.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Cybersecurity Hardening OT
+Segment the OT network, retire unsupported controller firmware and monitor vendor remote access.
+	
+Proposed
+	
+Definition
+	
+Not evaluated
+	
+Robert Chen
+	
+Information Technology
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+Customer Portal for Order Tracking
+A self-service portal exposing delivery date, production stage and dispatch tracking for every open order.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Michael Grant
+	
+Commercial
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+Digital Work Instructions
+Tablet-based work instructions served from the current revision, replacing laminated folders at the station.
+	
+Pending approval
+	
+Portfolio
+	
+Not evaluated
+	
+Sarah Mitchell
+	
+Digital Manufacturing
+	
+Prepare the portfolio decision
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+===== 01b-inicjatywy-lista-wszystkie-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Priority
+All priorities
+Critical
+High
+Medium
+Low
+Status
+Active
+All
+New initiative
+Wszystkie
+13
+Pending approval
+1
+In execution
+4
+INITIATIVE
+	
+STATUS
+	
+NEXT GATE
+	
+READINESS
+	
+OWNER
+	
+AREA / AXIS
+	
+NEXT ACTION
+	
+EXPECTED IMPACT
+	
+PLANNED WINDOW
+	
+HEALTH
+	
+UPDATED
+	
+
+
+Skills Matrix and Upskilling
+No single record of machine sign-off; cover for absence is arranged from memory and eleven roles have no backup.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+A live skills matrix for 340 production roles, feeding shift planning and closing eleven single points of failure.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Warehouse Automation Pilot
+Handling cost per unit rose 11% in two years while order lines grew only 4%; picking walks the full aisle.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Goods-to-person shuttle for the 400 fastest-moving SKUs in one Leeds aisle, sized to prove the business case.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+MES Rollout Line 3
+Line 3 production data reaches the ERP a day late, so schedule adherence cannot be managed within the shift.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Extends the existing MES from Lines 1-2 to Rotherham Line 3, replacing paper travellers with live reporting.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Predictive Maintenance for CNC Line
+Unplanned CNC stoppages cost 640 production hours in 2025 and are invisible until the machine stops.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Monitor the execution
+	
+Condition-based maintenance on Leeds CNC cells 1-6, replacing the fixed 12-week service calendar.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+this minute
+	
+
+
+Shift Handover Digitisation
+The June audit found 30% of open issues were lost at handover because the record is verbal plus a paper logbook.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A structured digital shift handover with open-issue carry-forward and a searchable history.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Scrap Reduction Programme
+Scrap at 3.4% of material cost against a 2.1% benchmark is about GBP 640k a year of avoidable loss.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A focused programme on the five largest scrap codes, each with an owner, a baseline and a weekly countermeasure review.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Supplier Quality Gate
+Two thirds of 2026 non-conformances come from bought-in castings; goods-in is a visual check with no feedback loop.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+A documented goods-in quality gate with risk-based sampling and a monthly defect feedback loop to suppliers.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Energy Monitoring and ISO 50001
+14.2 GWh a year is metered at four points only, so no department can be held to an energy budget.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Przypisany właściciel
+	
+—
+	
+Schedule the execution
+	
+Sub-metering of the twelve largest loads, energy per production hour, and ISO 50001 certification.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+this minute
+	
+
+
+Cybersecurity Hardening OT
+Segment the OT network, retire unsupported controller firmware and monitor vendor remote access.
+	
+Proposed
+	
+Definition
+	
+Not evaluated
+	
+Robert Chen
+	
+Information Technology
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+Customer Portal for Order Tracking
+A self-service portal exposing delivery date, production stage and dispatch tracking for every open order.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Michael Grant
+	
+Commercial
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+Digital Work Instructions
+Tablet-based work instructions served from the current revision, replacing laminated folders at the station.
+	
+Pending approval
+	
+Portfolio
+	
+Not evaluated
+	
+Sarah Mitchell
+	
+Digital Manufacturing
+	
+Prepare the portfolio decision
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+Sustainability Reporting (CSRD)
+Standalone CSRD reporting build; rejected because the group consolidation already discharges the obligation.
+	
+Rejected
+	
+—
+	
+Not evaluated
+	
+Thomas Baker
+	
+Finance
+	
+Review the history
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+
+SAP S/4 Migration Assessment
+Costed comparison of three ERP migration routes; recommendation accepted by the board in July 2026.
+	
+Closed
+	
+—
+	
+Not evaluated
+	
+Thomas Baker
+	
+Information Technology
+	
+Review the history
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 hours ago
+	
+
+===== 02a-obciazenie-lista-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Status
+New analysis
+Drafts
+0
+Published
+1
+With gaps
+0
+NAME
+	
+SOURCE PLAN
+	
+PERIODS
+	
+ROLES
+	
+GAPS
+	
+STATUS
+	
+UPDATED
+
+
+Northwind 2027 — Wave 1 capacity analysis
+	
+Northwind 2027 — Wave 1 delivery plan · v2
+	
+8
+	
+2
+	
+none
+	
+Published
+	
+Sep 08, 2026
+
+===== 02b-obciazenie-arkusz-podaz-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Status
+New analysis
+Drafts
+0
+Published
+1
+With gaps
+0
+Northwind 2027 — Wave 1 capacity analysis
+Published
+Saved
+Sekcje
+Work with AI
+Source plan
+Load worksheet
+Gaps and pressure
+Change proposals
+Decisions
+
+Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.
+
+Period	Role	Demand (FTE)	Supply (FTE)	Gap	Supply source
+2026-Q1	Automation Engineer	1.44	13	11.56	From Resources
+2026-Q1	Controls Engineer	0	11.7	11.7	From Resources
+2026-Q1	Data Analyst	0	11.38	11.38	From Resources
+2026-Q1	Finance Controller	0	13	13	From Resources
+2026-Q1	Head of Quality	0	12.35	12.35	From Resources
+2026-Q1	HR Business Partner	0	10.4	10.4	From Resources
+2026-Q1	Operations Director	0	13	13	From Resources
+2026-Q1	Plant Manager	0	13	13	From Resources
+2026-Q1	Production Planner	0.96	12.03	11.07	From Resources
+2026-Q2	Automation Engineer	3.96	13	9.04	From Resources
+2026-Q2	Controls Engineer	0	11.7	11.7	From Resources
+2026-Q2	Data Analyst	0	11.38	11.38	From Resources
+2026-Q2	Finance Controller	0	13	13	From Resources
+2026-Q2	Head of Quality	0	12.35	12.35	From Resources
+2026-Q2	HR Business Partner	0	10.4	10.4	From Resources
+2026-Q2	Operations Director	0	13	13	From Resources
+2026-Q2	Plant Manager	0	13	13	From Resources
+2026-Q2	Production Planner	2.64	12.03	9.39	From Resources
+2026-Q3	Automation Engineer	3.96	13	9.04	From Resources
+2026-Q3	Controls Engineer	0	11.7	11.7	From Resources
+2026-Q3	Data Analyst	0	11.38	11.38	From Resources
+2026-Q3	Finance Controller	0	13	13	From Resources
+2026-Q3	Head of Quality	0	12.35	12.35	From Resources
+2026-Q3	HR Business Partner	0	10.4	10.4	From Resources
+2026-Q3	Operations Director	0	13	13	From Resources
+2026-Q3	Plant Manager	0	13	13	From Resources
+2026-Q3	Production Planner	2.64	12.03	9.39	From Resources
+2026-Q4	Automation Engineer	5.46	13	7.54	From Resources
+2026-Q4	Controls Engineer	0	11.7	11.7	From Resources
+2026-Q4	Data Analyst	0	11.38	11.38	From Resources
+2026-Q4	Finance Controller	0	13	13	From Resources
+2026-Q4	Head of Quality	0	12.35	12.35	From Resources
+2026-Q4	HR Business Partner	0	10.4	10.4	From Resources
+2026-Q4	Operations Director	0	13	13	From Resources
+2026-Q4	Plant Manager	0	13	13	From Resources
+2026-Q4	Production Planner	3.64	12.03	8.39	From Resources
+2027-Q1	Automation Engineer	5.34	13	7.66	From Resources
+2027-Q1	Controls Engineer	0	11.7	11.7	From Resources
+2027-Q1	Data Analyst	0	11.38	11.38	From Resources
+2027-Q1	Finance Controller	0	13	13	From Resources
+2027-Q1	Head of Quality	0	12.35	12.35	From Resources
+2027-Q1	HR Business Partner	0	10.4	10.4	From Resources
+2027-Q1	Operations Director	0	13	13	From Resources
+2027-Q1	Plant Manager	0	13	13	From Resources
+2027-Q1	Production Planner	3.56	12.03	8.47	From Resources
+2027-Q2	Automation Engineer	3.36	13	9.64	From Resources
+2027-Q2	Controls Engineer	0	11.7	11.7	From Resources
+2027-Q2	Data Analyst	0	11.38	11.38	From Resources
+2027-Q2	Finance Controller	0	13	13	From Resources
+2027-Q2	Head of Quality	0	12.35	12.35	From Resources
+2027-Q2	HR Business Partner	0	10.4	10.4	From Resources
+2027-Q2	Operations Director	0	13	13	From Resources
+2027-Q2	Plant Manager	0	13	13	From Resources
+2027-Q2	Production Planner	2.24	12.03	9.79	From Resources
+2027-Q3	Automation Engineer	1.62	13	11.38	From Resources
+2027-Q3	Controls Engineer	0	11.7	11.7	From Resources
+2027-Q3	Data Analyst	0	11.38	11.38	From Resources
+2027-Q3	Finance Controller	0	13	13	From Resources
+2027-Q3	Head of Quality	0	12.35	12.35	From Resources
+2027-Q3	HR Business Partner	0	10.4	10.4	From Resources
+2027-Q3	Operations Director	0	13	13	From Resources
+2027-Q3	Plant Manager	0	13	13	From Resources
+2027-Q3	Production Planner	1.08	12.03	10.95	From Resources
+2027-Q4	Automation Engineer	0.42	13	12.58	From Resources
+2027-Q4	Controls Engineer	0	11.7	11.7	From Resources
+2027-Q4	Data Analyst	0	11.38	11.38	From Resources
+2027-Q4	Finance Controller	0	13	13	From Resources
+2027-Q4	Head of Quality	0	12.35	12.35	From Resources
+2027-Q4	HR Business Partner	0	10.4	10.4	From Resources
+2027-Q4	Operations Director	0	13	13	From Resources
+2027-Q4	Plant Manager	0	13	13	From Resources
+2027-Q4	Production Planner	0.28	12.03	11.75	From Resources
+ACTIONS
+Back to list
+PROPERTIES
+Property	Value
+Status	Published
+Periods	8
+Roles	2
+Gaps	0
+RELATIONS
+SOURCES AND ASSUMPTIONS
+COMMENTS
+HISTORY
+
+===== 03-realizacje-lista-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Active
+All
+All
+4
+At risk
+0
+Overdue
+1
+	
+INITIATIVE
+	
+LEVEL
+	
+STATUS
+	
+ASSIGNEE
+	
+PLANNED START / END
+	
+VARIANCE (DAYS)
+	
+RAG
+	
+
+	
+Predictive Maintenance for CNC Line
+	
+—
+	
+In execution
+	
+SM
+Sarah Mitchell
+	
+4/6/2026 → 3/31/2027
+	
+—
+	
+On track
+	
+
+	
+MES Rollout Line 3
+	
+—
+	
+In execution
+	
+SM
+Sarah Mitchell
+	
+5/4/2026 → 6/30/2027
+	
+—
+	
+On track
+	
+
+	
+Warehouse Automation Pilot
+	
+—
+	
+In execution
+	
+JW
+James Whitfield
+	
+3/2/2026 → 1/29/2027
+	
+—
+	
+On track
+	
+
+	
+Skills Matrix and Upskilling
+	
+—
+	
+On hold
+	
+JW
+James Whitfield
+	
+2/2/2026 → 12/18/2026
+	
+—
+	
+Blocked
+	
+
+===== 04-praca-tabela-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+All deliveries
+Skills Matrix and Upskilling
+Warehouse Automation Pilot
+MES Rollout Line 3
+Predictive Maintenance for CNC Line
+New task
+All
+42
+Overdue
+10
+Blocked
+2
+TASK
+	
+INITIATIVE
+	
+PERSON
+	
+DUE
+	
+STATUS
+	
+DAYS OVERDUE
+	
+
+
+Agree the shuttle safety case with the works council
+	
+Warehouse Automation Pilot
+	
+Priya Sharma
+	
+14 sie 2026
+	
+Blocked
+	
++24
+	
+
+
+Agree the MES downtime reason-code taxonomy
+	
+MES Rollout Line 3
+	
+Robert Chen
+	
+21 sie 2026
+	
+Blocked
+	
++17
+	
+
+
+Commission the shuttle system in the pilot aisle
+	
+Warehouse Automation Pilot
+	
+Daniel Osei
+	
+28 sie 2026
+	
+Done
+	
+—
+	
+
+
+Agree the maintenance work-order trigger with Planning
+	
+Predictive Maintenance for CNC Line
+	
+Emily Carter
+	
+03 wrz 2026
+	
+To do
+	
++4
+	
+
+
+Identify single points of failure per line
+	
+Skills Matrix and Upskilling
+	
+Priya Sharma
+	
+04 wrz 2026
+	
+In progress
+	
++3
+	
+
+
+Configure the MES work-order interface to ERP
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+11 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Install shop-floor terminals on Line 3
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+26 cze 2026
+	
+Done
+	
+—
+	
+
+
+Commission vibration sensors on cells 1 and 2
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+30 cze 2026
+	
+Done
+	
+—
+	
+
+
+Populate the skills matrix for all production roles
+	
+Skills Matrix and Upskilling
+	
+Priya Sharma
+	
+31 lip 2026
+	
+Done
+	
+—
+	
+
+
+Agree the cross-training rota with the shift leads
+	
+Skills Matrix and Upskilling
+	
+Sarah Mitchell
+	
+31 sie 2026
+	
+To do
+	
++7
+	
+
+
+Retrain the goods-out team on the new pick path
+	
+Warehouse Automation Pilot
+	
+Priya Sharma
+	
+01 wrz 2026
+	
+To do
+	
++6
+	
+
+
+Connect the condition-monitoring gateway to the historian
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+11 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Prepare the restart decision pack for the paused programme
+	
+Skills Matrix and Upskilling
+	
+James Whitfield
+	
+11 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Tune alert thresholds against the 2026 failure history
+	
+Predictive Maintenance for CNC Line
+	
+Michael Grant
+	
+11 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Validate barcode traceability at the packing station
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+11 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Write the Line 3 cutover runbook
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+18 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Re-slot the pilot aisle by pick frequency
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+18 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Migrate paper travellers for the top twenty part numbers
+	
+MES Rollout Line 3
+	
+Emily Carter
+	
+18 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Extend sensors to cells 3, 4 and 5
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+25 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Run the false-positive review with the shift leads
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+25 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Commission the MES-to-SCADA data bridge
+	
+MES Rollout Line 3
+	
+Daniel Osei
+	
+25 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Measure pick rate before and after re-slotting
+	
+Warehouse Automation Pilot
+	
+Michael Grant
+	
+02 paź 2026
+	
+To do
+	
+—
+	
+
+
+Integrate the shuttle controller with the warehouse system
+	
+Warehouse Automation Pilot
+	
+Laura Novak
+	
+09 paź 2026
+	
+To do
+	
+—
+	
+
+
+Write the pilot result pack for the steering committee
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+29 sty 2027
+	
+To do
+	
+—
+	
+
+
+Sign off the MES acceptance test pack
+	
+MES Rollout Line 3
+	
+Sarah Mitchell
+	
+26 mar 2027
+	
+To do
+	
+—
+	
+
+
+Build the failure-mode catalogue for spindle bearings
+	
+Predictive Maintenance for CNC Line
+	
+Michael Grant
+	
+10 lip 2026
+	
+Done
+	
+—
+	
+
+
+Cost the spare-parts holding reduction
+	
+Predictive Maintenance for CNC Line
+	
+Thomas Baker
+	
+28 sie 2026
+	
+To do
+	
++10
+	
+
+
+Define the OEE calculation rules with Quality
+	
+MES Rollout Line 3
+	
+Robert Chen
+	
+18 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Refresh the training records interface with HR
+	
+Skills Matrix and Upskilling
+	
+Michael Grant
+	
+25 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Quantify the labour saving per shift
+	
+Warehouse Automation Pilot
+	
+Thomas Baker
+	
+16 paź 2026
+	
+To do
+	
+—
+	
+
+
+Train Line 3 operators on the MES terminal
+	
+MES Rollout Line 3
+	
+Priya Sharma
+	
+16 paź 2026
+	
+To do
+	
+—
+	
+
+
+Document the predictive maintenance standard operating procedure
+	
+Predictive Maintenance for CNC Line
+	
+Laura Novak
+	
+23 paź 2026
+	
+To do
+	
+—
+	
+
+
+Cost the upskilling programme for 2027
+	
+Skills Matrix and Upskilling
+	
+Thomas Baker
+	
+30 paź 2026
+	
+To do
+	
+—
+	
+
+
+Review benefit realisation with the Plant Manager
+	
+Predictive Maintenance for CNC Line
+	
+Sarah Mitchell
+	
+27 lis 2026
+	
+To do
+	
+—
+	
+
+
+Close the pilot aisle housekeeping actions
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+25 sie 2026
+	
+To do
+	
++13
+	
+
+
+Confirm the apprenticeship levy funding route
+	
+Skills Matrix and Upskilling
+	
+Thomas Baker
+	
+06 lis 2026
+	
+To do
+	
+—
+	
+
+
+Approve Q3 capex request
+	
+Without initiative
+	
+James Whitfield
+	
+25 sie 2026
+	
+To do
+	
++14
+	
+
+
+Sign off Line 3 MES kickoff deck
+	
+Without initiative
+	
+James Whitfield
+	
+10 wrz 2026
+	
+In progress
+	
+—
+	
+
+
+Follow up with Rotherham plant manager on downtime log
+	
+Without initiative
+	
+James Whitfield
+	
+02 wrz 2026
+	
+To do
+	
++6
+	
+
+
+Review supplier corrective action plan
+	
+Without initiative
+	
+James Whitfield
+	
+12 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Draft opening remarks for steering committee
+	
+Without initiative
+	
+James Whitfield
+	
+18 wrz 2026
+	
+To do
+	
+—
+	
+
+
+Prepare board pack for October review
+	
+Without initiative
+	
+James Whitfield
+	
+30 wrz 2026
+	
+To do
+	
+—
+	
+
+===== 05-zasoby-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+All deliveries
+Skills Matrix and Upskilling
+Warehouse Automation Pilot
+MES Rollout Line 3
+Predictive Maintenance for CNC Line
+Add availability
+People
+9
+Overallocated
+2
+With backlog
+5
+
+Stan na 8.09.2026 · osób 9 · popyt 360 h · podaż 2704 h · obłożenie 13 % · przeciążonych tygodni 2 · zaległość 73 h u 5 os.
+
+PERSON / ROLE
+	
+WEEK
+	
+DEMAND (H)
+	
+SUPPLY (H)
+	
+UTILISATION %
+	
+GAP (H)
+	
+BACKLOG (H)
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 07.09.2026
+	
+48 h
+	
+36 h
+	
+133 %
+	
+-12 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 14.09.2026
+	
+12 h
+	
+36 h
+	
+33 %
+	
++24 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 21.09.2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 28.09.2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 05.10.2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 12.10.2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 19.10.2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 26.10.2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 07.09.2026
+	
+14 h
+	
+37 h
+	
+38 %
+	
++23 h
+	
+15 h
+	
+
+
+Emily Carter · Production Planner
+	
+od 14.09.2026
+	
+32 h
+	
+37 h
+	
+86 %
+	
++5 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 21.09.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 28.09.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 05.10.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 12.10.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 19.10.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 26.10.2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 07.09.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+28 h
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 14.09.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 21.09.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 28.09.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 05.10.2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 12.10.2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 19.10.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 26.10.2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 07.09.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+10 h
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 14.09.2026
+	
+10 h
+	
+38 h
+	
+26 %
+	
++28 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 21.09.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 28.09.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 05.10.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 12.10.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 19.10.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 26.10.2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 07.09.2026
+	
+20 h
+	
+40 h
+	
+50 %
+	
++20 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 14.09.2026
+	
+15 h
+	
+40 h
+	
+38 %
+	
++25 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 21.09.2026
+	
+59 h
+	
+40 h
+	
+148 %
+	
+-19 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 28.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 05.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 12.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 19.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 26.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 07.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+12 h
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 14.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 21.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 28.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 05.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 12.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 19.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 26.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 07.09.2026
+	
+12 h
+	
+35 h
+	
+34 %
+	
++23 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 14.09.2026
+	
+8 h
+	
+35 h
+	
+23 %
+	
++27 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 21.09.2026
+	
+18 h
+	
+35 h
+	
+51 %
+	
++17 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 28.09.2026
+	
+10 h
+	
+35 h
+	
+29 %
+	
++25 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 05.10.2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 12.10.2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 19.10.2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 26.10.2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 07.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+8 h
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 14.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 21.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 28.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 05.10.2026
+	
+7 h
+	
+40 h
+	
+18 %
+	
++33 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 12.10.2026
+	
+7 h
+	
+40 h
+	
+18 %
+	
++33 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 19.10.2026
+	
+5 h
+	
+40 h
+	
+13 %
+	
++35 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 26.10.2026
+	
+9 h
+	
+40 h
+	
+23 %
+	
++31 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 07.09.2026
+	
+6 h
+	
+40 h
+	
+15 %
+	
++34 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 14.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 21.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 28.09.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 05.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 12.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 19.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 26.10.2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+===== 06-decyzje-lista-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Due
+New decision
+Decisions
+9
+Risks
+7
+Signals
+8
+TITLE
+	
+NEEDED BY
+	
+DECISION MAKER
+	
+STATUS
+	
+DAYS OVERDUE
+	
+ESCALATION
+	
+
+
+Decide on the third-party training platform proposal
+	
+28 sie 2026
+	
+Priya Sharma
+	
+Escalated
+	
++10
+	
+None
+	
+
+
+Pause the skills passport programme until the 2027 budget
+	
+31 lip 2026
+	
+James Whitfield
+	
+Decided
+	
++38
+	
+None
+	
+
+
+Continue the warehouse shuttle pilot into a second aisle
+	
+14 sie 2026
+	
+James Whitfield
+	
+Decided
+	
++24
+	
+None
+	
+
+
+Approve the spare-parts holding reduction target
+	
+04 gru 2026
+	
+Thomas Baker
+	
+Pending
+	
+—
+	
+None
+	
+
+
+Set the predictive alert threshold policy
+	
+02 wrz 2026
+	
+Daniel Osei
+	
+Escalated
+	
++5
+	
+None
+	
+
+
+Extend predictive maintenance to cells 3, 4 and 5
+	
+21 sie 2026
+	
+Sarah Mitchell
+	
+Decided
+	
++17
+	
+None
+	
+
+
+Accept the vendor firmware release as a hard dependency
+	
+06 lis 2026
+	
+James Whitfield
+	
+Pending
+	
+—
+	
+None
+	
+
+
+Choose the MES downtime reason-code taxonomy
+	
+04 wrz 2026
+	
+Robert Chen
+	
+Escalated
+	
++3
+	
+None
+	
+
+
+Approve the Line 3 cutover date of 26 March 2027
+	
+09 paź 2026
+	
+Sarah Mitchell
+	
+Pending
+	
+—
+	
+None
+	
+Continue the warehouse shuttle pilot into a second aisle
+
+===== 07-sygnaly-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Due
+Decisions
+9
+Risks
+7
+Signals
+8
+INITIATIVE / TASK
+	
+SIGNAL TYPE
+	
+DEVIATION (DAYS)
+	
+REASON
+	
+DETECTED
+	
+STATE
+
+
+Agree the shuttle safety case with the works council
+	
+Overdue
+	
++24
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Agree the MES downtime reason-code taxonomy
+	
+Overdue
+	
++17
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Close the pilot aisle housekeeping actions
+	
+Overdue
+	
++13
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Cost the spare-parts holding reduction
+	
+Overdue
+	
++10
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Agree the cross-training rota with the shift leads
+	
+Overdue
+	
++7
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Retrain the goods-out team on the new pick path
+	
+Overdue
+	
++6
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Agree the maintenance work-order trigger with Planning
+	
+Overdue
+	
++4
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+
+Identify single points of failure per line
+	
+Overdue
+	
++3
+	
+Not determined
+	
+08 wrz 2026
+	
+New
+
+===== 08-raporty-light =====
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Level
+Reports
+Definitions
+Add report
+All
+2
+Needs review
+1
+Published
+1
+Definitions
+12
+RAPORT
+	
+POZIOM
+	
+STATUS
+	
+OKRES
+	
+STAN DANYCH NA
+	
+AUTOR
+	
+
+
+Northwind 2027 — programme health summary
+	
+Steering committee
+	
+Draft
+	
+31 sie 2026 – 06 wrz 2026
+	
+08 wrz 2026
+	
+James Whitfield
+	
+
+
+Northwind 2027 — weekly execution pack, week 36
+	
+PMO
+	
+Published
+	
+31 sie 2026 – 06 wrz 2026
+	
+08 wrz 2026
+	
+James Whitfield
+	

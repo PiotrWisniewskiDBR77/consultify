@@ -334,7 +334,16 @@ export const INICJATYWY: readonly Inicjatywa[] = [
   },
   {
     slug: 'skills-matrix-upskilling',
-    tytul: 'Skills Matrix & Upskilling',
+    // BEZ ZNAKU „&" W TYTULE — swiadoma decyzja D4b, nie przypadek. Globalny
+    // `inputSanitizationMiddleware` (`security.utils.ts:60`) escapuje KAZDY string
+    // ciala zadania NA ZAPISIE, wiec tytul zapisany przez HTTP (`register`
+    // i `PATCH .../metadata`) laduje w agregacie runtime-v1 jako „&amp;" i tak
+    // TRAFIA NA EKRAN listy Inicjatyw (zmierzone 08.09: wiersz klasyczny „Skills
+    // Matrix & Upskilling", agregat „Skills Matrix &amp; Upskilling"). STOP
+    // produktowy zapisany w rejestrze D3 („sanitizer runtime-v1 escapuje &") —
+    // do naprawy osobna paczka, bo dotyczy calego produktu. Do tego czasu dane
+    // pokazowe omijaja `&`, tak samo jak dane paczki D4.
+    tytul: 'Skills Matrix and Upskilling',
     status: 'IN_EXECUTION',
     onHold: true,
     blockedReason:
@@ -553,7 +562,7 @@ export const INICJATYWY: readonly Inicjatywa[] = [
     ],
     zakresPoza: [
       'Machine shop set-up sheets',
-      'Training records (covered by Skills Matrix & Upskilling)',
+      'Training records (covered by Skills Matrix and Upskilling)',
       'Customer-facing documentation',
     ],
     kryteriaSukcesu: [

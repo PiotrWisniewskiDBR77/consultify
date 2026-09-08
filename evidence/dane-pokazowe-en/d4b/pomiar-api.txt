@@ -1,0 +1,78 @@
+########## POMIAR NA ZYWYM API — paczka D4b, 2026-09-08T10:29:28Z ##########
+API http://127.0.0.1:4186, baza consultify_kopia_d44, konto OWNER james.whitfield@northwind.example
+login OWNER: HTTP 200
+
+=== DECYZJA 1 — identyfikator organizacji ===
+organizations.id = 468b234c-66c4-54e1-b626-5e0fb3a92f6a  (name: Northwind Manufacturing Ltd.)
+kolumny organization_id typu uuid w schemacie:
+  execution_report_snapshots
+  multi_framework_initiatives
+  multi_framework_reports
+  partner_attributions
+  partner_client_organizations
+  partner_commission_transactions
+  report_definitions
+  siri_dimension_scores
+  siri_prioritisation_snapshots
+  tp_scim_tokens
+  tp_service_accounts
+  tp_sso_configs
+organizations NIE MA kolumny slug (dowod — puste wyjscie ponizej):
+migawki raportow realizacji (D4 mial 0):
+  execution_report_snapshots = 2
+
+=== DECYZJA 2 — lancuch przekazania ===
+GET /api/initiatives/runtime-v1/execution-cases:
+  spraw realizacji: 4
+    004db83d-06fc-59f2-9cd9-64290638f2bc  state=ACTIVE  initiativeId=4e7a8762-62e6-52b5-985b-536a4d9185aa
+    9b06b4c3-fc76-56fc-b9b1-a5c29e2db589  state=ACTIVE  initiativeId=b650401b-b520-5532-9ce9-f21307bd3fe8
+    6bfccd56-ea23-5c94-a5c4-4ade9168082f  state=ACTIVE  initiativeId=d06a7a14-afe8-559e-a8ef-1ab7606e1c7c
+    3327e4be-a2d9-582c-9a3e-f13f44654966  state=ACTIVE  initiativeId=88013795-c478-5b1a-88da-fce4d1203621
+GET /api/initiatives (zrodlo listy Inicjatyw):
+  inicjatyw: 13 · roznych statusow: 7
+    APPROVED = 4
+    CLOSED = 1
+    DRAFT = 1
+    IN_EXECUTION = 4
+    PENDING_APPROVAL = 1
+    PROPOSED = 1
+    REJECTED = 1
+stany agregatow runtime-v1 (baza):
+  capacity_scenario  PUBLISHED  1
+  capacity_scenario_version  PUBLISHED  1
+  capacity_scenario_version  SUPERSEDED  1
+  decision  ACCEPT  4
+  decision  APPROVED  4
+  execution_case  ACTIVE  4
+  handoff_package  -  4
+  initiative  APPROVED_BACKLOG  4
+  initiative  IN_EXECUTION  4
+  plan_scenario  PUBLISHED  1
+  plan_scenario_version  PUBLISHED  1
+  plan_scenario_version  SUPERSEDED  1
+  portfolio_scenario  PUBLISHED  1
+  portfolio_scenario_version  PUBLISHED  1
+  portfolio_scenario_version  SUPERSEDED  1
+  raid_item  MITIGATED  1
+  raid_item  OPEN  6
+
+=== DECYZJA 3 — dwie poprawki produktu ===
+GET /api/initiatives/runtime-v1/capacity-roles (PRZED naprawa: {"roles":[]}):
+  rol z podaza: 9
+    Operations Director      fteWeekly=1  headcount=1
+    Plant Manager            fteWeekly=1  headcount=1
+    Head of Quality          fteWeekly=0.95  headcount=1
+    Production Planner       fteWeekly=0.925  headcount=1
+    Automation Engineer      fteWeekly=1  headcount=1
+    Finance Controller       fteWeekly=1  headcount=1
+    Controls Engineer        fteWeekly=0.9  headcount=1
+    Data Analyst             fteWeekly=0.875  headcount=1
+    HR Business Partner      fteWeekly=0.8  headcount=1
+GET /api/execution-control/delay-signals (PRZED naprawa: 13, w tym 5 dla zadan 'done'):
+  sygnalow: 8  typy: {'OVERDUE': 8}
+statusy zadan, ktore daly sygnal (zadnego 'done'/'cancelled'):
+  blocked = 2
+  in_progress = 1
+  todo = 5
+typ kolumny users.is_active (powod defektu nr 2):
+  users.is_active = text

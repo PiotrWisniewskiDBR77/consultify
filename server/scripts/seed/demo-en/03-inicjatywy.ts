@@ -1681,6 +1681,31 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       ),
     },
     {
+      // Znak `&` w polu, ktore idzie na zapis PRZEZ HTTP, wraca z bazy jako
+      // `&amp;` i tak sie renderuje na liscie (globalny `inputSanitizationMiddleware`,
+      // `security.utils.ts:60`). Dopoki STOP produktowy nie jest naprawiony,
+      // dane pokazowe MUSZA omijac `&` — ta asercja tego pilnuje.
+      nazwa: 'znak & w tytule/problemie/streszczeniu inicjatyw (sanitizer zamienia go na &amp;)',
+      oczekiwane: 0,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM initiatives
+          WHERE organization_id = $1 AND (name LIKE '%&%' OR COALESCE(title,'') LIKE '%&%'
+                OR COALESCE(problem_statement,'') LIKE '%&%' OR COALESCE(summary,'') LIKE '%&%')`,
+        [ORG_ID]
+      ),
+    },
+    {
+      // Bezpiecznik na wynik: gdyby sanitizer trafil cokolwiek w agregacie
+      // runtime-v1, na ekranie zobaczymy `&amp;`. Mierzymy SKUTEK, nie zamiar.
+      nazwa: 'encje HTML (&amp;) w agregatach runtime-v1 — to, co widac na liscie',
+      oczekiwane: 0,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND payload_json::text LIKE '%&amp;%'`,
+        [ORG_ID]
+      ),
+    },
+    {
       nazwa: 'pola tekstowe inicjatyw z polskimi znakami (dane muszą być po angielsku)',
       oczekiwane: 0,
       rzeczywiste: await licz(

@@ -1,0 +1,40 @@
+########## TESTY I MUTACJE — paczka D4b, 2026-09-08T10:30:01Z ##########
+
+=== A. Testy seedow (vitest.orphans.config.ts) ===
+ RUN  v4.1.8 /private/tmp/wt-d4b
+
+
+ Test Files  5 passed (5)
+      Tests  99 passed (99)
+   Start at  12:30:02
+   Duration  880ms (transform 129ms, setup 235ms, import 199ms, tests 41ms, environment 0ms)
+
+
+=== B. Testy realnego PG dla DECYZJI 3 — GREEN ===
+ RUN  v4.1.8 /private/tmp/wt-d4b/server
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  12:30:03
+   Duration  798ms (transform 149ms, setup 0ms, import 30ms, tests 650ms, environment 0ms)
+
+
+=== C. MUTACJA 1 (RED) — przywrocony filtr NOT IN ('DONE','CANCELLED') ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/services/__tests__/d4b.executionRuntimeDefects.pg.test.ts > D4b · defekty runtime Realizacji · RealPG > (1) zadanie `done` po terminie NIE daje sygnalu, otwarte daje
+AssertionError: expected [ …(3) ] to not include 'fe8f6863-9a16-403c-807f-46a3d9a4803c'
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+=== D. MUTACJA 2 (RED) — przywrocone COALESCE(u.is_active, 1) = 1 ===
+2026-09-08 12:30:21:3021 [31merror[39m: [31m[DB:Promise] Error: COALESCE types text and integer cannot be matched[39m {"sql":"SELECT COALESCE(u.job_title, u.title) AS role,\n            u.weekly_capacity_hours, u.availability_percent\n       FROM users u\n      WHERE u.organization_id = $1\n        -- [ODMROZENIE 06_EXECUTION DEC-453] users.is_active jest kolumna TEXT\n        -- (zmierzone w information_schema 08.09; wartosci w bazie: NULL, '1',\n        -- 'true'). Porownanie COALESCE(u.is_active, 1) = 1 rzucalo\n        -- \"operator does not exist: text = integer\", wyjatek byl polykany,\n        -- a PODAZ ROL zawsze wracala pusta (GET /capacity-roles = roles: []),\n        -- wiec arkusz obciazenia liczyl luke z zerowej podazy.\n        AND COALESCE(u.is_active, 1) = 1","params":["d29417c6-2868-4fda-9cc2-d5e2311eed19"]}
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/services/__tests__/d4b.executionRuntimeDefects.pg.test.ts > D4b · defekty runtime Realizacji · RealPG > (2) podaz rol jest NIEPUSTA i liczy osobe z NULL-em w is_active
+AssertionError: expected 0 to be greater than 0
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+
+=== E. Powrot do GREEN po zdjeciu obu mutacji ===
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
