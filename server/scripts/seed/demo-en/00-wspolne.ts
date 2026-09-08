@@ -67,16 +67,28 @@ export function tozsamosc(url: string): string {
   return `${u.hostname.toLowerCase()}:${u.port || '5432'}/${decodeURIComponent(u.pathname.replace(/^\//, '')).toLowerCase()}`;
 }
 
+/**
+ * Nazwa bazy dopuszczona dla WSZYSTKICH paczek D1-D6: lokalna kopia pokazowa
+ * `consultify_kopia_d<numer paczki>` (D1 pracuje na `consultify_kopia_d1`,
+ * D3 na `consultify_kopia_d3` itd.). Wzorzec jest CELOWO wąski — `consultify_staging_kopia`,
+ * `consultify_kopia_final` czy `railway` odpadają, bo nie kończą się numerem paczki.
+ */
+export const WZORZEC_BAZY_KOPII = /^consultify_kopia_d[0-9]+$/i;
+
 export function sprawdzCel(url: string, oczekiwanyHost: string): string {
   const toz = tozsamosc(url);
   if (/centerbeam/i.test(toz)) throw new Error('Cel wskazuje PRODUKCJĘ (centerbeam). STOP.');
   if (/trolley|thomas/i.test(toz))
-    throw new Error('Cel wskazuje demo/staging (trolley/thomas). Paczka D1 działa WYŁĄCZNIE na kopii lokalnej. STOP.');
+    throw new Error('Cel wskazuje demo/staging (trolley/thomas). Paczki D1-D6 działają WYŁĄCZNIE na kopii lokalnej. STOP.');
   const host = toz.split('/')[0]!;
   if (!host.includes(oczekiwanyHost))
     throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
-  if (!/consultify_kopia_d1/i.test(toz))
-    throw new Error(`Cel NIE jest bazą „consultify_kopia_d1" (dostał: nazwa bazy ukryta, sprawdzono wzorcem). STOP.`);
+  const nazwaBazy = toz.split('/').slice(1).join('/');
+  if (!WZORZEC_BAZY_KOPII.test(nazwaBazy))
+    throw new Error(
+      'Cel NIE jest lokalną kopią pokazową „consultify_kopia_d1"/„consultify_kopia_d3"/… ' +
+        '(dostał: nazwa bazy ukryta, sprawdzono wzorcem consultify_kopia_d<numer>). STOP.'
+    );
   return toz;
 }
 
