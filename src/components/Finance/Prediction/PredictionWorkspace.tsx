@@ -35,6 +35,7 @@
  * Authoring jest kanoniczny: mount odczytuje trwały snapshot, zapis ma CAS i
  * idempotency receipt, a preflight/calculate startują dopiero po exact cold readback.
  */
+import { ft } from '../shared/financeT';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
@@ -413,7 +414,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           message="Nie można otworzyć tego scenariusza — brak połączenia z realnym rekordem w nowym systemie."
           hint="Ten wiersz nie ma jeszcze odpowiednika w nowym systemie (nie został przeniesiony). Żadne dane nie zostały pobrane."
           action={{
-            label: 'Wróć do listy',
+            label: ft('finance.errorBoundary.backToList', 'Back to list'),
             onClick: () => props.onNavigateBack?.(),
             showPrefix: false,
             neutralAccent: true,
@@ -429,7 +430,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           message="Nie znaleziono tej wersji scenariusza w nowym systemie."
           hint="Rekord mógł zostać usunięty albo nie masz do niego dostępu. Żadne dane nie zostały pobrane."
           action={{
-            label: 'Wróć do listy',
+            label: ft('finance.errorBoundary.backToList', 'Back to list'),
             onClick: () => props.onNavigateBack?.(),
             showPrefix: false,
             neutralAccent: true,
@@ -445,7 +446,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           message="Nie udało się sprawdzić tego scenariusza."
           hint={mountCheck.message}
           action={{
-            label: 'Spróbuj ponownie',
+            label: ft('finance.common.tryAgain', 'Try again'),
             onClick: () => setCheckAttempt((n) => n + 1),
             showPrefix: false,
             neutralAccent: true,
@@ -469,7 +470,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           message="Nie udało się odczytać zapisanych założeń scenariusza."
           hint={authoringState.message}
           action={{
-            label: 'Spróbuj ponownie',
+            label: ft('finance.common.tryAgain', 'Try again'),
             onClick: () => setAuthoringAttempt((n) => n + 1),
             showPrefix: false,
             neutralAccent: true,

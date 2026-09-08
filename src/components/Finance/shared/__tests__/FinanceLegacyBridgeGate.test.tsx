@@ -161,7 +161,7 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
       /nie ma jeszcze odpowiednika|nie został jeszcze przeniesiony/
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /Wróć do listy/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Back to list/i }));
     expect(onBackToList).toHaveBeenCalledTimes(1);
   });
 
@@ -256,7 +256,7 @@ describe('FinanceLegacyBridgeGate — ERROR (network/server failure, distinct fr
     expect(screen.queryByTestId('finance-bridge-unresolved')).not.toBeInTheDocument();
     expect(screen.queryByTestId('mounted-workspace')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /Spróbuj ponownie/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Try again/i }));
     await waitFor(() => expect(screen.getByTestId('mounted-workspace')).toBeInTheDocument());
     expect(apiMocks.resolveLegacyFinanceArtifact).toHaveBeenCalledTimes(2);
   });

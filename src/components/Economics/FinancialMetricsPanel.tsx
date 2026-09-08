@@ -192,7 +192,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
         />
 
         <MetricCard
-          title="Okres zwrotu"
+          title={ft('finance.metrics.payback', 'Payback period')}
           value={formatYears(metrics.paybackPeriod)}
           subtitle={
             metrics.paybackPeriod && metrics.paybackPeriod <= horizon

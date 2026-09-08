@@ -268,7 +268,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                 <div className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Nazwa version (opcjonalnie)"
+                    placeholder={ft('finance.versionHistory.namePlaceholder', 'Version name (optional)')}
                     value={versionName}
                     onChange={(e) => setVersionName(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"

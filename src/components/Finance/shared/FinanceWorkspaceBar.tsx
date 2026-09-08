@@ -36,6 +36,7 @@
  * ikona-only fullscreen, `aria-expanded`/`aria-haspopup` na menu.
  */
 
+import { ft } from './financeT';
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -104,7 +105,7 @@ const CONTEXT_FIELD_LABEL_KEYS: Record<WorkspaceBarContextField, string> = {
 
 const CONTEXT_FIELD_LABEL_PL: Record<WorkspaceBarContextField, string> = {
   type: 'Typ',
-  period: 'Okres',
+  period: ft('finance.common.period', 'Period'),
   entity: 'Podmiot',
   currencyScale: 'Waluta / skala',
   source: 'Źródło',

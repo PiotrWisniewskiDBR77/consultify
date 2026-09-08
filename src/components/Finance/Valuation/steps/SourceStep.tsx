@@ -173,10 +173,15 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
     <div className="w-full space-y-4" data-testid="valuation-source-step">
       <h2 className="text-sm font-semibold text-c-text">{ft('finance.valuationSteps.valuationSource', 'Valuation source')}</h2>
       <p className="text-xs text-c-text-muted">
-        Ta wersja wyceny (<span className="font-mono">{businessVersionId}</span>
-        {variant ? `, wariant „${variant.name}"` : ''}) musi wskazywać dokładną, zatwierdzoną wersję
-        Baseline/Scenario — nigdy „najnowszą". Poniżej pokazujemy realny, pełny łańcuch pochodzenia
-        (lineage) z rejestru, nie deklarację.
+        {ft('finance.valuationSteps.sourceIntroPrefix', 'This valuation version (')}
+        <span className="font-mono">{businessVersionId}</span>
+        {variant
+          ? ft('finance.valuationSteps.sourceIntroVariant', ', variant “{{name}}”', { name: variant.name })
+          : ''}
+        {ft(
+          'finance.valuationSteps.sourceIntroSuffix',
+          ') must point at an exact, approved Baseline/Scenario version — never at “the latest”. Below we show the real, full lineage from the register, not a declaration.'
+        )}
       </p>
 
       {lineage === null && (
@@ -231,7 +236,7 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
                 <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
                   <dt>{ft('finance.valuationSteps.sourceVersionId', 'Source version ID')}</dt>
                   <dd className="font-mono text-c-text">{edge.sourceVersionId}</dd>
-                  <dt>ID wersji docelowej</dt>
+                  <dt>{ft('finance.valuationSteps.targetVersionId', 'Target version ID')}</dt>
                   <dd className="font-mono text-c-text">{edge.targetVersionId}</dd>
                   <dt>{ft('finance.valuationSteps.linkType', 'Link type')}</dt>
                   <dd className="text-c-text">{formatFreeformLineageCode(edge.edgeType)}</dd>

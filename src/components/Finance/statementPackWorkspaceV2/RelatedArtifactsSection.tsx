@@ -95,7 +95,7 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
                 data-testid={`related-artifacts-create-${type}`}
                 className="inline-flex min-h-[1.75rem] items-center rounded-lg border border-c-border-subtle px-2 text-[10px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                + Nowy
+                {ft('finance.relatedArtifacts.new', '+ New')}
               </button>
             </div>
             {edges.length === 0 ? (

@@ -53,7 +53,7 @@ export const SCurve: React.FC<SCurveProps> = ({
   actual,
   height = 240,
   formatValue = defaultFormat,
-  periodLabel = 'Okres',
+  periodLabel = ft('finance.common.period', 'Period'),
 }) => {
   const [hover, setHover] = useState<number | null>(null);
 

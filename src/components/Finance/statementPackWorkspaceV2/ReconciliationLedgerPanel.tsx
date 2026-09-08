@@ -156,7 +156,7 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
                 <Metric label="Status" value={reconciliationRunStatusLabel(runDetail.status)} />
                 <Metric label={ft('finance.common.quality', 'Quality')} value={reconciliationResultQualityLabel(runDetail.resultQuality)} />
                 <Metric label="Residual" value={formatPct(runDetail.residualPct)} />
-                <Metric label="Wierszy" value={String(runDetail.rows.length)} />
+                <Metric label={ft('finance.reconciliation.rows', 'Rows')} value={String(runDetail.rows.length)} />
               </div>
               <BucketBreakdown rows={runDetail.rows} />
             </div>

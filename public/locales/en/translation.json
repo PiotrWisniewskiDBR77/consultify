@@ -25926,10 +25926,13 @@
       "value": "Value",
       "quality": "Quality",
       "source": "Source",
-      "retry": "Retry"
+      "retry": "Retry",
+      "tryAgain": "Try again",
+      "period": "Period"
     },
     "benefits": {
-      "addMeasurement": "Add measurement"
+      "addMeasurement": "Add measurement",
+      "measurementPeriod": "Measurement period"
     },
     "digitization": {
       "saveChanges": "Save changes",
@@ -25943,10 +25946,17 @@
       "checkSummary": "Check the summary and confirm the import",
       "readyToImport": "Ready to import",
       "mayTakeSeconds": "This may take a few seconds",
-      "checkRecognition": "Check if the file was recognised correctly"
+      "checkRecognition": "Check if the file was recognised correctly",
+      "analysisName": "Analysis name",
+      "analysisNameColon": "Analysis name:",
+      "stepUpload": "Upload",
+      "stepPreview": "Preview",
+      "stepName": "Name",
+      "stepConfirm": "Confirm"
     },
     "metrics": {
-      "irrHint": "Internal Rate of Return — the discount rate at which NPV = 0"
+      "irrHint": "Internal Rate of Return — the discount rate at which NPV = 0",
+      "payback": "Payback period"
     },
     "initiativeIntegration": {
       "linkedHint": "The analysis will be linked to this initiative and available in the Finance module",
@@ -26020,7 +26030,14 @@
       "currentValue": "Current value",
       "closeDetail": "Close the detail card",
       "chartOverTime": "Value over time chart",
-      "notEnoughData": "Not enough data for a chart."
+      "notEnoughData": "Not enough data for a chart.",
+      "openDetail": "Open the detail card",
+      "emptyTitle": "No indicators configured",
+      "emptyBody": "This analysis has no KPI yet. Configure indicators to see results.",
+      "colName": "Indicator",
+      "colFormula": "Formula",
+      "colQuality": "Quality / availability",
+      "chartPeriods": "Chart — historical and forecast periods"
     },
     "reasonDialog": {
       "title": "Give a reason"
@@ -26047,7 +26064,9 @@
       "addInitiative": "+ Add initiative",
       "chainHint": "Chain: initiative → assumption → driver/KPI → statement line → forecast.",
       "noOverrides": "No overrides — add the first one above.",
-      "addOverride": "+ Add override"
+      "addOverride": "+ Add override",
+      "trackDriver": "B · Driver-based (drivers/KPI)",
+      "initiativeName": "Initiative name"
     },
     "scenarioResults": {
       "noExceptions": "No exceptions.",
@@ -26085,7 +26104,11 @@
       "loadingSourceLink": "Loading the source link…",
       "valuationSource": "Valuation source",
       "spread": "(spread {{pct}})",
-      "materialDisagreement": "— the methods disagree materially, do not treat the headline as certain."
+      "materialDisagreement": "— the methods disagree materially, do not treat the headline as certain.",
+      "targetVersionId": "Target version ID",
+      "sourceIntroPrefix": "This valuation version (",
+      "sourceIntroVariant": ", variant “{{name}}”",
+      "sourceIntroSuffix": ") must point at an exact, approved Baseline/Scenario version — never at “the latest”. Below we show the real, full lineage from the register, not a declaration."
     },
     "assumptions": {
       "emptyModel": "This model has no assumptions yet.",
@@ -26103,7 +26126,9 @@
       "confirmSaveWithWarnings": "Confirm saving the assumption set despite warnings",
       "addAssumptionButton": "+ Add assumption",
       "scheduleInertHint2": "This schedule does not feed the calculations today (the engine does not read it yet) — the row will be saved, but it will not change any number in \"Calculations\".",
-      "customCodePlaceholder": "e.g. HEADCOUNT_GROWTH_PCT"
+      "customCodePlaceholder": "e.g. HEADCOUNT_GROWTH_PCT",
+      "revert": "Revert to the last saved value",
+      "basePeriod": "Base period"
     },
     "calculations": {
       "emptyHint": "Run a calculation to see the forecast P&L, balance sheet and cash flows.",
@@ -26119,7 +26144,9 @@
       "staleSource": "Outdated — source changed",
       "notComputed": "Not calculated",
       "quarterly": "Quarterly",
-      "yearly": "Yearly"
+      "yearly": "Yearly",
+      "noNumeric": "No numeric value",
+      "noRollup": "No calculation for at least one month in this period (roll-up)"
     },
     "errorBoundary": {
       "backToList": "Back to list",
@@ -26137,11 +26164,13 @@
     },
     "reconciliation": {
       "bucketBreakdown": "Breakdown by bucket",
-      "detailFailed": "Could not load the detail of this run."
+      "detailFailed": "Could not load the detail of this run.",
+      "rows": "Rows"
     },
     "relatedArtifacts": {
       "empty": "No artefact of this type from this statement yet.",
-      "notLoaded": "Related artefacts have not been loaded yet."
+      "notLoaded": "Related artefacts have not been loaded yet.",
+      "new": "+ New"
     },
     "sourceEvidence": {
       "sourceAmount": "Source amount",
@@ -26152,7 +26181,8 @@
       "adjustmentReason": "Adjustment reason",
       "valueNature": "Nature of the value",
       "currencyScale": "Currency / scale (of this cell)",
-      "missingReason": "Reason for the gap"
+      "missingReason": "Reason for the gap",
+      "mappedAmount": "Mapped amount"
     },
     "aiRecommendations": {
       "createInitiative": "Create initiative"
@@ -26160,7 +26190,8 @@
     "versionHistory": {
       "createNew": "Create new version",
       "empty": "No saved versions",
-      "emptyHint": "Create the first version to track changes"
+      "emptyHint": "Create the first version to track changes",
+      "namePlaceholder": "Version name (optional)"
     },
     "statusValue": {
       "pending": "Pending",
@@ -26197,7 +26228,8 @@
       "emptyTitle": "Investment analysis workspace",
       "horizon": "Horizon (years)",
       "inputs": "Investment parameters",
-      "rate": "Discount rate (%)"
+      "rate": "Discount rate (%)",
+      "addPeriod": "+ period"
     },
     "statementPack": {
       "title": "Sprawozdanie finansowe"
@@ -26216,6 +26248,23 @@
       "billions": "{{value}}bn",
       "millions": "{{value}}m",
       "thousands": "{{value}}k"
+    },
+    "reportActions": {
+      "draft": "Generate draft",
+      "regenerate": "Generate again",
+      "generating": "Generation in progress…",
+      "open": "Open result",
+      "needDraft": "Generate the draft first (step 1).",
+      "publish": "Publish / attach to report",
+      "needOpen": "Open the result first (step 2).",
+      "publishing": "Publishing…",
+      "alreadyPublished": "Already published.",
+      "retryPublish": "Try publishing again"
+    },
+    "statementType": {
+      "pl": "Profit and loss",
+      "bs": "Balance sheet",
+      "cf": "Cash flow statement"
     }
   },
   "portfolio": {

@@ -102,9 +102,9 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
 
   if (!statementType) {
     const groups: Array<{ type: StatementLineDto['statementType']; label: string }> = [
-      { type: 'P&L', label: 'Rachunek zysków i strat' },
-      { type: 'BS', label: 'Bilans' },
-      { type: 'CF', label: 'Rachunek przepływów pieniężnych' },
+      { type: 'P&L', label: ft('finance.statementType.pl', 'Profit and loss') },
+      { type: 'BS', label: ft('finance.statementType.bs', 'Balance sheet') },
+      { type: 'CF', label: ft('finance.statementType.cf', 'Cash flow statement') },
     ];
     return (
       <div className="flex h-full flex-col gap-4 overflow-y-auto" data-testid="canonical-statement-tables-v2">

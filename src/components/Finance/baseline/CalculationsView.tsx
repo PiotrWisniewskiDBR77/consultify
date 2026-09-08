@@ -139,7 +139,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
     const cellsInGroup = group.members.map((p) => outputsByLineAndPeriod.get(`${line}::${p.periodId}`));
     if (cellsInGroup.some((c) => c === undefined)) {
       // Brak choćby jednego miesiąca w grupie = brak danych dla całej grupy — NIGDY nie renderujemy częściowej sumy jako pełnego wyniku.
-      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)' };
+      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: ft('finance.calculations.noRollup', 'No calculation for at least one month in this period (roll-up)') };
     }
     const present = cellsInGroup as BaselineOutputDto[];
     const missingLike = present.filter((c) => c.value.status === 'MISSING' || c.value.status === 'NA' || c.value.status === 'NOT_APPLICABLE');
@@ -155,7 +155,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       return { text: '—', isMissingLikeGlyph: true, numeric: null, reason };
     }
     const numbers = present.map((c) => (c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)));
-    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wartości liczbowej' };
+    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: ft('finance.calculations.noNumeric', 'No numeric value') };
     const nums = numbers as number[];
     const value = meta.aggregation === 'flow-sum' ? nums.reduce((a, b) => a + b, 0) : nums[nums.length - 1];
     const display = formatFinanceValueForDisplay({ status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: String(value) });

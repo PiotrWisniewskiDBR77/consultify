@@ -124,7 +124,7 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
             <thead className="bg-c-surface-raised text-xs uppercase tracking-wide text-c-text-muted">
               <tr>
                 <th className="px-3 py-2">Linia</th>
-                <th className="px-3 py-2">Okres</th>
+                <th className="px-3 py-2">{ft('finance.common.period', 'Period')}</th>
                 <th className="px-3 py-2 text-right">Scenariusz</th>
                 <th className="px-3 py-2 text-right">Baseline</th>
                 <th className="px-3 py-2 text-right">Δ</th>

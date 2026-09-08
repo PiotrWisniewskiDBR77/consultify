@@ -25492,7 +25492,8 @@
       "emptyTitle": "Obszar analiz inwestycyjnych",
       "horizon": "Horyzont (lata)",
       "inputs": "Parametry inwestycji",
-      "rate": "Stopa dyskontowa (%)"
+      "rate": "Stopa dyskontowa (%)",
+      "addPeriod": "+ okres"
     },
     "link": {
       "cta": "Powiąż inicjatywę",
@@ -26919,10 +26920,13 @@
       "value": "Wartość",
       "quality": "Jakość",
       "source": "Źródło",
-      "retry": "Ponów"
+      "retry": "Ponów",
+      "tryAgain": "Spróbuj ponownie",
+      "period": "Okres"
     },
     "benefits": {
-      "addMeasurement": "Dodaj measurement"
+      "addMeasurement": "Dodaj measurement",
+      "measurementPeriod": "Okres pomiaru"
     },
     "digitization": {
       "saveChanges": "Zapisz changesy",
@@ -26936,10 +26940,17 @@
       "checkSummary": "Sprawdź podsumowanie i potwierdź import",
       "readyToImport": "Gotowe do importu",
       "mayTakeSeconds": "To może potrwać kilka sekund",
-      "checkRecognition": "Sprawdź, czy plik został poprawnie rozpoznany"
+      "checkRecognition": "Sprawdź, czy plik został poprawnie rozpoznany",
+      "analysisName": "Nazwa analizy",
+      "analysisNameColon": "Nazwa analizy:",
+      "stepUpload": "Wgraj plik",
+      "stepPreview": "Podgląd",
+      "stepName": "Nazwa",
+      "stepConfirm": "Potwierdź"
     },
     "metrics": {
-      "irrHint": "Wewnętrzna stopa zwrotu — stopa dyskontowa, przy której NPV = 0"
+      "irrHint": "Wewnętrzna stopa zwrotu — stopa dyskontowa, przy której NPV = 0",
+      "payback": "Okres zwrotu"
     },
     "initiativeIntegration": {
       "linkedHint": "Analiza zostanie powiązana z tą inicjatywą i dostępna w module Finanse",
@@ -27013,7 +27024,14 @@
       "currentValue": "Wartość bieżąca",
       "closeDetail": "Zamknij kartę szczegółową",
       "chartOverTime": "Wykres wartości w czasie",
-      "notEnoughData": "Brak wystarczających danych do wykresu."
+      "notEnoughData": "Brak wystarczających danych do wykresu.",
+      "openDetail": "Otwórz kartę szczegółową",
+      "emptyTitle": "Brak skonfigurowanych wskaźników",
+      "emptyBody": "Ta analiza nie ma jeszcze żadnego wskaźnika KPI. Skonfiguruj wskaźniki, aby zobaczyć wyniki.",
+      "colName": "Wskaźnik",
+      "colFormula": "Wzór",
+      "colQuality": "Jakość / dostępność",
+      "chartPeriods": "Wykres — okresy historyczne i prognozowane"
     },
     "reasonDialog": {
       "title": "Podaj powód"
@@ -27040,7 +27058,9 @@
       "addInitiative": "+ Dodaj inicjatywę",
       "chainHint": "Łańcuch: inicjatywa → założenie → driver/KPI → linia sprawozdania → prognoza.",
       "noOverrides": "Brak nadpisań — dodaj pierwsze powyżej.",
-      "addOverride": "+ Dodaj nadpisanie"
+      "addOverride": "+ Dodaj nadpisanie",
+      "trackDriver": "B · Wskaźnikowy (drivery/KPI)",
+      "initiativeName": "Nazwa inicjatywy"
     },
     "scenarioResults": {
       "noExceptions": "Brak wyjątków.",
@@ -27078,7 +27098,11 @@
       "loadingSourceLink": "Wczytywanie powiązania źródła…",
       "valuationSource": "Źródło wyceny",
       "spread": "(rozrzut {{pct}})",
-      "materialDisagreement": "— istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika."
+      "materialDisagreement": "— istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika.",
+      "targetVersionId": "ID wersji docelowej",
+      "sourceIntroPrefix": "Ta wersja wyceny (",
+      "sourceIntroVariant": ", wariant „{{name}}\"",
+      "sourceIntroSuffix": ") musi wskazywać dokładną, zatwierdzoną wersję Baseline/Scenario — nigdy „najnowszą\". Poniżej pokazujemy realny, pełny łańcuch pochodzenia (lineage) z rejestru, nie deklarację."
     },
     "assumptions": {
       "emptyModel": "Ten model nie ma jeszcze żadnych założeń.",
@@ -27096,7 +27120,9 @@
       "confirmSaveWithWarnings": "Potwierdź zapis zestawu założeń mimo ostrzeżeń",
       "addAssumptionButton": "+ Dodaj założenie",
       "scheduleInertHint2": "Ten harmonogram nie zasila dziś wyliczeń (silnik go jeszcze nie czyta) — wiersz zapisze się, ale nie zmieni żadnej liczby w „Wyliczeniach\".",
-      "customCodePlaceholder": "np. HEADCOUNT_GROWTH_PCT"
+      "customCodePlaceholder": "np. HEADCOUNT_GROWTH_PCT",
+      "revert": "Cofnij do ostatniej zapisanej wartości",
+      "basePeriod": "Okres bazowy"
     },
     "calculations": {
       "emptyHint": "Uruchom przeliczenie, aby zobaczyć prognozowany P&L, bilans i przepływy.",
@@ -27112,7 +27138,9 @@
       "staleSource": "Nieaktualne — źródło zmienione",
       "notComputed": "Nie przeliczono",
       "quarterly": "Kwartalnie",
-      "yearly": "Rocznie"
+      "yearly": "Rocznie",
+      "noNumeric": "Brak wartości liczbowej",
+      "noRollup": "Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)"
     },
     "errorBoundary": {
       "backToList": "Wróć do listy",
@@ -27130,11 +27158,13 @@
     },
     "reconciliation": {
       "bucketBreakdown": "Podział po bucketach",
-      "detailFailed": "Nie udało się wczytać detalu tego przebiegu."
+      "detailFailed": "Nie udało się wczytać detalu tego przebiegu.",
+      "rows": "Wierszy"
     },
     "relatedArtifacts": {
       "empty": "Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.",
-      "notLoaded": "Powiązane artefakty nie zostały jeszcze wczytane."
+      "notLoaded": "Powiązane artefakty nie zostały jeszcze wczytane.",
+      "new": "+ Nowy"
     },
     "sourceEvidence": {
       "sourceAmount": "Kwota źródłowa",
@@ -27145,7 +27175,8 @@
       "adjustmentReason": "Powód korekty",
       "valueNature": "Charakter wartości",
       "currencyScale": "Waluta / skala (tej komórki)",
-      "missingReason": "Powód braku"
+      "missingReason": "Powód braku",
+      "mappedAmount": "Kwota zmapowana"
     },
     "aiRecommendations": {
       "createInitiative": "Utwórz inicjatywę"
@@ -27153,12 +27184,30 @@
     "versionHistory": {
       "createNew": "Utwórz nową wersję",
       "empty": "Brak zapisanych wersji",
-      "emptyHint": "Utwórz pierwszą wersję, żeby śledzić zmiany"
+      "emptyHint": "Utwórz pierwszą wersję, żeby śledzić zmiany",
+      "namePlaceholder": "Nazwa wersji (opcjonalnie)"
     },
     "number": {
       "billions": "{{value}} mld",
       "millions": "{{value}} mln",
       "thousands": "{{value}} tys."
+    },
+    "reportActions": {
+      "draft": "Generuj szkic",
+      "regenerate": "Generuj ponownie",
+      "generating": "Generowanie w toku…",
+      "open": "Otwórz wynik",
+      "needDraft": "Najpierw wygeneruj szkic (krok 1).",
+      "publish": "Opublikuj / Dołącz do raportu",
+      "needOpen": "Najpierw otwórz wynik (krok 2).",
+      "publishing": "Publikacja w toku…",
+      "alreadyPublished": "Już opublikowano.",
+      "retryPublish": "Spróbuj opublikować ponownie"
+    },
+    "statementType": {
+      "pl": "Rachunek zysków i strat",
+      "bs": "Bilans",
+      "cf": "Rachunek przepływów pieniężnych"
     }
   },
   "portfolio": {

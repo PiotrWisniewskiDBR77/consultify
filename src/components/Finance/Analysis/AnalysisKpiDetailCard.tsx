@@ -126,7 +126,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Wykres — okresy historyczne i prognozowane</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.chartPeriods', 'Chart — historical and forecast periods')}</p>
           <SparklineChart points={periodSeries} />
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-c-text-muted">
             {periodSeries.map((p) => (

@@ -62,7 +62,7 @@ export interface ScenarioAssumptionsViewProps {
 
 const MODE_TABS: Array<{ track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE'; label: string }> = [
   { track: 'STANDARD', label: 'A · Standardowy (Base/Bull/Bear)' },
-  { track: 'DRIVER_OVERRIDE', label: 'B · Wskaźnikowy (drivery/KPI)' },
+  { track: 'DRIVER_OVERRIDE', label: ft('finance.scenario.trackDriver', 'B · Driver-based (drivers/KPI)') },
   { track: 'FUNDAMENTAL_INITIATIVE', label: 'C · Fundamentalny (inicjatywy)' },
 ];
 
@@ -228,7 +228,7 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
           <input id={`${formId}-entity`} className={CONTROL_CLASS} value={entityId} onChange={(e) => setEntityId(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-period`}>
-          Okres
+          {ft('finance.common.period', 'Period')}
           <input id={`${formId}-period`} className={CONTROL_CLASS} value={periodId} onChange={(e) => setPeriodId(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-value`}>
@@ -250,7 +250,7 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
               <th className="px-3 py-2">Driver</th>
               <th className="px-3 py-2">Linia</th>
               <th className="px-3 py-2">Podmiot</th>
-              <th className="px-3 py-2">Okres</th>
+              <th className="px-3 py-2">{ft('finance.common.period', 'Period')}</th>
               <th className="px-3 py-2">{ft('finance.common.value', 'Value')}</th>
               <th className="px-3 py-2" />
             </tr>
@@ -385,7 +385,7 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                 className={CONTROL_CLASS}
                 value={initiative.name}
                 onChange={(e) => updateInitiative(initiative.id, { name: e.target.value })}
-                aria-label="Nazwa inicjatywy"
+                aria-label={ft('finance.scenario.initiativeName', 'Initiative name')}
               />
               <input
                 className={CONTROL_CLASS}

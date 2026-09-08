@@ -258,7 +258,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
         key: 'payback',
         label: 'Payback',
         value: fmtYears(result.payback),
-        hint: 'Okres zwrotu',
+        hint: ft('finance.metrics.payback', 'Payback period'),
       },
       {
         key: 'discountedPayback',
@@ -324,7 +324,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
               onClick={addPeriod}
               className="rounded border border-dashed border-c-border px-2 py-1 text-xs text-c-text-secondary hover:border-c-focus hover:text-c-text"
             >
-              + okres
+              {ft('finance.investment.addPeriod', '+ period')}
             </button>
           </div>
 

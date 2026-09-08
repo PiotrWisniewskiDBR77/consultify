@@ -17,6 +17,7 @@
  * an old-system id into a new-system component") — the four branches use
  * THIS component instead of passing `activeDocument.id` straight through.
  */
+import { ft } from './financeT';
 import { AlertTriangle, Link2 } from 'lucide-react';
 import React from 'react';
 
@@ -70,7 +71,7 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
           // `showPrefix: false, neutralAccent: true`.
           action={{
-            label: 'Spróbuj ponownie',
+            label: ft('finance.common.tryAgain', 'Try again'),
             onClick: retry,
             showPrefix: false,
             neutralAccent: true,
@@ -116,7 +117,7 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
           // "Spróbuj ponownie" wyżej.
           action={{
-            label: 'Wróć do listy',
+            label: ft('finance.errorBoundary.backToList', 'Back to list'),
             onClick: onBackToList,
             showPrefix: false,
             neutralAccent: true,

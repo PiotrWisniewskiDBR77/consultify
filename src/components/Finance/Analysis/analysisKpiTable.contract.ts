@@ -14,6 +14,7 @@
  * downstream.
  */
 
+import { ft } from '../shared/financeT';
 import { formatListNumber } from '../../../utils/listDateFormat';
 import { Decimal } from 'decimal.js';
 
@@ -373,9 +374,9 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
   }));
 
   return [
-    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '120px' },
+    { id: 'kpiName', label: ft('finance.analysisKpi.colName', 'Indicator'), sortable: true, align: 'left', width: '120px' },
     { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '122px' },
-    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '122px' },
+    { id: 'formulaDisplay', label: ft('finance.analysisKpi.colFormula', 'Formula'), align: 'left', width: '122px' },
     { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
     {
@@ -389,7 +390,7 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
     },
     { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
     { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
-    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
+    { id: 'qualityFlag', label: ft('finance.analysisKpi.colQuality', 'Quality / availability'), align: 'center', filterable: true, width: '176px' },
     {
       id: 'downstreamUses',
       label: 'Przeznaczenie',

@@ -175,7 +175,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
                 <dd className="font-mono text-c-text">{mappingRow.sourceAmount ?? '—'}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-c-text-muted">Kwota zmapowana</dt>
+                <dt className="text-c-text-muted">{ft('finance.sourceEvidence.mappedAmount', 'Mapped amount')}</dt>
                 <dd className="font-mono text-c-text">{mappingRow.mappedAmount ?? '—'}</dd>
               </div>
               {mappingRow.sourceRowRef && (

@@ -376,7 +376,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
               <thead className="bg-slate-50 dark:bg-navy-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Okres
+                    {ft('finance.common.period', 'Period')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Plan
@@ -577,7 +577,7 @@ const MeasurementModal: React.FC<{
           {/* Period Selection */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Okres measurement
+              {ft('finance.benefits.measurementPeriod', 'Measurement period')}
             </label>
             <input
               type="text"

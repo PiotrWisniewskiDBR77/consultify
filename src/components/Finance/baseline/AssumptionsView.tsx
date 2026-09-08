@@ -542,7 +542,7 @@ export function AssumptionsView({
               )}
 
               <label className="block text-xs font-medium text-c-text-secondary">
-                Okres
+                {ft('finance.common.period', 'Period')}
                 <select
                   value={addPeriodId}
                   onChange={(e) => setAddPeriodId(e.target.value)}
@@ -644,7 +644,7 @@ export function AssumptionsView({
                 Wart. historyczna
               </th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 90 }}>
-                Okres bazowy
+                {ft('finance.assumptions.basePeriod', 'Base period')}
               </th>
               {/*
                 ★ NAPRAWA punktu 4 orkiestratora: „Reguła kalibracji" (najdłuższa
@@ -936,14 +936,14 @@ export function AssumptionsView({
                         actions={[
                           {
                             id: 'reset',
-                            label: 'Cofnij do ostatniej zapisanej wartości',
+                            label: ft('finance.assumptions.revert', 'Revert to the last saved value'),
                             icon: RotateCcw,
                             disabled: !cell?.dirty || readOnly,
                             onClick: () => resetCellToServer(spec),
                           },
                           {
                             id: 'delete',
-                            label: 'Usuń wiersz założenia',
+                            label: ft('finance.assumptions.removeRow', 'Delete assumption row'),
                             icon: Trash2,
                             variant: 'danger',
                             disabled: readOnly,
