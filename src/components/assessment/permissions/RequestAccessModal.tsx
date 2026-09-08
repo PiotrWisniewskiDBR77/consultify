@@ -15,6 +15,7 @@ import { AlertCircle, Edit3, Loader2, Lock, Send, Settings, X } from 'lucide-rea
 import React, { useState } from 'react';
 
 import { CreateAccessRequestParams } from './useAssessmentPermissions';
+import { useTranslation } from 'react-i18next';
 
 // ==========================================
 // TYPES
@@ -77,6 +78,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const [requestedRole, setRequestedRole] = useState<RequestedRole>('editor');
   const [justification, setJustification] = useState('');
   const [priority, setPriority] = useState<Priority>('NORMAL');
@@ -124,10 +126,13 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                Request Edit Access
+                {t('assessment.requestAccess.title', 'Request edit access')}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                You don't have permission to edit this assessment
+                {t(
+                  'assessment.requestAccess.subtitle',
+                  'You do not have permission to edit this assessment'
+                )}
               </p>
             </div>
           </div>
@@ -145,13 +150,17 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
           <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Assessment:</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('assessment.requestAccess.assessmentLabel', 'Assessment:')}
+                </span>
                 <span className="font-medium text-navy-900 dark:text-white">
                   {assessmentName || 'Unnamed Assessment'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Your role:</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('assessment.requestAccess.yourRole', 'Your role:')}
+                </span>
                 <span className="font-medium text-navy-900 dark:text-white capitalize">
                   {currentRole}
                 </span>
@@ -262,12 +271,18 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
             <textarea
               value={justification}
               onChange={(e) => setJustification(e.target.value)}
-              placeholder="Explain why you need access to this assessment..."
+              placeholder={t(
+                'assessment.requestAccess.justificationPlaceholder',
+                'Explain why you need access to this assessment…'
+              )}
               rows={4}
               className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid outline-none resize-none"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Your request will be sent to the assessment owner for approval.
+              {t(
+                'assessment.requestAccess.approvalHint',
+                'Your request will be sent to the assessment owner for approval.'
+              )}
             </p>
           </div>
 
@@ -306,10 +321,14 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
             <div className="flex items-start gap-3">
               <AlertCircle size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-700 dark:text-blue-300">
-                <p className="font-medium mb-1">What happens next?</p>
+                <p className="font-medium mb-1">
+                  {t('assessment.requestAccess.whatNext', 'What happens next?')}
+                </p>
                 <p className="text-blue-600 dark:text-blue-400">
-                  The assessment owner will receive a notification about your request. You'll be
-                  notified once they approve or decline your request.
+                  {t(
+                    'assessment.requestAccess.whatNextBody',
+                    'The assessment owner will receive a notification about your request. You will be notified once they approve or decline it.'
+                  )}
                 </p>
               </div>
             </div>

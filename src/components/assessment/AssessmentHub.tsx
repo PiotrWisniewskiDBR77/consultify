@@ -1012,7 +1012,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     };
     const confidenceCol: TableColumn = {
       id: 'confidenceAvg',
-      label: t('assessment.hub.table.confidence', 'Pewność'),
+      label: t('assessment.hub.table.confidence', 'Confidence'),
       width: '110px',
       dataType: 'number',
       align: 'right',
@@ -1069,7 +1069,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               {label}
             </div>
             <div className="text-xs text-c-text-muted">
-              {t('assessment.hub.table.contextKind', 'Ocena')}
+              {t('assessment.hub.table.contextKind', 'Assessment')}
             </div>
           </div>
         );
@@ -1162,7 +1162,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     // Default: assessment list
     return [
       { ...frameworkCol, defaultVisible: false },
-      { ...nameCol, label: t('assessment.hub.table.assessmentName', 'Nazwa oceny') },
+      { ...nameCol, label: t('assessment.hub.table.assessmentName', 'Assessment name') },
       businessUnitCol,
       {
         id: 'status',
@@ -1178,7 +1178,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       },
       scoreCol,
       confidenceCol,
-      { ...authorCol, label: t('assessment.hub.table.owner', 'Właściciel') },
+      { ...authorCol, label: t('assessment.hub.table.owner', 'Owner') },
       /* POSTĘP schodzi z domyślnego zestawu do pstryczka: na obrazie na jego
          miejscu stoi JEDNOSTKA, a ta jest już zbudowana (migracja + API).
          Kolumna NIE znika — dalej jest w pstryczku i dalej pilnuje jej test
@@ -2342,7 +2342,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                         onClick={handleShowList}
                         className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
                       >
-                        Back to List
+                        {t('assessment.hub.backToList', 'Back to list')}
                       </button>
                     </div>
                   </div>
@@ -2425,7 +2425,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           onItemClick={handleOpenDocument}
           onItemAction={handleRowAction}
           onNewItem={handleNewAssessment}
-          newItemLabel={t('assessment.hub.newAssessment', 'Nowa ocena')}
+          newItemLabel={t('assessment.hub.newAssessment', 'New assessment')}
         />
       );
     }
@@ -2546,7 +2546,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                   disabled: true,
                   disabledTooltip: t(
                     'assessment.preview.aiPlanned',
-                    'Planowane — wymaga klucza dostawcy AI, którego nie ma w tym środowisku.'
+                    'Planned — requires an AI provider key that is not present in this environment.'
                   ),
                 }}
                 relations={[]}
@@ -2871,7 +2871,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               border border-slate-200/60 dark:border-white/10
               transition-colors duration-150
               disabled:opacity-50 disabled:cursor-not-allowed"
-            title={t('assessment.hub.uploadPdfTooltip', 'Wgraj raport DRD w formacie PDF')}
+            title={t('assessment.hub.uploadPdfTooltip', 'Upload a DRD report as PDF')}
           >
             {isUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
             {t('assessment.hub.uploadPdf', 'Wgraj PDF')}
@@ -2905,12 +2905,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     // PRZEWODY ODBIORU 2026-09-03: trzy CTA Menu 2 byly przybite po angielsku
     // ("New Report"/"New Initiative"/"New Assessment") w calkowicie polskim
     // module — zatwierdzone zrzuty mialy tu „Nowa ocena".
-    if (activeTab === 'reports') return t('assessment.hub.newReport', 'Nowy raport');
-    if (activeTab === 'initiatives') return t('assessment.hub.newInitiative', 'Nowa inicjatywa');
+    if (activeTab === 'reports') return t('assessment.hub.newReport', 'New report');
+    if (activeTab === 'initiatives') return t('assessment.hub.newInitiative', 'New initiative');
     // DEC-416: zakładka Wnioski miała CTA wyłączone — właściciel widział listę
     // zapisów sesji bez żadnego sposobu zrobienia wniosku.
-    if (activeTab === 'outputs') return t('assessment.hub.newConclusion', 'Nowy wniosek');
-    return t('assessment.hub.newAssessment', 'Nowa ocena');
+    if (activeTab === 'outputs') return t('assessment.hub.newConclusion', 'New conclusion');
+    return t('assessment.hub.newAssessment', 'New assessment');
   };
 
   // Loading state
@@ -3237,7 +3237,7 @@ const ReportSlideOverContent: React.FC<{
         <p className="text-sm">
           {t(
             'assessment.hub.reportPreview.notFound',
-            'Nie udało się wczytać raportu — nie znaleziono go albo jest chwilowo niedostępny.'
+            'The report could not be loaded — it was not found or is temporarily unavailable.'
           )}
         </p>
       </div>

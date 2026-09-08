@@ -8283,6 +8283,22 @@
         "noOrganization": "Brak kontekstu organizacji",
         "version": "Nieobsługiwana wersja kontraktu raportu",
         "generic": "Nie udało się wczytać raportu"
+      },
+      "notFrozen": {
+        "title": "Wynik nie został jeszcze zamrożony",
+        "description": "Ten raport renderuje wyłącznie zamrożony, niezmienny Output sesji assessmentu. Sesja jest wciąż w toku (draft/active/in_review) — raport pojawi się dokładnie w momencie zamrożenia wyniku, nie wcześniej."
+      },
+      "notFound": {
+        "title": "Nie znaleziono zamrożonego Outputu",
+        "description": "Ten identyfikator Outputu nie istnieje albo nie należy do tej organizacji."
+      },
+      "forbidden": {
+        "title": "Brak dostępu do tego wyniku",
+        "description": "To konto nie ma uprawnień do wyświetlenia tego Outputu."
+      },
+      "error": {
+        "title": "Nie udało się wczytać raportu",
+        "description": "Spróbuj ponownie za chwilę."
       }
     },
     "hub": {
@@ -8399,12 +8415,22 @@
         "reportScope": "Zakres raportu",
         "sectionFallback": "Sekcja {{n}}",
         "moreSections": "+{{count}} więcej sekcji"
-      }
+      },
+      "backToList": "Wróć do listy"
     },
     "newModal": {
       "comingSoonBadge": "Wkrótce",
       "comingSoonToast": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.",
-      "comingSoonError": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji."
+      "comingSoonError": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.",
+      "nameHint": "Nadaj ocenie opisową nazwę",
+      "descriptionPlaceholder": "Opisz zakres i cele tej oceny…",
+      "descriptionHint": "Opcjonalny kontekst dla tej oceny",
+      "canonicalLabel": "Kanoniczna etykieta sesji zostanie nadana z identyfikatora Method Core.",
+      "back": "Wstecz",
+      "selectFramework": "Wybierz model",
+      "newAssessment": "Nowa ocena",
+      "selectFrameworkHint": "Wybierz model oceny, aby zacząć",
+      "creating": "Tworzenie oceny {{framework}}"
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -8465,7 +8491,62 @@
       "notMatrix": "To nie jest macierz oceny",
       "notMatrixSuffix": "i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do średniej per oś.",
       "openMatrix": "Otwórz macierz oceny",
-      "openMatrixHint": "Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz” w nagłówku."
+      "openMatrixHint": "Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz” w nagłówku.",
+      "table": {
+        "axis": "Oś",
+        "achieved": "Osiągnięty",
+        "target": "Docelowy",
+        "gap": "Luka",
+        "evidence": "Dowody"
+      },
+      "errors": {
+        "load": "Nie udało się wczytać danych recenzji",
+        "addEvidence": "Nie udało się dodać dowodu",
+        "accept": "Nie udało się zaakceptować assessmentu",
+        "return": "Nie udało się odesłać assessmentu"
+      },
+      "loading": "Ładowanie…",
+      "scoring": {
+        "title": "Ocena i pokrycie dowodami",
+        "subtitle": "Odczyt z macierzy, zwinięty do średniej per oś — nie jest to miejsce edycji poziomów.",
+        "unavailable": "Ta ocena nie ma wyliczonego pokrycia dowodami — pokrycie liczymy dziś dla frameworku DRD."
+      },
+      "matrix": {
+        "title": "Macierz oceny DRD · oś {{axis}}",
+        "hint": "Kliknij komórkę, aby wybrać obszar i poziom do przeglądu. Poziomy zmienia się w sesji oceny.",
+        "selected": "{{area}} · poziom {{level}}",
+        "rowHint": "Kliknij, aby wybrać do przeglądu",
+        "overflowHint": "Jeszcze {{count}} kolumn po prawej — przewiń w bok."
+      },
+      "tiles": {
+        "completeness": "Kompletność",
+        "avgAchieved": "Śr. poziom osiągnięty"
+      },
+      "evidence": {
+        "addTitle": "Dodaj dowód",
+        "axisLabel": "Oś DRD",
+        "areaLabel": "Obszar",
+        "typeLabel": "Typ dowodu",
+        "typeNote": "Notatka",
+        "typeLink": "Link",
+        "typeDocument": "Dokument",
+        "typeReference": "Odniesienie",
+        "titlePlaceholder": "Tytuł dowodu",
+        "descriptionPlaceholder": "Opis (opcjonalnie)",
+        "urlPlaceholder": "URL (opcjonalnie)",
+        "adding": "Dodawanie…",
+        "itemMeta": "· oś {{axis}}/{{area}} · {{type}}"
+      },
+      "decision": {
+        "title": "Decyzja recenzenta",
+        "rationalePlaceholder": "Uzasadnienie decyzji (wymagane)",
+        "accept": "Zaakceptuj",
+        "return": "Odeślij do poprawy",
+        "accepted": "Zaakceptowano",
+        "returned": "Odesłano"
+      },
+      "acceptedBy": "Zaakceptowano {{date}} przez {{who}}",
+      "noAcceptedOutput": "Ten assessment nie ma jeszcze zaakceptowanego outputu."
     },
     "presentation": {
       "methodPack": "Pakiet metodyczny",
@@ -8478,7 +8559,62 @@
       "fullscreen": "Pełny ekran",
       "fullscreenTitle": "Pełny ekran (F)",
       "nextSlide": "Następny slajd",
-      "next": "Następny"
+      "next": "Następny",
+      "purpose": {
+        "kicker": "Cel oceny",
+        "title": "Po co przeprowadziliśmy tę ocenę",
+        "missingQuestion": "Pytanie biznesowe nie zostało zapisane w zamrożonym Output — do uzupełnienia przez konsultanta przed spotkaniem."
+      },
+      "method": {
+        "kicker": "Metoda",
+        "title": "Jak oceniliśmy",
+        "credibility": "Wiarygodność (dowód zaakceptowany)",
+        "aggregationRule": "Reguła agregacji",
+        "missingParticipants": "Lista uczestników nie jest częścią zamrożonego Output — do uzupełnienia przez konsultanta.",
+        "limitations": "Ograniczenia: {{list}}"
+      },
+      "overall": {
+        "kicker": "Wynik",
+        "title": "Wynik ogólny",
+        "caption": "Średnia poziomów dojrzałości per wymiar (skala natywna pakietu {{pack}}, reguła agregacji „{{rule}}”, wersja mapowania {{mapping}})."
+      },
+      "profile": {
+        "kicker": "Profil",
+        "title": "Profil per wymiar",
+        "empty": "Output nie zawiera zagregowanych wyników per wymiar."
+      },
+      "matrix": {
+        "kicker": "Macierz · oś {{number}}",
+        "footnote": "Oceniono {{assessed}} z {{total}} obszarów · skala 1–{{levels}} · wypełnienie kumulatywne · chip „AS” = stan obecny, „TO” = cel."
+      },
+      "more": "+{{count}} więcej",
+      "strengths": {
+        "kicker": "Mocne strony",
+        "title": "Co już działa",
+        "empty": "Żadna jednostka nie osiągnęła jeszcze poziomu docelowego w zaakceptowanych ustaleniach tego Outputu."
+      },
+      "gaps": {
+        "kicker": "Luki i ryzyka",
+        "title": "Gdzie jest największe ryzyko",
+        "empty": "Brak zaakceptowanych ustaleń z luką powyżej zera w tym Output."
+      },
+      "unknowns": {
+        "kicker": "Białe plamy",
+        "title": "Obszary bez dowodu",
+        "lede": "Brak zaakceptowanego dowodu to osobne, wartościowe odkrycie — nie luka w danych.",
+        "unitsWithout": "Jednostki bez zaakceptowanego dowodu",
+        "dontKnow": "Nie wiemy (dont_know)",
+        "noEvidence": "Wiemy, brak dokumentacji (no_evidence)",
+        "noUnresolved": "Brak jednostek z nierozstrzygniętym poziomem bieżącym.",
+        "noBreakdown": "Ten Output nie rozróżnia przyczyny braku dowodu — „nie wiemy” (dont_know) i „wiemy, ale nie udokumentowaliśmy” (no_evidence) są tu jedną zagregowaną liczbą. To dwie różne rozmowy z zarządem; rozstrzygnięcie wymaga wglądu poza ten zamrożony Output.",
+        "draftFindings": "Dodatkowo {{count}} ustaleń w tym Output ma status roboczy (niezaakceptowany dowód) i nie wchodzi w treść tej prezentacji."
+      },
+      "nextSteps": {
+        "kicker": "Co dalej",
+        "title": "Rekomendacje i kolejny krok",
+        "empty": "Brak rekomendacji w zaakceptowanych ustaleniach tego Outputu.",
+        "more": "+{{count}} więcej rekomendacji w pełnym Output"
+      }
     },
     "report": {
       "lifecycleSuperseded": "Zamrożony — zastąpiony nowszą rewizją",
@@ -8517,7 +8653,164 @@
         "pdf": "Pobierz prezentację (PDF)",
         "inProgress": "Przygotowuję plik…",
         "error": "Nie udało się pobrać pliku — kod: {{code}}"
-      }
+      },
+      "lifecycleSessionRecord": "Zapis sesji oceny — jeszcze nie zamrożony",
+      "methodologySourceEn": "Źródło: metodyka DRD w oryginale angielskim — polskiego tłumaczenia tej osi jeszcze nie ma w pakiecie.",
+      "area": {
+        "currentLevel": "Poziom obecny {{level}} — {{title}}",
+        "currentUnresolved": "Poziom obecny nie został w tej ocenie rozstrzygnięty.",
+        "levelDefinitionMissing": "Metodyka przypięta w tym Outpucie nie niesie definicji tego poziomu.",
+        "targetLevel": "Poziom docelowy {{level}} — {{title}}",
+        "targetReached": "Poziom docelowy {{level}} — osiągnięty; definicja jak wyżej.",
+        "assessmentNote": "Notatka z oceny",
+        "noAcceptedEvidence": "Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są poparte zaakceptowanym materiałem dowodowym."
+      },
+      "axis": {
+        "eyebrow": "Oś {{number}} z 7 · skala 1–{{levels}} · {{areas}} obszarów",
+        "assessedCount": "Oceniono {{assessed}} z {{total}} obszarów tej osi.",
+        "axisScore": "Wynik osi: {{score}} (skala 1–{{levels}}).",
+        "scoreOnFreeze": "Wynik osi powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona.",
+        "scoreMissing": "Zamrożony Output nie niesie zagregowanego wyniku tej osi.",
+        "noAreaAssessed": "Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać, czego badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach czytelnika.",
+        "notAssessedAreas": "Obszary tej osi nieobjęte oceną ({{count}})"
+      },
+      "table": {
+        "unitName": "Jednostka oceny",
+        "levels": "Obecny / Cel",
+        "gap": "Luka",
+        "band": "Pozycja na skali",
+        "evidence": "Dowody",
+        "evidenceConfirmed": "Potwierdzone dowodem",
+        "evidenceMissing": "Brak dowodu"
+      },
+      "surveyMode": {
+        "teresaLed": "Sesja była prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store.",
+        "guidedManual": "Sesja była prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji.",
+        "unknown": "Trybu prowadzenia sesji nie zapisano w metadanych."
+      },
+      "moduleAssessment": "Ocena",
+      "intro": {
+        "methodAxes": "— {{axes}} osi transformacji, łącznie {{areas}} obszarów analitycznych, każda oś na własnej skali dojrzałości ({{scales}} poziomów).",
+        "ofTotal": " z {{total}}",
+        "evidenceSplit": ". Dla {{withEvidence}} z nich organizacja dostarczyła dowód, który został przyjęty; dla {{withoutEvidence}} dowodu nie przyjęto — te obszary są w rozdziale 3 wymienione z nazwy i nie są liczone jako zero.",
+        "completeness": "Kompletność dowodowa tej oceny wynosi {{percent}}%.",
+        "notFrozenYet": "Ten wynik nie został jeszcze zamrożony — pochodzi z zapisu sesji oceny",
+        "frozenAt": "Wynik zamrożono {{date}}",
+        "sessionOpened": ", sesję otwarto {{date}}",
+        "approvalRecorded": "Zatwierdzenie zarejestrowano {{date}} (rewizja {{revision}})",
+        "approvalComment": " — „{{comment}}”",
+        "readOfSessionRecord": " dokument jest odczytem zapisu sesji, nie wynikiem zatwierdzonym.",
+        "readOfFrozen": " dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.",
+        "method": "Ocenę przeprowadzono metodyką <1>{{method}}</1> w wersji pakietu <3>{{version}}</3>",
+        "coverage": "Badanie objęło <1>{{units}}</1>{{ofTotal}} obszarów",
+        "coverageAxes": "w <1>{{covered}}</1> z {{total}} osi",
+        "noApprovalRecorded": "Dla tej rewizji <1>nie zarejestrowano zatwierdzenia</1> —",
+        "noApprovalPrefix": "Dla tej rewizji ",
+        "noApprovalStrong": "nie zarejestrowano zatwierdzenia"
+      },
+      "props": {
+        "sessionOwner": "Właściciel sesji",
+        "sessionOpened": "Otwarcie sesji",
+        "resultFrozen": "Zamrożenie wyniku",
+        "sessionRevision": "Rewizja sesji"
+      },
+      "limitationsTitle": "Ograniczenia i założenia",
+      "chapter2": {
+        "titleSeven": "Siedem osi metodyki",
+        "title": "Osie metodyki ({{count}})",
+        "lede": "Dla każdej osi: czym oś jest, a następnie każdy jej obszar analityczny — z definicją poziomu obecnego i docelowego."
+      },
+      "overall": {
+        "title": "Wynik ogólny",
+        "unitsAssessed": "Ocenionych jednostek",
+        "withEvidence": "Z potwierdzonym dowodem",
+        "withoutEvidence": "Bez przyjętego dowodu",
+        "unitsWithGap": "Jednostek z luką",
+        "perDimension": "Wynik per wymiar (oś)",
+        "aggregationOnFreeze": "Wynik zagregowany per wymiar (oś) powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona, więc go tu nie ma. Nie liczymy go zastępczo, żeby dokument nie podał liczby, której nikt nie zatwierdził. Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.",
+        "aggregationMissing": "Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza momentem zamrożenia (patrz „Ograniczenia i założenia” powyżej). Poniżej pełny wynik per jednostka, z których taka agregacja by się składała."
+      },
+      "axisNarrativesUnavailable": "Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją przypiętą w tym Outpucie ({{packId}} {{packVersion}}). Ten Output przypina wersję, której skompilowany pakiet nie zna — dokument pokazuje więc same liczby, bez definicji metodyki, zamiast opisywać poziomy z innej wersji metodyki niż ta, którą oceniano.",
+      "unmapped": {
+        "title": "Jednostki poza strukturą osi",
+        "body": "Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie. Są wymienione, żeby nie wypadły z dokumentu między rozdziałami."
+      },
+      "dimensionsTitle": "Zestawienie zbiorcze wszystkich jednostek",
+      "chapter3": {
+        "title": "Odpowiedzi i wstępna paleta wniosków",
+        "lede": "Co organizacja pokazała na dowód, czego nie pokazała, i co z tego wynika.",
+        "banner": "Zamrożony Output przenosi <1>przyjęty poziom i dowody</1>, a nie dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone z przyjętych poziomów.",
+        "bannerPrefix": "Zamrożony Output przenosi ",
+        "bannerStrong": "przyjęty poziom i dowody",
+        "bannerSuffix": ", a nie dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone z przyjętych poziomów."
+      },
+      "strengthsGaps": {
+        "title": "Mocne strony i luki",
+        "strengths": "Mocne strony ({{count}})",
+        "noStrengths": "Brak jednostek bez luki w tym Outpucie.",
+        "gaps": "Luki ({{count}})",
+        "noGaps": "Brak zidentyfikowanych luk w tym Outpucie.",
+        "gapValue": "luka {{gap}}"
+      },
+      "noKnowledge": {
+        "body": "To nie jest „zero punktów” — to osobna, diagnostyczna kategoria: organizacja nie potrafiła w momencie oceny dostarczyć wystarczającego dowodu dla poniższych jednostek. Zamrożony Output nie rozróżnia dziś „odpowiedziano nie wiem” od „nikt jeszcze nie odpowiedział” na poziomie pojedynczej jednostki (patrz „Ograniczenia i założenia”) — poniższa lista pokazuje jednostki BEZ przyjętego dowodu, czyli obie te sytuacje razem, uczciwie nierozróżnione.",
+        "totalUnits": "Jednostek łącznie",
+        "withAccepted": "Z przyjętym dowodem",
+        "withoutAccepted": "Bez przyjętego dowodu",
+        "completeness": "Kompletność dowodowa",
+        "allCovered": "Każda oceniana jednostka ma przyjęty dowód.",
+        "title": "Brak wiedzy w organizacji („nie wiem” / brak dowodu)"
+      },
+      "evidence": {
+        "title": "Dowody",
+        "none": "Ten Output nie ma zarejestrowanych dowodów.",
+        "criterion": "Kryterium",
+        "type": "Typ dowodu",
+        "strength": "Siła",
+        "locator": "Lokalizacja / odniesienie"
+      },
+      "chapter4": {
+        "lede": "Domknięcie: obraz całości i kolejność działań wynikająca z przyjętych poziomów.",
+        "title": "Podsumowanie"
+      },
+      "closing": {
+        "title": "Obraz całości",
+        "coverage": "Ocena objęła {{units}}{{ofTotal}} obszarów{{inAxes}}. W {{withoutGap}} obszarach organizacja jest na poziomie docelowym lub powyżej; w {{withGap}} pozostaje luka",
+        "inAxes": " w {{covered}} z {{total}} osi",
+        "allDocumented": "Każdy oceniany obszar ma przyjęty dowód — wynik można traktować jako udokumentowany w całości.",
+        "someUndocumented": "Dla {{count}} obszarów nie przyjęto dowodu. To nie są zera: to obszary, o których ta ocena nie rozstrzyga, i pierwsza pozycja do domknięcia w kolejnej rundzie.",
+        "orderRationale": "Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym a docelowym — nie z osobnego modelu priorytetyzacji.",
+        "largestGap": ", największa na obszarze <1>{{area}}</1> ({{gap}} poziomy)"
+      },
+      "narrative": {
+        "title": "Treść raportu zapisanego w module Ocena",
+        "source": "Źródło: raport „{{name}}”",
+        "status": " (status: {{status}})",
+        "verbatim": " — treść przepisana z zapisu, bez zmian.",
+        "executiveSummary": "Streszczenie dla zarządu",
+        "detailedAnalysis": "Analiza szczegółowa",
+        "savedItems": "Zapisane pozycje raportu ({{count}})"
+      },
+      "recommendations": {
+        "title": "Rekomendacje priorytetowe",
+        "onFreeze": "Rekomendacje per obszar powstają przy zamrożeniu wyniku (wnioski jądra metodycznego). Ta ocena nie została jeszcze zamrożona — powyżej jest to, co zapisano w raporcie oceny, a luki per obszar widać w zestawieniu zbiorczym w rozdziale 2.",
+        "none": "Brak rekomendacji w tym Outpucie.",
+        "noGap": "bez luki",
+        "priorityRationale": "Uzasadnienie priorytetu: {{value}}",
+        "expectedOutcome": "Oczekiwany efekt: {{value}}"
+      },
+      "footer": {
+        "sessionRecord": "Ten dokument jest odczytem zapisu sesji oceny. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zapisano w warsztacie. Zamrożenie wyniku nadaje mu niezmienność, skrót treści i ślad zatwierdzenia; ta ocena tego jeszcze nie ma.",
+        "frozen": "Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.",
+        "assessment": "Ocena",
+        "methodology": "Metodyka",
+        "createdAt": "Data utworzenia oceny",
+        "frozenAt": "Zamrożono",
+        "outputId": "Identyfikator Outputu",
+        "contentHash": "Skrót treści (hash)",
+        "outputVersion": "Wersja Outputu"
+      },
+      "sessionRecordBanner": "Ten raport powstał z <1>zapisu sesji oceny</1> — obszary, poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego, niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie zamrożony, liczby mogą się jeszcze zmienić."
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",
@@ -8759,6 +9052,169 @@
         "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
         "levelRamp": "Skala poziomów",
         "areasAssessed": "Ocenione obszary"
+      },
+      "http": {
+        "blockers": {
+          "noConfirmedUnits": "Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.",
+          "pendingProposals": "{{count}} propozycji Teresy oczekuje decyzji",
+          "unitsWithoutEvidence": "{{count}} odpowiedzianych jednostek bez dowodu"
+        },
+        "boot": {
+          "createFailed": "Nie udało się utworzyć sesji.",
+          "createFailedWithReason": "Nie udało się utworzyć sesji: {{reason}}"
+        },
+        "cell": {
+          "achieved": "osiągnięty",
+          "blocker": "BLOKER (pierwszy niespełniony poziom)",
+          "line": "{{unit}} · poziom {{level}} — {{state}}",
+          "notAchieved": "nieosiągnięty",
+          "reviewRequired": "above-gap: wymaga przeglądu"
+        },
+        "conflict": {
+          "body": "Twoja przeglądarka miała wersję {{local}}, serwer ma już wersję {{server}}. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.",
+          "exit": "Wyjdź bez zmian",
+          "indicatorTitle": "Konflikt wersji — lokalny widok jest nieaktualny.",
+          "loadServer": "Wczytaj wersję serwera",
+          "title": "Sesja zmieniła się na serwerze"
+        },
+        "error": {
+          "exit": "Wyjdź",
+          "retry": "Spróbuj ponownie",
+          "retryInline": "Spróbuj ponownie"
+        },
+        "field": {
+          "answerTo": "Odpowiedź na pytanie: „{{question}}”",
+          "level": "Poziom {{level}}"
+        },
+        "frozen": {
+          "draftNotice": "Draft — decyzja „Register as Initiative” należy do człowieka, poza tym modułem.",
+          "exit": "Wyjdź",
+          "findings": "Findings ({{count}})",
+          "generateInitiative": "Wygeneruj z findingów",
+          "generateReport": "Generuj raport z Outputu",
+          "heading": "Sesja {{id}} — {{state}}",
+          "initiativeDraftTitle": "Initiative Proposal Draft (lokalny, NIE Registered Initiative)",
+          "noInitiativeDraft": "Brak zapisanego Initiative Proposal Draft dla tego Outputu.",
+          "noReport": "Brak zapisanego raportu dla tego Outputu.",
+          "outputMissing": "Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu. Odśwież widok; ekran nie odtworzy treści z lokalnego cache.",
+          "recommendation": "Rekomendacja: {{value}}",
+          "reopenButton": "Reopen sesji (niedostępne przez HTTP)",
+          "reopenTitle": "Reopen — nowa rewizja",
+          "reopenUnavailable": "Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*, server/src/routes/method-core.routes.ts). Akcja wyłączona jawnie, nie udawana.",
+          "sourceTitle": "Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage.",
+          "stateClosed": "Zamknięta",
+          "stateFrozen": "Zamrożona",
+          "unitLine": "Jednostka: {{name}}"
+        },
+        "generated": {
+          "initiativeOutcome": "Podniesienie poziomu dojrzałości.",
+          "initiativeRationale": "Znaleziska Outputu wskazują lukę między current a target.",
+          "initiativeTitle": "Domknij automatyzację procesu sprzedaży w CRM",
+          "reportStrength": "Proces sprzedaży ma podstawową dokumentację.",
+          "reportSummary": "Sesja DRD — wynik cząstkowy.",
+          "reportTitle": "Raport DRD"
+        },
+        "governance": {
+          "freeze": "Zamroź",
+          "sendBack": "Odeślij do pracy",
+          "sendToReview": "Wyślij do przeglądu"
+        },
+        "offline": {
+          "body": "Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE jest potwierdzony stan serwera.",
+          "retry": "Spróbuj połączyć ponownie"
+        },
+        "readiness": {
+          "close": "Zamknij",
+          "evidence": "Dowody",
+          "evidenceCount": "{{withEvidence}}/{{total}} jednostek ma dowód",
+          "freezeBlockers": "Blokery zamrożenia",
+          "nextSafeAction": "Bezpieczny następny ruch",
+          "noFreezeBlockers": "Brak blokerów zamrożenia.",
+          "title": "Ocena gotowości sesji",
+          "whatIsMissing": "Czego brakuje",
+          "whatMattersNow": "Co teraz ma znaczenie",
+          "whereAreWe": "Gdzie jesteśmy"
+        },
+        "recovery": {
+          "apply": "Zastosuj zaległe zmiany ({{count}})",
+          "body": "Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie: zastosować je na serwerze, czy je odrzucić i wczytać bieżący stan serwera. Nic nie dzieje się automatycznie.",
+          "discard": "Odrzuć lokalne, wgraj serwer",
+          "indicatorTitle": "Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer.",
+          "title": "Połączenie wróciło — {{count}} zaległych zmian czeka"
+        },
+        "report": {
+          "axisMatrix": "Macierz osi",
+          "confirmedLevels": "Potwierdzone poziomy: {{levels}}. Wymaga komentarza eksperckiego przed zatwierdzeniem.",
+          "noConfirmedLevel": "Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.",
+          "workingChapter": "Roboczy rozdział raportu oparty na bieżących odpowiedziach, dowodach i targetach tej samej sesji. Nie jest zatwierdzonym raportem, dopóki sesja nie zostanie zamrożona przez approvera."
+        },
+        "resolution": {
+          "artifactHint": "Dokument procedury lub zrzut z systemu.",
+          "likelyOwner": "Właściciel procesu",
+          "requestEvidence": "Poproszono o dowód od właściciela procesu.",
+          "returnLater": "Odłożone — wróć później do tego pytania.",
+          "whatIsUnknown": "Czy jednostka {{unit}} spełnia kryteria poziomu {{level}}."
+        },
+        "source": {
+          "recovery": "Nie w pełni zsynchronizowane z serwerem.",
+          "server": "Świeżo potwierdzone przez serwer."
+        },
+        "state": {
+          "conflict": "Sesja zmieniła się na serwerze.",
+          "offline": "Brak połączenia z serwerem.",
+          "unknownError": "Nieznany błąd."
+        },
+        "teresa": {
+          "answerOrAttach": "Odpowiedz na bieżące pytanie lub dołącz dowód.",
+          "confirmedAfterAccept": "Potwierdzone po akceptacji propozycji Teresy (decyzja człowieka).",
+          "decidePending": "Zdecyduj o oczekujących propozycjach Teresy.",
+          "evidenceCollected": "{{count}} dowód/-ody zebrane.",
+          "noEvidence": "Brak dowodu dla tej jednostki.",
+          "noQuestions": "Brak pytań na tym poziomie.",
+          "whereAreWe": "Sesja DRD, jednostka {{unit}}, poziom {{level}}. {{answered}}/{{total}} jednostek dotkniętych.",
+          "why": "Oś „{{axis}}” wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy."
+        }
+      },
+      "legacy": {
+        "revisionNotice": "Rewizja sesji {{id}} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).",
+        "cell": {
+          "reviewRequiredLong": "above-gap: potwierdzone poza kolejnością, wymaga przeglądu"
+        },
+        "workingChapter": "Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i targetów co Interview i Matrix.",
+        "frozen": {
+          "evidence": "Dowody: {{list}}",
+          "noReport": "Brak wygenerowanego raportu.",
+          "overallResult": "Wynik ogólny: {{value}}",
+          "participants": "Uczestnicy: {{list}}",
+          "recommendations": "Rekomendacje: {{list}}",
+          "snapshotNote": "Renderowane ze snapshotu Outputu v{{version}} — zmiana sesji po freeze nie zmieni tego raportu.",
+          "noDrafts": "Brak draftów.",
+          "reopenNote": "frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded”.",
+          "noOutput": "Brak Outputu."
+        },
+        "evidenceCollected": "Zebrano {{count}} dowód/-ody dla tej jednostki.",
+        "demoLocalTitle": "Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)."
+      },
+      "editor": {
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScoreLevel": "Jak oceniać poziom: ",
+        "pitfalls": "Uważaj na: ",
+        "assignedToYou": "Przypisane do Ciebie",
+        "useEvidence": "Uzasadnij wybór dowodem (zrzut ekranu, raport, log systemu, procedura, KPI).",
+        "achieved": "Osiągnięty",
+        "achievedHint": ": jest wdrożone i używane w praktyce (nie tylko pilotaż).",
+        "target": "Cel",
+        "targetHint": ": pożądany poziom „to-be” (planowany / cel roadmapy).",
+        "skip": "Pomiń",
+        "skipHint": ": jawnie oznacz „nieplanowane” dla tego poziomu.",
+        "howToDecide": "Jak zdecydować",
+        "tip": "Wskazówka",
+        "tipBody": "Jeśli nie masz pewności, dodaj krótki komentarz i dołącz szybki artefakt. Zawsze możesz to później zmienić."
+      },
+      "ownerMatrix": {
+        "closeCellDetails": "Zamknij szczegóły komórki"
       }
     },
     "glossary": {
@@ -9412,6 +9868,10 @@
         "interpretation_reviewed": "interpretacja przejrzana",
         "score_proposed": "ocena zaproponowana",
         "score_reviewed": "ocena przejrzana"
+      },
+      "source": {
+        "assessment": "Ocena: {{name}}",
+        "assessmentFallback": "Ocena"
       }
     },
     "reportsManagePanel": {
@@ -9571,6 +10031,214 @@
           "initiative": "Inicjatywa"
         },
         "openGenerator": "Otwórz generator"
+      }
+    },
+    "breadcrumb": "Ocena",
+    "transferToRoadmap": {
+      "priority": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny"
+      },
+      "priorityLabel": "Priorytet",
+      "errors": {
+        "pickQuarter": "Wybierz kwartał",
+        "transferFailed": "Nie udało się przenieść do roadmapy",
+        "connection": "Błąd połączenia"
+      },
+      "title": "Dodaj do Roadmapy",
+      "success": "Dodano do Roadmapy!",
+      "successHint": "Inicjatywa została zaplanowana",
+      "targetQuarter": "Docelowy kwartał",
+      "notes": "Notatki (opcjonalne)",
+      "notesPlaceholder": "Dodatkowe uwagi dotyczące planowania...",
+      "cancel": "Anuluj",
+      "transferring": "Przenoszę..."
+    },
+    "axisLabels": {
+      "processes": "Procesy",
+      "digitalProducts": "Produkty Cyfrowe",
+      "businessModels": "Modele Biznesowe",
+      "dataManagement": "Zarządzanie Danymi",
+      "culture": "Kultura",
+      "cybersecurity": "Cyberbezpieczeństwo",
+      "aiMaturity": "Dojrzałość AI"
+    },
+    "initiativeDetails": {
+      "errors": {
+        "load": "Nie udało się pobrać szczegółów inicjatywy",
+        "connection": "Błąd połączenia"
+      },
+      "area": "Obszar: {{area}}",
+      "businessValue": "Wartość biznesowa",
+      "opex": "OPEX (rocznie)",
+      "description": "Opis",
+      "hypothesis": "Hipoteza",
+      "timeline": "Harmonogram",
+      "plannedStart": "Planowany start",
+      "plannedEnd": "Planowane zakończenie",
+      "owners": "Właściciele",
+      "source": "Źródło",
+      "createdAt": "Utworzono: {{date}}",
+      "taskCount": "{{count}} zadań",
+      "delete": "Usuń",
+      "edit": "Edytuj",
+      "approve": "Zatwierdź",
+      "notFound": "Nie znaleziono inicjatywy",
+      "close": "Zamknij",
+      "addToRoadmap": "Dodaj do roadmapy"
+    },
+    "reportTemplates": {
+      "dbr77": {
+        "tasksPerDay": "Zadań/dzień:",
+        "avgTaskTime": "Śr. czas zadania:",
+        "errors": "Błędy:",
+        "overtime": "Nadgodziny:",
+        "kaizenPerMonth": "Kaizen/miesiąc:",
+        "rolloutTime": "Czas wdrożenia:",
+        "roleEvolution": "Ewolucja roli:",
+        "estimatedAnnualSavings": "Szacowane oszczędności roczne",
+        "methodName": "Metoda DBR77 Lean 4.0",
+        "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify.",
+        "processes": "Procesów",
+        "workstations": "Stanowisk",
+        "savingsPerYear": "PLN oszczędności/rok",
+        "roleEvolutionTitle": "Ewolucja Ról",
+        "allMetricsCollected": "Zebrano wszystkie kluczowe metryki",
+        "next": {
+          "approve": "Zatwierdź ocenę, aby odblokować generowanie inicjatyw",
+          "createInitiatives": "Utwórz inicjatywy z rekomendacji roadmapy",
+          "dataGaps": "Uzupełnij luki w danych, by podnieść pewność",
+          "gemba": "Zaplanuj kolejne przejścia gemba"
+        },
+        "newSkillsRequired": "Wymagane nowe kompetencje"
+      },
+      "common": {
+        "keyFindings": "Kluczowe ustalenia",
+        "dataGaps": "Luki w danych",
+        "nextSteps": "Następne kroki",
+        "recommendedNextSteps": "Rekomendowane Następne Kroki",
+        "shortTerm": "Krótkoterminowe (0-6 mies.)",
+        "longTerm": "Długoterminowe (6-18 mies.)",
+        "resultsEvidence": "Wyniki (dowód)",
+        "recommendations": "Rekomendacje",
+        "nextStepsLabel": "Następne kroki:"
+      },
+      "cmmi": {
+        "legalNoticeA": "jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego",
+        "legalNoticeB": ". Implementacja w Consultify służy wyłącznie celom edukacyjnym i wewnętrznej samooceny.",
+        "maturityLevelTitle": "Poziom Dojrzałości Organizacji",
+        "practiceAreaMatrix": "Macierz Obszarów Praktyk",
+        "improveTo": "Doskonalenie {{name}} ({{code}}) do poziomu {{level}}",
+        "reachLevel": "Osiągnięcie poziomu {{level}} CMMI",
+        "quantitativeMeasures": "Wdrożenie pomiarów ilościowych procesów",
+        "formalCertification": "Rozważenie formalnej certyfikacji CMMI"
+      },
+      "adma": {
+        "legalNoticeA": "jest narzędziem opracowanym przez",
+        "legalNoticeB": "w ramach programu",
+        "legalNoticeC": ". Wykorzystanie w celach edukacyjnych. Oficjalna ocena wymaga współpracy z autoryzowanym DIH.",
+        "roadToFoF": "Droga do fabryki przyszłości (FoF ≥ 4)",
+        "fivePillars": "Ocena Pięciu Filarów",
+        "maturityLevels": "Poziomy Dojrzałości ADMA",
+        "dataGapsHint": "Te obszary wymagają dodatkowego zebrania danych lub wyjaśnienia."
+      },
+      "siri": {
+        "legalNoticeA": "jest narzędziem opracowanym przez",
+        "legalNoticeB": "we współpracy z",
+        "dataGapsHint": "Te obszary wymagają zebrania dodatkowych danych, zanim ocena będzie kompletna.",
+        "nextStepsBody": "Omów ustalenia z interesariuszami, ustal priorytety inicjatyw, przygotuj szczegółowe plany wdrożenia i zaplanuj kolejną ocenę."
+      }
+    },
+    "presentationView": {
+      "noOutput": "Brak zamrożonego Outputu do zaprezentowania. Ten ekran nie pokazuje przykładowych liczb — wskaż konkretny Output.",
+      "loading": "Wczytywanie zamrożonego Outputu…",
+      "notFound": "Nie znaleziono Outputu o podanym identyfikatorze — mógł zostać usunięty lub identyfikator jest nieprawidłowy.",
+      "forbidden": "Brak dostępu do tego Outputu w bieżącej organizacji.",
+      "offline": "Brak połączenia z serwerem — nie udało się pobrać Outputu. Spróbuj ponownie po odzyskaniu połączenia.",
+      "unrecognizedShape": "Odpowiedź serwera nie ma oczekiwanego kształtu zamrożonego Outputu — prezentacja nie może wyświetlić niezweryfikowanych danych.",
+      "legacyPrefix": "Ta ocena pochodzi ",
+      "legacyStrong": "z zapisu sesji — jeszcze nie zamrożone",
+      "legacySuffix": ". Prezentacja pokazuje tę samą treść co raport (macierz DRD, rozdziały osi); pełna 9-slajdowa prezentacja pojawi się po zamrożeniu wyniku."
+    },
+    "versionHistory": {
+      "restored": "Wersja przywrócona!",
+      "restoredHint": "Dane zostały zaktualizowane",
+      "emptyTitle": "Brak zapisanych wersji",
+      "emptyHint": "Historia pojawi się po zapisaniu zmian"
+    },
+    "reportEditor": {
+      "notFound": "Nie znaleziono raportu",
+      "back": "Wróć",
+      "preview": "Podgląd raportu",
+      "newFindingPlaceholder": "Dodaj nowy wniosek...",
+      "newRecommendationPlaceholder": "Dodaj nową rekomendację...",
+      "add": "Dodaj"
+    },
+    "dbr77Map": {
+      "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk pracy.",
+      "addProcess": "Dodaj proces",
+      "addWorkstation": "Dodaj stanowisko",
+      "tasksPerDay": "Zadań/dzień"
+    },
+    "admaMap": {
+      "peerAverage": "Średnia (peers)",
+      "peerAverageSample": "Średnia (peers) — dane przykładowe"
+    },
+    "siriMap": {
+      "legalNoticeC": ". Wykorzystanie struktury SIRI w Consultify ma wyłącznie",
+      "educationalPurpose": "cel edukacyjny",
+      "legalNoticeD": "i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora."
+    },
+    "activityLog": {
+      "empty": "Nie zapisano jeszcze żadnej aktywności",
+      "emptyHint": "Działania pojawią się tutaj w trakcie pracy nad oceną"
+    },
+    "importedReport": {
+      "loading": "Wczytywanie zaimportowanego raportu…",
+      "notFound": "Nie znaleziono raportu"
+    },
+    "levelAttachments": {
+      "empty": "Brak załączników dla tego poziomu"
+    },
+    "requestAccess": {
+      "title": "Poproś o prawo edycji",
+      "subtitle": "Nie masz uprawnień do edycji tej oceny",
+      "assessmentLabel": "Ocena:",
+      "yourRole": "Twoja rola:",
+      "justificationPlaceholder": "Wyjaśnij, dlaczego potrzebujesz dostępu do tej oceny…",
+      "approvalHint": "Prośba trafi do właściciela oceny do zatwierdzenia.",
+      "whatNext": "Co dalej?",
+      "whatNextBody": "Właściciel oceny dostanie powiadomienie o prośbie. Otrzymasz informację, gdy ją zatwierdzi albo odrzuci."
+    },
+    "sessionEditor": {
+      "loading": "Wczytywanie oceny…",
+      "backToAssessment": "Wróć do Oceny",
+      "saveAndExit": "Zapisz i wyjdź",
+      "whatToDoNext": "Co robić dalej",
+      "continueInChat": "Kontynuuj w Czacie z tym samym kontekstem oceny",
+      "prepareReport": "Przygotuj raport z tego przebiegu",
+      "attachContext": "Dołącz kontekst z czatu ogólnego",
+      "attachContextHint": "Zapisze to odniesienie i ostatnie wiadomości w kontekście oceny.",
+      "loadingShort": "Wczytywanie…",
+      "saveBeforeExit": "Czy zapisać zmiany przed wyjściem?"
+    },
+    "frameworks": {
+      "drd": {
+        "description": "Kompleksowa diagnoza dojrzałości cyfrowej w 7 osiach transformacji (39 obszarów)"
+      },
+      "siri": {
+        "description": "Model gotowości Przemysłu 4.0 skupiony na procesie, technologii i organizacji"
+      },
+      "adma": {
+        "description": "Zaawansowany model oceny zdolności do transformacji cyfrowej"
+      },
+      "cmmi": {
+        "description": "Model doskonalenia procesów wytwarzania oprogramowania i produktów"
+      },
+      "lean": {
+        "description": "Zasady Lean w produkcji połączone z technologiami Przemysłu 4.0"
       }
     }
   },

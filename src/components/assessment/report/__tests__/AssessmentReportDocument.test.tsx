@@ -113,7 +113,7 @@ describe('AssessmentReportDocument', () => {
   it('renders the frozen scope, lifecycle status and pinned method pack in the header', () => {
     render(<AssessmentReportDocument data={buildData()} />);
     expect(screen.getByText(/DRD · 2\.0\.0-methodpack\.1/)).toBeInTheDocument();
-    expect(screen.getByText('Zamrożony (niezmienny)')).toBeInTheDocument();
+    expect(screen.getByText('Frozen (immutable)')).toBeInTheDocument();
     expect(screen.getByText(/zamrożona z event-store/)).toBeInTheDocument();
   });
 
@@ -125,7 +125,7 @@ describe('AssessmentReportDocument', () => {
   it('shows an explicit "no approval on record" message when the approvals list is empty', () => {
     const data = buildData();
     render(<AssessmentReportDocument data={{ ...data, approvals: [] }} />);
-    expect(screen.getByText('Brak zarejestrowanego zatwierdzenia')).toBeInTheDocument();
+    expect(screen.getByText('No approval recorded')).toBeInTheDocument();
   });
 
   it('renders the limitations block verbatim (never buried/omitted)', () => {
@@ -137,7 +137,7 @@ describe('AssessmentReportDocument', () => {
 
   it('separates units without accepted evidence into their own "nie wiem" category, not a fabricated zero score', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    const section = screen.getByText(/Brak wiedzy w organizacji/).closest('section') as HTMLElement;
+    const section = screen.getByText(/Knowledge missing in the organisation/).closest('section') as HTMLElement;
     expect(section).toBeTruthy();
     // Chip is titled with the raw unit id even when a friendly structural
     // label resolves (DRD pack lookup) — assert on the stable `title`.
@@ -148,7 +148,7 @@ describe('AssessmentReportDocument', () => {
 
   it('honestly reports missing per-axis aggregation instead of fabricating an overall score', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    expect(screen.getByText(/nie zawiera zagregowanego wyniku per wymiar/)).toBeInTheDocument();
+    expect(screen.getByText(/carries no aggregated result per dimension/)).toBeInTheDocument();
   });
 
   // 2026-08-26 night-fixes-a (NIGHT_SWEEP_A_REPORT_20260826.md FIX-ATOM #8):
@@ -157,7 +157,7 @@ describe('AssessmentReportDocument', () => {
   // sections down already resolves to full Polish names. Proves the fix and
   // its honest degrade path (unknown pack/version still falls back to the
   // raw id, never a guess).
-  it('resolves aggregation.byGroup axis keys to Polish axis names, not raw axis-N codes', () => {
+  it('resolves aggregation.byGroup axis keys to real axis names in the UI language, not raw axis-N codes', () => {
     const data = buildData({
       aggregation: {
         byGroup: { 'axis-1': 5.0, 'axis-2': null },
@@ -173,8 +173,8 @@ describe('AssessmentReportDocument', () => {
     // consistently in both places, not a collision.
     const overallSection = container.querySelector('#overall') as HTMLElement;
     expect(overallSection).toBeTruthy();
-    expect(within(overallSection).getByText('Procesy Cyfrowe')).toBeInTheDocument();
-    expect(within(overallSection).getByText('Produkty Cyfrowe')).toBeInTheDocument();
+    expect(within(overallSection).getByText('Digital Processes')).toBeInTheDocument();
+    expect(within(overallSection).getByText('Digital Products')).toBeInTheDocument();
     expect(within(overallSection).queryByText('axis-1')).not.toBeInTheDocument();
     expect(within(overallSection).queryByText('axis-2')).not.toBeInTheDocument();
   });
@@ -195,7 +195,7 @@ describe('AssessmentReportDocument', () => {
 
   it('lists the finding under both strengths/gaps and evidence, with a unit-id reference', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    const gapsHeading = screen.getByText(/^Luki \(1\)$/);
+    const gapsHeading = screen.getByText(/^Gaps \(1\)$/);
     expect(gapsHeading).toBeInTheDocument();
     expect(screen.getAllByText(/\(1A\)/).length).toBeGreaterThan(0);
     expect(screen.getByText('vault://ev-1')).toBeInTheDocument();
@@ -214,9 +214,9 @@ describe('AssessmentReportDocument', () => {
 
   it('shows the demo-bypass banner only when demoBypassActive is true', () => {
     const { container, rerender } = render(<AssessmentReportDocument data={buildData()} />);
-    expect(container.textContent).not.toMatch(/ominięcie bramki gotowości pakietu/);
+    expect(container.textContent).not.toMatch(/the pack readiness gate was bypassed/);
     rerender(<AssessmentReportDocument data={buildData({ demoBypassActive: true })} />);
-    expect(screen.getByText(/ominięcie bramki gotowości pakietu/)).toBeInTheDocument();
+    expect(screen.getByText(/the pack readiness gate was bypassed/)).toBeInTheDocument();
   });
 
   it('never leaks the crimson brand-accent class into signal/status markup', () => {
@@ -233,27 +233,31 @@ describe('AssessmentReportDocument', () => {
   //    obszaru) → odpowiedzi i wnioski → podsumowanie ───────────────────────
   it('układa dokument w cztery numerowane rozdziały formuły właściciela', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    expect(screen.getByRole('heading', { name: /^1\. Jak prowadzono badanie$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^2\. Siedem osi metodyki$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^3\. Odpowiedzi i wstępna paleta wniosków$/ })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /^4\. Podsumowanie$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^1\. How the assessment was run$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^2\. The seven axes of the methodology$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^3\. Answers and the initial palette of conclusions$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^4\. Summary$/ })).toBeTruthy();
   });
 
   it('drukuje rozdział KAŻDEJ z siedmiu osi — także tych nieobjętych oceną', () => {
     render(<AssessmentReportDocument data={buildData()} />);
+    // Nazwy osi idą teraz ZA JĘZYKIEM INTERFEJSU (`drdLabels`): atrapa
+    // `react-i18next` w tests/setup.ts raportuje `en`, więc dokument drukuje
+    // angielskie warianty z `DRD_STRUCTURE.name`. Polskie warianty widzi
+    // konto `language='pl'` — dowód wizualny w `evidence/jezyk-j5/`.
     for (const [nr, nazwa] of [
-      [1, 'Procesy Cyfrowe'],
-      [2, 'Produkty Cyfrowe'],
-      [3, 'Cyfrowe Modele Biznesowe'],
-      [4, 'Zarządzanie Danymi'],
-      [5, 'Kultura Transformacji'],
-      [6, 'Cyberbezpieczeństwo'],
-      [7, 'Dojrzałość AI'],
+      [1, 'Digital Processes'],
+      [2, 'Digital Products'],
+      [3, 'Digital Business Models'],
+      [4, 'Data Management'],
+      [5, 'Culture of Transformation'],
+      [6, 'Cybersecurity'],
+      [7, 'AI Maturity'],
     ] as const) {
       expect(screen.getByRole('heading', { name: `${nr}. ${nazwa}` })).toBeTruthy();
     }
     // Oś bez ani jednego ocenionego obszaru zostaje w dokumencie i mówi to wprost.
-    expect(screen.getAllByText(/Żaden obszar tej osi nie został objęty tą oceną/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/No area of this axis was covered by this assessment/).length).toBeGreaterThan(0);
   });
 
   it('podpina definicję poziomu Z TEGO obszaru — nie z pierwszego obszaru osi', () => {
@@ -269,8 +273,8 @@ describe('AssessmentReportDocument', () => {
         data={buildData({ current: { '6C': 5 }, target: { '6C': 6 }, gap: { '6C': 1 }, findings: [] })}
       />
     );
-    expect(screen.getByText(/Poziom obecny 5 — Monitoring i detekcja/)).toBeTruthy();
-    expect(screen.getByText(/Poziom docelowy 6 — Weryfikacja tożsamości/)).toBeTruthy();
+    expect(screen.getByText(/Current level 5 — Monitoring i detekcja/)).toBeTruthy();
+    expect(screen.getByText(/Target level 6 — Weryfikacja tożsamości/)).toBeTruthy();
     expect(screen.queryByText(/HR w strategii/)).toBeNull();
   });
 
@@ -278,7 +282,7 @@ describe('AssessmentReportDocument', () => {
     const { container } = render(<AssessmentReportDocument data={buildData()} />);
     // Opisy osi 1–4 i 7 są w korpusie po angielsku — dokument oznacza je
     // znacznikiem EN zamiast podawać jako treść polską.
-    expect(container.querySelectorAll('[title*="oryginale angielskim"]').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('[title*="English original"]').length).toBeGreaterThan(0);
   });
 
   it('nie zostawia jednostki bez osi poza dokumentem', () => {
@@ -287,6 +291,6 @@ describe('AssessmentReportDocument', () => {
         data={buildData({ current: { '1A': 4, ZZ9: 2 }, target: { '1A': 6, ZZ9: 3 }, gap: { '1A': 2, ZZ9: 1 } })}
       />
     );
-    expect(screen.getByRole('heading', { name: 'Jednostki poza strukturą osi' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Units outside the axis structure' })).toBeTruthy();
   });
 });

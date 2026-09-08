@@ -33,6 +33,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { nazwaWJezyku } from './drd/drdNazwa';
+
 import {
   type DRDEditorAnswers,
   DRDMatrixGrid,
@@ -47,6 +49,7 @@ import type {
 } from '@/services/api/v8/assessment';
 import { V8AssessmentApi } from '@/services/api/v8/assessment';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface AssessmentQualityReviewPanelProps {
   assessmentId: string;
@@ -57,7 +60,8 @@ type EvidenceType = 'note' | 'link' | 'document' | 'reference';
 export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanelProps> = ({
   assessmentId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<V8AssessmentEvidence[]>([]);
@@ -90,28 +94,28 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
 
   const scoringColumns: TableColumn[] = useMemo(
     () => [
-      { id: 'axisName', label: 'Oś' },
+      { id: 'axisName', label: t('assessment.qualityReview.table.axis', 'Axis') },
       {
         id: 'avgAchievedLevel',
-        label: 'Osiągnięty',
+        label: t('assessment.qualityReview.table.achieved', 'Achieved'),
         align: 'right',
         render: (row: TableRow) => Number(row.avgAchievedLevel).toFixed(1),
       },
       {
         id: 'avgTargetLevel',
-        label: 'Docelowy',
+        label: t('assessment.qualityReview.table.target', 'Target'),
         align: 'right',
         render: (row: TableRow) => Number(row.avgTargetLevel).toFixed(1),
       },
       {
         id: 'gap',
-        label: 'Luka',
+        label: t('assessment.qualityReview.table.gap', 'Gap'),
         align: 'right',
         render: (row: TableRow) => Number(row.gap).toFixed(1),
       },
       {
         id: 'evidenceCount',
-        label: 'Dowody',
+        label: t('assessment.qualityReview.table.evidence', 'Evidence'),
         align: 'right',
         render: (row: TableRow) =>
           row.hasEvidence ? (
@@ -164,7 +168,11 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         setReport(null);
       }
     } catch (err: unknown) {
-      setLoadError(err instanceof Error ? err.message : 'Nie udało się wczytać danych recenzji');
+      setLoadError(
+        err instanceof Error
+          ? err.message
+          : t('assessment.qualityReview.errors.load', 'The review data could not be loaded')
+      );
     } finally {
       setLoading(false);
     }
@@ -191,7 +199,11 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       setUrl('');
       await load();
     } catch (err: unknown) {
-      setEvidenceError(err instanceof Error ? err.message : 'Nie udało się dodać dowodu');
+      setEvidenceError(
+        err instanceof Error
+          ? err.message
+          : t('assessment.qualityReview.errors.addEvidence', 'The evidence could not be added')
+      );
     } finally {
       setAddingEvidence(false);
     }
@@ -209,8 +221,8 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
         err instanceof Error
           ? err.message
           : action === 'accept'
-            ? 'Nie udało się zaakceptować assessmentu'
-            : 'Nie udało się odesłać assessmentu'
+            ? t('assessment.qualityReview.errors.accept', 'The assessment could not be accepted')
+            : t('assessment.qualityReview.errors.return', 'The assessment could not be sent back')
       );
     } finally {
       setSubmittingReview(false);
@@ -221,7 +233,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
     return (
       <div className="h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
         <Loader2 className="animate-spin mr-2" size={18} />
-        Ładowanie…
+        {t('assessment.qualityReview.loading', 'Loading…')}
       </div>
     );
   }
@@ -243,25 +255,25 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       {/* ── Czym ten ekran JEST, a czym NIE JEST — patrz nagłówek pliku ── */}
       <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5 p-4">
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
-          {t('assessment.qualityReview.title', 'Przegląd jakości oceny')}
+          {t('assessment.qualityReview.title', 'Assessment quality review')}
         </h3>
         <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
-          {t('assessment.qualityReview.intro1Prefix', 'Ten ekran sprawdza')}{' '}
+          {t('assessment.qualityReview.intro1Prefix', 'This screen checks the')}{' '}
           <strong className="font-semibold text-navy-900 dark:text-white">
-            {t('assessment.qualityReview.quality', 'jakość')}
+            {t('assessment.qualityReview.quality', 'quality')}
           </strong>{' '}
           {t(
             'assessment.qualityReview.intro1Suffix',
-            'gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje. Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.'
+            'of a finished assessment: how many areas have evidence, where evidence is missing, and whether the reviewer accepts the assessment. You can add evidence and record a decision here — but no level is set on this screen.'
           )}
         </p>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           <strong className="font-semibold text-navy-900 dark:text-white">
-            {t('assessment.qualityReview.notMatrix', 'To nie jest macierz oceny')}
+            {t('assessment.qualityReview.notMatrix', 'This is not the assessment matrix')}
           </strong>{' '}
           {t(
             'assessment.qualityReview.notMatrixSuffix',
-            'i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do średniej per oś.'
+            'and it does not replace it. The matrix (areas × levels) is the working tool — that is where the current and target level of every area is set. The table below reads out its result, collapsed to an average per axis.'
           )}
         </p>
         <a
@@ -269,22 +281,25 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm font-medium text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         >
           <Grid3x3 size={16} />
-          {t('assessment.qualityReview.openMatrix', 'Otwórz macierz oceny')}
+          {t('assessment.qualityReview.openMatrix', 'Open the assessment matrix')}
         </a>
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           {t(
             'assessment.qualityReview.openMatrixHint',
-            'Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz" w nagłówku.'
+            'Opens the session of this assessment; the matrix is there under the “Matrix” switch in the header.'
           )}
         </p>
       </section>
 
       <section>
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-1">
-          Ocena i pokrycie dowodami
+          {t('assessment.qualityReview.scoring.title', 'Scoring and evidence coverage')}
         </h3>
         <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-          Odczyt z macierzy, zwinięty do średniej per oś — nie jest to miejsce edycji poziomów.
+          {t(
+            'assessment.qualityReview.scoring.subtitle',
+            'A read-out of the matrix, collapsed to an average per axis — this is not where levels are edited.'
+          )}
         </p>
         {scoring ? (
           <>
@@ -293,16 +308,23 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-semibold text-navy-900 dark:text-white">
-                      Macierz oceny DRD · oś {selectedAxis.id}
+                      {t('assessment.qualityReview.matrix.title', 'DRD assessment matrix · axis {{axis}}', {
+                        axis: selectedAxis.id,
+                      })}
                     </h4>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Kliknij komórkę, aby wybrać obszar i poziom do przeglądu. Poziomy zmienia się
-                      w sesji oceny.
+                      {t(
+                        'assessment.qualityReview.matrix.hint',
+                        'Click a cell to pick an area and a level for review. Levels are changed in the assessment session.'
+                      )}
                     </p>
                   </div>
                   {selectedMatrixCell ? (
                     <span className="shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 px-2.5 py-1.5 text-xs font-medium text-navy-900 dark:text-white">
-                      {selectedMatrixCell.areaId} · poziom {selectedMatrixCell.level}
+                      {t('assessment.qualityReview.matrix.selected', '{{area}} · level {{level}}', {
+                        area: selectedMatrixCell.areaId,
+                        level: selectedMatrixCell.level,
+                      })}
                     </span>
                   ) : null}
                 </div>
@@ -312,7 +334,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                   value={matrixValue}
                   compact
                   columnMinPx={150}
-                  rowHint="Kliknij, aby wybrać do przeglądu"
+                  rowHint={t('assessment.qualityReview.matrix.rowHint', 'Click to select for review')}
                   selectedCell={selectedMatrixCell}
                   onCellClick={(nextAreaId, level) => {
                     setAreaId(nextAreaId);
@@ -320,7 +342,13 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                   }}
                   onAreaClick={(nextAreaId) => setAreaId(nextAreaId)}
                   areaStripLabel="Area"
-                  overflowHint={(hidden) => `Jeszcze ${hidden} kolumn po prawej — przewiń w bok.`}
+                  overflowHint={(hidden) =>
+                    t(
+                      'assessment.qualityReview.matrix.overflowHint',
+                      '{{count}} more columns to the right — scroll sideways.',
+                      { count: hidden }
+                    )
+                  }
                 />
               </div>
             ) : null}
@@ -329,7 +357,9 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 data-testid="assessment-quality-tile-completeness"
                 className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
               >
-                <div className="text-xs text-slate-500 dark:text-slate-400">Kompletność</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('assessment.qualityReview.tiles.completeness', 'Completeness')}
+                </div>
                 <div className="text-lg font-semibold text-navy-900 dark:text-white">
                   {scoring.completionPercent}%
                 </div>
@@ -339,7 +369,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
               >
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Śr. poziom osiągnięty
+                  {t('assessment.qualityReview.tiles.avgAchieved', 'Avg. level achieved')}
                 </div>
                 <div className="text-lg font-semibold text-navy-900 dark:text-white">
                   {scoring.overallAvgAchievedLevel.toFixed(1)}
@@ -375,72 +405,80 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             className="text-sm text-slate-500 dark:text-slate-400"
             data-testid="assessment-quality-scoring-unavailable"
           >
-            Ta ocena nie ma wyliczonego pokrycia dowodami — pokrycie liczymy dziś dla
-            frameworku DRD.
+            {t(
+              'assessment.qualityReview.scoring.unavailable',
+              'This assessment has no computed evidence coverage — today coverage is computed for the DRD framework.'
+            )}
           </p>
         )}
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">Dodaj dowód</h3>
+        <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
+          {t('assessment.qualityReview.evidence.addTitle', 'Add evidence')}
+        </h3>
         <div className="grid grid-cols-2 gap-3 mb-3">
           {/* aria-label: żaden z trzech selectów niżej nie ma widocznej etykiety
               (axe: select-name, zmierzone na assessment-quality-review-panel). */}
           <select
-            aria-label="Oś DRD"
+            aria-label={t('assessment.qualityReview.evidence.axisLabel', 'DRD axis')}
             value={axisId}
             onChange={(e) => setAxisId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {DRD_STRUCTURE.map((axis) => (
               <option key={axis.id} value={String(axis.id)}>
-                {axis.namePL || axis.name}
+                {nazwaWJezyku(axis.namePL, axis.name, isPolish)}
               </option>
             ))}
           </select>
           <select
-            aria-label="Obszar"
+            aria-label={t('assessment.qualityReview.evidence.areaLabel', 'Area')}
             value={areaId}
             onChange={(e) => setAreaId(e.target.value)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {(selectedAxis?.areas || []).map((area) => (
               <option key={area.id} value={area.id}>
-                {area.namePL || area.name}
+                {nazwaWJezyku(area.namePL, area.name, isPolish)}
               </option>
             ))}
           </select>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <select
-            aria-label="Typ dowodu"
+            aria-label={t('assessment.qualityReview.evidence.typeLabel', 'Evidence type')}
             value={evidenceType}
             onChange={(e) => setEvidenceType(e.target.value as EvidenceType)}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
-            <option value="note">Notatka</option>
-            <option value="link">Link</option>
-            <option value="document">Dokument</option>
-            <option value="reference">Odniesienie</option>
+            <option value="note">{t('assessment.qualityReview.evidence.typeNote', 'Note')}</option>
+            <option value="link">{t('assessment.qualityReview.evidence.typeLink', 'Link')}</option>
+            <option value="document">
+              {t('assessment.qualityReview.evidence.typeDocument', 'Document')}
+            </option>
+            <option value="reference">
+              {t('assessment.qualityReview.evidence.typeReference', 'Reference')}
+            </option>
           </select>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Tytuł dowodu"
+            placeholder={t('assessment.qualityReview.evidence.titlePlaceholder', 'Evidence title')}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           />
         </div>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Opis (opcjonalnie)"
+          placeholder={t('assessment.qualityReview.evidence.descriptionPlaceholder', 'Description (optional)')}
           rows={2}
           className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="URL (opcjonalnie)"
+          placeholder={t('assessment.qualityReview.evidence.urlPlaceholder', 'URL (optional)')}
           className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
         {evidenceError && (
@@ -455,7 +493,9 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           disabled={addingEvidence || !title.trim()}
           className="px-4 py-2 rounded-lg font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {addingEvidence ? 'Dodawanie…' : 'Dodaj dowód'}
+          {addingEvidence
+            ? t('assessment.qualityReview.evidence.adding', 'Adding…')
+            : t('assessment.qualityReview.evidence.addTitle', 'Add evidence')}
         </button>
 
         {evidence.length > 0 && (
@@ -468,7 +508,11 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 <span className="font-medium text-navy-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500 dark:text-slate-400">
                   {' '}
-                  · oś {item.axisId}/{item.areaId} · {item.evidenceType}
+                  {t('assessment.qualityReview.evidence.itemMeta', '· axis {{axis}}/{{area}} · {{type}}', {
+                    axis: item.axisId,
+                    area: item.areaId,
+                    type: item.evidenceType,
+                  })}
                 </span>
               </li>
             ))}
@@ -478,12 +522,12 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
 
       <section>
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
-          Decyzja recenzenta
+          {t('assessment.qualityReview.decision.title', 'Reviewer decision')}
         </h3>
         <textarea
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
-          placeholder="Uzasadnienie decyzji (wymagane)"
+          placeholder={t('assessment.qualityReview.decision.rationalePlaceholder', 'Decision rationale (required)')}
           rows={2}
           className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
@@ -501,7 +545,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ShieldCheck size={16} />
-            Zaakceptuj
+            {t('assessment.qualityReview.decision.accept', 'Accept')}
           </button>
           <button
             type="button"
@@ -510,7 +554,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw size={16} />
-            Odeślij do poprawy
+            {t('assessment.qualityReview.decision.return', 'Send back for correction')}
           </button>
         </div>
 
@@ -528,11 +572,13 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                       : 'font-medium text-amber-800 dark:text-amber-400'
                   }
                 >
-                  {rev.action === 'accept' ? 'Zaakceptowano' : 'Odesłano'}
+                  {rev.action === 'accept'
+                    ? t('assessment.qualityReview.decision.accepted', 'Accepted')
+                    : t('assessment.qualityReview.decision.returned', 'Sent back')}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400">
                   {' '}
-                  · {new Date(rev.createdAt).toLocaleString()} · {rev.rationale}
+                  · {formatListDateTime(rev.createdAt)} · {rev.rationale}
                 </span>
               </li>
             ))}
@@ -551,12 +597,18 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
               Niezmienny output istnieje
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Zaakceptowano {new Date(report.acceptedAt).toLocaleString()} przez {report.acceptedBy}
+              {t('assessment.qualityReview.acceptedBy', 'Accepted {{date}} by {{who}}', {
+                date: formatListDateTime(report.acceptedAt),
+                who: report.acceptedBy,
+              })}
             </p>
           </div>
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Ten assessment nie ma jeszcze zaakceptowanego outputu.
+            {t(
+              'assessment.qualityReview.noAcceptedOutput',
+              'This assessment has no accepted output yet.'
+            )}
           </p>
         )}
       </section>

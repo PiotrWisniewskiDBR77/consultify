@@ -1,0 +1,62 @@
+{
+ "ekran": "08-raport-stopka",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report",
+ "obcychSlowUI": 3,
+ "obcychLiniiUI": 3,
+ "ui": [
+  {
+   "linia": "Procesy Sprzedaży",
+   "trafienia": [
+    "Sprzedaży"
+   ]
+  },
+  {
+   "linia": "Procesy Jakości",
+   "trafienia": [
+    "Jakości"
+   ]
+  },
+  {
+   "linia": "Zarządzanie Finansami",
+   "trafienia": [
+    "Zarządzanie"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+   "trafienia": [
+    "Sesja",
+    "zamrożona"
+   ]
+  },
+  {
+   "linia": "The result was frozen on 05/09/2026, 10:11, the session was opened on 05/09/2026. The approval was recorded on 05/09/2026 (revision 4) — “Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).”.",
+   "trafienia": [
+    "Zamrożone",
+    "przez",
+    "właściciela",
+    "sesji"
+   ]
+  },
+  {
+   "linia": "Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.",
+   "trafienia": [
+    "danych",
+    "NIE",
+    "metodyka"
+   ]
+  },
+  {
+   "linia": "aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.",
+   "trafienia": [
+    "jest",
+    "oś",
+    "regułą"
+   ]
+  }
+ ]
+}

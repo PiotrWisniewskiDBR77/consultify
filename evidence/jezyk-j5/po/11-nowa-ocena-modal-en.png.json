@@ -1,0 +1,79 @@
+{
+ "ekran": "11-nowa-ocena-modal",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+ "obcychSlowUI": 1,
+ "obcychLiniiUI": 1,
+ "ui": [
+  {
+   "linia": "Zarząd Grupy",
+   "trafienia": [
+    "Zarząd"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Analiza gotowości AI",
+   "trafienia": [
+    "gotowości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Ocena dojrzałości cyfrowej Q1",
+   "trafienia": [
+    "Ocena",
+    "dojrzałości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  }
+ ]
+}

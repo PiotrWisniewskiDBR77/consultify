@@ -40,6 +40,8 @@ import {
 import { SIRIAssessmentData } from '../../../../types';
 import { ConclusionExecutiveSummary, ConclusionGapCards } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
+import { formatListDate } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 // ============================================
 // COLOR CLASSES HELPER (Tailwind requires full class names)
@@ -153,6 +155,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
   showLegalNotice = true,
   conclusionSource,
 }) => {
+  const { t } = useTranslation();
   // Calculate building block scores
   const blockScores = ['PROCESS', 'TECHNOLOGY', 'ORGANIZATION'].map((block) => ({
     id: block,
@@ -228,7 +231,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
               {organizationName}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+              {assessmentDate || formatListDate(new Date())}
             </p>
           </div>
         </div>
@@ -239,8 +242,10 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 mb-8 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>SIRI (Smart Industry Readiness Index)</strong> jest narzędziem opracowanym przez{' '}
-            <strong>Singapore Economic Development Board (EDB)</strong> we współpracy z{' '}
+            <strong>SIRI (Smart Industry Readiness Index)</strong>{' '}
+            {t('assessment.reportTemplates.siri.legalNoticeA', 'is a tool developed by the')}{' '}
+            <strong>Singapore Economic Development Board (EDB)</strong>{' '}
+            {t('assessment.reportTemplates.siri.legalNoticeB', 'in cooperation with')}{' '}
             <strong>TÜV SÜD</strong>. Wykorzystanie w celach edukacyjnych. Oficjalna certyfikacja
             wymaga akredytowanego audytora.
           </div>
@@ -271,7 +276,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} />
-          Wyniki (dowód)
+          {t('assessment.reportTemplates.common.resultsEvidence', 'Results (evidence)')}
         </h2>
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-center">
@@ -516,7 +521,9 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
 
       {/* Recommendations */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">Rekomendacje</h2>
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">
+          {t('assessment.reportTemplates.common.recommendations', 'Recommendations')}
+        </h2>
         <div className="space-y-3">
           {dimensionsWithGaps
             .filter((d) => d.gap >= 2)
@@ -606,8 +613,10 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 ))}
               </div>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-3">
-                These areas require additional data collection before a complete assessment can be
-                concluded.
+                {t(
+                  'assessment.reportTemplates.siri.dataGapsHint',
+                  'These areas require additional data collection before a complete assessment can be concluded.'
+                )}
               </p>
             </div>
           </section>
@@ -702,15 +711,18 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             </div>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            <strong>Next steps:</strong> Review findings with stakeholders, prioritize initiatives,
-            create detailed implementation plans, schedule follow-up assessment.
+            <strong>{t('assessment.reportTemplates.common.nextStepsLabel', 'Next steps:')}</strong>{' '}
+            {t(
+              'assessment.reportTemplates.siri.nextStepsBody',
+              'Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment.'
+            )}
           </p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">SIRI Assessment • {organizationName}</p>
       </footer>
     </div>

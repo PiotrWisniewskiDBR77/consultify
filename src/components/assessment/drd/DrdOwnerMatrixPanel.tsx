@@ -237,7 +237,7 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
             <button
               type="button"
               onClick={onCloseSideSheet}
-              aria-label="Zamknij szczegóły komórki"
+              aria-label={t('assessment.drd.ownerMatrix.closeCellDetails', 'Close cell details')}
               className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <X size={14} />

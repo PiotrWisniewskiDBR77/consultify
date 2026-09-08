@@ -24,6 +24,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { localeListy } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 // ==========================================
 // TYPES
@@ -157,7 +159,8 @@ function formatTimestamp(ts: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays} days ago`;
 
-  return date.toLocaleDateString('en-US', {
+  // K7: locale z konta (localeListy), nigdy przybite 'en-US'.
+  return date.toLocaleDateString(localeListy(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -167,7 +170,7 @@ function formatTimestamp(ts: string): string {
 
 function formatFullTimestamp(ts: string): string {
   const date = new Date(ts);
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(localeListy(), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -218,6 +221,7 @@ function getActionDetails(entry: ActivityLogEntry): string | null {
 // ==========================================
 
 export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -303,9 +307,14 @@ export const ActivityLogPanel: React.FC<Props> = ({ assessmentId, className }) =
         {logs.length === 0 ? (
           <div className="text-center py-12">
             <Clock className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400">No activity recorded yet</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              {t('assessment.activityLog.empty', 'No activity recorded yet')}
+            </p>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-              Actions will appear here as you work on the assessment
+              {t(
+                'assessment.activityLog.emptyHint',
+                'Actions will appear here as you work on the assessment'
+              )}
             </p>
           </div>
         ) : (

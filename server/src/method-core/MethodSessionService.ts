@@ -199,6 +199,16 @@ export interface MethodOutputBridge {
     /** See `MethodSessionRow.demo_bypass_active`. */
     readonly demoBypassActive: boolean;
     /**
+     * Język konta osoby, która zamraża (`users.language`) — jedyny powód,
+     * dla którego jądro w ogóle przekazuje coś „ludzkiego": pola `scope`
+     * i `limitations` zamrożonego Outputu są ZDANIAMI, które czyta klient,
+     * a do 2026-09 były zaszyte po polsku niezależnie od języka konta
+     * (program spójności językowej, docs/program/JEZYK_EN_PL_20260908/PLAN.md
+     * §2.5/§2.8). Jądro samo nie zna metody ani treści — przekazuje wyłącznie
+     * etykietę języka; wybór wariantu należy do mostka. Brak wartości → 'en'.
+     */
+    readonly language?: string | null;
+    /**
      * Set when the session being frozen is a `frozen -> active` reopen
      * revision (`MethodSession.revisionOfSessionId`). Lets the bridge chain
      * the new Output's `revisionOfOutputId` back to the LATEST Output of the
@@ -737,7 +747,12 @@ export class MethodSessionService {
     }
 
     if (to === 'frozen') {
-      await this.snapshotOnFreeze(session.organization_id, session.id, session.method_pack_version);
+      await this.snapshotOnFreeze(
+        session.organization_id,
+        session.id,
+        session.method_pack_version,
+        request.actorUserId
+      );
     }
 
     return { ok: true, authority };
@@ -778,6 +793,24 @@ export class MethodSessionService {
    * (ślad „kto zatwierdził", ten sam, który czyta raport z oceny), a
    * `POST /sessions/:id/approvals` robi to tak samo jak dotąd.
    */
+  /**
+   * `users.language` osoby zamrażającej. Fail-open na `null` (mostek zejdzie
+   * wtedy na 'en', zgodnie z regułą programu: brak deklaracji → angielski) —
+   * nieczytelna tabela użytkowników nigdy nie może wywrócić zamrożenia.
+   */
+  private async readActorLanguage(actorUserId?: string | null): Promise<string | null> {
+    if (!actorUserId) return null;
+    try {
+      const row = await DbPromise.get<{ language?: string | null }>(
+        `SELECT language FROM users WHERE id = ? LIMIT 1`,
+        [actorUserId]
+      );
+      return row?.language ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private async isSameTenantActiveOrganizationOwner(
     organizationId: string,
     userId: string
@@ -800,7 +833,8 @@ export class MethodSessionService {
   private async snapshotOnFreeze(
     organizationId: string,
     sessionId: string,
-    methodPackVersion: string
+    methodPackVersion: string,
+    actorUserId?: string | null
   ): Promise<void> {
     const events = await this.events.listBySession(organizationId, sessionId);
     const payload = { sessionId, methodPackVersion, events };
@@ -833,6 +867,7 @@ export class MethodSessionService {
         methodPackVersion,
         demoBypassActive: sessionRow.demo_bypass_active,
         revisionOfSessionId: sessionRow.revision_of_session_id,
+        language: await this.readActorLanguage(actorUserId),
       });
     }
   }

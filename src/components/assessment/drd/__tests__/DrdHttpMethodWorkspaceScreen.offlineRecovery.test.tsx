@@ -223,7 +223,7 @@ describe('scenario 5 — lokalna rewizja NOWSZA -> propozycja zapisu, nadal za p
 
     const view = await screen.findByTestId('drd-http-recovery-view');
     expect(badge()).toHaveAttribute('data-save-state', 'RECOVERY_DRAFT');
-    expect(view.textContent).toMatch(/2 zaległych zmian/);
+    expect(view.textContent).toMatch(/2 pending change/);
     // Nothing resolves on its own.
     expect(hoisted.getSession).not.toHaveBeenCalled();
   });
@@ -239,7 +239,7 @@ describe('scenario 6 — retry po nieudanym zapisie', () => {
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="offline" />);
     await screen.findByTestId('drd-http-offline-banner');
 
-    fireEvent.click(screen.getByText(/Spróbuj połączyć ponownie/));
+    fireEvent.click(screen.getByText(/Try to reconnect/));
 
     await waitFor(() => expect(hoisted.getSession).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryByTestId('drd-http-offline-banner')).not.toBeInTheDocument());
@@ -257,8 +257,8 @@ describe('scenario 7 — bezpieczne rozwiązanie konfliktu: obie wersje widoczne
 
     const view = await screen.findByTestId('drd-http-conflict-view');
     // Local (3) and server (4 — forceState bumps serverVersion to session.version+1) both visible.
-    expect(view.textContent).toMatch(/wersję 3/);
-    expect(view.textContent).toMatch(/wersję 4/);
+    expect(view.textContent).toMatch(/version 3/);
+    expect(view.textContent).toMatch(/version 4/);
     expect(screen.getByTestId('conflict-load-server')).toBeInTheDocument();
   });
 });

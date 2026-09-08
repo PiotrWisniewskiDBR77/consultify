@@ -1,0 +1,418 @@
+{
+ "suma": {
+  "faza": "po",
+  "ekrany": 11,
+  "pl": {
+   "obcychSlowUI": 49,
+   "ekranyZTrafieniami": [
+    "03-biblioteka",
+    "07-raport-zamrozonego-outputu",
+    "08-raport-stopka",
+    "10-sesja-drd",
+    "11-nowa-ocena-modal"
+   ]
+  }
+ },
+ "raport": [
+  {
+   "ekran": "01-lista-ocen",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "SIRI Assessment - Jul 3, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "02-lista-podglad",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "SIRI Assessment - Jul 3, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "03-biblioteka",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=library",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Advanced Digital Maturity Assessment",
+     "trafienia": [
+      "Assessment"
+     ]
+    }
+   ],
+   "dane": []
+  },
+  {
+   "ekran": "04-raporty",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=reports",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "DBR77 Staging Assessment Executive Report",
+     "trafienia": [
+      "Assessment",
+      "Report"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "05-wnioski",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=outputs",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "DBR77 Staging Assessment Executive Report",
+     "trafienia": [
+      "Assessment",
+      "Report"
+     ]
+    },
+    {
+     "linia": "QA UI 45 Tables — Assessment Test 2026-08-07",
+     "trafienia": [
+      "Assessment"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Jul 12, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Jul 12, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Jul 11, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Jul 11, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Jul 4, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "SIRI Assessment - Jul 3, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    },
+    {
+     "linia": "DRD Assessment - Apr 29, 2026",
+     "trafienia": [
+      "Assessment",
+      "Apr"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "06-inicjatywy",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=initiatives",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "F1-26 from assessment",
+     "trafienia": [
+      "from",
+      "assessment"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "07-raport-zamrozonego-outputu",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report",
+   "obcychSlowUI": 23,
+   "obcychLiniiUI": 10,
+   "ui": [
+    {
+     "linia": "ENAssessment of digital transformation across core business processes",
+     "trafienia": [
+      "of"
+     ]
+    },
+    {
+     "linia": "AREA",
+     "trafienia": [
+      "AREA"
+     ]
+    },
+    {
+     "linia": "AS 3",
+     "trafienia": [
+      "AS"
+     ]
+    },
+    {
+     "linia": "ENBudget control is implemented within the sales process through automation. An appropriate system enables the planning and control of the sales budget. The system generates the budget based on predefined parameters and sales indicators, streamlining financial management.",
+     "trafienia": [
+      "the",
+      "and",
+      "of",
+      "The"
+     ]
+    },
+    {
+     "linia": "ENAssessment of digital product offerings and their sophistication",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of digital business model adoption and innovation",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of data collection, storage, analysis and utilization capabilities",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of whether culture and competencies enable transformation (not just buying technology). Per the DRD book, 5A describes leadership TYPES (not better/worse), while 5B–5E use a 1–6 maturity scale.",
+     "trafienia": [
+      "of",
+      "and",
+      "the"
+     ]
+    },
+    {
+     "linia": "ENAssessment of cybersecurity maturity as a condition for survival (not just an IT problem). Each area uses a cumulative 1–6 scale per the DRD book.",
+     "trafienia": [
+      "of",
+      "as",
+      "for",
+      "area",
+      "the"
+     ]
+    },
+    {
+     "linia": "ENAssessment of AI readiness, adoption and governance",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.",
+     "trafienia": [
+      "unit",
+      "level",
+      "evidence"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "08-raport-stopka",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report",
+   "obcychSlowUI": 23,
+   "obcychLiniiUI": 10,
+   "ui": [
+    {
+     "linia": "ENAssessment of digital transformation across core business processes",
+     "trafienia": [
+      "of"
+     ]
+    },
+    {
+     "linia": "AREA",
+     "trafienia": [
+      "AREA"
+     ]
+    },
+    {
+     "linia": "AS 3",
+     "trafienia": [
+      "AS"
+     ]
+    },
+    {
+     "linia": "ENBudget control is implemented within the sales process through automation. An appropriate system enables the planning and control of the sales budget. The system generates the budget based on predefined parameters and sales indicators, streamlining financial management.",
+     "trafienia": [
+      "the",
+      "and",
+      "of",
+      "The"
+     ]
+    },
+    {
+     "linia": "ENAssessment of digital product offerings and their sophistication",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of digital business model adoption and innovation",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of data collection, storage, analysis and utilization capabilities",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    },
+    {
+     "linia": "ENAssessment of whether culture and competencies enable transformation (not just buying technology). Per the DRD book, 5A describes leadership TYPES (not better/worse), while 5B–5E use a 1–6 maturity scale.",
+     "trafienia": [
+      "of",
+      "and",
+      "the"
+     ]
+    },
+    {
+     "linia": "ENAssessment of cybersecurity maturity as a condition for survival (not just an IT problem). Each area uses a cumulative 1–6 scale per the DRD book.",
+     "trafienia": [
+      "of",
+      "as",
+      "for",
+      "area",
+      "the"
+     ]
+    },
+    {
+     "linia": "ENAssessment of AI readiness, adoption and governance",
+     "trafienia": [
+      "of",
+      "and"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.",
+     "trafienia": [
+      "unit",
+      "level",
+      "evidence"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "09-prezentacja",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/presentation",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": []
+  },
+  {
+   "ekran": "10-sesja-drd",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/DRD/b52cec42-86ce-49c4-8326-4b2771ec0716",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Session not found",
+     "trafienia": [
+      "Session"
+     ]
+    }
+   ],
+   "dane": []
+  },
+  {
+   "ekran": "11-nowa-ocena-modal",
+   "jezyk": "pl",
+   "jezykRealny": "pl",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Advanced Digital Maturity Assessment",
+     "trafienia": [
+      "Assessment"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "SIRI Assessment - Jul 3, 2026",
+     "trafienia": [
+      "Assessment",
+      "Jul"
+     ]
+    }
+   ]
+  }
+ ]
+}

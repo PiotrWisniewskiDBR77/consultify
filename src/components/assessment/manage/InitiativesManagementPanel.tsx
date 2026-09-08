@@ -537,10 +537,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
             name: initiative.title,
             summary: initiative.description,
             sourceLabel: assessmentName
-              ? t('assessment.initiativesPanel.source.assessment', 'Ocena: {{name}}', {
+              ? t('assessment.initiativesPanel.source.assessment', 'Assessment: {{name}}', {
                   name: assessmentName,
                 })
-              : t('assessment.initiativesPanel.source.assessmentFallback', 'Ocena'),
+              : t('assessment.initiativesPanel.source.assessmentFallback', 'Assessment'),
           }) as unknown as InitiativeRegisterRow
       ),
     [filteredInitiatives, assessmentName, t]

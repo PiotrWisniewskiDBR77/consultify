@@ -2326,7 +2326,10 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Ocena']} noPadding>
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('assessment.breadcrumb', 'Assessment')]}
+                noPadding
+              >
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Assessment"

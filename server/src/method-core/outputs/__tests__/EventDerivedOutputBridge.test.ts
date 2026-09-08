@@ -246,3 +246,105 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
     ).rejects.toThrow(/boom/);
   });
 });
+
+/**
+ * Program spójności językowej (docs/program/JEZYK_EN_PL_20260908/PLAN.md §2.5).
+ *
+ * `scope` i `limitations` zamrożonego Outputu to ZDANIA, które klient czyta
+ * w raporcie z oceny (rozdział „Ograniczenia i założenia", stopka). Do 2026-09
+ * były zaszyte po polsku niezależnie od języka konta — użytkownik EN dostawał
+ * polskie zdania w dokumencie dla zarządu.
+ *
+ * Test pilnuje TRZECH przypadków, bo każdy ma inną przyczynę awarii:
+ *   language='en'  -> angielski (regresja: powrót polskiego szablonu),
+ *   language='pl'  -> polski    (regresja: „naprawa" przez zangielszczenie wszystkiego),
+ *   brak language  -> angielski (regresja: cichy powrót do polskiego domyślnego).
+ */
+describe('EventDerivedOutputBridge — scope/limitations w języku konta', () => {
+  let events: InstanceType<typeof MethodEventStore>;
+  let outputs: InstanceType<typeof MethodOutputService>;
+
+  beforeEach(() => {
+    testDb.reset();
+    events = new MethodEventStore();
+    outputs = new MethodOutputService();
+  });
+
+  async function zamroz(language: string | null | undefined) {
+    const sessionId = `session-lang-${String(language)}`;
+    await events.append({
+      organizationId,
+      sessionId,
+      type: 'ANSWER_CONFIRMED',
+      unitId: '1A',
+      level: 3,
+      actorKind: 'human',
+      actorUserId: 'user-1',
+      methodPackVersion: '1.0.0',
+      payload: { questionId: 'q-1', answerState: 'confirmed' },
+    });
+    await events.append({
+      organizationId,
+      sessionId,
+      type: 'EVIDENCE_ATTACHED',
+      unitId: '1A',
+      actorKind: 'human',
+      actorUserId: 'user-1',
+      methodPackVersion: '1.0.0',
+      payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' },
+    });
+
+    const bridge = new EventDerivedOutputBridge(events, outputs);
+    await bridge.onSessionFrozen({
+      organizationId,
+      sessionId,
+      snapshotId: `snap-${sessionId}`,
+      module: 'assessment',
+      methodPackId: 'drd',
+      methodPackVersion: '1.0.0',
+      demoBypassActive: false,
+      revisionOfSessionId: null,
+      ...(language === undefined ? {} : { language }),
+    });
+
+    const rows = testDb.getRows('method_outputs');
+    const row = rows[rows.length - 1];
+    return {
+      scope: String(row.scope ?? ''),
+      limitations: JSON.parse(String(row.limitations_json ?? '[]')) as string[],
+    };
+  }
+
+  /** Polskie znaki diakrytyczne — najprostszy niezaprzeczalny dowód języka. */
+  const maPolskieZnaki = (text: string) => /[ąćęłńóśźż]/i.test(text);
+
+  it("language='en' — scope i limitations są po angielsku, bez ani jednego polskiego znaku", async () => {
+    const { scope, limitations } = await zamroz('en');
+
+    expect(scope).toContain('frozen from the event store');
+    expect(maPolskieZnaki(scope)).toBe(false);
+    expect(limitations.length).toBeGreaterThan(0);
+    for (const l of limitations) {
+      expect(maPolskieZnaki(l)).toBe(false);
+    }
+    expect(limitations.join(' ')).toContain('generated automatically from the event store');
+  });
+
+  it("language='pl' — scope i limitations zostają po polsku (naprawa EN nie zabiera polskiego)", async () => {
+    const { scope, limitations } = await zamroz('pl');
+
+    expect(scope).toContain('zamrożona z event-store');
+    expect(maPolskieZnaki(scope)).toBe(true);
+    expect(limitations.join(' ')).toContain('wygenerowany automatycznie z event-store');
+  });
+
+  it('brak języka — wypada angielski, nie polski (reguła programu: EN jest domyślne)', async () => {
+    const { scope, limitations } = await zamroz(undefined);
+
+    expect(maPolskieZnaki(scope)).toBe(false);
+    expect(scope).toContain('frozen from the event store');
+    for (const l of limitations) {
+      expect(maPolskieZnaki(l)).toBe(false);
+    }
+  });
+});

@@ -39,6 +39,8 @@ import {
 import { ADMAReportTemplate } from './reports/templates/ADMAReportTemplate';
 import { DRDReportTemplate } from './reports/templates/DRDReportTemplate';
 import { SIRIReportTemplate } from './reports/templates/SIRIReportTemplate';
+import { localeListy } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 interface ReportContent {
   executiveSummary: string;
@@ -99,6 +101,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   onSaved,
   onFinalized,
 }) => {
+  const { t } = useTranslation();
   // State
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
@@ -312,9 +315,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       <div className="h-full flex items-center justify-center bg-white dark:bg-navy-900">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">Nie znaleziono raportu</p>
+          <p className="text-slate-500 dark:text-slate-400">
+            {t('assessment.reportEditor.notFound', 'Report not found')}
+          </p>
           <button onClick={onClose} className="mt-4 text-primary-600 hover:underline">
-            Wróć
+            {t('assessment.reportEditor.back', 'Back')}
           </button>
         </div>
       </div>
@@ -406,7 +411,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   }`}
                 >
                   <Sparkles size={14} className="inline mr-1 -mt-0.5" />
-                  Podgląd raportu
+                  {t('assessment.reportEditor.preview', 'Report preview')}
                 </button>
               </div>
             )}
@@ -420,7 +425,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <span className="text-xs text-green-500 flex items-center gap-1">
                 <CheckCircle2 size={12} />
                 Zapisano{' '}
-                {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                {lastSaved.toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
             {error && <span className="text-xs text-danger-500">{error}</span>}
@@ -568,7 +573,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     type="text"
                     value={newFinding}
                     onChange={(e) => setNewFinding(e.target.value)}
-                    placeholder="Dodaj nowy wniosek..."
+                    placeholder={t('assessment.reportEditor.newFindingPlaceholder', 'Add a new finding…')}
                     className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && addFinding()}
                   />
@@ -578,7 +583,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                   >
                     <Plus size={16} />
-                    Dodaj
+                    {t('assessment.reportEditor.add', 'Add')}
                   </button>
                 </div>
               )}
@@ -617,7 +622,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     type="text"
                     value={newRecommendation}
                     onChange={(e) => setNewRecommendation(e.target.value)}
-                    placeholder="Dodaj nową rekomendację..."
+                    placeholder={t(
+                      'assessment.reportEditor.newRecommendationPlaceholder',
+                      'Add a new recommendation…'
+                    )}
                     className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && addRecommendation()}
                   />
@@ -627,7 +635,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     className="px-4 py-2 bg-green-500 hover:bg-green-400 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                   >
                     <Plus size={16} />
-                    Dodaj
+                    {t('assessment.reportEditor.add', 'Add')}
                   </button>
                 </div>
               )}

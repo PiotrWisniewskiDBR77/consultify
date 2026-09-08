@@ -1,0 +1,508 @@
+{
+ "suma": {
+  "faza": "po",
+  "ekrany": 11,
+  "en": {
+   "obcychSlowUI": 9,
+   "ekranyZTrafieniami": [
+    "01-lista-ocen",
+    "02-lista-podglad",
+    "07-raport-zamrozonego-outputu",
+    "08-raport-stopka",
+    "11-nowa-ocena-modal"
+   ]
+  }
+ },
+ "raport": [
+  {
+   "ekran": "01-lista-ocen",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Zarząd Grupy",
+     "trafienia": [
+      "Zarząd"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Ocena dojrzałości cyfrowej Q1",
+     "trafienia": [
+      "Ocena",
+      "dojrzałości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "02-lista-podglad",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Zarząd Grupy",
+     "trafienia": [
+      "Zarząd"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Ocena dojrzałości cyfrowej Q1",
+     "trafienia": [
+      "Ocena",
+      "dojrzałości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Assessment: Analiza gotowości AI. Framework: DRD. Status: DRAFT. Progress: 0%. The overall score was not persisted in the selected record. An assessment description was not persisted in the selected record. The creation date was not persisted in the selected record. Updated: 2026-09-08T22:32:47.609Z. Author: d2b6a316-08c5-47cf-9bf7-4ba50311d5a2. This Details section contains only facts persisted for the selected assessment. Fields without stored values remain explicitly unavailable in the interface and are not inferred from other records. The displayed scope therefore matches the available source row.",
+     "trafienia": [
+      "gotowości"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "03-biblioteka",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=library",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": []
+  },
+  {
+   "ekran": "04-raporty",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=reports",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "05-wnioski",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=outputs",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+     "trafienia": [
+      "Sesja",
+      "zamrożona"
+     ]
+    },
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Ocena dojrzałości cyfrowej Q1",
+     "trafienia": [
+      "Ocena",
+      "dojrzałości"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "06-inicjatywy",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=initiatives",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "Automatyzacja optymalizacji przezbrojeń",
+     "trafienia": [
+      "przezbrojeń"
+     ]
+    },
+    {
+     "linia": "Zarządzanie wydajnością cyfrową",
+     "trafienia": [
+      "Zarządzanie",
+      "wydajnością",
+      "cyfrową"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "07-raport-zamrozonego-outputu",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report",
+   "obcychSlowUI": 3,
+   "obcychLiniiUI": 3,
+   "ui": [
+    {
+     "linia": "Procesy Sprzedaży",
+     "trafienia": [
+      "Sprzedaży"
+     ]
+    },
+    {
+     "linia": "Procesy Jakości",
+     "trafienia": [
+      "Jakości"
+     ]
+    },
+    {
+     "linia": "Zarządzanie Finansami",
+     "trafienia": [
+      "Zarządzanie"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+     "trafienia": [
+      "Sesja",
+      "zamrożona"
+     ]
+    },
+    {
+     "linia": "The result was frozen on 05/09/2026, 10:11, the session was opened on 05/09/2026. The approval was recorded on 05/09/2026 (revision 4) — “Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).”.",
+     "trafienia": [
+      "Zamrożone",
+      "przez",
+      "właściciela",
+      "sesji"
+     ]
+    },
+    {
+     "linia": "Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.",
+     "trafienia": [
+      "danych",
+      "NIE",
+      "metodyka"
+     ]
+    },
+    {
+     "linia": "aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.",
+     "trafienia": [
+      "jest",
+      "oś",
+      "regułą"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "08-raport-stopka",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/report",
+   "obcychSlowUI": 3,
+   "obcychLiniiUI": 3,
+   "ui": [
+    {
+     "linia": "Procesy Sprzedaży",
+     "trafienia": [
+      "Sprzedaży"
+     ]
+    },
+    {
+     "linia": "Procesy Jakości",
+     "trafienia": [
+      "Jakości"
+     ]
+    },
+    {
+     "linia": "Zarządzanie Finansami",
+     "trafienia": [
+      "Zarządzanie"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+     "trafienia": [
+      "Sesja",
+      "zamrożona"
+     ]
+    },
+    {
+     "linia": "The result was frozen on 05/09/2026, 10:11, the session was opened on 05/09/2026. The approval was recorded on 05/09/2026 (revision 4) — “Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).”.",
+     "trafienia": [
+      "Zamrożone",
+      "przez",
+      "właściciela",
+      "sesji"
+     ]
+    },
+    {
+     "linia": "Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.",
+     "trafienia": [
+      "danych",
+      "NIE",
+      "metodyka"
+     ]
+    },
+    {
+     "linia": "aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.",
+     "trafienia": [
+      "jest",
+      "oś",
+      "regułą"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "09-prezentacja",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/presentation",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": [
+    {
+     "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+     "trafienia": [
+      "Sesja",
+      "zamrożona"
+     ]
+    }
+   ]
+  },
+  {
+   "ekran": "10-sesja-drd",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/DRD/b52cec42-86ce-49c4-8326-4b2771ec0716",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0,
+   "ui": [],
+   "dane": []
+  },
+  {
+   "ekran": "11-nowa-ocena-modal",
+   "jezyk": "en",
+   "jezykRealny": "en",
+   "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1,
+   "ui": [
+    {
+     "linia": "Zarząd Grupy",
+     "trafienia": [
+      "Zarząd"
+     ]
+    }
+   ],
+   "dane": [
+    {
+     "linia": "Analiza gotowości AI",
+     "trafienia": [
+      "gotowości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Ocena dojrzałości cyfrowej Q1",
+     "trafienia": [
+      "Ocena",
+      "dojrzałości"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    },
+    {
+     "linia": "Piotr Wiśniewski",
+     "trafienia": [
+      "Wiśniewski"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -18,18 +18,37 @@
  * of operation as a progress bar picking a colour from a percentage.
  */
 
+import i18n from 'i18next';
+
 export interface MaturityBand {
   readonly label: string;
   /** 0..1 position used for bar rendering. */
   readonly position: number;
 }
 
+/**
+ * Pięć stałych fraz — w OBU językach interfejsu.
+ *
+ * Do 2026-09 istniał wyłącznie wariant polski i angielski raport drukował
+ * „Poniżej środka skali" w kolumnie „Position on the scale" (zmierzone na
+ * zrzucie EN, program spójności językowej J5). Frazy są celowo generyczne
+ * (patrz nagłówek pliku) i nie są treścią licencjonowaną, więc drugi wariant
+ * to tłumaczenie tych samych pięciu etykiet, nie nowa treść metodyki.
+ */
 const BAND_LABELS_PL = [
   'Dolna część skali',
   'Poniżej środka skali',
   'Środek skali',
   'Powyżej środka skali',
   'Górna część skali',
+] as const;
+
+const BAND_LABELS_EN = [
+  'Bottom of the scale',
+  'Below the middle of the scale',
+  'Middle of the scale',
+  'Above the middle of the scale',
+  'Top of the scale',
 ] as const;
 
 /**
@@ -49,5 +68,8 @@ export function describeMaturityPosition(
   const clamped = Math.min(scaleMax, Math.max(scaleMin, value));
   const position = (clamped - scaleMin) / (scaleMax - scaleMin);
   const bucket = Math.min(BAND_LABELS_PL.length - 1, Math.floor(position * BAND_LABELS_PL.length));
-  return { label: BAND_LABELS_PL[bucket], position };
+  const etykiety = String(i18n.language || '').toLowerCase().startsWith('pl')
+    ? BAND_LABELS_PL
+    : BAND_LABELS_EN;
+  return { label: etykiety[bucket], position };
 }

@@ -50,7 +50,7 @@ import {
   Target,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import {
   DRDMatrixReadOnly,
@@ -72,11 +72,12 @@ import {
 } from './drdLabels';
 import { describeMaturityPosition } from './maturityBands';
 import type { AssessmentReportData, ReportFinding } from './types';
+import { localeListy } from '@/utils/listDateFormat';
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('pl-PL', {
+    return new Intl.DateTimeFormat(localeListy(), {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -91,9 +92,11 @@ function formatDateTime(iso: string | null | undefined): string {
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('pl-PL', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-      new Date(iso)
-    );
+    return new Intl.DateTimeFormat(localeListy(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -168,19 +171,25 @@ const MethodologyProse: React.FC<{ text: string; language: DrdSourceLanguage; cl
   text,
   language,
   className,
-}) => (
-  <p className={`text-xs leading-relaxed text-c-text-secondary ${className ?? ''}`}>
-    {language === 'en' ? (
-      <span
-        className="mr-1.5 rounded border border-c-border-subtle px-1 py-px align-middle text-[9px] font-semibold uppercase tracking-wider text-c-text-muted"
-        title="Źródło: metodyka DRD w oryginale angielskim — polskiego tłumaczenia tej osi jeszcze nie ma w pakiecie."
-      >
-        EN
-      </span>
-    ) : null}
-    {text}
-  </p>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <p className={`text-xs leading-relaxed text-c-text-secondary ${className ?? ''}`}>
+      {language === 'en' ? (
+        <span
+          className="mr-1.5 rounded border border-c-border-subtle px-1 py-px align-middle text-[9px] font-semibold uppercase tracking-wider text-c-text-muted"
+          title={t(
+            'assessment.report.methodologySourceEn',
+            'Source: the DRD methodology in its English original — this axis has no Polish translation in the pack yet.'
+          )}
+        >
+          EN
+        </span>
+      ) : null}
+      {text}
+    </p>
+  );
+};
 
 const Property: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> = ({
   label,
@@ -267,6 +276,7 @@ const AreaBlock: React.FC<{
   hasFinding,
   note,
 }) => {
+  const { t } = useTranslation();
   const currentLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, current);
   const targetLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, target);
   return (
@@ -298,7 +308,10 @@ const AreaBlock: React.FC<{
       {currentLevel ? (
         <div className="mt-2.5">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Poziom obecny {currentLevel.level} — {currentLevel.title}
+            {t('assessment.report.area.currentLevel', 'Current level {{level}} — {{title}}', {
+              level: currentLevel.level,
+              title: currentLevel.title,
+            })}
           </p>
           <MethodologyProse
             className="mt-0.5"
@@ -309,8 +322,14 @@ const AreaBlock: React.FC<{
       ) : (
         <p className="mt-2.5 text-[11px] italic text-c-text-muted">
           {current === null
-            ? 'Poziom obecny nie został w tej ocenie rozstrzygnięty.'
-            : 'Metodyka przypięta w tym Outpucie nie niesie definicji tego poziomu.'}
+            ? t(
+                'assessment.report.area.currentUnresolved',
+                'The current level was not determined in this assessment.'
+              )
+            : t(
+                'assessment.report.area.levelDefinitionMissing',
+                'The methodology pinned in this Output carries no definition of this level.'
+              )}
         </p>
       )}
 
@@ -321,7 +340,10 @@ const AreaBlock: React.FC<{
       {targetLevel && targetLevel.level !== currentLevel?.level ? (
         <div className="mt-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Poziom docelowy {targetLevel.level} — {targetLevel.title}
+            {t('assessment.report.area.targetLevel', 'Target level {{level}} — {{title}}', {
+              level: targetLevel.level,
+              title: targetLevel.title,
+            })}
           </p>
           <MethodologyProse
             className="mt-0.5"
@@ -331,14 +353,18 @@ const AreaBlock: React.FC<{
         </div>
       ) : targetLevel ? (
         <p className="mt-2 text-[11px] font-medium text-c-success">
-          Poziom docelowy {targetLevel.level} — osiągnięty; definicja jak wyżej.
+          {t(
+            'assessment.report.area.targetReached',
+            'Target level {{level}} — reached; definition as above.',
+            { level: targetLevel.level }
+          )}
         </p>
       ) : null}
 
       {note ? (
         <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 py-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Notatka z oceny
+            {t('assessment.report.area.assessmentNote', 'Assessment note')}
           </p>
           <p className="mt-0.5 text-[12px] leading-relaxed text-c-text">{note}</p>
         </div>
@@ -346,8 +372,10 @@ const AreaBlock: React.FC<{
 
       {!hasFinding ? (
         <p className="mt-2 text-[11px] font-medium text-c-warning">
-          Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są
-          poparte zaakceptowanym materiałem dowodowym.
+          {t(
+            'assessment.report.area.noAcceptedEvidence',
+            'No accepted evidence for this area — the numbers above come from the session record, but are not backed by accepted evidence material.'
+          )}
         </p>
       ) : null}
     </div>
@@ -371,6 +399,7 @@ const AxisSection: React.FC<{
   unitNotes?: Readonly<Record<string, string>>;
   zZapisuSesji?: boolean;
 }> = ({ axis, unitIds, output, aggregatedLevel, unitNotes, zZapisuSesji }) => {
+  const { t } = useTranslation();
   const findingUnitIds = new Set((output.findings ?? []).map((f) => f.unitId));
   const assessed = axis.areas.filter((a) => unitIds.includes(a.id));
   const notAssessed = axis.areas.filter((a) => !unitIds.includes(a.id));
@@ -378,7 +407,11 @@ const AxisSection: React.FC<{
   return (
     <SectionCard
       id={`os-${axis.axisNumber}`}
-      eyebrow={`Oś ${axis.axisNumber} z 7 · skala 1–${axis.levelCount} · ${axis.areas.length} obszarów`}
+      eyebrow={t(
+        'assessment.report.axis.eyebrow',
+        'Axis {{number}} of 7 · scale 1–{{levels}} · {{areas}} areas',
+        { number: axis.axisNumber, levels: axis.levelCount, areas: axis.areas.length }
+      )}
       title={`${axis.axisNumber}. ${axis.axisName}`}
     >
       {axis.description ? (
@@ -386,18 +419,32 @@ const AxisSection: React.FC<{
       ) : null}
 
       <p className="mb-3 text-[11px] text-c-text-muted">
-        Oceniono {assessed.length} z {axis.areas.length} obszarów tej osi.
+        {t('assessment.report.axis.assessedCount', '{{assessed}} of {{total}} areas of this axis assessed.', {
+          assessed: assessed.length,
+          total: axis.areas.length,
+        })}
         {aggregatedLevel !== null && aggregatedLevel !== undefined
-          ? ` Wynik osi: ${aggregatedLevel} (skala 1–${axis.levelCount}).`
+          ? ` ${t('assessment.report.axis.axisScore', 'Axis score: {{score}} (scale 1–{{levels}}).', {
+              score: aggregatedLevel,
+              levels: axis.levelCount,
+            })}`
           : zZapisuSesji
-            ? ' Wynik osi powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona.'
-            : ' Zamrożony Output nie niesie zagregowanego wyniku tej osi.'}
+            ? ` ${t(
+                'assessment.report.axis.scoreOnFreeze',
+                'The axis score is produced when the assessment is frozen — this assessment has not been frozen yet.'
+              )}`
+            : ` ${t(
+                'assessment.report.axis.scoreMissing',
+                'The frozen Output carries no aggregated score for this axis.'
+              )}`}
       </p>
 
       {assessed.length === 0 ? (
         <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-          Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać, czego
-          badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach czytelnika.
+          {t(
+            'assessment.report.axis.noAreaAssessed',
+            'No area of this axis was covered by this assessment. The axis stays in the document so the reader can see what the study did not touch — dropping the chapter would change the perceived scope of the assessment.'
+          )}
         </p>
       ) : (
         <div className="space-y-2.5">
@@ -442,7 +489,9 @@ const AxisSection: React.FC<{
       {assessed.length > 0 && notAssessed.length > 0 ? (
         <div className="mt-3">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Obszary tej osi nieobjęte oceną ({notAssessed.length})
+            {t('assessment.report.axis.notAssessedAreas', 'Areas of this axis not covered ({{count}})', {
+              count: notAssessed.length,
+            })}
           </p>
           <ul className="flex flex-wrap gap-1.5">
             {notAssessed.map((area) => (
@@ -478,9 +527,9 @@ const AxisSection: React.FC<{
  * zastanej — nie dublujemy jednego działania dwoma przyciskami.
  */
 const PLIKI_DO_POBRANIA = [
-  { format: 'report.docx', klucz: 'docx', domyslna: 'Pobierz raport (DOCX)' },
-  { format: 'deck.pptx', klucz: 'pptx', domyslna: 'Pobierz prezentację (PPTX)' },
-  { format: 'deck.pdf', klucz: 'pdf', domyslna: 'Pobierz prezentację (PDF)' },
+  { format: 'report.docx', klucz: 'docx' },
+  { format: 'deck.pptx', klucz: 'pptx' },
+  { format: 'deck.pdf', klucz: 'pdf' },
 ] as const;
 
 const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) => {
@@ -530,7 +579,7 @@ const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) =
   return (
     <div className="mt-4 border-t border-c-border-subtle pt-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-        {t('assessment.report.download.heading', 'Pliki do wysłania klientowi')}
+        {t('assessment.report.download.heading', 'Files to send to the client')}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {PLIKI_DO_POBRANIA.map((pozycja) => (
@@ -544,14 +593,18 @@ const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) =
           >
             <Download size={14} aria-hidden="true" />
             {trwa === pozycja.format
-              ? t('assessment.report.download.inProgress', 'Przygotowuję plik…')
-              : t(`assessment.report.download.${pozycja.klucz}`, pozycja.domyslna)}
+              ? t('assessment.report.download.inProgress', 'Preparing the file…')
+              : pozycja.klucz === 'docx'
+                ? t('assessment.report.download.docx', 'Download report (DOCX)')
+                : pozycja.klucz === 'pptx'
+                  ? t('assessment.report.download.pptx', 'Download deck (PPTX)')
+                  : t('assessment.report.download.pdf', 'Download deck (PDF)')}
           </button>
         ))}
       </div>
       {blad ? (
         <p className="mt-2 text-xs text-c-danger" role="alert">
-          {t('assessment.report.download.error', 'Nie udało się pobrać pliku — kod: {{code}}', {
+          {t('assessment.report.download.error', 'The file could not be downloaded — code: {{code}}', {
             code: blad,
           })}
         </p>
@@ -635,7 +688,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
     () => [
       {
         id: 'unitName',
-        label: 'Jednostka oceny',
+        label: t('assessment.report.table.unitName', 'Assessment unit'),
         sortable: true,
         render: (row) => (
           <div className="min-w-0">
@@ -654,7 +707,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       // (sortowanie/eksport), znika tylko z widoku.
       {
         id: 'levels',
-        label: 'Obecny / Cel',
+        label: t('assessment.report.table.levels', 'Current / Target'),
         width: '190px',
         render: (row) => (
           <div className="flex items-center gap-2">
@@ -676,7 +729,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       },
       {
         id: 'gap',
-        label: 'Luka',
+        label: t('assessment.report.table.gap', 'Gap'),
         width: '90px',
         sortable: true,
         render: (row) => {
@@ -693,23 +746,31 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       },
       {
         id: 'bandLabel',
-        label: 'Pozycja na skali',
+        label: t('assessment.report.table.band', 'Position on the scale'),
         width: '140px',
         render: (row) => (row.bandLabel ? <span className="text-xs text-c-text-secondary">{row.bandLabel as string}</span> : <span className="text-c-text-muted">—</span>),
       },
       {
         id: 'hasFinding',
-        label: 'Dowody',
+        label: t('assessment.report.table.evidence', 'Evidence'),
         width: '132px',
         render: (row) =>
           row.hasFinding ? (
-            <StatusChip label="Potwierdzone dowodem" tone="success" size="sm" />
+            <StatusChip
+              label={t('assessment.report.table.evidenceConfirmed', 'Confirmed by evidence')}
+              tone="success"
+              size="sm"
+            />
           ) : (
-            <StatusChip label="Brak dowodu" tone="warning" size="sm" />
+            <StatusChip
+              label={t('assessment.report.table.evidenceMissing', 'No evidence')}
+              tone="warning"
+              size="sm"
+            />
           ),
       },
     ],
-    []
+    [t]
   );
 
   const strengths = useMemo(
@@ -788,10 +849,10 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       ? 'neutral'
       : 'success';
   const lifecycleLabel = zZapisuSesji
-    ? t('assessment.report.lifecycleSessionRecord', 'Zapis sesji oceny — jeszcze nie zamrożony')
+    ? t('assessment.report.lifecycleSessionRecord', 'Assessment session record — not frozen yet')
     : superseded
-      ? t('assessment.report.lifecycleSuperseded', 'Zamrożony — zastąpiony nowszą rewizją')
-      : t('assessment.report.lifecycleFrozen', 'Zamrożony (niezmienny)');
+      ? t('assessment.report.lifecycleSuperseded', 'Frozen — superseded by a newer revision')
+      : t('assessment.report.lifecycleFrozen', 'Frozen (immutable)');
 
   // ── Formuła właściciela, punkt 2: „siedem osi" ────────────────────────────
   // Rozdziały osi powstają z metodyki (wszystkie 7, także te NIEobjęte tą
@@ -847,10 +908,19 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   // dla zarządu czyta się jak usterka składu.
   const surveyModeSentence =
     session?.mode === 'teresa_led'
-      ? 'Sesja była prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store.'
+      ? t(
+          'assessment.report.surveyMode.teresaLed',
+          'The session was led by the assistant (Teresa), with every step recorded in the event store.'
+        )
       : session?.mode === 'guided_manual'
-        ? 'Sesja była prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji.'
-        : 'Trybu prowadzenia sesji nie zapisano w metadanych.';
+        ? t(
+            'assessment.report.surveyMode.guidedManual',
+            'The session was led by a consultant — answers and evidence entered manually during the session.'
+          )
+        : t(
+            'assessment.report.surveyMode.unknown',
+            'The way the session was run was not recorded in the metadata.'
+          );
 
   return (
     <article className="mx-auto flex max-w-[880px] flex-col gap-4 pb-16">
@@ -861,7 +931,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <p>
             {t(
               'assessment.report.demoBypassBanner',
-              'Ten Output pochodzi z sesji utworzonej przez tryb demo (ominięcie bramki gotowości pakietu). To NIE jest wynik produkcyjny — nie może być przedstawiony jako zatwierdzony wynik pilota/produkcji.'
+              'This Output comes from a session created in demo mode (the pack readiness gate was bypassed). This is NOT a production result — it must not be presented as an approved pilot or production outcome.'
             )}
           </p>
         </div>
@@ -875,11 +945,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-xs text-c-text-secondary">
           <FileWarning size={16} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
           <p>
-            Ten raport powstał z <strong className="text-c-text">zapisu sesji oceny</strong> — obszary,
-            poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego,
-            niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów
-            pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie
-            zamrożony, liczby mogą się jeszcze zmienić.
+            <Trans
+              i18nKey="assessment.report.sessionRecordBanner"
+              defaults="This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change."
+              components={[<span key="0" />, <strong key="1" className="text-c-text" />]}
+            />
           </p>
         </div>
       ) : null}
@@ -889,7 +959,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {t('assessment.report.title', 'Raport oceny dojrzałości')}
+              {t('assessment.report.title', 'Maturity assessment report')}
             </p>
             <h1 className="mt-1 text-lg font-semibold text-c-text">
               {output.methodPackId.toUpperCase()} · {output.methodPackVersion}
@@ -907,7 +977,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
           <Property
             label={t('assessment.report.project', 'Projekt')}
-            value={session?.projectId ?? t('assessment.report.noProject', 'Brak przypisanego projektu')}
+            value={session?.projectId ?? t('assessment.report.noProject', 'No project assigned')}
             mono={!!session?.projectId}
           />
           <Property
@@ -920,11 +990,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             value={zZapisuSesji ? '—' : `v${output.outputVersion}`}
           />
           <Property
-            label={t('assessment.report.frozenAt', 'Data zamrożenia')}
+            label={t('assessment.report.frozenAt', 'Frozen at')}
             value={formatDateTime(output.frozenAt)}
           />
           <Property
-            label={t('assessment.report.approvedBy', 'Zatwierdził')}
+            label={t('assessment.report.approvedBy', 'Approved by')}
             value={
               latestApproval ? (
                 <span>
@@ -934,14 +1004,18 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                 </span>
               ) : (
                 <span className="italic text-c-text-muted">
-                  {t('assessment.report.noApproval', 'Brak zarejestrowanego zatwierdzenia')}
+                  {t('assessment.report.noApproval', 'No approval recorded')}
                 </span>
               )
             }
           />
           <Property
-            label={t('assessment.report.module', 'Moduł')}
-            value={output.module === 'assessment' ? 'Ocena' : output.module}
+            label={t('assessment.report.module', 'Module')}
+            value={
+              output.module === 'assessment'
+                ? t('assessment.report.moduleAssessment', 'Assessment')
+                : output.module
+            }
           />
         </dl>
 
@@ -951,7 +1025,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             <span>
               {t(
                 'assessment.report.supersededNotice',
-                'Ten Output został zastąpiony nowszą rewizją{{suffix}}. Poniższa treść pozostaje niezmiennym zapisem TEJ rewizji — nie jest aktualizowana.',
+                'This Output has been superseded by a newer revision{{suffix}}. The content below stays the immutable record of THIS revision — it is not updated.',
                 { suffix: supersededByOutputId ? ` (${supersededByOutputId})` : '' }
               )}
             </span>
@@ -970,22 +1044,39 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="wstep"
         number={1}
-        title={t('assessment.report.chapter1.title', 'Jak prowadzono badanie')}
+        title={t('assessment.report.chapter1.title', 'How the assessment was run')}
         icon={ClipboardList}
         lede={t(
           'assessment.report.chapter1.lede',
-          'Zakres, tryb i granice wiarygodności tej oceny — zanim padnie pierwsza liczba.'
+          'Scope, mode and the credibility limits of this assessment — before the first number.'
         )}
       >
-        <SectionCard id="wstep-przebieg" title={t('assessment.report.chapter1.courseTitle', 'Przebieg oceny')}>
+        <SectionCard id="wstep-przebieg" title={t('assessment.report.chapter1.courseTitle', 'How the assessment progressed')}>
           <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
             <p>
-              Ocenę przeprowadzono metodyką <strong className="text-c-text">{output.methodPackId.toUpperCase()}</strong>{' '}
-              w wersji pakietu <span className="font-mono text-[11px]">{output.methodPackVersion}</span>
+              <Trans
+                i18nKey="assessment.report.intro.method"
+                defaults="The assessment was carried out with the <1>{{method}}</1> methodology, pack version <3>{{version}}</3>"
+                values={{ method: output.methodPackId.toUpperCase(), version: output.methodPackVersion }}
+                components={[
+                  <span key="0" />,
+                  <strong key="1" className="text-c-text" />,
+                  <span key="2" />,
+                  <span key="3" className="font-mono text-[11px]" />,
+                ]}
+              />
               {axisNarratives.length > 0 ? (
                 <>
-                  {' '}— {axisNarratives.length} osi transformacji, łącznie {totalMethodAreas} obszarów
-                  analitycznych, każda oś na własnej skali dojrzałości ({levelScaleSummary} poziomów).
+                  {' '}
+                  {t(
+                    'assessment.report.intro.methodAxes',
+                    '— {{axes}} transformation axes, {{areas}} analytical areas in total, each axis on its own maturity scale ({{scales}} levels).',
+                    {
+                      axes: axisNarratives.length,
+                      areas: totalMethodAreas,
+                      scales: levelScaleSummary,
+                    }
+                  )}
                 </>
               ) : (
                 '.'
@@ -993,55 +1084,130 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               {surveyModeSentence}
             </p>
             <p>
-              Badanie objęło <strong className="text-c-text">{unitIds.length}</strong>
-              {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
+              <Trans
+                i18nKey="assessment.report.intro.coverage"
+                defaults="The study covered <1>{{units}}</1>{{ofTotal}} areas"
+                values={{
+                  units: unitIds.length,
+                  ofTotal:
+                    totalMethodAreas > 0
+                      ? t('assessment.report.intro.ofTotal', ' of {{total}}', {
+                          total: totalMethodAreas,
+                        })
+                      : '',
+                }}
+                components={[<span key="0" />, <strong key="1" className="text-c-text" />]}
+              />
               {axisNarratives.length > 0 ? (
                 <>
-                  {' '}w <strong className="text-c-text">{axesCoveredCount}</strong> z {axisNarratives.length} osi
+                  {' '}
+                  <Trans
+                    i18nKey="assessment.report.intro.coverageAxes"
+                    defaults="in <1>{{covered}}</1> of {{total}} axes"
+                    values={{ covered: axesCoveredCount, total: axisNarratives.length }}
+                    components={[<span key="0" />, <strong key="1" className="text-c-text" />]}
+                  />
                 </>
               ) : null}
-              . Dla {output.findings?.length ?? 0} z nich organizacja dostarczyła dowód, który został przyjęty;
-              dla {unitsWithoutFinding.length} dowodu nie przyjęto — te obszary są w rozdziale 3 wymienione
-              z nazwy i nie są liczone jako zero.
+              {t(
+                'assessment.report.intro.evidenceSplit',
+                '. For {{withEvidence}} of them the organisation provided evidence that was accepted; for {{withoutEvidence}} no evidence was accepted — those areas are listed by name in chapter 3 and are not counted as zero.',
+                {
+                  withEvidence: output.findings?.length ?? 0,
+                  withoutEvidence: unitsWithoutFinding.length,
+                }
+              )}
               {evidenceCompleteness
-                ? ` Kompletność dowodowa tej oceny wynosi ${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%.`
+                ? ` ${t(
+                    'assessment.report.intro.completeness',
+                    'The evidence completeness of this assessment is {{percent}}%.',
+                    {
+                      percent: Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100),
+                    }
+                  )}`
                 : ''}
             </p>
             <p>
-              {zZapisuSesji ? (
-                'Ten wynik nie został jeszcze zamrożony — pochodzi z zapisu sesji oceny'
-              ) : (
-                <>Wynik zamrożono {formatDateTime(output.frozenAt)}</>
-              )}
-              {session?.createdAt ? <>, sesję otwarto {formatDate(session.createdAt)}</> : null}.{' '}
+              {zZapisuSesji
+                ? t(
+                    'assessment.report.intro.notFrozenYet',
+                    'This result has not been frozen yet — it comes from the assessment session record'
+                  )
+                : t('assessment.report.intro.frozenAt', 'The result was frozen on {{date}}', {
+                    date: formatDateTime(output.frozenAt),
+                  })}
+              {session?.createdAt
+                ? t('assessment.report.intro.sessionOpened', ', the session was opened on {{date}}', {
+                    date: formatDate(session.createdAt),
+                  })
+                : null}
+              .{' '}
               {latestApproval ? (
                 <>
-                  Zatwierdzenie zarejestrowano{' '}
-                  {formatDate(latestApproval.createdAt)} (rewizja {latestApproval.revision})
-                  {latestApproval.comment ? <> — „{latestApproval.comment}"</> : null}.
+                  {t(
+                    'assessment.report.intro.approvalRecorded',
+                    'The approval was recorded on {{date}} (revision {{revision}})',
+                    {
+                      date: formatDate(latestApproval.createdAt),
+                      revision: latestApproval.revision,
+                    }
+                  )}
+                  {latestApproval.comment
+                    ? t('assessment.report.intro.approvalComment', ' — “{{comment}}”', {
+                        comment: latestApproval.comment,
+                      })
+                    : null}
+                  .
                 </>
               ) : (
                 <>
-                  Dla tej rewizji <strong className="text-c-text">nie zarejestrowano zatwierdzenia</strong> —
+                  {t('assessment.report.intro.noApprovalPrefix', 'For this revision ')}
+                  <strong className="text-c-text">
+                    {t('assessment.report.intro.noApprovalStrong', 'no approval was recorded')}
+                  </strong>
+                  {' — '}
                   {zZapisuSesji
-                    ? ' dokument jest odczytem zapisu sesji, nie wynikiem zatwierdzonym.'
-                    : ' dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.'}
+                    ? t(
+                        'assessment.report.intro.readOfSessionRecord',
+                        ' the document is a read-out of the session record, not an approved result.'
+                      )
+                    : t(
+                        'assessment.report.intro.readOfFrozen',
+                        ' the document is a read-out of the frozen result, not an approved result.'
+                      )}
                 </>
               )}
             </p>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-            <Property label="Właściciel sesji" value={session?.ownerUserId ?? '—'} mono={!!session?.ownerUserId} />
-            <Property label="Otwarcie sesji" value={formatDate(session?.createdAt)} />
-            <Property label="Zamrożenie wyniku" value={formatDate(output.frozenAt)} />
-            <Property label="Rewizja sesji" value={session ? `v${session.version}` : '—'} />
+            <Property
+              label={t('assessment.report.props.sessionOwner', 'Session owner')}
+              value={session?.ownerUserId ?? '—'}
+              mono={!!session?.ownerUserId}
+            />
+            <Property
+              label={t('assessment.report.props.sessionOpened', 'Session opened')}
+              value={formatDate(session?.createdAt)}
+            />
+            <Property
+              label={t('assessment.report.props.resultFrozen', 'Result frozen')}
+              value={formatDate(output.frozenAt)}
+            />
+            <Property
+              label={t('assessment.report.props.sessionRevision', 'Session revision')}
+              value={session ? `v${session.version}` : '—'}
+            />
           </dl>
         </SectionCard>
 
         {/* Zastrzeżenia metodyczne należą do wstępu, nie do stopki — czytelnik
             ma je poznać PRZED liczbami, nie po nich. */}
         {output.limitations && output.limitations.length > 0 ? (
-          <SectionCard id="limitations" title="Ograniczenia i założenia" icon={AlertTriangle}>
+          <SectionCard
+            id="limitations"
+            title={t('assessment.report.limitationsTitle', 'Limitations and assumptions')}
+            icon={AlertTriangle}
+          >
             <ul className="list-disc space-y-1.5 pl-5 text-xs text-c-text-secondary">
               {output.limitations.map((l, i) => (
                 <li key={i}>{l}</li>
@@ -1057,21 +1223,46 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="osie"
         number={2}
-        title={axisNarratives.length === 7 ? 'Siedem osi metodyki' : `Osie metodyki (${axisNarratives.length})`}
+        title={
+          axisNarratives.length === 7
+            ? t('assessment.report.chapter2.titleSeven', 'The seven axes of the methodology')
+            : t('assessment.report.chapter2.title', 'Axes of the methodology ({{count}})', {
+                count: axisNarratives.length,
+              })
+        }
         icon={BookOpen}
-        lede="Dla każdej osi: czym oś jest, a następnie każdy jej obszar analityczny — z definicją poziomu obecnego i docelowego."
+        lede={t(
+          'assessment.report.chapter2.lede',
+          'For every axis: what the axis is, and then each of its analytical areas — with the definition of the current and the target level.'
+        )}
       >
-      <SectionCard id="overall" title="Wynik ogólny" icon={CheckCircle2}>
+      <SectionCard
+        id="overall"
+        title={t('assessment.report.overall.title', 'Overall result')}
+        icon={CheckCircle2}
+      >
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryStat label="Ocenionych jednostek" value={unitIds.length} />
-          <SummaryStat label="Z potwierdzonym dowodem" value={output.findings?.length ?? 0} />
-          <SummaryStat label="Bez przyjętego dowodu" value={unitsWithoutFinding.length} />
-          <SummaryStat label="Jednostek z luką" value={jednostkiZLuka.length} />
+          <SummaryStat
+            label={t('assessment.report.overall.unitsAssessed', 'Units assessed')}
+            value={unitIds.length}
+          />
+          <SummaryStat
+            label={t('assessment.report.overall.withEvidence', 'With confirmed evidence')}
+            value={output.findings?.length ?? 0}
+          />
+          <SummaryStat
+            label={t('assessment.report.overall.withoutEvidence', 'Without accepted evidence')}
+            value={unitsWithoutFinding.length}
+          />
+          <SummaryStat
+            label={t('assessment.report.overall.unitsWithGap', 'Units with a gap')}
+            value={jednostkiZLuka.length}
+          />
         </div>
         {aggregationEntries.length > 0 ? (
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              Wynik per wymiar (oś)
+              {t('assessment.report.overall.perDimension', 'Result per dimension (axis)')}
             </p>
             {aggregationEntries.map(([axisId, value]) => {
               const targetsInAxis = Object.entries(output.gap ?? {});
@@ -1097,8 +1288,14 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         ) : (
           <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
             {zZapisuSesji
-              ? 'Wynik zagregowany per wymiar (oś) powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona, więc go tu nie ma. Nie liczymy go zastępczo, żeby dokument nie podał liczby, której nikt nie zatwierdził. Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.'
-              : 'Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza momentem zamrożenia (patrz „Ograniczenia i założenia" powyżej). Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.'}
+              ? t(
+                  'assessment.report.overall.aggregationOnFreeze',
+                  'The aggregated result per dimension (axis) is produced when the assessment is frozen — this assessment has not been frozen yet, so it is not here. We do not compute a stand-in, so that the document never states a number nobody approved. Below is the full result per unit, which such an aggregation would be built from.'
+                )
+              : t(
+                  'assessment.report.overall.aggregationMissing',
+                  'This Output carries no aggregated result per dimension (axis) — the kernel computes that aggregation outside the moment of freezing (see “Limitations and assumptions” above). Below is the full result per unit, which such an aggregation would be built from.'
+                )}
           </p>
         )}
       </SectionCard>
@@ -1106,10 +1303,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         {/* ── Rozdziały osi: opis osi → obszary z definicją poziomów ────── */}
         {axisNarratives.length === 0 ? (
           <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-            Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją przypiętą
-            w tym Outpucie ({output.methodPackId} {output.methodPackVersion}). Ten Output przypina wersję,
-            której skompilowany pakiet nie zna — dokument pokazuje więc same liczby, bez definicji metodyki,
-            zamiast opisywać poziomy z innej wersji metodyki niż ta, którą oceniano.
+            {t(
+              'assessment.report.axisNarrativesUnavailable',
+              'Axis and level descriptions are available only for a DRD pack whose version matches the one pinned in this Output ({{packId}} {{packVersion}}). This Output pins a version the compiled pack does not know — so the document shows the numbers alone, without methodology definitions, rather than describing levels from a different version of the methodology than the one assessed.',
+              { packId: output.methodPackId, packVersion: output.methodPackVersion }
+            )}
           </p>
         ) : (
           axisNarratives.map((axis) => (
@@ -1126,10 +1324,16 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         )}
 
         {unitsOutsideAxes.length > 0 ? (
-          <SectionCard id="axis-unmapped" title="Jednostki poza strukturą osi" icon={AlertTriangle}>
+          <SectionCard
+            id="axis-unmapped"
+            title={t('assessment.report.unmapped.title', 'Units outside the axis structure')}
+            icon={AlertTriangle}
+          >
             <p className="mb-2 text-xs text-c-text-secondary">
-              Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie. Są
-              wymienione, żeby nie wypadły z dokumentu między rozdziałami.
+              {t(
+                'assessment.report.unmapped.body',
+                'These units cannot be mapped to any axis of the methodology pinned in this Output. They are listed so that they do not fall out of the document between chapters.'
+              )}
             </p>
             <ul className="flex flex-wrap gap-1.5">
               {unitsOutsideAxes.map((unitId) => (
@@ -1147,7 +1351,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         {/* Zestawienie zbiorcze — jedna tabela na wszystkie jednostki, żeby
             czytelnik miał obraz całości bez przewijania siedmiu rozdziałów.
             Kanon: StandardTable, nigdy własna tabela. */}
-        <SectionCard id="dimensions" title="Zestawienie zbiorcze wszystkich jednostek" icon={CheckCircle2}>
+        <SectionCard
+          id="dimensions"
+          title={t('assessment.report.dimensionsTitle', 'Summary table of all units')}
+          icon={CheckCircle2}
+        >
           <StandardTable columns={dimensionColumns} data={dimensionRows} minTableWidth="auto" persistKey="assessment.report.dimensions" />
         </SectionCard>
       </Chapter>
@@ -1156,9 +1364,12 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="odpowiedzi"
         number={3}
-        title="Odpowiedzi i wstępna paleta wniosków"
+        title={t('assessment.report.chapter3.title', 'Answers and the initial palette of conclusions')}
         icon={Lightbulb}
-        lede="Co organizacja pokazała na dowód, czego nie pokazała, i co z tego wynika."
+        lede={t(
+          'assessment.report.chapter3.lede',
+          'What the organisation showed as evidence, what it did not show, and what follows from that.'
+        )}
       >
         {/* ★ UCZCIWOŚĆ, nie ozdobnik. Właściciel prosi w punkcie 3 o
             „odpowiedzi". Zamrożony Output NIE niesie treści odpowiedzi —
@@ -1169,22 +1380,37 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-xs text-c-text-secondary">
           <FileWarning size={14} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
           <p>
-            Zamrożony Output przenosi <strong className="text-c-text">przyjęty poziom i dowody</strong>, a nie
-            dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co
-            dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone
-            z przyjętych poziomów.
+            {t('assessment.report.chapter3.bannerPrefix', 'A frozen Output carries ')}
+            <strong className="text-c-text">
+              {t('assessment.report.chapter3.bannerStrong', 'the accepted level and the evidence')}
+            </strong>
+            {t(
+              'assessment.report.chapter3.bannerSuffix',
+              ', not the literal text of the session answers — that stays in the session event record. What follows is therefore what the document really holds: the evidence material per area, the areas without evidence, and the conclusions derived from the accepted levels.'
+            )}
           </p>
         </div>
 
-      <SectionCard id="strengths-gaps" title="Mocne strony i luki" icon={Lightbulb}>
+      <SectionCard
+        id="strengths-gaps"
+        title={t('assessment.report.strengthsGaps.title', 'Strengths and gaps')}
+        icon={Lightbulb}
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-success">
-              Mocne strony ({strengths.length})
+              {t('assessment.report.strengthsGaps.strengths', 'Strengths ({{count}})', {
+                count: strengths.length,
+              })}
             </p>
             <ul className="space-y-2">
               {strengths.length === 0 ? (
-                <li className="text-xs italic text-c-text-muted">Brak jednostek bez luki w tym Outpucie.</li>
+                <li className="text-xs italic text-c-text-muted">
+                  {t(
+                    'assessment.report.strengthsGaps.noStrengths',
+                    'No units without a gap in this Output.'
+                  )}
+                </li>
               ) : (
                 strengths.map((f) => (
                   <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
@@ -1199,17 +1425,24 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </div>
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-danger">
-              Luki ({gaps.length})
+              {t('assessment.report.strengthsGaps.gaps', 'Gaps ({{count}})', { count: gaps.length })}
             </p>
             <ul className="space-y-2">
               {gaps.length === 0 ? (
-                <li className="text-xs italic text-c-text-muted">Brak zidentyfikowanych luk w tym Outpucie.</li>
+                <li className="text-xs italic text-c-text-muted">
+                  {t(
+                    'assessment.report.strengthsGaps.noGaps',
+                    'No gaps identified in this Output.'
+                  )}
+                </li>
               ) : (
                 gaps.map((f) => (
                   <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
                     <p className="text-xs font-medium text-c-text">
                       {f.unitName} <span className="font-mono text-c-text-muted">({f.unitId})</span>
-                      <span className="ml-2 text-c-danger">luka {f.gap}</span>
+                      <span className="ml-2 text-c-danger">
+                        {t('assessment.report.strengthsGaps.gapValue', 'gap {{gap}}', { gap: f.gap })}
+                      </span>
                     </p>
                     <p className="mt-0.5 text-xs text-c-text-secondary">{f.riskOrOpportunity ?? f.businessMeaning}</p>
                   </li>
@@ -1221,27 +1454,47 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       </SectionCard>
 
       {/* ── 5. Odpowiedzi „nie wiem" / brak dowodu ───────────────────────── */}
-      <SectionCard id="unknowns" title="Brak wiedzy w organizacji („nie wiem” / brak dowodu)" icon={HelpCircle}>
+      <SectionCard
+        id="unknowns"
+        title={t(
+          'assessment.report.noKnowledge.title',
+          'Knowledge missing in the organisation (“don’t know” / no evidence)'
+        )}
+        icon={HelpCircle}
+      >
         <p className="mb-3 text-xs text-c-text-secondary">
-          To nie jest „zero punktów" — to osobna, diagnostyczna kategoria: organizacja nie potrafiła w
-          momencie oceny dostarczyć wystarczającego dowodu dla poniższych jednostek. Zamrożony Output nie
-          rozróżnia dziś „odpowiedziano nie wiem" od „nikt jeszcze nie odpowiedział" na poziomie pojedynczej
-          jednostki (patrz „Ograniczenia i założenia") — poniższa lista pokazuje jednostki BEZ przyjętego
-          dowodu, czyli obie te sytuacje razem, uczciwie nierozróżnione.
+          {t(
+            'assessment.report.noKnowledge.body',
+            'This is not “zero points” — it is a separate, diagnostic category: at the time of the assessment the organisation could not provide sufficient evidence for the units below. A frozen Output does not today distinguish “answered I don’t know” from “nobody has answered yet” at the level of a single unit (see “Limitations and assumptions”) — the list below shows the units WITHOUT accepted evidence, that is both situations together, honestly undistinguished.'
+          )}
         </p>
         {evidenceCompleteness ? (
           <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <SummaryStat label="Jednostek łącznie" value={evidenceCompleteness.totalUnits} />
-            <SummaryStat label="Z przyjętym dowodem" value={evidenceCompleteness.unitsWithAcceptedEvidence} />
-            <SummaryStat label="Bez przyjętego dowodu" value={evidenceCompleteness.unitsMissingEvidence} />
             <SummaryStat
-              label="Kompletność dowodowa"
+              label={t('assessment.report.noKnowledge.totalUnits', 'Units in total')}
+              value={evidenceCompleteness.totalUnits}
+            />
+            <SummaryStat
+              label={t('assessment.report.noKnowledge.withAccepted', 'With accepted evidence')}
+              value={evidenceCompleteness.unitsWithAcceptedEvidence}
+            />
+            <SummaryStat
+              label={t('assessment.report.noKnowledge.withoutAccepted', 'Without accepted evidence')}
+              value={evidenceCompleteness.unitsMissingEvidence}
+            />
+            <SummaryStat
+              label={t('assessment.report.noKnowledge.completeness', 'Evidence completeness')}
               value={`${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%`}
             />
           </div>
         ) : null}
         {unitsWithoutFinding.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Każda oceniana jednostka ma przyjęty dowód.</p>
+          <p className="text-xs italic text-c-text-muted">
+            {t(
+              'assessment.report.noKnowledge.allCovered',
+              'Every assessed unit has accepted evidence.'
+            )}
+          </p>
         ) : (
           <ul className="flex flex-wrap gap-1.5">
             {unitsWithoutFinding.map((unitId) => {
@@ -1261,25 +1514,31 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       </SectionCard>
 
       {/* ── 6. Dowody ───────────────────────────────────────────────────── */}
-      <SectionCard id="evidence" title="Dowody" icon={FileWarning}>
+      <SectionCard
+        id="evidence"
+        title={t('assessment.report.evidence.title', 'Evidence')}
+        icon={FileWarning}
+      >
         {evidenceRows.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Ten Output nie ma zarejestrowanych dowodów.</p>
+          <p className="text-xs italic text-c-text-muted">
+            {t('assessment.report.evidence.none', 'This Output has no registered evidence.')}
+          </p>
         ) : (
           <StandardTable
             columns={[
-              { id: 'unitName', label: 'Kryterium', render: (row) => (
+              { id: 'unitName', label: t('assessment.report.evidence.criterion', 'Criterion'), render: (row) => (
                 <span className="text-xs text-c-text">
                   {row.unitName as string} <span className="font-mono text-c-text-muted">({row.unitId as string})</span>
                 </span>
               ) },
-              { id: 'evidenceType', label: 'Typ dowodu', width: '140px' },
+              { id: 'evidenceType', label: t('assessment.report.evidence.type', 'Evidence type'), width: '140px' },
               {
                 id: 'strength',
-                label: 'Siła',
+                label: t('assessment.report.evidence.strength', 'Strength'),
                 width: '90px',
                 render: (row) => <span className="font-mono text-xs">{row.strength as string}</span>,
               },
-              { id: 'locator', label: 'Lokalizacja / odniesienie', render: (row) => (
+              { id: 'locator', label: t('assessment.report.evidence.locator', 'Location / reference'), render: (row) => (
                 <span className="truncate font-mono text-[11px] text-c-text-muted">{row.locator as string}</span>
               ) },
             ]}
@@ -1296,37 +1555,73 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="podsumowanie"
         number={4}
-        title="Podsumowanie"
+        title={t('assessment.report.chapter4.title', 'Summary')}
         icon={Target}
-        lede="Domknięcie: obraz całości i kolejność działań wynikająca z przyjętych poziomów."
+        lede={t(
+          'assessment.report.chapter4.lede',
+          'Closing: the whole picture and the order of actions that follows from the accepted levels.'
+        )}
       >
-        <SectionCard id="closing" title="Obraz całości">
+        <SectionCard
+          id="closing"
+          title={t('assessment.report.closing.title', 'The whole picture')}
+        >
           <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
             <p>
-              Ocena objęła {unitIds.length}
-              {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
-              {axisNarratives.length > 0 ? <> w {axesCoveredCount} z {axisNarratives.length} osi</> : null}.
-              W {jednostkiBezLuki.length} obszarach organizacja jest na poziomie docelowym lub powyżej;
-              w {jednostkiZLuka.length} pozostaje luka
-              {najwiekszaLuka
-                ? (
-                    <>
-                      , największa na obszarze{' '}
-                      <strong className="text-c-text">{nazwaJednostki(najwiekszaLuka.id)}</strong>{' '}
-                      ({najwiekszaLuka.gap} {najwiekszaLuka.gap === 1 ? 'poziom' : 'poziomy'})
-                    </>
-                  )
-                : null}
+              {t(
+                'assessment.report.closing.coverage',
+                'The assessment covered {{units}}{{ofTotal}} areas{{inAxes}}. In {{withoutGap}} areas the organisation is at or above the target level; in {{withGap}} a gap remains',
+                {
+                  units: unitIds.length,
+                  ofTotal:
+                    totalMethodAreas > 0
+                      ? t('assessment.report.intro.ofTotal', ' of {{total}}', {
+                          total: totalMethodAreas,
+                        })
+                      : '',
+                  inAxes:
+                    axisNarratives.length > 0
+                      ? t('assessment.report.closing.inAxes', ' in {{covered}} of {{total}} axes', {
+                          covered: axesCoveredCount,
+                          total: axisNarratives.length,
+                        })
+                      : '',
+                  withoutGap: jednostkiBezLuki.length,
+                  withGap: jednostkiZLuka.length,
+                }
+              )}
+              {najwiekszaLuka ? (
+                <>
+                  <Trans
+                    i18nKey="assessment.report.closing.largestGap"
+                    defaults=", the largest in the area <1>{{area}}</1> ({{gap}} levels)"
+                    values={{
+                      area: nazwaJednostki(najwiekszaLuka.id),
+                      gap: najwiekszaLuka.gap,
+                    }}
+                    components={[<span key="0" />, <strong key="1" className="text-c-text" />]}
+                  />
+                </>
+              ) : null}
               .
             </p>
             <p>
               {unitsWithoutFinding.length === 0
-                ? 'Każdy oceniany obszar ma przyjęty dowód — wynik można traktować jako udokumentowany w całości.'
-                : `Dla ${unitsWithoutFinding.length} obszarów nie przyjęto dowodu. To nie są zera: to obszary, o których ta ocena nie rozstrzyga, i pierwsza pozycja do domknięcia w kolejnej rundzie.`}
+                ? t(
+                    'assessment.report.closing.allDocumented',
+                    'Every assessed area has accepted evidence — the result can be treated as fully documented.'
+                  )
+                : t(
+                    'assessment.report.closing.someUndocumented',
+                    'For {{count}} areas no evidence was accepted. These are not zeros: they are areas this assessment does not decide about, and the first item to close in the next round.',
+                    { count: unitsWithoutFinding.length }
+                  )}
             </p>
             <p>
-              Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym
-              a docelowym — nie z osobnego modelu priorytetyzacji.
+              {t(
+                'assessment.report.closing.orderRationale',
+                'The order of actions below follows only from the size of the gap between the current and the target level — not from a separate prioritisation model.'
+              )}
             </p>
           </div>
         </SectionCard>
@@ -1343,18 +1638,27 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           narrative.recommendations.length > 0) ? (
           <SectionCard
             id="tresc-raportu-oceny"
-            title="Treść raportu zapisanego w module Ocena"
+            title={t('assessment.report.narrative.title', 'Content of the report saved in the Assessment module')}
             icon={FileText}
           >
             <p className="mb-2.5 text-[11px] text-c-text-muted">
-              Źródło: raport „{narrative.reportName ?? narrative.reportId}"
-              {narrative.reportStatus ? ` (status: ${narrative.reportStatus})` : null} — treść przepisana
-              z zapisu, bez zmian.
+              {t('assessment.report.narrative.source', 'Source: report “{{name}}”', {
+                name: narrative.reportName ?? narrative.reportId,
+              })}
+              {narrative.reportStatus
+                ? t('assessment.report.narrative.status', ' (status: {{status}})', {
+                    status: narrative.reportStatus,
+                  })
+                : null}
+              {t(
+                'assessment.report.narrative.verbatim',
+                ' — content copied from the record, unchanged.'
+              )}
             </p>
             {narrative.executiveSummary ? (
               <div className="mb-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                  Streszczenie dla zarządu
+                  {t('assessment.report.narrative.executiveSummary', 'Executive summary')}
                 </p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-c-text">
                   {narrative.executiveSummary}
@@ -1364,7 +1668,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             {narrative.detailedAnalysis ? (
               <div className="mb-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                  Analiza szczegółowa
+                  {t('assessment.report.narrative.detailedAnalysis', 'Detailed analysis')}
                 </p>
                 <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-c-text">
                   {narrative.detailedAnalysis}
@@ -1374,7 +1678,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             {narrative.recommendations.length > 0 ? (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                  Zapisane pozycje raportu ({narrative.recommendations.length})
+                  {t('assessment.report.narrative.savedItems', 'Saved report items ({{count}})', {
+                    count: narrative.recommendations.length,
+                  })}
                 </p>
                 <ol className="mt-1 list-decimal space-y-1 pl-5 text-xs text-c-text-secondary">
                   {narrative.recommendations.map((r, i) => (
@@ -1386,12 +1692,19 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </SectionCard>
         ) : null}
 
-      <SectionCard id="recommendations" title="Rekomendacje priorytetowe" icon={Lightbulb}>
+      <SectionCard
+        id="recommendations"
+        title={t('assessment.report.recommendations.title', 'Priority recommendations')}
+        icon={Lightbulb}
+      >
         {recommendations.length === 0 ? (
           <p className="text-xs italic text-c-text-muted">
             {zZapisuSesji
-              ? 'Rekomendacje per obszar powstają przy zamrożeniu wyniku (wnioski jądra metodycznego). Ta ocena nie została jeszcze zamrożona — powyżej jest to, co zapisano w raporcie oceny, a luki per obszar widać w zestawieniu zbiorczym w rozdziale 2.'
-              : 'Brak rekomendacji w tym Outpucie.'}
+              ? t(
+                  'assessment.report.recommendations.onFreeze',
+                  'Per-area recommendations are produced when the result is frozen (conclusions of the method kernel). This assessment has not been frozen yet — above is what was saved in the assessment report, and the per-area gaps are visible in the summary table in chapter 2.'
+                )
+              : t('assessment.report.recommendations.none', 'No recommendations in this Output.')}
           </p>
         ) : (
           <ol className="space-y-3">
@@ -1406,17 +1719,29 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                       w podsumowaniu ten sam czerwony znacznik co obszar
                       z luką 3. Ton krytyczny należy się WYŁĄCZNIE luce > 0. */}
                   {f.gap !== null && f.gap > 0 ? (
-                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-danger">luka {f.gap}</span>
+                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-danger">
+                      {t('assessment.report.strengthsGaps.gapValue', 'gap {{gap}}', { gap: f.gap })}
+                    </span>
                   ) : f.gap === 0 ? (
-                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-success">bez luki</span>
+                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-success">
+                      {t('assessment.report.recommendations.noGap', 'no gap')}
+                    </span>
                   ) : null}
                 </div>
                 <p className="mt-1 text-xs text-c-text-secondary">{f.recommendation}</p>
                 {f.priorityRationale ? (
-                  <p className="mt-1 text-[11px] italic text-c-text-muted">Uzasadnienie priorytetu: {f.priorityRationale}</p>
+                  <p className="mt-1 text-[11px] italic text-c-text-muted">
+                    {t('assessment.report.recommendations.priorityRationale', 'Priority rationale: {{value}}', {
+                      value: f.priorityRationale,
+                    })}
+                  </p>
                 ) : null}
                 {f.expectedOutcome ? (
-                  <p className="mt-1 text-[11px] text-c-text-muted">Oczekiwany efekt: {f.expectedOutcome}</p>
+                  <p className="mt-1 text-[11px] text-c-text-muted">
+                    {t('assessment.report.recommendations.expectedOutcome', 'Expected outcome: {{value}}', {
+                      value: f.expectedOutcome,
+                    })}
+                  </p>
                 ) : null}
               </li>
             ))}
@@ -1429,22 +1754,48 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <footer className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-5 text-[11px] text-c-text-muted">
         <p className="mb-2 font-semibold text-c-text-secondary">
           {zZapisuSesji
-            ? 'Ten dokument jest odczytem zapisu sesji oceny. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zapisano w warsztacie. Zamrożenie wyniku nadaje mu niezmienność, skrót treści i ślad zatwierdzenia; ta ocena tego jeszcze nie ma.'
-            : 'Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.'}
+            ? t(
+                'assessment.report.footer.sessionRecord',
+                'This document is a read-out of the assessment session record. The content is not recomputed on display — it shows exactly what was saved in the workshop. Freezing the result gives it immutability, a content hash and an approval trace; this assessment does not have that yet.'
+              )
+            : t(
+                'assessment.report.footer.frozen',
+                'This document is a read-out of the frozen, immutable Output. The content is not recomputed on display — it shows exactly what was approved at the moment of freezing.'
+              )}
         </p>
         {zZapisuSesji ? (
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-            <Property label="Ocena" value={output.scope} />
-            <Property label="Metodyka" value={`${output.methodPackId.toUpperCase()} ${output.methodPackVersion}`} />
-            <Property label="Data utworzenia oceny" value={formatDate(output.createdAt)} />
-            <Property label="Zamrożono" value="—" />
+            <Property label={t('assessment.report.footer.assessment', 'Assessment')} value={output.scope} />
+            <Property
+              label={t('assessment.report.footer.methodology', 'Methodology')}
+              value={`${output.methodPackId.toUpperCase()} ${output.methodPackVersion}`}
+            />
+            <Property
+              label={t('assessment.report.footer.createdAt', 'Assessment created on')}
+              value={formatDate(output.createdAt)}
+            />
+            <Property label={t('assessment.report.footer.frozenAt', 'Frozen')} value="—" />
           </dl>
         ) : (
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-            <Property label="Identyfikator Outputu" value={output.id} mono />
-            <Property label="Skrót treści (hash)" value={output.contentHash} mono />
-            <Property label="Wersja Outputu" value={`v${output.outputVersion}`} />
-            <Property label="Zamrożono" value={formatDateTime(output.frozenAt)} />
+            <Property
+              label={t('assessment.report.footer.outputId', 'Output identifier')}
+              value={output.id}
+              mono
+            />
+            <Property
+              label={t('assessment.report.footer.contentHash', 'Content hash')}
+              value={output.contentHash}
+              mono
+            />
+            <Property
+              label={t('assessment.report.footer.outputVersion', 'Output version')}
+              value={`v${output.outputVersion}`}
+            />
+            <Property
+              label={t('assessment.report.footer.frozenAt', 'Frozen')}
+              value={formatDateTime(output.frozenAt)}
+            />
           </dl>
         )}
       </footer>

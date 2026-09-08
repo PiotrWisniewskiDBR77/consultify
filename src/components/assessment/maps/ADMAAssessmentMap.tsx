@@ -553,13 +553,13 @@ export const ADMAAssessmentMap: React.FC<ADMAAssessmentMapProps> = ({
                   className="w-3 h-3 rounded-full border-2 border-dashed"
                   style={{ backgroundColor: 'rgb(186, 117, 23)', borderColor: 'rgb(186, 117, 23)' }}
                 ></div>
-                Średnia (peers)
+                {t('assessment.admaMap.peerAverage', 'Peer average')}
               </span>
             )}
           </div>
           {averagePeerScores === ADMA_DEFAULT_PEER_SCORES && (
             <p className="text-center text-xs text-slate-400 dark:text-slate-400 mt-2">
-              Średnia (peers) — dane przykładowe
+              {t('assessment.admaMap.peerAverageSample', 'Peer average — sample data')}
             </p>
           )}
         </div>

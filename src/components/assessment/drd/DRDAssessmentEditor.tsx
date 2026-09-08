@@ -1283,7 +1283,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     {isMine && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/30"
-                        title="Assigned to you"
+                        title={t('assessment.drd.editor.assignedToYou', 'Assigned to you')}
                       >
                         <User className="w-3 h-3" />
                         me
@@ -1960,36 +1960,55 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <div className={isExplanationExpanded ? '' : 'line-clamp-2'}>
                               {lvl.description}{' '}
                               <span className="text-slate-500 dark:text-slate-400">
-                                Use evidence (screenshot, report, system log, procedure, KPI) to
-                                justify your choice.
+                                {t(
+                                  'assessment.drd.editor.useEvidence',
+                                  'Use evidence (screenshot, report, system log, procedure, KPI) to justify your choice.'
+                                )}
                               </span>
                             </div>
 
                             {isExplanationExpanded && (
                               <div className="mt-3 space-y-2">
                                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  How to decide
+                                  {t('assessment.drd.editor.howToDecide', 'How to decide')}
                                 </div>
                                 <ul className="space-y-1">
                                   <li>
-                                    <span className="font-semibold">Achieved</span>: this is in
-                                    place and used in practice (not only a pilot).
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.achieved', 'Achieved')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.achievedHint',
+                                      ': this is in place and used in practice (not only a pilot).'
+                                    )}
                                   </li>
                                   <li>
-                                    <span className="font-semibold">Target</span>: desired “to‑be”
-                                    level (planned / roadmap target).
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.target', 'Target')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.targetHint',
+                                      ': the desired “to-be” level (planned / roadmap target).'
+                                    )}
                                   </li>
                                   <li>
-                                    <span className="font-semibold">Skip</span>: explicitly mark
-                                    “not planned” for this level.
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.skip', 'Skip')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.skipHint',
+                                      ': explicitly mark “not planned” for this level.'
+                                    )}
                                   </li>
                                 </ul>
                                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  Tip
+                                  {t('assessment.drd.editor.tip', 'Tip')}
                                 </div>
                                 <div>
-                                  If you’re unsure, add a short comment + attach a quick artifact.
-                                  You can always change your mind later.
+                                  {t(
+                                    'assessment.drd.editor.tipBody',
+                                    'If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later.'
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -2096,14 +2115,17 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                                   >
                                     <Sparkles className="w-3.5 h-3.5" />
-                                    Podpowiedź AI (dlaczego to ważne + jak oceniać)
+                                    {t(
+                                      'assessment.drd.editor.aiGuidanceCta',
+                                      'AI guidance (why it matters + how to score)'
+                                    )}
                                   </button>
                                 );
                               }
                               if (g.loading) {
                                 return (
                                   <div className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-                                    Generuję podpowiedź…
+                                    {t('assessment.drd.editor.generatingGuidance', 'Generating guidance…')}
                                   </div>
                                 );
                               }
@@ -2112,17 +2134,21 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 <div className="mt-3 rounded-lg border border-blue-200/60 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-2 text-sm">
                                   <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                                     <Sparkles className="w-3 h-3" />
-                                    Podpowiedź konsultanta
+                                    {t('assessment.drd.editor.consultantGuidance', 'Consultant guidance')}
                                     <span className="ml-auto font-normal normal-case text-slate-400">
                                       {g.data.source === 'llm' ? 'AI' : 'kanon'}
                                     </span>
                                   </div>
                                   <p className="text-slate-800 dark:text-slate-200">
-                                    <span className="font-semibold">Dlaczego to ważne: </span>
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.whyItMatters', 'Why it matters: ')}
+                                    </span>
                                     {g.data.whyItMatters}
                                   </p>
                                   <p className="text-slate-700 dark:text-slate-300">
-                                    <span className="font-semibold">Jak oceniać poziom: </span>
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.howToScoreLevel', 'How to score this level: ')}
+                                    </span>
                                     {g.data.levelInterpretation}
                                   </p>
                                   <p className="text-slate-600 dark:text-slate-400 text-xs">
@@ -2131,7 +2157,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   </p>
                                   {g.data.pitfalls.length > 0 && (
                                     <p className="text-slate-600 dark:text-slate-400 text-xs">
-                                      <span className="font-semibold">Uważaj na: </span>
+                                      <span className="font-semibold">
+                                        {t('assessment.drd.editor.pitfalls', 'Watch out for: ')}
+                                      </span>
                                       {g.data.pitfalls.join(' · ')}
                                     </p>
                                   )}

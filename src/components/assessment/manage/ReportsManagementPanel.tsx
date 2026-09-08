@@ -33,6 +33,7 @@ import {
 
 import { Api, getHeaders } from '../../../services/api';
 import { LoadingState } from '../../ui/primitives';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ============================================
 // Types
@@ -172,7 +173,7 @@ const STATUS_CONFIG: Record<
 /** Wspólny formatter daty — 1:1 z dawnym formatDate wiersza tabeli (przed migracją do StandardTable). */
 const formatReportDate = (dateStr: string): string => {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('pl-PL', {
+  return date.toLocaleDateString(localeListy(), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

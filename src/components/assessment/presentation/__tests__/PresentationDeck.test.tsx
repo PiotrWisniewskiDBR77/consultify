@@ -28,10 +28,10 @@ describe('PresentationDeck', () => {
     expect(screen.getByTestId('slide-counter').textContent).toBe(`1 / ${PRESENTATION_SLIDE_COUNT}`);
   });
 
-  it('advances with the "Następny" button, up to the last slide, then stops', async () => {
+  it('advances with the "Next" button, up to the last slide, then stops', async () => {
     const user = userEvent.setup();
     renderDeck();
-    const next = screen.getByRole('button', { name: 'Następny slajd' });
+    const next = screen.getByRole('button', { name: 'Next slide' });
     for (let i = 0; i < PRESENTATION_SLIDE_COUNT + 3; i += 1) {
       // eslint-disable-next-line no-await-in-loop -- sequential UI interaction
       await user.click(next);
@@ -40,10 +40,10 @@ describe('PresentationDeck', () => {
     expect(next).toBeDisabled();
   });
 
-  it('goes back with the "Poprzedni" button and never below slide 1', async () => {
+  it('goes back with the "Previous" button and never below slide 1', async () => {
     const user = userEvent.setup();
     renderDeck();
-    const prev = screen.getByRole('button', { name: 'Poprzedni slajd' });
+    const prev = screen.getByRole('button', { name: 'Previous slide' });
     expect(prev).toBeDisabled();
     await user.click(prev);
     expect(screen.getByTestId('slide-counter').textContent).toBe(`1 / ${PRESENTATION_SLIDE_COUNT}`);

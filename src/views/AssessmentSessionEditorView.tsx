@@ -51,6 +51,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 type SupportedFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
 
@@ -356,6 +357,7 @@ function calcCompletionPercent(framework: string, answers: Record<string, any>):
 }
 
 export const AssessmentSessionEditorView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl') ?? false;
@@ -1764,7 +1766,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       <div className="h-full flex items-center justify-center bg-c-bg">
         <div className="flex items-center gap-3 text-c-text-muted">
           <Loader2 className="w-5 h-5 animate-spin" />
-          Loading assessment…
+          {t('assessment.sessionEditor.loading', 'Loading assessment…')}
         </div>
       </div>
     );
@@ -1779,7 +1781,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             onClick={() => navigate('/assessment/overview')}
             className="px-4 py-2 rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition-colors"
           >
-            Back to Assessment
+            {t('assessment.sessionEditor.backToAssessment', 'Back to Assessment')}
           </button>
         </div>
       </div>
@@ -2035,7 +2037,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             <button
               onClick={() => navigate('/assessment/overview')}
               className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-c-border-subtle bg-white/70 dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              aria-label="Back to Assessment"
+              aria-label={t('assessment.sessionEditor.backToAssessment', 'Back to Assessment')}
               type="button"
             >
               <ArrowLeft className="w-4 h-4 text-slate-500" />
@@ -2217,7 +2219,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
               onClick={handleExitClick}
               disabled={isExiting}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold transition-colors"
-              title="Save and exit"
+              title={t('assessment.sessionEditor.saveAndExit', 'Save and exit')}
               type="button"
             >
               {isExiting ? (
@@ -2405,7 +2407,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                    What to do next
+                    {t('assessment.sessionEditor.whatToDoNext', 'What to do next')}
                   </div>
                   <div className="mt-2 space-y-2">
                     {(sessionWorkbenchNextSteps.length
@@ -2439,14 +2441,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
                       onClick={() => void handleOpenChat()}
                       className="w-full rounded-lg border border-c-border px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
-                      Continue in Chat with the same assessment context
+                      {t(
+                        'assessment.sessionEditor.continueInChat',
+                        'Continue in Chat with the same assessment context'
+                      )}
                     </button>
                     <button
                       type="button"
                       onClick={handleOpenReportWorkflow}
                       className="w-full rounded-lg border border-c-border px-3 py-2 text-left text-sm text-c-text-secondary hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
-                      Prepare a report from this run
+                      {t('assessment.sessionEditor.prepareReport', 'Prepare a report from this run')}
                     </button>
                     <button
                       type="button"
@@ -2593,7 +2598,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </span>
                   <div className="mt-1 text-sm">
                     {assessment?.created_at
-                      ? new Date(assessment.created_at).toLocaleString()
+                      ? formatListDateTime(assessment.created_at)
                       : '—'}
                   </div>
                 </div>
@@ -2603,7 +2608,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </span>
                   <div className="mt-1 text-sm">
                     {assessment?.updated_at
-                      ? new Date(assessment.updated_at).toLocaleString()
+                      ? formatListDateTime(assessment.updated_at)
                       : '—'}
                   </div>
                 </div>
@@ -2701,10 +2706,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
               <div>
                 <div className="text-base font-semibold text-c-text">
-                  Attach context from general chat
+                  {t('assessment.sessionEditor.attachContext', 'Attach context from general chat')}
                 </div>
                 <div className="text-xs text-c-text-muted">
-                  This will store a reference + last messages in assessment context.
+                  {t(
+                    'assessment.sessionEditor.attachContextHint',
+                    'This will store a reference + the last messages in the assessment context.'
+                  )}
                 </div>
               </div>
               <button
@@ -2784,7 +2792,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <div className="mt-4 rounded-xl border border-c-border overflow-hidden">
                 <div className="max-h-[420px] overflow-auto">
                   {chatLoading ? (
-                    <div className="p-6 text-sm text-c-text-muted">Loading…</div>
+                    <div className="p-6 text-sm text-c-text-muted">
+                      {t('assessment.sessionEditor.loadingShort', 'Loading…')}
+                    </div>
                   ) : chatConversations.length === 0 ? (
                     <div className="p-6 text-sm text-c-text-muted">No conversations found.</div>
                   ) : (
@@ -2850,7 +2860,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
             <div className="p-5">
               <p className="text-sm text-c-text-secondary mb-6">
-                Do you want to save your changes before exiting?
+                {t('assessment.sessionEditor.saveBeforeExit', 'Do you want to save your changes before exiting?')}
               </p>
 
               <div className="flex items-center gap-3">

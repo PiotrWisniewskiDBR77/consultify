@@ -447,7 +447,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Lean Maturity */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Lean Maturity (Dojrzałość Lean)
+                {t('assessment.lean.leanMaturity', 'Lean Maturity')}
               </label>
               {renderLevelSelector(process.leanMaturity, (level) =>
                 handleProcessScoreChange(index, 'leanMaturity', level)
@@ -457,7 +457,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Automation Potential */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Automation Potential (Potencjał Automatyzacji)
+                {t('assessment.lean.automationPotential', 'Automation Potential')}
               </label>
               {renderLevelSelector(process.automationPotential, (level) =>
                 handleProcessScoreChange(index, 'automationPotential', level)
@@ -534,7 +534,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Lean Maturity */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Lean Maturity (Dojrzałość Lean)
+                {t('assessment.lean.leanMaturity', 'Lean Maturity')}
               </label>
               {renderLevelSelector(workstation.leanMaturity, (level) =>
                 handleWorkstationScoreChange(index, 'leanMaturity', level)
@@ -544,7 +544,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Automation Potential */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Automation Potential (Potencjał Automatyzacji)
+                {t('assessment.lean.automationPotential', 'Automation Potential')}
               </label>
               {renderLevelSelector(workstation.automationPotential, (level) =>
                 handleWorkstationScoreChange(index, 'automationPotential', level)

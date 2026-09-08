@@ -25,6 +25,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 // ============================================
 // TYPES
@@ -135,6 +137,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
   onAssessmentCreated,
   onInitiativesCreated,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [data, setData] = useState<ImportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -222,7 +225,13 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
 
   // Loading state
   if (isLoading) {
-    return <LoadingState variant="spinner" className="h-full" label="Loading imported report..." />;
+    return (
+      <LoadingState
+        variant="spinner"
+        className="h-full"
+        label={t('assessment.importedReport.loading', 'Loading the imported report…')}
+      />
+    );
   }
 
   // Error state
@@ -231,12 +240,14 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-danger-400 mx-auto mb-3" />
-          <p className="text-sm text-danger-400 mb-4">{error || 'Report not found'}</p>
+          <p className="text-sm text-danger-400 mb-4">
+            {error || t('assessment.importedReport.notFound', 'Report not found')}
+          </p>
           <button
             onClick={onBack}
             className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
           >
-            Back to List
+            {t('assessment.hub.backToList', 'Back to list')}
           </button>
         </div>
       </div>
@@ -281,7 +292,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {data.detectedFramework} · Uploaded{' '}
-              {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : ''}
+              {data.createdAt ? formatListDate(data.createdAt) : ''}
             </p>
           </div>
         </div>

@@ -30,6 +30,10 @@ import {
   CMMICategoryConfig,
 } from '../../../../services/cmmiStructure';
 import { CMMIAssessmentData, CMMICategoryId } from '../../../../types';
+import { formatListDate } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
+
+import { nazwaWJezyku } from '../../drd/drdNazwa';
 
 interface CMMIReportTemplateProps {
   data: CMMIAssessmentData;
@@ -72,6 +76,8 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
   assessmentDate,
   showLegalNotice = true,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const currentLevel = CMMI_MATURITY_LEVELS.find((l) => l.level === data.maturityLevel);
 
   // Calculate category scores
@@ -116,7 +122,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
               {organizationName}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+              {assessmentDate || formatListDate(new Date())}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
               Model: {data.metadata?.model || 'DEV'}
@@ -130,10 +136,16 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 mb-8 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>CMMI®</strong> jest znakiem towarowym <strong>ISACA</strong> (dawniej CMMI
-            Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego{' '}
-            <strong>Lead Appraiser</strong>. Implementacja w Consultify służy wyłącznie celom
-            edukacyjnym i wewnętrznej samooceny.
+            <strong>CMMI®</strong>{' '}
+            {t(
+              'assessment.reportTemplates.cmmi.legalNoticeA',
+              'is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited'
+            )}{' '}
+            <strong>Lead Appraiser</strong>
+            {t(
+              'assessment.reportTemplates.cmmi.legalNoticeB',
+              '. The implementation in Consultify serves educational and internal self-assessment purposes only.'
+            )}
           </div>
         </div>
       )}
@@ -142,7 +154,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Shield size={20} />
-          Poziom Dojrzałości Organizacji
+          {t('assessment.reportTemplates.cmmi.maturityLevelTitle', 'Organisation maturity level')}
         </h2>
         <div className="grid grid-cols-5 gap-2 mb-6">
           {CMMI_MATURITY_LEVELS.map((level) => (
@@ -287,7 +299,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       {/* Practice Areas Matrix */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">
-          Macierz Obszarów Praktyk
+          {t('assessment.reportTemplates.cmmi.practiceAreaMatrix', 'Practice area matrix')}
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl overflow-hidden">
           <table
@@ -437,19 +449,23 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       {/* Next Steps */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">
-          Rekomendowane Następne Kroki
+          {t('assessment.reportTemplates.common.recommendedNextSteps', 'Recommended next steps')}
         </h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
             <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2">
-              Krótkoterminowe (0-6 mies.)
+              {t('assessment.reportTemplates.common.shortTerm', 'Short term (0–6 months)')}
             </h4>
             <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
               {topPriorities.slice(0, 3).map((pa) => (
                 <li key={pa.id} className="flex items-start gap-2">
                   <CheckCircle size={14} className="mt-0.5 shrink-0" />
                   <span>
-                    Doskonalenie {pa.namePL} ({pa.code}) do poziomu {Math.min(pa.current + 1, 5)}
+                    {t('assessment.reportTemplates.cmmi.improveTo', 'Improve {{name}} ({{code}}) to level {{level}}', {
+                      name: nazwaWJezyku(pa.namePL, pa.name, isPolish),
+                      code: pa.code,
+                      level: Math.min(pa.current + 1, 5),
+                    })}
                   </span>
                 </li>
               ))}
@@ -457,20 +473,26 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
           </div>
           <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4">
             <h4 className="font-bold text-primary-900 dark:text-primary-300 mb-2">
-              Długoterminowe (6-18 mies.)
+              {t('assessment.reportTemplates.common.longTerm', 'Long term (6–18 months)')}
             </h4>
             <ul className="space-y-2 text-sm text-primary-800 dark:text-primary-200">
               <li className="flex items-start gap-2">
                 <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                <span>Osiągnięcie poziomu {Math.min(data.maturityLevel + 1, 5)} CMMI</span>
+                <span>
+                  {t('assessment.reportTemplates.cmmi.reachLevel', 'Reach CMMI level {{level}}', {
+                    level: Math.min(data.maturityLevel + 1, 5),
+                  })}
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                <span>Wdrożenie pomiarów ilościowych procesów</span>
+                <span>
+                  {t('assessment.reportTemplates.cmmi.quantitativeMeasures', 'Introduce quantitative process measurement')}
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                <span>Rozważenie formalnej certyfikacji CMMI</span>
+                <span>{t('assessment.reportTemplates.cmmi.formalCertification', 'Consider formal CMMI certification')}</span>
               </li>
             </ul>
           </div>
@@ -479,7 +501,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">CMMI Assessment (Educational) • {organizationName}</p>
         <p className="mt-1 text-[10px]">CMMI® is a registered trademark of ISACA</p>
       </footer>

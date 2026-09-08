@@ -8734,6 +8734,22 @@
         "noOrganization": "Organization context is missing",
         "version": "Unsupported report contract version",
         "generic": "Could not load the report"
+      },
+      "notFrozen": {
+        "title": "The result has not been frozen yet",
+        "description": "This report renders only the frozen, immutable Output of an assessment session. The session is still in progress (draft/active/in_review) — the report appears exactly at the moment the result is frozen, not earlier."
+      },
+      "notFound": {
+        "title": "Frozen Output not found",
+        "description": "This Output identifier does not exist or does not belong to this organisation."
+      },
+      "forbidden": {
+        "title": "No access to this result",
+        "description": "This account has no permission to view this Output."
+      },
+      "error": {
+        "title": "The report could not be loaded",
+        "description": "Try again in a moment."
       }
     },
     "hub": {
@@ -8755,7 +8771,38 @@
         "updatedAt": "Updated",
         "score": "Score",
         "confidence": "Confidence",
-        "businessUnit": "Business unit"
+        "businessUnit": "Business unit",
+        "type": "Type",
+        "name": "Name",
+        "progressHeader": "Progress",
+        "updated": "Updated",
+        "status": "Status",
+        "sourceReport": "Source report",
+        "priority": "Priority",
+        "priorityLevel": {
+          "critical": "Urgent",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        },
+        "initiativeStatus": {
+          "draft": "Draft",
+          "review": "In review",
+          "planning": "Planning",
+          "approved": "Approved",
+          "executing": "In progress",
+          "cancelled": "Cancelled"
+        },
+        "importStatus": {
+          "pending": "Uploaded",
+          "detecting": "Detecting…",
+          "extracting": "Extracting…",
+          "readyForReview": "Ready for review",
+          "assessmentCreated": "Assessment created",
+          "initiativesCreated": "Initiatives created",
+          "completed": "Completed",
+          "failed": "Failed"
+        }
       },
       "editNoteImported": "Edit via the imported-PDF review flow",
       "triagePrompt": "Give me an AI pre-screen of the \"{{lane}}\" list ({{count}} items): what needs attention first, and why?",
@@ -8794,7 +8841,7 @@
       "newConclusion": "New conclusion",
       "newInitiative": "New initiative",
       "uploadPdf": "Upload PDF",
-      "uploadPdfTooltip": "Upload a DRD report (PDF)",
+      "uploadPdfTooltip": "Upload a DRD report as PDF",
       "reportPreview": {
         "notFound": "The report could not be loaded — it was not found or is temporarily unavailable.",
         "statusDescription": {
@@ -8819,12 +8866,22 @@
         "reportScope": "Report Scope",
         "sectionFallback": "Section {{n}}",
         "moreSections": "+{{count}} more sections"
-      }
+      },
+      "backToList": "Back to list"
     },
     "newModal": {
       "comingSoonBadge": "Coming soon",
       "comingSoonToast": "This framework is coming soon.",
-      "comingSoonError": "This framework is coming soon and cannot be started yet."
+      "comingSoonError": "This framework is coming soon and cannot be started yet.",
+      "nameHint": "Give your assessment a descriptive name",
+      "descriptionPlaceholder": "Describe the scope and objectives of this assessment…",
+      "descriptionHint": "Optional context for this assessment",
+      "canonicalLabel": "The canonical session label will be assigned from its Method Core identifier.",
+      "back": "Back",
+      "selectFramework": "Select framework",
+      "newAssessment": "New assessment",
+      "selectFrameworkHint": "Choose an assessment framework to get started",
+      "creating": "Creating {{framework}} assessment"
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -8881,44 +8938,154 @@
       "title": "Assessment quality review",
       "intro1Prefix": "This screen checks the",
       "quality": "quality",
-      "intro1Suffix": "of a completed assessment: how many areas have evidence, where evidence is missing, and whether the reviewer accepts the assessment. You can add evidence and make a decision here — but no level is set here.",
+      "intro1Suffix": "of a finished assessment: how many areas have evidence, where evidence is missing, and whether the reviewer accepts the assessment. You can add evidence and record a decision here — but no level is set on this screen.",
       "notMatrix": "This is not the assessment matrix",
-      "notMatrixSuffix": "and doesn't replace it. The matrix (areas × levels) is the working tool — that's where the current and target level of each area is set. The table below is a read-out of its result, collapsed to the per-axis average.",
+      "notMatrixSuffix": "and it does not replace it. The matrix (areas × levels) is the working tool — that is where the current and target level of every area is set. The table below reads out its result, collapsed to an average per axis.",
       "openMatrix": "Open the assessment matrix",
-      "openMatrixHint": "Opens this assessment's session; the matrix is there under the \"Matrix\" switch in the header."
+      "openMatrixHint": "Opens the session of this assessment; the matrix is there under the “Matrix” switch in the header.",
+      "table": {
+        "axis": "Axis",
+        "achieved": "Achieved",
+        "target": "Target",
+        "gap": "Gap",
+        "evidence": "Evidence"
+      },
+      "errors": {
+        "load": "The review data could not be loaded",
+        "addEvidence": "The evidence could not be added",
+        "accept": "The assessment could not be accepted",
+        "return": "The assessment could not be sent back"
+      },
+      "loading": "Loading…",
+      "scoring": {
+        "title": "Scoring and evidence coverage",
+        "subtitle": "A read-out of the matrix, collapsed to an average per axis — this is not where levels are edited.",
+        "unavailable": "This assessment has no computed evidence coverage — today coverage is computed for the DRD framework."
+      },
+      "matrix": {
+        "title": "DRD assessment matrix · axis {{axis}}",
+        "hint": "Click a cell to pick an area and a level for review. Levels are changed in the assessment session.",
+        "selected": "{{area}} · level {{level}}",
+        "rowHint": "Click to select for review",
+        "overflowHint": "{{count}} more columns to the right — scroll sideways."
+      },
+      "tiles": {
+        "completeness": "Completeness",
+        "avgAchieved": "Avg. level achieved"
+      },
+      "evidence": {
+        "addTitle": "Add evidence",
+        "axisLabel": "DRD axis",
+        "areaLabel": "Area",
+        "typeLabel": "Evidence type",
+        "typeNote": "Note",
+        "typeLink": "Link",
+        "typeDocument": "Document",
+        "typeReference": "Reference",
+        "titlePlaceholder": "Evidence title",
+        "descriptionPlaceholder": "Description (optional)",
+        "urlPlaceholder": "URL (optional)",
+        "adding": "Adding…",
+        "itemMeta": "· axis {{axis}}/{{area}} · {{type}}"
+      },
+      "decision": {
+        "title": "Reviewer decision",
+        "rationalePlaceholder": "Decision rationale (required)",
+        "accept": "Accept",
+        "return": "Send back for correction",
+        "accepted": "Accepted",
+        "returned": "Sent back"
+      },
+      "acceptedBy": "Accepted {{date}} by {{who}}",
+      "noAcceptedOutput": "This assessment has no accepted output yet."
     },
     "presentation": {
-      "methodPack": "Method Pack",
-      "frozenAt": "Frozen on",
+      "methodPack": "Method pack",
+      "frozenAt": "Frozen at",
       "outputVersion": "Output version",
-      "ariaLabel": "Maturity assessment presentation",
+      "ariaLabel": "Maturity assessment result presentation",
       "prevSlide": "Previous slide",
       "prev": "Previous",
       "exitFullscreen": "Exit full screen",
       "fullscreen": "Full screen",
       "fullscreenTitle": "Full screen (F)",
       "nextSlide": "Next slide",
-      "next": "Next"
+      "next": "Next",
+      "purpose": {
+        "kicker": "Purpose of the assessment",
+        "title": "Why we ran this assessment",
+        "missingQuestion": "The business question was not recorded in the frozen Output — to be filled in by the consultant before the meeting."
+      },
+      "method": {
+        "kicker": "Method",
+        "title": "How we assessed",
+        "credibility": "Credibility (accepted evidence)",
+        "aggregationRule": "Aggregation rule",
+        "missingParticipants": "The participant list is not part of the frozen Output — to be filled in by the consultant.",
+        "limitations": "Limitations: {{list}}"
+      },
+      "overall": {
+        "kicker": "Result",
+        "title": "Overall result",
+        "caption": "Mean maturity level per dimension (native scale of the {{pack}} pack, aggregation rule “{{rule}}”, mapping version {{mapping}})."
+      },
+      "profile": {
+        "kicker": "Profile",
+        "title": "Profile per dimension",
+        "empty": "The Output contains no aggregated results per dimension."
+      },
+      "matrix": {
+        "kicker": "Matrix · axis {{number}}",
+        "footnote": "{{assessed}} of {{total}} areas assessed · scale 1–{{levels}} · cumulative fill · chip “AS” = current state, “TO” = target."
+      },
+      "more": "+{{count}} more",
+      "strengths": {
+        "kicker": "Strengths",
+        "title": "What already works",
+        "empty": "No unit has reached its target level yet in the accepted findings of this Output."
+      },
+      "gaps": {
+        "kicker": "Gaps and risks",
+        "title": "Where the biggest risk is",
+        "empty": "No accepted finding with a gap above zero in this Output."
+      },
+      "unknowns": {
+        "kicker": "Blind spots",
+        "title": "Areas without evidence",
+        "lede": "Missing accepted evidence is a separate, valuable finding — not a hole in the data.",
+        "unitsWithout": "Units without accepted evidence",
+        "dontKnow": "We do not know (dont_know)",
+        "noEvidence": "We know, no documentation (no_evidence)",
+        "noUnresolved": "No units with an unresolved current level.",
+        "noBreakdown": "This Output does not distinguish the reason for missing evidence — “we do not know” (dont_know) and “we know but never documented it” (no_evidence) are one aggregated number here. Those are two different conversations with the board; telling them apart needs insight beyond this frozen Output.",
+        "draftFindings": "In addition, {{count}} findings in this Output are drafts (evidence not accepted) and do not enter the content of this deck."
+      },
+      "nextSteps": {
+        "kicker": "What next",
+        "title": "Recommendations and the next step",
+        "empty": "No recommendations in the accepted findings of this Output.",
+        "more": "+{{count}} more recommendations in the full Output"
+      }
     },
     "report": {
       "lifecycleSuperseded": "Frozen — superseded by a newer revision",
       "lifecycleFrozen": "Frozen (immutable)",
-      "demoBypassBanner": "This Output comes from a session created in demo mode (readiness gate bypassed). This is NOT a production result — it can't be presented as an approved pilot/production result.",
+      "demoBypassBanner": "This Output comes from a session created in demo mode (the pack readiness gate was bypassed). This is NOT a production result — it must not be presented as an approved pilot or production outcome.",
       "title": "Maturity assessment report",
       "demoMode": "Demo mode",
       "project": "Project",
       "noProject": "No project assigned",
       "session": "Session",
       "outputVersion": "Output version",
-      "frozenAt": "Frozen on",
+      "frozenAt": "Frozen at",
       "approvedBy": "Approved by",
-      "noApproval": "No recorded approval",
+      "noApproval": "No approval recorded",
       "module": "Module",
-      "supersededNotice": "This Output was superseded by a newer revision{{suffix}}. The content below remains an immutable record of THIS revision — it is not updated.",
+      "supersededNotice": "This Output has been superseded by a newer revision{{suffix}}. The content below stays the immutable record of THIS revision — it is not updated.",
       "chapter1": {
-        "title": "How the assessment was conducted",
-        "lede": "Scope, mode, and the reliability boundaries of this assessment — before the first number appears.",
-        "courseTitle": "Assessment course"
+        "title": "How the assessment was run",
+        "lede": "Scope, mode and the credibility limits of this assessment — before the first number.",
+        "courseTitle": "How the assessment progressed"
       },
       "strengths": "Key Strengths",
       "dataGaps": "Data Gaps & Follow-up Items",
@@ -8936,8 +9103,165 @@
         "pptx": "Download deck (PPTX)",
         "pdf": "Download deck (PDF)",
         "inProgress": "Preparing the file…",
-        "error": "Could not download the file — code: {{code}}"
-      }
+        "error": "The file could not be downloaded — code: {{code}}"
+      },
+      "lifecycleSessionRecord": "Assessment session record — not frozen yet",
+      "methodologySourceEn": "Source: the DRD methodology in its English original — this axis has no Polish translation in the pack yet.",
+      "area": {
+        "currentLevel": "Current level {{level}} — {{title}}",
+        "currentUnresolved": "The current level was not determined in this assessment.",
+        "levelDefinitionMissing": "The methodology pinned in this Output carries no definition of this level.",
+        "targetLevel": "Target level {{level}} — {{title}}",
+        "targetReached": "Target level {{level}} — reached; definition as above.",
+        "assessmentNote": "Assessment note",
+        "noAcceptedEvidence": "No accepted evidence for this area — the numbers above come from the session record, but are not backed by accepted evidence material."
+      },
+      "axis": {
+        "eyebrow": "Axis {{number}} of 7 · scale 1–{{levels}} · {{areas}} areas",
+        "assessedCount": "{{assessed}} of {{total}} areas of this axis assessed.",
+        "axisScore": "Axis score: {{score}} (scale 1–{{levels}}).",
+        "scoreOnFreeze": "The axis score is produced when the assessment is frozen — this assessment has not been frozen yet.",
+        "scoreMissing": "The frozen Output carries no aggregated score for this axis.",
+        "noAreaAssessed": "No area of this axis was covered by this assessment. The axis stays in the document so the reader can see what the study did not touch — dropping the chapter would change the perceived scope of the assessment.",
+        "notAssessedAreas": "Areas of this axis not covered ({{count}})"
+      },
+      "table": {
+        "unitName": "Assessment unit",
+        "levels": "Current / Target",
+        "gap": "Gap",
+        "band": "Position on the scale",
+        "evidence": "Evidence",
+        "evidenceConfirmed": "Confirmed by evidence",
+        "evidenceMissing": "No evidence"
+      },
+      "surveyMode": {
+        "teresaLed": "The session was led by the assistant (Teresa), with every step recorded in the event store.",
+        "guidedManual": "The session was led by a consultant — answers and evidence entered manually during the session.",
+        "unknown": "The way the session was run was not recorded in the metadata."
+      },
+      "moduleAssessment": "Assessment",
+      "intro": {
+        "methodAxes": "— {{axes}} transformation axes, {{areas}} analytical areas in total, each axis on its own maturity scale ({{scales}} levels).",
+        "ofTotal": " of {{total}}",
+        "evidenceSplit": ". For {{withEvidence}} of them the organisation provided evidence that was accepted; for {{withoutEvidence}} no evidence was accepted — those areas are listed by name in chapter 3 and are not counted as zero.",
+        "completeness": "The evidence completeness of this assessment is {{percent}}%.",
+        "notFrozenYet": "This result has not been frozen yet — it comes from the assessment session record",
+        "frozenAt": "The result was frozen on {{date}}",
+        "sessionOpened": ", the session was opened on {{date}}",
+        "approvalRecorded": "The approval was recorded on {{date}} (revision {{revision}})",
+        "approvalComment": " — “{{comment}}”",
+        "readOfSessionRecord": " the document is a read-out of the session record, not an approved result.",
+        "readOfFrozen": " the document is a read-out of the frozen result, not an approved result.",
+        "method": "The assessment was carried out with the <1>{{method}}</1> methodology, pack version <3>{{version}}</3>",
+        "coverage": "The study covered <1>{{units}}</1>{{ofTotal}} areas",
+        "coverageAxes": "in <1>{{covered}}</1> of {{total}} axes",
+        "noApprovalRecorded": "For this revision <1>no approval was recorded</1> —",
+        "noApprovalPrefix": "For this revision ",
+        "noApprovalStrong": "no approval was recorded"
+      },
+      "props": {
+        "sessionOwner": "Session owner",
+        "sessionOpened": "Session opened",
+        "resultFrozen": "Result frozen",
+        "sessionRevision": "Session revision"
+      },
+      "limitationsTitle": "Limitations and assumptions",
+      "chapter2": {
+        "titleSeven": "The seven axes of the methodology",
+        "title": "Axes of the methodology ({{count}})",
+        "lede": "For every axis: what the axis is, and then each of its analytical areas — with the definition of the current and the target level."
+      },
+      "overall": {
+        "title": "Overall result",
+        "unitsAssessed": "Units assessed",
+        "withEvidence": "With confirmed evidence",
+        "withoutEvidence": "Without accepted evidence",
+        "unitsWithGap": "Units with a gap",
+        "perDimension": "Result per dimension (axis)",
+        "aggregationOnFreeze": "The aggregated result per dimension (axis) is produced when the assessment is frozen — this assessment has not been frozen yet, so it is not here. We do not compute a stand-in, so that the document never states a number nobody approved. Below is the full result per unit, which such an aggregation would be built from.",
+        "aggregationMissing": "This Output carries no aggregated result per dimension (axis) — the kernel computes that aggregation outside the moment of freezing (see “Limitations and assumptions” above). Below is the full result per unit, which such an aggregation would be built from."
+      },
+      "axisNarrativesUnavailable": "Axis and level descriptions are available only for a DRD pack whose version matches the one pinned in this Output ({{packId}} {{packVersion}}). This Output pins a version the compiled pack does not know — so the document shows the numbers alone, without methodology definitions, rather than describing levels from a different version of the methodology than the one assessed.",
+      "unmapped": {
+        "title": "Units outside the axis structure",
+        "body": "These units cannot be mapped to any axis of the methodology pinned in this Output. They are listed so that they do not fall out of the document between chapters."
+      },
+      "dimensionsTitle": "Summary table of all units",
+      "chapter3": {
+        "title": "Answers and the initial palette of conclusions",
+        "lede": "What the organisation showed as evidence, what it did not show, and what follows from that.",
+        "banner": "A frozen Output carries <1>the accepted level and the evidence</1>, not the literal text of the session answers — that stays in the session event record. What follows is therefore what the document really holds: the evidence material per area, the areas without evidence, and the conclusions derived from the accepted levels.",
+        "bannerPrefix": "A frozen Output carries ",
+        "bannerStrong": "the accepted level and the evidence",
+        "bannerSuffix": ", not the literal text of the session answers — that stays in the session event record. What follows is therefore what the document really holds: the evidence material per area, the areas without evidence, and the conclusions derived from the accepted levels."
+      },
+      "strengthsGaps": {
+        "title": "Strengths and gaps",
+        "strengths": "Strengths ({{count}})",
+        "noStrengths": "No units without a gap in this Output.",
+        "gaps": "Gaps ({{count}})",
+        "noGaps": "No gaps identified in this Output.",
+        "gapValue": "gap {{gap}}"
+      },
+      "noKnowledge": {
+        "body": "This is not “zero points” — it is a separate, diagnostic category: at the time of the assessment the organisation could not provide sufficient evidence for the units below. A frozen Output does not today distinguish “answered I don’t know” from “nobody has answered yet” at the level of a single unit (see “Limitations and assumptions”) — the list below shows the units WITHOUT accepted evidence, that is both situations together, honestly undistinguished.",
+        "totalUnits": "Units in total",
+        "withAccepted": "With accepted evidence",
+        "withoutAccepted": "Without accepted evidence",
+        "completeness": "Evidence completeness",
+        "allCovered": "Every assessed unit has accepted evidence.",
+        "title": "Knowledge missing in the organisation (“don’t know” / no evidence)"
+      },
+      "evidence": {
+        "title": "Evidence",
+        "none": "This Output has no registered evidence.",
+        "criterion": "Criterion",
+        "type": "Evidence type",
+        "strength": "Strength",
+        "locator": "Location / reference"
+      },
+      "chapter4": {
+        "lede": "Closing: the whole picture and the order of actions that follows from the accepted levels.",
+        "title": "Summary"
+      },
+      "closing": {
+        "title": "The whole picture",
+        "coverage": "The assessment covered {{units}}{{ofTotal}} areas{{inAxes}}. In {{withoutGap}} areas the organisation is at or above the target level; in {{withGap}} a gap remains",
+        "inAxes": " in {{covered}} of {{total}} axes",
+        "allDocumented": "Every assessed area has accepted evidence — the result can be treated as fully documented.",
+        "someUndocumented": "For {{count}} areas no evidence was accepted. These are not zeros: they are areas this assessment does not decide about, and the first item to close in the next round.",
+        "orderRationale": "The order of actions below follows only from the size of the gap between the current and the target level — not from a separate prioritisation model.",
+        "largestGap": ", the largest in the area <1>{{area}}</1> ({{gap}} levels)"
+      },
+      "narrative": {
+        "title": "Content of the report saved in the Assessment module",
+        "source": "Source: report “{{name}}”",
+        "status": " (status: {{status}})",
+        "verbatim": " — content copied from the record, unchanged.",
+        "executiveSummary": "Executive summary",
+        "detailedAnalysis": "Detailed analysis",
+        "savedItems": "Saved report items ({{count}})"
+      },
+      "recommendations": {
+        "title": "Priority recommendations",
+        "onFreeze": "Per-area recommendations are produced when the result is frozen (conclusions of the method kernel). This assessment has not been frozen yet — above is what was saved in the assessment report, and the per-area gaps are visible in the summary table in chapter 2.",
+        "none": "No recommendations in this Output.",
+        "noGap": "no gap",
+        "priorityRationale": "Priority rationale: {{value}}",
+        "expectedOutcome": "Expected outcome: {{value}}"
+      },
+      "footer": {
+        "sessionRecord": "This document is a read-out of the assessment session record. The content is not recomputed on display — it shows exactly what was saved in the workshop. Freezing the result gives it immutability, a content hash and an approval trace; this assessment does not have that yet.",
+        "frozen": "This document is a read-out of the frozen, immutable Output. The content is not recomputed on display — it shows exactly what was approved at the moment of freezing.",
+        "assessment": "Assessment",
+        "methodology": "Methodology",
+        "createdAt": "Assessment created on",
+        "frozenAt": "Frozen",
+        "outputId": "Output identifier",
+        "contentHash": "Content hash",
+        "outputVersion": "Output version"
+      },
+      "sessionRecordBanner": "This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change."
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",
@@ -9120,7 +9444,8 @@
       "whatYouGet": "What you get",
       "startAssessment": "Start assessment",
       "aiSummarize": "Summarize assessment",
-      "aiNextSteps": "Suggest next steps"
+      "aiNextSteps": "Suggest next steps",
+      "aiPlanned": "Planned — requires an AI provider key that is not present in this environment."
     },
     "form": {
       "current": "Current",
@@ -9178,6 +9503,169 @@
         "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
         "levelRamp": "Level ramp",
         "areasAssessed": "Areas assessed"
+      },
+      "http": {
+        "blockers": {
+          "noConfirmedUnits": "No confirmed units — the interview has not started yet.",
+          "pendingProposals": "{{count}} Teresa proposals awaiting a decision",
+          "unitsWithoutEvidence": "{{count}} answered units without evidence"
+        },
+        "boot": {
+          "createFailed": "The session could not be created.",
+          "createFailedWithReason": "The session could not be created: {{reason}}"
+        },
+        "cell": {
+          "achieved": "achieved",
+          "blocker": "BLOCKER (first unmet level)",
+          "line": "{{unit}} · level {{level}} — {{state}}",
+          "notAchieved": "not achieved",
+          "reviewRequired": "above-gap: needs review"
+        },
+        "conflict": {
+          "body": "Your browser had version {{local}}, the server is already at version {{server}}. Nothing was overwritten automatically — choose how to continue.",
+          "exit": "Leave without changes",
+          "indicatorTitle": "Version conflict — your local view is out of date.",
+          "loadServer": "Load the server version",
+          "title": "The session changed on the server"
+        },
+        "error": {
+          "exit": "Leave",
+          "retry": "Try again",
+          "retryInline": "Try again"
+        },
+        "field": {
+          "answerTo": "Answer to the question: “{{question}}”",
+          "level": "Level {{level}}"
+        },
+        "frozen": {
+          "draftNotice": "Draft — the “Register as Initiative” decision belongs to a human, outside this module.",
+          "exit": "Leave",
+          "findings": "Findings ({{count}})",
+          "generateInitiative": "Generate from findings",
+          "generateReport": "Generate a report from the Output",
+          "heading": "Session {{id}} — {{state}}",
+          "initiativeDraftTitle": "Initiative Proposal Draft (local, NOT a Registered Initiative)",
+          "noInitiativeDraft": "No Initiative Proposal Draft saved for this Output.",
+          "noReport": "No report saved for this Output.",
+          "outputMissing": "The session is frozen on the server, but its current Output could not be found. Refresh the view; this screen will not rebuild the content from a local cache.",
+          "recommendation": "Recommendation: {{value}}",
+          "reopenButton": "Reopen the session (not available over HTTP)",
+          "reopenTitle": "Reopen — new revision",
+          "reopenUnavailable": "There is no HTTP endpoint for reopen (outside the scope of this file — server/src/method-core/*, server/src/routes/method-core.routes.ts). The action is disabled explicitly, not faked.",
+          "sourceTitle": "A frozen Output always comes from the server response, never from localStorage.",
+          "stateClosed": "Closed",
+          "stateFrozen": "Frozen",
+          "unitLine": "Unit: {{name}}"
+        },
+        "generated": {
+          "initiativeOutcome": "Raising the maturity level.",
+          "initiativeRationale": "The Output findings show a gap between current and target.",
+          "initiativeTitle": "Complete the sales process automation in the CRM",
+          "reportStrength": "The sales process has basic documentation.",
+          "reportSummary": "DRD session — partial result.",
+          "reportTitle": "DRD report"
+        },
+        "governance": {
+          "freeze": "Freeze",
+          "sendBack": "Send back to work",
+          "sendToReview": "Send for review"
+        },
+        "offline": {
+          "body": "No connection to the server — writes are queued locally and never lost, but this is NOT a confirmed server state.",
+          "retry": "Try to reconnect"
+        },
+        "readiness": {
+          "close": "Close",
+          "evidence": "Evidence",
+          "evidenceCount": "{{withEvidence}}/{{total}} units have evidence",
+          "freezeBlockers": "Freeze blockers",
+          "nextSafeAction": "Safe next move",
+          "noFreezeBlockers": "No freeze blockers.",
+          "title": "Session readiness assessment",
+          "whatIsMissing": "What is missing",
+          "whatMattersNow": "What matters now",
+          "whereAreWe": "Where we are"
+        },
+        "recovery": {
+          "apply": "Apply pending changes ({{count}})",
+          "body": "These changes were saved locally while there was no connection to the server. Choose explicitly: apply them on the server, or discard them and load the current server state. Nothing happens automatically.",
+          "discard": "Discard local, load the server",
+          "indicatorTitle": "Changes saved locally, not yet confirmed by the server.",
+          "title": "Connection is back — {{count}} pending change(s) waiting"
+        },
+        "report": {
+          "axisMatrix": "Axis matrix",
+          "confirmedLevels": "Confirmed levels: {{levels}}. Requires an expert comment before approval.",
+          "noConfirmedLevel": "No confirmed assessment — the report must not pretend to draw a conclusion for this area.",
+          "workingChapter": "A working report chapter based on the current answers, evidence and targets of this same session. It is not an approved report until the session is frozen by an approver."
+        },
+        "resolution": {
+          "artifactHint": "A procedure document or a screenshot from the system.",
+          "likelyOwner": "Process owner",
+          "requestEvidence": "Evidence requested from the process owner.",
+          "returnLater": "Deferred — come back to this question later.",
+          "whatIsUnknown": "Whether unit {{unit}} meets the criteria of level {{level}}."
+        },
+        "source": {
+          "recovery": "Not fully synchronised with the server.",
+          "server": "Freshly confirmed by the server."
+        },
+        "state": {
+          "conflict": "The session changed on the server.",
+          "offline": "No connection to the server.",
+          "unknownError": "Unknown error."
+        },
+        "teresa": {
+          "answerOrAttach": "Answer the current question or attach evidence.",
+          "confirmedAfterAccept": "Confirmed after accepting Teresa’s proposal (a human decision).",
+          "decidePending": "Decide on Teresa’s pending proposals.",
+          "evidenceCollected": "{{count}} piece(s) of evidence collected.",
+          "noEvidence": "No evidence for this unit.",
+          "noQuestions": "No questions at this level.",
+          "whereAreWe": "DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.",
+          "why": "Axis “{{axis}}” needs this unit confirmed to unlock the next levels."
+        }
+      },
+      "legacy": {
+        "revisionNotice": "Revision of session {{id}} (created by a reopen — the previous Output stays untouched and is marked superseded after the next freeze).",
+        "cell": {
+          "reviewRequiredLong": "above-gap: confirmed out of order, needs review"
+        },
+        "workingChapter": "The working report chapter uses the same state of answers, evidence and targets as Interview and Matrix.",
+        "frozen": {
+          "evidence": "Evidence: {{list}}",
+          "noReport": "No report has been generated.",
+          "overallResult": "Overall result: {{value}}",
+          "participants": "Participants: {{list}}",
+          "recommendations": "Recommendations: {{list}}",
+          "snapshotNote": "Rendered from the snapshot of Output v{{version}} — changing the session after the freeze will not change this report.",
+          "noDrafts": "No drafts.",
+          "reopenNote": "frozen → active creates a NEW session (a revision); this Output stays untouched and gets the “superseded” status after the next freeze.",
+          "noOutput": "No Output."
+        },
+        "evidenceCollected": "{{count}} piece(s) of evidence collected for this unit.",
+        "demoLocalTitle": "Legacy runtime — localStorage is the only store (flag drdHttpSourceOfTruthV1 = OFF)."
+      },
+      "editor": {
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "whyItMatters": "Why it matters: ",
+        "howToScoreLevel": "How to score this level: ",
+        "pitfalls": "Watch out for: ",
+        "assignedToYou": "Assigned to you",
+        "useEvidence": "Use evidence (screenshot, report, system log, procedure, KPI) to justify your choice.",
+        "achieved": "Achieved",
+        "achievedHint": ": this is in place and used in practice (not only a pilot).",
+        "target": "Target",
+        "targetHint": ": the desired “to-be” level (planned / roadmap target).",
+        "skip": "Skip",
+        "skipHint": ": explicitly mark “not planned” for this level.",
+        "howToDecide": "How to decide",
+        "tip": "Tip",
+        "tipBody": "If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later."
+      },
+      "ownerMatrix": {
+        "closeCellDetails": "Close cell details"
       }
     },
     "glossary": {
@@ -9815,6 +10303,10 @@
         "interpretation_reviewed": "interpretation reviewed",
         "score_proposed": "score proposed",
         "score_reviewed": "score reviewed"
+      },
+      "source": {
+        "assessment": "Assessment: {{name}}",
+        "assessmentFallback": "Assessment"
       }
     },
     "reportsManagePanel": {
@@ -9974,6 +10466,214 @@
           "initiative": "Initiative"
         },
         "openGenerator": "Open generator"
+      }
+    },
+    "breadcrumb": "Assessment",
+    "transferToRoadmap": {
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "priorityLabel": "Priority",
+      "errors": {
+        "pickQuarter": "Pick a quarter",
+        "transferFailed": "The transfer to the roadmap failed",
+        "connection": "Connection error"
+      },
+      "title": "Add to the roadmap",
+      "success": "Added to the roadmap!",
+      "successHint": "The initiative has been scheduled",
+      "targetQuarter": "Target quarter",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Additional planning remarks…",
+      "cancel": "Cancel",
+      "transferring": "Transferring…"
+    },
+    "axisLabels": {
+      "processes": "Processes",
+      "digitalProducts": "Digital Products",
+      "businessModels": "Business Models",
+      "dataManagement": "Data Management",
+      "culture": "Culture",
+      "cybersecurity": "Cybersecurity",
+      "aiMaturity": "AI Maturity"
+    },
+    "initiativeDetails": {
+      "errors": {
+        "load": "The initiative details could not be loaded",
+        "connection": "Connection error"
+      },
+      "area": "Area: {{area}}",
+      "businessValue": "Business value",
+      "opex": "OPEX (per year)",
+      "description": "Description",
+      "hypothesis": "Hypothesis",
+      "timeline": "Timeline",
+      "plannedStart": "Planned start",
+      "plannedEnd": "Planned end",
+      "owners": "Owners",
+      "source": "Source",
+      "createdAt": "Created: {{date}}",
+      "taskCount": "{{count}} tasks",
+      "delete": "Delete",
+      "edit": "Edit",
+      "approve": "Approve",
+      "notFound": "Initiative not found",
+      "close": "Close",
+      "addToRoadmap": "Add to the roadmap"
+    },
+    "reportTemplates": {
+      "dbr77": {
+        "tasksPerDay": "Tasks/day:",
+        "avgTaskTime": "Avg. task time:",
+        "errors": "Errors:",
+        "overtime": "Overtime:",
+        "kaizenPerMonth": "Kaizen/month:",
+        "rolloutTime": "Rollout time:",
+        "roleEvolution": "Role evolution:",
+        "estimatedAnnualSavings": "Estimated annual savings",
+        "methodName": "The DBR77 Lean 4.0 method",
+        "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method.",
+        "processes": "Processes",
+        "workstations": "Workstations",
+        "savingsPerYear": "PLN saved/year",
+        "roleEvolutionTitle": "Role evolution",
+        "allMetricsCollected": "All key metrics collected",
+        "next": {
+          "approve": "Approve the assessment to unlock initiative generation",
+          "createInitiatives": "Create initiatives from the roadmap recommendations",
+          "dataGaps": "Address data gaps for higher confidence",
+          "gemba": "Schedule follow-up gemba walks"
+        },
+        "newSkillsRequired": "New skills required"
+      },
+      "common": {
+        "keyFindings": "Key findings",
+        "dataGaps": "Data gaps",
+        "nextSteps": "Next steps",
+        "recommendedNextSteps": "Recommended next steps",
+        "shortTerm": "Short term (0–6 months)",
+        "longTerm": "Long term (6–18 months)",
+        "resultsEvidence": "Results (evidence)",
+        "recommendations": "Recommendations",
+        "nextStepsLabel": "Next steps:"
+      },
+      "cmmi": {
+        "legalNoticeA": "is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited",
+        "legalNoticeB": ". The implementation in Consultify serves educational and internal self-assessment purposes only.",
+        "maturityLevelTitle": "Organisation maturity level",
+        "practiceAreaMatrix": "Practice area matrix",
+        "improveTo": "Improve {{name}} ({{code}}) to level {{level}}",
+        "reachLevel": "Reach CMMI level {{level}}",
+        "quantitativeMeasures": "Introduce quantitative process measurement",
+        "formalCertification": "Consider formal CMMI certification"
+      },
+      "adma": {
+        "legalNoticeA": "is a tool developed by the",
+        "legalNoticeB": "under the",
+        "legalNoticeC": "programme. Used here for educational purposes. An official assessment requires working with an authorised DIH.",
+        "roadToFoF": "Road to the Factory of the Future (FoF ≥ 4)",
+        "fivePillars": "Five pillars assessment",
+        "maturityLevels": "ADMA maturity levels",
+        "dataGapsHint": "These areas require additional data collection or clarification."
+      },
+      "siri": {
+        "legalNoticeA": "is a tool developed by the",
+        "legalNoticeB": "in cooperation with",
+        "dataGapsHint": "These areas require additional data collection before a complete assessment can be concluded.",
+        "nextStepsBody": "Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment."
+      }
+    },
+    "presentationView": {
+      "noOutput": "No frozen Output to present. This screen shows no sample numbers — point it at a specific Output.",
+      "loading": "Loading the frozen Output…",
+      "notFound": "No Output found for that identifier — it may have been deleted, or the identifier is wrong.",
+      "forbidden": "No access to this Output in the current organisation.",
+      "offline": "No connection to the server — the Output could not be fetched. Try again once the connection is back.",
+      "unrecognizedShape": "The server response does not have the expected shape of a frozen Output — the deck will not display unverified data.",
+      "legacyPrefix": "This assessment comes ",
+      "legacyStrong": "from the session record — not frozen yet",
+      "legacySuffix": ". The deck shows the same content as the report (the DRD matrix, the axis chapters); the full 9-slide deck appears once the result is frozen."
+    },
+    "versionHistory": {
+      "restored": "Version restored!",
+      "restoredHint": "The data has been updated",
+      "emptyTitle": "No saved versions",
+      "emptyHint": "History appears once changes are saved"
+    },
+    "reportEditor": {
+      "notFound": "Report not found",
+      "back": "Back",
+      "preview": "Report preview",
+      "newFindingPlaceholder": "Add a new finding…",
+      "newRecommendationPlaceholder": "Add a new recommendation…",
+      "add": "Add"
+    },
+    "dbr77Map": {
+      "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential. It supports a full analysis of processes and workstations.",
+      "addProcess": "Add a process",
+      "addWorkstation": "Add a workstation",
+      "tasksPerDay": "Tasks/day"
+    },
+    "admaMap": {
+      "peerAverage": "Peer average",
+      "peerAverageSample": "Peer average — sample data"
+    },
+    "siriMap": {
+      "legalNoticeC": ". The SIRI structure is used in Consultify for an",
+      "educationalPurpose": "educational purpose",
+      "legalNoticeD": "only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor."
+    },
+    "activityLog": {
+      "empty": "No activity recorded yet",
+      "emptyHint": "Actions will appear here as you work on the assessment"
+    },
+    "importedReport": {
+      "loading": "Loading the imported report…",
+      "notFound": "Report not found"
+    },
+    "levelAttachments": {
+      "empty": "No attachments for this level"
+    },
+    "requestAccess": {
+      "title": "Request edit access",
+      "subtitle": "You do not have permission to edit this assessment",
+      "assessmentLabel": "Assessment:",
+      "yourRole": "Your role:",
+      "justificationPlaceholder": "Explain why you need access to this assessment…",
+      "approvalHint": "Your request will be sent to the assessment owner for approval.",
+      "whatNext": "What happens next?",
+      "whatNextBody": "The assessment owner will receive a notification about your request. You will be notified once they approve or decline it."
+    },
+    "sessionEditor": {
+      "loading": "Loading assessment…",
+      "backToAssessment": "Back to Assessment",
+      "saveAndExit": "Save and exit",
+      "whatToDoNext": "What to do next",
+      "continueInChat": "Continue in Chat with the same assessment context",
+      "prepareReport": "Prepare a report from this run",
+      "attachContext": "Attach context from general chat",
+      "attachContextHint": "This will store a reference + the last messages in the assessment context.",
+      "loadingShort": "Loading…",
+      "saveBeforeExit": "Do you want to save your changes before exiting?"
+    },
+    "frameworks": {
+      "drd": {
+        "description": "Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)"
+      },
+      "siri": {
+        "description": "Industry 4.0 readiness framework focusing on process, technology and organization"
+      },
+      "adma": {
+        "description": "Advanced assessment model for digital transformation capabilities"
+      },
+      "cmmi": {
+        "description": "Process improvement framework for software and product development"
+      },
+      "lean": {
+        "description": "Lean manufacturing principles integrated with Industry 4.0 technologies"
       }
     }
   },

@@ -1,0 +1,33 @@
+EXIT=1
++ Received
+
++ import type { MethodActorKind } from './events.js';
++
++ /**
++  * Kernel session states. Closed set.
++  *
++  * Assessment's canonical lifecycle maps as:
++  *   Draft            → 'draft'
++  *   Prepared         → 'prepared'
++  *   In interview     → 'active'
++  *   Evidence pending → 'active'      (sub-stage; blocks freeze, not work)
++  *
+
+ ❯ server/src/method-core/__tests__/contractMirrorDrift.test.ts:80:9
+     78|         withoutComments,
+     79|         `kopia ${name}.ts ma kod przed treścią kontraktu: ${JSON.strin…
+     80|       ).toBe('');
+       |         ^
+     81|     }
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 45 passed | 11 skipped (57)
+      Tests  3 failed | 873 passed | 163 skipped (1039)
+   Start at  21:29:45
+   Duration  14.25s (transform 33.33s, setup 12.03s, import 74.53s, tests 42.40s, environment 58.87s)
+
+
+[exited with code 0]

@@ -21,6 +21,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LevelAttachment, useAssessmentAttachments } from '../../hooks/useAssessmentAttachments';
+import { useTranslation } from 'react-i18next';
 
 interface LevelAttachmentsProps {
   assessmentId: string;
@@ -59,6 +60,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
   readOnly = false,
   compact = false,
 }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [attachments, setAttachments] = useState<LevelAttachment[]>([]);
@@ -324,7 +326,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         </div>
       ) : (
         <div className="text-center py-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-          No attachments for this level
+          {t('assessment.levelAttachments.empty', 'No attachments for this level')}
         </div>
       )}
     </div>

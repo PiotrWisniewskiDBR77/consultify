@@ -238,7 +238,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
     fireEvent.click(await screen.findByRole('button', { name: 'Ustawienia' }));
-    fireEvent.click(await screen.findByRole('button', { name: /Wyślij do przeglądu/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Send for review/i }));
 
     expect(await screen.findByTestId('drd-http-conflict-view')).toBeInTheDocument();
     expect(screen.queryByTestId('drd-http-frozen-output-view')).not.toBeInTheDocument();
@@ -254,7 +254,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="conflict" />);
 
     const conflictView = await screen.findByTestId('drd-http-conflict-view');
-    expect(conflictView.textContent).toMatch(/zmieniła się na serwerze/i);
+    expect(conflictView.textContent).toMatch(/changed on the server/i);
 
     // Nothing auto-resolves the conflict — getSession must NOT have been
     // called again until the explicit button is clicked.
@@ -277,7 +277,7 @@ describe('requirement 5 — recovery queue requires an explicit choice, never au
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="recovery" />);
 
     const recoveryView = await screen.findByTestId('drd-http-recovery-view');
-    expect(recoveryView.textContent).toMatch(/2 zaległych zmian/);
+    expect(recoveryView.textContent).toMatch(/2 pending change/);
     expect(hoisted.getSession).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('recovery-discard-pending'));

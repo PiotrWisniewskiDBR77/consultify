@@ -742,7 +742,9 @@ const WorkstationCard: React.FC<{
           {activePhase === 'MEASURE' && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400">Tasks/Day</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('assessment.dbr77Map.tasksPerDay', 'Tasks/day')}
+                </label>
                 <input
                   type="number"
                   value={workstation.currentState.tasksPerDay}
@@ -1029,17 +1031,21 @@ const WorkstationCard: React.FC<{
 /**
  * Legal Notice Banner
  */
-const DBR77LegalNotice: React.FC = () => (
+const DBR77LegalNotice: React.FC = () => {
+  const { t } = useTranslation();
+  return (
   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
     <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
     <div className="text-sm text-blue-800 dark:text-blue-200">
-      <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
-      <strong>autorską metodą Consultify</strong>, łączącą klasyczne narzędzia Lean z oceną
-      potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk
-      pracy.
+      <strong>{t('assessment.reportTemplates.dbr77.methodName', 'The DBR77 Lean 4.0 method')}</strong>{' '}
+      {t(
+        'assessment.dbr77Map.legalNotice',
+        '(Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential. It supports a full analysis of processes and workstations.'
+      )}
     </div>
   </div>
-);
+  );
+};
 
 // ============================================
 // MAIN COMPONENT
@@ -1236,7 +1242,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                   className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all"
                 >
                   <Plus size={20} />
-                  <span>Dodaj Proces</span>
+                  <span>{t('assessment.dbr77Map.addProcess', 'Add a process')}</span>
                 </button>
               )}
             </>
@@ -1261,7 +1267,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                   className="w-full p-4 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all"
                 >
                   <Plus size={20} />
-                  <span>Dodaj Stanowisko</span>
+                  <span>{t('assessment.dbr77Map.addWorkstation', 'Add a workstation')}</span>
                 </button>
               )}
             </>

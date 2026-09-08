@@ -58,6 +58,9 @@ import {
   listDemoSessionIds,
 } from '@/method-core/methods/drd/drdSessionRuntime';
 import type { MethodReadiness } from '@/method-core/contracts';
+import { useTranslation } from 'react-i18next';
+
+import { nazwaWJezyku } from './drdNazwa';
 
 const OWNER_ACTOR = 'demo-owner-piotr';
 const APPROVER_ACTOR = 'demo-approver-anna';
@@ -204,6 +207,8 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   initialViewMode,
   initialActorUserId,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const storage = storageProp ?? window.localStorage;
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -287,9 +292,25 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       if (confirmed.length > 0 && !hasEvidence) answeredUnitsMissingEvidence++;
     }
     const freezeBlockers: string[] = [];
-    if (answeredUnits === 0) freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
-    if (answeredUnitsMissingEvidence > 0) freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
-    if (pendingPreviews.length > 0) freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
+    if (answeredUnits === 0)
+      freezeBlockers.push(
+        t(
+          'assessment.drd.http.blockers.noConfirmedUnits',
+          'No confirmed units — the interview has not started yet.'
+        )
+      );
+    if (answeredUnitsMissingEvidence > 0)
+      freezeBlockers.push(
+        t('assessment.drd.http.blockers.unitsWithoutEvidence', '{{count}} answered units without evidence', {
+          count: answeredUnitsMissingEvidence,
+        })
+      );
+    if (pendingPreviews.length > 0)
+      freezeBlockers.push(
+        t('assessment.drd.http.blockers.pendingProposals', '{{count}} Teresa proposals awaiting a decision', {
+          count: pendingPreviews.length,
+        })
+      );
     return {
       answeredUnits,
       totalUnits,
@@ -362,7 +383,15 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
         },
         statements: [
           evidence.length > 0
-            ? { kind: 'confirmed_fact' as const, text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`, sourceRefs: evidence.map((e) => e.id) }
+            ? {
+                kind: 'confirmed_fact' as const,
+                text: t(
+                  'assessment.drd.legacy.evidenceCollected',
+                  '{{count}} piece(s) of evidence collected for this unit.',
+                  { count: evidence.length }
+                ),
+                sourceRefs: evidence.map((e) => e.id),
+              }
             : { kind: 'missing_evidence' as const, text: 'Brak dowodu dla tej jednostki na tym poziomie.', sourceRefs: [] },
           { kind: 'proposal' as const, text: `Proponowany poziom: ${focusLevel} na podstawie odpowiedzi respondenta.`, sourceRefs: [] },
         ],
@@ -424,8 +453,14 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       if (action === 'assign_question') return;
       const note =
         action === 'request_evidence'
-          ? 'Poproszono o dowód od właściciela procesu.'
-          : 'Odłożone — wróć później do tego pytania.';
+          ? t(
+              'assessment.drd.http.resolution.requestEvidence',
+              'Evidence requested from the process owner.'
+            )
+          : t(
+              'assessment.drd.http.resolution.returnLater',
+              'Deferred — come back to this question later.'
+            );
       runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevel,
@@ -458,7 +493,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
               level: change.after,
               questionId: preview.intent.questionId ?? `${activeArea.id}-L${change.after}-Q1`,
               answerState: 'confirmed',
-              text: 'Potwierdzone po akceptacji propozycji Teresy (decyzja człowieka).',
+              text: t(
+                'assessment.drd.http.teresa.confirmedAfterAccept',
+                'Confirmed after accepting Teresa’s proposal (a human decision).'
+              ),
               actorUserId,
             });
           }
@@ -491,11 +529,39 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   const initiatives = runtime.listInitiativeDrafts();
 
   const teresaSixQuestions = {
-    whereAreWe: `Sesja DRD, jednostka ${activeArea.namePL || activeArea.name}, poziom ${focusLevel}. ${readiness.answeredUnits}/${readiness.totalUnits} jednostek dotkniętych.`,
-    whatMattersNow: focusQuestions[0]?.canonicalWording ?? 'Brak pytań na tym poziomie.',
-    why: activeAxis.namePL ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.` : '',
-    whatIsMissing: evidenceCountForUnit === 0 ? 'Brak dowodu dla tej jednostki.' : `${evidenceCountForUnit} dowód/-ody zebrane.`,
-    nextSafeAction: pendingPreviews.length > 0 ? 'Zdecyduj o oczekujących propozycjach Teresy.' : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
+    whereAreWe: t(
+      'assessment.drd.http.teresa.whereAreWe',
+      'DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.',
+      {
+        unit: nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+        level: focusLevel,
+        answered: readiness.answeredUnits,
+        total: readiness.totalUnits,
+      }
+    ),
+    whatMattersNow:
+      focusQuestions[0]?.canonicalWording ??
+      t('assessment.drd.http.teresa.noQuestions', 'No questions at this level.'),
+    why: activeAxis.namePL
+      ? t(
+          'assessment.drd.http.teresa.why',
+          'Axis “{{axis}}” needs this unit confirmed to unlock the next levels.',
+          { axis: nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish) }
+        )
+      : '',
+    whatIsMissing:
+      evidenceCountForUnit === 0
+        ? t('assessment.drd.http.teresa.noEvidence', 'No evidence for this unit.')
+        : t('assessment.drd.http.teresa.evidenceCollected', '{{count}} piece(s) of evidence collected.', {
+            count: evidenceCountForUnit,
+          }),
+    nextSafeAction:
+      pendingPreviews.length > 0
+        ? t('assessment.drd.http.teresa.decidePending', 'Decide on Teresa’s pending proposals.')
+        : t(
+            'assessment.drd.http.teresa.answerOrAttach',
+            'Answer the current question or attach evidence.'
+          ),
   };
 
   if (session.state === 'frozen' || session.state === 'closed') {
@@ -510,9 +576,17 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
         lastRefusal={lastRefusal}
         onGenerateReport={() => {
           runtime.generateReport({
-            executiveSummary: 'Sesja demonstracyjna DRD — wynik cząstkowy.',
+            executiveSummary: t(
+              'assessment.drd.http.generated.reportSummary',
+              'DRD session — partial result.'
+            ),
             participants: ['Piotr (Owner)', 'Anna (Approver)'],
-            strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
+            strengths: [
+              t(
+                'assessment.drd.http.generated.reportStrength',
+                'The sales process has basic documentation.'
+              ),
+            ],
             appendices: [],
             actorUserId,
           });
@@ -593,7 +667,11 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
           // header pill does NOT (which prior session this one supersedes).
           degradedMessage={
             session.revisionOfSessionId
-              ? `Rewizja sesji ${session.revisionOfSessionId.slice(0, 8)} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).`
+              ? t(
+                  'assessment.drd.legacy.revisionNotice',
+                  'Revision of session {{id}} (created by a reopen — the previous Output stays untouched and is marked superseded after the next freeze).',
+                  { id: session.revisionOfSessionId.slice(0, 8) }
+                )
               : null
           }
           navigatorProps={{
@@ -612,9 +690,16 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             questionTotal: activeArea.levels.length,
             resolutionData: {
               questionId: focusQuestions[0]?.questionId ?? '',
-              whatIsUnknown: `Czy jednostka ${activeArea.id} spełnia kryteria poziomu ${focusLevel}.`,
-              likelyOwnerLabel: 'Właściciel procesu',
-              resolvingArtifactHint: 'Dokument procedury lub zrzut z systemu.',
+              whatIsUnknown: t(
+                'assessment.drd.http.resolution.whatIsUnknown',
+                'Whether unit {{unit}} meets the criteria of level {{level}}.',
+                { unit: activeArea.id, level: focusLevel }
+              ),
+              likelyOwnerLabel: t('assessment.drd.http.resolution.likelyOwner', 'Process owner'),
+              resolvingArtifactHint: t(
+                'assessment.drd.http.resolution.artifactHint',
+                'A procedure document or a screenshot from the system.'
+              ),
               dueDate: null,
               blocksFreeze: true,
             },
@@ -656,12 +741,12 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                   <p>
                     {selection.unitId} · poziom {selection.level} —{' '}
                     {cell?.blocker
-                      ? 'BLOKER (pierwszy niespełniony poziom)'
+                      ? t('assessment.drd.http.cell.blocker', 'BLOCKER (first unmet level)')
                       : cell?.reviewRequired
-                        ? 'above-gap: wymaga przeglądu'
+                        ? t('assessment.drd.http.cell.reviewRequired', 'above-gap: needs review')
                         : cell?.achieved
-                          ? 'osiągnięty'
-                          : 'nieosiągnięty'}
+                          ? t('assessment.drd.http.cell.achieved', 'achieved')
+                          : t('assessment.drd.http.cell.notAchieved', 'not achieved')}
                   </p>
                 </div>
               )}
@@ -680,7 +765,16 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
               <div className="text-xs text-c-text-secondary">
                 <p>
                   {selection.unitId} · poziom {selection.level} —{' '}
-                  {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: potwierdzone poza kolejnością, wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                  {cell?.blocker
+                    ? t('assessment.drd.http.cell.blocker', 'BLOCKER (first unmet level)')
+                    : cell?.reviewRequired
+                      ? t(
+                          'assessment.drd.legacy.cell.reviewRequiredLong',
+                          'above-gap: confirmed out of order, needs review'
+                        )
+                      : cell?.achieved
+                        ? t('assessment.drd.http.cell.achieved', 'achieved')
+                        : t('assessment.drd.http.cell.notAchieved', 'not achieved')}
                 </p>
               </div>
             ),
@@ -691,7 +785,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">DRD report · axis {activeAxis.id}</p>
                 <h2 className="text-lg font-semibold text-c-text">{activeAxis.namePL || activeAxis.name}</h2>
                 <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
-                  Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i targetów co Interview i Matrix.
+                  {t(
+                    'assessment.drd.legacy.workingChapter',
+                    'The working report chapter uses the same state of answers, evidence and targets as Interview and Matrix.'
+                  )}
                 </p>
               </div>
               <div className="rounded-xl border border-c-border bg-c-surface p-4">
@@ -709,7 +806,13 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                     <div className="text-xs text-c-text-secondary">
                       <p>
                         {selection.unitId} · poziom {selection.level} —{' '}
-                        {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                        {cell?.blocker
+                          ? t('assessment.drd.http.cell.blocker', 'BLOCKER (first unmet level)')
+                          : cell?.reviewRequired
+                            ? t('assessment.drd.http.cell.reviewRequired', 'above-gap: needs review')
+                            : cell?.achieved
+                              ? t('assessment.drd.http.cell.achieved', 'achieved')
+                              : t('assessment.drd.http.cell.notAchieved', 'not achieved')}
                       </p>
                     </div>
                   )}
@@ -724,7 +827,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                     <p className="mt-2 text-xs text-c-text-secondary">
                       {confirmedLevelsFor(events, area.id).length > 0
                         ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Komentarz ekspercki pozostaje roboczy do zatwierdzenia.`
-                        : 'Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.'}
+                        : t(
+                            'assessment.drd.http.report.noConfirmedLevel',
+                            'No confirmed assessment — the report must not pretend to draw a conclusion for this area.'
+                          )}
                     </p>
                   </article>
                 ))}
@@ -755,7 +861,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 disabled={session.state !== 'active'}
                 className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
               >
-                Wyślij do przeglądu
+                {t('assessment.drd.http.governance.sendToReview', 'Send for review')}
               </button>
               <button
                 type="button"
@@ -765,7 +871,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
               >
                 <Lock size={12} />
-                Zamroź
+                {t('assessment.drd.http.governance.freeze', 'Freeze')}
               </button>
             </>
           )}
@@ -792,6 +898,7 @@ const FrozenOutputView: React.FC<{
   onReopen: () => void;
   onExit: () => void;
 }> = ({ session, outputRecord, reports, initiatives, actorUserId, setActorUserId, lastRefusal, onGenerateReport, onGenerateInitiative, onReopen, onExit }) => {
+  const { t } = useTranslation();
   const output = outputRecord?.content ?? null;
   const currentReport = reports.find((r) => r.status === 'current')?.content ?? null;
 
@@ -799,13 +906,25 @@ const FrozenOutputView: React.FC<{
     <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-frozen-output-view">
       <div className="mb-4 flex items-center gap-3">
         <button type="button" onClick={onExit} className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
-          <ArrowLeft size={13} /> Wyjdź
+          <ArrowLeft size={13} /> {t('assessment.drd.http.frozen.exit', 'Leave')}
         </button>
         <h1 className="text-sm font-semibold text-c-text">
-          Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
+          {t('assessment.drd.http.frozen.heading', 'Session {{id}} — {{state}}', {
+            id: session.id.slice(0, 8),
+            state:
+              session.state === 'closed'
+                ? t('assessment.drd.http.frozen.stateClosed', 'Closed')
+                : t('assessment.drd.http.frozen.stateFrozen', 'Frozen'),
+          })}
           {session.revisionOfSessionId && <span className="ml-2 text-[11px] font-normal text-c-text-muted">(rewizja sesji {session.revisionOfSessionId.slice(0, 8)})</span>}
         </h1>
-        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
+        <DrdSourceIndicator
+          source="DEMO_LOCAL"
+          title={t(
+            'assessment.drd.legacy.demoLocalTitle',
+            'Legacy runtime — localStorage is the only store (flag drdHttpSourceOfTruthV1 = OFF).'
+          )}
+        />
         <span className="ml-auto flex items-center gap-2 text-[11px] text-c-text-secondary">
           Aktor:
           <select value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} className="rounded border border-c-border bg-c-surface px-1.5 py-0.5">
@@ -829,7 +948,9 @@ const FrozenOutputView: React.FC<{
           <h2 className="text-sm font-semibold text-c-text">AssessmentOutput (immutable, v{output?.version ?? '—'})</h2>
         </div>
         {!output ? (
-          <p className="text-xs text-c-text-muted">Brak Outputu.</p>
+          <p className="text-xs text-c-text-muted">
+            {t('assessment.drd.legacy.frozen.noOutput', 'No Output.')}
+          </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
             <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
@@ -852,7 +973,11 @@ const FrozenOutputView: React.FC<{
               <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
                 <p className="text-c-text">{f.businessMeaning}</p>
                 <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
-                <p className="text-c-text-muted">Dowody: {f.supportingEvidence.map((e) => e.evidenceId).join(', ')}</p>
+                <p className="text-c-text-muted">
+                  {t('assessment.drd.legacy.frozen.evidence', 'Evidence: {{list}}', {
+                    list: f.supportingEvidence.map((e) => e.evidenceId).join(', '),
+                  })}
+                </p>
               </div>
             ))}
           </div>
@@ -867,18 +992,38 @@ const FrozenOutputView: React.FC<{
             <h2 className="text-sm font-semibold text-c-text">Report Snapshot</h2>
           </div>
           <button type="button" onClick={onGenerateReport} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised">
-            Generuj raport z Outputu
+            {t('assessment.drd.http.frozen.generateReport', 'Generate a report from the Output')}
           </button>
         </div>
         {!currentReport ? (
-          <p className="text-xs text-c-text-muted">Brak wygenerowanego raportu.</p>
+          <p className="text-xs text-c-text-muted">
+            {t('assessment.drd.legacy.frozen.noReport', 'No report has been generated.')}
+          </p>
         ) : (
           <div className="space-y-1 text-xs text-c-text-secondary">
             <p className="text-c-text">{currentReport.executiveSummary}</p>
-            <p>Wynik ogólny: {currentReport.overallResult ?? '—'}</p>
-            <p>Uczestnicy: {currentReport.participants.join(', ')}</p>
-            <p>Rekomendacje: {currentReport.recommendations.join(' · ') || '—'}</p>
-            <p className="text-c-text-muted">Renderowane ze snapshotu Outputu v{currentReport.outputVersion} — zmiana sesji po freeze nie zmieni tego raportu.</p>
+            <p>
+              {t('assessment.drd.legacy.frozen.overallResult', 'Overall result: {{value}}', {
+                value: currentReport.overallResult ?? '—',
+              })}
+            </p>
+            <p>
+              {t('assessment.drd.legacy.frozen.participants', 'Participants: {{list}}', {
+                list: currentReport.participants.join(', '),
+              })}
+            </p>
+            <p>
+              {t('assessment.drd.legacy.frozen.recommendations', 'Recommendations: {{list}}', {
+                list: currentReport.recommendations.join(' · ') || '—',
+              })}
+            </p>
+            <p className="text-c-text-muted">
+              {t(
+                'assessment.drd.legacy.frozen.snapshotNote',
+                'Rendered from the snapshot of Output v{{version}} — changing the session after the freeze will not change this report.',
+                { version: currentReport.outputVersion }
+              )}
+            </p>
           </div>
         )}
       </section>
@@ -888,14 +1033,21 @@ const FrozenOutputView: React.FC<{
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb size={14} className="text-c-text-secondary" />
-            <h2 className="text-sm font-semibold text-c-text">Initiative Proposal Draft (lokalny, NIE Registered Initiative)</h2>
+            <h2 className="text-sm font-semibold text-c-text">
+              {t(
+                'assessment.drd.http.frozen.initiativeDraftTitle',
+                'Initiative Proposal Draft (local, NOT a Registered Initiative)'
+              )}
+            </h2>
           </div>
           <button type="button" onClick={onGenerateInitiative} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised">
-            Wygeneruj z findingów
+            {t('assessment.drd.http.frozen.generateInitiative', 'Generate from findings')}
           </button>
         </div>
         {initiatives.filter((i) => i.status === 'current').length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak draftów.</p>
+          <p className="text-xs text-c-text-muted">
+            {t('assessment.drd.legacy.frozen.noDrafts', 'No drafts.')}
+          </p>
         ) : (
           initiatives
             .filter((i) => i.status === 'current')
@@ -904,7 +1056,12 @@ const FrozenOutputView: React.FC<{
                 <p className="font-medium text-c-text">{rec.content.title}</p>
                 <p className="text-c-text-secondary">{rec.content.summary}</p>
                 <p className="text-c-text-muted">Findings: {rec.content.findingIds.join(', ')} · confidence: {rec.content.confidence}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">
+                  {t(
+                    'assessment.drd.http.frozen.draftNotice',
+                    'Draft — the “Register as Initiative” decision belongs to a human, outside this module.'
+                  )}
+                </p>
               </div>
             ))
         )}
@@ -917,7 +1074,10 @@ const FrozenOutputView: React.FC<{
           <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
-          frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded".
+          {t(
+            'assessment.drd.legacy.frozen.reopenNote',
+            'frozen → active creates a NEW session (a revision); this Output stays untouched and gets the “superseded” status after the next freeze.'
+          )}
         </p>
         <button
           type="button"

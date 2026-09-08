@@ -450,11 +450,17 @@ const SIRILegalNotice: React.FC = () => (
   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
     <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
     <div className="text-sm text-amber-800 dark:text-amber-200">
-      <strong>SIRI (Smart Industry Readiness Index)</strong> jest narzędziem opracowanym przez{' '}
-      <strong>Singapore Economic Development Board (EDB)</strong> we współpracy z{' '}
-      <strong>TÜV SÜD</strong>. Wykorzystanie struktury SIRI w Consultify ma wyłącznie{' '}
-      <strong>cel edukacyjny</strong> i służy do nauki metodologii Industry 4.0. Oficjalna
-      certyfikacja SIRI wymaga akredytowanego audytora.
+      <strong>SIRI (Smart Industry Readiness Index)</strong>{' '}
+      {t('assessment.reportTemplates.siri.legalNoticeA', 'is a tool developed by the')}{' '}
+      <strong>Singapore Economic Development Board (EDB)</strong>{' '}
+      {t('assessment.reportTemplates.siri.legalNoticeB', 'in cooperation with')}{' '}
+      <strong>TÜV SÜD</strong>
+      {t('assessment.siriMap.legalNoticeC', '. The SIRI structure is used in Consultify for an')}{' '}
+      <strong>{t('assessment.siriMap.educationalPurpose', 'educational purpose')}</strong>{' '}
+      {t(
+        'assessment.siriMap.legalNoticeD',
+        'only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor.'
+      )}
     </div>
   </div>
 );

@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TransferToRoadmapModalProps {
   initiativeId: string;
@@ -58,23 +59,27 @@ const generateQuarters = () => {
 const PRIORITY_OPTIONS = [
   {
     value: 'LOW',
-    label: 'Niski',
+    labelKey: 'assessment.transferToRoadmap.priority.low',
+    labelDefault: 'Low',
     color:
       'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted',
   },
   {
     value: 'MEDIUM',
-    label: 'Średni',
+    labelKey: 'assessment.transferToRoadmap.priority.medium',
+    labelDefault: 'Medium',
     color: 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning',
   },
   {
     value: 'HIGH',
-    label: 'Wysoki',
+    labelKey: 'assessment.transferToRoadmap.priority.high',
+    labelDefault: 'High',
     color: 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning',
   },
   {
     value: 'CRITICAL',
-    label: 'Krytyczny',
+    labelKey: 'assessment.transferToRoadmap.priority.critical',
+    labelDefault: 'Critical',
     color: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
   },
 ];
@@ -85,6 +90,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
   onClose,
   onTransferred,
 }) => {
+  const { t } = useTranslation();
   const [quarters] = useState(generateQuarters);
   const [selectedQuarter, setSelectedQuarter] = useState<string>('');
   const [priority, setPriority] = useState<string>('MEDIUM');
@@ -104,7 +110,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
   // Handle transfer
   const handleTransfer = async () => {
     if (!selectedQuarter) {
-      setError('Wybierz kwartał');
+      setError(t('assessment.transferToRoadmap.errors.pickQuarter', 'Pick a quarter'));
       return;
     }
 
@@ -134,11 +140,14 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
         }, 1500);
       } else {
         const data = await response.json();
-        setError(data.error || 'Nie udało się przenieść do roadmapy');
+        setError(
+          data.error ||
+            t('assessment.transferToRoadmap.errors.transferFailed', 'The transfer to the roadmap failed')
+        );
       }
     } catch (err) {
       console.error('[TransferToRoadmapModal] Transfer error:', err);
-      setError('Błąd połączenia');
+      setError(t('assessment.transferToRoadmap.errors.connection', 'Connection error'));
     } finally {
       setSubmitting(false);
     }
@@ -155,7 +164,9 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                 <MapPin className="w-5 h-5 text-c-accent dark:text-c-accent" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-c-text">Dodaj do Roadmapy</h3>
+                <h3 className="text-lg font-bold text-c-text">
+                  {t('assessment.transferToRoadmap.title', 'Add to the roadmap')}
+                </h3>
                 <p className="text-sm text-c-text-muted truncate max-w-[200px]">{initiativeName}</p>
               </div>
             </div>
@@ -175,8 +186,12 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-c-text">Dodano do Roadmapy!</p>
-              <p className="text-sm text-c-text-muted mt-1">Inicjatywa została zaplanowana</p>
+              <p className="text-lg font-medium text-c-text">
+                {t('assessment.transferToRoadmap.success', 'Added to the roadmap!')}
+              </p>
+              <p className="text-sm text-c-text-muted mt-1">
+                {t('assessment.transferToRoadmap.successHint', 'The initiative has been scheduled')}
+              </p>
             </div>
           ) : (
             <>
@@ -184,7 +199,8 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2 flex items-center gap-2">
                   <Calendar size={16} className="text-c-accent" />
-                  Docelowy kwartał <span className="text-danger-500">*</span>
+                  {t('assessment.transferToRoadmap.targetQuarter', 'Target quarter')}{' '}
+                  <span className="text-danger-500">*</span>
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {quarters.slice(0, 8).map((quarter) => (
@@ -213,7 +229,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2 flex items-center gap-2">
                   <Flag size={16} className="text-c-warning" />
-                  Priorytet
+                  {t('assessment.transferToRoadmap.priorityLabel', 'Priority')}
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {PRIORITY_OPTIONS.map((opt) => (
@@ -229,7 +245,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                                 }
                                             `}
                     >
-                      {opt.label}
+                      {t(opt.labelKey, opt.labelDefault)}
                     </button>
                   ))}
                 </div>
@@ -238,12 +254,15 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                  Notatki (opcjonalne)
+                  {t('assessment.transferToRoadmap.notes', 'Notes (optional)')}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Dodatkowe uwagi dotyczące planowania..."
+                  placeholder={t(
+                    'assessment.transferToRoadmap.notesPlaceholder',
+                    'Additional planning remarks…'
+                  )}
                   rows={3}
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted resize-none text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
@@ -268,7 +287,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 border border-c-border-subtle text-c-text-secondary dark:text-c-text-muted rounded-lg font-medium hover:bg-c-surface-raised dark:hover:bg-white/5 transition-colors"
               >
-                Anuluj
+                {t('assessment.transferToRoadmap.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleTransfer}
@@ -285,12 +304,12 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                 {submitting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Przenoszę...
+                    {t('assessment.transferToRoadmap.transferring', 'Transferring…')}
                   </>
                 ) : (
                   <>
                     <MapPin size={16} />
-                    Dodaj do Roadmapy
+                    {t('assessment.transferToRoadmap.title', 'Add to the roadmap')}
                   </>
                 )}
               </button>

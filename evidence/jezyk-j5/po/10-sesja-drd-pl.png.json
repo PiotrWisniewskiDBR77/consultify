@@ -1,0 +1,17 @@
+{
+ "ekran": "10-sesja-drd",
+ "jezyk": "pl",
+ "jezykRealny": "pl",
+ "url": "http://127.0.0.1:3216/assessment/DRD/b52cec42-86ce-49c4-8326-4b2771ec0716",
+ "obcychSlowUI": 1,
+ "obcychLiniiUI": 1,
+ "ui": [
+  {
+   "linia": "Session not found",
+   "trafienia": [
+    "Session"
+   ]
+  }
+ ],
+ "dane": []
+}

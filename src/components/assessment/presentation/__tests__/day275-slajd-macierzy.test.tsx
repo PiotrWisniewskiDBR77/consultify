@@ -27,10 +27,10 @@ describe('Day 275 — slajdy kanonicznej macierzy DRD', () => {
     expect(model.axisMatrices.map((matrix) => matrix.axisId)).toEqual(['axis-1', 'axis-2']);
 
     const { container } = render(<PresentationDeck model={model} initialSlide={5} />);
-    expect(screen.getByText('Macierz · oś 1')).toBeInTheDocument();
+    expect(screen.getByText('Matrix · axis 1')).toBeInTheDocument();
     expect(container.querySelector('div[style*="grid-template-columns"]')).not.toBeNull();
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(screen.getByText('Macierz · oś 2')).toBeInTheDocument();
+    expect(screen.getByText('Matrix · axis 2')).toBeInTheDocument();
     expect(container.querySelector('div[style*="grid-template-columns"]')).not.toBeNull();
   });
 });

@@ -1,0 +1,23 @@
+{
+ "ekran": "04-raporty",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=reports",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Analiza gotowości AI",
+   "trafienia": [
+    "gotowości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  }
+ ]
+}

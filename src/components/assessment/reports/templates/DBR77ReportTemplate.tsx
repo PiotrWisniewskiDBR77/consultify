@@ -46,6 +46,8 @@ import {
   DBR77ProcessAssessment,
   DBR77WorkstationAssessment,
 } from '../../../../types';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 interface DBR77ReportTemplateProps {
   data: DBR77AssessmentData;
@@ -64,6 +66,7 @@ const WorkstationPage: React.FC<{
   index: number;
   total: number;
 }> = ({ workstation, index, total }) => {
+  const { t } = useTranslation();
   const roleEvolution = DBR77_ROLE_EVOLUTION[workstation.automationPotential.roleEvolution];
 
   const getWasteIcon = (wasteId: string) => {
@@ -121,21 +124,29 @@ const WorkstationPage: React.FC<{
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Zadań/dzień:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.tasksPerDay', 'Tasks/day:')}
+              </span>
               <span className="font-bold">{workstation.currentState.tasksPerDay}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Śr. czas zadania:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.avgTaskTime', 'Avg. task time:')}
+              </span>
               <span className="font-bold">{workstation.currentState.avgTaskTime} min</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Błędy:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.errors', 'Errors:')}
+              </span>
               <span className="font-bold text-danger-600">
                 {workstation.currentState.errorRate}%
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Nadgodziny:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.overtime', 'Overtime:')}
+              </span>
               <span className="font-bold">{workstation.currentState.overtimeHours}h/tyg</span>
             </div>
             <div className="flex justify-between">
@@ -171,7 +182,9 @@ const WorkstationPage: React.FC<{
               <span className="font-bold">{workstation.leanAssessment.crossTraining}/5</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Kaizen/miesiąc:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.kaizenPerMonth', 'Kaizen/month:')}
+              </span>
               <span className="font-bold">{workstation.leanAssessment.kaizen}</span>
             </div>
           </div>
@@ -219,7 +232,9 @@ const WorkstationPage: React.FC<{
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Czas wdrożenia:</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {t('assessment.reportTemplates.dbr77.rolloutTime', 'Rollout time:')}
+              </span>
               <span className="font-bold">
                 {(workstation.automationPotential as any).timeToAutomate || '-'} mies.
               </span>
@@ -264,15 +279,17 @@ const WorkstationPage: React.FC<{
           <DollarSign className="w-8 h-8 text-emerald-600" />
           <div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Szacowane oszczędności roczne
+              {t('assessment.reportTemplates.dbr77.estimatedAnnualSavings', 'Estimated annual savings')}
             </p>
             <p className="text-2xl font-bold text-emerald-600">
-              {(workstation.automationPotential.estimatedSavings || 0).toLocaleString('pl-PL')} PLN
+              {formatListNumber(workstation.automationPotential.estimatedSavings || 0)} PLN
             </p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Ewolucja roli:</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('assessment.reportTemplates.dbr77.roleEvolution', 'Role evolution:')}
+          </p>
           <p className={`font-bold text-${roleEvolution.color}-600`}>{roleEvolution.name}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
             {roleEvolution.description}
@@ -286,7 +303,7 @@ const WorkstationPage: React.FC<{
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <h4 className="font-bold text-amber-900 dark:text-amber-300">
-              Wymagane nowe kompetencje
+              {t('assessment.reportTemplates.dbr77.newSkillsRequired', 'New skills required')}
             </h4>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -310,6 +327,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
   organizationName = 'Organization',
   assessmentDate,
 }) => {
+  const { t } = useTranslation();
   const totalSavings =
     data.workstations.reduce((sum, ws) => sum + (ws.automationPotential.estimatedSavings || 0), 0) +
     data.processes.reduce((sum, p) => sum + (p.automationPotential.estimatedSavings || 0), 0);
@@ -334,7 +352,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             {organizationName}
           </p>
           <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+            {assessmentDate || formatListDate(new Date())}
           </p>
         </div>
 
@@ -342,8 +360,8 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
           <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Metoda DBR77 Lean 4.0</strong> (Pomierz-Zoptymalizuj-Automatyzuj) jest{' '}
-            <strong>autorską metodą Consultify</strong>.
+            <strong>{t('assessment.reportTemplates.dbr77.methodName', 'The DBR77 Lean 4.0 method')}</strong>{' '}
+            {t('assessment.reportTemplates.dbr77.legalNotice', '(Measure-Optimise-Automate) is a proprietary Consultify method.')}
           </div>
         </div>
       </div>
@@ -360,10 +378,17 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-blue-600">{data.processes.length}</div>
-            <div className="text-sm text-blue-600/70">Procesów</div>
+            <div className="text-sm text-blue-600/70">{t('assessment.reportTemplates.dbr77.processes', 'Processes')}</div>
           </div>
           <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-primary-600">{data.workstations.length}</div>
+            {/* STOP J5 (program językowy): ta jedna etykieta zostaje po polsku
+                ŚWIADOMIE. Klasa tekstu w linii niżej niesie kolor zastany
+                (dług 15 sztuk w tym pliku, `scripts/check-triada.baseline.txt`);
+                każde dotknięcie tej linii bramka TRIADA czyta jako NOWE
+                naruszenie, a zmiana koloru byłaby zmianą wizualną zamrożonego
+                modułu bez akceptu właściciela. Do rozstrzygnięcia razem
+                z pozostałymi 14 wystąpieniami w tym szablonie. */}
             <div className="text-sm text-primary-600/70">Stanowisk</div>
           </div>
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center">
@@ -374,7 +399,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             <div className="text-3xl font-bold text-emerald-600">
               {(totalSavings / 1000).toFixed(0)}k
             </div>
-            <div className="text-sm text-emerald-600/70">PLN oszczędności/rok</div>
+            <div className="text-sm text-emerald-600/70">
+              {t('assessment.reportTemplates.dbr77.savingsPerYear', 'PLN saved/year')}
+            </div>
           </div>
         </div>
 
@@ -407,7 +434,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-emerald-600">
-                      {(ws.automationPotential.estimatedSavings || 0).toLocaleString()} PLN
+                      {formatListNumber(ws.automationPotential.estimatedSavings || 0)} PLN
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {ws.automationPotential.taskAutomationPercent}% automatyzacji
@@ -420,7 +447,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
 
         {/* Role Evolution Summary */}
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Ewolucja Ról</h3>
+          <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
+            {t('assessment.reportTemplates.dbr77.roleEvolutionTitle', 'Role evolution')}
+          </h3>
           <div className="grid grid-cols-4 gap-3">
             {Object.entries(DBR77_ROLE_EVOLUTION).map(([key, config]) => {
               const count = data.workstations.filter(
@@ -553,7 +582,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         </h2>
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4">
-            <h3 className="font-bold text-slate-800 dark:text-white mb-3">Key Findings</h3>
+            <h3 className="font-bold text-slate-800 dark:text-white mb-3">
+              {t('assessment.reportTemplates.common.keyFindings', 'Key findings')}
+            </h3>
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-start gap-2">
                 <CheckCircle className="text-green-500 mt-0.5 flex-shrink-0" size={14} />
@@ -573,14 +604,16 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                 <div className="flex items-start gap-2">
                   <DollarSign className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} />
                   <span>
-                    Estimated savings: {data.summary.totalEstimatedSavings.toLocaleString()} PLN/yr
+                    Estimated savings: {formatListNumber(data.summary.totalEstimatedSavings)} PLN/yr
                   </span>
                 </div>
               )}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4">
-            <h3 className="font-bold text-slate-800 dark:text-white mb-3">Data Gaps</h3>
+            <h3 className="font-bold text-slate-800 dark:text-white mb-3">
+              {t('assessment.reportTemplates.common.dataGaps', 'Data gaps')}
+            </h3>
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {data.processes
                 .filter((p: any) => p.currentState.oee === 0)
@@ -592,29 +625,37 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                   </div>
                 ))}
               {data.processes.filter((p: any) => p.currentState.oee === 0).length === 0 && (
-                <p className="text-slate-500 italic">All key metrics collected</p>
+                <p className="text-slate-500 italic">
+                  {t('assessment.reportTemplates.dbr77.allMetricsCollected', 'All key metrics collected')}
+                </p>
               )}
             </div>
           </div>
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800/30">
-          <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Next Steps</h3>
+          <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">
+            {t('assessment.reportTemplates.common.nextSteps', 'Next steps')}
+          </h3>
           <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
             <div className="flex items-center gap-2">
               <ArrowRight size={14} />
-              <span>Approve assessment to unlock initiative generation</span>
+              <span>
+                {t('assessment.reportTemplates.dbr77.next.approve', 'Approve the assessment to unlock initiative generation')}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <ArrowRight size={14} />
-              <span>Create initiatives from roadmap recommendations</span>
+              <span>
+                {t('assessment.reportTemplates.dbr77.next.createInitiatives', 'Create initiatives from the roadmap recommendations')}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <ArrowRight size={14} />
-              <span>Address data gaps for higher confidence</span>
+              <span>{t('assessment.reportTemplates.dbr77.next.dataGaps', 'Address data gaps for higher confidence')}</span>
             </div>
             <div className="flex items-center gap-2">
               <ArrowRight size={14} />
-              <span>Schedule follow-up gemba walks</span>
+              <span>{t('assessment.reportTemplates.dbr77.next.gemba', 'Schedule follow-up gemba walks')}</span>
             </div>
           </div>
         </div>
@@ -622,7 +663,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-200 dark:border-navy-700 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">DBR77 Lean 4.0 Assessment • {organizationName}</p>
       </footer>
     </div>

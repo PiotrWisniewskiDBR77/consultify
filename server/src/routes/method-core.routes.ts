@@ -307,6 +307,24 @@ const POWER_ROLES: ReadonlySet<MethodProcessRole> = new Set(TRANSITION_AUTHORITY
  * check (see the header comment's "auth + tenant isolation" bullet), so
  * this one more belongs here rather than growing a new kernel dependency.
  */
+/**
+ * `users.language` — język konta, w którym mają powstać zdania zamrażane
+ * w Outpucie (`scope`, `limitations`). Fail-open na `null`: mostek zejdzie
+ * wtedy na angielski, a nieczytelna tabela użytkowników nigdy nie wywraca
+ * odtworzenia Outputu.
+ */
+async function readUserLanguage(userId: string): Promise<string | null> {
+  try {
+    const row = await DbPromise.get<{ language?: string | null }>(
+      `SELECT language FROM users WHERE id = ? LIMIT 1`,
+      [userId]
+    );
+    return row?.language ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getUserOrganizationId(userId: string): Promise<string | null> {
   const row = await DbPromise.get<{ organization_id: string | null }>(
     `SELECT organization_id FROM users WHERE id = ?`,
@@ -1616,6 +1634,11 @@ router.post(
         // this pass's scope (type errors only). Flagged for follow-up.
         demoBypassActive: false,
         revisionOfSessionId: session.revisionOfSessionId ?? null,
+        // Program spójności językowej (PLAN.md §2.5): `scope`/`limitations`
+        // zamrażanego Outputu to zdania dla klienta — ścieżka samonaprawcza
+        // musi znać język konta tak samo jak zwykłe zamrożenie, inaczej
+        // odtworzony Output byłby po polsku dla użytkownika EN.
+        language: await readUserLanguage(actorUserId),
       });
       outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);
       output = outputs[0] ?? null;

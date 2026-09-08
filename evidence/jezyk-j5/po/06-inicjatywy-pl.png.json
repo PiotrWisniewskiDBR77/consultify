@@ -1,0 +1,18 @@
+{
+ "ekran": "06-inicjatywy",
+ "jezyk": "pl",
+ "jezykRealny": "pl",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=initiatives",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "F1-26 from assessment",
+   "trafienia": [
+    "from",
+    "assessment"
+   ]
+  }
+ ]
+}

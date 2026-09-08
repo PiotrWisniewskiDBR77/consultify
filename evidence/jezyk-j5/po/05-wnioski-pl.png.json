@@ -1,0 +1,73 @@
+{
+ "ekran": "05-wnioski",
+ "jezyk": "pl",
+ "jezykRealny": "pl",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=outputs",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "DBR77 Staging Assessment Executive Report",
+   "trafienia": [
+    "Assessment",
+    "Report"
+   ]
+  },
+  {
+   "linia": "QA UI 45 Tables — Assessment Test 2026-08-07",
+   "trafienia": [
+    "Assessment"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Jul 12, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Jul 12, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Jul 11, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Jul 11, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Jul 4, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "SIRI Assessment - Jul 3, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  },
+  {
+   "linia": "DRD Assessment - Apr 29, 2026",
+   "trafienia": [
+    "Assessment",
+    "Apr"
+   ]
+  }
+ ]
+}

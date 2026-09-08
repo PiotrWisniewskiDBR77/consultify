@@ -70,7 +70,7 @@ beforeEach(() => {
 describe('AssessmentReportView', () => {
   it('shows the honest "not frozen yet" state and performs ZERO fetches when outputId is null', () => {
     render(<AssessmentReportView outputId={null} />);
-    expect(screen.getByText('Wynik nie został jeszcze zamrożony')).toBeInTheDocument();
+    expect(screen.getByText('The result has not been frozen yet')).toBeInTheDocument();
     expect(hoisted.fetchOutputForReport).not.toHaveBeenCalled();
   });
 
@@ -85,12 +85,12 @@ describe('AssessmentReportView', () => {
   it('shows "not found" when the Output fetch resolves null (404)', async () => {
     hoisted.fetchOutputForReport.mockResolvedValue(null);
     render(<AssessmentReportView outputId="missing-id" />);
-    await waitFor(() => expect(screen.getByText('Nie znaleziono zamrożonego Outputu')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Frozen Output not found')).toBeInTheDocument());
   });
 
   it('shows "forbidden" on a 403', async () => {
     hoisted.fetchOutputForReport.mockRejectedValue(new MethodCoreApiError('forbidden', 403, {}));
     render(<AssessmentReportView outputId="out-1" />);
-    await waitFor(() => expect(screen.getByText('Brak dostępu do tego wyniku')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('No access to this result')).toBeInTheDocument());
   });
 });
