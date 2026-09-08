@@ -122,11 +122,19 @@ async function loadVaultDocumentForRequest(
     return null;
   }
   if (need === 'mutate' && !canMutateDocument(doc, ctx)) {
-    res.status(403).json({ error: 'Brak uprawnień do edycji dokumentu' });
+    res.status(403).json({
+      errorCode: 'VAULT_DOCUMENT_EDIT_FORBIDDEN',
+      code: 'VAULT_DOCUMENT_EDIT_FORBIDDEN',
+      error: 'Brak uprawnień do edycji dokumentu',
+    });
     return null;
   }
   if (need === 'delete' && !canDeleteDocument(doc, ctx)) {
-    res.status(403).json({ error: 'Brak uprawnień do usunięcia dokumentu' });
+    res.status(403).json({
+      errorCode: 'VAULT_DOCUMENT_DELETE_FORBIDDEN',
+      code: 'VAULT_DOCUMENT_DELETE_FORBIDDEN',
+      error: 'Brak uprawnień do usunięcia dokumentu',
+    });
     return null;
   }
   return { doc, ctx };
@@ -922,7 +930,11 @@ router.post(
 
       if (requestedScope === 'project') {
         if (!rawProjectId) {
-          return res.status(400).json({ error: 'project_id wymagany dla scope=project' });
+          return res.status(400).json({
+            errorCode: 'VAULT_PROJECT_ID_REQUIRED',
+            code: 'VAULT_PROJECT_ID_REQUIRED',
+            error: 'project_id wymagany dla scope=project',
+          });
         }
         const canAccess = await contextDocumentService.canAccessProject({
           organizationId: orgId,
@@ -931,7 +943,11 @@ router.post(
           userRole: role,
         });
         if (!canAccess) {
-          return res.status(403).json({ error: 'Brak dostępu do projektu' });
+          return res.status(403).json({
+          errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+          code: 'PROJECT_ACCESS_FORBIDDEN',
+          error: 'Brak dostępu do projektu',
+        });
         }
       }
       const projectId = requestedScope === 'project' ? rawProjectId : null;
@@ -1085,7 +1101,11 @@ router.get(
           userRole: role,
         });
         if (!canAccess) {
-          return res.status(403).json({ error: 'Brak dostępu do projektu' });
+          return res.status(403).json({
+          errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+          code: 'PROJECT_ACCESS_FORBIDDEN',
+          error: 'Brak dostępu do projektu',
+        });
         }
       }
 
@@ -1359,7 +1379,11 @@ router.get(
         projectId: requestedProjectId,
         userRole: req.user?.role || 'USER',
       });
-      if (!canAccess) return res.status(403).json({ error: 'Brak dostępu do projektu' });
+      if (!canAccess) return res.status(403).json({
+          errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+          code: 'PROJECT_ACCESS_FORBIDDEN',
+          error: 'Brak dostępu do projektu',
+        });
     }
 
     try {
@@ -1421,7 +1445,11 @@ router.post(
 
     if (scope === 'project') {
       if (!rawProjectId) {
-        return res.status(400).json({ error: 'projectId wymagany dla scope=project' });
+        return res.status(400).json({
+          errorCode: 'VAULT_PROJECT_ID_REQUIRED',
+          code: 'VAULT_PROJECT_ID_REQUIRED',
+          error: 'projectId wymagany dla scope=project',
+        });
       }
       const canAccess = await contextDocumentService.canAccessProject({
         organizationId: orgId,
@@ -1429,7 +1457,11 @@ router.post(
         projectId: rawProjectId,
         userRole: req.user?.role || 'USER',
       });
-      if (!canAccess) return res.status(403).json({ error: 'Brak dostępu do projektu' });
+      if (!canAccess) return res.status(403).json({
+          errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+          code: 'PROJECT_ACCESS_FORBIDDEN',
+          error: 'Brak dostępu do projektu',
+        });
     }
 
     try {
@@ -1589,7 +1621,11 @@ router.get(
 
     const versionNumber = Number(req.params.versionNumber);
     if (!Number.isInteger(versionNumber) || versionNumber < 1) {
-      return res.status(400).json({ error: 'versionNumber musi być dodatnią liczbą całkowitą' });
+      return res.status(400).json({
+        errorCode: 'VAULT_VERSION_NUMBER_INVALID',
+        code: 'VAULT_VERSION_NUMBER_INVALID',
+        error: 'versionNumber musi być dodatnią liczbą całkowitą',
+      });
     }
     const version = await vaultVersions.getVersion(
       gate.ctx.organizationId,
@@ -1641,7 +1677,11 @@ router.post(
         expectedVersion = Number(rawExpected);
         if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
           dropTemp();
-          return res.status(400).json({ error: 'expectedVersion musi być liczbą całkowitą' });
+          return res.status(400).json({
+            errorCode: 'VAULT_EXPECTED_VERSION_INVALID',
+            code: 'VAULT_EXPECTED_VERSION_INVALID',
+            error: 'expectedVersion musi być liczbą całkowitą',
+          });
         }
       }
 
@@ -1760,7 +1800,11 @@ router.post(
 
     const sourceNumber = Number(req.params.versionNumber);
     if (!Number.isInteger(sourceNumber) || sourceNumber < 1) {
-      return res.status(400).json({ error: 'versionNumber musi być dodatnią liczbą całkowitą' });
+      return res.status(400).json({
+        errorCode: 'VAULT_VERSION_NUMBER_INVALID',
+        code: 'VAULT_VERSION_NUMBER_INVALID',
+        error: 'versionNumber musi być dodatnią liczbą całkowitą',
+      });
     }
     const source = await vaultVersions.getVersion(
       gate.ctx.organizationId,
@@ -1774,7 +1818,11 @@ router.post(
     if (rawExpected !== undefined && rawExpected !== null && String(rawExpected).trim() !== '') {
       expectedVersion = Number(rawExpected);
       if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
-        return res.status(400).json({ error: 'expectedVersion musi być liczbą całkowitą' });
+        return res.status(400).json({
+            errorCode: 'VAULT_EXPECTED_VERSION_INVALID',
+            code: 'VAULT_EXPECTED_VERSION_INVALID',
+            error: 'expectedVersion musi być liczbą całkowitą',
+          });
       }
     }
 
@@ -1904,13 +1952,21 @@ router.put(
         if (!folder) return res.status(400).json({ error: 'Folder not found' });
         const docScope = doc.scope || 'organization';
         if (folder.scope !== docScope) {
-          return res.status(400).json({ error: 'Folder należy do innego poziomu sejfu' });
+          return res.status(400).json({
+            errorCode: 'VAULT_FOLDER_SCOPE_MISMATCH',
+            code: 'VAULT_FOLDER_SCOPE_MISMATCH',
+            error: 'Folder należy do innego poziomu sejfu',
+          });
         }
         if (
           docScope === 'project' &&
           String(folder.project_id || '') !== String(doc.project_id || '')
         ) {
-          return res.status(400).json({ error: 'Folder należy do innego projektu' });
+          return res.status(400).json({
+            errorCode: 'VAULT_FOLDER_PROJECT_MISMATCH',
+            code: 'VAULT_FOLDER_PROJECT_MISMATCH',
+            error: 'Folder należy do innego projektu',
+          });
         }
         resolvedFolderId = String(folderId);
       }
@@ -1952,7 +2008,11 @@ router.get(
     if (!requestedScope) {
       return res
         .status(400)
-        .json({ error: 'scope musi być jednym z: user, project, organization' });
+        .json({
+        errorCode: 'VAULT_SCOPE_INVALID',
+        code: 'VAULT_SCOPE_INVALID',
+        error: 'scope musi być jednym z: user, project, organization',
+      });
     }
 
     const gate = await loadVaultDocumentForRequest(req, res, id, 'mutate');
@@ -1993,7 +2053,11 @@ router.patch(
     if (!requestedScope) {
       return res
         .status(400)
-        .json({ error: 'scope musi być jednym z: user, project, organization' });
+        .json({
+        errorCode: 'VAULT_SCOPE_INVALID',
+        code: 'VAULT_SCOPE_INVALID',
+        error: 'scope musi być jednym z: user, project, organization',
+      });
     }
 
     const gate = await loadVaultDocumentForRequest(req, res, id, 'mutate');
@@ -2006,7 +2070,11 @@ router.patch(
 
     if (requestedScope === 'project') {
       if (!rawProjectId) {
-        return res.status(400).json({ error: 'project_id wymagany dla scope=project' });
+        return res.status(400).json({
+            errorCode: 'VAULT_PROJECT_ID_REQUIRED',
+            code: 'VAULT_PROJECT_ID_REQUIRED',
+            error: 'project_id wymagany dla scope=project',
+          });
       }
       const canAccess = await contextDocumentService.canAccessProject({
         organizationId: orgId,
@@ -2015,7 +2083,11 @@ router.patch(
         userRole: role,
       });
       if (!canAccess) {
-        return res.status(403).json({ error: 'Brak dostępu do projektu' });
+        return res.status(403).json({
+          errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+          code: 'PROJECT_ACCESS_FORBIDDEN',
+          error: 'Brak dostępu do projektu',
+        });
       }
     }
 

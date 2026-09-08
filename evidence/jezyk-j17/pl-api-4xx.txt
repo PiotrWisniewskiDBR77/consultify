@@ -1,0 +1,5 @@
+GET 404 /api/v8/planning/pending-decisions  {"error":"V8 features not available","code":"V8_DISABLED"}
+GET 404 /api/v8/planning/initiatives/8df2897b-5993-4ee3-82ba-746a0bc6b166/snapshot  {"error":"V8 features not available","code":"V8_DISABLED"}
+PATCH 400 /api/knowledge/documents/00000000-0000-0000-0000-000000000000/scope  {"errorCode":"VAULT_SCOPE_INVALID","code":"VAULT_SCOPE_INVALID","error":"scope musi być jednym z: user, project, organization"}
+GET 404 /api/v8/planning/pending-decisions  {"error":"V8 features not available","code":"V8_DISABLED"}
+GET 404 /api/v8/assessment?limit=200&offset=0  {"error":"V8 features not available","code":"V8_DISABLED"}

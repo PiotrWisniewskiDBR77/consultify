@@ -68,6 +68,8 @@ router.post(
     if (!result) {
       return res.status(422).json({
         error: 'materialize_failed',
+        errorCode: 'INITIATIVE_MATERIALIZE_EMPTY_PORTFOLIO',
+        code: 'INITIATIVE_MATERIALIZE_EMPTY_PORTFOLIO',
         message: 'Portfel jest pusty lub generacja materiału nie powiodła się.',
       });
     }
@@ -103,6 +105,8 @@ router.post(
       // Fail-soft: initiative missing OR generation degraded → 422 (no buffer).
       return res.status(422).json({
         error: 'materialize_failed',
+        errorCode: 'INITIATIVE_MATERIALIZE_FAILED',
+        code: 'INITIATIVE_MATERIALIZE_FAILED',
         message: 'Nie udało się wygenerować materiału (brak inicjatywy lub dane niewystarczające).',
       });
     }

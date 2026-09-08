@@ -2807,6 +2807,9 @@ router.put(
         return res.status(503).json({
           success: false,
           error: 'billing_alerts_unavailable',
+          // J17: `code` niesie kod klasy bledu (dynamiczny); `errorCode` jest
+          // STALY i to on ma wpis w `errors.*`, wiec front tlumaczy go pewnie.
+          errorCode: 'BILLING_ALERTS_UNAVAILABLE',
           code: error.code,
           message:
             'Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.',

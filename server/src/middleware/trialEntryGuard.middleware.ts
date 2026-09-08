@@ -272,6 +272,7 @@ export const trialEntryGuard: RequestHandler = async (
     );
     if (shouldBlock) {
       safeRespond(res, next, 403, {
+        errorCode: 'TRIAL_ENTRY_RESTRICTION',
         error: 'TRIAL_ENTRY_RESTRICTION',
         message: 'Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.',
         messageEn:
@@ -309,6 +310,7 @@ export const requireOrgContext = async (
   const isTrialEntry = safeRead(() => req.isTrialEntry === true, false);
   if (isTrialEntry) {
     safeRespond(res, next, 403, {
+      errorCode: 'TRIAL_ENTRY_ORGANIZATION_REQUIRED',
       error: 'ORG_REQUIRED',
       message: 'Ta funkcja wymaga organizacji. Jesteś w fazie Trial Entry.',
       cta: {
@@ -322,6 +324,7 @@ export const requireOrgContext = async (
   const organizationId = normalizeUserId(safeRead(() => req.user?.organizationId, undefined));
   if (!organizationId || organizationId.length > MAX_USER_ID_LENGTH) {
     safeRespond(res, next, 403, {
+      errorCode: 'ORGANIZATION_CONTEXT_MISSING',
       error: 'ORG_REQUIRED',
       message: 'Brak kontekstu organizacji.',
     });

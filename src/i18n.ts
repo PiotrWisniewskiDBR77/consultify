@@ -3,6 +3,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
+import { setApiErrorTranslator } from './utils/apiError';
+
 // Supported languages in the application
 // NOTE (S23-LOCALE, 2026-08-12): 'jp' was never a valid BCP47 subtag for
 // Japanese (the correct subtag is 'ja') — Intl.PluralRules('jp') silently
@@ -218,5 +220,13 @@ export const changeLanguage = async (lang: string): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * J17: podłącz tłumacza komunikatów błędu API do warstwy, która nie ma `t`
+ * (`src/utils/apiError.ts` — 515 wołaczy). Bez tego wywołania `normalizeApiErrorMessage`
+ * zwraca ANGIELSKI fallback z `API_ERROR_FALLBACKS_EN`, więc użytkownik PL
+ * dostałby angielski komunikat — a nie odwrotnie.
+ */
+setApiErrorTranslator((key, defaultValue) => i18n.t(key, { defaultValue }) as string);
 
 export default i18n;

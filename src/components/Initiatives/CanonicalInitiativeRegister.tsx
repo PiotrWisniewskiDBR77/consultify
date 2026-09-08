@@ -2,6 +2,8 @@ import { Copy, Lightbulb } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
+
 import { StandardPreview, StandardTable } from '@/components/standard';
 import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
@@ -16,12 +18,7 @@ import {
   type InitiativeRegisterColumnOptions,
   type InitiativeRegisterRow,
 } from './initiativeRegisterColumns.shared';
-import {
-  INITIATIVE_GATE_NAME_LABELS,
-  INITIATIVE_GATE_READINESS_LABELS,
-  INITIATIVE_LIFECYCLE_LABELS,
-  INITIATIVE_SOURCE_FRESHNESS_LABELS,
-} from './initiativeRegisterProjection';
+
 
 /**
  * "Planowane okno" w danych demo/rejestrze jest jednym stringiem
@@ -100,7 +97,9 @@ export const CanonicalInitiativeRegister = ({
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
             label: initiative.onHold
               ? t('initiatives.status.ON_HOLD', 'Wstrzymana')
-              : INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] ||
+              : (isKnownEnumValue('initiativeLifecycle', String(initiative.displayStatus))
+                  ? enumLabel('initiativeLifecycle', String(initiative.displayStatus), t)
+                  : '') ||
                 getLocalizedStatusLabel(
                 String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
                 t
@@ -109,8 +108,9 @@ export const CanonicalInitiativeRegister = ({
           },
           {
             label:
-              INITIATIVE_GATE_READINESS_LABELS[String(initiative.gateReadiness || 'UNKNOWN')] ||
-              String(initiative.gateReadiness || 'UNKNOWN'),
+              // J17: enum przez slownik — nieznana wartosc daje „Unknown"/„Nieznane",
+              // nigdy surowego stringa z bazy.
+              enumLabel('initiativeGateReadiness', initiative.gateReadiness, t),
             tone: 'neutral',
           },
         ],
@@ -119,51 +119,58 @@ export const CanonicalInitiativeRegister = ({
             v{String(initiative.canonicalVersion || '—')}
           </span>
         ),
-        recommendation: String(initiative.nextAction || '—'),
+        // J17: kod -> zdanie w jezyku interfejsu; zdanie z danych to dlug.
+        recommendation: isKnownEnumValue(
+          'initiativeNextAction',
+          (initiative as { nextActionKey?: string }).nextActionKey
+        )
+          ? enumLabel(
+              'initiativeNextAction',
+              (initiative as { nextActionKey?: string }).nextActionKey,
+              t
+            )
+          : String(initiative.nextAction || '—'),
       }}
       details={{
-        label: 'Kontekst inicjatywy',
-        text: initiative.summary || initiative.description || 'Brak opisu.',
+        label: t('initiatives.canonical.contextLabel', 'Initiative context'),
+        text:
+          initiative.summary ||
+          initiative.description ||
+          t('initiatives.canonical.noDescription', 'No description.'),
         properties: [
           {
             id: 'gate',
-            label: 'Następna bramka',
-            value: initiative.gateName
-              ? INITIATIVE_GATE_NAME_LABELS[initiative.gateName] || initiative.gateName
-              : '—',
+            label: t('initiatives.columns.gateName', 'Next gate'),
+            value: initiative.gateName ? enumLabel('initiativeGateName', initiative.gateName, t) : '—',
           },
           {
             id: 'readiness',
-            label: 'Gotowość',
-            value:
-              INITIATIVE_GATE_READINESS_LABELS[String(initiative.gateReadiness || 'UNKNOWN')] ||
-              String(initiative.gateReadiness || 'UNKNOWN'),
+            label: t('initiatives.columns.gateReadiness', 'Readiness'),
+            value: enumLabel('initiativeGateReadiness', initiative.gateReadiness, t),
           },
           {
             id: 'owner',
-            label: 'Właściciel',
+            label: t('initiatives.columns.owner', 'Owner'),
             value:
               initiative.ownerBusiness?.firstName || initiative.ownerExecution?.firstName || '—',
           },
           {
             id: 'impact',
-            label: 'Oczekiwany efekt',
+            label: t('initiatives.columns.expectedImpact', 'Expected impact'),
             value:
               initiative.expectedImpact && String(initiative.expectedImpact) !== 'UNKNOWN'
                 ? String(initiative.expectedImpact)
-                : 'Nieznany',
+                : t('enums.unknown', 'Unknown'),
           },
           {
             id: 'window',
-            label: 'Planowane okno',
+            label: t('initiatives.columns.plannedWindow', 'Planned window'),
             value: formatPlannedWindow(initiative.plannedWindow),
           },
           {
             id: 'freshness',
-            label: 'Źródło',
-            value:
-              INITIATIVE_SOURCE_FRESHNESS_LABELS[String(initiative.sourceFreshness || 'UNKNOWN')] ||
-              String(initiative.sourceFreshness || 'UNKNOWN'),
+            label: t('initiatives.columns.source', 'Source'),
+            value: enumLabel('initiativeSourceFreshness', initiative.sourceFreshness, t),
           },
         ],
         onCopy: () =>
@@ -206,7 +213,7 @@ export const CanonicalInitiativeRegister = ({
               columns: 2,
               buttons: [
                 {
-                  label: 'Kopiuj link',
+                  label: t('common.copyLink', 'Copy link'),
                   icon: Copy,
                   colorScheme: 'neutral',
                   onClick: () => void navigator.clipboard?.writeText(initiative.id),

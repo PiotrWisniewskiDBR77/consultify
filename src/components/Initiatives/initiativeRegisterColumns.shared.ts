@@ -7,17 +7,11 @@ import type { StandardRowMenu, TableColumn } from '@/components/standard';
 import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
 import type { PortfolioInitiative } from '@/types';
+import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
-import {
-  INITIATIVE_GATE_NAME_LABELS,
-  INITIATIVE_GATE_READINESS_LABELS,
-  INITIATIVE_HEALTH_STATE_LABELS,
-  INITIATIVE_IMPACT_CONFIDENCE_LABELS,
-  INITIATIVE_LIFECYCLE_LABELS,
-  nextStepForLifecycle,
-} from './initiativeRegisterProjection';
+import { nextStepForLifecycle } from './initiativeRegisterProjection';
 
 export const INITIATIVE_REGISTER_COLUMN_IDS = [
   'name',
@@ -169,10 +163,20 @@ export const createInitiativeRegisterColumns = (
   options: InitiativeRegisterColumnOptions = {}
 ): TableColumn[] => {
   const t = options.t;
+  /**
+   * J17 (program JEZYK_EN_PL_20260908, zasady 4 i 6): etykieta kolumny i wartosc
+   * enuma MUSZA przejsc przez `t()`. Przed ta zmiana naglowki byly polskimi
+   * literalami, a `INITIATIVE_*_LABELS` polskimi mapami — uzytkownik wersji
+   * angielskiej widzial „Oczekiwany efekt" i „Pewnosc: Nieznana", a przy
+   * nieznanej wartosci surowy enum („UNKNOWN") sklejony z polskim zdaniem.
+   * `options.t` bywa nieprzekazane (starsze wolacze), wiec fallback zwraca
+   * ANGIELSKI defaultValue — nigdy klucz i nigdy polski.
+   */
+  const tr = (key: string, fallback: string): string => (t ? t(key, fallback) : fallback);
   const base: TableColumn[] = [
     {
       id: 'name',
-      label: 'Inicjatywa',
+      label: tr('initiatives.columns.name', 'Initiative'),
       width: '220px',
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
@@ -187,14 +191,16 @@ export const createInitiativeRegisterColumns = (
           h(
             'span',
             { className: 'block truncate text-xs text-c-text-secondary' },
-            row.summary || row.description || 'Brak opisu problemu'
+            row.summary ||
+              row.description ||
+              tr('initiatives.columns.noProblemSummary', 'No problem description')
           )
         );
       },
     },
     {
       id: 'status',
-      label: 'Status',
+      label: tr('initiatives.columns.status', 'Status'),
       width: '170px',
       filterable: true,
       filterOptions: Object.values(InitiativeStatus).map((value) => ({
@@ -224,14 +230,14 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'gateName',
-      label: 'Następna bramka',
+      label: tr('initiatives.columns.gateName', 'Next gate'),
       width: '175px',
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
         const value = String(
           row.gateName || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).gate || ''
         );
-        const label = value && value !== '—' ? INITIATIVE_GATE_NAME_LABELS[value] || value : '—';
+        const label = value && value !== '—' ? enumLabel('initiativeGateName', value, tr) : '—';
         return h(
           'span',
           { className: 'block truncate text-xs text-c-text-secondary', title: label },
@@ -241,11 +247,11 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'gateReadiness',
-      label: 'Gotowość',
+      label: tr('initiatives.columns.gateReadiness', 'Readiness'),
       width: '150px',
       render: (raw) => {
         const readiness = String((raw as InitiativeRegisterRow).gateReadiness || 'NOT_EVALUATED');
-        const label = INITIATIVE_GATE_READINESS_LABELS[readiness] || readiness.replaceAll('_', ' ');
+        const label = enumLabel('initiativeGateReadiness', readiness, tr);
         return h(
           'span',
           { className: 'block truncate text-xs font-medium text-c-text-secondary', title: label },
@@ -255,7 +261,7 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'owner',
-      label: 'Właściciel',
+      label: tr('initiatives.columns.owner', 'Owner'),
       width: '150px',
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
@@ -285,21 +291,34 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'nextAction',
-      label: 'Następne działanie',
+      label: tr('initiatives.columns.nextAction', 'Next action'),
       width: '160px',
       // PRZEWODY ODBIORU 2026-09-03: brak danych renderował się jako angielskie
       // „UNKNOWN" w polskiej tabeli (zmierzone na `assessment-initiatives-table`
       // — pięć wierszy, dwie kolumny). Kanon tabel: pusta komórka to „—".
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
-        const action =
-          row.nextAction || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).action;
-        return h('span', { className: 'text-xs font-medium text-c-text' }, String(action || '—'));
+        // J17: gdy serwer nie przysłał własnego `nextAction`, bierzemy KOD
+        // z `nextStepForLifecycle` i tłumaczymy — przed tą zmianą wpadało tu
+        // polskie zdanie („Zaplanuj realizację") także w wersji angielskiej.
+        const kod =
+          String((row as { nextActionKey?: string }).nextActionKey || '').trim() ||
+          nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).actionKey;
+        if (isKnownEnumValue('initiativeNextAction', kod)) {
+          return h(
+            'span',
+            { className: 'text-xs font-medium text-c-text' },
+            enumLabel('initiativeNextAction', kod, tr)
+          );
+        }
+        // Starszy nadawca przysłał gotowe zdanie — pokazujemy je, ale to dług.
+        const zServera = String(row.nextAction || '').trim();
+        return h('span', { className: 'text-xs font-medium text-c-text' }, zServera || '—');
       },
     },
     {
       id: 'expectedImpact',
-      label: 'Oczekiwany efekt',
+      label: tr('initiatives.columns.expectedImpact', 'Expected impact'),
       width: '160px',
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
@@ -310,19 +329,31 @@ export const createInitiativeRegisterColumns = (
           h(
             'span',
             { className: 'block truncate text-c-text-secondary' },
-            String(row.expectedImpact || '—')
+            // Surowy enum („UNKNOWN") to BRAK pomiaru, nie treść — kanon tabel
+            // każe pokazać „—", a nie wartość z bazy (defekt zgłoszony przez
+            // właściciela: „UNKNOWN Pewność: Nieznana").
+            String(row.expectedImpact || '').trim() &&
+              String(row.expectedImpact).trim().toUpperCase() !== 'UNKNOWN'
+              ? String(row.expectedImpact)
+              : '—'
           ),
           h(
             'span',
             { className: 'text-c-text-secondary' },
-            `Pewność: ${INITIATIVE_IMPACT_CONFIDENCE_LABELS[confidence] || confidence}`
+            // Zakaz sklejania enumu ze zdaniem (zasada 6): etykieta „Confidence"
+            // i wartosc to DWA osobne klucze, oba tlumaczone.
+            `${tr('initiatives.columns.confidence', 'Confidence')}: ${enumLabel(
+              'initiativeImpactConfidence',
+              confidence,
+              tr
+            )}`
           )
         );
       },
     },
     {
       id: 'plannedWindow',
-      label: 'Planowane okno',
+      label: tr('initiatives.columns.plannedWindow', 'Planned window'),
       width: '215px',
       render: (raw) => {
         const label = formatPlannedWindow((raw as InitiativeRegisterRow).plannedWindow);
@@ -335,7 +366,7 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'healthState',
-      label: 'Kondycja',
+      label: tr('initiatives.columns.healthState', 'Health'),
       width: '110px',
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
@@ -343,7 +374,7 @@ export const createInitiativeRegisterColumns = (
           row.healthState ||
             (resolveInitiativeRegisterLifecycle(row) === 'IN_EXECUTION' ? 'UNKNOWN' : 'N/A')
         );
-        const label = INITIATIVE_HEALTH_STATE_LABELS[value] || value;
+        const label = enumLabel('initiativeHealthState', value, tr);
         return h(
           'span',
           { className: 'block truncate text-xs text-c-text-secondary', title: label },
@@ -353,7 +384,7 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'updatedAt',
-      label: 'Aktualizacja',
+      label: tr('initiatives.columns.updatedAt', 'Updated'),
       width: '220px',
       align: 'right',
       sortable: true,
@@ -382,7 +413,7 @@ export const createInitiativeRegisterColumns = (
   // „Aktualizacja", zeby kolumna sortowania zostala ostatnia (kanon TRIADA).
   const sourceColumn: TableColumn = {
     id: 'source',
-    label: 'Źródło',
+    label: tr('initiatives.columns.source', 'Source'),
     width: '150px',
     render: (raw) => {
       const row = raw as InitiativeRegisterRow;

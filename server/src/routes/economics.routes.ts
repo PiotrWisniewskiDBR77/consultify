@@ -112,6 +112,7 @@ async function financeWrite<T>(table: string, op: () => Promise<T>): Promise<T> 
 function respondFinanceStorageUnavailable(res: Response, error: FinanceStorageUnavailableError) {
   return res.status(503).json({
     success: false,
+    errorCode: 'FINANCE_STORAGE_UNAVAILABLE',
     error: 'FINANCE_STORAGE_UNAVAILABLE',
     table: error.table,
     message:
@@ -627,6 +628,7 @@ router.get(
       // read failure is now reported as a failure.
       logger.error('[Economics] Error fetching analyses:', error);
       return res.status(500).json({
+        errorCode: 'ANALYSES_READ_FAILED',
         error: 'ANALYSES_READ_FAILED',
         message: 'Nie udało się wczytać listy analiz. To błąd odczytu, nie pusta lista.',
       });
@@ -1650,6 +1652,7 @@ router.put(
         });
         return res.status(503).json({
           success: false,
+          errorCode: 'ROI_RECONCILIATION_STORAGE_UNAVAILABLE',
           error: 'ROI_RECONCILIATION_STORAGE_UNAVAILABLE',
           actualBenefitsWriteRejected: true,
           storedActualBenefits,
@@ -1685,6 +1688,7 @@ router.put(
       // canonical Results reconciliation command.
       return res.status(409).json({
         success: false,
+        errorCode: 'RESULTS_ACTUAL_SOURCE_REQUIRED',
         error: 'RESULTS_ACTUAL_SOURCE_REQUIRED',
         status: 'NEEDS_DECISION',
         actualBenefitsWriteRejected: true,
@@ -1763,6 +1767,7 @@ router.put(
         );
         return res.status(409).json({
           success: false,
+          errorCode: 'BENEFIT_ACTUAL_APPEND_ONLY',
           error: 'BENEFIT_ACTUAL_APPEND_ONLY',
           actualBenefitsWriteRejected: true,
           requestedActualBenefits: actualBenefits,
@@ -1881,6 +1886,7 @@ router.post(
     }
 
     return res.status(501).json({
+      errorCode: 'BUSINESS_CASE_ENDPOINT_RETIRED',
       error: 'not_implemented',
       message:
         'Ten endpoint był stubem (BUG-07) i nie generuje już fałszywego pustego dokumentu. ' +

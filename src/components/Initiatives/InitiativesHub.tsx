@@ -131,7 +131,6 @@ import {
 import {
   canonicalInitiativeMatchesRegisterFilters,
   filterCanonicalInitiativeRegisterScope,
-  INITIATIVE_LIFECYCLE_LABELS,
   INITIATIVE_LIFECYCLE_PRESETS,
   type InitiativeLifecyclePreset,
   lifecycleMatchesPreset,
