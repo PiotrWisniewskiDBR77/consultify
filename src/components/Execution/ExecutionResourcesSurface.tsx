@@ -354,7 +354,7 @@ export const ExecutionResourcesSurface = ({
     },
     {
       id: 'weekLabel',
-      label: t('execution.resources.columns.week', 'Tydzień'),
+      label: t('execution.resources.columns.week', 'Week'),
       sortable: true,
       width: '170px',
     },
@@ -366,13 +366,13 @@ export const ExecutionResourcesSurface = ({
     },
     {
       id: 'supplyLabel',
-      label: t('execution.resources.columns.supply', 'Podaż (h)'),
+      label: t('execution.resources.columns.supply', 'Supply (h)'),
       sortable: true,
       width: '120px',
     },
     {
       id: 'utilizationLabel',
-      label: t('execution.resources.columns.utilization', 'Obłożenie %'),
+      label: t('execution.resources.columns.utilization', 'Utilization %'),
       sortable: true,
       filterable: true,
       width: '150px',
@@ -393,7 +393,7 @@ export const ExecutionResourcesSurface = ({
      */
     {
       id: 'backlogLabel',
-      label: t('execution.resources.columns.backlog', 'Zaległość (h)'),
+      label: t('execution.resources.columns.backlog', 'Backlog (h)'),
       sortable: true,
       width: '150px',
       render: (row: any) =>
@@ -649,12 +649,10 @@ export const ExecutionResourcesSurface = ({
   useEffect(() => {
     if (!onRegisterPrimaryCta) return;
     onRegisterPrimaryCta({
-      label: t('execution.resources.actions.addAvailability', 'Dodaj dostępność'),
+      label: t('execution.resources.actions.addAvailability', 'Add availability'),
       testId: 'execution-resources-add-availability',
       disabled: planPeople.length === 0,
-      disabledReason: t(
-        'execution.resources.actions.addAvailabilityEmpty',
-        'Brak osób w planie — nie ma komu ustawić dostępności.'
+      disabledReason: t('execution.resources.actions.addAvailabilityEmpty', 'No people in the plan — there\'s no one to set availability for.'
       ),
       onClick: () => {
         const osoba =
@@ -808,7 +806,7 @@ export const ExecutionResourcesSurface = ({
            */}
           <span
             className="cursor-help underline decoration-dotted decoration-c-border underline-offset-2"
-            title={t('execution.resources.summary.utilizationTooltip', 'Średnia z {{count}} tygodni', {
+            title={t('execution.resources.summary.utilizationTooltip', 'Average over {{count}} weeks', {
               count: plan.weeks.length,
             })}
           >
@@ -1260,11 +1258,16 @@ export const ExecutionResourcesSurface = ({
                   setCapacityDialog(null);
                   await loadPlan();
                 } catch {
-                  setCapacityError('Nie udało się zapisać dostępności. Spróbuj ponownie.');
+                  setCapacityError(
+                    t(
+                      'execution.resources.errors.saveAvailability',
+                      'Could not save availability. Try again.'
+                    )
+                  );
                 }
               }}
             >
-              Zapisz
+              {t('execution.resources.actions.saveAvailability', 'Save')}
             </button>
           </div>
           {capacityError && (

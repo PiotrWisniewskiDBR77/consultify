@@ -13620,6 +13620,9 @@
         "risks": "Ryzyka",
         "overdue": "Po terminie",
         "signals": "Sygnały"
+      },
+      "summary": {
+        "decisions": "Rozstrzygnięcia"
       }
     },
     "scope": {
@@ -14126,10 +14129,15 @@
       },
       "actions": {
         "proposeAllocation": "Zaproponuj przydział",
-        "addAvailability": "Dodaj dostępność"
+        "addAvailability": "Dodaj dostępność",
+        "addAvailabilityEmpty": "Brak osób w planie — nie ma komu ustawić dostępności.",
+        "saveAvailability": "Zapisz"
       },
       "summary": {
         "utilizationTooltip": "Średnia z {{count}} tygodni"
+      },
+      "errors": {
+        "saveAvailability": "Nie udało się zapisać dostępności. Spróbuj ponownie."
       }
     },
     "governance": {

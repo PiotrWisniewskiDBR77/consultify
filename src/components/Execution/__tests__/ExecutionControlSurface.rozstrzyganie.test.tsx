@@ -19,6 +19,11 @@
  *   (l) pokazanie bloku akcji bez sprawdzenia `canDecide` → RED
  *       (MEMBER widziałby przycisk, który i tak odbije się o 403).
  */
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski (Decision title/Needed by (required)/Reject/missing-context
+// message). Asercje w tym pliku zaktualizowano na nowy angielski tekst —
+// kontrakt się nie zmienił, zmienił się tylko język domyślnego tekstu.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -216,7 +221,7 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
     const zapisz = screen.getByTestId('execution-new-decision-save');
     expect(zapisz).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), {
+    fireEvent.change(screen.getByLabelText('Decision title'), {
       target: { value: 'proba-r3-test' },
     });
     // Sam tytuł to DOKŁADNIE payload sprzed R3 — i dokładnie ten, który
@@ -228,7 +233,7 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
     });
     expect(zapisz).toBeDisabled(); // wciąż brak terminu
 
-    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
+    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
       target: { value: '2026-10-15' },
     });
     expect(zapisz).toBeEnabled();
@@ -236,13 +241,13 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
 
   it('wysyła initiativeId + sourceId + sourceType + dueDate + decydenta', async () => {
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), {
+    fireEvent.change(screen.getByLabelText('Decision title'), {
       target: { value: 'proba-r3-test' },
     });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
-    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
+    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
       target: { value: '2026-10-15' },
     });
     fireEvent.click(screen.getByTestId('execution-new-decision-save'));
@@ -272,11 +277,11 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
       new TestowyApiError({ error: 'Missing decision context' }, 'Failed to create decision', 400)
     );
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Decision title'), { target: { value: 'x' } });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
-    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
+    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
       target: { value: '2026-10-15' },
     });
     fireEvent.click(screen.getByTestId('execution-new-decision-save'));
@@ -284,7 +289,7 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
     await waitFor(() =>
       expect(
         screen.getByText(
-          'Brakuje danych decyzji — uzupełnij inicjatywę, termin i decydenta.'
+          'Decision data is missing — complete the initiative, due date and decision maker.'
         )
       ).toBeInTheDocument()
     );
@@ -381,7 +386,7 @@ describe('(g) rozstrzygnięcie BEZ uzasadnienia jest zablokowane', () => {
     fireEvent.click(screen.getByTestId('execution-decision-reason-confirm'));
     await waitFor(() =>
       expect(screen.getByTestId('execution-decision-reason-error')).toHaveTextContent(
-        'Nie masz uprawnień do tej operacji'
+        "You don't have permission for this operation"
       )
     );
   });
@@ -394,7 +399,7 @@ describe('(l) kto widzi akcje rozstrzygające', () => {
     fireEvent.click(screen.getByText('Cudza decyzja po terminie'));
     await waitFor(() => expect(screen.getAllByText('Dni po terminie').length).toBeGreaterThan(1));
     expect(screen.queryByText('Rozstrzygnij')).toBeNull();
-    expect(screen.queryByText('Odrzuć')).toBeNull();
+    expect(screen.queryByText('Reject')).toBeNull();
     expect(screen.queryByText('Nieaktualna')).toBeNull();
   });
 
@@ -404,7 +409,7 @@ describe('(l) kto widzi akcje rozstrzygające', () => {
     await waitFor(() => expect(screen.getByText('Cudza decyzja po terminie')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Cudza decyzja po terminie'));
     await waitFor(() => expect(screen.getByText('Rozstrzygnij')).toBeInTheDocument());
-    expect(screen.getByText('Odrzuć')).toBeInTheDocument();
+    expect(screen.getByText('Reject')).toBeInTheDocument();
     expect(screen.getByText('Nieaktualna')).toBeInTheDocument();
   });
 
@@ -434,7 +439,7 @@ describe('(l) kto widzi akcje rozstrzygające', () => {
       screen.queryAllByRole('button', { name: 'Nieaktualna' })
     ).toHaveLength(0);
     expect(screen.queryByText('Rozstrzygnij')).toBeNull();
-    expect(screen.queryByText('Odrzuć')).toBeNull();
+    expect(screen.queryByText('Reject')).toBeNull();
     // Uzasadnienie zostaje na widoku — to jest cały sens „wpisu nieusuwalnego".
     expect(screen.getByText('Zakres wypadł z programu.')).toBeInTheDocument();
   });

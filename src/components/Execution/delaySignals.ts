@@ -50,10 +50,10 @@ type Tlumacz = (key: string, fallback: string) => string;
 export const rodzajSygnaluLabel = (value: unknown, t: Tlumacz): string => {
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
-    LATE_START: t('execution.signals.kind.lateStart', 'Późny start'),
-    OVERDUE: t('execution.signals.kind.overdue', 'Po terminie'),
-    LATE_FINISH_RISK: t('execution.signals.kind.lateFinishRisk', 'Ryzyko poślizgu końca'),
-    DEADLINE_RISK: t('execution.signals.kind.deadlineRisk', 'Zagrożony termin'),
+    LATE_START: t('execution.signals.kind.lateStart', 'Late start'),
+    OVERDUE: t('execution.signals.kind.overdue', 'Overdue'),
+    LATE_FINISH_RISK: t('execution.signals.kind.lateFinishRisk', 'Late finish risk'),
+    DEADLINE_RISK: t('execution.signals.kind.deadlineRisk', 'Deadline at risk'),
   };
   return slownik[key] ?? String(value ?? '—');
 };
@@ -66,12 +66,12 @@ export const rodzajSygnaluLabel = (value: unknown, t: Tlumacz): string => {
 export const powodSygnaluLabel = (value: unknown, t: Tlumacz): string => {
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
-    BLOCKED: t('execution.signals.reason.blocked', 'Blokada'),
-    DEPENDENCY_NOT_DONE: t('execution.signals.reason.dependency', 'Niedomknięta zależność'),
-    NO_OWNER: t('execution.signals.reason.noOwner', 'Bez właściciela'),
-    RAID_HIGH_RISK: t('execution.signals.reason.raidHighRisk', 'Wysokie ryzyko RAID'),
-    CAPACITY_OVERLOAD: t('execution.signals.reason.capacity', 'Przeciążenie zasobów'),
-    NO_TASKS_PLANNED: t('execution.signals.reason.noTasks', 'Brak zaplanowanych zadań'),
+    BLOCKED: t('execution.signals.reason.blocked', 'Blocked'),
+    DEPENDENCY_NOT_DONE: t('execution.signals.reason.dependency', 'Unresolved dependency'),
+    NO_OWNER: t('execution.signals.reason.noOwner', 'No owner'),
+    RAID_HIGH_RISK: t('execution.signals.reason.raidHighRisk', 'High RAID risk'),
+    CAPACITY_OVERLOAD: t('execution.signals.reason.capacity', 'Resource overload'),
+    NO_TASKS_PLANNED: t('execution.signals.reason.noTasks', 'No planned tasks'),
   };
   return slownik[key] ?? String(value ?? '');
 };
@@ -81,7 +81,7 @@ export const powodySygnaluLabel = (powody: PowodOpoznienia[] | undefined, t: Tlu
   const lista = (powody ?? [])
     .map((p) => powodSygnaluLabel(p?.reason, t))
     .filter((x) => x.trim().length > 0);
-  if (lista.length === 0) return t('execution.signals.reason.unknown', 'Nie ustalono');
+  if (lista.length === 0) return t('execution.signals.reason.unknown', 'Not determined');
   return lista.join(' · ');
 };
 
@@ -130,7 +130,7 @@ export const stanSygnaluLabel = (stan: StanSygnalu, t: Tlumacz): string =>
   ({
     NOWY: t('execution.signals.state.new', 'Nowy'),
     INTERWENCJA: t('execution.signals.state.intervention', 'Interwencja'),
-    ZAMKNIETY: t('execution.signals.state.closed', 'Zamknięty'),
+    ZAMKNIETY: t('execution.signals.state.closed', 'Closed'),
   })[stan];
 
 /**

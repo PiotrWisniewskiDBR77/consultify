@@ -290,10 +290,8 @@ const buildCols = ({
   edytowalny,
   zapisz,
 }: KontekstKolumn): StandardTableColumn[] => {
-  const podpowiedz = t('execution.work.edit.hint', 'Zmień podwójnym kliknięciem');
-  const podpowiedzBrak = t(
-    'execution.work.edit.notEditable',
-    'Ten wiersz pochodzi z kanonicznego rejestru realizacji — otwórz element pracy, żeby go zmienić.'
+  const podpowiedz = t('execution.work.edit.hint', 'Double-click to change');
+  const podpowiedzBrak = t('execution.work.edit.notEditable', 'This row comes from the canonical execution register — open the work item to change it.'
   );
   const brakOsoby = t('execution.work.edit.unassigned', 'Nieprzypisany');
 
@@ -326,7 +324,7 @@ const buildCols = ({
       render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
       editable: {
         kind: 'select',
-        ariaLabel: t('execution.work.edit.person', 'Zmień osobę'),
+        ariaLabel: t('execution.work.edit.person', 'Change assignee'),
         hint: podpowiedz,
         disabledHint: podpowiedzBrak,
         isEditable: edytowalny,
@@ -345,7 +343,7 @@ const buildCols = ({
       width: '150px',
       editable: {
         kind: 'date',
-        ariaLabel: t('execution.work.edit.due', 'Zmień termin'),
+        ariaLabel: t('execution.work.edit.due', 'Change due date'),
         hint: podpowiedz,
         disabledHint: podpowiedzBrak,
         isEditable: edytowalny,
@@ -361,7 +359,7 @@ const buildCols = ({
       render: (row) => <span role="status">{etykietaStatusu(row.status as string, t)}</span>,
       editable: {
         kind: 'select',
-        ariaLabel: t('execution.work.edit.status', 'Zmień status'),
+        ariaLabel: t('execution.work.edit.status', 'Change status'),
         hint: podpowiedz,
         disabledHint: podpowiedzBrak,
         isEditable: edytowalny,
@@ -880,9 +878,7 @@ export const ExecutionWorkSurface = ({
         }) as unknown as string;
       }
       if (/Blocking decisions/i.test(surowy)) {
-        return t(
-          'execution.work.edit.blockedByDecision',
-          'Zadania nie można zamknąć: czeka na rozstrzygnięcie decyzji.'
+        return t('execution.work.edit.blockedByDecision', 'The task can\'t be closed: it is waiting on a decision to be resolved.'
         );
       }
       if (/Blocked reason is required/i.test(surowy)) {
@@ -892,7 +888,7 @@ export const ExecutionWorkSurface = ({
         );
       }
       return t('execution.work.edit.failed', {
-        powod: surowy || t('execution.work.edit.unknownReason', 'brak odpowiedzi serwera'),
+        powod: surowy || t('execution.work.edit.unknownReason', 'no response from server'),
         defaultValue: 'Nie udało się zapisać zmiany: {{powod}}',
       }) as unknown as string;
     },
@@ -911,14 +907,12 @@ export const ExecutionWorkSurface = ({
       if (biezacy === 'done')
         return {
           mozna: false,
-          powod: t('execution.work.edit.alreadyClosed', 'Zadanie jest już zamknięte.'),
+          powod: t('execution.work.edit.alreadyClosed', 'The task is already closed.'),
         };
       if (!slownikStatusow)
         return {
           mozna: false,
-          powod: t(
-            'execution.work.edit.dictionaryMissing',
-            'Słownik statusów jeszcze się nie wczytał.'
+          powod: t('execution.work.edit.dictionaryMissing', 'The status dictionary hasn\'t loaded yet.'
           ),
         };
       if (!(slownikStatusow.transitions?.[biezacy] ?? []).includes('done'))
@@ -994,7 +988,7 @@ export const ExecutionWorkSurface = ({
               : wiersz
           )
         );
-        toast.success(t('execution.work.edit.saved', 'Zapisano zmianę zadania'));
+        toast.success(t('execution.work.edit.saved', 'Task change saved'));
       } catch (error) {
         const komunikat = komunikatBledu(error);
         setBladWiersza({ rowId: id, message: komunikat });
@@ -1038,7 +1032,7 @@ export const ExecutionWorkSurface = ({
     if (!tytul) {
       setFormularzNowego((biezacy) => ({
         ...biezacy,
-        blad: t('execution.work.create.titleRequired', 'Podaj tytuł zadania.'),
+        blad: t('execution.work.create.titleRequired', 'Enter a task title.'),
       }));
       return;
     }
@@ -1379,7 +1373,7 @@ export const ExecutionWorkSurface = ({
       return;
     }
     onRegisterPrimaryCta({
-      label: t('execution.actions.newTask', 'Nowe zadanie'),
+      label: t('execution.actions.newTask', 'New task'),
       testId: 'execution-work-new-task',
       onClick: () =>
         setFormularzNowego((biezacy) => ({
@@ -1488,7 +1482,7 @@ export const ExecutionWorkSurface = ({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={t('execution.work.create.title', 'Nowe zadanie')}
+          aria-label={t('execution.work.create.title', 'New task')}
           data-testid="execution-work-create-dialog"
           className="fixed inset-0 z-modal flex items-center justify-center bg-black/40 p-4"
           onClick={() => setFormularzNowego((biezacy) => ({ ...biezacy, otwarty: false }))}
@@ -1498,15 +1492,15 @@ export const ExecutionWorkSurface = ({
             onClick={(event) => event.stopPropagation()}
           >
             <h3 className="text-base font-semibold text-c-text">
-              {t('execution.work.create.title', 'Nowe zadanie')}
+              {t('execution.work.create.title', 'New task')}
             </h3>
             <div className="mt-4 grid gap-3">
               <label className="block text-xs text-c-text-secondary">
-                {t('execution.work.create.fieldTitle', 'Tytuł')}
+                {t('execution.work.create.fieldTitle', 'Title')}
                 <input
                   autoFocus
                   type="text"
-                  aria-label={t('execution.work.create.fieldTitle', 'Tytuł')}
+                  aria-label={t('execution.work.create.fieldTitle', 'Title')}
                   value={formularzNowego.title}
                   onChange={(event) =>
                     setFormularzNowego((biezacy) => ({ ...biezacy, title: event.target.value }))
@@ -1599,7 +1593,7 @@ export const ExecutionWorkSurface = ({
                 className="btn-secondary"
                 onClick={() => setFormularzNowego((biezacy) => ({ ...biezacy, otwarty: false }))}
               >
-                {t('common.cancel', 'Anuluj')}
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -1608,7 +1602,7 @@ export const ExecutionWorkSurface = ({
                 disabled={formularzNowego.zapisywanie}
                 onClick={() => void utworzZadanie()}
               >
-                {t('execution.work.create.submit', 'Utwórz zadanie')}
+                {t('execution.work.create.submit', 'Create task')}
               </button>
             </div>
           </div>
@@ -1761,21 +1755,21 @@ export const ExecutionWorkSurface = ({
                         informational: [
                           {
                             id: 'change-person',
-                            label: t('execution.work.edit.person', 'Zmień osobę'),
+                            label: t('execution.work.edit.person', 'Change assignee'),
                             variant: 'neutral',
                             icon: UserCog,
                             onClick: () => setEdycjaPodgladu('owner'),
                           },
                           {
                             id: 'change-due',
-                            label: t('execution.work.edit.due', 'Zmień termin'),
+                            label: t('execution.work.edit.due', 'Change due date'),
                             variant: 'neutral',
                             icon: CalendarClock,
                             onClick: () => setEdycjaPodgladu('due'),
                           },
                           {
                             id: 'close-task',
-                            label: t('execution.work.edit.close', 'Zamknij zadanie'),
+                            label: t('execution.work.edit.close', 'Close task'),
                             variant: 'positive',
                             icon: CheckCircle2,
                             disabled: !mozliwoscZamkniecia(r).mozna,
@@ -1801,10 +1795,10 @@ export const ExecutionWorkSurface = ({
                   <div className="mt-3 space-y-2" data-testid="execution-work-preview-edit">
                     {edycjaPodgladu === 'owner' && (
                       <label className="block text-xs text-c-text-secondary">
-                        {t('execution.work.edit.person', 'Zmień osobę')}
+                        {t('execution.work.edit.person', 'Change assignee')}
                         <select
                           autoFocus
-                          aria-label={t('execution.work.edit.person', 'Zmień osobę')}
+                          aria-label={t('execution.work.edit.person', 'Change assignee')}
                           defaultValue={String(r.owner ?? '')}
                           className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           onChange={(event) => {
@@ -1826,11 +1820,11 @@ export const ExecutionWorkSurface = ({
                     )}
                     {edycjaPodgladu === 'due' && (
                       <label className="block text-xs text-c-text-secondary">
-                        {t('execution.work.edit.due', 'Zmień termin')}
+                        {t('execution.work.edit.due', 'Change due date')}
                         <input
                           autoFocus
                           type="date"
-                          aria-label={t('execution.work.edit.due', 'Zmień termin')}
+                          aria-label={t('execution.work.edit.due', 'Change due date')}
                           defaultValue={naWartoscDaty(r.rawDueAt)}
                           className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           onChange={(event) => {
@@ -1889,7 +1883,7 @@ export const ExecutionWorkSurface = ({
                     primary: [
                       {
                         id: 'open',
-                        label: t('execution.work.menu.openTask', 'Otwórz zadanie'),
+                        label: t('execution.work.menu.openTask', 'Open task'),
                         icon: ArrowRight,
                         onClick: openWorkspaceForAction,
                       },

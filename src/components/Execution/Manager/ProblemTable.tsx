@@ -121,7 +121,7 @@ function buildRowActions(
 
   const openPreview: RowAction = {
     id: 'open-preview',
-    label: t('common.openPreview', 'Otwórz podgląd'),
+    label: t('common.openPreview', 'Open preview'),
     icon: ChevronRight,
     divider: contextActions.length > 0,
     onClick: () => onSelect(row),

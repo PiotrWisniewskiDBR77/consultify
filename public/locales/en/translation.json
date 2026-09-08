@@ -14159,6 +14159,9 @@
         "risks": "Risks",
         "overdue": "Overdue",
         "signals": "Signals"
+      },
+      "summary": {
+        "decisions": "Decisions"
       }
     },
     "scope": {
@@ -14638,10 +14641,15 @@
       },
       "actions": {
         "proposeAllocation": "Propose allocation",
-        "addAvailability": "Add availability"
+        "addAvailability": "Add availability",
+        "addAvailabilityEmpty": "No people in the plan — there is no one to set availability for.",
+        "saveAvailability": "Save"
       },
       "summary": {
         "utilizationTooltip": "Average of {{count}} weeks"
+      },
+      "errors": {
+        "saveAvailability": "Could not save availability. Try again."
       }
     },
     "governance": {

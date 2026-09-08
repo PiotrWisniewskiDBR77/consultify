@@ -16,6 +16,11 @@
  *   (d) `sortujBezInicjatywyNaKoniec` → `(rows) => [...rows]` → RED,
  *   (e) `taskSlipDays` liczone także dla zadań zamkniętych → RED.
  */
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski ('Change assignee'/'Change due date'/'Change status'/'Enter a
+// task title.'). Asercje zaktualizowano — kontrakt się nie zmienił, zmienił
+// się tylko język domyślnego tekstu.
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -171,7 +176,7 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     const komorka = within(wiersz('Zadanie z inicjatywa')).getByText('Anna Kowalska');
     fireEvent.doubleClick(komorka);
 
-    const edytor = await screen.findByLabelText('Zmień osobę');
+    const edytor = await screen.findByLabelText('Change assignee');
     fireEvent.change(edytor, { target: { value: 'osoba-2' } });
 
     await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
@@ -193,7 +198,7 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     )[1];
     fireEvent.doubleClick(komorkaTerminu);
 
-    const edytor = await screen.findByLabelText('Zmień termin');
+    const edytor = await screen.findByLabelText('Change due date');
     fireEvent.change(edytor, { target: { value: '2026-12-01' } });
     fireEvent.blur(edytor);
 
@@ -213,7 +218,7 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
       'td [data-editable]'
     )[2];
     fireEvent.doubleClick(komorkaStatusu);
-    const edytor = (await screen.findByLabelText('Zmień status')) as HTMLSelectElement;
+    const edytor = (await screen.findByLabelText('Change status')) as HTMLSelectElement;
 
     const wartosci = Array.from(edytor.options).map((o) => o.value);
     // `in_progress` + jego przejścia; NIE ma tam `on_hold`→… ani statusu, którego serwer zabroni.
@@ -248,7 +253,7 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
 
     const komorkaStatusu = wiersz('Zadanie runtime').querySelectorAll('td [data-editable]')[2];
     fireEvent.doubleClick(komorkaStatusu);
-    expect(screen.queryByLabelText('Zmień status')).toBeNull();
+    expect(screen.queryByLabelText('Change status')).toBeNull();
     expect(updateTask).not.toHaveBeenCalled();
   });
 });
@@ -263,7 +268,7 @@ describe('P16-R2 (b) — błąd serwera nie może być ciszą', () => {
 
     const komorka = within(wiersz('Zadanie z inicjatywa')).getByText('Anna Kowalska');
     fireEvent.doubleClick(komorka);
-    const edytor = await screen.findByLabelText('Zmień osobę');
+    const edytor = await screen.findByLabelText('Change assignee');
     fireEvent.change(edytor, { target: { value: 'osoba-2' } });
 
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
@@ -278,7 +283,7 @@ describe('P16-R2 (b) — błąd serwera nie może być ciszą', () => {
     await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
     const komorka = within(wiersz('Zadanie z inicjatywa')).getByText('Anna Kowalska');
     fireEvent.doubleClick(komorka);
-    fireEvent.change(await screen.findByLabelText('Zmień osobę'), {
+    fireEvent.change(await screen.findByLabelText('Change assignee'), {
       target: { value: 'osoba-2' },
     });
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledTimes(1));
@@ -301,7 +306,7 @@ describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {
     expect(primaryCta!.testId).toBe('execution-work-new-task');
     act(() => primaryCta!.onClick());
 
-    fireEvent.change(screen.getByLabelText('Tytuł'), {
+    fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Nowe zadanie z formularza' },
     });
     fireEvent.change(screen.getByLabelText('Inicjatywa'), { target: { value: 'init-1' } });
@@ -325,7 +330,7 @@ describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {
     fireEvent.click(screen.getByTestId('execution-work-create-submit'));
 
     expect(apiPost).not.toHaveBeenCalled();
-    expect(await screen.findByText('Podaj tytuł zadania.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a task title.')).toBeInTheDocument();
   });
 });
 

@@ -23,6 +23,10 @@
  *   (l) kebab renderowany niezależnie od `isAdmin` → `onRegisterMenu3Control`
  *       dostałby węzeł z tekstem „Nowa definicja" nawet dla MEMBER (FAIL).
  */
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski ('No reports'). Asercja zaktualizowana — kontrakt się nie
+// zmienił, zmienił się tylko język domyślnego tekstu.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -149,7 +153,7 @@ describe('ExecutionReportsSurface — pusty stan z kaflami (D6) i kebab admin-on
     expect(screen.queryByTestId('standard-table-empty-actions')).not.toBeInTheDocument();
     expect(screen.queryByTestId('standard-table-empty-action-mvp-owner-test')).not.toBeInTheDocument();
     expect(screen.queryByText('Wygeneruj pierwszy raport')).not.toBeInTheDocument();
-    expect(screen.getByText('Brak raportów')).toBeInTheDocument();
+    expect(screen.getByText('No reports')).toBeInTheDocument();
   });
 
   it('(l) MEMBER (isAdmin=false) nie dostaje kebaba deweloperskiego w Menu 3', async () => {
