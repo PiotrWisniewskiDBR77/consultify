@@ -1,0 +1,18 @@
+{
+ "ekran": "09-prezentacja",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/outputs/92f3bd7f-7048-44c8-a023-392b982c52ee/presentation",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+   "trafienia": [
+    "Sesja",
+    "zamrożona"
+   ]
+  }
+ ]
+}

@@ -1,22 +1,22 @@
 {
   "_meta": {
-    "data": "2026-09-08T12:24:41.838Z",
-    "root": "/private/tmp/wt-j7b",
-    "sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95"
+    "data": "2026-09-08T22:36:39.926Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/j5-ocena",
+    "sha": "6d3ac39c08b694ad95e660d777a0ff9fd064641b"
   },
   "suma": {
     "K1": 2,
-    "K1def": 1218,
-    "K1defWID": 236,
+    "K1def": 1183,
+    "K1defWID": 234,
     "K2": 12,
-    "K3a": 1818,
-    "K3aKLUCZ": 429,
+    "K3a": 1792,
+    "K3aKLUCZ": 417,
     "K3b": 7,
-    "K4pl": 969,
-    "K4en": 1283,
+    "K4pl": 781,
+    "K4en": 1245,
     "K5pl": 258,
     "K5en": 1822,
-    "K7": 849
+    "K7": 819
   },
   "moduly": {
     "01 Chat": {
@@ -77,17 +77,17 @@
     },
     "05 Assessment": {
       "K1": 0,
-      "K1def": 35,
-      "K1defWID": 2,
+      "K1def": 0,
+      "K1defWID": 0,
       "K2": 0,
-      "K3a": 26,
-      "K3aKLUCZ": 12,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 188,
-      "K4en": 43,
+      "K4pl": 0,
+      "K4en": 5,
       "K5pl": 97,
       "K5en": 76,
-      "K7": 30
+      "K7": 0
     },
     "06 Initiatives": {
       "K1": 0,
@@ -1761,14 +1761,13 @@
     ]
   },
   "plikiTop": {
-    "public/locales/pl/translation.json": 441,
+    "public/locales/pl/translation.json": 429,
     "src/views/partner/PartnerPortalView.tsx": 95,
     "server/src/routes/document-studio.routes.ts": 86,
     "server/src/routes/work-canvas.routes.ts": 61,
     "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx": 60,
     "src/views/legal/TermsOfServiceView.tsx": 56,
     "src/components/MyWork/panel/IdeaElementInspector.tsx": 53,
-    "src/components/assessment/report/AssessmentReportDocument.tsx": 53,
     "src/components/Organization/redesign/OrganizationReadinessScreen.tsx": 52,
     "server/src/routes/table-platform.routes.ts": 51,
     "src/components/billing/SubscriptionAnalytics.tsx": 50,
@@ -1790,6 +1789,7 @@
     "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
     "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
     "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31
+    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31,
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31
   }
 }

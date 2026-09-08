@@ -1,0 +1,31 @@
+{
+ "ekran": "05-wnioski",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=outputs",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Sesja 203d5476-657b-4033-9ff3-d2c177dc047c — drd@2.0.0-methodpack.1, zamrożona z event-store.",
+   "trafienia": [
+    "Sesja",
+    "zamrożona"
+   ]
+  },
+  {
+   "linia": "Analiza gotowości AI",
+   "trafienia": [
+    "gotowości"
+   ]
+  },
+  {
+   "linia": "Ocena dojrzałości cyfrowej Q1",
+   "trafienia": [
+    "Ocena",
+    "dojrzałości"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "ekran": "02-lista-podglad",
+ "jezyk": "en",
+ "jezykRealny": "en",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+ "obcychSlowUI": 1,
+ "obcychLiniiUI": 1,
+ "ui": [
+  {
+   "linia": "Zarząd Grupy",
+   "trafienia": [
+    "Zarząd"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Analiza gotowości AI",
+   "trafienia": [
+    "gotowości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Ocena dojrzałości cyfrowej Q1",
+   "trafienia": [
+    "Ocena",
+    "dojrzałości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Analiza gotowości AI",
+   "trafienia": [
+    "gotowości"
+   ]
+  },
+  {
+   "linia": "Assessment: Analiza gotowości AI. Framework: DRD. Status: DRAFT. Progress: 0%. The overall score was not persisted in the selected record. An assessment description was not persisted in the selected record. The creation date was not persisted in the selected record. Updated: 2026-09-08T22:32:47.609Z. Author: d2b6a316-08c5-47cf-9bf7-4ba50311d5a2. This Details section contains only facts persisted for the selected assessment. Fields without stored values remain explicitly unavailable in the interface and are not inferred from other records. The displayed scope therefore matches the available source row.",
+   "trafienia": [
+    "gotowości"
+   ]
+  }
+ ]
+}

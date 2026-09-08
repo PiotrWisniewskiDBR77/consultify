@@ -1,0 +1,18 @@
+{
+ "ekran": "02-lista-podglad",
+ "jezyk": "pl",
+ "jezykRealny": "pl",
+ "url": "http://127.0.0.1:3216/assessment/overview?tab=processes",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "SIRI Assessment - Jul 3, 2026",
+   "trafienia": [
+    "Assessment",
+    "Jul"
+   ]
+  }
+ ]
+}
