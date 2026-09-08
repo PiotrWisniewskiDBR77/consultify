@@ -1,0 +1,12 @@
+
+=== Organization (http://127.0.0.1:3198/organization) ===
+znaków diakrytycznych PL: 46
+przykładowe słowa PL: Tożsamość, źródło, Uzupełnione, uzupełnienia, BRANŻA, PODBRANŻA, BRANŻY, Szczegóły, WIELKOŚĆ, PRACOWNIKÓW, PRZYCHÓD, ZAŁOŻENIA, KLIENTÓW, uzupełnione, Kompletność
+
+=== Admin Panel (Members) (http://127.0.0.1:3198/admin) ===
+znaków diakrytycznych PL: 0
+przykładowe słowa PL: (brak)
+
+=== Settings (Profile) (http://127.0.0.1:3198/settings) ===
+znaków diakrytycznych PL: 0
+przykładowe słowa PL: (brak)
