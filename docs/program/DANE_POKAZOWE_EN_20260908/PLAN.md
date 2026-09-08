@@ -211,6 +211,7 @@ z tagu `northwind-demo-2026` + slug.
 | Audyty | `auditsStrictMembership.middleware.ts:109-118` | Wymaga wiersza `organization_members` ze `status='ACTIVE'`. **Fail-closed: błąd odczytu tabeli ⇒ 503** |
 | Portal partnerski | `partners.routes.ts:225-243` | Wymaga wiersza w `partner_users`; bez niego 403 „Partner organization required" |
 | Katalog narzędzi | `tools` **nie ma** `organization_id`, 31 wierszy globalnie | **Nie seedować.** Moduł Tools działa z katalogu globalnego |
+| **`audit_findings` to pułapka** | Tabela ma 3 wiersze i **żadnego czytelnika**. `auditInitiativeService.ts:12-13` mówi wprost: „Findings are stored INLINE as a JSON array in `audits.findings` (there is no separate audit_findings table)". Żywa tabela nowej ścieżki to `audit_program_findings` (`aiProposalService.ts:1134`), dziś **0 wierszy** | Seedować `audit_program_findings`, **nigdy** `audit_findings` |
 | `initiatives` ma `name` **i** `title` | `name` jest NOT NULL bez wartości domyślnej | Wypełnić OBA, tą samą treścią (`createInitiativeService.ts` robi to normalizacją — SQL nie) |
 | Portfel systemowy | partial unique `uq_projects_org_system_portfolio` (migracja 912) | `projects.is_system` zakładać przez `initiativeProjectPolicyService.ts:71`, nie ręcznym INSERT |
 | Bramki cyklu życia | 17 kolumn NOT NULL, FK do `v8_agent_proposal_versions` i `v8_agent_proposal_scope_reviews`, trigger `…_immutable`, wartości tylko `approved`/`rejected` | **Poza zakresem seedu.** Zbudowanie łańcucha A05 to osobna praca. Bez bramek inicjatywy i tak przechodzą (bramka jest opcjonalna dla listy) |
@@ -230,7 +231,7 @@ z tagu `northwind-demo-2026` + slug.
 | 8 | **Results** | 8 definicji KPI + 6 pomiarów każda (48 pomiarów), 3 cele OKR z kluczowymi wynikami, 1 przypadek ROI. **Obowiązkowo wiersze widoczności** | `rvn_kpi_definitions`, `rvn_kpi_definition_versions`, `rvn_kpi_measurements`, **`rvn_platform_resource_visibility`**, `okr_vnext_*`, `rvn_roi_*` | **API** `POST /api/vnext/results/kpi` — obowiązkowo |
 | 9 | **Finance** | Minimum wg zakresu MVP: 1 paczka sprawozdań (P&L + bilans, 4 kwartały), 1 budżet z pozycjami, 3 wskaźniki | `financial_statement_packs`, `financial_statements`, `financial_statement_values`, `budgets`, `budget_lines` | SQL |
 | 10 | **Materials** | 4 dokumenty (Charter, Business Case, Status Report, Playbook), 2 talie prezentacji, 1 skoroszyt; **wpisy w rejestrze artefaktów** | `knowledge_docs`, `presentation_decks`, `generated_workbooks`, **`v8_output_artifacts`**, `v8_artifact_origin_links` | SQL |
-| 11 | **Audits** | 1 pakiet audytowy, 1 program z 6 kryteriami, 3 ustalenia. **Wymaga `organization_members.status='ACTIVE'`** | `audit_packs`, `audit_programs`, `audit_program_criteria`, `audit_findings` | SQL |
+| 11 | **Audits** | 1 pakiet audytowy, 1 program z 6 kryteriami, 3 ustalenia. **Wymaga `organization_members.status='ACTIVE'`** | `audit_packs`, `audit_programs`, `audit_program_criteria`, **`audit_program_findings`** | SQL |
 | 12 | **Meeting** | 2 spotkania z uczestnikami i notatkami. **Moduł za flagą `VITE_MODULE_MEETINGS`, domyślnie OFF** (`src/utils/meetingsModuleFlag.ts:47-53`) — dane seedujemy, flagę włącza właściciel osobno | `meetings`, `meeting_participants`, `meeting_notes` | SQL |
 | 13 | **Organization** | Profil organizacji (opis, branża, wielkość, lokalizacje), branding, magazyn kontekstu | `organization_profiles`, `organization_branding`, `organization_settings`, `organization_context_store` | SQL |
 | 14 | **Admin Panel** | 2 zaproszenia oczekujące, przypisania ról. Ekran czyta `organization_members`+`users` — wypełniony przez rdzeń | `invitations`, `admin_role_assignments` | SQL |
@@ -334,10 +335,12 @@ To jest dokładnie ta pułapka, przez którą „widać na liście" myli się z 
 1. `pg_dump` całej kopii do `evidence/dane-pokazowe-en/dump-przed-<data>.dump`
    (z kontenera PG18). **Wykonaj `ls -la` na pliku i podaj rozmiar** — dowód poza
    repo wyparowuje.
-2. **Dokończ skan martwych tabel** metodą B (grep po `FROM|JOIN|INTO|UPDATE|DELETE FROM
-   <tabela>` w `server/src`) dla wszystkich 546 niepustych tabel. Wynik do
-   `docs/program/DANE_POKAZOWE_EN_20260908/martwe-tabele.md`. Bez tego kroku nikt
-   nic nie kasuje.
+2. ~~Dokończ skan martwych tabel.~~ **ZROBIONE 08.09** — wynik obu metod
+   z ręczną weryfikacją każdej pozycji w [`POMIAR.md`](POMIAR.md) §6.
+   Pewnie martwych 13, łącznie ~190 wierszy. **Kasowanie tabel zostaje poza
+   zakresem** — nie ma czego kasować w skali, która by to uzasadniała.
+   Jedyny skutek dla pracy: `audit_findings` jest martwa, moduł Audits seeduje
+   `audit_program_findings`.
 3. Zbuduj `scripts/dane/usun-organizacje.ts` na bazie `higiena-wlasciciela/wspolne.ts`:
    - `--lista-id <plik.txt>` — jawna lista identyfikatorów, **żadnego dopasowania
      po wzorcu nazwy** (nazwa „Consultify" i „Test Corp" wyglądają podobnie do skryptu),
@@ -351,7 +354,7 @@ To jest dokładnie ta pułapka, przez którą „widać na liście" myli się z 
    `--apply`.** Raport idzie do właściciela.
 
 **Pliki:** `scripts/dane/usun-organizacje.ts`, `scripts/dane/lista-do-usuniecia.txt`,
-`docs/program/DANE_POKAZOWE_EN_20260908/martwe-tabele.md`, `evidence/dane-pokazowe-en/`.
+`evidence/dane-pokazowe-en/`.
 **Zależności:** brak. **Ryzyko:** dopasowanie po wzorcu zamiast po liście ID →
 skasowanie DBR77. Dlatego lista jest jawna i sprawdzana oczami.
 **Gotowe gdy:** dry-run raportuje ≥ 70 000 wierszy do usunięcia, `--rollback`

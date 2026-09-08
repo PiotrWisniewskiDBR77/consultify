@@ -226,10 +226,36 @@ w pełnym odczycie: `z139_backup_919_initiatives`, `z139_backup_919_decisions`,
 `z139_backup_t5_notebook_pages_title`. **Kandydaci do usunięcia bez ryzyka** —
 to kopie z naprawy z lipca 2026, nie dane produktu.
 
-**Metoda B (grep po czasownikach SQL `FROM|JOIN|INTO|UPDATE|DELETE FROM <tabela>`)**
-uruchomiona, nie dobiegła końca w czasie tej sesji — wynik cząstkowy nie
-uprawnia do wniosku i **nie jest tu podany**. D0 ma ją dokończyć jako pierwszy
-krok (patrz PLAN §4, paczka D0, krok 2).
+**Metoda B (grep po czasownikach SQL `FROM|JOIN|INTO|UPDATE|DELETE FROM <tabela>`),
+dokończona:** martwych **17**. Ale **metoda B ma fałszywe pozytywy** — serwis, który
+trzyma nazwę tabeli w stałej (`const TABLE = '…'`), nie ma jej nigdzie obok
+czasownika SQL. Sprawdziłem każdą z 17 pozycji z osobna:
+
+| Tabela | Wierszy | Werdykt po sprawdzeniu | Dowód |
+|---|---:|---|---|
+| `initiative_gate_ai_events` | 84 | **ŻYWA** — fałszywy pozytyw | `gateAiTelemetryService.ts:18` `const TABLE = …` |
+| `presentation_template_governance_events` | 24 | **ŻYWA** — fałszywy pozytyw | `presentationTemplateGovernanceService.ts:111` |
+| `initiative_feature_flags` | 2 | **ŻYWA** — fałszywy pozytyw | `initiativeGateAiConfig.ts:20` |
+| `system_prompts` | 2 | **NIEROZSTRZYGNIĘTE** — tworzona, ale bez czytelnika | `PostgresDatabase.ts:2454` tylko `CREATE TABLE IF NOT EXISTS` |
+| **`audit_findings`** | **3** | **MARTWA — potwierdzona** | `auditInitiativeService.ts:12-13`: „Findings are stored INLINE as a JSON array in `audits.findings` (**there is no separate audit_findings table**)". Żywa tabela nowej ścieżki: `audit_program_findings` (`aiProposalService.ts:1134`), dziś 0 wierszy |
+| `interview_template_questions` | 39 | **PODEJRZANA** — jedyne trafienie to mapa kolumn boolean, `PostgresDatabase.ts:327` | brak czytelnika |
+| `finance_periods` | 45 | **MARTWA** — osierocona po przejściu na `finance_stmt_periods` | |
+| `finance_reason_codes` | 14 | **MARTWA** — słownik bez czytelnika | |
+| `ai_deep_thinking_confirms` | 8 | **MARTWA** | |
+| `tool_initiative_links_backfill_reports` | 1 | **MARTWA** — raport z jednorazowego backfillu | |
+| 7 tabel kopii zapasowych (`_z139_…`, `z139_backup_…`, `_v8_flag_backup_…`, `_migration_518_done`) | 78 razem | **MARTWE** — kopie z naprawy z lipca 2026 | |
+
+**Wniosek uczciwy:** metoda A (sama nazwa) daje 8 i zaniża; metoda B (czasowniki
+SQL) daje 17 i **zawyża o co najmniej 3 fałszywe pozytywy**. Po ręcznym
+sprawdzeniu **pewnie martwych jest 13**, jedna nierozstrzygnięta
+(`system_prompts`) i jedna podejrzana (`interview_template_questions`).
+Żadna z nich nie jest warta osobnej migracji — łącznie **~190 wierszy**
+wobec 70 656 do usunięcia przez kasowanie organizacji. **Kasowanie tabel
+zostaje poza zakresem planu.**
+
+**`audit_findings` ma znaczenie dla seedu, nie dla sprzątania:** to była pułapka,
+w którą wpadł pierwotny szkic tej pracy — moduł Audits musi seedować
+`audit_program_findings`, nigdy `audit_findings`.
 
 ---
 

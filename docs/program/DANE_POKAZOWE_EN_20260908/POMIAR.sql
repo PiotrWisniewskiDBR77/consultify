@@ -286,3 +286,14 @@ union all select 'om ACTIVE atelier', count(*) from organization_members
   where organization_id = 'atelier' and status = 'ACTIVE'
 union all select 'om ACTIVE dbr77',   count(*) from organization_members
   where organization_id = 'a3e05d4a-5397-419d-b486-8e44366c0063' and status = 'ACTIVE';
+
+-- ============================================================ Q19
+-- Pułapka `audit_findings`: tabela ma wiersze i NIE MA czytelnika.
+-- auditInitiativeService.ts:12-13 — „Findings are stored INLINE as a JSON array
+-- in `audits.findings` (there is no separate audit_findings table)".
+-- Żywa tabela nowej ścieżki: audit_program_findings (aiProposalService.ts:1134).
+select 'audit_findings (MARTWA)'       as k, count(*) as v from audit_findings
+union all select 'audit_program_findings (ZYWA)', count(*) from audit_program_findings
+union all select 'audits.findings niepuste',      count(*) from audits
+  where findings is not null and findings not in ('', '[]');
+-- Wynik 08.09: 3 / 0 / 2.  Seed modułu Audits ma pisać do audit_program_findings.
