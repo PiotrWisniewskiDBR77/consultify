@@ -30,7 +30,7 @@
  * Filtry (format + źródło): od DEC-423d (właściciel, 06.09.2026) chipy fasetowe
  * NIE stoją już w tym komponencie — mieszkają w Menu 3 huba
  * (`ReportsAndPresentationsHub`), wspólne dla Galerii i Tabeli. Ten plik
- * eksportuje wyłącznie ich etykiety/kolejność (`TEMPLATE_TYPE_LABEL_PLURAL`,
+ * eksportuje wyłącznie ich etykiety/kolejność (`templateTypeLabelPlural`,
  * `TEMPLATE_TYPE_ORDER`, `TEMPLATE_SCOPE_ORDER`, `templateScopeLabel`), żeby
  * oba widoki i menu mówiły jednym słownikiem.
  */
@@ -87,11 +87,21 @@ function blockCountLabel(item: TemplateItem): string | null {
  * rzędzie w treści zakładki. Jedno źródło etykiet dla obu widoków
  * (Galeria/Tabela) — filtr pisze do tego samego `activeFilters`.
  */
-export const TEMPLATE_TYPE_LABEL_PLURAL: Record<TemplateType, string> = {
-  report: 'Raporty',
-  sheet: 'Tabele',
-  presentation: 'Prezentacje',
-};
+/**
+ * J10 (DEC-453): słownik jest FUNKCJĄ `t`, a nie stałą z polskimi napisami.
+ * Stała zaszywała polski w chipach Menu 3 Biblioteki wzorców — konto
+ * angielskie widziało „Raporty / Tabele / Prezentacje" obok „All formats"
+ * (zmierzone, `evidence/jezyk-j10/przed/05-wzorce-en.png`).
+ */
+export function templateTypeLabelPlural(
+  t: (key: string, defaultValue: string) => string
+): Record<TemplateType, string> {
+  return {
+    report: t('rap.templates.typePlural.report', 'Reports'),
+    sheet: t('rap.templates.typePlural.sheet', 'Sheets'),
+    presentation: t('rap.templates.typePlural.presentation', 'Presentations'),
+  };
+}
 
 export const TEMPLATE_TYPE_ORDER: TemplateType[] = ['report', 'sheet', 'presentation'];
 export const TEMPLATE_SCOPE_ORDER: TemplateScope[] = [

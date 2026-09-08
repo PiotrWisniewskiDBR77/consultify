@@ -29715,7 +29715,12 @@
       "statusUnknown": "Unknown",
       "provenanceQueue": "Provenance and rights",
       "viewTable": "Table",
-      "backToLibrary": "Templates"
+      "backToLibrary": "Templates",
+      "typePlural": {
+        "report": "Reports",
+        "sheet": "Sheets",
+        "presentation": "Presentations"
+      }
     },
     "bundleHistoryPanel": {
       "qualityIsFine": "Quality is fine",

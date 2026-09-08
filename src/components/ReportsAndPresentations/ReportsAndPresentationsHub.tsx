@@ -67,7 +67,7 @@ import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCount
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import {
   TEMPLATE_SCOPE_ORDER,
-  TEMPLATE_TYPE_LABEL_PLURAL,
+  templateTypeLabelPlural,
   TEMPLATE_TYPE_ORDER,
   templateScopeLabel,
 } from './TemplatesGalleryView';
@@ -1160,12 +1160,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 setSinglePreset(
                   'type',
                   currentType === type ? null : type,
-                  TEMPLATE_TYPE_LABEL_PLURAL[type]
+                  templateTypeLabelPlural(t)[type]
                 )
               }
               data-testid={`materials-menu3-chip-type-${type}`}
             >
-              {TEMPLATE_TYPE_LABEL_PLURAL[type]}
+              {templateTypeLabelPlural(t)[type]}
               <Menu3Badge count={typeCount(type)} active={currentType === type} />
             </Menu3Chip>
           ))}
