@@ -1245,16 +1245,17 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       ]),
     },
     {
-      // Sygnały liczy detektor NA ŻYWO z tej samej reguły (`delayDetectionService.ts:345-377`:
-      // JOIN inicjatyw, `due_date < now`, status poza DONE/CANCELLED). Asercja liczy
-      // dokładnie to zapytanie, żeby „sygnały > 0" było mierzone, nie deklarowane.
+      // Sygnały liczy detektor NA ŻYWO z tej samej reguły (`delayDetectionService.ts`:
+      // JOIN inicjatyw, `due_date < now`, status poza done/cancelled PRZEZ LOWER —
+      // po naprawie D4b DECYZJA 3). Asercja liczy dokładnie to zapytanie, żeby
+      // „sygnały > 0" było mierzone, nie deklarowane.
       nazwa: 'źródło sygnałów opóźnień: zadania po terminie z inicjatywą (musi być > 0)',
       oczekiwane: 8,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM tasks t JOIN initiatives i ON i.id = t.initiative_id
-          WHERE i.organization_id=$1 AND t.status NOT IN ('DONE','CANCELLED')
-            AND t.due_date IS NOT NULL AND t.due_date < $2::timestamp
-            AND LOWER(COALESCE(t.status,'')) NOT IN ('done','cancelled')`,
+          WHERE i.organization_id=$1
+            AND LOWER(COALESCE(t.status,'')) NOT IN ('done','cancelled')
+            AND t.due_date IS NOT NULL AND t.due_date < $2::timestamp`,
         [ORG_ID, DZIS]
       ),
     },

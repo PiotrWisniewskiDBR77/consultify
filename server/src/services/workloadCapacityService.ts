@@ -1057,7 +1057,14 @@ export async function getRoleWeeklySupply(
     `SELECT COALESCE(u.job_title, u.title) AS role,
             u.weekly_capacity_hours, u.availability_percent
        FROM users u
-      WHERE u.organization_id = ? AND COALESCE(u.is_active, 1) = 1`,
+      WHERE u.organization_id = ?
+        -- [ODMROZENIE 06_EXECUTION DEC-453] users.is_active jest kolumna TEXT
+        -- (zmierzone w information_schema 08.09; wartosci w bazie: NULL, '1',
+        -- 'true'). Porownanie COALESCE(u.is_active, 1) = 1 rzucalo
+        -- "operator does not exist: text = integer", wyjatek byl polykany,
+        -- a PODAZ ROL zawsze wracala pusta (GET /capacity-roles = roles: []),
+        -- wiec arkusz obciazenia liczyl luke z zerowej podazy.
+        AND COALESCE(NULLIF(TRIM(CAST(u.is_active AS TEXT)), ''), '1') NOT IN ('0', 'false', 'FALSE')`,
     [orgId]
   );
   const byRole = new Map<string, RoleWeeklySupplyRow>();
