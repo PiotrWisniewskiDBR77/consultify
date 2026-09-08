@@ -16088,7 +16088,8 @@
         "owner": "Owner",
         "effort2": "Effort",
         "medium2": "Medium",
-        "medium3": "Medium"
+        "medium3": "Medium",
+        "critical": "Critical"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S to save • \"/\" to insert a block"
@@ -16132,7 +16133,9 @@
       },
       "executiveSummary": {
         "currentMaturity": "Current maturity",
-        "totalGap": "Total gap"
+        "totalGap": "Total gap",
+        "target": "Target",
+        "estimatedRoi": "Estimated ROI"
       },
       "aiAssistantPanel": {
         "customPromptPlaceholder": "Describe the content you want to generate...\n\nExamples:\n• Write a section on the key cyber-security challenges\n• Build a comparison against the industry benchmark\n• Propose KPIs for the transformation plan"

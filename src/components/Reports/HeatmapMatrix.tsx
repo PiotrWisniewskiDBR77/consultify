@@ -45,7 +45,7 @@ interface HeatmapMatrixProps {
 }
 
 // Priority configuration
-const PRIORITIES = [
+const priorities = (t: (key: string, defaultValue: string) => string) => [
   {
     id: 'critical',
     labelPl: 'Krytyczny',
@@ -89,11 +89,14 @@ const PRIORITIES = [
 ];
 
 // Helper to calculate priority from gap
-const getPriorityFromGap = (gap: number): (typeof PRIORITIES)[0] => {
-  if (gap >= 3) return PRIORITIES[0]; // Critical
-  if (gap >= 2) return PRIORITIES[1]; // High
-  if (gap >= 1) return PRIORITIES[2]; // Medium
-  return PRIORITIES[3]; // Low
+const getPriorityFromGap = (
+  gap: number,
+  t: (key: string, defaultValue: string) => string
+): ReturnType<typeof priorities>[0] => {
+  if (gap >= 3) return priorities(t)[0]; // Critical
+  if (gap >= 2) return priorities(t)[1]; // High
+  if (gap >= 1) return priorities(t)[2]; // Medium
+  return priorities(t)[3]; // Low
 };
 
 export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
@@ -114,7 +117,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
     return Object.entries(DRD_AXES).map(([axisId, config]) => {
       const data = axisData[axisId] || {};
       const gap = Math.max(0, (data.target || 0) - (data.actual || 0));
-      const priority = getPriorityFromGap(gap);
+      const priority = getPriorityFromGap(gap, t);
 
       return {
         axisId,
@@ -153,7 +156,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-4">
-        {PRIORITIES.map((priority) => {
+        {priorities(t).map((priority) => {
           const count = stats.counts[priority.id as keyof typeof stats.counts];
           const Icon = priority.icon;
 
@@ -305,7 +308,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-sm">
-        {PRIORITIES.map((priority) => (
+        {priorities(t).map((priority) => (
           <div key={priority.id} className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: priority.color }} />
             <span className="text-slate-600 dark:text-slate-400">

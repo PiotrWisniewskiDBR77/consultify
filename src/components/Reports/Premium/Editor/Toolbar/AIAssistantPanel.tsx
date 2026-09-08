@@ -36,7 +36,7 @@ interface QuickAction {
   sectionType: string;
 }
 
-const QUICK_ACTIONS: QuickAction[] = [
+const quickActions = (t: (key: string, defaultValue: string) => string): QuickAction[] => [
   {
     id: 'executive-summary',
     label: 'Executive Summary',
@@ -172,7 +172,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               </div>
             )}
 
-            {QUICK_ACTIONS.map((action) => {
+            {quickActions(t).map((action) => {
               const Icon = action.icon;
               const isLoading = isGenerating === action.id;
 

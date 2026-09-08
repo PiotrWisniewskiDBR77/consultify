@@ -33,16 +33,16 @@ interface RecommendationAttrs {
   axisId?: string;
 }
 
-const PRIORITY_STYLES = {
+const priorityStyles = (t: (key: string, defaultValue: string) => string) => ({
   critical: {
     badge: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     border: 'border-l-danger-500',
-    label: 'Krytyczny',
+    label: t('reports.premium.recommendationCard.critical', 'Critical'),
   },
   high: {
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     border: 'border-l-amber-500',
-    label: 'Wysoki',
+    label: t('reports.premium.recommendationCard.high', 'High'),
   },
   medium: {
     badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -52,21 +52,21 @@ const PRIORITY_STYLES = {
   low: {
     badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     border: 'border-l-green-500',
-    label: 'Niski',
+    label: t('reports.premium.recommendationCard.low', 'Low'),
   },
-};
+});
 
-const IMPACT_LABELS = {
+const impactLabels = (t: (key: string, defaultValue: string) => string) => ({
   high: { label: 'Wysoki', color: 'text-green-600' },
   medium: { label: t('reports.premium.recommendationCard.medium2', 'Medium'), color: 'text-yellow-600' },
   low: { label: 'Niski', color: 'text-slate-500 dark:text-slate-400' },
-};
+});
 
-const EFFORT_LABELS = {
+const effortLabels = (t: (key: string, defaultValue: string) => string) => ({
   high: { label: t('reports.premium.recommendationCard.high', 'High'), color: 'text-danger-500' },
   medium: { label: t('reports.premium.recommendationCard.medium3', 'Medium'), color: 'text-yellow-600' },
   low: { label: t('reports.premium.recommendationCard.low', 'Low'), color: 'text-green-600' },
-};
+});
 
 // React component
 const RecommendationCardComponent: React.FC<NodeViewProps> = ({
@@ -81,9 +81,9 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
   const attrs = node.attrs as RecommendationAttrs;
   const [editForm, setEditForm] = useState(attrs);
 
-  const priorityStyle = PRIORITY_STYLES[attrs.priority || 'medium'];
-  const impactStyle = IMPACT_LABELS[attrs.impact || 'medium'];
-  const effortStyle = EFFORT_LABELS[attrs.effort || 'medium'];
+  const priorityStyle = priorityStyles(t)[attrs.priority || 'medium'];
+  const impactStyle = impactLabels(t)[attrs.impact || 'medium'];
+  const effortStyle = effortLabels(t)[attrs.effort || 'medium'];
 
   const handleSave = () => {
     updateAttributes(editForm);

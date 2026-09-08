@@ -37,7 +37,7 @@ interface BlockOption {
   category: 'data' | 'content' | 'ai';
 }
 
-const BLOCK_OPTIONS: BlockOption[] = [
+const blockOptions = (t: (key: string, defaultValue: string) => string): BlockOption[] => [
   // Data Visualization
   {
     id: 'maturityRadar',
@@ -137,7 +137,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Filter blocks based on search
-  const filteredBlocks = BLOCK_OPTIONS.filter(
+  const filteredBlocks = blockOptions(t).filter(
     (block) =>
       block.label.toLowerCase().includes(search.toLowerCase()) ||
       block.labelPl.toLowerCase().includes(search.toLowerCase()) ||

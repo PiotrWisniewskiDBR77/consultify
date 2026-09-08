@@ -15715,7 +15715,8 @@
         "owner": "Właściciel",
         "effort2": "Nakład",
         "medium2": "Średni",
-        "medium3": "Średni"
+        "medium3": "Średni",
+        "critical": "Krytyczny"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S aby zapisać • \"/\" aby wstawić blok"
@@ -15759,7 +15760,9 @@
       },
       "executiveSummary": {
         "currentMaturity": "Obecna dojrzałość",
-        "totalGap": "Całkowita luka"
+        "totalGap": "Całkowita luka",
+        "target": "Cel",
+        "estimatedRoi": "Szacowany ROI"
       },
       "aiAssistantPanel": {
         "customPromptPlaceholder": "Opisz, jaką treść chcesz wygenerować...\n\nPrzykłady:\n• Napisz sekcję o kluczowych wyzwaniach w obszarze cyberbezpieczeństwa\n• Stwórz porównanie z benchmarkiem branżowym\n• Zaproponuj KPI dla planu transformacji"
