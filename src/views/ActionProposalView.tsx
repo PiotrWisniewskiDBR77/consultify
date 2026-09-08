@@ -9,8 +9,10 @@ import { ActionDecisionDialog } from '../components/ai/ActionDecisionDialog';
 import { ActionProposalDetail } from '../components/ai/ActionProposalDetail';
 import { ActionProposal, ActionProposalList } from '../components/ai/ActionProposalList';
 import { useAppStore } from '../store/useAppStore';
+import { useTranslation } from 'react-i18next';
 
 export const ActionProposalView: React.FC = () => {
+  const { t } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
   const [proposals, setProposals] = useState<ActionProposal[]>([]);
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>([]);
@@ -144,7 +146,7 @@ export const ActionProposalView: React.FC = () => {
         <div className="flex gap-4">
           <div className="px-5 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 rounded-xl">
             <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-0.5">
-              Pending Proposals
+              {t('myWork.actionProposals.pendingProposals', 'Pending proposals')}
             </div>
             <div className="text-2xl font-black text-indigo-700 dark:text-indigo-400">
               {proposals.length}
@@ -165,7 +167,7 @@ export const ActionProposalView: React.FC = () => {
             }`}
           >
             <Zap size={16} />
-            Pending Approvals
+            {t('myWork.actionProposals.pendingApprovals', 'Pending approvals')}
           </button>
           <button
             onClick={() => setActiveTab('AUDIT')}
@@ -219,7 +221,10 @@ export const ActionProposalView: React.FC = () => {
                   Immutable Action Audit
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Every AI intervention is logged with human accountability.
+                  {t(
+                    'myWork.actionProposals.accountabilityNote',
+                    'Every AI intervention is logged with human accountability.'
+                  )}
                 </p>
               </div>
               <div className="p-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl flex items-center gap-3">

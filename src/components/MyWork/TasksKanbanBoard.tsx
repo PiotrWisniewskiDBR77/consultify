@@ -882,14 +882,18 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
             <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
-            <h3 className="text-lg font-medium text-c-text-secondary mb-2">No tasks yet</h3>
-            <p className="text-sm text-c-text-muted mb-4">Create your first task to get started</p>
+            <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+              {t('myWork.kanban.emptyTitle', 'No tasks yet')}
+            </h3>
+            <p className="text-sm text-c-text-muted mb-4">
+              {t('myWork.kanban.emptyHint', 'Create your first task to get started')}
+            </p>
             <button
               onClick={onCreateTask}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:opacity-90 transition-opacity"
             >
               <Plus size={16} />
-              Create Task
+              {t('myWork.kanban.createTask', 'Create task')}
             </button>
           </div>
         </div>

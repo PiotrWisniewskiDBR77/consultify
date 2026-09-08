@@ -1632,7 +1632,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </div>
               <button onClick={approveAndMaterializeArtifact} disabled={converting}
                 className="px-3 py-2 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold disabled:opacity-60">
-                Approve and create
+                {t('myWork.ideas.approveAndCreate', 'Approve and create')}
               </button>
             </div>
           )}

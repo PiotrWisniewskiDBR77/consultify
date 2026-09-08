@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-08T20:11:47.166Z",
+    "data": "2026-09-08T20:20:02.494Z",
     "root": "/Users/piotrwisniewski/Developer/wt/j2-mojapraca",
-    "sha": "57362e6ea78692024e866e65459209c8563fac98"
+    "sha": "336d67c933ab81fae36525b8e9c2ba1a10a1210c"
   },
   "suma": {
     "K1": 2,
@@ -13,7 +13,7 @@
     "K3aKLUCZ": 429,
     "K3b": 7,
     "K4pl": 953,
-    "K4en": 1283,
+    "K4en": 1268,
     "K5pl": 258,
     "K5en": 1822,
     "K7": 773
@@ -42,7 +42,7 @@
       "K3aKLUCZ": 0,
       "K3b": 0,
       "K4pl": 62,
-      "K4en": 71,
+      "K4en": 56,
       "K5pl": 1,
       "K5en": 61,
       "K7": 0

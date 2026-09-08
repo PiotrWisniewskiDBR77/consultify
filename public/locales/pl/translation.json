@@ -47,7 +47,8 @@
     "colDue": "Termin",
     "loading": "Wczytywanie przekazań…",
     "unavailable": "Kolejka przekazań niedostępna.",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "returnWithBlockers": "Zwróć z blokerami"
   },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
@@ -2405,10 +2406,17 @@
         "noTasks": "Brak zadań",
         "addTask": "Dodaj zadanie",
         "dropHere": "Upuść tutaj"
-      }
+      },
+      "emptyTitle": "Nie ma jeszcze zadań",
+      "emptyHint": "Utwórz pierwsze zadanie, żeby zacząć",
+      "createTask": "Utwórz zadanie"
     },
     "title": "Moja Praca",
-    "home": "Strona główna",
+    "home": {
+      "noSignalsForFilter": "Żaden sygnał nie pasuje do bieżącego filtra.",
+      "pickSignalHint": "Wybierz sygnał na radarze, żeby zobaczyć, dlaczego może być teraz dla Ciebie ważny.",
+      "whyOnRadar": "Dlaczego to jest na Twoim radarze"
+    },
     "manager": "Menedżer",
     "inbox": {
       "urgency": {
@@ -2810,7 +2818,8 @@
       "savedFromChatToast": "Zapisano z czatu w Moich Pomysłach",
       "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę",
       "gardenSpark": "Iskra Ogrodu Pomysłów",
-      "plantInGarden": "Zasadź w Ogrodzie Pomysłów"
+      "plantInGarden": "Zasadź w Ogrodzie Pomysłów",
+      "approveAndCreate": "Zatwierdź i utwórz"
     },
     "whiteboard": {
       "regionLabel": "Tablica idei z elementami swobodnymi",
@@ -4648,7 +4657,9 @@
       "sourcesAndAssumptions": "Źródła i założenia",
       "noSourceContext": "Brak kontekstu źródła",
       "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",
-      "created": "Utworzono"
+      "created": "Utworzono",
+      "blockedPlaceholder": "Co blokuje to zadanie?",
+      "selectInitiative": "Wybierz inicjatywę (opcjonalnie)"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -5777,6 +5788,11 @@
       "overdue": "Termin Krytyczny",
       "strategic": "Wysoki Priorytet Strategiczny",
       "standard": "Standardowe"
+    },
+    "actionProposals": {
+      "pendingProposals": "Propozycje oczekujące",
+      "pendingApprovals": "Akceptacje oczekujące",
+      "accountabilityNote": "Każda interwencja AI jest zapisana z odpowiedzialnością człowieka."
     }
   },
   "step1": {

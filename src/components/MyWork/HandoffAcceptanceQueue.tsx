@@ -216,7 +216,7 @@ export const HandoffAcceptanceQueue = () => {
                 disabled={!rationale.trim() || !gateGuard.ready || write === 'SAVING'}
                 onClick={() => void decide('RETURN_WITH_BLOCKERS')}
               >
-                Return with blockers
+                {t('p9Handoff.returnWithBlockers', 'Return with blockers')}
               </button>
               <button
                 className="btn-secondary"

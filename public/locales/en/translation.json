@@ -47,7 +47,8 @@
     "colDue": "Due",
     "loading": "Loading handoff acceptances…",
     "unavailable": "Handoff queue unavailable.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "returnWithBlockers": "Return with blockers"
   },
   "notFoundPage": {
     "title": "Page not found",
@@ -3076,10 +3077,17 @@
         "noTasks": "No tasks",
         "addTask": "Add task",
         "dropHere": "Drop here"
-      }
+      },
+      "emptyTitle": "No tasks yet",
+      "emptyHint": "Create your first task to get started",
+      "createTask": "Create task"
     },
     "title": "My Work",
-    "home": "Home",
+    "home": {
+      "noSignalsForFilter": "No signals match the current filter.",
+      "pickSignalHint": "Pick a signal on the radar to see why it may matter to you right now.",
+      "whyOnRadar": "Why this is on your radar"
+    },
     "manager": "Manager",
     "inbox": {
       "urgency": {
@@ -3481,7 +3489,8 @@
       "savedFromChatToast": "Saved from chat to My Ideas",
       "sentToWorkspaceToast": "Opened in Ideas workspace",
       "gardenSpark": "Idea Garden Spark",
-      "plantInGarden": "Plant in Idea Garden"
+      "plantInGarden": "Plant in Idea Garden",
+      "approveAndCreate": "Approve and create"
     },
     "whiteboard": {
       "regionLabel": "Idea whiteboard with freeform elements",
@@ -5311,7 +5320,9 @@
       "sourcesAndAssumptions": "Sources and assumptions",
       "noSourceContext": "No source context",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode",
-      "created": "Created"
+      "created": "Created",
+      "blockedPlaceholder": "What is blocking this task?",
+      "selectInitiative": "Select an initiative (optional)"
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -6416,6 +6427,11 @@
       "overdue": "Critical deadline",
       "strategic": "High strategic priority",
       "standard": "Standard"
+    },
+    "actionProposals": {
+      "pendingProposals": "Pending proposals",
+      "pendingApprovals": "Pending approvals",
+      "accountabilityNote": "Every AI intervention is logged with human accountability."
     }
   },
   "step1": {
