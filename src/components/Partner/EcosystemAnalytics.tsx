@@ -19,6 +19,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   PartnerEcosystemMetrics,
@@ -125,6 +126,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
   complianceScore,
   loading,
 }) => {
+  const { t } = useTranslation();
   const tierGradient = useMemo(
     () => (metrics ? TIER_COLORS[metrics.partnerTier] : TIER_COLORS.BRONZE),
     [metrics]
@@ -151,7 +153,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
   if (!metrics) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white/90 p-6 text-center text-slate-500 dark:text-slate-400 dark:border-navy-700 dark:bg-navy-900/60">
-        Brak danych ekosystemu partnera
+        {t('partner.ecosystem.noData', 'No partner ecosystem data')}
       </div>
     );
   }
@@ -166,14 +168,18 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
               <Award size={28} />
             </div>
             <div>
-              <div className="text-sm font-medium text-white/80">Status partnera</div>
+              <div className="text-sm font-medium text-white/80">
+                {t('partner.ecosystem.partnerStatus', 'Partner status')}
+              </div>
               <div className="text-2xl font-bold">{tierLabel}</div>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <div className="text-sm font-medium text-white/80">Compliance Score</div>
+              <div className="text-sm font-medium text-white/80">
+                {t('partner.ecosystem.complianceScore', 'Compliance score')}
+              </div>
               <div className="flex items-center gap-2">
                 <div className="text-3xl font-bold">{complianceScore}%</div>
                 <CheckCircle2
@@ -184,7 +190,9 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
             </div>
 
             <div className="text-center">
-              <div className="text-sm font-medium text-white/80">Network Effect</div>
+              <div className="text-sm font-medium text-white/80">
+                {t('partner.ecosystem.networkEffect', 'Network effect')}
+              </div>
               <div className="flex items-center gap-2">
                 <Network size={20} />
                 <span className="text-3xl font-bold">
@@ -200,33 +208,39 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           icon={<DollarSign size={20} />}
-          label="Total Commission"
+          label={t('partner.ecosystem.totalCommission', 'Total commission')}
           value={`$${metrics.totalCommissionEarned.toLocaleString()}`}
-          subtitle={`${metrics.totalDealsWon} deals won`}
+          subtitle={t('partner.ecosystem.dealsWon', '{{count}} deals won', {
+            count: metrics.totalDealsWon,
+          })}
           trend="+12%"
           trendUp
         />
         <MetricCard
           icon={<Target size={20} />}
-          label="Deals Created"
+          label={t('partner.ecosystem.dealsCreated', 'Deals created')}
           value={metrics.totalDealsCreated.toString()}
-          subtitle={`${Math.round((metrics.totalDealsWon / metrics.totalDealsCreated) * 100)}% win rate`}
+          subtitle={t('partner.ecosystem.winRate', '{{percent}}% win rate', {
+            percent: Math.round((metrics.totalDealsWon / metrics.totalDealsCreated) * 100),
+          })}
           trend="+8%"
           trendUp
         />
         <MetricCard
           icon={<Users size={20} />}
-          label="Active Clients"
+          label={t('partner.ecosystem.activeClients', 'Active clients')}
           value={metrics.activeClients.toString()}
-          subtitle="With active access"
+          subtitle={t('partner.ecosystem.withActiveAccess', 'With active access')}
           trend="+2"
           trendUp
         />
         <MetricCard
           icon={<Globe size={20} />}
-          label="Referral Conversions"
+          label={t('partner.ecosystem.referralConversions', 'Referral conversions')}
           value={metrics.referralConversions.toString()}
-          subtitle={`${metrics.benchmarkContributions} benchmarks`}
+          subtitle={t('partner.ecosystem.benchmarks', '{{count}} benchmarks', {
+            count: metrics.benchmarkContributions,
+          })}
           trend="+15%"
           trendUp
         />
@@ -235,16 +249,20 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
       {/* Ecosystem Health Score */}
       <div className="rounded-xl border border-slate-200 bg-white/90 p-6 dark:border-navy-700 dark:bg-navy-900/60">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Ecosystem Health</h3>
+          <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+            {t('partner.ecosystem.healthTitle', 'Ecosystem health')}
+          </h3>
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Activity size={14} />
-            Real-time monitoring
+            {t('partner.ecosystem.realTimeMonitoring', 'Real-time monitoring')}
           </div>
         </div>
 
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="text-slate-600 dark:text-slate-300">Overall Health Score</span>
+            <span className="text-slate-600 dark:text-slate-300">
+              {t('partner.ecosystem.overallHealthScore', 'Overall health score')}
+            </span>
             <span className="font-semibold text-navy-900 dark:text-white">
               {metrics.ecosystemHealthScore}/100
             </span>
@@ -265,19 +283,25 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
 
         <div className="grid gap-3 md:grid-cols-3">
           <HealthIndicator
-            label="Deal Pipeline"
+            label={t('partner.ecosystem.dealPipeline', 'Deal pipeline')}
             status={metrics.totalDealsCreated > 10 ? 'healthy' : 'warning'}
-            value={`${metrics.totalDealsCreated} active`}
+            value={t('partner.ecosystem.activeCount', '{{count}} active', {
+              count: metrics.totalDealsCreated,
+            })}
           />
           <HealthIndicator
-            label="Client Engagement"
+            label={t('partner.ecosystem.clientEngagement', 'Client engagement')}
             status={metrics.activeClients >= 5 ? 'healthy' : 'warning'}
-            value={`${metrics.activeClients} clients`}
+            value={t('partner.ecosystem.clientsCount', '{{count}} clients', {
+              count: metrics.activeClients,
+            })}
           />
           <HealthIndicator
-            label="Network Growth"
+            label={t('partner.ecosystem.networkGrowth', 'Network growth')}
             status={metrics.networkEffectMultiplier >= 1.2 ? 'healthy' : 'warning'}
-            value={`${metrics.networkEffectMultiplier.toFixed(1)}x multiplier`}
+            value={t('partner.ecosystem.multiplier', '{{value}}x multiplier', {
+              value: metrics.networkEffectMultiplier.toFixed(1),
+            })}
           />
         </div>
       </div>
@@ -285,7 +309,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
       {/* PMO Domains Legend */}
       <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-navy-700 dark:bg-navy-900/40">
         <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          PMO Standards Compliance Domains
+          {t('partner.ecosystem.pmoDomains', 'PMO standards compliance domains')}
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(PMO_DOMAIN_INFO).map(([domainId, info]) => (

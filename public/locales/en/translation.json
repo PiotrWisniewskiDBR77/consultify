@@ -2362,6 +2362,30 @@
     },
     "program": {
       "truthBoundary": "Commercial information and the options available to you depend on a confirmed program status and the agreement in force."
+    },
+    "ecosystem": {
+      "noData": "No partner ecosystem data",
+      "partnerStatus": "Partner status",
+      "complianceScore": "Compliance score",
+      "networkEffect": "Network effect",
+      "totalCommission": "Total commission",
+      "dealsWon": "{{count}} deals won",
+      "dealsCreated": "Deals created",
+      "winRate": "{{percent}}% win rate",
+      "activeClients": "Active clients",
+      "withActiveAccess": "With active access",
+      "referralConversions": "Referral conversions",
+      "benchmarks": "{{count}} benchmarks",
+      "healthTitle": "Ecosystem health",
+      "realTimeMonitoring": "Real-time monitoring",
+      "overallHealthScore": "Overall health score",
+      "dealPipeline": "Deal pipeline",
+      "activeCount": "{{count}} active",
+      "clientEngagement": "Client engagement",
+      "clientsCount": "{{count}} clients",
+      "networkGrowth": "Network growth",
+      "multiplier": "{{value}}x multiplier",
+      "pmoDomains": "PMO standards compliance domains"
     }
   },
   "common": {
@@ -32761,6 +32785,61 @@
       "startTrial": "Sign up & Start Trial",
       "subtitle": "Your own workspace, 7 days free",
       "title": "Start Your 7-Day Trial"
+    },
+    "entry": {
+      "errors": {
+        "invalidCode": "The access code is invalid or has expired.",
+        "verificationUnavailable": "The verification system is temporarily unavailable. Please try again later."
+      },
+      "codeAccepted": "Access verified. Moving on to trial registration.",
+      "brandTagline": "Decision Partner",
+      "backToHome": "Back to the home page",
+      "statusBadge": "Status: selective access",
+      "heroTitle": "This is not another free trial.",
+      "heroBody": "The DBR77 method takes discipline and commitment. Entering the trial stage means starting work on the real structure of your organization.",
+      "benefits": {
+        "readiness": {
+          "title": "Readiness check",
+          "body": "AI helps you judge whether your organization is ready for strategic change."
+        },
+        "context": {
+          "title": "Working on context",
+          "body": "Access to the modules you need to define your strategic axes."
+        },
+        "noCommitment": {
+          "title": "No financial commitment",
+          "body": "At this stage we ask for your time and thinking, not for a credit card."
+        }
+      },
+      "trustLayer": "DBR77 trust layer enforced",
+      "activateTitle": "Activate your access",
+      "activateBody": "Enter the code you received from your consultant or from the referral system to start validation.",
+      "codePlaceholder": "ENTER CODE (e.g. REF-1234)",
+      "verifying": "Verifying…",
+      "continue": "Continue to validation"
+    },
+    "transition": {
+      "proceedSuccess": "Done. Let us move on to setting up the organization.",
+      "proceedFailed": "The transition could not be completed",
+      "title": "Before you create an organization",
+      "subtitle": "Make sure you understand what this step means.",
+      "time": {
+        "title": "I understand this takes time",
+        "body": "Working with the system is not a quick fix. It takes commitment and regular work with your team."
+      },
+      "team": {
+        "title": "This is a tool for teams",
+        "body": "The system is designed for organizations. It is worth the most when more than one person works in it."
+      },
+      "memory": {
+        "title": "The system will remember our work",
+        "body": "Every decision, discussion and conclusion is recorded. That creates continuity, but it also creates responsibility."
+      },
+      "back": "Back",
+      "inProgress": "Continuing…",
+      "confirm": "I understand, continue",
+      "allConfirmed": "All confirmations are ticked",
+      "remaining": "{{count}} left"
     }
   },
   "audit": {

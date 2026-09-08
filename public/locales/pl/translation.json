@@ -21026,6 +21026,30 @@
     },
     "program": {
       "truthBoundary": "Informacje handlowe oraz dostępne możliwości zależą od potwierdzonego statusu programu i obowiązującej umowy."
+    },
+    "ecosystem": {
+      "noData": "Brak danych ekosystemu partnera",
+      "partnerStatus": "Status partnera",
+      "complianceScore": "Wskaźnik zgodności",
+      "networkEffect": "Efekt sieciowy",
+      "totalCommission": "Prowizja łącznie",
+      "dealsWon": "wygranych transakcji: {{count}}",
+      "dealsCreated": "Utworzone transakcje",
+      "winRate": "{{percent}}% skuteczności",
+      "activeClients": "Aktywni klienci",
+      "withActiveAccess": "Z aktywnym dostępem",
+      "referralConversions": "Konwersje poleceń",
+      "benchmarks": "benchmarków: {{count}}",
+      "healthTitle": "Kondycja ekosystemu",
+      "realTimeMonitoring": "Monitorowanie na bieżąco",
+      "overallHealthScore": "Ogólny wskaźnik kondycji",
+      "dealPipeline": "Lejek transakcji",
+      "activeCount": "aktywnych: {{count}}",
+      "clientEngagement": "Zaangażowanie klientów",
+      "clientsCount": "klientów: {{count}}",
+      "networkGrowth": "Wzrost sieci",
+      "multiplier": "mnożnik {{value}}x",
+      "pmoDomains": "Domeny zgodności ze standardami PMO"
     }
   },
   "thinking": {
@@ -29868,6 +29892,61 @@
       "logInAndTrial": "Zaloguj się i kontynuuj",
       "ownWorkspace": "Twój własny workspace",
       "ownWorkspaceDesc": "7 dni z własną organizacją, projektami i danymi. Pełny dostęp do wszystkich funkcji."
+    },
+    "entry": {
+      "errors": {
+        "invalidCode": "Niepoprawny lub wygasły kod dostępu.",
+        "verificationUnavailable": "System weryfikacji jest chwilowo niedostępny. Spróbuj później."
+      },
+      "codeAccepted": "Dostęp zweryfikowany. Przechodzimy do rejestracji triala.",
+      "brandTagline": "Partner Decyzyjny",
+      "backToHome": "Wróć na stronę główną",
+      "statusBadge": "Status: dostęp selektywny",
+      "heroTitle": "To nie jest kolejny darmowy okres próbny.",
+      "heroBody": "Metoda DBR77 wymaga dyscypliny i zaangażowania. Wchodząc w etap Trial, zaczynasz pracę nad realną strukturą swojej organizacji.",
+      "benefits": {
+        "readiness": {
+          "title": "Weryfikacja gotowości",
+          "body": "AI pomoże Ci ocenić, czy Twoja organizacja jest gotowa na zmianę strategiczną."
+        },
+        "context": {
+          "title": "Praca na kontekście",
+          "body": "Dostęp do modułów pozwalających zdefiniować osie strategiczne firmy."
+        },
+        "noCommitment": {
+          "title": "Brak zobowiązań finansowych",
+          "body": "Na tym etapie liczymy na Twój czas i intelekt, a nie na kartę kredytową."
+        }
+      },
+      "trustLayer": "Warstwa zaufania DBR77 aktywna",
+      "activateTitle": "Aktywuj dostęp",
+      "activateBody": "Wprowadź kod otrzymany od konsultanta lub z systemu poleceń, aby rozpocząć proces walidacji.",
+      "codePlaceholder": "WPROWADŹ KOD (np. REF-1234)",
+      "verifying": "Weryfikacja…",
+      "continue": "Kontynuuj do walidacji"
+    },
+    "transition": {
+      "proceedSuccess": "Gotowe. Przejdźmy do konfiguracji organizacji.",
+      "proceedFailed": "Nie udało się wykonać przejścia",
+      "title": "Przed utworzeniem organizacji",
+      "subtitle": "Upewnij się, że rozumiesz, co oznacza ten krok.",
+      "time": {
+        "title": "Rozumiem, że to wymaga czasu",
+        "body": "Praca z systemem to nie szybkie rozwiązanie. Wymaga zaangażowania i regularnej pracy z zespołem."
+      },
+      "team": {
+        "title": "To narzędzie dla zespołów",
+        "body": "System jest zaprojektowany dla organizacji. Największą wartość przynosi, gdy pracuje z nim więcej niż jedna osoba."
+      },
+      "memory": {
+        "title": "System będzie pamiętał naszą pracę",
+        "body": "Każda decyzja, dyskusja i wniosek zostanie zapisany. To tworzy ciągłość, ale oznacza też odpowiedzialność."
+      },
+      "back": "Wróć",
+      "inProgress": "Przechodzę…",
+      "confirm": "Rozumiem, kontynuuj",
+      "allConfirmed": "Wszystkie potwierdzenia zaznaczone",
+      "remaining": "pozostało: {{count}}"
     }
   },
   "ui": {
