@@ -38,14 +38,14 @@
     "K5pl": 256,
     "K3b": 3,
     "K1": 2,
-    "K3a": 1184,
+    "K3a": 1123,
     "K2": 5,
-    "K1def": 987,
-    "K4pl": 801,
-    "K1defWID": 173,
-    "K3aKLUCZ": 214,
-    "K7": 773,
-    "K4en": 1196,
+    "K1def": 912,
+    "K4pl": 720,
+    "K1defWID": 170,
+    "K3aKLUCZ": 205,
+    "K7": 766,
+    "K4en": 1171,
     "K5en": 1822
   },
   "moduly": {
@@ -81,14 +81,14 @@
       "K5pl": 49,
       "K3b": 0,
       "K1": 0,
-      "K3a": 61,
+      "K3a": 0,
       "K2": 1,
-      "K1def": 75,
-      "K4pl": 81,
-      "K1defWID": 3,
-      "K3aKLUCZ": 9,
-      "K7": 7,
-      "K4en": 35,
+      "K1def": 0,
+      "K4pl": 0,
+      "K1defWID": 0,
+      "K3aKLUCZ": 0,
+      "K7": 0,
+      "K4en": 10,
       "K5en": 112
     },
     "03 Interview": {
@@ -1795,6 +1795,22 @@
     "root": "/Users/piotrwisniewski/Developer/wt/j1-czat",
     "sha": "e1033f9cb8b41b6f965838f19bbd4df049854574",
     "poprzedni_sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95",
-    "paczka": "J1 — modul 01 Chat"
+    "paczka": "J1 — modul 01 Chat",
+    "obnizenia": [
+      {
+        "paczka": "J4",
+        "modul": "04 Tools",
+        "data": "2026-09-09",
+        "zmiany": [
+          "K3a: -61",
+          "K1def: -75",
+          "K4pl: -81",
+          "K1defWID: -3",
+          "K3aKLUCZ: -9",
+          "K7: -7",
+          "K4en: -25"
+        ]
+      }
+    ]
   }
 }
