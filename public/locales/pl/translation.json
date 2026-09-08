@@ -25871,7 +25871,8 @@
       "saveAsAnalysis": "Zapisz jako analizę",
       "savedFromLive": "Analiza zapisana z podglądu",
       "noLiveData": "Brak danych. Upewnij się, że istnieją modele finansowe do analizy.",
-      "refineWithAI": "Doprecyzuj z AI"
+      "refineWithAI": "Doprecyzuj z AI",
+      "selectedNone": "nie wybrano"
     },
     "valuation": {
       "createTitle": "Nowa wycena przedsiębiorstwa",

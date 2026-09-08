@@ -19,6 +19,7 @@
  * - docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md
  */
 
+import { analysisTypeLabel } from '../Finance/labels/financeEnums';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -722,7 +723,7 @@ const EMPTY_STATE_ICON_BY_TAB: Partial<Record<ModuleTab, typeof Calculator>> = {
 };
 
 export const FinanceHub: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1876,7 +1877,7 @@ export const FinanceHub: React.FC = () => {
           filterOptions: analysisTypeFilterOptions,
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
-              <span className="text-sm text-c-text-secondary capitalize">{row.analysisType}</span>
+              <span className="text-sm text-c-text-secondary">{analysisTypeLabel(row.analysisType, i18n.language?.startsWith('pl') ?? false)}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
             ),

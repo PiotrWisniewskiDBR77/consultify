@@ -24867,7 +24867,8 @@
       "tabLabel": "Analysis",
       "title": "Financial Analysis",
       "titlePlaceholder": "e.g., Q4 2025 Financial Review",
-      "useAsAssumptions": "Use as model assumptions"
+      "useAsAssumptions": "Use as model assumptions",
+      "selectedNone": "0 selected"
     },
     "valuation": {
       "createTitle": "New enterprise valuation",

@@ -50,3 +50,37 @@ export function statementReadinessLabel(
 }
 
 export const statementReadinessLabelEntries = STATEMENT_READINESS_LABELS;
+
+/**
+ * Rodzaj analizy finansowej — kolumna „Rodzaj analizy" na liście Analiz.
+ *
+ * PRZED (zrzut `evidence/jezyk-j9/po/09-analiza-lista-*.png`, 08.09): kolumna
+ * renderowała SUROWĄ wartość z bazy przepuszczoną przez CSS `capitalize`,
+ * więc oba języki widziały „Comprehensive" — angielszczyzna dla Polaka
+ * i nieprzetłumaczony kod bazy dla Anglika. PLAN językowy §2.6 zakazuje tego
+ * wprost: „Enumy i statusy zawsze przez słownik. Zakaz renderowania surowej
+ * wartości bazy".
+ *
+ * Nieznany kod NIE wraca surowy — dostaje uczciwą etykietę „inny rodzaj",
+ * bo wyciek kodu bazy na ekran jest właśnie tym defektem, nie obejściem.
+ */
+const ANALYSIS_TYPE_LABELS: Record<string, { pl: string; en: string }> = {
+  comprehensive: { pl: 'Kompleksowa', en: 'Comprehensive' },
+  investment_case: { pl: 'Analiza inwestycji', en: 'Investment case' },
+  historical: { pl: 'Historyczna', en: 'Historical' },
+  ratio: { pl: 'Wskaźnikowa', en: 'Ratio' },
+  archived: { pl: 'Zarchiwizowana', en: 'Archived' },
+};
+
+const UNKNOWN_ANALYSIS_TYPE = { pl: 'Inny rodzaj', en: 'Other type' } as const;
+
+export function analysisTypeLabel(code: string | null | undefined, isPolish: boolean): string {
+  const normalized = String(code ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  const labels = ANALYSIS_TYPE_LABELS[normalized] ?? UNKNOWN_ANALYSIS_TYPE;
+  return isPolish ? labels.pl : labels.en;
+}
+
+export const analysisTypeLabelEntries = ANALYSIS_TYPE_LABELS;
