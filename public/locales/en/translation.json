@@ -21348,7 +21348,20 @@
           "loaded": "loaded",
           "noData": "no data"
         }
-      }
+      },
+      "orgTitle": "Organization service status",
+      "orgSubtitle": "An aggregate, customer-safe availability readback scoped to this organization.",
+      "source": "Source",
+      "readAt": "Read at",
+      "customerViewNote": "The customer view exposes aggregate safe status only. Probe details and execution belong to the platform operator.",
+      "readbackStatus": "Readback status",
+      "noAggregateEndpoint": "A verified aggregate endpoint without operator details is not connected yet.",
+      "errors": {
+        "load": "Failed to load health probes",
+        "runAll": "Failed to run probes",
+        "runOne": "Failed to run probe"
+      },
+      "allPassing": "All probes passing"
     },
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
@@ -21479,7 +21492,8 @@
       "subtitle": "Manage team access and commercial controls for your organization.",
       "breadcrumb": "Admin panel",
       "description": "Access, organization policies, evidence, and safe operations",
-      "navigation": "Admin Panel navigation"
+      "navigation": "Admin Panel navigation",
+      "moduleName": "Admin Panel"
     },
     "section": {
       "people": {
@@ -21613,6 +21627,12 @@
           "title": "No plan change history",
           "description": "No subscription changes have been recorded for this organization yet."
         }
+      },
+      "alerts": {
+        "saveFailed": "Could not save the budget thresholds.",
+        "saved": "Budget thresholds saved",
+        "unavailable": "Budget thresholds are unavailable right now — the settings store is not responding. Nothing was saved, and we do not show values that do not exist.",
+        "empty": "No budget threshold has been set yet."
       }
     },
     "interviewAssignmentsPanel": {
@@ -22119,7 +22139,7 @@
           "enabled": "Enabled",
           "gracePeriod": "Grace period (days)",
           "errors": {
-            "noEnrolledAccounts": "Two-factor cannot be required: no account in this organisation has it. Set a second factor up on at least one account before enforcing it."
+            "noEnrolledAccounts": "Cannot require a second factor: no account in this organization has one. Set up a second factor on at least one account before turning the requirement on."
           }
         },
         "sso": {
@@ -22313,8 +22333,8 @@
       "unknownMember": "Unknown member",
       "readOnly": "Read-only access. Management controls are available only to active workspace owners and admins.",
       "roleSelectLabel": "Role for {{name}}",
-      "loadErrorTitle": "We could not load this workspace's members.",
-      "loadErrorBody": "This is a read failure, not evidence that the workspace has no members. Details: {{reason}}",
+      "loadErrorTitle": "Could not load the member list for this organization.",
+      "loadErrorBody": "This is a read failure, not a sign that the organization has no members. Details: {{reason}}",
       "loadErrorRetry": "Try again",
       "roles": {
         "owner": "Owner",
@@ -22418,6 +22438,11 @@
         "copyLink": "Copy link",
         "linkCopied": "Registration link copied",
         "copyFailed": "Failed to copy to clipboard"
+      },
+      "errors": {
+        "loadMembers": "Failed to load members",
+        "loadInvitations": "Failed to load invitations",
+        "invitationReadback": "Command completed without exact invitation read-back."
       }
     },
     "operations": {
@@ -23654,7 +23679,8 @@
           "timezoneLabel": "Time zone",
           "timezoneAria": "Time zone",
           "dateFormatLabel": "Date format",
-          "dateFormatAria": "Date format"
+          "dateFormatAria": "Date format",
+          "saved": "Saved and confirmed by readback."
         },
         "finance": {
           "loadError": "Failed to load financial settings.",
@@ -23893,6 +23919,11 @@
     "platformOperations": {
       "unauthorizedTitle": "Unauthorized",
       "unauthorizedBody": "Platform operations are outside customer administration and require an explicit Platform Operator capability."
+    },
+    "capability": {
+      "notVerified": "Not verified",
+      "body": "This screen has an approved place in “{{domain}}”, but its independent data, authorization, and durable-readback contract has not been verified. No placeholder form or action is exposed before a real backend connection exists.",
+      "guarantees": "No write, no RBAC change, and no false success message."
     }
   },
   "access": {

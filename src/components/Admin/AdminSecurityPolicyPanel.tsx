@@ -78,7 +78,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
       if (code === 'MFA_ENFORCE_NO_ENROLLED_ACCOUNTS') {
         const message = t(
           'admin.security.policyPanel.mfa.errors.noEnrolledAccounts',
-          'Nie można wymagać drugiego składnika: żadne konto w tej organizacji go nie ma. Skonfiguruj drugi składnik na co najmniej jednym koncie, zanim włączysz wymóg.'
+          'Cannot require a second factor: no account in this organization has one. Set up a second factor on at least one account before turning the requirement on.'
         );
         setBlockedReason(message);
         setPolicy((prev) => ({ ...prev, mfaRequired: false }));

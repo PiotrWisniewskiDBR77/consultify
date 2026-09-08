@@ -338,7 +338,12 @@ describe('AdminSettingsModule section routing', () => {
 
   it('fails closed for a direct Platform Operations deep link', () => {
     renderAt('/admin/health/platform-operations');
-    expect(screen.getByRole('heading', { name: 'UNAUTHORIZED' })).toBeInTheDocument();
+    // J14 (09.09): nagłówek przeszedł na i18n (`admin.platformOperations.unauthorizedTitle`),
+    // więc test nie może już asertować surowego, nietłumaczonego napisu — inaczej
+    // zielony test wymuszałby angielski token na ekranie polskiego administratora.
+    expect(
+      screen.getByRole('heading', { name: /unauthorized|brak uprawnień/i })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Operacje platformowe|Platform Operations/i })
     ).not.toBeInTheDocument();

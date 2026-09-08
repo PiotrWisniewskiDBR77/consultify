@@ -222,20 +222,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         toast.error(
           result?.message ||
             t('admin.billing.alerts.saveFailed', {
-              defaultValue: 'Nie udało się zapisać progów budżetowych.',
+              defaultValue: 'Could not save the budget thresholds.',
             })
         );
         return;
       }
       if (Array.isArray(result?.alerts)) setAlerts(result.alerts);
       setAlertsAvailable(true);
-      toast.success(t('admin.billing.alerts.saved', { defaultValue: 'Progi budżetowe zapisane' }));
+      toast.success(t('admin.billing.alerts.saved', { defaultValue: 'Budget thresholds saved' }));
     } catch (error: any) {
       setAlertsAvailable(false);
       toast.error(
         error?.message ||
           t('admin.billing.alerts.saveFailed', {
-            defaultValue: 'Nie udało się zapisać progów budżetowych.',
+            defaultValue: 'Could not save the budget thresholds.',
           })
       );
     } finally {
@@ -617,14 +617,14 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
               >
                 {t('admin.billing.alerts.unavailable', {
                   defaultValue:
-                    'Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.',
+                    'Budget thresholds are unavailable right now — the settings store is not responding. Nothing was saved, and we do not show values that do not exist.',
                 })}
               </div>
             )}
             {alertsAvailable && alerts.length === 0 && (
               <div className="text-sm text-c-text-muted" data-testid="billing-alerts-empty">
                 {t('admin.billing.alerts.empty', {
-                  defaultValue: 'Nie ustawiono jeszcze żadnego progu budżetowego.',
+                  defaultValue: 'No budget threshold has been set yet.',
                 })}
               </div>
             )}

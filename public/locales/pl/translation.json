@@ -22804,7 +22804,20 @@
           "loaded": "odczytano",
           "noData": "brak danych"
         }
-      }
+      },
+      "orgTitle": "Status usług organizacji",
+      "orgSubtitle": "Zbiorczy, bezpieczny dla klienta odczyt dostępności usług w zakresie organizacji.",
+      "source": "Źródło",
+      "readAt": "Odczyt",
+      "customerViewNote": "Widok klienta pokazuje wyłącznie bezpieczny status zbiorczy. Szczegóły i uruchamianie sond należą do operatora platformy.",
+      "readbackStatus": "Status odczytu",
+      "noAggregateEndpoint": "Nie istnieje jeszcze zweryfikowany endpoint zbiorczy bez szczegółów operatora.",
+      "errors": {
+        "load": "Nie udało się wczytać sond stanu",
+        "runAll": "Nie udało się uruchomić sond",
+        "runOne": "Nie udało się uruchomić sondy"
+      },
+      "allPassing": "Wszystkie sondy przechodzą"
     },
     "strategicProfile": {
       "industryCode": "Kod branżowy ({{system}})",
@@ -22935,7 +22948,8 @@
       "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji.",
       "breadcrumb": "Panel administratora",
       "description": "Dostęp, polityki organizacji, dowody i bezpieczne operacje",
-      "navigation": "Nawigacja panelu administratora"
+      "navigation": "Nawigacja panelu administratora",
+      "moduleName": "Panel administratora"
     },
     "section": {
       "people": {
@@ -23069,6 +23083,12 @@
           "title": "Brak historii zmian planu",
           "description": "Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji."
         }
+      },
+      "alerts": {
+        "saveFailed": "Nie udało się zapisać progów budżetowych.",
+        "saved": "Progi budżetowe zapisane",
+        "unavailable": "Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.",
+        "empty": "Nie ustawiono jeszcze żadnego progu budżetowego."
       }
     },
     "interviewAssignmentsPanel": {
@@ -23771,8 +23791,8 @@
       "unknownMember": "Nieznany członek",
       "readOnly": "Dostęp tylko do odczytu. Zarządzanie jest dostępne wyłącznie dla aktywnych właścicieli i administratorów przestrzeni.",
       "roleSelectLabel": "Rola użytkownika {{name}}",
-      "loadErrorTitle": "Nie udało się wczytać członków tej przestrzeni.",
-      "loadErrorBody": "To awaria odczytu, a nie informacja, że przestrzeń nie ma członków. Szczegóły: {{reason}}",
+      "loadErrorTitle": "Nie udało się wczytać listy członków tej organizacji.",
+      "loadErrorBody": "To awaria odczytu, a nie informacja, że organizacja nie ma członków. Szczegóły: {{reason}}",
       "loadErrorRetry": "Spróbuj ponownie",
       "roles": {
         "owner": "Właściciel",
@@ -23876,6 +23896,11 @@
         "copyLink": "Kopiuj link",
         "linkCopied": "Skopiowano link rejestracyjny",
         "copyFailed": "Nie udało się skopiować do schowka"
+      },
+      "errors": {
+        "loadMembers": "Nie udało się wczytać członków",
+        "loadInvitations": "Nie udało się wczytać zaproszeń",
+        "invitationReadback": "Polecenie wykonane, ale bez dokładnego odczytu zwrotnego zaproszenia."
       }
     },
     "operations": {
@@ -25119,7 +25144,8 @@
           "timezoneLabel": "Strefa czasowa",
           "timezoneAria": "Strefa czasowa",
           "dateFormatLabel": "Format daty",
-          "dateFormatAria": "Format daty"
+          "dateFormatAria": "Format daty",
+          "saved": "Zapisano i potwierdzono odczytem."
         },
         "finance": {
           "loadError": "Nie udało się pobrać ustawień finansowych.",
@@ -25360,6 +25386,11 @@
     "platformOperations": {
       "unauthorizedTitle": "Brak uprawnień",
       "unauthorizedBody": "Operacje platformowe nie należą do administracji klienta i wymagają jawnej capability operatora platformy."
+    },
+    "capability": {
+      "notVerified": "Niezweryfikowane",
+      "body": "Ten ekran ma zatwierdzone miejsce w domenie „{{domain}}”, ale niezależny kontrakt danych, uprawnień i trwałego odczytu nie został jeszcze potwierdzony. Nie udostępniamy pozornego formularza ani akcji do czasu powiązania z rzeczywistym backendem.",
+      "guarantees": "Brak zapisu, brak zmiany RBAC i brak fałszywego komunikatu sukcesu."
     }
   },
   "access": {

@@ -111,7 +111,9 @@ export const AdminOrganizationDefaultsPanel: React.FC<Props> = ({ organizationId
         dateFormat: value.dateFormat || '',
       });
       setProfileState('ready');
-      setProfileMessage('Zapisano i potwierdzono odczytem.');
+      setProfileMessage(
+        t('admin.command.organization-defaults.profile.saved', 'Saved and confirmed by readback.')
+      );
     } catch (error) {
       setProfileState('error');
       setProfileMessage(
