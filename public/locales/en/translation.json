@@ -1734,7 +1734,11 @@
       "col": {
         "status": "Status"
       },
-      "userCount": "{{count}} users"
+      "userCount": "{{count}} users",
+      "fallbackOrganization": "Organization",
+      "fallbackTeamMember": "Team member",
+      "fallbackMember": "Member",
+      "fallbackAccessLevel": "partner access"
     },
     "dashboard": {
       "startProject": "Start Project",
@@ -1778,7 +1782,11 @@
         "benefits": "Commission tracking and settlements",
         "resource": "Client access management"
       },
-      "freshHint": "Your data will appear here after your first referrals and commission transactions."
+      "freshHint": "Your data will appear here after your first referrals and commission transactions.",
+      "complete": "Complete",
+      "completed": "completed",
+      "certificationsInLearningPath": "You will find certification details in the Learning path",
+      "certificationsUnavailable": "Certification status is temporarily unavailable"
     },
     "metrics": {
       "title": "Metrics",
@@ -1806,7 +1814,18 @@
       "clientAcquisition": "Client Acquisition",
       "projectDelivery": "Project Delivery",
       "certificationProgress": "Certification Progress",
-      "freshHint": "Your data will appear here after your first referrals and commission transactions."
+      "freshHint": "Your data will appear here after your first referrals and commission transactions.",
+      "runtimeConversionRate": "Conversion rate",
+      "runtimePaidCustomers": "Paying customers",
+      "runtimeReadyForPayout": "Ready for payout",
+      "runtimeReferralClicks": "Referral link clicks",
+      "runtimeTitle": "Partner program summary",
+      "runtimeSubtitle": "Current performance data for the signed-in partner.",
+      "detailUnique": "{{count}} unique",
+      "detailSignups": "{{count}} sign-ups",
+      "detailTrials": "{{count}} trials",
+      "detailLifecycle": "stage: {{phase}}",
+      "detailPending": "{{count}} pending"
     },
     "certification": {
       "learningPath": "Learning Path",
@@ -1863,6 +1882,9 @@
       "examMode": {
         "review": "Operator review",
         "exam": "Exam-based"
+      },
+      "moduleKind": {
+        "default": "Module"
       }
     },
     "clients": {
@@ -1881,14 +1903,20 @@
       "col": {
         "organization": "Organization",
         "assessment": "Assessment",
-        "status": "Status"
+        "status": "Status",
+        "industry": "Industry",
+        "projects": "Projects",
+        "users": "Users"
       },
       "status": {
         "active": "Active",
         "onboarding": "Onboarding",
         "inactive": "Inactive",
         "unknown": "Unknown status"
-      }
+      },
+      "technicalId": "Identifier",
+      "unavailable": "Client unavailable",
+      "organizationsDesc": "Manage the organizations covered by your partnership"
     },
     "resources": {
       "desc": "Download partner toolkit resources",
@@ -1896,7 +1924,10 @@
       "downloadError": "Couldn't download the resource.",
       "canonicalDocs": "Canonical partner docs",
       "academyStatus": "Academy status",
-      "openGuide": "Open supporting guide"
+      "openGuide": "Open supporting guide",
+      "retry": "Try again",
+      "degradedDescription": "The catalogue could not be read, so the number of available materials is unknown.",
+      "degradedTitle": "The resource library is temporarily unavailable"
     },
     "profile": {
       "companyInfo": "Company Info",
@@ -1918,7 +1949,9 @@
       "yourCompany": "Your company",
       "partnerTier": "Partner",
       "noRegions": "No regions selected",
-      "noSpecializations": "No specializations selected"
+      "noSpecializations": "No specializations selected",
+      "companyName": "Company name",
+      "taxId": "Tax ID / VAT number"
     },
     "home": {
       "title": "Home",
@@ -2097,6 +2130,23 @@
         "failed": "Failed",
         "cancelled": "Cancelled",
         "unknown": "Unknown status"
+      },
+      "paidSuffix": "paid out",
+      "itemsCount": "Items: {{count}}",
+      "approvedAmount": "Approved: {{amount}}",
+      "heldAmount": "On hold: {{amount}}",
+      "lastMonthAmount": "Previous month: {{amount}}",
+      "transactionType": {
+        "initial": "First payment",
+        "subscription": "Subscription",
+        "subscription_renewal": "Subscription renewal",
+        "renewal": "Renewal",
+        "upsell": "Upsell",
+        "subscription_upgrade": "Subscription upgrade",
+        "one_time": "One-off",
+        "new_contract": "New contract",
+        "refund": "Refund",
+        "bonus": "Bonus"
       }
     },
     "payouts": {
@@ -2109,7 +2159,25 @@
       "title": "Payout Settings",
       "subtitle": "Configure your payout preferences and bank details",
       "saved": "Payout settings updated",
-      "saveFailed": "Failed to update payout settings"
+      "saveFailed": "Failed to update payout settings",
+      "operationsUnavailable": "Payout operations are unavailable",
+      "operationsUnavailableDesc": "Commission accrual and payout operations are unavailable. Historical settings remain available read-only.",
+      "method": "Payout method",
+      "historicalValue": "Historical value",
+      "bankDetails": "Bank account details",
+      "accountHolder": "Account holder",
+      "bankName": "Bank name",
+      "preferences": "Payout settings",
+      "minimumThreshold": "Minimum payout threshold",
+      "minimumThresholdDesc": "The minimum amount required to request a payout",
+      "historicalOnly": "Historical data only",
+      "historicalOnlyDesc": "These values are kept as historical data only and cannot be changed in the Partner workspace.",
+      "methods": {
+        "bank_transfer": "Bank transfer",
+        "paypal": "PayPal",
+        "stripe": "Stripe",
+        "wise": "Wise"
+      }
     },
     "commission": {
       "faq": {
@@ -2132,7 +2200,67 @@
       "tipSignature": "Add your referral code to your email signature",
       "tipCaseStudies": "Share case studies alongside your referral link for higher trust",
       "copyCode": "Copy referral code",
-      "copyLinkAction": "Copy referral link"
+      "copyLinkAction": "Copy referral link",
+      "analyticsTitle": "Click analytics",
+      "analyticsSubtitle": "Review referral performance alongside your active campaign links.",
+      "campaign": "Campaign",
+      "campaignCreated": "Campaign link created",
+      "campaignDeleted": "Campaign link deleted",
+      "campaignLinks": "Campaign links",
+      "campaignLinksDesc": "Track the performance of campaigns tagged with UTM parameters",
+      "clicks": "Clicks",
+      "codeHint": "Clients can enter this code when they sign up",
+      "confirmDelete": "Delete this campaign link?",
+      "convRate": "Conversion %",
+      "conversions": "Paying",
+      "copied": "Copied to clipboard",
+      "copyFailed": "Could not copy",
+      "copyLink": "Copy link",
+      "createCampaign": "Create campaign link",
+      "createFailed": "Could not create the campaign",
+      "customerAttributedAt": "Attributed on",
+      "customerCommissionDuration": "Commission period",
+      "customerCommissionEarned": "Commission earned",
+      "customerCommissionRate": "Commission rate",
+      "customerFirstPayment": "First payment",
+      "customerLifetimeValue": "Customer lifetime value",
+      "customerSignupCompleted": "Sign-up completed",
+      "getQR": "Get QR code",
+      "loadError": "Could not load the referral tools",
+      "identityMissingError": "Referral data is being prepared. Refresh the screen in a moment.",
+      "nameRequired": "A campaign name is required",
+      "newCampaign": "New campaign",
+      "noLink": "Your referral link is not available yet",
+      "noCampaigns": "You have no campaign links yet. Create the first one to start tracking.",
+      "noReferredCustomers": "No referred clients",
+      "noReferredCustomersDesc": "Referred organizations will appear here once they are attributed.",
+      "preview": "Preview",
+      "qrAlt": "QR code for the referral link",
+      "qrFailed": "Could not create the QR code",
+      "qrHint": "Scan to open the referral link",
+      "qrTitle": "Referral QR code",
+      "referredCustomersList": "Referred clients",
+      "referredCustomersListDesc": "The list of clients attributed to your referrals.",
+      "referredOrganizationsTitle": "Referred clients",
+      "referredOrganizationsSubtitle": "See the client acquisition summary and the referral tools in use.",
+      "signups": "Sign-ups",
+      "tips": "Tips to improve conversion",
+      "title": "My referral links and codes",
+      "subtitle": "Share your own links and codes to record referrals.",
+      "yourCode": "Your referral code",
+      "yourLink": "Your referral link",
+      "v8AnalyticsRuntimeTitle": "Referral performance",
+      "v8AnalyticsRuntimeSubtitle": "Clicks, sign-ups and the conversion rate of your referrals.",
+      "v8ConversionRate": "Conversion rate",
+      "v8PaidCustomers": "Paying customers",
+      "v8RuntimeTitle": "Referral summary",
+      "v8RuntimeSubtitle": "A summary of referral clicks and conversions.",
+      "v8ReferredOrganizationsRuntimeTitle": "Client acquisition summary",
+      "v8ReferredOrganizationsRuntimeSubtitle": "Sign-ups, trials and moves to a paid plan among referred clients.",
+      "v8Signups": "Sign-ups",
+      "v8TotalClicks": "Total clicks",
+      "detailSources": "{{count}} sources",
+      "detailTrackedDays": "{{count}} tracked days"
     },
     "canonicalRuntime": {
       "title": "Current partner programme status",
@@ -2166,6 +2294,12 @@
         "onboarding": "Onboarding",
         "pending": "Pending",
         "suspended": "Suspended"
+      },
+      "organizationStatus": {
+        "active": "Active partner organization",
+        "onboarding": "Partner organization is being set up",
+        "pending": "Partner organization is awaiting review",
+        "suspended": "Partner organization is suspended"
       }
     },
     "common": {
@@ -2173,7 +2307,61 @@
       "progress": "Progress"
     },
     "layout": {
-      "breadcrumbs": "Breadcrumbs"
+      "breadcrumbs": "Breadcrumbs",
+      "closeNavigation": "Close partner navigation",
+      "openNavigation": "Open partner navigation"
+    },
+    "apply": {
+      "backToProgram": "Back to the partner program page",
+      "badge": "Partner program qualification",
+      "submit": "Send partner application",
+      "submitting": "Sending…",
+      "successTitle": "Your application has been sent",
+      "title": "Join the Consultify partner program",
+      "subtitle": "This is a short qualification step for new candidates. We review fit, business model and room for co-operation before inviting you to the next step.",
+      "successBody": "Your application is waiting for review. We will decide on the invitation to the next step based on the information you provided.",
+      "checklist": {
+        "noLogin": "First step, no sign-in required",
+        "reviewed": "Reviewed in the same approval queue as other superadmin requests",
+        "qualify": "Built to qualify serious commercial partners quickly"
+      },
+      "formBadge": "Application form",
+      "formTitle": "Tell us how you want to grow with Consultify",
+      "fields": {
+        "fullName": "Full name",
+        "email": "Work email address",
+        "company": "Company",
+        "website": "Website",
+        "country": "Country",
+        "role": "Your role",
+        "teamSize": "Team size",
+        "focusArea": "Main focus area",
+        "message": "Why do you want to join?",
+        "messagePlaceholder": "Tell us about your market, your clients or your rollout plans."
+      },
+      "errors": {
+        "submitFailed": "Could not send the partner application"
+      }
+    },
+    "start": {
+      "activeSubtitle": "Current balance, program status and the next step.",
+      "activeTitle": "Your partner program",
+      "availableToPayout": "Ready for payout",
+      "goToEarnings": "Go to commissions",
+      "goToReferralTools": "My links and codes",
+      "grossEarned": "Earned in total",
+      "heldAmount": "On hold",
+      "paidOut": "Paid out",
+      "retry": "Try again",
+      "unknownPhaseTitle": "Unknown partner program stage",
+      "unknownTitle": "We could not determine your program status",
+      "whatNext": "Next step",
+      "degraded": "The balance is shown with limitations because part of the program data could not be read.",
+      "paidProjection": "The paid-out amount comes from the completed payouts register; part of the data has not been posted to the program ledger yet.",
+      "unknownDescription": "We are not showing the sign-up screen because we do not know your current program stage. Please try again in a moment."
+    },
+    "program": {
+      "truthBoundary": "Commercial information and the options available to you depend on a confirmed program status and the agreement in force."
     }
   },
   "common": {
