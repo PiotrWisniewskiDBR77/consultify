@@ -564,7 +564,10 @@
         "finance": "Finanse",
         "execution": "Realizacja",
         "settings": "Ustawienia",
-        "admin": "Administracja"
+        "admin": "Administracja",
+        "interview": "Wywiad",
+        "tools": "Narzędzia",
+        "roi": "ROI"
       },
       "page": {
         "reports": "Raporty",
@@ -572,7 +575,12 @@
         "model": "Model",
         "analysis": "Analiza",
         "prediction": "Predykcja",
-        "valuation": "Wycena"
+        "valuation": "Wycena",
+        "strategicAnalysis": "Analiza strategiczna",
+        "megatrends": "Megatrendy",
+        "operational": "Operacyjne",
+        "digital": "Cyfrowe",
+        "processAutomation": "Automatyzacja procesów"
       }
     },
     "loading": {

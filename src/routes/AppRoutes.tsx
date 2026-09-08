@@ -2056,7 +2056,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/discovery/canvas"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Wywiad']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.interview', 'Interview')]} noPadding>
               <RouteErrorBoundary>
                 <DiscoveryConsultantView />
               </RouteErrorBoundary>
@@ -2080,7 +2080,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.INTERVIEW}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Wywiad']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.interview', 'Interview')]} noPadding>
               <RouteErrorBoundary>
                 <InterviewHub />
               </RouteErrorBoundary>
@@ -2106,7 +2106,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.ROOT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2122,7 +2122,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Analiza strategiczna']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools'), t('layout.breadcrumb.page.strategicAnalysis', 'Strategic analysis')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2139,7 +2139,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS}
           element={
             <MainLayout
-              breadcrumbs={breadcrumbs || ['Narzędzia', 'Analiza strategiczna', 'Megatrendy']}
+              breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools'), t('layout.breadcrumb.page.strategicAnalysis', 'Strategic analysis'), t('layout.breadcrumb.page.megatrends', 'Megatrends')]}
               noPadding
             >
               <ProductionModuleGate
@@ -2162,7 +2162,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Operacyjne']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools'), t('layout.breadcrumb.page.operational', 'Operational')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2177,7 +2177,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.DIGITAL}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Cyfrowe']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools'), t('layout.breadcrumb.page.digital', 'Digital')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2192,7 +2192,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Narzędzia', 'Automatyzacja procesów']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.tools', 'Tools'), t('layout.breadcrumb.page.processAutomation', 'Process automation')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Tools"
@@ -2431,7 +2431,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ROI}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['ROI']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.roi', 'ROI')]}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Initiatives"
