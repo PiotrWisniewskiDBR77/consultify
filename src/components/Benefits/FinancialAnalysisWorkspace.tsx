@@ -2,6 +2,7 @@ import { ArrowRight, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '../../utils/listDateFormat';
 
 import { LoadingState } from '@/components/shared/states';
 
@@ -412,7 +413,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   }, [ratios, selected, selectedRatioIds, t, targetModelId]);
 
   const fmtNumber = useMemo(
-    () => new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    () => new Intl.NumberFormat(localeListy(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
   );
 
@@ -444,7 +445,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
             <button
               onClick={() => setShowCreate(true)}
               className="rounded-lg bg-white/[0.04] p-2 text-slate-600 transition hover:bg-white/[0.08]"
-              title={t('finance.analysis.createTitle', 'New Financial Analysis') as string}
+              title={t('finance.analysis.createTitle', 'New financial analysis') as string}
             >
               <Plus size={16} />
             </button>
@@ -554,7 +555,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
           <div className="w-full max-w-md rounded-2xl bg-slate-950 p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-100">
-                {t('finance.analysis.createTitle', 'New Financial Analysis')}
+                {t('finance.analysis.createTitle', 'New financial analysis')}
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
@@ -615,7 +616,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
               )}
             </p>
             {targetModelsLoading ? (
-              <div className="py-4 text-sm text-slate-500">{t('common.loading', 'Loading…')}</div>
+              <div className="py-4 text-sm text-slate-500">{t('common.loading', 'Loading')}</div>
             ) : targetModels.length === 0 ? (
               <div className="mb-4 rounded-xl bg-white/[0.03] px-3 py-4 text-sm text-slate-500">
                 {t(
@@ -654,7 +655,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                 className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition hover:bg-c-text-secondary disabled:opacity-50"
               >
                 {applyingAssumptions
-                  ? t('common.saving', 'Saving…')
+                  ? t('common.saving', 'Saving...')
                   : t('finance.analysis.bridgeApply', 'Apply to model')}
               </button>
             </div>
@@ -670,7 +671,9 @@ const RatioBlocksTable: React.FC<{
   fmtNumber: Intl.NumberFormat;
   selectedRatioIds: Set<string>;
   onToggleRatio: (ratioId: string) => void;
-}> = ({ groupedRatios, fmtNumber, selectedRatioIds, onToggleRatio }) => (
+}> = ({ groupedRatios, fmtNumber, selectedRatioIds, onToggleRatio }) => {
+  const { t } = useTranslation();
+  return (
   <div className="space-y-4">
     {RATIO_BLOCKS.map((block) => {
       const items = groupedRatios[block.key] || [];
@@ -692,10 +695,18 @@ const RatioBlocksTable: React.FC<{
               <thead>
                 <tr className="border-y border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
                   <th className="w-10 px-5 py-3" />
-                  <th className="px-5 py-3 min-w-[240px]">Wskaźnik</th>
-                  <th className="px-5 py-3 min-w-[240px]">Wyliczenie</th>
-                  <th className="px-5 py-3 min-w-[360px]">Interpretacja</th>
-                  <th className="px-5 py-3 min-w-[180px]">Wskaźnik branżowy</th>
+                  <th className="px-5 py-3 min-w-[240px]">
+                    {t('results.financialAnalysis.columns.ratio', 'Ratio')}
+                  </th>
+                  <th className="px-5 py-3 min-w-[240px]">
+                    {t('results.financialAnalysis.columns.calculation', 'Calculation')}
+                  </th>
+                  <th className="px-5 py-3 min-w-[360px]">
+                    {t('results.financialAnalysis.columns.interpretation', 'Interpretation')}
+                  </th>
+                  <th className="px-5 py-3 min-w-[180px]">
+                    {t('results.financialAnalysis.columns.benchmark', 'Industry benchmark')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -751,6 +762,7 @@ const RatioBlocksTable: React.FC<{
       );
     })}
   </div>
-);
+  );
+};
 
 export default FinancialAnalysisWorkspace;

@@ -51,11 +51,38 @@ for (const q of [
     }
   } catch { /* tabela może nie istnieć w tej bazie — pomijamy */ }
 }
+// Nazwy własne obiektów modułów — bez nich tytuły z bazy (nazwa karty wyników,
+// zestawu OKR, analizy ROI) liczyłyby się jako polski INTERFEJS na ekranie EN.
 for (const q of [
   'select title from meetings',
+  'select name from meetings',
   'select name from audit_programs',
+  'select title from audit_programs',
   'select title from interviews',
+  'select name from interview_sessions',
   'select name from kpi_definitions',
+  'select name from kpi_scorecards',
+  'select name from rvn_kpi_scorecards',
+  'select name from rvn_kpi_definitions',
+  'select name from rvn_kpi_scorecard_items',
+  'select name from rvn_roi_cases',
+  'select title from rvn_roi_cases',
+  'select name from kpi_scorecard_items',
+  'select name from kpis',
+  'select title from kpis',
+  'select name from okr_vnext_sets',
+  'select title from okr_vnext_sets',
+  'select title from okr_vnext_objectives',
+  'select name from okr_vnext_objectives',
+  'select title from okr_vnext_key_results',
+  'select name from okr_vnext_key_results',
+  'select title from okr_objectives',
+  'select name from okr_objectives',
+  'select title from okr_key_results',
+  'select name from roi_cases',
+  'select title from roi_cases',
+  'select name from management_reports',
+  'select title from management_reports',
 ]) {
   try {
     for (const v of sql(q).split('\n')) {

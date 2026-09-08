@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { formatListDate, formatListNumber } from '../utils/listDateFormat';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 import { AxisAssessment, FullInitiative, FullSession } from '../types';
@@ -72,7 +73,7 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
             Digital Transformation Strategy
           </h1>
           <p className="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-sm mt-1">
-            Executive Summary • {new Date().toLocaleDateString()}
+            Executive Summary • {formatListDate(new Date().toISOString())}
           </p>
         </div>
         <div className="text-right">
@@ -177,7 +178,7 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-slate-600 dark:text-slate-400">
-                  ${(init.costCapex || 0).toLocaleString()}
+                  ${formatListNumber(init.costCapex || 0)}
                 </td>
               </tr>
             ))}

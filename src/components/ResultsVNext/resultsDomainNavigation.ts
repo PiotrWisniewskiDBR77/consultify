@@ -30,7 +30,7 @@ export function getResultsDomainTabs(): StandardModuleTab[] {
    */
   const withReports: StandardModuleTab[] = [
     ...RESULTS_DOMAIN_TABS,
-    { id: 'reports', label: i18n.t('results.managementReportsTab', 'Raporty zarządcze') },
+    { id: 'reports', label: i18n.t('results.managementReportsTab', 'Management reports') },
   ];
   // 2026-09-02 (wołacze duty) — "Archiwum"/"Archive" tab, default OFF
   // (`resultsLegacyArchive`, see resultsVNextFeatureFlags.ts). Appended

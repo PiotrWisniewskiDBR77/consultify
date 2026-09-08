@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '../../utils/listDateFormat';
 import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@/components/shared/states';
@@ -481,7 +482,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const projectionPeriods = activeScenario?.projections?.periods || [];
 
   const fmtNumber = useMemo(
-    () => new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }),
+    () => new Intl.NumberFormat(localeListy(), { maximumFractionDigits: 0 }),
     []
   );
 
@@ -664,7 +665,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
                 >
                   {generating ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                  {t('finance.budget.project', 'Generate Projections')}
+                  {t('finance.budget.project', 'Project')}
                 </button>
                 <button
                   onClick={handleApprove}
@@ -698,7 +699,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
                 >
                   <TrendingUp size={14} />
-                  {t('finance.budget.valuate', 'Wycen budżet')}
+                  {t('finance.budget.valuate', 'Valuate Budget')}
                 </button>
               </div>
             </div>

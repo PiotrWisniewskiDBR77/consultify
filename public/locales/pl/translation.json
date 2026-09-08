@@ -28723,7 +28723,9 @@
       "convert": "Utwórz inicjatywę",
       "convertOk": "Utworzono inicjatywę",
       "convertFailed": "Nie udało się utworzyć inicjatywy",
-      "openInitiative": "Otwórz"
+      "openInitiative": "Otwórz",
+      "openCandidates": "Otwórz (zakładka „Kandydaci\")",
+      "candidateModalBody": "Zostanie utworzony kandydat na inicjatywę — nie sama inicjatywa. Kandydata zaakceptujesz w zakładce „Kandydaci\" w Inicjatywach."
     },
     "negotiation": {
       "title": "Pakiet negocjacyjny",
@@ -30296,7 +30298,28 @@
     },
     "okrObjectiveCard": "Karta celu",
     "okrKeyResultSet": "Zbiór kart kluczowych rezultatów",
-    "okrKeyResultCard": "Karta kluczowego rezultatu"
+    "okrKeyResultCard": "Karta kluczowego rezultatu",
+    "financialAnalysis": {
+      "columns": {
+        "ratio": "Wskaźnik",
+        "calculation": "Wyliczenie",
+        "interpretation": "Interpretacja",
+        "benchmark": "Wskaźnik branżowy"
+      }
+    },
+    "actionCards": {
+      "aria": "Karty działania — Wyniki"
+    },
+    "lessons": {
+      "descriptionPlaceholder": "Opisz wyciągniętą lekcję…",
+      "actionPlaceholder": "Co zrobiono w wyniku tej lekcji?",
+      "addFirst": "Dodaj pierwszą lekcję"
+    },
+    "executive": {
+      "accessRestricted": "Widok zarządczy jest dostępny wyłącznie dla ról Admin i Manager.",
+      "loadingSummary": "Wczytywanie podsumowania zarządczego…",
+      "noPendingDecisions": "Brak decyzji oczekujących"
+    }
   },
   "traceability": {
     "source": "Źródło",

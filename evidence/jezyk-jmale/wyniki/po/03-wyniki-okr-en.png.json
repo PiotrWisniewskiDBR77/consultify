@@ -1,0 +1,36 @@
+{
+ "ekran": "03-wyniki-okr",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/results/okr",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "OKR zakładu — Q4 2026",
+   "trafienia": [
+    "zakładu"
+   ]
+  },
+  {
+   "linia": "OKR sprzedaży — H2 2026",
+   "trafienia": [
+    "sprzedaży"
+   ]
+  },
+  {
+   "linia": "Przyspieszyć realizację wartości transformacji",
+   "trafienia": [
+    "Przyspieszyć",
+    "realizację",
+    "wartości"
+   ]
+  }
+ ]
+}

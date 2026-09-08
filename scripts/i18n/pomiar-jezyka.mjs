@@ -494,6 +494,11 @@ function skanujJsx(pliki) {
       if (/^[A-Za-z]+\s*=/.test(kandydat)) continue; // fragment atrybutu
       // odsiew kodu zlapanego przez generyki TS: `useState<Foo>(null); ... useState<`
       if (/;|=>|\bconst\b|\blet\b|\breturn\b|\bfunction\b|useState|useRef|useMemo|&&|\|\||\?\?|===|!==/.test(kandydat)) continue;
+      // Rzutowanie TS złapane przez generyki: `r as unknown as Record<string, unknown>`
+      // — regex tekstu JSX widzi fragment między `>` i `<` jako zdanie po angielsku.
+      // Zmierzone 08.09 na ResultsKpiRegistryPage.tsx:1681 i bliźniaczym miejscu
+      // w ResultsKpiScorecardDetailPage.tsx (dwa fałszywe K4en w module 08).
+      if (/\bas\s+(unknown|const|never|any)\b|\bas\s+[A-Z]\w*(\[\])?$/.test(kandydat)) continue;
       zapiszTekst(m.index, kandydat);
     }
   }
@@ -625,9 +630,20 @@ const WZORCE_DATY = [
   [/new Intl\.(?:DateTimeFormat|NumberFormat)\(\s*(["'])(en-US|en-GB|pl-PL|de-DE)\1/g, 'Intl z locale na sztywno'],
 ];
 
+/**
+ * Wycina treść komentarzy — blokowych i liniowych — zostawiając białe znaki.
+ *
+ * POWÓD (J-małe): `KpiToolPage.tsx:1224` opisuje w komentarzu defekt
+ * („`undefined.toLocaleString()` wywraca kartę"), a skaner liczył ten opis
+ * jako realne wywołanie bez locale. Komentarz nie renderuje daty.
+ */
+function bezKomentarzy(tresc) {
+  return bezKomentarzyBlokowych(tresc).replace(/\/\/[^\n]*/g, (l) => ' '.repeat(l.length));
+}
+
 function skanujDaty(pliki) {
   for (const rel of pliki) {
-    const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const tresc = bezKomentarzy(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
     const modul = rel.startsWith('src/') ? modulZeSciezki(rel) : WSPOLNE;
     for (const [wz, opis] of WZORCE_DATY) {
       wz.lastIndex = 0;
@@ -640,9 +656,11 @@ function skanujDaty(pliki) {
   }
 }
 
-function analizujDatyZawartosc(tresc) {
+function analizujDatyZawartosc(trescSurowa) {
   let n = 0;
-  if (!tresc) return { K7: 0 };
+  if (!trescSurowa) return { K7: 0 };
+  // Ta sama zasada co w `skanujDaty` — tryb szybki i pełny muszą liczyć tak samo.
+  const tresc = bezKomentarzy(trescSurowa);
   for (const [wz] of WZORCE_DATY) {
     wz.lastIndex = 0;
     while (wz.exec(tresc)) n += 1;

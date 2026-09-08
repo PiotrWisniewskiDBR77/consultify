@@ -1,0 +1,53 @@
+{
+ "ekran": "01-wyniki-kpi",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/results/kpi",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Karta wyników transformacji",
+   "trafienia": [
+    "wyników"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Plant Balanced Scorecard — Zakład DBR77",
+   "trafienia": [
+    "Zakład"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "KPI jakości — sierpień 2026",
+   "trafienia": [
+    "jakości",
+    "sierpień"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  }
+ ]
+}

@@ -27355,7 +27355,8 @@
       "exitMetric": "Metric",
       "save": "Save assumptions",
       "saved": "Assumptions saved",
-      "saveFailed": "Failed to save assumptions"
+      "saveFailed": "Failed to save assumptions",
+      "sourceDataRequired": "source data required"
     },
     "comps": {
       "title": "Comparable valuation (multiples)",
@@ -27401,7 +27402,19 @@
       "convert": "Create initiative",
       "convertOk": "Initiative created",
       "convertFailed": "Failed to create initiative",
-      "openInitiative": "Open"
+      "openInitiative": "Open",
+      "openCandidates": "Open (\"Candidates\" tab)",
+      "candidateModalBody": "A candidate for an initiative is created — not the initiative itself. You approve the candidate in the \"Candidates\" tab in Initiatives.",
+      "candidateAlreadyExists": "This recommendation has already been sent as an initiative candidate",
+      "candidateChecking": "Checking availability…",
+      "candidateCreated": "Initiative candidate created",
+      "candidateFitScore": "Fit",
+      "candidateHandoffFailed": "Could not send the candidate",
+      "candidateModalCancel": "Cancel",
+      "candidateModalClose": "Close",
+      "candidateModalConfirm": "Send",
+      "candidateModalTitle": "Send as an initiative candidate",
+      "candidatePreviewFailed": "Could not check whether this action is available"
     },
     "negotiation": {
       "title": "Negotiation pack",
@@ -28864,7 +28877,28 @@
     },
     "okrObjectiveCard": "Objective card",
     "okrKeyResultSet": "Key result set",
-    "okrKeyResultCard": "Key result card"
+    "okrKeyResultCard": "Key result card",
+    "financialAnalysis": {
+      "columns": {
+        "ratio": "Ratio",
+        "calculation": "Calculation",
+        "interpretation": "Interpretation",
+        "benchmark": "Industry benchmark"
+      }
+    },
+    "actionCards": {
+      "aria": "Action cards — Results"
+    },
+    "lessons": {
+      "descriptionPlaceholder": "Describe the lesson learned…",
+      "actionPlaceholder": "What was done as a result of this learning?",
+      "addFirst": "Add the first lesson"
+    },
+    "executive": {
+      "accessRestricted": "Executive View is available for Admin and Manager roles only.",
+      "loadingSummary": "Loading executive summary…",
+      "noPendingDecisions": "No pending decisions"
+    }
   },
   "traceability": {
     "source": "Source",

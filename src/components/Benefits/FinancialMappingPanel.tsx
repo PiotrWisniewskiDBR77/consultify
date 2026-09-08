@@ -386,7 +386,7 @@ export const FinancialMappingPanel: React.FC = () => {
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {t('kpi.financial.addMapping', 'Add Financial Mapping')}
+                {t('kpi.financial.addMapping', 'Add Mapping')}
               </h3>
               <button
                 onClick={() => {

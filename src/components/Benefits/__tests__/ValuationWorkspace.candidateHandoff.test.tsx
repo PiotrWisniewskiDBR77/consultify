@@ -164,7 +164,7 @@ const renderWorkspace = () =>
 async function openResultsTabWithRecommendation() {
   const resultsTab = await screen.findByRole('tab', { name: 'results' });
   fireEvent.click(resultsTab);
-  return screen.findByRole('button', { name: /Wyślij jako kandydata na Initiative/i });
+  return screen.findByRole('button', { name: /Create initiative/i });
 }
 
 beforeEach(() => {
@@ -244,7 +244,7 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Wyślij' })
+      screen.queryByRole('button', { name: 'Send' })
     ).not.toBeInTheDocument();
     expect(confirmMock).not.toHaveBeenCalled();
   });
@@ -276,7 +276,7 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     // confirm button, not an immediate success. The rationale text is
     // unique to the modal (the recommendation card behind it shows
     // `mechanism`, not `rationale`), so it disambiguates from the card.
-    const confirmButton = await screen.findByRole('button', { name: 'Wyślij' });
+    const confirmButton = await screen.findByRole('button', { name: 'Send' });
     expect(screen.getByText('Improves EV multiple ahead of the raise.')).toBeInTheDocument();
 
     fireEvent.click(confirmButton);
@@ -296,12 +296,12 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     const node = typeof toastArg === 'function' ? toastArg({ id: 't1' }) : toastArg;
     render(node as React.ReactElement);
 
-    expect(screen.getByText('Utworzono kandydata na Initiative')).toBeInTheDocument();
+    expect(screen.getByText('Initiative candidate created')).toBeInTheDocument();
     expect(screen.queryByText('Initiative created')).not.toBeInTheDocument();
 
     // Modal closed after a resolved confirm.
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Wyślij' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument()
     );
   });
 
@@ -326,7 +326,7 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     const convertButton = await openResultsTabWithRecommendation();
     fireEvent.click(convertButton);
 
-    const confirmButton = await screen.findByRole('button', { name: 'Wyślij' });
+    const confirmButton = await screen.findByRole('button', { name: 'Send' });
     fireEvent.click(confirmButton);
 
     expect(
@@ -353,7 +353,7 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     const convertButton = await openResultsTabWithRecommendation();
     fireEvent.click(convertButton);
 
-    const confirmButton = await screen.findByRole('button', { name: 'Wyślij' });
+    const confirmButton = await screen.findByRole('button', { name: 'Send' });
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(toastFn).toHaveBeenCalledTimes(1));
@@ -362,9 +362,9 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     render(node as React.ReactElement);
 
     expect(
-      screen.getByText('To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative')
+      screen.getByText('This recommendation has already been sent as an initiative candidate')
     ).toBeInTheDocument();
-    expect(screen.queryByText('Utworzono kandydata na Initiative')).not.toBeInTheDocument();
+    expect(screen.queryByText('Initiative candidate created')).not.toBeInTheDocument();
   });
 
   it('attempts a fresh read-back of the handoff receipt after a successful confirm (FinanceCandidateHandoffModal.fetchHandoff wiring)', async () => {
@@ -392,7 +392,7 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
     const convertButton = await openResultsTabWithRecommendation();
     fireEvent.click(convertButton);
 
-    const confirmButton = await screen.findByRole('button', { name: 'Wyślij' });
+    const confirmButton = await screen.findByRole('button', { name: 'Send' });
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(getHandoffMock).toHaveBeenCalledWith(RECOMMENDATION_ID));
