@@ -1,0 +1,14 @@
+{
+ "ekran": "kokpit",
+ "url": "http://127.0.0.1:3187/execution?tab=summary",
+ "czasStronyMs": 14469,
+ "bledyKonsoli": [],
+ "wolaniaWolneLubBledne": [
+  {
+   "url": "/api/llm/providers/health?timeoutMs=4000",
+   "status": 200,
+   "ms": 2057
+  }
+ ],
+ "tekstEkranu": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nKokpit\nRealizacje\nPraca\nZasoby\nDecyzje i ryzyka\nRaporty\nRyzyka\n7\nRozstrzygnięcia\n64\nKokpit menedżera\nPięć pytań zarządczych, jedna odpowiedź na spojrzenie.\nKONDYCJA\n69\n/100\npostęp 0%\nNA CZAS\n100%\n6 na tor\n0 ryzyk\n0 opóźn.\nWARTOŚĆ VS PLAN\nBrak policzonego ROI\nOBŁOŻENIE\n0%\n8 osób\ndomyślnie 40 h/tydz.\nDO ROZSTRZYGNIĘCIA\n64\npozycje\n2 blokery\n12 przetermin.\nCo nam grozi — TOP ryzyka\nRyzyka o najwyższym wyniku (P × I).\nRYZYKO\n\t\nPOZIOM (P×I)\n\t\nWŁAŚCICIEL\n\t\nINICJATYWA\n\t\nSTATUS\nAPI Gateway depends on Auth Service migration\n\t\nWysokie (9)\n\t\nKatarzyna Wójcik\n\t\n—\n\t\nOtwarte\nUiPath license expired — blocking RPA\n\t\nWysokie (9)\n\t\nJan Zieliński\n\t\nProcess Automation — RPA\n\t\nOtwarte\nKey person dependency — Marek\n\t\nWysokie (9)\n\t\nAnna Kowalska\n\t\n—\n\t\nOtwarte\nGDPR non-compliance penalty\n\t\nWysokie (8)\n\t\nEwa Nowicka\n\t\n—\n\t\nOtwarte\nAzure region outage risk\n\t\nUmiarkowane (6)\n\t\nAnna Kowalska\n\t\n—\n\t\nOtwarte\nCI/CD pipeline flaky tests\n\t\nUmiarkowane (4)\n\t\nKatarzyna Wójcik\n\t\n—\n\t\nOtwarte\nData loss during Lakehouse migration\n\t\nUmiarkowane (4)\n\t\nMarek Nowak\n\t\n—\n\t\nOtwarte\nNajbliższe kamienie milowe\nBrak zaplanowanych kamieni milowych."
+}

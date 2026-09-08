@@ -1,0 +1,22 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const BASE='http://127.0.0.1:3187';
+const OUT='/private/tmp/wt-rev-real/evidence/przeglad-dbr77/realizacja';
+const b=await chromium.launch();
+const c=await b.newContext({storageState:process.env.AUTH,viewport:{width:1440,height:900}});
+const p=await c.newPage();
+const bledy=[];
+p.on('console',m=>{if(m.type()==='error')bledy.push(m.text().slice(0,300));});
+await p.goto(`${BASE}/execution?tab=resources`,{waitUntil:'domcontentloaded'});
+await p.waitForTimeout(14000);
+await p.getByRole('cell',{name:/Piotr Wiśniewski/}).first().click();
+await p.waitForTimeout(2500);
+// przewin podglad do wlasciwosci
+const zal=p.getByText('Zaległość',{exact:true}).first();
+await zal.scrollIntoViewIfNeeded();
+await p.waitForTimeout(800);
+await p.screenshot({path:`${OUT}/19-zasoby-podglad-osoby.png`});
+const tekst=(await p.locator('body').innerText()).replace(/\n{2,}/g,'\n').slice(0,2500);
+fs.writeFileSync(`${OUT}/19-zasoby-podglad-osoby.png.json`,JSON.stringify({ekran:'zasoby-podglad-osoby-PO',url:`${BASE}/execution?tab=resources`,bledyKonsoli:bledy,tekstEkranu:tekst},null,1));
+console.log('bledy:',bledy.length);
+await b.close();
