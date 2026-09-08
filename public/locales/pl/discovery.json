@@ -127,7 +127,8 @@
       "converting": "Tworzenie projektu...",
       "success": "Projekt utworzony!",
       "error": "Nie udało się utworzyć projektu",
-      "cancel": "Anuluj"
+      "cancel": "Anuluj",
+      "projectNamePlaceholder": "Nazwa projektu…"
     },
     "version": {
       "title": "Wersje",

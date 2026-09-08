@@ -216,10 +216,15 @@ export function pickTemplateLabel<K extends string>(
 
 // ── Fabryki elementów ──────────────────────────────────────────────────────
 
-export function newDocSection(): DocSection {
+/**
+ * Tytuł nowego elementu przychodzi OD WOŁACZA — komponent ma `t`, fabryka nie.
+ * Wcześniej stał tu polski literał, więc konto angielskie dostawało „Nowa
+ * sekcja” w drzewie struktury (znalazł to bezpiecznik źródłowy J4, nie skaner).
+ */
+export function newDocSection(tytul = 'New section'): DocSection {
   return {
     id: nextId('sec'),
-    title: 'Nowa sekcja',
+    title: tytul,
     block: 'paragraph',
     depth: 'medium',
     hint: '',
@@ -227,20 +232,20 @@ export function newDocSection(): DocSection {
   };
 }
 
-export function newDeckSlide(): DeckSlide {
+export function newDeckSlide(tytul = 'New slide'): DeckSlide {
   return {
     id: nextId('slide'),
-    title: 'Nowy slajd',
+    title: tytul,
     archetype: 'content',
     hint: '',
     aiFilled: true,
   };
 }
 
-export function newSheetColumn(): SheetColumn {
+export function newSheetColumn(nazwa = 'New column'): SheetColumn {
   return {
     id: nextId('col'),
-    name: 'Nowa kolumna',
+    name: nazwa,
     type: 'text',
     formula: '',
     starterValue: '',
@@ -249,8 +254,13 @@ export function newSheetColumn(): SheetColumn {
   };
 }
 
-export function newWorkbookSheet(name = 'Arkusz 1'): WorkbookTemplateSheet {
-  return { id: nextId('sheet'), name, columns: [newSheetColumn()] };
+/**
+ * Nazwy domyślne przychodzą OD WOŁACZA (komponent ma `t`, fabryka nie).
+ * Wcześniej stał tu polski literał „Arkusz 1"/„Nowa kolumna", więc konto
+ * angielskie dostawało polską nazwę arkusza i kolumny.
+ */
+export function newWorkbookSheet(name = 'Sheet 1', nazwaKolumny = 'New column'): WorkbookTemplateSheet {
+  return { id: nextId('sheet'), name, columns: [newSheetColumn(nazwaKolumny)] };
 }
 
 export function emptyDraft(type: TemplateType, name: string, scope: TemplateScope): TemplateDraft {

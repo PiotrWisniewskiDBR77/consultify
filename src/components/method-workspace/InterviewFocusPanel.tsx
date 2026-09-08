@@ -335,7 +335,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 onClick={() => setActiveSequenceIndex((value) => Math.max(0, value - 1))}
                 className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Poprzedni krok
+                {t('methodWorkspace.focus.previousStep', 'Previous step')}
               </button>
               <button
                 type="button"

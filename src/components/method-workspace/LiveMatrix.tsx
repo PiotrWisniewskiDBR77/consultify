@@ -265,11 +265,11 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                     data-unit-id={row.unitId}
                     className="pl-3 text-[10px] tabular-nums text-c-text-secondary whitespace-nowrap"
                   >
-                    <span title="Obecny poziom">C {summary.current ?? '—'}</span>
+                    <span title={t('methodWorkspace.matrix.currentLevel', 'Current level')}>C {summary.current ?? '—'}</span>
                     <span className="mx-1 text-c-text-muted" aria-hidden="true">
                       ·
                     </span>
-                    <span title="Poziom docelowy">T {summary.target ?? '—'}</span>
+                    <span title={t('methodWorkspace.matrix.targetLevel', 'Target level')}>T {summary.target ?? '—'}</span>
                     <span className="mx-1 text-c-text-muted" aria-hidden="true">
                       ·
                     </span>

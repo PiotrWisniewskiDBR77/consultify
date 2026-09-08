@@ -565,7 +565,8 @@
         "finance": "Finance",
         "execution": "Execution",
         "settings": "Settings",
-        "admin": "Administration"
+        "admin": "Administration",
+        "tools": "Tools"
       },
       "page": {
         "reports": "Reports",
@@ -573,7 +574,12 @@
         "model": "Model",
         "analysis": "Analysis",
         "prediction": "Prediction",
-        "valuation": "Valuation"
+        "valuation": "Valuation",
+        "strategicAnalysis": "Strategic analysis",
+        "megatrends": "Megatrends",
+        "operational": "Operations",
+        "digital": "Digital",
+        "processAutomation": "Process automation"
       }
     },
     "loading": {
@@ -47367,7 +47373,8 @@
       "strategicTensions": "Strategic tensions",
       "whatIs": "What it is",
       "whatItMeans": "What it means",
-      "whatToDoFirst": "What to do first"
+      "whatToDoFirst": "What to do first",
+      "evidence": "Evidence"
     },
     "generic": {
       "loadError": "Could not load the tool session",
@@ -47385,7 +47392,9 @@
       "project": "Project",
       "copyJsonData": "Copy data (JSON)",
       "whyThisScreen": "Why you are seeing this screen",
-      "whyThisScreenBody": "This session uses a tool type that does not have its own workspace yet. Rather than block you, we show the full session data — nothing is lost, and it can be copied or passed on."
+      "whyThisScreenBody": "This session uses a tool type that does not have its own workspace yet. Rather than block you, we show the full session data — nothing is lost, and it can be copied or passed on.",
+      "answersAndData": "Answers and session data (technical)",
+      "sessionInfo": "Session information"
     },
     "trace": {
       "sourceIdea": "Idea",
@@ -47561,7 +47570,9 @@
       "level": "level",
       "evidence": "evidence",
       "cellDetails": "Cell details",
-      "answerLabel": "answer"
+      "answerLabel": "answer",
+      "currentLevel": "Current level",
+      "targetLevel": "Target level"
     },
     "navigator": {
       "noStructure": "The Method Pack has not delivered a structure yet."
@@ -47606,7 +47617,8 @@
       "skipReasonLabel": "Skip reason (choose a code)",
       "chooseReason": "Choose a reason…",
       "confirm": "Confirm",
-      "evidenceStrengthLabel": "Evidence strength"
+      "evidenceStrengthLabel": "Evidence strength",
+      "previousStep": "Previous step"
     },
     "skipReason": {
       "outsideOperatingModel": "outside the operating model",
@@ -47650,7 +47662,8 @@
       "descHint": "Briefly: what this template is for.",
       "availabilityLabel": "Availability",
       "themeLabel": "Theme (org branding)",
-      "themeHint": "Organization Brand Kit — separate from the structure (D19)."
+      "themeHint": "Organization Brand Kit — separate from the structure (D19).",
+      "toolProperties": "Properties"
     },
     "editors": {
       "instructionLabel": "Instructions for the generator",
@@ -47705,7 +47718,8 @@
         "allowedValuesHint": "Separate values with commas.",
         "minLabel": "Minimum",
         "maxLabel": "Maximum",
-        "addColumn": "Add column"
+        "addColumn": "Add column",
+        "newColumn": "New column"
       }
     },
     "container": {
@@ -47715,7 +47729,10 @@
       "columnsCount": "{{count}} columns",
       "addSection": "Add section",
       "addSlide": "Add slide",
-      "addSheet": "Add sheet"
+      "addSheet": "Add sheet",
+      "newSection": "New section",
+      "newSlide": "New slide",
+      "sheet": "Sheet"
     },
     "shell": {
       "save": "Save as template",

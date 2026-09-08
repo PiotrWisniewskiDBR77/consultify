@@ -213,7 +213,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         : []),
       {
         id: 'save-template',
-        label: saving ? t('templateBuilder.shell.saving', 'Zapisywanie…') : resolvedSaveLabel,
+        label: saving ? t('templateBuilder.shell.saving', 'Saving…') : resolvedSaveLabel,
         kind: 'primary',
         group: 'primary',
         disabled: saving || !canSave,
@@ -239,13 +239,13 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
 
   const rightTools: RightRailToolDescriptor[] = useMemo(
     () =>
-      TEMPLATE_RIGHT_TOOLS.map((t) => ({
-        id: t.id,
-        label: t.label,
-        icon: t.icon,
-        active: activeRightTool === t.id,
+      TEMPLATE_RIGHT_TOOLS.map((narzedzie) => ({
+        id: narzedzie.id,
+        label: t(narzedzie.labelKey, narzedzie.labelDefault),
+        icon: narzedzie.icon,
+        active: activeRightTool === narzedzie.id,
       })),
-    [activeRightTool]
+    [activeRightTool, t]
   );
 
   return (
@@ -266,10 +266,10 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             topBarChips={chips}
             leftRailTitle={
               draft.type === 'doc'
-                ? t('templateBuilder.shell.sections', 'Sekcje')
+                ? t('templateBuilder.shell.sections', 'Sections')
                 : draft.type === 'deck'
-                  ? t('templateBuilder.shell.slides', 'Slajdy')
-                  : t('templateBuilder.shell.sheets', 'Arkusze')
+                  ? t('templateBuilder.shell.slides', 'Slides')
+                  : t('templateBuilder.shell.sheets', 'Sheets')
             }
             leftRailContent={
               <TemplateStructureList

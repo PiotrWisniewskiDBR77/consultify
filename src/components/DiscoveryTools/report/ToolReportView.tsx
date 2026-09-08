@@ -78,7 +78,7 @@ export function BlockView({ block }: { block: ReportBlock }) {
     case 'evidence-list':
       return (
         <section className="space-y-2">
-          <Eyebrow>Dowody</Eyebrow>
+          <Eyebrow>{t('discoveryTools.report.evidence', 'Evidence')}</Eyebrow>
           <ul className="space-y-1.5">
             {block.items.map((it, i) => (
               <li key={i} className="flex items-baseline gap-2 text-sm text-c-text-secondary">
@@ -199,7 +199,7 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
 
   return (
     <section className="space-y-2">
-      <Eyebrow>{t('discoveryTools.swot.strategicField', 'Pole strategiczne')}</Eyebrow>
+      <Eyebrow>{t('discoveryTools.swot.strategicField', 'Strategic field')}</Eyebrow>
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-c-border-subtle bg-c-border-subtle">
         {QUADRANTS.map((q) => {
           const inQ = (data.items ?? []).filter((i) => i.bucket === q.key);

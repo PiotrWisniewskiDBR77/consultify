@@ -247,7 +247,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
             onClick={step === 1 ? cancel : () => setStep((s) => (s - 1) as Step)}
             icon={step === 1 ? undefined : <ArrowLeft className="w-4 h-4" />}
           >
-            {step === 1 ? t('templateBuilder.wizard.cancel', 'Cancel') : t('templateBuilder.wizard.back', 'Wstecz')}
+            {step === 1 ? t('templateBuilder.wizard.cancel', 'Cancel') : t('templateBuilder.wizard.back', 'Back')}
           </Button>
           <Button
             variant="primary"
@@ -255,7 +255,7 @@ export const TemplateCreateWizard: React.FC<TemplateCreateWizardProps> = ({
             disabled={!canNext}
             icon={step === 3 ? <Check className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
           >
-            {step === 3 ? t('templateBuilder.wizard.createAndEdit', 'Create and edit') : t('templateBuilder.wizard.next', 'Dalej')}
+            {step === 3 ? t('templateBuilder.wizard.createAndEdit', 'Create and edit') : t('templateBuilder.wizard.next', 'Next')}
           </Button>
         </div>
       </div>

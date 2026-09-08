@@ -137,7 +137,7 @@ function viewModeOptions(
 ): Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> {
   return [
     { id: 'interview', label: t('methodWorkspace.tabs.interview', 'Wywiad'), icon: <MessageSquareText size={13} /> },
-    { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Macierz'), icon: <LayoutGrid size={13} /> },
+    { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Matrix'), icon: <LayoutGrid size={13} /> },
     { id: 'report', label: t('methodWorkspace.tabs.report', 'Report'), icon: <FileText size={13} /> },
   ];
 }
@@ -281,7 +281,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Settings size={13} />
-          {t('methodWorkspace.settings', 'Ustawienia')}
+          {t('methodWorkspace.settings', 'Settings')}
         </button>
 
         <div className="relative shrink-0">

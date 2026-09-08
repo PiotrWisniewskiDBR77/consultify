@@ -565,7 +565,8 @@
         "finance": "Finanse",
         "execution": "Realizacja",
         "settings": "Ustawienia",
-        "admin": "Administracja"
+        "admin": "Administracja",
+        "tools": "Narzędzia"
       },
       "page": {
         "reports": "Raporty",
@@ -573,7 +574,12 @@
         "model": "Model",
         "analysis": "Analiza",
         "prediction": "Predykcja",
-        "valuation": "Wycena"
+        "valuation": "Wycena",
+        "strategicAnalysis": "Analiza strategiczna",
+        "megatrends": "Megatrendy",
+        "operational": "Operacyjne",
+        "digital": "Cyfrowe",
+        "processAutomation": "Automatyzacja procesów"
       }
     },
     "loading": {
@@ -48760,7 +48766,8 @@
       "strategicTensions": "Napięcia strategiczne",
       "whatIs": "Co jest",
       "whatItMeans": "Co to znaczy",
-      "whatToDoFirst": "Co robić najpierw"
+      "whatToDoFirst": "Co robić najpierw",
+      "evidence": "Dowody"
     },
     "generic": {
       "loadError": "Nie udało się wczytać sesji narzędzia",
@@ -48778,7 +48785,9 @@
       "project": "Projekt",
       "copyJsonData": "Kopiuj dane (JSON)",
       "whyThisScreen": "Dlaczego widzisz ten ekran",
-      "whyThisScreenBody": "Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu. Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie i można je skopiować albo przekazać dalej."
+      "whyThisScreenBody": "Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu. Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie i można je skopiować albo przekazać dalej.",
+      "answersAndData": "Odpowiedzi i dane sesji (dane techniczne)",
+      "sessionInfo": "Informacje o sesji"
     },
     "trace": {
       "sourceIdea": "Pomysł",
@@ -48954,7 +48963,9 @@
       "level": "poziom",
       "evidence": "dowód",
       "cellDetails": "Szczegóły komórki",
-      "answerLabel": "odpowiedź"
+      "answerLabel": "odpowiedź",
+      "currentLevel": "Obecny poziom",
+      "targetLevel": "Poziom docelowy"
     },
     "navigator": {
       "noStructure": "Method Pack nie dostarczył jeszcze struktury."
@@ -48999,7 +49010,8 @@
       "skipReasonLabel": "Powód pominięcia (wybierz kod)",
       "chooseReason": "Wybierz powód…",
       "confirm": "Potwierdź",
-      "evidenceStrengthLabel": "Siła dowodu"
+      "evidenceStrengthLabel": "Siła dowodu",
+      "previousStep": "Poprzedni krok"
     },
     "skipReason": {
       "outsideOperatingModel": "poza modelem operacyjnym",
@@ -49043,7 +49055,8 @@
       "descHint": "Krótko: do czego służy ten szablon.",
       "availabilityLabel": "Dostępność",
       "themeLabel": "Motyw (branding org)",
-      "themeHint": "Brand Kit organizacji — osobno od struktury (D19)."
+      "themeHint": "Brand Kit organizacji — osobno od struktury (D19).",
+      "toolProperties": "Właściwości"
     },
     "editors": {
       "instructionLabel": "Instrukcja dla generatora",
@@ -49098,7 +49111,8 @@
         "allowedValuesHint": "Rozdziel wartości przecinkami.",
         "minLabel": "Minimum",
         "maxLabel": "Maksimum",
-        "addColumn": "Dodaj kolumnę"
+        "addColumn": "Dodaj kolumnę",
+        "newColumn": "Nowa kolumna"
       }
     },
     "container": {
@@ -49108,7 +49122,10 @@
       "columnsCount": "{{count}} kolumn",
       "addSection": "Dodaj sekcję",
       "addSlide": "Dodaj slajd",
-      "addSheet": "Dodaj arkusz"
+      "addSheet": "Dodaj arkusz",
+      "newSection": "Nowa sekcja",
+      "newSlide": "Nowy slajd",
+      "sheet": "Arkusz"
     },
     "shell": {
       "save": "Zapisz jako szablon",

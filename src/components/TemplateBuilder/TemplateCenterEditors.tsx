@@ -313,7 +313,7 @@ export const WorkbookSheetEditor: React.FC<{
           <div key={column.id} className="space-y-4 rounded-lg border border-c-border p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-c-text">
-                {t('templateBuilder.editors.table.columnN', 'Kolumna {{n}}', { n: index + 1 })}
+                {t('templateBuilder.editors.table.columnN', 'Column {{n}}', { n: index + 1 })}
               </span>
               <button
                 type="button"
@@ -439,7 +439,12 @@ export const WorkbookSheetEditor: React.FC<{
         <button
           type="button"
           data-testid="sheet-add-column"
-          onClick={() => onChange({ ...sheet, columns: [...sheet.columns, newSheetColumn()] })}
+          onClick={() =>
+            onChange({
+              ...sheet,
+              columns: [...sheet.columns, newSheetColumn(t('templateBuilder.editors.table.newColumn', 'New column'))],
+            })
+          }
           className="inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised"
         >
           <Plus className="h-4 w-4" aria-hidden /> {t('templateBuilder.editors.table.addColumn', 'Add column')}

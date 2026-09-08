@@ -165,7 +165,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               onClick={() => copyJson(session)}
               className="px-3 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-900 dark:text-white rounded-lg text-sm border border-slate-200 dark:border-navy-700 transition-colors"
             >
-              Kopiuj dane (JSON)
+              {t('discoveryTools.generic.copyJsonData', 'Copy data (JSON)')}
             </button>
           </div>
         </div>
@@ -218,7 +218,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Odpowiedzi i dane sesji (dane techniczne)
+                  {t('discoveryTools.generic.answersAndData', 'Answers and session data (technical)')}
                 </h3>
                 <button
                   onClick={() => copyJson(session?.answers)}
@@ -237,7 +237,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
           <div className="space-y-6">
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                Informacje o sesji
+                {t('discoveryTools.generic.sessionInfo', 'Session information')}
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">

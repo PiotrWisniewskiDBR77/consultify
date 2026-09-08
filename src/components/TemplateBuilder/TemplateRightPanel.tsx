@@ -25,12 +25,20 @@ export type TemplateRightTool = 'properties';
 
 export interface TemplateRightRailToolDef {
   id: TemplateRightTool;
-  label: string;
+  /** Klucz i18n etykiety — nazwa narzędzia idzie za językiem konta. */
+  labelKey: string;
+  /** Angielski tekst zapasowy dla `t(labelKey, labelDefault)`. */
+  labelDefault: string;
   icon: LucideIcon;
 }
 
 export const TEMPLATE_RIGHT_TOOLS: TemplateRightRailToolDef[] = [
-  { id: 'properties', label: 'Właściwości', icon: Settings2 },
+  {
+    id: 'properties',
+    labelKey: 'templateBuilder.rightPanel.toolProperties',
+    labelDefault: 'Properties',
+    icon: Settings2,
+  },
 ];
 
 /** Motywy org (Brand Kit) — w realu z themeRegistry/brandIngestion; tu przykładowe. */
