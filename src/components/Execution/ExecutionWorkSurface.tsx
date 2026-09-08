@@ -42,7 +42,18 @@ import { useAppStore } from '@/store/useAppStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { liczebnik } from '@/utils/liczebnik';
 
-import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import { Banner } from '@/components/shared/Banner';
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  MENU_2_FILTER_SELECT,
+  MENU_2_FILTERS_ROW,
+} from '@/components/shared/ModuleMenu3';
+
+import {
+  countExecutionPresets,
+  type ExecutionMenu3Contract,
+  type ExecutionSurfacePrimaryCta,
+} from './canonicalMenu3';
 import { fanOutExecutionCases } from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
@@ -540,9 +551,30 @@ export const ExecutionWorkSurface = ({
   onOpenDocument,
   documentId,
   onRegisterFilterControl,
+  onRegisterPrimaryCta,
+  onRegisterMenu3Control,
 }: ExecutionMenu3Contract & {
   onOpenDocument?: (row: ExecutionWorkDocumentRef) => void;
   documentId?: string | null;
+  /**
+   * Rejestruje JEDEN primary CTA zakładki do prawego skraju Menu 2 gospodarza
+   * (kanon TRIADA §A2: „od PRAWEJ do środka: primary CTA → segment → filtry",
+   * §C4: ciemny wypełniony, w dark jasny inwers).
+   *
+   * POWÓD (uwaga właściciela 08.09.2026): „Nowe zadanie" jechało dotąd przez
+   * `onRegisterFilterControl` jako `btn-secondary` — czyli akcja tworzenia
+   * siedziała w slocie FILTRÓW i miała wygląd przycisku pomocniczego, podczas
+   * gdy bliźniacze „Nowa inicjatywa" w Inicjatywach było ciemnym CTA. Ta sama
+   * rola, dwa wyglądy w sąsiadujących modułach.
+   */
+  onRegisterPrimaryCta?: (cta: ExecutionSurfacePrimaryCta | null) => void;
+  /**
+   * Prawy slot Menu 3 — kebab z RZADKIMI akcjami tworzenia, które nie mogą
+   * być drugim CTA (kanon: JEDEN primary CTA na zakładkę). Ten sam kanał
+   * i ten sam kebab (`RowActionsMenu`) co w `ExecutionReportsSurface`
+   * (P16-R6/D6) — nie budujemy nowego prymitywu.
+   */
+  onRegisterMenu3Control?: (node: React.ReactNode) => void;
   /**
    * Rejestruje węzeł kontrolki (filtr realizacji + akcje "Nowe…") do
    * prawej strony Menu 2 gospodarza (ExecutionHub). Ten sam wzorzec co
@@ -634,30 +666,33 @@ export const ExecutionWorkSurface = ({
 
   const loadingPhase = useDeferredLoading(state === 'LOADING');
   /**
-   * Uczciwy stan częściowy — ale NIE między Menu 3 a tabelą.
+   * Uczciwy stan częściowy — CICHY PASEK INFORMACYJNY POD MENU 3, nie w Menu 2.
    *
-   * Do 2026-09-05 ten komunikat był akapitem wewnątrz sekcji, tuż nad tabelą,
-   * więc rozpychał pion dokładnie tam, gdzie kanon każe zaczynać tabelę
-   * (uwaga właściciela z 02.09: „w całej aplikacji mamy standard że tabela
-   * zaczyna się pod menu 3", obraz zatwierdzony `UW-06-01` nie ma tam nic).
-   * Teraz to PLAKIETKA w Menu 2 (ta sama rejestracja co filtr realizacji),
-   * czyli NAD paskiem modułu — informacja zostaje, układ się nie łamie.
+   * Historia tego jednego komunikatu jest historią całego zlecenia:
+   *  · do 2026-09-05 — akapit tuż nad tabelą, rozpychał pion tam, gdzie kanon
+   *    każe zaczynać tabelę („tabela zaczyna się pod menu 3", uwaga 02.09);
+   *  · 2026-09-05 → 08 — PLAKIETKA W MENU 2 (`onRegisterFilterControl`), i to
+   *    właśnie ona złamała pasek na zrzucie właściciela 08.09.2026: baner
+   *    w linii 1, select „Wszystkie realizacje" w linii 2, „Nowe zadanie"
+   *    w linii 3. Kanon §A2 mówi wprost: Menu 2 bez banerów, jedna linia;
+   *  · teraz — `Banner variant="degraded"` (SSOT `shared/Banner`, ten sam
+   *    komponent co Finanse/Ustawienia) NAD tabelą, wewnątrz treści zakładki.
+   *    Pion rośnie o jeden pasek TYLKO w stanie zdegradowanym, a pasek modułu
+   *    zostaje jednolinijkowy zawsze.
    *
    * Pokazuje się WYŁĄCZNIE gdy dane naprawdę są zdegradowane: stan READY i
    * co najmniej jedna realizacja, której nie udało się pobrać.
    */
-  const degradedChip = useMemo(() => {
+  const degradedBanner = useMemo(() => {
     if (state !== 'READY' || unreachableCaseIds.length === 0) return null;
     const count = unreachableCaseIds.length;
     return (
-      <span
-        role="status"
-        data-testid="execution-work-degraded-chip"
-        title={unreachableCaseIds.join(', ')}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 text-xs text-c-text-secondary"
-      >
-        <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-        {t('execution.work.degraded', {
+      <div data-testid="execution-work-degraded-banner">
+        <Banner
+        variant="degraded"
+        icon={<AlertTriangle size={16} aria-hidden="true" />}
+        className="mb-3"
+        title={t('execution.work.degraded', {
           count,
           unit: isPolish
             ? liczebnik(count, ['realizacja', 'realizacje', 'realizacji'])
@@ -666,7 +701,9 @@ export const ExecutionWorkSurface = ({
               : 'deliveries',
           defaultValue: 'Niepełne dane: {{count}} {{unit}} bez odpowiedzi',
         })}
-      </span>
+        message={unreachableCaseIds.join(', ')}
+        />
+      </div>
     );
   }, [state, unreachableCaseIds, t, isPolish]);
   const loadCases = useCallback(async () => {
@@ -1284,6 +1321,17 @@ export const ExecutionWorkSurface = ({
     });
     await load(caseId);
   };
+  // ── MENU 2 · slot filtrów ────────────────────────────────────────────────
+  // WYŁĄCZNIE filtr realizacji. Jedna linia, bez `flex-wrap` (kanon §A2).
+  // Co STĄD WYSZŁO (uwaga właściciela 08.09.2026 — pasek łamał się na trzy
+  // linie: baner · select · przycisk):
+  //   · baner „Niepełne dane…"  → nad tabelę, `Banner variant="degraded"`;
+  //   · „Nowe zadanie"          → `onRegisterPrimaryCta` (prawy skraj Menu 2);
+  //   · „New Decision"          → USUNIĘTY (dublował CTA zakładki
+  //                               „Decyzje i ryzyka", która tworzy decyzje
+  //                               w tym samym rejestrze — JEDNA AKCJA = JEDEN DOM);
+  //   · „New milestone"         → kebab Menu 3 (`onRegisterMenu3Control`),
+  //                               ten sam kanał i kebab co w Raportach (P16-R6/D6).
   useEffect(() => {
     if (!onRegisterFilterControl) return;
     if (documentId) {
@@ -1291,12 +1339,11 @@ export const ExecutionWorkSurface = ({
       return;
     }
     onRegisterFilterControl(
-      <div className="flex flex-wrap items-center gap-2">
-        {degradedChip}
+      <div className={MENU_2_FILTERS_ROW}>
         <select
           aria-label="Execution Case for work"
           value={caseId}
-          className="h-9 min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text-secondary"
+          className={MENU_2_FILTER_SELECT}
           onChange={(e) => {
             const nextCaseId = e.target.value;
             if (nextCaseId) void load(nextCaseId);
@@ -1317,48 +1364,60 @@ export const ExecutionWorkSurface = ({
             </option>
           ))}
         </select>
-        {/*
-         * JEDEN „Nowe zadanie" w Menu 2 — ZAWSZE widoczny (D5).
-         * Poprzedni przycisk o tej samej nazwie pokazywał się tylko przy
-         * wybranej realizacji `runtime-v1` (0 sztuk na DBR77) i pisał do innego
-         * rejestru. Dwa przyciski „Nowe zadanie" obok siebie łamałyby doktrynę
-         * gęstości (JEDNA AKCJA = JEDEN DOM), więc runtime'owy znika z paska;
-         * edytor zadania `runtime-v1` zostaje dostępny z wiersza tego rejestru.
-         */}
-        <button
-          type="button"
-          className="btn-secondary"
-          data-testid="execution-work-new-task"
-          onClick={() =>
-            setFormularzNowego((biezacy) => ({
-              ...biezacy,
-              otwarty: true,
-              blad: null,
-              initiativeId: biezacy.initiativeId || initiativeId || '',
-            }))
-          }
-        >
-          {t('execution.actions.newTask', 'Nowe zadanie')}
-        </button>
-        {caseId && (
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-secondary" onClick={() => setToolMode('DECISION')}>
-              {t('execution.actions.newDecision', 'New Decision')}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setToolMode('MILESTONE')}
-            >
-              {t('execution.actions.newMilestone', 'New milestone')}
-            </button>
-          </div>
-        )}
       </div>
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, documentId, caseId, cases, degradedChip, initiativeId, t]);
+  }, [onRegisterFilterControl, documentId, caseId, cases, t]);
+
+  // ── MENU 2 · JEDEN primary CTA ───────────────────────────────────────────
+  // „Nowe zadanie" — ZAWSZE widoczne (D5), niezależne od wybranej realizacji.
+  useEffect(() => {
+    if (!onRegisterPrimaryCta) return;
+    if (documentId) {
+      onRegisterPrimaryCta(null);
+      return;
+    }
+    onRegisterPrimaryCta({
+      label: t('execution.actions.newTask', 'Nowe zadanie'),
+      testId: 'execution-work-new-task',
+      onClick: () =>
+        setFormularzNowego((biezacy) => ({
+          ...biezacy,
+          otwarty: true,
+          blad: null,
+          initiativeId: biezacy.initiativeId || initiativeId || '',
+        })),
+    });
+    return () => onRegisterPrimaryCta(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterPrimaryCta, documentId, initiativeId, t]);
+
+  // ── MENU 3 · prawy kebab (rzadkie akcje tworzenia) ───────────────────────
+  // Kamień milowy powstaje tylko przy WYBRANEJ realizacji i jest akcją rzadką,
+  // więc nie zajmuje slotu primary CTA (kanon: JEDEN CTA na zakładkę).
+  useEffect(() => {
+    if (!onRegisterMenu3Control) return;
+    if (documentId || !caseId) {
+      onRegisterMenu3Control(null);
+      return;
+    }
+    onRegisterMenu3Control(
+      <RowActionsMenu
+        size="md"
+        iconVariant="horizontal"
+        actions={[
+          {
+            id: 'execution-work-new-milestone',
+            label: t('execution.actions.newMilestone', 'New milestone'),
+            onClick: () => setToolMode('MILESTONE'),
+          },
+        ]}
+      />
+    );
+    return () => onRegisterMenu3Control(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterMenu3Control, documentId, caseId, t]);
 
   if (state === 'ERROR')
     return (
@@ -1418,6 +1477,9 @@ export const ExecutionWorkSurface = ({
   // dokumentu (documentId) — tam nie ma listy do filtrowania.
   return (
     <section aria-label="Execution Work" className="flex h-full min-h-0 flex-col p-4">
+      {/* Cichy pasek informacyjny — JEDNO miejsce na komunikaty o stanie
+          danych w tej zakładce, tuż pod Menu 3 i nad tabelą (nigdy w Menu 2). */}
+      {degradedBanner}
       {/*
        * Formularz „Nowe zadanie" jako WARSTWA, nie panel nad tabelą — kanon
        * triady: tabela zaczyna się pod Menu 3 i nic jej stamtąd nie spycha.

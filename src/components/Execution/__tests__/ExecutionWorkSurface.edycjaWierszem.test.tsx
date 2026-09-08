@@ -16,7 +16,7 @@
  *   (d) `sortujBezInicjatywyNaKoniec` → `(rows) => [...rows]` → RED,
  *   (e) `taskSlipDays` liczone także dla zadań zamkniętych → RED.
  */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -144,10 +144,17 @@ beforeEach(() => {
   apiPost.mockResolvedValue({ data: { id: 'nowe-1', title: 'Nowe zadanie z formularza' } });
 });
 
-const zamontuj = (menu2?: (node: React.ReactNode) => void) =>
+const zamontuj = (
+  menu2?: (node: React.ReactNode) => void,
+  cta?: (cta: { label: string; onClick: () => void; testId?: string } | null) => void
+) =>
   render(
     <MemoryRouter>
-      <ExecutionWorkSurface activePreset="all" onRegisterFilterControl={menu2} />
+      <ExecutionWorkSurface
+        activePreset="all"
+        onRegisterFilterControl={menu2}
+        onRegisterPrimaryCta={cta}
+      />
     </MemoryRouter>
   );
 
@@ -281,15 +288,18 @@ describe('P16-R2 (b) — błąd serwera nie może być ciszą', () => {
 
 describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {
   it('POST /tasks niesie tytuł ORAZ initiativeId wybrany w formularzu', async () => {
-    let menu2: React.ReactNode = null;
-    zamontuj((node) => {
-      menu2 = node;
+    // Porządek pasków 08.09.2026: „Nowe zadanie" NIE jest już przyciskiem
+    // w slocie filtrów Menu 2 — jest JEDYNYM primary CTA zakładki, rejestrowanym
+    // osobnym kanałem (`onRegisterPrimaryCta`) na prawy skraj Menu 2.
+    let primaryCta: { label: string; onClick: () => void; testId?: string } | null = null;
+    zamontuj(undefined, (cta) => {
+      primaryCta = cta;
     });
     await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
 
-    // Menu 2 gospodarza jest rejestrowane propem — renderujemy je obok tabeli.
-    render(<MemoryRouter>{menu2}</MemoryRouter>);
-    fireEvent.click(await screen.findByTestId('execution-work-new-task'));
+    await waitFor(() => expect(primaryCta).not.toBeNull());
+    expect(primaryCta!.testId).toBe('execution-work-new-task');
+    act(() => primaryCta!.onClick());
 
     fireEvent.change(screen.getByLabelText('Tytuł'), {
       target: { value: 'Nowe zadanie z formularza' },
@@ -305,13 +315,13 @@ describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {
   });
 
   it('bez tytułu nie wysyła nic i mówi dlaczego', async () => {
-    let menu2: React.ReactNode = null;
-    zamontuj((node) => {
-      menu2 = node;
+    let primaryCta: { label: string; onClick: () => void; testId?: string } | null = null;
+    zamontuj(undefined, (cta) => {
+      primaryCta = cta;
     });
     await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
-    render(<MemoryRouter>{menu2}</MemoryRouter>);
-    fireEvent.click(await screen.findByTestId('execution-work-new-task'));
+    await waitFor(() => expect(primaryCta).not.toBeNull());
+    act(() => primaryCta!.onClick());
     fireEvent.click(screen.getByTestId('execution-work-create-submit'));
 
     expect(apiPost).not.toHaveBeenCalled();

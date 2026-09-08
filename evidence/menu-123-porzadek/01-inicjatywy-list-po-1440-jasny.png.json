@@ -1,0 +1,23 @@
+{
+  "opis": "inicjatywy › list — po, 1440px, motyw jasny",
+  "url": "http://127.0.0.1:3192/initiatives",
+  "etykieta": "po",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "pomiarMenu2": {
+    "znaleziono": true,
+    "wysokoscPx": 60,
+    "linie": 1,
+    "przyciskiWPrawymKlastrze": 8,
+    "etykietyPrawegoKlastra": [
+      "Status",
+      "Aktywne",
+      "Wszystkie",
+      "Nowa inicjatywa"
+    ],
+    "licznikiWMenu2": 0,
+    "baneryWMenu2": 0,
+    "selectyWMenu2": 1
+  },
+  "bledyKonsoli": []
+}

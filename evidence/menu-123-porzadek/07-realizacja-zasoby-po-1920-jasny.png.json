@@ -1,0 +1,20 @@
+{
+  "opis": "realizacja › zasoby — po, 1920px, motyw jasny",
+  "url": "http://127.0.0.1:3192/execution?tab=resources",
+  "etykieta": "po",
+  "szerokosc": 1920,
+  "motyw": "jasny",
+  "pomiarMenu2": {
+    "znaleziono": true,
+    "wysokoscPx": 60,
+    "linie": 1,
+    "przyciskiWPrawymKlastrze": 1,
+    "etykietyPrawegoKlastra": [
+      "Dodaj dostępność"
+    ],
+    "licznikiWMenu2": 0,
+    "baneryWMenu2": 0,
+    "selectyWMenu2": 1
+  },
+  "bledyKonsoli": []
+}

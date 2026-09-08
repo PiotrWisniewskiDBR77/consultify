@@ -16,7 +16,7 @@
  * ładowania, Zasoby renderują pustkę). Mutacja celuje w SAM MECHANIZM
  * ODPORNOŚCI wachlarza, nie w mapowanie danych.
  */
-import { act, render as rtlRender, screen, waitFor } from '@testing-library/react';
+import { act, render as rtlRender, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -160,9 +160,12 @@ describe('Praca (ExecutionWorkSurface)', () => {
       return OK_WORK;
     });
 
-    // 2026-09-05 (runda 3 odbioru): komunikat o degradacji NIE jest już
-    // akapitem między Menu 3 a tabelą — jest plakietką rejestrowaną do Menu 2
-    // (`onRegisterFilterControl`), bo kanon każe zaczynać tabelę pod Menu 3.
+    // 2026-09-08 (porządek pasków Menu 1/2/3): komunikat o degradacji NIE jest
+    // ani akapitem między Menu 3 a tabelą, ani — jak od 05.09 — PLAKIETKĄ
+    // W MENU 2. To właśnie plakietka w Menu 2 złamała pasek na trzy linie na
+    // zrzucie właściciela (baner · select · „Nowe zadanie"), a kanon TRIADA
+    // §A2 mówi wprost: Menu 2 bez banerów, jedna linia. Teraz to
+    // `Banner variant="degraded"` w TREŚCI zakładki, tuż pod Menu 3.
     const registerFilterControl = vi.fn();
     render(
       <ExecutionWorkSurface activePreset="all" onRegisterFilterControl={registerFilterControl} />
@@ -175,12 +178,26 @@ describe('Praca (ExecutionWorkSurface)', () => {
     // nic o degradacji NIE stoi w kolumnie treści (regresja układu)
     expect(screen.queryByText(/Nie udało się pobrać pracy/)).not.toBeInTheDocument();
 
+    // Informacja ZOSTAJE, tylko w innym pasku — nad tabelą.
+    await waitFor(() =>
+      expect(screen.getByTestId('execution-work-degraded-banner')).toHaveTextContent(
+        /Niepełne dane: 1 realizacja bez odpowiedzi/
+      )
+    );
+
+    // …i NIE MA JEJ w Menu 2. Mutacja: wróć z banerem do
+    // `onRegisterFilterControl` → RED.
     await waitFor(() => expect(registerFilterControl).toHaveBeenCalled());
     const lastNode = registerFilterControl.mock.calls.at(-1)?.[0];
     const registered = render(<div>{lastNode}</div>);
-    expect(registered.getByTestId('execution-work-degraded-chip')).toHaveTextContent(
-      /Niepełne dane: 1 realizacja bez odpowiedzi/
-    );
+    /*
+     * `within(container)`, NIE `registered.queryBy*`. Zapytania zwracane przez
+     * `render()` są związane z `baseElement` = `document.body`, więc widzą
+     * TEŻ pierwsze drzewo (z banerem nad tabelą) i przeszłyby na zielono
+     * niezależnie od tego, gdzie baner naprawdę jest — przyrząd kłamałby.
+     */
+    expect(within(registered.container).queryByTestId('execution-work-degraded-banner')).toBeNull();
+    expect(within(registered.container).queryByText(/Niepełne dane/)).toBeNull();
   });
 
   it('nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE', async () => {

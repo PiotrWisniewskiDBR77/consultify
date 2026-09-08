@@ -28,7 +28,17 @@ import {
   transitionOperationalAllocation,
 } from '@/services/initiatives-execution/runtimeApi';
 
-import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  MENU_2_FILTER_SELECT,
+  MENU_2_FILTERS_ROW,
+} from '@/components/shared/ModuleMenu3';
+
+import {
+  countExecutionPresets,
+  type ExecutionMenu3Contract,
+  type ExecutionSurfacePrimaryCta,
+} from './canonicalMenu3';
 import {
   fanOutExecutionCases,
   isExecutionCaseTimeout,
@@ -109,15 +119,21 @@ export const ExecutionResourcesSurface = ({
   activePreset,
   onCountsChange,
   onRegisterFilterControl,
+  onRegisterPrimaryCta,
+  onRegisterMenu3Control,
 }: ExecutionMenu3Contract & {
   /**
-   * Rejestruje węzeł kontrolki (filtr realizacji + "Zaproponuj przydział")
-   * do prawej strony Menu 2 gospodarza (ExecutionHub) — patrz identyczny
-   * komentarz w `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
+   * Rejestruje węzeł FILTRÓW (i tylko filtrów) do prawej strony Menu 2
+   * gospodarza (ExecutionHub) — patrz identyczny komentarz w
+   * `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
    * execution-tab-resources: właściciel zgłosił ten sam problem co na
    * ekranie "Praca".
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
+  /** JEDEN primary CTA zakładki — prawy skraj Menu 2 (kanon §A2/§C4). */
+  onRegisterPrimaryCta?: (cta: ExecutionSurfacePrimaryCta | null) => void;
+  /** Prawy slot Menu 3 — kebab z rzadkimi akcjami (ten sam co w Raportach). */
+  onRegisterMenu3Control?: (node: React.ReactNode) => void;
 }) => {
   const { t } = useTranslation();
   const [cases, setCases] = useState<any[]>([]),
@@ -584,12 +600,16 @@ export const ExecutionResourcesSurface = ({
     setSelected(item);
     setShowWorkspace(true);
   };
-  // Menu 2 (prawa strona) — filtr realizacji + "Zaproponuj przydział". Patrz
-  // komentarz propa `onRegisterFilterControl` powyżej.
+  // ── MENU 2 · slot filtrów ────────────────────────────────────────────────
+  // WYŁĄCZNIE filtr realizacji, jedna linia, bez `flex-wrap` (kanon §A2).
+  // Co STĄD WYSZŁO (porządek pasków 08.09.2026, ten sam wzorzec co „Praca"):
+  //   · „Dodaj dostępność"    → `onRegisterPrimaryCta` (JEDEN CTA zakładki);
+  //   · „Propose allocation"  → kebab Menu 3 (rzadka, tylko przy wybranej
+  //                             realizacji — nie może być drugim CTA).
   useEffect(() => {
     if (!onRegisterFilterControl) return;
     onRegisterFilterControl(
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={MENU_2_FILTERS_ROW}>
         <select
           aria-label="Execution Case for resources"
           value={caseId}
@@ -603,7 +623,7 @@ export const ExecutionResourcesSurface = ({
               void loadCases();
             }
           }}
-          className="h-9 min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text-secondary"
+          className={MENU_2_FILTER_SELECT}
         >
           <option value="">{t('execution.filters.allCases', 'All deliveries')}</option>
           {cases.map((c) => (
@@ -616,38 +636,66 @@ export const ExecutionResourcesSurface = ({
             </option>
           ))}
         </select>
-        {/* CTA Menu 2 wg planu 1.12 C2 — „Dodaj dostępność". Bez tego przycisku
-            podaż zostaje na domyślnych 40 h i nikt nie może jej poprawić. */}
-        <button
-          type="button"
-          className="btn-secondary"
-          data-testid="execution-resources-add-availability"
-          disabled={planPeople.length === 0}
-          onClick={() => {
-            const osoba =
-              planPeople.find((person) => person.userId === selectedPlanRowId?.split('|')[0]) ??
-              planPeople[0];
-            if (!osoba) return;
-            setCapacityDialog({
-              userId: osoba.userId,
-              name: osoba.name,
-              hours: String(osoba.weeklyCapacityHours),
-              percent: String(osoba.availabilityPercent),
-            });
-          }}
-        >
-          {t('execution.resources.actions.addAvailability', 'Dodaj dostępność')}
-        </button>
-        {caseId && (
-          <button type="button" className="btn-secondary" onClick={() => setShowProposal(true)}>
-            {t('execution.resources.actions.proposeAllocation', 'Propose allocation')}
-          </button>
-        )}
       </div>
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, caseId, cases, unreachableCaseIds, plan, selectedPlanRowId]);
+  }, [onRegisterFilterControl, caseId, cases, unreachableCaseIds]);
+
+  // ── MENU 2 · JEDEN primary CTA ───────────────────────────────────────────
+  // „Dodaj dostępność" (plan 1.12 C2). Bez tego przycisku podaż zostaje na
+  // domyślnych 40 h i nikt nie może jej poprawić — dlatego to on, a nie
+  // „Propose allocation", jest akcją główną zakładki.
+  useEffect(() => {
+    if (!onRegisterPrimaryCta) return;
+    onRegisterPrimaryCta({
+      label: t('execution.resources.actions.addAvailability', 'Dodaj dostępność'),
+      testId: 'execution-resources-add-availability',
+      disabled: planPeople.length === 0,
+      disabledReason: t(
+        'execution.resources.actions.addAvailabilityEmpty',
+        'Brak osób w planie — nie ma komu ustawić dostępności.'
+      ),
+      onClick: () => {
+        const osoba =
+          planPeople.find((person) => person.userId === selectedPlanRowId?.split('|')[0]) ??
+          planPeople[0];
+        if (!osoba) return;
+        setCapacityDialog({
+          userId: osoba.userId,
+          name: osoba.name,
+          hours: String(osoba.weeklyCapacityHours),
+          percent: String(osoba.availabilityPercent),
+        });
+      },
+    });
+    return () => onRegisterPrimaryCta(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterPrimaryCta, plan, selectedPlanRowId, t]);
+
+  // ── MENU 3 · prawy kebab (rzadkie akcje) ─────────────────────────────────
+  useEffect(() => {
+    if (!onRegisterMenu3Control) return;
+    if (!caseId) {
+      onRegisterMenu3Control(null);
+      return;
+    }
+    onRegisterMenu3Control(
+      <RowActionsMenu
+        size="md"
+        iconVariant="horizontal"
+        actions={[
+          {
+            id: 'execution-resources-propose-allocation',
+            label: t('execution.resources.actions.proposeAllocation', 'Propose allocation'),
+            onClick: () => setShowProposal(true),
+          },
+        ]}
+      />
+    );
+    return () => onRegisterMenu3Control(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterMenu3Control, caseId, t]);
   if (state === 'CASE_UNREACHABLE') {
     const nazwa =
       cases.find((item) => item.executionCaseId === caseId)?.initiativeTitle ||

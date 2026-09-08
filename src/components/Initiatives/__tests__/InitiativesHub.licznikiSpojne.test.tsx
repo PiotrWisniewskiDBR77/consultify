@@ -9,8 +9,15 @@
  * samego zbioru w jednym kadrze, bo liczyły je trzy niezależne wyrażenia na
  * trzech różnych podstawach.
  *
- * Ten test trzyma niezmiennik: pigułka „Wszystkie" w Menu 3 == wartość przy
- * przycisku „Status" w Menu 2 == suma pozycji statusów w rozwiniętej liście.
+ * Ten test trzyma niezmiennik: pigułka „Wszystkie" w Menu 3 == wiersz
+ * „Wszystkie" w rozwiniętej liście statusów == suma pozycji statusów.
+ *
+ * AKTUALIZACJA 08.09.2026 (porządek Menu 1/2/3): trzecim punktem odczytu była
+ * wcześniej LICZBA NA PRZYCISKU „Status" w Menu 2 — a kanon TRIADA (lista
+ * czekowania pkt 3) mówi „Menu 2: bez liczników". Dropdown chodzi teraz
+ * w trybie `compact`, więc przycisk pokazuje samą nazwę filtra; test czyta tę
+ * samą liczbę z pierwszego wiersza listy i DODATKOWO pilnuje, żeby na
+ * przycisku nie było żadnej cyfry.
  *
  * Mutacja (zmierzona ręcznie przy tym dyżurze): przywrócenie
  * `{ id: 'all', ..., count: allInitiatives.length }` w `lifecycleDropdownOptions`
@@ -196,10 +203,26 @@ describe('InitiativesHub — jedna liczba, jeden zbiór (Menu 2 · Menu 3 · lis
     const pigulka = await screen.findByTestId('initiatives-menu3-chip-all');
     const zPigulki = liczbaZChipa(pigulka);
 
-    // 2) Licznik przy przycisku „Status" w Menu 2 (zbiór na domyślnym „Wszystkie").
+    /*
+     * 2) Przycisk „Status" w Menu 2 — PORZĄDEK PASKÓW 08.09.2026.
+     *
+     * Do 08.09 dropdown chodził bez `compact` i pisał na przycisku
+     * „Status: Wszystkie 97", czyli LICZNIK WPROST W MENU 2. Kanon TRIADA
+     * (lista czekowania pkt 3) tego zabrania: „Menu 2: bez liczników" —
+     * liczniki mieszkają w Menu 3. W trybie `compact` przycisk na pozycji
+     * domyślnej pokazuje samą nazwę filtra, dokładnie jak kanoniczny
+     * `StatusDropdown` w Ocenie.
+     *
+     * NIEZMIENNIK („jedna liczba, jeden zbiór") NIE ZNIKA — przenosi się
+     * z przycisku do PIERWSZEGO WIERSZA rozwiniętej listy („Wszystkie N"),
+     * sprawdzanego niżej jako `wierszWszystkie`. Zmieniło się miejsce
+     * odczytu, nie reguła.
+     */
     const dropdown = screen.getByTestId('initiatives-lifecycle-dropdown');
     const przycisk = within(dropdown).getByRole('button');
-    const zFiltra = liczbaZChipa(przycisk);
+    // Mutacja: skasuj `compact` przy `Menu2PresetDropdown` → licznik wraca
+    // na przycisk Menu 2 → RED.
+    expect(przycisk.textContent ?? '').not.toMatch(/\d/);
 
     // 3) Suma pozycji statusów w rozwiniętej liście.
     await user.click(przycisk);
@@ -215,7 +238,6 @@ describe('InitiativesHub — jedna liczba, jeden zbiór (Menu 2 · Menu 3 · lis
       .reduce((suma, wiersz) => suma + wiersz.liczba, 0);
 
     expect(zPigulki).toBe(WIDOCZNE_AKTYWNE);
-    expect(zFiltra).toBe(WIDOCZNE_AKTYWNE);
     expect(wierszWszystkie.liczba).toBe(WIDOCZNE_AKTYWNE);
     expect(sumaStatusow).toBe(WIDOCZNE_AKTYWNE);
   });
