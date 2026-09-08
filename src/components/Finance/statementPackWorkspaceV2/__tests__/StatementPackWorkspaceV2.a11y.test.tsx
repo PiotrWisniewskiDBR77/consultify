@@ -72,7 +72,7 @@ function renderWorkspace(fetchers: StatementPackWorkspaceV2Fetchers) {
 async function openReasonDialog(): Promise<void> {
   const lifecycleTrigger = await screen.findByTestId('finance-workspace-bar-lifecycle-trigger');
   fireEvent.click(lifecycleTrigger);
-  const menuItem = await screen.findByRole('menuitem', { name: 'Poproś o zmiany' });
+  const menuItem = await screen.findByRole('menuitem', { name: 'Request changes' });
   fireEvent.click(menuItem);
   await screen.findByTestId('statement-pack-reason-dialog');
 }

@@ -122,7 +122,7 @@ afterEach(() => {
 });
 
 describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt 2)', () => {
-  it('FinanceCommentsPanel: "Oznacz jako rozwiązany" MUTATES the existing role="status" node, never remounts it', async () => {
+  it('FinanceCommentsPanel: "Mark as resolved" MUTATES the existing role="status" node, never remounts it', async () => {
     window.localStorage.setItem(
       'consultify_feature_flags',
       JSON.stringify({ financeCommentsV1: true })
@@ -173,7 +173,7 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
     // distinction a plain text-content assertion cannot make.
     observer.observe(announcerBefore, { characterData: true, childList: true, subtree: true });
 
-    fireEvent.click(screen.getByText('Oznacz jako rozwiązany'));
+    fireEvent.click(screen.getByText('Mark as resolved'));
 
     // Force the intermediate `loading` state to actually commit and be
     // inspectable before moving on.
@@ -188,7 +188,7 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
 
     await waitFor(() =>
       expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
-        'Komentarz oznaczony jako rozwiązany.'
+        'Comment marked as resolved.'
       )
     );
     observer.disconnect();
@@ -206,7 +206,7 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
 });
 
 describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt 2), SavedViews', () => {
-  it('FinanceSavedViewsPanel: "Usuń" (goes through loading) MUTATES the existing role="status" node, never remounts it', async () => {
+  it('FinanceSavedViewsPanel: "Delete" (goes through loading) MUTATES the existing role="status" node, never remounts it', async () => {
     window.localStorage.setItem(
       'consultify_feature_flags',
       JSON.stringify({ financeSavedViewsV1: true })
@@ -240,7 +240,7 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
     releaseViews([]);
 
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('View deleted.')
     );
     observer.disconnect();
 

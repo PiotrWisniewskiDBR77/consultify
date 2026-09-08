@@ -85,7 +85,7 @@ async function openReasonDialog(): Promise<void> {
   await screen.findByRole('tablist');
   const lifecycleTrigger = screen.getByTestId('finance-workspace-bar-lifecycle-trigger');
   fireEvent.click(lifecycleTrigger);
-  const menuItem = await screen.findByRole('menuitem', { name: 'Poproś o zmiany' });
+  const menuItem = await screen.findByRole('menuitem', { name: 'Request changes' });
   fireEvent.click(menuItem);
   await screen.findByTestId('baseline-reason-dialog');
 }
@@ -125,7 +125,7 @@ describe('BaselineWorkspace — dialog „Podaj powód" (a11y, Pakiet I)', () =>
     await openReasonDialog();
 
     const textarea = screen.getByTestId('baseline-reason-input');
-    const cancelButton = screen.getByRole('button', { name: 'Anuluj' });
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     // "Potwierdź" jest disabled dopóki reasonDraft jest puste — nie jest
     // częścią tab-order, więc pułapka po Tab powinna wrócić na `textarea`
     // (pierwszy fokusowalny), nie na disabled przycisk.

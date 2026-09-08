@@ -26,7 +26,7 @@ function makeConfig(primaryId: string, primaryLabelPl: string): WorkspaceBarConf
     artifactType: 'VALUATION_CASE',
     identity: {
       artifactRef: { artifactType: 'VALUATION_CASE', businessVersionId: 'bv-1', artifactId: 'art-1' },
-      back: { targetListRoute: '/finance/valuation', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance/valuation', label: { key: 'back', pl: 'Back to list' } },
       name: {
         value: 'DBR77 — Wycena FY2026',
         editable: false,
@@ -114,12 +114,12 @@ describe('FinanceWorkspaceBar — primary action ikonowa TYLKO dla primary.refre
   });
 
   it('primary.refresh (StatementPackWorkspaceV2): NIE zmienia się — nadal słowny przycisk (regresja zakazana)', () => {
-    const config = makeConfig('primary.refresh', 'Odśwież');
+    const config = makeConfig('primary.refresh', 'Refresh');
     render(
       <FinanceWorkspaceBar config={config} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />
     );
     const btn = screen.getByTestId('finance-workspace-bar-primary');
-    expect(btn).toHaveTextContent('Odśwież');
+    expect(btn).toHaveTextContent('Refresh');
     expect(btn.className).not.toMatch(/rounded-full/);
   });
 

@@ -119,7 +119,7 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
         <Boom />
       </FinanceErrorBoundary>
     );
-    fireEvent.click(screen.getByText('Wróć do listy'));
+    fireEvent.click(screen.getByText('Back to list'));
     expect(onBackToList).toHaveBeenCalledTimes(1);
   });
 

@@ -70,7 +70,7 @@ describe('FinanceSavedViewsPanel — ogłaszanie stanów dynamicznych (a11y, Pak
     );
   });
 
-  it('usunięcie widoku ogłasza "Widok usunięty."', async () => {
+  it('usunięcie widoku ogłasza "View deleted."', async () => {
     mockListFinanceSavedViews.mockResolvedValueOnce([sampleView()]);
     mockDeleteFinanceSavedView.mockResolvedValueOnce(undefined);
     mockListFinanceSavedViews.mockResolvedValueOnce([]);
@@ -80,7 +80,7 @@ describe('FinanceSavedViewsPanel — ogłaszanie stanów dynamicznych (a11y, Pak
     fireEvent.click(screen.getByTestId('saved-view-delete'));
 
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('View deleted.')
     );
   });
 
@@ -108,7 +108,7 @@ describe('FinanceSavedViewsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)
     mockListFinanceSavedViews.mockResolvedValueOnce([]);
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
     await screen.findByTestId('finance-saved-views-panel');
-    expect(screen.getByLabelText('Widoczność zapisywanego widoku')).toBe(
+    expect(screen.getByLabelText('Visibility of the saved view')).toBe(
       screen.getByTestId('saved-view-scope-select')
     );
   });

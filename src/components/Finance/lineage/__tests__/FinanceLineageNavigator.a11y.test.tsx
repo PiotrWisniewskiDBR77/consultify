@@ -70,11 +70,11 @@ afterEach(() => {
 });
 
 describe('FinanceLineageNavigator — ogłaszanie stanów dynamicznych (a11y, Pakiet I)', () => {
-  it('podczas ładowania jest zamontowany role="status" z tekstem "Ładowanie powiązań…"', async () => {
+  it('podczas ładowania jest zamontowany role="status" z tekstem "Loading lineage…"', async () => {
     mockGetFinanceLineageNavigator.mockReturnValueOnce(new Promise(() => {}));
     render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
     const status = await screen.findByTestId('finance-status-announcer');
-    expect(status).toHaveTextContent('Ładowanie powiązań…');
+    expect(status).toHaveTextContent('Loading lineage…');
   });
 
   it('po sukcesie role="status" ogłasza liczbę elementów łańcucha', async () => {

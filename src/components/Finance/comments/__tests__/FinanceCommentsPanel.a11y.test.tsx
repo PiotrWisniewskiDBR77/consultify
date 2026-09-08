@@ -80,28 +80,28 @@ afterEach(() => {
 });
 
 describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakiet I)', () => {
-  it('podczas ładowania jest zamontowany role="status" z tekstem "Ładowanie komentarzy…"', async () => {
+  it('podczas ładowania jest zamontowany role="status" z tekstem "Loading comments…"', async () => {
     mockListFinanceComments.mockReturnValueOnce(new Promise(() => {}));
     mockListFinanceReviewChecklist.mockReturnValueOnce(new Promise(() => {}));
     mockHasUnresolvedBlocking.mockReturnValueOnce(new Promise(() => {}));
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     const status = await screen.findByTestId('finance-status-announcer');
     expect(status).toHaveAttribute('role', 'status');
-    expect(status).toHaveTextContent('Ładowanie komentarzy…');
+    expect(status).toHaveTextContent('Loading comments…');
   });
 
-  it('po "Oznacz jako rozwiązany" role="status" ogłasza to działanie (nie tylko widoczna lista)', async () => {
+  it('po "Mark as resolved" role="status" ogłasza to działanie (nie tylko widoczna lista)', async () => {
     mockLoadOnce();
     mockResolveFinanceComment.mockResolvedValueOnce(undefined);
     mockLoadOnce({ comments: [{ ...SAMPLE_COMMENT, resolvedAt: 't', resolvedBy: 'u-2' }] });
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     await screen.findByTestId('finance-comments-panel');
 
-    fireEvent.click(screen.getByText('Oznacz jako rozwiązany'));
+    fireEvent.click(screen.getByText('Mark as resolved'));
 
     await waitFor(() =>
       expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
-        'Komentarz oznaczony jako rozwiązany.'
+        'Comment marked as resolved.'
       )
     );
   });
@@ -146,14 +146,14 @@ describe('FinanceCommentsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)',
     expect(screen.getByLabelText('Zweryfikuj sumy kontrolne')).toBeInTheDocument();
   });
 
-  it('"Oznacz jako rozwiązany"/"Blokujący" NIE używają surowego `text-c-focus`/`text-c-danger` (za mały kontrast — axe, PRZED naprawą)', async () => {
+  it('"Mark as resolved"/"Blocking" NIE używają surowego `text-c-focus`/`text-c-danger` (za mały kontrast — axe, PRZED naprawą)', async () => {
     mockLoadOnce({ comments: [{ ...SAMPLE_COMMENT, isBlocking: true }] });
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     await screen.findByTestId('finance-comments-panel');
-    const resolveButton = screen.getByText('Oznacz jako rozwiązany');
+    const resolveButton = screen.getByText('Mark as resolved');
     expect(resolveButton.className).not.toMatch(/text-c-focus(?!-solid)\b/);
     expect(resolveButton.className).toMatch(/text-c-focus-solid/);
-    const blockingBadge = screen.getByText('Blokujący');
+    const blockingBadge = screen.getByText('Blocking');
     expect(blockingBadge.className).not.toMatch(/\btext-c-danger\b/);
     expect(blockingBadge.className).toMatch(/text-red-800/);
   });

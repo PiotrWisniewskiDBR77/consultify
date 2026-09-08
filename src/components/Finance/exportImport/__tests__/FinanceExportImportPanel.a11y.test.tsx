@@ -51,7 +51,7 @@ describe('FinanceExportImportPanel — dostępna nazwa pola pliku (a11y, Pakiet 
     // `getByLabelText` przechodzi TYLKO gdy istnieje realne programowe
     // powiązanie label↔input (htmlFor/id, aria-labelledby, wrapping) —
     // dokładnie to, czego brakowało PRZED naprawą.
-    expect(screen.getByLabelText('Wybierz plik do importu (.xlsx)')).toBe(
+    expect(screen.getByLabelText('Choose a file to import (.xlsx)')).toBe(
       screen.getByTestId('import-file-input')
     );
   });
@@ -72,7 +72,7 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
       expect(
         screen
           .getAllByTestId('finance-status-announcer')
-          .some((el) => el.textContent === 'Eksportuję plik .xlsx…')
+          .some((el) => el.textContent === 'Exporting .xlsx file…')
       ).toBe(true)
     );
 
@@ -154,6 +154,6 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
     const { container } = render(<FinanceExportImportPanel {...PROPS} />);
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Wybierz plik do importu (.xlsx)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Choose a file to import (.xlsx)')).not.toBeInTheDocument();
   });
 });
