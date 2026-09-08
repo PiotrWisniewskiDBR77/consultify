@@ -1,0 +1,185 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-lista-wszystkie",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "02-dokumenty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New document"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "03-prezentacje",
+  "napisowUi": 42,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "04-skoroszyty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "05-wzorce",
+  "napisowUi": 140,
+  "polskichUi": 7,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Wszystkie formaty",
+   "Wszystkie źródła",
+   "Nieznany",
+   "Podgląd",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 5,
+  "angielskie": [
+   "Open user profile menu",
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "06-raporty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "07-podglad-wiersza",
+  "napisowUi": 48,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "08-kebab",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "09-nowy-material",
+  "napisowUi": 55,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "10-filtry-menu3",
+  "napisowUi": 43,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "11-wzorce-galeria",
+  "napisowUi": 140,
+  "polskichUi": 7,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Wszystkie formaty",
+   "Wszystkie źródła",
+   "Nieznany",
+   "Podgląd",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 5,
+  "angielskie": [
+   "Open user profile menu",
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "12-pstryczek-kolumn",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation",
+   "Show row description"
+  ]
+ }
+]

@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { formatListDate } from '../../utils/listDateFormat';
 
 interface ReportSection {
   id: string;
@@ -466,7 +467,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
             <div>
               <span className="text-xs text-gray-600">{t('sponsorReport.created', 'Created')}</span>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                {new Date(report.created_at).toLocaleDateString()}
+                {formatListDate(report.created_at)}
               </p>
             </div>
             <div>

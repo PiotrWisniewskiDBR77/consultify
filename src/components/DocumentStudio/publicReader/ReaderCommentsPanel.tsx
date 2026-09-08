@@ -24,6 +24,8 @@ import {
   postSharedComment,
   replySharedComment,
 } from './clientReaderApi';
+import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface ThreadGroup {
   threadId: string;
@@ -58,7 +60,7 @@ function formatAuthor(authorId: string): string {
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('pl-PL');
+  return Number.isNaN(date.getTime()) ? iso : formatListDateTime(date);
 }
 
 function getOrCreateFingerprint(token: string): string {
@@ -78,6 +80,7 @@ function getOrCreateFingerprint(token: string): string {
 }
 
 export function ReaderCommentsPanel({ token }: { token: string }): React.ReactElement {
+  const { t } = useTranslation();
   const [comments, setComments] = useState<DocumentComment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -226,7 +229,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
                   <textarea
                     value={replyDraft}
                     onChange={(e) => setReplyDraft(e.target.value)}
-                    placeholder="Napisz odpowiedź…"
+                    placeholder={t('documentStudio.readerCommentsPanel.writeAReply', 'Write a reply…')}
                     className="min-h-[52px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
                   />
                   <div className="mt-1.5 flex justify-end gap-2">
@@ -238,7 +241,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
                       }}
                       className="rounded-md px-2.5 py-1 text-xs text-c-text-secondary hover:text-c-text"
                     >
-                      Anuluj
+                      {t('documentStudio.readerCommentsPanel.cancel', 'Cancel')}
                     </button>
                     <button
                       type="button"
@@ -246,7 +249,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
                       disabled={busy || !replyDraft.trim()}
                       className="rounded-md bg-c-text px-2.5 py-1 text-xs font-medium text-c-surface disabled:opacity-40"
                     >
-                      Wyślij
+                      {t('documentStudio.readerCommentsPanel.send', 'Send')}
                     </button>
                   </div>
                 </div>
@@ -263,7 +266,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
           ))}
         </ul>
       ) : comments !== null && !error ? (
-        <p className="mb-5 text-sm text-c-text-secondary">Brak komentarzy — bądź pierwszy.</p>
+        <p className="mb-5 text-sm text-c-text-secondary">{t('documentStudio.readerCommentsPanel.noCommentsYetBeThe', 'No comments yet — be the first.')}</p>
       ) : null}
 
       {error ? (
@@ -276,7 +279,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Dodaj komentarz do całego dokumentu…"
+          placeholder={t('documentStudio.readerCommentsPanel.addACommentAboutThe', 'Add a comment about the whole document…')}
           className="min-h-[72px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
           data-testid="reader-comment-input"
         />

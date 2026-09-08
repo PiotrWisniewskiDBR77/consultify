@@ -11,6 +11,7 @@ import { RefreshCw, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { useDemoSession } from '@/hooks/useDemoSession';
+import { useTranslation } from 'react-i18next';
 
 interface GapHeatmapAttrs {
   assessmentId: string | null;
@@ -50,6 +51,7 @@ const getGapColor = (gap: number, scheme: 'redGreen' | 'blueOrange'): string => 
 
 // React component
 const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, selected }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<GapData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -159,7 +161,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-800 rounded-lg space-y-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Tytuł
+              {t('reports.premium.gapHeatmap.title', 'Title')}
             </label>
             <input
               type="text"
@@ -176,7 +178,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
                 onChange={(e) => updateAttributes({ showNumbers: e.target.checked })}
                 className="rounded"
               />
-              Pokaż wartości
+              {t('reports.premium.gapHeatmap.showValues', 'Show values')}
             </label>
             <select
               value={colorScheme}
@@ -184,7 +186,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
               className="px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
             >
               <option value="redGreen">Czerwono-Zielony</option>
-              <option value="blueOrange">Niebiesko-Pomarańczowy</option>
+              <option value="blueOrange">{t('reports.premium.gapHeatmap.blueOrange', 'Blue-Orange')}</option>
             </select>
           </div>
         </div>
@@ -203,8 +205,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
             <thead>
               <tr>
                 <th className="text-left py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
-                  Oś
-                </th>
+                  {t('reports.premium.gapHeatmap.axis', 'Axis')}</th>
                 <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
                   Obecny
                 </th>
@@ -258,7 +259,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         </div>
       ) : (
         <div className="flex items-center justify-center h-48 text-slate-600 dark:text-slate-500">
-          Brak danych do wyświetlenia
+          {t('reports.premium.gapHeatmap.noDataToShow', 'No data to show')}
         </div>
       )}
 
@@ -268,19 +269,19 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
           <span
             className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-green-200' : 'bg-blue-200'}`}
           ></span>
-          Mała luka (0-1)
+          {t('reports.premium.gapHeatmap.smallGap01', 'Small gap (0-1)')}
         </span>
         <span className="flex items-center gap-1">
           <span
             className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-yellow-200' : 'bg-blue-300'}`}
           ></span>
-          Średnia (1-2)
+          {t('reports.premium.gapHeatmap.medium12', 'Medium (1-2)')}
         </span>
         <span className="flex items-center gap-1">
           <span
             className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-danger-300' : 'bg-amber-400'}`}
           ></span>
-          Duża luka (2+)
+          {t('reports.premium.gapHeatmap.largeGap2', 'Large gap (2+)')}
         </span>
       </div>
     </NodeViewWrapper>

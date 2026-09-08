@@ -38,7 +38,6 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { CURATED_COLOR_SETS } from '@/components/shared/colorPatterns/curatedColorSets';
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
@@ -66,6 +65,7 @@ import {
   type DeckBuilderRightRailState,
   type DeckBuilderRightRailToolId,
 } from './DeckBuilderMelsRightRail';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Metadane artefaktu-prezentacji pokazywane w sekcji „Właściwości" prawego
@@ -281,6 +281,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   onOpenShortcutHelp,
   persistRailState = true,
 }) => {
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const [artifactLeftMode, setArtifactLeftMode] = useState<
@@ -307,27 +308,27 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           case 'qa':
             return {
               ...descriptor,
-              label: 'QA i przegląd',
-              overflowSection: 'QA i przegląd',
+              label: t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionQa', 'QA and review'),
               onClick: () => setArtifactLeftMode('review'),
             };
           case 'history':
             return {
               ...descriptor,
-              label: 'Historia',
-              overflowSection: 'Historia',
+              label: t('presentations.builder.deckBuilderMelsView.history', 'History'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
             };
           case 'audit':
             return {
               ...descriptor,
-              label: 'Dziennik audytu',
-              overflowSection: 'Historia',
+              label: t('presentations.builder.deckBuilderMelsView.auditLog', 'Audit log'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
             };
           case 'analytics':
             return {
               ...descriptor,
-              label: 'Analityka udostępniania',
-              overflowSection: 'Udostępnianie',
+              label: t('presentations.builder.deckBuilderMelsView.sharingAnalytics', 'Sharing analytics'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionSharing', 'Sharing'),
             };
           default:
             return descriptor;
@@ -367,10 +368,15 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       <div
         className="flex shrink-0 items-center gap-1 border-b border-c-border-subtle p-2"
         role="tablist"
-        aria-label="Narzędzia prezentacji"
+        aria-label={t('presentations.builder.deckBuilderMelsView.presentationTools', 'Presentation tools')}
       >
         {(
-          [['structure', 'Slajdy'], ...(reviewPanel ? [['review', 'QA i przegląd']] : [])] as Array<
+          [
+            ['structure', t('presentations.builder.deckBuilderMelsView.slides', 'Slides')],
+            ...(reviewPanel
+              ? [['review', t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review')]]
+              : []),
+          ] as Array<
             [typeof artifactLeftMode, string]
           >
         ).map(([mode, label]) => (

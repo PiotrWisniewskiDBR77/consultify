@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/primitives/Button';
 
 import type { DocumentComment, DocumentCommentThread } from './types';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 export function formatCommentAuthor(authorId: string | undefined | null): string {
   const id = String(authorId || '').trim();
@@ -27,7 +28,7 @@ export function formatCommentAuthor(authorId: string | undefined | null): string
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('pl-PL');
+  return Number.isNaN(date.getTime()) ? iso : formatListDateTime(date);
 }
 
 const STATUS_CHIP_CLASS: Record<'open' | 'resolved', string> = {

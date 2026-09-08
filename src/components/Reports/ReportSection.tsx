@@ -351,8 +351,8 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             )}
           </span>
           <span>
-            {/* Kanon dat — patrz uwaga w `ReportBuilder.tsx` (ta sama naprawa,
-                `toLocaleDateString()` bez argumentu → `formatListDate`). */}
+            {/* Kanon dat — patrz uwaga w `ReportBuilder.tsx` (ta sama naprawa:
+                metoda lokalizująca datę bez argumentu → `formatListDate`). */}
             v{section.version} • {formatListDate(section.updatedAt)}
           </span>
         </div>

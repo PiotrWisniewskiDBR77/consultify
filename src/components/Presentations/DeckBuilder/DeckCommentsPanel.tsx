@@ -26,6 +26,7 @@ import {
   listDeckComments,
   setDeckCommentResolved,
 } from './deckCommentsApi';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 type ThreadFilter = 'all' | 'open' | 'resolved';
 
@@ -63,7 +64,7 @@ function formatWhen(iso: string): string {
   const ms = Date.parse(iso);
   if (!Number.isFinite(ms)) return '';
   try {
-    return new Date(ms).toLocaleString('pl-PL');
+    return formatListDateTime(ms);
   } catch {
     return '';
   }

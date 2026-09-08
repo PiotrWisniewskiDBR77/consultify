@@ -28,6 +28,7 @@ import {
   listSavedViews,
   saveSavedView,
 } from '@/services/presentationAuditLogSavedViews';
+import { useTranslation } from 'react-i18next';
 
 interface DeckAuditLogModalProps {
   deckId: string;
@@ -298,6 +299,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
   onClose,
   userKey,
 }) => {
+  const { t } = useTranslation();
   const resolvedUserKey = userKey ?? SHARED_USER_KEY;
 
   const [status, setStatus] = useState<AuditLogFetchStatus | 'loading'>('loading');
@@ -741,7 +743,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       return (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="animate-spin w-6 h-6 border-2 border-c-accent border-t-transparent rounded-full" />
-          <p className="mt-3 text-xs text-c-text-secondary">Ładowanie dziennika audytu…</p>
+          <p className="mt-3 text-xs text-c-text-secondary">{t('presentations.builder.deckAuditLogModal.loadingTheAuditLog', 'Loading the audit log…')}</p>
         </div>
       );
     }
@@ -790,9 +792,9 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <History size={20} className="text-c-text-secondary" />
-          <p className="mt-2 text-sm font-medium text-c-text-secondary">Nie ma jeszcze zdarzeń audytowych</p>
+          <p className="mt-2 text-sm font-medium text-c-text-secondary">{t('presentations.builder.deckAuditLogModal.noAuditEventsYet', 'No audit events yet')}</p>
           <p className="mt-1 text-xs text-c-text-secondary">
-            Activity for this deck will appear here once edits, shares, or AI proposals occur.
+            {t('presentations.builder.deckAuditLogModal.activityForThisDeckWill', 'Activity for this deck will appear here once edits, shares, or AI proposals occur.')}
           </p>
         </div>
       );
@@ -845,10 +847,10 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 id="audit-action-filter"
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
-                aria-label="Filtruj według działania"
+                aria-label={t('presentations.builder.deckAuditLogModal.filterByAction', 'Filter by action')}
                 className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               >
-                <option value="">Wszystkie działania</option>
+                <option value="">{t('presentations.builder.deckAuditLogModal.allActions', 'All actions')}</option>
                 {uniqueActions.map((a) => (
                   <option key={a} value={a}>
                     {a}
@@ -862,7 +864,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 htmlFor="audit-date-from"
                 className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary"
               >
-                From
+                {t('presentations.builder.deckAuditLogModal.from', 'From')}
               </label>
               <input
                 id="audit-date-from"
@@ -905,7 +907,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                         <button
                           type="button"
                           onClick={() => setActiveView(null)}
-                          aria-label="Wyczyść aktywny zapisany widok"
+                          aria-label={t('presentations.builder.deckAuditLogModal.clearTheActiveSavedView', 'Clear the active saved view')}
                           className="ml-0.5 rounded-full p-0.5 hover:bg-c-accent-soft0"
                         >
                           <X size={10} />
@@ -961,7 +963,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                               }
                             }}
                             className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[12px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
-                            placeholder="np. aktywność AI z ostatnich 7 dni"
+                            placeholder={t('presentations.builder.deckAuditLogModal.eGAiActivityFrom', 'e.g. AI activity from the last 7 days')}
                           />
                           {saveDraftError ? (
                             <p className="mt-1 text-[11px] text-danger-600 dark:text-danger-400">
@@ -1090,7 +1092,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 type="button"
                 onClick={resetFilters}
                 disabled={!filtersActive}
-                aria-label="Wyczyść filtry"
+                aria-label={t('presentations.builder.deckAuditLogModal.clearFilters', 'Clear filters')}
                 className="text-[11px] font-medium text-c-accent hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
               >
                 Reset filters
@@ -1107,12 +1109,12 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <History size={20} className="text-c-text-secondary" />
             <p className="mt-2 text-sm font-medium text-c-text-secondary">
-              No events match the current filters
+              {t('presentations.builder.deckAuditLogModal.noEventsMatchTheCurrent', 'No events match the current filters')}
             </p>
             <button
               type="button"
               onClick={resetFilters}
-              aria-label="Wyczyść filtry"
+              aria-label={t('presentations.builder.deckAuditLogModal.clearFilters', 'Clear filters')}
               className="mt-2 text-[12px] font-medium text-c-accent hover:underline"
             >
               Reset filters
@@ -1162,7 +1164,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Zamknij"
+            aria-label={t('presentations.builder.deckAuditLogModal.close', 'Close')}
             className="p-1 rounded-md text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised"
           >
             <X size={16} />
@@ -1174,7 +1176,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             <button
               type="button"
               onClick={handleCopyShareLink}
-              aria-label="Skopiuj odnośnik z bieżącymi filtrami"
+              aria-label={t('presentations.builder.deckAuditLogModal.copyALinkWithThe', 'Copy a link with the current filters')}
               className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised"
             >
               <Link2 size={12} />
@@ -1195,13 +1197,13 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 type="button"
                 onClick={() => void loadMore()}
                 disabled={loadingMore}
-                aria-label="Wczytaj więcej zdarzeń"
+                aria-label={t('presentations.builder.deckAuditLogModal.loadMoreEvents', 'Load more events')}
                 className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loadingMore ? (
                   <>
                     <div className="animate-spin w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
-                    Loading…
+                    {t('presentations.builder.deckAuditLogModal.loading', 'Loading…')}
                   </>
                 ) : (
                   'Load more'

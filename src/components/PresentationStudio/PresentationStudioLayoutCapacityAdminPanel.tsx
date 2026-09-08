@@ -65,6 +65,7 @@ import {
   type LayoutCapacityRegistrySnapshot,
   PresentationStudioLayoutCapacityAdminApi,
 } from '@/services/api/presentationStudioLayoutCapacityAdmin.api';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -309,6 +310,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
   api = PresentationStudioLayoutCapacityAdminApi,
   testId = 'studio-layout-capacity-admin',
 }) => {
+  const { t } = useTranslation();
   const [bootstrap, setBootstrap] = useState<BootstrapState>({
     status: 'loading',
     data: null,
@@ -564,7 +566,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
       >
         <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          <span>Loading layout-capacity admin surface…</span>
+          <span>{t('presentations.studio.presentationStudioLayoutCapacityAdminPanel.loadingLayoutCapacityAdminSurface', 'Loading layout-capacity admin surface…')}</span>
         </div>
       </section>
     );
@@ -580,7 +582,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
         <div className="flex items-start gap-3 text-sm text-danger-700 dark:text-danger-300">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <div className="font-medium">Failed to load layout-capacity admin surface</div>
+            <div className="font-medium">{t('presentations.studio.presentationStudioLayoutCapacityAdminPanel.failedToLoadLayoutCapacity', 'Failed to load layout-capacity admin surface')}</div>
             <div className="mt-1">{bootstrap.error}</div>
             <button
               type="button"
@@ -798,7 +800,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
             role="alert"
             data-testid={`${testId}-overrides-validation-errors`}
           >
-            <div className="mb-1 font-medium">Server validator rejected the payload:</div>
+            <div className="mb-1 font-medium">{t('presentations.studio.presentationStudioLayoutCapacityAdminPanel.serverValidatorRejectedThePayload', 'Server validator rejected the payload:')}</div>
             <ErrorList errors={overrideFlow.proposeErrors} />
           </div>
         ) : null}
@@ -856,7 +858,7 @@ export const PresentationStudioLayoutCapacityAdminPanel: React.FC<
           >
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <div className="font-medium">Override applied and audited</div>
+              <div className="font-medium">{t('presentations.studio.presentationStudioLayoutCapacityAdminPanel.overrideAppliedAndAudited', 'Override applied and audited')}</div>
               <div className="mt-1 text-xs opacity-80">
                 Audit event: presentation_studio_layout_capacity_overrides_applied
               </div>

@@ -25,6 +25,8 @@ import {
   ManagementReportType,
 } from '../../../types';
 import { ReportHistoryRowSkeleton } from './shared/ReportSkeleton';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 interface ReportHistoryItem {
   id: string;
@@ -139,6 +141,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
   onRenameReport,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const totalPages = Math.ceil(total / pageSize);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
@@ -226,7 +229,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Status</option>
-                <option value="DRAFT">Draft</option>
+                <option value="DRAFT">{t('reports.management.reportHistoryTable.draft', 'Draft')}</option>
                 <option value="FINAL">Final</option>
                 <option value="ARCHIVED">Archived</option>
               </select>
@@ -280,7 +283,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
           <div className="p-8 text-center">
             <FileText size={48} className="mx-auto text-c-text-muted mb-3" />
             <p className="text-c-text-muted">No reports found.</p>
-            <p className="text-sm text-c-text-muted">Generate your first report to see it here.</p>
+            <p className="text-sm text-c-text-muted">{t('reports.management.reportHistoryTable.generateYourFirstReportTo', 'Generate your first report to see it here.')}</p>
           </div>
         ) : (
           <table className="w-full">
@@ -350,7 +353,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
                         <Calendar size={14} className="text-c-text-muted" />
-                        {new Date(report.createdAt).toLocaleDateString()}
+                        {formatListDate(report.createdAt)}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-c-text-muted mt-1">
                         <User size={12} />

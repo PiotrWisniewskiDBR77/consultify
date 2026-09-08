@@ -76,12 +76,12 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
     expect(screen.getByText('Presentation bottom bar')).toBeInTheDocument();
     expect(screen.getByText('Saved Draft')).toBeInTheDocument();
     expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Slajdy' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Slides' })).toHaveAttribute('aria-selected', 'true');
     // ★ Komentarze i Źródła NIE są już zakładkami lewej szyny — wróciły do
     // prawego panelu (SPEC-A §11.2). Lewa szyna to struktura + przegląd QA.
     expect(screen.queryByRole('tab', { name: 'Komentarze' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Źródła' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'QA i przegląd' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'QA and review' }));
     expect(screen.getByText('Presentation QA and approval workflow')).toBeInTheDocument();
   });
 
@@ -163,16 +163,19 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
 
-    expect(screen.getAllByText('QA i przegląd').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('QA and review').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole('menuitem', { name: 'Zasady przeglądu' })).not.toBeInTheDocument();
-    expect(screen.getAllByText('Historia')).toHaveLength(2);
-    expect(screen.getByRole('menuitem', { name: 'Dziennik audytu' })).toBeInTheDocument();
-    expect(screen.getByText('Udostępnianie')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Analityka udostępniania' })).toBeInTheDocument();
+    // J10: po ujednoliceniu języka „Historia" → „History" ten sam napis niesie
+    // nagłówek sekcji, chip i etykieta w prawym panelu — liczy się obecność,
+    // nie dokładna liczba wystąpień (wzorzec jak dla „QA and review" wyżej).
+    expect(screen.getAllByText('History').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole('menuitem', { name: 'Audit log' })).toBeInTheDocument();
+    expect(screen.getByText('Sharing')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Sharing analytics' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Governance' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Audit' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('menuitem', { name: 'QA i przegląd' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'QA and review' }));
     expect(screen.getByText('Presentation QA and approval workflow')).toBeInTheDocument();
   });
 });

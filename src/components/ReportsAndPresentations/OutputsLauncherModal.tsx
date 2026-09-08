@@ -34,6 +34,7 @@ import { type CanvasOutputResource, createOutputFromCanvasDraft } from './create
 import { useDeliverableTemplates } from './useDeliverableTemplates';
 import { useRecentWorkCanvasDrafts } from './useRecentWorkCanvasDrafts';
 import { useTemplateSuggestion } from './useTemplateSuggestion';
+import { formatListDate } from '../../utils/listDateFormat';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
 
@@ -107,7 +108,7 @@ const BLANK_CARD: TemplateCard = {
 function formatCanvasUpdatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' });
+  return formatListDate(d);
 }
 
 // v1 — kuratorowane szablony placeholder (realna biblioteka DBR77 = seria T).
@@ -478,7 +479,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-navy-600">
                     {t(
                       'rap.outputs.launcher.phaseEstimateNote',
-                      'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.'
+                      'Estimated run — generation usually takes 1–2 min, the download starts once it finishes.'
                     )}
                   </p>
                 </div>

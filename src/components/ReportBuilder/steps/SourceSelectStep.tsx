@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ReportSourceType, SourceOption } from '../useReportBuilder';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 // ==========================================
 // TYPES
@@ -252,7 +253,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                   (source as any).updatedAt ||
                   (source as any).createdAt ||
                   '';
-                const dateText = rawDate ? new Date(String(rawDate)).toLocaleDateString() : '—';
+                const dateText = rawDate ? formatListDate(String(rawDate)) : '—';
                 const dateLabel =
                   sourceType === 'ASSESSMENT'
                     ? t('reportBuilder.sourceSelectStep.approved', 'Approved')

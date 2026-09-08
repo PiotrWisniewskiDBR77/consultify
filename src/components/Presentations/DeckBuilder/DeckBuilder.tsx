@@ -925,7 +925,7 @@ export const DeckBuilder: React.FC = () => {
         setAutosaveError(
           t(
             'presentations.builder.autosaveOffline',
-            'Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.'
+            'No connection to the server — changes are visible on screen but are NOT saved.'
           )
         );
       }
@@ -1046,7 +1046,7 @@ export const DeckBuilder: React.FC = () => {
         order_index: idx,
         intent: 'key_messages',
         layout_id: 'content_full',
-        title: t('presentations.builder.defaultContent.newSlide', 'Nowy slajd'),
+        title: t('presentations.builder.defaultContent.newSlide', 'New slide'),
         blocks: [],
         source_refs: [],
         has_refreshable_data: false,
@@ -1608,7 +1608,7 @@ export const DeckBuilder: React.FC = () => {
           title={deck.title}
           onTitleChange={handleTitleChange}
           onBack={handleBackToPresentations}
-          moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
+          moduleLabel={t('presentations.builder.moduleLabel', 'Presentations')}
           backLabel={t('presentations.builder.back', 'Back to presentations')}
           topBarLabels={{
             internal: t('presentations.builder.topBar.internal', 'Internal'),
@@ -1817,7 +1817,7 @@ export const DeckBuilder: React.FC = () => {
                   context={presentationArtifactCommandContext}
                   resolveLabel={(label) => label}
                   maxVisible={9}
-                  ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
+                  ariaLabel={t('presentations.builder.contextTools', 'Presentation tools')}
                 />
               }
               aiButton={
@@ -1894,10 +1894,10 @@ export const DeckBuilder: React.FC = () => {
               registry={presentationArtifactCommands}
               context={presentationArtifactCommandContext}
               resolveLabel={(label) => label}
-              ariaLabel={t('presentations.builder.contextMenu', 'Menu kontekstowe prezentacji')}
+              ariaLabel={t('presentations.builder.contextMenu', 'Presentation context menu')}
               surfaceAriaLabel={t(
                 'presentations.builder.contextSurface',
-                'Powierzchnia robocza prezentacji'
+                'Presentation workspace'
               )}
               className="min-h-full"
             >
@@ -2013,7 +2013,7 @@ export const DeckBuilder: React.FC = () => {
                   )}
                   <AlertTriangle size={14} className="text-c-warning flex-shrink-0" />
                   <span className="text-xs font-medium text-c-warning">
-                    {t('presentations.qualitySignal.badge', 'Jakość: {{count}} ostrzeżeń', {
+                    {t('presentations.qualitySignal.badge', 'Quality: {{count}} warnings', {
                       count: deckQualityInfo.warnings.length,
                     })}
                   </span>
@@ -2455,7 +2455,7 @@ export type SimpleT = (key: string, defaultValue?: string) => string;
 export function getDefaultContent(blockType: string, t: SimpleT): Record<string, unknown> {
   switch (blockType) {
     case 'heading':
-      return { text: t('presentations.builder.defaultContent.heading', 'Nagłówek'), level: 2 };
+      return { text: t('presentations.builder.defaultContent.heading', 'Heading'), level: 2 };
     case 'paragraph':
       return { text: t('presentations.builder.defaultContent.paragraph', 'Wpisz tekst tutaj…') };
     case 'bullet_list':
@@ -2502,7 +2502,7 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
     case 'callout':
       return {
         variant: 'info',
-        text: t('presentations.builder.defaultContent.callout', 'Ważna uwaga'),
+        text: t('presentations.builder.defaultContent.callout', 'Important note'),
       };
     case 'smart_layout':
       return { layoutType: '3col', items: [{ title: 'A' }, { title: 'B' }, { title: 'C' }] };
@@ -2518,8 +2518,8 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
     case 'timeline_block':
       return {
         items: [
-          { date: 'Q1', title: t('presentations.builder.defaultContent.timelineStart', 'Początek') },
-          { date: 'Q2', title: t('presentations.builder.defaultContent.timelineMid', 'Środek') },
+          { date: 'Q1', title: t('presentations.builder.defaultContent.timelineStart', 'Start') },
+          { date: 'Q2', title: t('presentations.builder.defaultContent.timelineMid', 'Middle') },
           { date: 'Q3', title: t('presentations.builder.defaultContent.timelineEnd', 'Koniec') },
         ],
       };

@@ -32,7 +32,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
@@ -70,6 +69,7 @@ import {
   type ClientTemplateLineageNode,
   fetchTemplateLineage,
 } from '@/services/presentationTemplateGovernance';
+import { useTranslation } from 'react-i18next';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -787,7 +787,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 nie alarm. Zastąpione tym samym neutralnym wzorcem „(wymagane)".
               */}
               <span className="text-xs font-normal text-c-text-muted">
-                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+                ({t('documentStudio.intake.requiredMarker', 'required')})
               </span>
             </span>
             <textarea
@@ -1052,7 +1052,7 @@ export const PresentationTemplateArchitectView: React.FC<
 
             <section
               className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
-              aria-label="Historia wersji wzorca"
+              aria-label={t('presentations.presentationTemplateArchitectView.templateVersionHistory', 'Template version history')}
             >
               <div className="flex items-center justify-between gap-2">
                 <h4 className="text-xs font-semibold text-c-text">Historia wersji</h4>
@@ -1093,7 +1093,7 @@ export const PresentationTemplateArchitectView: React.FC<
                           disabled={cloningId === version.id}
                           onClick={() => void handleRestoreVersionAsDraft(version)}
                         >
-                          Restore as draft
+                          {t('presentations.presentationTemplateArchitectView.restoreAsDraft', 'Restore as draft')}
                         </Button>
                       </div>
                     </div>
@@ -1188,14 +1188,14 @@ export const PresentationTemplateArchitectView: React.FC<
                       rows={3}
                       placeholder={t(
                         'presentations.templateArchitect.imageStylePlaceholder',
-                        'Np. gradient fuksji, różu i królewskiego błękitu, subtelne światło studyjne'
+                        'E.g. a gradient of fuchsia, pink and royal blue, subtle studio lighting'
                       )}
                       className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus disabled:opacity-60"
                     />
                     <span className="text-[11px] text-c-text-secondary">
                       {t(
                         'presentations.templateArchitect.imageStyleHint',
-                        'Te słowa zostaną dopisane do każdego polecenia generowania obrazu AI w tym motywie.'
+                        'These words will be appended to every AI image prompt in this theme.'
                       )}
                     </span>
                   </label>
@@ -1203,12 +1203,12 @@ export const PresentationTemplateArchitectView: React.FC<
               )}
               <div className="col-span-1 sm:col-span-2">
                 <span className="font-medium text-c-text text-xs">
-                  {t('presentations.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                  {t('presentations.templateArchitect.colorPatternLabel', 'Colour pattern')}
                 </span>
                 <p className="mb-2 text-[11px] text-c-text-secondary">
                   {t(
                     'presentations.templateArchitect.colorPatternHint',
-                    'Niezależny od treści — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                    'Independent of the content — you can save just the colours, just the structure, or both.'
                   )}
                 </p>
                 <div className={!isEditable ? 'pointer-events-none opacity-60' : undefined}>
@@ -1332,8 +1332,7 @@ export const PresentationTemplateArchitectView: React.FC<
                       Template variables
                     </div>
                     <p className="text-[11px] text-c-text-secondary">
-                      Typed fields are persisted in the template schema and become the
-                      deck-generation data requirements.
+                      {t('presentations.presentationTemplateArchitectView.typedFieldsArePersistedIn', 'Typed fields are persisted in the template schema and become the\n                      deck-generation data requirements.')}
                     </p>
                   </div>
                   <Button
@@ -1395,7 +1394,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { defaultValue: event.target.value })
                         }
-                        placeholder="Wartość domyślna"
+                        placeholder={t('presentations.presentationTemplateArchitectView.defaultValue', 'Default value')}
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <label className="flex items-center gap-1 text-xs text-c-text-secondary">
@@ -1616,7 +1615,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 onChange={(e) => handleOutlineKeyMessageChange(idx, e.target.value)}
                                 placeholder={t(
                                   'presentations.templateArchitect.keyMessagePlaceholder',
-                                  'Jednozdaniowa teza tego slajdu (bez wymyślonych faktów).'
+                                  'The one-sentence claim of this slide (no invented facts).'
                                 )}
                                 className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                               />
@@ -1634,7 +1633,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 rows={Math.max(2, (slide.dataNeeded ?? []).length)}
                                 placeholder={t(
                                   'presentations.templateArchitect.dataNeededPlaceholder',
-                                  'Jedna pozycja na linię — nazwy danych do zebrania, nie wartości.'
+                                  'One item per line — the names of the data to collect, not the values.'
                                 )}
                                 className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                               />
@@ -1654,7 +1653,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 }
                                 placeholder={t(
                                   'presentations.templateArchitect.suggestedVisualPlaceholder',
-                                  'Np. wykres słupkowy, macierz priorytetów, oś czasu.'
+                                  'E.g. bar chart, priority matrix, timeline.'
                                 )}
                                 className="mt-0.5 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-1.5 py-1 text-xs text-c-text-secondary focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                               />
@@ -1748,7 +1747,7 @@ export const PresentationTemplateArchitectView: React.FC<
               >
                 {validationIssues.length === 0 ? (
                   <p className="font-medium">
-                    Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.
+                    {t('presentations.presentationTemplateArchitectView.theCheckPassedTheDraft', 'The check passed. The draft is ready to publish.')}
                   </p>
                 ) : (
                   <>

@@ -22,7 +22,7 @@ export const CalloutBlock: React.FC<Props> = ({ block, theme }) => {
     (block.content.variant as string) || (block.type === 'quote_block' ? 'quote' : 'info');
   const text =
     (block.content.text as string) ||
-    t('presentations.builder.defaultContent.calloutInfo', 'Ważna informacja');
+    t('presentations.builder.defaultContent.calloutInfo', 'Important information');
   const author = block.content.author as string | undefined;
   const Icon = CALLOUT_ICONS[variant] || Info;
 

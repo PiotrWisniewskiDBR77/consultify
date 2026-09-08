@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -123,6 +122,8 @@ import type {
   DocumentVariantSummary,
   DocumentVersionSnapshotSummary,
 } from './types';
+import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
@@ -778,7 +779,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
               </span>
             </div>
             <div className="mt-1 text-c-text-secondary">
-              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString('pl-PL')}
+              {entry.actorId} · {formatListDateTime(entry.occurredAt)}
             </div>
           </li>
         ))}
@@ -1264,7 +1265,7 @@ export function SchemaDiffPanel({
             </option>
             {[...snapshots].reverse().map((snapshot) => (
               <option key={snapshot.versionId} value={snapshot.versionId}>
-                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString('pl-PL')}${
+                {`v${snapshot.versionNumber} · ${formatListDateTime(snapshot.capturedAt)}${
                   snapshot.label ? ` · ${snapshot.label}` : ''
                 }`}
               </option>
@@ -1281,7 +1282,7 @@ export function SchemaDiffPanel({
                 defaultValue: 'Baseline v{{version}}',
                 version: result.baseSnapshot.versionNumber,
               })}{' '}
-              · {new Date(result.baseSnapshot.capturedAt).toLocaleString('pl-PL')}
+              · {formatListDateTime(result.baseSnapshot.capturedAt)}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -2000,7 +2001,7 @@ function TeresaDrawerPanel({
         </p>
       </div>
       <p className="text-xs text-c-text-secondary">
-        Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+        {t('documentStudio.documentStudioDocumentPanel.selectTextInTheDocument', 'Select text in the document to improve it with Teresa.')}
       </p>
     </div>
   );
@@ -2208,7 +2209,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     async (nextTitle: string): Promise<void> => {
       const trimmed = nextTitle.trim();
       if (!trimmed) {
-        toast.error(t('documentStudio.panel.titleSaveEmpty', 'Tytuł nie może być pusty.'));
+        toast.error(t('documentStudio.panel.titleSaveEmpty', 'The title cannot be empty.'));
         return;
       }
       if (trimmed === schema.title) return;
@@ -2219,7 +2220,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         toast.error(
           t(
             'documentStudio.panel.titleSaveFailed',
-            'Nie udało się zapisać tytułu. Spróbuj ponownie.'
+            'Could not save the title. Please try again.'
           )
         );
         return;
@@ -2231,7 +2232,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           title: trimmed,
         });
         onSchemaUpdated(saved);
-        toast.success(t('documentStudio.panel.titleSaved', 'Tytuł zapisany'));
+        toast.success(t('documentStudio.panel.titleSaved', 'Title saved'));
       } catch (err) {
         if (err instanceof DocumentManualSaveConflictError) {
           // Same reconciliation as the editor's autosave conflict path:
@@ -2246,7 +2247,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           toast.error(
             t(
               'documentStudio.panel.titleSaveConflict',
-              'Dokument zmienił się w międzyczasie — spróbuj ponownie.'
+              'The document changed in the meantime — please try again.'
             )
           );
           return;
@@ -2260,7 +2261,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const persistSectionStructure = useCallback(
     async (nextSections: DocumentSection[]): Promise<void> => {
       if (!schema.updatedAt) {
-        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        toast.error(t('documentStudio.outline.saveFailed', 'Could not save the outline.'));
         return;
       }
       const normalized = nextSections.map((section, orderIndex) => ({ ...section, orderIndex }));
@@ -2282,7 +2283,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             /* best-effort reconciliation */
           }
         }
-        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        toast.error(t('documentStudio.outline.saveFailed', 'Could not save the outline.'));
       }
     },
     [artifactId, onSchemaUpdated, schema.updatedAt, t]
@@ -2612,7 +2613,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         // overwrite. The new (empty-content) artifact still exists and is
         // reachable from "Otwórz", so nothing is lost — just not cloned.
         throw new Error(
-          t('documentStudio.fileMenu.saveAsFailed', 'Nie udało się zduplikować dokumentu')
+          t('documentStudio.fileMenu.saveAsFailed', 'Could not duplicate the document')
         );
       }
       const saved = await saveDocumentStudioManualContent(created.artifactId, {
@@ -2620,7 +2621,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         expectedVersion: created.schema.updatedAt,
       });
       toast.success(
-        t('documentStudio.fileMenu.saveAsSuccess', 'Zduplikowano dokument: {{title}}', {
+        t('documentStudio.fileMenu.saveAsSuccess', 'Document duplicated: {{title}}', {
           title: saved.title,
         })
       );
@@ -2676,7 +2677,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'qa',
         label: qaBlock
           ? t('documentStudio.panel.chipQaBlocked', 'QA blocked')
-          : t('documentStudio.panel.chipQaReview', 'QA i przegląd'),
+          : t('documentStudio.panel.chipQaReview', 'QA and review'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : 'success',
         onClick: handleOpenQa,
@@ -2975,7 +2976,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       content = (
         <div className="h-full overflow-y-auto p-3">
           <p className="text-xs text-c-text-secondary">
-            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+            {t('documentStudio.documentStudioDocumentPanel.selectTextInTheDocument', 'Select text in the document to improve it with Teresa.')}
           </p>
         </div>
       );
@@ -3034,7 +3035,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onCreated={(template) => {
             setShowSaveAsTemplateModal(false);
             toast.success(
-              t('documentStudio.createFromArtifact.success', 'Utworzono szkic wzorca: {{name}}', {
+              t('documentStudio.createFromArtifact.success', 'Template draft created: {{name}}', {
                 name: template.name,
               })
             );
@@ -3300,7 +3301,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         {reportViewAvailable ? (
           <div
             role="group"
-            aria-label={t('documentStudio.panel.viewModeGroup', 'Widok dokumentu')}
+            aria-label={t('documentStudio.panel.viewModeGroup', 'Document view')}
             className="mb-3 flex items-center gap-1 self-start rounded-lg border border-c-border-subtle bg-c-surface-raised p-0.5"
           >
             {(['report', 'editor'] as const).map((mode) => {
@@ -3319,7 +3320,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                   }`}
                 >
                   {mode === 'report'
-                    ? t('documentStudio.panel.viewReport', 'Raport')
+                    ? t('documentStudio.panel.viewReport', 'Report')
                     : t('documentStudio.panel.viewEditor', 'Edytor')}
                 </button>
               );
@@ -3349,7 +3350,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       registry={documentArtifactCommands}
       context={documentArtifactCommandContext}
       resolveLabel={(label) => label}
-      ariaLabel={t('documentStudio.panel.contextMenu', 'Menu kontekstowe dokumentu')}
+      ariaLabel={t('documentStudio.panel.contextMenu', 'Document context menu')}
       className="min-h-full"
     >
       {canvasContent}
@@ -3378,7 +3379,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       // ONE thing in this corner that looks like "back", and it behaves like
       // "back".
       onBack={() => navigate('/presentations?tab=documents')}
-      backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+      backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
       // U3 — "Plik" is the FIRST action in the row (Word convention: File is
       // always leftmost), ahead of Historia/QA/Nadzór and ahead of the
       // highlighted "Udostępnij" primary chip. `topBarLeadingActionSlot`
@@ -3410,10 +3411,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               {autosaveStatus === 'saving'
                 ? t('common.saving', 'Zapisywanie…')
                 : autosaveStatus === 'error'
-                  ? t('common.saveError', 'Błąd zapisu')
+                  ? t('common.saveError', 'Save failed')
                   : autosaveStatus === 'conflict'
                     ? t('common.conflict', 'Konflikt')
-                    : t('common.saved', 'Zapisano')}
+                    : t('common.saved', 'Saved')}
             </span>
             <span className="rounded-md border border-c-border px-2 py-1 whitespace-nowrap">
               {confidentialityLabel(i18n.language, schema.confidentiality)}
@@ -3445,7 +3446,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       }
       leftRailTitle={
         artifactStudioMode
-          ? t('documentStudio.panel.structureTitle', 'Struktura dokumentu')
+          ? t('documentStudio.panel.structureTitle', 'Document structure')
           : t('documentStudio.panel.outlineTitle', 'Outline')
       }
       leftRailContent={
@@ -3454,7 +3455,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             <div
               className="grid grid-cols-5 gap-1 border-b border-c-border p-2"
               role="tablist"
-              aria-label={t('documentStudio.panel.documentPanelViews', 'Widoki panelu dokumentu')}
+              aria-label={t('documentStudio.panel.documentPanelViews', 'Document panel views')}
             >
               {[
                 {
@@ -3464,7 +3465,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'sources',
-                  label: t('documentStudio.panel.toolSources', 'Źródła'),
+                  label: t('documentStudio.panel.toolSources', 'Sources'),
                   icon: FileText,
                 },
                 {
@@ -3474,7 +3475,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'qa',
-                  label: t('documentStudio.panel.toolQaReview', 'QA i przegląd'),
+                  label: t('documentStudio.panel.toolQaReview', 'QA and review'),
                   icon: ShieldCheck,
                 },
                 {
@@ -3542,7 +3543,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             context={documentArtifactCommandContext}
             resolveLabel={(label) => label}
             maxVisible={8}
-            ariaLabel={t('documentStudio.panel.contextTools', 'Narzędzia dokumentu')}
+            ariaLabel={t('documentStudio.panel.contextTools', 'Document tools')}
           />
         ) : undefined
       }

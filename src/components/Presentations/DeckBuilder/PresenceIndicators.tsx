@@ -5,6 +5,7 @@
 
 import { Users, Wifi, WifiOff } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CollabUser {
   userId: string;
@@ -28,6 +29,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
   connectionStatus,
   maxAvatars = 5,
 }) => {
+  const { t } = useTranslation();
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
 
   const displayUsers = users.slice(0, maxAvatars);
@@ -116,7 +118,7 @@ export const PresenceIndicators: React.FC<PresenceIndicatorsProps> = ({
       {users.length === 0 && isConnected && (
         <div className="flex items-center gap-1 text-[10px] text-c-text-muted">
           <Users size={10} />
-          <span>Tylko Ty</span>
+          <span>{t('presentations.builder.presenceIndicators.onlyYou', 'Only you')}</span>
         </div>
       )}
     </div>

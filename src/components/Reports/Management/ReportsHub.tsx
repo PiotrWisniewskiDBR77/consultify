@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '../../../hooks/useOpenChatWithContext';
@@ -61,6 +60,8 @@ import { ReportingAutomationWorkspace } from './ReportingAutomationWorkspace';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 import { ManagementReportCard } from './ManagementReportsView';
+import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime } from '../../../utils/listDateFormat';
 
 // Report type metadata. Identity (type) is carried by a muted icon + short
 // label — color is NOT a status signal here (canon §4.0a), so we keep the icon
@@ -187,7 +188,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       setSchedules(schedulesRes.data?.schedules || []);
     } catch (err) {
       console.error('[ReportsHub] Failed to load:', err);
-      const msg = t('reports.toast.loadError', 'Nie udało się załadować danych');
+      const msg = t('reports.toast.loadError', 'Could not load the data');
       toast.error(msg);
       setLoadError(msg);
     } finally {
@@ -248,13 +249,13 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('reports.tabs.reports', 'Raporty'),
+        label: t('reports.tabs.reports', 'Reports'),
         icon: <FileBarChart2 size={16} />,
         count: filteredReports.length,
       },
       {
         id: 'reports' as ModuleTab,
-        label: t('reports.tabs.templates', 'Szablony'),
+        label: t('reports.tabs.templates', 'Templates'),
         icon: <Wand2 size={16} />,
         count: templates.length,
       },
@@ -351,7 +352,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
-              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.createdAt)}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {row.generatedByName || '—'}
@@ -394,14 +395,14 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       actions.push(
         {
           id: 'open_preview',
-          label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+          label: t('rap.actions.openPreview', 'Open preview'),
           icon: ChevronRight,
           divider: true,
           onClick: () => setSelectedId(row.id),
         },
         {
           id: 'edit',
-          label: t('common.edit', 'Edytuj'),
+          label: t('common.edit', 'Edit'),
           icon: Pencil,
           onClick: () => handleViewReport(row.id),
         },
@@ -411,7 +412,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           label: t('rap.actions.archive', 'Archiwizuj'),
           icon: Archive,
           disabled: true,
-          description: t('common.comingSoon', 'Wkrótce'),
+          description: t('common.comingSoon', 'Coming soon'),
           onClick: () => {},
         }
       );
@@ -466,7 +467,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportTemplate) => (
           <div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.createdAt)}
             </div>
             {row.createdByName && (
               <p className="text-xs text-slate-500 dark:text-slate-400">{row.createdByName}</p>
@@ -531,7 +532,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) =>
           row.nextScheduledAt ? (
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.nextScheduledAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.nextScheduledAt)}
             </div>
           ) : (
             <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
@@ -584,7 +585,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         }
       }
     } catch (error) {
-      toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
+      toast.error(t('reports.toast.loadReportError', 'Could not load the report'));
     }
   }, [navigate, reportIdParam, setActiveDocumentId, setOpenDocuments, t]);
 
@@ -593,10 +594,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       const response = await Api.get(`/api/management-reports/${reportId}/pdf`);
       if (response.data?.pdfUrl) {
         window.open(response.data.pdfUrl, '_blank');
-        toast.success(t('reports.toast.pdfStarted', 'Pobieranie PDF rozpoczęte'));
+        toast.success(t('reports.toast.pdfStarted', 'PDF download started'));
       }
     } catch (error) {
-      toast.error(t('reports.toast.pdfError', 'Nie udało się pobrać PDF'));
+      toast.error(t('reports.toast.pdfError', 'Could not download the PDF'));
     }
   }, []);
 
@@ -607,10 +608,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       });
       if (response.data?.shareUrl) {
         navigator.clipboard.writeText(window.location.origin + response.data.shareUrl);
-        toast.success(t('reports.toast.shareLinkCopied', 'Link do udostępniania skopiowany'));
+        toast.success(t('reports.toast.shareLinkCopied', 'Share link copied'));
       }
     } catch (error) {
-      toast.error(t('reports.toast.shareLinkError', 'Nie udało się utworzyć linku'));
+      toast.error(t('reports.toast.shareLinkError', 'Could not create the link'));
     }
   }, []);
 
@@ -710,7 +711,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
     setOpenDocuments((prev) => [...prev, doc]);
     setActiveDocumentId(report.id);
-    toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie!'));
+    toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
   }, []);
 
   // Render report preview
@@ -730,7 +731,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       case 'RAID':
         return <RaidReport report={currentReport} />;
       default:
-        return <div className="p-6 text-slate-600">Nieznany typ raportu</div>;
+        return <div className="p-6 text-slate-600">{t('reports.management.reportsHub.unknownReportType', 'Unknown report type')}</div>;
     }
   };
 
@@ -839,7 +840,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       {t('reports.col.generated', 'Generated')}
                     </dt>
                     <dd className="text-slate-700 dark:text-slate-200 text-right">
-                      {new Date(item.createdAt).toLocaleString('pl-PL')}
+                      {formatListDateTime(item.createdAt)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
@@ -898,13 +899,13 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                         periodEnd: item.periodEnd,
                       },
                     });
-                    toast.success(t('reports.toast.chatOpened', 'Otwarto czat dla tego raportu'), {
+                    toast.success(t('reports.toast.chatOpened', 'Chat opened for this report'), {
                       duration: 1500,
                       icon: '💬',
                     });
                   } catch (err) {
                     console.error('[ReportsHub] Failed to open chat:', err);
-                    toast.error(t('reports.toast.chatOpenError', 'Nie udało się otworzyć czatu'));
+                    toast.error(t('reports.toast.chatOpenError', 'Could not open the chat'));
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-full border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
@@ -1040,7 +1041,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewReport}
-        newItemLabel={t('reports.actions.newReport', 'Nowy raport')}
+        newItemLabel={t('reports.actions.newReport', 'New report')}
         viewModes={['table']}
       >
         {renderContent()}

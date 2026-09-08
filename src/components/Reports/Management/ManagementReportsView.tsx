@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
@@ -43,6 +42,8 @@ import { ReportTemplatesView } from './ReportTemplatesView';
 // Import sub-components
 import { ReportTypeSelector } from './ReportTypeSelector';
 import { ReportSkeleton } from './shared/ReportSkeleton';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 // Lazy load report components for better performance
 const TeamMeetingReport = lazy(() =>
@@ -67,24 +68,42 @@ export const ManagementReportCard: React.FC<{
   onShare: () => Promise<{ shareUrl: string; expiresAt: string }>;
   children: React.ReactNode;
 }> = ({ report, onBack, onExportPDF, onExportPPTX, onShare, children }) => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('report');
   const sections: StandardSekcjaDef[] = MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
     ...item,
     component: children,
     aiContract: { none: true as const, reason: item.aiReason },
   }));
-  const reportTypeLabel: Record<string, string> = { TEAM_MEETING: 'Spotkanie zespołu', TEAM_WEEKLY: 'Raport tygodniowy zespołu', STEERING_COMMITTEE: 'Komitet sterujący', PORTFOLIO_HEALTH: 'Zdrowie portfela', RAID: 'RAID' };
-  const scopeLabel: Record<string, string> = { PORTFOLIO: 'Portfel', PROJECT: 'Projekt', ORGANIZATION: 'Organizacja' };
-  const statusLabel: Record<string, string> = { DRAFT: 'Szkic', FINAL: 'Finalny', APPROVED: 'Zatwierdzony', ARCHIVED: 'Zarchiwizowany' };
-  const rightPanel = {
-    actions: { label: 'Akcje', children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>Eksportuj PDF</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>Eksportuj PPTX</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>Udostępnij link</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
-    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'type', label: 'Typ', value: reportTypeLabel[report.reportType] ?? report.reportType }, { id: 'scope', label: 'Zakres', value: scopeLabel[report.scope] ?? report.scope }, { id: 'status', label: 'Status', value: statusLabel[report.status] ?? report.status }, { id: 'period', label: 'Okres', value: `${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodStart))} – ${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodEnd))}`, mono: true }, { id: 'author', label: 'Autor', value: report.generatedByName || '—' }]} /> },
-    relations: { pominieta: true as const, reason: 'Raport nie deklaruje czytelnych powiązań biznesowych.' },
-    evidence: report.aiWarnings?.length ? { label: 'Źródła i założenia', children: <ul className="list-disc pl-4 text-sm">{report.aiWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> } : { pominieta: true as const, reason: 'Brak zapisanych źródeł i założeń.' },
-    comments: { pominieta: true as const, reason: 'Raport zarządczy nie ma wątku komentarzy.' },
-    history: { label: 'Historia', children: <p className="text-sm">Utworzono {new Intl.DateTimeFormat('pl-PL').format(new Date(report.createdAt))} · wersja {report.currentVersion ?? 1}</p> },
+  // Słownik enumów module-scope (wzór J7b): wartość bazy NIGDY nie trafia na
+  // ekran surowa, a etykieta ma angielski default — konto EN nie zobaczy polskiego.
+  const reportTypeLabel: Record<string, string> = {
+    TEAM_MEETING: t('reports.management.type.teamMeeting', 'Team meeting'),
+    TEAM_WEEKLY: t('reports.management.type.teamWeekly', 'Weekly team report'),
+    STEERING_COMMITTEE: t('reports.management.type.steeringCommittee', 'Steering committee'),
+    PORTFOLIO_HEALTH: t('reports.management.type.portfolioHealth', 'Portfolio health'),
+    RAID: 'RAID',
   };
-  return <div className="h-full min-h-0"><StandardArtifactShell karta="management-report" klasa="L" header={{ title: report.title, onTitleChange: () => undefined, titleReadOnly: true, artifactType: 'document' as any, artifactId: report.id, onSave: () => undefined, saveState: 'saved', onClose: onBack, statusLabel: report.status, statusTone: report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft' }} primaryAction={{ intentionallyNone: true, reason: 'Eksport i udostępnianie są w sekcji Akcje.' }} sections={sections} rightPanel={rightPanel} activeSection={activeSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={() => undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={activeSection} onSectionChange={setActiveSection} readMode ai={{ onAnalizuj: () => toast('Raport zawiera analizę z chwili wygenerowania; ponowna analiza wymaga nowego raportu.'), kontekstArtefaktu: { title: report.title, status: report.status, type: 'management-report' }, moznaEdytowac: false, powodTylkoOdczyt: 'raport jest wynikiem generatora i nie ma pól do uzupełnienia' }} />} panelAriaLabel="Szczegóły raportu zarządczego" /></div>;
+  const scopeLabel: Record<string, string> = {
+    PORTFOLIO: t('reports.management.scope.portfolio', 'Portfolio'),
+    PROJECT: t('reports.management.scope.project', 'Project'),
+    ORGANIZATION: t('reports.management.scope.organization', 'Organisation'),
+  };
+  const statusLabel: Record<string, string> = {
+    DRAFT: t('reports.management.status.draft', 'Draft'),
+    FINAL: t('reports.management.status.final', 'Final'),
+    APPROVED: t('reports.management.status.approved', 'Approved'),
+    ARCHIVED: t('reports.management.status.archived', 'Archived'),
+  };
+  const rightPanel = {
+    actions: { label: t('reports.management.panel.actions', 'Actions'), children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>{t('reports.management.panel.exportPdf', 'Export PDF')}</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>{t('reports.management.panel.exportPptx', 'Export PPTX')}</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>{t('reports.management.managementReportsView.shareLink', 'Share link')}</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
+    properties: { label: t('reports.management.panel.properties', 'Properties'), children: <ArtifactPropertiesTable propertyLabel={t('reports.management.panel.property', 'Property')} valueLabel={t('reports.management.panel.value', 'Value')} rows={[{ id: 'type', label: t('reports.management.panel.type', 'Type'), value: reportTypeLabel[report.reportType] ?? report.reportType }, { id: 'scope', label: t('reports.management.panel.scope', 'Scope'), value: scopeLabel[report.scope] ?? report.scope }, { id: 'status', label: t('reports.management.panel.status', 'Status'), value: statusLabel[report.status] ?? report.status }, { id: 'period', label: t('reports.management.panel.period', 'Period'), value: `${formatListDate(report.periodStart)} – ${formatListDate(report.periodEnd)}`, mono: true }, { id: 'author', label: t('reports.management.panel.author', 'Author'), value: report.generatedByName || '—' }]} /> },
+    relations: { pominieta: true as const, reason: t('reports.management.panel.noRelations', 'This report declares no readable business relations.') },
+    evidence: report.aiWarnings?.length ? { label: t('reports.management.panel.evidence', 'Sources and assumptions'), children: <ul className="list-disc pl-4 text-sm">{report.aiWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> } : { pominieta: true as const, reason: t('reports.management.panel.noEvidence', 'No sources or assumptions were recorded.') },
+    comments: { pominieta: true as const, reason: t('reports.management.panel.noComments', 'A management report has no comment thread.') },
+    history: { label: t('reports.management.panel.history', 'History'), children: <p className="text-sm">{t('reports.management.panel.createdVersion', 'Created {{date}} · version {{version}}', { date: formatListDate(report.createdAt), version: report.currentVersion ?? 1 })}</p> },
+  };
+  return <div className="h-full min-h-0"><StandardArtifactShell karta="management-report" klasa="L" header={{ title: report.title, onTitleChange: () => undefined, titleReadOnly: true, artifactType: 'document' as any, artifactId: report.id, onSave: () => undefined, saveState: 'saved', onClose: onBack, statusLabel: report.status, statusTone: report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft' }} primaryAction={{ intentionallyNone: true, reason: t('reports.management.panel.primaryActionReason', 'Export and sharing live in the Actions section.') }} sections={sections} rightPanel={rightPanel} activeSection={activeSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={() => undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={activeSection} onSectionChange={setActiveSection} readMode ai={{ onAnalizuj: () => toast(t('reports.management.panel.reanalyzeBlocked', 'This report holds the analysis from the moment it was generated; a fresh analysis needs a new report.')), kontekstArtefaktu: { title: report.title, status: report.status, type: 'management-report' }, moznaEdytowac: false, powodTylkoOdczyt: t('reports.management.panel.readOnlyReason', 'the report is generator output and has no fields to fill in') }} />} panelAriaLabel={t('reports.management.panel.ariaLabel', 'Management report details')} /></div>;
 };
 
 export const normalizeManagementReportProjects = (
@@ -185,7 +204,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       setHistoryTotal(response.data?.total || 0);
     } catch (error) {
       console.error('Failed to load report history:', error);
-      toast.error(t('reports.toast.loadHistoryError', 'Nie udało się załadować historii'));
+      toast.error(t('reports.toast.loadHistoryError', 'Could not load the history'));
     } finally {
       setHistoryLoading(false);
     }
@@ -200,7 +219,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
   // Generate report
   const handleGenerateReport = useCallback(async () => {
     if (scope === 'PROJECT' && !selectedProjectId) {
-      toast.error(t('reports.toast.selectProject', 'Wybierz projekt'));
+      toast.error(t('reports.toast.selectProject', 'Select a project'));
       return;
     }
 
@@ -220,7 +239,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       if (response.data?.report) {
         setCurrentReport(response.data.report);
         setViewMode('preview');
-        toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie!'));
+        toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
 
         if (scheduleMode === 'RECURRING') {
           try {
@@ -245,7 +264,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             toast.error(
               t(
                 'reports.toast.scheduleError',
-                'Raport wygenerowany, ale harmonogram nie został utworzony'
+                'Report generated, but the schedule was not created'
               )
             );
           }
@@ -254,7 +273,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
     } catch (error: any) {
       console.error('Report generation failed:', error);
       toast.error(
-        error.message || t('reports.toast.generateFailed', 'Nie udało się wygenerować raportu')
+        error.message || t('reports.toast.generateFailed', 'Could not generate the report')
       );
     } finally {
       setGenerating(false);
@@ -309,7 +328,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         setViewMode('preview');
       }
     } catch (error) {
-      toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
+      toast.error(t('reports.toast.loadReportError', 'Could not load the report'));
     }
   };
 
@@ -333,7 +352,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 Management Reports
               </h1>
               <p className="text-sm text-c-text-muted mt-1">
-                Generate Team Meeting and Steering Committee reports
+                {t('reports.management.managementReportsView.generateTeamMeetingAndSteering', 'Generate Team Meeting and Steering Committee reports')}
               </p>
             </div>
           </div>
@@ -369,7 +388,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:opacity-90 text-white rounded-lg font-medium transition-colors"
               >
                 <Plus size={18} />
-                <span>New Report</span>
+                <span>{t('reports.management.managementReportsView.newReport', 'New Report')}</span>
               </button>
             )}
           </div>
@@ -383,13 +402,12 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles size={20} className="text-c-accent" />
-                <h2 className="text-lg font-semibold text-c-text">Generate New Report</h2>
+                <h2 className="text-lg font-semibold text-c-text">{t('reports.management.managementReportsView.generateNewReport', 'Generate New Report')}</h2>
               </div>
 
               {projectsLoadError && (
                 <div role="alert" className="mb-4 text-sm text-red-600 dark:text-red-300">
-                  Failed to load projects. Report generation is unavailable until projects can be
-                  loaded.
+                  {t('reports.management.managementReportsView.failedToLoadProjectsReport', 'Failed to load projects. Report generation is unavailable until projects can be\n                  loaded.')}
                 </div>
               )}
 
@@ -516,7 +534,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       ) : (
                         <div>
                           <label className="block text-xs text-c-text-muted mb-1">
-                            Day of month
+                            {t('reports.management.managementReportsView.dayOfMonth', 'Day of month')}
                           </label>
                           <input
                             type="number"
@@ -583,7 +601,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </button>
 
                 <p className="mt-4 text-center text-sm text-c-text-muted">
-                  AI will analyze your data and generate a comprehensive report with insights.
+                  {t('reports.management.managementReportsView.aiWillAnalyzeYourData', 'AI will analyze your data and generate a comprehensive report with insights.')}
                 </p>
               </div>
             </div>
@@ -648,12 +666,12 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                     if (res.data?.shareUrl) {
                       navigator.clipboard.writeText(window.location.origin + res.data.shareUrl);
                       toast.success(
-                        t('reports.toast.shareLinkCopied', 'Link do udostępniania skopiowany')
+                        t('reports.toast.shareLinkCopied', 'Share link copied')
                       );
                     }
                   })
                   .catch(() =>
-                    toast.error(t('reports.toast.shareLinkError', 'Nie udało się utworzyć linku'))
+                    toast.error(t('reports.toast.shareLinkError', 'Could not create the link'))
                   );
               }}
             />
@@ -690,7 +708,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </div>
               </div>
               <p className="text-xs text-c-text-muted">
-                Settings are applied when creating new reports or schedules.
+                {t('reports.management.managementReportsView.settingsAreAppliedWhenCreating', 'Settings are applied when creating new reports or schedules.')}
               </p>
             </div>
           </div>

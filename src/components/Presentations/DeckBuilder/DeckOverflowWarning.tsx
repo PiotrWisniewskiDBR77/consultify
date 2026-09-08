@@ -2,6 +2,7 @@ import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 
 import type { PresentationOverflowWarning } from '@/services/presentationExport';
+import { useTranslation } from 'react-i18next';
 
 interface DeckOverflowWarningProps {
   warnings: PresentationOverflowWarning[];
@@ -26,6 +27,7 @@ export function DeckOverflowWarning({
   onContinueExport,
   onCancel,
 }: DeckOverflowWarningProps) {
+  const { t } = useTranslation();
   if (warnings.length === 0) return null;
   const first = warnings[0];
   // FIX-230 F7: `pewnosc` was computed by the detector and thrown away —
@@ -59,10 +61,10 @@ export function DeckOverflowWarning({
         className="rounded-md bg-c-text px-3 py-1.5 text-sm font-medium text-c-surface"
         onClick={onContinueExport}
       >
-        Eksportuj mimo ostrzeżenia
+        {t('presentations.builder.deckOverflowWarning.exportDespiteTheWarning', 'Export despite the warning')}
       </button>
       <button type="button" className="text-sm text-c-text-secondary" onClick={onCancel}>
-        Anuluj
+        {t('presentations.builder.deckOverflowWarning.cancel', 'Cancel')}
       </button>
     </div>
   );

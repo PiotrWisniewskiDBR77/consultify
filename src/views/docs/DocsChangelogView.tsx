@@ -28,6 +28,8 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/primitives/Button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -341,11 +343,7 @@ function ReleaseCard({ release }: { release: Release }) {
           <div className="flex items-center gap-4 text-xs text-c-text-muted">
             <span className="flex items-center gap-1">
               <Calendar size={12} />
-              {new Date(release.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {formatListDate(release.date)}
             </span>
             {featureCount > 0 && <span className="text-green-400">{featureCount} features</span>}
             {improvementCount > 0 && (
@@ -401,6 +399,7 @@ function ReleaseCard({ release }: { release: Release }) {
 // ============================================
 
 export function DocsChangelogView() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'major' | 'breaking'>('all');
 
   const filteredReleases = RELEASES.filter((release) => {
@@ -424,7 +423,7 @@ export function DocsChangelogView() {
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Changelog</h1>
             <p className="text-xl text-c-text-secondary max-w-2xl mx-auto mb-8">
-              Track all updates, new features, and improvements to the Consultify platform.
+              {t('docs.docsChangelogView.trackAllUpdatesNewFeatures', 'Track all updates, new features, and improvements to the Consultify platform.')}
             </p>
 
             {/* Subscribe Button */}
@@ -484,7 +483,7 @@ export function DocsChangelogView() {
             className="inline-flex items-center gap-2 text-c-accent hover:text-c-accent/80 transition-colors"
           >
             <ArrowRight size={16} />
-            Back to Documentation Home
+            {t('docs.docsChangelogView.backToDocumentationHome', 'Back to Documentation Home')}
           </Link>
         </div>
       </div>

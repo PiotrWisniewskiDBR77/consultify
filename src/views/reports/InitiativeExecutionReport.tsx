@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 
 interface Task {
   id: string;
@@ -152,7 +153,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
             </p>
           )}
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('reports.generatedAt')}: {new Date(report.generatedAt).toLocaleString()}
+            {t('reports.generatedAt')}: {formatListDateTime(report.generatedAt)}
           </p>
         </div>
 
@@ -194,7 +195,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span>
-              {t('reports.dueDate')}: {new Date(report.initiative.dueDate).toLocaleDateString()}
+              {t('reports.dueDate')}: {formatListDate(report.initiative.dueDate)}
             </span>
           </div>
         )}
@@ -282,7 +283,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   {deadline.assignee && <span>{deadline.assignee}</span>}
                   <span className="font-medium text-amber-600 dark:text-amber-400">
-                    {new Date(deadline.dueDate).toLocaleDateString()}
+                    {formatListDate(deadline.dueDate)}
                   </span>
                 </div>
               </div>
@@ -324,7 +325,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 {task.assignee && <span>{task.assignee}</span>}
-                {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
+                {task.dueDate && <span>{formatListDate(task.dueDate)}</span>}
                 <span className="font-medium">{task.progress}%</span>
               </div>
             </div>

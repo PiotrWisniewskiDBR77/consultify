@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface RecommendationAttrs {
   title: string;
@@ -32,40 +33,40 @@ interface RecommendationAttrs {
   axisId?: string;
 }
 
-const PRIORITY_STYLES = {
+const priorityStyles = (t: (key: string, defaultValue: string) => string) => ({
   critical: {
     badge: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     border: 'border-l-danger-500',
-    label: 'Krytyczny',
+    label: t('reports.premium.recommendationCard.critical', 'Critical'),
   },
   high: {
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     border: 'border-l-amber-500',
-    label: 'Wysoki',
+    label: t('reports.premium.recommendationCard.high', 'High'),
   },
   medium: {
     badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     border: 'border-l-yellow-500',
-    label: 'Średni',
+    label: t('reports.premium.recommendationCard.medium', 'Medium'),
   },
   low: {
     badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     border: 'border-l-green-500',
-    label: 'Niski',
+    label: t('reports.premium.recommendationCard.low', 'Low'),
   },
-};
+});
 
-const IMPACT_LABELS = {
+const impactLabels = (t: (key: string, defaultValue: string) => string) => ({
   high: { label: 'Wysoki', color: 'text-green-600' },
-  medium: { label: 'Średni', color: 'text-yellow-600' },
+  medium: { label: t('reports.premium.recommendationCard.medium2', 'Medium'), color: 'text-yellow-600' },
   low: { label: 'Niski', color: 'text-slate-500 dark:text-slate-400' },
-};
+});
 
-const EFFORT_LABELS = {
-  high: { label: 'Duży', color: 'text-danger-500' },
-  medium: { label: 'Średni', color: 'text-yellow-600' },
-  low: { label: 'Mały', color: 'text-green-600' },
-};
+const effortLabels = (t: (key: string, defaultValue: string) => string) => ({
+  high: { label: t('reports.premium.recommendationCard.high', 'High'), color: 'text-danger-500' },
+  medium: { label: t('reports.premium.recommendationCard.medium3', 'Medium'), color: 'text-yellow-600' },
+  low: { label: t('reports.premium.recommendationCard.low', 'Low'), color: 'text-green-600' },
+});
 
 // React component
 const RecommendationCardComponent: React.FC<NodeViewProps> = ({
@@ -73,15 +74,16 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
   updateAttributes,
   selected,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
   const attrs = node.attrs as RecommendationAttrs;
   const [editForm, setEditForm] = useState(attrs);
 
-  const priorityStyle = PRIORITY_STYLES[attrs.priority || 'medium'];
-  const impactStyle = IMPACT_LABELS[attrs.impact || 'medium'];
-  const effortStyle = EFFORT_LABELS[attrs.effort || 'medium'];
+  const priorityStyle = priorityStyles(t)[attrs.priority || 'medium'];
+  const impactStyle = impactLabels(t)[attrs.impact || 'medium'];
+  const effortStyle = effortLabels(t)[attrs.effort || 'medium'];
 
   const handleSave = () => {
     updateAttributes(editForm);
@@ -101,7 +103,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
         // Edit Mode
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-slate-900 dark:text-white">Edytuj Rekomendację</h4>
+            <h4 className="font-semibold text-slate-900 dark:text-white">{t('reports.premium.recommendationCard.editTheRecommendation', 'Edit the recommendation')}</h4>
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
@@ -121,7 +123,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Tytuł
+                {t('reports.premium.recommendationCard.title', 'Title')}
               </label>
               <input
                 type="text"
@@ -159,14 +161,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
               >
                 <option value="critical">Krytyczny</option>
                 <option value="high">Wysoki</option>
-                <option value="medium">Średni</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
                 <option value="low">Niski</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Wpływ
+                {t('reports.premium.recommendationCard.impact', 'Impact')}
               </label>
               <select
                 value={editForm.impact}
@@ -179,14 +181,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
                 <option value="high">Wysoki</option>
-                <option value="medium">Średni</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
                 <option value="low">Niski</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Nakład pracy
+                {t('reports.premium.recommendationCard.effort', 'Effort')}
               </label>
               <select
                 value={editForm.effort}
@@ -198,9 +200,9 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 }
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
-                <option value="low">Mały</option>
-                <option value="medium">Średni</option>
-                <option value="high">Duży</option>
+                <option value="low">{t('reports.premium.recommendationCard.low', 'Low')}</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
+                <option value="high">{t('reports.premium.recommendationCard.high', 'High')}</option>
               </select>
             </div>
 
@@ -232,7 +234,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Właściciel
+                {t('reports.premium.recommendationCard.owner', 'Owner')}
               </label>
               <input
                 type="text"
@@ -296,14 +298,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="text-xs">Wpływ</span>
+                    <span className="text-xs">{t('reports.premium.recommendationCard.impact', 'Impact')}</span>
                   </div>
                   <span className={`font-semibold ${impactStyle.color}`}>{impactStyle.label}</span>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <Clock className="w-4 h-4" />
-                    <span className="text-xs">Nakład</span>
+                    <span className="text-xs">{t('reports.premium.recommendationCard.effort2', 'Effort')}</span>
                   </div>
                   <span className={`font-semibold ${effortStyle.color}`}>{effortStyle.label}</span>
                 </div>

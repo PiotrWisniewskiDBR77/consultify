@@ -67,7 +67,7 @@ import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCount
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import {
   TEMPLATE_SCOPE_ORDER,
-  TEMPLATE_TYPE_LABEL_PLURAL,
+  templateTypeLabelPlural,
   TEMPLATE_TYPE_ORDER,
   templateScopeLabel,
 } from './TemplatesGalleryView';
@@ -144,7 +144,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        aria-label={t('rap.templatesLauncher.moreOptions', 'Więcej opcji tworzenia szablonów')}
+        aria-label={t('rap.templatesLauncher.moreOptions', 'More ways to create templates')}
         aria-expanded={isOpen}
         data-testid="templates-new-split-toggle"
         className={`${ctaBase} rounded-r-lg border-l border-white/20 px-2 dark:border-navy-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
@@ -172,7 +172,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
             >
               <Wand2 size={14} className="shrink-0 text-c-text-muted" />
               <span>
-                {t('rap.templatesLauncher.openDeckArchitect', 'Architekt szablonów (Prezentacja)')}
+                {t('rap.templatesLauncher.openDeckArchitect', 'Template Architect (Presentation)')}
               </span>
             </button>
           )}
@@ -458,17 +458,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'document' as MaterialFormat,
         icon: FileText,
-        title: t('rap.materialsLauncher.document', 'Dokument'),
+        title: t('rap.materialsLauncher.document', 'Document'),
       },
       {
         id: 'presentation' as MaterialFormat,
         icon: Presentation,
-        title: t('rap.materialsLauncher.presentation', 'Prezentacja'),
+        title: t('rap.materialsLauncher.presentation', 'Presentation'),
       },
       {
         id: 'spreadsheet' as MaterialFormat,
         icon: FileSpreadsheet,
-        title: t('rap.materialsLauncher.spreadsheet', 'Arkusz Excel'),
+        title: t('rap.materialsLauncher.spreadsheet', 'Excel spreadsheet'),
       },
     ],
     [t]
@@ -482,20 +482,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         title: t('rap.materialsLauncher.blankTitle', 'Czysto'),
         desc: t(
           'rap.materialsLauncher.blankDesc',
-          'Ręczny start — pusty artefakt w edytorze, bez AI.'
+          'Manual start — an empty artifact in the editor, no AI.'
         ),
       },
       {
         id: 'ai' as MaterialStart,
         icon: Sparkles,
         title: t('rap.materialsLauncher.aiTitle', 'Z AI'),
-        desc: t('rap.materialsLauncher.aiDesc', 'Opisz brief — AI zbuduje pierwszą wersję.'),
+        desc: t('rap.materialsLauncher.aiDesc', 'Describe the brief — AI will build the first draft.'),
       },
       {
         id: 'from_template' as MaterialStart,
         icon: LayoutTemplate,
         title: t('rap.materialsLauncher.templateTitle', 'Z szablonu'),
-        desc: t('rap.materialsLauncher.templateDesc', 'Wybierz istniejący szablon i dostosuj.'),
+        desc: t('rap.materialsLauncher.templateDesc', 'Pick an existing template and adjust it.'),
       },
     ],
     [t]
@@ -551,7 +551,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'presentation' as TemplateFormat,
         icon: Presentation,
-        title: t('rap.templatesLauncher.presentation', 'Prezentacja'),
+        title: t('rap.templatesLauncher.presentation', 'Presentation'),
       },
       {
         id: 'spreadsheet' as TemplateFormat,
@@ -568,19 +568,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         id: 'blank' as TemplateStart,
         icon: PenLine,
         title: t('rap.templatesLauncher.blankTitle', 'Od czystego'),
-        desc: t('rap.templatesLauncher.blankDesc', 'Nowy szablon od zera w architekcie.'),
+        desc: t('rap.templatesLauncher.blankDesc', 'A brand-new template built from scratch in the architect.'),
       },
       {
         id: 'ai' as TemplateStart,
         icon: Sparkles,
         title: t('rap.templatesLauncher.aiTitle', 'Z AI'),
-        desc: t('rap.templatesLauncher.aiDesc', 'Opisz szablon — architekt zaplanuje strukturę.'),
+        desc: t('rap.templatesLauncher.aiDesc', 'Describe the template — the architect will plan the structure.'),
       },
       {
         id: 'from_existing' as TemplateStart,
         icon: LayoutTemplate,
-        title: t('rap.templatesLauncher.existingTitle', 'Na bazie istniejącego'),
-        desc: t('rap.templatesLauncher.existingDesc', 'Sklonuj zatwierdzony szablon i dostosuj.'),
+        title: t('rap.templatesLauncher.existingTitle', 'Based on an existing one'),
+        desc: t('rap.templatesLauncher.existingDesc', 'Clone an approved template and adjust it.'),
       },
     ],
     [t]
@@ -922,11 +922,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             type="button"
             onClick={() => setTemplateProvenanceOpen(true)}
             className={`${chipBase} bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-            title={t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}
+            title={t('rap.templates.provenanceQueue', 'Provenance and rights')}
             data-testid="materials-provenance-btn"
           >
             <ShieldCheck size={16} />
-            <span>{t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}</span>
+            <span>{t('rap.templates.provenanceQueue', 'Provenance and rights')}</span>
           </button>
         ) : null}
         <Menu2PresetDropdown
@@ -981,13 +981,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           <div
             data-testid="templates-gallery-view-toggle"
             role="group"
-            aria-label={t('rap.templates.viewToggle', 'Widok biblioteki wzorców')}
+            aria-label={t('rap.templates.viewToggle', 'Template library view')}
             className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
           >
             {(
               [
                 ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
-                ['table', Table2, t('rap.templates.viewTable', 'Tabela')],
+                ['table', Table2, t('rap.templates.viewTable', 'Table')],
               ] as const
             ).map(([id, Icon, label]) => (
               <button
@@ -1149,7 +1149,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onClick={() => setSinglePreset('type', null)}
             data-testid="materials-menu3-chip-all"
           >
-            {t('rap.templates.allFormats', 'Wszystkie formaty')}
+            {t('rap.templates.allFormats', 'All formats')}
             <Menu3Badge count={typeCount(null)} active={!currentType} />
           </Menu3Chip>
           {TEMPLATE_TYPE_ORDER.map((type) => (
@@ -1160,12 +1160,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 setSinglePreset(
                   'type',
                   currentType === type ? null : type,
-                  TEMPLATE_TYPE_LABEL_PLURAL[type]
+                  templateTypeLabelPlural(t)[type]
                 )
               }
               data-testid={`materials-menu3-chip-type-${type}`}
             >
-              {TEMPLATE_TYPE_LABEL_PLURAL[type]}
+              {templateTypeLabelPlural(t)[type]}
               <Menu3Badge count={typeCount(type)} active={currentType === type} />
             </Menu3Chip>
           ))}
@@ -1175,7 +1175,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onClick={() => setSinglePreset('scope', null)}
             data-testid="materials-menu3-chip-all-scopes"
           >
-            {t('rap.templates.allScopes', 'Wszystkie źródła')}
+            {t('rap.templates.allScopes', 'All sources')}
             <Menu3Badge count={scopeCount(null)} active={!currentScope} />
           </Menu3Chip>
           {TEMPLATE_SCOPE_ORDER.map((scope) => (
@@ -1303,7 +1303,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         data-testid={testId}
       >
         <ArrowLeft size={14} />
-        {t('rap.templates.backToLibrary', 'Szablony')}
+        {t('rap.templates.backToLibrary', 'Templates')}
       </button>
     </div>
   );
@@ -1440,7 +1440,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
    * (nie literal `true`) świadomie: to jeden przełącznik do odmrożenia w Fali 2.
    */
   const TEMPLATES_CTA_FROZEN: boolean = true;
-  const TEMPLATES_CTA_FROZEN_REASON = t('rap.templates.ctaFrozen', 'Tworzenie wzorców w fali 2');
+  const TEMPLATES_CTA_FROZEN_REASON = t('rap.templates.ctaFrozen', 'Template creation lands in wave 2');
 
   const templatesLibraryCta =
     !TEMPLATES_CTA_FROZEN && activeTab === 'templates' && templatesView === 'library'
@@ -1520,11 +1520,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       <CreateFormatModeLauncher<MaterialFormat, MaterialStart>
         isOpen={materialsLauncherOpen}
         onClose={() => setMaterialsLauncherOpen(false)}
-        title={t('rap.materialsLauncher.title', 'Nowy materiał')}
-        stepOneHint={t('rap.materialsLauncher.subtitle', 'Wybierz format')}
-        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'Jak chcesz zacząć?')}
+        title={t('rap.materialsLauncher.title', 'New material')}
+        stepOneHint={t('rap.materialsLauncher.subtitle', 'Pick a format')}
+        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'How would you like to start?')}
         stepTwoHint={() =>
-          t('rap.materialsLauncher.modeHint', 'Wybierz tryb — wszystkie trzy są równorzędne.')
+          t('rap.materialsLauncher.modeHint', 'Pick a mode — all three are equal.')
         }
         formatTiles={materialsFormatTiles}
         modeTiles={materialsModeTiles}
@@ -1538,11 +1538,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       <CreateFormatModeLauncher<TemplateFormat, TemplateStart>
         isOpen={templateLauncherOpen}
         onClose={() => setTemplateLauncherOpen(false)}
-        title={t('rap.templatesLauncher.title', 'Nowy szablon')}
-        stepOneHint={t('rap.templatesLauncher.subtitle', 'Wybierz typ szablonu')}
-        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'Jak chcesz zacząć?')}
+        title={t('rap.templatesLauncher.title', 'New template')}
+        stepOneHint={t('rap.templatesLauncher.subtitle', 'Pick a template type')}
+        stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'How would you like to start?')}
         stepTwoHint={() =>
-          t('rap.materialsLauncher.modeHint', 'Wybierz tryb — wszystkie trzy są równorzędne.')
+          t('rap.materialsLauncher.modeHint', 'Pick a mode — all three are equal.')
         }
         formatTiles={templateFormatTiles}
         modeTiles={templateModeTiles}
@@ -1575,7 +1575,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               toast.success(
                 t(
                   'rap.templateBuilder.savedBuildNow',
-                  'Szablon zapisany — wybierz „Zbuduj skoroszyt”'
+                  'Template saved — pick "Build workbook"'
                 )
               );
               void fetchTemplates();

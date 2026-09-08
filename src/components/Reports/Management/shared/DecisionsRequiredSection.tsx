@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../../utils/listDateFormat';
 
 export interface DecisionRequiredItem {
   id: string;
@@ -182,7 +183,7 @@ const DecisionCard: React.FC<{
           ) : decision.deadline ? (
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <Calendar size={14} />
-              Due: {new Date(decision.deadline).toLocaleDateString()}
+              Due: {formatListDate(decision.deadline)}
             </span>
           ) : null}
         </div>

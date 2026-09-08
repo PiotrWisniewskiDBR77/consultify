@@ -13,7 +13,7 @@
  * Te testy bronią ZABEZPIECZENIA, nie scenariusza:
  *   1. w StrictMode powstaje realny dokument, a strumień NIE jest używany;
  *   2. odmontowanie w trakcie tworzenia nie unieważnia żądania;
- *   3. porażka zostawia trwały, wychodzalny stan z „Spróbuj ponownie",
+ *   3. porażka zostawia trwały, wychodzalny stan z „Try again",
  *      a nie niemy komunikat.
  */
 
@@ -120,7 +120,7 @@ describe('DocumentStudioView — tryb „Czysto" (?entry=blank)', () => {
     ).not.toThrow();
   });
 
-  it('porażka daje trwały polski komunikat i „Spróbuj ponownie" zamiast ciszy', async () => {
+  it('porażka daje trwały polski komunikat i „Try again" zamiast ciszy', async () => {
     generateMock.mockRejectedValueOnce(new Error('Serwer odmówił utworzenia dokumentu'));
 
     renderBlank(false);
@@ -133,7 +133,7 @@ describe('DocumentStudioView — tryb „Czysto" (?entry=blank)', () => {
       schema,
       generationWarnings: [],
     });
-    fireEvent.click(screen.getByRole('button', { name: /Spróbuj ponownie/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
     await screen.findByTestId('document-panel');
   });
 });

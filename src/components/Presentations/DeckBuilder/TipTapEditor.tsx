@@ -23,6 +23,7 @@ import {
   Strikethrough,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TipTapEditorProps {
   content: string;
@@ -43,6 +44,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
   headingLevel,
   isHeading = false,
 }) => {
+  const { t } = useTranslation();
   const [showToolbar, setShowToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -135,14 +137,14 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive('strike')}
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            title="Przekreślenie"
+            title={t('presentations.builder.tipTapEditor.strikethrough', 'Strikethrough')}
           >
             <Strikethrough size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('highlight')}
             onClick={() => editor.chain().focus().toggleHighlight().run()}
-            title="Wyróżnienie"
+            title={t('presentations.builder.tipTapEditor.highlight', 'Highlight')}
           >
             <Highlighter size={14} />
           </ToolbarBtn>
@@ -165,21 +167,21 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'left' })}
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            title="Wyrównaj do lewej"
+            title={t('presentations.builder.tipTapEditor.alignLeft', 'Align left')}
           >
             <AlignLeft size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'center' })}
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            title="Wyrównaj do środka"
+            title={t('presentations.builder.tipTapEditor.alignCentre', 'Align centre')}
           >
             <AlignCenter size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'right' })}
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            title="Wyrównaj do prawej"
+            title={t('presentations.builder.tipTapEditor.alignRight', 'Align right')}
           >
             <AlignRight size={14} />
           </ToolbarBtn>
@@ -192,7 +194,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 editor.chain().focus().setLink({ href: url }).run();
               }
             }}
-            title="Odnośnik"
+            title={t('presentations.builder.tipTapEditor.link', 'Link')}
           >
             <LinkIcon size={14} />
           </ToolbarBtn>

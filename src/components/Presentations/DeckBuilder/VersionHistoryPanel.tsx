@@ -5,9 +5,10 @@
 
 import { Check, Clock, RotateCcw, Save, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { VersionSnapshot } from './useVersionHistory';
+import { useTranslation } from 'react-i18next';
+import { localeListy } from '../../../utils/listDateFormat';
 
 interface VersionHistoryPanelProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             value={checkpointName}
             onChange={(e) => setCheckpointName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSaveCheckpoint()}
-            placeholder="Nadaj nazwę tej wersji…"
+            placeholder={t('presentations.builder.versionHistoryPanel.nameThisVersion', 'Name this version…')}
             className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised outline-none focus:ring-1 focus:ring-c-focus"
           />
           <button
@@ -140,7 +141,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
         ) : versions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-c-text-secondary text-xs">
             <Clock size={16} className="mb-2 opacity-40" />
-            <p>Nie ma jeszcze zapisanych wersji</p>
+            <p>{t('presentations.builder.versionHistoryPanel.noSavedVersionsYet', 'No saved versions yet')}</p>
           </div>
         ) : (
           <div className="px-2 py-2 space-y-1">
@@ -207,7 +208,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 };
 
 function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  return new Date(timestamp).toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatTimeAgo(timestamp: number): string {

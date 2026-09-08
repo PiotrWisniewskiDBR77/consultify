@@ -1,0 +1,636 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-lista-wszystkie",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "02-dokumenty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New document"
+  ],
+  "uwaga": "zrzut z przebiegu dobiegowego (kotwica jezykowa nie przeszla w przebiegu glownym)"
+ },
+ {
+  "lang": "en",
+  "ekran": "03-prezentacje",
+  "napisowUi": 42,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "04-skoroszyty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "05-wzorce",
+  "napisowUi": 138,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 7,
+  "angielskie": [
+   "Open user profile menu",
+   "Provenance and rights",
+   "Unknown",
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "06-raporty",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "07-podglad-wiersza",
+  "napisowUi": 48,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "08-kebab",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "09-nowy-material",
+  "napisowUi": 55,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Open user profile menu"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "10-filtry-menu3",
+  "napisowUi": 43,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "11-wzorce-galeria",
+  "napisowUi": 138,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 7,
+  "angielskie": [
+   "Open user profile menu",
+   "Provenance and rights",
+   "Unknown",
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "12-pstryczek-kolumn",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "New presentation",
+   "Show row description"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "01-lista-wszystkie",
+  "napisowUi": 51,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowy materiał",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Sortuj według: Format",
+   "Filtruj Format, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Format",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "WIDOCZNOŚĆ",
+   "Zmień szerokość kolumny: Widoczność",
+   "ŹRÓDŁO",
+   "Zmień szerokość kolumny: źródło",
+   "PRZEGLĄD",
+   "Zmień szerokość kolumny: Przegląd",
+   "Zmień szerokość kolumny: Eksporty",
+   "Sortuj według: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "02-dokumenty",
+  "napisowUi": 51,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowy dokument",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Sortuj według: Format",
+   "Filtruj Format, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Format",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "WIDOCZNOŚĆ",
+   "Zmień szerokość kolumny: Widoczność",
+   "ŹRÓDŁO",
+   "Zmień szerokość kolumny: źródło",
+   "PRZEGLĄD",
+   "Zmień szerokość kolumny: Przegląd",
+   "Zmień szerokość kolumny: Eksporty",
+   "Sortuj według: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "03-prezentacje",
+  "napisowUi": 42,
+  "polskichUi": 23,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowa prezentacja",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "ŹRÓDŁO",
+   "Filtruj Źródło, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Źródło",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "Filtruj Tryb, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Tryb",
+   "Sortuj według: Data",
+   "Zmień szerokość kolumny: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "04-skoroszyty",
+  "napisowUi": 51,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowy arkusz",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Sortuj według: Format",
+   "Filtruj Format, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Format",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "WIDOCZNOŚĆ",
+   "Zmień szerokość kolumny: Widoczność",
+   "ŹRÓDŁO",
+   "Zmień szerokość kolumny: źródło",
+   "PRZEGLĄD",
+   "Zmień szerokość kolumny: Przegląd",
+   "Zmień szerokość kolumny: Eksporty",
+   "Sortuj według: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "05-wzorce",
+  "napisowUi": 140,
+  "polskichUi": 21,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widok biblioteki wzorców",
+   "Wszystkie formaty",
+   "Wszystkie źródła",
+   "Nieznany",
+   "Użyj wzorca",
+   "Podgląd",
+   "Podgląd struktury dokumentu, liczba sekcji: 8",
+   "Podgląd struktury dokumentu, liczba sekcji: 6",
+   "Podgląd struktury dokumentu, liczba sekcji: 7",
+   "Podgląd struktury dokumentu, liczba sekcji: 5",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Podgląd struktury dokumentu, liczba sekcji: 4",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "06-raporty",
+  "napisowUi": 51,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowy materiał",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Sortuj według: Format",
+   "Filtruj Format, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Format",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "WIDOCZNOŚĆ",
+   "Zmień szerokość kolumny: Widoczność",
+   "ŹRÓDŁO",
+   "Zmień szerokość kolumny: źródło",
+   "PRZEGLĄD",
+   "Zmień szerokość kolumny: Przegląd",
+   "Zmień szerokość kolumny: Eksporty",
+   "Sortuj według: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "07-podglad-wiersza",
+  "napisowUi": 48,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowa prezentacja",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "ŹRÓDŁO",
+   "Filtruj Źródło, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Źródło",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "Filtruj Tryb, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Tryb",
+   "Sortuj według: Data",
+   "Zmień szerokość kolumny: Data",
+   "Zamknij panel",
+   "Otwórz",
+   "Opcje szczegółów",
+   "Omów",
+   "Rozpocznij przegląd",
+   "Udostępnij"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "uwaga": "zrzut z przebiegu dobiegowego (kotwica jezykowa nie przeszla w przebiegu glownym)"
+ },
+ {
+  "lang": "pl",
+  "ekran": "08-kebab",
+  "napisowUi": 49,
+  "polskichUi": 28,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowa prezentacja",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "ŹRÓDŁO",
+   "Filtruj Źródło, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Źródło",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "Filtruj Tryb, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Tryb",
+   "Sortuj według: Data",
+   "Zmień szerokość kolumny: Data",
+   "Otwórz",
+   "Omów",
+   "Udostępnij",
+   "Otwórz podgląd",
+   "Edytuj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "09-nowy-material",
+  "napisowUi": 55,
+  "polskichUi": 29,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowy materiał",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Sortuj według: Format",
+   "Filtruj Format, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Format",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "WIDOCZNOŚĆ",
+   "Zmień szerokość kolumny: Widoczność",
+   "ŹRÓDŁO",
+   "Zmień szerokość kolumny: źródło",
+   "PRZEGLĄD",
+   "Zmień szerokość kolumny: Przegląd",
+   "Zmień szerokość kolumny: Eksporty",
+   "Sortuj według: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "10-filtry-menu3",
+  "napisowUi": 43,
+  "polskichUi": 23,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowa prezentacja",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "ŹRÓDŁO",
+   "Filtruj Źródło, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Źródło",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "Filtruj Tryb, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Tryb",
+   "Sortuj według: Data",
+   "Zmień szerokość kolumny: Data"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "11-wzorce-galeria",
+  "napisowUi": 140,
+  "polskichUi": 21,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widok biblioteki wzorców",
+   "Wszystkie formaty",
+   "Wszystkie źródła",
+   "Nieznany",
+   "Użyj wzorca",
+   "Podgląd",
+   "Podgląd struktury dokumentu, liczba sekcji: 8",
+   "Podgląd struktury dokumentu, liczba sekcji: 6",
+   "Podgląd struktury dokumentu, liczba sekcji: 7",
+   "Podgląd struktury dokumentu, liczba sekcji: 5",
+   "Aktualizacja dla komitetu sterującego (Steering Committee Update)",
+   "Podgląd struktury dokumentu, liczba sekcji: 4",
+   "Program — Raport 3 osi (czas × zadania × wartość)"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "[System] risk register report (EN)",
+   "[System] risk register report (PL)",
+   "Tool Comparison Report",
+   "Tool Evaluation Report"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "12-pstryczek-kolumn",
+  "napisowUi": 64,
+  "polskichUi": 33,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Wszystkie",
+   "Biblioteka wzorców",
+   "Widoczność",
+   "Nowa prezentacja",
+   "TYTUŁ",
+   "Zmień szerokość kolumny: Tytuł",
+   "ŹRÓDŁO",
+   "Filtruj Źródło, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Źródło",
+   "WŁAŚCICIEL",
+   "Zmień szerokość kolumny: Właściciel",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "Filtruj Tryb, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Tryb",
+   "Sortuj według: Data",
+   "Zmień szerokość kolumny: Data",
+   "Move Tytuł up",
+   "Move Tytuł down",
+   "Źródło",
+   "Move Źródło up",
+   "Move Źródło down",
+   "Właściciel",
+   "Move Właściciel up",
+   "Move Właściciel down",
+   "Przywróć domyślne",
+   "Pokaż opis / uzasadnienie"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ }
+]

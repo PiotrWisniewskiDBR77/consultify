@@ -20,6 +20,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface BlockInsertMenuProps {
   position: { x: number; y: number };
@@ -36,13 +37,13 @@ interface BlockOption {
   category: 'data' | 'content' | 'ai';
 }
 
-const BLOCK_OPTIONS: BlockOption[] = [
+const blockOptions = (t: (key: string, defaultValue: string) => string): BlockOption[] => [
   // Data Visualization
   {
     id: 'maturityRadar',
     label: 'Maturity Radar',
     labelPl: 'Radar Dojrzałości',
-    description: 'Wykres radarowy z poziomami dojrzałości',
+    description: t('reports.premium.blockInsertMenu.aRadarChartOfThe', 'A radar chart of the maturity levels'),
     icon: PieChart,
     category: 'data',
   },
@@ -50,7 +51,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'gapHeatmap',
     label: 'Gap Heatmap',
     labelPl: 'Mapa Ciepła Luk',
-    description: 'Heatmapa pokazująca luki w dojrzałości',
+    description: t('reports.premium.blockInsertMenu.aHeatmapShowingTheMaturity', 'A heatmap showing the maturity gaps'),
     icon: Target,
     category: 'data',
   },
@@ -58,7 +59,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'metricCard',
     label: 'Metric Cards',
     labelPl: 'Karty Metryk',
-    description: 'Karty z kluczowymi wskaźnikami',
+    description: t('reports.premium.blockInsertMenu.cardsWithTheKeyMetrics', 'Cards with the key metrics'),
     icon: Gauge,
     category: 'data',
   },
@@ -84,7 +85,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'callout',
     label: 'Callout',
     labelPl: 'Wyróżnienie',
-    description: 'Wyróżniony blok informacyjny',
+    description: t('reports.premium.blockInsertMenu.aHighlightedInformationBlock', 'A highlighted information block'),
     icon: AlertCircle,
     category: 'content',
   },
@@ -92,7 +93,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'table',
     label: 'Table',
     labelPl: 'Tabela',
-    description: 'Tabela z danymi',
+    description: t('reports.premium.blockInsertMenu.aDataTable', 'A data table'),
     icon: Table,
     category: 'content',
   },
@@ -100,7 +101,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'timeline',
     label: 'Timeline',
     labelPl: 'Oś Czasu',
-    description: 'Roadmapa lub harmonogram',
+    description: t('reports.premium.blockInsertMenu.aRoadmapOrSchedule', 'A roadmap or schedule'),
     icon: Calendar,
     category: 'content',
   },
@@ -110,7 +111,7 @@ const BLOCK_OPTIONS: BlockOption[] = [
     id: 'executiveSummary',
     label: 'Executive Summary',
     labelPl: 'Podsumowanie Wykonawcze',
-    description: 'AI-generowane podsumowanie dla zarządu',
+    description: t('reports.premium.blockInsertMenu.anAiGeneratedExecutiveSummary', 'An AI-generated executive summary'),
     icon: FileText,
     category: 'ai',
   },
@@ -129,13 +130,14 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
   onSelect,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Filter blocks based on search
-  const filteredBlocks = BLOCK_OPTIONS.filter(
+  const filteredBlocks = blockOptions(t).filter(
     (block) =>
       block.label.toLowerCase().includes(search.toLowerCase()) ||
       block.labelPl.toLowerCase().includes(search.toLowerCase()) ||
@@ -260,7 +262,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
             setSearch(e.target.value);
             setSelectedIndex(0);
           }}
-          placeholder="Szukaj bloków..."
+          placeholder={t('reports.premium.blockInsertMenu.searchBlocks', 'Search blocks...')}
           className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -269,7 +271,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
       <div className="max-h-80 overflow-y-auto py-2">
         {filteredBlocks.length === 0 ? (
           <div className="px-3 py-8 text-center text-slate-600 dark:text-slate-500">
-            Nie znaleziono bloków
+            {t('reports.premium.blockInsertMenu.noBlocksFound', 'No blocks found')}
           </div>
         ) : (
           <>
@@ -282,7 +284,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
 
       {/* Help */}
       <div className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-500">
-        ↑↓ nawiguj • Enter wybierz • Esc zamknij
+        {t('reports.premium.blockInsertMenu.navigateEnterSelectEscClose', '↑↓ navigate • Enter select • Esc close')}
       </div>
     </div>
   );

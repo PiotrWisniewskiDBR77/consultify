@@ -45,7 +45,7 @@ describe('TemplateProvenanceApprovalDialog', () => {
     render(<TemplateProvenanceApprovalDialog open onClose={vi.fn()} onApproved={onApproved} />);
 
     await user.click(await screen.findByRole('button', { name: /Board pack/ }));
-    const approve = screen.getByRole('button', { name: 'Zatwierdź kompletne pochodzenie' });
+    const approve = screen.getByRole('button', { name: 'Approve the complete provenance' });
     expect(approve).toBeDisabled();
     for (const [label, value] of [
       ['Źródło / autor / właściciel', 'Internal design team'],
@@ -73,7 +73,7 @@ describe('TemplateProvenanceApprovalDialog', () => {
       evidence: 'evidence://rights/tpl-1',
     });
     expect(
-      await screen.findByText('Brak wzorców oczekujących na pochodzenie.')
+      await screen.findByText('No templates are waiting for provenance.')
     ).toBeInTheDocument();
   });
 });

@@ -22,7 +22,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
@@ -67,6 +66,8 @@ import type {
   TemplateSectionBlueprint,
 } from './types';
 import { normalizeTemplateFormattingSchema } from './types';
+import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 export function getTemplateStructureSaveErrorMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : String(error ?? '');
@@ -737,7 +738,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 Zastąpione tym samym neutralnym wzorcem „(wymagane)".
               */}
               <span className="text-xs font-normal text-c-text-muted">
-                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+                ({t('documentStudio.intake.requiredMarker', 'required')})
               </span>
             </span>
             <textarea
@@ -910,7 +911,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                     <li key={entry.auditId} className="flex items-center justify-between gap-3">
                       <span>
                         {entry.action.replace(/_/g, ' ')} ·{' '}
-                        {new Date(entry.occurredAt).toLocaleString('pl-PL')}
+                        {formatListDateTime(entry.occurredAt)}
                       </span>
                       {entry.details?.templateSnapshot ? (
                         <span className="flex gap-2">
@@ -928,18 +929,18 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                               void handleRestoreSnapshot(selectedTemplate.templateId, entry.auditId)
                             }
                           >
-                            Restore as draft
+                            {t('documentStudio.documentStudioTemplateArchitectView.restoreAsDraft', 'Restore as draft')}
                           </Button>
                         </span>
                       ) : (
-                        <span className="text-xs">Podgląd wersji jest niedostępny</span>
+                        <span className="text-xs">{t('documentStudio.documentStudioTemplateArchitectView.theVersionPreviewIsUnavailable', 'The version preview is unavailable')}</span>
                       )}
                     </li>
                   ))}
                 </ol>
                 {comparedSnapshot ? (
                   <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-                    <div className="font-semibold text-c-text">Porównanie wersji</div>
+                    <div className="font-semibold text-c-text">{t('documentStudio.documentStudioTemplateArchitectView.versionComparison', 'Version comparison')}</div>
                     <dl className="mt-2 grid gap-1 text-xs">
                       <div>
                         Sections:{' '}
@@ -1016,12 +1017,12 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                   </div>
                   <div className="mt-3">
                     <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                      {t('documentStudio.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                      {t('documentStudio.templateArchitect.colorPatternLabel', 'Colour pattern')}
                     </span>
                     <p className="mb-2 text-[11px] text-c-text-secondary">
                       {t(
                         'documentStudio.templateArchitect.colorPatternHint',
-                        'Niezależny od struktury sekcji — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                        'Independent of the section structure — you can save just the colours, just the structure, or both.'
                       )}
                     </p>
                     <ColorPatternPicker

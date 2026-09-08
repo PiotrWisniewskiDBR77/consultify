@@ -24,10 +24,11 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReportType } from '../../../types';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 interface TemplateSection {
   id: string;
@@ -111,7 +112,7 @@ export const ReportTemplatesView: React.FC = () => {
         setTemplates(response.data?.templates || []);
       } catch (error) {
         console.error('Failed to load templates:', error);
-        toast.error(t('reports.toast.loadTemplatesError', 'Nie udało się załadować szablonów'));
+        toast.error(t('reports.toast.loadTemplatesError', 'Could not load the templates'));
       } finally {
         setLoading(false);
       }
@@ -132,7 +133,7 @@ export const ReportTemplatesView: React.FC = () => {
 
   const handleCreateTemplate = async () => {
     if (!name.trim()) {
-      toast.error(t('reports.toast.templateNameRequired', 'Nazwa szablonu jest wymagana'));
+      toast.error(t('reports.toast.templateNameRequired', 'A template name is required'));
       return;
     }
 
@@ -147,11 +148,11 @@ export const ReportTemplatesView: React.FC = () => {
         setTemplates((prev) => [response.data.template, ...prev]);
         setName('');
         setDescription('');
-        toast.success(t('reports.toast.templateCreated', 'Szablon utworzony'));
+        toast.success(t('reports.toast.templateCreated', 'Template created'));
       }
     } catch (error) {
       console.error('Failed to create template:', error);
-      toast.error(t('reports.toast.templateCreateError', 'Nie udało się utworzyć szablonu'));
+      toast.error(t('reports.toast.templateCreateError', 'Could not create the template'));
     }
   };
 
@@ -227,7 +228,7 @@ export const ReportTemplatesView: React.FC = () => {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 min-h-[80px]"
-                placeholder="Highlight key decision drivers and escalation status."
+                placeholder={t('reports.management.reportTemplatesView.highlightKeyDecisionDriversAnd', 'Highlight key decision drivers and escalation status.')}
               />
             </div>
 
@@ -340,7 +341,7 @@ export const ReportTemplatesView: React.FC = () => {
         {savedExpanded && (
           <div className="divide-y divide-slate-100 dark:divide-navy-700 border-t border-slate-100 dark:border-navy-700">
             {loading ? (
-              <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
+              <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">{t('reports.management.reportTemplatesView.loading', 'Loading...')}</div>
             ) : templates.length === 0 ? (
               <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">
                 No templates created yet.
@@ -371,7 +372,7 @@ export const ReportTemplatesView: React.FC = () => {
                       </p>
                     </div>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {new Date(template.createdAt).toLocaleDateString()}
+                      {formatListDate(template.createdAt)}
                     </span>
                   </div>
                 </div>

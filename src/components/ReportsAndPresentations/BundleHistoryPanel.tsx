@@ -8,10 +8,11 @@
 
 import { CheckCircle2, Clock, Package2, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { BundleListItem } from '../../services/deliverablesBundle';
 import { useBundleList } from './useBundleList';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // ---------------------------------------------------------------------------
 // Lifecycle badge
@@ -55,11 +56,12 @@ function LifecycleBadge({ state }: { state: string }) {
 // ---------------------------------------------------------------------------
 
 function QualityIcon({ passed }: { passed: boolean | null }) {
+  const { t } = useTranslation();
   if (passed === true)
-    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Jakość poprawna" />;
+    return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label={t('rap.bundleHistoryPanel.qualityIsFine', 'Quality is fine')} />;
   if (passed === false)
-    return <XCircle className="h-4 w-4 text-red-500" aria-label="Problemy z jakością" />;
-  return <Clock className="h-4 w-4 text-c-text-muted" aria-label="Kontrola jakości w toku" />;
+    return <XCircle className="h-4 w-4 text-red-500" aria-label={t('rap.bundleHistoryPanel.qualityProblems', 'Quality problems')} />;
+  return <Clock className="h-4 w-4 text-c-text-muted" aria-label={t('rap.bundleHistoryPanel.qualityCheckInProgress', 'Quality check in progress')} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,11 +70,7 @@ function QualityIcon({ passed }: { passed: boolean | null }) {
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return formatListDate(iso);
   } catch {
     return iso;
   }

@@ -60,7 +60,7 @@ export const DocumentUndoRedoControls: React.FC<DocumentUndoRedoControlsProps> =
         size="sm"
         onClick={() => editor?.chain().focus().undo().run()}
         disabled={!editor || !canUndo}
-        title={t('documentStudio.panel.undoTooltip', 'Cofnij ostatnią zmianę (Ctrl/Cmd+Z)')}
+        title={t('documentStudio.panel.undoTooltip', 'Undo the last change (Ctrl/Cmd+Z)')}
         aria-label={t('documentStudio.panel.undoLabel', 'Cofnij')}
         data-testid="document-studio-undo"
       >
@@ -72,8 +72,8 @@ export const DocumentUndoRedoControls: React.FC<DocumentUndoRedoControlsProps> =
         size="sm"
         onClick={() => editor?.chain().focus().redo().run()}
         disabled={!editor || !canRedo}
-        title={t('documentStudio.panel.redoTooltip', 'Ponów cofniętą zmianę (Ctrl/Cmd+Shift+Z)')}
-        aria-label={t('documentStudio.panel.redoLabel', 'Ponów')}
+        title={t('documentStudio.panel.redoTooltip', 'Redo the undone change (Ctrl/Cmd+Shift+Z)')}
+        aria-label={t('documentStudio.panel.redoLabel', 'Redo')}
         data-testid="document-studio-redo"
       >
         <Redo2 className="h-3.5 w-3.5" aria-hidden="true" />

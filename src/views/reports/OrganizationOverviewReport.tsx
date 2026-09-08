@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 
 interface InitiativeSummary {
   id: string;
@@ -139,7 +140,7 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
             </h1>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('reports.generatedAt')}: {new Date(report.generatedAt).toLocaleString()}
+            {t('reports.generatedAt')}: {formatListDateTime(report.generatedAt)}
           </p>
         </div>
 
@@ -239,7 +240,7 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
                     {initiative.dueDate && (
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(initiative.dueDate).toLocaleDateString()}
+                        {formatListDate(initiative.dueDate)}
                       </span>
                     )}
                     <span className={priorityColors[initiative.priority] || priorityColors.medium}>
@@ -307,7 +308,7 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
                 </div>
                 {task.due_date && (
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(task.due_date).toLocaleDateString()}
+                    {formatListDate(task.due_date)}
                   </div>
                 )}
               </div>

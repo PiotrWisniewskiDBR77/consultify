@@ -170,14 +170,14 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text bg-emerald-500 hover:bg-emerald-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Check size={12} />
-            {t('documentStudio.inlineAi.approve', 'Zatwierdź')}
+            {t('documentStudio.inlineAi.approve', 'Approve')}
           </button>
           <button
             onClick={handleReject}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={12} />
-            {t('documentStudio.inlineAi.reject', 'Odrzuć')}
+            {t('documentStudio.inlineAi.reject', 'Reject')}
           </button>
         </div>
       )}
@@ -186,13 +186,13 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
       {status === 'error' && (
         <div className="space-y-1">
           <p className="text-xs text-red-600 dark:text-red-400">
-            {errorMsg ?? t('documentStudio.inlineAi.error', 'Błąd AI. Spróbuj ponownie.')}
+            {errorMsg ?? t('documentStudio.inlineAi.error', 'AI error. Please try again.')}
           </p>
           <button
             onClick={() => rejectProposal()}
             className="text-xs text-c-text-secondary underline hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {t('documentStudio.inlineAi.close', 'Zamknij')}
+            {t('documentStudio.inlineAi.close', 'Close')}
           </button>
         </div>
       )}

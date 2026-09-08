@@ -9,6 +9,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Report, ReportSection } from '../useReportBuilder';
+import { localeListy } from '../../../utils/listDateFormat';
 
 // ==========================================
 // TYPES
@@ -201,7 +202,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
                 <span className="text-sm text-c-text">{section.title}</span>
                 {section.generatedAt && (
                   <span className="ml-2 text-xs text-c-text-secondary">
-                    {new Date(section.generatedAt).toLocaleTimeString()}
+                    {new Date(section.generatedAt).toLocaleTimeString(localeListy())}
                   </span>
                 )}
               </div>

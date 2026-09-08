@@ -199,7 +199,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                         }}
                         placeholder={t(
                           'presentations.builder.rewritePlaceholder',
-                          'Przerób ten slajd…'
+                          'Rewrite this slide…'
                         )}
                         className="flex-1 text-sm bg-transparent border-none outline-none text-c-text placeholder:text-c-text-muted disabled:opacity-60"
                       />

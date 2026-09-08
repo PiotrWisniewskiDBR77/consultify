@@ -38,7 +38,6 @@ import {
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
@@ -50,6 +49,7 @@ import {
 import { KbArticleListItem, KbCategory, useDocsCategories, useDocsFeatured } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/routes/routeConfig';
+import { useTranslation } from 'react-i18next';
 
 // Icon mapping for categories
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -638,7 +638,7 @@ export const DocsHomeView: React.FC = () => {
                 Changelog
               </h3>
               <p className="text-sm text-c-text-secondary mb-4">
-                Stay up to date with new features, improvements, bug fixes, and breaking changes.
+                {t('docs.docsHomeView.stayUpToDateWith', 'Stay up to date with new features, improvements, bug fixes, and breaking changes.')}
               </p>
               <div className="flex items-center text-sm text-emerald-600 dark:text-emerald-400 font-medium">
                 View releases
@@ -664,8 +664,7 @@ export const DocsHomeView: React.FC = () => {
                 Security & Trust
               </h3>
               <p className="text-sm text-c-text-secondary mb-4">
-                Enterprise security certifications, compliance standards, and data protection
-                policies.
+                {t('docs.docsHomeView.enterpriseSecurityCertificationsComplianceStandards', 'Enterprise security certifications, compliance standards, and data protection\n                policies.')}
               </p>
               <div className="flex items-center text-sm text-blue-600 dark:text-blue-400 font-medium">
                 Trust Center
@@ -686,11 +685,10 @@ export const DocsHomeView: React.FC = () => {
           <div className="relative">
             <GraduationCap size={48} className="mx-auto mb-4 opacity-90" />
             <h2 className="text-2xl lg:text-3xl font-bold mb-3">
-              Ready to Transform Your Organization?
+              {t('docs.docsHomeView.readyToTransformYourOrganization', 'Ready to Transform Your Organization?')}
             </h2>
             <p className="text-lg opacity-90 max-w-xl mx-auto mb-6">
-              Start your free trial today and access the complete Consultify Transformation AI
-              Platform.
+              {t('docs.docsHomeView.startYourFreeTrialToday', 'Start your free trial today and access the complete Consultify Transformation AI\n              Platform.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

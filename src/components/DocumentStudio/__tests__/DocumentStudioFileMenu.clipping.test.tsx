@@ -3,7 +3,7 @@
  * Document Studio było w DOM z kompletem pozycji, ale NIEWIDOCZNE i
  * NIEKLIKALNE: panel renderował się `position: absolute` wewnątrz przodka z
  * `overflow: auto` (pasek `mels-topbar-chips`), który go przycinał. Blokowało
- * to również ekran `document-studio-save-as-template` („Zrób z tego wzorzec"
+ * to również ekran `document-studio-save-as-template` („Turn this into a template"
  * leży w tym menu).
  *
  * Ten test broni ZABEZPIECZENIA, nie mechanizmu: renderuje wyzwalacz w
@@ -80,13 +80,13 @@ describe('DocumentStudioFileMenu — panel poza przodkiem przycinającym', () =>
     expect(onSaveAsTemplate).toHaveBeenCalledTimes(1);
   });
 
-  it('„Zrób z tego wzorzec" jest osiągalne (ekran document-studio-save-as-template)', () => {
+  it('„Turn this into a template" jest osiągalne (ekran document-studio-save-as-template)', () => {
     renderInClippingBar({});
     fireEvent.click(screen.getByTestId('document-file-menu-trigger'));
     const panel = screen.getByTestId('document-file-menu');
     expect(
       within(panel).getByTestId('document-file-menu-save-as-template').textContent
-    ).toContain('Zrób z tego wzorzec');
+    ).toContain('Turn this into a template');
   });
 
   it('klik w pozycję panelu nie jest traktowany jako klik „na zewnątrz" (panel w portalu)', () => {

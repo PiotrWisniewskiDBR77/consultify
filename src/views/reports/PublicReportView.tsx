@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import { InitiativeExecutionReport } from './InitiativeExecutionReport';
 import { OrganizationOverviewReport } from './OrganizationOverviewReport';
+import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 
 interface ShareLinkData {
   entityType: 'ORG_REPORT' | 'INITIATIVE_REPORT';
@@ -131,7 +132,7 @@ export const PublicReportView: React.FC = () => {
           <div className="flex items-center gap-2 text-xs text-white/70">
             <Clock className="w-3 h-3" />
             <span>
-              {t('reports.expiresOn', 'Expires')}: {new Date(data.expiresAt).toLocaleDateString()}
+              {t('reports.expiresOn', 'Expires')}: {formatListDate(data.expiresAt)}
             </span>
           </div>
         </div>
@@ -157,7 +158,7 @@ export const PublicReportView: React.FC = () => {
           </p>
           <p className="text-xs mt-1 text-c-text-secondary">
             {t('reports.snapshotGeneratedAt', 'Generated')}:{' '}
-            {new Date(data.createdAt).toLocaleString()}
+            {formatListDateTime(data.createdAt)}
           </p>
         </div>
       </div>

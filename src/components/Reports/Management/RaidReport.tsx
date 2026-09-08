@@ -5,6 +5,7 @@
 
 import { AlertTriangle, FileText, Flag, Sparkles } from 'lucide-react';
 import React from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { ManagementReport, RAGStatus, RaidReportContent } from '../../../types';
 import { RAGIndicator } from './shared/RAGIndicator';
@@ -74,6 +75,7 @@ const renderSectionTable = (title: string, items: RaidReportContent['risks'], ac
 );
 
 export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }) => {
+  const { t } = useTranslation();
   const content = report.content as RaidReportContent;
   const overallStatus = getOverallStatus(content);
 
@@ -156,13 +158,19 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         <div className="flex items-center gap-2 mb-3">
           <FileText size={16} className="text-slate-500" />
           <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Escalation Summary
+            {t('reports.management.raidReport.escalationSummary', 'Escalation Summary')}
           </h4>
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Overall RAID status is{' '}
-          <span className="font-medium text-slate-700 dark:text-slate-200">{overallStatus}</span>.
-          Escalations are calculated from open issues, dependency blockers, and critical risks.
+          <Trans
+            i18nKey="reports.management.raidReport.escalationNote"
+            values={{ status: String(overallStatus) }}
+            defaults="Overall RAID status is <1>{{status}}</1>. Escalations are calculated from open issues, dependency blockers, and critical risks."
+            components={[
+              <React.Fragment key="0" />,
+              <span key="1" className="font-medium text-slate-700 dark:text-slate-200" />,
+            ]}
+          />
         </p>
       </div>
 

@@ -1,6 +1,5 @@
 import { Download, ShieldCheck, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import {
   fetchPresentationGovernanceCard,
@@ -8,6 +7,8 @@ import {
   type GovernanceVerdict,
   type PresentationGovernanceCard,
 } from '@/services/presentationGovernance';
+import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface DeckGovernanceCardModalProps {
   deckId: string;
@@ -60,7 +61,7 @@ function formatTimestamp(value: string | null | undefined): string {
   const ts = Date.parse(value);
   if (Number.isNaN(ts)) return value;
   try {
-    return new Date(ts).toLocaleString('pl-PL');
+    return formatListDateTime(ts);
   } catch {
     return value;
   }
@@ -240,7 +241,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                 </span>
               </section>
 
-              <section className="space-y-2" aria-label="Jakość">
+              <section className="space-y-2" aria-label={t('presentations.builder.deckGovernanceCardModal.quality', 'Quality')}>
                 <header className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.quality', 'Quality')}
@@ -259,7 +260,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                 </div>
               </section>
 
-              <section className="space-y-2" aria-label="Poufność">
+              <section className="space-y-2" aria-label={t('presentations.builder.deckGovernanceCardModal.confidentiality', 'Confidentiality')}>
                 <header className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.confidentiality', 'Confidentiality')}
@@ -291,7 +292,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
                 </div>
               </section>
 
-              <section className="space-y-2" aria-label="Dane o działaniu">
+              <section className="space-y-2" aria-label={t('presentations.builder.deckGovernanceCardModal.activityData', 'Activity data')}>
                 <header className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-c-text">
                     {t('presentations.governance.telemetry', 'Telemetry (last {{n}}d)', {

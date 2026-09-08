@@ -38,6 +38,7 @@ import type {
   TemplateItem,
   UnifiedOutputRow,
 } from './types';
+import { formatListDate } from '../../utils/listDateFormat';
 
 export type ReportActionTarget =
   | string
@@ -437,7 +438,7 @@ function resolveArtifactTitle(raw: any, kindLabel: string): string {
   const date = dateRaw ? new Date(dateRaw) : null;
   const dateLabel =
     date && !Number.isNaN(date.getTime())
-      ? date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+      ? formatListDate(date)
       : '';
   return dateLabel ? `${kindLabel} · ${dateLabel}` : kindLabel;
 }

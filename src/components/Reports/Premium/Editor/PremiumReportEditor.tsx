@@ -31,6 +31,7 @@ import { RecommendationCardExtension } from './Extensions/RecommendationCard';
 import { AIAssistantPanel } from './Toolbar/AIAssistantPanel';
 import { BlockInsertMenu } from './Toolbar/BlockInsertMenu';
 import { EditorToolbar } from './Toolbar/EditorToolbar';
+import { useTranslation } from 'react-i18next';
 
 export interface PremiumReportEditorProps {
   initialContent?: JSONContent;
@@ -91,6 +92,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
   onSave,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -308,7 +310,7 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
         </span>
         {!readOnly && (
           <span className="text-xs text-slate-600 dark:text-slate-500">
-            Ctrl+S aby zapisać • "/" aby wstawić blok
+            {t('reports.premium.premiumReportEditor.ctrlSToSaveTo', 'Ctrl+S to save • "/" to insert a block')}
           </span>
         )}
       </div>

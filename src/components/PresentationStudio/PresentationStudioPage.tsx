@@ -68,6 +68,7 @@ import {
   validatePresentationStudioSetupForm,
 } from './PresentationStudioSetupForm';
 import { PresentationStudioSourceArtifactPicker } from './PresentationStudioSourceArtifactPicker';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -286,6 +287,7 @@ function toneForTemplateStatus(status?: string): StatusTone {
 // ---------------------------------------------------------------------------
 
 export const PresentationStudioPage: React.FC = () => {
+  const { t } = useTranslation();
   const [formValue, setFormValue] = useState<PresentationStudioSetupFormValue>(
     PRESENTATION_STUDIO_SETUP_FORM_DEFAULT
   );
@@ -634,8 +636,7 @@ export const PresentationStudioPage: React.FC = () => {
             <div>
               <div className="font-medium">Setup is incomplete</div>
               <div className="mt-1">
-                Fix the highlighted required fields above before running a Studio preview. No silent
-                defaults are applied.
+                {t('presentations.studio.presentationStudioPage.fixTheHighlightedRequiredFields', 'Fix the highlighted required fields above before running a Studio preview. No silent\n                defaults are applied.')}
               </div>
             </div>
           </div>
@@ -649,7 +650,7 @@ export const PresentationStudioPage: React.FC = () => {
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div>
-              <div className="font-medium">Studio preview failed</div>
+              <div className="font-medium">{t('presentations.studio.presentationStudioPage.studioPreviewFailed', 'Studio preview failed')}</div>
               <div className="mt-1">{state.error}</div>
             </div>
           </div>
@@ -663,7 +664,7 @@ export const PresentationStudioPage: React.FC = () => {
           >
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div>
-              <div className="font-medium">Approval cannot be requested yet</div>
+              <div className="font-medium">{t('presentations.studio.presentationStudioPage.approvalCannotBeRequestedYet', 'Approval cannot be requested yet')}</div>
               <div className="mt-1">{approval.approvalErrorReason}</div>
             </div>
           </div>
@@ -691,7 +692,7 @@ export const PresentationStudioPage: React.FC = () => {
           >
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <div className="font-medium">Deck generated and audited</div>
+              <div className="font-medium">{t('presentations.studio.presentationStudioPage.deckGeneratedAndAudited', 'Deck generated and audited')}</div>
               <div className="mt-1">
                 Deck id{' '}
                 <span
@@ -742,7 +743,7 @@ export const PresentationStudioPage: React.FC = () => {
         {/* Source Pack */}
         <SectionCard
           title="Source pack preview"
-          description="Tenant-scoped read of source coverage, missing inputs, and readiness."
+          description={t('presentations.studio.presentationStudioPage.tenantScopedReadOfSource', 'Tenant-scoped read of source coverage, missing inputs, and readiness.')}
           testId="section-source-pack"
           badge={
             summary.sourcePackStatus ? (
@@ -795,7 +796,7 @@ export const PresentationStudioPage: React.FC = () => {
         {/* Narrative Plan */}
         <SectionCard
           title="Narrative plan preview"
-          description="Deck-level thesis, storyline, decisions, and per-slide narrative role."
+          description={t('presentations.studio.presentationStudioPage.deckLevelThesisStorylineDecisions', 'Deck-level thesis, storyline, decisions, and per-slide narrative role.')}
           testId="section-narrative-plan"
           badge={
             summary.narrativeStatus ? (
@@ -836,7 +837,7 @@ export const PresentationStudioPage: React.FC = () => {
         {/* Template Plan */}
         <SectionCard
           title="Template architect plan preview"
-          description="Methodology-first template plan. Always returned with approvalRequired=true."
+          description={t('presentations.studio.presentationStudioPage.methodologyFirstTemplatePlanAlways', 'Methodology-first template plan. Always returned with approvalRequired=true.')}
           testId="section-template-plan"
           badge={
             summary.templateStatus ? (
@@ -866,7 +867,7 @@ export const PresentationStudioPage: React.FC = () => {
                 className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
                 data-testid="template-approval-banner"
               >
-                Approval required before this template enters the registry.
+                {t('presentations.studio.presentationStudioPage.approvalRequiredBeforeThisTemplate', 'Approval required before this template enters the registry.')}
               </div>
             </div>
           ) : (
@@ -877,7 +878,7 @@ export const PresentationStudioPage: React.FC = () => {
         {/* Generate Preview */}
         <SectionCard
           title="Generate dispatcher preview"
-          description="What the deck would look like if generated now. Read-only — never persists."
+          description={t('presentations.studio.presentationStudioPage.whatTheDeckWouldLook', 'What the deck would look like if generated now. Read-only — never persists.')}
           testId="section-generate"
           badge={
             summary.canProceed === null ? null : summary.canProceed ? (

@@ -20,6 +20,7 @@ import { RAGIndicator } from './shared/RAGIndicator';
 import { ReportFooter } from './shared/ReportFooter';
 import { ReportHeader } from './shared/ReportHeader';
 import { TaskListSection } from './shared/TaskListSection';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMeetingReportProps {
   report: ManagementReport;
@@ -27,6 +28,7 @@ interface TeamMeetingReportProps {
 }
 
 export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, className = '' }) => {
+  const { t } = useTranslation();
   const content = report.content as TeamMeetingReportContent;
   const summary = content.statusSummary;
 
@@ -139,7 +141,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
 
       {/* Completed Work */}
       <TaskListSection
-        title="Completed This Period"
+        title={t('reports.management.teamMeetingReport.completedThisPeriod', 'Completed This Period')}
         icon={<CheckCircle2 size={16} className="text-emerald-500" />}
         variant="completed"
         items={content.completedWork.map((item: any) => ({
@@ -193,7 +195,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {/* Pending Decisions */}
       {content.pendingDecisions.length > 0 && (
         <TaskListSection
-          title="Pending Decisions"
+          title={t('reports.management.teamMeetingReport.pendingDecisions', 'Pending Decisions')}
           icon={<HelpCircle size={16} className="text-amber-500" />}
           variant="pending"
           items={content.pendingDecisions.map((item: any) => ({

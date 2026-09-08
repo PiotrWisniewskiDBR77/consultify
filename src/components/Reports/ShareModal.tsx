@@ -1,6 +1,7 @@
 import { AlertTriangle, Calendar, Check, Copy, Link2, Loader2, Share2, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -217,7 +218,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <Calendar className="w-4 h-4" />
                   <span>
-                    {t('reports.expiresOn')}: {new Date(expiresAt).toLocaleDateString()}
+                    {t('reports.expiresOn')}: {formatListDate(expiresAt)}
                   </span>
                 </div>
               )}

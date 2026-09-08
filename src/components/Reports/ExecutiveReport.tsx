@@ -12,10 +12,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 interface ExecutiveReportProps {
   projectId?: string;
@@ -55,7 +56,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
 
   const generateReport = useCallback(async () => {
     if (!activeProjectId) {
-      toast.error(t('reports.toast.selectProjectFirst', 'Najpierw wybierz projekt'));
+      toast.error(t('reports.toast.selectProjectFirst', 'Select a project first'));
       return;
     }
 
@@ -91,10 +92,10 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       };
 
       setReport(reportData);
-      toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie'));
+      toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
     } catch (error) {
       console.error('Failed to generate report:', error);
-      toast.error(t('reports.toast.generateError', 'Nie udało się wygenerować raportu'));
+      toast.error(t('reports.toast.generateError', 'Could not generate the report'));
     } finally {
       setLoading(false);
     }
@@ -186,7 +187,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                 {report.projectName}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Generated: {new Date(report.generatedAt).toLocaleString()}
+                Generated: {formatListDateTime(report.generatedAt)}
               </p>
             </div>
             <div
@@ -231,7 +232,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {report.keyMetrics.decisionsPending}
               </div>
-              <div className="text-xs text-amber-500">Pending Decisions</div>
+              <div className="text-xs text-amber-500">{t('reports.executiveReport.pendingDecisions', 'Pending Decisions')}</div>
             </div>
           </div>
 
@@ -318,7 +319,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
             No Report Generated
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-            Click "Generate Report" to create an AI-powered executive summary
+            {t('reports.executiveReport.clickGenerateReportToCreate', 'Click "Generate Report" to create an AI-powered executive summary')}
           </p>
         </div>
       )}

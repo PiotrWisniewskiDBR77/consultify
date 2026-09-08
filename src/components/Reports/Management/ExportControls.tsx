@@ -51,9 +51,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       const url = await onExportPDF();
       window.open(url, '_blank');
-      toast.success(t('reports.export.pdfSuccess', 'PDF wygenerowany pomyślnie'));
+      toast.success(t('reports.export.pdfSuccess', 'PDF generated successfully'));
     } catch (error) {
-      toast.error(t('reports.export.pdfError', 'Nie udało się wygenerować PDF'));
+      toast.error(t('reports.export.pdfError', 'Could not generate the PDF'));
       console.error('PDF export error:', error);
     } finally {
       setExportingPDF(false);
@@ -67,9 +67,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       const url = await onExportPPTX();
       window.open(url, '_blank');
-      toast.success(t('reports.export.pptxSuccess', 'PowerPoint wygenerowany pomyślnie'));
+      toast.success(t('reports.export.pptxSuccess', 'PowerPoint generated successfully'));
     } catch (error) {
-      toast.error(t('reports.export.pptxError', 'Nie udało się wygenerować PowerPoint'));
+      toast.error(t('reports.export.pptxError', 'Could not generate the PowerPoint'));
       console.error('PPTX export error:', error);
     } finally {
       setExportingPPTX(false);
@@ -89,11 +89,11 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
       const result = await onShare();
       // Replace optimistic URL with real one
       setShareUrl(result.shareUrl);
-      toast.success(t('reports.export.shareLinkCreated', 'Link do udostępniania utworzony'));
+      toast.success(t('reports.export.shareLinkCreated', 'Share link created'));
     } catch (error) {
       // Rollback optimistic update
       setShareUrl(null);
-      toast.error(t('reports.export.shareLinkError', 'Nie udało się utworzyć linku'));
+      toast.error(t('reports.export.shareLinkError', 'Could not create the link'));
       console.error('Share error:', error);
     } finally {
       setSharing(false);
@@ -109,7 +109,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
       toast.success(t('reports.export.linkCopied', 'Link skopiowany do schowka'));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error(t('reports.export.copyError', 'Nie udało się skopiować linku'));
+      toast.error(t('reports.export.copyError', 'Could not copy the link'));
     }
   };
 

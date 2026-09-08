@@ -317,7 +317,7 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('artifact-menu3')).toBeInTheDocument();
     expect(screen.getByTestId('artifact-bottom-bar-content')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Teresa' })).toBeInTheDocument();
-    expect(screen.getByTestId('document-artifact-status')).toHaveTextContent('Zapisano');
+    expect(screen.getByTestId('document-artifact-status')).toHaveTextContent('Saved');
     expect(screen.getByTestId('document-artifact-status')).toHaveTextContent(
       schema.confidentiality
     );
@@ -345,7 +345,7 @@ describe('DocumentStudioDocumentPanel', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Struktura' }));
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Executive summary');
 
-    fireEvent.click(screen.getByRole('tab', { name: 'QA i przegląd' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'QA and review' }));
     expect(screen.getByTestId('document-review-panel')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'QA' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));
@@ -371,7 +371,7 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Risks');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('Document preview');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('This is the executive summary.');
-    await waitFor(() => expect(screen.getByText('QA i przegląd')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('QA and review')).toBeInTheDocument());
 
     // U5 (odbiór "menu pliku", 2026-07-28) — "history" and "governance" moved
     // to the `⋯` overflow tier (measured live at 1280px: 6 always-expanded
@@ -617,7 +617,7 @@ describe('DocumentStudioDocumentPanel', () => {
       // 'idle', which reads as "already durable" (matches server state at
       // load), not as "nothing to report".
       const saveRow = screen.getByTestId('document-file-menu-save');
-      expect(saveRow).toHaveTextContent('Zapisano automatycznie');
+      expect(saveRow).toHaveTextContent('Saved automatically');
       // Not a button — clicking it must not pretend to trigger a save.
       expect(saveRow).toHaveAttribute('aria-disabled', 'true');
     });
@@ -691,8 +691,8 @@ describe('DocumentStudioDocumentPanel', () => {
       // U2: visible text and accessible name (aria-label) must agree, and
       // both must name the DESTINATION, not the screen the user is already
       // on ("Document Studio" — that was the bug).
-      expect(back).toHaveTextContent('Materiał');
-      expect(back).toHaveAccessibleName(/materiał/i);
+      expect(back).toHaveTextContent('Materials');
+      expect(back).toHaveAccessibleName(/materials/i);
     });
 
     it('"Start over" (Nowy) is reachable ONLY from the File menu, not from the back arrow', () => {

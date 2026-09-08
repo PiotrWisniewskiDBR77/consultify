@@ -107,7 +107,7 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
         handled: true,
         reply: t(
           'documentStudio.aiEntry.startingReply',
-          'Zaczynam planować i pisać dokument — pojawi się obok w kilka chwil.'
+          'I am planning and writing the document — it will appear next to this in a moment.'
         ),
       };
     },
@@ -129,12 +129,12 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
           <FileText size={26} className="text-c-text-secondary" aria-hidden />
         </div>
         <p className="text-sm font-medium text-c-text">
-          {t('documentStudio.aiEntry.placeholderTitle', 'Twój dokument pojawi się tutaj')}
+          {t('documentStudio.aiEntry.placeholderTitle', 'Your document will appear here')}
         </p>
         <p className="max-w-sm text-xs text-c-text-secondary">
           {t(
             'documentStudio.aiEntry.placeholderHint',
-            'Opisz w oknie obok, jaki dokument potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach.'
+            'Describe the document you need in the panel next to this — Teresa will plan the structure and write the first draft in front of you.'
           )}
         </p>
         {onBackToModes ? (
@@ -143,7 +143,7 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
             onClick={onBackToModes}
             className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-c-text-secondary transition-colors hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {t('documentStudio.intake.backToModes', 'Wybór trybu')}
+            {t('documentStudio.intake.backToModes', 'Choose a mode')}
           </button>
         ) : null}
         {error ? (

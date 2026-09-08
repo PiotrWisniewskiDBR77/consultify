@@ -23,7 +23,6 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { Link, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -33,6 +32,7 @@ import remarkGfm from 'remark-gfm';
 import { useDocsArticle, useDocsTrackView } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 import { getHeaders } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 // Extract headings for TOC
 const extractHeadings = (content: string): { id: string; text: string; level: number }[] => {
@@ -299,9 +299,9 @@ export const DocsArticleView: React.FC = () => {
 
           {/* Feedback Section */}
           <div className="mt-12 p-6 rounded-xl border border-c-border bg-c-surface-raised">
-            <h3 className="text-lg font-semibold mb-3">Was this article helpful?</h3>
+            <h3 className="text-lg font-semibold mb-3">{t('docs.docsArticleView.wasThisArticleHelpful', 'Was this article helpful?')}</h3>
             {feedbackGiven ? (
-              <p className="text-sm text-c-text-secondary">Thank you for your feedback! 🙏</p>
+              <p className="text-sm text-c-text-secondary">{t('docs.docsArticleView.thankYouForYourFeedback', 'Thank you for your feedback! 🙏')}</p>
             ) : (
               <div className="flex items-center gap-3">
                 <button
@@ -339,7 +339,7 @@ export const DocsArticleView: React.FC = () => {
           <aside className="hidden xl:block w-64 shrink-0">
             <div className="sticky top-20">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-3">
-                On this page
+                {t('docs.docsArticleView.onThisPage', 'On this page')}
               </h4>
               <nav className="space-y-1">
                 {headings.map((h) => (

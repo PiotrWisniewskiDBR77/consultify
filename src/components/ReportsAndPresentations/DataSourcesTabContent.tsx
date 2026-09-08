@@ -19,6 +19,7 @@ import {
   type MaterialDataset,
   previewConnector,
 } from '@/services/materialData';
+import { useTranslation } from 'react-i18next';
 
 const CONNECTOR_LABEL: Record<string, string> = {
   postgres: 'PostgreSQL',
@@ -30,6 +31,7 @@ const CONNECTOR_LABEL: Record<string, string> = {
 };
 
 function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactElement {
+  const { t } = useTranslation();
   const cols = dataset.columns ?? [];
   const rows = dataset.rows ?? [];
   return (
@@ -40,7 +42,7 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
         </span>
         {dataset.truncated && (
           <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-            podgląd skrócony
+            {t('rap.dataSourcesTabContent.shortPreview', 'short preview')}
           </span>
         )}
       </div>
@@ -79,6 +81,7 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
 }
 
 export const DataSourcesTabContent: React.FC = () => {
+  const { t } = useTranslation();
   const [types, setTypes] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string>('');
   const [config, setConfig] = useState<string>('{\n  \n}');
@@ -139,19 +142,19 @@ export const DataSourcesTabContent: React.FC = () => {
         <header className="flex items-center gap-2">
           <Database size={18} className="text-c-text-muted" />
           <div>
-            <h2 className="text-sm font-semibold text-c-text">Źródła danych materiału</h2>
+            <h2 className="text-sm font-semibold text-c-text">{t('rap.dataSourcesTabContent.dataSourcesForThisMaterial', 'Data sources for this material')}</h2>
             <p className="text-xs text-c-text-muted">
-              Podłącz dane do generowanych materiałów — z konektora albo z formularza intake.
+              {t('rap.dataSourcesTabContent.connectDataToTheMaterials', 'Connect data to the materials you generate — from a connector or from an intake form.')}
             </p>
           </div>
         </header>
 
         {/* Połącz źródło */}
         <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
-          <h3 className="mb-2 text-sm font-semibold text-c-text">Połącz źródło</h3>
+          <h3 className="mb-2 text-sm font-semibold text-c-text">{t('rap.dataSourcesTabContent.connectASource', 'Connect a source')}</h3>
           {types.length === 0 ? (
             <p className="text-xs text-c-text-muted" data-testid="rap-data-no-connectors">
-              Brak dostępnych konektorów (warstwa danych wyłączona lub bez rejestru).
+              {t('rap.dataSourcesTabContent.noConnectorsAvailableTheData', 'No connectors available (the data layer is off or has no registry).')}
             </p>
           ) : (
             <>
@@ -205,7 +208,7 @@ export const DataSourcesTabContent: React.FC = () => {
 
         {/* Zbierz przez formularz */}
         <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
-          <h3 className="mb-2 text-sm font-semibold text-c-text">Zbierz przez formularz</h3>
+          <h3 className="mb-2 text-sm font-semibold text-c-text">{t('rap.dataSourcesTabContent.collectViaAForm', 'Collect via a form')}</h3>
           <div className="flex flex-wrap items-center gap-2">
             <input
               value={formId}

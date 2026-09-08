@@ -29,6 +29,7 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 
 import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+import { useTranslation } from 'react-i18next';
 
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
@@ -83,6 +84,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
   onClose,
   onImported,
 }) => {
+  const { t } = useTranslation();
   const token = getAuthToken();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -197,10 +199,10 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-            Report Imported Successfully
+            {t('reports.importReportModal.reportImportedSuccessfully', 'Report Imported Successfully')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            You can now generate initiatives from this report
+            {t('reports.importReportModal.youCanNowGenerateInitiatives', 'You can now generate initiatives from this report')}
           </p>
         </div>
       );
@@ -214,7 +216,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
               <span className="font-medium text-green-700 dark:text-green-400">
-                Data Extracted Successfully
+                {t('reports.importReportModal.dataExtractedSuccessfully', 'Data Extracted Successfully')}
               </span>
             </div>
             <div className="text-sm text-green-600 dark:text-green-300 space-y-1">
@@ -296,8 +298,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-            Review and adjust extracted scores before saving. You can generate initiatives from this
-            report.
+            {t('reports.importReportModal.reviewAndAdjustExtractedScores', 'Review and adjust extracted scores before saving. You can generate initiatives from this\n            report.')}
           </p>
         </div>
       );
@@ -340,7 +341,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             <div className="flex flex-col items-center">
               <Upload className="w-12 h-12 text-slate-600 dark:text-slate-500 mb-3" />
               <p className="font-medium text-navy-900 dark:text-white mb-1">
-                Drop your report here
+                {t('reports.importReportModal.dropYourReportHere', 'Drop your report here')}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 or click to browse (PDF, Excel, TXT)
@@ -353,7 +354,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
         {file && (
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Report Name
+              {t('reports.importReportModal.reportName', 'Report Name')}
             </label>
             <input
               type="text"
@@ -448,7 +449,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                 ) : step === 'mapping' ? (
                   <>
                     <Save size={16} />
-                    Save Report
+                    {t('reports.importReportModal.saveReport', 'Save Report')}
                   </>
                 ) : (
                   <>

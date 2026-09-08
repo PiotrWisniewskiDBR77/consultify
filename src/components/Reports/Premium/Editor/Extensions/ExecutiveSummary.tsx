@@ -8,6 +8,7 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { FileText, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 
 interface ExecutiveSummaryAttrs {
@@ -23,6 +24,7 @@ const ExecutiveSummaryComponent: React.FC<{
   updateAttributes: (attrs: Partial<ExecutiveSummaryAttrs>) => void;
   selected: boolean;
 }> = ({ node, updateAttributes, selected }) => {
+  const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -76,10 +78,10 @@ oraz budowy kompetencji data science, co może przynieść szacowany ROI na pozi
   const displayMetrics = attrs.metrics?.length
     ? attrs.metrics
     : [
-        { label: 'Obecna dojrzałość', value: '3.2', trend: 'neutral' as const },
-        { label: 'Cel', value: '5.0', trend: 'up' as const },
-        { label: 'Całkowita luka', value: '12.8', trend: 'down' as const },
-        { label: 'Szacowany ROI', value: '180%', trend: 'up' as const },
+        { label: t('reports.premium.executiveSummary.currentMaturity', 'Current maturity'), value: '3.2', trend: 'neutral' as const },
+        { label: t('reports.premium.executiveSummary.target', 'Target'), value: '5.0', trend: 'up' as const },
+        { label: t('reports.premium.executiveSummary.totalGap', 'Total gap'), value: '12.8', trend: 'down' as const },
+        { label: t('reports.premium.executiveSummary.estimatedRoi', 'Estimated ROI'), value: '180%', trend: 'up' as const },
       ];
 
   return (
