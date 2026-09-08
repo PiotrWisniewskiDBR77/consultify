@@ -242,7 +242,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       setDraft(readback);
       setConfirmedAt(new Date());
     } catch {
-      setSaveError(t('myWork.ideaInspector.saveFailed', 'Nie udało się zapisać zmian'));
+      setSaveError(t('myWork.ideaInspector.saveFailed', 'Changes could not be saved'));
     } finally {
       setSaving(false);
     }
@@ -293,22 +293,22 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   const activityLabel = (item: IdeaInspectorActivityItem) => {
     switch (item.action) {
       case 'comment':
-        return t('myWork.ideaInspector.activity.commented', 'skomentował(a)');
+        return t('myWork.ideaInspector.activity.commented', 'commented');
       case 'edited':
-        return t('myWork.ideaInspector.activity.edited', 'zmienił(a) {{field}}', {
+        return t('myWork.ideaInspector.activity.edited', 'changed {{field}}', {
           field: item.field ?? '',
         });
       case 'attachment':
-        return t('myWork.ideaInspector.activity.addedAttachment', 'dodał(a) załącznik');
+        return t('myWork.ideaInspector.activity.addedAttachment', 'added an attachment');
       case 'status_change':
-        return t('myWork.ideaInspector.activity.changedStatus', 'zmienił(a) stan: {{oldValue}} → {{newValue}}', {
+        return t('myWork.ideaInspector.activity.changedStatus', 'changed the status: {{oldValue}} → {{newValue}}', {
           oldValue: item.oldValue,
           newValue: item.newValue,
         });
       case 'ai_suggestion':
-        return t('myWork.ideaInspector.activity.aiSuggested', 'AI zasugerowało');
+        return t('myWork.ideaInspector.activity.aiSuggested', 'AI suggested');
       default:
-        return t('myWork.ideaInspector.activity.created', 'utworzył(a)');
+        return t('myWork.ideaInspector.activity.created', 'created');
     }
   };
 
@@ -334,7 +334,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   const zakladki = teresaContent ? (
     <div
       role="tablist"
-      aria-label={t('myWork.ideaInspector.tabs.aria', 'Zakładki panelu')}
+      aria-label={t('myWork.ideaInspector.tabs.aria', 'Panel tabs')}
       className="inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5"
     >
       {(
@@ -372,8 +372,8 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       data-testid="idea-panel-close"
       aria-label={
         onClosePanel
-          ? t('myWork.ideaInspector.closePanel', 'Zamknij panel')
-          : t('myWork.ideaInspector.close', 'Zamknij inspektor')
+          ? t('myWork.ideaInspector.closePanel', 'Close panel')
+          : t('myWork.ideaInspector.close', 'Close inspector')
       }
       className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
     >
@@ -414,7 +414,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       <aside
         ref={rootRef}
         {...wspolneAtrybutyKorzenia}
-        aria-label={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
+        aria-label={t('myWork.ideaInspector.ariaPanel', 'Idea panel')}
         data-testid="idea-right-panel"
       >
         {powlokaNaglowka}
@@ -425,7 +425,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   }
 
   if (!draft) {
-    const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
+    const emptyText = t('myWork.ideaInspector.empty', 'Select an element to see its properties');
     /**
      * ★ NAPRAWA (odbiór CTO 05.09, `09-idea-mapa.png`/`10-idea-whiteboard.png`):
      * dawniej ten stan był 600-pikselową pustką — wyśrodkowana podpowiedź na
@@ -450,12 +450,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
         label: t('myWork.ideaInspector.sections.actions', 'Akcje'),
         defaultOpen: true,
         isEmpty: !gniazdoAnalizy,
-        emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'Brak dostępnych akcji.'),
+        emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'No actions available.'),
         children: gniazdoAnalizy,
       },
       {
         id: 'properties',
-        label: t('myWork.ideaInspector.sections.properties', 'Właściwości'),
+        label: t('myWork.ideaInspector.sections.properties', 'Properties'),
         defaultOpen: true,
         children: (
           <>
@@ -469,7 +469,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             <FieldRow label={t('myWork.ideaInspector.stageField', 'Etap')}>
               <IdeaStageChip stage={ideaStage || 'seed'} isPolish={language === 'pl'} />
             </FieldRow>
-            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Owner')}>
               {ideaOwnerLabel}
             </FieldRow>
             <FieldRow label={t('myWork.ideaInspector.createdField', 'Utworzono')}>
@@ -516,22 +516,22 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       },
       {
         id: 'relations',
-        label: t('myWork.ideaInspector.sections.relations', 'Powiązania'),
+        label: t('myWork.ideaInspector.sections.relations', 'Relations'),
         defaultOpen: false,
         badge: 0,
         showZeroBadge: true,
         isEmpty: true,
-        emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'Brak powiązań.'),
+        emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'No relations.'),
         children: null,
       },
       {
         id: 'evidence',
-        label: t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła'),
+        label: t('myWork.ideaInspector.sections.evidence', 'Evidence and sources'),
         defaultOpen: false,
         badge: 0,
         showZeroBadge: true,
         isEmpty: true,
-        emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'Brak zapisanych źródeł i założeń.'),
+        emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'No sources or assumptions recorded.'),
         children: null,
       },
       {
@@ -541,7 +541,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
         badge: 0,
         showZeroBadge: true,
         isEmpty: true,
-        emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'Brak komentarzy.'),
+        emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'No comments.'),
         children: null,
       },
       {
@@ -551,7 +551,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
         badge: 0,
         showZeroBadge: true,
         isEmpty: true,
-        emptyLabel: t('myWork.ideaInspector.noActivity', 'Brak aktywności'),
+        emptyLabel: t('myWork.ideaInspector.noActivity', 'No activity'),
         children: null,
       },
     ];
@@ -559,7 +559,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       <aside
         ref={rootRef}
         {...wspolneAtrybutyKorzenia}
-        aria-label={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
+        aria-label={t('myWork.ideaInspector.ariaPanel', 'Idea panel')}
         data-testid="idea-right-panel"
       >
         {powlokaNaglowka}
@@ -574,7 +574,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <p className="mt-2 text-[12.5px] leading-relaxed text-c-text-secondary">
             {t(
               'myWork.ideaInspector.emptyHint',
-              'Kliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola'
+              'Click a node, row, card, or edge to see its fields'
             )}
           </p>
           <p className="sr-only">{emptyText}</p>
@@ -582,7 +582,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
         <div className="min-h-0 flex-1 overflow-y-auto">
           <ArtifactRightPanel
             renderAs="div"
-            ariaLabel={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
+            ariaLabel={t('myWork.ideaInspector.ariaPanel', 'Idea panel')}
             sections={emptySections}
             width="100%"
             className="min-h-0 flex-1 border-0"
@@ -613,12 +613,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       // Honest empty state — the real quick actions (Drąż w głąb/AI podsumuj/
       // AI porada) live in the header next to the element's identity, same as
       // before; there is no second, distinct set of actions to show here.
-      emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'Brak dostępnych akcji.'),
+      emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'No actions available.'),
       children: gniazdoAnalizy,
     },
     {
       id: 'properties',
-      label: t('myWork.ideaInspector.sections.properties', 'Właściwości'),
+      label: t('myWork.ideaInspector.sections.properties', 'Properties'),
       defaultOpen: true,
       children: (
         <>
@@ -633,7 +633,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           </FieldRow>
           {tool === 'process' ? (
             <p className="text-sm text-c-text-secondary">
-              {t('myWork.ideaInspector.noState', 'To narzędzie nie prowadzi stanu elementu')}
+              {t('myWork.ideaInspector.noState', 'This tool does not track element state')}
             </p>
           ) : (
             <FieldRow label={t('myWork.ideaInspector.stateField', 'Stan')}>
@@ -689,9 +689,9 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               Whiteboard never had an assign feature at all, so both keep the
               read-only rendering rather than fabricating a new edit surface. */}
           {tool === 'table' || tool === 'mindmap' ? (
-            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Owner')}>
               <input
-                aria-label={t('myWork.ideaInspector.ownerField', 'Właściciel')}
+                aria-label={t('myWork.ideaInspector.ownerField', 'Owner')}
                 value={draft.owner ?? ''}
                 onChange={(e) => setDraft({ ...draft, owner: e.target.value })}
                 onBlur={() => void commit({ owner: draft.owner })}
@@ -699,7 +699,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
               />
             </FieldRow>
           ) : (
-            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Owner')}>
               {safeText(draft.owner) || (
                 <span className="text-c-text-muted">
                   {t('myWork.ideaInspector.ownerEmpty', '—')}
@@ -727,7 +727,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           {depthParagraphs.length ? (
             <div className="mt-3 space-y-1.5 border-t border-c-border-subtle pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                {t('myWork.ideaInspector.sections.contentDepth', 'Treść i głębia')}
+                {t('myWork.ideaInspector.sections.contentDepth', 'Content and depth')}
               </p>
               {depthParagraphs.map((text, index) => (
                 <p key={index} className="text-[12.5px] leading-relaxed text-c-text-secondary">
@@ -749,12 +749,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     },
     {
       id: 'relations',
-      label: t('myWork.ideaInspector.sections.relations', 'Powiązania'),
+      label: t('myWork.ideaInspector.sections.relations', 'Relations'),
       defaultOpen: false,
       badge: relationsTotal,
       showZeroBadge: true,
       isEmpty: relationsTotal === 0,
-      emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'Brak powiązań.'),
+      emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'No relations.'),
       // ArtifactRightPanel's canon has no separate "outputs" slot — converted
       // artifacts are a kind of relation, so they render here (own labeled
       // sub-group), not as a 7th accordion the approved composition lacks.
@@ -772,7 +772,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             {draft.outputs?.length ? (
               <div className="mt-2 space-y-1.5 border-t border-c-border-subtle pt-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                  {t('myWork.ideaInspector.sections.outputs', 'Artefakty wyjściowe')}
+                  {t('myWork.ideaInspector.sections.outputs', 'Output artifacts')}
                 </p>
                 {draft.outputs.map((item) => (
                   <div
@@ -788,7 +788,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
                         onClick={() => onOpenOutput?.(item.targetId!)}
                         className="shrink-0 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                       >
-                        {t('myWork.ideaInspector.openButton', 'Otwórz')}
+                        {t('myWork.ideaInspector.openButton', 'Open')}
                       </button>
                     ) : null}
                   </div>
@@ -800,12 +800,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     },
     {
       id: 'evidence',
-      label: t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła'),
+      label: t('myWork.ideaInspector.sections.evidence', 'Evidence and sources'),
       defaultOpen: false,
       badge: counts.evidence,
       showZeroBadge: true,
       isEmpty: counts.evidence === 0,
-      emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'Brak zapisanych źródeł i założeń.'),
+      emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'No sources or assumptions recorded.'),
       children:
         counts.evidence === 0
           ? null
@@ -828,7 +828,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       isEmpty: true,
       // Honest — this element inspector has no comment thread of its own
       // (per-node comment threads are a separate, already-shipped surface).
-      emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'Brak komentarzy.'),
+      emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'No comments.'),
       children: null,
     },
     {
@@ -842,7 +842,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <div className="space-y-1.5">
             {(activity?.length ?? 0) === 0 ? (
               <p className="text-[12.5px] text-c-text-muted">
-                {t('myWork.ideaInspector.noActivity', 'Brak aktywności')}
+                {t('myWork.ideaInspector.noActivity', 'No activity')}
               </p>
             ) : (
               [...(activity ?? [])]
@@ -914,7 +914,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
        * szerokość ustala powłoka z tokenu `--ntype-right-panel-width`.
        */
       {...wspolneAtrybutyKorzenia}
-      aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
+      aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Element properties')}
     >
       {powlokaNaglowka}
       {/* Header — no box, typographic title + light meta line (DEC-68).
@@ -936,7 +936,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             <>
               <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
               <time dateTime={confirmedAt.toISOString()}>
-                {t('myWork.ideaInspector.saved', 'Zapisano')}{' '}
+                {t('myWork.ideaInspector.saved', 'Saved')}{' '}
                 {confirmedAt.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
               </time>
             </>
@@ -960,15 +960,15 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <button
             type="button"
             disabled
-            title={t('myWork.ideaInspector.drillReason', 'Akcja czeka na definicję zakresu')}
+            title={t('myWork.ideaInspector.drillReason', 'This action is waiting for its scope to be defined')}
             className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
-            {t('myWork.ideaInspector.drill', 'Drąż w głąb')}
+            {t('myWork.ideaInspector.drill', 'Drill down')}
           </button>
           <button
             type="button"
             disabled
-            title={t('myWork.ideaInspector.summarizeReason', 'Akcja czeka na definicję zakresu')}
+            title={t('myWork.ideaInspector.summarizeReason', 'This action is waiting for its scope to be defined')}
             className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
             {t('myWork.ideaInspector.summarize', 'AI podsumuj')}
@@ -976,7 +976,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           <button
             type="button"
             disabled
-            title={t('myWork.ideaInspector.adviceReason', 'Akcja czeka na definicję zakresu')}
+            title={t('myWork.ideaInspector.adviceReason', 'This action is waiting for its scope to be defined')}
             className="text-[11.5px] font-medium text-c-text-secondary disabled:opacity-40"
           >
             {t('myWork.ideaInspector.advice', 'AI porada')}
@@ -1000,7 +1000,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           // się jako `div`, żeby panel miał JEDEN korzeń (decyzja CTO
           // 2026-09-05: „policz aside — ma być 1 albo 0").
           renderAs="div"
-          ariaLabel={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
+          ariaLabel={t('myWork.ideaInspector.ariaElementProperties', 'Element properties')}
           sections={sections}
           width="100%"
           className="min-h-0 flex-1 border-0"

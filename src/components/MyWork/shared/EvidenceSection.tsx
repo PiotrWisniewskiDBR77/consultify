@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export type EvidenceType = 'DOCUMENT' | 'DATA' | 'DEMO' | 'APPROVAL';
 
@@ -404,7 +405,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                       {t('myWork.evidence.signedOffBy', 'Signed off by')} {signedOffBy || 'Unknown'}
                       {signedOffAt && (
                         <span className="text-emerald-600/70 dark:text-emerald-400/70 ml-1">
-                          ({new Date(signedOffAt).toLocaleDateString()})
+                          ({formatListDate(signedOffAt)})
                         </span>
                       )}
                     </span>

@@ -58,7 +58,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             <div className="text-2xl font-bold text-rose-600">{data?.overdueCount || 0}</div>
           </div>
           <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700">
-            <div className="text-sm text-slate-500 dark:text-slate-400">Due This Week</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {t('myWork.today.dueThisWeek', 'Due this week')}
+            </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
               {data?.dueThisWeekCount || 0}
             </div>
@@ -128,7 +130,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 onClick={onCreateTask}
                 className="text-blue-600 text-sm font-medium hover:underline"
               >
-                Create a task to get started
+                {t('myWork.today.createFirstTask', 'Create a task to get started')}
               </button>
             </div>
           )}

@@ -798,7 +798,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                       {governedUnavailable
                         ? t(
                             'notebook.slashMenu.receiptUnavailable',
-                            'Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia'
+                            'Unavailable until the server can return a durable action receipt'
                           )
                         : isPolish
                           ? cmd.descriptionPl

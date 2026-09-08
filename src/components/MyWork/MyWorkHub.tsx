@@ -3504,7 +3504,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {t('myWork.hub.aITriage', 'Wstępna klasyfikacja AI')}
+                {t('myWork.hub.aITriage', 'AI Triage')}
               </button>
               {/* MP-MENU3: pigułki „Teresa"/„Pokaż panel" — patrz komentarz
                   przy `jedenPanelControls` na szczycie komponentu. */}

@@ -42,6 +42,7 @@ import type { ArtifactLink } from '@/utils/artifactLinks';
 import TeresaMark from '../../shared/TeresaMark';
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { AddEvidenceModal } from './AddEvidenceModal';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -961,7 +962,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
                   >
                     <div className="text-[10px] text-c-text-secondary mb-1">
-                      {new Date(entry.timestamp).toLocaleString()}
+                      {formatListDateTime(entry.timestamp)}
                     </div>
                     <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text">
                       {entry.resultSummary}

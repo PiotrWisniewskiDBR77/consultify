@@ -65,9 +65,9 @@ describe('Notatnik — edycja tytułu w miejscu (DEC-397, 06.09)', () => {
     expect(source).toContain('scheduleSave({ title: restored });');
   });
 
-  it('names the field for assistive technology in Polish (i18n pl+en, not a bare placeholder)', () => {
+  it('names the field for assistive technology (English default, Polish in pl/translation.json)', () => {
     expect(source).toContain(
-      "aria-label={t('notebook.notebookContent.titleAriaLabel', 'Tytuł notatki')}"
+      "aria-label={t('notebook.notebookContent.titleAriaLabel', 'Note title')}"
     );
   });
 

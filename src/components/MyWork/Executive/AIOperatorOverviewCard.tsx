@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 type Props = {
   overview: any;
@@ -332,7 +333,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                     if (typeof milestone === 'object') {
                       const name = milestone.name || milestone.title || '';
                       const date = milestone.targetDate
-                        ? new Date(milestone.targetDate).toLocaleDateString()
+                        ? formatListDate(milestone.targetDate)
                         : '';
                       return (
                         [name, date].filter(Boolean).join(' · ') ||

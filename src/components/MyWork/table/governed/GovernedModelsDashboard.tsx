@@ -28,6 +28,7 @@ import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as Api from '@/services/api/tablePlatform.api';
 
 import { DataLineageView } from './DataLineageView';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -137,9 +138,9 @@ function KpiProgressBar({
         />
       </div>
       <span className="text-[11px] text-c-text-muted whitespace-nowrap">
-        {value.toLocaleString()}
+        {formatListNumber(value, '')}
         {unit ? ` ${unit}` : ''}
-        {target ? ` / ${target.toLocaleString()}` : ''}
+        {target ? ` / ${formatListNumber(target, '')}` : ''}
       </span>
     </div>
   );
@@ -692,7 +693,7 @@ function ModelCard({
       <div className="flex items-center justify-between pt-2 border-t border-c-border-subtle">
         <span className="text-[10px] text-c-text-secondary">
           {model.updated_at
-            ? `${t('myWorkTable.governedModels.updated')}: ${new Date(model.updated_at).toLocaleDateString()}`
+            ? `${t('myWorkTable.governedModels.updated')}: ${formatListDate(model.updated_at)}`
             : ''}
         </span>
         <div className="flex items-center gap-1">

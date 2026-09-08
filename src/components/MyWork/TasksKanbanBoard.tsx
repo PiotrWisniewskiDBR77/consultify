@@ -808,31 +808,31 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           if (httpStatus === 404) {
             message = t(
               'myWork.kanban.statusFailedNotFound',
-              'Nie zapisano: zadanie „{{title}}" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.',
+              'Not saved: task "{{title}}" no longer exists (it may have been deleted or reassigned). Refresh the board.',
               ctx
             );
           } else if (httpStatus === 401 || httpStatus === 403) {
             message = t(
               'myWork.kanban.statusFailedForbidden',
-              'Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}". Poproś właściciela zadania o zmianę.',
+              'Not saved: you do not have permission to change the status of "{{title}}". Ask the task owner to change it.',
               ctx
             );
           } else if (httpStatus >= 500) {
             message = t(
               'myWork.kanban.statusFailedServer',
-              'Nie zapisano „{{title}}" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.',
+              'Not saved "{{title}}" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.',
               { ...ctx, code: httpStatus }
             );
           } else if (!httpStatus) {
             message = t(
               'myWork.kanban.statusFailedOffline',
-              'Nie zapisano „{{title}}" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.',
+              'Not saved "{{title}}" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.',
               ctx
             );
           } else {
             message = t(
               'myWork.kanban.statusFailedGeneric',
-              'Nie zapisano „{{title}}" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie.',
+              'Not saved "{{title}}" → {{column}} ({{code}}). The card was moved back — please try again.',
               { ...ctx, code: httpStatus }
             );
           }
@@ -882,14 +882,18 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
             <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
-            <h3 className="text-lg font-medium text-c-text-secondary mb-2">No tasks yet</h3>
-            <p className="text-sm text-c-text-muted mb-4">Create your first task to get started</p>
+            <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+              {t('myWork.kanban.emptyTitle', 'No tasks yet')}
+            </h3>
+            <p className="text-sm text-c-text-muted mb-4">
+              {t('myWork.kanban.emptyHint', 'Create your first task to get started')}
+            </p>
             <button
               onClick={onCreateTask}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:opacity-90 transition-opacity"
             >
               <Plus size={16} />
-              Create Task
+              {t('myWork.kanban.createTask', 'Create task')}
             </button>
           </div>
         </div>

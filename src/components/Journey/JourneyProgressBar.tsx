@@ -1,5 +1,6 @@
 import { CheckCircle2, ChevronRight, Circle, Loader2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PhaseProgress, useJourneyProgress } from '../../hooks/useJourneyProgress';
 
@@ -91,6 +92,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
   showNextAction = true,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const { progress, isLoading, error } = useJourneyProgress();
 
   if (isLoading) {
@@ -162,7 +164,9 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
         <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <Circle size={8} className="text-primary-500 fill-primary-500" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">Następny krok:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('myWork.journey.nextStep', 'Next step:')}
+            </span>
             <span className="text-xs font-medium text-navy-900 dark:text-white">
               {progress.nextAction.label}
             </span>

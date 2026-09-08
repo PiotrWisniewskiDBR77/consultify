@@ -167,6 +167,7 @@ import { RelatedContext } from './shared/RelatedContext';
 // Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
 // równolegle edytowany przez inne fronty.
 import { RelatedItemsList } from './shared/RelatedItemsList';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
 const DECISION_SECTION_IDS = [
@@ -2164,7 +2165,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                   <div className="min-w-0">
                     <p className="text-sm text-c-text">{entry.description}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
-                      <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                      <span>{formatListDateTime(entry.timestamp)}</span>
                       {entry.userName && <span>{`· ${entry.userName}`}</span>}
                       <span className="px-1.5 py-0.5 rounded border border-c-border-subtle/60">
                         {meta.label}
@@ -9583,7 +9584,7 @@ Use userId only from this list:
                                       </td>
                                       <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">
                                         {a.uploadedAt
-                                          ? new Date(a.uploadedAt).toLocaleDateString()
+                                          ? formatListDate(a.uploadedAt)
                                           : '—'}
                                       </td>
                                       <td className="py-2 pr-2 text-c-text-secondary dark:text-c-text-muted">

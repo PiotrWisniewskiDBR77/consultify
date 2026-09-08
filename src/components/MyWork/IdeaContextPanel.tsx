@@ -32,6 +32,7 @@ import { InitiativeSourceLink } from '@/components/Initiatives/InitiativeSourceL
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 type Backlink = {
   id: string;
@@ -860,7 +861,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                         owner — show when the link was created instead. */}
                     {bl.createdAt && (
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                        {new Date(bl.createdAt).toLocaleDateString()}
+                        {formatListDate(bl.createdAt)}
                       </div>
                     )}
                   </div>
@@ -903,7 +904,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   {n.text}
                   {n.createdAt && (
                     <div className="text-[8px] text-amber-400 mt-0.5">
-                      {new Date(n.createdAt).toLocaleDateString()}
+                      {formatListDate(n.createdAt)}
                     </div>
                   )}
                 </div>

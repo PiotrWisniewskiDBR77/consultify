@@ -99,6 +99,7 @@ import {
 // karty (cardContract.types.ts) zamiast zahardkodowanego nModeSections — patrz
 // notificationCardContract.ts. Za flagą (default OFF), wzorzec = POC Decision.
 import { NOTIFICATION_CARD_RENDER_IDS, NOTIFICATION_CARD_SPEC } from './notificationCardContract';
+import { formatListDateTime } from '@/utils/listDateFormat';
 // ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
 // JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
 // `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
@@ -964,8 +965,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         setShowSnoozeMenu(false);
         toast.success(
           isPolish
-            ? `Odłożono do ${new Date(result.snoozedUntil).toLocaleString('pl-PL')}`
-            : `Snoozed until ${new Date(result.snoozedUntil).toLocaleString('en-US')}`
+            ? `Odłożono do ${formatListDateTime(result.snoozedUntil)}`
+            : `Snoozed until ${formatListDateTime(result.snoozedUntil)}`
         );
       } catch (error) {
         console.error('Failed to snooze', error);

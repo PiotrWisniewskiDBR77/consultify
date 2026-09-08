@@ -208,6 +208,7 @@ const PMOCategoryFilter: React.FC<{
   selected: PMOCategory[];
   onChange: (selected: PMOCategory[]) => void;
 }> = ({ selected, onChange }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -281,7 +282,7 @@ const PMOCategoryFilter: React.FC<{
                                         `}
                   >
                     <span>{config.emoji}</span>
-                    <span className="truncate">{config.label}</span>
+                    <span className="truncate">{t(config.labelKey, config.label)}</span>
                   </button>
                 );
               })}

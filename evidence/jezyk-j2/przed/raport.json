@@ -1,0 +1,153 @@
+[
+  {
+    "ekran": "01-skrzynka",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 8,
+    "przyklady": []
+  },
+  {
+    "ekran": "02-zadania-tabela",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 8,
+    "przyklady": []
+  },
+  {
+    "ekran": "03-notatnik",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "04-kalendarz",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 5,
+    "przyklady": []
+  },
+  {
+    "ekran": "05-pomysly",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 45,
+    "przyklady": []
+  },
+  {
+    "ekran": "06-decyzje",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 2,
+    "przyklady": []
+  },
+  {
+    "ekran": "07-sejf",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lang": "en"
+  },
+  {
+    "ekran": "01-skrzynka",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "02-zadania-tabela",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "03-notatnik",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "04-kalendarz",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "05-pomysly",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "06-decyzje",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 1,
+    "dane": 0,
+    "przyklady": [
+      {
+        "slowo": "pending",
+        "kontekst": "Moje prośby (pending)"
+      }
+    ]
+  },
+  {
+    "ekran": "07-sejf",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "lang": "pl"
+  }
+]

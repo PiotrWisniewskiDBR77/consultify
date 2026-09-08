@@ -54,7 +54,7 @@ function formatTemplatePreviewValue(
   if (field?.fieldType === 'checkbox') {
     return value
       ? t('ideas.table.recordTemplates.previewYes', 'Tak')
-      : t('ideas.table.recordTemplates.previewNo', 'Nie');
+      : t('ideas.table.recordTemplates.previewNo', 'No');
   }
   if (field?.fieldType === 'singleSelect' || field?.fieldType === 'multiSelect') {
     const opts =
@@ -191,7 +191,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
             {/* axe `button-name`: przycisk-X bez tekstu dla czytnika ekranu. */}
             <button
               onClick={onClose}
-              aria-label={t('common.close', 'Zamknij')}
+              aria-label={t('common.close', 'Close')}
               className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
             >
               <X size={16} className="text-c-text-muted" />
@@ -448,7 +448,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           {/* axe `button-name`: przycisk-X bez tekstu dla czytnika ekranu. */}
           <button
             onClick={onClose}
-            aria-label={t('common.close', 'Zamknij')}
+            aria-label={t('common.close', 'Close')}
             className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
             <X size={16} className="text-c-text-muted" />

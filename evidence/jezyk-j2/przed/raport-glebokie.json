@@ -1,0 +1,94 @@
+[
+  {
+    "ekran": "20-notatnik-strona",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 4,
+    "dane": 0,
+    "przyklady": [
+      {
+        "slowo": "można",
+        "kontekst": "No dobra tutaj można robić notatki"
+      },
+      {
+        "slowo": "robić",
+        "kontekst": "No dobra tutaj można robić notatki"
+      },
+      {
+        "slowo": "działania",
+        "kontekst": "Plan działania"
+      },
+      {
+        "slowo": "myśli",
+        "kontekst": "Zatem myśli są proste"
+      }
+    ]
+  },
+  {
+    "ekran": "21-idea-mapa-mysli",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 0,
+    "dane": 9,
+    "przyklady": []
+  },
+  {
+    "ekran": "22-idea-tabela",
+    "lang": "en",
+    "jezykApp": "en",
+    "proby": 1,
+    "ui": 5,
+    "dane": 8,
+    "przyklady": [
+      {
+        "slowo": "Domyślny",
+        "kontekst": "Domyślny"
+      },
+      {
+        "slowo": "Triażowanie",
+        "kontekst": "Triażowanie"
+      },
+      {
+        "slowo": "Wpływ",
+        "kontekst": "Wpływ"
+      },
+      {
+        "slowo": "Oszczędność",
+        "kontekst": "Oszczędność/rok"
+      },
+      {
+        "slowo": "Wdrożenie",
+        "kontekst": "Wdrożenie (mies.)"
+      }
+    ]
+  },
+  {
+    "ekran": "20-notatnik-strona",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "21-idea-mapa-mysli",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  },
+  {
+    "ekran": "22-idea-tabela",
+    "lang": "pl",
+    "jezykApp": "pl",
+    "proby": 1,
+    "ui": 0,
+    "dane": 0,
+    "przyklady": []
+  }
+]

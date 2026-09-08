@@ -255,7 +255,9 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
         {preferences.quietHours?.enabled && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-600 dark:text-slate-400">From</label>
+              <label className="text-sm text-slate-600 dark:text-slate-400">
+                {t('myWork.notificationPrefs.from', 'From')}
+              </label>
               <input
                 type="time"
                 value={preferences.quietHours?.start || '20:00'}

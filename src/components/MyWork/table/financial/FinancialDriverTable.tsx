@@ -25,6 +25,7 @@ import type {
   FinancialDriver,
   FinancialScenarioId,
 } from './financialTypes';
+import { localeListy } from '@/utils/listDateFormat';
 
 export interface FinancialDriverTableProps {
   caseMeta: Omit<FinancialCaseInput, 'drivers'>;
@@ -269,7 +270,7 @@ export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ case
                         />
                       </td>
                       <td className="px-2 py-1 text-right text-xs tabular-nums text-c-text">
-                        {driverTotal(driver).toLocaleString('pl-PL', { maximumFractionDigits: 0 })}
+                        {driverTotal(driver).toLocaleString(localeListy(), { maximumFractionDigits: 0 })}
                       </td>
                       <td className="px-2 py-1">
                         <select

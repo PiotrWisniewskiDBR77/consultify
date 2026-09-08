@@ -9,6 +9,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TeamWorkload, UserWorkload, WorkloadHeatmapProps } from '../../../types/myWork';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 interface ExtendedWorkloadHeatmapProps extends Partial<WorkloadHeatmapProps> {
   className?: string;
@@ -80,7 +81,7 @@ const UserWorkloadRow: React.FC<{
           <div
             key={idx}
             className={`w-6 h-6 rounded ${getAllocationColor(day.allocation)} flex items-center justify-center`}
-            title={`${new Date(day.date).toLocaleDateString()}: ${day.allocation}%`}
+            title={`${formatListDate(day.date)}: ${day.allocation}%`}
           >
             <span className={`text-[8px] font-bold ${getAllocationTextColor(day.allocation)}`}>
               {day.taskCount}
@@ -136,7 +137,7 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
     for (let i = 0; i < 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
-      labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+      labels.push(date.toLocaleDateString(localeListy(), { weekday: 'short' }));
     }
     return labels;
   }, []);

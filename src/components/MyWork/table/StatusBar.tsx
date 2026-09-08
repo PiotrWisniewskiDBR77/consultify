@@ -6,6 +6,7 @@
 import { ChevronDown } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 type AggregateMode = 'none' | 'sum' | 'avg' | 'min' | 'max' | 'count';
 
@@ -45,11 +46,12 @@ function computeAggregate(mode: AggregateMode, values: unknown[]): string {
   if (nums.length === 0) return '—';
   switch (mode) {
     case 'sum':
-      return (Math.round(nums.reduce((a, b) => a + b, 0) * 100) / 100).toLocaleString();
+      return formatListNumber(Math.round(nums.reduce((a, b) => a + b, 0) * 100) / 100, '');
     case 'avg':
-      return (
-        Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100
-      ).toLocaleString();
+      return formatListNumber(
+        Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100,
+        ''
+      );
     case 'min':
       return String(Math.min(...nums));
     case 'max':

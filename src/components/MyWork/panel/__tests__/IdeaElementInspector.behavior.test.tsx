@@ -125,14 +125,14 @@ describe('IdeaElementInspector behavior', () => {
     );
     fireEvent.change(screen.getByLabelText('Etykieta'), { target: { value: 'Nowa etykieta' } });
     fireEvent.blur(screen.getByLabelText('Etykieta'));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się zapisać');
-    expect(screen.queryByText(/^Zapisano/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Changes could not be saved');
+    expect(screen.queryByText(/^Saved/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Etykieta')).toHaveValue('Nowa etykieta');
   });
 
   it('renders the common empty state and omits an empty recent-items frame', () => {
     render(<IdeaElementInspector element={null} tool="process" recentItems={[]} />);
-    expect(screen.getByText('Zaznacz element, aby zobaczyć właściwości')).toBeInTheDocument();
+    expect(screen.getByText('Select an element to see its properties')).toBeInTheDocument();
     expect(screen.queryByText('Ostatnio otwarte')).not.toBeInTheDocument();
   });
 
@@ -149,8 +149,8 @@ describe('IdeaElementInspector behavior', () => {
     // Właściwości default open) — expand them before asserting body text.
     fireEvent.click(screen.getByText('Relations').closest('button')!);
     fireEvent.click(screen.getByText('Sources and assumptions').closest('button')!);
-    expect(screen.getByText('Brak powiązań.')).toBeInTheDocument();
-    expect(screen.getByText('Brak zapisanych źródeł i założeń.')).toBeInTheDocument();
+    expect(screen.getByText('No relations.')).toBeInTheDocument();
+    expect(screen.getByText('No sources or assumptions recorded.')).toBeInTheDocument();
   });
 
   it('does not expose the element UUID or an output target slug in rendered text', () => {
@@ -160,6 +160,6 @@ describe('IdeaElementInspector behavior', () => {
     // Relations (which carries the converted-output "Otwórz" link) defaults
     // collapsed — expand it first.
     fireEvent.click(screen.getByText('Relations').closest('button')!);
-    expect(within(container).getByRole('button', { name: 'Otwórz' })).toBeInTheDocument();
+    expect(within(container).getByRole('button', { name: 'Open' })).toBeInTheDocument();
   });
 });

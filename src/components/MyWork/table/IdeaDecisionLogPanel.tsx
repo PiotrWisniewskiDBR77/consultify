@@ -70,6 +70,7 @@ import {
   validateDecisionEntry,
 } from './ideaDecisionGovernance';
 import type { TableNode } from './tableTypes';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export interface IdeaDecisionLogPanelProps {
   open: boolean;
@@ -503,7 +504,7 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
                         >
                           <span>
                             v{e.version} — {e.decision}
-                            {e.decidedAt ? ` (${new Date(e.decidedAt).toLocaleDateString()})` : ''}
+                            {e.decidedAt ? ` (${formatListDate(e.decidedAt)})` : ''}
                           </span>
                         </div>
                       ))}

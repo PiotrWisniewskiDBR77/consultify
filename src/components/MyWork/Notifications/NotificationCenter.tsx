@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { useNotificationNavigation } from '../../../hooks/useNotificationNavigation';
 import { Api } from '../../../services/api';
 import { NotificationData, NotificationDetailPanel } from './NotificationDetailPanel';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface Notification extends NotificationData {
   readAt?: string;
@@ -99,7 +100,7 @@ const formatRelativeTime = (dateString: string | null | undefined): string => {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  return formatListDate(date);
 };
 
 /**

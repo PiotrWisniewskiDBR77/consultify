@@ -149,7 +149,7 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
   it('renders the approved two-line panel header, not the note title', () => {
     render(<Harness />);
     expect(screen.getByText('Notebook')).toBeTruthy();
-    const heading = screen.getByRole('heading', { name: 'Szczegóły notatki' });
+    const heading = screen.getByRole('heading', { name: 'Note details' });
     expect(heading).toBeTruthy();
     // The note title belongs to the document header on the left, not the rail.
     expect(screen.queryByText('Decision note')).toBeNull();
@@ -215,7 +215,7 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     expect(header).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(header);
     expect(header).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Brak komentarzy do tego dokumentu.')).toBeInTheDocument();
+    expect(screen.getByText('No comments on this document.')).toBeInTheDocument();
     fireEvent.click(header);
     expect(header).toHaveAttribute('aria-expanded', 'false');
   });
@@ -267,7 +267,7 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Akcje/ }));
     const actionsSection = screen.getByRole('button', { name: /^Akcje/ }).closest('section')!;
     fireEvent.click(within(actionsSection).getByText('Eksportuj'));
-    fireEvent.click(within(actionsSection).getByText('Udostępnij'));
+    fireEvent.click(within(actionsSection).getByText('Share'));
     fireEvent.click(within(actionsSection).getByText('Historia wersji'));
     expect(onExport).toHaveBeenCalledOnce();
     expect(onShare).toHaveBeenCalledOnce();
@@ -280,7 +280,7 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Akcje/ }));
     const button = screen.getByText('Kopiuj link').closest('button')!;
     expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Akcja czeka na definicję zakresu');
+    expect(button).toHaveAttribute('title', 'Action is waiting for its scope to be defined');
   });
 
   it('owns editable governance controls and exposes a truthful failed-save retry', () => {

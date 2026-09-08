@@ -12,6 +12,7 @@ import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 import { duplicateCalendarEventFourWeeks } from '../CalendarV2/duplicateCalendarEvent';
 import { useConfirmDialog } from '../shared/ConfirmDialog';
 import { CalendarAttendeesField, type CalendarAttendeeOption } from './CalendarAttendeesField';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface CalendarConflictItem {
   id: string;
@@ -160,7 +161,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           const dates = [1, 2, 3, 4].map((week) => {
             const next = new Date(startAt);
             next.setUTCDate(next.getUTCDate() + week * 7);
-            return next.toLocaleDateString();
+            return formatListDate(next);
           });
           // FIX-20 (Day 3 layer-2 acceptance): window.confirm() replaced with
           // the canonical ConfirmDialog — same golden-standard modal every

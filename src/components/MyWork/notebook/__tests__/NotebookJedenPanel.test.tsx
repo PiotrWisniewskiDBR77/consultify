@@ -156,7 +156,7 @@ describe('Notatnik — jeden prawy panel (decyzja CTO 05.09)', () => {
   it('bez `teresaContent` panel zachowuje dotychczasową główkę (zero regresji u wołaczy)', () => {
     render(<NotebookRightRail {...wspolneProps} onClose={vi.fn()} />);
     expect(screen.queryByTestId('notebook-panel-tab-teresa')).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Szczegóły notatki' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Note details' })).toBeInTheDocument();
   });
 
   it('„Wstaw blok" i TAGI mieszkają w panelu — z handlerami gospodarza', () => {

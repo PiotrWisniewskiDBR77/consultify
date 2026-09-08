@@ -104,6 +104,7 @@ import {
   StatusTag,
   TechnicalId,
 } from './ui';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // OTWIERANIE OBIEKTÓW — jedno miejsce dla całego modułu
@@ -641,7 +642,7 @@ function measurementTone(
 
 function formatValue(value: number | null, unit: string | null): string {
   if (value === null || value === undefined) return '—';
-  const number = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 }).format(value);
+  const number = new Intl.NumberFormat(localeListy(), { maximumFractionDigits: 2 }).format(value);
   return unit ? `${number} ${unit}` : number;
 }
 

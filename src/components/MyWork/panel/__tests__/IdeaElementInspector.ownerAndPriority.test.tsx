@@ -46,7 +46,7 @@ describe('IdeaElementInspector — priority readout and Owner editability', () =
           onSave={onSave}
         />
       );
-      const input = screen.getByLabelText('Właściciel');
+      const input = screen.getByLabelText('Owner');
       expect(input.tagName).toBe('INPUT');
       expect(input).toHaveValue('Anna Kowalska');
       fireEvent.change(input, { target: { value: 'Piotr Nowak' } });
@@ -59,7 +59,7 @@ describe('IdeaElementInspector — priority readout and Owner editability', () =
     'keeps Owner read-only for %s (no functioning old-panel edit to preserve)',
     (tool) => {
       render(<IdeaElementInspector element={element} tool={tool} nativeStates={[]} />);
-      expect(screen.queryByLabelText('Właściciel')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument();
       expect(screen.getByText('Anna Kowalska')).toBeInTheDocument();
     }
   );

@@ -2946,7 +2946,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         EDGE_CONDITIONS.find((c) => c.id === currentCondition) ?? EDGE_CONDITIONS[0];
       const truncate = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1)}…` : s);
       return {
-        title: t('canvasEditBar.titleEdge', 'Połączenie'),
+        title: t('canvasEditBar.titleEdge', 'Connection'),
         groups: [
           {
             id: 'edge-semantics',
@@ -2972,12 +2972,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 kind: 'popover' as const,
                 id: 'edge-condition',
                 icon: GitBranch,
-                label: t('canvasEditBar.edgeCondition', 'Typ połączenia'),
+                label: t('canvasEditBar.edgeCondition', 'Connection type'),
                 text: isPl ? currentConditionEntry.pl : currentConditionEntry.en,
                 align: 'center' as const,
                 render: (close: () => void) => (
                   <MenuListPopover
-                    title={t('canvasEditBar.edgeCondition', 'Typ połączenia')}
+                    title={t('canvasEditBar.edgeCondition', 'Connection type')}
                     close={close}
                     items={EDGE_CONDITIONS.map((c) => ({
                       id: c.id || 'none',
@@ -3002,7 +3002,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 render: (close: () => void) => (
                   <ColorPalettePopover
                     title={t('canvasEditBar.lineColor', 'Kolor linii')}
-                    resetLabel={t('canvasEditBar.resetDefault', 'Domyślny')}
+                    resetLabel={t('canvasEditBar.resetDefault', 'Default')}
                     value={edgeData.edgeColor}
                     onPick={(c) => handleEdgeColorChange(edgeId, c)}
                     close={close}
@@ -3021,7 +3021,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     items={[
                       {
                         id: 'solid',
-                        label: t('canvasEditBar.lineSolid', 'Ciągła'),
+                        label: t('canvasEditBar.lineSolid', 'Solid'),
                         icon: Minus,
                         onClick: () => handleEdgeStyleOverrideChange(edgeId, 'solid'),
                       },
@@ -3044,7 +3044,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 kind: 'popover' as const,
                 id: 'arrows',
                 icon: MoveRight,
-                label: t('canvasEditBar.arrowTitle', 'Strzałki i kierunek'),
+                label: t('canvasEditBar.arrowTitle', 'Arrows and direction'),
                 align: 'center' as const,
                 render: (close: () => void) => (
                   <ArrowDirectionPopover
@@ -3060,7 +3060,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 icon: Repeat,
                 // Odwrócenie kierunku PRZEPŁYWU (zamiana źródła i celu) — to co
                 // innego niż sam grot strzałki wyżej, dlatego osobny przycisk.
-                label: t('canvasEditBar.reverseFlow', 'Odwróć kierunek przepływu'),
+                label: t('canvasEditBar.reverseFlow', 'Reverse flow direction'),
                 onClick: () => handleEdgeReverse(edgeId),
               },
               {
@@ -3093,7 +3093,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     });
 
     return {
-      title: t('canvasEditBar.titleNode', 'Węzeł'),
+      title: t('canvasEditBar.titleNode', 'Node'),
       groups: [
         ...styleGroups,
         {

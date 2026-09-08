@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useExecutionScore } from '../../../hooks/useExecutionScore';
 import type { VelocityChartProps, VelocityMetrics } from '../../../types/myWork';
+import { formatListDate } from '@/utils/listDateFormat';
 
 /**
  * Simple bar chart component
@@ -139,10 +140,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
           {metrics.data.map((d: VelocityMetrics['data'][number], idx: number) => (
             <div key={idx} className="flex-1 text-center">
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                {new Date(d.date).toLocaleDateString('pl-PL', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
+                {formatListDate(d.date)}
               </span>
             </div>
           ))}

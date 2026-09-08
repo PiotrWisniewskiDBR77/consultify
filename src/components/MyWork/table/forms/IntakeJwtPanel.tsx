@@ -52,6 +52,7 @@ import {
   issueFormIntakeJwt,
   setFormIntakeAllowList,
 } from '@/services/api/tablePlatform.api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 const SUBJECT_MAX_CHARS = 320;
 const DEFAULT_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -310,7 +311,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                   <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.hardExpiry', 'Hard expiry')}</dt>
                   <dd className="col-span-2 text-c-text" data-testid="intake-hard-expiry">
                     {context.publicLinkExpiresAt
-                      ? new Date(context.publicLinkExpiresAt).toLocaleString()
+                      ? formatListDateTime(context.publicLinkExpiresAt)
                       : t('ideas.table.intakeJwt.none', 'None')}
                   </dd>
                   <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.status', 'Status')}</dt>
@@ -492,7 +493,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] text-c-success">
                         {t('ideas.table.intakeJwt.expires', 'Expires {{date}}', {
-                          date: new Date(issued.expiresAt).toLocaleString(),
+                          date: formatListDateTime(issued.expiresAt),
                         })}
                       </span>
                       <button

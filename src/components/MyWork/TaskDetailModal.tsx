@@ -310,7 +310,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       value={blockedReason}
                       onChange={(e) => setBlockedReason(e.target.value)}
                       className="w-full px-3 py-2 border border-danger-300 dark:border-danger-500/30 rounded-lg bg-danger-50 dark:bg-danger-500/10 text-danger-900 dark:text-white placeholder:text-danger-400 focus:ring-2 focus:ring-danger-500 outline-none"
-                      placeholder="What is blocking this task?"
+                      placeholder={t('myWork.taskDetail.blockedPlaceholder', 'What is blocking this task?')}
                     />
                   </div>
                 )}
@@ -388,7 +388,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   onChange={(e) => setInitiativeId(e.target.value)}
                   className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
                 >
-                  <option value="">Select Initiative (Optional)</option>
+                  <option value="">
+                    {t('myWork.taskDetail.selectInitiative', 'Select an initiative (optional)')}
+                  </option>
                   {initiatives.map((initiative) => (
                     <option key={initiative.id} value={initiative.id}>
                       {initiative.name}

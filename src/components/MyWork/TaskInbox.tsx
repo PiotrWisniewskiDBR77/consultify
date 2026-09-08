@@ -32,6 +32,7 @@ import { type RowAction, type RowActionSection, RowActionsMenu } from '../shared
 import type { GenericListItem, ListColumn, ListSection } from '../shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '../shared/ViewLayouts';
 import { ErrorState } from '../ui/primitives/ErrorState';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // PMO Priority Categories
 type PMOCategory =
@@ -336,7 +337,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         priority: task.priority || 'medium',
         priorityVariant,
         dueDate: task.dueDate
-          ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          ? formatListDate(task.dueDate)
           : undefined,
         isOverdue: task.dueDate
           ? new Date(task.dueDate) < new Date() &&
@@ -484,7 +485,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               >
                 <Calendar size={10} />
                 {task.dueDate ? (
-                  new Date(task.dueDate).toLocaleDateString()
+                  formatListDate(task.dueDate)
                 ) : (
                   <span className="italic">{t('myWork.taskInbox.noDueDate', 'No due date')}</span>
                 )}
@@ -798,31 +799,36 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             {[
               {
                 key: 'blocking_phase' as PMOCategory,
-                label: '🔴 Blokujące Fazę',
+                labelKey: 'myWork.taskInbox.pmoGroup.blocking_phase',
+                label: '🔴 Blocking the phase',
                 color: 'border-rose-500',
                 bgColor: 'bg-rose-50 dark:bg-rose-900/10',
               },
               {
                 key: 'blocking_initiative' as PMOCategory,
-                label: '🟠 Blokujące Inicjatywy',
+                labelKey: 'myWork.taskInbox.pmoGroup.blocking_initiative',
+                label: '🟠 Blocking initiatives',
                 color: 'border-amber-500',
                 bgColor: 'bg-amber-50 dark:bg-amber-900/10',
               },
               {
                 key: 'awaiting_decision' as PMOCategory,
-                label: '🟡 Oczekujące na Decyzję',
+                labelKey: 'myWork.taskInbox.pmoGroup.awaiting_decision',
+                label: '🟡 Awaiting a decision',
                 color: 'border-yellow-500',
                 bgColor: 'bg-yellow-50 dark:bg-yellow-900/10',
               },
               {
                 key: 'overdue' as PMOCategory,
-                label: '⚫ Przeterminowane',
+                labelKey: 'myWork.taskInbox.pmoGroup.overdue',
+                label: '⚫ Overdue',
                 color: 'border-slate-500',
                 bgColor: 'bg-slate-50 dark:bg-slate-800/50',
               },
               {
                 key: 'other' as PMOCategory,
-                label: '✅ Pozostałe',
+                labelKey: 'myWork.taskInbox.pmoGroup.other',
+                label: '✅ Everything else',
                 color: 'border-green-500',
                 bgColor: 'bg-green-50 dark:bg-green-900/10',
               },
@@ -843,7 +849,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-navy-900 dark:text-white">
-                        {category.label}
+                        {t(category.labelKey, category.label)}
                       </span>
                       <span className="text-xs px-2 py-0.5 bg-white dark:bg-navy-800 rounded-full text-slate-600 dark:text-slate-300 font-medium">
                         {categoryTasks.length}

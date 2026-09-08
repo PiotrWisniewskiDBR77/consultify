@@ -193,7 +193,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               setStatus('error');
               setErrorAction('generate');
               setErrorMsg(
-                t('myWorkNotebook.inlineAi.empty', 'AI nie zwróciło treści. Spróbuj ponownie.')
+                t('myWorkNotebook.inlineAi.empty', 'AI returned no content. Please try again.')
               );
               return;
             }
@@ -236,7 +236,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               setStatus('error');
               setErrorAction('generate');
               setErrorMsg(
-                t('myWorkNotebook.inlineAi.proposalFailed', 'Nie udało się utworzyć propozycji AI.')
+                t('myWorkNotebook.inlineAi.proposalFailed', 'Failed to create AI proposal.')
               );
             }
           })();
@@ -253,7 +253,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
       if ((err as { name?: string })?.name !== 'AbortError') {
         setStatus('error');
         setErrorAction('generate');
-        setErrorMsg(t('myWorkNotebook.inlineAi.executeFailed', 'Błąd AI. Spróbuj ponownie.'));
+        setErrorMsg(t('myWorkNotebook.inlineAi.executeFailed', 'AI error. Please try again.'));
       }
     }
   };
@@ -271,7 +271,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
     } catch {
       setStatus('error');
       setErrorAction('approve');
-      setErrorMsg(t('myWorkNotebook.inlineAi.approveFailed', 'Nie udało się zatwierdzić.'));
+      setErrorMsg(t('myWorkNotebook.inlineAi.approveFailed', 'Failed to approve.'));
       resolutionInFlightRef.current = false;
       return;
     }
@@ -304,7 +304,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
         setStatus('error');
         setErrorAction('reject');
         setErrorMsg(
-          t('myWorkNotebook.inlineAi.rejectFailed', 'Nie udało się odrzucić propozycji.')
+          t('myWorkNotebook.inlineAi.rejectFailed', 'Could not reject the proposal.')
         );
         resolutionInFlightRef.current = false;
         return;
@@ -339,7 +339,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
       {status === 'done' && (
         <div className="space-y-2" data-testid="notebook-inline-ai-preview">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            {t('myWorkNotebook.inlineAi.provenance', 'Źródło: Teresa')}
+            {t('myWorkNotebook.inlineAi.provenance', 'Source: Teresa')}
             {pendingRef.current?.actionLabel
               ? ` · ${t('myWorkNotebook.inlineAi.action', 'akcja')} „${pendingRef.current.actionLabel}”`
               : ''}
@@ -374,7 +374,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-c-success hover:bg-c-success/90 transition-colors"
             >
               <Check size={12} />
-              {t('myWorkNotebook.inlineAi.approve', 'Zatwierdź')}
+              {t('myWorkNotebook.inlineAi.approve', 'Approve')}
             </button>
             <button
               data-testid="notebook-inline-ai-reject"
@@ -384,7 +384,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
             >
               <X size={12} />
-              {t('myWorkNotebook.inlineAi.reject', 'Odrzuć')}
+              {t('myWorkNotebook.inlineAi.reject', 'Reject')}
             </button>
           </div>
         </div>
@@ -393,7 +393,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
       {status === 'error' && (
         <div className="space-y-1" role="alert">
           <p className="text-xs text-c-danger">
-            {errorMsg ?? t('myWorkNotebook.inlineAi.error', 'Błąd AI. Spróbuj ponownie.')}
+            {errorMsg ?? t('myWorkNotebook.inlineAi.error', 'AI error. Please try again.')}
           </p>
           <div className="flex gap-2">
             {errorAction && (
@@ -426,7 +426,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               onClick={reset}
               className="text-xs text-c-text-secondary underline hover:text-c-text"
             >
-              {t('myWorkNotebook.inlineAi.close', 'Zamknij')}
+              {t('myWorkNotebook.inlineAi.close', 'Close')}
             </button>
           </div>
         </div>
@@ -442,7 +442,7 @@ export const NotebookInlineAIMenu: React.FC<NotebookInlineAIMenuProps> = ({
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors w-full"
             >
               <Sparkles size={12} />
-              <span>{t('myWorkNotebook.inlineAi.trigger', 'Popraw z Teresą')}</span>
+              <span>{t('myWorkNotebook.inlineAi.trigger', 'Improve with Teresa')}</span>
               <ChevronDown size={12} />
             </button>
           ) : (

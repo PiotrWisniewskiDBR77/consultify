@@ -637,6 +637,7 @@ function RadarCanvas({
   onSelectSignal: (id: string) => void;
   ambientMotion: 'soft' | 'full';
 }) {
+  const { t } = useTranslation();
   const isDark = useIsDark();
   const layout = useMemo(() => computeSignalLayout(signals), [signals]);
   const selectedSignal =
@@ -1005,7 +1006,7 @@ function RadarCanvas({
 
         {!signals.length && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
-            No signals match the current filter.
+            {t('myWork.home.noSignalsForFilter', 'No signals match the current filter.')}
           </div>
         )}
       </div>
@@ -1043,12 +1044,16 @@ function RadarPreviewPanel({
   signal: RadarMapSignal | null;
   onAction: (action: HomeScreenAction) => void;
 }) {
+  const { t } = useTranslation();
   const { briefing, loading } = useRadarBriefing(signal?.id ?? null);
 
   if (!signal) {
     return (
       <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center text-slate-500 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
-        Pick a signal on the radar to see why it may matter to you right now.
+        {t(
+          'myWork.home.pickSignalHint',
+          'Pick a signal on the radar to see why it may matter to you right now.'
+        )}
       </div>
     );
   }
@@ -1116,7 +1121,7 @@ function RadarPreviewPanel({
 
       <div className="mt-3 rounded-xl border border-primary-400/30 bg-primary-500/10 p-3 dark:border-primary-400/20">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-200">
-          Why this is on your radar
+          {t('myWork.home.whyOnRadar', 'Why this is on your radar')}
         </div>
         <p className="mt-1 text-[12px] leading-relaxed text-primary-900/80 dark:text-primary-50/90">
           {whyItMattersForYou}

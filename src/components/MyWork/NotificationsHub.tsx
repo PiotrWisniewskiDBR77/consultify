@@ -47,6 +47,7 @@ import {
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export type NotificationMode = 'project' | 'personal' | 'all';
 export type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
@@ -93,7 +94,7 @@ const notificationToGenericItem = (n: Notification): GenericListItem => ({
   tertiaryLabel: n.scope || 'System',
   isHighlighted: !n.read,
   dueDate: n.createdAt
-    ? new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    ? formatListDate(n.createdAt)
     : undefined,
   _raw: n,
 });
@@ -150,7 +151,7 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  return formatListDate(date);
 };
 
 // Get notification icon

@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { FieldType } from '@/types/tablePlatform';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -145,7 +146,7 @@ const FieldValueDisplay: React.FC<{
     return (
       <span className="text-xs tabular-nums text-c-text-secondary">
         {prefix}
-        {num.toLocaleString()}
+        {formatListNumber(num, String(num))}
         {suffix}
       </span>
     );

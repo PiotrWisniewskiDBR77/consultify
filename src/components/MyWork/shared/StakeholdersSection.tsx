@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export type StakeholderRole = 'responsible' | 'accountable' | 'consulted' | 'informed';
 
@@ -476,9 +477,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 'myWork.stakeholders.acknowledged',
                                                 'Acknowledged'
                                               )}{' '}
-                                              {new Date(
-                                                stakeholder.acknowledgedAt
-                                              ).toLocaleDateString()}
+                                              {formatListDate(stakeholder.acknowledgedAt)}
                                             </span>
                                           </div>
                                         )}

@@ -29,6 +29,7 @@ import { isTabeleFormIntakeEnabled } from '@/utils/tabeleFormIntakeFlag';
 
 import FormBuilder from '../FormBuilder';
 import { IntakeJwtPanel } from './IntakeJwtPanel';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -331,7 +332,7 @@ export function FormsIndex({
               {form.created_at && (
                 <p className="mb-4 text-xs text-c-text-muted">
                   {t('formsIndex.created', 'Created')}{' '}
-                  {new Date(form.created_at).toLocaleDateString()}
+                  {formatListDate(form.created_at)}
                 </p>
               )}
 

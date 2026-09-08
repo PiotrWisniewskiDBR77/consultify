@@ -70,7 +70,7 @@ export function InboxActionCards() {
         const task = await createTaskFromActionCard(card.id);
         toast.success(t('actionCard.taskCreated', 'Zadanie utworzone: {{title}}', { title: task.title }));
       } catch {
-        toast.error(t('actionCard.taskFailed', 'Nie udało się utworzyć zadania.'));
+        toast.error(t('actionCard.taskFailed', 'Could not create the task.'));
       } finally {
         setBusyId(null);
       }
@@ -83,7 +83,7 @@ export function InboxActionCards() {
       setBusyId(card.id);
       try {
         await closeActionCard(card.id);
-        toast.success(t('actionCard.closed', 'Karta zamknięta.'));
+        toast.success(t('actionCard.closed', 'Action card closed.'));
         if (openId === card.id) setOpenId(null);
         if (zZadresu === card.id) {
           try {
@@ -97,7 +97,7 @@ export function InboxActionCards() {
         }
         await wczytaj();
       } catch {
-        toast.error(t('actionCard.closeFailed', 'Nie udało się zamknąć karty.'));
+        toast.error(t('actionCard.closeFailed', 'Could not close the card.'));
       } finally {
         setBusyId(null);
       }
@@ -106,7 +106,7 @@ export function InboxActionCards() {
   );
 
   const naglowek = useMemo(
-    () => t('actionCard.inboxSection', 'Karty działania ({{count}})', { count: cards.length }),
+    () => t('actionCard.inboxSection', 'Action cards ({{count}})', { count: cards.length }),
     [cards.length, t]
   );
 
@@ -114,7 +114,7 @@ export function InboxActionCards() {
 
   return (
     <section
-      aria-label={t('actionCard.inboxSectionAria', 'Karty działania w Skrzynce')}
+      aria-label={t('actionCard.inboxSectionAria', 'Action cards in Inbox')}
       data-testid="inbox-action-cards"
       className="space-y-2 px-4 pt-3"
     >
@@ -130,7 +130,7 @@ export function InboxActionCards() {
               onClick={() => setOpenId(rozwinieta ? null : card.id)}
               className="flex w-full items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-left text-sm text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              <span className="truncate">{card.problem || t('actionCard.title', 'Karta działania')}</span>
+              <span className="truncate">{card.problem || t('actionCard.title', 'Action card')}</span>
             </button>
             {rozwinieta ? (
               <div className="mt-2">

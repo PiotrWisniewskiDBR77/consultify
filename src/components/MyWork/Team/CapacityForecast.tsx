@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, Calendar, Clock, TrendingDown, TrendingUp, Users, Zap } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface DayForecast {
   date: Date;
@@ -72,7 +73,7 @@ const ForecastDay: React.FC<{
             {forecast.dayLabel}
           </p>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {forecast.date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+            {formatListDate(forecast.date)}
           </p>
         </div>
         {forecast.riskLevel !== 'low' && (

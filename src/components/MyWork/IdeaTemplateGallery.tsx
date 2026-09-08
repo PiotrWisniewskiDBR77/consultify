@@ -2232,7 +2232,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
             {/* axe `button-name`: przycisk-X bez tekstu dla czytnika ekranu. */}
             <button
               onClick={onClose}
-              aria-label={t('common.close', 'Zamknij')}
+              aria-label={t('common.close', 'Close')}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               <X size={16} className="text-slate-500" />

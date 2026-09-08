@@ -47,7 +47,8 @@
     "colDue": "Termin",
     "loading": "Wczytywanie przekazań…",
     "unavailable": "Kolejka przekazań niedostępna.",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "returnWithBlockers": "Zwróć z blokerami"
   },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
@@ -2405,12 +2406,33 @@
         "noTasks": "Brak zadań",
         "addTask": "Dodaj zadanie",
         "dropHere": "Upuść tutaj"
-      }
+      },
+      "emptyTitle": "Nie ma jeszcze zadań",
+      "emptyHint": "Utwórz pierwsze zadanie, żeby zacząć",
+      "createTask": "Utwórz zadanie"
     },
     "title": "Moja Praca",
-    "home": "Strona główna",
+    "home": {
+      "noSignalsForFilter": "Żaden sygnał nie pasuje do bieżącego filtra.",
+      "pickSignalHint": "Wybierz sygnał na radarze, żeby zobaczyć, dlaczego może być teraz dla Ciebie ważny.",
+      "whyOnRadar": "Dlaczego to jest na Twoim radarze"
+    },
     "manager": "Menedżer",
-    "inbox": "Skrzynka",
+    "inbox": {
+      "urgency": {
+        "critical": "Krytyczne",
+        "high": "Wysokie",
+        "normal": "Normalne",
+        "low": "Niskie"
+      },
+      "triage": {
+        "accept_today": "Dziś",
+        "schedule": "Zaplanuj",
+        "delegate": "Deleguj",
+        "archive": "Archiwum",
+        "reject": "Odrzuć"
+      }
+    },
     "focus": {
       "label": "Fokus",
       "columns": {
@@ -2504,7 +2526,13 @@
           "critical": "Krytyczny"
         }
       },
-      "removeFromFocus": "Usuń z fokusu"
+      "removeFromFocus": "Usuń z fokusu",
+      "timeBlock": {
+        "morning": "Rano",
+        "afternoon": "Popołudnie",
+        "buffer": "Bufor",
+        "bufferTime": "Elastyczny"
+      }
     },
     "radar": {
       "pulseLabel": "Radar · kontekst, pomysły i spokojny kierunek",
@@ -2790,7 +2818,8 @@
       "savedFromChatToast": "Zapisano z czatu w Moich Pomysłach",
       "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę",
       "gardenSpark": "Iskra Ogrodu Pomysłów",
-      "plantInGarden": "Zasadź w Ogrodzie Pomysłów"
+      "plantInGarden": "Zasadź w Ogrodzie Pomysłów",
+      "approveAndCreate": "Zatwierdź i utwórz"
     },
     "whiteboard": {
       "regionLabel": "Tablica idei z elementami swobodnymi",
@@ -3208,7 +3237,7 @@
       "label12": "Nowe",
       "label13": "Wszystkie",
       "label14": "Moje do decyzji",
-      "label15": "Moje prośby (pending)",
+      "label15": "Moje prośby (oczekujące)",
       "name7": "Nowe zadanie",
       "newIdea": "Nowy pomysł",
       "idea2": "Pomysł",
@@ -3304,7 +3333,7 @@
       "ariaLabel2": "Ostatnio otwierane",
       "label49": "Zaległe",
       "label50": "Pilne",
-      "label51": "Decyzje (pending)",
+      "label51": "Decyzje (oczekujące)",
       "label52": "Skrzynka odbiorcza",
       "noAlerts": "Brak alertów",
       "accessRestrictedAdminOr": "Brak dostępu. Wymagana rola Admin lub Manager.",
@@ -4628,7 +4657,9 @@
       "sourcesAndAssumptions": "Źródła i założenia",
       "noSourceContext": "Brak kontekstu źródła",
       "actionsHiddenInReadMode": "Akcje ukryte w trybie podglądu",
-      "created": "Utworzono"
+      "created": "Utworzono",
+      "blockedPlaceholder": "Co blokuje to zadanie?",
+      "selectInitiative": "Wybierz inicjatywę (opcjonalnie)"
     },
     "dependencies": {
       "toastError": "Wybierz zadanie źródłowe",
@@ -5567,6 +5598,13 @@
         "updateFailed": "Nie udało się zaktualizować zadania",
         "taskDeleted": "Zadanie usunięte",
         "deleteFailed": "Nie udało się usunąć zadania"
+      },
+      "pmoGroup": {
+        "blocking_phase": "🔴 Blokujące Fazę",
+        "blocking_initiative": "🟠 Blokujące Inicjatywy",
+        "awaiting_decision": "🟡 Oczekujące na Decyzję",
+        "overdue": "⚫ Przeterminowane",
+        "other": "✅ Pozostałe"
       }
     },
     "ideaMap": {
@@ -5673,10 +5711,88 @@
       "stageField": "Etap",
       "createdField": "Utworzono",
       "updatedField": "Zaktualizowano",
-      "noActivity": "Brak aktywności"
+      "noActivity": "Brak aktywności",
+      "activity": {
+        "addedAttachment": "dodał(a) załącznik",
+        "aiSuggested": "AI zasugerowało",
+        "changedStatus": "zmienił(a) stan: {{oldValue}} → {{newValue}}",
+        "commented": "skomentował(a)",
+        "created": "utworzył(a)",
+        "edited": "zmienił(a) {{field}}"
+      },
+      "close": "Zamknij inspektor"
     },
     "initiatives": {
       "createdFromChatToast": "Utworzono inicjatywę z czatu"
+    },
+    "taskCardV2": {
+      "status": {
+        "todo": "Do zrobienia",
+        "inProgress": "W realizacji",
+        "review": "Do przeglądu",
+        "done": "Ukończone",
+        "blocked": "Zablokowane",
+        "unknown": "Stan nieznany"
+      },
+      "priority": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny",
+        "unset": "Nie ustalono"
+      },
+      "noDueDate": "Nie ustalono terminu",
+      "backToList": "Wróć do listy zadań",
+      "newTask": "NOWE ZADANIE",
+      "untitled": "Zadanie bez tytułu",
+      "saving": "Zapisywanie…",
+      "save": "Zapisz zadanie",
+      "purposeTitle": "Zadanie — tu doprowadzasz pracę do zamknięcia",
+      "noDescription": "Nie wpisano jeszcze opisu zadania. Uzupełnij cel, zakres i oczekiwany rezultat.",
+      "closureConditions": "Warunki zamknięcia",
+      "closureCount": "{{completed}} z {{total}} spełnionych",
+      "closureModelNote": "Model zadania przechowuje płaską listę warunków — nie przypisuje ich do etapów.",
+      "dueDate": "Termin",
+      "progressAria": "{{completed}} z {{total}} warunków spełnionych",
+      "conditionMet": "Spełniony",
+      "conditionPending": "Czeka",
+      "noConditions": "Nie zdefiniowano warunków zamknięcia. Zadania nie można rzetelnie ocenić bez listy warunków.",
+      "blocked": "Zablokowane",
+      "blockedByDependencies": "Zadanie czeka na {{blocking}} z {{total}} zależności poprzedzających.",
+      "evidenceTitle": "Dowody wykonania",
+      "evidenceCount": "{{attached}} z {{required}} wymaganych",
+      "attached": "Załączony",
+      "noEvidence": "Nie załączono jeszcze żadnego dowodu wykonania.",
+      "missingTitle": "Brakujące — nazwane, nie „brak danych”",
+      "missingBody": "Brakuje {{missing}} z {{total}} dowodów powiązanych z warunkami. Model nie przechowuje nazw brakujących dowodów, więc karta nie zastępuje ich zerem ani wymyśloną nazwą.",
+      "panelAria": "Panel zadania",
+      "roleAndRights": "Rola i uprawnienia",
+      "ownerIs": "Właściciel zadania: {{name}}",
+      "ownerMissing": "Właściciel zadania nie został wskazany.",
+      "rightEdit": "Możesz edytować treść i warunki zadania.",
+      "rightSave": "Możesz zapisać zmiany i dowody wykonania.",
+      "rightNoSelfApproval": "Karta nie potwierdza uprawnienia do niezależnej akceptacji własnego działania.",
+      "rightNotDoneBefore": "Nie można uznać zadania za gotowe przed spełnieniem {{total}} z {{total}} warunków.",
+      "properties": "Właściwości",
+      "fieldStatus": "Status",
+      "fieldPriority": "Priorytet",
+      "fieldOwner": "Właściciel",
+      "ownerUnset": "Nie wskazano",
+      "fieldDependencies": "Zależności",
+      "dependencyCount": "{{known}} z {{total}} rozpoznanych"
+    },
+    "pmoCategory": {
+      "blocking_phase": "Blokujące Fazę",
+      "blocking_initiative": "Blokujące Inicjatywę",
+      "decision_required": "Oczekuje Decyzji",
+      "overdue": "Termin Krytyczny",
+      "strategic": "Wysoki Priorytet Strategiczny",
+      "standard": "Standardowe"
+    },
+    "actionProposals": {
+      "pendingProposals": "Propozycje oczekujące",
+      "pendingApprovals": "Akceptacje oczekujące",
+      "accountabilityNote": "Każda interwencja AI jest zapisana z odpowiedzialnością człowieka."
     }
   },
   "step1": {
@@ -38258,7 +38374,8 @@
       "popupBlockedForPdf": "Wyskakujące okno zablokowane. Zezwól na wyskakujące okna, aby wyeksportować PDF.",
       "failedToRenderImageRetry": "Nie udało się wyrenderować obrazu mapy myśli. Zamknij tę kartę i spróbuj ponownie.",
       "pdfReadyPrintDialog": "PDF gotowy — użyj okna drukowania, aby go zapisać.",
-      "pdfExportFailedRetry": "Eksport PDF nie powiódł się. Spróbuj ponownie."
+      "pdfExportFailedRetry": "Eksport PDF nie powiódł się. Spróbuj ponownie.",
+      "branchHealthLabel": "Zdrowie gałęzi: {{score}}%"
     },
     "financial": {
       "dialogTitle": "Case finansowy",
@@ -38726,7 +38843,19 @@
       "tags": "Tagi",
       "addTag": "+ tag",
       "removeTag": "Usuń tag {{tag}}",
-      "untitled": "Bez tytułu"
+      "untitled": "Bez tytułu",
+      "copyLinkReason": "Akcja czeka na definicję zakresu",
+      "evidenceCaptured": "Notatka powstała z przechwytu:",
+      "noComments": "Brak komentarzy do tego dokumentu.",
+      "noEvidence": "Ta notatka nie ma zapisanych źródeł ani założeń.",
+      "share": "Udostępnij",
+      "structureHint": "Nagłówki dokumentu — nawigacja PO artefakcie, nie metadana o nim.",
+      "teresaComposeDisabled": "Pisanie wprost w pasie będzie możliwe, gdy notatka dostanie własny wątek rozmowy.",
+      "teresaConvertInitiative": "Zamień w inicjatywę",
+      "teresaConvertTask": "Zamień w zadanie",
+      "teresaEmpty": "Ta notatka nie ma jeszcze własnego wątku rozmowy — otwórz rozmowę, żeby zacząć.",
+      "versionHistoryHint": "Otwórz historię wersji w sekcji Akcje, żeby zobaczyć poprzednie zapisy.",
+      "versionHistoryOpenHint": "Historia wersji otwarta poniżej dokumentu — patrz sekcja Akcje."
     },
     "slashMenu": {
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"
@@ -41200,7 +41329,9 @@
       "proposalFailed": "Nie udało się utworzyć propozycji AI.",
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia akcji",
       "executeFailed": "Błąd AI. Spróbuj ponownie.",
-      "approveFailed": "Nie udało się zatwierdzić."
+      "approveFailed": "Nie udało się zatwierdzić.",
+      "provenance": "Źródło: Teresa",
+      "rejectFailed": "Nie udało się odrzucić propozycji."
     }
   },
   "myWorkMindmap": {
@@ -41223,7 +41354,7 @@
       "expandNode": "Rozwiń ten węzeł",
       "deepenTopic": "Pogłęb temat",
       "summarizeBranch": "Podsumuj gałąź",
-      "whatIfAnalysis": "What-if analiza",
+      "whatIfAnalysis": "Analiza what-if",
       "suggestLinks": "Zasugeruj powiązania",
       "rewriteNode": "AI: Przeredaguj węzeł"
     },
@@ -46892,7 +47023,8 @@
       "both": "Obustronna"
     },
     "edgeLabel": "Etykieta",
-    "edgeCondition": "Typ połączenia"
+    "edgeCondition": "Typ połączenia",
+    "save": "Zapisz"
   },
   "statusChip": {
     "onboarding": "Onboarding",

@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView, Task, TaskPriority, TaskStatus } from '../types';
@@ -133,7 +134,7 @@ export const TaskDropdown = () => {
       return t('taskDropdown.dOverdue', '{{count}}d overdue', { count: Math.abs(diffDays) });
     if (diffDays === 0) return t('taskDropdown.today', 'Today');
     if (diffDays === 1) return t('taskDropdown.tomorrow', 'Tomorrow');
-    return d.toLocaleDateString();
+    return formatListDate(d);
   };
 
   return (

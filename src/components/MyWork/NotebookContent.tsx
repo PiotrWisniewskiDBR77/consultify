@@ -3522,7 +3522,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 e.currentTarget.blur();
                               }
                             }}
-                            aria-label={t('notebook.notebookContent.titleAriaLabel', 'Tytuł notatki')}
+                            aria-label={t('notebook.notebookContent.titleAriaLabel', 'Note title')}
                             placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
                             className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
                           />

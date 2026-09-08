@@ -47,7 +47,8 @@
     "colDue": "Due",
     "loading": "Loading handoff acceptances…",
     "unavailable": "Handoff queue unavailable.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "returnWithBlockers": "Return with blockers"
   },
   "notFoundPage": {
     "title": "Page not found",
@@ -3076,12 +3077,33 @@
         "noTasks": "No tasks",
         "addTask": "Add task",
         "dropHere": "Drop here"
-      }
+      },
+      "emptyTitle": "No tasks yet",
+      "emptyHint": "Create your first task to get started",
+      "createTask": "Create task"
     },
     "title": "My Work",
-    "home": "Home",
+    "home": {
+      "noSignalsForFilter": "No signals match the current filter.",
+      "pickSignalHint": "Pick a signal on the radar to see why it may matter to you right now.",
+      "whyOnRadar": "Why this is on your radar"
+    },
     "manager": "Manager",
-    "inbox": "Inbox",
+    "inbox": {
+      "urgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "triage": {
+        "accept_today": "Today",
+        "schedule": "Schedule",
+        "delegate": "Delegate",
+        "archive": "Archive",
+        "reject": "Reject"
+      }
+    },
     "focus": {
       "label": "Focus",
       "columns": {
@@ -3175,7 +3197,13 @@
           "critical": "Critical"
         }
       },
-      "removeFromFocus": "Remove from focus"
+      "removeFromFocus": "Remove from focus",
+      "timeBlock": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "buffer": "Buffer",
+        "bufferTime": "Flexible"
+      }
     },
     "radar": {
       "pulseLabel": "Radar · context, ideas, and a gentle steer",
@@ -3461,7 +3489,8 @@
       "savedFromChatToast": "Saved from chat to My Ideas",
       "sentToWorkspaceToast": "Opened in Ideas workspace",
       "gardenSpark": "Idea Garden Spark",
-      "plantInGarden": "Plant in Idea Garden"
+      "plantInGarden": "Plant in Idea Garden",
+      "approveAndCreate": "Approve and create"
     },
     "whiteboard": {
       "regionLabel": "Idea whiteboard with freeform elements",
@@ -4166,7 +4195,9 @@
       "lineageOrganization": "Organization",
       "lineageUpdated": "Updated",
       "lineageSourceStatus": "Source status",
-      "lineageInitiative": "Initiative"
+      "lineageInitiative": "Initiative",
+      "possibleDuplicate": "Possible duplicate ({{count}})",
+      "possibleDuplicateHint": "Another item has the same title, section and source — check whether this is a duplicate."
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -4951,7 +4982,8 @@
       "sourcesAndAssumptions": "Sources & assumptions",
       "sourceArtifact": "Source artifact",
       "sourceDocuments": "Source documents",
-      "sessionsAndNotes": "Sessions, notes & findings"
+      "sessionsAndNotes": "Sessions, notes & findings",
+      "moreActions": "More actions"
     },
     "taskDetail": {
       "label": "Notify only",
@@ -5288,7 +5320,9 @@
       "sourcesAndAssumptions": "Sources and assumptions",
       "noSourceContext": "No source context",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode",
-      "created": "Created"
+      "created": "Created",
+      "blockedPlaceholder": "What is blocking this task?",
+      "selectInitiative": "Select an initiative (optional)"
     },
     "dependencies": {
       "toastError": "Select a source task first",
@@ -6203,6 +6237,13 @@
         "updateFailed": "Failed to update task",
         "taskDeleted": "Task deleted",
         "deleteFailed": "Failed to delete task"
+      },
+      "pmoGroup": {
+        "blocking_phase": "🔴 Blocking the phase",
+        "blocking_initiative": "🟠 Blocking initiatives",
+        "awaiting_decision": "🟡 Awaiting a decision",
+        "overdue": "⚫ Overdue",
+        "other": "✅ Everything else"
       }
     },
     "ideaMap": {
@@ -6309,10 +6350,88 @@
       "stageField": "Stage",
       "createdField": "Created",
       "updatedField": "Updated",
-      "noActivity": "No activity"
+      "noActivity": "No activity",
+      "activity": {
+        "addedAttachment": "added an attachment",
+        "aiSuggested": "AI suggested",
+        "changedStatus": "changed the status: {{oldValue}} → {{newValue}}",
+        "commented": "commented",
+        "created": "created",
+        "edited": "changed {{field}}"
+      },
+      "close": "Close inspector"
     },
     "initiatives": {
       "createdFromChatToast": "Initiative created from chat"
+    },
+    "taskCardV2": {
+      "status": {
+        "todo": "To do",
+        "inProgress": "In progress",
+        "review": "In review",
+        "done": "Done",
+        "blocked": "Blocked",
+        "unknown": "Status unknown"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical",
+        "unset": "Not set"
+      },
+      "noDueDate": "No due date set",
+      "backToList": "Back to the task list",
+      "newTask": "NEW TASK",
+      "untitled": "Task without a title",
+      "saving": "Saving…",
+      "save": "Save task",
+      "purposeTitle": "Task — this is where you close the work",
+      "noDescription": "No task description yet. Fill in the goal, the scope and the expected result.",
+      "closureConditions": "Closure conditions",
+      "closureCount": "{{completed}} of {{total}} met",
+      "closureModelNote": "The task model keeps a flat list of conditions — it does not map them to stages.",
+      "dueDate": "Due date",
+      "progressAria": "{{completed}} of {{total}} conditions met",
+      "conditionMet": "Met",
+      "conditionPending": "Pending",
+      "noConditions": "No closure conditions defined. A task cannot be judged honestly without a list of conditions.",
+      "blocked": "Blocked",
+      "blockedByDependencies": "The task is waiting on {{blocking}} of {{total}} predecessor dependencies.",
+      "evidenceTitle": "Evidence of completion",
+      "evidenceCount": "{{attached}} of {{required}} required",
+      "attached": "Attached",
+      "noEvidence": "No evidence of completion attached yet.",
+      "missingTitle": "Missing — named, not “no data”",
+      "missingBody": "{{missing}} of {{total}} pieces of evidence tied to conditions are missing. The model does not store the names of the missing items, so this card does not replace them with a zero or an invented name.",
+      "panelAria": "Task panel",
+      "roleAndRights": "Role and permissions",
+      "ownerIs": "Task owner: {{name}}",
+      "ownerMissing": "No task owner has been named.",
+      "rightEdit": "You can edit the content and the conditions.",
+      "rightSave": "You can save changes and evidence of completion.",
+      "rightNoSelfApproval": "This card does not confirm the right to independently accept your own work.",
+      "rightNotDoneBefore": "The task cannot be called done before {{total}} of {{total}} conditions are met.",
+      "properties": "Properties",
+      "fieldStatus": "Status",
+      "fieldPriority": "Priority",
+      "fieldOwner": "Owner",
+      "ownerUnset": "Not named",
+      "fieldDependencies": "Dependencies",
+      "dependencyCount": "{{known}} of {{total}} identified"
+    },
+    "pmoCategory": {
+      "blocking_phase": "Blocking the phase",
+      "blocking_initiative": "Blocking an initiative",
+      "decision_required": "Awaiting a decision",
+      "overdue": "Critical deadline",
+      "strategic": "High strategic priority",
+      "standard": "Standard"
+    },
+    "actionProposals": {
+      "pendingProposals": "Pending proposals",
+      "pendingApprovals": "Pending approvals",
+      "accountabilityNote": "Every AI intervention is logged with human accountability."
     }
   },
   "step1": {
@@ -35808,7 +35927,8 @@
       "popupBlockedForPdf": "Pop-up blocked. Please allow pop-ups to export the PDF.",
       "failedToRenderImageRetry": "Failed to render the mind map image. Please close this tab and try again.",
       "pdfReadyPrintDialog": "PDF ready — use the print dialog to save it.",
-      "pdfExportFailedRetry": "PDF export failed. Please try again."
+      "pdfExportFailedRetry": "PDF export failed. Please try again.",
+      "branchHealthLabel": "Branch health: {{score}}%"
     },
     "financial": {
       "dialogTitle": "Financial case",
@@ -36230,7 +36350,19 @@
       "tags": "Tags",
       "addTag": "+ tag",
       "removeTag": "Remove tag {{tag}}",
-      "untitled": "Untitled"
+      "untitled": "Untitled",
+      "copyLinkReason": "Action is waiting for its scope to be defined",
+      "evidenceCaptured": "This note was created from a capture:",
+      "noComments": "No comments on this document.",
+      "noEvidence": "This note has no saved sources or assumptions.",
+      "share": "Share",
+      "structureHint": "Document headings — navigation THROUGH the artefact, not metadata about it.",
+      "teresaComposeDisabled": "Writing straight into the rail will be possible once the note has its own conversation thread.",
+      "teresaConvertInitiative": "Turn into an initiative",
+      "teresaConvertTask": "Turn into a task",
+      "teresaEmpty": "This note has no conversation thread of its own yet — open a conversation to start one.",
+      "versionHistoryHint": "Open version history in the Actions section to see earlier saves.",
+      "versionHistoryOpenHint": "Version history is open below the document — see the Actions section."
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
@@ -38676,7 +38808,9 @@
       "proposalFailed": "Failed to create AI proposal.",
       "executeFailed": "AI error. Please try again.",
       "approveFailed": "Failed to approve.",
-      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
+      "provenance": "Source: Teresa",
+      "rejectFailed": "Could not reject the proposal."
     }
   },
   "myWorkMindmap": {
@@ -44354,7 +44488,8 @@
       "both": "Both ways"
     },
     "edgeLabel": "Label",
-    "edgeCondition": "Connection type"
+    "edgeCondition": "Connection type",
+    "save": "Save"
   },
   "statusChip": {
     "onboarding": "Onboarding",
