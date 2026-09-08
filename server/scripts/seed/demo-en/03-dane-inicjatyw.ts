@@ -23,12 +23,17 @@
  * `APPROVED_BACKLOG`, więc zarejestrowany wniosek pokazuje się jako „Approved"
  * (zmierzone: chip „Pending approval 0" przy dwóch wnioskach w bazie).
  *
- * Wniosek konstrukcyjny: KAŻDY wiersz z agregatem wygląda na liście na „Approved",
- * więc agregaty zakładamy WYŁĄCZNIE inicjatywom, które NAPRAWDĘ stoją w `APPROVED`.
- * Plan potrzebuje czterech okien, a okno wymaga agregatu `APPROVED_BACKLOG` — stąd
- * `APPROVED 4`. Reszta rozkładu dopełnia 13 tak, żeby każdy z siedmiu statusów miał
- * na ekranie swojego przedstawiciela. To jedyny rozkład, w którym „7 statusów widać"
- * i „plan ma 4 inicjatywy" są prawdziwe JEDNOCZEŚNIE.
+ * SPROSTOWANIE D4b (DECYZJA 2), zmierzone 08.09 na `consultify_kopia_d44`:
+ * zdanie „poza łańcuchem przekazania nic nie przesuwa agregatu" jest prawdziwe,
+ * ale wniosek „więc agregaty tylko dla APPROVED" był ZA SZEROKI. Łańcuch DA SIĘ
+ * przejść kanonicznymi pisarzami po HTTP (`register` -> okno w opublikowanym
+ * planie -> `initiative.schedule.request/decide` -> `initiative.handoff.
+ * request/decide`), a `decideHandoffAcceptance` ustawia `lifecycleState`
+ * na `IN_EXECUTION` (`handoffAcceptance.ts:277`) — co `statusMapping.ts:22`
+ * mapuje z powrotem na status `IN_EXECUTION`. Dlatego OSIEM inicjatyw ma agregat
+ * i OSIEM okien w planie, a na liście dalej widać SIEDEM statusów, bo żaden
+ * agregat nie zostaje w `APPROVED_BACKLOG`/`SCHEDULED` na wierszu realizowanym.
+ * `PENDING_APPROVAL` zostaje bez agregatu (nie ma dla niego łańcucha).
  */
 
 /** Status kanoniczny (`server/src/constants/initiativeStatuses.ts:1-15`). */
@@ -981,26 +986,50 @@ export function statusEtapuSql(inicjatywa: Inicjatywa): StatusInicjatywy {
 /**
  * Inicjatywy, dla których zakładamy agregat runtime-v1 przez `register`.
  *
- * WYŁĄCZNIE te, które realnie stoją w `APPROVED`. Inicjatywy `IN_EXECUTION`
- * i `PENDING_APPROVAL` są tu ŚWIADOMIE pominięte — patrz nagłówek pliku: agregat
- * `APPROVED_BACKLOG` przykryłby na liście ich prawdziwy status („In execution 0",
- * „Pending approval 0"). Agregat dla realizowanej inicjatywy powstaje w łańcuchu
- * przekazania (`handoffAcceptance.ts`, paczka D4), nie tutaj.
+ * D4b (DECYZJA 2) — OSIEM: cztery `APPROVED` (zostają w `APPROVED_BACKLOG`)
+ * ORAZ cztery `IN_EXECUTION`, które przechodzą PEŁNY łańcuch przekazania
+ * (`register` -> okno planu -> `scheduleDecision` -> `handoffAcceptance`)
+ * i kończą w `lifecycleState = 'IN_EXECUTION'`.
+ *
+ * DLACZEGO TO NIE PRZYKRYWA STATUSU (obawa D3, DEC-397): rejestr runtime-v1
+ * wygrywa z wierszem klasycznym, ale `statusMapping.ts:22` mapuje
+ * `lifecycleState = 'IN_EXECUTION'` na status `IN_EXECUTION` — więc po pełnym
+ * łańcuchu lista pokazuje PRAWDĘ. Groźny jest wyłącznie agregat, który UTKNĄŁ
+ * w `APPROVED_BACKLOG`/`SCHEDULED` na inicjatywie realizowanej; dokładnie to
+ * (i tylko to) pilnuje zwężona asercja `--verify`.
+ *
+ * KOLEJNOŚĆ JEST WYMUSZONA: `register` odmawia statusu `IN_EXECUTION`
+ * (`registerModuleInitiativeForPlanning.ts:38` — `PLANNABLE_MODULE_STATUSES =
+ * ['APPROVED','PENDING_APPROVAL']`), dlatego etap SQL zapisuje realizowane jako
+ * `APPROVED` (`statusEtapuSql`), a przejście wiersza na `IN_EXECUTION` idzie
+ * DOPIERO po domknięciu łańcucha.
  */
 export function doRejestracji(
   inicjatywy: readonly Inicjatywa[] = INICJATYWY
 ): readonly Inicjatywa[] {
-  return inicjatywy.filter((i) => i.status === 'APPROVED');
+  return inicjatywy.filter((i) => i.status === 'APPROVED' || i.status === 'IN_EXECUTION');
 }
 
+/** Cztery realizowane inicjatywy — dla nich D4b buduje `execution_case`. */
+export const SLUGI_PRZEKAZANIA = [
+  'predictive-maintenance-cnc',
+  'mes-rollout-line-3',
+  'warehouse-automation-pilot',
+  'skills-matrix-upskilling',
+] as const;
+
 /**
- * Cztery inicjatywy wchodzące do opublikowanego planu (zakładka „Plan").
+ * Osiem inicjatyw wchodzących do opublikowanego planu (zakładka „Plan").
  * Muszą to być DOKŁADNIE te z `doRejestracji()` — plan przyjmuje wyłącznie okna
- * z agregatem w stanie `APPROVED_BACKLOG` (`planScenario.ts:205-222`).
+ * z agregatem w stanie `APPROVED_BACKLOG` (`planScenario.ts:205-222`), a
+ * `scheduleDecision.ts:144-146` żąda okna DOKŁADNIE dla tej inicjatywy i
+ * DOKŁADNIE dla jej bieżącej wersji agregatu („Exact Initiative planned window
+ * is missing"). Bez okna dla czterech realizowanych łańcucha nie da się przejść.
  */
 export const SLUGI_PLANU = [
   'energy-monitoring-iso-50001',
   'supplier-quality-gate',
   'scrap-reduction-programme',
   'shift-handover-digitisation',
+  ...SLUGI_PRZEKAZANIA,
 ] as const;
