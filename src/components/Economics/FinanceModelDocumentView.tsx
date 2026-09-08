@@ -1,3 +1,5 @@
+import { localeListy } from '../../utils/listDateFormat';
+import { statementLineLabel } from '../Finance/labels/financeEnums';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +29,12 @@ type Props = {
 
 export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
   const { i18n, t } = useTranslation();
-  const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  // `localeListy()` zamiast pary 'pl-PL'/'en-US' wpisanej w kod: konto
+  // angielskie dostawało tu format AMERYKAŃSKI (M/D, przecinek tysięcy),
+  // a reszta produktu — brytyjski. Skaner K7 tego nie widział, bo locale
+  // nie stało w wywołaniu, tylko w zmiennej.
+  const numberLocale = localeListy();
+  const jestPolski = numberLocale.startsWith('pl');
   const [selectedVariant, setSelectedVariant] = useState<'base' | 'optimistic' | 'conservative'>(
     'base'
   );
@@ -257,7 +264,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
                         line.isTotal || line.isSubtotal ? 'font-semibold text-slate-100' : ''
                       }
                     >
-                      {line.lineName}
+                      {statementLineLabel(line.lineName, jestPolski)}
                     </span>
                   </td>
                   {forecastYears.map((year) => {

@@ -1,4 +1,4 @@
-import { formatListDate } from '../../utils/listDateFormat';
+import { formatListDate, localeListy } from '../../utils/listDateFormat';
 import {
   BarChart3,
   Calculator,
@@ -210,7 +210,12 @@ export function useFinancePreview({
   versionSnapshots,
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
-  const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  // `localeListy()` zamiast pary 'pl-PL'/'en-US' wpisanej w kod: konto
+  // angielskie dostawało tu format AMERYKAŃSKI (M/D, przecinek tysięcy),
+  // a reszta produktu — brytyjski. Skaner K7 tego nie widział, bo locale
+  // nie stało w wywołaniu, tylko w zmiennej.
+  const numberLocale = localeListy();
+  const jestPolski = numberLocale.startsWith('pl');
   const isPolishLocale = numberLocale === 'pl-PL';
 
   const ModelStatementPreview: React.FC<{
@@ -323,7 +328,7 @@ export function useFinancePreview({
                     style={{ paddingLeft: `${12 + line.level * 16}px` }}
                   >
                     <span className={line.isTotal || line.isSubtotal ? 'font-semibold' : ''}>
-                      {line.lineName}
+                      {statementLineLabel(line.lineName, jestPolski)}
                     </span>
                   </td>
                   {detail.forecastYears.map((year) => {
