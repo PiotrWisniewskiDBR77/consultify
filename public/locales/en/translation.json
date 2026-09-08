@@ -47324,7 +47324,10 @@
     },
     "unitsAnswered": "{{answered}}/{{total}} units answered",
     "unitsMissingEvidence": "{{count}} without evidence",
-    "viewModeAria": "View mode"
+    "viewModeAria": "View mode",
+    "saveFailedToast": "Could not save — try again",
+    "saveRetry": "Retry save",
+    "saveDismiss": "Dismiss"
   },
   "templateBuilder": {
     "rightPanel": {

@@ -122,20 +122,20 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (draft.type === 'doc')
       return draft.doc.map((s, i) => ({
         id: s.id,
-        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        label: s.title || t('templateBuilder.container.untitled', 'Untitled'),
         meta: pickTemplateLabel(DOC_BLOCK_LABELS, DOC_BLOCK_LABELS_EN, s.block, language),
         index: i + 1,
       }));
     if (draft.type === 'deck')
       return draft.deck.map((s, i) => ({
         id: s.id,
-        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        label: s.title || t('templateBuilder.container.untitled', 'Untitled'),
         meta: pickTemplateLabel(SLIDE_ARCHETYPE_LABELS, SLIDE_ARCHETYPE_LABELS_EN, s.archetype, language),
         index: i + 1,
       }));
     return draft.table.map((sheet, i) => ({
       id: sheet.id,
-      label: sheet.name || t('templateBuilder.container.unnamed', 'Bez nazwy'),
+      label: sheet.name || t('templateBuilder.container.unnamed', 'Unnamed'),
       meta: t('templateBuilder.container.columnsCount', '{{count}} kolumn', {
         count: sheet.columns.length,
       }),
@@ -145,10 +145,10 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   const addLabel =
     draft.type === 'doc'
-      ? t('templateBuilder.container.addSection', 'Dodaj sekcję')
+      ? t('templateBuilder.container.addSection', 'Add section')
       : draft.type === 'deck'
-        ? t('templateBuilder.container.addSlide', 'Dodaj slajd')
-        : t('templateBuilder.container.addSheet', 'Dodaj arkusz');
+        ? t('templateBuilder.container.addSlide', 'Add slide')
+        : t('templateBuilder.container.addSheet', 'Add sheet');
 
   // ── Mutacje listy ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(() => {
@@ -345,8 +345,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         canSave={canSave}
         saveLabel={
           templateId
-            ? t('templateBuilder.container.saveChanges', 'Zapisz zmiany')
-            : t('templateBuilder.shell.save', 'Zapisz jako szablon')
+            ? t('templateBuilder.container.saveChanges', 'Save changes')
+            : t('templateBuilder.shell.save', 'Save as template')
         }
         validationErrors={validation.errors}
         lifecycle={

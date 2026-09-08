@@ -176,10 +176,10 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
   if (archetype !== 'dynamic-swot') return null;
 
   const QUADRANTS: Array<{ key: string; label: string }> = [
-    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Siły') },
-    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Słabości') },
+    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Strengths') },
+    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Weaknesses') },
     { key: 'opportunities', label: t('discoveryTools.swot.opportunities', 'Szanse') },
-    { key: 'threats', label: t('discoveryTools.swot.threats', 'Zagrożenia') },
+    { key: 'threats', label: t('discoveryTools.swot.threats', 'Threats') },
   ];
 
   return (
@@ -207,7 +207,7 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
       </div>
       {/* Napięcia łączą ćwiartki — bez nich to tylko cztery listy. */}
       <div className="text-[11px] text-c-text-muted">
-        {t('discoveryTools.swot.tensionsCount', '{{count}} napięć łączy ćwiartki', {
+        {t('discoveryTools.swot.tensionsCount', '{{count}} tensions connect the quadrants', {
           count: (data.tensions ?? []).length,
         })}
       </div>
@@ -236,12 +236,12 @@ export function ToolReportView({ doc, presentationMode = false }: ToolReportView
         <Eyebrow>
           {isDeck
             ? t('discoveryTools.report.execPresentation', 'Prezentacja wykonawcza')
-            : t('discoveryTools.report.title', 'Raport')}
+            : t('discoveryTools.report.title', 'Report')}
         </Eyebrow>
         <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-c-text">{doc.title}</h1>
         {!presentationMode && (
           <p className="mt-2 text-xs text-c-text-muted">
-            {t('discoveryTools.report.rendererInfo', 'Renderer {{version}} · źródła: {{count}}', {
+            {t('discoveryTools.report.rendererInfo', 'Renderer {{version}} · sources: {{count}}', {
               version: doc.rendererVersion,
               count: doc.sourceOutputIds.length,
             })}

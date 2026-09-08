@@ -48717,7 +48717,10 @@
     },
     "unitsAnswered": "{{answered}}/{{total}} jednostek odpowiedzianych",
     "unitsMissingEvidence": "{{count}} bez dowodu",
-    "viewModeAria": "Tryb widoku"
+    "viewModeAria": "Tryb widoku",
+    "saveFailedToast": "Nie udało się zapisać — spróbuj ponownie",
+    "saveRetry": "Ponów zapis",
+    "saveDismiss": "Zamknij"
   },
   "templateBuilder": {
     "rightPanel": {

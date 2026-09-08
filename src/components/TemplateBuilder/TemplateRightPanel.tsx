@@ -55,10 +55,10 @@ export const TemplateRightPanel: React.FC<{
       <div className="flex items-center gap-2 text-c-text">
         <Settings2 className="w-4 h-4 text-c-text-muted" />
         <span className="text-sm font-semibold">
-          {t('templateBuilder.rightPanel.heading', 'Właściwości szablonu')}
+          {t('templateBuilder.rightPanel.heading', 'Template properties')}
         </span>
       </div>
-      <Field label={t('templateBuilder.rightPanel.nameLabel', 'Nazwa')}>
+      <Field label={t('templateBuilder.rightPanel.nameLabel', 'Name')}>
         <TextInput
           value={draft.name}
           onChange={(v) => onDraftChange({ name: v })}
@@ -66,8 +66,8 @@ export const TemplateRightPanel: React.FC<{
         />
       </Field>
       <Field
-        label={t('templateBuilder.rightPanel.descLabel', 'Opis')}
-        hint={t('templateBuilder.rightPanel.descHint', 'Krótko: do czego służy ten szablon.')}
+        label={t('templateBuilder.rightPanel.descLabel', 'Description')}
+        hint={t('templateBuilder.rightPanel.descHint', 'Briefly: what this template is for.')}
       >
         <TextArea
           value={draft.description}
@@ -76,7 +76,7 @@ export const TemplateRightPanel: React.FC<{
           testId="prop-desc"
         />
       </Field>
-      <Field label={t('templateBuilder.rightPanel.availabilityLabel', 'Dostępność')}>
+      <Field label={t('templateBuilder.rightPanel.availabilityLabel', 'Availability')}>
         <Segmented
           value={draft.scope}
           options={scopeOpts}
@@ -91,7 +91,7 @@ export const TemplateRightPanel: React.FC<{
         <Select
           value={draft.themeRef ?? ''}
           options={[
-            { value: '', label: t('templateBuilder.shell.defaultOrgTheme', 'Domyślny motyw org') },
+            { value: '', label: t('templateBuilder.shell.defaultOrgTheme', 'Default org theme') },
             ...themeOptions,
           ]}
           onChange={(v) => onDraftChange({ themeRef: v === '' ? null : v })}
