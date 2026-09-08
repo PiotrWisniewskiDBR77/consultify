@@ -894,7 +894,8 @@
     "reload": "Odśwież",
     "saveError": "Błąd zapisu",
     "undo": "Cofnij",
-    "redo": "Ponów"
+    "redo": "Ponów",
+    "tableWithPreview": "Obszar roboczy tabeli i podglądu"
   },
   "superadmin": {
     "confirm": {
@@ -50062,13 +50063,39 @@
     },
     "export": {
       "title": "Eksportuj diagram",
-      "subtitle": "Wybierz format i ustawienia"
+      "subtitle": "Wybierz format i ustawienia",
+      "action": "Eksportuj"
     },
     "loading": "Wczytywanie Studia…",
     "unavailable": {
       "title": "Studio nie jest jeszcze dostępne",
       "body": "Wizualny warsztat AI jest w budowie. Zajrzyj wkrótce — w międzyczasie skorzystaj z Mapy myśli, Mapy procesu albo Tablicy w Mojej Pracy."
-    }
+    },
+    "node": {
+      "processStep": "Krok procesu",
+      "decision": "Decyzja",
+      "startEnd": "Start/Koniec",
+      "note": "Notatka",
+      "orgUnit": "Osoba/Zespół",
+      "topic": "Temat",
+      "raciCell": "Komórka RACI",
+      "swimlane": "Tor (swimlane)",
+      "desc": {
+        "actionOrTask": "Działanie lub zadanie",
+        "yesNoBranch": "Rozgałęzienie tak/nie",
+        "flowTerminal": "Początek lub koniec przepływu",
+        "annotation": "Adnotacja",
+        "orgUnit": "Jednostka organizacyjna",
+        "mindMapNode": "Węzeł mapy myśli",
+        "matrixCell": "Komórka macierzy",
+        "departmentLane": "Tor działu"
+      }
+    },
+    "untitled": "Bez tytułu",
+    "unsavedChanges": "Niezapisane zmiany",
+    "diagram": "Diagram",
+    "saved": "Zapisano",
+    "linkToTask": "Powiąż z zadaniem lub projektem"
   },
   "playbook": {
     "properties": {

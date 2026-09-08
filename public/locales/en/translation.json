@@ -2479,7 +2479,8 @@
     "reload": "Refresh",
     "saveError": "Save failed",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "tableWithPreview": "Table and preview workspace"
   },
   "superadmin": {
     "confirm": {
@@ -48669,13 +48670,39 @@
     },
     "export": {
       "title": "Export diagram",
-      "subtitle": "Choose format and settings"
+      "subtitle": "Choose format and settings",
+      "action": "Export"
     },
     "loading": "Loading Studio…",
     "unavailable": {
       "title": "Studio is not available yet",
       "body": "The visual AI workspace is still being built. Check back soon — in the meantime, try Mind Map, Process Flow, or Whiteboard under My Work."
-    }
+    },
+    "node": {
+      "processStep": "Process step",
+      "decision": "Decision",
+      "startEnd": "Start/End",
+      "note": "Note",
+      "orgUnit": "Person/Team",
+      "topic": "Topic",
+      "raciCell": "RACI cell",
+      "swimlane": "Swimlane",
+      "desc": {
+        "actionOrTask": "Action or task",
+        "yesNoBranch": "Yes/No branch",
+        "flowTerminal": "Flow terminal",
+        "annotation": "Annotation",
+        "orgUnit": "Organisation unit",
+        "mindMapNode": "Mind map node",
+        "matrixCell": "Matrix cell",
+        "departmentLane": "Department lane"
+      }
+    },
+    "untitled": "Untitled",
+    "unsavedChanges": "Unsaved changes",
+    "diagram": "Diagram",
+    "saved": "Saved",
+    "linkToTask": "Link to a task or project"
   },
   "playbook": {
     "properties": {
