@@ -94,6 +94,11 @@ import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKan
 import { HubWorkAreaLoadError, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
+  MENU_2_FILTER_SELECT,
+  MENU_2_FILTERS_ROW,
+  MENU_2_SEGMENT_GROUP,
+  MENU_2_SEGMENT_ITEM_ACTIVE,
+  MENU_2_SEGMENT_ITEM_INACTIVE,
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
@@ -104,6 +109,7 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
+import { Banner } from '../shared/Banner';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
@@ -2161,10 +2167,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // MAIN RENDER
   // ============================================
 
-  // Active / All scope toggle (matches agreed UI spec)
+  // Segment zakresu Aktywne/Wszystkie — SSOT `MENU_2_SEGMENT_*` (ModuleMenu3),
+  // ten sam kod klas co bliźniaczy pstryczek w Realizacji. Do 08.09.2026 oba
+  // moduły miały własne warianty tego samego elementu (h-8 vs h-9, inne
+  // obwódki i inne tło aktywnego) — właściciel nazwał to chaosem menu.
   const scopeToggle = (
     <div
-      className="inline-flex items-center rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised p-0.5"
+      className={MENU_2_SEGMENT_GROUP}
       role="radiogroup"
       aria-label={t('initiatives.scope.label', 'Scope')}
     >
@@ -2179,11 +2188,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-c-bg ${
-            scope === opt.id
-              ? 'bg-c-surface text-c-text shadow-sm border border-c-border-subtle'
-              : 'text-c-text-secondary hover:bg-c-surface-raised'
-          }`}
+          className={
+            scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE
+          }
           title={
             opt.id === 'active'
               ? t(
@@ -2368,8 +2375,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // największej wartości decyzyjnej po samym „Wszystkie".
   const menu3Statuses = [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.IN_EXECUTION];
 
+  /**
+   * Menu 3 · lewa strona (chipy filtrów z licznikami).
+   *
+   * KEBAB „Więcej" WYSZEDŁ STĄD (porządek pasków 08.09.2026). Powód jest
+   * mechaniczny, nie estetyczny: `ModuleNavBar` owija `commandRowContent`
+   * w `<div className="min-w-0">` BEZ `flex-1`, więc wewnętrzne
+   * `justify-between` nie miało czego rozpychać — prawy klaster lądował
+   * tuż przy ostatnim chipie zamiast na prawym skraju paska (widać to na
+   * zrzucie PRZED: kebab tuż za „W realizacji 12"). Kanoniczny prawy slot
+   * Menu 3 to osobny prop `commandRowRightContent` — i tam teraz jest,
+   * obok „Pokaż panel", które `StandardModuleBar` dokłada tym samym kanałem.
+   */
   const commandRowContent = (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-2">
       <div className={MENU_3_LEFT_CLASS}>
         <button
           type="button"
@@ -2409,7 +2428,29 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           );
         })}
       </div>
-      {isInitiativeBridgeEnabled() && !isPilotParticipant && (
+      {/* P-22 (Piotr, OBR-102 2026-07-27): „Te dwa przyciski nie są potrzebne
+          na pewno" — prawa strona Menu 3 jest teraz PUSTA.
+          - „+ New"   → usunięty 07-27 (D-01: dublował CTA „New initiative")
+          - „Charter" → usunięty tu (2026-07-28): kanon TRIADA A3 dopuszcza po
+            prawej stronie Menu 3 WYŁĄCZNIE przyciski AI (wzorzec: `AI Priorities`
+            w Tasks), a Charter to akcja tworzenia. Funkcja NIE zniknęła —
+            `InitiativeCharterWizard` ma wejście w `InitiativeGeneratorModal`
+            (globalny `UnifiedCreateLauncher` USUNIĘTY jako martwy kod, D-01,
+            05.09.2026).
+          #75 — the "AI Initiative Wizard" entry that used to live here was
+          removed earlier: it duplicated the source-anchored insight-picker that
+          belongs to the SOURCE (Interview/Tools). */}
+    </div>
+  );
+
+  /**
+   * Menu 3 · prawy slot (kanoniczny `commandRowRightContent`). Kanon §A3
+   * dopuszcza tu przyciski AI i przełączniki — „Pokaż panel" dokłada
+   * `StandardModuleBar` sam (`useStandardPanelControls`), więc oba stoją
+   * w JEDNYM miejscu, tym samym co w Mojej Pracy i Materiałach.
+   */
+  const commandRowRightContent =
+    isInitiativeBridgeEnabled() && !isPilotParticipant ? (
         <div className={MENU_3_RIGHT_CLASS} ref={menu3KebabRef}>
           {/* DEC-420: "Adopt classic initiative" — migracja klasycznego
               rejestru do runtime-v1 (prawdziwa funkcja, `window.prompt` x2 +
@@ -2454,21 +2495,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             )}
           </div>
         </div>
-      )}
-      {/* P-22 (Piotr, OBR-102 2026-07-27): „Te dwa przyciski nie są potrzebne
-          na pewno" — prawa strona Menu 3 jest teraz PUSTA.
-          - „+ New"   → usunięty 07-27 (D-01: dublował CTA „New initiative")
-          - „Charter" → usunięty tu (2026-07-28): kanon TRIADA A3 dopuszcza po
-            prawej stronie Menu 3 WYŁĄCZNIE przyciski AI (wzorzec: `AI Priorities`
-            w Tasks), a Charter to akcja tworzenia. Funkcja NIE zniknęła —
-            `InitiativeCharterWizard` ma wejście w `InitiativeGeneratorModal`
-            (globalny `UnifiedCreateLauncher` USUNIĘTY jako martwy kod, D-01,
-            05.09.2026).
-          #75 — the "AI Initiative Wizard" entry that used to live here was
-          removed earlier: it duplicated the source-anchored insight-picker that
-          belongs to the SOURCE (Interview/Tools). */}
-    </div>
-  );
+    ) : null;
 
   // DEC-420: pełne listy (9 pozycji) zasilają WYŁĄCZNIE dropdown Menu 2
   // (`Menu2PresetDropdown` w `rightControls`) — 1:1 wzorzec z Oceną
@@ -2515,16 +2542,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     })),
   ];
 
+  /**
+   * Menu 2 · slot filtrów — WYŁĄCZNIE filtry (porządek pasków 08.09.2026).
+   *
+   * Co STĄD WYSZŁO: plakietka „SAMPLE DATA". To komunikat o STANIE DANYCH,
+   * a takie nie mieszkają w Menu 2 (kanon §A2: pasek funkcjonalny, bez
+   * banerów) — przeniesiona nad tabelę, do tego samego, jednego miejsca,
+   * w którym Realizacja pokazuje „Niepełne dane…" (`sampleDataBanner`).
+   *
+   * `MENU_2_FILTERS_ROW` zamiast lokalnego `flex` — brak `flex-wrap`
+   * i `min-w-0`, żeby slot nigdy nie łamał paska do drugiej linii.
+   */
   const rightControls = (
-    <div className="flex items-center gap-2">
-      {allowDemoData && (
-        <span
-          data-testid="initiatives-sample-data-marker"
-          className="inline-flex h-8 items-center rounded-full border border-amber-300 bg-amber-50 px-3 text-[11px] font-semibold text-amber-800"
-        >
-          {t('common.sampleData', 'SAMPLE DATA')}
-        </span>
-      )}
+    <div className={MENU_2_FILTERS_ROW}>
       {activeTab === 'list' && (
         <>
           {priorityFilter}
@@ -2537,7 +2567,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
               )
             }
-            className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className={MENU_2_FILTER_SELECT}
           >
             <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
             <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
@@ -2549,6 +2579,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               presetów), Menu 3 obok trzyma tylko "Wszystkie · Do decyzji ·
               W realizacji". */}
           <Menu2PresetDropdown
+            compact
             label={t('initiatives.filters.status', 'Status')}
             options={lifecycleDropdownOptions}
             value={activeStatusFilter ?? 'all'}
@@ -2563,6 +2594,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       )}
       {activeTab === 'plan' && (
         <Menu2PresetDropdown
+          compact
           label={t('initiatives.filters.planStatus', 'Status')}
           options={canonicalMenu3FullOptions.plan.map((option) => ({
             ...option,
@@ -2575,6 +2607,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       )}
       {activeTab === 'capacity' && (
         <Menu2PresetDropdown
+          compact
           label={t('initiatives.filters.capacityStatus', 'Status')}
           options={canonicalMenu3FullOptions.capacity.map((option) => ({
             ...option,
@@ -2638,6 +2671,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               ? bulkBarContent
               : commandRowContent
         }
+        /* Menu 3 · prawy skraj — kanoniczny slot. `StandardModuleBar` dokłada
+           tu jeszcze „Pokaż panel" (`useStandardPanelControls`), więc oba
+           przełączniki stoją w tym samym miejscu co w Mojej Pracy. */
+        commandRowRightContent={
+          activeTab === 'plan' || activeTab === 'capacity' || activeTab === 'portfolioHealth'
+            ? undefined
+            : isBulkMode
+              ? undefined
+              : commandRowRightContent
+        }
         chips={canonicalMenu3.map((preset) => ({
           ...preset,
           count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
@@ -2649,6 +2692,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         viewModes={availableViewModes}
       >
         <div className="flex h-full min-h-0 flex-col overflow-hidden">
+          {/* Cichy pasek informacyjny o stanie danych — JEDNO miejsce, pod
+              Menu 3 i nad treścią, nigdy w Menu 2 (kanon §A2). Ten sam
+              wzorzec i ten sam komponent `Banner` co „Niepełne dane…"
+              w Realizacji → Praca. */}
+          {allowDemoData && (
+            <div className="shrink-0 px-4 pb-2" data-testid="initiatives-sample-data-marker">
+              <Banner
+                variant="warning"
+                title={t('common.sampleData', 'SAMPLE DATA')}
+                message={t(
+                  'initiatives.sampleData.message',
+                  'Ten rejestr pokazuje dane pokazowe, nie dane Twojej organizacji.'
+                )}
+              />
+            </div>
+          )}
           <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
         </div>
       </StandardModuleBar>
