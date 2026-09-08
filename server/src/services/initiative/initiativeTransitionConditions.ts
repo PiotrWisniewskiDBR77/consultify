@@ -17,6 +17,7 @@
 import type { InitiativeTransitionCondition } from '../../constants/initiativeStatuses.js';
 import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { hasOrgAdminRole } from './initiativeCapabilityMatrix.js';
 
 export const INITIATIVE_CONDITION_RULES = {
   TITLE_AND_JUSTIFICATION: 'TITLE_AND_JUSTIFICATION_REQUIRED',
@@ -169,19 +170,34 @@ export async function evaluateInitiativeTransitionCondition(
   return null;
 }
 
-/** Autorstwo — jedyny warunek, który kończy się 403, a nie 400. */
+/**
+ * Autorstwo — jedyny warunek, który kończy się 403, a nie 400.
+ *
+ * DEC-453 (zmierzone na kopii DBR77: 52 z 69 szkiców ma puste `created_by`):
+ * bramka `authorOnly` (np. SUBMIT_FOR_REVIEW) jest spełniona, gdy
+ *   (a) aktor jest autorem (`created_by` == aktor), LUB
+ *   (b) inicjatywa nie ma zapisanego autora (`created_by` puste — nie ma kogo
+ *       chronić, a odmowa blokowała wtedy KAŻDEGO, ADMIN-a włącznie), LUB
+ *   (c) aktor ma rolę ADMIN/OWNER w organizacji (ten sam `hasOrgAdminRole`,
+ *       którego używa `canExecuteGate` dla roli bramki — jedna definicja
+ *       „admin", nie dwie, które mogłyby się rozjechać).
+ * MEMBER nie będący autorem cudzego, PODPISANEGO szkicu nadal dostaje 403
+ * z tym samym kodem reguły — (c) nie zmienia tego przypadku.
+ */
 export function evaluateInitiativeAuthorOnly(
   row: Record<string, unknown>,
-  actorId: string | null | undefined
+  actorId: string | null | undefined,
+  effectiveRoles: readonly string[] | null | undefined = []
 ): InitiativeConditionFailure | null {
   const createdBy = row.created_by ? String(row.created_by) : null;
-  if (!createdBy || createdBy !== String(actorId ?? '')) {
-    return {
-      rule: INITIATIVE_AUTHOR_ONLY_RULE,
-      error: 'Only the initiative author can execute this transition',
-    };
-  }
-  return null;
+  const isAuthor = createdBy !== null && createdBy === String(actorId ?? '');
+  const noRecordedAuthor = createdBy === null;
+  const isOrgAdmin = hasOrgAdminRole(effectiveRoles);
+  if (isAuthor || noRecordedAuthor || isOrgAdmin) return null;
+  return {
+    rule: INITIATIVE_AUTHOR_ONLY_RULE,
+    error: 'Only the initiative author or an organization admin can execute this transition',
+  };
 }
 
 /**

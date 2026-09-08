@@ -38,7 +38,7 @@ export const INITIATIVE_RULE_MESSAGE_KEYS: Record<string, { key: string; pl: str
   },
   AUTHOR_ONLY: {
     key: 'initiatives.lifecycle.blocked.AUTHOR_ONLY',
-    pl: 'To działanie może wykonać wyłącznie autor inicjatywy.',
+    pl: 'Tylko autor lub administrator może przesłać szkic do zatwierdzenia.',
   },
   INVALID_TRANSITION: {
     key: 'initiatives.lifecycle.blocked.INVALID_TRANSITION',

@@ -102,7 +102,11 @@ export async function getInitiativeTransitionPreflight(input: {
   const steeringBoardEnabled = !!accessCtx?.steeringBoardEnabled;
   const effectiveRoles: string[] = accessCtx?.effectiveRoles || [];
   const client: PgTransactionClient = createReadOnlyConditionClient();
-  const isAuthor = evaluateInitiativeAuthorOnly(row, actorId) === null;
+  // DEC-453: pass effectiveRoles so ADMIN/OWNER (or a no-author draft) reads as
+  // "author satisfied" here EXACTLY like the writer (initiativeTransitionService)
+  // does — both call the same `evaluateInitiativeAuthorOnly`, so the preflight
+  // button and the 403 it would otherwise get can never disagree.
+  const isAuthor = evaluateInitiativeAuthorOnly(row, actorId, effectiveRoles) === null;
 
   const validNext: string[] =
     (VALID_TRANSITIONS as Record<string, string[]>)[normalizeStatus(currentStatus)] || [];
