@@ -32,6 +32,10 @@
  *   (m5) CTA wraca do `btn-secondary`/wariantu bez `menu` — traci ciemny
  *        wygląd wspólny z Pracą/Zasobami/Decyzjami i ryzykiem (FAIL).
  */
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski ('Add report' / 'Custom report…'). Asercje zaktualizowano —
+// kontrakt się nie zmienił, zmienił się tylko język domyślnego tekstu.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -202,7 +206,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
+    fireEvent.click(screen.getByText('Add report'));
 
     // Katalog testowy ma DWA mvp (mvp-owner-test, weekly-exec) — nie cztery
     // realne klucze produkcyjne, i ZERO dla 'wave2-test' (mvp: false).
@@ -218,14 +222,14 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     expect(screen.queryByText('Definicja Fali 2')).not.toBeInTheDocument();
 
     // Piąta pozycja: „Własny raport…" (dawniej: „Nowy raport" w primary CTA).
-    expect(screen.getByText('Własny raport…')).toBeInTheDocument();
+    expect(screen.getByText('Custom report…')).toBeInTheDocument();
   });
 
   it('(m2) klik pozycji menu otwiera kreator z TĄ definicją wybraną (ten sam handler co dawny kafel)', async () => {
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
+    fireEvent.click(screen.getByText('Add report'));
     const item = await screen.findByText('Tygodniowy pakiet realizacji');
     fireEvent.click(item);
 
@@ -241,8 +245,8 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Dodaj raport'));
-    const custom = await screen.findByText('Własny raport…');
+    fireEvent.click(screen.getByText('Add report'));
+    const custom = await screen.findByText('Custom report…');
     fireEvent.click(custom);
 
     await waitFor(() => {
@@ -271,7 +275,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
 
     // Widok domyślny to „Raporty" — CTA jest widoczne.
     render(<PrimaryCtaMenuButton cta={latestCta(onRegisterPrimaryCta)} />);
-    expect(screen.getByText('Dodaj raport')).toBeInTheDocument();
+    expect(screen.getByText('Add report')).toBeInTheDocument();
 
     // Węzeł Menu 2 (segment „Raporty | Definicje") — najnowsze wywołanie.
     const filterCalls = onRegisterFilterControl.mock.calls;

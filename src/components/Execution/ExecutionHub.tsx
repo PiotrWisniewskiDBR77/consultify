@@ -641,7 +641,7 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     control: [
       ['decyzje', t('execution.menu3.governance.decisions', 'Decyzje')],
       ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
-      ['sygnaly', t('execution.menu3.governance.signals', 'Sygnały')],
+      ['sygnaly', t('execution.menu3.governance.signals', 'Signals')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R4b (zlecenie 12r4b): 11 chipów → 3. Zrzut R4
     // (`evidence/1-12-r4/03-zdrowie-programu.png`) pokazał rząd 10+ chipów
@@ -666,7 +666,7 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // teraz JEDNA tabela pełnej szerokości, przełączana tym przyciskiem-chipem.
     summary: [
       ['ryzyka', t('execution.menu3.summary.risks', 'Ryzyka')],
-      ['rozstrzygniecia', t('execution.menu3.summary.decisions', 'Rozstrzygnięcia')],
+      ['rozstrzygniecia', t('execution.menu3.summary.decisions', 'Decisions')],
     ].map(([id, label]) => ({ id, label })),
   };
 }
@@ -2494,7 +2494,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           if (!start && !end)
             return (
               <span className="text-xs text-c-text-muted">
-                {t('execution.table.noPlanDates', 'brak dat planu')}
+                {t('execution.table.noPlanDates', 'no plan dates')}
               </span>
             );
           return (
@@ -2531,9 +2531,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span
                 className="text-c-text-muted"
-                title={t(
-                  'execution.table.deviationNoBaseline',
-                  'Brak planu bazowego — nie ma od czego liczyć odchylenia'
+                title={t('execution.table.deviationNoBaseline', 'No baseline plan — nothing to calculate the deviation from'
                 )}
               >
                 —
@@ -2578,10 +2576,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             : rag === 'red'
               ? t('execution.rag.late', 'Po terminie')
               : rag === 'amber'
-                ? t('execution.rag.atRisk', 'Zagrożona')
+                ? t('execution.rag.atRisk', 'At risk')
                 : rag === 'green'
-                  ? t('execution.rag.onTrack', 'Na czas')
-                  : t('execution.rag.noDates', 'Brak dat planu');
+                  ? t('execution.rag.onTrack', 'On track')
+                  : t('execution.rag.noDates', 'No plan dates');
           const kropka =
             rag === 'red'
               ? 'bg-c-danger'
@@ -3011,7 +3009,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         primary: [
           {
             id: 'open_preview',
-            label: t('common.openPreview', 'Otwórz podgląd'),
+            label: t('common.openPreview', 'Open preview'),
             icon: ChevronRight,
             onClick: () => setSummaryPreviewInitiativeId(init.id),
           },
@@ -3021,10 +3019,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           ? [
               {
                 id: 'delay',
-                label: t('common.delay', 'Opóźnij'),
+                label: t('common.delay', 'Delay'),
                 icon: Clock,
                 disabled: true,
-                note: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                note: t('common.comingSoonBackend', 'Coming soon (backend)'),
               },
             ]
           : undefined,
@@ -5756,7 +5754,7 @@ Please return:
                       properties: [
                         {
                           id: 'owner',
-                          label: t('execution.governance.columns.owner', 'Właściciel'),
+                          label: t('execution.governance.columns.owner', 'Owner'),
                           value: selectedSummaryRisk.ownerName || '—',
                         },
                         {
@@ -5778,7 +5776,7 @@ Please return:
                         },
                       ],
                     }}
-                    relationsEmptyLabel={t('common.noRelations', 'Brak powiązań')}
+                    relationsEmptyLabel={t('common.noRelations', 'No relations')}
                   />
                 ) : null
               }

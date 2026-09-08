@@ -287,8 +287,8 @@ export function buildExecutionReportSnapshot(args: {
 
   const noData = (source: string) =>
     inputs.unavailable.includes(source)
-      ? t('executionReports.empty.unavailable', 'Brak danych — źródło nie odpowiedziało.')
-      : t('executionReports.empty.none', 'Brak danych w tym okresie.');
+      ? t('executionReports.empty.unavailable', 'No data — the source did not respond.')
+      : t('executionReports.empty.none', 'No data for this period.');
 
   const taskRow = (task: any) => ({
     title: text(task?.title),
@@ -323,23 +323,23 @@ export function buildExecutionReportSnapshot(args: {
 
   const taskColumns = [
     { id: 'title', label: t('executionReports.col.task', 'Zadanie') },
-    { id: 'owner', label: t('executionReports.col.owner', 'Osoba') },
+    { id: 'owner', label: t('executionReports.col.owner', 'Owner') },
     { id: 'due', label: t('executionReports.col.due', 'Termin') },
     { id: 'slip', label: t('executionReports.col.slip', 'Po terminie') },
     { id: 'status', label: t('executionReports.col.status', 'Status') },
   ];
   const decisionColumns = [
     { id: 'title', label: t('executionReports.col.decision', 'Decyzja') },
-    { id: 'owner', label: t('executionReports.col.owner', 'Osoba') },
+    { id: 'owner', label: t('executionReports.col.owner', 'Owner') },
     { id: 'due', label: t('executionReports.col.due', 'Termin') },
     { id: 'overdue', label: t('executionReports.col.overdue', 'Po terminie') },
     { id: 'escalation', label: t('executionReports.col.escalation', 'Eskalacja') },
   ];
   const milestoneColumns = [
-    { id: 'title', label: t('executionReports.col.initiative', 'Inicjatywa') },
-    { id: 'planned', label: t('executionReports.col.plannedEnd', 'Koniec wg planu') },
-    { id: 'owner', label: t('executionReports.col.owner', 'Osoba') },
-    { id: 'deviation', label: t('executionReports.col.deviation', 'Odchylenie') },
+    { id: 'title', label: t('executionReports.col.initiative', 'Initiative') },
+    { id: 'planned', label: t('executionReports.col.plannedEnd', 'Planned end') },
+    { id: 'owner', label: t('executionReports.col.owner', 'Owner') },
+    { id: 'deviation', label: t('executionReports.col.deviation', 'Deviation') },
   ];
 
   const milestoneRows = d.upcomingMilestones.slice(0, 12).map((initiative) => {
@@ -379,7 +379,7 @@ export function buildExecutionReportSnapshot(args: {
     },
     {
       id: 'decisions',
-      label: t('executionReports.metric.openDecisions', 'Decyzje do rozstrzygnięcia'),
+      label: t('executionReports.metric.openDecisions', 'Decisions to resolve'),
       value: String(d.openDecisions.length),
       hint: t('executionReports.metric.overdueDecisions', '{{count}} po terminie', {
         count: d.overdueDecisions.length,
@@ -391,7 +391,7 @@ export function buildExecutionReportSnapshot(args: {
       label: t('executionReports.metric.onTime', 'Na czas'),
       value:
         d.onTimeRatio == null
-          ? t('executionReports.value.noData', 'brak danych')
+          ? t('executionReports.value.noData', 'no data')
           : `${d.onTimeRatio}%`,
       tone: d.onTimeRatio == null ? ('GREY' as const) : ('NEUTRAL' as const),
     },
@@ -404,24 +404,20 @@ export function buildExecutionReportSnapshot(args: {
   ];
 
   let rag: ExecutionReportRag = 'GREEN';
-  let ragReason = t('executionReports.rag.green', 'Brak blokad i pozycji po terminie.');
+  let ragReason = t('executionReports.rag.green', 'No blockers or overdue items.');
   if (!inputs.tasks.length && !inputs.decisions.length) {
     rag = 'GREY';
-    ragReason = t(
-      'executionReports.rag.grey',
-      'Nie da się ocenić — brak danych źródłowych dla tego okresu.'
+    ragReason = t('executionReports.rag.grey', 'Cannot be assessed — no source data for this period.'
     );
   } else if (d.blockedTasks.length || d.criticalSignals.length) {
     rag = 'RED';
-    ragReason = t('executionReports.rag.red', '{{blocked}} blokad, {{signals}} sygnałów krytycznych.', {
+    ragReason = t('executionReports.rag.red', '{{blocked}} blockers, {{signals}} critical signals.', {
       blocked: d.blockedTasks.length,
       signals: d.criticalSignals.length,
     });
   } else if (d.overdueTasks.length || d.overdueDecisions.length) {
     rag = 'AMBER';
-    ragReason = t(
-      'executionReports.rag.amber',
-      '{{tasks}} zadań i {{decisions}} decyzji po terminie.',
+    ragReason = t('executionReports.rag.amber', '{{tasks}} tasks and {{decisions}} decisions overdue.',
       { tasks: d.overdueTasks.length, decisions: d.overdueDecisions.length }
     );
   }
@@ -436,16 +432,14 @@ export function buildExecutionReportSnapshot(args: {
         {
           id: 'progress',
           title: sectionTitle(0, 'Postęp i harmonogram'),
-          narrative: t(
-            'executionReports.narrative.ownerProgress',
-            'W realizacji jest {{initiatives}} inicjatyw. Otwartych zadań: {{open}}, z tego {{overdue}} po terminie. Wskaźnik „na czas": {{onTime}}.',
+          narrative: t('executionReports.narrative.ownerProgress', '{{initiatives}} initiatives are in progress. Open tasks: {{open}}, of which {{overdue}} overdue. On-time rate: {{onTime}}.',
             {
               initiatives: d.deliveryInitiatives.length,
               open: inputs.tasks.length - d.doneInPeriod.length,
               overdue: d.overdueTasks.length,
               onTime:
                 d.onTimeRatio == null
-                  ? t('executionReports.value.noData', 'brak danych')
+                  ? t('executionReports.value.noData', 'no data')
                   : `${d.onTimeRatio}%`,
             }
           ),
@@ -458,9 +452,7 @@ export function buildExecutionReportSnapshot(args: {
           title: sectionTitle(1, 'Kamienie milowe'),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
-        t(
-          'executionReports.empty.milestones',
-          'Brak danych — kamienie milowe nie istnieją jeszcze jako osobny obiekt (pakiet R3); pokazujemy daty końcowe inicjatyw.'
+        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
         )
       ),
       emptyOr(
@@ -494,9 +486,7 @@ export function buildExecutionReportSnapshot(args: {
         {
           id: 'progress',
           title: sectionTitle(0, 'Podsumowanie postępu'),
-          narrative: t(
-            'executionReports.narrative.weeklyProgress',
-            'Okres {{start}} – {{end}}. Domknięte zadania: {{done}}. Otwarte po terminie: {{overdue}}. Zablokowane: {{blocked}}. Decyzje czekające na rozstrzygnięcie: {{decisions}}.',
+          narrative: t('executionReports.narrative.weeklyProgress', 'Period {{start}} – {{end}}. Tasks completed: {{done}}. Open and overdue: {{overdue}}. Blocked: {{blocked}}. Decisions awaiting resolution: {{decisions}}.',
             {
               start: date(period.start),
               end: date(period.end),
@@ -539,9 +529,7 @@ export function buildExecutionReportSnapshot(args: {
           title: sectionTitle(3, 'Najbliższe kamienie'),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
-        t(
-          'executionReports.empty.milestones',
-          'Brak danych — kamienie milowe nie istnieją jeszcze jako osobny obiekt (pakiet R3); pokazujemy daty końcowe inicjatyw.'
+        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
         )
       ),
       emptyOr(
@@ -561,15 +549,15 @@ export function buildExecutionReportSnapshot(args: {
     );
   } else if (definitionKey === 'program-health') {
     const healthColumns = [
-      { id: 'title', label: t('executionReports.col.initiative', 'Inicjatywa') },
+      { id: 'title', label: t('executionReports.col.initiative', 'Initiative') },
       { id: 'status', label: t('executionReports.col.status', 'Status') },
-      { id: 'progress', label: t('executionReports.col.progress', 'Postęp') },
-      { id: 'deviation', label: t('executionReports.col.deviation', 'Odchylenie') },
+      { id: 'progress', label: t('executionReports.col.progress', 'Progress') },
+      { id: 'deviation', label: t('executionReports.col.deviation', 'Deviation') },
       { id: 'rag', label: t('executionReports.col.rag', 'RAG') },
     ];
     const ragLabel: Record<ExecutionReportRag, string> = {
       GREEN: t('executionReports.ragLabel.GREEN', 'Zielony'),
-      AMBER: t('executionReports.ragLabel.AMBER', 'Żółty'),
+      AMBER: t('executionReports.ragLabel.AMBER', 'Amber'),
       RED: t('executionReports.ragLabel.RED', 'Czerwony'),
       GREY: t('executionReports.ragLabel.GREY', 'Szary (luka danych)'),
     };
@@ -626,13 +614,11 @@ export function buildExecutionReportSnapshot(args: {
         {
           id: 'confidence',
           title: sectionTitle(2, 'Pewność dowiezienia'),
-          narrative: t(
-            'executionReports.narrative.confidence',
-            'Na czas: {{onTime}}. Inicjatyw z sygnałem opóźnienia: {{withSignals}} z {{total}}. Otwartych pozycji RAID: {{risks}}, w tym o wysokim wyniku ryzyka: {{highRisks}}.',
+          narrative: t('executionReports.narrative.confidence', 'On time: {{onTime}}. Initiatives with a delay signal: {{withSignals}} of {{total}}. Open RAID items: {{risks}}, of which high-risk: {{highRisks}}.',
             {
               onTime:
                 d.onTimeRatio == null
-                  ? t('executionReports.value.noData', 'brak danych')
+                  ? t('executionReports.value.noData', 'no data')
                   : `${d.onTimeRatio}%`,
               // Sygnały dotyczą też zadań i kamieni; licznik ma zliczać TYLKO inicjatywy
               // z tabeli obok, inaczej wychodzi absurd „32 z 23" (zmierzone na eksporcie).
@@ -651,9 +637,7 @@ export function buildExecutionReportSnapshot(args: {
         {
           id: 'narrative',
           title: sectionTitle(3, 'Narracja'),
-          narrative: t(
-            'executionReports.narrative.program',
-            'Ocena okresu: {{rag}} — {{reason}} Największe odchylenie: {{worst}}. Rekomendacja: zdjąć blokady z {{blocked}} zadań i domknąć {{overdueDecisions}} decyzji po terminie przed kolejnym przeglądem.',
+          narrative: t('executionReports.narrative.program', 'Period rating: {{rag}} — {{reason}} Biggest deviation: {{worst}}. Recommendation: unblock {{blocked}} tasks and close {{overdueDecisions}} overdue decisions before the next review.',
             {
               rag: ragLabel[rag],
               reason: ragReason,
@@ -693,9 +677,7 @@ export function buildExecutionReportSnapshot(args: {
         {
           id: 'progress',
           title: sectionTitle(0, 'Postęp'),
-          narrative: t(
-            'executionReports.narrative.sponsorProgress',
-            'W realizacji {{initiatives}} inicjatyw. Domknięte w okresie: {{done}} zadań. Po terminie: {{overdue}}. Ocena okresu: {{rag}}.',
+          narrative: t('executionReports.narrative.sponsorProgress', '{{initiatives}} initiatives in progress. Completed this period: {{done}} tasks. Overdue: {{overdue}}. Period rating: {{rag}}.',
             {
               initiatives: d.deliveryInitiatives.length,
               done: d.doneInPeriod.length,
@@ -728,9 +710,7 @@ export function buildExecutionReportSnapshot(args: {
           title: sectionTitle(2, 'Najbliższe kamienie'),
           table: { columns: milestoneColumns, rows: milestoneRows.slice(0, 5) },
         },
-        t(
-          'executionReports.empty.milestones',
-          'Brak danych — kamienie milowe nie istnieją jeszcze jako osobny obiekt (pakiet R3); pokazujemy daty końcowe inicjatyw.'
+        t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
         )
       ),
       emptyOr(
@@ -757,10 +737,10 @@ export function buildExecutionReportSnapshot(args: {
     // Fala 2 — definicja jest w katalogu, ale nie generuje migawki.
     sections.push({
       id: 'wave2',
-      title: t('executionReports.wave2.title', 'Dostępne w Fali 2'),
+      title: t('executionReports.wave2.title', 'Available in Wave 2'),
       empty: t(
         'executionReports.wave2.body',
-        'Ta definicja jest widoczna w katalogu, ale nie generuje jeszcze migawki.'
+        "This definition is visible in the catalog but doesn't generate a snapshot yet."
       ),
     });
   }
@@ -768,7 +748,7 @@ export function buildExecutionReportSnapshot(args: {
   return {
     definitionKey,
     title: `${definitionName} · ${date(asOf)}`,
-    subtitle: t('executionReports.subtitle', 'Zamrożona migawka danych realizacji'),
+    subtitle: t('executionReports.subtitle', 'Frozen snapshot of execution data'),
     rag,
     ragReason,
     period,

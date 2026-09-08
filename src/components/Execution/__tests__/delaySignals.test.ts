@@ -31,15 +31,20 @@ import {
 
 const t = (_klucz: string, zapasowy: string) => zapasowy;
 
-describe('słowniki po polsku — cztery rodzaje i sześć powodów kontraktu', () => {
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski. Ten test sprawdza DEFAULT (fallback t() wywołania), nie
+// aktywny język — nazwa opisu zaktualizowana, bo domyślny tekst jest teraz
+// angielski (kontrakt: cztery rodzaje sygnałów i sześć powodów).
+describe('domyślne (EN) etykiety słowników — cztery rodzaje i sześć powodów kontraktu', () => {
   it('rodzaj sygnału nie zostaje kodem technicznym', () => {
-    expect(rodzajSygnaluLabel('LATE_START', t)).toBe('Późny start');
-    expect(rodzajSygnaluLabel('OVERDUE', t)).toBe('Po terminie');
-    expect(rodzajSygnaluLabel('LATE_FINISH_RISK', t)).toBe('Ryzyko poślizgu końca');
-    expect(rodzajSygnaluLabel('DEADLINE_RISK', t)).toBe('Zagrożony termin');
+    expect(rodzajSygnaluLabel('LATE_START', t)).toBe('Late start');
+    expect(rodzajSygnaluLabel('OVERDUE', t)).toBe('Overdue');
+    expect(rodzajSygnaluLabel('LATE_FINISH_RISK', t)).toBe('Late finish risk');
+    expect(rodzajSygnaluLabel('DEADLINE_RISK', t)).toBe('Deadline at risk');
   });
 
-  it('powody po polsku, wiele powodów w jednej komórce', () => {
+  it('kilka powodów w jednej komórce (domyślny EN tekst)', () => {
     expect(
       powodySygnaluLabel(
         [
@@ -48,12 +53,12 @@ describe('słowniki po polsku — cztery rodzaje i sześć powodów kontraktu', 
         ],
         t
       )
-    ).toBe('Blokada · Bez właściciela');
+    ).toBe('Blocked · No owner');
   });
 
   it('BRAK powodu jest nazwany, a nie pusty — 26 z 42 sygnałów go nie ma', () => {
-    expect(powodySygnaluLabel([], t)).toBe('Nie ustalono');
-    expect(powodySygnaluLabel(undefined, t)).toBe('Nie ustalono');
+    expect(powodySygnaluLabel([], t)).toBe('Not determined');
+    expect(powodySygnaluLabel(undefined, t)).toBe('Not determined');
   });
 });
 

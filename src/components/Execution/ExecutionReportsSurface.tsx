@@ -621,8 +621,8 @@ export const ExecutionReportsSurface = ({
         author: item.createdByName || '—',
         status:
           item.status === 'PUBLISHED'
-            ? t('executionReports.status.published', 'Opublikowany')
-            : t('executionReports.status.draft', 'Szkic'),
+            ? t('executionReports.status.published', 'Published')
+            : t('executionReports.status.draft', 'Draft'),
         rawStatus: item.status,
         definition: definitionName(item.definitionKey, item.definitionKey),
         period: `${formatDate(item.period.start)} – ${formatDate(item.period.end)}`,
@@ -939,9 +939,9 @@ export const ExecutionReportsSurface = ({
       <div className={MENU_2_FILTERS_ROW}>
         <Menu2PresetDropdown
           compact
-          label={t('common.level', 'Poziom')}
+          label={t('common.level', 'Level')}
           options={[
-            { id: 'ALL', label: t('common.all', 'Wszystkie') },
+            { id: 'ALL', label: t('common.all', 'All') },
             ...REPORT_LEVELS.map((level) => ({
               id: level,
               label: levelLabel(level),
@@ -954,7 +954,7 @@ export const ExecutionReportsSurface = ({
         <div
           className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
           role="tablist"
-          aria-label={t('executionReports.registerToggle', 'Widok rejestru raportów')}
+          aria-label={t('executionReports.registerToggle', 'Report register view')}
         >
           <button
             type="button"
@@ -1001,13 +1001,13 @@ export const ExecutionReportsSurface = ({
       return;
     }
     onRegisterPrimaryCta({
-      label: t('executionReports.menu2.addReport', 'Dodaj raport'),
+      label: t('executionReports.menu2.addReport', 'Add report'),
       testId: 'execution-reports-add-report-menu',
       onClick: () => undefined,
       menu: {
-        ariaLabel: t('executionReports.menu2.addReport', 'Dodaj raport'),
+        ariaLabel: t('executionReports.menu2.addReport', 'Add report'),
         items: addReportMenuItems,
-        customLabel: t('executionReports.menu2.addReportCustom', 'Własny raport…'),
+        customLabel: t('executionReports.menu2.addReportCustom', 'Custom report…'),
         onCustom: openGenericWizard,
       },
     });
@@ -1082,20 +1082,18 @@ export const ExecutionReportsSurface = ({
     <section aria-label="Execution Reports" className="flex h-full min-h-0 flex-col p-4">
       {wizardOpen && (
         <section
-          aria-label={t('executionReports.wizard.title', 'Nowy raport')}
+          aria-label={t('executionReports.wizard.title', 'New report')}
           data-testid="execution-report-wizard"
           className="mt-3 rounded-xl border border-c-border bg-c-surface-raised p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="font-semibold">{t('executionReports.wizard.title', 'Nowy raport')}</h3>
+            <h3 className="font-semibold">{t('executionReports.wizard.title', 'New report')}</h3>
             <button className="btn-secondary" onClick={() => setWizardOpen(false)}>
-              {t('common.close', 'Zamknij')}
+              {t('common.close', 'Close')}
             </button>
           </div>
           <p className="text-sm text-c-text-muted">
-            {t(
-              'executionReports.wizard.help',
-              'Wybierz poziom raportu i okres. Migawka powstaje z realnych danych organizacji i zamraża stan na dzień wygenerowania.'
+            {t('executionReports.wizard.help', 'Choose the report level and period. The snapshot is built from the organization\'s real data and freezes the state as of the generation date.'
             )}
           </p>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -1149,8 +1147,8 @@ export const ExecutionReportsSurface = ({
               onClick={() => void generateSnapshot(wizardKey)}
             >
               {generating
-                ? t('executionReports.wizard.generating', 'Generuję migawkę…')
-                : t('executionReports.wizard.generate', 'Generuj migawkę')}
+                ? t('executionReports.wizard.generating', 'Generating snapshot…')
+                : t('executionReports.wizard.generate', 'Generate snapshot')}
             </button>
             {generateError && (
               <span role="alert" className="text-sm text-c-danger">
@@ -1164,12 +1162,10 @@ export const ExecutionReportsSurface = ({
       {registerMode === 'DEFINITIONS' && (
         <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
           <h3 className="font-semibold">
-            {t('executionReports.definitionsHeading', 'Definicje raportów')}
+            {t('executionReports.definitionsHeading', 'Report definitions')}
           </h3>
           <p className="mb-2 text-sm text-c-text-muted">
-            {t(
-              'executionReports.definitionsHelp',
-              'Cztery definicje — po jednej na poziom raportowania — generują migawkę. Pozostałe są widoczne w katalogu i wchodzą w Fali 2.'
+            {t('executionReports.definitionsHelp', 'Four definitions — one per reporting level — generate a snapshot. The others are visible in the catalog and are coming in Wave 2.'
             )}
           </p>
           {/*
@@ -1230,9 +1226,7 @@ export const ExecutionReportsSurface = ({
                         { label: row.level ?? '—', tone: 'neutral' },
                       ],
                       recommendation: item.mvp
-                        ? t(
-                            'executionReports.recommendation.active',
-                            'Gotowa — generuje migawkę na realnych danych.'
+                        ? t('executionReports.recommendation.active', 'Ready — generates a snapshot from real data.'
                           )
                         : t(
                             'executionReports.recommendation.wave2',
@@ -1240,7 +1234,7 @@ export const ExecutionReportsSurface = ({
                           ),
                     }}
                     details={{
-                      label: t('executionReports.preview.contract', 'Zawartość raportu'),
+                      label: t('executionReports.preview.contract', 'Report contents'),
                       text: t(
                         `executionReports.definitions.${item.key}.scope`,
                         item.scope || '—'
@@ -1273,7 +1267,7 @@ export const ExecutionReportsSurface = ({
                         section
                       ),
                     }))}
-                    relationsEmptyLabel={t('executionReports.preview.noSections', 'Brak sekcji')}
+                    relationsEmptyLabel={t('executionReports.preview.noSections', 'No sections')}
                   />
                 );
               }
@@ -1394,10 +1388,8 @@ export const ExecutionReportsSurface = ({
               })}
               persistKey="execution.report-definitions.v2"
               empty={{
-                title: t('executionReports.empty.definitions.title', 'Brak definicji raportów'),
-                description: t(
-                  'executionReports.empty.definitions.body',
-                  'Katalog nie odpowiedział. Odśwież ekran albo utwórz wersjonowaną definicję kontraktową.'
+                title: t('executionReports.empty.definitions.title', 'No report definitions'),
+                description: t('executionReports.empty.definitions.body', 'The catalog didn\'t respond. Refresh the screen or create a versioned contract definition.'
                 ),
               }}
             />
@@ -1596,7 +1588,7 @@ export const ExecutionReportsSurface = ({
                 title={r.title}
                 onClose={() => setSelectedId(null)}
                 onOpenFull={() => void openSnapshot(r.snapshot!.id)}
-                openLabel={t('executionReports.action.openReport', 'Otwórz raport')}
+                openLabel={t('executionReports.action.openReport', 'Open report')}
                 meta={{
                   pills: [
                     {
@@ -1605,9 +1597,7 @@ export const ExecutionReportsSurface = ({
                     },
                     { label: r.level ?? '—', tone: 'neutral' },
                   ],
-                  recommendation: t(
-                    'executionReports.recommendation.snapshot',
-                    'Zamrożona migawka — otwórz dokument, pobierz DOCX lub PDF.'
+                  recommendation: t('executionReports.recommendation.snapshot', 'Frozen snapshot — open the document, download DOCX or PDF.'
                   ),
                 }}
                 details={{
@@ -1635,7 +1625,7 @@ export const ExecutionReportsSurface = ({
                   ],
                 }}
                 relations={[]}
-                relationsEmptyLabel={t('executionReports.preview.noSources', 'Brak źródeł')}
+                relationsEmptyLabel={t('executionReports.preview.noSources', 'No sources')}
               />
             ) : (
             <StandardPreview
@@ -1721,7 +1711,7 @@ export const ExecutionReportsSurface = ({
               primary: [
                 {
                   id: 'open-report',
-                  label: t('executionReports.action.openReport', 'Otwórz raport'),
+                  label: t('executionReports.action.openReport', 'Open report'),
                   onClick: () => {
                     setSelectedId(r.id);
                     if (r.snapshot) {
@@ -1743,10 +1733,8 @@ export const ExecutionReportsSurface = ({
               // przez akcje w pustym stanie (`empty.actions` — kanon
               // dopuszcza, ale ten ekran świadomie z nich nie korzysta, żeby
               // nie duplikować CTA).
-              title: t('executionReports.empty.runs.title', 'Brak raportów'),
-              description: t(
-                'executionReports.empty.runs.body',
-                'Brak raportów. Dodaj raport, żeby zobaczyć migawkę z realnych danych realizacji.'
+              title: t('executionReports.empty.runs.title', 'No reports'),
+              description: t('executionReports.empty.runs.body', 'No reports. Add a report to see a snapshot from real execution data.'
               ),
             }}
           />

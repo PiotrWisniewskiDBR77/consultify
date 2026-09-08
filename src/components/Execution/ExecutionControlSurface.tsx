@@ -472,7 +472,7 @@ const escalationAddressee = (
   t: (key: string, fallback: string) => string
 ): string =>
   step === 1
-    ? t('execution.decisions.escalation.level1', 'Właściciel inicjatywy')
+    ? t('execution.decisions.escalation.level1', 'Initiative owner')
     : step === 2
       ? t('execution.decisions.escalation.level2', 'PMO')
       : t('execution.decisions.escalation.level3', 'Komitet');
@@ -490,7 +490,7 @@ const escalationStepShort = (
   t: (key: string, fallback: string) => string
 ): string =>
   !step || step <= 0
-    ? t('execution.decisions.escalation.none', 'Brak')
+    ? t('execution.decisions.escalation.none', 'None')
     : `${step}/${ESCALATION_STEP_MAX}`;
 
 /** PODGLĄD — licznik z adresatem („2/3 · PMO"). */
@@ -499,7 +499,7 @@ const escalationStepLabel = (
   t: (key: string, fallback: string) => string
 ): string =>
   !step || step <= 0
-    ? t('execution.decisions.escalation.none', 'Brak')
+    ? t('execution.decisions.escalation.none', 'None')
     : `${step}/${ESCALATION_STEP_MAX} · ${escalationAddressee(step, t)}`;
 
 const raidTypeLabel = (value: unknown): string =>
@@ -531,12 +531,10 @@ const decisionStatusLabel = (
   const slownik: Record<string, string> = {
     PENDING: t('execution.decisions.status.pending', 'Oczekuje'),
     ESCALATED: t('execution.decisions.status.escalated', 'Eskalowana'),
-    APPROVED: t('execution.decisions.status.approved', 'Rozstrzygnięta'),
+    APPROVED: t('execution.decisions.status.approved', 'Resolved'),
     REJECTED: t('execution.decisions.status.rejected', 'Odrzucona'),
     SUPERSEDED: t('execution.decisions.status.superseded', 'Nieaktualna'),
-    RETURNED_FOR_CLARIFICATION: t(
-      'execution.decisions.status.returned',
-      'Zwrócona do uzupełnienia'
+    RETURNED_FOR_CLARIFICATION: t('execution.decisions.status.returned', 'Returned for completion'
     ),
     DEFERRED: t('execution.decisions.status.deferred', 'Odroczona'),
     CANCELLED: t('execution.decisions.status.cancelled', 'Anulowana'),
@@ -580,7 +578,7 @@ const raidProbabilityLabel = (
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
     LOW: t('execution.raid.probability.low', 'Niskie'),
-    MEDIUM: t('execution.raid.probability.medium', 'Średnie'),
+    MEDIUM: t('execution.raid.probability.medium', 'Medium'),
     HIGH: t('execution.raid.probability.high', 'Wysokie'),
   };
   const nazwa = slownik[key];
@@ -592,7 +590,7 @@ const raidImpactLabel = (value: unknown, t: (key: string, fallback: string) => s
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
     LOW: t('execution.raid.impact.low', 'Niski'),
-    MEDIUM: t('execution.raid.impact.medium', 'Średni'),
+    MEDIUM: t('execution.raid.impact.medium', 'Medium'),
     HIGH: t('execution.raid.impact.high', 'Wysoki'),
     CRITICAL: t('execution.raid.impact.critical', 'Krytyczny'),
   };
@@ -608,7 +606,7 @@ const raidStatusPl = (value: unknown, t: (key: string, fallback: string) => stri
     OPEN: t('execution.raid.status.open', 'Otwarta'),
     MITIGATED: t('execution.raid.status.mitigated', 'Ograniczona'),
     REALIZED: t('execution.raid.status.realized', 'Zmaterializowana'),
-    CLOSED: t('execution.raid.status.closed', 'Zamknięta'),
+    CLOSED: t('execution.raid.status.closed', 'Closed'),
   };
   return slownik[key] ?? String(value ?? '—');
 };
@@ -638,7 +636,7 @@ const formatDay = (value: string | null | undefined) => {
  */
 const kolumnaTytul = (t: (key: string, fallback: string) => string): TableColumn => ({
   id: 'title',
-  label: t('execution.governance.columns.title', 'Tytuł'),
+  label: t('execution.governance.columns.title', 'Title'),
   sortable: true,
   width: '300px',
 });
@@ -771,7 +769,7 @@ const buildRaidColumns = (t: (key: string, fallback: string) => string): TableCo
     // się na dwie linie i wiersz rósł z 57 do 65 px — kanon trzyma 56 px.
     // Kolumny inne niż główna mają `line-clamp-2`, więc nie skracają się
     // wielokropkiem: jedyną naprawą jest realna szerokość.
-    label: t('execution.governance.columns.owner', 'Właściciel'),
+    label: t('execution.governance.columns.owner', 'Owner'),
     dataType: 'text',
     sortable: true,
     width: '176px',
@@ -794,13 +792,13 @@ const buildRaidColumns = (t: (key: string, fallback: string) => string): TableCo
     // do niej budżet (16 px sortowanie, 26 px filtr). Porządkowanie ryzyk robi
     // się po EKSPOZYCJI (sortowalna) — to ona jest liczbą decyzyjną, nie sam
     // jeden ze składników; filtrowanie zostaje na Typie, Wpływie i Statusie.
-    label: t('execution.raid.columns.probability', 'Prawdopodobieństwo'),
+    label: t('execution.raid.columns.probability', 'Probability'),
     dataType: 'status',
     width: '172px',
   },
   {
     id: 'impactLabel',
-    label: t('execution.raid.columns.impact', 'Wpływ'),
+    label: t('execution.raid.columns.impact', 'Impact'),
     dataType: 'number',
     sortable: true,
     filterable: true,
@@ -859,13 +857,13 @@ const buildDelayColumns = (t: (key: string, fallback: string) => string): TableC
       rósł z 56 do 65 px — zmierzone `.local/mierz2.mjs`.
     */
     id: 'title',
-    label: t('execution.signals.columns.entity', 'Inicjatywa / zadanie'),
+    label: t('execution.signals.columns.entity', 'Initiative / task'),
     sortable: true,
     width: '300px',
   },
   {
     id: 'kindLabel',
-    label: t('execution.signals.columns.kind', 'Rodzaj sygnału'),
+    label: t('execution.signals.columns.kind', 'Signal type'),
     dataType: 'status',
     sortable: true,
     filterable: true,
@@ -892,7 +890,7 @@ const buildDelayColumns = (t: (key: string, fallback: string) => string): TableC
     id: 'reasonLabel',
     // 250 px: sygnał bywa wielopowodowy („Blokada · Wysokie ryzyko RAID"
     // = ~205 px treści) i przy 226 px zawijał wiersz na dwie linie.
-    label: t('execution.signals.columns.reason', 'Powód'),
+    label: t('execution.signals.columns.reason', 'Reason'),
     dataType: 'text',
     sortable: true,
     filterable: true,
@@ -1169,7 +1167,7 @@ export const ExecutionControlSurface = ({
         return {
           id: `decision:${decision.id}`,
           decisionId: String(decision.id),
-          title: decision.title ?? t('execution.decisions.untitled', 'Decyzja bez tytułu'),
+          title: decision.title ?? t('execution.decisions.untitled', 'Untitled decision'),
           kind: 'DECISION' as const,
           // Kolumna „Typ" znika z widoku decyzji (zostaje w RAID). `kindLabel`
           // wciąż niesie status, bo używa go pigułka podglądu.
@@ -1213,7 +1211,7 @@ export const ExecutionControlSurface = ({
         id: `raid:${item.id}`,
         raidId: String(item.id),
         raidInitiativeId: item.initiativeId ?? null,
-        title: item.title ?? t('execution.raid.untitled', 'Pozycja RAID bez tytułu'),
+        title: item.title ?? t('execution.raid.untitled', 'Untitled RAID item'),
         kind: 'RAID' as const,
         kindLabel: raidTypeLabel(item.type),
         rawRaidType: String(item.type ?? '').toUpperCase(),
@@ -1545,36 +1543,26 @@ export const ExecutionControlSurface = ({
       const slownik: Record<string, string> = {
         REASON_REQUIRED: t(
           'execution.decisions.errors.reasonRequired',
-          'Uzasadnienie jest wymagane — bez niego decyzja nie zostanie zapisana.'
+          'A rationale is required — the decision cannot be saved without it.'
         ),
         RATIONALE_REQUIRED: t(
           'execution.decisions.errors.reasonRequired',
-          'Uzasadnienie jest wymagane — bez niego decyzja nie zostanie zapisana.'
+          'A rationale is required — the decision cannot be saved without it.'
         ),
-        ESCALATION_AT_MAX: t(
-          'execution.decisions.errors.escalationAtMax',
-          'Decyzja jest już na najwyższym poziomie eskalacji (3/3 — komitet).'
+        ESCALATION_AT_MAX: t('execution.decisions.errors.escalationAtMax', 'This decision is already at the highest escalation level (3/3 — committee).'
         ),
-        ALREADY_FINALIZED: t(
-          'execution.decisions.errors.alreadyFinalized',
-          'Ta decyzja już zapadła — rozstrzygnięcia nie da się cofnąć ani powtórzyć.'
+        ALREADY_FINALIZED: t('execution.decisions.errors.alreadyFinalized', 'This decision has already been resolved — the resolution cannot be undone or repeated.'
         ),
-        STALE_VERSION: t(
-          'execution.decisions.errors.staleVersion',
-          'Ktoś zmienił tę decyzję w międzyczasie. Odśwież listę i spróbuj ponownie.'
+        STALE_VERSION: t('execution.decisions.errors.staleVersion', 'Someone changed this decision in the meantime. Refresh the list and try again.'
         ),
       };
       if (kod && slownik[kod]) return slownik[kod];
       if (status === 403) {
-        return t(
-          'execution.decisions.errors.forbidden',
-          'Nie masz uprawnień do tej operacji — rozstrzygać może decydent albo administrator.'
+        return t('execution.decisions.errors.forbidden', 'You don\'t have permission for this operation — only the decision maker or an administrator can resolve it.'
         );
       }
       if (status === 400) {
-        return t(
-          'execution.decisions.errors.missingContext',
-          'Brakuje danych decyzji — uzupełnij inicjatywę, termin i decydenta.'
+        return t('execution.decisions.errors.missingContext', 'Decision data is missing — complete the initiative, due date and decision maker.'
         );
       }
       return status
@@ -1640,7 +1628,7 @@ export const ExecutionControlSurface = ({
   const raidErrorMessage = useCallback(
     (error: unknown): string => {
       if (error instanceof RaidWriteError) return error.message;
-      return t('execution.raid.errors.saveFailed', 'Nie udało się zapisać pozycji RAID.');
+      return t('execution.raid.errors.saveFailed', 'Could not save the RAID item.');
     },
     [t]
   );
@@ -1926,9 +1914,9 @@ export const ExecutionControlSurface = ({
                 ? undefined
                 : () => void eskalujDoProblemu(wiersz),
             note: juzProblem
-              ? t('execution.raid.notes.alreadyIssue', 'To już jest problem.')
+              ? t('execution.raid.notes.alreadyIssue', 'This is already an issue.')
               : zamknieta
-                ? t('execution.raid.notes.closed', 'Pozycja jest zamknięta.')
+                ? t('execution.raid.notes.closed', 'The item is closed.')
                 : undefined,
           },
         ];
@@ -1950,11 +1938,9 @@ export const ExecutionControlSurface = ({
                   setReasonDialog({ kind: 'escalate', row: wiersz });
                 },
           note: zakonczona
-            ? t('execution.decisions.notes.resolved', 'Decyzja już zapadła.')
+            ? t('execution.decisions.notes.resolved', 'The decision has already been resolved.')
             : naMaksie
-              ? t(
-                  'execution.decisions.notes.escalationMax',
-                  'Najwyższy poziom eskalacji (3/3 — komitet).'
+              ? t('execution.decisions.notes.escalationMax', 'Highest escalation level (3/3 — committee).'
                 )
               : undefined,
         },
@@ -2203,7 +2189,7 @@ export const ExecutionControlSurface = ({
           options={[
             {
               id: 'wszystkie',
-              label: t('common.all', 'Wszystkie'),
+              label: t('common.all', 'All'),
               count: liczbaWszystkich,
             },
             {
@@ -2259,7 +2245,7 @@ export const ExecutionControlSurface = ({
     }
     if (activeGovernancePreset === 'ryzyka') {
       onRegisterPrimaryCta({
-        label: t('execution.raid.actions.new', 'Nowa pozycja RAID'),
+        label: t('execution.raid.actions.new', 'New RAID item'),
         testId: 'execution-new-raid-open',
         onClick: () => {
           setNewRaidError(null);
@@ -2307,7 +2293,7 @@ export const ExecutionControlSurface = ({
               className="btn-secondary"
               onClick={() => setNewDecisionOpen(false)}
             >
-              {t('common.close', 'Zamknij')}
+              {t('common.close', 'Close')}
             </button>
           </div>
           {/*
@@ -2319,9 +2305,9 @@ export const ExecutionControlSurface = ({
           */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="text-xs">
-              {t('execution.decisions.form.title', 'Tytuł decyzji')}
+              {t('execution.decisions.form.title', 'Decision title')}
               <input
-                aria-label={t('execution.decisions.form.title', 'Tytuł decyzji')}
+                aria-label={t('execution.decisions.form.title', 'Decision title')}
                 value={newDecision.title}
                 onChange={(event) =>
                   setNewDecision((current) => ({ ...current, title: event.target.value }))
@@ -2348,7 +2334,7 @@ export const ExecutionControlSurface = ({
                 className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="">
-                  {t('execution.decisions.form.initiativePlaceholder', 'Wybierz realizację…')}
+                  {t('execution.decisions.form.initiativePlaceholder', 'Select an initiative…')}
                 </option>
                 {executionInitiatives.map((initiative) => (
                   <option key={initiative.id} value={initiative.id}>
@@ -2358,9 +2344,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.decisions.form.due', 'Potrzebna do dnia (wymagane)')}
+              {t('execution.decisions.form.due', 'Needed by (required)')}
               <input
-                aria-label={t('execution.decisions.form.due', 'Potrzebna do dnia (wymagane)')}
+                aria-label={t('execution.decisions.form.due', 'Needed by (required)')}
                 type="date"
                 value={newDecision.dueDate}
                 onChange={(event) =>
@@ -2383,7 +2369,7 @@ export const ExecutionControlSurface = ({
                 className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="">
-                  {t('execution.decisions.form.decisionMakerPlaceholder', 'Ja (domyślnie)')}
+                  {t('execution.decisions.form.decisionMakerPlaceholder', 'Me (default)')}
                 </option>
                 {orgMembers.map((member) => (
                   <option key={member.id} value={member.id}>
@@ -2410,7 +2396,7 @@ export const ExecutionControlSurface = ({
             }
             onClick={() => void createDecision()}
           >
-            {t('execution.decisions.form.save', 'Zapisz decyzję')}
+            {t('execution.decisions.form.save', 'Save decision')}
           </button>
         </div>
       )}
@@ -2425,16 +2411,16 @@ export const ExecutionControlSurface = ({
       {newRaidOpen && (
         <div className="mb-3 rounded-lg border border-c-border p-4">
           <div className="mb-2 flex items-center justify-between">
-            <strong>{t('execution.raid.actions.new', 'Nowa pozycja RAID')}</strong>
+            <strong>{t('execution.raid.actions.new', 'New RAID item')}</strong>
             <button type="button" className="btn-secondary" onClick={() => setNewRaidOpen(false)}>
-              {t('common.close', 'Zamknij')}
+              {t('common.close', 'Close')}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <label className="text-xs">
-              {t('execution.raid.form.title', 'Tytuł (wymagany)')}
+              {t('execution.raid.form.title', 'Title (required)')}
               <input
-                aria-label={t('execution.raid.form.title', 'Tytuł (wymagany)')}
+                aria-label={t('execution.raid.form.title', 'Title (required)')}
                 value={newRaid.title}
                 onChange={(event) =>
                   setNewRaid((current) => ({ ...current, title: event.target.value }))
@@ -2470,7 +2456,7 @@ export const ExecutionControlSurface = ({
                 className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="">
-                  {t('execution.decisions.form.initiativePlaceholder', 'Wybierz realizację…')}
+                  {t('execution.decisions.form.initiativePlaceholder', 'Select an initiative…')}
                 </option>
                 {executionInitiatives.map((initiative) => (
                   <option key={initiative.id} value={initiative.id}>
@@ -2480,9 +2466,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.governance.columns.owner', 'Właściciel')}
+              {t('execution.governance.columns.owner', 'Owner')}
               <select
-                aria-label={t('execution.governance.columns.owner', 'Właściciel')}
+                aria-label={t('execution.governance.columns.owner', 'Owner')}
                 value={newRaid.ownerId}
                 onChange={(event) =>
                   setNewRaid((current) => ({ ...current, ownerId: event.target.value }))
@@ -2510,9 +2496,9 @@ export const ExecutionControlSurface = ({
               />
             </label>
             <label className="text-xs">
-              {t('execution.raid.columns.probability', 'Prawdopodobieństwo')}
+              {t('execution.raid.columns.probability', 'Probability')}
               <select
-                aria-label={t('execution.raid.columns.probability', 'Prawdopodobieństwo')}
+                aria-label={t('execution.raid.columns.probability', 'Probability')}
                 value={newRaid.probability}
                 onChange={(event) =>
                   setNewRaid((current) => ({ ...current, probability: event.target.value }))
@@ -2527,9 +2513,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.raid.columns.impact', 'Wpływ')}
+              {t('execution.raid.columns.impact', 'Impact')}
               <select
-                aria-label={t('execution.raid.columns.impact', 'Wpływ')}
+                aria-label={t('execution.raid.columns.impact', 'Impact')}
                 value={newRaid.impact}
                 onChange={(event) =>
                   setNewRaid((current) => ({ ...current, impact: event.target.value }))
@@ -2571,7 +2557,7 @@ export const ExecutionControlSurface = ({
             disabled={!newRaid.title.trim() || !newRaid.initiativeId.trim() || newRaidBusy}
             onClick={() => void createRaid()}
           >
-            {t('execution.raid.form.save', 'Zapisz pozycję RAID')}
+            {t('execution.raid.form.save', 'Save RAID item')}
           </button>
         </div>
       )}
@@ -2635,20 +2621,18 @@ export const ExecutionControlSurface = ({
                 recommendation:
                   row.kind === 'RAID'
                     ? !czyRaidOtwarty(row.rawRaidStatus)
-                      ? t('execution.raid.preview.closed', 'Pozycja zamknięta — zostaje w rejestrze.')
+                      ? t('execution.raid.preview.closed', 'Item closed — stays in the register.')
                       : row.daysOverdue != null
-                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'dni — zmień termin albo zamknij pozycję.')}`
+                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
                         : row.rawDueAt
-                          ? t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.')
-                          : t('execution.raid.preview.noDue', 'Pozycja bez terminu — ustaw termin, żeby dało się ją pilnować.')
+                          ? t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.')
+                          : t('execution.raid.preview.noDue', 'Item has no due date — set one so it can be tracked.')
                     : row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
-                      ? t(
-                          'execution.decisions.preview.resolved',
-                          'Decyzja zapadła — wpis jest nieusuwalny.'
+                      ? t('execution.decisions.preview.resolved', 'The decision has been resolved — this entry cannot be deleted.'
                         )
                       : row.daysOverdue != null
                         ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'dni — rozstrzygnij albo eskaluj.')}`
-                        : t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.'),
+                        : t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.'),
               }}
               details={{
                 label:
@@ -2658,7 +2642,7 @@ export const ExecutionControlSurface = ({
                 text:
                   row.source?.description ||
                   row.source?.recommendation ||
-                  t('execution.governance.preview.noDescription', 'Brak dodatkowego opisu.'),
+                  t('execution.governance.preview.noDescription', 'No additional description.'),
                 properties:
                   row.kind === 'DECISION'
                     ? [
@@ -2682,7 +2666,7 @@ export const ExecutionControlSurface = ({
                           label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
                           value:
                             row.daysOverdue == null
-                              ? t('execution.decisions.escalation.none', 'Brak')
+                              ? t('execution.decisions.escalation.none', 'None')
                               : String(row.daysOverdue),
                         },
                         {
@@ -2706,7 +2690,7 @@ export const ExecutionControlSurface = ({
                           ? [
                               {
                                 id: 'decidedAt',
-                                label: t('execution.decisions.preview.decidedAt', 'Rozstrzygnięto'),
+                                label: t('execution.decisions.preview.decidedAt', 'Resolved on'),
                                 value: formatDay(row.decidedAt),
                               },
                             ]
@@ -2726,7 +2710,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'owner',
-                          label: t('execution.governance.columns.owner', 'Właściciel'),
+                          label: t('execution.governance.columns.owner', 'Owner'),
                           value: row.owner,
                         },
                         {
@@ -2736,12 +2720,12 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'probability',
-                          label: t('execution.raid.columns.probability', 'Prawdopodobieństwo'),
+                          label: t('execution.raid.columns.probability', 'Probability'),
                           value: row.probabilityLabel ?? '—',
                         },
                         {
                           id: 'impact',
-                          label: t('execution.raid.columns.impact', 'Wpływ'),
+                          label: t('execution.raid.columns.impact', 'Impact'),
                           value: row.impactLabel ?? '—',
                         },
                         {
@@ -2759,14 +2743,14 @@ export const ExecutionControlSurface = ({
                           label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
                           value:
                             row.daysOverdue == null
-                              ? t('execution.decisions.escalation.none', 'Brak')
+                              ? t('execution.decisions.escalation.none', 'None')
                               : String(row.daysOverdue),
                         },
                         ...(zrodloEskalacji(row.description)
                           ? [
                               {
                                 id: 'sourceRaid',
-                                label: t('execution.raid.preview.source', 'Powstało z pozycji'),
+                                label: t('execution.raid.preview.source', 'Created from item'),
                                 value: String(zrodloEskalacji(row.description)),
                               },
                             ]
@@ -2798,7 +2782,7 @@ export const ExecutionControlSurface = ({
                           {
                             id: 'raid-due',
                             variant: 'neutral',
-                            label: t('execution.raid.actions.changeDue', 'Zmień termin'),
+                            label: t('execution.raid.actions.changeDue', 'Change due date'),
                             icon: CalendarClock,
                             disabled: raidBusy,
                             onClick: () => {
@@ -2813,7 +2797,7 @@ export const ExecutionControlSurface = ({
                           {
                             id: 'raid-owner',
                             variant: 'neutral',
-                            label: t('execution.raid.actions.changeOwner', 'Zmień właściciela'),
+                            label: t('execution.raid.actions.changeOwner', 'Change owner'),
                             icon: UserCog,
                             disabled: raidBusy,
                             onClick: () => {
@@ -2830,7 +2814,7 @@ export const ExecutionControlSurface = ({
                           {
                             id: 'raid-close',
                             variant: 'neutral',
-                            label: t('execution.raid.actions.close', 'Zamknij pozycję'),
+                            label: t('execution.raid.actions.close', 'Close item'),
                             icon: CircleSlash,
                             disabled: raidBusy,
                             onClick: () => {
@@ -2859,7 +2843,7 @@ export const ExecutionControlSurface = ({
                         {
                           id: 'decision-reject',
                           variant: 'destructive',
-                          label: t('execution.decisions.actions.reject', 'Odrzuć'),
+                          label: t('execution.decisions.actions.reject', 'Reject'),
                           icon: XCircle,
                           onClick: () => {
                             setReasonError(null);
@@ -2882,7 +2866,7 @@ export const ExecutionControlSurface = ({
                     }
                   : undefined
               }
-              relationsEmptyLabel={t('execution.governance.preview.noRelations', 'Brak powiązań')}
+              relationsEmptyLabel={t('execution.governance.preview.noRelations', 'No relations')}
             />
           )}
         >
@@ -2904,11 +2888,9 @@ export const ExecutionControlSurface = ({
             empty={{
               title:
                 activeGovernancePreset === 'ryzyka'
-                  ? t('execution.governance.empty.raidTitle', 'Brak pozycji w rejestrze RAID')
-                  : t('execution.governance.empty.decisionsTitle', 'Brak decyzji w rejestrze'),
-              description: t(
-                'execution.governance.empty.description',
-                'Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka.'
+                  ? t('execution.governance.empty.raidTitle', 'No items in the RAID register')
+                  : t('execution.governance.empty.decisionsTitle', 'No decisions in the register'),
+              description: t('execution.governance.empty.description', 'The register reads the organization\'s decisions and RAID items. An empty register means nothing is pending.'
               ),
             }}
           />
@@ -2960,30 +2942,24 @@ export const ExecutionControlSurface = ({
                   ],
                   recommendation:
                     row.state === 'NOWY'
-                      ? t(
-                          'execution.signals.preview.new',
-                          'Sygnał bez odpowiedzi — przygotuj wniosek o przesunięcie albo nadrób opóźnienie.'
+                      ? t('execution.signals.preview.new', 'Signal without a response — prepare a delay request or make up the delay.'
                         )
                       : row.state === 'INTERWENCJA'
-                        ? t(
-                            'execution.signals.preview.intervention',
-                            'Wniosek o przesunięcie czeka na rozstrzygnięcie w widoku Decyzje.'
+                        ? t('execution.signals.preview.intervention', 'The delay request is awaiting resolution in the Decisions view.'
                           )
-                        : t(
-                            'execution.signals.preview.closed',
-                            'Wniosek o przesunięcie już zapadł.'
+                        : t('execution.signals.preview.closed', 'The delay request has already been resolved.'
                           ),
                 }}
                 details={{
-                  label: t('execution.signals.preview.label', 'Sygnał opóźnienia'),
+                  label: t('execution.signals.preview.label', 'Delay signal'),
                   text:
                     row.entityType === 'INITIATIVE'
-                      ? t('execution.signals.preview.initiative', 'Sygnał dotyczy inicjatywy.')
-                      : t('execution.signals.preview.task', 'Sygnał dotyczy zadania.'),
+                      ? t('execution.signals.preview.initiative', 'The signal concerns an initiative.')
+                      : t('execution.signals.preview.task', 'The signal concerns a task.'),
                   properties: [
                     {
                       id: 'kind',
-                      label: t('execution.signals.columns.kind', 'Rodzaj sygnału'),
+                      label: t('execution.signals.columns.kind', 'Signal type'),
                       value: row.kindLabel,
                     },
                     {
@@ -2993,7 +2969,7 @@ export const ExecutionControlSurface = ({
                     },
                     {
                       id: 'reason',
-                      label: t('execution.signals.columns.reason', 'Powód'),
+                      label: t('execution.signals.columns.reason', 'Reason'),
                       value: row.reasonLabel,
                     },
                     {
@@ -3015,7 +2991,7 @@ export const ExecutionControlSurface = ({
                       ? [
                           {
                             id: 'decision',
-                            label: t('execution.signals.preview.decision', 'Wniosek o przesunięcie'),
+                            label: t('execution.signals.preview.decision', 'Delay request'),
                             value: tytulInterwencji(row.entityName, row.deviationDays),
                           },
                         ]
@@ -3051,9 +3027,7 @@ export const ExecutionControlSurface = ({
                           {
                             id: 'signal-intervention',
                             variant: 'positive',
-                            label: t(
-                              'execution.signals.actions.prepareIntervention',
-                              'Przygotuj interwencję'
+                            label: t('execution.signals.actions.prepareIntervention', 'Prepare intervention'
                             ),
                             icon: Wrench,
                             disabled: interventionBusy,
@@ -3063,7 +3037,7 @@ export const ExecutionControlSurface = ({
                       }
                     : undefined
                 }
-                relationsEmptyLabel={t('execution.governance.preview.noRelations', 'Brak powiązań')}
+                relationsEmptyLabel={t('execution.governance.preview.noRelations', 'No relations')}
               />
             )}
           >
@@ -3074,10 +3048,8 @@ export const ExecutionControlSurface = ({
               onRowClick={(row) => setSelectedDelayId(row.id)}
               persistKey="execution.governance.signals.v1"
               empty={{
-                title: t('execution.signals.empty.title', 'Brak sygnałów opóźnień'),
-                description: t(
-                  'execution.signals.empty.description',
-                  'System liczy sygnały z terminów inicjatyw i zadań. Pusto znaczy, że nic się nie sypie.'
+                title: t('execution.signals.empty.title', 'No delay signals'),
+                description: t('execution.signals.empty.description', 'The system counts signals from initiative and task due dates. Empty means nothing is slipping.'
                 ),
               }}
             />
@@ -3726,63 +3698,53 @@ export const ExecutionControlSurface = ({
         destructive={reasonDialog?.kind === 'reject'}
         title={
           reasonDialog?.kind === 'approve'
-            ? t('execution.decisions.dialog.approve', 'Rozstrzygnij decyzję')
+            ? t('execution.decisions.dialog.approve', 'Resolve decision')
             : reasonDialog?.kind === 'reject'
-              ? t('execution.decisions.dialog.reject', 'Odrzuć decyzję')
+              ? t('execution.decisions.dialog.reject', 'Reject decision')
               : reasonDialog?.kind === 'supersede'
-                ? t('execution.decisions.dialog.supersede', 'Oznacz decyzję jako nieaktualną')
+                ? t('execution.decisions.dialog.supersede', 'Mark decision as superseded')
                 : reasonDialog?.kind === 'raid-close'
-                  ? t('execution.raid.dialog.close', 'Zamknij pozycję RAID')
-                  : t('execution.decisions.dialog.escalate', 'Eskaluj decyzję')
+                  ? t('execution.raid.dialog.close', 'Close RAID item')
+                  : t('execution.decisions.dialog.escalate', 'Escalate decision')
         }
         confirmLabel={
           reasonDialog?.kind === 'approve'
             ? t('execution.decisions.actions.approve', 'Rozstrzygnij')
             : reasonDialog?.kind === 'reject'
-              ? t('execution.decisions.actions.reject', 'Odrzuć')
+              ? t('execution.decisions.actions.reject', 'Reject')
               : reasonDialog?.kind === 'supersede'
                 ? t('execution.decisions.actions.supersede', 'Nieaktualna')
                 : reasonDialog?.kind === 'raid-close'
-                  ? t('execution.raid.actions.close', 'Zamknij pozycję')
+                  ? t('execution.raid.actions.close', 'Close item')
                   : t('execution.decisions.actions.escalate', 'Eskaluj')
         }
         label={
           reasonDialog?.kind === 'escalate'
-            ? t('execution.decisions.dialog.escalateLabel', 'Powód eskalacji (wymagany)')
+            ? t('execution.decisions.dialog.escalateLabel', 'Escalation reason (required)')
             : reasonDialog?.kind === 'raid-close'
-              ? t('execution.raid.dialog.closeLabel', 'Co z tym zrobiono (wymagane)')
-              : t('execution.decisions.dialog.rationaleLabel', 'Uzasadnienie (wymagane)')
+              ? t('execution.raid.dialog.closeLabel', 'What was done about it (required)')
+              : t('execution.decisions.dialog.rationaleLabel', 'Rationale (required)')
         }
         placeholder={
           reasonDialog?.kind === 'escalate'
-            ? t(
-                'execution.decisions.dialog.escalatePlaceholder',
-                'Napisz, dlaczego decyzja idzie poziom wyżej.'
+            ? t('execution.decisions.dialog.escalatePlaceholder', 'Write why this decision is moving up a level.'
               )
             : reasonDialog?.kind === 'raid-close'
               ? t(
                   'execution.raid.dialog.closePlaceholder',
-                  'Napisz jednym zdaniem, dlaczego pozycja jest zamykana.'
+                  'Write one sentence on why this item is being closed.'
                 )
-              : t(
-                  'execution.decisions.dialog.rationalePlaceholder',
-                  'Napisz jednym zdaniem, dlaczego tak rozstrzygasz — trafi do rejestru na stałe.'
+              : t('execution.decisions.dialog.rationalePlaceholder', 'Write one sentence on why you\'re resolving it this way — it goes into the register permanently.'
                 )
         }
         hint={
           reasonDialog?.kind === 'escalate'
-            ? t(
-                'execution.decisions.dialog.escalateHint',
-                'Poziom rośnie o jeden: właściciel inicjatywy → PMO → komitet.'
+            ? t('execution.decisions.dialog.escalateHint', 'The level goes up by one: initiative owner → PMO → committee.'
               )
             : reasonDialog?.kind === 'raid-close'
-              ? t(
-                  'execution.raid.dialog.closeHint',
-                  'Pozycja zostaje w rejestrze ze statusem „Zamknięta" i przestaje liczyć się do „Po terminie".'
+              ? t('execution.raid.dialog.closeHint', 'The item stays in the register with status "Closed" and stops counting toward "Overdue".'
                 )
-              : t(
-                  'execution.decisions.dialog.rationaleHint',
-                  'Wpisu nie da się usunąć ani rozstrzygnąć drugi raz.'
+              : t('execution.decisions.dialog.rationaleHint', 'This entry cannot be deleted or resolved a second time.'
                 )
         }
         onCancel={() => {
@@ -3803,16 +3765,16 @@ export const ExecutionControlSurface = ({
           aria-modal="true"
           aria-label={
             raidEdit.pole === 'dueDate'
-              ? t('execution.raid.dialog.due', 'Zmień termin pozycji RAID')
-              : t('execution.raid.dialog.owner', 'Zmień właściciela pozycji RAID')
+              ? t('execution.raid.dialog.due', 'Change RAID item due date')
+              : t('execution.raid.dialog.owner', 'Change RAID item owner')
           }
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         >
           <div className="w-full max-w-md rounded-xl border border-c-border bg-c-surface p-5 shadow-lg">
             <h3 className="text-sm font-semibold">
               {raidEdit.pole === 'dueDate'
-                ? t('execution.raid.dialog.due', 'Zmień termin pozycji RAID')
-                : t('execution.raid.dialog.owner', 'Zmień właściciela pozycji RAID')}
+                ? t('execution.raid.dialog.due', 'Change RAID item due date')
+                : t('execution.raid.dialog.owner', 'Change RAID item owner')}
             </h3>
             <p className="mt-1 text-xs text-c-text-muted">{raidEdit.row.title}</p>
             {raidEdit.pole === 'dueDate' ? (
@@ -3833,7 +3795,7 @@ export const ExecutionControlSurface = ({
               <select
                 autoFocus
                 data-testid="execution-raid-edit-input"
-                aria-label={t('execution.governance.columns.owner', 'Właściciel')}
+                aria-label={t('execution.governance.columns.owner', 'Owner')}
                 value={raidEdit.wartosc}
                 onChange={(event) =>
                   setRaidEdit((current) =>
@@ -3864,7 +3826,7 @@ export const ExecutionControlSurface = ({
                   setRaidError(null);
                 }}
               >
-                {t('common.cancel', 'Anuluj')}
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -3873,7 +3835,7 @@ export const ExecutionControlSurface = ({
                 disabled={raidBusy}
                 onClick={() => void zapiszPoleRaid()}
               >
-                {t('common.save', 'Zapisz')}
+                {t('common.save', 'Save')}
               </button>
             </div>
           </div>

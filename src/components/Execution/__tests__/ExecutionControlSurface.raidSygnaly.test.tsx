@@ -304,6 +304,13 @@ describe('(i) EKSPOZYCJA jest liczona i tylko do odczytu', () => {
   });
 });
 
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod pod tym plikiem
+// miał polski defaultValue w t() mimo poprawnego klucza EN w public/locales —
+// domyślny tekst poprawiony na angielski (Probability/Impact/Title (required)/
+// Late start/No owner/New RAID item/Delay signal/Owner). Test mock (t: (k,
+// fallback) => fallback) czyta ten sam string co realny UI w EN, więc
+// asercje w tym pliku zaktualizowano na nowy angielski tekst — kontrakt się
+// nie zmienił, zmienił się tylko język domyślnego tekstu.
 describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legacy', () => {
   const otworzFormularz = async () => {
     await zamontujRyzyka();
@@ -324,22 +331,22 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
     await otworzFormularz();
     // Domyślnie MEDIUM × MEDIUM = 3 × 3 = 9.
     expect(screen.getByTestId('execution-new-raid-exposure')).toHaveTextContent('9');
-    fireEvent.change(screen.getByLabelText('Prawdopodobieństwo'), { target: { value: 'HIGH' } });
-    fireEvent.change(screen.getByLabelText('Wpływ'), { target: { value: 'CRITICAL' } });
+    fireEvent.change(screen.getByLabelText('Probability'), { target: { value: 'HIGH' } });
+    fireEvent.change(screen.getByLabelText('Impact'), { target: { value: 'CRITICAL' } });
     expect(screen.getByTestId('execution-new-raid-exposure')).toHaveTextContent('20');
   });
 
   it('zapis idzie pod runtime-v1/.../raid-items/:id, NIGDY pod /api/raid', async () => {
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), {
+    fireEvent.change(screen.getByLabelText('Title (required)'), {
       target: { value: 'proba-r45-ryzyko' },
     });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
     fireEvent.change(screen.getByLabelText('Termin'), { target: { value: '2026-10-20' } });
-    fireEvent.change(screen.getByLabelText('Prawdopodobieństwo'), { target: { value: 'HIGH' } });
-    fireEvent.change(screen.getByLabelText('Wpływ'), { target: { value: 'CRITICAL' } });
+    fireEvent.change(screen.getByLabelText('Probability'), { target: { value: 'HIGH' } });
+    fireEvent.change(screen.getByLabelText('Impact'), { target: { value: 'CRITICAL' } });
     fireEvent.click(screen.getByTestId('execution-new-raid-save'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -365,7 +372,7 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
     const zapisz = screen.getByTestId('execution-new-raid-save');
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: '' } });
     expect(zapisz).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Title (required)'), { target: { value: 'x' } });
     expect(zapisz).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: 'ini-1' } });
     expect(zapisz).toBeEnabled();
@@ -374,7 +381,7 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
   it('awaria zapisu ma widoczny komunikat PO POLSKU — zero cichych awarii', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({}) });
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Title (required)'), { target: { value: 'x' } });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: 'ini-1' } });
     fireEvent.click(screen.getByTestId('execution-new-raid-save'));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
@@ -429,8 +436,8 @@ describe('(j) PRESET „Sygnały" czyta delay-signals, nie pusty runtime-v1', ()
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     const wiersz = screen.getByText('Migracja ERP').closest('tr') as HTMLElement;
-    expect(within(wiersz).getByText('Późny start')).toBeInTheDocument();
-    expect(within(wiersz).getByText('Bez właściciela')).toBeInTheDocument();
+    expect(within(wiersz).getByText('Late start')).toBeInTheDocument();
+    expect(within(wiersz).getByText('No owner')).toBeInTheDocument();
     expect(within(wiersz).getByText('+140')).toBeInTheDocument();
     expect(within(wiersz).getByText('Nowy')).toBeInTheDocument();
   });
@@ -449,7 +456,7 @@ describe('(j) PRESET „Sygnały" czyta delay-signals, nie pusty runtime-v1', ()
     expect(within(menu2).queryByText('Dodaj sygnał')).toBeNull();
     expect(within(menu2).queryByText('Add signal')).toBeNull();
     expect(within(menu2).queryByText('Nowa decyzja')).toBeNull();
-    expect(within(menu2).queryByText('Nowa pozycja RAID')).toBeNull();
+    expect(within(menu2).queryByText('New RAID item')).toBeNull();
   });
 });
 
@@ -459,13 +466,13 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Migracja ERP'));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /Przygotuj interwencję/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Prepare intervention/ })).toBeInTheDocument()
     );
   };
 
   it('wysyła sourceType + sourceId sygnału, termin dziś + 3 dni i tytuł po polsku', async () => {
     await otworzPodgladSygnalu();
-    fireEvent.click(screen.getByRole('button', { name: /Przygotuj interwencję/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Prepare intervention/ }));
     await waitFor(() => expect(createDecision).toHaveBeenCalledTimes(1));
     const payload = createDecision.mock.calls[0][0];
     expect(payload.sourceType).toBe('delay_signal');
@@ -484,8 +491,8 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Konfiguracja środowiska')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Konfiguracja środowiska'));
-    await waitFor(() => expect(screen.getByText('Sygnał opóźnienia')).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Przygotuj interwencję/ })).toBeNull();
+    await waitFor(() => expect(screen.getByText('Delay signal')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /Prepare intervention/ })).toBeNull();
   });
 
   it('awaria tworzenia wniosku ma widoczny komunikat PO POLSKU', async () => {
@@ -493,9 +500,9 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
       new TestowyApiError({ error: 'Permission denied' }, 'Failed', 403)
     );
     await otworzPodgladSygnalu();
-    fireEvent.click(screen.getByRole('button', { name: /Przygotuj interwencję/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Prepare intervention/ }));
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0));
-    expect(screen.getAllByRole('alert')[0].textContent).toContain('Nie masz uprawnień');
+    expect(screen.getAllByRole('alert')[0].textContent).toContain("don't have permission");
   });
 });
 
@@ -504,13 +511,13 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
     await zamontujRyzyka();
     fireEvent.click(screen.getByText('Awaria dostawcy chmury'));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /Zmień termin/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Change due date/ })).toBeInTheDocument()
     );
   };
 
   it('„Zmień termin" zapisuje przez kanonicznego pisarza, bez wymogu powodu', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Zmień termin/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Change due date/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: '2026-11-30' },
     });
@@ -532,7 +539,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
    */
   it('pierwszy zapis idzie z WERSJĄ z modelu odczytu, nie ze ślepym 0', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Zmień termin/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Change due date/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: '2026-11-30' },
     });
@@ -545,7 +552,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
 
   it('„Zmień właściciela" wysyła identyfikator osoby z katalogu', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Zmień właściciela/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Change owner/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: 'osoba-2' },
     });
@@ -556,7 +563,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
 
   it('„Zamknij pozycję" WYMAGA uzasadnienia — pusty powód nie zapisuje', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Zamknij pozycję/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Close item/ }));
     await waitFor(() =>
       expect(screen.getByTestId('execution-decision-reason-confirm')).toBeInTheDocument()
     );
@@ -607,8 +614,8 @@ describe('MEMBER — para negatywna', () => {
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Migracja ERP'));
-    await waitFor(() => expect(screen.getByText('Sygnał opóźnienia')).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Przygotuj interwencję/ })).toBeNull();
+    await waitFor(() => expect(screen.getByText('Delay signal')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /Prepare intervention/ })).toBeNull();
   });
 
   /**
@@ -653,7 +660,7 @@ describe('MEMBER — para negatywna', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Inicjatywa (wymagana)')).toBeInTheDocument()
     );
-    const wlasciciel = screen.getByLabelText('Właściciel') as HTMLSelectElement;
+    const wlasciciel = screen.getByLabelText('Owner') as HTMLSelectElement;
     expect(Array.from(wlasciciel.options).map((o) => o.value)).toEqual(['']);
   });
 });

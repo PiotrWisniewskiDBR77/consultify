@@ -21,6 +21,11 @@
  * DOWOD MUTACYJNY: zdjecie limitu z `load(id)` (goly `Promise.all`) ->
  * test „wybor wiszacej realizacji…" na czerwono (stan zostaje LOADING).
  */
+// [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
+// na angielski ('Supply (h)' / 'Utilization %' / 'Save'). Asercje
+// zaktualizowano — kontrakt się nie zmienił, zmienił się tylko język
+// domyślnego tekstu.
 import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -230,8 +235,8 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
       timeout: 3000,
     });
     expect(screen.getByText('Popyt (h)')).toBeInTheDocument();
-    expect(screen.getByText('Podaż (h)')).toBeInTheDocument();
-    expect(screen.getByText('Obłożenie %')).toBeInTheDocument();
+    expect(screen.getByText('Supply (h)')).toBeInTheDocument();
+    expect(screen.getByText('Utilization %')).toBeInTheDocument();
     expect(screen.getByText('Luka (h)')).toBeInTheDocument();
     expect(screen.getByText('64 h')).toBeInTheDocument();
     expect(screen.getByText('160 %')).toBeInTheDocument();
@@ -350,7 +355,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     const dialog = await screen.findByTestId('execution-resources-capacity-dialog');
     expect(dialog).toHaveTextContent('Anna Kowalska');
     const zapisz = [...dialog.querySelectorAll('button')].find(
-      (b) => b.textContent === 'Zapisz'
+      (b) => b.textContent === 'Save'
     ) as HTMLButtonElement;
     await act(async () => {
       zapisz.click();

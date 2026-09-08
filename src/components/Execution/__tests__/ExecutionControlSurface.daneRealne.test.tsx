@@ -286,7 +286,10 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
       (th.textContent || '').replace(/[^\p{L} ]/gu, '').trim()
     );
     expect(naglowki).toContain('Typ');
-    expect(naglowki).toContain('Właściciel');
+    // [ODMROZENIE 06_EXECUTION DEC-453] kolumna „Właściciel" ma teraz angielski
+    // default 'Owner' (execution.governance.columns.owner, J7) — kontrakt kolumn
+    // się nie zmienił, zmienił się tylko język domyślnego tekstu.
+    expect(naglowki).toContain('Owner');
     expect(naglowki).not.toContain('Decydent');
     expect(naglowki).not.toContain('Potrzebna do dnia');
   });
