@@ -27208,6 +27208,14 @@
       "pl": "Rachunek zysków i strat",
       "bs": "Bilans",
       "cf": "Rachunek przepływów pieniężnych"
+    },
+    "bridge": {
+      "checkFailed": "Nie udało się sprawdzić tego rekordu w nowym systemie.",
+      "cannotOpen": "Nie można otworzyć tego rekordu w nowym module.",
+      "quarantined": "Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu.",
+      "notMigrated": "Ten rekord jeszcze nie ma odpowiednika w nowym systemie (nie został jeszcze przeniesiony).",
+      "legacyTitle": "Otwierasz sprawdzony widok klasyczny",
+      "legacyBody": "Nowy workspace nie ma jeszcze powiązania z tym rekordem. Możesz normalnie pracować na danych w dotychczasowym widoku; nic nie jest ukrywane ani symulowane."
     }
   },
   "portfolio": {

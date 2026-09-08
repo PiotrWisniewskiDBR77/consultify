@@ -26265,6 +26265,14 @@
       "pl": "Profit and loss",
       "bs": "Balance sheet",
       "cf": "Cash flow statement"
+    },
+    "bridge": {
+      "checkFailed": "Could not check this record in the new system.",
+      "cannotOpen": "This record cannot be opened in the new module.",
+      "quarantined": "This record was deliberately skipped when moving to the new system.",
+      "notMigrated": "This record has no counterpart in the new system yet (it has not been migrated).",
+      "legacyTitle": "You are opening the proven classic view",
+      "legacyBody": "The new workspace has no link to this record yet. You can keep working on the data in the existing view; nothing is hidden or simulated."
     }
   },
   "portfolio": {
