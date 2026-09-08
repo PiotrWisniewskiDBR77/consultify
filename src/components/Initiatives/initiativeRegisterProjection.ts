@@ -319,21 +319,43 @@ export const runtimeLifecycleToInitiativeStatus = (rawLifecycle: string): Initia
   return InitiativeStatus.DRAFT;
 };
 
-/** One canonical adapter used by both the Initiatives and Execution registers. */
+/**
+ * One canonical adapter used by both the Initiatives and Execution registers.
+ *
+ * D4b (2026-09-07/08) — literał zamiast nazwiska. Rejestr runtime-v1 niesie
+ * WYŁĄCZNIE `initiativeOwnerId` (UUID), nigdy imienia/nazwiska — w
+ * przeciwieństwie do wiersza legacy (`toCanonicalInitiativeRegisterItemFromLegacyRow`),
+ * który dostaje `ownerBusiness.firstName/lastName` już rozwiązane przez
+ * backend. Zanim ten resolver istniał, adapter miał tylko dwie ścieżki:
+ * dopasowanie do zalogowanego `actor` (jedna osoba) i heurystykę „to nie
+ * wygląda jak UUID → sformatuj jako imię" (myliła np. `demo-story-owner`
+ * ze slugiem). Dla realnego UUID-a spoza obu ścieżek adapter zwracał SUROWY
+ * POLSKI LITERAŁ „Przypisany właściciel" — zmierzone na Northwind: 8/13
+ * wierszy rejestru. Teraz przyjmuje opcjonalny `resolveMemberName` (ta sama
+ * mapa `userId → nazwisko`, którą liczy `useOrganizationMemberNames` z listy
+ * członków organizacji — patrz `InitiativesHub.tsx`) i rozwiązuje UUID na
+ * człowieka DOKŁADNIE tak samo jak inne ekrany (Execution, Results). Gdy
+ * katalog nie zna identyfikatora, kolumna dostaje `undefined`
+ * (`ownerBusiness` nieustawione) i renderuje uczciwe „—"
+ * (`CanonicalInitiativeRegister.tsx`) — NIGDY literał, NIGDY surowy UUID.
+ */
 export const toCanonicalInitiativeRegisterItem = (
   record: RegisteredInitiativeReadModel,
-  actor?: { id?: string | null; displayName?: string | null }
+  actor?: { id?: string | null; displayName?: string | null },
+  resolveMemberName?: (userId: string) => string | null
 ): PortfolioInitiative => {
   const { initiative, updatedAt } = record;
   const projection = projectCanonicalInitiativeRegisterRow(record);
   const ownerId = initiative.initiativeOwnerId?.trim() || '';
+  const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(ownerId);
+  const resolvedMemberName = ownerId ? resolveMemberName?.(ownerId)?.trim() || '' : '';
   const ownerDisplayName =
     ownerId && actor?.id === ownerId && actor.displayName?.trim()
       ? actor.displayName.trim()
-      : ownerId && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(ownerId)
-        ? ownerId.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-        : ownerId
-          ? 'Przypisany właściciel'
+      : resolvedMemberName
+        ? resolvedMemberName
+        : ownerId && !looksLikeUuid
+          ? ownerId.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
           : '';
   return {
     ...projection,
@@ -354,7 +376,10 @@ export const toCanonicalInitiativeRegisterItem = (
     projectId: initiative.projectId,
     sourceId: initiative.source?.sourceId,
     sourceType: initiative.source?.sourceType || 'UNKNOWN',
-    ownerBusiness: ownerId
+    // Uczciwe „brak dopasowania": nie tworzymy `ownerBusiness` bez nazwiska
+    // (patrz komentarz nad funkcją) — kolumna wtedy renderuje „—", nigdy
+    // literał ani surowy UUID.
+    ownerBusiness: ownerId && ownerDisplayName
       ? {
           id: ownerId,
           firstName: ownerDisplayName,

@@ -51,6 +51,7 @@ import {
 } from '@/components/standard';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { API_URL, getHeaders } from '@/services/api/baseClient';
@@ -451,6 +452,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
 
+  // D4b (2026-09-07/08): rejestr runtime-v1 niesie tylko `initiativeOwnerId`
+  // (UUID) — bez tej mapy `toCanonicalInitiativeRegisterItem` nie ma jak
+  // rozwiązać właściciela na nazwisko i pokazywał surowy polski literał
+  // „Przypisany właściciel" (8/13 wierszy na Northwind). Ta sama mapa
+  // członków organizacji, której już używa Execution/Results.
+  const resolveOwnerMemberName = useOrganizationMemberNames();
+
   useEffect(() => {
     let cancelled = false;
     const loadPendingDecisionChains = async () => {
@@ -559,10 +567,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           const registeredRows = mapSafely(
             registeredResult.initiatives,
             (record) =>
-              toCanonicalInitiativeRegisterItem(record, {
-                id: currentUserId,
-                displayName: currentUserDisplayName,
-              }),
+              toCanonicalInitiativeRegisterItem(
+                record,
+                {
+                  id: currentUserId,
+                  displayName: currentUserDisplayName,
+                },
+                resolveOwnerMemberName
+              ),
             (record) => record?.initiative?.initiativeId
           );
           const legacyCanonicalRows = mapSafely(
@@ -666,6 +678,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       currentUserId,
       filters.priority,
       initiativesDemoData.initiatives,
+      resolveOwnerMemberName,
       searchQuery,
       scope,
       t,
