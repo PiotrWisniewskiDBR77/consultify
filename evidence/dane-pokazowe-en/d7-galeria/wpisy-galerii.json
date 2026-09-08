@@ -1,0 +1,307 @@
+[
+  {
+    "nazwa": "01-chat-lista",
+    "opis": "Chat — lista wątków Northwind (3 wątki)",
+    "url": "http://127.0.0.1:3211/chat",
+    "czas": "2026-09-08T10:47:28.518Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "01b-chat-watek",
+    "opis": "Chat — wątek \"Where are we losing OEE on Line 3?\" otwarty",
+    "url": "http://127.0.0.1:3211/chat/017b0fd4-655e-5072-8454-36b4c6817ef1",
+    "czas": "2026-09-08T10:47:38.053Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "02-my-work-skrzynka",
+    "opis": "My Work — skrzynka OWNER-a (6 pozycji, w tym overdue)",
+    "url": "http://127.0.0.1:3211/my-work",
+    "czas": "2026-09-08T10:47:47.724Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "03-interview-lista",
+    "opis": "Interview — lista sesji (2 wywiady)",
+    "url": "http://127.0.0.1:3211/interview?tab=sessions",
+    "czas": "2026-09-08T10:47:57.448Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "03b-interview-podglad",
+    "opis": "Interview — podgląd sesji \"Plant operations — Leeds\"",
+    "url": "http://127.0.0.1:3211/interview?tab=sessions",
+    "czas": "2026-09-08T10:48:02.908Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "04-tools-lista",
+    "opis": "Tools — 3 sesje narzędzi z katalogu globalnego",
+    "url": "http://127.0.0.1:3211/discovery-tools",
+    "czas": "2026-09-08T10:48:15.305Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 2,
+    "polskieSlowaUnikalne": [
+      "Narzędzia",
+      "procesów"
+    ]
+  },
+  {
+    "nazwa": "05-assessment-lista",
+    "opis": "Assessment — 1 ocena dojrzałości operacyjnej",
+    "url": "http://127.0.0.1:3211/assessment?tab=library",
+    "czas": "2026-09-08T10:48:26.934Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "06-initiatives-lista",
+    "opis": "Initiatives — lista, zakres All (13 rekordow, 7 statusow DEC-424)",
+    "url": "http://127.0.0.1:3211/initiatives?tab=list",
+    "czas": "2026-09-08T10:48:42.837Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 16,
+    "polskieSlowaUnikalne": [
+      "właściciel"
+    ]
+  },
+  {
+    "nazwa": "06b-initiatives-podglad-draft",
+    "opis": "Initiatives — podglad \"Customer Portal Redesign\" (DRAFT)",
+    "url": "http://127.0.0.1:3211/initiatives?open=84baaa08-5249-42e4-a292-3921e67d29d1&mode=drawer",
+    "czas": "2026-09-08T10:48:51.551Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "polskieDiakrytykiLiczba": 16,
+    "polskieSlowaUnikalne": [
+      "właściciel"
+    ]
+  },
+  {
+    "nazwa": "07a-execution-realizacje",
+    "opis": "Execution — lista realizacji (4 execution_case)",
+    "url": "http://127.0.0.1:3211/execution?tab=list&view=table",
+    "czas": "2026-09-08T10:49:03.569Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "07b-execution-praca",
+    "opis": "Execution — tabela Praca (36 zadan)",
+    "url": "http://127.0.0.1:3211/execution?tab=work&view=table",
+    "czas": "2026-09-08T10:49:16.390Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 6,
+    "polskieSlowaUnikalne": [
+      "paź"
+    ]
+  },
+  {
+    "nazwa": "07c-execution-zasoby",
+    "opis": "Execution — Zasoby/Obciazenie (9 osob)",
+    "url": "http://127.0.0.1:3211/execution?tab=resources&view=table",
+    "czas": "2026-09-08T10:49:29.301Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 9,
+    "polskieSlowaUnikalne": [
+      "osób",
+      "podaż",
+      "obłożenie",
+      "przeciążonych",
+      "zaległość"
+    ]
+  },
+  {
+    "nazwa": "07d-execution-decyzje-ryzyka",
+    "opis": "Execution — Decyzje i ryzyka (9 decyzji, 7 RAID)",
+    "url": "http://127.0.0.1:3211/execution?tab=control&view=table",
+    "czas": "2026-09-08T10:49:41.054Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 1,
+    "polskieSlowaUnikalne": [
+      "paź"
+    ]
+  },
+  {
+    "nazwa": "07e-execution-raporty",
+    "opis": "Execution — Raporty statusu (2 raporty)",
+    "url": "http://127.0.0.1:3211/execution?tab=reports&view=table",
+    "czas": "2026-09-08T10:49:53.765Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "08-results-kpi-lista",
+    "opis": "Results — KPI, 8 definicji Northwind",
+    "url": "http://127.0.0.1:3211/results/kpi",
+    "czas": "2026-09-08T10:50:07.361Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "08b-results-kpi-karta",
+    "opis": "Results — karta KPI \"OEE — Line 3\" z 6 pomiarami",
+    "url": "http://127.0.0.1:3211/results/kpi/71ff89d2-0e1f-4ffd-ad74-42723a19ec60",
+    "czas": "2026-09-08T10:50:20.964Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "09-finance-sprawozdania",
+    "opis": "Finance — sprawozdania, 4 kwartaly GBP",
+    "url": "http://127.0.0.1:3211/finance?tab=statements",
+    "czas": "2026-09-08T10:50:35.525Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "09b-finance-budzet",
+    "opis": "Finance — Prediction/Budget (budzet programu FY2026)",
+    "url": "http://127.0.0.1:3211/finance?tab=prediction",
+    "czas": "2026-09-08T10:50:45.921Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "10-materials-lista",
+    "opis": "Materials — lista (4 dokumenty, 2 decki, 1 skoroszyt)",
+    "url": "http://127.0.0.1:3211/presentations?tab=all",
+    "czas": "2026-09-08T10:50:59.334Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "10b-materials-dokument",
+    "opis": "Materials — podglad \"Operational Excellence Charter\"",
+    "url": "http://127.0.0.1:3211/reports/builder/1d10bf8a-3239-5e2c-b2c4-3900966f8173",
+    "czas": "2026-09-08T10:51:06.401Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "11-audits-glowny",
+    "opis": "Audits — /audit-programs (dane NIE seedowane w D1-D6)",
+    "url": "http://127.0.0.1:3211/audit-programs?tab=library",
+    "czas": "2026-09-08T10:51:18.090Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "12-meetings-lista",
+    "opis": "Meetings — lista (2 spotkania)",
+    "url": "http://127.0.0.1:3211/meetings",
+    "czas": "2026-09-08T10:51:28.591Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "12b-meetings-notatka",
+    "opis": "Meetings — \"Weekly PMO Review\", zakladka Minutes",
+    "url": "http://127.0.0.1:3211/meetings/2e124a9f-30cd-5ea8-bf77-49441a1861bf/minutes",
+    "czas": "2026-09-08T10:51:40.717Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "13-organization-profil",
+    "opis": "Organization — profil Northwind Manufacturing Ltd.",
+    "url": "http://127.0.0.1:3211/organization/profile/identity-scale",
+    "czas": "2026-09-08T10:51:50.391Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 46,
+    "polskieSlowaUnikalne": [
+      "Tożsamość",
+      "źródło",
+      "Uzupełnione",
+      "uzupełnienia",
+      "BRANŻA",
+      "PODBRANŻA",
+      "BRANŻY",
+      "Szczegóły",
+      "WIELKOŚĆ",
+      "PRACOWNIKÓW",
+      "PRZYCHÓD",
+      "ZAŁOŻENIA",
+      "KLIENTÓW",
+      "uzupełnione",
+      "Kompletność",
+      "gotowość",
+      "ŹRÓDŁA",
+      "twierdzeń",
+      "źródłowych",
+      "Pokaż",
+      "źródła",
+      "wersję",
+      "niezmienną",
+      "wersję,",
+      "której",
+      "korzystają",
+      "pozostałe",
+      "moduły."
+    ]
+  },
+  {
+    "nazwa": "14-admin-panel",
+    "opis": "Admin — panel (9 kont, role)",
+    "url": "http://127.0.0.1:3211/admin/team/members",
+    "czas": "2026-09-08T10:52:00.218Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "14b-admin-czlonkowie",
+    "opis": "Admin — lista czlonkow organizacji",
+    "url": "http://127.0.0.1:3211/admin/team/members",
+    "czas": "2026-09-08T10:52:04.874Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "15-settings-glowny",
+    "opis": "Settings — preferencje OWNER-a (jezyk en, strefa Europe/London)",
+    "url": "http://127.0.0.1:3211/settings/profile",
+    "czas": "2026-09-08T10:52:14.661Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  },
+  {
+    "nazwa": "16-partners-portal",
+    "opis": "Partner Portal — /partner (brak wiersza partner_users w D1-D6)",
+    "url": "http://127.0.0.1:3211/partner?tab=partner-home",
+    "czas": "2026-09-08T10:52:24.193Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLiczba": 0,
+    "polskieSlowaUnikalne": []
+  }
+]

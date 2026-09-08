@@ -1,0 +1,119 @@
+########## DOWOD CLI paczki D7 (Galeria odbiorcza) — 2026-09-08 ##########
+baza:   127.0.0.1:54418/consultify_kopia_d7 (TEMPLATE consultify_staging_kopia, SWIEZA)
+stanowisko: API 4191 (ENABLE_V8_GLOBAL=true), Vite 3211 (--mode test, VITE_MODULE_MEETINGS=true)
+galaz:  mvp/dane-d7-galeria HEAD b4baaca48f
+login OWNER: james.whitfield@northwind.example
+haslo-plik: /private/tmp/dane-pokazowe-en/northwind-konta-d7.txt (poza repo, chmod 600)
+
+=== D1 rdzen — dry-run ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d7
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id 468b234c-66c4-54e1-b626-5e0fb3a92f6a)
+[rdzen] tryb:         dry-run
+[rdzen] dry-run: plan obejmuje 1 organizacje + profil + 9 osob + 9 czlonkostw + 2 zespoly + 9 czlonkow zespolow + 2 projekty. 33 rzeczy do zmiany. Nic nie zapisano.
+
+=== D1 rdzen — apply ===
+[rdzen] haslo (1 wspolne dla 9 kont) zapisane do /private/tmp/dane-pokazowe-en/northwind-konta-d7.txt (chmod 600). NIE jest drukowane.
+[rdzen] utworzono=33 zmieniono=0 pominieto=0
+
+=== D1 — verify (99-verify.ts) ===
+[verify] OK   organizacje (id=northwind)                              oczekiwane=1 rzeczywiste=1
+[verify] OK   uzytkownicy                                             oczekiwane=9 rzeczywiste=9
+[verify] OK   czlonkostwa ACTIVE                                      oczekiwane=9 rzeczywiste=9
+[verify] OK   zespoly                                                 oczekiwane=2 rzeczywiste=2
+[verify] OK   projekty                                                oczekiwane=2 rzeczywiste=2
+[verify] OK   profile organizacji                                     oczekiwane=1 rzeczywiste=1
+[verify] OK   czlonkostwa OWNER                                       oczekiwane=1 rzeczywiste=1
+[verify] OK   czlonkostwa ADMIN                                       oczekiwane=2 rzeczywiste=2
+[verify] OK   czlonkostwa MEMBER                                      oczekiwane=6 rzeczywiste=6
+[verify] OK   users.role spoza slownika (stanowisko wpisane jako rola) oczekiwane=0 rzeczywiste=0
+[verify] OK   osoby przeciazone (alokacja > weekly_capacity_hours)    oczekiwane=0 rzeczywiste=0
+[verify] OK   uzytkownicy z language != en                            oczekiwane=0 rzeczywiste=0
+[verify] OK   uzytkownicy spoza domeny @northwind.example             oczekiwane=0 rzeczywiste=0
+[verify] PASS: wszystkie 13 asercji przeszly.
+
+=== D2 odkrycie — apply ===
+[odkrycie] method-core: sesja 08ef1def-f656-445f-a72b-d8baad9e583c zamrozona, Output a7d051f5-1da7-4a01-bf57-22f372f759bf (39 obszarow).
+[odkrycie] utworzono=36 zmieniono=0 pominieto=0
+
+=== D2 — verify ===
+OK   interview_sessions (northwind)             oczekiwano=2 rzeczywiste=2
+OK   interview_questions (northwind)            oczekiwano=22 rzeczywiste=22
+OK   interview_answers (northwind, rollup)      oczekiwano=2 rzeczywiste=2
+OK   interview_insights (northwind)             oczekiwano=4 rzeczywiste=4
+OK   tool_sessions (northwind)                  oczekiwano=3 rzeczywiste=3
+OK   assessments (northwind)                    oczekiwano=1 rzeczywiste=1
+OK   assessment_reports (northwind)             oczekiwano=1 rzeczywiste=1
+OK   method_sessions frozen (northwind, drd)    oczekiwano=1 rzeczywiste=1
+OK   method_outputs (northwind, drd)            oczekiwano=1 rzeczywiste=1
+[verify] OK — wszystkie asercje D2 zgadzaja sie.
+
+=== D3 inicjatywy — apply (--api http://127.0.0.1:4191) ===
+interesariusze RACI: 0 -> 47
+przekazania (readiness_allowed=TRUE): 0 -> 8
+rozklad docelowy:    PROPOSED=1 DRAFT=1 PENDING_APPROVAL=1 APPROVED=4 IN_EXECUTION=4 CLOSED=1 REJECTED=1 (on_hold=1)
+[inicjatywy/sql] utworzono=141 zmieniono=0 pominieto=0
+[inicjatywy/api] decyzje GO=9/9 . agregaty=8/8 . przejscia do realizacji=4/4
+[inicjatywy/api] plan:       opublikowany (8 inicjatywy w oknach)
+[inicjatywy/api] obciazenie: policzona z planu i podazy organizacji, OPUBLIKOWANA
+[inicjatywy/api] przekazania -> execution_case: 4/4
+
+=== D3 — verify ===
+[verify-d3] rozklad w bazie: APPROVED=4 CLOSED=1 DRAFT=1 IN_EXECUTION=4 PENDING_APPROVAL=1 PROPOSED=1 REJECTED=1
+[verify-d3] PASS: wszystkie 31 asercji przeszly (13 inicjatyw, 47 RACI, 8 agregatow runtime-v1, 4 execution_case,
+             4 handoff_package, 1 plan OPUBLIKOWANY, 1 analiza obciazenia OPUBLIKOWANA, 0 znakow & w tytulach,
+             0 encji &amp; w agregatach, 0 pol z polskimi znakami).
+
+=== D4 realizacja — apply (--api http://127.0.0.1:4191) ===
+zadania                    utworzy=36 zaktualizuje=0 bezZmian=0
+RAID                       utworzy=7 bezZmian=0
+decyzje                    utworzy=9 bezZmian=0
+raporty statusu            utworzy=2 bezZmian=0
+[realizacja/sql] utworzono=40 zmieniono=10 pominieto=0
+[realizacja/api] RAID:     utworzone=7 istniejace=0
+[realizacja/api] decyzje:  utworzone=9 istniejace=0 opcje=20 rozstrzygniecia=3
+[realizacja/api] migawki:  utworzone=2 istniejace=0
+
+=== D4 — verify ===
+[verify-d4] PASS: wszystkie 31 asercji przeszly (36 zadan, 0 bez inicjatywy/osoby/rodowodu, 8 po terminie,
+             7 RAID, 9 decyzji [3 po terminie, 3 rozstrzygniete], 20 opcji, 8 kamieni, 2 migawki planu bazowego,
+             2 raporty statusu OPUBLIKOWANE, 0 polskich znakow, 0 & w danych).
+
+=== D5 wyniki+finanse — apply PRZED naprawa literowki (BLAD) ===
+[wyniki-finanse] BLAD: Nie znalazlem inicjatywy "Skills Matrix & Upskilling" w organizacji
+  "468b234c-66c4-54e1-b626-5e0fb3a92f6a". Najpierw uruchom 03-inicjatywy.ts --apply (paczka D3).
+--> PRZYCZYNA: server/scripts/seed/demo-en/05-dane-wynikow.ts:32 mial stala z "&", D3 zapisuje
+    ten tytul jako "Skills Matrix AND Upskilling" (bez &, przez znany STOP sanitizera z D4b).
+    NAPRAWIONE (jedno slowo, patrz GALERIA.md "Odstepstwo od zakazu napraw").
+
+=== D5 — apply PO naprawie (1. bieg, przed ENABLE_V8_GLOBAL) ===
+[wyniki-finanse/sql] paczka sprawozdan: utworzona . sprawozdania=4 . wartosci=44
+[wyniki-finanse/api] KPI: utworzone=8 pominiete=0 . pomiary=48 . powiazania=8
+[wyniki-finanse/api] Raport KPI: utworzony i aktywny . pozycje=8
+[wyniki-finanse/api] OKR: program utworzony i opublikowany . cele=3 . kluczowe wyniki=6
+[wyniki-finanse/api] ROI: przypadek utworzony . zalozenia=3 . koszty=3 . korzysci=3
+[wyniki-finanse] BLAD: Budzet — rejestracja: HTTP 404 {"error":"V8 features not available","code":"V8_DISABLED"}
+--> PRZYCZYNA: API uruchomione bez ENABLE_V8_GLOBAL=true (server/src/middleware/v8FeatureGate.middleware.ts:15).
+    Restart API z ENABLE_V8_GLOBAL=true (zmienna infrastrukturalna, nie zmiana kodu).
+
+=== D5 — apply (2. bieg, po ENABLE_V8_GLOBAL=true, idempotentny na KPI/OKR/ROI/sprawozdaniach) ===
+[wyniki-finanse/sql] paczka sprawozdan: bez zmian . sprawozdania=0 . wartosci=0
+[wyniki-finanse/api] KPI: utworzone=0 pominiete=8 . pomiary=0
+[wyniki-finanse/api] Budzet: utworzony (15 pozycji, 3 scenariusze) . powiazania z inicjatywami=4
+[wyniki-finanse] utworzono=5 zmieniono=15 pominieto=149
+
+=== D5 — verify ===
+[verify-d5] PASS: wszystkie 38 asercji przeszly (8 KPI + widocznosc, 48 pomiarow, 1 raport KPI/8 pozycji,
+             1 program OKR/3 cele/6 KR, 1 przypadek ROI, 1 paczka sprawozdan/4 kwartaly/44 wartosci,
+             1 budzet/15 pozycji/4 powiazan z inicjatywami, 0 polskich znakow).
+
+=== D6 materialy — apply ===
+[materialy] utworzono=80 zmieniono=0 pominieto=0
+
+=== D6 — verify ===
+[verify] PASS: wszystkie 16 asercji przeszly (4 dokumenty/16 sekcji, 2 decki/12 kart, 1 skoroszyt,
+           7 wpisow w rejestrze artefaktow, 2 spotkania/8 uczestnikow/2 notatki, 3 watki czatu/11 wiadomosci,
+           6 zadan osobistych OWNER-a, 6 pozycji skrzynki [2 overdue_sla_breach], 0 polskich tytulow).
+
+########## PODSUMOWANIE ##########
+6/6 paczek APPLY + VERIFY: PASS. Zero rozjazdu z premisa zmierzona w KROKU 0 kazdej paczki.
+Jedna naprawiona literowka w danych wlasnego seeda (05-dane-wynikow.ts:32, "&"->"and") — nie w kodzie produktu.

@@ -1,0 +1,19 @@
+{
+  "nazwa": "05b-assessment-raport",
+  "opis": "Assessment — probe otwarcia raportu sesji DRD (dwuklik)",
+  "url": "http://127.0.0.1:3211/assessment/drd/08ef1def-f656-445f-a72b-d8baad9e583c",
+  "czas": "2026-09-08T11:00:28.872Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 49,
+  "polskieSlowaUnikalne": [
+    "Wyjdź",
+    "Zamrożona",
+    "zamrożona",
+    "per-oś",
+    "regułą",
+    "dowód/-ody",
+    "findingów",
+    "wyłączona",
+    "(niedostępne"
+  ]
+}

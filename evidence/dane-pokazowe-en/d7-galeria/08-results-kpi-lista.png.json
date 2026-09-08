@@ -1,0 +1,11 @@
+{
+  "nazwa": "08-results-kpi-lista",
+  "opis": "Results — KPI, 8 definicji Northwind",
+  "url": "http://127.0.0.1:3211/results/kpi",
+  "czas": "2026-09-08T10:50:07.361Z",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "polskieDiakrytykiLiczba": 0,
+  "polskieSlowaUnikalne": []
+}
