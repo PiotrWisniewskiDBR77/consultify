@@ -1,3 +1,4 @@
+import { formatListNumber } from '../../utils/listDateFormat';
 import {
   AlertTriangle,
   BarChart3,
@@ -1057,14 +1058,14 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                               {o.leverName || o.leverId}
                             </span>
                             <span className="tabular-nums text-[11px] text-c-text-secondary">
-                              {typeof o.metric === 'number' ? o.metric.toLocaleString('pl-PL') : '—'}
+                              {typeof o.metric === 'number' ? formatListNumber(o.metric) : '—'}
                               {typeof o.deltaVsStatusQuo === 'number' &&
                                 o.deltaVsStatusQuo !== 0 && (
                                   <span
                                     className={`ml-1 text-[10px] ${o.deltaVsStatusQuo > 0 ? 'text-c-success' : 'text-danger-500'}`}
                                   >
                                     ({o.deltaVsStatusQuo > 0 ? '+' : ''}
-                                    {o.deltaVsStatusQuo.toLocaleString('pl-PL')})
+                                    {formatListNumber(o.deltaVsStatusQuo)})
                                   </span>
                                 )}
                             </span>
@@ -1085,7 +1086,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                       {t('finance.pack.section.grossValue', 'Gross value')}:{' '}
                       <span className="tabular-nums font-medium">
                         {typeof section.valueTree.tree.gross === 'number'
-                          ? section.valueTree.tree.gross.toLocaleString('pl-PL')
+                          ? formatListNumber(section.valueTree.tree.gross)
                           : '—'}
                       </span>
                       {(section.valueTree.tree.components?.length ?? 0) > 0 && (

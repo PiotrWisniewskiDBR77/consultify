@@ -12,6 +12,7 @@
  * driverów spoza tej listy dostaje bezpieczny fallback wg `unit` zwracanego
  * przez API, nie zgadywaną nazwę).
  */
+import { formatListNumber, formatListPercent } from '../../../utils/listDateFormat';
 import type { BaselineAssumptionRule, BaselineScheduleType, BaselineStatementType } from '@/services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
@@ -192,9 +193,9 @@ export const WIRED_DRIVERS_BY_SCHEDULE: Partial<Record<BaselineScheduleType, str
 
 /** Formatuje liczbę wg pl-PL, tabular — MISSING/NA/NOT_APPLICABLE muszą wołać `formatFinanceValueForDisplay`, NIGDY tej funkcji wprost na `null`. */
 export function formatNumberPl(n: number, opts: { maximumFractionDigits?: number } = {}): string {
-  return n.toLocaleString('pl-PL', { maximumFractionDigits: opts.maximumFractionDigits ?? 0 });
+  return formatListNumber(n, '—', { maximumFractionDigits: opts.maximumFractionDigits ?? 0 });
 }
 
 export function formatPercentPl(fraction: number): string {
-  return `${(fraction * 100).toLocaleString('pl-PL', { maximumFractionDigits: 1 })}%`;
+  return formatListPercent(fraction, 1);
 }

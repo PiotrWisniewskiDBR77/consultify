@@ -35,7 +35,7 @@ function makeConfigWithViewState(state: {
         businessVersionId: 'bv-1',
         artifactId: 'art-1',
       },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Back to list' } },
       name: {
         value: 'Model bazowy',
         editable: true,

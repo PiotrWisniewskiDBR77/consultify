@@ -1,3 +1,4 @@
+import { formatListDate, localeListy } from '../../utils/listDateFormat';
 import {
   BarChart3,
   Calculator,
@@ -49,7 +50,7 @@ import {
 } from './financeTypes';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 import { normalizeSensitivityGrid } from './normalizeSensitivityGrid';
-import { statementReadinessLabel } from '../Finance/labels/financeEnums';
+import { statementLineLabel, statementReadinessLabel } from '../Finance/labels/financeEnums';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -209,7 +210,12 @@ export function useFinancePreview({
   versionSnapshots,
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
-  const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  // `localeListy()` zamiast pary 'pl-PL'/'en-US' wpisanej w kod: konto
+  // angielskie dostawało tu format AMERYKAŃSKI (M/D, przecinek tysięcy),
+  // a reszta produktu — brytyjski. Skaner K7 tego nie widział, bo locale
+  // nie stało w wywołaniu, tylko w zmiennej.
+  const numberLocale = localeListy();
+  const jestPolski = numberLocale.startsWith('pl');
   const isPolishLocale = numberLocale === 'pl-PL';
 
   const ModelStatementPreview: React.FC<{
@@ -231,7 +237,7 @@ export function useFinancePreview({
     const statementLabels = {
       'P&L': 'P&L',
       BS: t('finance.preview.statementBS', 'Balance Sheet'),
-      CF: 'Cash Flow',
+      CF: t('finance.statementType.cfShort', 'Cash Flow'),
     };
 
     return (
@@ -322,7 +328,7 @@ export function useFinancePreview({
                     style={{ paddingLeft: `${12 + line.level * 16}px` }}
                   >
                     <span className={line.isTotal || line.isSubtotal ? 'font-semibold' : ''}>
-                      {line.lineName}
+                      {statementLineLabel(line.lineName, jestPolski)}
                     </span>
                   </td>
                   {detail.forecastYears.map((year) => {
@@ -396,7 +402,7 @@ export function useFinancePreview({
         if (row.startDate)
           metaPills.push({
             label: t('finance.columns.start', 'Start'),
-            value: new Date(row.startDate).toLocaleDateString('pl-PL'),
+            value: formatListDate(row.startDate),
           });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
@@ -1089,13 +1095,13 @@ export function useFinancePreview({
         const statementRow = row as FinanceStatementRow;
         actionButtons.push(
           {
-            label: t('finance.actions.createModelFromStatement', 'Utwórz model'),
+            label: t('finance.actions.createModelFromStatement', 'Create model'),
             onClick: () => handleCreateModelFromStatement(statementRow),
             colorScheme: 'primary',
             disabled: !statementRow.isWorkable,
           },
           {
-            label: t('finance.actions.createAnalysis', 'Utwórz analizę'),
+            label: t('finance.actions.createAnalysis', 'Create analysis'),
             onClick: () => handleCreateAnalysisFromStatements(statementRow),
             colorScheme: 'emerald',
             disabled: !statementRow.isWorkable,
@@ -1103,7 +1109,7 @@ export function useFinancePreview({
         );
         if (!statementRow.isWorkable) {
           actionButtons.push({
-            label: t('finance.actions.openRecoveryQueue', 'Otwórz recovery queue'),
+            label: t('finance.actions.openRecoveryQueue', 'Open recovery queue'),
             onClick: () => handleOpenFull(statementRow),
             colorScheme: 'neutral',
           });
@@ -1112,7 +1118,7 @@ export function useFinancePreview({
 
       if (row.kind === 'models' && row.status !== 'APPROVED') {
         actionButtons.push({
-          label: t('finance.actions.approve', 'Zatwierdź'),
+          label: t('finance.actions.approve', 'Approve'),
           onClick: async () => {
             try {
               await approveCanonicalModel(row.id);
@@ -1121,7 +1127,7 @@ export function useFinancePreview({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                  t('finance.toast.approveFailed', 'Approval failed')
               );
             }
           },
@@ -1141,14 +1147,14 @@ export function useFinancePreview({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')
+                  t('finance.toast.reanalyzeFailed', 'Recalculation failed')
               );
             }
           },
           colorScheme: 'primary',
         });
         actionButtons.push({
-          label: t('finance.actions.createValuation', 'Utwórz wycenę'),
+          label: t('finance.actions.createValuation', 'Create valuation'),
           onClick: () =>
             window.location.assign(
               `/economics?tab=valuation&createFrom=financial_analysis&sourceId=${row.id}`
@@ -1157,7 +1163,7 @@ export function useFinancePreview({
         });
         if (row.status !== 'APPROVED') {
           actionButtons.push({
-            label: t('finance.actions.approve', 'Zatwierdź'),
+            label: t('finance.actions.approve', 'Approve'),
             onClick: async () => {
               try {
                 await approveCanonicalFinancialAnalysis(row.id);
@@ -1166,7 +1172,7 @@ export function useFinancePreview({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -1202,7 +1208,7 @@ export function useFinancePreview({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.projectionFailed', 'Nie udało się wygenerować')
+                    t('finance.toast.projectionFailed', 'Generation failed')
                 );
               }
             },
@@ -1210,7 +1216,7 @@ export function useFinancePreview({
           });
           if (pRow.status !== 'APPROVED') {
             actionButtons.push({
-              label: t('finance.actions.approve', 'Zatwierdź'),
+              label: t('finance.actions.approve', 'Approve'),
               onClick: async () => {
                 try {
                   const detail = await Api.get(`/api/economics/budgets/${rawId}`);
@@ -1219,11 +1225,11 @@ export function useFinancePreview({
                     throw new Error('Budget version is unavailable');
                   await V8FinanceApi.approveBudget(rawId, expectedVersion, crypto.randomUUID());
                   await loadBudgets();
-                  toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
+                  toast.success(t('finance.toast.budgetApproved', 'Budget approved'));
                 } catch (e: any) {
                   toast.error(
                     e?.response?.data?.error ||
-                      t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                      t('finance.toast.approveFailed', 'Approval failed')
                   );
                 }
               },
@@ -1241,7 +1247,7 @@ export function useFinancePreview({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.computeFailed', 'Nie udało się przeliczyć')
+                    t('finance.toast.computeFailed', 'Recalculation failed')
                 );
               }
             },
@@ -1265,7 +1271,7 @@ export function useFinancePreview({
                 apiError?.code === 'APPROVED_VERSION_IMMUTABLE'
                   ? t(
                       'finance.toast.approvedVersionImmutable',
-                      'Ta wersja wyceny jest zatwierdzona i niezmienna. Aby ponownie obliczyć WACC, utwórz nową wersję.'
+                      'This valuation version is approved and immutable. To recompute WACC, create a new version.'
                     )
                   : apiError?.error || t('finance.toast.computeDcfFailed')
               );
@@ -1275,7 +1281,7 @@ export function useFinancePreview({
         });
         if (row.status !== 'APPROVED') {
           actionButtons.push({
-            label: t('finance.actions.approve', 'Zatwierdź'),
+            label: t('finance.actions.approve', 'Approve'),
             onClick: async () => {
               try {
                 await approveCanonicalValuation(row.id);
@@ -1284,7 +1290,7 @@ export function useFinancePreview({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -1306,7 +1312,7 @@ export function useFinancePreview({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.exportFailed', 'Nie udało się wyeksportować')
+                  t('finance.toast.exportFailed', 'Export failed')
               );
             }
           },

@@ -10,6 +10,8 @@
  * the user type the label (defaulting to the `'PRIMARY'` convention this package assumes, since
  * no discovery endpoint exists to confirm the real convention other packages use).
  */
+import { formatListNumber } from '../../../../utils/listDateFormat';
+import { ft } from '../../shared/financeT';
 import React, { useState } from 'react';
 
 import {
@@ -36,7 +38,7 @@ export interface SensitivityStepProps {
 function fmtCellValue(raw: string | null): string {
   if (raw === null) return '—';
   const n = Number(raw);
-  return Number.isFinite(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : raw;
+  return Number.isFinite(n) ? formatListNumber(n, raw, { maximumFractionDigits: 0 }) : raw;
 }
 
 export function SensitivityStep(props: SensitivityStepProps): React.ReactElement {
@@ -81,7 +83,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
   return (
     <div className="max-w-5xl space-y-4" data-testid="valuation-sensitivity-step">
       <h2 className="text-sm font-semibold text-c-text">
-        Wrażliwość — WACC × wzrost terminalny (5×5)
+        {ft('finance.valuationSteps.sensitivityTitle', 'Sensitivity — WACC × terminal growth (5×5)')}
       </h2>
 
       <div className="flex flex-wrap items-end gap-2">
@@ -146,7 +148,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
             // prettier-ignore
             <table className="border-collapse text-center text-xs" data-testid="sensitivity-grid-table" data-canon="§27-exempt">
               <caption className="sr-only">
-                Siatka wrażliwości EV: wiersze = wzrost terminalny g, kolumny = WACC
+                {ft('finance.valuationSteps.sensitivityGridAria', 'EV sensitivity grid: rows = terminal growth g, columns = WACC')}
               </caption>
               <thead>
                 <tr>

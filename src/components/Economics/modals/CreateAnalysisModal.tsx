@@ -104,7 +104,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
       });
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
       );
     } finally {
       setCreating(false);
@@ -216,7 +216,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             <span className="text-[11px] text-slate-600">
               {selectedStatementPackId
                 ? t('finance.analysis.selectedOne', 'selected')
-                : '0 selected'}
+                : t('finance.analysis.selectedNone', '0 selected')}
             </span>
           </div>
           <div className="max-h-48 overflow-y-auto space-y-2">

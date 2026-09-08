@@ -6,6 +6,7 @@
  * panel WEWNĄTRZ workspace'u Analysis, wzorowany na istniejącym
  * Table+Preview layoutcie (`TableWithPreviewLayout`), nie osobny artefakt.
  */
+import { ft } from '../shared/financeT';
 import { financeKpiCommentLabel } from '../../../labels/financeKpiCommentLabels';
 import { financeKpiCategory, financeKpiName } from '../../../labels/financeKpiLabels';
 import { X } from 'lucide-react';
@@ -43,7 +44,7 @@ function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }):
   const numeric = points.map((p) => (p.value.status === 'PRESENT_ZERO' || p.value.status === 'PRESENT_NONZERO' ? Number(p.value.valueDecimal) : null));
   const present = numeric.filter((n): n is number => n !== null);
   if (present.length === 0) {
-    return <p className="text-xs text-c-text-muted">Brak wystarczających danych do wykresu.</p>;
+    return <p className="text-xs text-c-text-muted">{ft('finance.analysisKpi.notEnoughData', 'Not enough data for a chart.')}</p>;
   }
   const min = Math.min(...present);
   const max = Math.max(...present);
@@ -58,7 +59,7 @@ function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }):
     pathParts.push(`${pathParts.length === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`);
   });
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-16" role="img" aria-label="Wykres wartości w czasie">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-16" role="img" aria-label={ft('finance.analysisKpi.chartOverTime', 'Value over time chart')}>
       <path d={pathParts.join(' ')} fill="none" stroke="currentColor" strokeWidth={2} className="text-c-text-secondary" />
       {coords.map((c, i) =>
         c ? (
@@ -101,7 +102,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
           type="button"
           onClick={onClose}
           className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          aria-label="Zamknij kartę szczegółową"
+          aria-label={ft('finance.analysisKpi.closeDetail', 'Close the detail card')}
           data-testid="analysis-kpi-detail-close"
         >
           <X className="h-4 w-4" />
@@ -110,7 +111,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5 text-sm">
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Wartość bieżąca</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.currentValue', 'Current value')}</p>
           <p
             className={`text-2xl font-semibold tabular-nums ${display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}
             data-testid="analysis-kpi-detail-value"
@@ -125,7 +126,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Wykres — okresy historyczne i prognozowane</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.chartPeriods', 'Chart — historical and forecast periods')}</p>
           <SparklineChart points={periodSeries} />
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-c-text-muted">
             {periodSeries.map((p) => (
@@ -138,7 +139,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Formuła i składniki</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.formulaAndInputs', 'Formula and inputs')}</p>
           <p className="font-mono text-xs bg-c-surface-raised rounded-md px-2 py-1.5 text-c-text">
             {formulaInfo?.formulaDisplay ?? 'Brak zdefiniowanej formuły wyświetlanej.'}
           </p>
@@ -146,14 +147,14 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Benchmark branżowy</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.industryBenchmark', 'Industry benchmark')}</p>
           {kpiValue.benchmark ? (
             <p className="text-c-text">
               {kpiValue.benchmark.rangeLow}–{kpiValue.benchmark.rangeHigh} ({industryLabelForCode(kpiValue.benchmark.industryCode)}) · źródło: {kpiValue.benchmark.source} ·{' '}
               {kpiValue.benchmark.asOf}
             </p>
           ) : (
-            <p className="text-c-text-muted">Benchmark niedostępny dla tego wskaźnika.</p>
+            <p className="text-c-text-muted">{ft('finance.analysisKpi.benchmarkUnavailable', 'No benchmark available for this indicator.')}</p>
           )}
         </section>
 
@@ -167,14 +168,14 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Lineage — źródło danych</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">{ft('finance.analysisKpi.lineage', 'Lineage — data source')}</p>
           <p className="text-c-text">{sourceLineageLabel}</p>
         </section>
 
         <section>
           <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Historia</p>
           {history.length === 0 ? (
-            <p className="text-c-text-muted">Brak wcześniejszych wersji tego wskaźnika.</p>
+            <p className="text-c-text-muted">{ft('finance.analysisKpi.noPreviousVersions', 'No earlier versions of this indicator.')}</p>
           ) : (
             <ul className="space-y-1">
               {history.map((h) => (

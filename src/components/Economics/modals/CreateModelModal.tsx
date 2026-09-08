@@ -168,7 +168,7 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
       });
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć modelu')
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
       );
     } finally {
       setCreating(false);

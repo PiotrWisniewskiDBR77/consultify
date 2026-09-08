@@ -4,6 +4,8 @@
  * provisional, DEC-FIN-009 pełna wersja) i badge świeżości (`stale` gdy założenia zmieniły się po
  * ostatnim compute — wyniki NIE są kasowane).
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 import { formatFinanceValueForDisplay, type FinanceValueStatus } from '@/services/api/financeV2.types';
@@ -116,13 +118,13 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
       </div>
 
       <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-        <h3 className="mb-2 text-sm font-semibold text-c-text">Porównanie ze scenariuszem bazowym — absolutne / Δ / %</h3>
+        <h3 className="mb-2 text-sm font-semibold text-c-text">{ft('finance.scenarioResults.comparisonHeader', 'Comparison against the base scenario — absolute / Δ / %')}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">{/* §27-exempt — scenariusz-vs-baseline porównanie linii P&L/BS/CF (Excel/Platforma-tabel archetyp, DOKTRYNA_TABELA_NIE_EXCEL.md Decyzja 07-13), nie lista rekordów: kolumny to Δ/%, nie akcje na wierszu. */}
             <thead className="bg-c-surface-raised text-xs uppercase tracking-wide text-c-text-muted">
               <tr>
                 <th className="px-3 py-2">Linia</th>
-                <th className="px-3 py-2">Okres</th>
+                <th className="px-3 py-2">{ft('finance.common.period', 'Period')}</th>
                 <th className="px-3 py-2 text-right">Scenariusz</th>
                 <th className="px-3 py-2 text-right">Baseline</th>
                 <th className="px-3 py-2 text-right">Δ</th>
@@ -147,11 +149,11 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-          <h3 className="mb-1 text-sm font-semibold text-c-text">Zapas płynności</h3>
+          <h3 className="mb-1 text-sm font-semibold text-c-text">{ft('finance.scenarioResults.liquidityHeadroom', 'Liquidity headroom')}</h3>
           {liquidity === null || liquidity.liquidityHeadroom === null ? (
-            <p className="text-sm text-c-text-muted">Brak danych o gotówce lub polityce min. cash — wyjątek, nie blokada.</p>
+            <p className="text-sm text-c-text-muted">{ft('finance.scenarioResults.noCashData', 'No cash or minimum-cash policy data — an exception, not a blocker.')}</p>
           ) : (
-            <p className="text-lg tabular-nums text-c-text">{liquidity.liquidityHeadroom.toLocaleString('pl-PL')} PLN</p>
+            <p className="text-lg tabular-nums text-c-text">{formatListNumber(liquidity.liquidityHeadroom)} PLN</p>
           )}
         </div>
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
@@ -161,7 +163,7 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
               Twarda blokada: {covenantError}
             </p>
           ) : covenant === null ? (
-            <p className="text-sm text-c-text-muted">Brak danych EBITDA/Net Debt.</p>
+            <p className="text-sm text-c-text-muted">{ft('finance.scenarioResults.noEbitdaData', 'No EBITDA/Net Debt data.')}</p>
           ) : (
             <p className="text-lg tabular-nums text-c-text">
               {covenant.netDebtToEbitda.toFixed(2)}x <span className="text-sm text-c-text-secondary">(zapas {covenant.headroomRatio.toFixed(2)}x)</span>
@@ -171,9 +173,9 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
       </section>
 
       <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-        <h3 className="mb-2 text-sm font-semibold text-c-text">Rejestr wyjątków (DEC-FIN-009)</h3>
+        <h3 className="mb-2 text-sm font-semibold text-c-text">{ft('finance.scenarioResults.exceptionRegister', 'Exception register (DEC-FIN-009)')}</h3>
         {exceptionLedger.length === 0 ? (
-          <p className="text-sm text-c-text-muted">Brak wyjątków.</p>
+          <p className="text-sm text-c-text-muted">{ft('finance.scenarioResults.noExceptions', 'No exceptions.')}</p>
         ) : (
           <ul className="space-y-1 text-sm text-c-text-secondary">
             {exceptionLedger.map((e) => (

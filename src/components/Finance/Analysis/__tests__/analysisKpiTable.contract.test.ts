@@ -5,6 +5,7 @@
  * na KPI, wartości per okres w osobnych kolumnach — nie jeden wiersz na
  * (kpi, okres) z zawsze pustymi kolumnami okresów).
  */
+import i18n from 'i18next';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -330,14 +331,25 @@ describe('buildAnalysisKpiColumns', () => {
 });
 
 describe('formatYoyDeltaText / formatBenchmarkText — komórki NIE-string bezpieczne do renderu', () => {
+  const jezykPrzedTestem = i18n.language;
+
   it('formatYoyDeltaText: COMPUTED renderuje procent ze znakiem, MISSING_*/undefined renderują "—" (nigdy surowy obiekt)', () => {
-    // Polski separator dziesiętny (przecinek) — NAPRAWIONE (powtórka 08-31),
-    // patrz komentarz przy formatPlPercent1 w analysisKpiTable.contract.ts.
+    // Separator dziesiętny idzie ZA KONTEM, nie za `'pl-PL'` wpisanym w kod
+    // (J9, 08.09): SSOT `formatListNumber` czyta `i18n.language`. Konto
+    // polskie ma dostać przecinek, angielskie kropkę — dlatego test sprawdza
+    // OBA języki, a nie jeden zapis na sztywno. Sama asercja „+20.0%" bez
+    // przełączenia języka nie odróżniłaby naprawy od regresji do `.toFixed(1)`.
+    i18n.language = 'pl';
     expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20,0%');
     expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12,3%');
+    i18n.language = 'en';
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20.0%');
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12.3%');
     expect(formatYoyDeltaText({ status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null })).toBe('—');
     expect(formatYoyDeltaText({ status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null })).toBe('—');
     expect(formatYoyDeltaText({ status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: 50, percentDelta: null })).toContain('nieokreślony');
+    // Nie zostawiamy ustawionego języka innym testom w tym pliku.
+    i18n.language = jezykPrzedTestem;
   });
 
   it('formatDownstreamUsesText: pusto/null ⇒ "—"; wiele pozycji ⇒ sklejone przecinkiem ze spacją', () => {

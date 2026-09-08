@@ -10,6 +10,7 @@
  * pełnym łańcuchem przyczynowym (timing/ramp/delay/decay/koszt/confidence/owner/jednostka/znak/
  * okres/źródło) i wykrywaniem double counting (`detectClientSideOverlaps`).
  */
+import { ft } from '../shared/financeT';
 import React, { useId, useState } from 'react';
 
 import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '@/components/shared/ModuleMenu3';
@@ -61,7 +62,7 @@ export interface ScenarioAssumptionsViewProps {
 
 const MODE_TABS: Array<{ track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE'; label: string }> = [
   { track: 'STANDARD', label: 'A · Standardowy (Base/Bull/Bear)' },
-  { track: 'DRIVER_OVERRIDE', label: 'B · Wskaźnikowy (drivery/KPI)' },
+  { track: 'DRIVER_OVERRIDE', label: ft('finance.scenario.trackDriver', 'B · Driver-based (drivers/KPI)') },
   { track: 'FUNDAMENTAL_INITIATIVE', label: 'C · Fundamentalny (inicjatywy)' },
 ];
 
@@ -227,16 +228,16 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
           <input id={`${formId}-entity`} className={CONTROL_CLASS} value={entityId} onChange={(e) => setEntityId(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-period`}>
-          Okres
+          {ft('finance.common.period', 'Period')}
           <input id={`${formId}-period`} className={CONTROL_CLASS} value={periodId} onChange={(e) => setPeriodId(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-value`}>
-          Wartość
+          {ft('finance.common.value', 'Value')}
           <input id={`${formId}-value`} className={CONTROL_CLASS} value={value} onChange={(e) => setValue(e.target.value)} placeholder="np. 0.58" />
         </label>
         <div className="col-span-2 flex items-end sm:col-span-6">
           <button type="button" className={BUTTON_CLASS} onClick={addOverride} data-testid="add-driver-override">
-            + Dodaj nadpisanie
+            {ft('finance.scenario.addOverride', '+ Add override')}
           </button>
         </div>
       </div>
@@ -249,8 +250,8 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
               <th className="px-3 py-2">Driver</th>
               <th className="px-3 py-2">Linia</th>
               <th className="px-3 py-2">Podmiot</th>
-              <th className="px-3 py-2">Okres</th>
-              <th className="px-3 py-2">Wartość</th>
+              <th className="px-3 py-2">{ft('finance.common.period', 'Period')}</th>
+              <th className="px-3 py-2">{ft('finance.common.value', 'Value')}</th>
               <th className="px-3 py-2" />
             </tr>
           </thead>
@@ -258,7 +259,7 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
             {draft.driverOverrides.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-3 py-6 text-center text-c-text-muted">
-                  Brak nadpisań — dodaj pierwsze powyżej.
+                  {ft('finance.scenario.noOverrides', 'No overrides — add the first one above.')}
                 </td>
               </tr>
             )}
@@ -272,7 +273,7 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
                 <td className="px-3 py-2 tabular-nums">{o.valueDecimal === null ? '—' : o.valueDecimal}</td>
                 <td className="px-3 py-2 text-right">
                   <button type="button" className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`} onClick={() => removeOverride(o.id)}>
-                    Usuń
+                    {ft('finance.common.remove', 'Delete')}
                   </button>
                 </td>
               </tr>
@@ -351,9 +352,9 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-c-text-secondary">Łańcuch: inicjatywa → założenie → driver/KPI → linia sprawozdania → prognoza.</p>
+        <p className="text-sm text-c-text-secondary">{ft('finance.scenario.chainHint', 'Chain: initiative → assumption → driver/KPI → statement line → forecast.')}</p>
         <button type="button" className={BUTTON_CLASS} onClick={addInitiative} data-testid="add-initiative">
-          + Dodaj inicjatywę
+          {ft('finance.scenario.addInitiative', '+ Add initiative')}
         </button>
       </div>
 
@@ -361,7 +362,7 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
         <div className="rounded-xl border border-c-warning/40 bg-c-warning/10 p-3" role="alert" data-testid="overlap-warnings">
           <p className="text-sm font-semibold text-c-text">Wykryto możliwe nakładanie się wpływów ({overlaps.length})</p>
           <p className="mb-2 text-xs text-c-text-muted">
-            Podgląd kliencki, nieautorytatywny — uruchom „Uruchom preflight" w pasku, żeby dostać realną (Layer 2, waluta) analizę serwera.
+            {ft('finance.scenario.clientPreviewHint', 'Client-side preview, not authoritative — run "Run preflight" in the bar to get the real server analysis (Layer 2, currency).')}
           </p>
           <ul className="space-y-1 text-sm text-c-text-secondary">
             {overlaps.map((f) => (
@@ -373,7 +374,7 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
         </div>
       )}
 
-      {draft.initiatives.length === 0 && <p className="rounded-xl border border-dashed border-c-border-subtle p-6 text-center text-sm text-c-text-muted">Brak inicjatyw — dodaj pierwszą powyżej.</p>}
+      {draft.initiatives.length === 0 && <p className="rounded-xl border border-dashed border-c-border-subtle p-6 text-center text-sm text-c-text-muted">{ft('finance.scenario.noInitiatives', 'No initiatives — add the first one above.')}</p>}
 
       {draft.initiatives.map((initiative) => {
         const impacts = draft.impacts.filter((i) => i.initiativeId === initiative.id);
@@ -384,14 +385,14 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                 className={CONTROL_CLASS}
                 value={initiative.name}
                 onChange={(e) => updateInitiative(initiative.id, { name: e.target.value })}
-                aria-label="Nazwa inicjatywy"
+                aria-label={ft('finance.scenario.initiativeName', 'Initiative name')}
               />
               <input
                 className={CONTROL_CLASS}
                 value={initiative.owner ?? ''}
-                placeholder="Właściciel"
+                placeholder={ft('finance.scenario.owner', 'Owner')}
                 onChange={(e) => updateInitiative(initiative.id, { owner: e.target.value || null })}
-                aria-label="Właściciel inicjatywy"
+                aria-label={ft('finance.scenario.initiativeOwner', 'Initiative owner')}
               />
               <input
                 className={CONTROL_CLASS}
@@ -406,33 +407,33 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
               <input
                 className={CONTROL_CLASS}
                 value={initiative.defaultStartPeriodId ?? ''}
-                placeholder="Domyślny okres startu"
+                placeholder={ft('finance.scenario.defaultStartPeriod', 'Default start period')}
                 onChange={(e) => updateInitiative(initiative.id, { defaultStartPeriodId: e.target.value || null })}
-                aria-label="Domyślny okres startu"
+                aria-label={ft('finance.scenario.defaultStartPeriod', 'Default start period')}
               />
               <input
                 className={CONTROL_CLASS}
                 type="number"
                 min={0}
                 value={initiative.defaultRampMonths ?? ''}
-                placeholder="Ramp-up (miesiące)"
+                placeholder={ft('finance.scenario.rampUpMonths', 'Ramp-up (months)')}
                 onChange={(e) => updateInitiative(initiative.id, { defaultRampMonths: e.target.value === '' ? null : Number(e.target.value) })}
-                aria-label="Ramp-up w miesiącach"
+                aria-label={ft('finance.scenario.rampUpMonthsAria', 'Ramp-up in months')}
               />
               <input
                 className={CONTROL_CLASS}
                 type="number"
                 value={initiative.implementationCostDecimal ?? ''}
-                placeholder="Koszt wdrożenia"
+                placeholder={ft('finance.scenario.implementationCost', 'Implementation cost')}
                 onChange={(e) => updateInitiative(initiative.id, { implementationCostDecimal: e.target.value === '' ? null : Number(e.target.value) })}
-                aria-label="Koszt wdrożenia"
+                aria-label={ft('finance.scenario.implementationCost', 'Implementation cost')}
               />
             </div>
 
             <div className="mt-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">Wpływy ({impacts.length})</p>
               <button type="button" className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`} onClick={() => addImpact(initiative.id)}>
-                + Dodaj wpływ
+                {ft('finance.scenario.addImpact', '+ Add impact')}
               </button>
             </div>
 
@@ -453,9 +454,9 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   type="number"
                   value={impact.amountDecimal}
                   onChange={(e) => updateImpact(impact.id, { amountDecimal: Number(e.target.value) })}
-                  aria-label="Wielkość wpływu"
+                  aria-label={ft('finance.scenario.impactSize', 'Impact size')}
                 />
-                <input className={CONTROL_CLASS} value={impact.startPeriodId ?? ''} placeholder="Start (dziedziczy z inicjatywy)" onChange={(e) => updateImpact(impact.id, { startPeriodId: e.target.value || null })} aria-label="Okres startu wpływu" />
+                <input className={CONTROL_CLASS} value={impact.startPeriodId ?? ''} placeholder="Start (dziedziczy z inicjatywy)" onChange={(e) => updateImpact(impact.id, { startPeriodId: e.target.value || null })} aria-label={ft('finance.scenario.impactStartPeriod', 'Impact start period')} />
                 <input
                   className={CONTROL_CLASS}
                   type="number"
@@ -464,7 +465,7 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   value={impact.confidencePct ?? ''}
                   placeholder="Confidence %"
                   onChange={(e) => updateImpact(impact.id, { confidencePct: e.target.value === '' ? null : Number(e.target.value) })}
-                  aria-label="Confidence wpływu"
+                  aria-label={ft('finance.scenario.impactConfidence', 'Impact confidence')}
                 />
                 <input
                   className={CONTROL_CLASS}
@@ -474,16 +475,16 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   value={impact.probabilityPct ?? ''}
                   placeholder="Probability %"
                   onChange={(e) => updateImpact(impact.id, { probabilityPct: e.target.value === '' ? null : Number(e.target.value) })}
-                  aria-label="Prawdopodobieństwo wpływu"
+                  aria-label={ft('finance.scenario.impactProbability', 'Impact probability')}
                 />
                 <input className={CONTROL_CLASS} value={impact.amountUnit} onChange={(e) => updateImpact(impact.id, { amountUnit: e.target.value })} aria-label="Jednostka" />
                 <input
                   className={CONTROL_CLASS}
                   type="number"
                   value={impact.implementationCostDecimal ?? ''}
-                  placeholder="Koszt wdrożenia (per-impact)"
+                  placeholder={ft('finance.scenario.implementationCostPerImpact', 'Implementation cost (per impact)')}
                   onChange={(e) => updateImpact(impact.id, { implementationCostDecimal: e.target.value === '' ? null : Number(e.target.value) })}
-                  aria-label="Koszt wdrożenia wpływu"
+                  aria-label={ft('finance.scenario.implementationCostImpactAria', 'Impact implementation cost')}
                 />
               </div>
             ))}

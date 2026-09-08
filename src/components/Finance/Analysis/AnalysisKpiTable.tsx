@@ -5,6 +5,7 @@
  * pin/reset/persystencja) jest wbudowany w `StandardTable` przez `persistKey`
  * — ten komponent tylko dostarcza dane+kolumny z `analysisKpiTable.contract.ts`.
  */
+import { ft } from '../shared/financeT';
 import { BarChart3, FileOutput, ListChecks } from 'lucide-react';
 import React, { useMemo } from 'react';
 
@@ -89,7 +90,7 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
     const markedAsModelInput = Boolean(row.markedAsModelInput);
     return {
       primary: [
-        { id: 'open-detail', label: 'Otwórz kartę szczegółową', icon: BarChart3, onClick: () => onOpenDetail(String(row.id)) },
+        { id: 'open-detail', label: ft('finance.analysisKpi.openDetail', 'Open the detail card'), icon: BarChart3, onClick: () => onOpenDetail(String(row.id)) },
       ],
       statusTransitions: [
         {
@@ -128,8 +129,8 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
       rowMenu={rowMenu}
       persistKey={analysisKpiTablePersistKey(businessVersionId)}
       empty={{
-        title: 'Brak skonfigurowanych wskaźników',
-        description: 'Ta analiza nie ma jeszcze żadnego wskaźnika KPI. Skonfiguruj wskaźniki, aby zobaczyć wyniki.',
+        title: ft('finance.analysisKpi.emptyTitle', 'No indicators configured'),
+        description: ft('finance.analysisKpi.emptyBody', 'This analysis has no KPI yet. Configure indicators to see results.'),
         actionLabel: 'Skonfiguruj wskaźniki',
         onAction: onConfigureKpis,
       }}

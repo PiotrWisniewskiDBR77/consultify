@@ -1,0 +1,34 @@
+{
+ "ekran": "14-panele-wartosci",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3215/finance?tab=models&financeValuePanels=1&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+   "trafienia": [
+    "wycena"
+   ]
+  },
+  {
+   "linia": "Grupa Kapitałowa Apator — Bull",
+   "trafienia": [
+    "Kapitałowa"
+   ]
+  },
+  {
+   "linia": "Grupa Kapitałowa Apator — Bear",
+   "trafienia": [
+    "Kapitałowa"
+   ]
+  },
+  {
+   "linia": "Grupa Kapitałowa Apator — Base",
+   "trafienia": [
+    "Kapitałowa"
+   ]
+  }
+ ]
+}

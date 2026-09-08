@@ -30,6 +30,7 @@
  * `financeBaselineWorkspaceV1` (domyślnie ON od dyżuru 279 — warunkowy akcept
  * właściciela spełniony; jawny override OFF nadal wyłącza).
  */
+import { ft } from './shared/financeT';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
@@ -204,7 +205,7 @@ function BaselineWorkspaceContextLoader(props: BaselineWorkspaceProps): React.Re
           message="Nie można otworzyć kontekstu modelu bazowego."
           hint={state.message}
           action={{
-            label: 'Spróbuj ponownie',
+            label: ft('finance.common.tryAgain', 'Try again'),
             onClick: () => setAttempt((value) => value + 1),
             showPrefix: false,
             neutralAccent: true,
@@ -603,12 +604,12 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
             ref={reasonDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
-            aria-label="Podaj powód"
+            aria-label={ft('finance.reasonDialog.title', 'Give a reason')}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
             data-testid="baseline-reason-dialog"
           >
-            <p className="text-sm font-semibold text-c-text">Podaj powód</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.reasonDialog.title', 'Give a reason')}</p>
             <textarea
               autoFocus
               value={reasonDraft}
@@ -623,7 +624,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
                 onClick={closeReasonDialog}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Anuluj
+                {ft('finance.common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -632,7 +633,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
                 data-testid="baseline-reason-submit"
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-danger px-3.5 text-xs font-semibold text-white hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Potwierdź
+                {ft('finance.common.confirm', 'Confirm')}
               </button>
             </div>
           </div>

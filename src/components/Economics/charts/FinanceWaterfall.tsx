@@ -12,6 +12,7 @@
  * NIE wpięty nigdzie — biblioteczny prymityw do użycia przez panele M16.
  */
 
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo } from 'react';
 
 export type WaterfallStepKind = 'start' | 'increase' | 'decrease' | 'total';
@@ -125,7 +126,7 @@ export const FinanceWaterfall: React.FC<FinanceWaterfallProps> = ({
         data-empty="true"
         className="flex h-48 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-400"
       >
-        Brak danych — dodaj kroki mostka wartości
+        {ft('finance.charts.waterfall.empty', 'No data — add value bridge steps')}
       </div>
     );
   }
@@ -154,7 +155,7 @@ export const FinanceWaterfall: React.FC<FinanceWaterfallProps> = ({
       <svg
         data-testid="finance-waterfall"
         role="img"
-        aria-label="Wykres mostka wartości (waterfall)"
+        aria-label={ft('finance.charts.waterfall.title', 'Value bridge chart (waterfall)')}
         viewBox={`0 0 ${VIEW_W} ${height}`}
         width="100%"
         height={height}

@@ -346,7 +346,7 @@ describe('ValuationWorkspace — real legacy recommendation candidate handoff', 
     );
 
     const open = await screen.findByRole('button', {
-      name: 'Wyślij jako kandydata na Initiative',
+      name: 'Send as an Initiative candidate',
     });
     expect(screen.getByText('Reduce governed execution risk')).toBeInTheDocument();
     expect(screen.getByText(/Źródło: rec-real-1/)).toBeInTheDocument();
@@ -372,14 +372,14 @@ describe('ValuationWorkspace — real legacy recommendation candidate handoff', 
         initialStepId="advisor"
       />
     );
-    expect(await screen.findByText('Weryfikowanie źródła rekomendacji…')).toBeInTheDocument();
+    expect(await screen.findByText('Verifying the recommendation source…')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Wyślij jako kandydata na Initiative' })
+      screen.queryByRole('button', { name: 'Send as an Initiative candidate' })
     ).not.toBeInTheDocument();
     rejectLoad(new Error('tenant lookup unavailable'));
     expect(await screen.findByText(/Przekazanie kandydata jest zablokowane/)).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Wyślij jako kandydata na Initiative' })
+      screen.queryByRole('button', { name: 'Send as an Initiative candidate' })
     ).not.toBeInTheDocument();
   });
 });

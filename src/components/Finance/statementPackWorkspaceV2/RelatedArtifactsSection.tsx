@@ -17,6 +17,7 @@
  * routingu kreatorów, tylko przekazuje intencję dalej).
  */
 
+import { ft } from '../shared/financeT';
 import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React from 'react';
 
@@ -60,7 +61,7 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
   if (!loaded) {
     return (
       <div className="p-3 text-xs text-c-text-muted" data-testid="related-artifacts-not-loaded">
-        Powiązane artefakty nie zostały jeszcze wczytane.
+        {ft('finance.relatedArtifacts.notLoaded', 'Related artefacts have not been loaded yet.')}
       </div>
     );
   }
@@ -94,11 +95,11 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
                 data-testid={`related-artifacts-create-${type}`}
                 className="inline-flex min-h-[1.75rem] items-center rounded-lg border border-c-border-subtle px-2 text-[10px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                + Nowy
+                {ft('finance.relatedArtifacts.new', '+ New')}
               </button>
             </div>
             {edges.length === 0 ? (
-              <p className="text-[10px] text-c-text-muted">Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.</p>
+              <p className="text-[10px] text-c-text-muted">{ft('finance.relatedArtifacts.empty', 'No artefact of this type from this statement yet.')}</p>
             ) : (
               <ul className="space-y-1">
                 {edges.map((edge) => (

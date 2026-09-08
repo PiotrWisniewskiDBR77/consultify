@@ -9,6 +9,7 @@
  * WACC's own currency field until an actual FCFF run supplies a measured one (there is no
  * currency-only endpoint), documented inline.
  */
+import { ft } from '../../shared/financeT';
 import React, { useEffect, useState } from 'react';
 
 import type { UpsertValuationWaccInputsParams } from '@/services/api/financeV2.api';
@@ -103,7 +104,7 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
 
   return (
     <div className="max-w-5xl space-y-4" data-testid="valuation-assumptions-step">
-      <h2 className="text-sm font-semibold text-c-text">Założenia — WACC i struktura kapitału</h2>
+      <h2 className="text-sm font-semibold text-c-text">{ft('finance.valuationSteps.assumptionsTitle', 'Assumptions — WACC and capital structure')}</h2>
 
       <div
         role="status"

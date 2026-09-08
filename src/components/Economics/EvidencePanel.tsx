@@ -5,6 +5,8 @@
  * Supports adding links, notes, and uploading documents.
  */
 
+import { formatListDate } from '../../utils/listDateFormat';
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
   Check,
@@ -218,7 +220,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               <EmptyState
                 icon={<Paperclip />}
                 title="No evidence attached"
-                description="Add evidence to support the assessment"
+                description={ft('finance.evidence.addHint', 'Add evidence to support the assessment')}
                 compact
               />
             ) : (
@@ -276,7 +278,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           )}
                           <span>{item.uploaded_by_name || 'User'}</span>
                           <span>•</span>
-                          <span>{new Date(item.uploaded_at).toLocaleDateString('pl-PL')}</span>
+                          <span>{formatListDate(item.uploaded_at)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -306,7 +308,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             {/* Add evidence form */}
             {showAddForm && (
               <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-4 border border-emerald-200 dark:border-emerald-500/20">
-                <h4 className="font-medium text-navy-900 dark:text-white mb-4">Add new evidence</h4>
+                <h4 className="font-medium text-navy-900 dark:text-white mb-4">{ft('finance.evidence.addNew', 'Add new evidence')}</h4>
 
                 {/* Type selector */}
                 <div className="flex gap-2 mb-4">

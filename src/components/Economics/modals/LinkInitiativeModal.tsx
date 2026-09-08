@@ -56,7 +56,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
       onLinked?.();
       onClose();
     } catch {
-      toast.error(t('finance.link.failed', 'Nie udało się utworzyć powiązania'));
+      toast.error(t('finance.link.failed', 'Could not create the link'));
     } finally {
       setSaving(false);
     }
@@ -96,7 +96,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           <input
             value={modelRef}
             onChange={(e) => setModelRef(e.target.value)}
-            placeholder={t('finance.link.financeRefPlaceholder', 'np. identyfikator modelu')}
+            placeholder={t('finance.link.financeRefPlaceholder', 'e.g. model identifier')}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
         </div>
@@ -110,7 +110,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           >
             {LINKAGE_TYPES.map((lt) => (
               <option key={lt} value={lt}>
-                {t(`finance.link.typeValue.${lt}`, 'Inne powiązanie finansowe')}
+                {t(`finance.link.typeValue.${lt}`, 'Other financial link')}
               </option>
             ))}
           </select>

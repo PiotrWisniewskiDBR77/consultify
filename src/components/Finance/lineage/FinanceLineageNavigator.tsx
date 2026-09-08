@@ -211,13 +211,13 @@ export function FinanceLineageNavigator({
   let content: React.ReactNode;
 
   if (state.kind === 'loading') {
-    announcerMessage = t('finance.lineage.loading', 'Ładowanie powiązań…');
+    announcerMessage = t('finance.lineage.loading', 'Loading lineage…');
     content = (
       <div
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="lineage-navigator-loading"
       >
-        <p className="text-xs text-c-text-secondary">{t('finance.lineage.loading', 'Ładowanie powiązań…')}</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.lineage.loading', 'Loading lineage…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -235,7 +235,7 @@ export function FinanceLineageNavigator({
   } else {
     const { data } = state;
     const { trail, relatedPanel } = data;
-    announcerMessage = t('finance.lineage.trailLoaded', 'Łańcuch powiązań wczytany: {{count}} elementów.', {
+    announcerMessage = t('finance.lineage.trailLoaded', 'Lineage chain loaded: {{count}} items.', {
       count: trail.items.length,
     });
     content = (
@@ -244,12 +244,12 @@ export function FinanceLineageNavigator({
         data-testid="finance-lineage-navigator"
       >
         <div>
-          <p className="mb-2 text-xs font-semibold text-c-text-secondary">{t('finance.lineage.trail', 'Łańcuch powiązań')}</p>
+          <p className="mb-2 text-xs font-semibold text-c-text-secondary">{t('finance.lineage.trail', 'Lineage chain')}</p>
           <div
             className="flex flex-wrap items-center gap-1.5"
             data-testid="lineage-trail"
             role="list"
-            aria-label={t('finance.lineage.trail', 'Łańcuch powiązań')}
+            aria-label={t('finance.lineage.trail', 'Lineage chain')}
           >
             {trail.items.map((item, idx) => (
               <React.Fragment
@@ -283,7 +283,7 @@ export function FinanceLineageNavigator({
           </div>
           {trail.unresolvedVersionIds.length > 0 ? (
             <p className="mt-1 text-[11px] text-c-danger" data-testid="lineage-trail-unresolved">
-              {t('finance.lineage.unresolved', '{{count}} wersji nie udało się opisać.', {
+              {t('finance.lineage.unresolved', '{{count}} versions could not be described.', {
                 count: trail.unresolvedVersionIds.length,
               })}
             </p>
@@ -291,7 +291,7 @@ export function FinanceLineageNavigator({
         </div>
 
         <div className="flex flex-col gap-3" data-testid="lineage-related-panel">
-          <p className="text-xs font-semibold text-c-text-secondary">{t('finance.lineage.related', 'Powiązane')}</p>
+          <p className="text-xs font-semibold text-c-text-secondary">{t('finance.lineage.related', 'Related')}</p>
           {relatedPanel.focusBadges.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {relatedPanel.focusBadges.map((badge) => (
@@ -303,22 +303,22 @@ export function FinanceLineageNavigator({
             <RelatedGroupSection
               title={t('finance.lineage.parents', 'Rodzice')}
               groups={relatedPanel.parents}
-              emptyLabel={t('finance.lineage.noParents', 'Brak bezpośrednich rodziców.')}
+              emptyLabel={t('finance.lineage.noParents', 'No direct parents.')}
             />
             <RelatedGroupSection
               title={t('finance.lineage.children', 'Dzieci')}
               groups={relatedPanel.children}
-              emptyLabel={t('finance.lineage.noChildren', 'Brak bezpośrednich dzieci.')}
+              emptyLabel={t('finance.lineage.noChildren', 'No direct children.')}
             />
             <RelatedGroupSection
-              title={t('finance.lineage.indirectAncestors', 'Przodkowie pośredni')}
+              title={t('finance.lineage.indirectAncestors', 'Indirect ancestors')}
               groups={relatedPanel.indirectAncestors}
-              emptyLabel={t('finance.lineage.none', 'Brak.')}
+              emptyLabel={t('finance.lineage.none', 'None.')}
             />
             <RelatedGroupSection
-              title={t('finance.lineage.indirectDescendants', 'Potomkowie pośredni')}
+              title={t('finance.lineage.indirectDescendants', 'Indirect descendants')}
               groups={relatedPanel.indirectDescendants}
-              emptyLabel={t('finance.lineage.none', 'Brak.')}
+              emptyLabel={t('finance.lineage.none', 'None.')}
             />
           </div>
           {relatedPanel.siblings.length > 0 ? (
@@ -346,7 +346,7 @@ export function FinanceLineageNavigator({
                     className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     onClick={() => onCreateNew?.(action)}
                   >
-                    + {t('finance.lineage.new', 'Nowy')}: {isEn ? financeArtifactTypeLabelEn(action.targetArtifactType) : financeArtifactTypeLabel(action.targetArtifactType)}
+                    + {t('finance.lineage.new', 'New')}: {isEn ? financeArtifactTypeLabelEn(action.targetArtifactType) : financeArtifactTypeLabel(action.targetArtifactType)}
                   </button>
                 ))}
               </div>
@@ -361,7 +361,7 @@ export function FinanceLineageNavigator({
             <p className="text-[11px] text-c-text-secondary">
               {t(
                 'finance.lineage.hiddenTerminal',
-                'Ukryto {{count}} zarchiwizowanych/unieważnionych powiązań.',
+                '{{count}} archived/invalidated links hidden.',
                 { count: relatedPanel.hiddenTerminalCount }
               )}
             </p>
@@ -369,7 +369,7 @@ export function FinanceLineageNavigator({
         </div>
 
         <p className="text-[11px] text-c-text-secondary" data-testid="lineage-freshness-note">
-          {t('finance.lineage.focusFreshness', 'Świeżość ogniska')}:{' '}
+          {t('finance.lineage.focusFreshness', 'Focus freshness')}:{' '}
           {isEn
             ? financeArtifactFreshnessLabelEn(relatedPanel.focus.freshness)
             : financeArtifactFreshnessLabel(relatedPanel.focus.freshness)}

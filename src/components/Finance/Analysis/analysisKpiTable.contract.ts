@@ -14,6 +14,8 @@
  * downstream.
  */
 
+import { ft } from '../shared/financeT';
+import { formatListNumber } from '../../../utils/listDateFormat';
 import { Decimal } from 'decimal.js';
 
 import { financeKpiCommentLabel } from '../../../labels/financeKpiCommentLabels';
@@ -257,13 +259,13 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
 // funkcji nie widzi tego defektu.
 // ---------------------------------------------------------------------------
 
-// Polski separator dziesiętny (przecinek, nie kropka) — ten sam wzorzec co
-// `formatAnalysisKpiValueForDisplay` (financeV2.types.ts, `toLocaleString('pl-PL')`).
+// Separator dziesiętny WEDŁUG KONTA (przecinek dla PL, kropka dla EN) — przez
+// SSOT `formatListNumber`, nie przez locale wpisane w wywołanie (J9, 08.09).
 // NAPRAWIONE (powtórka 08-31): `.toFixed(1)` dawało „+7.1%"/„-12.3%" z kropką —
 // dokładnie ta sama klasa defektu, którą wcześniej zamknięto na
 // finance-valuation-workspace („Kropka zamiast przecinka dziesiętnego").
 function formatPlPercent1(n: number): string {
-  return n.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return formatListNumber(n, '—', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 export function formatYoyDeltaText(yoy: YoyDelta): string {
@@ -372,9 +374,9 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
   }));
 
   return [
-    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '120px' },
+    { id: 'kpiName', label: ft('finance.analysisKpi.colName', 'Indicator'), sortable: true, align: 'left', width: '120px' },
     { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '122px' },
-    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '122px' },
+    { id: 'formulaDisplay', label: ft('finance.analysisKpi.colFormula', 'Formula'), align: 'left', width: '122px' },
     { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
     {
@@ -388,7 +390,7 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
     },
     { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
     { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
-    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
+    { id: 'qualityFlag', label: ft('finance.analysisKpi.colQuality', 'Quality / availability'), align: 'center', filterable: true, width: '176px' },
     {
       id: 'downstreamUses',
       label: 'Przeznaczenie',

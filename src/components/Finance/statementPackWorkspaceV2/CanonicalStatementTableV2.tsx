@@ -26,6 +26,7 @@
  * (celowo — check-list-canon R1 skanuje pod kątem tych tokenów).
  */
 
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 import {
@@ -101,9 +102,9 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
 
   if (!statementType) {
     const groups: Array<{ type: StatementLineDto['statementType']; label: string }> = [
-      { type: 'P&L', label: 'Rachunek zysków i strat' },
-      { type: 'BS', label: 'Bilans' },
-      { type: 'CF', label: 'Rachunek przepływów pieniężnych' },
+      { type: 'P&L', label: ft('finance.statementType.pl', 'Profit and loss') },
+      { type: 'BS', label: ft('finance.statementType.bs', 'Balance sheet') },
+      { type: 'CF', label: ft('finance.statementType.cf', 'Cash flow statement') },
     ];
     return (
       <div className="flex h-full flex-col gap-4 overflow-y-auto" data-testid="canonical-statement-tables-v2">
@@ -202,7 +203,7 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
                     // TONE_SHELL.warning (już zweryfikowana kontrastowo tam).
                     <span
                       className="ml-1.5 shrink-0 rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-amber-900 dark:text-amber-300"
-                      title="Brak canonicalLineId — grupowane po kodzie źródłowym"
+                      title={ft('finance.statementTable.noCanonicalLineId', 'No canonicalLineId — grouped by source code')}
                     >
                       nieprzypisana
                     </span>

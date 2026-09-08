@@ -20,6 +20,7 @@
  * screenshots.
  */
 
+import { formatListNumber } from '../../utils/listDateFormat';
 import { AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +47,7 @@ interface Props {
 }
 
 function fmtNumber(n: number, currency: string): string {
-  const rounded = Math.round(n).toLocaleString('pl-PL');
+  const rounded = formatListNumber(Math.round(n));
   return `${rounded} ${currency}`;
 }
 

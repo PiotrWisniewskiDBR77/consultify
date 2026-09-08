@@ -12,6 +12,8 @@
  * którego nie da się uczciwie podłączyć bez kroku mapowania.
  */
 
+import { formatListDateTime } from '../../../utils/listDateFormat';
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 import {
@@ -136,7 +138,7 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
                   isSelected ? 'text-c-text-secondary' : 'text-c-text-muted'
                 }`}
               >
-                <span>{new Date(run.createdAt).toLocaleString('pl-PL')}</span>
+                <span>{formatListDateTime(run.createdAt)}</span>
                 <span className="tabular-nums">Residual: {formatPct(run.totals.residualPct)}</span>
               </div>
             </button>
@@ -152,15 +154,15 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
             <div data-testid="reconciliation-run-detail">
               <div className="mb-2 grid grid-cols-2 gap-2 text-[11px]">
                 <Metric label="Status" value={reconciliationRunStatusLabel(runDetail.status)} />
-                <Metric label="Jakość" value={reconciliationResultQualityLabel(runDetail.resultQuality)} />
+                <Metric label={ft('finance.common.quality', 'Quality')} value={reconciliationResultQualityLabel(runDetail.resultQuality)} />
                 <Metric label="Residual" value={formatPct(runDetail.residualPct)} />
-                <Metric label="Wierszy" value={String(runDetail.rows.length)} />
+                <Metric label={ft('finance.reconciliation.rows', 'Rows')} value={String(runDetail.rows.length)} />
               </div>
               <BucketBreakdown rows={runDetail.rows} />
             </div>
           ) : (
             <p className="text-[11px] text-c-text-muted" data-testid="reconciliation-run-detail-missing">
-              Nie udało się wczytać detalu tego przebiegu.
+              {ft('finance.reconciliation.detailFailed', 'Could not load the detail of this run.')}
             </p>
           )}
         </div>
@@ -183,7 +185,7 @@ function BucketBreakdown({ rows }: { rows: ReconciliationDetailRowDto[] }): Reac
   const duplicateCount = counts.DUPLICATE ?? 0;
   return (
     <div>
-      <p className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">Podział po bucketach</p>
+      <p className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">{ft('finance.reconciliation.bucketBreakdown', 'Breakdown by bucket')}</p>
       <div className="flex flex-wrap gap-1.5" data-testid="reconciliation-bucket-breakdown">
         {Object.entries(counts).map(([bucket, count]) => (
           <span

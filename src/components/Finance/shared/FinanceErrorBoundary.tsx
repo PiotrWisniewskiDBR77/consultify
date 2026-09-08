@@ -24,6 +24,7 @@
  *     zachowane" — patrz test negatywnej kontroli).
  */
 
+import { ft } from './financeT';
 import React from 'react';
 
 function readSessionCorrelationId(): string {
@@ -95,19 +96,21 @@ export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryPr
         className="flex min-h-[240px] flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-c-border-subtle bg-c-surface px-6 py-10 text-center"
       >
         <div className="max-w-md space-y-2">
-          <p className="text-sm font-semibold text-c-text">Nie udało się wyświetlić: {documentLabel}</p>
+          <p className="text-sm font-semibold text-c-text">{ft('finance.errorBoundary.title', 'Could not display: {{label}}', { label: documentLabel })}</p>
           <p className="text-xs text-c-text-muted">
-            Wystąpił nieoczekiwany błąd w tym dokumencie. Reszta obszaru roboczego (lista, pasek, inne dokumenty)
-            działa dalej — Twój wybrany artefakt i niezapisane zmiany są zachowane.
+            {ft(
+              'finance.errorBoundary.body',
+              'An unexpected error occurred in this document. The rest of the workspace (list, bar, other documents) keeps working — your selected artefact and unsaved changes are preserved.'
+            )}
           </p>
           {errorMessage && (
             <p className="text-xs text-c-text-muted">
-              Szczegół: <span className="font-mono">{errorMessage}</span>
+              {ft('finance.errorBoundary.detail', 'Detail:')} <span className="font-mono">{errorMessage}</span>
             </p>
           )}
           {correlationId && (
             <p className="text-xs text-c-text-muted" data-testid="finance-error-boundary-correlation-id">
-              ID zgłoszenia: <span className="font-mono select-all">{correlationId}</span>
+              {ft('finance.errorBoundary.correlationId', 'Report ID:')} <span className="font-mono select-all">{correlationId}</span>
             </p>
           )}
         </div>
@@ -117,14 +120,14 @@ export class FinanceErrorBoundary extends React.Component<FinanceErrorBoundaryPr
             onClick={this.handleRetry}
             className="inline-flex min-h-[2.75rem] items-center rounded-xl border border-c-border-subtle bg-c-surface px-4 text-xs font-semibold text-c-text shadow-sm transition hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            Ponów
+            {ft('finance.common.retry', 'Retry')}
           </button>
           <button
             type="button"
             onClick={onBackToList}
             className="inline-flex min-h-[2.75rem] items-center rounded-xl bg-c-text px-4 text-xs font-semibold text-c-surface shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            Wróć do listy
+            {ft('finance.errorBoundary.backToList', 'Back to list')}
           </button>
         </div>
       </div>

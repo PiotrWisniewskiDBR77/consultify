@@ -10,6 +10,7 @@
  * props-driven, data-testid, aria-label.
  */
 
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo } from 'react';
 
 import { useFinanceChartColors } from '@/components/Economics/financeChartTokens';
@@ -114,11 +115,11 @@ export const FootballField: React.FC<FootballFieldProps> = ({
         data-testid="football-field"
         data-empty="true"
         role="img"
-        aria-label="Football field wyceny — brak danych"
+        aria-label={ft('finance.charts.footballField.empty.title', 'Valuation football field — no data')}
         className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-400"
         style={{ minHeight: 120 }}
       >
-        Brak danych — dodaj metody wyceny
+        {ft('finance.charts.footballField.empty', 'No data — add valuation methods')}
       </div>
     );
   }

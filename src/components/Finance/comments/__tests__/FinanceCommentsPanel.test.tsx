@@ -165,13 +165,13 @@ describe('FinanceCommentsPanel', () => {
 
     mockResolveFinanceComment.mockResolvedValueOnce({ ...SAMPLE_COMMENT, resolvedAt: 't' });
     mockLoadOnce({ comments: [{ ...SAMPLE_COMMENT, resolvedAt: 't' }], blocking: false });
-    fireEvent.click(screen.getByText('Oznacz jako rozwiązany'));
+    fireEvent.click(screen.getByText('Mark as resolved'));
     await waitFor(() => expect(mockResolveFinanceComment).toHaveBeenCalledWith('c-1'));
 
-    await waitFor(() => expect(screen.getByText('Otwórz ponownie')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Reopen')).toBeInTheDocument());
     mockReopenFinanceComment.mockResolvedValueOnce(SAMPLE_COMMENT);
     mockLoadOnce();
-    fireEvent.click(screen.getByText('Otwórz ponownie'));
+    fireEvent.click(screen.getByText('Reopen'));
     await waitFor(() => expect(mockReopenFinanceComment).toHaveBeenCalledWith('c-1'));
   });
 

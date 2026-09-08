@@ -122,11 +122,11 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
     <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-          {t('finance.valuation.createTitle', 'Nowa wycena przedsiębiorstwa')}
+          {t('finance.valuation.createTitle', 'New enterprise valuation')}
         </h3>
         <div>
           <label className="text-xs text-slate-500">
-            {t('finance.valuation.name', 'Nazwa wyceny')}
+            {t('finance.valuation.name', 'Valuation name')}
           </label>
           <input
             value={title}
@@ -137,7 +137,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         </div>
         <div>
           <label className="text-xs text-slate-500">
-            {t('finance.valuation.sourceType', 'Źródło danych')}
+            {t('finance.valuation.sourceType', 'Data source')}
           </label>
           <select
             value={sourceType}

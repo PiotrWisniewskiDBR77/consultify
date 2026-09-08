@@ -2469,7 +2469,8 @@
     "verifying": "Verifying…",
     "copyLink": "Copy link",
     "publish": "Publish",
-    "loadingSlow": "This is taking longer than usual…"
+    "loadingSlow": "This is taking longer than usual…",
+    "reload": "Refresh"
   },
   "superadmin": {
     "confirm": {
@@ -24728,7 +24729,30 @@
       "button": "Export",
       "toastSuccess": "Draft created successfully",
       "openOutput": "Open output",
-      "openSource": "Open source"
+      "openSource": "Open source",
+      "audience": "Audience",
+      "audiencePlaceholder": "e.g. board / investors / CFO",
+      "briefTitle": "Brief (no-template)",
+      "checkingEligibility": "Checking eligibility...",
+      "created": "Output created",
+      "formatPlaceholder": "e.g. executive, 5 slides",
+      "goal": "Goal",
+      "goalPlaceholder": "e.g. support investment decision",
+      "initiatives": "Initiatives",
+      "initiativesDesc": "Create draft initiatives from analysis insights",
+      "investmentCaseCandidateAlreadyExists": "Already sent as Initiative candidate: {{title}}",
+      "investmentCaseCandidateCreated": "Sent as Initiative candidate: {{title}}",
+      "investmentCaseCandidateNotice": "This sends the Investment Case to the Candidate inbox for review — it does not create an Initiative directly.",
+      "investmentCaseConfirmFailed": "Could not create the Candidate",
+      "investmentCaseEligibilityFailed": "Could not check eligibility",
+      "investmentCaseHandoffTitle": "Investment Case → Candidate",
+      "investmentCaseNotApproved": "This model is not approved yet — approve it first, then send it as a Candidate.",
+      "investmentCaseNotFound": "This model could not be found.",
+      "investmentCaseUnsupported": "Available from an approved Investment Case",
+      "language": "Language",
+      "scope": "Scope",
+      "scopePlaceholder": "e.g. last 12 months + key ratios",
+      "sendAsCandidate": "Send as Candidate"
     },
     "model": {
       "title": "Financial Models",
@@ -24820,7 +24844,53 @@
       },
       "manualModeNotice": "No source statement — historical lines will not be pulled in. Opening balances start at zero. Use \"Ground on statement\" to seed the model from an approved statement.",
       "seededFromManualBaseline": "Manual / prepared baseline",
-      "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval."
+      "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval.",
+      "cfNone": "None",
+      "saved": "Saved",
+      "versionConflict": "Someone else changed this model since you last loaded it. Refresh to see the current version, then try again.",
+      "scenarios": {
+        "setBaseline": "Set as baseline",
+        "baseline": "Baseline",
+        "settingBaseline": "Ustawiam…",
+        "title": "Scenariusze i baseline"
+      },
+      "serverVersion": "server version",
+      "cfOperating": "Operacyjne",
+      "cfInvesting": "Inwestycyjne",
+      "cfFinancing": "Finansowe",
+      "computing": "Computing forecast — running the model, generating outputs and validations. This can take up to 30 seconds…",
+      "defaultForecastSuffix": "forecast",
+      "defaultLatestApproved": "Latest approved (default)",
+      "deleteEvent": "Delete event",
+      "emptyDesc": "Pick a financial model from the list, or create a new one to start forecasting.",
+      "fromAnalysisProvenance": "from-analysis",
+      "fromAnalysisTitle": "From financial analysis",
+      "fromStatementMode": "Ground on statement",
+      "groundedBadgeLabel": "Grounded on",
+      "groundedGenericSource": "Approved statement",
+      "importedFromStatement": "Imported from statement",
+      "manualMode": "Start from zero",
+      "missingBaselineLines": "Missing baseline lines",
+      "noEventsSeeded": "No forecast events yet. This model already has a seeded baseline; add events to project changes on top of it.",
+      "noOutputsSeeded": "Statement connected but compute not run yet. Run compute to generate forecast outputs.",
+      "notGroundedHint": "This model was created without a source statement. Opening balances start at zero.",
+      "refreshSource": "Refresh from source",
+      "refreshSourceHint": "Re-pull historical lines from the source statement",
+      "refreshingSource": "Refreshing…",
+      "seedEntity": "Entity",
+      "seedInputs": "Seed source and baseline",
+      "seedNeedsConfirmation": "requires confirmation",
+      "seedPeriod": "Period",
+      "seedReady": "ready",
+      "seedStartDate": "Forecast start",
+      "seedStatus": "Seed status",
+      "seededFromStatement": "Seeded from imported statement",
+      "seededManually": "Manual / zero-seeded",
+      "selectStatement": "Select statement pack",
+      "sourceStatement": "Source statement",
+      "tabs": "Model sections",
+      "validationEmpty": "No validation results yet. Run compute to evaluate model consistency.",
+      "validationSeededEmpty": "Statement connected but compute not run yet. Run compute to generate validation checks."
     },
     "tabs": {
       "models": "Models",
@@ -24855,7 +24925,10 @@
       "document": "Document",
       "forecastWindow": "Forecast",
       "scaling": "Scaling",
-      "type": "Type"
+      "type": "Type",
+      "analyticsDepth": "Levels",
+      "statementType": "Completeness",
+      "mappedLines": "Docs"
     },
     "empty": {
       "statements": "No statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.",
@@ -24866,7 +24939,8 @@
       "analysis": "No analyses yet. Create your first analysis.",
       "prediction": "No prediction data. Create a model first.",
       "valuation": "No valuations yet. Create your first valuation.",
-      "investment": "No investment case studies yet. Create your first investment analysis."
+      "investment": "No investment case studies yet. Create your first investment analysis.",
+      "statementsTitle": "No statements yet"
     },
     "teresa": {
       "explainModel": "Explain this financial model: its assumptions, the key drivers, and what the NPV/ROI/payback results mean for the client.",
@@ -24930,7 +25004,8 @@
       "createFailed": "Failed to create",
       "budgetCreated": "Budget created",
       "statementDuplicateUnsupported": "Statement duplication is not supported",
-      "analysisCreated": "Analysis created"
+      "analysisCreated": "Analysis created",
+      "modelCreated": "Model utworzony"
     },
     "prediction": {
       "budget": "Budget",
@@ -24948,7 +25023,8 @@
       "periodEnd": "Period to",
       "monthly": "Monthly",
       "granularity": "Granularity",
-      "annual": "Annual"
+      "annual": "Annual",
+      "quarterly": "Kwartalna"
     },
     "analysis": {
       "ratioSummary": "Financial Ratios",
@@ -24962,7 +25038,32 @@
       "saveAsAnalysis": "Save as Analysis",
       "savedFromLive": "Analysis saved from live preview",
       "noLiveData": "No data available. Ensure financial models exist to analyze.",
-      "refineWithAI": "Refine with AI"
+      "refineWithAI": "Refine with AI",
+      "bridgeApplied": "Model assumptions updated from this analysis",
+      "bridgeApply": "Apply to model",
+      "bridgeApplyFailed": "Failed to update model assumptions",
+      "bridgeHint": "The selected indicators will be attached to the chosen financial model’s assumptions, labeled as coming from this analysis.",
+      "bridgeModelsLoadFailed": "Failed to load financial models",
+      "bridgeNoModels": "No financial models yet. Create one in the Models tab first.",
+      "bridgeSelectHint": "Check one or more indicators below first",
+      "bridgeTargetModel": "Target model",
+      "createFailed": "Failed to create analysis",
+      "headerDescription": "Only the 18 core KPI blocks are shown: profitability, cost structure, cash, working capital and leverage.",
+      "headerLabel": "Ratio Analysis",
+      "loadFailed": "Failed to load financial analyses",
+      "noAnalyses": "No analyses yet",
+      "noRatios": "No KPI values are available yet for this analysis.",
+      "noStatements": "No statements available",
+      "period": "Period",
+      "selectOrCreate": "Select an analysis",
+      "selectedOne": "selected",
+      "sidebarHint": "Only ratio analysis is shown here.",
+      "sourceStatements": "Source statement pack",
+      "tabLabel": "Analysis",
+      "title": "Financial Analysis",
+      "titlePlaceholder": "e.g., Q4 2025 Financial Review",
+      "useAsAssumptions": "Use as model assumptions",
+      "selectedNone": "0 selected"
     },
     "valuation": {
       "createTitle": "New enterprise valuation",
@@ -24985,7 +25086,9 @@
         "submit": "Set source",
         "submitting": "Saving…",
         "noCandidates": "No approved Baseline or Scenario versions in this organization. Approve a baseline model or a scenario first."
-      }
+      },
+      "sendAsCandidate": "Send as an Initiative candidate",
+      "verifyingSource": "Verifying the recommendation source…"
     },
     "budget": {
       "valuate": "Valuate Budget",
@@ -25006,7 +25109,10 @@
       "capex": "CAPEX",
       "initiative": "Initiative",
       "tabs": {
-        "initiatives": "Initiatives"
+        "initiatives": "Initiatives",
+        "inputs": "Inputs",
+        "projections": "Projections",
+        "scenarios": "Scenario Comparison"
       },
       "importDocument": "Import from Document",
       "importFromDocument": "Import Budget from Document",
@@ -25015,7 +25121,35 @@
       "importLines": "Import Lines",
       "docImported": "Budget lines imported",
       "confirmWithAI": "Confirm with AI",
-      "project": "Project"
+      "project": "Project",
+      "approve": "Approve",
+      "approveFailed": "Approve failed",
+      "approved": "Budget approved",
+      "baselines": "Baselines",
+      "cashFlow": "Cash Flow",
+      "createFailed": "Failed to create budget",
+      "createTitle": "New Budget",
+      "documentImportFailed": "Document import failed",
+      "driverHint": "Consider linking to a KPI driver for automatic projections",
+      "endPeriod": "End",
+      "kpiHint": "Driven by linked KPI — updates automatically",
+      "line": "Line",
+      "lineUpdateFailed": "Budget line changed; current data reloaded",
+      "linkFailed": "Failed to link initiative",
+      "manual": "manual",
+      "metric": "Metric",
+      "netIncome": "Net Income",
+      "noBudgets": "No budgets yet",
+      "projectFailed": "Generation failed",
+      "projected": "Projections generated",
+      "scenarioDiff": "Scenario Comparison",
+      "selectOrCreate": "Select a budget or create a new one",
+      "startPeriod": "Start",
+      "tabLabel": "Budget",
+      "title": "Budget Planning",
+      "titlePlaceholder": "e.g., 2026 Operating Budget",
+      "totalRevenue": "Revenue",
+      "unlinkFailed": "Failed to unlink initiative"
     },
     "statements": {
       "currentDocument": "Current",
@@ -25062,7 +25196,46 @@
         "missingPeriodStatement": "At least one reporting period is missing a statement",
         "inconsistentEntity": "Statements belong to different legal entities",
         "inconsistentSource": "Statements come from different sources"
-      }
+      },
+      "alternativeCandidates": "alternatives",
+      "documentIntelligence": "Document intelligence",
+      "documentSearchPlaceholder": "Ask the report",
+      "extractedSections": "Extracted sections",
+      "ingestRuns": "Ingest runs",
+      "importStage": "Przetwarzanie dokumentu",
+      "documentRecognized": "Rozpoznano rodzaj dokumentu",
+      "line": "Line",
+      "mappingCandidates": "Mapping candidates",
+      "noDocumentMatches": "No document matches yet",
+      "noExtractedSections": "No extracted sections yet",
+      "noIngestRuns": "No ingest runs yet",
+      "noMappedValues": "No recognized financial lines yet",
+      "noQualityRuns": "No quality runs yet",
+      "noValidationMessages": "No validation messages",
+      "nonFinancialLines": "Excluded rows",
+      "notFound": "Statement not found",
+      "notReadyForWork": "Not ready for work",
+      "open": "open",
+      "original": "Original",
+      "qualityRuns": "Quality runs",
+      "ratioCoverage": "Ratio coverage",
+      "ratiosComputed": "ratios computed",
+      "readiness": "Readiness",
+      "readyForWork": "Ready to work",
+      "recognizedLines": "Recognized financial lines",
+      "recoveryQueueLabel": "Recovery queue",
+      "recoveryWorkbench": "Recovery workbench",
+      "recoveryWorkbenchHint": "Correct mappings here, save a new value version, and move the statement toward ready.",
+      "rejectedImport": "Rejected import",
+      "repairSessions": "Repair sessions",
+      "retryRecovery": "Retry recovery",
+      "saveRecovery": "Save recovery",
+      "scaling": "Scaling",
+      "sourceFile": "Source file",
+      "unmappedLines": "Unmapped lines",
+      "validationMessages": "Validation messages",
+      "value": "Value",
+      "workableRule": "Only fully mapped and correctly validated financial data is handled in Statements. This import must be corrected before it becomes a working statement."
     },
     "counters": {
       "all": "All",
@@ -25098,7 +25271,12 @@
       "valuationFromPredictionHint": "Go to Valuation and create an item based on the current model or budget.",
       "valuationFromStatementsHint": "Valuation is available after creating a model, budget or financial analysis.",
       "modeling": "Modeling",
-      "financialAnalysis": "Financial analysis"
+      "financialAnalysis": "Financial analysis",
+      "laneStart": "Start Finance Lane",
+      "laneStartHint": "Begin a governed import→analysis→mutation→readback workflow.",
+      "laneStatus": "View Lane Status",
+      "laneStatusHint": "View active finance lane progress and issues.",
+      "menuTitle": "Choose next step"
     },
     "importWizard": {
       "completed": "Completed",
@@ -25213,11 +25391,56 @@
       "conf": "Confidence",
       "mappedTo": "Mapped to",
       "unmapped": "Unmapped",
-      "noMappedValues": "No lines to map"
+      "noMappedValues": "No lines to map",
+      "periodPlaceholder": "np. 2024"
     },
     "lane": {
       "kpi": {
-        "stale": "Stale"
+        "stale": "Stale",
+        "coherent": "KPI: coherent",
+        "unavailable": "KPI: unavailable"
+      },
+      "advance": "Advance",
+      "advanceDetailPlaceholder": "Optional detail / note…",
+      "auditTrail": "Audit Trail",
+      "coherenceNotChecked": "Coherence not yet checked.",
+      "finalizeSwitchover": "Finalize",
+      "finalized": "Version finalized",
+      "issueCount": "{{count}} issue",
+      "issues": "Issues",
+      "kpiCoherence": "KPI Coherence",
+      "mutationAudits": "Mutation Audits",
+      "noActiveRun": "No active run",
+      "noActiveRunHint": "No active lane run. Start one from the Analyze menu.",
+      "noSnapshots": "No version snapshots yet.",
+      "on": "on",
+      "progress": "Lane Progress",
+      "refreshCoherence": "Refresh coherence check",
+      "run": "Run",
+      "startToCheck": "Start a lane run to check coherence.",
+      "started": "Finance lane started",
+      "title": "Finance Lane",
+      "versionSnapshots": "Version Snapshots",
+      "degraded": {
+        "activeIssues": "Finance lane has {{count}} active issue(s)",
+        "viewAll": "View all"
+      },
+      "steps": {
+        "analysis": "Analysis",
+        "analysisL123": "Analysis (L1/L2/L3)",
+        "import": "Import",
+        "mutation": "Mutation",
+        "readback": "Readback"
+      },
+      "version": {
+        "actual": "Actual",
+        "current": "Current"
+      },
+      "versions": {
+        "by": "by",
+        "finalized": "finalized",
+        "history": "Version History",
+        "switchover": "Switchover"
       }
     },
     "ratios": {
@@ -25307,7 +25530,12 @@
       "yearsAbbrev": "yr",
       "requiresReadyStatementOrModel": "Requires a ready statement or model",
       "confirmBulkDeleteStatements": "Are you sure you want to delete {{value}} statement(s)? This cannot be undone.",
-      "confirmBulkDeleteRows": "Are you sure you want to delete {{value}} item(s)? This cannot be undone."
+      "confirmBulkDeleteRows": "Are you sure you want to delete {{value}} item(s)? This cannot be undone.",
+      "aiRisks": "Flag data risks",
+      "aiSummarize": "Summarize statement",
+      "canonicalComputed": "Computed canonical result",
+      "openCanonicalResult": "Open the workspace to inspect the verified result and its source lineage.",
+      "relationsInWorkspace": "Verified lineage is available in the canonical workspace"
     },
     "pack": {
       "retry": "Retry",
@@ -25346,14 +25574,39 @@
       "noDocumentSelected": "No document selected for this table.",
       "notFound": "Statement pack not found",
       "section": {
-        "cta": "Generate report section"
+        "cta": "Generate report section",
+        "components": "{{count}} components",
+        "empty": "The report section came back empty.",
+        "emptyHint": "No report section yet.",
+        "failed": "Could not generate the report section. Please try again.",
+        "grossValue": "Gross value",
+        "initiatives": "{{count}} initiatives",
+        "loading": "Composing report section…",
+        "periods": "periods",
+        "portfolio": "Portfolio advisory (O4.4)",
+        "recommended": "Recommended",
+        "scenarios": "Scenarios (O4.2)",
+        "tooltip": "Generate a financial report section: scenarios, value tree, portfolio recommendations and trend",
+        "trend": "Trend (O4.6)",
+        "valueTree": "Value tree (O4.3)"
       },
       "validation": {
         "MAPPING_COVERAGE": "Mapping coverage",
         "DUAL_PERIOD": "Dual period",
         "LOW_MAPPING_COVERAGE": "Low mapping coverage",
         "ariaLabel": "Validation results"
-      }
+      },
+      "candidateAlreadyExists": "Already sent as Initiative candidate: {{title}}",
+      "candidateCreated": "Sent as Initiative candidate: {{title}}",
+      "candidateEligibilityFailed": "Could not check eligibility",
+      "candidateHandoffCancel": "Cancel",
+      "candidateHandoffClose": "Close",
+      "candidateHandoffFailed": "Could not create the Candidate",
+      "candidateHandoffNotice": "This sends the Statement Pack to the Candidate inbox for review — it does not create an Initiative directly.",
+      "candidateHandoffTitle": "Statement Pack → Candidate",
+      "checkingEligibility": "Checking eligibility...",
+      "sendAsCandidate": "Send as Candidate",
+      "titleFallback": "Statement Pack"
     },
     "mappingEditor": {
       "tierReview": "review",
@@ -25772,7 +26025,10 @@
       "noDiff": "No assumption changes",
       "key": "Assumption",
       "diffFailed": "Diff failed",
-      "empty": "No saved versions yet. Approve a model to create a snapshot."
+      "empty": "No saved versions yet. Approve a model to create a snapshot.",
+      "from": "Before (v",
+      "title": "Version history",
+      "to": "After (v"
     },
     "valueOffice": {
       "title": "Value Office — transformation value engine",
@@ -25787,7 +26043,12 @@
       "blockedByDemo": {
         "title": "Value bridge and decision portfolio are not available in demo mode",
         "body": "The read-only demo workspace blocks the value engine request. The rest of the cockpit is unaffected, but this part of the value story is not shown — do not read it as a completed calculation."
-      }
+      },
+      "valueBridge": "Value bridge (Baseline→Realized→Banked)",
+      "realizedValue": "Realised value",
+      "identifiedValue": "Identified value",
+      "loading": "Loading…",
+      "heading": "Value Office — the transformation value engine"
     },
     "driverPlanner": {
       "title": "Driver-based planning + what-if",
@@ -25796,7 +26057,9 @@
       "empty": {
         "title": "Select a financial model",
         "body": "The driver tree decomposes a selected model’s forecast (EBIT = Revenue − COGS − Opex − Depreciation). Pick a model from the list to plan and run what-if on its real figures."
-      }
+      },
+      "sensitivity": "Sensitivity (tornado)",
+      "whatIfResult": "What-if result"
     },
     "valuePanels": {
       "bankingValue": "Banking value",
@@ -25830,7 +26093,384 @@
         "approved": "Approved"
       }
     },
-    "blocked": "Access to the Finance module is restricted by your organization's policy."
+    "blocked": "Access to the Finance module is restricted by your organization's policy.",
+    "link": {
+      "failed": "Could not create the link",
+      "financeRefPlaceholder": "e.g. model identifier",
+      "cta": "Link initiative",
+      "financeRef": "Finance entity ref (model / analysis ID)",
+      "hint": "Attach an initiative to this finance entity so its economics appear in Results and the value pipeline.",
+      "initiativeId": "Initiative ID",
+      "initiativeIdPlaceholder": "np. 42",
+      "missingFields": "Initiative ID and Finance ref are required",
+      "success": "Initiative linked to finance",
+      "title": "Link initiative to finance",
+      "type": "Link type",
+      "typeValue": {
+        "financial_model": "Financial model",
+        "budget": "Budget",
+        "analysis": "Financial analysis",
+        "valuation": "Valuation",
+        "investment_case": "Investment case"
+      }
+    },
+    "common": {
+      "save": "Save",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "remove": "Delete",
+      "value": "Value",
+      "quality": "Quality",
+      "source": "Source",
+      "retry": "Retry",
+      "tryAgain": "Try again",
+      "period": "Period"
+    },
+    "benefits": {
+      "addMeasurement": "Add measurement",
+      "measurementPeriod": "Measurement period"
+    },
+    "digitization": {
+      "saveChanges": "Save changes",
+      "toggleHelp": "Show/hide help"
+    },
+    "evidence": {
+      "addHint": "Add evidence to support the assessment",
+      "addNew": "Add new evidence"
+    },
+    "excelImport": {
+      "checkSummary": "Check the summary and confirm the import",
+      "readyToImport": "Ready to import",
+      "mayTakeSeconds": "This may take a few seconds",
+      "checkRecognition": "Check if the file was recognised correctly",
+      "analysisName": "Analysis name",
+      "analysisNameColon": "Analysis name:",
+      "stepUpload": "Upload",
+      "stepPreview": "Preview",
+      "stepName": "Name",
+      "stepConfirm": "Confirm"
+    },
+    "metrics": {
+      "irrHint": "Internal Rate of Return — the discount rate at which NPV = 0",
+      "payback": "Payback period"
+    },
+    "initiativeIntegration": {
+      "linkedHint": "The analysis will be linked to this initiative and available in the Finance module",
+      "transferHint": "Data will be transferred automatically:",
+      "fullAnalysisHint": "Run a full NPV, IRR, payback period and sensitivity analysis for this initiative.",
+      "openAnalysisHint": "Click \"Open Analysis\" to see the full scores and run a detailed financial analysis"
+    },
+    "charts": {
+      "waterfall": {
+        "title": "Value bridge chart (waterfall)",
+        "empty": "No data — add value bridge steps"
+      },
+      "footballField": {
+        "empty": {
+          "title": "Valuation football field — no data"
+        }
+      },
+      "goldenThread": {
+        "broken": "· broken thread",
+        "empty": "No data — connect initiatives to KPIs and value to see the golden thread."
+      },
+      "portfolioBubble": {
+        "empty": "No data — add portfolio items"
+      },
+      "sCurve": {
+        "today": "today",
+        "title": "Value delivery S-curve: plan vs actual",
+        "empty": {
+          "title": "S-curve — no data"
+        }
+      },
+      "heatmap": {
+        "empty": {
+          "title": "Sensitivity heatmap — no data"
+        }
+      },
+      "tornado": {
+        "title": "Tornado chart — one-way sensitivity",
+        "empty": "No data — add sensitivity drivers"
+      }
+    },
+    "investmentAppraisal": {
+      "npvVsThreshold": "NPV against the break-even threshold (0)",
+      "unavailable": "Analysis is temporarily unavailable — please try again.",
+      "computing": "Calculating…"
+    },
+    "varianceBridge": {
+      "loading": "Loading variance analysis…",
+      "empty": "No budget data — add plan/actual items.",
+      "unavailable": "Variance analysis is temporarily unavailable — the view keeps working.",
+      "title": "Budget vs actual (variance bridge)"
+    },
+    "analysisWizard": {
+      "incomplete": "The wizard is incomplete — go back and fill in the missing steps.",
+      "readyToCreate": "Ready to create. Click \"Create and calculate\" to set up the analysis and run the first calculation.",
+      "customFormula": "Custom formula (sandbox)",
+      "pickAtLeastOne": "Choose at least one.",
+      "searchKpi": "Search for an indicator…",
+      "industry": "Industry",
+      "pickPeriods": "Choose the periods to analyse (historical and forecast).",
+      "noSources": "No sources available — an approved statement pack is required.",
+      "pickSourceHint": "Choose the statement pack (Statement Pack Version) the analysis will draw its source data from.",
+      "close": "Close the wizard"
+    },
+    "analysisKpi": {
+      "noPreviousVersions": "No earlier versions of this indicator.",
+      "lineage": "Lineage — data source",
+      "benchmarkUnavailable": "No benchmark available for this indicator.",
+      "industryBenchmark": "Industry benchmark",
+      "formulaAndInputs": "Formula and inputs",
+      "currentValue": "Current value",
+      "closeDetail": "Close the detail card",
+      "chartOverTime": "Value over time chart",
+      "notEnoughData": "Not enough data for a chart.",
+      "openDetail": "Open the detail card",
+      "emptyTitle": "No indicators configured",
+      "emptyBody": "This analysis has no KPI yet. Configure indicators to see results.",
+      "colName": "Indicator",
+      "colFormula": "Formula",
+      "colQuality": "Quality / availability",
+      "chartPeriods": "Chart — historical and forecast periods"
+    },
+    "reasonDialog": {
+      "title": "Give a reason"
+    },
+    "actionCards": {
+      "title": "Action cards — Finance"
+    },
+    "scenario": {
+      "implementationCostImpactAria": "Impact implementation cost",
+      "implementationCostPerImpact": "Implementation cost (per impact)",
+      "impactProbability": "Impact probability",
+      "impactConfidence": "Impact confidence",
+      "impactStartPeriod": "Impact start period",
+      "impactSize": "Impact size",
+      "addImpact": "+ Add impact",
+      "implementationCost": "Implementation cost",
+      "rampUpMonthsAria": "Ramp-up in months",
+      "rampUpMonths": "Ramp-up (months)",
+      "defaultStartPeriod": "Default start period",
+      "initiativeOwner": "Initiative owner",
+      "owner": "Owner",
+      "noInitiatives": "No initiatives — add the first one above.",
+      "clientPreviewHint": "Client-side preview, not authoritative — run \"Run preflight\" in the bar to get the real server analysis (Layer 2, currency).",
+      "addInitiative": "+ Add initiative",
+      "chainHint": "Chain: initiative → assumption → driver/KPI → statement line → forecast.",
+      "noOverrides": "No overrides — add the first one above.",
+      "addOverride": "+ Add override",
+      "trackDriver": "B · Driver-based (drivers/KPI)",
+      "initiativeName": "Initiative name"
+    },
+    "scenarioResults": {
+      "noExceptions": "No exceptions.",
+      "exceptionRegister": "Exception register (DEC-FIN-009)",
+      "noEbitdaData": "No EBITDA/Net Debt data.",
+      "noCashData": "No cash or minimum-cash policy data — an exception, not a blocker.",
+      "liquidityHeadroom": "Liquidity headroom",
+      "comparisonHeader": "Comparison against the base scenario — absolute / Δ / %"
+    },
+    "advisor": {
+      "frozen": "Frozen",
+      "empty": "No conclusions generated for this variant.",
+      "loading": "Loading conclusions…",
+      "humanApprovalHint": "and does not replace human approval. It works only on a fresh, not yet approved candidate version.",
+      "doesNotApprove": "does not approve decisions"
+    },
+    "valuationSteps": {
+      "assumptionsTitle": "Assumptions — WACC and capital structure",
+      "exportUnavailable": "Valuation export is not available today",
+      "addMethod": "Add method",
+      "readiness": "Readiness",
+      "noEvBridge": "No saved EV→Equity bridge for this variant.",
+      "equityValue": "Equity value",
+      "divergenceWarnings": "Method divergence warnings",
+      "methodRange": "Range of method results:",
+      "evHeading": "Enterprise value (EV) — headline",
+      "loadingResults": "Loading results…",
+      "sensitivityGridAria": "EV sensitivity grid: rows = terminal growth g, columns = WACC",
+      "sensitivityTitle": "Sensitivity — WACC × terminal growth (5×5)",
+      "linkId": "Link ID",
+      "assumptionsSnapshotHash": "Assumptions snapshot hash",
+      "linkType": "Link type",
+      "sourceVersionId": "Source version ID",
+      "technicalDetails": "Technical details",
+      "loadingSourceLink": "Loading the source link…",
+      "valuationSource": "Valuation source",
+      "spread": "(spread {{pct}})",
+      "materialDisagreement": "— the methods disagree materially, do not treat the headline as certain.",
+      "targetVersionId": "Target version ID",
+      "sourceIntroPrefix": "This valuation version (",
+      "sourceIntroVariant": ", variant “{{name}}”",
+      "sourceIntroSuffix": ") must point at an exact, approved Baseline/Scenario version — never at “the latest”. Below we show the real, full lineage from the register, not a declaration."
+    },
+    "assumptions": {
+      "emptyModel": "This model has no assumptions yet.",
+      "impactPreview": "Impact preview",
+      "forecastValue": "Forecast value",
+      "calibrationRule": "Calibration rule",
+      "assumption": "Assumption",
+      "removeRowConfirm": "Delete the assumption row?",
+      "removeRow": "Delete assumption row",
+      "addRow": "Add row",
+      "customName": "Assumption name (custom)",
+      "addAssumption": "Add assumption",
+      "saveAnyway": "Save anyway",
+      "hasWarnings": "The assumption set has warnings",
+      "confirmSaveWithWarnings": "Confirm saving the assumption set despite warnings",
+      "addAssumptionButton": "+ Add assumption",
+      "scheduleInertHint2": "This schedule does not feed the calculations today (the engine does not read it yet) — the row will be saved, but it will not change any number in \"Calculations\".",
+      "customCodePlaceholder": "e.g. HEADCOUNT_GROWTH_PCT",
+      "revert": "Revert to the last saved value",
+      "basePeriod": "Base period"
+    },
+    "calculations": {
+      "emptyHint": "Run a calculation to see the forecast P&L, balance sheet and cash flows.",
+      "empty": "No calculations",
+      "loading": "Loading calculations…",
+      "slowConnection": "The connection took longer than usual — checking whether the calculation finished anyway…",
+      "computing": "Recalculating the model (the convergence solver iterates over every month)…",
+      "monthly": "Monthly",
+      "lastSuccess": "Last successful calculation: {{when}}",
+      "recovered": "(recovered after the connection dropped)",
+      "neverComputed": "Not calculated yet",
+      "staleAssumptions": "Outdated — assumptions changed",
+      "staleSource": "Outdated — source changed",
+      "notComputed": "Not calculated",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly",
+      "noNumeric": "No numeric value",
+      "noRollup": "No calculation for at least one month in this period (roll-up)"
+    },
+    "errorBoundary": {
+      "backToList": "Back to list",
+      "correlationId": "Report ID:",
+      "detail": "Detail:",
+      "title": "Could not display: {{label}}",
+      "body": "An unexpected error occurred in this document. The rest of the workspace (list, bar, other documents) keeps working — your selected artefact and unsaved changes are preserved."
+    },
+    "utilities": {
+      "compareUnavailable": "Comparison becomes available once a second version of the artefact exists.",
+      "title": "Finance tools"
+    },
+    "statementTable": {
+      "noCanonicalLineId": "No canonicalLineId — grouped by source code"
+    },
+    "reconciliation": {
+      "bucketBreakdown": "Breakdown by bucket",
+      "detailFailed": "Could not load the detail of this run.",
+      "rows": "Rows"
+    },
+    "relatedArtifacts": {
+      "empty": "No artefact of this type from this statement yet.",
+      "notLoaded": "Related artefacts have not been loaded yet.",
+      "new": "+ New"
+    },
+    "sourceEvidence": {
+      "sourceAmount": "Source amount",
+      "noMappingRow": "The selected reconciliation run has no mapping row for this cell.",
+      "mappingPath": "Mapping path (reconciliation)",
+      "noEvidence": "No source evidence saved for this value (sourceRef = none).",
+      "sourceEvidence": "Source evidence",
+      "adjustmentReason": "Adjustment reason",
+      "valueNature": "Nature of the value",
+      "currencyScale": "Currency / scale (of this cell)",
+      "missingReason": "Reason for the gap",
+      "mappedAmount": "Mapped amount"
+    },
+    "aiRecommendations": {
+      "createInitiative": "Create initiative"
+    },
+    "versionHistory": {
+      "createNew": "Create new version",
+      "empty": "No saved versions",
+      "emptyHint": "Create the first version to track changes",
+      "namePlaceholder": "Version name (optional)"
+    },
+    "statusValue": {
+      "pending": "Pending",
+      "ready": "Ready",
+      "recoverable": "Needs completion",
+      "rejected": "Rejected",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "failed": "Failed",
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "processing": "Processing",
+      "running": "In progress"
+    },
+    "aiChat": "Finance",
+    "openAiChat": "Open AI Chat for Finance",
+    "annual": "Annual",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "granularity": "Granularity",
+    "periodOrderError": "End date must be after start date.",
+    "document": {
+      "unsupported": {
+        "hint": "Return to the list and reopen a supported statement pack, model, analysis, budget, or valuation.",
+        "message": "This finance document type is not yet available in the full workspace."
+      }
+    },
+    "investment": {
+      "benefits": "Annual benefits ({{currency}}/yr)",
+      "capex": "Initial investment ({{currency}})",
+      "createTitle": "New Investment Case",
+      "emptyBody": "Use this tab for initiative-level investment cases and go/no-go decisions based on NPV, IRR, payback, and ROI.",
+      "emptyHint": "Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.",
+      "emptyTitle": "Investment analysis workspace",
+      "horizon": "Horizon (years)",
+      "inputs": "Investment parameters",
+      "rate": "Discount rate (%)",
+      "addPeriod": "+ period"
+    },
+    "statementPack": {
+      "title": "Sprawozdanie finansowe"
+    },
+    "errors": {
+      "realSourceTitle": "Real finance source needs attention",
+      "realSourceHint": "No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.",
+      "statementsRealSourceFailed": "Failed to load real finance statements from the active data source.",
+      "modelsRealSourceFailed": "Failed to load real finance models from the active data source.",
+      "analysesRealSourceFailed": "Failed to load real financial analyses from the active data source.",
+      "valuationsRealSourceFailed": "Failed to load real valuations from the active data source.",
+      "budgetsRealSourceFailed": "Failed to load real budgets from the active data source.",
+      "demoModeRequiresRealSource": "Demo mode is enabled, but this module requires real source data."
+    },
+    "number": {
+      "billions": "{{value}}bn",
+      "millions": "{{value}}m",
+      "thousands": "{{value}}k"
+    },
+    "reportActions": {
+      "draft": "Generate draft",
+      "regenerate": "Generate again",
+      "generating": "Generation in progress…",
+      "open": "Open result",
+      "needDraft": "Generate the draft first (step 1).",
+      "publish": "Publish / attach to report",
+      "needOpen": "Open the result first (step 2).",
+      "publishing": "Publishing…",
+      "alreadyPublished": "Already published.",
+      "retryPublish": "Try publishing again"
+    },
+    "statementType": {
+      "pl": "Profit and loss",
+      "bs": "Balance sheet",
+      "cf": "Cash flow statement",
+      "cfShort": "Cash Flow"
+    },
+    "bridge": {
+      "checkFailed": "Could not check this record in the new system.",
+      "cannotOpen": "This record cannot be opened in the new module.",
+      "quarantined": "This record was deliberately skipped when moving to the new system.",
+      "notMigrated": "This record has no counterpart in the new system yet (it has not been migrated).",
+      "legacyTitle": "You are opening the proven classic view",
+      "legacyBody": "The new workspace has no link to this record yet. You can keep working on the data in the existing view; nothing is hidden or simulated."
+    }
   },
   "portfolio": {
     "toast": {
@@ -27519,17 +28159,23 @@
       "source": "Source",
       "assumptions": "Assumptions",
       "results": "Results",
-      "export": "Export"
+      "export": "Export",
+      "label": "Valuation steps",
+      "sensitivity": "Sensitivity"
     },
     "list": {
       "title": "Valuations",
       "empty": "No valuations yet. Create one to start.",
-      "source": "Source"
+      "source": "Source",
+      "emptyDesc": "Create a valuation to estimate value from a model or budget.",
+      "loadErrorDesc": "The valuations source could not be reached. Check your connection and try again.",
+      "loadErrorTitle": "Could not load valuations"
     },
     "detail": {
       "empty": "Select a valuation to continue",
       "status": "Status",
-      "currency": "Currency"
+      "currency": "Currency",
+      "viewSource": "View source"
     },
     "create": {
       "cta": "New valuation",
@@ -27562,7 +28208,11 @@
       "save": "Save assumptions",
       "saved": "Assumptions saved",
       "saveFailed": "Failed to save assumptions",
-      "sourceDataRequired": "source data required"
+      "sourceDataRequired": "source data required",
+      "asOf": "Valuation date",
+      "cashTax": "Cash tax rate (%)",
+      "failed": "Failed to save assumptions",
+      "gordonGrowth": "Wzrost Gordona"
     },
     "comps": {
       "title": "Comparable valuation (multiples)",
@@ -27573,12 +28223,14 @@
       "peersPlaceholder": "e.g., Company A, Company B",
       "save": "Save comps",
       "saved": "Comps saved",
-      "saveFailed": "Failed to save comps"
+      "saveFailed": "Failed to save comps",
+      "failed": "Failed to save comps"
     },
     "compute": {
       "cta": "Compute",
       "ok": "Valuation computed",
-      "failed": "Compute failed"
+      "failed": "Compute failed",
+      "readbackMismatch": "Canonical valuation result readback mismatch"
     },
     "approve": {
       "cta": "Approve",
@@ -27596,7 +28248,8 @@
       "compsMin": "Min",
       "compsMedian": "Median",
       "compsMax": "Max",
-      "compsEmpty": "Configure comps in Assumptions"
+      "compsEmpty": "Configure comps in Assumptions",
+      "terminalCrossCheck": "Terminal value cross-check"
     },
     "advisory": {
       "title": "Valuation advisory",
@@ -27620,7 +28273,17 @@
       "candidateModalClose": "Close",
       "candidateModalConfirm": "Send",
       "candidateModalTitle": "Send as an initiative candidate",
-      "candidatePreviewFailed": "Could not check whether this action is available"
+      "candidatePreviewFailed": "Could not check whether this action is available",
+      "change": "Change",
+      "complianceNotice": "Compliance Notice",
+      "current": "Current",
+      "details": "Details",
+      "driver": "Driver",
+      "driverDecomposition": "Value Driver Decomposition",
+      "effort": "Effort",
+      "evImpact": "EV Impact",
+      "impact": "Impact",
+      "lever": "Lever"
     },
     "negotiation": {
       "title": "Negotiation pack",
@@ -27643,7 +28306,11 @@
       "conservative": "Conservative ~1.0%"
     },
     "sensitivity": {
-      "tornadoTitle": "Tornado (top drivers)"
+      "tornadoTitle": "Tornado (top drivers)",
+      "higher": "Higher",
+      "legend": "Legend",
+      "lower": "Lower",
+      "mid": "Mid"
     },
     "export": {
       "pptx": "Export PPTX",
@@ -27665,6 +28332,29 @@
     "archiveOnly": {
       "title": "Archived valuation data",
       "body": "This record has no counterpart in the new financial model yet, so results and assumptions come straight from the saved valuation. Nothing is recomputed or simulated."
+    },
+    "inputs": {
+      "failed": "Canonical valuation inputs unavailable"
+    },
+    "load": {
+      "failed": "Valuation archive read failed",
+      "invalid": "Valuation archive response is invalid"
+    },
+    "source": {
+      "note": "Source is set at creation (Budget or Manual for this branch)."
+    },
+    "enum": {
+      "source": {
+        "budget": "Budget",
+        "financialAnalysis": "Financial analysis",
+        "financialModel": "Financial model",
+        "manual": "Manual"
+      },
+      "status": {
+        "approved": "Approved",
+        "draft": "Draft",
+        "review": "In review"
+      }
     }
   },
   "capability": {

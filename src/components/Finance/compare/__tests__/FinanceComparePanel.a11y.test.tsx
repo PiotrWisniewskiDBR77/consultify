@@ -67,19 +67,19 @@ afterEach(() => {
 });
 
 describe('FinanceComparePanel — ogłaszanie stanów dynamicznych (a11y, Pakiet I)', () => {
-  it('podczas ładowania jest zamontowany role="status" z tekstem "Liczenie porównania…"', async () => {
+  it('podczas ładowania jest zamontowany role="status" z tekstem "Computing comparison…"', async () => {
     mockComparePeriods.mockReturnValueOnce(new Promise(() => {})); // nigdy się nie rozwiązuje — zostajemy w loading
     render(<FinanceComparePanel request={REQUEST} />);
     const status = await screen.findByTestId('finance-status-announcer');
     expect(status).toHaveAttribute('role', 'status');
-    expect(status).toHaveTextContent('Liczenie porównania…');
+    expect(status).toHaveTextContent('Computing comparison…');
   });
 
   it('po sukcesie treść role="status" zmienia się na komunikat gotowości', async () => {
     mockComparePeriods.mockResolvedValueOnce(sampleResult());
     render(<FinanceComparePanel request={REQUEST} />);
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Comparison ready.')
     );
   });
 
@@ -89,7 +89,7 @@ describe('FinanceComparePanel — ogłaszanie stanów dynamicznych (a11y, Pakiet
     await waitFor(() => {
       const status = screen.getByTestId('finance-status-announcer');
       expect(status).toHaveAttribute('aria-live', 'assertive');
-      expect(status).toHaveTextContent(/Błąd porównania/);
+      expect(status).toHaveTextContent(/Comparison error/);
     });
   });
 

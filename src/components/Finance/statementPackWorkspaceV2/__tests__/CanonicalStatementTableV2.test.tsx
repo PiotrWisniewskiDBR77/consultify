@@ -63,9 +63,9 @@ describe('CanonicalStatementTableV2', () => {
       />
     );
     expect(screen.getAllByTestId('canonical-statement-table-v2-empty')).toHaveLength(3);
-    expect(screen.getByText('Rachunek zysków i strat')).toBeInTheDocument();
-    expect(screen.getByText('Bilans')).toBeInTheDocument();
-    expect(screen.getByText('Rachunek przepływów pieniężnych')).toBeInTheDocument();
+    expect(screen.getByText('Profit and loss')).toBeInTheDocument();
+    expect(screen.getByText('Balance sheet')).toBeInTheDocument();
+    expect(screen.getByText('Cash flow statement')).toBeInTheDocument();
   });
 
   it('renders currency+scale in the table header (not just the workspace bar)', () => {

@@ -10,6 +10,7 @@
  * Czysty SVG, props-driven, kolory wg §1 (znaczeniowe). aria-label + tooltip (title).
  */
 
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 // Kolory wg FINANCE_VISUAL_CANON §1 (Tailwind light mapping).
@@ -52,7 +53,7 @@ export const SCurve: React.FC<SCurveProps> = ({
   actual,
   height = 240,
   formatValue = defaultFormat,
-  periodLabel = 'Okres',
+  periodLabel = ft('finance.common.period', 'Period'),
 }) => {
   const [hover, setHover] = useState<number | null>(null);
 
@@ -149,11 +150,11 @@ export const SCurve: React.FC<SCurveProps> = ({
       <div
         data-testid="s-curve"
         role="img"
-        aria-label="Krzywa S — brak danych"
+        aria-label={ft('finance.charts.sCurve.empty.title', 'S-curve — no data')}
         className="flex items-center justify-center text-xs text-slate-500"
         style={{ height }}
       >
-        Brak danych — dodaj plan realizacji
+        {ft('finance.charts.sCurve.empty', 'No data — add a delivery plan')}
       </div>
     );
   }
@@ -164,7 +165,7 @@ export const SCurve: React.FC<SCurveProps> = ({
     <svg
       data-testid="s-curve"
       role="img"
-      aria-label="Krzywa S realizacji wartości: plan vs realizacja"
+      aria-label={ft('finance.charts.sCurve.title', 'Value delivery S-curve: plan vs actual')}
       viewBox={`0 0 ${VB_W} ${height}`}
       width="100%"
       height={height}
@@ -242,7 +243,7 @@ export const SCurve: React.FC<SCurveProps> = ({
             strokeDasharray="2 3"
           />
           <text x={model.todayX} y={PAD.top - 4} textAnchor="middle" fontSize={8} fill={COLOR.axis}>
-            dziś
+            {ft('finance.charts.sCurve.today', 'today')}
           </text>
         </g>
       )}

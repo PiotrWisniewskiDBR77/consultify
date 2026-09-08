@@ -32,9 +32,9 @@ describe('StatementReportActionsSection — sequential gating', () => {
     );
     expect(screen.getByTestId('statement-report-step-button-draft')).not.toBeDisabled();
     expect(screen.getByTestId('statement-report-step-button-open')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-open')).toHaveTextContent('Najpierw wygeneruj szkic');
+    expect(screen.getByTestId('statement-report-step-reason-open')).toHaveTextContent('Generate the draft first');
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Najpierw otwórz wynik');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Open the result first');
   });
 
   it('step 2 (open) unlocks once draftStatus is ready; step 3 remains blocked until opened', () => {
@@ -53,7 +53,7 @@ describe('StatementReportActionsSection — sequential gating', () => {
     expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled();
     expect(screen.queryByTestId('statement-report-step-reason-open')).not.toBeInTheDocument();
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Najpierw otwórz wynik');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Open the result first');
   });
 
   it('step 3 (publish) unlocks ONLY after the result has actually been opened (openStatus=opened), not merely available', () => {
@@ -127,7 +127,7 @@ describe('StatementReportActionsSection — sequential gating', () => {
       />
     );
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
-    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Już opublikowano');
+    expect(screen.getByTestId('statement-report-step-reason-publish')).toHaveTextContent('Already published');
     expect(screen.getByTestId('statement-report-step-status-publish')).toHaveTextContent('Opublikowano');
   });
 

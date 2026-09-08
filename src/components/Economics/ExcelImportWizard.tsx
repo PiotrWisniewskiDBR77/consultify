@@ -5,6 +5,7 @@
  * Based on PDFImportWizard pattern
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertTriangle,
   CheckCircle,
@@ -44,10 +45,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const steps: { id: WizardStep; label: string }[] = [
-    { id: 'upload', label: 'Wgraj file' },
-    { id: 'preview', label: 'Preview' },
-    { id: 'name', label: 'Nazwa' },
-    { id: 'confirm', label: 'Confirm' },
+    { id: 'upload', label: ft('finance.excelImport.stepUpload', 'Upload') },
+    { id: 'preview', label: ft('finance.excelImport.stepPreview', 'Preview') },
+    { id: 'name', label: ft('finance.excelImport.stepName', 'Name') },
+    { id: 'confirm', label: ft('finance.excelImport.stepConfirm', 'Confirm') },
   ];
 
   const handleFileSelect = useCallback((selectedFile: File) => {
@@ -302,7 +303,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               <div className="text-center mb-4">
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">File Previewu</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Check if file was correctly recognized
+                  {ft('finance.excelImport.checkRecognition', 'Check if the file was recognised correctly')}
                 </p>
               </div>
 
@@ -343,7 +344,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           {currentStep === 'name' && (
             <div className="space-y-4">
               <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nazwa analysis</h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">{ft('finance.excelImport.analysisName', 'Analysis name')}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Nadaj name importowanej analysesie
                 </p>
@@ -351,7 +352,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                  Nazwa analysis
+                  {ft('finance.excelImport.analysisName', 'Analysis name')}
                 </label>
                 <input
                   type="text"
@@ -373,7 +374,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 animate-spin" />
                   <p className="text-slate-600 dark:text-slate-400">Importing data...</p>
                   <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
-                    This may take a few seconds
+                    {ft('finance.excelImport.mayTakeSeconds', 'This may take a few seconds')}
                   </p>
                 </div>
               ) : (
@@ -381,10 +382,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   <div className="text-center mb-4">
                     <CheckCircle className="w-16 h-16 mx-auto mb-4 text-emerald-500" />
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                      Gotowe do importu
+                      {ft('finance.excelImport.readyToImport', 'Ready to import')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Check summary and confirm import
+                      {ft('finance.excelImport.checkSummary', 'Check the summary and confirm the import')}
                     </p>
                   </div>
 
@@ -396,7 +397,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Nazwa analysis:</span>
+                      <span className="text-slate-500 dark:text-slate-400">{ft('finance.excelImport.analysisNameColon', 'Analysis name:')}</span>
                       <span className="font-medium text-navy-900 dark:text-white">
                         {analysisName}
                       </span>

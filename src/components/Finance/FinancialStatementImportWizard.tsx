@@ -981,7 +981,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
   };
   const statusLabel = (status: unknown) => {
     const normalized = String(status || 'pending').toLowerCase();
-    return t(`finance.statusValue.${normalized}`, 'Oczekuje');
+    return t(`finance.statusValue.${normalized}`, 'Pending');
   };
   const displayedDetectionConfidence = detection?.confidence || 0;
   const detectionConfidenceHint = t(

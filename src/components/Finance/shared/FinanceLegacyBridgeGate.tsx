@@ -17,6 +17,7 @@
  * an old-system id into a new-system component") — the four branches use
  * THIS component instead of passing `activeDocument.id` straight through.
  */
+import { ft } from './financeT';
 import { AlertTriangle, Link2 } from 'lucide-react';
 import React from 'react';
 
@@ -64,13 +65,13 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
       <div className="p-4" data-testid="finance-bridge-error">
         <EmptyStateInline
           icon={AlertTriangle}
-          message="Nie udało się sprawdzić tego rekordu w nowym systemie."
+          message={ft('finance.bridge.checkFailed', 'Could not check this record in the new system.')}
           hint={state.message}
           // ★ NAPRAWA (zaszyty prefiks "+" — patrz `EmptyStateInline.tsx`'s own
           // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
           // `showPrefix: false, neutralAccent: true`.
           action={{
-            label: 'Spróbuj ponownie',
+            label: ft('finance.common.tryAgain', 'Try again'),
             onClick: retry,
             showPrefix: false,
             neutralAccent: true,
@@ -91,16 +92,23 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
     // nie echouje surowego stringa.
     const hint =
       state.code === 'QUARANTINED'
-        ? `Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu. ${financeLegacyBridgeQuarantineReasonLabel(state.reason)}`
-        : 'Ten rekord jeszcze nie ma odpowiednika w nowym systemie (nie został jeszcze przeniesiony).';
+        ? `${ft('finance.bridge.quarantined', 'This record was deliberately skipped when moving to the new system.')} ${financeLegacyBridgeQuarantineReasonLabel(state.reason)}`
+        : ft(
+            'finance.bridge.notMigrated',
+            'This record has no counterpart in the new system yet (it has not been migrated).'
+          );
     if (unresolvedFallback) {
       return (
         <div data-testid="finance-bridge-legacy-fallback">
           <div className="mx-4 mt-4 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-c-text-secondary">
-            <div className="font-medium text-c-text">Otwierasz sprawdzony widok klasyczny</div>
+            <div className="font-medium text-c-text">
+              {ft('finance.bridge.legacyTitle', 'You are opening the proven classic view')}
+            </div>
             <div className="mt-1">
-              Nowy workspace nie ma jeszcze powiązania z tym rekordem. Możesz normalnie pracować
-              na danych w dotychczasowym widoku; nic nie jest ukrywane ani symulowane.
+              {ft(
+                'finance.bridge.legacyBody',
+                'The new workspace has no link to this record yet. You can keep working on the data in the existing view; nothing is hidden or simulated.'
+              )}
             </div>
           </div>
           {unresolvedFallback}
@@ -111,12 +119,12 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
       <div className="p-4" data-testid="finance-bridge-unresolved">
         <EmptyStateInline
           icon={Link2}
-          message="Nie można otworzyć tego rekordu w nowym module."
+          message={ft('finance.bridge.cannotOpen', 'This record cannot be opened in the new module.')}
           hint={hint}
           // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
           // "Spróbuj ponownie" wyżej.
           action={{
-            label: 'Wróć do listy',
+            label: ft('finance.errorBoundary.backToList', 'Back to list'),
             onClick: onBackToList,
             showPrefix: false,
             neutralAccent: true,

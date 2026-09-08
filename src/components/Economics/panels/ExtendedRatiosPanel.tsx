@@ -11,6 +11,7 @@
  * Fail-soft: a request error degrades to a quiet inline notice, never throws.
  * Behind flag `m16ValueSuite` (default OFF) — see financeFeatureFlags.ts.
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -55,7 +56,7 @@ const FIELDS: Array<{ key: keyof ExtendedFinancials; labelKey: string; fallback:
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 0 });
 };
 
 const fmtRatio = (v: number | null | undefined): string => {

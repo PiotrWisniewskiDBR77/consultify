@@ -1,3 +1,4 @@
+import { ft } from './financeT';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useFinanceWorkspacePlatformFlag } from '@/hooks/useFinanceWorkspacePlatformFlag';
@@ -75,7 +76,7 @@ export function FinanceWorkspaceUtilities({
       className="w-full shrink-0 border-t border-c-border-subtle bg-c-surface"
       data-testid="finance-workspace-utilities"
     >
-      <div className="flex flex-wrap gap-2 p-3" role="toolbar" aria-label="Narzędzia Finance">
+      <div className="flex flex-wrap gap-2 p-3" role="toolbar" aria-label={ft('finance.utilities.title', 'Finance tools')}>
         {tools.map(([id, label]) => (
           <button
             key={id}
@@ -114,7 +115,7 @@ export function FinanceWorkspaceUtilities({
           )}
           {active === 'compare' && !comparisonVersionId && (
             <p role="status" className="text-sm text-c-text-secondary">
-              Porównanie będzie dostępne po utworzeniu drugiej wersji artefaktu.
+              {ft('finance.utilities.compareUnavailable', 'Comparison becomes available once a second version of the artefact exists.')}
             </p>
           )}
           {active === 'exchange' && workingRevisionId && (

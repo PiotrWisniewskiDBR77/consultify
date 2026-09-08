@@ -230,10 +230,10 @@ export function useFinanceRowActions({
           await discardCanonicalLegacyValuation(row.id);
           await loadValuations();
         }
-        toast.success(t('finance.toast.deleted', 'Usunięto'));
+        toast.success(t('finance.toast.deleted', 'Deleted'));
       } catch (e: any) {
         toast.error(
-          e?.response?.data?.error || t('finance.toast.deleteFailed', 'Nie udało się usunąć')
+          e?.response?.data?.error || t('finance.toast.deleteFailed', 'Failed to delete')
         );
       }
     },
@@ -261,7 +261,7 @@ export function useFinanceRowActions({
           toast.error(
             t(
               'finance.toast.statementDuplicateUnsupported',
-              'Duplikacja statementu nie jest wspierana'
+              'Statement duplication is not supported'
             )
           );
           return;
@@ -327,7 +327,7 @@ export function useFinanceRowActions({
       } catch (e: any) {
         toast.error(
           e?.response?.data?.error ||
-            t('finance.toast.duplicateFailed', 'Nie udało się zduplikować')
+            t('finance.toast.duplicateFailed', 'Failed to duplicate')
         );
       }
     },
@@ -382,7 +382,7 @@ export function useFinanceRowActions({
       const manifest: RowAction[] = [
         {
           id: 'preview',
-          label: t('common.openPreview', 'Otwórz podgląd'),
+          label: t('common.openPreview', 'Open preview'),
           icon: ChevronRight,
           divider: true,
           onClick: () => (handleOpenPreview ?? handleOpenFull)(row),
@@ -392,7 +392,7 @@ export function useFinanceRowActions({
           label: t('common.archive', 'Archiwizuj'),
           icon: Archive,
           disabled: true,
-          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          description: t('common.comingSoonBackend', 'Coming soon (backend)'),
           onClick: () => undefined,
         },
       ];
@@ -406,7 +406,7 @@ export function useFinanceRowActions({
         tabSpecific.push(
           {
             id: 'createModel',
-            label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+            label: t('finance.row.createModelFromStatement', 'Create model'),
             icon: TrendingUp,
             variant: 'primary',
             disabled: !statementRow.isWorkable,
@@ -414,7 +414,7 @@ export function useFinanceRowActions({
           },
           {
             id: 'createAnalysis',
-            label: t('finance.row.createAnalysisFromStatement', 'Utwórz analizę'),
+            label: t('finance.row.createAnalysisFromStatement', 'Create analysis'),
             icon: Eye,
             disabled: !statementRow.isWorkable,
             onClick: () => handleCreateAnalysisFromStatements(statementRow),
@@ -434,7 +434,7 @@ export function useFinanceRowActions({
         ) {
           tabSpecific.push({
             id: 'confirm',
-            label: t('finance.row.confirmStatement', 'Potwierdź'),
+            label: t('finance.row.confirmStatement', 'Confirm'),
             icon: CheckCircle,
             onClick: async () => {
               try {
@@ -444,7 +444,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -456,7 +456,7 @@ export function useFinanceRowActions({
         if (row.status !== 'APPROVED') {
           tabSpecific.push({
             id: 'approve',
-            label: t('finance.row.approve', 'Zatwierdź'),
+            label: t('finance.row.approve', 'Approve'),
             icon: CheckCircle,
             variant: 'primary',
             onClick: async () => {
@@ -467,7 +467,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -479,7 +479,7 @@ export function useFinanceRowActions({
         if (row.status !== 'APPROVED') {
           tabSpecific.push({
             id: 'approve',
-            label: t('finance.row.approve', 'Zatwierdź'),
+            label: t('finance.row.approve', 'Approve'),
             icon: CheckCircle,
             variant: 'primary',
             onClick: async () => {
@@ -490,7 +490,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -508,14 +508,14 @@ export function useFinanceRowActions({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')
+                  t('finance.toast.reanalyzeFailed', 'Recalculation failed')
               );
             }
           },
         });
         tabSpecific.push({
           id: 'createValuation',
-          label: t('finance.row.createValuation', 'Utwórz wycenę'),
+          label: t('finance.row.createValuation', 'Create valuation'),
           icon: TrendingUp,
           onClick: () =>
             window.location.assign(
@@ -554,7 +554,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.projectionFailed', 'Nie udało się wygenerować')
+                    t('finance.toast.projectionFailed', 'Generation failed')
                 );
               }
             },
@@ -562,7 +562,7 @@ export function useFinanceRowActions({
           if (pRow.status !== 'APPROVED') {
             tabSpecific.push({
               id: 'approve',
-              label: t('finance.row.approve', 'Zatwierdź'),
+              label: t('finance.row.approve', 'Approve'),
               icon: CheckCircle,
               variant: 'primary',
               onClick: async () => {
@@ -574,11 +574,11 @@ export function useFinanceRowActions({
                     throw new Error('Budget version is unavailable');
                   await V8FinanceApi.approveBudget(rawId, expectedVersion, crypto.randomUUID());
                   await loadBudgets();
-                  toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
+                  toast.success(t('finance.toast.budgetApproved', 'Budget approved'));
                 } catch (e: any) {
                   toast.error(
                     e?.response?.data?.error ||
-                      t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                      t('finance.toast.approveFailed', 'Approval failed')
                   );
                 }
               },
@@ -598,7 +598,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.computeFailed', 'Nie udało się przeliczyć')
+                    t('finance.toast.computeFailed', 'Recalculation failed')
                 );
               }
             },
@@ -624,7 +624,7 @@ export function useFinanceRowActions({
                 apiError?.code === 'APPROVED_VERSION_IMMUTABLE'
                   ? t(
                       'finance.toast.approvedVersionImmutable',
-                      'Ta wersja wyceny jest zatwierdzona i niezmienna. Aby ponownie obliczyć WACC, utwórz nową wersję.'
+                      'This valuation version is approved and immutable. To recompute WACC, create a new version.'
                     )
                   : apiError?.error || t('finance.toast.computeDcfFailed')
               );
@@ -634,7 +634,7 @@ export function useFinanceRowActions({
         if (row.status !== 'APPROVED') {
           tabSpecific.push({
             id: 'approve',
-            label: t('finance.row.approve', 'Zatwierdź'),
+            label: t('finance.row.approve', 'Approve'),
             icon: CheckCircle,
             onClick: async () => {
               try {
@@ -644,7 +644,7 @@ export function useFinanceRowActions({
               } catch (e: any) {
                 toast.error(
                   e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                    t('finance.toast.approveFailed', 'Approval failed')
                 );
               }
             },
@@ -667,7 +667,7 @@ export function useFinanceRowActions({
             } catch (e: any) {
               toast.error(
                 e?.response?.data?.error ||
-                  t('finance.toast.exportFailed', 'Nie udało się wyeksportować')
+                  t('finance.toast.exportFailed', 'Export failed')
               );
             }
           },
@@ -676,7 +676,7 @@ export function useFinanceRowActions({
 
       const deleteAction: RowAction = {
         id: 'delete',
-        label: t('common.delete', 'Usuń'),
+        label: t('common.delete', 'Delete'),
         icon: Trash2,
         variant: 'danger',
         divider: true,

@@ -108,7 +108,7 @@ describe('AnalysisCreatorWizard — pułapka fokusa/Escape/przywrócenie (a11y, 
 
   it('przycisk „Zamknij kreator" ma dostępną nazwę (nie jest gołą ikoną)', () => {
     render(<AnalysisCreatorWizard {...baseProps()} />);
-    expect(screen.getByRole('button', { name: 'Zamknij kreator' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close the wizard' })).toBeInTheDocument();
   });
 
   it('KONTROLA NEGATYWNA: po odmontowaniu (zamknięciu) kreatora Escape przestaje wywoływać onClose — dowód, że listener jest sprzątany, nie wycieka globalnie', async () => {

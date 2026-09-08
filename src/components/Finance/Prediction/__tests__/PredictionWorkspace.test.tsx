@@ -413,7 +413,7 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
   });
 
-  it('błąd sieci/serwera przy sprawdzaniu businessVersionId -> JAWNY komunikat błędu z przyciskiem "Spróbuj ponownie", nie pusty formularz', async () => {
+  it('błąd sieci/serwera przy sprawdzaniu businessVersionId -> JAWNY komunikat błędu z przyciskiem "Try again", nie pusty formularz', async () => {
     apiMocks.getFinanceBusinessVersion.mockRejectedValue(apiError(500, 'INTERNAL_ERROR'));
     render(
       <PredictionWorkspace
@@ -425,10 +425,10 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
 
     await waitFor(() => expect(screen.getByTestId('prediction-mount-error')).toBeInTheDocument());
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Spróbuj ponownie/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
   });
 
-  it('"Spróbuj ponownie" po błędzie faktycznie odpytuje serwer jeszcze raz i przechodzi do prawdziwego workspace po sukcesie', async () => {
+  it('"Try again" po błędzie faktycznie odpytuje serwer jeszcze raz i przechodzi do prawdziwego workspace po sukcesie', async () => {
     apiMocks.getFinanceBusinessVersion.mockRejectedValueOnce(apiError(500, 'INTERNAL_ERROR'));
     apiMocks.getFinanceBusinessVersion.mockResolvedValueOnce(CONFIRMED_VERSION);
     render(
@@ -440,7 +440,7 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
     );
 
     await waitFor(() => expect(screen.getByTestId('prediction-mount-error')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Spróbuj ponownie/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
 
     await waitFor(() =>
       expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()

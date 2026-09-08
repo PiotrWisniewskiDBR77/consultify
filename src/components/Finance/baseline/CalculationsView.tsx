@@ -12,6 +12,8 @@
  * emituje automatycznego finansowania; ten widok tylko RENDERUJE to, co
  * silnik zwrócił, nie koryguje.
  */
+import { formatListDateTime } from '../../../utils/listDateFormat';
+import { ft } from '../shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -137,7 +139,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
     const cellsInGroup = group.members.map((p) => outputsByLineAndPeriod.get(`${line}::${p.periodId}`));
     if (cellsInGroup.some((c) => c === undefined)) {
       // Brak choćby jednego miesiąca w grupie = brak danych dla całej grupy — NIGDY nie renderujemy częściowej sumy jako pełnego wyniku.
-      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)' };
+      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: ft('finance.calculations.noRollup', 'No calculation for at least one month in this period (roll-up)') };
     }
     const present = cellsInGroup as BaselineOutputDto[];
     const missingLike = present.filter((c) => c.value.status === 'MISSING' || c.value.status === 'NA' || c.value.status === 'NOT_APPLICABLE');
@@ -153,7 +155,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       return { text: '—', isMissingLikeGlyph: true, numeric: null, reason };
     }
     const numbers = present.map((c) => (c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)));
-    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wartości liczbowej' };
+    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: ft('finance.calculations.noNumeric', 'No numeric value') };
     const nums = numbers as number[];
     const value = meta.aggregation === 'flow-sum' ? nums.reduce((a, b) => a + b, 0) : nums[nums.length - 1];
     const display = formatFinanceValueForDisplay({ status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: String(value) });
@@ -180,18 +182,24 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
             className="rounded-md border border-c-border-subtle bg-c-bg px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             data-testid="baseline-granularity-select"
           >
-            <option value="monthly">Miesięcznie</option>
-            <option value="quarterly">Kwartalnie</option>
-            <option value="yearly">Rocznie</option>
+            <option value="monthly">{ft('finance.calculations.monthly', 'Monthly')}</option>
+            <option value="quarterly">{ft('finance.calculations.quarterly', 'Quarterly')}</option>
+            <option value="yearly">{ft('finance.calculations.yearly', 'Yearly')}</option>
           </select>
           <span data-testid="baseline-last-compute-label">
             {lastComputedAt
-              ? `Ostatnie udane przeliczenie: ${lastComputedAt.toLocaleString('pl-PL')}${wasRecovered ? ' (odzyskane po przerwaniu połączenia)' : ''}`
-              : 'Jeszcze nie przeliczono'}
+              ? `${ft('finance.calculations.lastSuccess', 'Last successful calculation: {{when}}', {
+                  when: formatListDateTime(lastComputedAt),
+                })}${wasRecovered ? ` ${ft('finance.calculations.recovered', '(recovered after the connection dropped)')}` : ''}`
+              : ft('finance.calculations.neverComputed', 'Not calculated yet')}
           </span>
           {stale.stale && (
             <span className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning" data-testid="baseline-stale-badge">
-              {stale.reason === 'ASSUMPTIONS_EDITED' ? 'Nieaktualne — założenia zmienione' : stale.reason === 'SOURCE_CHANGED' ? 'Nieaktualne — źródło zmienione' : 'Nie przeliczono'}
+              {stale.reason === 'ASSUMPTIONS_EDITED'
+                ? ft('finance.calculations.staleAssumptions', 'Outdated — assumptions changed')
+                : stale.reason === 'SOURCE_CHANGED'
+                  ? ft('finance.calculations.staleSource', 'Outdated — source changed')
+                  : ft('finance.calculations.notComputed', 'Not calculated')}
             </span>
           )}
         </div>
@@ -200,12 +208,12 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       {/* ── Stan compute — NIGDY surowy "Request timed out" (OWN-FIN-018). ── */}
       {computeState === 'computing' && (
         <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-computing-banner">
-          Trwa przeliczanie modelu (solver zbieżności iteruje po każdym miesiącu)…
+          {ft('finance.calculations.computing', 'Recalculating the model (the convergence solver iterates over every month)…')}
         </div>
       )}
       {computeState === 'recovering' && (
         <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-recovering-banner">
-          Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…
+          {ft('finance.calculations.slowConnection', 'The connection took longer than usual — checking whether the calculation finished anyway…')}
         </div>
       )}
       {computeState === 'failed' && computeErrorDetail && (
@@ -245,11 +253,11 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       */}
       <div className="flex-1 overflow-auto pb-16">
         {loadingOutputs ? (
-          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">Wczytuję wyliczenia…</div>
+          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">{ft('finance.calculations.loading', 'Loading calculations…')}</div>
         ) : outputs.length === 0 && groupedPeriods.length === 0 ? (
           <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 p-6 text-center">
-            <p className="text-sm font-semibold text-c-text">Brak wyliczeń</p>
-            <p className="max-w-sm text-xs text-c-text-muted">Uruchom przeliczenie, aby zobaczyć prognozowany P&amp;L, bilans i przepływy.</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.calculations.empty', 'No calculations')}</p>
+            <p className="max-w-sm text-xs text-c-text-muted">{ft('finance.calculations.emptyHint', 'Run a calculation to see the forecast P&L, balance sheet and cash flows.')}</p>
           </div>
         ) : (
           (['P&L', 'BS', 'CF'] as const).map((statementType) => (

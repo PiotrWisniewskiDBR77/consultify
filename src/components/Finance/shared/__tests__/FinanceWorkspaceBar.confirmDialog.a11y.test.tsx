@@ -40,7 +40,7 @@ function makeConfigWithDestructiveLifecycle(): WorkspaceBarConfig {
         businessVersionId: 'bv-1',
         artifactId: 'art-1',
       },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Back to list' } },
       name: {
         value: 'Model bazowy FY2026',
         editable: true,
@@ -77,7 +77,7 @@ function makeConfigWithDestructiveLifecycle(): WorkspaceBarConfig {
         transitions: [
           {
             action: 'reopen',
-            label: { key: 'reopen', pl: 'Otwórz ponownie' },
+            label: { key: 'reopen', pl: 'Reopen' },
             enablement: ENABLEMENT_ALWAYS,
             destructive: true,
             requiresConfirmation: true,
@@ -121,7 +121,7 @@ function noopHandlers() {
 async function openConfirmDialog(): Promise<HTMLElement> {
   const lifecycleTrigger = screen.getByTestId('finance-workspace-bar-lifecycle-trigger');
   fireEvent.click(lifecycleTrigger);
-  const menuItem = await screen.findByRole('menuitem', { name: 'Otwórz ponownie' });
+  const menuItem = await screen.findByRole('menuitem', { name: 'Reopen' });
   fireEvent.click(menuItem);
   return screen.findByRole('alertdialog');
 }
@@ -137,7 +137,7 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
       />
     );
     await openConfirmDialog();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Potwierdź' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm' })).toHaveFocus());
   });
 
   it('Escape zamyka dialog i przywraca fokus na trigger lifecycle (wyzwalacz — pozycja menu, która faktycznie otworzyła dialog, już się odmontowała)', async () => {
@@ -168,15 +168,15 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
       />
     );
     await openConfirmDialog();
-    const cancelButton = screen.getByRole('button', { name: 'Anuluj' });
-    const confirmButton = screen.getByRole('button', { name: 'Potwierdź' });
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    const confirmButton = screen.getByRole('button', { name: 'Confirm' });
     await waitFor(() => expect(confirmButton).toHaveFocus());
 
     fireEvent.keyDown(confirmButton, { key: 'Tab' });
     await waitFor(() => expect(cancelButton).toHaveFocus());
   });
 
-  it('"Potwierdź" wywołuje onLifecycleTransition z transition oryginalnym', async () => {
+  it('"Confirm" wywołuje onLifecycleTransition z transition oryginalnym', async () => {
     const handlers = noopHandlers();
     render(
       <FinanceWorkspaceBar
@@ -187,7 +187,7 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
       />
     );
     await openConfirmDialog();
-    fireEvent.click(screen.getByRole('button', { name: 'Potwierdź' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(handlers.onLifecycleTransition).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'reopen' })
     );
@@ -220,7 +220,7 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
     );
     const lifecycleTrigger = screen.getByTestId('finance-workspace-bar-lifecycle-trigger');
     fireEvent.click(lifecycleTrigger);
-    const menuItem = await screen.findByRole('menuitem', { name: 'Otwórz ponownie' });
+    const menuItem = await screen.findByRole('menuitem', { name: 'Reopen' });
     fireEvent.click(menuItem);
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();

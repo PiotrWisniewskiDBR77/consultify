@@ -31,7 +31,7 @@ function baseConfig(overrides: Partial<WorkspaceBarConfig> = {}): WorkspaceBarCo
     artifactType: 'BASELINE_MODEL',
     identity: {
       artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-1', artifactId: 'art-1' },
-      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
+      back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Back to list' } },
       name: {
         value: 'Model bazowy FY2026',
         editable: true,
@@ -71,7 +71,7 @@ function baseConfig(overrides: Partial<WorkspaceBarConfig> = {}): WorkspaceBarCo
         transitions: [
           {
             action: 'submit_for_review',
-            label: { key: 'submit', pl: 'Przekaż do przeglądu' },
+            label: { key: 'submit', pl: 'Submit for review' },
             enablement: ENABLEMENT_ALWAYS,
             destructive: false,
             requiresConfirmation: false,
@@ -252,7 +252,7 @@ describe('financeWorkspaceBar.contract — destrukcyjne operacje wymagają potwi
           items: [
             {
               id: 'more.delete',
-              label: { key: 'delete', pl: 'Usuń' },
+              label: { key: 'delete', pl: 'Delete' },
               group: 'danger',
               enablement: ENABLEMENT_ALWAYS,
               destructive: true,

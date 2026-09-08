@@ -56,15 +56,15 @@ type ExportState =
 function exportStateMessage(state: ExportState, t: TFunction): string {
   switch (state.kind) {
     case 'idle':
-      return t('finance.exportImport.export.idle', 'Eksport gotowy do uruchomienia.');
+      return t('finance.exportImport.export.idle', 'Export is ready to run.');
     case 'exporting':
-      return t('finance.exportImport.export.exporting', 'Eksportuję plik .xlsx…');
+      return t('finance.exportImport.export.exporting', 'Exporting .xlsx file…');
     case 'exported':
-      return t('finance.exportImport.export.exported', 'Eksport gotowy: wersja v{{version}}.', {
+      return t('finance.exportImport.export.exported', 'Export ready: version v{{version}}.', {
         version: state.manifest.businessVersionNo,
       });
     case 'error':
-      return `${t('finance.exportImport.export.error', 'Błąd eksportu')}: ${state.title}`;
+      return `${t('finance.exportImport.export.error', 'Export error')}: ${state.title}`;
     default: {
       const _exhaustive: never = state;
       return String(_exhaustive);
@@ -75,37 +75,37 @@ function exportStateMessage(state: ExportState, t: TFunction): string {
 function importStateMessage(state: ImportState, t: TFunction): string {
   switch (state.kind) {
     case 'idle':
-      return t('finance.exportImport.import.idle', 'Import gotowy — wybierz plik .xlsx.');
+      return t('finance.exportImport.import.idle', 'Import ready — choose an .xlsx file.');
     case 'parsing':
-      return t('finance.exportImport.import.parsing', 'Wczytuję plik…');
+      return t('finance.exportImport.import.parsing', 'Reading file…');
     case 'parsed':
       return state.manifestIssues.length > 0
         ? `${t('finance.exportImport.import.manifestIssues', 'Manifest ma problemy')}: ${state.manifestIssues.join('; ')}`
-        : t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+        : t('finance.exportImport.import.parsed', 'Loaded {{count}} rows. Manifest OK.', {
             count: state.rows.length,
           });
     case 'previewing':
-      return t('finance.exportImport.import.previewing', 'Liczę podgląd różnic…');
+      return t('finance.exportImport.import.previewing', 'Computing diff preview…');
     case 'previewed':
       return state.preview.ok
         ? t(
             'finance.exportImport.import.previewReady',
-            'Podgląd gotowy: {{add}} dodanych, {{change}} zmienionych, {{clear}} wyczyszczonych.',
+            'Preview ready: {{add}} added, {{change}} changed, {{clear}} cleared.',
             {
               add: state.preview.diff.toAdd.length,
               change: state.preview.diff.toChange.length,
               clear: state.preview.diff.toClear.length,
             }
           )
-        : t('finance.exportImport.import.previewBlocked', 'Podgląd zablokowany: {{count}} błędów wierszy.', {
+        : t('finance.exportImport.import.previewBlocked', 'Preview blocked: {{count}} row errors.', {
             count: state.preview.rowErrors.length,
           });
     case 'applying':
-      return t('finance.exportImport.import.applying', 'Zapisuję zmiany…');
+      return t('finance.exportImport.import.applying', 'Saving changes…');
     case 'applied':
       return t(
         'finance.exportImport.import.applied',
-        'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+        'Applied: {{added}} added, {{changed}} changed, {{cleared}} cleared.',
         {
           added: state.appliedCount.added,
           changed: state.appliedCount.changed,
@@ -113,7 +113,7 @@ function importStateMessage(state: ImportState, t: TFunction): string {
         }
       );
     case 'error':
-      return `${t('finance.exportImport.import.error', 'Błąd importu')}: ${state.title}`;
+      return `${t('finance.exportImport.import.error', 'Import error')}: ${state.title}`;
     default: {
       const _exhaustive: never = state;
       return String(_exhaustive);
@@ -254,13 +254,13 @@ export function FinanceExportImportPanel({
           onClick={handleExport}
           data-testid="export-button"
         >
-          {exportState.kind === 'exporting' ? t('finance.exportImport.exportingButton', 'Eksportuję…') : t('finance.exportImport.exportButton', 'Eksportuj .xlsx')}
+          {exportState.kind === 'exporting' ? t('finance.exportImport.exportingButton', 'Exporting…') : t('finance.exportImport.exportButton', 'Eksportuj .xlsx')}
         </button>
         {exportState.kind === 'exported' ? (
           <p className="text-[11px] text-c-text-secondary" data-testid="export-manifest-summary">
-            {t('finance.exportImport.version', 'Wersja')} v{exportState.manifest.businessVersionNo} ·{' '}
+            {t('finance.exportImport.version', 'Version')} v{exportState.manifest.businessVersionNo} ·{' '}
             {t('finance.exportImport.unit', 'jednostka')} {financeUnitLabel(exportState.manifest.defaultUnit)} ·{' '}
-            {t('finance.exportImport.source', 'źródło')} {exportState.manifest.source}
+            {t('finance.exportImport.source', 'source')} {exportState.manifest.source}
           </p>
         ) : null}
         {exportState.kind === 'error' ? (
@@ -284,7 +284,7 @@ export function FinanceExportImportPanel({
           też PROGRAMOWO powiązana).
         */}
         <label htmlFor={importFileInputId} className="text-xs font-medium text-c-text-primary">
-          {t('finance.exportImport.chooseFileLabel', 'Wybierz plik do importu (.xlsx)')}
+          {t('finance.exportImport.chooseFileLabel', 'Choose a file to import (.xlsx)')}
         </label>
         {/*
           Odbiór 2026-08-30 (przegląd całości): natywny przycisk pola pliku
@@ -316,15 +316,15 @@ export function FinanceExportImportPanel({
             htmlFor={importFileInputId}
             className="cursor-pointer rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface"
           >
-            {t('finance.exportImport.chooseFileButton', 'Wybierz plik')}
+            {t('finance.exportImport.chooseFileButton', 'Choose file')}
           </label>
           <span className="text-xs text-c-text-secondary">
-            {selectedFileName ?? t('finance.exportImport.noFileSelected', 'Nie wybrano pliku')}
+            {selectedFileName ?? t('finance.exportImport.noFileSelected', 'No file selected')}
           </span>
         </div>
 
         {importState.kind === 'parsing' ? (
-          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.parsing', 'Wczytuję plik…')}</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.parsing', 'Reading file…')}</p>
         ) : null}
 
         {importState.kind === 'parsed' ? (
@@ -335,7 +335,7 @@ export function FinanceExportImportPanel({
               </p>
             ) : (
               <p className="text-xs text-c-text-secondary">
-                {t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+                {t('finance.exportImport.import.parsed', 'Loaded {{count}} rows. Manifest OK.', {
                   count: importState.rows.length,
                 })}
               </p>
@@ -347,22 +347,22 @@ export function FinanceExportImportPanel({
               onClick={handlePreview}
               data-testid="import-preview-button"
             >
-              {t('finance.exportImport.previewButton', 'Podgląd różnic')}
+              {t('finance.exportImport.previewButton', 'Preview differences')}
             </button>
           </div>
         ) : null}
 
         {importState.kind === 'previewing' ? (
-          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.previewing', 'Liczę podgląd różnic…')}</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.previewing', 'Computing diff preview…')}</p>
         ) : null}
 
         {importState.kind === 'previewed' ? (
           <div className="flex flex-col gap-2" data-testid="import-preview">
             <div className="grid grid-cols-4 gap-2 text-xs">
-              <SummaryTile label={t('finance.exportImport.added', 'Dodane')} value={importState.preview.diff.toAdd.length} />
-              <SummaryTile label={t('finance.exportImport.changed', 'Zmienione')} value={importState.preview.diff.toChange.length} />
-              <SummaryTile label={t('finance.exportImport.cleared', 'Wyczyszczone')} value={importState.preview.diff.toClear.length} />
-              <SummaryTile label={t('finance.exportImport.unchanged', 'Bez zmian')} value={importState.preview.diff.unchangedCount} />
+              <SummaryTile label={t('finance.exportImport.added', 'Added')} value={importState.preview.diff.toAdd.length} />
+              <SummaryTile label={t('finance.exportImport.changed', 'Changed')} value={importState.preview.diff.toChange.length} />
+              <SummaryTile label={t('finance.exportImport.cleared', 'Cleared')} value={importState.preview.diff.toClear.length} />
+              <SummaryTile label={t('finance.exportImport.unchanged', 'Unchanged')} value={importState.preview.diff.unchangedCount} />
             </div>
             {importState.preview.rowErrors.length > 0 ? (
               <div
@@ -371,7 +371,7 @@ export function FinanceExportImportPanel({
               >
                 {t(
                   'finance.exportImport.rowErrors',
-                  '{{count}} błędów wierszy — import zablokowany, dopóki nie zostaną naprawione.',
+                  "{{count}} row errors — import blocked until they're fixed.",
                   { count: importState.preview.rowErrors.length }
                 )}
               </div>
@@ -395,7 +395,7 @@ export function FinanceExportImportPanel({
                   ? undefined
                   : t(
                       'finance.exportImport.applyBlockedTitle',
-                      'Zastosowanie zablokowane — napraw błędy powyżej (wszystko-albo-nic)'
+                      'Apply blocked — fix the errors above (all-or-nothing)'
                     )
               }
             >
@@ -405,7 +405,7 @@ export function FinanceExportImportPanel({
         ) : null}
 
         {importState.kind === 'applying' ? (
-          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.applying', 'Zapisuję…')}</p>
+          <p className="text-xs text-c-text-secondary">{t('finance.exportImport.import.applying', 'Saving changes…')}</p>
         ) : null}
 
         {importState.kind === 'applied' ? (
@@ -415,14 +415,14 @@ export function FinanceExportImportPanel({
           >
             {t(
               'finance.exportImport.import.applied',
-              'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+              'Applied: {{added}} added, {{changed}} changed, {{cleared}} cleared.',
               {
                 added: importState.appliedCount.added,
                 changed: importState.appliedCount.changed,
                 cleared: importState.appliedCount.cleared,
               }
             )}{' '}
-            {t('finance.exportImport.newWorkingRevision', 'Nowa robocza rewizja: {{id}}.', {
+            {t('finance.exportImport.newWorkingRevision', 'New working revision: {{id}}.', {
               id: importState.newWorkingRevisionId,
             })}
           </div>

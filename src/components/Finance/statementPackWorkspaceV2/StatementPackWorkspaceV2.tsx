@@ -48,6 +48,7 @@
  * (sourceRef), nie fabrykuje kroku 2.
  */
 
+import { ft } from '../shared/financeT';
 import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -722,12 +723,12 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
             ref={reasonDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
-            aria-label="Podaj powód"
+            aria-label={ft('finance.reasonDialog.title', 'Give a reason')}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
             data-testid="statement-pack-reason-dialog"
           >
-            <p className="text-sm font-semibold text-c-text">Podaj powód</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.reasonDialog.title', 'Give a reason')}</p>
             <textarea
               autoFocus
               value={reasonDraft}
@@ -742,7 +743,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
                 onClick={closeReasonDialog}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Anuluj
+                {ft('finance.common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -751,7 +752,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
                 data-testid="statement-pack-reason-submit"
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-danger px-3.5 text-xs font-semibold text-white hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Potwierdź
+                {ft('finance.common.confirm', 'Confirm')}
               </button>
             </div>
           </div>

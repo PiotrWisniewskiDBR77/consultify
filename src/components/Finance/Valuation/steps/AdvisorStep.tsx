@@ -8,6 +8,7 @@
  * Findings from either response shape (`POST .../advisor/generate` camelCase or
  * `GET .../advisor` snake_case) are normalized to ONE view before rendering.
  */
+import { ft } from '../../shared/financeT';
 import React from 'react';
 
 import {
@@ -77,8 +78,7 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
       <h2 className="text-sm font-semibold text-c-text">Doradca wyceny</h2>
       <p className="text-xs text-c-text-muted">
         Doradca odczytuje dane, formułuje fakty i hipotezy oraz wskazuje dowody —{' '}
-        <strong>nie zatwierdza decyzji</strong> i nie zastępuje zatwierdzenia przez człowieka.
-        Działa wyłącznie na świeżej, jeszcze niezatwierdzonej wersji kandydackiej.
+        <strong>{ft('finance.advisor.doesNotApprove', 'does not approve decisions')}</strong> {ft('finance.advisor.humanApprovalHint', 'and does not replace human approval. It works only on a fresh, not yet approved candidate version.')}
       </p>
 
       {!canGenerate && (
@@ -106,13 +106,13 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
 
       {findings === null && (
         <p className="text-xs text-c-text-muted" data-testid="advisor-step-loading">
-          Wczytywanie wniosków…
+          {ft('finance.advisor.loading', 'Loading conclusions…')}
         </p>
       )}
 
       {findings !== null && view.length === 0 && (
         <p className="text-xs text-c-text-muted" data-testid="advisor-empty">
-          Brak wygenerowanych wniosków dla tego wariantu.
+          {ft('finance.advisor.empty', 'No conclusions generated for this variant.')}
         </p>
       )}
 
@@ -140,7 +140,7 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
                         Pewność: {valuationAdvisorConfidenceLabel(f.confidence)}
                       </span>
                     )}
-                    {f.isFrozen && <span className="text-[10px] text-c-text-muted">Zamrożone</span>}
+                    {f.isFrozen && <span className="text-[10px] text-c-text-muted">{ft('finance.advisor.frozen', 'Frozen')}</span>}
                     {f.isStale && <span className="text-[10px] text-c-warning">Nieaktualne</span>}
                   </div>
                   <p className="mt-1 text-sm text-c-text">{f.title}</p>

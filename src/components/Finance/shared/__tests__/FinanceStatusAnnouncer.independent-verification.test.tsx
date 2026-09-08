@@ -100,7 +100,7 @@ describe('FinanceStatusAnnouncer — niezależna weryfikacja (FinanceComparePane
     await screen.findByTestId('finance-compare-panel');
 
     const announcerBefore = screen.getByTestId('finance-status-announcer');
-    expect(announcerBefore).toHaveTextContent('Porównanie gotowe.');
+    expect(announcerBefore).toHaveTextContent('Comparison ready.');
 
     const records: MutationRecord[] = [];
     const observer = new MutationObserver((list) => records.push(...list));
@@ -127,7 +127,7 @@ describe('FinanceStatusAnnouncer — niezależna weryfikacja (FinanceComparePane
     releaseSecond(sampleResult('drugie'));
 
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Comparison ready.')
     );
     observer.disconnect();
 

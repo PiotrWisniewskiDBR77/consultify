@@ -11,6 +11,7 @@
  * Fail-soft: a request error degrades to a quiet inline notice, never throws.
  * Behind flag `m16ValueSuite` (default OFF) — see financeFeatureFlags.ts.
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -31,7 +32,7 @@ const GATES: ValueCaptureGateStage[] = ['G0', 'G1', 'G2', 'G3', 'G4', 'G5'];
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 0 });
 };
 
 const fmtPct = (v: number | null | undefined): string => {

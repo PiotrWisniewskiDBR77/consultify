@@ -6,6 +6,7 @@
  * Mounted behind ff_modelVersioning flag in FinancialModelWorkspace (#82c —
  * moved here from the now-unused FinanceModelDocumentView full-view).
  */
+import { formatListDate } from '../../utils/listDateFormat';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -141,7 +142,7 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
                   </span>
                 </td>
                 <td className="px-3 py-2 text-xs text-slate-400">
-                  {new Date(v.createdAt).toLocaleDateString('pl-PL')}
+                  {formatListDate(v.createdAt)}
                 </td>
                 <td className="px-3 py-2">
                   <input

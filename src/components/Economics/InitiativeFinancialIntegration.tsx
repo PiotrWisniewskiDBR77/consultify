@@ -5,6 +5,8 @@
  * Shows linked analysis status and allows creating/navigating to financial analysis.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
   ArrowRight,
@@ -180,11 +182,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
     // from analysis_financials.currency); the `currency` prop is only a
     // last-resort fallback for when no analysis has loaded yet.
     const effectiveCurrency = linkedAnalysis?.currency || currency;
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency: effectiveCurrency,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatListCurrency(value, effectiveCurrency, { maximumFractionDigits: 0 });
   };
 
   const formatPercent = (value: number | null | undefined) => {
@@ -308,7 +306,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <BarChart2 size={14} />
           <span>
-            Click "Open Analysis" to see full scores and perform detailed analysis financial
+            {ft('finance.initiativeIntegration.openAnalysisHint', 'Click "Open Analysis" to see the full scores and run a detailed financial analysis')}
           </span>
         </div>
       </div>
@@ -326,7 +324,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           Detailed analysis ekonomiczna
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
-          Perform full analysis NPV, IRR, payback period and sensitivity for this initiative.
+          {ft('finance.initiativeIntegration.fullAnalysisHint', 'Run a full NPV, IRR, payback period and sensitivity analysis for this initiative.')}
         </p>
 
         {/* Pre-filled Data Preview */}
@@ -334,7 +332,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           <div className="bg-white dark:bg-navy-800 rounded-lg p-4 mb-4 text-left">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1">
               <Check size={12} className="text-emerald-500" />
-              Data will be automatically transferred:
+              {ft('finance.initiativeIntegration.transferHint', 'Data will be transferred automatically:')}
             </p>
             <div className="grid grid-cols-3 gap-2 text-sm">
               {initiative.costCapex && (
@@ -384,7 +382,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         </button>
 
         <p className="text-xs text-slate-600 dark:text-slate-500 mt-4">
-          Analysis will be linked to this initiative and available w module Economics
+          {ft('finance.initiativeIntegration.linkedHint', 'The analysis will be linked to this initiative and available in the Finance module')}
         </p>
       </div>
     </div>

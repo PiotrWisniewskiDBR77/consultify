@@ -11,6 +11,7 @@
  *
  * NIE wpięty nigdzie — biblioteczny panel M16 do użycia przez FinanceHub.
  */
+import { ft } from '../../Finance/shared/financeT';
 import React, { useEffect, useState } from 'react';
 
 import { FinanceWaterfall } from '@/components/Economics/charts';
@@ -102,7 +103,7 @@ export const VarianceBridgePanel: React.FC<Props> = ({ lines, fetcher }) => {
       className="rounded-xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-800"
     >
       <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-        Budżet vs wykonanie (variance bridge)
+        {ft('finance.varianceBridge.title', 'Budget vs actual (variance bridge)')}
       </h3>
       {children}
     </div>
@@ -113,7 +114,7 @@ export const VarianceBridgePanel: React.FC<Props> = ({ lines, fetcher }) => {
     return (
       <Frame>
         <p className="text-sm text-slate-500 dark:text-slate-400" data-testid="variance-failed">
-          Analiza wariancji niedostępna chwilowo — widok działa normalnie.
+          {ft('finance.varianceBridge.unavailable', 'Variance analysis is temporarily unavailable — the view keeps working.')}
         </p>
       </Frame>
     );
@@ -124,7 +125,7 @@ export const VarianceBridgePanel: React.FC<Props> = ({ lines, fetcher }) => {
     return (
       <Frame>
         <p className="text-sm text-slate-500 dark:text-slate-400" data-testid="variance-empty">
-          Brak danych budżetowych — dodaj pozycje plan/wykonanie.
+          {ft('finance.varianceBridge.empty', 'No budget data — add plan/actual items.')}
         </p>
       </Frame>
     );
@@ -134,7 +135,7 @@ export const VarianceBridgePanel: React.FC<Props> = ({ lines, fetcher }) => {
     return (
       <Frame>
         <p className="text-sm text-slate-400 dark:text-slate-500" data-testid="variance-busy">
-          Ładowanie analizy wariancji…
+          {ft('finance.varianceBridge.loading', 'Loading variance analysis…')}
         </p>
       </Frame>
     );

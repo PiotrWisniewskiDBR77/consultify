@@ -20,6 +20,7 @@
  * ten plik i tak samo w sobie nic nie montuje, flaga jest sprawdzana przez
  * callera (`AnalysisWorkspace.tsx`).
  */
+import { ft } from '../shared/financeT';
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
@@ -185,7 +186,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           <button
             type="button"
             onClick={onClose}
-            aria-label="Zamknij kreator"
+            aria-label={ft('finance.analysisWizard.close', 'Close the wizard')}
             data-testid="analysis-creator-close"
             className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
@@ -233,12 +234,11 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           {state.currentStep === 'source_version' && (
             <div className="space-y-2" data-testid="analysis-creator-body-source_version">
               <p className="text-xs text-c-text-muted mb-3">
-                Wybierz pakiet sprawozdań (Statement Pack Version), z którego analiza pobierze dane
-                źródłowe.
+                {ft('finance.analysisWizard.pickSourceHint', 'Choose the statement pack (Statement Pack Version) the analysis will draw its source data from.')}
               </p>
               {sourceOptions.length === 0 ? (
                 <p className="text-sm text-c-text-muted">
-                  Brak dostępnych źródeł — potrzebny jest zatwierdzony pakiet sprawozdań.
+                  {ft('finance.analysisWizard.noSources', 'No sources available — an approved statement pack is required.')}
                 </p>
               ) : (
                 sourceOptions.map((opt) => {
@@ -274,7 +274,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           {state.currentStep === 'periods' && (
             <div className="space-y-2" data-testid="analysis-creator-body-periods">
               <p className="text-xs text-c-text-muted mb-3">
-                Wybierz okresy do analizy (historyczne i prognozowane).
+                {ft('finance.analysisWizard.pickPeriods', 'Choose the periods to analyse (historical and forecast).')}
               </p>
               {periodOptions
                 .slice()
@@ -308,7 +308,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
             <div className="space-y-5" data-testid="analysis-creator-body-industry_goal">
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">
-                  Branża
+                  {ft('finance.analysisWizard.industry', 'Industry')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {ANALYSIS_INDUSTRY_PRESETS.map((preset) => (
@@ -359,7 +359,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 <input
                   value={kpiSearch}
                   onChange={(e) => setKpiSearch(e.target.value)}
-                  placeholder="Szukaj wskaźnika…"
+                  placeholder={ft('finance.analysisWizard.searchKpi', 'Search for an indicator…')}
                   className="w-full bg-transparent text-sm text-c-text placeholder:text-c-text-muted focus:outline-none"
                   data-testid="analysis-creator-kpi-search"
                 />
@@ -369,7 +369,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 <span className="font-medium text-c-text">{state.selectedKpiCodes.length}</span>{' '}
                 wskaźnik(ów).
                 {state.selectedKpiCodes.length === 0 ? (
-                  <span className="ml-1 text-c-danger">Wybierz przynajmniej jeden.</span>
+                  <span className="ml-1 text-c-danger">{ft('finance.analysisWizard.pickAtLeastOne', 'Choose at least one.')}</span>
                 ) : null}
               </p>
               <div className="space-y-1">
@@ -410,7 +410,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
               </div>
 
               <div className="mt-4 rounded-lg border border-dashed border-c-border-subtle p-3">
-                <p className="mb-1 text-xs font-medium text-c-text">Własna formuła (piaskownica)</p>
+                <p className="mb-1 text-xs font-medium text-c-text">{ft('finance.analysisWizard.customFormula', 'Custom formula (sandbox)')}</p>
                 <p className="mb-2 text-xs text-c-text-muted">
                   Walidacja działa na żywo, bez `eval`. Zapisanie jako nowy wskaźnik katalogu wymaga
                   endpointu backendowego, którego dziś nie ma — ta sekcja tylko sprawdza poprawność
@@ -485,8 +485,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           {state.currentStep === 'create_compute' && (
             <div className="space-y-3" data-testid="analysis-creator-body-create_compute">
               <p className="text-sm text-c-text">
-                Gotowe do utworzenia. Kliknij „Utwórz i przelicz”, aby założyć analizę i uruchomić
-                pierwsze przeliczenie.
+                {ft('finance.analysisWizard.readyToCreate', 'Ready to create. Click "Create and calculate" to set up the analysis and run the first calculation.')}
               </p>
               {draftPayload ? (
                 <pre
@@ -497,7 +496,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 </pre>
               ) : (
                 <p className="text-sm text-c-danger">
-                  Kreator jest niekompletny — wróć i uzupełnij brakujące kroki.
+                  {ft('finance.analysisWizard.incomplete', 'The wizard is incomplete — go back and fill in the missing steps.')}
                 </p>
               )}
               {submitErrorMessage ? (

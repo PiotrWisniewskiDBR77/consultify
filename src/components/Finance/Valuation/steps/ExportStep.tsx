@@ -8,6 +8,7 @@
  * export mechanism that was never asked to be adapted for Valuation's shape) — reported as
  * EVIDENCE_MISSING in PKG_H_VALUATION_report.md, not silently hidden.
  */
+import { ft } from '../../shared/financeT';
 import React from 'react';
 
 export function ExportStep(): React.ReactElement {
@@ -18,7 +19,7 @@ export function ExportStep(): React.ReactElement {
         className="rounded-xl border border-c-warning/30 bg-c-warning/10 p-4"
         data-testid="export-not-available"
       >
-        <p className="text-sm font-medium text-c-text">Eksport wyceny nie jest dziś dostępny</p>
+        <p className="text-sm font-medium text-c-text">{ft('finance.valuationSteps.exportUnavailable', 'Valuation export is not available today')}</p>
         <p className="mt-1 text-xs text-c-text-muted">
           Pakiet B3 (`valuation.routes.ts`, baza 9604652e27) nie udostępnia żadnego endpointu
           eksportu dla wyceny — `REPORT_EXPORT` istnieje jako typ artefaktu w kontrakcie ogólnym,

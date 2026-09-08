@@ -5,6 +5,8 @@
  * with visual indicators and explanations.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
   ArrowDownRight,
@@ -47,12 +49,10 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
 }) => {
   const formatCurrency = (value: number | null) => {
     if (value === null) return '—';
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency,
+    return formatListCurrency(value, currency, {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    });
   };
 
   const formatPercent = (value: number | null) => {
@@ -188,11 +188,11 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
           }
           status={irrStatus}
           icon={<Percent size={20} className={statusColors[irrStatus].text} />}
-          tooltip="Internal Rate of Return - discount rate at which NPV = 0"
+          tooltip={ft('finance.metrics.irrHint', 'Internal Rate of Return — the discount rate at which NPV = 0')}
         />
 
         <MetricCard
-          title="Okres zwrotu"
+          title={ft('finance.metrics.payback', 'Payback period')}
           value={formatYears(metrics.paybackPeriod)}
           subtitle={
             metrics.paybackPeriod && metrics.paybackPeriod <= horizon

@@ -96,7 +96,7 @@ describe('PredictionWorkspace — FinanceErrorBoundary (AP_MOUNT §D)', () => {
       render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-eb-1" />)
     ).not.toThrow();
     await waitFor(() => expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument());
-    expect(screen.getByTestId('finance-error-boundary')).toHaveTextContent(/Ponów|Wróć do listy/);
+    expect(screen.getByTestId('finance-error-boundary')).toHaveTextContent(/Retry|Back to list/);
     consoleErrorSpy.mockRestore();
   });
 });

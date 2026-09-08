@@ -5,6 +5,7 @@
  * Shows prioritized initiatives with effort/impact analysis.
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   ArrowRight,
   Award,
@@ -361,7 +362,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       onClick={() => onCreateInitiative(rec)}
                       className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg"
                     >
-                      Create initiative
+                      {ft('finance.aiRecommendations.createInitiative', 'Create initiative')}
                       <ArrowRight size={12} />
                     </button>
                   )}

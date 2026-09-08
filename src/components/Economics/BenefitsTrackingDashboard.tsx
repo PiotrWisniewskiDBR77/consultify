@@ -5,6 +5,8 @@
  * Includes variance analysis, trend visualization, and measurement entry.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -98,11 +100,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   }, [analysisId]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatListCurrency(value, currency, { maximumFractionDigits: 0 });
   };
 
   const formatPercent = (value: number | undefined | null) => {
@@ -254,7 +252,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus size={18} />
-          Dodaj measurement
+          {ft('finance.benefits.addMeasurement', 'Add measurement')}
         </button>
       </div>
 
@@ -369,7 +367,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
               onClick={() => setShowMeasurementModal(true)}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium"
             >
-              Dodaj measurement
+              {ft('finance.benefits.addMeasurement', 'Add measurement')}
             </button>
           </div>
         ) : (
@@ -378,7 +376,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
               <thead className="bg-slate-50 dark:bg-navy-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Okres
+                    {ft('finance.common.period', 'Period')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Plan
@@ -579,7 +577,7 @@ const MeasurementModal: React.FC<{
           {/* Period Selection */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Okres measurement
+              {ft('finance.benefits.measurementPeriod', 'Measurement period')}
             </label>
             <input
               type="text"
@@ -675,7 +673,7 @@ const MeasurementModal: React.FC<{
               ) : (
                 <>
                   <Check size={18} />
-                  Zapisz
+                  {ft('finance.common.save', 'Save')}
                 </>
               )}
             </button>

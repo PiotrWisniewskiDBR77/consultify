@@ -5,6 +5,8 @@
  * Supports creating snapshots, comparing versions, and restoring.
  */
 
+import { formatListDate } from '../../utils/listDateFormat';
+import { ft } from '../Finance/shared/financeT';
 import {
   Bookmark,
   Calendar,
@@ -261,12 +263,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             {showCreateForm && (
               <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
                 <h4 className="font-medium text-navy-900 dark:text-white mb-4">
-                  Create new version
+                  {ft('finance.versionHistory.createNew', 'Create new version')}
                 </h4>
                 <div className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Nazwa version (opcjonalnie)"
+                    placeholder={ft('finance.versionHistory.namePlaceholder', 'Version name (optional)')}
                     value={versionName}
                     onChange={(e) => setVersionName(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
@@ -394,10 +396,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                   <History className="text-slate-600 dark:text-slate-500" size={28} />
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  No zapisanych version
+                  {ft('finance.versionHistory.empty', 'No saved versions')}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-500">
-                  Create first version to track changesy
+                  {ft('finance.versionHistory.emptyHint', 'Create the first version to track changes')}
                 </p>
               </div>
             ) : (
@@ -447,7 +449,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
                               <span className="flex items-center gap-1">
                                 <Calendar size={12} />
-                                {new Date(version.created_at).toLocaleDateString('pl-PL')}
+                                {formatListDate(version.created_at)}
                               </span>
                               <span className="flex items-center gap-1">
                                 <User size={12} />

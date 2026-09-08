@@ -13,6 +13,8 @@
  * ★ V-5: brak martwej przestrzeni — grid wypełnia pełną szerokość
  * (`w-full`, kolumny `minmax`, nie stałe px).
  */
+import { formatListPercent } from '../../../utils/listDateFormat';
+import { ft } from '../shared/financeT';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -58,7 +60,7 @@ function formatPctAwareValue(
   return formatFinanceValueForDisplay(
     value,
     unit === 'PCT'
-      ? (n) => `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 2 })}%`
+      ? (n) => formatListPercent(n, 2)
       : undefined
   );
 }
@@ -379,7 +381,7 @@ export function AssumptionsView({
             }
             className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
           >
-            + Dodaj założenie
+            {ft('finance.assumptions.addAssumptionButton', '+ Add assumption')}
           </button>
           <div className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
           <button
@@ -398,7 +400,7 @@ export function AssumptionsView({
             data-testid="baseline-assumptions-redo"
             className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Ponów
+            {ft('finance.common.retry', 'Retry')}
           </button>
           <button
             type="button"
@@ -429,12 +431,12 @@ export function AssumptionsView({
             ref={confirmDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
-            aria-label="Potwierdź zapis zestawu założeń mimo ostrzeżeń"
+            aria-label={ft('finance.assumptions.confirmSaveWithWarnings', 'Confirm saving the assumption set despite warnings')}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
             data-testid="baseline-assumptions-preflight-confirm"
           >
-            <p className="text-sm font-semibold text-c-text">Zestaw założeń ma ostrzeżenia</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.assumptions.hasWarnings', 'The assumption set has warnings')}</p>
             <p className="mt-1 text-sm text-c-text-secondary">
               {preflightWarnings.length}{' '}
               {preflightWarnings.length === 1 ? 'komórka wymaga' : 'komórek wymaga'} uwagi (brak
@@ -447,7 +449,7 @@ export function AssumptionsView({
                 onClick={() => setConfirmingDespiteWarnings(false)}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Anuluj
+                {ft('finance.common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -458,7 +460,7 @@ export function AssumptionsView({
                 data-testid="baseline-assumptions-preflight-confirm-save"
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-text px-3.5 text-xs font-semibold text-c-surface hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Zapisz mimo to
+                {ft('finance.assumptions.saveAnyway', 'Save anyway')}
               </button>
             </div>
           </div>
@@ -474,12 +476,12 @@ export function AssumptionsView({
             ref={addDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
-            aria-label="Dodaj założenie"
+            aria-label={ft('finance.assumptions.addAssumption', 'Add assumption')}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
             data-testid="baseline-assumptions-add-dialog"
           >
-            <p className="text-sm font-semibold text-c-text">Dodaj założenie</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.assumptions.addAssumption', 'Add assumption')}</p>
             <div className="mt-3 space-y-3">
               <label className="block text-xs font-medium text-c-text-secondary">
                 Harmonogram
@@ -506,7 +508,7 @@ export function AssumptionsView({
 
               {scheduleIsWired ? (
                 <label className="block text-xs font-medium text-c-text-secondary">
-                  Założenie
+                  {ft('finance.assumptions.assumption', 'Assumption')}
                   <select
                     value={addDriverCode}
                     onChange={(e) => setAddDriverCode(e.target.value)}
@@ -523,25 +525,24 @@ export function AssumptionsView({
               ) : (
                 <div>
                   <label className="block text-xs font-medium text-c-text-secondary">
-                    Nazwa założenia (własna)
+                    {ft('finance.assumptions.customName', 'Assumption name (custom)')}
                     <input
                       type="text"
                       value={addCustomDriverCode}
                       onChange={(e) => setAddCustomDriverCode(e.target.value)}
-                      placeholder="np. HEADCOUNT_GROWTH_PCT"
+                      placeholder={ft('finance.assumptions.customCodePlaceholder', 'e.g. HEADCOUNT_GROWTH_PCT')}
                       className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       data-testid="baseline-add-driver-custom"
                     />
                   </label>
                   <p className="mt-1 text-[11px] text-c-warning">
-                    Ten harmonogram nie zasila dziś wyliczeń (silnik go jeszcze nie czyta) — wiersz
-                    zapisze się, ale nie zmieni żadnej liczby w „Wyliczeniach".
+                    {ft('finance.assumptions.scheduleInertHint2', 'This schedule does not feed the calculations today (the engine does not read it yet) — the row will be saved, but it will not change any number in \"Calculations\".')}
                   </p>
                 </div>
               )}
 
               <label className="block text-xs font-medium text-c-text-secondary">
-                Okres
+                {ft('finance.common.period', 'Period')}
                 <select
                   value={addPeriodId}
                   onChange={(e) => setAddPeriodId(e.target.value)}
@@ -568,7 +569,7 @@ export function AssumptionsView({
                 onClick={() => setAddOpen(false)}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Anuluj
+                {ft('finance.common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -576,7 +577,7 @@ export function AssumptionsView({
                 data-testid="baseline-add-submit"
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-text px-3.5 text-xs font-semibold text-c-surface hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Dodaj wiersz
+                {ft('finance.assumptions.addRow', 'Add row')}
               </button>
             </div>
           </div>
@@ -592,12 +593,12 @@ export function AssumptionsView({
             ref={deleteDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
-            aria-label="Usuń wiersz założenia"
+            aria-label={ft('finance.assumptions.removeRow', 'Delete assumption row')}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
             data-testid="baseline-delete-confirm"
           >
-            <p className="text-sm font-semibold text-c-text">Usunąć wiersz założenia?</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.assumptions.removeRowConfirm', 'Delete the assumption row?')}</p>
             <p className="mt-1 text-sm text-c-text-secondary">
               {driverLabel(pendingDelete.driverCode)} —{' '}
               {BASELINE_SCHEDULE_TYPE_LABELS[pendingDelete.scheduleType]} (
@@ -615,7 +616,7 @@ export function AssumptionsView({
                 onClick={() => setPendingDelete(null)}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                Anuluj
+                {ft('finance.common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -637,13 +638,13 @@ export function AssumptionsView({
           <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
             <tr>
               <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>
-                Założenie
+                {ft('finance.assumptions.assumption', 'Assumption')}
               </th>
               <th className="px-3 py-2 text-right" style={{ minWidth: 110 }}>
                 Wart. historyczna
               </th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 90 }}>
-                Okres bazowy
+                {ft('finance.assumptions.basePeriod', 'Base period')}
               </th>
               {/*
                 ★ NAPRAWA punktu 4 orkiestratora: „Reguła kalibracji" (najdłuższa
@@ -655,13 +656,13 @@ export function AssumptionsView({
                 (`BASELINE_RULE_LABELS`/opcje jakości), nie zgadywane.
               */}
               <th className="px-3 py-2 text-left" style={{ minWidth: 210 }}>
-                Reguła kalibracji
+                {ft('finance.assumptions.calibrationRule', 'Calibration rule')}
               </th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 170 }}>
-                Źródło
+                {ft('finance.common.source', 'Source')}
               </th>
               <th className="px-3 py-2 text-right" style={{ minWidth: 140 }}>
-                Wartość prognozy
+                {ft('finance.assumptions.forecastValue', 'Forecast value')}
               </th>
               {/*
                 185-usuwanie-zalozenia: kebab w kolumnie Akcje sam nie
@@ -676,7 +677,7 @@ export function AssumptionsView({
                 Bezpieczny zakres
               </th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
-                Jakość
+                {ft('finance.common.quality', 'Quality')}
               </th>
               {
                 /**
@@ -701,7 +702,7 @@ export function AssumptionsView({
                  */
               }
               <th className="px-3 py-2 text-left" style={{ minWidth: 150 }}>
-                Podgląd wpływu
+                {ft('finance.assumptions.impactPreview', 'Impact preview')}
               </th>
               {/*
                 185-usuwanie-zalozenia (uwaga właściciela: "dalej nie mam...
@@ -935,14 +936,14 @@ export function AssumptionsView({
                         actions={[
                           {
                             id: 'reset',
-                            label: 'Cofnij do ostatniej zapisanej wartości',
+                            label: ft('finance.assumptions.revert', 'Revert to the last saved value'),
                             icon: RotateCcw,
                             disabled: !cell?.dirty || readOnly,
                             onClick: () => resetCellToServer(spec),
                           },
                           {
                             id: 'delete',
-                            label: 'Usuń wiersz założenia',
+                            label: ft('finance.assumptions.removeRow', 'Delete assumption row'),
                             icon: Trash2,
                             variant: 'danger',
                             disabled: readOnly,
@@ -961,7 +962,7 @@ export function AssumptionsView({
             {effectiveRowOrder.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-3 py-10 text-center text-sm text-c-text-muted">
-                  Ten model nie ma jeszcze żadnych założeń.
+                  {ft('finance.assumptions.emptyModel', 'This model has no assumptions yet.')}
                 </td>
               </tr>
             )}

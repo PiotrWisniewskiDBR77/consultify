@@ -89,7 +89,7 @@ describe('AssumptionsView — dialog potwierdzenia zapisu mimo ostrzeżeń (a11y
     await waitFor(() => expect(editor.save).toHaveBeenCalledTimes(1));
   });
 
-  it('KONTROLA NEGATYWNA: gdy brak ostrzeżeń preflight, klik "Zapisz" NIE otwiera dialogu (dowód, że test faktycznie zależy od preflightWarnings, nie zawsze się otwiera)', () => {
+  it('KONTROLA NEGATYWNA: gdy brak ostrzeżeń preflight, klik "Save" NIE otwiera dialogu (dowód, że test faktycznie zależy od preflightWarnings, nie zawsze się otwiera)', () => {
     render(<AssumptionsView editor={fakeEditor({ preflightWarnings: [] })} rowOrder={[]} />);
     fireEvent.click(screen.getByTestId('baseline-assumptions-save'));
     expect(screen.queryByTestId('baseline-assumptions-preflight-confirm')).not.toBeInTheDocument();

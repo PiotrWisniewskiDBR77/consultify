@@ -69,21 +69,22 @@ export function lifecycleTransitionsFor(
   status: BusinessVersionStatus
 ): WorkspaceBarLifecycleTransition[] {
   /**
-   * ★ ŚWIADOMIE BEZ `en` — 1:1 z tym, co stało w `BaselineWorkspace.tsx`
-   * i `StatementPackWorkspaceV2.tsx` przed wyniesieniem (2026-09-05).
-   * `pickWorkspaceBarLabel` bierze `.en` gdy język to angielski, więc
-   * dołożenie tłumaczeń ZMIENIŁO BY wygląd tych dwóch, odebranych już
-   * ekranów przy okazji dyżuru o UUID-ach. Brak `en` to zastany dług
-   * (menu cyklu życia jest po polsku także w wersji angielskiej), zgłoszony,
-   * nie naprawiany tutaj.
+   * `en` DOŁOŻONE w paczce J9 (program spójności językowej, 08.09). Wcześniej
+   * świadomie go nie było — komentarz w tym miejscu opisywał to jako „zastany
+   * dług: menu cyklu życia jest po polsku także w wersji angielskiej". To
+   * właśnie ten dług; `pickWorkspaceBarLabel` bierze `.en` gdy język konta to
+   * angielski, więc od teraz pasek cyklu życia w `BaselineWorkspace.tsx`
+   * i `StatementPackWorkspaceV2.tsx` mówi po angielsku do konta EN. Wersja
+   * polska (`pl`) nie zmienia się ani o znak.
    */
   const t = (
     action: WorkspaceBarLifecycleTransition['action'],
     pl: string,
+    en: string,
     opts: Partial<WorkspaceBarLifecycleTransition> = {}
   ): WorkspaceBarLifecycleTransition => ({
     action,
-    label: { key: action, pl },
+    label: { key: action, pl, en },
     enablement: ENABLEMENT_ALWAYS,
     destructive: false,
     requiresConfirmation: false,
@@ -94,8 +95,8 @@ export function lifecycleTransitionsFor(
   switch (status) {
     case 'DRAFT':
       return [
-        t('submit_for_review', 'Przekaż do przeglądu'),
-        t('invalidate', 'Unieważnij', {
+        t('submit_for_review', 'Przekaż do przeglądu', 'Submit for review'),
+        t('invalidate', 'Unieważnij', 'Invalidate', {
           destructive: true,
           requiresConfirmation: true,
           requiresReason: true,
@@ -103,19 +104,19 @@ export function lifecycleTransitionsFor(
       ];
     case 'READY_FOR_REVIEW':
       return [
-        t('start_review', 'Rozpocznij przegląd'),
-        t('withdraw', 'Wycofaj z przeglądu'),
+        t('start_review', 'Rozpocznij przegląd', 'Start review'),
+        t('withdraw', 'Wycofaj z przeglądu', 'Withdraw from review'),
       ];
     case 'IN_REVIEW':
       return [
-        t('approve', 'Zatwierdź', { requiresConfirmation: true }),
-        t('request_changes', 'Poproś o zmiany', { requiresReason: true }),
+        t('approve', 'Zatwierdź', 'Approve', { requiresConfirmation: true }),
+        t('request_changes', 'Poproś o zmiany', 'Request changes', { requiresReason: true }),
       ];
     case 'NEEDS_CHANGES':
-      return [t('resume_editing', 'Wróć do edycji')];
+      return [t('resume_editing', 'Wróć do edycji', 'Resume editing')];
     case 'APPROVED':
       return [
-        t('reopen', 'Otwórz ponownie', {
+        t('reopen', 'Otwórz ponownie', 'Reopen', {
           destructive: true,
           requiresConfirmation: true,
           requiresReason: true,

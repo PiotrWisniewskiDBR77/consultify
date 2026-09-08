@@ -19,6 +19,7 @@
  * FAKTYCZNIE otworzył wynik przynajmniej raz, nie tylko żeby szkic istniał.
  */
 
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 export type ReportDraftStageStatus = 'not_started' | 'in_progress' | 'ready' | 'failed';
@@ -64,41 +65,41 @@ export function StatementReportActionsSection(props: StatementReportActionsSecti
     {
       id: 'draft',
       index: 1,
-      title: 'Generuj szkic',
+      title: ft('finance.reportActions.draft', 'Generate draft'),
       statusText: draftStatusText(draftStatus, draftError),
       tone: draftStatusTone(draftStatus),
       disabled: draftStatus === 'in_progress',
-      disabledReason: draftStatus === 'in_progress' ? 'Generowanie w toku…' : null,
-      buttonLabel: draftStatus === 'ready' || draftStatus === 'failed' ? 'Generuj ponownie' : 'Generuj szkic',
+      disabledReason: draftStatus === 'in_progress' ? ft('finance.reportActions.generating', 'Generation in progress…') : null,
+      buttonLabel: draftStatus === 'ready' || draftStatus === 'failed' ? ft('finance.reportActions.regenerate', 'Generate again') : ft('finance.reportActions.draft', 'Generate draft'),
       onClick: onGenerateDraft,
     },
     {
       id: 'open',
       index: 2,
-      title: 'Otwórz wynik',
+      title: ft('finance.reportActions.open', 'Open result'),
       statusText: openStatusText(openStatus, draftStatus),
       tone: openStatusTone(openStatus),
       disabled: draftStatus !== 'ready',
-      disabledReason: draftStatus !== 'ready' ? 'Najpierw wygeneruj szkic (krok 1).' : null,
-      buttonLabel: 'Otwórz wynik',
+      disabledReason: draftStatus !== 'ready' ? ft('finance.reportActions.needDraft', 'Generate the draft first (step 1).') : null,
+      buttonLabel: ft('finance.reportActions.open', 'Open result'),
       onClick: onOpenResult,
     },
     {
       id: 'publish',
       index: 3,
-      title: 'Opublikuj / Dołącz do raportu',
+      title: ft('finance.reportActions.publish', 'Publish / attach to report'),
       statusText: publishStatusText(publishStatus, openStatus, publishError),
       tone: publishStatusTone(publishStatus),
       disabled: openStatus !== 'opened' || publishStatus === 'in_progress' || publishStatus === 'published',
       disabledReason:
         openStatus !== 'opened'
-          ? 'Najpierw otwórz wynik (krok 2).'
+          ? ft('finance.reportActions.needOpen', 'Open the result first (step 2).')
           : publishStatus === 'in_progress'
-            ? 'Publikacja w toku…'
+            ? ft('finance.reportActions.publishing', 'Publishing…')
             : publishStatus === 'published'
-              ? 'Już opublikowano.'
+              ? ft('finance.reportActions.alreadyPublished', 'Already published.')
               : null,
-      buttonLabel: publishStatus === 'failed' ? 'Spróbuj opublikować ponownie' : 'Opublikuj / Dołącz do raportu',
+      buttonLabel: publishStatus === 'failed' ? ft('finance.reportActions.retryPublish', 'Try publishing again') : ft('finance.reportActions.publish', 'Publish / attach to report'),
       onClick: onPublish,
     },
   ];

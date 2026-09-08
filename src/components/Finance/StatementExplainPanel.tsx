@@ -1,3 +1,4 @@
+import { formatListNumber } from '../../utils/listDateFormat';
 import {
   ArrowRight,
   BookOpen,
@@ -198,7 +199,7 @@ function EvidenceCard({
                   {t('finance.explainPanel.contribution', 'Contribution')}
                 </span>
                 <span className="font-mono font-semibold tabular-nums">
-                  {Number(evidence.contributionValue).toLocaleString('pl-PL')}
+                  {formatListNumber(evidence.contributionValue)}
                 </span>
               </div>
             )}
@@ -324,11 +325,11 @@ export const StatementExplainPanel: React.FC<Props> = ({
             <div className="flex items-end justify-between">
               <div>
                 <div className="font-mono text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-                  {new Intl.NumberFormat('pl-PL', {
+                  {formatListNumber(explain.value || 0, '—', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                     useGrouping: true,
-                  }).format(explain.value || 0)}
+                  })}
                 </div>
                 {currency && (
                   <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500">
@@ -386,7 +387,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         }`}
                       >
                         {pv.value != null
-                          ? new Intl.NumberFormat('pl-PL', { useGrouping: true }).format(pv.value)
+                          ? formatListNumber(pv.value, '—', { useGrouping: true })
                           : '—'}
                       </div>
                     </div>

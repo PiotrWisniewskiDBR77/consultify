@@ -15,6 +15,7 @@
  * a controlled rollback seam. The only consumer today is
  * `dev-render/screens/finance-valuation-workspace.tsx` for screenshot evidence.
  */
+import { ft } from '../shared/financeT';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
@@ -724,7 +725,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
               <section className="mt-6 max-w-5xl space-y-3" aria-label="Przekazanie rekomendacji">
                 <h3 className="text-sm font-semibold text-c-text">Rekomendacja → kandydat</h3>
                 {legacyRecommendations === null && (
-                  <p className="text-xs text-c-text-muted">Weryfikowanie źródła rekomendacji…</p>
+                  <p className="text-xs text-c-text-muted">{ft('finance.valuation.verifyingSource', 'Verifying the recommendation source…')}</p>
                 )}
                 {legacyRecommendationError && (
                   <p role="alert" className="text-xs text-c-danger">
@@ -754,7 +755,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
                         setCandidateRecommendationId(recommendation.id);
                       }}
                     >
-                      Wyślij jako kandydata na Initiative
+                      {ft('finance.valuation.sendAsCandidate', 'Send as an Initiative candidate')}
                     </button>
                   </div>
                 ))}
@@ -775,7 +776,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
           confirm={() => candidateHandoffApi.confirm(candidateRecommendationId)}
           fetchHandoff={() => candidateHandoffApi.get(candidateRecommendationId)}
           getReopenLink={() => null}
-          title="Wyślij jako kandydata na Initiative"
+          title={ft('finance.valuation.sendAsCandidate', 'Send as an Initiative candidate')}
           noticeText="Ta operacja tworzy kandydata do osobnej oceny; nie tworzy Initiative automatycznie."
           confirmLabel="Wyślij"
           cancelLabel="Anuluj"

@@ -1,3 +1,4 @@
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 /**
@@ -238,7 +239,7 @@ export const GoldenThreadSankey: React.FC<GoldenThreadSankeyProps> = ({
         className="flex items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
         style={{ height }}
       >
-        <span>Brak danych — połącz inicjatywy z KPI i wartością, aby zobaczyć złotą nić.</span>
+        <span>{ft('finance.charts.goldenThread.empty', 'No data — connect initiatives to KPIs and value to see the golden thread.')}</span>
       </div>
     );
   }
@@ -355,7 +356,7 @@ export const GoldenThreadSankey: React.FC<GoldenThreadSankeyProps> = ({
             <span>
               <strong>{hovered.label}</strong>
               {hovered.orphan && (
-                <span className="ml-1 text-rose-600 dark:text-rose-400">· zerwana nić</span>
+                <span className="ml-1 text-rose-600 dark:text-rose-400">{ft('finance.charts.goldenThread.broken', '· broken thread')}</span>
               )}
               <span className="ml-1 text-slate-500 dark:text-slate-400">{hovered.value}</span>
             </span>
