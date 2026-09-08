@@ -110,6 +110,34 @@ describe('00-wspolne — guard hosta (odmowa produkcji/demo/staging i błędnego
     expect(sprawdzCel(url, '54418')).toBe('127.0.0.1:54418/consultify_kopia_d6');
   });
 
+  // D2 (docs/program/DANE_POKAZOWE_EN_20260908/PLAN.md §D2) uruchamia
+  // 02-odkrycie.ts na WŁASNEJ kopii `consultify_kopia_d2` (a nie na
+  // `consultify_kopia_d1` z D1) — każda paczka dostaje swój numer. Guard
+  // musiał zostać uogólniony z literału "d1" na wzorzec "d<N>"
+  // (00-wspolne.ts:78, `/consultify_kopia_d\d+/i`) — ten test pilnuje że
+  // d2 (i każdy kolejny numer) przechodzi tak samo jak d1 powyżej.
+  it('przepuszcza KAŻDY numer paczki "consultify_kopia_d<N>" (d1, d2, d3, …) — guard nie jest przybity do jednej paczki', () => {
+    for (const n of [1, 2, 3, 7]) {
+      const url = `postgresql://postgres:postgres@127.0.0.1:54418/consultify_kopia_d${n}`;
+      expect(() => sprawdzCel(url, '54418')).not.toThrow();
+    }
+  });
+
+  it('MUTACJA — gdyby guard wrócił do literału "d1", "consultify_kopia_d2" (baza D2) zostałaby ODRZUCONA; produkcyjna wersja tego NIE robi', () => {
+    const mutantSprawdzCelD1Only = (url: string, oczekiwanyHost: string): string => {
+      const t = tozsamosc(url);
+      if (/centerbeam/i.test(t)) throw new Error('PRODUKCJĘ');
+      if (/trolley|thomas/i.test(t)) throw new Error('demo/staging');
+      const host = t.split('/')[0]!;
+      if (!host.includes(oczekiwanyHost)) throw new Error('nie pasuje');
+      if (!/consultify_kopia_d1/i.test(t)) throw new Error('consultify_kopia_d1'); // MUTANT: literał "d1"
+      return t;
+    };
+    const urlD2 = 'postgresql://postgres:postgres@127.0.0.1:54418/consultify_kopia_d2';
+    expect(() => mutantSprawdzCelD1Only(urlD2, '54418')).toThrow(); // mutant: odrzuca d2 (RED byłoby złe dla D2)
+    expect(() => sprawdzCel(urlD2, '54418')).not.toThrow(); // produkcja: przepuszcza d2 (to jest właściwe zachowanie)
+  });
+
   it('MUTACJA — gdyby guard porównywał tylko prefiks hosta bez segmentu bazy, złapałby staging na tym samym porcie; produkcyjna wersja tego NIE robi', () => {
     // Mutant: guard "stary" sprawdzał tylko host:port, nie nazwę bazy.
     const mutantSprawdzCel = (url: string, oczekiwanyHost: string): string => {

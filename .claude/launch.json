@@ -626,6 +626,14 @@
         "--strictPort"
       ],
       "port": 3011
+    },
+    {
+      "name": "d2-odkrycie-38271",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "scripts/dev/d2-odkrycie-frontend.sh"
+      ],
+      "port": 38271
     }
   ]
 }
