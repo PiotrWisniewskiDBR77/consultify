@@ -25625,6 +25625,20 @@
         "emptyNoApprovedReport": "Raport powstaje z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
         "emptyNoApprovedInitiative": "Inicjatywy powstają z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
         "goToSessions": "Przejdź do Sesji"
+      },
+      "category": {
+        "strategic": "Strategiczne",
+        "operational": "Operacyjne",
+        "digital": "Cyfrowe",
+        "automation": "Automatyzacja procesów",
+        "licensed": "Oceny"
+      },
+      "initiative": {
+        "loading": "Wczytywanie szczegółów inicjatywy…",
+        "notFound": "Nie znaleziono inicjatywy",
+        "backToList": "Wróć do listy",
+        "noTasks": "Brak zadań",
+        "noTasksHint": "Zadania powstaną na etapie planowania"
       }
     },
     "integrations": {
@@ -29420,7 +29434,56 @@
       "insights": "Wnioski AI"
     },
     "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
-    "goToBaseline": "Przejdź do Baseline"
+    "goToBaseline": "Przejdź do Baseline",
+    "custom": {
+      "title": "Trendy własne",
+      "subtitle": "Dodaj presje charakterystyczne dla Twojego rynku lub niszy.",
+      "add": "Dodaj trend własny",
+      "radarWatch": "Radar AI",
+      "radarWatchBody": "Obserwuję źródła informacji pod kątem „Carbon Tax Legislation” — wygląda na istotne dla Twojego sektora.",
+      "addToList": "Dodać do listy?",
+      "empty": "Nie dodano jeszcze żadnego trendu własnego.",
+      "newTitle": "Nowy trend własny",
+      "nameLabel": "Nazwa trendu",
+      "namePlaceholder": "np. wojna cenowa lokalnego konkurenta",
+      "descriptionLabel": "Opis / dlaczego istotne?",
+      "descriptionPlaceholder": "Wpływ na sprzedaż w III kwartale…",
+      "typeLabel": "Typ",
+      "type": {
+        "technology": "Technologia",
+        "business": "Biznes",
+        "societal": "Społeczny"
+      },
+      "ring": {
+        "now": "Wpływ teraz",
+        "watch": "Bacznie obserwuj",
+        "horizon": "Na horyzoncie"
+      },
+      "save": "Zapisz trend"
+    },
+    "detail": {
+      "loading": "Wczytywanie szczegółów trendu…",
+      "errorLabel": "Błąd",
+      "goBack": "Wróć",
+      "noTrend": "Nie wybrano trendu.",
+      "whatIsIt": "Czym to jest",
+      "industryImpact": "Wpływ na branżę",
+      "companyImpact": "Wpływ na firmę",
+      "aiInsight": "Insight AI",
+      "impactScoring": "Ocena wpływu",
+      "evidence": "Dowody",
+      "risks": "Ryzyka",
+      "opportunities": "Szanse",
+      "actions": "Działania",
+      "economicImpact": "Wpływ ekonomiczny",
+      "likelihood": "Prawdopodobieństwo (3–5 lat)",
+      "unavoidability": "Nieuchronność",
+      "competitivePressure": "Presja konkurencyjna",
+      "downloadAndRescore": "Pobierz wszystko i przelicz ocenę"
+    },
+    "baseline": {
+      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu."
+    }
   },
   "publicBooking": {
     "header": "Umów spotkanie",
@@ -36279,6 +36342,9 @@
       "recommendation": {
         "confidence": "pewność"
       }
+    },
+    "insight": {
+      "loading": "Wczytywanie insightu…"
     }
   },
   "docs": {
@@ -48729,6 +48795,9 @@
       "identifier": "Identyfikator",
       "openInMyWork": "Otwórz źródło w Mojej Pracy",
       "noSourceId": "Ten wpis nie niesie identyfikatora źródła — nie ma dokąd przejść."
+    },
+    "canvas": {
+      "loadingStep": "Wczytywanie kroku…"
     }
   },
   "drd": {
@@ -49944,6 +50013,55 @@
       "now": "Teraz — krok {{index}} z {{total}}",
       "notStarted": "Proces jeszcze nie wystartował.",
       "noCurrentStep": "Brak kroku w toku."
+    }
+  },
+  "knowledge": {
+    "backToTop": "Wróć na górę",
+    "uploader": {
+      "webHint": "Wyciąga główną treść, tytuł i metadane ze stron internetowych",
+      "words": "słów"
+    }
+  },
+  "studio": {
+    "chat": {
+      "subtitle": "Opisz swój diagram",
+      "clear": "Wyczyść czat",
+      "startCreating": "Zacznij tworzyć",
+      "emptyBody": "Opisz diagram, który chcesz stworzyć, a wygeneruję go dla Ciebie.",
+      "generating": "Generuję diagram",
+      "quickActions": "Szybkie akcje",
+      "inputPlaceholder": "Opisz swój diagram…"
+    },
+    "quickActions": {
+      "processFlow": "Utwórz mapę procesu",
+      "decisionNode": "Dodaj węzeł decyzyjny",
+      "orgChart": "Utwórz schemat organizacyjny",
+      "swimlane": "Dodaj tor (swimlane)",
+      "mindMap": "Utwórz mapę myśli",
+      "raciMatrix": "Utwórz macierz RACI"
+    },
+    "sidebar": {
+      "newDocument": "Nowy dokument"
+    },
+    "export": {
+      "title": "Eksportuj diagram",
+      "subtitle": "Wybierz format i ustawienia"
+    },
+    "loading": "Wczytywanie Studia…",
+    "unavailable": {
+      "title": "Studio nie jest jeszcze dostępne",
+      "body": "Wizualny warsztat AI jest w budowie. Zajrzyj wkrótce — w międzyczasie skorzystaj z Mapy myśli, Mapy procesu albo Tablicy w Mojej Pracy."
+    }
+  },
+  "playbook": {
+    "properties": {
+      "empty": "Wybierz węzeł, aby edytować jego właściwości",
+      "descriptionPlaceholder": "Opisz, co robi ten krok…",
+      "selectAction": "Wybierz akcję…"
+    },
+    "canvas": {
+      "empty": "Pusta kanwa",
+      "emptyHint": "Użyj paska narzędzi, aby dodać węzły"
     }
   }
 }

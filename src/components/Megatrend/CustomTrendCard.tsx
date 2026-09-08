@@ -4,6 +4,7 @@
 // ----------------------------------------------------------------------
 
 import { AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 
 interface CustomTrend {
@@ -21,6 +22,7 @@ interface CustomTrendCardProps {
 }
 
 export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd, onDelete }) => {
+  const { t } = useTranslation();
   const [isAdding, setIsAdding] = useState(false);
   const [newTrend, setNewTrend] = useState<Omit<CustomTrend, 'id'>>({
     label: '',
@@ -40,9 +42,9 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
     <div className="bg-c-surface rounded-xl shadow-lg p-6 space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-c-text">Custom Trends</h2>
+          <h2 className="text-2xl font-bold text-c-text">{t('megatrends.custom.title', 'Custom trends')}</h2>
           <p className="text-sm text-c-text-muted mt-1">
-            Add specific pressures unique to your market or niche.
+            {t('megatrends.custom.subtitle', 'Add specific pressures unique to your market or niche.')}
           </p>
         </div>
         {!isAdding && (
@@ -50,7 +52,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-surface rounded-lg hover:opacity-90 transition"
           >
-            <Plus size={16} /> Add Custom Trend
+            <Plus size={16} /> {t('megatrends.custom.add', 'Add custom trend')}
           </button>
         )}
       </div>
@@ -59,10 +61,18 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
       <div className="bg-c-surface-raised p-4 rounded-lg border border-c-border-subtle flex items-start gap-3">
         <AlertCircle className="text-c-text-secondary dark:text-c-text-muted mt-1" size={18} />
         <div>
-          <h4 className="font-bold text-sm text-c-text">AI Radar Watch</h4>
+          <h4 className="font-bold text-sm text-c-text">{t('megatrends.custom.radarWatch', 'AI radar watch')}</h4>
           <p className="text-xs text-c-text-muted mt-1">
-            I'm monitoring news sources for "Carbon Tax Legislation" as it seems relevant to your
-            sector.
+            {t(
+              'megatrends.custom.radarWatchBody',
+              'I am monitoring news sources for “Carbon Tax Legislation” as it seems relevant to your sector.'
+            )}
+            {/* STOP J4 (09.09): tego napisu NIE przenoszę do `t()`. Linia niżej
+                niesie token crimson, a hook `check-triada` liczy każdą NOWO
+                DODANĄ linię z crimsonem jako naruszenie kanonu — naprawa
+                językowa wymagałaby przy okazji zmiany koloru, czyli zmiany
+                WIZUALNEJ poza zakresem paczki językowej (wymaga akceptu
+                właściciela). Zgłoszone w evidence/jezyk-j4/README.md. */}
             <button className="text-c-accent font-bold ml-1 hover:underline">Add to list?</button>
           </p>
         </div>
@@ -72,7 +82,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
       <div className="space-y-3">
         {trends.length === 0 && !isAdding && (
           <div className="text-center py-8 text-c-text-secondary dark:text-c-text-muted italic">
-            No custom trends added yet.
+            {t('megatrends.custom.empty', 'No custom trends added yet.')}
           </div>
         )}
 
@@ -118,37 +128,37 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
           onSubmit={handleSubmit}
           className="bg-c-surface-raised p-4 rounded-lg border border-c-border-subtle animate-in fade-in slide-in-from-top-2"
         >
-          <h3 className="font-bold text-c-text mb-4">New Custom Trend</h3>
+          <h3 className="font-bold text-c-text mb-4">{t('megatrends.custom.newTitle', 'New custom trend')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="col-span-2">
               <label className="block text-xs font-bold text-c-text-muted uppercase mb-1">
-                Trend Name
+                {t('megatrends.custom.nameLabel', 'Trend name')}
               </label>
               <input
                 type="text"
                 required
                 value={newTrend.label}
                 onChange={(e) => setNewTrend({ ...newTrend, label: e.target.value })}
-                placeholder="e.g. Local Competitor Price War"
+                placeholder={t('megatrends.custom.namePlaceholder', 'e.g. Local competitor price war')}
                 className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               />
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-bold text-c-text-muted uppercase mb-1">
-                Description / Why Relevant?
+                {t('megatrends.custom.descriptionLabel', 'Description / why relevant?')}
               </label>
               <textarea
                 required
                 value={newTrend.description}
                 onChange={(e) => setNewTrend({ ...newTrend, description: e.target.value })}
-                placeholder="Impact on our Q3 sales..."
+                placeholder={t('megatrends.custom.descriptionPlaceholder', 'Impact on our Q3 sales…')}
                 className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
                 rows={2}
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-c-text-muted uppercase mb-1">
-                Type
+                {t('megatrends.custom.typeLabel', 'Type')}
               </label>
               <select
                 value={newTrend.type}
@@ -157,9 +167,9 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 }
                 className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               >
-                <option value="Technology">Technology</option>
-                <option value="Business">Business</option>
-                <option value="Societal">Societal</option>
+                <option value="Technology">{t('megatrends.custom.type.technology', 'Technology')}</option>
+                <option value="Business">{t('megatrends.custom.type.business', 'Business')}</option>
+                <option value="Societal">{t('megatrends.custom.type.societal', 'Societal')}</option>
               </select>
             </div>
             <div>
@@ -173,9 +183,9 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 }
                 className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               >
-                <option value="Now">Impact Now</option>
-                <option value="Watch Closely">Watch Closely</option>
-                <option value="On the Horizon">On the Horizon</option>
+                <option value="Now">{t('megatrends.custom.ring.now', 'Impact now')}</option>
+                <option value="Watch Closely">{t('megatrends.custom.ring.watch', 'Watch closely')}</option>
+                <option value="On the Horizon">{t('megatrends.custom.ring.horizon', 'On the horizon')}</option>
               </select>
             </div>
           </div>
@@ -185,13 +195,13 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
               onClick={() => setIsAdding(false)}
               className="px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised rounded"
             >
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm bg-c-text text-c-surface rounded hover:opacity-90"
             >
-              Save Trend
+              {t('megatrends.custom.save', 'Save trend')}
             </button>
           </div>
         </form>

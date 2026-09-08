@@ -12,6 +12,7 @@
 //   • Documents & Evidence – list of attached files/links, AI can re‑score after upload
 // ---------------------------------------------------------------
 
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 
 // Expected shape of a megatrend – matches backend model
@@ -47,6 +48,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
   trend: propTrend,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [trend, setTrend] = useState<MegatrendDetail | null>(propTrend ?? null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
             ></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
           </svg>
-          <span>Loading trend details…</span>
+          <span>{t('megatrends.detail.loading', 'Loading trend details…')}</span>
         </div>
       </div>
     );
@@ -101,19 +103,19 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
   if (error) {
     return (
       <div className="p-8 text-center text-danger-600 dark:text-danger-400">
-        <p>Error: {error}</p>
+        <p>{t('megatrends.detail.errorLabel', 'Error')}: {error}</p>
         <button
           onClick={onClose}
           className="mt-4 px-4 py-2 bg-c-surface-raised rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
         >
-          Go Back
+          {t('megatrends.detail.goBack', 'Go back')}
         </button>
       </div>
     );
   }
 
   if (!trend) {
-    return <p className="text-c-text-muted">No trend selected.</p>;
+    return <p className="text-c-text-muted">{t('megatrends.detail.noTrend', 'No trend selected.')}</p>;
   }
 
   const {
@@ -150,7 +152,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
       <button
         className="absolute top-4 right-4 p-2 rounded-full hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted hover:text-c-text dark:hover:text-c-text-muted transition-colors"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t('common.close', 'Close')}
       >
         ✕
       </button>
@@ -174,7 +176,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
           <div className="lg:col-span-2 space-y-8">
             {/* What is it */}
             <section className="bg-c-surface-raised p-6 rounded-lg">
-              <SectionHeader icon={<span>📄</span>} title="What is it" />
+              <SectionHeader icon={<span>📄</span>} title={t('megatrends.detail.whatIsIt', 'What is it')} />
               <p className="mt-2 text-c-text-secondary leading-relaxed text-lg text-justify">
                 {shortDescription}
               </p>
@@ -183,13 +185,13 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Why it matters for the industry */}
               <section>
-                <SectionHeader icon={<span>🏭</span>} title="Industry Impact" />
+                <SectionHeader icon={<span>🏭</span>} title={t('megatrends.detail.industryImpact', 'Industry impact')} />
                 <p className="mt-2 text-c-text-secondary text-justify">{industryImpact}</p>
               </section>
 
               {/* Why it matters for YOUR company */}
               <section>
-                <SectionHeader icon={<span>👤</span>} title="Company Impact" />
+                <SectionHeader icon={<span>👤</span>} title={t('megatrends.detail.companyImpact', 'Company impact')} />
                 <p className="mt-2 text-c-text-secondary text-justify">{companyImpact}</p>
               </section>
             </div>
@@ -197,7 +199,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
             {/* AI Insight */}
             {aiSuggestion && (
               <section className="bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] border-l-2 border-c-info rounded-xl p-6">
-                <SectionHeader icon={<span>🤖</span>} title="AI Insight" />
+                <SectionHeader icon={<span>🤖</span>} title={t('megatrends.detail.aiInsight', 'AI insight')} />
                 <div className="mt-4 space-y-4 text-c-text-secondary">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="font-semibold text-c-info">Suggested Ring:</span>
@@ -209,7 +211,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                   <div className="grid md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="font-semibold text-danger-600/80 dark:text-danger-400 block mb-2">
-                        Risks
+                        {t('megatrends.detail.risks', 'Risks')}
                       </span>
                       <ul className="list-disc list-inside space-y-1">
                         {aiSuggestion.risks.map((r, i) => (
@@ -218,7 +220,9 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                       </ul>
                     </div>
                     <div>
-                      <span className="font-semibold text-c-success block mb-2">Opportunities</span>
+                      <span className="font-semibold text-c-success block mb-2">
+                        {t('megatrends.detail.opportunities', 'Opportunities')}
+                      </span>
                       <ul className="list-disc list-inside space-y-1">
                         {aiSuggestion.opportunities.map((o, i) => (
                           <li key={i}>{o}</li>
@@ -226,7 +230,9 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                       </ul>
                     </div>
                     <div>
-                      <span className="font-semibold text-c-info block mb-2">Actions</span>
+                      <span className="font-semibold text-c-info block mb-2">
+                        {t('megatrends.detail.actions', 'Actions')}
+                      </span>
                       <ul className="list-disc list-inside space-y-1">
                         {aiSuggestion.actions.map((a, i) => (
                           <li key={i}>{a}</li>
@@ -243,11 +249,11 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
           <div className="space-y-6">
             {/* Impact Scoring */}
             <section className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4 shadow-sm">
-              <SectionHeader icon={<span>📊</span>} title="Impact Scoring" />
+              <SectionHeader icon={<span>📊</span>} title={t('megatrends.detail.impactScoring', 'Impact scoring')} />
               <div className="space-y-4 mt-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-c-text-muted">Economic Impact</span>
+                    <span className="text-c-text-muted">{t('megatrends.detail.economicImpact', 'Economic impact')}</span>
                     <span className="font-bold">{impactScore}/7</span>
                   </div>
                   <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
@@ -259,15 +265,15 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                 </div>
                 <div className="pt-2 border-t border-c-border-subtle space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-c-text-muted">Likelihood (3-5yr)</span>
+                    <span className="text-c-text-muted">{t('megatrends.detail.likelihood', 'Likelihood (3–5 yrs)')}</span>
                     <span className="font-medium">{likelihood}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-c-text-muted">Unavoidability</span>
+                    <span className="text-c-text-muted">{t('megatrends.detail.unavoidability', 'Unavoidability')}</span>
                     <span className="font-medium">{unavoidability}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-c-text-muted">Competitive Pressure</span>
+                    <span className="text-c-text-muted">{t('megatrends.detail.competitivePressure', 'Competitive pressure')}</span>
                     <span className="font-medium">{competitivePressure}</span>
                   </div>
                 </div>
@@ -277,7 +283,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
             {/* Documents & Evidence */}
             {documents && documents.length > 0 && (
               <section className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4 shadow-sm">
-                <SectionHeader icon={<span>📁</span>} title="Evidence" />
+                <SectionHeader icon={<span>📁</span>} title={t('megatrends.detail.evidence', 'Evidence')} />
                 <ul className="mt-4 space-y-3">
                   {documents.map((doc, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
@@ -299,7 +305,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                     console.log('Download all documents / trigger AI re‑score');
                   }}
                 >
-                  Download all & re‑score
+                  {t('megatrends.detail.downloadAndRescore', 'Download all and re-score')}
                 </button>
               </section>
             )}

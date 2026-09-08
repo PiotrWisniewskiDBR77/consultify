@@ -42,8 +42,10 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
             Industry Standard Trends: {industry.charAt(0).toUpperCase() + industry.slice(1)}
           </h4>
           <p className="text-xs text-c-text-secondary mt-1">
-            Below are the top megatrends affecting your industry globally. AI has prioritized these
-            based on market signals and your context.
+            {t(
+              'megatrends.baseline.subtitle',
+              'Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context.'
+            )}
           </p>
         </div>
       </div>

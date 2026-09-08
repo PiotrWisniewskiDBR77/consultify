@@ -3,6 +3,7 @@
  */
 
 import { Clock, FileText, FolderOpen, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -26,6 +27,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
   onSelectDocument,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<StudioDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +113,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
       <div className="p-3">
         <button className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-c-accent-soft hover:bg-c-accent-soft text-c-accent rounded-lg transition-colors text-sm">
           <Plus size={14} />
-          New Document
+          {t('studio.sidebar.newDocument', 'New document')}
         </button>
       </div>
 

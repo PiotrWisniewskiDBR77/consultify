@@ -24158,6 +24158,20 @@
         "emptyNoApprovedReport": "A report is generated from an approved session — approve a session in the Sessions tab.",
         "emptyNoApprovedInitiative": "Initiatives are generated from an approved session — approve a session in the Sessions tab.",
         "goToSessions": "Go to Sessions"
+      },
+      "category": {
+        "strategic": "Strategy",
+        "operational": "Operations",
+        "digital": "Digital",
+        "automation": "Process automation",
+        "licensed": "Assessments"
+      },
+      "initiative": {
+        "loading": "Loading initiative details…",
+        "notFound": "Initiative not found",
+        "backToList": "Back to the list",
+        "noTasks": "No tasks yet",
+        "noTasksHint": "Tasks will be added during the planning phase"
       }
     },
     "integrations": {
@@ -29026,7 +29040,56 @@
       "insights": "AI Insights"
     },
     "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
-    "goToBaseline": "Go to Baseline"
+    "goToBaseline": "Go to Baseline",
+    "custom": {
+      "title": "Custom trends",
+      "subtitle": "Add specific pressures unique to your market or niche.",
+      "add": "Add custom trend",
+      "radarWatch": "AI radar watch",
+      "radarWatchBody": "I am monitoring news sources for “Carbon Tax Legislation” as it seems relevant to your sector.",
+      "addToList": "Add to the list?",
+      "empty": "No custom trends added yet.",
+      "newTitle": "New custom trend",
+      "nameLabel": "Trend name",
+      "namePlaceholder": "e.g. Local competitor price war",
+      "descriptionLabel": "Description / why relevant?",
+      "descriptionPlaceholder": "Impact on our Q3 sales…",
+      "typeLabel": "Type",
+      "type": {
+        "technology": "Technology",
+        "business": "Business",
+        "societal": "Societal"
+      },
+      "ring": {
+        "now": "Impact now",
+        "watch": "Watch closely",
+        "horizon": "On the horizon"
+      },
+      "save": "Save trend"
+    },
+    "detail": {
+      "loading": "Loading trend details…",
+      "errorLabel": "Error",
+      "goBack": "Go back",
+      "noTrend": "No trend selected.",
+      "whatIsIt": "What is it",
+      "industryImpact": "Industry impact",
+      "companyImpact": "Company impact",
+      "aiInsight": "AI insight",
+      "impactScoring": "Impact scoring",
+      "evidence": "Evidence",
+      "risks": "Risks",
+      "opportunities": "Opportunities",
+      "actions": "Actions",
+      "economicImpact": "Economic impact",
+      "likelihood": "Likelihood (3–5 yrs)",
+      "unavoidability": "Unavoidability",
+      "competitivePressure": "Competitive pressure",
+      "downloadAndRescore": "Download all and re-score"
+    },
+    "baseline": {
+      "subtitle": "Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context."
+    }
   },
   "publicBooking": {
     "header": "Book a meeting",
@@ -34972,6 +35035,9 @@
       "recommendation": {
         "confidence": "confidence"
       }
+    },
+    "insight": {
+      "loading": "Loading insight…"
     }
   },
   "docs": {
@@ -47336,6 +47402,9 @@
       "identifier": "Identifier",
       "openInMyWork": "Open the source in My Work",
       "noSourceId": "This entry carries no source identifier — there is nowhere to go."
+    },
+    "canvas": {
+      "loadingStep": "Loading step…"
     }
   },
   "drd": {
@@ -48551,6 +48620,55 @@
       "now": "Now — step {{index}} of {{total}}",
       "notStarted": "The process has not started yet.",
       "noCurrentStep": "No step is running."
+    }
+  },
+  "knowledge": {
+    "backToTop": "Back to top",
+    "uploader": {
+      "webHint": "Extracts main content, title, and metadata from web pages",
+      "words": "words"
+    }
+  },
+  "studio": {
+    "chat": {
+      "subtitle": "Describe your diagram",
+      "clear": "Clear chat",
+      "startCreating": "Start creating",
+      "emptyBody": "Describe the diagram you want to create, and I will generate it for you.",
+      "generating": "Generating diagram",
+      "quickActions": "Quick actions",
+      "inputPlaceholder": "Describe your diagram…"
+    },
+    "quickActions": {
+      "processFlow": "Create process flow",
+      "decisionNode": "Add decision node",
+      "orgChart": "Create org chart",
+      "swimlane": "Add swimlane",
+      "mindMap": "Create mind map",
+      "raciMatrix": "Create RACI matrix"
+    },
+    "sidebar": {
+      "newDocument": "New document"
+    },
+    "export": {
+      "title": "Export diagram",
+      "subtitle": "Choose format and settings"
+    },
+    "loading": "Loading Studio…",
+    "unavailable": {
+      "title": "Studio is not available yet",
+      "body": "The visual AI workspace is still being built. Check back soon — in the meantime, try Mind Map, Process Flow, or Whiteboard under My Work."
+    }
+  },
+  "playbook": {
+    "properties": {
+      "empty": "Select a node to edit its properties",
+      "descriptionPlaceholder": "Describe what this step does…",
+      "selectAction": "Select an action…"
+    },
+    "canvas": {
+      "empty": "Empty canvas",
+      "emptyHint": "Use the toolbar to add nodes"
     }
   }
 }

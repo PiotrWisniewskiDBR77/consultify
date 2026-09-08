@@ -19,6 +19,7 @@ import {
   Settings,
   X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Edge, Node, ReactFlowProvider } from 'reactflow';
@@ -49,6 +50,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
   linkedInitiativeId,
   onClose,
 }) => {
+  const { t } = useTranslation();
   // UI State
   const [showChat, setShowChat] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -149,7 +151,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <div className="h-full flex items-center justify-center bg-c-bg">
           <div className="text-center">
             <Loader2 size={32} className="text-c-accent animate-spin mx-auto mb-4" />
-            <p className="text-c-text-muted">Loading Studio...</p>
+            <p className="text-c-text-muted">{t('studio.loading', 'Loading Studio…')}</p>
           </div>
         </div>
       </SplitLayout>

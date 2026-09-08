@@ -4,6 +4,7 @@
 
 import { toPng, toSvg } from 'html-to-image';
 import { Check, Download, FileCode, FileText, Image, Loader2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -20,6 +21,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
   documentName,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [format, setFormat] = useState<ExportFormat>('png');
   const [exporting, setExporting] = useState(false);
   const [includeBackground, setIncludeBackground] = useState(true);
@@ -109,8 +111,8 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
               <Download size={20} className="text-c-accent" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-c-text">Export Diagram</h2>
-              <p className="text-xs text-c-text-muted">Choose format and settings</p>
+              <h2 className="text-lg font-semibold text-c-text">{t('studio.export.title', 'Export diagram')}</h2>
+              <p className="text-xs text-c-text-muted">{t('studio.export.subtitle', 'Choose format and settings')}</p>
             </div>
           </div>
           <button

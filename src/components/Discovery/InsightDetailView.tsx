@@ -30,6 +30,9 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import { formatListDate } from '@/utils/listDateFormat';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
@@ -229,6 +232,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
   onRefresh,
 }) => {
   const [insight, setInsight] = useState<Insight | null>(initialInsight || null);
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(!initialInsight);
   const [exporting, setExporting] = useState<string | null>(null);
 
@@ -327,7 +331,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center gap-3 text-slate-600">
           <Clock size={20} className="animate-spin" />
-          <span>Loading insight...</span>
+          <span>{t('discovery.insight.loading', 'Loading insight…')}</span>
         </div>
       </div>
     );
@@ -425,11 +429,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
                 <div className="flex items-center gap-1.5 text-slate-500">
                   <Clock size={12} />
                   <span>
-                    {new Date(insight.createdAt).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                    {formatListDate(insight.createdAt)}
                   </span>
                 </div>
               )}

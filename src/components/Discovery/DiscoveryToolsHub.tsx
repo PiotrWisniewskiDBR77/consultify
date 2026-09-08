@@ -74,6 +74,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 import { ALL_STATUSES as ALL_INITIATIVE_STATUSES } from '@/utils/initiativeHelpers';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import {
@@ -286,11 +287,15 @@ type ToolType =
   // Automation (31)
   | 'PAI';
 
-// Category metadata
+// Category metadata. NAZWA kategorii nie stoi tu jako literał — to enum
+// renderowany w tabeli, filtrach i pickerze; polski „Strategiczne" świecił
+// w kolumnie CATEGORY na koncie angielskim (zmierzone na zrzucie
+// `evidence/jezyk-j4/przed/01-biblioteka-en.png`). Etykieta idzie przez
+// `nazwaKategorii(t, klucz)` (PLAN §2 pkt 6).
 const CATEGORY_META: Record<
   ToolCategory,
   {
-    name: string;
+    nameKey: string;
     icon: React.ReactNode;
     textClass: string;
     dotClass: string;
@@ -298,35 +303,35 @@ const CATEGORY_META: Record<
   }
 > = {
   strategic: {
-    name: 'Strategiczne',
+    nameKey: 'tools.hub.category.strategic',
     icon: <Target size={16} />,
     textClass: 'text-emerald-700 dark:text-emerald-400',
     dotClass: 'bg-emerald-400',
     count: 10,
   },
   operational: {
-    name: 'Operacyjne',
+    nameKey: 'tools.hub.category.operational',
     icon: <Settings size={16} />,
     textClass: 'text-blue-700 dark:text-blue-400',
     dotClass: 'bg-blue-400',
     count: 10,
   },
   digital: {
-    name: 'Cyfrowe',
+    nameKey: 'tools.hub.category.digital',
     icon: <Cpu size={16} />,
     textClass: 'text-blue-700 dark:text-blue-400',
     dotClass: 'bg-blue-400',
     count: 10,
   },
   automation: {
-    name: 'Automatyzacja procesów',
+    nameKey: 'tools.hub.category.automation',
     icon: <Zap size={16} />,
     textClass: 'text-amber-700 dark:text-amber-400',
     dotClass: 'bg-amber-400',
     count: 1,
   },
   licensed: {
-    name: 'Oceny',
+    nameKey: 'tools.hub.category.licensed',
     icon: <Shield size={16} />,
     // P6 §3.1: "Oceny" to kategoria narzędzi, nie stan błędu — danger-* tu było przypadkową
     // podmianą koloru, nie decyzją. Ton przez stateToneMap.ts (SSOT), nie klasa wprost.
@@ -335,6 +340,24 @@ const CATEGORY_META: Record<
     count: 5,
   },
 };
+
+/**
+ * Nazwa kategorii narzędzia — jedno miejsce, z którego biorą ją tabela,
+ * filtry Menu 3 i picker „Add tool”.
+ */
+function nazwaKategorii(
+  t: (klucz: string, domyslny: string) => string,
+  meta: { nameKey: string }
+): string {
+  const DOMYSLNE: Record<string, string> = {
+    'tools.hub.category.strategic': 'Strategy',
+    'tools.hub.category.operational': 'Operations',
+    'tools.hub.category.digital': 'Digital',
+    'tools.hub.category.automation': 'Process automation',
+    'tools.hub.category.licensed': 'Assessments',
+  };
+  return t(meta.nameKey, DOMYSLNE[meta.nameKey] ?? meta.nameKey);
+}
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -1804,7 +1827,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         dataType: 'status',
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
-          label: meta.name,
+          label: nazwaKategorii(t, meta),
         })),
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
@@ -1816,7 +1839,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 />
               }
             >
-              {meta?.name || row.category}
+              {meta ? nazwaKategorii(t, meta) : row.category}
             </ChipBase>
           );
         },
@@ -1939,7 +1962,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         dataType: 'status',
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
-          label: meta.name,
+          label: nazwaKategorii(t, meta),
         })),
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
@@ -1951,7 +1974,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 />
               }
             >
-              {meta?.name || row.category}
+              {meta ? nazwaKategorii(t, meta) : row.category}
             </ChipBase>
           );
         },
@@ -2046,14 +2069,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         filterable: true,
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
-          label: meta.name,
+          label: nazwaKategorii(t, meta),
         })),
         render: (row) => {
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
             <span className={`text-xs font-medium ${meta?.textClass || 'text-c-text-secondary'}`}>
-              {meta?.name || row.libraryCategory || '-'}
+              {meta ? nazwaKategorii(t, meta) : row.libraryCategory || '-'}
             </span>
           );
         },
@@ -3485,14 +3508,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     return `$${amount}`;
   };
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+  // SSOT `listDateFormat` zamiast `toLocaleDateString('en-US')` — data szła
+  // za locale przybitym w kodzie, nie za językiem konta (K7, PLAN §2 pkt 7).
+  const formatDate = (dateStr?: string) => formatListDate(dateStr, '-');
 
   const getTaskStatusColor = (status: string) => {
     switch (status) {
@@ -3540,7 +3558,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-3 text-c-text-muted">
             <Loader2 className="w-8 h-8 animate-spin" />
-            <span>Loading initiative details...</span>
+            <span>{t('tools.hub.initiative.loading', 'Loading initiative details…')}</span>
           </div>
         </div>
       );
@@ -3551,12 +3569,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         <div className="flex items-center justify-center h-full text-c-text-muted">
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-amber-400/50" />
-            <p className="text-lg text-c-text">Initiative not found</p>
+            <p className="text-lg text-c-text">{t('tools.hub.initiative.notFound', 'Initiative not found')}</p>
             <button
               onClick={handleShowList}
               className="mt-4 px-4 py-2 bg-c-border-subtle hover:bg-slate-300 dark:hover:bg-navy-600 text-c-text rounded-lg text-sm transition-colors"
             >
-              Back to List
+              {t('tools.hub.initiative.backToList', 'Back to the list')}
             </button>
           </div>
         </div>
@@ -3686,9 +3704,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 {initiativeTasks.length === 0 ? (
                   <div className="text-center py-8 text-c-text-muted">
                     <ListTodo className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No tasks yet</p>
+                    <p className="text-sm">{t('tools.hub.initiative.noTasks', 'No tasks yet')}</p>
                     <p className="text-xs text-c-text-secondary mt-1">
-                      Tasks will be added during planning phase
+                      {t('tools.hub.initiative.noTasksHint', 'Tasks will be added during the planning phase')}
                     </p>
                   </div>
                 ) : (
@@ -4743,7 +4761,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       {t('common.updated', 'Updated')}
                       <div className="text-c-text font-medium mt-0.5">
                         {(item as any)?.updatedAt
-                          ? new Date((item as any).updatedAt).toLocaleString()
+                          ? formatListDateTime((item as any).updatedAt, '-')
                           : '-'}
                       </div>
                     </div>
@@ -5343,7 +5361,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       { id: 'all', label: t('common.all', 'All') },
       ...Object.entries(CATEGORY_META).map(([key, meta]) => ({
         id: key as ToolCategory,
-        label: meta.name,
+        label: nazwaKategorii(t, meta),
         count: meta.count,
         icon: meta.icon,
       })),

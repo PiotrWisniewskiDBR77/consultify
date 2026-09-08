@@ -5,6 +5,7 @@
  */
 
 import { ChevronDown, FolderPlus, MessageSquare, Rocket, Save, X } from 'lucide-react';
+import { formatListTime } from '@/utils/listDateFormat';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -70,7 +71,7 @@ const VersionSelector: React.FC = () => {
                   >
                     <span>v{v.version}</span>
                     <span className="text-xs text-slate-600 dark:text-slate-500">
-                      {new Date(v.createdAt).toLocaleTimeString()}
+                      {formatListTime(v.createdAt, '')}
                     </span>
                   </button>
                 ))

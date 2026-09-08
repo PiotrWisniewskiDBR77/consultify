@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useRef } from 'react';
 
 import {
@@ -28,6 +29,7 @@ export const PlaybookCanvas: React.FC<PlaybookCanvasProps> = ({
   onNodeSelect,
   onNodeMove,
 }) => {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleNodeDragEnd = (nodeId: string, e: React.DragEvent) => {
@@ -135,8 +137,8 @@ export const PlaybookCanvas: React.FC<PlaybookCanvasProps> = ({
       {nodes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="text-lg mb-2">Empty Canvas</p>
-            <p className="text-sm">Use the toolbar to add nodes</p>
+            <p className="text-lg mb-2">{t('playbook.canvas.empty', 'Empty canvas')}</p>
+            <p className="text-sm">{t('playbook.canvas.emptyHint', 'Use the toolbar to add nodes')}</p>
           </div>
         </div>
       )}
