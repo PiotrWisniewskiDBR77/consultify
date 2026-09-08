@@ -24025,7 +24025,12 @@
       "back": "Back",
       "slides": "slides",
       "dataRefresh": {
-        "stale": "Stale"
+        "stale": "Stale",
+        "refresh": "Refresh data",
+        "refreshAll": "Refresh all data",
+        "outdated": "The data may be out of date",
+        "refreshing": "Refreshing...",
+        "upToDate": "Up to date"
       },
       "noContent": "Deck has no content yet. Generate slides first.",
       "loadFailed": "Failed to load presentation deck",
@@ -24039,11 +24044,48 @@
         "governance": "Governance",
         "analytics": "Share Analytics",
         "auditLog": "Audit log",
-        "teresa": "Teresa"
+        "teresa": "Teresa",
+        "more": "More",
+        "internal": "Internal",
+        "theme": "Theme",
+        "history": "History",
+        "quality": "Quality",
+        "comments": "Comments",
+        "share": "Share",
+        "agent": "Agent",
+        "present": "Present",
+        "undo": "Undo",
+        "redo": "Redo"
       },
       "share": {
         "enablePublicFirst": "Enable public link sharing first to get an embed code.",
-        "generateLink": "Generate share link"
+        "generateLink": "Generate share link",
+        "editDesc": "Can view and edit",
+        "editLabel": "Edit",
+        "expires": "Expires",
+        "invalidEmail": "Enter a valid email address",
+        "inviteAdded": "Collaborator added",
+        "inviteAddedAndSent": "Collaborator added — link copied and an email opened",
+        "inviteNote": "An invitation adds this person as a collaborator with the chosen role and sends them the link.",
+        "inviteSent": "Invitation ready — link copied and an email opened",
+        "permEdit": "edit",
+        "permView": "view",
+        "permissions": "Permissions",
+        "revokeFailed": "Could not revoke the share link",
+        "revoked": "Share link revoked",
+        "rotate": "Create a new link",
+        "viewDesc": "Can view the presentation",
+        "viewLabel": "View",
+        "collaborate": "Collaborate",
+        "shareLink": "Share link",
+        "export": "Export",
+        "embed": "Embed",
+        "analytics": "Analytics",
+        "inviteByEmail": "Invite by email",
+        "publicLink": "Public link",
+        "copyLink": "Copy link",
+        "anyoneCanView": "Anyone with the link can view",
+        "anyoneCanComment": "Anyone with the link can comment"
       },
       "alternativeLayout": "Alternative layout",
       "regenerateSlide": "Regenerate slide",
@@ -24085,7 +24127,16 @@
           "bar": "Bar Chart",
           "line": "Line Chart",
           "pie": "Pie Chart"
-        }
+        },
+        "search": "Search",
+        "basicBlocks": "Basic blocks",
+        "images": "Images",
+        "smartLayouts": "Smart layouts",
+        "diagrams": "Diagrams",
+        "chartsData": "Charts and data",
+        "media": "Media",
+        "artifacts": "Artifacts",
+        "aiEdit": "AI edit"
       },
       "duplicate": "Duplicate",
       "delete": "Delete",
@@ -24133,7 +24184,209 @@
       "autosaveOffline": "No connection to the server — changes are visible on screen but are NOT saved.",
       "contextTools": "Presentation tools",
       "blocks": {
-        "headingDefaultText": "Heading"
+        "headingDefaultText": "Heading",
+        "heading": "Heading",
+        "paragraph": "Paragraph",
+        "bulletList": "Bulleted list",
+        "numberedList": "Numbered list",
+        "table": "Table",
+        "chart": "Chart",
+        "image": "Image",
+        "kpiWidget": "KPI widget",
+        "metricStrip": "Metric strip",
+        "smartLayout": "Smart layout",
+        "smartDiagram": "Smart diagram",
+        "callout": "Callout",
+        "timeline": "Timeline",
+        "artifactEmbed": "Artifact",
+        "divider": "Divider"
+      },
+      "selection": {
+        "tools": "Multi-block selection tools",
+        "count": "Selected blocks: {{count}}",
+        "clickHint": "Shift/⌘ + click",
+        "groupAria": "Group the selected blocks",
+        "group": "Group",
+        "ungroupAria": "Ungroup the selected blocks",
+        "ungroup": "Ungroup",
+        "alignTools": "Align the selected blocks",
+        "distributeTools": "Distribute the selected blocks",
+        "distributeHorizontal": "Distribute horizontally",
+        "distributeVertical": "Distribute vertically",
+        "distributeH": "Distribute horizontally",
+        "distributeV": "Distribute vertically",
+        "alignmentHint": "Alignment is available for freely positioned blocks.",
+        "align": {
+          "left": "Align left",
+          "center": "Align centre",
+          "right": "Align right",
+          "top": "Align top",
+          "middle": "Align middle",
+          "bottom": "Align bottom"
+        },
+        "position": {
+          "left": "left",
+          "center": "centre",
+          "right": "right",
+          "top": "top",
+          "middle": "middle",
+          "bottom": "bottom"
+        }
+      },
+      "conflict": {
+        "help": "Load the latest version, or keep yours and save it over the changes from the other session.",
+        "keepMine": "Keep my version",
+        "reload": "Load the latest",
+        "serverVersion": "(the latest is v{{version}})",
+        "title": "This presentation was changed in another session"
+      },
+      "contextMenu": "Presentation context menu",
+      "contextSurface": "Presentation workspace",
+      "presence": {
+        "hereNow": "Here now: {{count}}"
+      },
+      "rewriteSend": "Send",
+      "selectSlide": "Select slide",
+      "slideActions": "Slide actions",
+      "title": "Presentation editor",
+      "exit": "Back to Presentations",
+      "untitled": "Untitled deck",
+      "cardView": "Cards",
+      "listView": "List",
+      "addBlank": "Blank slide",
+      "addAi": "AI generates",
+      "addFromTemplate": "From a template",
+      "confidentiality": {
+        "label": "Confidentiality",
+        "recentAiActivity": "Latest AI activity: {{date}}",
+        "public": "Public",
+        "internal": "Internal",
+        "confidential": "Confidential"
+      },
+      "rightRail": {
+        "blocks": "Elements",
+        "media": "Media",
+        "activity": "AI activity",
+        "relations": "Related items",
+        "evidence": "Sources and assumptions"
+      },
+      "structure": "Structure",
+      "cardToolbar": {
+        "layout": "Layout",
+        "chooseLayout": "Choose the slide layout",
+        "background": "Background",
+        "chooseBackground": "Choose the slide background",
+        "animations": "Animations",
+        "toggleAnimations": "Turn block animations on or off"
+      },
+      "freeform": {
+        "move": "Move the selected block",
+        "moveHint": "Drag to move; the arrow keys nudge by 1%, Shift by 5%",
+        "rotate": "Rotate the selected block",
+        "rotateHint": "Drag to rotate",
+        "resize": "Resize the selected block",
+        "resizeHint": "Drag to resize"
+      },
+      "bottomBar": {
+        "card": "Slide",
+        "of": "of",
+        "quickEdits": "Ask Teresa",
+        "notes": "Notes"
+      },
+      "editCard": {
+        "title": "Edit this card",
+        "prompt": "How would you like to edit this card?",
+        "improveWriting": "Improve the writing",
+        "fixSpelling": "Fix spelling and grammar",
+        "translate": "Translate",
+        "makeLonger": "Make it longer",
+        "makeShorter": "Make it shorter",
+        "simplify": "Simplify the language",
+        "moreSpecific": "Be more specific",
+        "moreVisual": "Add visuals",
+        "addImage": "Add an image",
+        "addChart": "Add a chart",
+        "swapOrgPhoto": "Use an organisation photo",
+        "regenerateImages": "Regenerate all images",
+        "updateData": "Update the data from the source",
+        "changeChartType": "Change the chart type",
+        "addKpi": "Add a KPI widget",
+        "tryNewLayout": "Try a new layout"
+      },
+      "present": {
+        "fromBeginning": "Present from the start",
+        "fromCurrent": "From the current slide",
+        "options": "Presenting options",
+        "inTab": "In this tab",
+        "fullScreen": "Full screen",
+        "presenterView": "Presenter view",
+        "shareFollow": "Share a follow-along link"
+      },
+      "export": {
+        "pdf": "PDF",
+        "pptx": "PowerPoint (PPTX)",
+        "png": "PNG (per slide)",
+        "html": "Interactive HTML5",
+        "allCards": "All cards",
+        "selectedRange": "Selected range",
+        "fontGuidance": "Install these fonts so the file renders correctly:",
+        "staticNote": "Animated elements will be static in PDF and PowerPoint",
+        "htmlNote": "A standalone interactive page with animations and navigation"
+      },
+      "commandPalette": {
+        "placeholder": "Type a command or ask the AI...",
+        "categories": {
+          "insert": "Insert",
+          "edit": "Edit",
+          "theme": "Theme",
+          "export": "Export and present",
+          "navigate": "Navigate",
+          "ai": "AI actions"
+        }
+      },
+      "mediaLibrary": {
+        "title": "Media library",
+        "search": "Search by tag or name...",
+        "empty": "No images found",
+        "upload": "Upload images",
+        "uploadFirst": "Upload your first image",
+        "categories": {
+          "all": "All",
+          "photo": "Photos",
+          "illustration": "Illustrations",
+          "logo": "Logos",
+          "icon": "Icons"
+        }
+      },
+      "versionHistory": {
+        "loading": "Loading version history…",
+        "retry": "Try again",
+        "unavailable": "Version history is unavailable",
+        "unavailableHint": "The presentation is still available. Try loading the saved versions again.",
+        "title": "Version history",
+        "unsavedChanges": "Unsaved changes",
+        "allSaved": "All changes saved",
+        "saveCheckpoint": "Save a named version",
+        "restore": "Restore",
+        "confirmRestore": "Click again to confirm the restore",
+        "auto": "Autosave",
+        "manual": "Manual",
+        "checkpoint": "Checkpoint"
+      },
+      "animations": {
+        "enabled": "Animations on",
+        "disabled": "Animations off",
+        "toggle": "Toggle animations"
+      },
+      "collaboration": {
+        "onlyYou": "Only you",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "connecting": "Connecting..."
+      },
+      "sourceTraceability": {
+        "dataFrom": "Data from",
+        "clickToOpen": "Click to open the source"
       }
     },
     "governance": {
@@ -24195,20 +24448,142 @@
       "loadingArtifacts": "Loading artifacts...",
       "noArtifacts": "No registered artifacts found yet. You can still choose a source type below for a draft deck.",
       "selectedEvidence": "Selected evidence",
-      "showDrafts": "Show drafts"
+      "showDrafts": "Show drafts",
+      "title": "Choose the data sources",
+      "subtitle": "Pick the platform artifacts to include in the deck.",
+      "initiative": "Initiatives",
+      "note": "Notes",
+      "report": "Reports",
+      "financial_analysis": "Financial analysis",
+      "tool_session": "Tool sessions",
+      "workspace": "Workspaces",
+      "insight": "Insights",
+      "initiative_portfolio": "Initiative portfolio",
+      "execution_status": "Execution status",
+      "kpi_roi": "KPIs and ROI",
+      "raid": "Risks and issues",
+      "assessment": "Assessment results",
+      "valuation": "Company valuation"
     },
     "exportBlocked": "Export blocked by quality gates. Open the deck to review blockers.",
     "openInBuilder": "Open this deck in the full editor to view and edit slides.",
     "setup": {
       "smartDefaults": "Suggested based on your organization's preferences",
-      "loadingDefaults": "Loading smart defaults..."
+      "loadingDefaults": "Loading smart defaults...",
+      "title": "Set up your deck",
+      "subtitle": "Set the mode, audience, visuals and style.",
+      "deckTitle": "Deck title",
+      "titlePlaceholder": "e.g. Steering Committee Update — Q1 2026",
+      "creationPath": "Creation path",
+      "aiGenerates": "AI generates",
+      "aiGeneratesDesc": "The AI will propose a structure from your sources",
+      "template": "Template (optional)",
+      "customDeck": "Custom deck",
+      "customDeckDesc": "The AI generates an outline from the sources",
+      "audience": "Audience",
+      "goal": "Goal",
+      "language": "Language",
+      "theme": "Theme",
+      "confidentiality": "Confidentiality",
+      "generateOutline": "Generate outline",
+      "visuals": {
+        "title": "Visuals (AI images)",
+        "desc": "Gamma-like visuals: a cover plus subtle textures. Best in Quality mode.",
+        "priority": "Visual priority",
+        "quality": "Quality",
+        "cost": "Cost",
+        "density": "Image density",
+        "densityLow": "Low",
+        "densityMedium": "Medium",
+        "densityHigh": "High"
+      }
     },
     "wizard": {
-      "contentDepth": "Content Depth"
+      "contentDepth": "Content Depth",
+      "title": "Presentation generator",
+      "titleRequired": "Enter a title",
+      "outlineFailed": "Could not generate the outline",
+      "generationFailed": "Generation failed",
+      "downloadFailed": "Download failed",
+      "presentationMode": "Presentation mode",
+      "communicationRegister": "Communication register",
+      "imageStylePreset": "Image style",
+      "imageSource": "Image source",
+      "cardSize": "Card size",
+      "colorSet": "Colour palette",
+      "brandKit": "Brand kit",
+      "visualsSection": "Visuals and branding",
+      "visualsSectionDesc": "Control the image style, colour palette and card dimensions.",
+      "wordsPerSlide": "Words/slide",
+      "typicalSlides": "Slides",
+      "animations": "Animations",
+      "showAdvanced": "Advanced options",
+      "additionalInstructions": "Extra instructions for the AI",
+      "additionalInstructionsPlaceholder": "e.g. Focus on financial metrics, use dark backgrounds...",
+      "modes": {
+        "show": "Show",
+        "showDesc": "A narrated live presentation. Large visuals, minimal text.",
+        "document": "Document",
+        "documentDesc": "A standalone consulting deliverable. Dense content, few images.",
+        "briefing": "Briefing",
+        "briefingDesc": "A quick management update. Key metrics and status changes.",
+        "workshop": "Workshop",
+        "workshopDesc": "Workshop material with frameworks and interactive elements."
+      },
+      "registers": {
+        "executive": "Executive",
+        "executiveDesc": "Decision-driven, concise, 'so what' framing",
+        "professional": "Professional",
+        "professionalDesc": "Business-neutral, the canonical default",
+        "technical": "Technical",
+        "technicalDesc": "Analytical, precise, more detail",
+        "narrative": "Narrative",
+        "narrativeDesc": "Storytelling style, best for Show mode"
+      },
+      "imageStyles": {
+        "corporatePhotography": "Corporate photography",
+        "corporatePhotographyDesc": "Professional photos of people, offices, products",
+        "abstractGeometric": "Abstract",
+        "abstractGeometricDesc": "Gradients, shapes, patterns",
+        "flatIllustration": "Illustrations",
+        "flatIllustrationDesc": "Modern vector illustrations",
+        "dataFocused": "Data",
+        "dataFocusedDesc": "Charts and diagrams only, no decorative images",
+        "industryRealistic": "Industry",
+        "industryRealisticDesc": "Realistic industry imagery",
+        "minimalNoImages": "Minimal",
+        "minimalNoImagesDesc": "Typography and colour only"
+      },
+      "imageSources": {
+        "smart": "Smart (auto)",
+        "orgLibrary": "Organisation library",
+        "aiOnly": "AI generated",
+        "none": "No images",
+        "manual": "Manual only"
+      }
     },
     "outline": {
       "keyMessagePlaceholder": "Key message for this slide...",
-      "slides": "slides"
+      "slides": "slides",
+      "title": "Deck outline",
+      "header": "The AI proposed {{count}} slides. Drag to reorder. Click to edit.",
+      "reorder": "Drag to reorder, toggle to include or exclude",
+      "addSlide": "Add slide",
+      "generate": "Generate deck",
+      "contentHintPlaceholder": "Hint: describe what this slide should cover...",
+      "aiRecommends": "The AI recommends adding:",
+      "validation": {
+        "minSlides": "At least 2 slides are required",
+        "maxSlides": "The maximum of 30 slides has been exceeded",
+        "tooMany": "Consider splitting this into two presentations (>20 slides)",
+        "noCover": "No cover slide"
+      },
+      "suggestions": {
+        "addRisk": "Risk review",
+        "addKpi": "KPI dashboard",
+        "addNextSteps": "Next steps",
+        "addThankYou": "Thank you"
+      }
     },
     "versionConflictDetected": "This deck was changed in another session. Choose how to resolve it.",
     "versionConflictReloaded": "Reloaded the latest version of this deck.",
@@ -24222,7 +24597,8 @@
       "empty": "No related sources. Blocks generated from initiatives, analyses and tools will appear here.",
       "jumpTo": "Jump to artifact",
       "subtitle": "All sources linked to this presentation — click to jump to the artifact.",
-      "title": "Relations"
+      "title": "Relations",
+      "usedOnCount": "Used in {{count}} materials"
     },
     "templates": {
       "systemTemplates": "System Templates",
@@ -24340,14 +24716,155 @@
         "appendix": "Appendix"
       },
       "imageStylePlaceholder": "E.g. a gradient of fuchsia, pink and royal blue, subtle studio lighting",
-      "imageStyleHint": "These words will be appended to every AI image prompt in this theme."
+      "imageStyleHint": "These words will be appended to every AI image prompt in this theme.",
+      "approveAndPublish": "Approve and publish",
+      "approving": "Publishing…",
+      "customMasterTheme": "Custom PowerPoint theme and slide masters",
+      "deleteDraftConfirm": "Delete draft",
+      "deleteDraftTemplate": "Delete draft",
+      "deleteDraftTitle": "Delete this draft template?",
+      "deleteDraftWarning": "This draft will be permanently deleted. This cannot be undone.",
+      "deprecateConfirm": "Deprecate template",
+      "deprecatePublishedDescription": "The template will no longer be available for new presentations. Its history and existing presentations are kept.",
+      "deprecatePublishedTemplate": "Deprecate published template",
+      "deprecatePublishedTitle": "Deprecate this published template?",
+      "deprecateReason": "Reason",
+      "deprecateReasonPlaceholder": "Explain why this template is being deprecated.",
+      "errApproveTemplate": "Could not approve and publish the template"
     },
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}",
     "qualitySignal": {
-      "badge": "Quality: {{count}} warnings"
+      "badge": "Quality: {{count}} warnings",
+      "score": "Score {{score}}/100"
     },
     "result": {
-      "qualityBadge": "Quality: {{count}} warnings"
+      "qualityBadge": "Quality: {{count}} warnings",
+      "qualityScore": "Score {{score}}/100",
+      "ready": "Your deck is ready!",
+      "slidesGenerated": "slides generated successfully",
+      "warnings": "Quality warnings",
+      "downloadPptx": "Download PPTX",
+      "editOutline": "Edit and regenerate",
+      "openBuilder": "Open Deck Builder"
+    },
+    "comments": {
+      "addComment": "Add comment",
+      "addFailed": "Could not add the comment",
+      "added": "Comment added",
+      "adding": "Adding…",
+      "anchorDeck": "Whole presentation",
+      "anchorSlide": "Slide {{number}}",
+      "anchorSlideUnknown": "Slide (deleted)",
+      "anchorToDeck": "To the whole presentation",
+      "anchorToSlide": "To slide {{number}}",
+      "composerPlaceholder": "Add a review comment…",
+      "delete": "Delete",
+      "deleteFailed": "Could not delete the comment",
+      "deleted": "Comment deleted",
+      "deletedBody": "(comment deleted)",
+      "empty": "No comments yet.",
+      "emptyFilter": "No thread matches this filter.",
+      "filterAll": "All",
+      "filterLabel": "Filter threads",
+      "filterOpen": "Open",
+      "filterResolved": "Resolved",
+      "loadFailed": "Could not load the comments",
+      "loading": "Loading…",
+      "openBadge": "Open",
+      "refresh": "Refresh",
+      "reopen": "Reopen",
+      "reopened": "Thread reopened",
+      "reply": "Reply",
+      "replyAdded": "Reply added",
+      "replyFailed": "Could not add the reply",
+      "replyPlaceholder": "Write a reply…",
+      "resolve": "Resolve",
+      "resolveFailed": "Could not complete the action",
+      "resolvedBadge": "Resolved",
+      "resolvedToast": "Thread resolved",
+      "subtitle": "Review threads for this presentation. A comment can be pinned to the current slide or to the whole presentation.",
+      "title": "Comments",
+      "untitledSlide": "Untitled slide"
+    },
+    "steps": {
+      "sources": "Sources",
+      "setup": "Setup",
+      "outline": "Outline",
+      "result": "Result"
+    },
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Executives",
+      "board": "Board",
+      "project_team": "Project team",
+      "client": "Client",
+      "investor": "Investor / VC",
+      "internal": "Internal team",
+      "educate": "Educate"
+    },
+    "goals": {
+      "inform": "Inform",
+      "decide": "Decide",
+      "sell": "Sell",
+      "align": "Align",
+      "educate": "Educate"
+    },
+    "themes": {
+      "corporate": "Corporate",
+      "minimal": "Minimal",
+      "modern": "Modern"
+    },
+    "confidentialities": {
+      "confidential": "Confidential",
+      "internal": "Internal",
+      "public": "Public"
+    },
+    "languages": {
+      "en": "English",
+      "pl": "Polish"
+    },
+    "generating": {
+      "title": "Generating the deck",
+      "subtitle": "Building consulting-grade slides with quality checks. This may take a moment..."
+    },
+    "brandKit": {
+      "title": "Brand kit",
+      "subtitle": "Set up the organisation branding for presentations and reports.",
+      "colors": "Colours",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "accent": "Accent",
+      "fonts": "Fonts",
+      "titleFont": "Title font",
+      "bodyFont": "Body font",
+      "headerFooter": "Header and footer",
+      "headerText": "Header text",
+      "footerText": "Footer text",
+      "pageNumbers": "Page numbers",
+      "confidentialityBanner": "Confidentiality banner",
+      "defaultConfidentiality": "Default confidentiality",
+      "disclaimer": "Disclaimer text",
+      "disclaimerPlaceholder": "Optional legal disclaimer for financial and valuation decks",
+      "saved": "Brand kit saved",
+      "saveFailed": "Could not save"
+    },
+    "agent": {
+      "title": "AI agent",
+      "greeting": "Hi! I know this deck was built from {{sources}}. How can I help?",
+      "placeholder": "Ask me to edit, create or restyle",
+      "suggestions": {
+        "addSummary": "Add an executive summary",
+        "makeConcise": "Make every slide shorter",
+        "addNotes": "Add speaker notes",
+        "updateData": "Update the data from the sources",
+        "improveVisuals": "Improve visual consistency"
+      },
+      "proactive": {
+        "sourceUpdated": "The source '{{name}}' has been updated. Refresh the data?",
+        "densSlide": "Slide {{number}} is very dense. Split it?",
+        "noNotes": "You have no speaker notes. Generate them?",
+        "betterChart": "The chart on slide {{number}} would read better as a {{type}}. Change it?"
+      }
     }
   },
   "finance": {
@@ -30937,6 +31454,88 @@
     "breadcrumb": {
       "new": "New sheet",
       "open": "Sheet"
+    },
+    "rightPanel": {
+      "actions": "Actions",
+      "allFiles": "All files",
+      "ariaLabel": "Workbook details",
+      "checkpoint": "Create a checkpoint",
+      "comments": "Comments",
+      "commentsEmpty": "Comments are coming soon",
+      "download": "Download XLSX",
+      "exportCsv": "Export CSV",
+      "fileName": "File",
+      "format": "Format",
+      "history": "History",
+      "historyEmpty": "The history appears once the workbook is generated",
+      "historyFailed": "Generation failed",
+      "openWorkspace": "Open in the workbook",
+      "properties": "Properties",
+      "propertiesEmpty": "Properties appear once the workbook is generated",
+      "quality": "Quality",
+      "relations": "Related items",
+      "relationsEmpty": "No related items",
+      "revokeShare": "Revoke sharing",
+      "share": "Share and copy the link",
+      "sheets": "Sheets",
+      "sourceTable": "Source table",
+      "versionHistory": "Version history"
+    },
+    "rightRail": {
+      "resize": "Resize the panel",
+      "checkpoint": "Create a checkpoint",
+      "collapseLabel": "Collapse or expand the toolbar",
+      "download": "Download XLSX",
+      "exportCsv": "Export CSV",
+      "fileName": "File",
+      "format": "Format",
+      "history": "History and releases",
+      "historyEmpty": "The history appears once the workbook is generated",
+      "historyFailed": "Generation failed",
+      "historySubtitle": "The generation steps for this workbook.",
+      "historyTitle": "History and releases",
+      "quality": "Quality",
+      "revokeShare": "Revoke sharing",
+      "selected": "Selection",
+      "selectedSubtitle": "Nothing is selected — showing the properties of the whole document.",
+      "selectedTitle": "Selection",
+      "share": "Share and copy the link",
+      "sheets": "Sheets",
+      "sourceTable": "Source table",
+      "sources": "Sources and figures",
+      "sourcesEmpty": "This workbook has no recorded data source.",
+      "sourcesSubtitle": "Where the data in this workbook comes from.",
+      "sourcesTitle": "Sources and figures",
+      "structure": "Structure",
+      "structureDisabled": "The workbook has no sheet to show yet",
+      "structureEmpty": "The workbook has no sheet yet.",
+      "structureRows": "{{count}} rows",
+      "structureSubtitle": "The layout of the workbook and its sheets.",
+      "structureTitle": "Structure",
+      "versionHistory": "Version history"
+    },
+    "shared": {
+      "badge": "Shared workbook — read only",
+      "loading": "Loading the shared workbook…",
+      "selectSheet": "Choose a sheet",
+      "unavailableBody": "The share link is invalid, revoked or has expired.",
+      "unavailableTitle": "This workbook is unavailable",
+      "untitled": "Untitled workbook"
+    },
+    "versionHistory": {
+      "confirmAction": "Restore",
+      "confirmMessage": "Restore version {{version}}? The current state is kept in the history as a new version.",
+      "conflict": "The workbook changed in the meantime. Current version: {{version}}. Refresh and try again.",
+      "empty": "No saved history — edit a cell to create the first version.",
+      "loadFailed": "Could not load the version history.",
+      "loading": "Loading…",
+      "refresh": "Refresh",
+      "restore": "Restore",
+      "restoreFailed": "Could not restore the version",
+      "restoring": "Restoring…",
+      "sheets": "sheets",
+      "title": "Version history",
+      "version": "Version"
     }
   },
   "aiActions": {
@@ -32532,7 +33131,11 @@
       "contextChip": "Context: {{organizationName}}",
       "sectionBrief": "Brief",
       "backToModes": "Choose a mode",
-      "blockedReason": "To plan a document, describe it in at least 10 characters."
+      "blockedReason": "To plan a document, describe it in at least 10 characters.",
+      "requiredSourcePlaceholder": "Paste the content, a URL or the id of an existing attachment",
+      "sourceAttachment": "Attachment id",
+      "sourceText": "Text",
+      "sourceUrl": "URL"
     },
     "outline": {
       "type": "Type",
@@ -32542,7 +33145,10 @@
       "back": "Back",
       "generating": "Generating…",
       "generate": "Generate document",
-      "saveFailed": "Could not save the outline."
+      "saveFailed": "Could not save the outline.",
+      "addSection": "+ Add section",
+      "newSectionDefault": "New section",
+      "newSectionPrompt": "Name of the new section"
     },
     "templateArchitect": {
       "heading": "Document Template Architect",
@@ -32607,7 +33213,23 @@
       "addSection": "Add section",
       "blankTitleHint": "Every section needs a title before you can save.",
       "structurePreviewHeading": "Structure preview",
-      "structurePreviewEmpty": "No sections yet."
+      "structurePreviewEmpty": "No sections yet.",
+      "bodyFont": "Body typeface and style",
+      "deleteDraft": "Delete draft",
+      "footer": "Footer",
+      "footerContent": "Footer content",
+      "footerContentPlaceholder": "e.g. Internal use only",
+      "header": "Header",
+      "headerContent": "Header content",
+      "headerContentPlaceholder": "e.g. Confidential — for the board",
+      "history": "Version history",
+      "newVersion": "Create a new version",
+      "pageNumbering": "Page numbering",
+      "requiredInputs": "Required source material (one per line)",
+      "requiredSectionMarker": "Required section",
+      "structurePreviewAriaLabel": "Document structure preview, {{count}} sections",
+      "validate": "Check",
+      "wordSettings": "Document layout"
     },
     "view": {
       "templatesLoadFailedWithReason": "Approved templates could not be loaded ({{reason}}). You can still generate without a template.",
@@ -32634,7 +33256,14 @@
       "backToLibrary": "Back to the template library",
       "artifactNotFound": "This document was not found. It may have been deleted, or the link points to a different document type.",
       "artifactLoadFailedGeneric": "Could not load the document. Please try again in a moment.",
-      "noDocumentActionable": "Could not open the document. Try again or go back to Materials."
+      "noDocumentActionable": "Could not open the document. Try again or go back to Materials.",
+      "templateDeprecated": "This template has been deprecated.",
+      "templateForbidden": "You do not have access to this template.",
+      "templateFormatUnsupported": "This template's format is not supported.",
+      "templateNotIndexed": "This template is not available in the library.",
+      "templateOrphaned": "The source of this template was not found.",
+      "templateResolveFailed": "Could not check the selected template.",
+      "templateResolving": "Checking the selected template…"
     },
     "breadcrumb": {
       "new": "New document",
@@ -32895,7 +33524,29 @@
       "viewEditor": "Editor",
       "chipQaReview": "QA and review",
       "toolQaReview": "QA and review",
-      "contextTools": "Document tools"
+      "contextTools": "Document tools",
+      "approvalTab": "Approval",
+      "contextMenu": "Document context menu",
+      "documentPanelViews": "Document panel views",
+      "reviewTabs": "Quality control and approval",
+      "sectionCount": "Sections: {{count}}",
+      "shareRevoke": "Revoke sharing",
+      "shareRevoked": "Share link revoked",
+      "shareRotate": "Create a new link",
+      "shareRotated": "New share link created",
+      "snapshotCapture": "Create a checkpoint",
+      "snapshotCapturing": "Creating…",
+      "snapshotCreateFailed": "Could not create the checkpoint",
+      "snapshotManualLabel": "Manual checkpoint",
+      "snapshotRestore": "Restore the selected one",
+      "snapshotRestoreConfirm": "Confirm restore",
+      "snapshotRestoreFailed": "Could not restore the checkpoint",
+      "snapshotRestoring": "Restoring…",
+      "structureTitle": "Document structure",
+      "toolEvidence": "Sources and assumptions",
+      "toolHistory": "History",
+      "toolMore": "More tools",
+      "toolMoreBack": "Back to the tools"
     },
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
@@ -32956,18 +33607,71 @@
     "aiEntry": {
       "startingReply": "I am planning and writing the document — it will appear next to this in a moment.",
       "placeholderTitle": "Your document will appear here",
-      "placeholderHint": "Describe the document you need in the panel next to this — Teresa will plan the structure and write the first draft in front of you."
+      "placeholderHint": "Describe the document you need in the panel next to this — Teresa will plan the structure and write the first draft in front of you.",
+      "teresaTitle": "Teresa"
     },
     "blank": {
       "title": "New document",
       "failed": "Could not create a blank document.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "creating": "Creating a blank document…",
+      "description": "A blank working document you edit yourself.",
+      "section": "Section 1"
     },
     "tri": {
       "heading": "How would you like to start the document?",
       "subheading": "Pick a mode — all three are equal.",
       "aiDesc": "Describe the document — Studio will plan the structure and the first draft.",
-      "templateDesc": "Start from an approved template and adjust the content."
+      "templateDesc": "Start from an approved template and adjust the content.",
+      "aiTitle": "With AI",
+      "cleanDesc": "A blank document in the editor. You write it yourself, no AI.",
+      "cleanTitle": "From scratch",
+      "templateTitle": "From a template"
+    },
+    "comments": {
+      "addComment": "Add comment",
+      "addFailed": "Could not add the comment",
+      "added": "Comment added",
+      "adding": "Adding…",
+      "anchorBlock": "Block",
+      "anchorDocument": "Whole document",
+      "anchorGoTo": "Go to this place in the document",
+      "anchorNotFound": "This section is not visible in the current view.",
+      "anchorSection": "Section",
+      "anchorUnknownSection": "Unknown section",
+      "cancel": "Cancel",
+      "composerPlaceholder": "Add a comment about the whole document…",
+      "delete": "Delete",
+      "deleteFailed": "Could not delete the comment",
+      "deleted": "Comment deleted",
+      "deletedComment": "Deleted comment",
+      "empty": "No comments yet.",
+      "emptyFilter": "No thread matches this filter.",
+      "filterAll": "All",
+      "filterLabel": "Filter threads",
+      "filterOpen": "Open",
+      "filterResolved": "Resolved",
+      "loadFailed": "Could not load the comments",
+      "loading": "Loading…",
+      "refresh": "Refresh",
+      "reopen": "Reopen",
+      "reopenFailed": "Could not reopen the thread",
+      "reopened": "Thread reopened",
+      "reply": "Reply",
+      "replyAdded": "Reply added",
+      "replyFailed": "Could not add the reply",
+      "replyPlaceholder": "Write a reply…",
+      "replySend": "Send reply",
+      "resolve": "Resolve",
+      "resolveConfirm": "Confirm resolution",
+      "resolveFailed": "Could not resolve the thread",
+      "resolveReasonPlaceholder": "Optional reason for resolving…",
+      "resolved": "Thread resolved",
+      "resolvedBy": "Resolved by {{name}}",
+      "statusOpen": "Open",
+      "statusResolved": "Resolved",
+      "subtitle": "Review threads for this document. Section and block links jump to the right place in the editor.",
+      "title": "Comments"
     }
   },
   "priority": {
