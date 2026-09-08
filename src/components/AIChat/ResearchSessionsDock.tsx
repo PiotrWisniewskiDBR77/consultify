@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -71,6 +72,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
   selectedSessionId = null,
   onSessionSelected,
 }) => {
+  const { t } = useTranslation();
   const [sessions, setSessions] = React.useState<ResearchSessionView[]>([]);
   const [selected, setSelected] = React.useState<ResearchSessionView | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -274,8 +276,10 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
             Research Sessions
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Reproducible Deep Research with lifecycle, evidence graph, citations and final report
-            artifacts.
+            {t(
+              'aios.research.subtitle',
+              'Reproducible Deep Research with lifecycle, evidence graph, citations and final report artifacts.'
+            )}
           </p>
         </div>
       ) : null}
@@ -296,7 +300,10 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">Create Session</h2>
               <p className="text-xs text-slate-500">
-                Plan research first, then approve and run it as a governed background job.
+                {t(
+              'aios.research.planHint',
+              'Plan research first, then approve and run it as a governed background job.'
+            )}
               </p>
             </div>
             <input
@@ -308,7 +315,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
             <textarea
               value={scope}
               onChange={(event) => setScope(event.target.value)}
-              placeholder="Scope and constraints"
+              placeholder="{t('aios.research.scope', 'Scope and constraints')}"
               rows={2}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
@@ -348,7 +355,10 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">Session Dock</h2>
               <p className="text-xs text-slate-500">
-                Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.
+                {t(
+              'aios.research.controlsHint',
+              'Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.'
+            )}
               </p>
             </div>
             <button
@@ -361,14 +371,14 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
           </div>
           <div className="divide-y divide-slate-200 dark:divide-navy-800">
             {loading && sessions.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500">Loading research sessions...</div>
+              <div className="p-4 text-sm text-slate-500">{t('aios.research.loading', 'Loading research sessions...')}</div>
             ) : sessions.length === 0 ? (
               <div className="p-4 text-sm text-slate-500">No research sessions yet.</div>
             ) : (
               <>
                 {loading && (
                   <div className="px-4 py-2 text-xs text-slate-500">
-                    Refreshing sessions in the background...
+                    {t('aios.research.refreshing', 'Refreshing sessions in the background...')}
                   </div>
                 )}
                 {sessions.map((session) => {
@@ -482,7 +492,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
                 </div>
                 {selected.status === 'running' && (
                   <div className="mt-1 text-xs text-slate-500">
-                    Background job accepted. This panel refreshes while the report is generated.
+                    {t('aios.research.jobAccepted', 'Background job accepted. This panel refreshes while the report is generated.')}
                   </div>
                 )}
               </div>

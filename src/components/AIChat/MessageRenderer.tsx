@@ -980,10 +980,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               ) : isDeepThinkingConfirm ? (
                 <div className="space-y-3">
                   <div className="text-xs font-semibold text-c-text-secondary">
-                    Confirm Understanding (Deep Thinking)
+                    {t('chat.deepThinking.confirmTitle', 'Confirm Understanding (Deep Thinking)')}
                   </div>
                   <div className="text-xs text-c-text-secondary space-y-1">
-                    <div className="font-medium">My understanding of your task</div>
+                    <div className="font-medium">
+                      {t('chat.deepThinking.understanding', 'My understanding of your task')}
+                    </div>
                     <ul className="list-disc pl-4 space-y-0.5">
                       <li>
                         <span className="font-medium">Goal:</span>{' '}
@@ -1144,7 +1146,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {dtPendingConfirm?.messageId === msg.id && (
                     <div className="space-y-2">
                       <div className="text-[11px] text-c-text-muted">
-                        If this is not correct, adjust the task and re-run confirm.
+                        {t(
+                          'chat.deepThinking.adjustHint',
+                          'If this is not correct, adjust the task and re-run confirm.'
+                        )}
                       </div>
                       <textarea
                         value={dtPendingConfirm.editedMessage}
@@ -1456,10 +1461,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                     disabled={isDisabled || agentAuditBusy}
                                     className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-text hover:opacity-90 text-c-surface disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
-                                    Accept risk & proceed
+                                    {t('chat.agentAudit.acceptRisk', 'Accept risk & proceed')}
                                   </button>
                                   <div className="text-[11px] text-c-text-muted">
-                                    This is recorded in the audit trail.
+                                    {t('chat.agentAudit.recorded', 'This is recorded in the audit trail.')}
                                   </div>
                                 </div>
                               ) : null}

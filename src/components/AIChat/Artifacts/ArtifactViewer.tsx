@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Artifact } from '../../../types';
 
@@ -35,6 +36,7 @@ interface ArtifactViewerProps {
 }
 
 export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, className = '' }) => {
+  const { t } = useTranslation();
   const renderContent = () => {
     switch (artifact.type) {
       case 'code':
@@ -57,7 +59,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
                 <div className="flex h-64 items-center justify-center text-slate-600 dark:text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="text-sm">Loading diagram...</span>
+                    <span className="text-sm">{t('chat.artifacts.loadingDiagram', 'Loading diagram...')}</span>
                   </div>
                 </div>
               }
@@ -73,7 +75,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
               <div className="flex h-64 items-center justify-center text-slate-600 dark:text-slate-500">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-6 w-6 animate-spin" />
-                  <span className="text-sm">Loading diagram engine...</span>
+                  <span className="text-sm">{t('chat.artifacts.loadingDiagramEngine', 'Loading diagram engine...')}</span>
                 </div>
               </div>
             }

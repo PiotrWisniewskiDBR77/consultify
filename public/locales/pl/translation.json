@@ -20754,7 +20754,10 @@
       "emitDocumentTooltip": "Utwórz dokument z tej odpowiedzi",
       "openAsDocument": "Otwórz jako dokument"
     },
-    "artifacts": "Artefakty",
+    "artifacts": {
+      "loadingDiagram": "Wczytywanie schematu...",
+      "loadingDiagramEngine": "Wczytywanie silnika schematów..."
+    },
     "orgMemory": {
       "untitledAnalysis": "Analiza bez tytułu",
       "problemLabel": "Wyzwanie:",
@@ -20889,6 +20892,40 @@
     "toolSteps": {
       "title": "Kroki narzędzi",
       "ariaLabel": "Kroki narzędzi Teresy"
+    },
+    "shared": {
+      "header": "udostępniona rozmowa",
+      "loading": "Wczytywanie…",
+      "notFoundTitle": "Ten link nie jest już dostępny",
+      "notFoundBody": "Udostępniona rozmowa mogła zostać usunięta albo link wygasł.",
+      "loadError": "Coś poszło nie tak przy wczytywaniu tej rozmowy.",
+      "passwordTitle": "Chronione hasłem",
+      "passwordPlaceholder": "Wpisz hasło",
+      "view": "Pokaż",
+      "untitled": "Rozmowa",
+      "footer": "Udostępnione przez Consultify — widok tylko do odczytu."
+    },
+    "trustPanel": {
+      "summary": "Dlaczego taka odpowiedź? Szczegóły zaufania"
+    },
+    "canvasBlocks": {
+      "evidenceDegraded": "Osłabiony dowód: do tego bloku badawczego nie podpięto jeszcze żadnych źródeł.",
+      "noChartMetrics": "Brak miar do wykresu. Pokazuję zamiast tego projekcję Markdown."
+    },
+    "deepThinking": {
+      "confirmTitle": "Potwierdź zrozumienie (głębokie myślenie)",
+      "understanding": "Tak rozumiem Twoje zadanie",
+      "adjustHint": "Jeśli to nieprawda, popraw zadanie i potwierdź jeszcze raz."
+    },
+    "agentAudit": {
+      "recorded": "To zostaje zapisane w śladzie audytowym.",
+      "acceptRisk": "Przyjmij ryzyko i kontynuuj"
+    },
+    "projectTeam": {
+      "sponsorId": "Identyfikator sponsora",
+      "ownerId": "Identyfikator wlasciciela projektu",
+      "ownerName": "Imie i nazwisko wlasciciela projektu",
+      "budgetLimit": "Limit budzetu agenta"
     }
   },
   "aiChat": {
@@ -32812,7 +32849,29 @@
       "reportTypeSteeringCommittee": "Dla komitetu sterującego",
       "reportTypeCisoSecurity": "CISO / Bezpieczeństwo"
     },
-    "confidence": "pewność"
+    "confidence": "pewność",
+    "hub": {
+      "gateChecklist": "Lista czekowania bramki ręcznej",
+      "gateChecklistHint": "Przetestuj każdą kartę poniżej i sklasyfikuj wynik jako PASS, PASS_WITH_LIMITATIONS albo BLOCKED."
+    },
+    "actionCenter": {
+      "subtitle": "Przeglądaj propozycje wykonania, zatwierdzaj osobno od wykonania i sprawdzaj ślad audytowy AIRun.",
+      "listTitle": "Propozycje i wykonania",
+      "listHint": "Żadna zmiana nie zostaje wykonana, dopóki nie ma zatwierdzonego AIRun.",
+      "loading": "Wczytywanie działań AI...",
+      "empty": "Nie znaleziono żadnych działań AI.",
+      "auditEmpty": "Wybierz działanie, żeby zobaczyć kto, co, kiedy i dlaczego.",
+      "decisionAndOutput": "Decyzja i wynik"
+    },
+    "research": {
+      "subtitle": "Powtarzalne badanie głębokie z cyklem życia, grafem dowodów, cytowaniami i artefaktem raportu końcowego.",
+      "planHint": "Najpierw zaplanuj badanie, potem zatwierdź je i uruchom jako nadzorowane zadanie w tle.",
+      "scope": "Zakres i ograniczenia",
+      "controlsHint": "Uruchamiaj, wstrzymuj, wznawiaj i ponawiaj badanie. Trwające zadania odświeżają się co 5 sekund.",
+      "loading": "Wczytywanie sesji badawczych...",
+      "refreshing": "Odświeżanie sesji w tle...",
+      "jobAccepted": "Zadanie w tle przyjęte. Ten panel odświeża się w trakcie generowania raportu."
+    }
   },
   "initiative": {
     "decision": "Decyzja",

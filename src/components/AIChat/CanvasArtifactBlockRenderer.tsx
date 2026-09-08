@@ -377,7 +377,10 @@ export function CanvasArtifactBlockRenderer({
           </div>
           {sources.length === 0 ? (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-100">
-              Evidence degraded: no sources are attached to this research block yet.
+              {t(
+                'chat.canvasBlocks.evidenceDegraded',
+                'Evidence degraded: no sources are attached to this research block yet.'
+              )}
             </div>
           ) : null}
         </div>
@@ -637,7 +640,10 @@ function ChartBlockView({
         </div>
       ) : (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
-          No chart metrics are available. Showing the Markdown projection instead.
+          {t(
+            'chat.canvasBlocks.noChartMetrics',
+            'No chart metrics are available. Showing the Markdown projection instead.'
+          )}
           <div className="mt-3 rounded-lg bg-white/70 p-3 dark:bg-black/20">
             <CanvasMarkdownRenderer text={block.markdownProjection || `### ${block.title}`} />
           </div>

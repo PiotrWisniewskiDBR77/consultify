@@ -19478,7 +19478,10 @@
       "emitDocumentTooltip": "Create a document from this answer",
       "openAsDocument": "Open as document"
     },
-    "artifacts": "Artifacts",
+    "artifacts": {
+      "loadingDiagram": "Loading diagram...",
+      "loadingDiagramEngine": "Loading diagram engine..."
+    },
     "orgMemory": {
       "untitledAnalysis": "Untitled analysis",
       "problemLabel": "Problem:",
@@ -19578,8 +19581,32 @@
       "complete": "Complete in Initiatives"
     },
     "governedHandoff": {
-      "proposeDocument": "Propose governed document",
-      "citations": "{{count}} source references preserved."
+      "state": {
+        "pending": "Awaiting verification",
+        "materializable": "Ready to create",
+        "working": "In progress",
+        "materialized": "Created",
+        "rejected": "Rejected",
+        "failed": "The operation failed",
+        "approved": "Approved"
+      },
+      "title": "Governed document proposal",
+      "provenance": "Pinned to this message and to its server-verified content hash.",
+      "citations_one": "{{count}} source citation preserved.",
+      "citations_other": "{{count}} source citations preserved.",
+      "citations": "Source citations preserved ({{count}}).",
+      "noCitations": "No source citations were found.",
+      "source": "Source",
+      "hash": "Hash",
+      "version": "Version",
+      "approve": "Approve",
+      "reject": "Reject",
+      "createDocument": "Create document",
+      "created": "Document created",
+      "rejected": "Proposal rejected",
+      "defaultTitle": "Document from chat",
+      "createFailed": "Failed to create the proposal.",
+      "proposeDocument": "Propose a governed document"
     },
     "sources": {
       "details": "Sources details"
@@ -19587,6 +19614,40 @@
     "toolSteps": {
       "title": "Tool steps",
       "ariaLabel": "Teresa's tool steps"
+    },
+    "shared": {
+      "header": "shared conversation",
+      "loading": "Loading…",
+      "notFoundTitle": "This link is no longer available",
+      "notFoundBody": "The shared conversation may have been removed or the link has expired.",
+      "loadError": "Something went wrong loading this conversation.",
+      "passwordTitle": "Password protected",
+      "passwordPlaceholder": "Enter password",
+      "view": "View",
+      "untitled": "Conversation",
+      "footer": "Shared with Consultify — read-only view."
+    },
+    "trustPanel": {
+      "summary": "Why this answer? Trust details"
+    },
+    "canvasBlocks": {
+      "evidenceDegraded": "Evidence degraded: no sources are attached to this research block yet.",
+      "noChartMetrics": "No chart metrics are available. Showing the Markdown projection instead."
+    },
+    "deepThinking": {
+      "confirmTitle": "Confirm Understanding (Deep Thinking)",
+      "understanding": "My understanding of your task",
+      "adjustHint": "If this is not correct, adjust the task and re-run confirm."
+    },
+    "agentAudit": {
+      "recorded": "This is recorded in the audit trail.",
+      "acceptRisk": "Accept risk & proceed"
+    },
+    "projectTeam": {
+      "sponsorId": "Sponsor user ID",
+      "ownerId": "Project owner user ID",
+      "ownerName": "Project owner name",
+      "budgetLimit": "Agent budget limit"
     }
   },
   "aiChat": {
@@ -30560,7 +30621,29 @@
       "reportTypeSteeringCommittee": "Steering committee",
       "reportTypeCisoSecurity": "CISO / Security"
     },
-    "confidence": "confidence"
+    "confidence": "confidence",
+    "hub": {
+      "gateChecklist": "Manual gate checklist",
+      "gateChecklistHint": "Test each card below and classify findings as PASS, PASS_WITH_LIMITATIONS or BLOCKED."
+    },
+    "actionCenter": {
+      "subtitle": "Review execution proposals, approve separately from execution, and inspect AIRun audit trails.",
+      "listTitle": "Proposals and Executions",
+      "listHint": "No mutation is executed until it has an approved AIRun.",
+      "loading": "Loading AI actions...",
+      "empty": "No AI actions found.",
+      "auditEmpty": "Select an action to inspect who, what, when and why.",
+      "decisionAndOutput": "Decision and Output"
+    },
+    "research": {
+      "subtitle": "Reproducible Deep Research with lifecycle, evidence graph, citations and final report artifacts.",
+      "planHint": "Plan research first, then approve and run it as a governed background job.",
+      "scope": "Scope and constraints",
+      "controlsHint": "Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.",
+      "loading": "Loading research sessions...",
+      "refreshing": "Refreshing sessions in the background...",
+      "jobAccepted": "Background job accepted. This panel refreshes while the report is generated."
+    }
   },
   "initiative": {
     "decision": "Decision",

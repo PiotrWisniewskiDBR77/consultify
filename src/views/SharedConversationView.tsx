@@ -6,6 +6,7 @@
  */
 import { Lock, MessageSquare } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -77,36 +78,45 @@ export const SharedConversationView: React.FC = () => {
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-2">
           <MessageSquare size={18} className="text-c-accent" />
           <span className="text-sm font-semibold text-c-text">Consultify</span>
-          <span className="text-xs text-c-text-muted">· shared conversation</span>
+          <span className="text-xs text-c-text-muted">
+            · {t('chat.shared.header', 'shared conversation')}
+          </span>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
         {status === 'loading' && (
-          <div className="py-20 text-center text-sm text-c-text-muted">Loading…</div>
+          <div className="py-20 text-center text-sm text-c-text-muted">
+            {t('chat.shared.loading', 'Loading…')}
+          </div>
         )}
 
         {status === 'notfound' && (
           <div className="py-20 text-center">
             <div className="text-lg font-semibold text-c-text">
-              This link is no longer available
+              {t('chat.shared.notFoundTitle', 'This link is no longer available')}
             </div>
             <p className="mt-2 text-sm text-c-text-muted">
-              The shared conversation may have been removed or the link has expired.
+              {t(
+                'chat.shared.notFoundBody',
+                'The shared conversation may have been removed or the link has expired.'
+              )}
             </p>
           </div>
         )}
 
         {status === 'error' && (
           <div className="py-20 text-center text-sm text-c-danger">
-            Something went wrong loading this conversation.
+            {t('chat.shared.loadError', 'Something went wrong loading this conversation.')}
           </div>
         )}
 
         {status === 'password' && (
           <div className="mx-auto max-w-sm py-16 text-center">
             <Lock size={28} className="mx-auto text-c-text-muted" />
-            <div className="mt-3 text-base font-semibold text-c-text">Password protected</div>
+            <div className="mt-3 text-base font-semibold text-c-text">
+              {t('chat.shared.passwordTitle', 'Password protected')}
+            </div>
             <div className="mt-4 flex gap-2">
               <input
                 type="password"
@@ -115,14 +125,14 @@ export const SharedConversationView: React.FC = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') void load(password);
                 }}
-                placeholder="Enter password"
+                placeholder={t('chat.shared.passwordPlaceholder', 'Enter password')}
                 className="flex-1 rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm outline-none focus:border-c-focus-solid"
               />
               <button
                 onClick={() => void load(password)}
                 className="rounded-xl bg-c-accent hover:opacity-90 text-white px-4 py-2 text-sm font-semibold"
               >
-                View
+                {t('chat.shared.view', 'View')}
               </button>
             </div>
           </div>
@@ -130,7 +140,9 @@ export const SharedConversationView: React.FC = () => {
 
         {status === 'ok' && data && (
           <>
-            <h1 className="text-2xl font-semibold text-c-text">{data.title || 'Conversation'}</h1>
+            <h1 className="text-2xl font-semibold text-c-text">
+              {data.title || t('chat.shared.untitled', 'Conversation')}
+            </h1>
             {data.description && (
               <p className="mt-1 text-sm text-c-text-muted">{data.description}</p>
             )}
@@ -155,7 +167,7 @@ export const SharedConversationView: React.FC = () => {
               ))}
             </div>
             <footer className="mt-16 border-t border-c-border pt-6 text-center text-xs text-c-text-muted">
-              Shared with Consultify — read-only view.
+              {t('chat.shared.footer', 'Shared with Consultify — read-only view.')}
             </footer>
           </>
         )}

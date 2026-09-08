@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
@@ -87,6 +88,7 @@ const modules = [
 ];
 
 export const AIOSHub: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-navy-950 p-6">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -111,11 +113,13 @@ export const AIOSHub: React.FC = () => {
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
               <div className="flex items-center gap-2 font-semibold">
                 <ShieldCheck size={18} />
-                Manual gate checklist
+                {t('aios.hub.gateChecklist', 'Manual gate checklist')}
               </div>
               <p className="mt-1">
-                Test each card below and classify findings as PASS, PASS_WITH_LIMITATIONS or
-                BLOCKED.
+                {t(
+                  'aios.hub.gateChecklistHint',
+                  'Test each card below and classify findings as PASS, PASS_WITH_LIMITATIONS or BLOCKED.'
+                )}
               </p>
             </div>
           </div>
