@@ -151,19 +151,40 @@ beforeEach(() => {
 
 /**
  * „Nowa decyzja" NIE jest rysowana przez samą powierzchnię — powierzchnia
- * REJESTRUJE ten węzeł u gospodarza (`ExecutionHub`) przez
- * `onRegisterFilterControl`, żeby przycisk stanął po prawej stronie Menu 2.
- * Test montuje więc mały gospodarz, który renderuje zarejestrowany węzeł —
- * inaczej klikałby przycisk, którego w tym drzewie nie ma.
+ * REJESTRUJE ją u gospodarza (`ExecutionHub`), żeby przycisk stanął po prawej
+ * stronie Menu 2. Test montuje więc mały gospodarz, który renderuje to, co
+ * powierzchnia zarejestruje — inaczej klikałby przycisk, którego w tym
+ * drzewie nie ma.
+ *
+ * PORZĄDEK PASKÓW 08.09.2026: kanałów jest teraz DWA, nie jeden. Slot filtrów
+ * (`onRegisterFilterControl`) niesie WYŁĄCZNIE filtry (dropdown „Termin"),
+ * a JEDEN primary CTA zakładki jedzie osobno (`onRegisterPrimaryCta`) na
+ * prawy skraj Menu 2, ciemnym wypełnionym przyciskiem — kanon TRIADA §A2/§C4.
+ * Wcześniej „Nowa decyzja" była `btn-secondary` doklejonym do filtrów: akcja
+ * główna zakładki wyglądała jak przycisk pomocniczy i wspólnie z resztą
+ * łamała pasek na kolejne linie (uwaga właściciela z Pracy).
  */
 const Gospodarz: React.FC = () => {
   const [kontrolka, setKontrolka] = React.useState<React.ReactNode>(null);
+  const [cta, setCta] = React.useState<{
+    label: string;
+    onClick: () => void;
+    testId?: string;
+  } | null>(null);
   return (
     <MemoryRouter>
-      <div data-testid="menu2">{kontrolka}</div>
+      <div data-testid="menu2">
+        {kontrolka}
+        {cta ? (
+          <button type="button" data-testid={cta.testId} onClick={cta.onClick}>
+            {cta.label}
+          </button>
+        ) : null}
+      </div>
       <ExecutionControlSurface
         activePreset="decyzje"
         onRegisterFilterControl={setKontrolka}
+        onRegisterPrimaryCta={setCta}
       />
     </MemoryRouter>
   );

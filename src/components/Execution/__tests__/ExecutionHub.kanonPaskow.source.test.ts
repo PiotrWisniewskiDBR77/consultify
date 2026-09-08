@@ -38,6 +38,19 @@ const zasoby = zrodlo('ExecutionResourcesSurface.tsx');
 const sterowanie = zrodlo('ExecutionControlSurface.tsx');
 
 /**
+ * Usuwa komentarze (`//`, `/* … *\/`, `{/* … *\/}`) — inaczej test mierzyłby
+ * własne wyjaśnienia zamiast kodu. Pierwsza wersja tego pliku wywracała się
+ * na zdaniach „bez `flex-wrap`" i „cztery `tabular-nums`" W KOMENTARZU, choć
+ * kod był poprawny: przyrząd łapał opis defektu zamiast defektu.
+ */
+const bezKomentarzy = (kod: string): string =>
+  kod
+    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^[ \t]*\/\/.*$/gm, ' ')
+    .replace(/([^:])\/\/.*$/gm, '$1');
+
+/**
  * Wycina ładunek JSX przekazany do `onRegisterFilterControl(` — czyli DOKŁADNIE
  * to, co ląduje w slocie filtrów Menu 2 gospodarza. Liczenie nawiasów, nie
  * regex do pierwszego `)`, bo w środku jest pełen JSX z nawiasami.
@@ -53,7 +66,7 @@ const slotFiltrow = (kod: string): string => {
     if (kod[i] === '(') glebokosc += 1;
     else if (kod[i] === ')') glebokosc -= 1;
   }
-  return kod.slice(start, i);
+  return bezKomentarzy(kod.slice(start, i));
 };
 
 const POWIERZCHNIE: Array<[string, string]> = [
@@ -138,7 +151,7 @@ describe('ExecutionHub · pasek modułu', () => {
   it('slot filtrów gospodarza nie zawija i nie niesie liczników', () => {
     const start = hub.indexOf('const rightControls = useMemo');
     const koniec = hub.indexOf('const portfolioMetrics', start);
-    const blok = hub.slice(start, koniec);
+    const blok = bezKomentarzy(hub.slice(start, koniec));
     // Mutacja: przywróć plakietkę „exec v2" z czterema `tabular-nums` → RED.
     expect(blok).not.toContain('tabular-nums');
     expect(blok).not.toContain('exec v2');

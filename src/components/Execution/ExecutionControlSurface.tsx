@@ -48,7 +48,13 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 import { useAppStore } from '@/store/useAppStore';
 
-import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import { MENU_2_FILTERS_ROW } from '@/components/shared/ModuleMenu3';
+
+import {
+  countExecutionPresets,
+  type ExecutionMenu3Contract,
+  type ExecutionSurfacePrimaryCta,
+} from './canonicalMenu3';
 import {
   type DecyzjaRodowod,
   powodySygnaluLabel,
@@ -922,15 +928,24 @@ export const ExecutionControlSurface = ({
   activePreset,
   onCountsChange,
   onRegisterFilterControl,
+  onRegisterPrimaryCta,
 }: ExecutionMenu3Contract & {
   /**
-   * Rejestruje węzeł kontrolki ("Dodaj sygnał" / "Przygotuj interwencję")
-   * do prawej strony Menu 2 gospodarza (ExecutionHub) — patrz identyczny
-   * komentarz w `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
+   * Rejestruje węzeł FILTRÓW (tu: dropdown „Termin") do prawej strony Menu 2
+   * gospodarza (ExecutionHub) — patrz identyczny komentarz w
+   * `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
    * execution-tab-control: właściciel zgłosił ten sam problem co na
    * ekranach "Praca" i "Zasoby".
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
+  /**
+   * JEDEN primary CTA zakładki — „Nowa decyzja" (preset Decyzje) albo
+   * „Nowa pozycja RAID" (preset Ryzyka), nigdy oba naraz; w Sygnałach żaden
+   * (sygnału nie tworzy człowiek, tylko system). Do 08.09.2026 jechały tą
+   * samą drogą co filtry i miały wygląd `btn-secondary` — czyli akcja
+   * główna zakładki wyglądała jak przycisk pomocniczy (kanon §A2/§C4).
+   */
+  onRegisterPrimaryCta?: (cta: ExecutionSurfacePrimaryCta | null) => void;
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -2175,7 +2190,10 @@ export const ExecutionControlSurface = ({
         ? delayRows.length
         : governanceRows.filter((row) => matches(row, activeGovernancePreset)).length;
     onRegisterFilterControl(
-      <div className="flex flex-wrap items-center gap-2">
+      // Jedna linia, bez `flex-wrap` — kanon §A2. Slot filtrów trzyma TYLKO
+      // filtr; CTA („Nowa decyzja" / „Nowa pozycja RAID") poszło do
+      // `onRegisterPrimaryCta` niżej (porządek pasków 08.09.2026).
+      <div className={MENU_2_FILTERS_ROW}>
         <Menu2PresetDropdown
           compact
           label={t('execution.governance.filters.dueLabel', 'Termin')}
@@ -2195,37 +2213,6 @@ export const ExecutionControlSurface = ({
             },
           ]}
         />
-        {/*
-          ZALEGŁOŚĆ PO R3, ZMIERZONA I ZAMKNIĘTA TU (07.09, konto MEMBER Anna):
-          „Nowa decyzja" pokazywała się KAŻDEMU, a `POST /api/decisions` odsyła
-          MEMBER-owi 403 `Permission denied` (`approve_changes`). R3 zamknął tę
-          samą regułą akcje rozstrzygające (`canDecide`), ale CTA tworzenia mu
-          umknęło. Próg §10: zero przycisków, które dla MEMBER-a nie mogą zadziałać.
-        */}
-        {activeGovernancePreset === 'decyzje' && canDecide(null) && (
-          <button type="button" className="btn-secondary" onClick={() => setNewDecisionOpen(true)}>
-            {t('execution.governance.actions.newDecision', 'Nowa decyzja')}
-          </button>
-        )}
-        {activeGovernancePreset === 'ryzyka' && (
-          <button
-            type="button"
-            className="btn-secondary"
-            data-testid="execution-new-raid-open"
-            onClick={() => {
-              setNewRaidError(null);
-              setNewRaid((current) => ({
-                ...current,
-                // Domyślna inicjatywa z filtru realizacji — użytkownik nie musi
-                // jej szukać, tak samo jak przy „Nowej decyzji" (R3).
-                initiativeId: current.initiativeId || (executionInitiatives[0]?.id ?? ''),
-              }));
-              setNewRaidOpen(true);
-            }}
-          >
-            {t('execution.raid.actions.new', 'Nowa pozycja RAID')}
-          </button>
-        )}
       </div>
     );
     return () => onRegisterFilterControl(null);
@@ -2251,9 +2238,48 @@ export const ExecutionControlSurface = ({
     filtrTerminu,
     governanceRows,
     delayRows,
-    executionInitiatives,
-    canDecide,
   ]);
+
+  // ── MENU 2 · JEDEN primary CTA (zależny od presetu Menu 3) ───────────────
+  //
+  // ZALEŻNOŚĆ UPRAWNIEŃ ZOSTAJE (zaległość po R3, zmierzona 07.09, konto
+  // MEMBER Anna): „Nowa decyzja" pokazywała się KAŻDEMU, a `POST /api/decisions`
+  // odsyła MEMBER-owi 403 `Permission denied` (`approve_changes`). Próg §10:
+  // zero przycisków, które dla MEMBER-a nie mogą zadziałać. Przeniesienie CTA
+  // do innego slotu tej reguły NIE rozluźnia.
+  useEffect(() => {
+    if (!onRegisterPrimaryCta) return;
+    if (activeGovernancePreset === 'decyzje' && canDecide(null)) {
+      onRegisterPrimaryCta({
+        label: t('execution.governance.actions.newDecision', 'Nowa decyzja'),
+        testId: 'execution-new-decision-open',
+        onClick: () => setNewDecisionOpen(true),
+      });
+      return () => onRegisterPrimaryCta(null);
+    }
+    if (activeGovernancePreset === 'ryzyka') {
+      onRegisterPrimaryCta({
+        label: t('execution.raid.actions.new', 'Nowa pozycja RAID'),
+        testId: 'execution-new-raid-open',
+        onClick: () => {
+          setNewRaidError(null);
+          setNewRaid((current) => ({
+            ...current,
+            // Domyślna inicjatywa z filtru realizacji — użytkownik nie musi
+            // jej szukać, tak samo jak przy „Nowej decyzji" (R3).
+            initiativeId: current.initiativeId || (executionInitiatives[0]?.id ?? ''),
+          }));
+          setNewRaidOpen(true);
+        },
+      });
+      return () => onRegisterPrimaryCta(null);
+    }
+    // Sygnały — sygnału nie tworzy człowiek, tylko system. Zero CTA.
+    onRegisterPrimaryCta(null);
+    return () => onRegisterPrimaryCta(null);
+    // `t` poza zależnościami z tego samego powodu co wyżej (pętla efekt↔host).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterPrimaryCta, activeGovernancePreset, canDecide, executionInitiatives]);
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">

@@ -89,10 +89,20 @@ describe('Raporty — Menu 3 (4 chipy) i CTA w Menu 2, 1.12-R4b + P16-R6', () =>
     const idx = executionHubSource.indexOf('<StandardModuleBar');
     const end = executionHubSource.indexOf('chips={', idx);
     const block = executionHubSource.slice(idx, end);
-    // Mutacja: `menu3Right={reportsMenu3Control}` na sztywno (bez warunku po
-    // zakładce) pokazałby kebab Raportów na KAŻDEJ zakładce Realizacji.
-    expect(block).toContain(
-      "menu3Right={activeTab === 'reports' ? reportsMenu3Control : undefined}"
-    );
+    /*
+     * Mutacja: `menu3Right={reportsMenu3Control}` na sztywno (bez warunku po
+     * zakładce) pokazałby kebab Raportów na KAŻDEJ zakładce Realizacji.
+     *
+     * PORZĄDEK PASKÓW 08.09.2026: prawy slot Menu 3 obsługuje teraz TRZY
+     * zakładki (Raporty · Praca · Zasoby), każdą z własną kontrolką, więc
+     * warunek jest łańcuchem, nie pojedynczym ternary. Test pilnuje tego, co
+     * naprawdę ma pilnować: kontrolka Raportów jest przypięta do zakładki
+     * `reports` i nie wycieka na sąsiednie.
+     */
+    expect(block).toContain("activeTab === 'reports'\n            ? reportsMenu3Control");
+    expect(block).toContain('workMenu3Control');
+    expect(block).toContain('resourcesMenu3Control');
+    // Kebab Raportów NIE jest podpięty bezwarunkowo.
+    expect(block).not.toContain('menu3Right={reportsMenu3Control}');
   });
 });

@@ -297,9 +297,16 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
       timeout: 3000,
     });
 
-    // Wybór wiszącej realizacji z Menu 2 — sciezka `load(id)`.
+    /*
+     * Wybór wiszącej realizacji z Menu 2 — sciezka `load(id)`.
+     *
+     * Porządek pasków 08.09.2026: slot filtrów niesie JEDNO dziecko (select
+     * realizacji), a nie tablicę [select, „Dodaj dostępność", „Propose
+     * allocation"] — akcje wyszły do `primaryCta` i kebaba Menu 3. Dlatego
+     * `props.children` jest pojedynczym elementem, nie tablicą.
+     */
     const lastNode = registerFilterControl.mock.calls.at(-1)?.[0] as any;
-    const onChange = lastNode.props.children[0].props.onChange as (e: any) => void;
+    const onChange = lastNode.props.children.props.onChange as (e: any) => void;
     vi.useFakeTimers();
     act(() => onChange({ target: { value: HANGING_CASE } }));
     await act(async () => {
@@ -320,17 +327,24 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
       weeklyCapacityHours: 32,
       availabilityPercent: 80,
     });
-    const registerFilterControl = vi.fn();
+    // Porządek pasków 08.09.2026: „Dodaj dostępność" to JEDYNY primary CTA
+    // zakładki, rejestrowany osobnym kanałem (`onRegisterPrimaryCta`) na prawy
+    // skraj Menu 2 — nie przycisk `btn-secondary` w slocie filtrów.
+    const registerPrimaryCta = vi.fn();
 
-    renderSurface({ onRegisterFilterControl: registerFilterControl });
+    renderSurface({ onRegisterPrimaryCta: registerPrimaryCta });
     await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
       timeout: 3000,
     });
 
-    const lastNode = registerFilterControl.mock.calls.at(-1)?.[0] as React.ReactNode;
-    const registered = render(<MemoryRouter>{lastNode}</MemoryRouter>);
+    await waitFor(() => expect(registerPrimaryCta.mock.calls.at(-1)?.[0]).toBeTruthy());
+    const cta = registerPrimaryCta.mock.calls.at(-1)?.[0] as {
+      testId?: string;
+      onClick: () => void;
+    };
+    expect(cta.testId).toBe('execution-resources-add-availability');
     await act(async () => {
-      registered.getByTestId('execution-resources-add-availability').click();
+      cta.onClick();
     });
 
     const dialog = await screen.findByTestId('execution-resources-capacity-dialog');

@@ -204,19 +204,39 @@ beforeEach(() => {
   });
 });
 
-/** Gospodarz montujący węzeł Menu 2, tak jak robi to `ExecutionHub`. */
+/**
+ * Gospodarz montujący pasek Menu 2, tak jak robi to `ExecutionHub`.
+ *
+ * Od porządku pasków 08.09.2026 Menu 2 ma DWA sloty, nie jeden: slot filtrów
+ * (`onRegisterFilterControl`, tu dropdown „Termin") i JEDEN primary CTA
+ * (`onRegisterPrimaryCta`, prawy skraj — „Nowa decyzja"/„Nowa pozycja RAID").
+ * Gospodarz odwzorowuje oba, żeby test mierzył ten sam układ co aplikacja.
+ */
 const Gospodarz: React.FC<{ preset: string; onCounts?: (c: Record<string, number>) => void }> = ({
   preset,
   onCounts,
 }) => {
   const [kontrolka, setKontrolka] = React.useState<React.ReactNode>(null);
+  const [cta, setCta] = React.useState<{
+    label: string;
+    onClick: () => void;
+    testId?: string;
+  } | null>(null);
   return (
     <MemoryRouter>
-      <div data-testid="menu2">{kontrolka}</div>
+      <div data-testid="menu2">
+        {kontrolka}
+        {cta ? (
+          <button type="button" data-testid={cta.testId} onClick={cta.onClick}>
+            {cta.label}
+          </button>
+        ) : null}
+      </div>
       <ExecutionControlSurface
         activePreset={preset}
         onCountsChange={onCounts}
         onRegisterFilterControl={setKontrolka}
+        onRegisterPrimaryCta={setCta}
       />
     </MemoryRouter>
   );

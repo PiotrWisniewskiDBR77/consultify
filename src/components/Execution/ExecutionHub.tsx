@@ -112,6 +112,9 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import {
+  MENU_2_SEGMENT_GROUP,
+  MENU_2_SEGMENT_ITEM_ACTIVE,
+  MENU_2_SEGMENT_ITEM_INACTIVE,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_INACTIVE,
@@ -123,6 +126,7 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { type ExecutionSurfacePrimaryCta } from './canonicalMenu3';
 import { ExecutionActionCards } from './ExecutionActionCards';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
@@ -756,6 +760,32 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // slotu Menu 3 (`StandardModuleBar.menu3Right`), ten sam wzorzec co
   // `reportsFilterControl` powyżej dla Menu 2.
   const [reportsMenu3Control, setReportsMenu3Control] = useState<React.ReactNode>(null);
+  /**
+   * ── PORZĄDEK PASKÓW 08.09.2026 (uwaga właściciela: „w menu też chaos") ────
+   *
+   * JEDEN primary CTA per zakładka, rejestrowany przez powierzchnię, trafia
+   * do `StandardModuleBar.primaryCta` — czyli na PRAWY SKRAJ Menu 2, ciemny
+   * wypełniony (kanon §A2/§C4). Do tej pory akcje tworzenia jechały przez
+   * `onRegisterFilterControl` razem z filtrami: były `btn-secondary` (jasny
+   * obrys), stały w slocie filtrów, potrafiły być po trzy naraz i wspólnie
+   * z banerem łamały pasek na trzy linie.
+   *
+   * Ten sam kanał co `*FilterControl` powyżej — jeden stan per zakładka.
+   */
+  const [workPrimaryCta, setWorkPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(null);
+  const [resourcesPrimaryCta, setResourcesPrimaryCta] =
+    useState<ExecutionSurfacePrimaryCta | null>(null);
+  const [controlPrimaryCta, setControlPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(
+    null
+  );
+  /**
+   * Prawy slot Menu 3 (kebab `RowActionsMenu`) dla Pracy i Zasobów — RZADKIE
+   * akcje tworzenia, które nie mogą być drugim CTA: „Nowy kamień milowy"
+   * (Praca) i „Propose allocation" (Zasoby), obie widoczne tylko przy
+   * wybranej realizacji. Ten sam kanał i ten sam kebab co Raporty (P16-R6/D6).
+   */
+  const [workMenu3Control, setWorkMenu3Control] = useState<React.ReactNode>(null);
+  const [resourcesMenu3Control, setResourcesMenu3Control] = useState<React.ReactNode>(null);
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
@@ -2573,16 +2603,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t]
   );
 
+  // Segment zakresu — SSOT `MENU_2_SEGMENT_*` (ModuleMenu3.tsx). Do 08.09.2026
+  // ten sam pstryczek miał w Inicjatywach i w Realizacji dwa różne wyglądy
+  // (h-8/h-9, inne tła aktywnego, inne obwódki) — właściciel nazwał to chaosem.
   const scopeToggle = (
-    <div
-      className="
-        flex items-center gap-1 p-0.5 rounded-full h-9
-        bg-c-surface-raised
-        border border-c-border-subtle
-      "
-      role="radiogroup"
-      aria-label={t('execution.scope.aria', 'Scope')}
-    >
+    <div className={MENU_2_SEGMENT_GROUP} role="radiogroup" aria-label={t('execution.scope.aria', 'Scope')}>
       {(
         [
           { id: 'active' as const, label: t('execution.scope.active', 'Active') },
@@ -2598,11 +2623,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`h-8 px-3 rounded-full text-[11px] font-semibold transition-colors ${
-            scope === opt.id
-              ? 'bg-c-surface/80 text-c-text-secondary shadow-sm'
-              : 'text-c-text-muted hover:bg-c-surface/60'
-          }`}
+          className={
+            scope === opt.id ? MENU_2_SEGMENT_ITEM_ACTIVE : MENU_2_SEGMENT_ITEM_INACTIVE
+          }
           title={
             opt.id === 'active'
               ? t('execution.scope.activeHint', 'Scheduled → Executing → Blocked')
@@ -2617,40 +2640,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const rightControls = useMemo(() => {
     const showScope = activeTab === 'list';
-    const execChip =
-      currentProjectId && activeTab !== 'list' ? (
-        <button
-          type="button"
-          onClick={() => setActiveTab('list' as ModuleTab)}
-          className="h-9 px-3 rounded-lg flex items-center gap-2 border border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface/60 transition-colors"
-          title={t('execution.execSnapshot.title', 'Executive snapshot')}
-        >
-          <span className="text-[10px] font-mono uppercase tracking-wide text-c-text-muted">
-            exec v2{execSnapshotSource ? ` · ${execSnapshotSource}` : ''}
-          </span>
-          <span className="text-[11px] font-semibold tabular-nums text-emerald-500">
-            {execTopline.executing}
-          </span>
-          <span className="text-[11px] font-semibold tabular-nums text-danger-500">
-            {execTopline.blocked}
-          </span>
-          <span className="text-[11px] font-semibold tabular-nums text-amber-500">
-            {execTopline.pendingDecisions}
-          </span>
-          <span className="text-[11px] font-semibold tabular-nums text-c-danger">
-            {execTopline.overdueTasks}
-          </span>
-        </button>
-      ) : null;
 
-    // #22/#13/#15/#21a — the "Results" button was removed at its single source
-    // here, so it no longer appears on ANY Implementation sub-tab (Summary,
-    // Rollout/*, Reporting, Management).
+    /*
+     * USUNIĘTA PLAKIETKA „exec v2 · 4 liczniki" (porządek pasków 08.09.2026).
+     *
+     * Był to przycisk-skrót do zakładki „Realizacje" z czterema licznikami
+     * `tabular-nums` (w realizacji · zablokowane · decyzje · po terminie)
+     * wprost w Menu 2 — a kanon TRIADA §A2/lista czekowania pkt 3 mówi
+     * „Menu 2: bez liczników; liczniki mieszkają w Menu 3". Te same cztery
+     * liczby pokazuje Kokpit (kafle Kondycja/Na czas/Obłożenie/Do
+     * rozstrzygnięcia) i chipy Menu 3, więc informacja NIE ginie — znika
+     * duplikat w niewłaściwym pasku. `execTopline`/`execSnapshotSource`
+     * zostają wyliczane dla Kokpitu, nie kasujemy ich.
+     */
 
-    // Odbiór grafiki 165-menu3-pasek — filtr realizacji / akcje per-zakładka
-    // (Praca/Zasoby/Sterowanie), zarejestrowane przez sam surface (patrz
-    // `onRegisterFilterControl`). Zastępuje blok tytuł+opis+filtr, który
-    // wcześniej rozpychał pion między Menu 3 a tabelą.
+    // Odbiór grafiki 165-menu3-pasek — filtr realizacji per-zakładka
+    // (Praca/Zasoby/Decyzje i ryzyka/Raporty), zarejestrowany przez sam
+    // surface (patrz `onRegisterFilterControl`). Od 08.09.2026 slot niesie
+    // WYŁĄCZNIE filtry — akcje tworzenia poszły do `primaryCta` Menu 2.
     const surfaceControl =
       activeTab === ('work' as ModuleTab)
         ? workFilterControl
@@ -2663,27 +2670,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               : null;
 
     if (!showScope) {
-      return (
-        <div className="flex items-center gap-2">
-          {execChip}
-          {surfaceControl}
-        </div>
-      );
+      // `min-w-0` + brak `flex-wrap`: slot filtrów nie ma prawa zawinąć się
+      // do drugiej linii (kanon §A2 „jedna linia").
+      return <div className="flex min-w-0 items-center gap-2">{surfaceControl}</div>;
     }
 
-    return (
-      <div className="flex items-center gap-2">
-        {execChip}
-        {scopeToggle}
-      </div>
-    );
+    return <div className="flex min-w-0 items-center gap-2">{scopeToggle}</div>;
   }, [
     activeTab,
-    currentProjectId,
-    execSnapshotSource,
-    execTopline,
     scopeToggle,
-    t,
     workFilterControl,
     resourcesFilterControl,
     controlFilterControl,
@@ -5550,6 +5545,8 @@ Please return:
             onCountsChange={menu3CountHandlers.work}
             documentId={workIdParts.join(':')}
             onRegisterFilterControl={setWorkFilterControl}
+            onRegisterPrimaryCta={setWorkPrimaryCta}
+            onRegisterMenu3Control={setWorkMenu3Control}
           />
         );
       }
@@ -5559,6 +5556,8 @@ Please return:
           onCountsChange={menu3CountHandlers.work}
           onOpenDocument={handleOpenWorkDocument}
           onRegisterFilterControl={setWorkFilterControl}
+          onRegisterPrimaryCta={setWorkPrimaryCta}
+          onRegisterMenu3Control={setWorkMenu3Control}
         />
       );
     }
@@ -5568,6 +5567,8 @@ Please return:
           activePreset={canonicalMenu3Preset.resources}
           onCountsChange={menu3CountHandlers.resources}
           onRegisterFilterControl={setResourcesFilterControl}
+          onRegisterPrimaryCta={setResourcesPrimaryCta}
+          onRegisterMenu3Control={setResourcesMenu3Control}
         />
       );
     if (activeTab === ('control' as ModuleTab))
@@ -5586,6 +5587,7 @@ Please return:
           activePreset={canonicalMenu3Preset.control}
           onCountsChange={menu3CountHandlers.control}
           onRegisterFilterControl={setControlFilterControl}
+          onRegisterPrimaryCta={setControlPrimaryCta}
         />
       );
     if (activeTab === 'reports')
@@ -5893,6 +5895,23 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
+        /*
+         * ── JEDEN primary CTA per zakładka (porządek pasków 08.09.2026) ────
+         * Powierzchnie Praca/Zasoby/Decyzje i ryzyka rejestrują swoje CTA
+         * przez `onRegisterPrimaryCta`; Raporty i Rollout korzystają dalej
+         * z `onNewItem` (zdarzenia CustomEvent). `primaryCta` ma w
+         * `ModuleNavBar` pierwszeństwo nad `onNewItem`, a te dwa zbiory
+         * zakładek są rozłączne — nigdy nie ma dwóch CTA naraz.
+         */
+        primaryCta={
+          activeTab === ('work' as ModuleTab)
+            ? (workPrimaryCta ?? undefined)
+            : activeTab === ('resources' as ModuleTab)
+              ? (resourcesPrimaryCta ?? undefined)
+              : activeTab === ('control' as ModuleTab)
+                ? (controlPrimaryCta ?? undefined)
+                : undefined
+        }
         onNewItem={menuCta.onNewItem}
         newItemLabel={menuCta.newItemLabel}
         activeStatusFilter={activeStatusFilter}
@@ -5906,7 +5925,15 @@ Please return:
         // `ExecutionReportsSurface` (patrz `reportsMenu3Control` powyżej).
         // Puste na każdej innej zakładce — zero zmian dla list/work/
         // resources/control/summary.
-        menu3Right={activeTab === 'reports' ? reportsMenu3Control : undefined}
+        menu3Right={
+          activeTab === 'reports'
+            ? reportsMenu3Control
+            : activeTab === ('work' as ModuleTab)
+              ? workMenu3Control
+              : activeTab === ('resources' as ModuleTab)
+                ? resourcesMenu3Control
+                : undefined
+        }
         chips={
           /*
            * 1.12-R1 (A): PRZYCZYNA martwego Menu 3 „Realizacji" — chipy były
