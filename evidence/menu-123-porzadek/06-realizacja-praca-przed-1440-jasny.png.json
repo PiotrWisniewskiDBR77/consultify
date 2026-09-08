@@ -1,0 +1,20 @@
+{
+  "opis": "realizacja › praca — przed, 1440px, motyw jasny",
+  "url": "http://127.0.0.1:3192/execution?tab=work",
+  "etykieta": "przed",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "pomiarMenu2": {
+    "znaleziono": true,
+    "wysokoscPx": 62,
+    "linie": 1,
+    "przyciskiWPrawymKlastrze": 1,
+    "etykietyPrawegoKlastra": [
+      "Nowe zadanie"
+    ],
+    "licznikiWMenu2": 0,
+    "baneryWMenu2": 0,
+    "selectyWMenu2": 1
+  },
+  "bledyKonsoli": []
+}

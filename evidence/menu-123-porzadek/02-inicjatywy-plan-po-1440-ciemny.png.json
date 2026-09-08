@@ -1,0 +1,21 @@
+{
+  "opis": "inicjatywy › plan — po, 1440px, motyw ciemny",
+  "url": "http://127.0.0.1:3192/initiatives?tab=plan",
+  "etykieta": "po",
+  "szerokosc": 1440,
+  "motyw": "ciemny",
+  "pomiarMenu2": {
+    "znaleziono": true,
+    "wysokoscPx": 60,
+    "linie": 1,
+    "przyciskiWPrawymKlastrze": 2,
+    "etykietyPrawegoKlastra": [
+      "Status",
+      "Nowy plan"
+    ],
+    "licznikiWMenu2": 0,
+    "baneryWMenu2": 0,
+    "selectyWMenu2": 0
+  },
+  "bledyKonsoli": []
+}
