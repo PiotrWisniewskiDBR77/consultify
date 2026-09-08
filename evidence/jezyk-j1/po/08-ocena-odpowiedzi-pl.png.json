@@ -1,0 +1,110 @@
+{
+ "ekran": "08-ocena-odpowiedzi",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/chat/a196ee85-b59b-406e-9084-2640fb048022",
+ "jezykPowloki": null,
+ "zgodnyJezyk": null,
+ "obcychSlowUI": 23,
+ "obcychLiniiUI": 15,
+ "ui": [
+  {
+   "linia": "User Feedback & Triage",
+   "trafienia": [
+    "Feedback"
+   ]
+  },
+  {
+   "linia": "Improve with AI",
+   "trafienia": [
+    "with"
+   ]
+  },
+  {
+   "linia": "Attach a screenshot of the current view (optional)",
+   "trafienia": [
+    "of",
+    "the"
+   ]
+  },
+  {
+   "linia": "Attach console logs, network errors and breadcrumbs (without form values)",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Feedback sent as audyt@dbr77.local",
+   "trafienia": [
+    "Feedback",
+    "as"
+   ]
+  },
+  {
+   "linia": "Skip to main content",
+   "trafienia": [
+    "content"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "create",
+   "trafienia": [
+    "create"
+   ]
+  },
+  {
+   "linia": "Open target",
+   "trafienia": [
+    "Open"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "7 sources",
+   "trafienia": [
+    "sources"
+   ]
+  }
+ ],
+ "dane": []
+}

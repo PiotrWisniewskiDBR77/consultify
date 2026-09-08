@@ -1,0 +1,841 @@
+{
+ "ekran": "08-ocena-odpowiedzi",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3217/chat/a196ee85-b59b-406e-9084-2640fb048022",
+ "jezykPowloki": null,
+ "zgodnyJezyk": null,
+ "obcychSlowUI": 295,
+ "obcychLiniiUI": 61,
+ "ui": [
+  {
+   "linia": "Analiza kosztów operacyjnych:",
+   "trafienia": [
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Oceń, czy są możliwe szybkie zmiany w tych obszarach, które nie wpływają na jakość, np. renegocjacja umów z dostawcami lub optymalizacja procesów [M4], [M5], [M6].",
+   "trafienia": [
+    "Oceń",
+    "są",
+    "możliwe",
+    "które",
+    "nie",
+    "wpływają",
+    "jakość",
+    "umów",
+    "lub",
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Optymalizacja procesów produkcyjnych:",
+   "trafienia": [
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Przeanalizuj efektywność wykorzystania zasobów, takich jak energia, surowce czy czas pracy maszyn. Inicjatywy takie jak „Robotyzacja gniazda spawalniczego” i „Automatyzacja magazynu WIP” mogą już wpływać na oszczędności [M4], [M6].",
+   "trafienia": [
+    "efektywność",
+    "zasobów",
+    "mogą",
+    "już",
+    "wpływać",
+    "oszczędności"
+   ]
+  },
+  {
+   "linia": "Rozważ wdrożenie lean management, aby usunąć marnotrawstwo i zwiększyć efektywność procesów.",
+   "trafienia": [
+    "Rozważ",
+    "wdrożenie",
+    "usunąć",
+    "zwiększyć",
+    "efektywność",
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Przyspiesz inicjatywy związane z automatyzacją, jak „System wizyjny kontroli jakości”, które mogą zmniejszyć koszty pracy i poprawić jakość [M5].",
+   "trafienia": [
+    "związane",
+    "automatyzacją",
+    "jakości",
+    "które",
+    "mogą",
+    "zmniejszyć",
+    "poprawić",
+    "jakość"
+   ]
+  },
+  {
+   "linia": "Zbadaj możliwości dalszej digitalizacji procesów administracyjnych i produkcyjnych, co może prowadzić do redukcji kosztów operacyjnych.",
+   "trafienia": [
+    "możliwości",
+    "procesów",
+    "może",
+    "prowadzić",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Przegląd polityki zakupowej:",
+   "trafienia": [
+    "Przegląd"
+   ]
+  },
+  {
+   "linia": "Dokonaj przeglądu polityki zakupowej i zidentyfikuj możliwości konsolidacji zakupów lub przetargów na większą skalę, aby uzyskać lepsze ceny.",
+   "trafienia": [
+    "przeglądu",
+    "możliwości",
+    "zakupów",
+    "lub",
+    "przetargów",
+    "większą",
+    "skalę",
+    "uzyskać"
+   ]
+  },
+  {
+   "linia": "Efektywne zarządzanie zasobami ludzkimi:",
+   "trafienia": [
+    "zarządzanie"
+   ]
+  },
+  {
+   "linia": "Oceń strukturę zatrudnienia i identyfikuj obszary, gdzie może być nadmiar zasobów lub możliwość ich lepszego wykorzystania bez wpływu na jakość pracy.",
+   "trafienia": [
+    "Oceń",
+    "strukturę",
+    "może",
+    "być",
+    "zasobów",
+    "lub",
+    "możliwość",
+    "wpływu",
+    "jakość"
+   ]
+  },
+  {
+   "linia": "Rekomenduję rozpoczęcie od szczegółowej analizy kosztów w każdym z tych obszarów. Możemy skorzystać z modułu Finance w Consultify do modelowania potencjalnych oszczędności i oceny ich wpływu na ogólną wydajność organizacji. Czy chciałbyś, abym zainicjowała bardziej szczegółową analizę w którymś z tych obszarów?",
+   "trafienia": [
+    "Rekomenduję",
+    "rozpoczęcie",
+    "szczegółowej",
+    "kosztów",
+    "każdym",
+    "obszarów",
+    "Możemy",
+    "skorzystać",
+    "modułu",
+    "oszczędności",
+    "oceny",
+    "wpływu",
+    "ogólną",
+    "wydajność",
+    "chciałbyś",
+    "zainicjowała",
+    "szczegółową",
+    "analizę",
+    "którymś"
+   ]
+  },
+  {
+   "linia": "Przeprowadź analizę Pareto:",
+   "trafienia": [
+    "Przeprowadź",
+    "analizę"
+   ]
+  },
+  {
+   "linia": "Użyj zasady 80/20 do identyfikacji kluczowych obszarów, które generują większość kosztów. Skup się na tych, gdzie można wprowadzić zmiany bez utraty jakości.",
+   "trafienia": [
+    "Użyj",
+    "obszarów",
+    "które",
+    "generują",
+    "większość",
+    "kosztów",
+    "się",
+    "można",
+    "wprowadzić",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Wybierz inicjatywy, które można wdrożyć stosunkowo szybko i które przyniosą natychmiastowe oszczędności, jak np. renegocjacja warunków z dostawcami lub optymalizacja procesów.",
+   "trafienia": [
+    "Wybierz",
+    "które",
+    "można",
+    "wdrożyć",
+    "przyniosą",
+    "oszczędności",
+    "warunków",
+    "lub",
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Skorzystaj z modułu Initiatives w Consultify, aby utworzyć listę inicjatyw oszczędnościowych i ustalić ich priorytetyzację. Możesz wykorzystać już istniejące inicjatywy, takie jak automatyzacja i robotyzacja, i ocenić ich potencjalny wpływ na koszty [M4], [M5], [M6].",
+   "trafienia": [
+    "modułu",
+    "utworzyć",
+    "listę",
+    "oszczędnościowych",
+    "ustalić",
+    "priorytetyzację",
+    "Możesz",
+    "wykorzystać",
+    "już",
+    "istniejące",
+    "ocenić",
+    "wpływ"
+   ]
+  },
+  {
+   "linia": "Po wdrożeniu zmian, regularnie monitoruj ich wpływ na koszty oraz jakość. Wykorzystaj moduł Wyniki (Benefits) do śledzenia realizacji KPI i ROI.",
+   "trafienia": [
+    "wdrożeniu",
+    "wpływ",
+    "oraz",
+    "jakość",
+    "moduł",
+    "śledzenia"
+   ]
+  },
+  {
+   "linia": "Jeśli potrzebujesz pomocy w utworzeniu inicjatywy lub analizy finansowej, mogę Cię poprowadzić przez odpowiednie moduły Consultify. Czy chciałbyś, abym pomogła w konkretnej części tego procesu?",
+   "trafienia": [
+    "Jeśli",
+    "lub",
+    "mogę",
+    "Cię",
+    "poprowadzić",
+    "przez",
+    "moduły",
+    "chciałbyś",
+    "pomogła",
+    "części"
+   ]
+  },
+  {
+   "linia": "Wykorzystanie narzędzi analitycznych:",
+   "trafienia": [
+    "narzędzi"
+   ]
+  },
+  {
+   "linia": "Skorzystaj z narzędzi dostępnych w Consultify do analizy danych i identyfikacji obszarów z potencjałem oszczędności. Moduł Finance może być pomocny w modelowaniu różnych scenariuszy kosztowych i ich wpływu na organizację.",
+   "trafienia": [
+    "narzędzi",
+    "dostępnych",
+    "obszarów",
+    "potencjałem",
+    "oszczędności",
+    "Moduł",
+    "może",
+    "być",
+    "różnych",
+    "wpływu",
+    "organizację"
+   ]
+  },
+  {
+   "linia": "Optymalizacja procesów produkcyjnych:",
+   "trafienia": [
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Rozważ zastosowanie rozwiązań takich jak Digital Twin lub IIoT, które oferuje DBR77. Pomagają one w monitorowaniu i optymalizacji procesów produkcyjnych, co może prowadzić do redukcji kosztów operacyjnych.",
+   "trafienia": [
+    "Rozważ",
+    "rozwiązań",
+    "lub",
+    "które",
+    "Pomagają",
+    "procesów",
+    "może",
+    "prowadzić",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Inwestuj w automatyzację procesów produkcyjnych, co może zmniejszyć koszty pracy i poprawić efektywność. DBR77 oferuje zaawansowane rozwiązania w zakresie automatyzacji, które mogą być dostosowane do specyficznych potrzeb Twojej organizacji.",
+   "trafienia": [
+    "automatyzację",
+    "procesów",
+    "może",
+    "zmniejszyć",
+    "poprawić",
+    "efektywność",
+    "rozwiązania",
+    "które",
+    "mogą",
+    "być"
+   ]
+  },
+  {
+   "linia": "Zarządzanie danymi:",
+   "trafienia": [
+    "Zarządzanie"
+   ]
+  },
+  {
+   "linia": "Wykorzystaj platformy analityczne, takie jak IRIS, do lepszego zarządzania i interpretacji danych produkcyjnych. Zrozumienie, jak dane płyną od maszyn do decyzji operacyjnych, może pomóc w identyfikacji obszarów do optymalizacji [KB1], [KB2].",
+   "trafienia": [
+    "zarządzania",
+    "płyną",
+    "może",
+    "pomóc",
+    "obszarów"
+   ]
+  },
+  {
+   "linia": "Szkolenie i rozwój pracowników:",
+   "trafienia": [
+    "rozwój",
+    "pracowników"
+   ]
+  },
+  {
+   "linia": "Zapewnij, że Twoi pracownicy są przeszkoleni w korzystaniu z nowych technologii i procesów. Wpływa to na efektywność i pozwala na pełne wykorzystanie potencjału wdrożonych rozwiązań.",
+   "trafienia": [
+    "że",
+    "są",
+    "procesów",
+    "Wpływa",
+    "efektywność",
+    "pełne",
+    "potencjału",
+    "wdrożonych",
+    "rozwiązań"
+   ]
+  },
+  {
+   "linia": "Te działania mogą pomóc w identyfikacji i realizacji oszczędności, jednocześnie dbając o utrzymanie lub nawet poprawę jakości produkcji. Jeżeli potrzebujesz bardziej szczegółowej analizy lub pomocy w implementacji tych rozwiązań, mogę pomóc w nawigacji po odpowiednich modułach Consultify.",
+   "trafienia": [
+    "działania",
+    "mogą",
+    "pomóc",
+    "oszczędności",
+    "jednocześnie",
+    "dbając",
+    "lub",
+    "poprawę",
+    "jakości",
+    "Jeżeli",
+    "szczegółowej",
+    "rozwiązań",
+    "mogę",
+    "modułach"
+   ]
+  },
+  {
+   "linia": "Propozycja kroków do stworzenia Plant Canvas:",
+   "trafienia": [
+    "kroków"
+   ]
+  },
+  {
+   "linia": "Zdefiniuj cel: Określ, co chcesz osiągnąć dzięki Plant Canvas. Może to być optymalizacja procesów, poprawa efektywności produkcji lub identyfikacja obszarów do automatyzacji.",
+   "trafienia": [
+    "Określ",
+    "osiągnąć",
+    "dzięki",
+    "Może",
+    "być",
+    "procesów",
+    "efektywności",
+    "lub",
+    "obszarów"
+   ]
+  },
+  {
+   "linia": "Zbierz dane: Przygotuj niezbędne informacje o procesach produkcyjnych, zasobach, maszynach i istniejących wyzwaniach. Dane te będą kluczowe przy tworzeniu Canvas.",
+   "trafienia": [
+    "niezbędne",
+    "istniejących",
+    "będą"
+   ]
+  },
+  {
+   "linia": "Wybierz narzędzie: W module Ideas / Notatki, wybierz najbardziej odpowiednie narzędzie do wizualizacji, takie jak Process Flow, aby stworzyć Plant Canvas.",
+   "trafienia": [
+    "Wybierz",
+    "narzędzie",
+    "wybierz",
+    "stworzyć"
+   ]
+  },
+  {
+   "linia": "Twórz Canvas:",
+   "trafienia": [
+    "Twórz"
+   ]
+  },
+  {
+   "linia": "Zidentyfikuj obszary wymagające uwagi lub poprawy.",
+   "trafienia": [
+    "wymagające",
+    "lub"
+   ]
+  },
+  {
+   "linia": "Uwzględnij potencjalne inicjatywy, które mogą przynieść oszczędności lub poprawić jakość.",
+   "trafienia": [
+    "Uwzględnij",
+    "które",
+    "mogą",
+    "przynieść",
+    "oszczędności",
+    "lub",
+    "poprawić",
+    "jakość"
+   ]
+  },
+  {
+   "linia": "Analizuj i iteruj: Regularnie przeglądaj i aktualizuj Plant Canvas, aby odzwierciedlał bieżące potrzeby i wyzwania.",
+   "trafienia": [
+    "przeglądaj",
+    "odzwierciedlał",
+    "bieżące"
+   ]
+  },
+  {
+   "linia": "Jeśli chcesz, mogę pomóc w nawigacji do modułu Ideas / Notatki i rozpocząć tworzenie Plant Canvas. Czy chcesz, abym przygotowała i poprowadziła Cię przez ten proces?",
+   "trafienia": [
+    "Jeśli",
+    "mogę",
+    "pomóc",
+    "modułu",
+    "rozpocząć",
+    "przygotowała",
+    "poprowadziła",
+    "Cię",
+    "przez"
+   ]
+  },
+  {
+   "linia": "Identyfikacja istniejących wyzwań i obszarów do poprawy.",
+   "trafienia": [
+    "istniejących",
+    "wyzwań",
+    "obszarów"
+   ]
+  },
+  {
+   "linia": "Wizualizacja kluczowych procesów.",
+   "trafienia": [
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Zaznaczenie potencjalnych inicjatyw oszczędnościowych.",
+   "trafienia": [
+    "oszczędnościowych"
+   ]
+  },
+  {
+   "linia": "Wdrożenie identyfikowanych inicjatyw.",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Regularna aktualizacja Canvasu w oparciu o nowe dane i potrzeby.",
+   "trafienia": [
+    "nowe"
+   ]
+  },
+  {
+   "linia": "Przegląd i Optymalizacja:",
+   "trafienia": [
+    "Przegląd"
+   ]
+  },
+  {
+   "linia": "Regularne przeglądy efektywności i jakości.",
+   "trafienia": [
+    "przeglądy",
+    "efektywności",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Dostosowywanie działań w oparciu o wyniki i analizę.",
+   "trafienia": [
+    "działań",
+    "analizę"
+   ]
+  },
+  {
+   "linia": "Jeśli jesteś gotowy, możemy zacząć tworzenie tego planu w Canvasie. Czy mogę działać dalej?",
+   "trafienia": [
+    "Jeśli",
+    "jesteś",
+    "możemy",
+    "zacząć",
+    "mogę",
+    "działać"
+   ]
+  },
+  {
+   "linia": "Wizja: Zwiększenie efektywności operacyjnej poprzez optymalizację kosztów bez wpływu na jakość.",
+   "trafienia": [
+    "Zwiększenie",
+    "efektywności",
+    "optymalizację",
+    "kosztów",
+    "wpływu",
+    "jakość"
+   ]
+  },
+  {
+   "linia": "Cele: Redukcja kosztów operacyjnych o X% w ciągu najbliższych 12 miesięcy przy jednoczesnym utrzymaniu poziomu jakości.",
+   "trafienia": [
+    "kosztów",
+    "ciągu",
+    "najbliższych",
+    "miesięcy",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Analiza Wstępna",
+   "trafienia": [
+    "Wstępna"
+   ]
+  },
+  {
+   "linia": "Przegląd aktualnych procesów i kosztów.",
+   "trafienia": [
+    "Przegląd",
+    "procesów",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Identyfikacja kluczowych obszarów generujących największe koszty.",
+   "trafienia": [
+    "obszarów",
+    "generujących",
+    "największe"
+   ]
+  },
+  {
+   "linia": "Automatyzacja: Wdrożenie technologii w celu zmniejszenia kosztów pracy.",
+   "trafienia": [
+    "Wdrożenie",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Optymalizacja Procesów: Lean management i eliminacja marnotrawstwa.",
+   "trafienia": [
+    "Procesów"
+   ]
+  },
+  {
+   "linia": "Zarządzanie Dostawcami: Renegocjacja umów i konsolidacja zakupów.",
+   "trafienia": [
+    "Zarządzanie",
+    "umów",
+    "zakupów"
+   ]
+  },
+  {
+   "linia": "Plan wdrożenia inicjatyw z wyznaczeniem odpowiedzialności i harmonogramu.",
+   "trafienia": [
+    "wdrożenia",
+    "odpowiedzialności"
+   ]
+  },
+  {
+   "linia": "Pilotowanie wybranych rozwiązań w celu oceny ich skuteczności.",
+   "trafienia": [
+    "rozwiązań",
+    "oceny",
+    "skuteczności"
+   ]
+  },
+  {
+   "linia": "Regularne przeglądy wyników i dostosowywanie strategii.",
+   "trafienia": [
+    "przeglądy",
+    "wyników"
+   ]
+  },
+  {
+   "linia": "Mierzenie wyników za pomocą KPI i porównywanie z celami.",
+   "trafienia": [
+    "wyników",
+    "pomocą",
+    "porównywanie"
+   ]
+  },
+  {
+   "linia": "Regularna komunikacja postępów i wyników do interesariuszy.",
+   "trafienia": [
+    "postępów",
+    "wyników"
+   ]
+  },
+  {
+   "linia": "Szkolenia dla pracowników w zakresie nowych procesów i technologii.",
+   "trafienia": [
+    "dla",
+    "pracowników",
+    "procesów"
+   ]
+  },
+  {
+   "linia": "To ogólny szkic, który można rozwinąć w bardziej szczegółowy plan, uwzględniając specyficzne potrzeby i dane organizacji. Jeśli chcesz, możemy teraz przejść do tworzenia szczegółowego dokumentu w Consultify.",
+   "trafienia": [
+    "ogólny",
+    "który",
+    "można",
+    "rozwinąć",
+    "szczegółowy",
+    "uwzględniając",
+    "Jeśli",
+    "możemy",
+    "przejść",
+    "szczegółowego"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Poszukajmy oszczędności — gdzie najszybciej możemy obniżyć koszty bez utraty jakości?",
+   "trafienia": [
+    "oszczędności",
+    "możemy",
+    "obniżyć",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Aby zidentyfikować potencjalne obszary oszczędności bez utraty jakości, musimy podejść do tematu strategicznie i analitycznie. Oto kroki, które sugeruję:",
+   "trafienia": [
+    "zidentyfikować",
+    "oszczędności",
+    "jakości",
+    "podejść",
+    "które",
+    "sugeruję"
+   ]
+  },
+  {
+   "linia": "Zidentyfikuj największe kategorie wydatków operacyjnych. Skoncentruj się na tych, które stanowią 20% kategorii generujących 80% kosztów (zasada Pareto).",
+   "trafienia": [
+    "największe",
+    "wydatków",
+    "się",
+    "które",
+    "stanowią",
+    "generujących",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "super to co mam zrobić ?",
+   "trafienia": [
+    "zrobić"
+   ]
+  },
+  {
+   "linia": "Aby zacząć działać w kierunku osiągnięcia oszczędności bez utraty jakości, proponuję podjąć następujące kroki:",
+   "trafienia": [
+    "zacząć",
+    "działać",
+    "osiągnięcia",
+    "oszczędności",
+    "jakości",
+    "proponuję",
+    "podjąć",
+    "następujące"
+   ]
+  },
+  {
+   "linia": "Skoncentruj się na wyciągnięciu szczegółowych danych dotyczących największych kategorii kosztów w Twojej organizacji. Możesz skorzystać z modułu Finance w Consultify, aby uzyskać szczegółowy wgląd w strukturę kosztów.",
+   "trafienia": [
+    "się",
+    "wyciągnięciu",
+    "szczegółowych",
+    "dotyczących",
+    "największych",
+    "kosztów",
+    "Możesz",
+    "skorzystać",
+    "modułu",
+    "uzyskać",
+    "szczegółowy",
+    "wgląd",
+    "strukturę"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "W DBR77, w kontekście Consultify, możesz skupić się na kilku kluczowych działaniach, które mogą pomóc w osiągnięciu oszczędności bez utraty jakości:",
+   "trafienia": [
+    "kontekście",
+    "możesz",
+    "skupić",
+    "się",
+    "działaniach",
+    "które",
+    "mogą",
+    "pomóc",
+    "osiągnięciu",
+    "oszczędności",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Aby utworzyć Plant Canvas, skorzystajmy z modułu Ideas / Notatki w Consultify, który oferuje narzędzia do wizualizacji i przechwytywania wiedzy, takie jak Mind Map czy Process Flow.",
+   "trafienia": [
+    "utworzyć",
+    "modułu",
+    "który",
+    "narzędzia"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Zacznijmy od stworzenia planu w Canvasie. Skupię się na najważniejszych krokach, które możemy tam uwzględnić. Proszę o…",
+   "trafienia": [
+    "Skupię",
+    "się",
+    "najważniejszych",
+    "które",
+    "możemy",
+    "uwzględnić",
+    "Proszę"
+   ]
+  },
+  {
+   "linia": "Zacznijmy od stworzenia planu w Canvasie. Skupię się na najważniejszych krokach, które możemy tam uwzględnić. Proszę o potwierdzenie, czy takie podejście Ci odpowiada, a jeśli masz dodatkowe wymagania, daj mi znać.",
+   "trafienia": [
+    "Skupię",
+    "się",
+    "najważniejszych",
+    "które",
+    "możemy",
+    "uwzględnić",
+    "Proszę",
+    "podejście",
+    "jeśli",
+    "znać"
+   ]
+  },
+  {
+   "linia": "Plan działania:",
+   "trafienia": [
+    "działania"
+   ]
+  },
+  {
+   "linia": "Zdefiniowanie celu Plant Canvas: Optymalizacja procesów, zwiększenie efektywności, identyfikacja obszarów automatyzacji.",
+   "trafienia": [
+    "procesów",
+    "zwiększenie",
+    "efektywności",
+    "obszarów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przepraszam za opóźnienie. Aby stworzyć plan w Canvasie obok, musisz potwierdzić, że jesteś gotowy, a ja mogę przejść do kolejnych kroków. Proszę o Twoje potwierdzenie lub dodatkowe instrukcje, jeśli masz konkretne wymagania dotyczące tego planu.",
+   "trafienia": [
+    "opóźnienie",
+    "stworzyć",
+    "potwierdzić",
+    "że",
+    "jesteś",
+    "mogę",
+    "przejść",
+    "kroków",
+    "Proszę",
+    "lub",
+    "jeśli",
+    "dotyczące"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Słuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda normalnie plan strategiczny w tym zakresie bez głębszej analizy",
+   "trafienia": [
+    "Słuchaj",
+    "żebyś",
+    "zrobiła",
+    "taką",
+    "krótką",
+    "zajawkę",
+    "wygląda",
+    "głębszej"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Poniżej przedstawiam zarys planu strategicznego dotyczącego optymalizacji kosztów bez utraty jakości. Jest to ogólna struktura, którą można dostosować do specyficznych potrzeb organizacji:",
+   "trafienia": [
+    "Poniżej",
+    "dotyczącego",
+    "kosztów",
+    "jakości",
+    "Jest",
+    "ogólna",
+    "którą",
+    "można",
+    "dostosować"
+   ]
+  }
+ ]
+}

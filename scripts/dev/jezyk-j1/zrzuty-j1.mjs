@@ -167,6 +167,27 @@ function liniePodejrzane(text, lang) {
   return wynik;
 }
 
+/**
+ * W jakim języku NAPRAWDĘ stoi powłoka.
+ *
+ * Zmierzone 08.09, dwa razy pod rząd: zrzut oznaczony „-en" pokazywał POLSKI
+ * interfejs mimo `users.language='en'`. Pierwsza wersja tej sondy czytała
+ * `document.title` — i SKŁAMAŁA: tytuł potrafi zostać z etykiety trasy
+ * („AI Chat") przy polskim wnętrzu. Sonda czyta więc napisy, które renderuje
+ * SAM PRODUKT: pole wpisu i pasek akcji czatu.
+ */
+async function jezykPowloki(p) {
+  const tekst = await p.evaluate(() => {
+    const ph = document.querySelector('textarea')?.getAttribute('placeholder') || '';
+    return `${ph} ${document.body.innerText.slice(0, 1500)}`;
+  });
+  const pl = /Zapytaj Teres|Rozmawiaj głosem|Nowa rozmowa|Współmyśliciel|Wybierz tryb/i.test(tekst);
+  const en = /Ask Teresa|Start by voice|New conversation|Co-Thinker|Choose a mode/i.test(tekst);
+  if (pl && !en) return 'pl';
+  if (en && !pl) return 'en';
+  return null;
+}
+
 async function zrzut(p, nazwa, lang) {
   await p.waitForTimeout(2000);
   let wykryty = await jezykPowloki(p);
