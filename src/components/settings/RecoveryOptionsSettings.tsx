@@ -183,7 +183,22 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
 
   // Download codes as file
   const handleDownloadCodes = () => {
-    const content = `Consultify Backup Codes\nGenerated: ${formatListDateTime()}\n\n${backupCodes.join('\n')}\n\nStore these codes in a safe place. Each code can only be used once.`;
+    // Plik z kodami zapasowymi szedl PO ANGIELSKU niezaleznie od jezyka konta —
+    // a to jedyny artefakt, ktory uzytkownik zapisuje u siebie i czyta pozniej,
+    // gdy nie moze sie zalogowac. Tresc idzie w jezyku interfejsu.
+    const content = [
+      t('settings.recovery.fileTitle', 'Consultify backup codes'),
+      t('settings.recovery.fileGenerated', 'Generated: {{date}}', {
+        date: formatListDateTime(new Date()),
+      }),
+      '',
+      ...backupCodes,
+      '',
+      t(
+        'settings.recovery.fileFooter',
+        'Store these codes in a safe place. Each code can only be used once.'
+      ),
+    ].join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -212,7 +212,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       } else {
         setStaleWarning('Saved but read-back is stale — please refresh.');
       }
-      setSavedAt(formatListTime());
+      setSavedAt(formatListTime(new Date()));
     } catch {
       setSaveError('Failed to save brand kit. Please retry.');
     } finally {

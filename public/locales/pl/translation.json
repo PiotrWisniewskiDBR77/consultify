@@ -18665,7 +18665,10 @@
       "unavailable": "Odzyskiwanie konta jest chwilowo niedostępne.",
       "saved": "Zapisane",
       "error": "Błąd",
-      "saveFailed": "Nie udało się zapisać"
+      "saveFailed": "Nie udało się zapisać",
+      "fileTitle": "Kody zapasowe Consultify",
+      "fileGenerated": "Wygenerowano: {{date}}",
+      "fileFooter": "Przechowuj te kody w bezpiecznym miejscu. Każdego kodu można użyć tylko raz."
     },
     "modules": {
       "notifications": "Powiadomienia"
