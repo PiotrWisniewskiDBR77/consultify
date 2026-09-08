@@ -1,0 +1,5 @@
+{
+  "status": 400,
+  "body": "{\"errorCode\":\"VAULT_SCOPE_INVALID\",\"code\":\"VAULT_SCOPE_INVALID\",\"error\":\"scope musi być jednym z: user, project, organization\"}",
+  "naEkranie": "scope musi być jednym z: user, project, organization."
+}

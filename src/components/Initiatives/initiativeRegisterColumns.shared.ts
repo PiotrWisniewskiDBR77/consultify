@@ -7,7 +7,7 @@ import type { StandardRowMenu, TableColumn } from '@/components/standard';
 import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
 import type { PortfolioInitiative } from '@/types';
-import { enumLabel } from '@/utils/enumLabel';
+import { enumLabel, isKnownEnumValue } from '@/utils/enumLabel';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
@@ -298,9 +298,22 @@ export const createInitiativeRegisterColumns = (
       // — pięć wierszy, dwie kolumny). Kanon tabel: pusta komórka to „—".
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
-        const action =
-          row.nextAction || nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).action;
-        return h('span', { className: 'text-xs font-medium text-c-text' }, String(action || '—'));
+        // J17: gdy serwer nie przysłał własnego `nextAction`, bierzemy KOD
+        // z `nextStepForLifecycle` i tłumaczymy — przed tą zmianą wpadało tu
+        // polskie zdanie („Zaplanuj realizację") także w wersji angielskiej.
+        const kod =
+          String((row as { nextActionKey?: string }).nextActionKey || '').trim() ||
+          nextStepForLifecycle(resolveInitiativeRegisterLifecycle(row)).actionKey;
+        if (isKnownEnumValue('initiativeNextAction', kod)) {
+          return h(
+            'span',
+            { className: 'text-xs font-medium text-c-text' },
+            enumLabel('initiativeNextAction', kod, tr)
+          );
+        }
+        // Starszy nadawca przysłał gotowe zdanie — pokazujemy je, ale to dług.
+        const zServera = String(row.nextAction || '').trim();
+        return h('span', { className: 'text-xs font-medium text-c-text' }, zServera || '—');
       },
     },
     {
@@ -316,7 +329,13 @@ export const createInitiativeRegisterColumns = (
           h(
             'span',
             { className: 'block truncate text-c-text-secondary' },
-            String(row.expectedImpact || '—')
+            // Surowy enum („UNKNOWN") to BRAK pomiaru, nie treść — kanon tabel
+            // każe pokazać „—", a nie wartość z bazy (defekt zgłoszony przez
+            // właściciela: „UNKNOWN Pewność: Nieznana").
+            String(row.expectedImpact || '').trim() &&
+              String(row.expectedImpact).trim().toUpperCase() !== 'UNKNOWN'
+              ? String(row.expectedImpact)
+              : '—'
           ),
           h(
             'span',

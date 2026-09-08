@@ -119,7 +119,17 @@ export const CanonicalInitiativeRegister = ({
             v{String(initiative.canonicalVersion || '—')}
           </span>
         ),
-        recommendation: String(initiative.nextAction || '—'),
+        // J17: kod -> zdanie w jezyku interfejsu; zdanie z danych to dlug.
+        recommendation: isKnownEnumValue(
+          'initiativeNextAction',
+          (initiative as { nextActionKey?: string }).nextActionKey
+        )
+          ? enumLabel(
+              'initiativeNextAction',
+              (initiative as { nextActionKey?: string }).nextActionKey,
+              t
+            )
+          : String(initiative.nextAction || '—'),
       }}
       details={{
         label: t('initiatives.canonical.contextLabel', 'Initiative context'),
@@ -203,7 +213,7 @@ export const CanonicalInitiativeRegister = ({
               columns: 2,
               buttons: [
                 {
-                  label: 'Kopiuj link',
+                  label: t('common.copyLink', 'Copy link'),
                   icon: Copy,
                   colorScheme: 'neutral',
                   onClick: () => void navigator.clipboard?.writeText(initiative.id),

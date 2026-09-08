@@ -2465,7 +2465,8 @@
     "closeDocumentNamed": "Close {{name}}",
     "moreOpenDocuments": "More open documents ({{count}})",
     "sampleData": "SAMPLE DATA",
-    "verifying": "Verifying…"
+    "verifying": "Verifying…",
+    "copyLink": "Copy link"
   },
   "superadmin": {
     "confirm": {
@@ -44137,6 +44138,17 @@
       "HIGH": "High",
       "MEDIUM": "Medium",
       "LOW": "Low"
+    },
+    "initiativeNextAction": {
+      "DEFINE": "Complete the definition",
+      "ANALYZE": "Complete the analysis",
+      "PORTFOLIO_DECISION": "Prepare the portfolio decision",
+      "SCHEDULE": "Schedule the execution",
+      "HANDOFF": "Hand over to execution",
+      "MONITOR": "Monitor the execution",
+      "VERIFY_BENEFITS": "Verify the benefits",
+      "PREPARE_CLOSURE": "Prepare the closure",
+      "REVIEW_HISTORY": "Review the history"
     }
   }
 }

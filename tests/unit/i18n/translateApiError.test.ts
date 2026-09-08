@@ -85,3 +85,42 @@ describe('translateApiError', () => {
     expect(polskie).toEqual([]);
   });
 });
+
+/**
+ * J17 — warstwa globalna: `normalizeApiErrorMessage` jest wołane w 515 miejscach
+ * frontu, w większości BEZ `t` w zasięgu. Ta ścieżka jest tym, co realnie
+ * zdejmuje polskie zdanie z ekranu użytkownika EN bez przepisywania 515 plików.
+ */
+describe('normalizeApiErrorMessage — warstwa globalna J17', () => {
+  it('ZNANY kod wypiera polskie zdanie serwera (bez tłumacza: angielski fallback)', async () => {
+    const { normalizeApiErrorMessage, setApiErrorTranslator } = await import('@/utils/apiError');
+    setApiErrorTranslator(null);
+
+    const out = normalizeApiErrorMessage({
+      code: 'KNOWLEDGE_VAULT_FOLDERS_FAILED',
+      error: 'Nie udało się pobrać folderów',
+    });
+    expect(out).toBe('Folders could not be loaded.');
+  });
+
+  it('zarejestrowany tłumacz decyduje o języku (PL dostaje polskie)', async () => {
+    const { normalizeApiErrorMessage, setApiErrorTranslator } = await import('@/utils/apiError');
+    setApiErrorTranslator((key, def) =>
+      key === 'errors.KNOWLEDGE_VAULT_FOLDERS_FAILED' ? 'Nie udało się pobrać folderów.' : def
+    );
+
+    expect(
+      normalizeApiErrorMessage({ code: 'KNOWLEDGE_VAULT_FOLDERS_FAILED', error: 'x' })
+    ).toBe('Nie udało się pobrać folderów.');
+    setApiErrorTranslator(null);
+  });
+
+  it('NIEZNANY kod nie jest ruszany — stare angielskie komunikaty zostają', async () => {
+    const { normalizeApiErrorMessage, setApiErrorTranslator } = await import('@/utils/apiError');
+    setApiErrorTranslator(null);
+
+    expect(
+      normalizeApiErrorMessage({ error: { message: 'Email already exists', code: 'DUPLICATE_EMAIL' } })
+    ).toBe('Email already exists');
+  });
+});

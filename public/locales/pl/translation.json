@@ -880,7 +880,8 @@
     "closeDocumentNamed": "Zamknij {{name}}",
     "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})",
     "sampleData": "PRZYKŁADOWE DANE",
-    "verifying": "Weryfikowanie…"
+    "verifying": "Weryfikowanie…",
+    "copyLink": "Kopiuj link"
   },
   "superadmin": {
     "confirm": {
@@ -46801,6 +46802,17 @@
       "HIGH": "Wysoki",
       "MEDIUM": "Średni",
       "LOW": "Niski"
+    },
+    "initiativeNextAction": {
+      "DEFINE": "Uzupełnij definicję",
+      "ANALYZE": "Uzupełnij analizę",
+      "PORTFOLIO_DECISION": "Przygotuj decyzję portfelową",
+      "SCHEDULE": "Zaplanuj realizację",
+      "HANDOFF": "Przekaż do realizacji",
+      "MONITOR": "Monitoruj realizację",
+      "VERIFY_BENEFITS": "Zweryfikuj efekty",
+      "PREPARE_CLOSURE": "Przygotuj zamknięcie",
+      "REVIEW_HISTORY": "Przejrzyj historię"
     }
   }
 }

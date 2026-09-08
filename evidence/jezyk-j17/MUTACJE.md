@@ -44,3 +44,32 @@ reportBuilder.templatePicker.card.system    | BASE pl="System"    en="System"
 ```
 `i18nTrescPolska.baseline.json` ma 261 wpisów i nie zawiera `branch.main`.
 Baseline należy do J0/CTO — **nie aktualizuję go sam** (polecenie paczki).
+
+## PREMISA SPRAWDZONA — 7 czerwonych testów Inicjatyw też NIE jest z J17
+
+`npx vitest run src/components/Initiatives/__tests__` daje 7 czerwonych testów
+w 6 plikach. Sprawdzone wprost: te same pliki przywrócone do wersji z bazy
+gałęzi `59f92c2330` (`git checkout 59f92c2330 -- <7 plików>`, potem przywrócenie
+mojej wersji) dają **identyczny wynik**:
+
+```
+--- BAZA ---            Test Files  4 failed (4)   Tests  7 failed | 10 passed (17)
+--- Z MOIMI ZMIANAMI --- Test Files  4 failed (4)   Tests  7 failed | 10 passed (17)
+```
+
+Przyczyny (żadna nie dotyczy kodów błędów ani enumów):
+* `PlanScenarioSurface.listaPlanow` — brak eksportu `listPlannableInitiatives` w atrapie modułu,
+* `a19-jedna-tabela-render` — `useLocation()` poza `<Router>`,
+* `financialNarrativeBlocks` — surowy klucz i18n zamiast tekstu (kategoria K1def/K3a),
+* `initiativeKartaRealnyRekord` — mapowanie `displayStatus` `IN_EXECUTION`↔`EXECUTING`
+  (linie `initiativeRegisterProjection.ts:350/432`, których mój diff nie dotyka).
+
+## tsc
+
+* `tsc -p server/tsconfig.json --noEmit` → **0**
+* `tsc -p tsconfig.json --noEmit` → **192** (próg paczki: ≤192).
+  Jedyne błędy w plikach, które ruszałem, to 2 wpisy w
+  `initiativeRegisterColumns.shared.ts` na WYRAŻENIU, którego mój diff nie zmienia
+  (`getLocalizedStatusLabel(value, t ?? ((key) => key))`) — identyczny kod i identyczny
+  typ `t?: (key: string, fallback: string) => string` są w bazie `59f92c2330`
+  (linie 202/221 i 78 pliku bazowego).

@@ -138,29 +138,47 @@ export const INITIATIVE_SOURCE_FRESHNESS_LABELS: Record<string, string> = {
   UNKNOWN: 'Nieznane',
 };
 
+/**
+ * Następny krok dla stanu cyklu życia.
+ *
+ * J17 (zasada 6): `action` było POLSKIM ZDANIEM wprost w tabeli — kolumna
+ * „Next action" pokazywała „Zaplanuj realizację" także użytkownikowi
+ * angielskiemu (zmierzone na zrzucie `en-01-rejestr-inicjatyw.png`).
+ * Zwracamy teraz KOD (`actionKey`), a zdanie nadaje ekran przez
+ * `enumLabel('initiativeNextAction', …)`. Pole `action` zostaje dla zgodności
+ * wstecznej, ale niesie ANGIELSKI tekst — nie polski.
+ */
 export const nextStepForLifecycle = (lifecycle: string) => {
   switch (lifecycle) {
     case 'REGISTERED_DRAFT':
     case 'DEFINING':
-      return { gate: 'Definition', action: 'Uzupełnij definicję' };
+      return { gate: 'Definition', actionKey: 'DEFINE', action: 'Complete the definition' };
     case 'DEFINED':
     case 'ANALYZING':
-      return { gate: 'Analysis', action: 'Uzupełnij analizę' };
+      return { gate: 'Analysis', actionKey: 'ANALYZE', action: 'Complete the analysis' };
     case 'READY_FOR_DECISION':
-      return { gate: 'Portfolio', action: 'Przygotuj decyzję portfelową' };
+      return {
+        gate: 'Portfolio',
+        actionKey: 'PORTFOLIO_DECISION',
+        action: 'Prepare the portfolio decision',
+      };
     case 'APPROVED_BACKLOG':
-      return { gate: 'Schedule', action: 'Zaplanuj realizację' };
+      return { gate: 'Schedule', actionKey: 'SCHEDULE', action: 'Schedule the execution' };
     case 'SCHEDULED':
-      return { gate: 'Handoff', action: 'Przekaż do realizacji' };
+      return { gate: 'Handoff', actionKey: 'HANDOFF', action: 'Hand over to execution' };
     case 'IN_EXECUTION':
-      return { gate: 'Delivery', action: 'Monitoruj realizację' };
+      return { gate: 'Delivery', actionKey: 'MONITOR', action: 'Monitor the execution' };
     case 'DELIVERED':
     case 'BENEFITS_TRACKING':
-      return { gate: 'Effectiveness', action: 'Zweryfikuj efekty' };
+      return {
+        gate: 'Effectiveness',
+        actionKey: 'VERIFY_BENEFITS',
+        action: 'Verify the benefits',
+      };
     case 'EFFECTIVENESS_REVIEWED':
-      return { gate: 'Closure', action: 'Przygotuj zamknięcie' };
+      return { gate: 'Closure', actionKey: 'PREPARE_CLOSURE', action: 'Prepare the closure' };
     default:
-      return { gate: '—', action: 'Przejrzyj historię' };
+      return { gate: '—', actionKey: 'REVIEW_HISTORY', action: 'Review the history' };
   }
 };
 
@@ -239,11 +257,17 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
     title: record.initiative.title,
     problem: record.initiative.problem || null,
     lifecycle,
-    lifecycleLabel: INITIATIVE_LIFECYCLE_LABELS[lifecycle] || 'UNKNOWN',
+    // J17: etykieta cyklu zycia NIE moze byc zapiekana w danych — to warstwa
+    // wyswietlania. Zostaje KOD, ekran tlumaczy przez `enumLabel`. Pole trzymamy
+    // dla zgodnosci (nikt poza tym plikiem go dzis nie czyta — `grep lifecycleLabel`).
+    lifecycleLabel: lifecycle || 'UNKNOWN',
     gateName: nextStep.gate,
     gateReadiness:
       record.initiative.gateReadiness || record.initiative.readiness || 'NOT_EVALUATED',
     ownerId: record.initiative.initiativeOwnerId || null,
+    // J17: KOD dla ekranu (`enumLabel('initiativeNextAction', …)`); `nextAction`
+    // zostaje dla starszych wolaczy i niesie ANGIELSKI tekst, nie polski.
+    nextActionKey: nextStep.actionKey,
     nextAction: nextStep.action,
     expectedImpact: record.initiative.proposedOutcome || 'UNKNOWN',
     impactConfidence: 'UNKNOWN',

@@ -1,3 +1,38 @@
+import { API_ERROR_FALLBACKS_EN } from './apiErrorFallbacks';
+
+/**
+ * J17 — tłumacz komunikatów błędu dla kodu, który NIE ma własnego `t`.
+ *
+ * DLACZEGO REJESTRACJA, A NIE `import i18n from '@/i18n'`: `apiError.ts` jest
+ * importowany w 515 miejscach, także poza Reactem i w testach jednostkowych;
+ * twardy import zaciągałby cały bootstrap i18n (HttpBackend + detektor języka)
+ * wszędzie. `src/i18n.ts` rejestruje tłumacza po inicjalizacji; bez rejestracji
+ * (test, skrypt) zostaje ANGIELSKI fallback z `API_ERROR_FALLBACKS_EN` — czyli
+ * nigdy polskie zdanie z serwera.
+ */
+type ApiErrorTranslator = (key: string, defaultValue: string) => string;
+let apiErrorTranslator: ApiErrorTranslator | null = null;
+
+export function setApiErrorTranslator(translator: ApiErrorTranslator | null): void {
+  apiErrorTranslator = translator;
+}
+
+/**
+ * Zdanie dla ZNANEGO kodu błędu, albo `null` gdy kodu nie znamy.
+ *
+ * Świadomie NIE dotykamy nieznanych kodów: zamiana ich na generyczne zdanie
+ * zabrałaby użyteczne, angielskie komunikaty starszych tras (np.
+ * `DUPLICATE_EMAIL` → „Email already exists"). Ta gałąź celuje dokładnie
+ * w 222 miejsca z pomiaru K5pl, gdzie serwer wysyłał kod ORAZ polskie zdanie,
+ * a front renderował zdanie.
+ */
+function translateKnownCode(code: string | undefined): string | null {
+  if (!code) return null;
+  const fallback = API_ERROR_FALLBACKS_EN[code];
+  if (!fallback) return null;
+  return apiErrorTranslator ? apiErrorTranslator(`errors.${code}`, fallback) : fallback;
+}
+
 export interface NormalizedApiError {
   message: string;
   code?: string;
@@ -129,12 +164,15 @@ export function normalizeApiError(input: unknown, fallback = 'Request failed'): 
 }
 
 export function normalizeApiErrorMessage(input: unknown, fallback = 'Request failed'): string {
-  return normalizeApiError(input, fallback).message;
+  const normalized = normalizeApiError(input, fallback);
+  return translateKnownCode(normalized.code) ?? normalized.message;
 }
 
 export function createApiError(input: unknown, fallback = 'Request failed'): Error {
   const normalized = normalizeApiError(input, fallback);
-  const error = new Error(normalized.message) as Error & {
+  // J17: `message` jest tym, co renderują ekrany łapiące ten błąd, więc musi
+  // być w języku interfejsu, a nie w języku, w którym router napisał zdanie.
+  const error = new Error(translateKnownCode(normalized.code) ?? normalized.message) as Error & {
     code?: string;
     status?: number;
     details?: unknown;

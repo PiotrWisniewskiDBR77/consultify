@@ -105,6 +105,18 @@ export const ENUM_FALLBACKS_EN: Readonly<Record<string, Readonly<Record<string, 
       UNBLOCK: 'Resume execution',
       ARCHIVE: 'Archive',
     }),
+    /** Nastepny krok rejestru Inicjatyw (`nextStepForLifecycle().actionKey`). */
+    initiativeNextAction: Object.freeze({
+      DEFINE: 'Complete the definition',
+      ANALYZE: 'Complete the analysis',
+      PORTFOLIO_DECISION: 'Prepare the portfolio decision',
+      SCHEDULE: 'Schedule the execution',
+      HANDOFF: 'Hand over to execution',
+      MONITOR: 'Monitor the execution',
+      VERIFY_BENEFITS: 'Verify the benefits',
+      PREPARE_CLOSURE: 'Prepare the closure',
+      REVIEW_HISTORY: 'Review the history',
+    }),
     priority: Object.freeze({
       CRITICAL: 'Critical',
       HIGH: 'High',
