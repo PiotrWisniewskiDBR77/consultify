@@ -8133,7 +8133,60 @@
       "notMatrix": "To nie jest macierz oceny",
       "notMatrixSuffix": "i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do średniej per oś.",
       "openMatrix": "Otwórz macierz oceny",
-      "openMatrixHint": "Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz” w nagłówku."
+      "openMatrixHint": "Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz” w nagłówku.",
+      "table": {
+        "axis": "Oś",
+        "achieved": "Osiągnięty",
+        "target": "Docelowy",
+        "gap": "Luka",
+        "evidence": "Dowody"
+      },
+      "errors": {
+        "load": "Nie udało się wczytać danych recenzji",
+        "addEvidence": "Nie udało się dodać dowodu",
+        "accept": "Nie udało się zaakceptować assessmentu",
+        "return": "Nie udało się odesłać assessmentu"
+      },
+      "loading": "Ładowanie…",
+      "scoring": {
+        "title": "Ocena i pokrycie dowodami",
+        "subtitle": "Odczyt z macierzy, zwinięty do średniej per oś — nie jest to miejsce edycji poziomów.",
+        "unavailable": "Ta ocena nie ma wyliczonego pokrycia dowodami — pokrycie liczymy dziś dla frameworku DRD."
+      },
+      "matrix": {
+        "title": "Macierz oceny DRD · oś {{axis}}",
+        "hint": "Kliknij komórkę, aby wybrać obszar i poziom do przeglądu. Poziomy zmienia się w sesji oceny.",
+        "selected": "{{area}} · poziom {{level}}",
+        "rowHint": "Kliknij, aby wybrać do przeglądu",
+        "overflowHint": "Jeszcze {{count}} kolumn po prawej — przewiń w bok."
+      },
+      "tiles": {
+        "completeness": "Kompletność",
+        "avgAchieved": "Śr. poziom osiągnięty"
+      },
+      "evidence": {
+        "addTitle": "Dodaj dowód",
+        "axisLabel": "Oś DRD",
+        "areaLabel": "Obszar",
+        "typeLabel": "Typ dowodu",
+        "typeNote": "Notatka",
+        "typeLink": "Link",
+        "typeDocument": "Dokument",
+        "typeReference": "Odniesienie",
+        "titlePlaceholder": "Tytuł dowodu",
+        "descriptionPlaceholder": "Opis (opcjonalnie)",
+        "urlPlaceholder": "URL (opcjonalnie)",
+        "adding": "Dodawanie…",
+        "itemMeta": "· oś {{axis}}/{{area}} · {{type}}"
+      },
+      "decision": {
+        "title": "Decyzja recenzenta",
+        "rationalePlaceholder": "Uzasadnienie decyzji (wymagane)",
+        "accept": "Zaakceptuj",
+        "return": "Odeślij do poprawy",
+        "accepted": "Zaakceptowano",
+        "returned": "Odesłano"
+      }
     },
     "presentation": {
       "methodPack": "Pakiet metodyczny",
@@ -8146,7 +8199,62 @@
       "fullscreen": "Pełny ekran",
       "fullscreenTitle": "Pełny ekran (F)",
       "nextSlide": "Następny slajd",
-      "next": "Następny"
+      "next": "Następny",
+      "purpose": {
+        "kicker": "Cel oceny",
+        "title": "Po co przeprowadziliśmy tę ocenę",
+        "missingQuestion": "Pytanie biznesowe nie zostało zapisane w zamrożonym Output — do uzupełnienia przez konsultanta przed spotkaniem."
+      },
+      "method": {
+        "kicker": "Metoda",
+        "title": "Jak oceniliśmy",
+        "credibility": "Wiarygodność (dowód zaakceptowany)",
+        "aggregationRule": "Reguła agregacji",
+        "missingParticipants": "Lista uczestników nie jest częścią zamrożonego Output — do uzupełnienia przez konsultanta.",
+        "limitations": "Ograniczenia: {{list}}"
+      },
+      "overall": {
+        "kicker": "Wynik",
+        "title": "Wynik ogólny",
+        "caption": "Średnia poziomów dojrzałości per wymiar (skala natywna pakietu {{pack}}, reguła agregacji „{{rule}}”, wersja mapowania {{mapping}})."
+      },
+      "profile": {
+        "kicker": "Profil",
+        "title": "Profil per wymiar",
+        "empty": "Output nie zawiera zagregowanych wyników per wymiar."
+      },
+      "matrix": {
+        "kicker": "Macierz · oś {{number}}",
+        "footnote": "Oceniono {{assessed}} z {{total}} obszarów · skala 1–{{levels}} · wypełnienie kumulatywne · chip „AS” = stan obecny, „TO” = cel."
+      },
+      "more": "+{{count}} więcej",
+      "strengths": {
+        "kicker": "Mocne strony",
+        "title": "Co już działa",
+        "empty": "Żadna jednostka nie osiągnęła jeszcze poziomu docelowego w zaakceptowanych ustaleniach tego Outputu."
+      },
+      "gaps": {
+        "kicker": "Luki i ryzyka",
+        "title": "Gdzie jest największe ryzyko",
+        "empty": "Brak zaakceptowanych ustaleń z luką powyżej zera w tym Output."
+      },
+      "unknowns": {
+        "kicker": "Białe plamy",
+        "title": "Obszary bez dowodu",
+        "lede": "Brak zaakceptowanego dowodu to osobne, wartościowe odkrycie — nie luka w danych.",
+        "unitsWithout": "Jednostki bez zaakceptowanego dowodu",
+        "dontKnow": "Nie wiemy (dont_know)",
+        "noEvidence": "Wiemy, brak dokumentacji (no_evidence)",
+        "noUnresolved": "Brak jednostek z nierozstrzygniętym poziomem bieżącym.",
+        "noBreakdown": "Ten Output nie rozróżnia przyczyny braku dowodu — „nie wiemy” (dont_know) i „wiemy, ale nie udokumentowaliśmy” (no_evidence) są tu jedną zagregowaną liczbą. To dwie różne rozmowy z zarządem; rozstrzygnięcie wymaga wglądu poza ten zamrożony Output.",
+        "draftFindings": "Dodatkowo {{count}} ustaleń w tym Output ma status roboczy (niezaakceptowany dowód) i nie wchodzi w treść tej prezentacji."
+      },
+      "nextSteps": {
+        "kicker": "Co dalej",
+        "title": "Rekomendacje i kolejny krok",
+        "empty": "Brak rekomendacji w zaakceptowanych ustaleniach tego Outputu.",
+        "more": "+{{count}} więcej rekomendacji w pełnym Output"
+      }
     },
     "report": {
       "lifecycleSuperseded": "Zamrożony — zastąpiony nowszą rewizją",
@@ -9522,7 +9630,8 @@
         },
         "openGenerator": "Otwórz generator"
       }
-    }
+    },
+    "breadcrumb": "Ocena"
   },
   "initiatives": {
     "fullView": {

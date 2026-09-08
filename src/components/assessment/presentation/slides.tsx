@@ -59,7 +59,7 @@ export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatChip
-          label={t('assessment.presentation.methodPack', 'Pakiet metodyczny')}
+          label={t('assessment.presentation.methodPack', 'Method pack')}
           value={`${model.methodPackId} v${model.methodPackVersion}`}
         />
         <StatChip
@@ -79,80 +79,129 @@ export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string
 // 2. Po co ta ocena
 // ---------------------------------------------------------------------------
 
-export const PurposeSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell
-    kicker="Cel oceny"
-    title="Po co przeprowadziliśmy tę ocenę"
-    lede={model.scope}
-  >
-    <div className="flex items-start gap-3">
-      <Compass size={22} className="mt-1 flex-shrink-0 text-c-text-muted" />
-      {model.narrative.businessQuestion ? (
-        <p className="max-w-2xl text-lg text-c-text">{model.narrative.businessQuestion}</p>
-      ) : (
-        <MissingNarrativeNote label="Pytanie biznesowe nie zostało zapisane w zamrożonym Output — do uzupełnienia przez konsultanta przed spotkaniem." />
-      )}
-    </div>
-  </PresentationSlideShell>
-);
+export const PurposeSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.purpose.kicker', 'Purpose of the assessment')}
+      title={t('assessment.presentation.purpose.title', 'Why we ran this assessment')}
+      lede={model.scope}
+    >
+      <div className="flex items-start gap-3">
+        <Compass size={22} className="mt-1 flex-shrink-0 text-c-text-muted" />
+        {model.narrative.businessQuestion ? (
+          <p className="max-w-2xl text-lg text-c-text">{model.narrative.businessQuestion}</p>
+        ) : (
+          <MissingNarrativeNote
+            label={t(
+              'assessment.presentation.purpose.missingQuestion',
+              'The business question was not recorded in the frozen Output — to be filled in by the consultant before the meeting.'
+            )}
+          />
+        )}
+      </div>
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 3. Jak oceniliśmy
 // ---------------------------------------------------------------------------
 
-export const MethodSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell kicker="Metoda" title="Jak oceniliśmy">
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <StatChip label="Pakiet metodyczny" value={`${model.methodPackId} v${model.methodPackVersion}`} />
-      <StatChip
-        label="Wiarygodność (dowód zaakceptowany)"
-        value={`${model.unknowns.unitsWithAcceptedEvidence} / ${model.unknowns.totalUnits} (${formatPercent(model.unknowns.completenessRatio)})`}
-      />
-      <StatChip label="Reguła agregacji" value={model.aggregationRule || '—'} />
-    </div>
-    <div className="mt-6 flex items-start gap-3">
-      <Users size={20} className="mt-1 flex-shrink-0 text-c-text-muted" />
-      {model.narrative.participants && model.narrative.participants.length > 0 ? (
-        <p className="text-base text-c-text-secondary">{model.narrative.participants.join(' · ')}</p>
-      ) : (
-        <MissingNarrativeNote label="Lista uczestników nie jest częścią zamrożonego Output — do uzupełnienia przez konsultanta." />
-      )}
-    </div>
-    {model.limitations.length > 0 ? (
-      <p className="mt-6 text-sm text-c-text-muted">
-        Ograniczenia: {model.limitations.join(' · ')}
-      </p>
-    ) : null}
-  </PresentationSlideShell>
-);
+export const MethodSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.method.kicker', 'Method')}
+      title={t('assessment.presentation.method.title', 'How we assessed')}
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatChip
+          label={t('assessment.presentation.methodPack', 'Method pack')}
+          value={`${model.methodPackId} v${model.methodPackVersion}`}
+        />
+        <StatChip
+          label={t('assessment.presentation.method.credibility', 'Credibility (accepted evidence)')}
+          value={`${model.unknowns.unitsWithAcceptedEvidence} / ${model.unknowns.totalUnits} (${formatPercent(model.unknowns.completenessRatio)})`}
+        />
+        <StatChip
+          label={t('assessment.presentation.method.aggregationRule', 'Aggregation rule')}
+          value={model.aggregationRule || '—'}
+        />
+      </div>
+      <div className="mt-6 flex items-start gap-3">
+        <Users size={20} className="mt-1 flex-shrink-0 text-c-text-muted" />
+        {model.narrative.participants && model.narrative.participants.length > 0 ? (
+          <p className="text-base text-c-text-secondary">{model.narrative.participants.join(' · ')}</p>
+        ) : (
+          <MissingNarrativeNote
+            label={t(
+              'assessment.presentation.method.missingParticipants',
+              'The participant list is not part of the frozen Output — to be filled in by the consultant.'
+            )}
+          />
+        )}
+      </div>
+      {model.limitations.length > 0 ? (
+        <p className="mt-6 text-sm text-c-text-muted">
+          {t('assessment.presentation.method.limitations', 'Limitations: {{list}}', {
+            list: model.limitations.join(' · '),
+          })}
+        </p>
+      ) : null}
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 4. Wynik ogólny
 // ---------------------------------------------------------------------------
 
-export const OverallResultSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell kicker="Wynik" title="Wynik ogólny">
-    <div className="flex flex-col items-center justify-center gap-4 text-center">
-      <Gauge size={40} className="text-c-text-muted" />
-      <p className="text-7xl font-bold text-c-text sm:text-8xl">{formatLevel(model.overallResult)}</p>
-      <p className="max-w-md text-sm text-c-text-muted">
-        Średnia poziomów dojrzałości per wymiar (skala natywna pakietu {model.methodPackId}, reguła agregacji „
-        {model.aggregationRule || '—'}", wersja mapowania {model.aggregationMappingVersion || '—'}).
-      </p>
-    </div>
-  </PresentationSlideShell>
-);
+export const OverallResultSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.overall.kicker', 'Result')}
+      title={t('assessment.presentation.overall.title', 'Overall result')}
+    >
+      <div className="flex flex-col items-center justify-center gap-4 text-center">
+        <Gauge size={40} className="text-c-text-muted" />
+        <p className="text-7xl font-bold text-c-text sm:text-8xl">{formatLevel(model.overallResult)}</p>
+        <p className="max-w-md text-sm text-c-text-muted">
+          {t(
+            'assessment.presentation.overall.caption',
+            'Mean maturity level per dimension (native scale of the {{pack}} pack, aggregation rule “{{rule}}”, mapping version {{mapping}}).',
+            {
+              pack: model.methodPackId,
+              rule: model.aggregationRule || '—',
+              mapping: model.aggregationMappingVersion || '—',
+            }
+          )}
+        </p>
+      </div>
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 5. Profil per wymiar
 // ---------------------------------------------------------------------------
 
 export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
   const maxLevel = Math.max(1, ...model.dimensionProfile.map((d) => d.currentLevel ?? 0));
   return (
-    <PresentationSlideShell kicker="Profil" title="Profil per wymiar">
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.profile.kicker', 'Profile')}
+      title={t('assessment.presentation.profile.title', 'Profile per dimension')}
+    >
       {model.dimensionProfile.length === 0 ? (
-        <MissingNarrativeNote label="Output nie zawiera zagregowanych wyników per wymiar." />
+        <MissingNarrativeNote
+          label={t(
+            'assessment.presentation.profile.empty',
+            'The Output contains no aggregated results per dimension.'
+          )}
+        />
       ) : (
         <div className="space-y-3">
           {model.dimensionProfile.map((d) => (
@@ -233,6 +282,7 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
 export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string }> = ({
   matrix,
 }) => {
+  const { t } = useTranslation();
   const value = React.useMemo(
     () =>
       drdOdpowiedziZOutputu(
@@ -245,13 +295,22 @@ export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string
 
   return (
     <PresentationSlideShell
-      kicker={`Macierz · oś ${matrix.axisNumber}`}
+      kicker={t('assessment.presentation.matrix.kicker', 'Matrix · axis {{number}}', {
+        number: matrix.axisNumber,
+      })}
       title={matrix.axisName}
       lede={matrix.description ?? undefined}
       footnote={
         <span>
-          Oceniono {matrix.assessedCount} z {matrix.areas.length} obszarów · skala 1–
-          {matrix.levelCount} · wypełnienie kumulatywne · chip „AS" = stan obecny, „TO" = cel.
+          {t(
+            'assessment.presentation.matrix.footnote',
+            '{{assessed}} of {{total}} areas assessed · scale 1–{{levels}} · cumulative fill · chip “AS” = current state, “TO” = target.',
+            {
+              assessed: matrix.assessedCount,
+              total: matrix.areas.length,
+              levels: matrix.levelCount,
+            }
+          )}
         </span>
       }
     >
@@ -276,6 +335,7 @@ const HighlightList: React.FC<{ items: readonly FindingHighlight[]; emptyLabel: 
   emptyLabel,
   limit = 6,
 }) => {
+  const { t } = useTranslation();
   if (items.length === 0) return <MissingNarrativeNote label={emptyLabel} />;
   const shown = items.slice(0, limit);
   const hidden = items.length - shown.length;
@@ -292,7 +352,11 @@ const HighlightList: React.FC<{ items: readonly FindingHighlight[]; emptyLabel: 
           <p className="mt-1 text-sm text-c-text-secondary">{item.text || '—'}</p>
         </li>
       ))}
-      {hidden > 0 ? <li className="text-xs text-c-text-muted">+{hidden} więcej</li> : null}
+      {hidden > 0 ? (
+        <li className="text-xs text-c-text-muted">
+          {t('assessment.presentation.more', '+{{count}} more', { count: hidden })}
+        </li>
+      ) : null}
     </ul>
   );
 };
@@ -301,37 +365,55 @@ const HighlightList: React.FC<{ items: readonly FindingHighlight[]; emptyLabel: 
 // 6. Mocne strony
 // ---------------------------------------------------------------------------
 
-export const StrengthsSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell kicker="Mocne strony" title="Co już działa">
-    <div className="flex items-start gap-3">
-      <Award size={22} className="mt-1 flex-shrink-0 text-c-success" />
-      <div className="flex-1">
-        <HighlightList
-          items={model.strengths}
-          emptyLabel="Żadna jednostka nie osiągnęła jeszcze poziomu docelowego w zaakceptowanych ustaleniach tego Outputu."
-        />
+export const StrengthsSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.strengths.kicker', 'Strengths')}
+      title={t('assessment.presentation.strengths.title', 'What already works')}
+    >
+      <div className="flex items-start gap-3">
+        <Award size={22} className="mt-1 flex-shrink-0 text-c-success" />
+        <div className="flex-1">
+          <HighlightList
+            items={model.strengths}
+            emptyLabel={t(
+              'assessment.presentation.strengths.empty',
+              'No unit has reached its target level yet in the accepted findings of this Output.'
+            )}
+          />
+        </div>
       </div>
-    </div>
-  </PresentationSlideShell>
-);
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 7. Luki i ryzyka
 // ---------------------------------------------------------------------------
 
-export const GapsAndRisksSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell kicker="Luki i ryzyka" title="Gdzie jest największe ryzyko">
-    <div className="flex items-start gap-3">
-      <ShieldAlert size={22} className="mt-1 flex-shrink-0 text-c-danger" />
-      <div className="flex-1">
-        <HighlightList
-          items={model.gapsAndRisks}
-          emptyLabel="Brak zaakceptowanych ustaleń z luką powyżej zera w tym Output."
-        />
+export const GapsAndRisksSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+    <PresentationSlideShell
+      kicker={t('assessment.presentation.gaps.kicker', 'Gaps and risks')}
+      title={t('assessment.presentation.gaps.title', 'Where the biggest risk is')}
+    >
+      <div className="flex items-start gap-3">
+        <ShieldAlert size={22} className="mt-1 flex-shrink-0 text-c-danger" />
+        <div className="flex-1">
+          <HighlightList
+            items={model.gapsAndRisks}
+            emptyLabel={t(
+              'assessment.presentation.gaps.empty',
+              'No accepted finding with a gap above zero in this Output.'
+            )}
+          />
+        </div>
       </div>
-    </div>
-  </PresentationSlideShell>
-);
+    </PresentationSlideShell>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // 8. Obszary bez dowodu
@@ -350,33 +432,54 @@ export const GapsAndRisksSlide: React.FC<{ model: PresentationDeckModel }> = ({ 
 // ---------------------------------------------------------------------------
 
 export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
   const breakdown = model.unknowns.reasonBreakdown;
   return (
     <PresentationSlideShell
-      kicker="Białe plamy"
-      title="Obszary bez dowodu"
-      lede="Brak zaakceptowanego dowodu to osobne, wartościowe odkrycie — nie luka w danych."
+      kicker={t('assessment.presentation.unknowns.kicker', 'Blind spots')}
+      title={t('assessment.presentation.unknowns.title', 'Areas without evidence')}
+      lede={t(
+        'assessment.presentation.unknowns.lede',
+        'Missing accepted evidence is a separate, valuable finding — not a hole in the data.'
+      )}
     >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
         <div className="flex flex-wrap items-start gap-3">
           <div className="flex items-start gap-3">
             <HelpCircle size={22} className="mt-1 flex-shrink-0 text-c-warning" />
             <StatChip
-              label="Jednostki bez zaakceptowanego dowodu"
+              label={t(
+                'assessment.presentation.unknowns.unitsWithout',
+                'Units without accepted evidence'
+              )}
               value={`${model.unknowns.unitsMissingEvidence} / ${model.unknowns.totalUnits}`}
               tone={model.unknowns.unitsMissingEvidence > 0 ? 'danger' : 'success'}
             />
           </div>
           {breakdown ? (
             <>
-              <StatChip label="Nie wiemy (dont_know)" value={String(breakdown.dontKnow)} />
-              <StatChip label="Wiemy, brak dokumentacji (no_evidence)" value={String(breakdown.noEvidence)} />
+              <StatChip
+                label={t('assessment.presentation.unknowns.dontKnow', 'We do not know (dont_know)')}
+                value={String(breakdown.dontKnow)}
+              />
+              <StatChip
+                label={t(
+                  'assessment.presentation.unknowns.noEvidence',
+                  'We know, no documentation (no_evidence)'
+                )}
+                value={String(breakdown.noEvidence)}
+              />
             </>
           ) : null}
         </div>
         <div className="flex-1">
           {model.unknowns.unknownUnits.length === 0 ? (
-            <p className="text-sm text-c-text-muted">Brak jednostek z nierozstrzygniętym poziomem bieżącym.</p>
+            <p className="text-sm text-c-text-muted">
+              {t(
+                'assessment.presentation.unknowns.noUnresolved',
+                'No units with an unresolved current level.'
+              )}
+            </p>
           ) : (
             <ul className="flex flex-wrap gap-2">
               {model.unknowns.unknownUnits.slice(0, 12).map((u) => (
@@ -388,7 +491,11 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
                 </li>
               ))}
               {model.unknowns.unknownUnits.length > 12 ? (
-                <li className="text-xs text-c-text-muted">+{model.unknowns.unknownUnits.length - 12} więcej</li>
+                <li className="text-xs text-c-text-muted">
+                  {t('assessment.presentation.more', '+{{count}} more', {
+                    count: model.unknowns.unknownUnits.length - 12,
+                  })}
+                </li>
               ) : null}
             </ul>
           )}
@@ -396,15 +503,19 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
       </div>
       {!breakdown ? (
         <p className="mt-6 text-xs text-c-text-muted">
-          Ten Output nie rozróżnia przyczyny braku dowodu — „nie wiemy" (dont_know) i „wiemy, ale nie
-          udokumentowaliśmy" (no_evidence) są tu jedną zagregowaną liczbą. To dwie różne rozmowy z zarządem;
-          rozstrzygnięcie wymaga wglądu poza ten zamrożony Output.
+          {t(
+            'assessment.presentation.unknowns.noBreakdown',
+            'This Output does not distinguish the reason for missing evidence — “we do not know” (dont_know) and “we know but never documented it” (no_evidence) are one aggregated number here. Those are two different conversations with the board; telling them apart needs insight beyond this frozen Output.'
+          )}
         </p>
       ) : null}
       {model.draftFindingCount > 0 ? (
         <p className="mt-2 text-xs text-c-text-muted">
-          Dodatkowo {model.draftFindingCount} ustaleń w tym Output ma status roboczy (niezaakceptowany dowód) i nie
-          wchodzi w treść tej prezentacji.
+          {t(
+            'assessment.presentation.unknowns.draftFindings',
+            'In addition, {{count}} findings in this Output are drafts (evidence not accepted) and do not enter the content of this deck.',
+            { count: model.draftFindingCount }
+          )}
         </p>
       ) : null}
     </PresentationSlideShell>
@@ -415,13 +526,23 @@ export const UnknownsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mode
 // 9. Co dalej
 // ---------------------------------------------------------------------------
 
-export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => (
-  <PresentationSlideShell kicker="Co dalej" title="Rekomendacje i kolejny krok">
+export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ model }) => {
+  const { t } = useTranslation();
+  return (
+  <PresentationSlideShell
+    kicker={t('assessment.presentation.nextSteps.kicker', 'What next')}
+    title={t('assessment.presentation.nextSteps.title', 'Recommendations and the next step')}
+  >
     <div className="flex items-start gap-3">
       <Target size={22} className="mt-1 flex-shrink-0 text-c-text-muted" />
       <div className="flex-1">
         {model.recommendations.length === 0 ? (
-          <MissingNarrativeNote label="Brak rekomendacji w zaakceptowanych ustaleniach tego Outputu." />
+          <MissingNarrativeNote
+            label={t(
+              'assessment.presentation.nextSteps.empty',
+              'No recommendations in the accepted findings of this Output.'
+            )}
+          />
         ) : (
           <ol className="space-y-3">
             {model.recommendations.slice(0, 6).map((rec, idx) => (
@@ -432,7 +553,12 @@ export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mod
             ))}
             {model.recommendations.length > 6 ? (
               <li className="flex items-center gap-2 text-xs text-c-text-muted">
-                <ListChecks size={14} />+{model.recommendations.length - 6} więcej rekomendacji w pełnym Output
+                <ListChecks size={14} />
+                {t(
+                  'assessment.presentation.nextSteps.more',
+                  '+{{count}} more recommendations in the full Output',
+                  { count: model.recommendations.length - 6 }
+                )}
               </li>
             ) : null}
           </ol>
@@ -440,7 +566,8 @@ export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mod
       </div>
     </div>
   </PresentationSlideShell>
-);
+  );
+};
 
 /** Liczba slajdów STAŁEGO szkieletu decku (tytuł → … → co dalej). Od
  * 2026-08-30 deck ma dodatkowo po jednym slajdzie macierzy na każdą ocenioną

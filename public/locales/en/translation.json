@@ -8745,10 +8745,63 @@
       "notMatrix": "This is not the assessment matrix",
       "notMatrixSuffix": "and it does not replace it. The matrix (areas × levels) is the working tool — that is where the current and target level of every area is set. The table below reads out its result, collapsed to an average per axis.",
       "openMatrix": "Open the assessment matrix",
-      "openMatrixHint": "Opens the session of this assessment; the matrix is there under the “Matrix” switch in the header."
+      "openMatrixHint": "Opens the session of this assessment; the matrix is there under the “Matrix” switch in the header.",
+      "table": {
+        "axis": "Axis",
+        "achieved": "Achieved",
+        "target": "Target",
+        "gap": "Gap",
+        "evidence": "Evidence"
+      },
+      "errors": {
+        "load": "The review data could not be loaded",
+        "addEvidence": "The evidence could not be added",
+        "accept": "The assessment could not be accepted",
+        "return": "The assessment could not be sent back"
+      },
+      "loading": "Loading…",
+      "scoring": {
+        "title": "Scoring and evidence coverage",
+        "subtitle": "A read-out of the matrix, collapsed to an average per axis — this is not where levels are edited.",
+        "unavailable": "This assessment has no computed evidence coverage — today coverage is computed for the DRD framework."
+      },
+      "matrix": {
+        "title": "DRD assessment matrix · axis {{axis}}",
+        "hint": "Click a cell to pick an area and a level for review. Levels are changed in the assessment session.",
+        "selected": "{{area}} · level {{level}}",
+        "rowHint": "Click to select for review",
+        "overflowHint": "{{count}} more columns to the right — scroll sideways."
+      },
+      "tiles": {
+        "completeness": "Completeness",
+        "avgAchieved": "Avg. level achieved"
+      },
+      "evidence": {
+        "addTitle": "Add evidence",
+        "axisLabel": "DRD axis",
+        "areaLabel": "Area",
+        "typeLabel": "Evidence type",
+        "typeNote": "Note",
+        "typeLink": "Link",
+        "typeDocument": "Document",
+        "typeReference": "Reference",
+        "titlePlaceholder": "Evidence title",
+        "descriptionPlaceholder": "Description (optional)",
+        "urlPlaceholder": "URL (optional)",
+        "adding": "Adding…",
+        "itemMeta": "· axis {{axis}}/{{area}} · {{type}}"
+      },
+      "decision": {
+        "title": "Reviewer decision",
+        "rationalePlaceholder": "Decision rationale (required)",
+        "accept": "Accept",
+        "return": "Send back for correction",
+        "accepted": "Accepted",
+        "returned": "Sent back"
+      }
     },
     "presentation": {
-      "methodPack": "Method Pack",
+      "methodPack": "Method pack",
       "frozenAt": "Frozen at",
       "outputVersion": "Output version",
       "ariaLabel": "Maturity assessment result presentation",
@@ -8758,7 +8811,62 @@
       "fullscreen": "Full screen",
       "fullscreenTitle": "Full screen (F)",
       "nextSlide": "Next slide",
-      "next": "Next"
+      "next": "Next",
+      "purpose": {
+        "kicker": "Purpose of the assessment",
+        "title": "Why we ran this assessment",
+        "missingQuestion": "The business question was not recorded in the frozen Output — to be filled in by the consultant before the meeting."
+      },
+      "method": {
+        "kicker": "Method",
+        "title": "How we assessed",
+        "credibility": "Credibility (accepted evidence)",
+        "aggregationRule": "Aggregation rule",
+        "missingParticipants": "The participant list is not part of the frozen Output — to be filled in by the consultant.",
+        "limitations": "Limitations: {{list}}"
+      },
+      "overall": {
+        "kicker": "Result",
+        "title": "Overall result",
+        "caption": "Mean maturity level per dimension (native scale of the {{pack}} pack, aggregation rule “{{rule}}”, mapping version {{mapping}})."
+      },
+      "profile": {
+        "kicker": "Profile",
+        "title": "Profile per dimension",
+        "empty": "The Output contains no aggregated results per dimension."
+      },
+      "matrix": {
+        "kicker": "Matrix · axis {{number}}",
+        "footnote": "{{assessed}} of {{total}} areas assessed · scale 1–{{levels}} · cumulative fill · chip “AS” = current state, “TO” = target."
+      },
+      "more": "+{{count}} more",
+      "strengths": {
+        "kicker": "Strengths",
+        "title": "What already works",
+        "empty": "No unit has reached its target level yet in the accepted findings of this Output."
+      },
+      "gaps": {
+        "kicker": "Gaps and risks",
+        "title": "Where the biggest risk is",
+        "empty": "No accepted finding with a gap above zero in this Output."
+      },
+      "unknowns": {
+        "kicker": "Blind spots",
+        "title": "Areas without evidence",
+        "lede": "Missing accepted evidence is a separate, valuable finding — not a hole in the data.",
+        "unitsWithout": "Units without accepted evidence",
+        "dontKnow": "We do not know (dont_know)",
+        "noEvidence": "We know, no documentation (no_evidence)",
+        "noUnresolved": "No units with an unresolved current level.",
+        "noBreakdown": "This Output does not distinguish the reason for missing evidence — “we do not know” (dont_know) and “we know but never documented it” (no_evidence) are one aggregated number here. Those are two different conversations with the board; telling them apart needs insight beyond this frozen Output.",
+        "draftFindings": "In addition, {{count}} findings in this Output are drafts (evidence not accepted) and do not enter the content of this deck."
+      },
+      "nextSteps": {
+        "kicker": "What next",
+        "title": "Recommendations and the next step",
+        "empty": "No recommendations in the accepted findings of this Output.",
+        "more": "+{{count}} more recommendations in the full Output"
+      }
     },
     "report": {
       "lifecycleSuperseded": "Frozen — superseded by a newer revision",
@@ -10118,7 +10226,8 @@
         },
         "openGenerator": "Open generator"
       }
-    }
+    },
+    "breadcrumb": "Assessment"
   },
   "initiatives": {
     "fullView": {
