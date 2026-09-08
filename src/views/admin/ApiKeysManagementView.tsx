@@ -30,38 +30,29 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
+import { formatListDate } from '../../utils/listDateFormat';
 import { useAppStore } from '../../store/useAppStore';
 import { ApiKey } from '../../types';
 
-// Available API permissions (scopes) - matches backend
-const API_PERMISSIONS = [
-  { id: 'read:projects', label: 'Read projects', description: 'Read project data' },
-  { id: 'write:projects', label: 'Write projects', description: 'Create and modify projects' },
-  { id: 'read:tasks', label: 'Read tasks', description: 'Read task data' },
-  { id: 'write:tasks', label: 'Write tasks', description: 'Create and modify tasks' },
-  { id: 'read:calendar', label: 'Read calendar', description: 'Read calendar sources and items' },
-  {
-    id: 'write:calendar',
-    label: 'Write calendar',
-    description: 'Create and modify calendar sources and items',
-  },
-  {
-    id: 'read:integrations',
-    label: 'Read integrations',
-    description: 'Read integration connections and health',
-  },
-  {
-    id: 'write:integrations',
-    label: 'Write integrations',
-    description: 'Create and modify integration connections',
-  },
-  { id: 'read:reports', label: 'Read reports', description: 'Read reports and analytics' },
-  { id: 'write:reports', label: 'Write reports', description: 'Generate and export reports' },
-  { id: 'ai:execute', label: 'AI execute', description: 'Execute AI actions' },
-  { id: 'ai:read', label: 'AI read', description: 'Read AI insights and recommendations' },
-  { id: 'webhooks:manage', label: 'Webhooks', description: 'Manage webhook configurations' },
-  { id: 'full:access', label: 'Full access', description: 'Full API access' },
-];
+// Zakresy uprawnień API. Etykiety i opisy NIE mieszkają w tej stałej —
+// idą przez i18n (`admin.apiKeys.permissions.<id>.*`). Trzymanie ich tutaj
+// dawało 22 angielskie napisy, których polski administrator nie mógł przeczytać.
+const API_PERMISSION_IDS = [
+  'read:projects',
+  'write:projects',
+  'read:tasks',
+  'write:tasks',
+  'read:calendar',
+  'write:calendar',
+  'read:integrations',
+  'write:integrations',
+  'read:reports',
+  'write:reports',
+  'ai:execute',
+  'ai:read',
+  'webhooks:manage',
+  'full:access',
+] as const;
 
 interface ApiKeysManagementViewProps {
   className?: string;
@@ -70,6 +61,11 @@ interface ApiKeysManagementViewProps {
 export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const { currentOrganization } = useAppStore();
+  const permissionKey = (permId: string) => permId.replace(':', '_');
+  const permissionLabel = (permId: string) =>
+    t(`admin.apiKeys.permissions.${permissionKey(permId)}.label`, permId);
+  const permissionDescription = (permId: string) =>
+    t(`admin.apiKeys.permissions.${permissionKey(permId)}.description`, '');
 
   const [loading, setLoading] = useState(true);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -112,9 +108,9 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       );
     } catch (error: any) {
       console.error('Failed to load API keys:', error);
-      toast.error(error.message || 'Failed to load API keys');
+      toast.error(error.message || t('admin.apiKeys.errors.load', "Failed to load API keys"));
       setApiKeys([]);
-      setLoadError(error.message || 'Failed to load API keys');
+      setLoadError(error.message || t('admin.apiKeys.errors.load', "Failed to load API keys"));
     }
     setLoading(false);
   }, [currentOrganization?.id]);
@@ -129,11 +125,11 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
 
   const handleCreateKey = async () => {
     if (!newKeyForm.name) {
-      toast.error('Please enter a name for the API key');
+      toast.error(t('admin.apiKeys.errors.nameRequired', "Please enter a name for the API key"));
       return;
     }
     if (newKeyForm.permissions.length === 0) {
-      toast.error('Please select at least one permission');
+      toast.error(t('admin.apiKeys.errors.permissionRequired', "Please select at least one permission"));
       return;
     }
 
@@ -165,18 +161,18 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         setShowNewKeyModal(true);
         await loadApiKeys();
         setNewKeyForm({ name: '', description: '', permissions: [], expiresIn: '90' });
-        toast.success('API key created successfully');
+        toast.success(t('admin.apiKeys.created', "API key created successfully"));
       } else {
-        toast.error(data.error || 'Failed to create API key');
+        toast.error(data.error || t('admin.apiKeys.errors.create', "Failed to create API key"));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create API key');
+      toast.error(error.message || t('admin.apiKeys.errors.create', "Failed to create API key"));
     }
     setCreating(false);
   };
 
   const handleRevokeKey = async (keyId: string) => {
-    if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+    if (!confirm(t('admin.apiKeys.confirmRevoke', "Are you sure you want to revoke this API key? This action cannot be undone."))) {
       return;
     }
 
@@ -184,21 +180,21 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       const data = await Api.delete(`/api/api-keys/${keyId}`);
 
       if (data.success !== false) {
-        toast.success('API key revoked');
+        toast.success(t('admin.apiKeys.revoked', "API key revoked"));
         await loadApiKeys();
       } else {
-        toast.error(data.error || 'Failed to revoke API key');
+        toast.error(data.error || t('admin.apiKeys.errors.revoke', "Failed to revoke API key"));
       }
     } catch (error: any) {
       console.error('Failed to revoke API key:', error);
-      toast.error(error.message || 'Failed to revoke API key');
+      toast.error(error.message || t('admin.apiKeys.errors.revoke', "Failed to revoke API key"));
     }
   };
 
   const copyToClipboard = async (text: string, keyId?: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedKey(keyId || 'new');
-    toast.success('Copied to clipboard');
+    toast.success(t('admin.apiKeys.copied', "Copied to clipboard"));
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -211,27 +207,19 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
     }));
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  // Data przez wspólny formater listy (locale konta), nie 'en-US' na sztywno.
+  const formatDate = (dateString?: string) =>
+    dateString ? formatListDate(dateString) : t('admin.apiKeys.never', 'Never');
 
   const formatRelativeTime = (dateString?: string) => {
-    if (!dateString) return 'Never used';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    if (!dateString) return t('admin.apiKeys.neverUsed', 'Never used');
+    const diffMs = Date.now() - new Date(dateString).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    return `${diffDays} days ago`;
+    if (diffMins < 60) return t('admin.apiKeys.minutesAgo', { defaultValue: '{{count}} minutes ago', count: diffMins });
+    if (diffHours < 24) return t('admin.apiKeys.hoursAgo', { defaultValue: '{{count}} hours ago', count: diffHours });
+    return t('admin.apiKeys.daysAgo', { defaultValue: '{{count}} days ago', count: diffDays });
   };
 
   const isKeyExpiringSoon = (key: ApiKey) => {
@@ -272,22 +260,24 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
         >
           <Plus size={18} />
-          Create API Key
+          {t('admin.apiKeys.createButton', 'Create API Key')}
         </button>
       </div>
 
-      {loadError && <DegradedState title="API keys unavailable" description={loadError} />}
+      {loadError && <DegradedState title={t('admin.apiKeys.unavailableTitle', "API keys unavailable")} description={loadError} />}
 
       {/* Security Notice */}
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
         <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-            Keep your API keys secure
+            {t('admin.apiKeys.noticeTitle', 'Keep your API keys secure')}
           </p>
           <p className="text-xs text-amber-600 dark:text-amber-300 mt-1">
-            API keys provide access to your organization's data. Never share them in public
-            repositories or client-side code.
+            {t(
+              'admin.apiKeys.noticeBody',
+              'API keys provide access to your organization’s data. Never share them in public repositories or client-side code.'
+            )}
           </p>
         </div>
       </div>
@@ -295,21 +285,23 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       {/* API Keys List */}
       {loadError ? (
         <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <DegradedState title="API key list unavailable" description={loadError} />
+          <DegradedState title={t('admin.apiKeys.listUnavailableTitle', "API key list unavailable")} description={loadError} />
         </div>
       ) : apiKeys.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <Key className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No API Keys</h3>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+            {t('admin.apiKeys.emptyTitle', 'No API keys')}
+          </h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1 mb-4">
-            Create your first API key to get started with integrations
+            {t('admin.apiKeys.emptyBody', 'Create your first API key to get started with integrations')}
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={!!loadError}
             className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
           >
-            Create API Key
+            {t('admin.apiKeys.createButton', 'Create API Key')}
           </button>
         </div>
       ) : (
@@ -347,17 +339,17 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                       <h3 className="font-medium text-slate-900 dark:text-white">{key.name}</h3>
                       {isKeyExpired(key) && (
                         <span className="px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400 text-xs rounded-full">
-                          Expired
+                          {t('admin.apiKeys.status.expired', 'Expired')}
                         </span>
                       )}
                       {key.revokedAt && (
                         <span className="px-2 py-0.5 bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400 text-xs rounded-full">
-                          Revoked
+                          {t('admin.apiKeys.status.revoked', 'Revoked')}
                         </span>
                       )}
                       {isKeyExpiringSoon(key) && !isKeyExpired(key) && (
                         <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs rounded-full">
-                          Expiring Soon
+                          {t('admin.apiKeys.status.expiringSoon', 'Expiring soon')}
                         </span>
                       )}
                     </div>
@@ -369,12 +361,12 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1">
                         <Activity size={12} />
-                        Last used: {formatRelativeTime(key.lastUsedAt)}
+                        {t('admin.apiKeys.lastUsed', 'Last used')}: {formatRelativeTime(key.lastUsedAt)}
                       </span>
                       {key.expiresAt && (
                         <span className="flex items-center gap-1">
                           <Calendar size={12} />
-                          Expires: {formatDate(key.expiresAt)}
+                          {t('admin.apiKeys.expires', 'Expires')}: {formatDate(key.expiresAt)}
                         </span>
                       )}
                     </div>
@@ -394,7 +386,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   <button
                     onClick={() => copyToClipboard(`${key.keyPrefix}...`, key.id)}
                     className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300"
-                    title="Copy key prefix"
+                    title={t('admin.apiKeys.copyPrefix', "Copy key prefix")}
                   >
                     {copiedKey === key.id ? <Check size={16} /> : <Copy size={16} />}
                   </button>
@@ -403,7 +395,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                       onClick={() => handleRevokeKey(key.id)}
                       disabled={!!loadError}
                       className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
-                      title="Revoke key"
+                      title={t('admin.apiKeys.revokeKey', "Revoke key")}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -433,79 +425,79 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
               <div className="p-6 border-b border-slate-200 dark:border-navy-700">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <Key size={20} />
-                  Create API Key
+                  {t('admin.apiKeys.createButton', 'Create API Key')}
                 </h3>
               </div>
               <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Name *
+                    {t('admin.apiKeys.fields.name', 'Name')} *
                   </label>
                   <input
                     type="text"
                     value={newKeyForm.name}
                     onChange={(e) => setNewKeyForm({ ...newKeyForm, name: e.target.value })}
-                    placeholder="e.g., Production Integration"
+                    placeholder={t('admin.apiKeys.namePlaceholder', "e.g. Production Integration")}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Description (optional)
+                    {t('admin.apiKeys.fields.description', 'Description (optional)')}
                   </label>
                   <input
                     type="text"
                     value={newKeyForm.description}
                     onChange={(e) => setNewKeyForm({ ...newKeyForm, description: e.target.value })}
-                    placeholder="What is this key used for?"
+                    placeholder={t('admin.apiKeys.descriptionPlaceholder', "What is this key used for?")}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Expiration
+                    {t('admin.apiKeys.fields.expiration', 'Expiration')}
                   </label>
                   <select
                     value={newKeyForm.expiresIn}
                     onChange={(e) => setNewKeyForm({ ...newKeyForm, expiresIn: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                   >
-                    <option value="30">30 days</option>
-                    <option value="90">90 days</option>
-                    <option value="180">180 days</option>
-                    <option value="365">1 year</option>
-                    <option value="">Never expires</option>
+                    <option value="30">{t('admin.apiKeys.expiry.d30', '30 days')}</option>
+                    <option value="90">{t('admin.apiKeys.expiry.d90', '90 days')}</option>
+                    <option value="180">{t('admin.apiKeys.expiry.d180', '180 days')}</option>
+                    <option value="365">{t('admin.apiKeys.expiry.y1', '1 year')}</option>
+                    <option value="">{t('admin.apiKeys.expiry.never', 'Never expires')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Permissions *
+                    {t('admin.apiKeys.fields.permissions', 'Permissions')} *
                   </label>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {API_PERMISSIONS.map((perm) => (
+                    {API_PERMISSION_IDS.map((permId) => (
                       <label
-                        key={perm.id}
+                        key={permId}
                         className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                          newKeyForm.permissions.includes(perm.id)
+                          newKeyForm.permissions.includes(permId)
                             ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
                             : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
                         }`}
                       >
                         <input
                           type="checkbox"
-                          checked={newKeyForm.permissions.includes(perm.id)}
-                          onChange={() => togglePermission(perm.id)}
+                          checked={newKeyForm.permissions.includes(permId)}
+                          onChange={() => togglePermission(permId)}
                           className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                         />
                         <div>
                           <span className="font-medium text-slate-900 dark:text-white text-sm">
-                            {perm.label}
+                            {permissionLabel(permId)}
                           </span>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {perm.description}
+                            {permissionDescription(permId)}
                           </p>
                         </div>
                       </label>
@@ -518,7 +510,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   onClick={() => setShowCreateModal(false)}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 >
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleCreateKey}
@@ -526,7 +518,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium disabled:opacity-50"
                 >
                   {creating && <RefreshCw className="w-4 h-4 animate-spin" />}
-                  Create Key
+                  {t('admin.apiKeys.createKey', 'Create key')}
                 </button>
               </div>
             </motion.div>
@@ -552,7 +544,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
               <div className="p-6 border-b border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
                 <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
                   <Check size={20} />
-                  API Key Created
+                  {t('admin.apiKeys.createdTitle', 'API key created')}
                 </h3>
               </div>
               <div className="p-6 space-y-4">
@@ -561,10 +553,13 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     <AlertTriangle className="w-5 h-5 text-danger-600 dark:text-danger-400 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-danger-800 dark:text-danger-200">
-                        This key will only be shown once!
+                        {t('admin.apiKeys.shownOnceTitle', 'This key will only be shown once!')}
                       </p>
                       <p className="text-xs text-danger-600 dark:text-danger-300 mt-1">
-                        Make sure to copy it now. You won't be able to see it again.
+                        {t(
+                          'admin.apiKeys.shownOnceBody',
+                          'Make sure to copy it now. You will not be able to see it again.'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -572,7 +567,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Your API Key
+                    {t('admin.apiKeys.yourKey', 'Your API key')}
                   </label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 px-3 py-2 bg-slate-100 dark:bg-navy-900 rounded-lg text-sm font-mono text-slate-900 dark:text-white break-all">
@@ -595,7 +590,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   }}
                   className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"
                 >
-                  I've Copied the Key
+                  {t('admin.apiKeys.copiedConfirm', 'I have copied the key')}
                 </button>
               </div>
             </motion.div>

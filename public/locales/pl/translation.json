@@ -25391,6 +25391,119 @@
       "notVerified": "Niezweryfikowane",
       "body": "Ten ekran ma zatwierdzone miejsce w domenie „{{domain}}”, ale niezależny kontrakt danych, uprawnień i trwałego odczytu nie został jeszcze potwierdzony. Nie udostępniamy pozornego formularza ani akcji do czasu powiązania z rzeczywistym backendem.",
       "guarantees": "Brak zapisu, brak zmiany RBAC i brak fałszywego komunikatu sukcesu."
+    },
+    "apiKeys": {
+      "permissions": {
+        "read_projects": {
+          "label": "Odczyt projektów",
+          "description": "Odczyt danych projektów"
+        },
+        "write_projects": {
+          "label": "Zapis projektów",
+          "description": "Tworzenie i zmiana projektów"
+        },
+        "read_tasks": {
+          "label": "Odczyt zadań",
+          "description": "Odczyt danych zadań"
+        },
+        "write_tasks": {
+          "label": "Zapis zadań",
+          "description": "Tworzenie i zmiana zadań"
+        },
+        "read_calendar": {
+          "label": "Odczyt kalendarza",
+          "description": "Odczyt źródeł i wpisów kalendarza"
+        },
+        "write_calendar": {
+          "label": "Zapis kalendarza",
+          "description": "Tworzenie i zmiana źródeł oraz wpisów kalendarza"
+        },
+        "read_integrations": {
+          "label": "Odczyt integracji",
+          "description": "Odczyt połączeń integracji i ich stanu"
+        },
+        "write_integrations": {
+          "label": "Zapis integracji",
+          "description": "Tworzenie i zmiana połączeń integracji"
+        },
+        "read_reports": {
+          "label": "Odczyt raportów",
+          "description": "Odczyt raportów i analityki"
+        },
+        "write_reports": {
+          "label": "Zapis raportów",
+          "description": "Generowanie i eksport raportów"
+        },
+        "ai_execute": {
+          "label": "Uruchamianie AI",
+          "description": "Uruchamianie działań AI"
+        },
+        "ai_read": {
+          "label": "Odczyt AI",
+          "description": "Odczyt wniosków i rekomendacji AI"
+        },
+        "webhooks_manage": {
+          "label": "Webhooki",
+          "description": "Zarządzanie konfiguracją webhooków"
+        },
+        "full_access": {
+          "label": "Pełny dostęp",
+          "description": "Pełny dostęp do API"
+        }
+      },
+      "never": "Nigdy",
+      "neverUsed": "Nieużywany",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu",
+      "errors": {
+        "load": "Nie udało się wczytać kluczy API",
+        "nameRequired": "Podaj nazwę klucza API",
+        "permissionRequired": "Wybierz co najmniej jedno uprawnienie",
+        "create": "Nie udało się utworzyć klucza API",
+        "revoke": "Nie udało się unieważnić klucza API"
+      },
+      "created": "Klucz API utworzony",
+      "confirmRevoke": "Na pewno unieważnić ten klucz API? Tej operacji nie da się cofnąć.",
+      "revoked": "Klucz API unieważniony",
+      "copied": "Skopiowano do schowka",
+      "unavailableTitle": "Klucze API niedostępne",
+      "listUnavailableTitle": "Lista kluczy API niedostępna",
+      "copyPrefix": "Kopiuj prefiks klucza",
+      "revokeKey": "Unieważnij klucz",
+      "namePlaceholder": "np. Integracja produkcyjna",
+      "descriptionPlaceholder": "Do czego służy ten klucz?",
+      "createButton": "Utwórz klucz API",
+      "status": {
+        "expired": "Wygasł",
+        "revoked": "Unieważniony",
+        "expiringSoon": "Wkrótce wygasa"
+      },
+      "lastUsed": "Ostatnio użyty",
+      "expires": "Wygasa",
+      "fields": {
+        "name": "Nazwa",
+        "description": "Opis (opcjonalnie)",
+        "expiration": "Ważność",
+        "permissions": "Uprawnienia"
+      },
+      "expiry": {
+        "d30": "30 dni",
+        "d90": "90 dni",
+        "d180": "180 dni",
+        "y1": "1 rok",
+        "never": "Bez terminu"
+      },
+      "createKey": "Utwórz klucz",
+      "createdTitle": "Klucz API utworzony",
+      "yourKey": "Twój klucz API",
+      "copiedConfirm": "Skopiowałem klucz",
+      "noticeTitle": "Chroń swoje klucze API",
+      "noticeBody": "Klucze API dają dostęp do danych Twojej organizacji. Nigdy nie umieszczaj ich w publicznych repozytoriach ani w kodzie po stronie przeglądarki.",
+      "emptyTitle": "Brak kluczy API",
+      "emptyBody": "Utwórz pierwszy klucz API, żeby zacząć korzystać z integracji",
+      "shownOnceTitle": "Ten klucz zobaczysz tylko raz!",
+      "shownOnceBody": "Skopiuj go teraz — później nie będzie już widoczny."
     }
   },
   "access": {

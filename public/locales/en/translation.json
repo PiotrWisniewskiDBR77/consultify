@@ -23924,6 +23924,119 @@
       "notVerified": "Not verified",
       "body": "This screen has an approved place in “{{domain}}”, but its independent data, authorization, and durable-readback contract has not been verified. No placeholder form or action is exposed before a real backend connection exists.",
       "guarantees": "No write, no RBAC change, and no false success message."
+    },
+    "apiKeys": {
+      "permissions": {
+        "read_projects": {
+          "label": "Read projects",
+          "description": "Read project data"
+        },
+        "write_projects": {
+          "label": "Write projects",
+          "description": "Create and modify projects"
+        },
+        "read_tasks": {
+          "label": "Read tasks",
+          "description": "Read task data"
+        },
+        "write_tasks": {
+          "label": "Write tasks",
+          "description": "Create and modify tasks"
+        },
+        "read_calendar": {
+          "label": "Read calendar",
+          "description": "Read calendar sources and items"
+        },
+        "write_calendar": {
+          "label": "Write calendar",
+          "description": "Create and modify calendar sources and items"
+        },
+        "read_integrations": {
+          "label": "Read integrations",
+          "description": "Read integration connections and health"
+        },
+        "write_integrations": {
+          "label": "Write integrations",
+          "description": "Create and modify integration connections"
+        },
+        "read_reports": {
+          "label": "Read reports",
+          "description": "Read reports and analytics"
+        },
+        "write_reports": {
+          "label": "Write reports",
+          "description": "Generate and export reports"
+        },
+        "ai_execute": {
+          "label": "AI execute",
+          "description": "Execute AI actions"
+        },
+        "ai_read": {
+          "label": "AI read",
+          "description": "Read AI insights and recommendations"
+        },
+        "webhooks_manage": {
+          "label": "Webhooks",
+          "description": "Manage webhook configurations"
+        },
+        "full_access": {
+          "label": "Full access",
+          "description": "Full API access"
+        }
+      },
+      "never": "Never",
+      "neverUsed": "Never used",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "errors": {
+        "load": "Failed to load API keys",
+        "nameRequired": "Please enter a name for the API key",
+        "permissionRequired": "Please select at least one permission",
+        "create": "Failed to create API key",
+        "revoke": "Failed to revoke API key"
+      },
+      "created": "API key created successfully",
+      "confirmRevoke": "Are you sure you want to revoke this API key? This action cannot be undone.",
+      "revoked": "API key revoked",
+      "copied": "Copied to clipboard",
+      "unavailableTitle": "API keys unavailable",
+      "listUnavailableTitle": "API key list unavailable",
+      "copyPrefix": "Copy key prefix",
+      "revokeKey": "Revoke key",
+      "namePlaceholder": "e.g. Production Integration",
+      "descriptionPlaceholder": "What is this key used for?",
+      "createButton": "Create API Key",
+      "status": {
+        "expired": "Expired",
+        "revoked": "Revoked",
+        "expiringSoon": "Expiring soon"
+      },
+      "lastUsed": "Last used",
+      "expires": "Expires",
+      "fields": {
+        "name": "Name",
+        "description": "Description (optional)",
+        "expiration": "Expiration",
+        "permissions": "Permissions"
+      },
+      "expiry": {
+        "d30": "30 days",
+        "d90": "90 days",
+        "d180": "180 days",
+        "y1": "1 year",
+        "never": "Never expires"
+      },
+      "createKey": "Create key",
+      "createdTitle": "API key created",
+      "yourKey": "Your API key",
+      "copiedConfirm": "I have copied the key",
+      "noticeTitle": "Keep your API keys secure",
+      "noticeBody": "API keys provide access to your organization’s data. Never share them in public repositories or client-side code.",
+      "emptyTitle": "No API keys",
+      "emptyBody": "Create your first API key to get started with integrations",
+      "shownOnceTitle": "This key will only be shown once!",
+      "shownOnceBody": "Make sure to copy it now. You will not be able to see it again."
     }
   },
   "access": {
