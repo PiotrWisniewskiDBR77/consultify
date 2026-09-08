@@ -70,6 +70,24 @@ const decodeValue = (value: string): string => {
 };
 
 /**
+ * Sam KOD z napisu solvera — działa też, gdy `decodePlanSolverReason` nie zna
+ * tego kodu (przyszła wersja `SOLVER-2:`, zepsuty zapis, albo kod dodany do
+ * serwera bez odpowiednika tutaj). Zwraca `null` dla tekstu człowieka
+ * (brak prefiksu `SOLVER-1:`) — TEN przypadek ma wracać na ekran dosłownie,
+ * nie jako „kod X".
+ */
+function extractPlanSolverCode(value: string): string | null {
+  if (!value.startsWith(PLAN_SOLVER_REASON_PREFIX)) return null;
+  const body = value.slice(PLAN_SOLVER_REASON_PREFIX.length);
+  if (body.startsWith('{')) {
+    const match = /"code"\s*:\s*"([^"]+)"/.exec(body) || /&quot;code&quot;\s*:\s*&quot;([^&]+)&quot;/.exec(body);
+    return match ? match[1] : '?';
+  }
+  const [code] = body.split(';');
+  return code || '?';
+}
+
+/**
  * Odczyt kodu z napisu. Zwraca `null` dla tekstu człowieka i dla planów sprzed
  * tej paczki. Rozumie też PIERWSZĄ postać kodu (JSON) — także po tym, jak
  * sanitizer zamienił w niej `"` na `&quot;` — żeby plany zapisane w trakcie
@@ -205,7 +223,19 @@ export function formatPlanSolverReason(
   resolveName: (initiativeId: string) => string = (id) => id
 ): string {
   const reason = decodePlanSolverReason(value);
-  if (!reason) return value;
+  if (!reason) {
+    const code = extractPlanSolverCode(value);
+    // `code === null` ⇒ tekst człowieka (albo plan sprzed tej paczki) — dosłownie.
+    // `code` ustawiony, ale nierozpoznany ⇒ kod solvera, którego ten dekoder nie
+    // zna (przyszła wersja/zepsuty zapis) — uczciwe zdanie zamiast surowego
+    // `SOLVER-1:…` na ekranie (defekt 2, DEC-453: nieznany kod nie jest ciszą).
+    return code === null
+      ? value
+      : t('initiatives.planSolver.unknownCode', {
+          defaultValue: 'Uzasadnienie: kod {{code}}',
+          code,
+        });
+  }
   switch (reason.code) {
     case 'SELECTED':
       return t('initiatives.planSolver.selected', {
@@ -271,7 +301,15 @@ export function formatPlanSolverReason(
         periods: reason.periods,
       });
     default:
-      return value;
+      // Ścieżka JSON w `decodePlanSolverReason` sprawdza tylko, że `code` jest
+      // stringiem — NIE że to jeden z rozpoznanych kodów (patrz komentarz przy
+      // parsowaniu). Nierozpoznany kod ląduje więc tutaj, nie w gałęzi
+      // `!reason` wyżej — ten sam uczciwy tekst, żeby ekran nigdy nie pokazał
+      // surowego `SOLVER-1:{…}` (defekt 2, DEC-453).
+      return t('initiatives.planSolver.unknownCode', {
+        defaultValue: 'Uzasadnienie: kod {{code}}',
+        code: (reason as { code: string }).code,
+      });
   }
 }
 
