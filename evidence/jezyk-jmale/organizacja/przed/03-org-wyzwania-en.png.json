@@ -1,0 +1,174 @@
+{
+ "ekran": "03-org-wyzwania",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/challenges/declared-challenges",
+ "obcychSlowUI": 42,
+ "obcychLiniiUI": 23,
+ "ui": [
+  {
+   "linia": "Zadeklarowane wyzwania",
+   "trafienia": [
+    "wyzwania"
+   ]
+  },
+  {
+   "linia": "Dowody",
+   "trafienia": [
+    "Dowody"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "Zadeklarowane wyzwania",
+   "trafienia": [
+    "wyzwania"
+   ]
+  },
+  {
+   "linia": "Oficjalne problemy zgłoszone przez klienta (symptomy).",
+   "trafienia": [
+    "zgłoszone",
+    "przez"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj wyzwanie",
+   "trafienia": [
+    "Dodaj"
+   ]
+  },
+  {
+   "linia": "Dowody",
+   "trafienia": [
+    "Dowody"
+   ]
+  },
+  {
+   "linia": "Twarde fakty, metryki lub logi potwierdzające istnienie wyzwań.",
+   "trafienia": [
+    "lub",
+    "potwierdzające",
+    "wyzwań"
+   ]
+  },
+  {
+   "linia": "DLA: DOWODY",
+   "trafienia": [
+    "DLA",
+    "DOWODY"
+   ]
+  },
+  {
+   "linia": "Wgraj pliki, które pomogą AI lepiej zrozumieć kontekst.Co warto wgrać?",
+   "trafienia": [
+    "które",
+    "pomogą",
+    "zrozumieć",
+    "wgrać"
+   ]
+  },
+  {
+   "linia": "REKOMENDOWANE DLA: DOWODY",
+   "trafienia": [
+    "DLA",
+    "DOWODY"
+   ]
+  },
+  {
+   "linia": "Eksport surowych danych",
+   "trafienia": [
+    "danych"
+   ]
+  },
+  {
+   "linia": "Raporty finansowe",
+   "trafienia": [
+    "Raporty"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj dowód",
+   "trafienia": [
+    "Dodaj",
+    "dowód"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  }
+ ]
+}

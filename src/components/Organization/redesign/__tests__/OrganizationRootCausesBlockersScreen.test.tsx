@@ -62,7 +62,7 @@ const CHALLENGES_FIXTURE = {
   rootCauseAnswers: { 0: 'Zarząd boi się delegować decyzje.' },
   evidence: [],
   activeBlockers: [
-    { id: 'b1', type: 'Culture', title: 'Lęk przed porażką', desc: '', status: 'confirmed' },
+    { id: 'b1', type: 'Culture', title: 'Fear of failure', desc: '', status: 'confirmed' },
   ],
 };
 
@@ -83,9 +83,9 @@ describe('OrganizationRootCausesBlockersScreen', () => {
     expect(screen.getByTestId('org-card-rootcause')).toBeInTheDocument();
     expect(screen.getByTestId('org-card-blockers')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Zarząd boi się delegować decyzje.')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Lęk przed porażką')).toBeInTheDocument();
-    expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:2');
-    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Uzupełnione:2');
+    expect(screen.getByDisplayValue('Fear of failure')).toBeInTheDocument();
+    expect(screen.getByTestId('chip-all')).toHaveTextContent('All:2');
+    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Filled in:2');
   });
 
   it('odpowiedź na pytanie diagnostyczne trafia do setChallenges(rootCauseAnswers)', () => {
@@ -105,10 +105,10 @@ describe('OrganizationRootCausesBlockersScreen', () => {
     // Etykieta przycisku to poprawna polska pisownia „Dodaj bloker" (jedno
     // „c") — spójna z resztą ekranów redesignu (np. „Dodaj wyzwanie",
     // „Dodaj ryzyko" w OrganizationCardPrimitives.tsx addLabel).
-    fireEvent.click(screen.getByText('Dodaj bloker'));
+    fireEvent.click(screen.getByText('Add blocker'));
     expect(setChallenges).toHaveBeenCalledWith({
       activeBlockers: expect.arrayContaining([
-        expect.objectContaining({ title: 'Lęk przed porażką' }),
+        expect.objectContaining({ title: 'Fear of failure' }),
         expect.objectContaining({ title: '' }),
       ]),
     });
@@ -120,20 +120,20 @@ describe('OrganizationRootCausesBlockersScreen', () => {
     const gallery = screen.getByTestId('org-blocker-gallery');
     const buttons = within(gallery).getAllByRole('button');
     expect(buttons).toHaveLength(4);
-    expect(within(gallery).getByText('Nadmiar spotkań')).toBeInTheDocument();
-    expect(within(gallery).getByText('Zmęczenie zmianą')).toBeInTheDocument();
-    expect(within(gallery).getByText('Fragmentacja danych')).toBeInTheDocument();
+    expect(within(gallery).getByText('Too many meetings')).toBeInTheDocument();
+    expect(within(gallery).getByText('Change fatigue')).toBeInTheDocument();
+    expect(within(gallery).getByText('Fragmented data')).toBeInTheDocument();
 
     // „Lęk przed porażką" jest już w activeBlockers fixture'a → przycisk wyłączony.
-    const alreadyAdded = within(gallery).getByText('Lęk przed porażką').closest('button');
+    const alreadyAdded = within(gallery).getByText('Fear of failure').closest('button');
     expect(alreadyAdded).toBeDisabled();
 
-    fireEvent.click(within(gallery).getByText('Nadmiar spotkań'));
+    fireEvent.click(within(gallery).getByText('Too many meetings'));
     expect(setChallenges).toHaveBeenCalledWith({
       activeBlockers: expect.arrayContaining([
-        expect.objectContaining({ title: 'Lęk przed porażką' }),
+        expect.objectContaining({ title: 'Fear of failure' }),
         expect.objectContaining({
-          title: 'Nadmiar spotkań',
+          title: 'Too many meetings',
           type: 'Process',
           status: 'confirmed',
         }),

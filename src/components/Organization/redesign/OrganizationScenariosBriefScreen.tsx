@@ -60,9 +60,9 @@ import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
 
 export type ScenariosBriefSection = 'scenarios' | 'brief';
 
-export const SCENARIOS_BRIEF_SECTIONS: Array<{ id: ScenariosBriefSection; label: string }> = [
-  { id: 'scenarios', label: 'Scenariusze transformacji' },
-  { id: 'brief', label: 'Executive brief' },
+export const SCENARIOS_BRIEF_SECTIONS: Array<{ id: ScenariosBriefSection; labelKey: string; en: string }> = [
+  { id: 'scenarios', labelKey: 'organization.redesign.scenarios.sections.scenarios', en: 'Transformation scenarios' },
+  { id: 'brief', labelKey: 'organization.redesign.scenarios.sections.brief', en: 'Executive brief' },
 ];
 
 const SCENARIO_ICONS: Record<string, LucideIcon> = {
@@ -104,7 +104,7 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   // użytkownik) nigdy nie wołał `useTranslation`, więc karty zawsze
   // pokazywały angielski oryginał niezależnie od języka konta. Ten sam
   // wzorzec przeniesiony 1:1, bez nowej treści tłumaczeń.
-  const { t: translate } = useTranslation();
+  const { t: translate, t } = useTranslation();
   const scenarioTranslations = useMemo(() => {
     const raw = translate('transformationScenarios.scenarios', { returnObjects: true });
     return typeof raw === 'object' && raw !== null ? (raw as Record<string, any>) : {};
@@ -139,9 +139,13 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   );
 
   const chips: StandardCounterChip[] = [
-    { id: 'scenario', label: 'Scenariusz wybrany', count: selectedScenario ? 1 : 0 },
-    { id: 'risks', label: 'Ryzyka krytyczne/wysokie', count: criticalRisks.length },
-    { id: 'challenges', label: 'Wyzwania zadeklarowane', count: challenges.declaredChallenges.length },
+    { id: 'scenario', label: t('organization.redesign.scenarios.chip.scenario', 'Scenario selected'), count: selectedScenario ? 1 : 0 },
+    { id: 'risks', label: t('organization.redesign.scenarios.chip.risks', 'Critical/high risks'), count: criticalRisks.length },
+    {
+      id: 'challenges',
+      label: t('organization.redesign.scenarios.chip.challenges', 'Declared challenges'),
+      count: challenges.declaredChallenges.length,
+    },
   ];
 
   const handleSave = useCallback(() => {
@@ -150,22 +154,27 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   }, []);
 
   const statePanel: OrganizationStatePanelProps = {
-    completenessNote: 'Wybór scenariusza zapisywany jest lokalnie na bieżąco — przycisk potwierdza stan.',
+    completenessNote: t('organization.redesign.scenarios.completenessNote', 'The scenario choice is stored locally as you go — the button confirms the state.'),
     onSave: handleSave,
-    saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
+    saveLabel: saved
+      ? t('organization.redesign.panel.saved', 'Saved')
+      : t('organization.redesign.panel.save', 'Save changes'),
   };
 
   const sections: StandardModuleTab[] = SCENARIOS_BRIEF_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
   }));
 
   const content = (
     <>
       <OrgSectionCard
         id="scenarios"
-        title="Scenariusze transformacji"
-        lead={`Na podstawie ${challenges.declaredChallenges.length} zadeklarowanych wyzwań rekomendowany kierunek to „${scenarioText(recommended.id, 'name', recommended.name)}".`}
+        title={t('organization.redesign.scenarios.sections.scenarios', 'Transformation scenarios')}
+        lead={t('organization.redesign.scenarios.lead', 'Based on {{count}} declared challenges, the recommended direction is "{{scenario}}".', {
+          count: challenges.declaredChallenges.length,
+          scenario: scenarioText(recommended.id, 'name', recommended.name),
+        })}
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {SCENARIOS.map((scenario) => {
@@ -187,7 +196,9 @@ export const OrganizationScenariosBriefScreen: React.FC<{
               >
                 <div className="flex items-center justify-between gap-2">
                   <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-c-text-muted" />
-                  {isRecommended && <OrgStatusChip tone="info">Rekomendowany</OrgStatusChip>}
+                  {isRecommended && (
+                    <OrgStatusChip tone="info">{t('organization.redesign.scenarios.recommended', 'Recommended')}</OrgStatusChip>
+                  )}
                 </div>
                 <p className="text-[13px] font-semibold text-c-text">
                   {scenarioText(scenario.id, 'name', scenario.name)}
@@ -196,7 +207,8 @@ export const OrganizationScenariosBriefScreen: React.FC<{
                   {scenarioText(scenario.id, 'description', scenario.description)}
                 </p>
                 <p className="text-[11px] text-c-text-muted">
-                  {scenario.typicalDuration} · złożoność {scenario.complexity}
+                  {scenario.typicalDuration} ·{' '}
+                  {t('organization.redesign.scenarios.complexity', 'complexity {{level}}', { level: scenario.complexity })}
                 </p>
               </button>
             );
@@ -204,35 +216,40 @@ export const OrganizationScenariosBriefScreen: React.FC<{
         </div>
       </OrgSectionCard>
 
-      <OrgSectionCard id="brief" title="Executive brief" icon={FileText}>
+      <OrgSectionCard id="brief" title={t('organization.redesign.scenarios.sections.brief', 'Executive brief')} icon={FileText}>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Profil organizacji
+              {t('organization.redesign.scenarios.brief.profile', 'Organization profile')}
             </p>
             <p className="mt-1 flex items-center gap-2 text-[13px] font-semibold text-c-text">
               <Building2 aria-hidden="true" className="h-4 w-4 text-c-text-muted" />
               {companyProfile.companyName || '—'}
             </p>
             <p className="mt-1 text-[12px] text-c-text-secondary">
-              {companyProfile.industry || '—'} · {companyProfile.employees || '—'} osób ·{' '}
-              {companyProfile.revenue || '—'} przychodu
+              {companyProfile.industry || '—'} ·{' '}
+              {t('organization.redesign.scenarios.brief.headcountRevenue', '{{employees}} people · {{revenue}} revenue', {
+                employees: companyProfile.employees || '—',
+                revenue: companyProfile.revenue || '—',
+              })}
             </p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Dojrzałość
+              {t('organization.redesign.scenarios.brief.maturity', 'Maturity')}
             </p>
             <p className="mt-1 text-[13px] text-c-text">
-              Dziś: <span className="font-semibold">{companyProfile.currentMaturityLevel || '—'}</span>
+              {t('organization.redesign.scenarios.brief.today', 'Today:')}{' '}
+              <span className="font-semibold">{companyProfile.currentMaturityLevel || '—'}</span>
             </p>
             <p className="text-[13px] text-c-text">
-              Cel: <span className="font-semibold">{companyProfile.targetMaturityLevel || '—'}</span>
+              {t('organization.redesign.scenarios.brief.target', 'Target:')}{' '}
+              <span className="font-semibold">{companyProfile.targetMaturityLevel || '—'}</span>
             </p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Wybrany scenariusz
+              {t('organization.redesign.scenarios.brief.selectedScenario', 'Selected scenario')}
             </p>
             <p className="mt-1 text-[13px] font-semibold text-c-text">
               {selectedScenario ? scenarioText(selectedScenario.id, 'name', selectedScenario.name) : '—'}
@@ -242,17 +259,23 @@ export const OrganizationScenariosBriefScreen: React.FC<{
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">Ryzyka</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              {t('organization.redesign.scenarios.brief.risks', 'Risks')}
+            </p>
             <p className="mt-1 text-2xl font-semibold text-c-text">{synthesis.risks.length}</p>
-            <p className="text-[11px] text-c-text-muted">{criticalRisks.length} krytyczne/wysokie</p>
+            <p className="text-[11px] text-c-text-muted">
+              {t('organization.redesign.scenarios.brief.criticalHigh', '{{count}} critical/high', { count: criticalRisks.length })}
+            </p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">Szanse</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              {t('organization.redesign.scenarios.brief.opportunities', 'Opportunities')}
+            </p>
             <p className="mt-1 text-2xl font-semibold text-c-text">{synthesis.strengths.length}</p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Wyzwania
+              {t('organization.redesign.scenarios.brief.challenges', 'Challenges')}
             </p>
             <p className="mt-1 text-2xl font-semibold text-c-text">{challenges.declaredChallenges.length}</p>
           </div>
@@ -261,7 +284,7 @@ export const OrganizationScenariosBriefScreen: React.FC<{
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Cele strategiczne
+              {t('organization.redesign.scenarios.brief.strategicGoals', 'Strategic goals')}
             </p>
             {goals.strategicGoals.length === 0 ? (
               <p className="text-[13px] text-c-text-muted">—</p>
@@ -284,7 +307,7 @@ export const OrganizationScenariosBriefScreen: React.FC<{
           </div>
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
-              Mierniki sukcesu
+              {t('organization.redesign.scenarios.brief.successMetrics', 'Success metrics')}
             </p>
             {goals.successMetrics.length === 0 ? (
               <p className="text-[13px] text-c-text-muted">—</p>

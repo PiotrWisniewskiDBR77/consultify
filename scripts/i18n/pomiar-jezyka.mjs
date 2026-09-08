@@ -453,9 +453,24 @@ function skanujTlumaczenia() {
 const ATRYBUTY_TEKSTOWE = /\b(placeholder|title|label|aria-label|ariaLabel|alt|tooltip|emptyText|helperText|subtitle|heading|confirmText|cancelText|okText|description)\s*=\s*(["'])([^"'{}]{3,160})\2/g;
 const TEKST_JSX = />\s*([^<>{}\n][^<>{}]{2,160})\s*</g;
 
+/**
+ * Wycina TREŚĆ komentarzy blokowych (`/* … *\/`, w JSX `{/* … *\/}`), zostawiając
+ * w ich miejscu spacje i znaki nowej linii — offsety i numery linii zostają bez zmian.
+ *
+ * POWÓD (paczka J-małe, 08.09): heurystyka „pomiń linię zaczynającą się od `*`"
+ * łapie tylko PIERWSZĄ linię komentarza. Wielolinijkowy komentarz JSX, którego
+ * kolejne wiersze nie zaczynają się od gwiazdki, wchodził do wyniku jako tekst
+ * interfejsu — zmierzone na `OrganizationCardPrimitives.tsx:104`
+ * („…here skipped a level everywhere it's used." liczone jako K4en). To był
+ * defekt przyrządu, nie produktu: komentarz nigdy nie trafia na ekran.
+ */
+function bezKomentarzyBlokowych(tresc) {
+  return tresc.replace(/\/\*[\s\S]*?\*\//g, (blok) => blok.replace(/[^\n]/g, ' '));
+}
+
 function skanujJsx(pliki) {
   for (const rel of pliki) {
-    const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const tresc = bezKomentarzyBlokowych(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
     const linie = tresc.split('\n');
     const modul = modulZeSciezki(rel);
     const zapiszTekst = (offset, tekst) => {
@@ -484,9 +499,12 @@ function skanujJsx(pliki) {
   }
 }
 
-function analizujJsxZawartosc(tresc) {
+function analizujJsxZawartosc(trescSurowa) {
   const w = { K4pl: 0, K4en: 0 };
-  if (!tresc) return w;
+  if (!trescSurowa) return w;
+  // Ta sama zasada co w `skanujJsx` — inaczej tryb szybki (pre-commit) i tryb
+  // pełny liczyłyby RÓŻNE liczby dla tego samego pliku.
+  const tresc = bezKomentarzyBlokowych(trescSurowa);
   const linie = tresc.split('\n');
   const licz = (offset, tekst) => {
     const nrLinii = tresc.slice(0, offset).split('\n').length;

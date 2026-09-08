@@ -62,7 +62,7 @@ function claim(overrides: Partial<Record<string, unknown>> = {}) {
     claimId: 'c1',
     itemId: 'i1',
     claimPath: 'profile.industry',
-    value: 'Produkcja',
+    value: 'Manufacturing',
     confidence: 0.9,
     sourceType: 'document',
     visibilityScope: 'organization',
@@ -106,11 +106,11 @@ describe('OrganizationReadinessScreen', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('org-readiness-dim-consistency')).toHaveTextContent(
-        '1 rozbieżności'
+        '1 discrepancies'
       )
     );
     // BLOKER RAPORT_B #2: spolszczona etykieta pola, nie surowy claimPath.
-    expect(screen.getByText(/Konflikt: Przychód roczny/)).toBeInTheDocument();
+    expect(screen.getByText(/Conflict: Przychód roczny/)).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('profile.annualRevenue');
   });
 
@@ -149,7 +149,7 @@ describe('OrganizationReadinessScreen', () => {
         claim({
           claimId: 'b',
           claimPath: 'notes.manualContext',
-          value: { section: 'goals', primaryObjective: 'Redukcja kosztów' },
+          value: { section: 'goals', primaryObjective: 'Cost reduction' },
         }),
       ] as never);
       vi.mocked(organizationGovernedContextApi.listVersions).mockResolvedValue([]);
@@ -159,11 +159,11 @@ describe('OrganizationReadinessScreen', () => {
       // BLOKER RAPORT_B #2: etykieta pola musi być spolszczona ("Notatki kontekstowe"),
       // NIGDY surowy claimPath techniczny ("notes.manualContext").
       await waitFor(() =>
-        expect(screen.getByText(/Konflikt: Notatki kontekstowe/)).toBeInTheDocument()
+        expect(screen.getByText(/Conflict: Notatki kontekstowe/)).toBeInTheDocument()
       );
       expect(document.body.textContent).not.toContain('notes.manualContext');
 
-      const blockersSection = screen.getByText(/Konflikt: Notatki kontekstowe/).closest('div');
+      const blockersSection = screen.getByText(/Conflict: Notatki kontekstowe/).closest('div');
       expect(blockersSection).not.toBeNull();
       // Zero surowego JSON-u widocznego użytkownikowi — ani nawiasów klamrowych,
       // ani cudzysłowów kluczy obiektu.
@@ -191,9 +191,9 @@ describe('OrganizationReadinessScreen', () => {
 
     render(<OrganizationReadinessScreen title="Gotowość organizacji" />);
 
-    expect(await screen.findByText('Gotowe')).toBeInTheDocument();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
     expect(
-      screen.getByText('Nie ma otwartych konfliktów ani oczekujących decyzji.')
+      screen.getByText('There are no open conflicts and no pending decisions.')
     ).toBeInTheDocument();
   });
 });

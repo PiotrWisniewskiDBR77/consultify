@@ -45,6 +45,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { formatListDate } from '../../../utils/listDateFormat';
 import { useNavigate } from 'react-router-dom';
 
 import { cn } from '../../../lib/utils';
@@ -191,11 +193,9 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
     () => [
       {
         id: 'completeness',
-        label: t('organization.readiness.dim.completeness.label', 'Kompletność'),
+        label: t('organization.readiness.dim.completeness.label', 'Completeness'),
         value: `${completeness.filled} z ${completeness.total}`,
-        detail: t(
-          'organization.readiness.dim.completeness.detail',
-          '{{missing}} pól profilu bez wartości.',
+        detail: t('organization.readiness.dim.completeness.detail', '{{missing}} profile fields have no value.',
           { missing: completeness.total - completeness.filled }
         ),
         tone:
@@ -203,27 +203,25 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       },
       {
         id: 'evidence',
-        label: t('organization.readiness.dim.evidence.label', 'Pokrycie dowodami'),
+        label: t('organization.readiness.dim.evidence.label', 'Evidence coverage'),
         value:
           claims.length > 0
             ? `${approved.length} z ${claims.length}`
-            : t('organization.readiness.dim.evidence.none', 'Brak twierdzeń'),
-        detail: t(
-          'organization.readiness.dim.evidence.detail',
-          '{{count}} faktów bez zatwierdzenia źródła.',
+            : t('organization.readiness.dim.evidence.none', 'No claims'),
+        detail: t('organization.readiness.dim.evidence.detail', '{{count}} facts with no approved source.',
           { count: claims.length - approved.length }
         ),
         tone: claims.length === 0 ? 'muted' : approved.length === claims.length ? 'ok' : 'warning',
-        actionLabel: t('organization.readiness.dim.evidence.action', 'Pokaż fakty →'),
+        actionLabel: t('organization.readiness.dim.evidence.action', 'Show facts →'),
         onAction: goToClaims,
       },
       {
         id: 'consistency',
-        label: t('organization.readiness.dim.consistency.label', 'Spójność'),
+        label: t('organization.readiness.dim.consistency.label', 'Consistency'),
         value:
           conflicts.length === 0
-            ? t('organization.readiness.dim.consistency.none', 'Brak')
-            : t('organization.readiness.dim.consistency.count', '{{count}} rozbieżności', {
+            ? t('organization.readiness.dim.consistency.none', 'None')
+            : t('organization.readiness.dim.consistency.count', '{{count}} discrepancies', {
                 count: conflicts.length,
               }),
         detail:
@@ -232,55 +230,49 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
                 .slice(0, 2)
                 .map((conflict) => organizationFieldLabel(conflict.path, isPolish))
                 .join(', ')
-            : t(
-                'organization.readiness.dim.consistency.detailOk',
-                'Żadne twierdzenie nie ma sprzecznych wartości ze źródeł.'
+            : t('organization.readiness.dim.consistency.detailOk', 'No claim has conflicting values across sources.'
               ),
         tone: conflicts.length === 0 ? 'ok' : 'warning',
         actionLabel:
           conflicts.length > 0
-            ? t('organization.readiness.dim.consistency.action', 'Rozstrzygnij →')
+            ? t('organization.readiness.dim.consistency.action', 'Resolve →')
             : undefined,
         onAction: conflicts.length > 0 ? goToConflicts : undefined,
       },
       {
         id: 'freshness',
-        label: t('organization.readiness.dim.freshness.label', 'Aktualność'),
+        label: t('organization.readiness.dim.freshness.label', 'Freshness'),
         value:
           stale.length === 0
-            ? t('organization.readiness.dim.freshness.none', 'Aktualne')
-            : t('organization.readiness.dim.freshness.count', '{{count}} przeterminowanych', {
+            ? t('organization.readiness.dim.freshness.none', 'Up to date')
+            : t('organization.readiness.dim.freshness.count', '{{count}} out of date', {
                 count: stale.length,
               }),
-        detail: t(
-          'organization.readiness.dim.freshness.detail',
-          'Twierdzenia starsze niż {{days}} dni ({{count}} z {{total}}).',
+        detail: t('organization.readiness.dim.freshness.detail', 'Claims older than {{days}} days ({{count}} of {{total}}).',
           { days: FRESHNESS_THRESHOLD_DAYS, count: stale.length, total: claims.length }
         ),
         tone: stale.length === 0 ? 'ok' : 'warning',
         actionLabel:
           stale.length > 0
-            ? t('organization.readiness.dim.freshness.action', 'Odśwież →')
+            ? t('organization.readiness.dim.freshness.action', 'Refresh →')
             : undefined,
         onAction: stale.length > 0 ? goToClaims : undefined,
       },
       {
         id: 'approval',
-        label: t('organization.readiness.dim.approval.label', 'Zatwierdzenie'),
+        label: t('organization.readiness.dim.approval.label', 'Approval'),
         value: latestVersion
           ? `v${latestVersion.version}`
-          : t('organization.readiness.dim.approval.none', 'Brak'),
+          : t('organization.readiness.dim.approval.none', 'None'),
         detail: latestVersion
-          ? t('organization.readiness.dim.approval.detail', 'Opublikowano {{date}}.', {
-              date: new Date(latestVersion.createdAt).toLocaleDateString('pl-PL'),
+          ? t('organization.readiness.dim.approval.detail', 'Published {{date}}.', {
+              date: formatListDate(latestVersion.createdAt),
             })
-          : t(
-              'organization.readiness.dim.approval.detailNone',
-              'Nikt nie opublikował jeszcze wersji kontekstu.'
+          : t('organization.readiness.dim.approval.detailNone', 'Nobody has published a context version yet.'
             ),
         tone: latestVersion ? 'ok' : 'muted',
         actionLabel: !latestVersion
-          ? t('organization.readiness.dim.approval.action', 'Wskaż osobę →')
+          ? t('organization.readiness.dim.approval.action', 'Name an owner →')
           : undefined,
         onAction: !latestVersion ? goToConflicts : undefined,
       },
@@ -312,11 +304,11 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       items.push({
         id: `conflict-${conflict.path}`,
         tone: 'warning',
-        title: t('organization.readiness.blocker.conflict.title', 'Konflikt: {{path}}', {
+        title: t('organization.readiness.blocker.conflict.title', 'Conflict: {{path}}', {
           path: organizationFieldLabel(conflict.path, isPolish),
         }),
         detail: conflict.values.join('  ↔  '),
-        actionLabel: t('organization.readiness.blocker.conflict.action', 'Rozstrzygnij →'),
+        actionLabel: t('organization.readiness.blocker.conflict.action', 'Resolve →'),
         onAction: goToConflicts,
       });
     });
@@ -324,15 +316,13 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       items.push({
         id: 'pending',
         tone: 'info',
-        title: t('organization.readiness.blocker.pending.title', 'Oczekuje na zatwierdzenie'),
-        detail: t(
-          'organization.readiness.blocker.pending.detail',
-          '{{count}} faktów bez decyzji.',
+        title: t('organization.readiness.blocker.pending.title', 'Waiting for approval'),
+        detail: t('organization.readiness.blocker.pending.detail', '{{count}} facts with no decision.',
           {
             count: pending.length,
           }
         ),
-        actionLabel: t('organization.readiness.blocker.pending.action', 'Przejrzyj →'),
+        actionLabel: t('organization.readiness.blocker.pending.action', 'Review →'),
         onAction: goToClaims,
       });
     }
@@ -340,12 +330,10 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       items.push({
         id: 'no-version',
         tone: 'muted',
-        title: t('organization.readiness.blocker.noVersion.title', 'Brak opublikowanej wersji'),
-        detail: t(
-          'organization.readiness.blocker.noVersion.detail',
-          'Nikt nie zatwierdził jeszcze wersji kontekstu organizacji.'
+        title: t('organization.readiness.blocker.noVersion.title', 'No published version'),
+        detail: t('organization.readiness.blocker.noVersion.detail', 'Nobody has approved a version of the organization context yet.'
         ),
-        actionLabel: t('organization.readiness.blocker.noVersion.action', 'Opublikuj →'),
+        actionLabel: t('organization.readiness.blocker.noVersion.action', 'Publish →'),
         onAction: goToConflicts,
       });
     }
@@ -360,7 +348,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
         className="flex min-h-48 items-center justify-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface text-[13px] text-c-text-secondary"
       >
         <RefreshCw aria-hidden="true" className="h-4 w-4 animate-spin text-c-info" />
-        {t('organization.readiness.loading', 'Sprawdzam aktualny stan organizacji…')}
+        {t('organization.readiness.loading', 'Checking the current state of the organization…')}
       </div>
     );
   }
@@ -373,12 +361,10 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
         aria-label={title}
       >
         <h2 className="text-[15px] font-semibold text-c-text">
-          {t('organization.readiness.error.title', 'Nie można potwierdzić gotowości')}
+          {t('organization.readiness.error.title', 'Readiness could not be confirmed')}
         </h2>
         <p className="mt-2 text-[13px] text-c-text-secondary">
-          {t(
-            'organization.readiness.error.detail',
-            'Nie udało się odczytać bieżącego stanu organizacji. Dane nie zostały zmienione.'
+          {t('organization.readiness.error.detail', 'The current organization state could not be read. No data was changed.'
           )}
         </p>
         <button
@@ -386,7 +372,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
           onClick={() => void load()}
           className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-c-border px-3 text-[13px] font-medium text-c-text hover:border-c-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
         >
-          {t('organization.readiness.error.retry', 'Spróbuj ponownie')}
+          {t('organization.readiness.error.retry', 'Try again')}
         </button>
       </section>
     );
@@ -396,7 +382,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
     <div className="space-y-4" aria-label={title} data-testid="org-readiness-screen">
       <section aria-labelledby="org-readiness-dims-heading">
         <h2 id="org-readiness-dims-heading" className={cn(ORG_L1, 'mb-2')}>
-          {t('organization.readiness.dimsHeading', 'Pięć wymiarów gotowości')}
+          {t('organization.readiness.dimsHeading', 'Five dimensions of readiness')}
         </h2>
         <div
           data-testid="org-readiness-dimgrid"
@@ -433,19 +419,17 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
               id="org-readiness-blockers-heading"
               className="text-[13px] font-semibold text-c-text"
             >
-              {t('organization.readiness.blockersHeading', 'Co blokuje i kogo zatrzymuje')}
+              {t('organization.readiness.blockersHeading', 'What is blocked and who is held up')}
             </h2>
             <p className="text-[11px] text-c-text-muted">
-              {t(
-                'organization.readiness.blockersSubheading',
-                'Każda pozycja mówi, czego dotyczy i co zrobić dalej.'
+              {t('organization.readiness.blockersSubheading', 'Each item says what it concerns and what to do next.'
               )}
             </p>
           </div>
           <OrgStatusChip tone={blockers.length === 0 ? 'ok' : 'warning'}>
             {blockers.length === 0
-              ? t('organization.readiness.ready', 'Gotowe')
-              : t('organization.readiness.blockersCount', '{{count}} blokad', {
+              ? t('organization.readiness.ready', 'Ready')
+              : t('organization.readiness.blockersCount', '{{count}} blockers', {
                   count: blockers.length,
                 })}
           </OrgStatusChip>
@@ -454,9 +438,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
           {blockers.length === 0 ? (
             <div className="flex items-start gap-2 p-2 text-[13px] text-c-text-secondary">
               <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-c-success" />
-              {t(
-                'organization.readiness.noBlockers',
-                'Nie ma otwartych konfliktów ani oczekujących decyzji.'
+              {t('organization.readiness.noBlockers', 'There are no open conflicts and no pending decisions.'
               )}
             </div>
           ) : (
@@ -498,22 +480,22 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
 
       <section className="grid gap-3 md:grid-cols-3">
         <article className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-          <p className={ORG_L1}>{t('organization.readiness.footer.claims', 'Twierdzenia razem')}</p>
+          <p className={ORG_L1}>{t('organization.readiness.footer.claims', 'Claims in total')}</p>
           <p className="mt-1 text-[15px] font-semibold text-c-text">{claims.length}</p>
         </article>
         <article className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-          <p className={ORG_L1}>{t('organization.readiness.footer.rejected', 'Odrzucone')}</p>
+          <p className={ORG_L1}>{t('organization.readiness.footer.rejected', 'Rejected')}</p>
           <p className="mt-1 text-[15px] font-semibold text-c-text">
             {claims.filter((claim) => claim.reviewState === 'rejected').length}
           </p>
         </article>
         <article className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
           <p className={ORG_L1}>
-            {t('organization.readiness.footer.publication', 'Ostatnia publikacja')}
+            {t('organization.readiness.footer.publication', 'Last publication')}
           </p>
           <p className="mt-1 text-[15px] font-semibold text-c-text">
             <FileCheck2 aria-hidden="true" className="mr-1.5 inline h-4 w-4 text-c-text-muted" />
-            {latestVersion ? new Date(latestVersion.createdAt).toLocaleDateString('pl-PL') : '—'}
+            {formatListDate(latestVersion?.createdAt)}
           </p>
         </article>
       </section>

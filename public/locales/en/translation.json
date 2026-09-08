@@ -26339,6 +26339,17 @@
         "forbidden": "You do not have permission to perform this governed action.",
         "notFound": "The governed claim or snapshot no longer exists. Refresh and try again.",
         "conflict": "The governed state changed. Refresh before retrying this action."
+      },
+      "dashboard": {
+        "recentActivity": "User updated Role permissions"
+      },
+      "rules": {
+        "subtitle": "Define and manage automated system policies."
+      },
+      "settings": {
+        "auditDescription": "Configure retention and detail level for audit logs.",
+        "securityDescription": "Global security constraints and MFA requirements.",
+        "notificationsDescription": "Alerting for governance breaches and events."
       }
     },
     "profile": {
@@ -26618,7 +26629,9 @@
           "professional_services": "Professional Services",
           "other": "Other"
         }
-      }
+      },
+      "saved": "Profile saved",
+      "readbackFailed": "Save request completed, but durable profile readback could not be verified."
     },
     "sections": {
       "profile": {
@@ -26712,7 +26725,8 @@
       "noDomain": "No custom domain configured.",
       "approvedTitle": "Approved Email Domains",
       "approvedDesc": "Users with these email domains can auto-join your organization.",
-      "noApproved": "No approved domains set."
+      "noApproved": "No approved domains set.",
+      "dnsNote": "DNS verification remains a separate operator step before the domain can be marked verified."
     },
     "branding": {
       "visualTitle": "Visual Identity",
@@ -26782,6 +26796,471 @@
         "artifact": "Artifact",
         "system": "System"
       }
+    },
+    "redesign": {
+      "sections": {
+        "identity": "Identity",
+        "scale": "Scale",
+        "delivery": "Delivery model",
+        "markets": "Markets & systems",
+        "marketsFull": "Markets & core systems"
+      },
+      "chips": {
+        "all": "All",
+        "filled": "Filled in",
+        "missing": "To fill in",
+        "conflicts": "Conflicts"
+      },
+      "cta": {
+        "addSource": "Add source"
+      },
+      "identity": {
+        "lead": "The organization type decides what Teresa asks about next."
+      },
+      "loading": {
+        "profile": "Loading the organization profile…"
+      },
+      "filter": {
+        "noMatch": "No field on this screen matches the selected filter."
+      },
+      "fields": {
+        "organizationType": "Organization type",
+        "organizationDescription": "Organization description"
+      },
+      "techDetails": {
+        "orgId": "Organization identifier"
+      },
+      "status": {
+        "sourceConflicts": "{{count}} source conflicts",
+        "fieldsToFill": "{{count}} fields to fill in",
+        "conflictingValues": "{{count}} conflicting values from sources",
+        "conflictingValuesDetail": "{{count}} values from sources do not agree"
+      },
+      "sources": {
+        "claimsCount": "{{count}} claims",
+        "contextItems": "Context items",
+        "contextItemsDetail": "{{count}} source records",
+        "lastUpdate": "Last update",
+        "conflicts": "Conflicts"
+      },
+      "sourceType": {
+        "document": "Document",
+        "interview_answer": "Interview answer",
+        "interview_context": "Interview context",
+        "manual_entry": "Entered manually",
+        "organization_profile": "Organization profile"
+      },
+      "provenance": {
+        "approved": "approved",
+        "notApproved": "not approved"
+      },
+      "relative": {
+        "never": "never",
+        "justNow": "just now",
+        "minutesAgo": "{{count}} min ago",
+        "hoursAgo": "{{count}} h ago",
+        "daysAgo": "{{count}} days ago"
+      },
+      "panel": {
+        "aria": "State of this screen",
+        "dataState": "Data state",
+        "filledFields": "Fields filled in",
+        "approvedFacts": "Approved facts",
+        "completenessAria": "Screen field completeness",
+        "completenessNote": "Data completeness — this is not decision readiness.",
+        "needsDecision": "Needs a decision",
+        "resolveConflicts": "Resolve conflicts",
+        "sources": "Sources",
+        "fieldSources": "Show field sources",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "publish": "Publish context version",
+        "publishNote": "Publishing creates an immutable version that the other modules read.",
+        "saved": "Saved"
+      },
+      "primitives": {
+        "addItem": "Add item",
+        "removeItem": "Remove item",
+        "emptyList": "No items.",
+        "techDetails": "Technical details"
+      },
+      "severity": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "challenges": {
+        "sections": {
+          "challenges": "Declared challenges",
+          "evidence": "Evidence"
+        },
+        "challengesLead": "Official problems reported by the client (symptoms).",
+        "evidenceLead": "Hard facts, metrics or logs that confirm the challenges are real.",
+        "col": {
+          "challenge": "Challenge / symptom",
+          "challengePh": "e.g. High defect rate",
+          "area": "Area",
+          "areaPh": "e.g. Quality",
+          "severity": "Severity",
+          "notes": "Note",
+          "notesPh": "Extra context…",
+          "metric": "Metric / data point",
+          "metricPh": "e.g. Defects 12%",
+          "symptom": "Symptom / observation",
+          "symptomPh": "e.g. Stoppage every hour",
+          "source": "System / source document",
+          "sourcePh": "e.g. SAP report",
+          "link": "Link / reference",
+          "linkPh": "e.g. Page 12"
+        },
+        "addChallenge": "Add challenge",
+        "addEvidence": "Add evidence",
+        "upload": {
+          "rawExport": "Raw data export",
+          "kpiDashboard": "KPI dashboard",
+          "systemLogs": "System logs",
+          "financialReports": "Financial reports"
+        }
+      },
+      "direction": {
+        "sections": {
+          "position": "Position & priorities",
+          "technology": "Technology",
+          "culture": "Culture & communication",
+          "constraints": "Constraints & risk"
+        },
+        "cultureHint": "These settings help Teresa match her communication style to the organization's culture."
+      },
+      "goalsMetrics": {
+        "sections": {
+          "intent": "Strategic intent",
+          "metrics": "Success metrics"
+        },
+        "metricsTitle": "Success metrics (KPIs)",
+        "priority": {
+          "eff": "Efficiency / cost reduction",
+          "growth": "Growth / higher sales",
+          "inv": "Innovation / new products",
+          "qual": "Quality / compliance",
+          "speed": "Speed / agility",
+          "cust": "Customer experience"
+        },
+        "timeframe": {
+          "3m": "3 months",
+          "6m": "6 months",
+          "12m": "12 months"
+        },
+        "primaryObjective": "Primary objective",
+        "secondaryObjectives": "Secondary objectives",
+        "prioritiesHeading": "Priorities (max. 3)",
+        "prioritiesAria": "Priorities",
+        "col": {
+          "name": "KPI name",
+          "namePh": "e.g. OEE",
+          "baseline": "Baseline value",
+          "baselinePh": "e.g. 60%",
+          "target": "Target",
+          "targetPh": "e.g. 85%",
+          "timeframe": "Horizon"
+        },
+        "addMetric": "Add metric"
+      },
+      "rootCauses": {
+        "sections": {
+          "rootcause": "Root causes",
+          "blockers": "Blockers"
+        },
+        "lead": "These answers help surface the hidden causes behind the declared challenges.",
+        "q1": "Where do decisions get stuck?",
+        "q1h": "e.g. Middle management hesitation, missing data…",
+        "q2": "Where is resistance to change strongest?",
+        "q2h": "e.g. The shop floor, one specific department…",
+        "q3": "Which past initiatives failed, and why?",
+        "q3h": "e.g. A Lean rollout with no follow-through…",
+        "q4": "Is there a gap between the board's view and reality?",
+        "q4h": "e.g. The CEO believes the ERP works, users work in Excel…",
+        "gallery": {
+          "heading": "Ready-made blockers — add with one click",
+          "aria": "Ready-made blockers"
+        },
+        "preset": {
+          "c1": {
+            "title": "Fear of failure",
+            "desc": "People hide mistakes instead of reporting them."
+          },
+          "c2": {
+            "title": "Too many meetings",
+            "desc": "Productivity is lost to excessive coordination meetings."
+          },
+          "c3": {
+            "title": "Change fatigue",
+            "desc": "Teams are burnt out by too many initiatives at once."
+          },
+          "c4": {
+            "title": "Fragmented data",
+            "desc": "Key KPIs are collected by hand in Excel."
+          }
+        },
+        "col": {
+          "title": "Blocker name",
+          "titlePh": "e.g. Fear of failure",
+          "type": "Type",
+          "desc": "Description and impact",
+          "descPh": "Describe the obstacle and its impact…"
+        },
+        "addBlocker": "Add blocker"
+      },
+      "blockerType": {
+        "Culture": "Culture",
+        "Process": "Process",
+        "Technology": "Technology",
+        "Strategy": "Strategy",
+        "People": "People"
+      },
+      "risks": {
+        "sections": {
+          "risks": "Risks",
+          "strengths": "Opportunities"
+        },
+        "risksLead": "What could derail this transformation?",
+        "strengthsLead": "Which strengths can we build on?",
+        "col": {
+          "risk": "Risk / threat",
+          "riskPh": "e.g. Middle management resistance",
+          "why": "Why (root cause)",
+          "whyPh": "e.g. Fear of job cuts",
+          "severity": "Severity",
+          "mitigation": "Mitigation strategy",
+          "mitigationPh": "e.g. Change management programme",
+          "enabler": "Strength / opportunity",
+          "enablerPh": "e.g. Strong engineering team",
+          "seen": "Evidence / where it shows",
+          "seenPh": "e.g. R&D results",
+          "leverage": "How to use it",
+          "leveragePh": "e.g. As pilot champions"
+        },
+        "addRisk": "Add risk",
+        "addOpportunity": "Add opportunity"
+      },
+      "scope": {
+        "sections": {
+          "scope": "Scope",
+          "collaboration": "Ways of working"
+        },
+        "inScope": "In scope",
+        "outScope": "Out of scope",
+        "col": {
+          "area": "Area",
+          "areaInPh": "e.g. Plant A",
+          "areaOutPh": "e.g. Logistics",
+          "notes": "Note",
+          "notesPh": "e.g. Full audit",
+          "reason": "Reason",
+          "reasonPh": "e.g. Already optimised"
+        },
+        "addArea": "Add area",
+        "addExclusion": "Add exclusion",
+        "archetypeLabel": "Transformation archetype",
+        "aiRoleLabel": "Role of AI",
+        "cadenceLabel": "Steering cadence",
+        "archetype": {
+          "fast": "Pilot and scale (agile)",
+          "deep": "Core transformation (waterfall)",
+          "targeted": "By value / use case"
+        },
+        "aiRole": {
+          "advisor": "Strategic advisor",
+          "partner": "Co-pilot",
+          "agent": "Autonomous agent"
+        },
+        "cadence": {
+          "weekly": "Weekly SteerCo",
+          "monthly": "Monthly review",
+          "daily": "Daily stand-up",
+          "milestone": "At milestones"
+        }
+      },
+      "scenarios": {
+        "sections": {
+          "scenarios": "Transformation scenarios",
+          "brief": "Executive brief"
+        },
+        "lead": "Based on {{count}} declared challenges, the recommended direction is \"{{scenario}}\".",
+        "recommended": "Recommended",
+        "complexity": "complexity {{level}}",
+        "chip": {
+          "scenario": "Scenario selected",
+          "risks": "Critical/high risks",
+          "challenges": "Declared challenges"
+        },
+        "completenessNote": "The scenario choice is stored locally as you go — the button confirms the state.",
+        "brief": {
+          "profile": "Organization profile",
+          "headcountRevenue": "{{employees}} people · {{revenue}} revenue",
+          "maturity": "Maturity",
+          "today": "Today:",
+          "target": "Target:",
+          "selectedScenario": "Selected scenario",
+          "risks": "Risks",
+          "criticalHigh": "{{count}} critical/high",
+          "opportunities": "Opportunities",
+          "challenges": "Challenges",
+          "strategicGoals": "Strategic goals",
+          "successMetrics": "Success metrics"
+        }
+      }
+    },
+    "readiness": {
+      "dim": {
+        "completeness": {
+          "label": "Completeness",
+          "detail": "{{missing}} profile fields have no value."
+        },
+        "evidence": {
+          "label": "Evidence coverage",
+          "none": "No claims",
+          "detail": "{{count}} facts with no approved source.",
+          "action": "Show facts →"
+        },
+        "consistency": {
+          "label": "Consistency",
+          "none": "None",
+          "count": "{{count}} discrepancies",
+          "detailOk": "No claim has conflicting values across sources.",
+          "action": "Resolve →"
+        },
+        "freshness": {
+          "label": "Freshness",
+          "none": "Up to date",
+          "count": "{{count}} out of date",
+          "detail": "Claims older than {{days}} days ({{count}} of {{total}}).",
+          "action": "Refresh →"
+        },
+        "approval": {
+          "label": "Approval",
+          "none": "None",
+          "detail": "Published {{date}}.",
+          "detailNone": "Nobody has published a context version yet.",
+          "action": "Name an owner →"
+        }
+      },
+      "blocker": {
+        "conflict": {
+          "title": "Conflict: {{path}}",
+          "action": "Resolve →"
+        },
+        "pending": {
+          "title": "Waiting for approval",
+          "detail": "{{count}} facts with no decision.",
+          "action": "Review →"
+        },
+        "noVersion": {
+          "title": "No published version",
+          "detail": "Nobody has approved a version of the organization context yet.",
+          "action": "Publish →"
+        }
+      },
+      "loading": "Checking the current state of the organization…",
+      "error": {
+        "title": "Readiness could not be confirmed",
+        "detail": "The current organization state could not be read. No data was changed.",
+        "retry": "Try again"
+      },
+      "dimsHeading": "Five dimensions of readiness",
+      "blockersHeading": "What is blocked and who is held up",
+      "blockersSubheading": "Each item says what it concerns and what to do next.",
+      "ready": "Ready",
+      "blockersCount": "{{count}} blockers",
+      "noBlockers": "There are no open conflicts and no pending decisions.",
+      "footer": {
+        "claims": "Claims in total",
+        "rejected": "Rejected",
+        "publication": "Last publication"
+      }
+    },
+    "setupWizard": {
+      "badge": "New organization",
+      "heading": "Create a space for your team",
+      "subheading": "Start with a name. You can refine the rest now or later in the organization settings.",
+      "bullet1": "You are creating a shared space for decisions, knowledge and the team's work.",
+      "bullet2": "Domain, country and industry help set sensible context from the start.",
+      "bullet3": "You can add team members and extra settings later.",
+      "orgName": "Organization name",
+      "orgNamePh": "e.g. \"VTS Group\" or \"PMO Europe\"",
+      "orgNameHint": "This is the only field required to start.",
+      "domain": "Domain or website",
+      "domainPh": "e.g. vtsgroup.com",
+      "country": "Country",
+      "selectOrSkip": "Select or skip",
+      "detailsSummary": "Refine now or do it later",
+      "detailsHint": "role, industry, size, VAT",
+      "userTitle": "Your job title",
+      "userTitlePh": "e.g. CFO, PMO Lead",
+      "phone": "Phone",
+      "userRole": "Your role",
+      "notNow": "Not now",
+      "orgType": "Organization type",
+      "industry": "Industry",
+      "companySize": "Organization size",
+      "vat": "Tax ID / VAT",
+      "vatPh": "e.g. LU12345678 or PL1234567890",
+      "memoryTitle": "Organization memory",
+      "memoryBody": "The system will remember the organization's context, agreements and conclusions so that later interactions stay continuous.",
+      "memoryConsent": "I understand and accept that the work memory belongs to the organization, not to an individual person.",
+      "memoryRequired": "Confirming organization memory is required to create the workspace.",
+      "changeLater": "You can change all of this later in the organization settings.",
+      "skip": "Skip setup",
+      "submit": "Create organization",
+      "submitting": "Creating…",
+      "created": "Organization created. Trial data filled in.",
+      "createFailed": "Could not create the organization",
+      "industryOption": {
+        "technology": "Technology / Software",
+        "financial": "Financial services",
+        "healthcare": "Healthcare / Life Sciences",
+        "manufacturing": "Manufacturing / Industry",
+        "professional": "Professional services",
+        "other": "Other industry"
+      },
+      "countryOption": {
+        "PL": "Poland",
+        "DE": "Germany",
+        "UK": "United Kingdom",
+        "US": "United States",
+        "OTHER": "Other"
+      },
+      "userRoleOption": {
+        "EXECUTIVE": "Board / C-suite",
+        "DIRECTOR": "Director / Senior manager",
+        "MANAGER": "Manager / Team lead",
+        "SPECIALIST": "Specialist / Expert",
+        "CONSULTANT": "External consultant"
+      },
+      "userRoleDesc": {
+        "EXECUTIVE": "Strategic decisions, resource allocation",
+        "DIRECTOR": "Operational decisions, team coordination",
+        "MANAGER": "Tactical decisions, delivering on goals",
+        "SPECIALIST": "Domain knowledge, subject-matter view",
+        "CONSULTANT": "Advisory role, objective facilitation"
+      },
+      "orgTypeOption": {
+        "OPERATING": "Operating company",
+        "CONSULTING": "Consulting / advisory"
+      }
+    },
+    "contextStore": {
+      "saved": "Saved",
+      "readbackFailed": "The save completed, but the read-back from the server does not match the saved data."
+    },
+    "contextUploader": {
+      "forTab": "For: {{tab}}",
+      "lead": "Upload files that help the AI understand the context better.",
+      "whatToUpload": "What is worth uploading?",
+      "recommendedFor": "Recommended for: {{tab}}",
+      "title": "Supporting documents",
+      "processed": "Processed: {{message}}",
+      "error": "Error: {{message}}"
     }
   },
   "megatrends": {

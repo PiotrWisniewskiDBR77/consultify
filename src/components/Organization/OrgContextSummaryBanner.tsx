@@ -191,7 +191,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
           {hasClaims ? (
             <>
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                {t('organization.context.banner.claims', {
+                {t('organization.context.banner.claims', 'Teresa context: {{count}} claims · updated {{ago}}', {
                   count: claims,
                   ago: updatedLabel,
                   defaultValue: 'Teresa context: {{count}} claims · updated {{ago}}',

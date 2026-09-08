@@ -27,6 +27,7 @@
 import { Cpu, MessageSquare, Shield, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -62,12 +63,13 @@ export type DirectionConstraintsSection = 'position' | 'technology' | 'culture' 
 
 export const DIRECTION_CONSTRAINTS_SECTIONS: Array<{
   id: DirectionConstraintsSection;
-  label: string;
+  labelKey: string;
+  en: string;
 }> = [
-  { id: 'position', label: 'Pozycja i priorytety' },
-  { id: 'technology', label: 'Technologia' },
-  { id: 'culture', label: 'Kultura i komunikacja' },
-  { id: 'constraints', label: 'Ograniczenia i ryzyko' },
+  { id: 'position', labelKey: 'organization.redesign.direction.sections.position', en: 'Position & priorities' },
+  { id: 'technology', labelKey: 'organization.redesign.direction.sections.technology', en: 'Technology' },
+  { id: 'culture', labelKey: 'organization.redesign.direction.sections.culture', en: 'Culture & communication' },
+  { id: 'constraints', labelKey: 'organization.redesign.direction.sections.constraints', en: 'Constraints & risk' },
 ];
 
 interface OrgContextResponse {
@@ -80,25 +82,27 @@ interface OrgContextResponse {
 interface ScreenField {
   id: keyof OrgProfile;
   section: DirectionConstraintsSection;
-  label: string;
+  /** Klucz i18n etykiety pola — literał nigdy nie trafia do JSX (PLAN §2 pkt 4). */
+  labelKey: string;
+  en: string;
 }
 
 const SCREEN_FIELDS: ScreenField[] = [
-  { id: 'competitive_position', section: 'position', label: 'Pozycja konkurencyjna' },
-  { id: 'growth_stage', section: 'position', label: 'Etap wzrostu' },
-  { id: 'strategic_priorities', section: 'position', label: 'Priorytety strategiczne' },
-  { id: 'mission_statement', section: 'position', label: 'Misja' },
-  { id: 'vision_statement', section: 'position', label: 'Wizja' },
-  { id: 'digital_maturity_overall', section: 'technology', label: 'Dojrzałość cyfrowa (1-7)' },
-  { id: 'cloud_adoption_level', section: 'technology', label: 'Poziom adopcji chmury' },
-  { id: 'technology_stack', section: 'technology', label: 'Stos technologiczny' },
-  { id: 'digital_budget_percent', section: 'technology', label: 'Budżet cyfrowy (% przychodu)' },
-  { id: 'communication_style', section: 'culture', label: 'Styl komunikacji' },
-  { id: 'industry_jargon_level', section: 'culture', label: 'Poziom żargonu branżowego' },
-  { id: 'regulatory_environment', section: 'constraints', label: 'Otoczenie regulacyjne' },
-  { id: 'risk_appetite', section: 'constraints', label: 'Apetyt na ryzyko' },
-  { id: 'budget_constraints', section: 'constraints', label: 'Ograniczenia budżetowe' },
-  { id: 'timeline_constraints', section: 'constraints', label: 'Ograniczenia czasowe' },
+  { id: 'competitive_position', section: 'position', labelKey: 'organization.profile.fields.competitivePosition', en: 'Competitive Position' },
+  { id: 'growth_stage', section: 'position', labelKey: 'organization.profile.fields.growthStage', en: 'Growth Stage' },
+  { id: 'strategic_priorities', section: 'position', labelKey: 'organization.profile.fields.strategicPriorities', en: 'Strategic Priorities' },
+  { id: 'mission_statement', section: 'position', labelKey: 'organization.profile.fields.missionStatement', en: 'Mission Statement' },
+  { id: 'vision_statement', section: 'position', labelKey: 'organization.profile.fields.visionStatement', en: 'Vision Statement' },
+  { id: 'digital_maturity_overall', section: 'technology', labelKey: 'organization.profile.fields.digitalMaturity', en: 'Digital Maturity (1-7)' },
+  { id: 'cloud_adoption_level', section: 'technology', labelKey: 'organization.profile.fields.cloudAdoption', en: 'Cloud Adoption' },
+  { id: 'technology_stack', section: 'technology', labelKey: 'organization.profile.fields.technologyStack', en: 'Technology Stack' },
+  { id: 'digital_budget_percent', section: 'technology', labelKey: 'organization.profile.fields.digitalBudget', en: 'Digital Budget (% of IT spend)' },
+  { id: 'communication_style', section: 'culture', labelKey: 'organization.profile.fields.communicationStyle', en: 'Communication Style' },
+  { id: 'industry_jargon_level', section: 'culture', labelKey: 'organization.profile.fields.jargonLevel', en: 'Industry Jargon Level' },
+  { id: 'regulatory_environment', section: 'constraints', labelKey: 'organization.profile.fields.regulatoryEnvironment', en: 'Regulatory Environment' },
+  { id: 'risk_appetite', section: 'constraints', labelKey: 'organization.profile.fields.riskAppetite', en: 'Risk Appetite' },
+  { id: 'budget_constraints', section: 'constraints', labelKey: 'organization.profile.fields.budgetConstraints', en: 'Budget Constraints' },
+  { id: 'timeline_constraints', section: 'constraints', labelKey: 'organization.profile.fields.timelineConstraints', en: 'Timeline Constraints' },
 ];
 
 function isFilled(profile: OrgProfile, field: keyof OrgProfile): boolean {
@@ -108,16 +112,16 @@ function isFilled(profile: OrgProfile, field: keyof OrgProfile): boolean {
   return String(value ?? '').trim().length > 0;
 }
 
-function formatRelative(iso: string | null | undefined): string {
-  if (!iso) return 'nigdy';
+function formatRelative(iso: string | null | undefined, t: TFunction): string {
+  if (!iso) return t('organization.redesign.relative.never', 'never');
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return 'nigdy';
+  if (Number.isNaN(then)) return t('organization.redesign.relative.never', 'never');
   const minutes = Math.floor((Date.now() - then) / 60_000);
-  if (minutes < 1) return 'przed chwilą';
-  if (minutes < 60) return `${minutes} min temu`;
+  if (minutes < 1) return t('organization.redesign.relative.justNow', 'just now');
+  if (minutes < 60) return t('organization.redesign.relative.minutesAgo', '{{count}} min ago', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} godz. temu`;
-  return `${Math.floor(hours / 24)} dni temu`;
+  if (hours < 24) return t('organization.redesign.relative.hoursAgo', '{{count}} h ago', { count: hours });
+  return t('organization.redesign.relative.daysAgo', '{{count}} days ago', { count: Math.floor(hours / 24) });
 }
 
 export interface DirectionConstraintsRenderArgs {
@@ -224,9 +228,11 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
     (field: ScreenField) => {
       const query = searchValue.trim().toLowerCase();
       if (!query) return true;
-      return field.label.toLowerCase().includes(query);
+      // Wyszukiwarka Menu 3 filtruje po etykiecie W JĘZYKU UŻYTKOWNIKA — inaczej
+      // użytkownik EN musiałby wpisać polskie słowo, żeby cokolwiek znaleźć.
+      return t(field.labelKey, field.en).toLowerCase().includes(query);
     },
-    [searchValue]
+    [searchValue, t]
   );
 
   const shownFields = useMemo(
@@ -272,7 +278,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
       toast.success(t('organization.profile.saved', 'Profil zapisany'));
     } catch (error) {
       toast.error(
-        (error as Error)?.message || t('organization.profile.saveFailed', 'Nie udało się zapisać')
+        (error as Error)?.message || t('organization.profile.saveFailed', 'Failed to save')
       );
     } finally {
       setSaving(false);
@@ -289,13 +295,13 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
 
   const sections: StandardModuleTab[] = DIRECTION_CONSTRAINTS_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
   }));
 
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: counts.all },
-    { id: 'filled', label: 'Uzupełnione', count: counts.filled },
-    { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
+    { id: 'all', label: t('organization.redesign.chips.all', 'All'), count: counts.all },
+    { id: 'filled', label: t('organization.redesign.chips.filled', 'Filled in'), count: counts.filled },
+    { id: 'missing', label: t('organization.redesign.chips.missing', 'To fill in'), count: counts.missing },
   ];
 
   const statePanel: OrganizationStatePanelProps = {
@@ -304,20 +310,27 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
     totalFields: counts.all,
     approvedFacts: context?.counts?.claims,
     sourcesSummary:
-      typeof context?.counts?.claims === 'number' ? `${context.counts.claims} twierdzeń` : undefined,
+      typeof context?.counts?.claims === 'number'
+        ? t('organization.redesign.sources.claimsCount', '{{count}} claims', { count: context.counts.claims })
+        : undefined,
     sources: context
       ? [
           {
             id: 'context-items',
-            label: 'Elementy kontekstu',
-            detail: `${context.counts?.items ?? 0} pozycji źródłowych`,
+            label: t('organization.redesign.sources.contextItems', 'Context items'),
+            detail: t('organization.redesign.sources.contextItemsDetail', '{{count}} source records', {
+              count: context.counts?.items ?? 0,
+            }),
             status: (context.counts?.conflicts ?? 0) > 0 ? 'warning' : 'ok',
-            statusLabel: (context.counts?.conflicts ?? 0) > 0 ? 'Konflikty' : 'OK',
+            statusLabel:
+              (context.counts?.conflicts ?? 0) > 0
+                ? t('organization.redesign.sources.conflicts', 'Conflicts')
+                : 'OK',
           },
           {
             id: 'context-updated',
-            label: 'Ostatnia aktualizacja',
-            detail: formatRelative(context.snapshotUpdatedAt),
+            label: t('organization.redesign.sources.lastUpdate', 'Last update'),
+            detail: formatRelative(context.snapshotUpdatedAt, t),
           },
         ]
       : [],
@@ -339,13 +352,13 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
     <>
       {sectionHasContent('position') && (
         <div ref={registerSection('position')}>
-          <OrgSectionCard id="position" title="Pozycja i priorytety" icon={Target}>
+          <OrgSectionCard id="position" title={t('organization.redesign.direction.sections.position', 'Position & priorities')} icon={Target}>
             <OrgFieldGrid>
               <OrgFieldColumn>
                 {shows('competitive_position') && (
                   <OrgSelectField
                     id="org-competitive-position"
-                    label="Pozycja konkurencyjna"
+                    label={t('organization.profile.fields.competitivePosition', 'Competitive Position')}
                     value={profile.competitive_position}
                     options={COMPETITIVE_POSITIONS.map((position) => ({
                       value: position.value,
@@ -360,7 +373,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('growth_stage') && (
                   <OrgSelectField
                     id="org-growth-stage"
-                    label="Etap wzrostu"
+                    label={t('organization.profile.fields.growthStage', 'Growth Stage')}
                     value={profile.growth_stage}
                     options={GROWTH_STAGES.map((stage) => ({
                       value: stage.value,
@@ -372,7 +385,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('strategic_priorities') && (
                   <OrgListField
                     id="org-strategic-priorities"
-                    label="Priorytety strategiczne"
+                    label={t('organization.profile.fields.strategicPriorities', 'Strategic Priorities')}
                     value={profile.strategic_priorities}
                     onChange={(value) => update('strategic_priorities', value)}
                   />
@@ -382,7 +395,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('mission_statement') && (
                   <OrgTextField
                     id="org-mission"
-                    label="Misja"
+                    label={t('organization.profile.fields.missionStatement', 'Mission Statement')}
                     multiline
                     value={profile.mission_statement}
                     onChange={(value) => update('mission_statement', value)}
@@ -391,7 +404,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('vision_statement') && (
                   <OrgTextField
                     id="org-vision"
-                    label="Wizja"
+                    label={t('organization.profile.fields.visionStatement', 'Vision Statement')}
                     multiline
                     value={profile.vision_statement}
                     onChange={(value) => update('vision_statement', value)}
@@ -405,13 +418,13 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
 
       {sectionHasContent('technology') && (
         <div ref={registerSection('technology')}>
-          <OrgSectionCard id="technology" title="Technologia" icon={Cpu}>
+          <OrgSectionCard id="technology" title={t('organization.redesign.direction.sections.technology', 'Technology')} icon={Cpu}>
             <OrgFieldGrid>
               <OrgFieldColumn>
                 {shows('digital_maturity_overall') && (
                   <OrgTextField
                     id="org-digital-maturity"
-                    label="Dojrzałość cyfrowa (1-7)"
+                    label={t('organization.profile.fields.digitalMaturity', 'Digital Maturity (1-7)')}
                     type="number"
                     value={
                       profile.digital_maturity_overall === null
@@ -426,7 +439,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('cloud_adoption_level') && (
                   <OrgSelectField
                     id="org-cloud-adoption"
-                    label="Poziom adopcji chmury"
+                    label={t('organization.profile.fields.cloudAdoption', 'Cloud Adoption')}
                     value={profile.cloud_adoption_level}
                     options={CLOUD_LEVELS.map((level) => ({
                       value: level,
@@ -443,7 +456,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('technology_stack') && (
                   <OrgListField
                     id="org-technology-stack"
-                    label="Stos technologiczny"
+                    label={t('organization.profile.fields.technologyStack', 'Technology Stack')}
                     value={profile.technology_stack}
                     onChange={(value) => update('technology_stack', value)}
                   />
@@ -451,7 +464,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('digital_budget_percent') && (
                   <OrgTextField
                     id="org-digital-budget"
-                    label="Budżet cyfrowy (% przychodu)"
+                    label={t('organization.profile.fields.digitalBudget', 'Digital Budget (% of IT spend)')}
                     type="number"
                     value={
                       profile.digital_budget_percent === null
@@ -473,16 +486,16 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
         <div ref={registerSection('culture')}>
           <OrgSectionCard
             id="culture"
-            title="Kultura i komunikacja"
+            title={t('organization.redesign.direction.sections.culture', 'Culture & communication')}
             icon={MessageSquare}
-            hint="Te ustawienia pomagają Teresie dopasować styl komunikacji do kultury organizacji."
+            hint={t('organization.redesign.direction.cultureHint', 'These settings help Teresa match her communication style to the organization\'s culture.')}
           >
             <OrgFieldGrid>
               <OrgFieldColumn>
                 {shows('communication_style') && (
                   <OrgSelectField
                     id="org-communication-style"
-                    label="Styl komunikacji"
+                    label={t('organization.profile.fields.communicationStyle', 'Communication Style')}
                     value={profile.communication_style}
                     options={COMMUNICATION_STYLES.map((style) => ({
                       value: style.value,
@@ -499,7 +512,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('industry_jargon_level') && (
                   <OrgSelectField
                     id="org-jargon-level"
-                    label="Poziom żargonu branżowego"
+                    label={t('organization.profile.fields.jargonLevel', 'Industry Jargon Level')}
                     value={profile.industry_jargon_level}
                     options={JARGON_LEVELS.map((level) => ({
                       value: level.value,
@@ -516,11 +529,11 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
 
       {sectionHasContent('constraints') && (
         <div ref={registerSection('constraints')}>
-          <OrgSectionCard id="constraints" title="Ograniczenia i ryzyko" icon={Shield}>
+          <OrgSectionCard id="constraints" title={t('organization.redesign.direction.sections.constraints', 'Constraints & risk')} icon={Shield}>
             {shows('regulatory_environment') && (
               <div className="mb-4">
                 <OrgTagToggleGroup
-                  label="Otoczenie regulacyjne"
+                  label={t('organization.profile.fields.regulatoryEnvironment', 'Regulatory Environment')}
                   options={REGULATIONS}
                   value={profile.regulatory_environment}
                   onChange={(value) => update('regulatory_environment', value)}
@@ -530,7 +543,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
             {shows('risk_appetite') && (
               <div className="mb-4">
                 <OrgChoiceSegment
-                  label="Apetyt na ryzyko"
+                  label={t('organization.profile.fields.riskAppetite', 'Risk Appetite')}
                   value={profile.risk_appetite}
                   options={RISK_APPETITES.map((appetite) => ({
                     value: appetite.value,
@@ -548,7 +561,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('budget_constraints') && (
                   <OrgTextField
                     id="org-budget-constraints"
-                    label="Ograniczenia budżetowe"
+                    label={t('organization.profile.fields.budgetConstraints', 'Budget Constraints')}
                     multiline
                     value={profile.budget_constraints}
                     onChange={(value) => update('budget_constraints', value)}
@@ -559,7 +572,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
                 {shows('timeline_constraints') && (
                   <OrgTextField
                     id="org-timeline-constraints"
-                    label="Ograniczenia czasowe"
+                    label={t('organization.profile.fields.timelineConstraints', 'Timeline Constraints')}
                     multiline
                     value={profile.timeline_constraints}
                     onChange={(value) => update('timeline_constraints', value)}
@@ -573,7 +586,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
 
       {shownFields.length === 0 && (
         <p className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-[13px] text-c-text-muted">
-          Żadne pole tego ekranu nie pasuje do wybranego filtra.
+          {t('organization.redesign.filter.noMatch', 'No field on this screen matches the selected filter.')}
         </p>
       )}
     </>

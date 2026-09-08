@@ -27604,6 +27604,17 @@
         "forbidden": "Nie masz uprawnień do wykonania tej nadzorowanej operacji.",
         "notFound": "Twierdzenie lub migawka już nie istnieje. Odśwież widok i spróbuj ponownie.",
         "conflict": "Stan nadzorowanego kontekstu uległ zmianie. Odśwież widok przed ponowną próbą."
+      },
+      "dashboard": {
+        "recentActivity": "Użytkownik zmienił uprawnienia roli"
+      },
+      "rules": {
+        "subtitle": "Definiuj automatyczne polityki systemowe i zarządzaj nimi."
+      },
+      "settings": {
+        "auditDescription": "Ustaw okres przechowywania i poziom szczegółowości dzienników audytu.",
+        "securityDescription": "Globalne ograniczenia bezpieczeństwa i wymagania MFA.",
+        "notificationsDescription": "Powiadomienia o naruszeniach nadzoru i zdarzeniach."
       }
     },
     "profile": {
@@ -27883,7 +27894,9 @@
           "professional_services": "Usługi profesjonalne",
           "other": "Inna"
         }
-      }
+      },
+      "saved": "Profil zapisany",
+      "readbackFailed": "Zapis wykonany, ale nie udało się potwierdzić trwałego odczytu profilu."
     },
     "sections": {
       "profile": {
@@ -27977,7 +27990,8 @@
       "noDomain": "Brak skonfigurowanej domeny własnej.",
       "approvedTitle": "Zatwierdzone domeny email",
       "approvedDesc": "Użytkownicy z tych domen email mogą automatycznie dołączyć do organizacji.",
-      "noApproved": "Brak zatwierdzonych domen."
+      "noApproved": "Brak zatwierdzonych domen.",
+      "dnsNote": "Weryfikacja DNS to osobny krok operatora — dopiero po nim domena może zostać oznaczona jako zweryfikowana."
     },
     "branding": {
       "visualTitle": "Tożsamość wizualna",
@@ -28047,6 +28061,471 @@
         "artifact": "Artefakt",
         "system": "System"
       }
+    },
+    "redesign": {
+      "sections": {
+        "identity": "Tożsamość",
+        "scale": "Skala",
+        "delivery": "Model dostawy",
+        "markets": "Rynki i systemy",
+        "marketsFull": "Rynki i systemy rdzeniowe"
+      },
+      "chips": {
+        "all": "Wszystkie",
+        "filled": "Uzupełnione",
+        "missing": "Do uzupełnienia",
+        "conflicts": "Konflikty"
+      },
+      "cta": {
+        "addSource": "Dodaj źródło"
+      },
+      "identity": {
+        "lead": "Typ organizacji ustala, o co Teresa pyta dalej."
+      },
+      "loading": {
+        "profile": "Wczytywanie profilu organizacji…"
+      },
+      "filter": {
+        "noMatch": "Żadne pole tego ekranu nie pasuje do wybranego filtra."
+      },
+      "fields": {
+        "organizationType": "Typ organizacji",
+        "organizationDescription": "Opis organizacji"
+      },
+      "techDetails": {
+        "orgId": "Identyfikator organizacji"
+      },
+      "status": {
+        "sourceConflicts": "{{count}} konfliktów źródeł",
+        "fieldsToFill": "{{count}} pól do uzupełnienia",
+        "conflictingValues": "{{count}} niezgodnych wartości ze źródeł",
+        "conflictingValuesDetail": "{{count}} wartości ze źródeł jest niezgodnych"
+      },
+      "sources": {
+        "claimsCount": "{{count}} twierdzeń",
+        "contextItems": "Elementy kontekstu",
+        "contextItemsDetail": "{{count}} pozycji źródłowych",
+        "lastUpdate": "Ostatnia aktualizacja",
+        "conflicts": "Konflikty"
+      },
+      "sourceType": {
+        "document": "Dokument",
+        "interview_answer": "Odpowiedź z wywiadu",
+        "interview_context": "Kontekst wywiadu",
+        "manual_entry": "Wpisane ręcznie",
+        "organization_profile": "Profil organizacji"
+      },
+      "provenance": {
+        "approved": "zatwierdzone",
+        "notApproved": "niezatwierdzone"
+      },
+      "relative": {
+        "never": "nigdy",
+        "justNow": "przed chwilą",
+        "minutesAgo": "{{count}} min temu",
+        "hoursAgo": "{{count}} godz. temu",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "panel": {
+        "aria": "Stan tego ekranu",
+        "dataState": "Stan danych",
+        "filledFields": "Pola uzupełnione",
+        "approvedFacts": "Zatwierdzone fakty",
+        "completenessAria": "Kompletność pól ekranu",
+        "completenessNote": "Kompletność danych — nie jest to gotowość decyzyjna.",
+        "needsDecision": "Wymaga decyzji",
+        "resolveConflicts": "Rozstrzygnij konflikty",
+        "sources": "Źródła",
+        "fieldSources": "Pokaż źródła pola",
+        "save": "Zapisz zmiany",
+        "saving": "Zapisywanie…",
+        "publish": "Opublikuj wersję kontekstu",
+        "publishNote": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+        "saved": "Zapisano"
+      },
+      "primitives": {
+        "addItem": "Dodaj pozycję",
+        "removeItem": "Usuń pozycję",
+        "emptyList": "Brak pozycji.",
+        "techDetails": "Szczegóły techniczne"
+      },
+      "severity": {
+        "critical": "Krytyczna",
+        "high": "Wysoka",
+        "medium": "Średnia",
+        "low": "Niska"
+      },
+      "challenges": {
+        "sections": {
+          "challenges": "Zadeklarowane wyzwania",
+          "evidence": "Dowody"
+        },
+        "challengesLead": "Oficjalne problemy zgłoszone przez klienta (symptomy).",
+        "evidenceLead": "Twarde fakty, metryki lub logi potwierdzające istnienie wyzwań.",
+        "col": {
+          "challenge": "Wyzwanie / objaw",
+          "challengePh": "np. Wysoki wskaźnik braków",
+          "area": "Obszar",
+          "areaPh": "np. Jakość",
+          "severity": "Waga",
+          "notes": "Notatka",
+          "notesPh": "Dodatkowy kontekst…",
+          "metric": "Metryka / dana",
+          "metricPh": "np. Braki 12%",
+          "symptom": "Objaw / obserwacja",
+          "symptomPh": "np. Przestój co godzinę",
+          "source": "System / dokument źródłowy",
+          "sourcePh": "np. Raport SAP",
+          "link": "Link / odniesienie",
+          "linkPh": "np. Strona 12"
+        },
+        "addChallenge": "Dodaj wyzwanie",
+        "addEvidence": "Dodaj dowód",
+        "upload": {
+          "rawExport": "Eksport surowych danych",
+          "kpiDashboard": "Dashboard KPI",
+          "systemLogs": "Logi systemowe",
+          "financialReports": "Raporty finansowe"
+        }
+      },
+      "direction": {
+        "sections": {
+          "position": "Pozycja i priorytety",
+          "technology": "Technologia",
+          "culture": "Kultura i komunikacja",
+          "constraints": "Ograniczenia i ryzyko"
+        },
+        "cultureHint": "Te ustawienia pomagają Teresie dopasować styl komunikacji do kultury organizacji."
+      },
+      "goalsMetrics": {
+        "sections": {
+          "intent": "Intencja strategiczna",
+          "metrics": "Mierniki sukcesu"
+        },
+        "metricsTitle": "Mierniki sukcesu (KPI)",
+        "priority": {
+          "eff": "Efektywność / redukcja kosztów",
+          "growth": "Wzrost / zwiększenie sprzedaży",
+          "inv": "Innowacje / nowe produkty",
+          "qual": "Jakość / zgodność",
+          "speed": "Szybkość / zwinność",
+          "cust": "Doświadczenie klienta"
+        },
+        "timeframe": {
+          "3m": "3 miesiące",
+          "6m": "6 miesięcy",
+          "12m": "12 miesięcy"
+        },
+        "primaryObjective": "Cel nadrzędny",
+        "secondaryObjectives": "Cele drugorzędne",
+        "prioritiesHeading": "Priorytety (maks. 3)",
+        "prioritiesAria": "Priorytety",
+        "col": {
+          "name": "Nazwa KPI",
+          "namePh": "np. OEE",
+          "baseline": "Wartość bazowa",
+          "baselinePh": "np. 60%",
+          "target": "Cel",
+          "targetPh": "np. 85%",
+          "timeframe": "Horyzont"
+        },
+        "addMetric": "Dodaj miernik"
+      },
+      "rootCauses": {
+        "sections": {
+          "rootcause": "Przyczyny źródłowe",
+          "blockers": "Blokery"
+        },
+        "lead": "Odpowiedzi pomagają zidentyfikować ukryte przyczyny za zadeklarowanymi wyzwaniami.",
+        "q1": "Gdzie utykają decyzje?",
+        "q1h": "np. Obawa kadry średniego szczebla, brak danych…",
+        "q2": "Gdzie jest najsilniejszy opór wobec zmian?",
+        "q2h": "np. Hala produkcyjna, konkretny dział…",
+        "q3": "Jakie inicjatywy zawiodły w przeszłości i dlaczego?",
+        "q3h": "np. Wdrożenie Lean bez kontynuacji…",
+        "q4": "Czy jest rozbieżność między widokiem zarządu a rzeczywistością?",
+        "q4h": "np. CEO myśli, że ERP działa, użytkownicy używają Excela…",
+        "gallery": {
+          "heading": "Gotowe blokery — dodaj jednym kliknięciem",
+          "aria": "Gotowe blokery"
+        },
+        "preset": {
+          "c1": {
+            "title": "Lęk przed porażką",
+            "desc": "Pracownicy ukrywają błędy zamiast je zgłaszać."
+          },
+          "c2": {
+            "title": "Nadmiar spotkań",
+            "desc": "Produktywność traci na nadmiernych spotkaniach koordynacyjnych."
+          },
+          "c3": {
+            "title": "Zmęczenie zmianą",
+            "desc": "Zespoły są wypalone nadmiarem inicjatyw."
+          },
+          "c4": {
+            "title": "Fragmentacja danych",
+            "desc": "Kluczowe KPI są ręcznie zbierane w Excelu."
+          }
+        },
+        "col": {
+          "title": "Nazwa blokera",
+          "titlePh": "np. Lęk przed porażką",
+          "type": "Typ",
+          "desc": "Opis i wpływ",
+          "descPh": "Opisz przeszkodę i jej wpływ…"
+        },
+        "addBlocker": "Dodaj bloker"
+      },
+      "blockerType": {
+        "Culture": "Kultura",
+        "Process": "Proces",
+        "Technology": "Technologia",
+        "Strategy": "Strategia",
+        "People": "Ludzie"
+      },
+      "risks": {
+        "sections": {
+          "risks": "Ryzyka",
+          "strengths": "Szanse"
+        },
+        "risksLead": "Co mogłoby wykoleić tę transformację?",
+        "strengthsLead": "Jakie mocne strony można wykorzystać?",
+        "col": {
+          "risk": "Ryzyko / zagrożenie",
+          "riskPh": "np. Opór kadry średniej",
+          "why": "Dlaczego (przyczyna)",
+          "whyPh": "np. Obawa o redukcję etatów",
+          "severity": "Waga",
+          "mitigation": "Strategia mitygacji",
+          "mitigationPh": "np. Program zarządzania zmianą",
+          "enabler": "Mocna strona / szansa",
+          "enablerPh": "np. Silny zespół inżynierski",
+          "seen": "Dowód / gdzie widoczne",
+          "seenPh": "np. Wyniki R&D",
+          "leverage": "Jak wykorzystać",
+          "leveragePh": "np. Jako pilotażowych liderów"
+        },
+        "addRisk": "Dodaj ryzyko",
+        "addOpportunity": "Dodaj szansę"
+      },
+      "scope": {
+        "sections": {
+          "scope": "Zakres",
+          "collaboration": "Tryb współpracy"
+        },
+        "inScope": "W zakresie",
+        "outScope": "Poza zakresem",
+        "col": {
+          "area": "Obszar",
+          "areaInPh": "np. Zakład A",
+          "areaOutPh": "np. Logistyka",
+          "notes": "Notatka",
+          "notesPh": "np. Pełny audyt",
+          "reason": "Powód",
+          "reasonPh": "np. Już zoptymalizowane"
+        },
+        "addArea": "Dodaj obszar",
+        "addExclusion": "Dodaj wyłączenie",
+        "archetypeLabel": "Archetyp transformacji",
+        "aiRoleLabel": "Rola AI",
+        "cadenceLabel": "Rytm nadzoru",
+        "archetype": {
+          "fast": "Pilotaż i skalowanie (zwinnie)",
+          "deep": "Transformacja rdzenia (kaskadowo)",
+          "targeted": "Wg wartości / przypadków użycia"
+        },
+        "aiRole": {
+          "advisor": "Doradca strategiczny",
+          "partner": "Współpilot",
+          "agent": "Autonomiczny agent"
+        },
+        "cadence": {
+          "weekly": "Cotygodniowy SteerCo",
+          "monthly": "Miesięczny przegląd",
+          "daily": "Codzienny standup",
+          "milestone": "Wg kamieni milowych"
+        }
+      },
+      "scenarios": {
+        "sections": {
+          "scenarios": "Scenariusze transformacji",
+          "brief": "Executive brief"
+        },
+        "lead": "Na podstawie {{count}} zadeklarowanych wyzwań rekomendowany kierunek to „{{scenario}}\".",
+        "recommended": "Rekomendowany",
+        "complexity": "złożoność {{level}}",
+        "chip": {
+          "scenario": "Scenariusz wybrany",
+          "risks": "Ryzyka krytyczne/wysokie",
+          "challenges": "Wyzwania zadeklarowane"
+        },
+        "completenessNote": "Wybór scenariusza zapisywany jest lokalnie na bieżąco — przycisk potwierdza stan.",
+        "brief": {
+          "profile": "Profil organizacji",
+          "headcountRevenue": "{{employees}} osób · {{revenue}} przychodu",
+          "maturity": "Dojrzałość",
+          "today": "Dziś:",
+          "target": "Cel:",
+          "selectedScenario": "Wybrany scenariusz",
+          "risks": "Ryzyka",
+          "criticalHigh": "{{count}} krytyczne/wysokie",
+          "opportunities": "Szanse",
+          "challenges": "Wyzwania",
+          "strategicGoals": "Cele strategiczne",
+          "successMetrics": "Mierniki sukcesu"
+        }
+      }
+    },
+    "readiness": {
+      "dim": {
+        "completeness": {
+          "label": "Kompletność",
+          "detail": "{{missing}} pól profilu bez wartości."
+        },
+        "evidence": {
+          "label": "Pokrycie dowodami",
+          "none": "Brak twierdzeń",
+          "detail": "{{count}} faktów bez zatwierdzenia źródła.",
+          "action": "Pokaż fakty →"
+        },
+        "consistency": {
+          "label": "Spójność",
+          "none": "Brak",
+          "count": "{{count}} rozbieżności",
+          "detailOk": "Żadne twierdzenie nie ma sprzecznych wartości ze źródeł.",
+          "action": "Rozstrzygnij →"
+        },
+        "freshness": {
+          "label": "Aktualność",
+          "none": "Aktualne",
+          "count": "{{count}} przeterminowanych",
+          "detail": "Twierdzenia starsze niż {{days}} dni ({{count}} z {{total}}).",
+          "action": "Odśwież →"
+        },
+        "approval": {
+          "label": "Zatwierdzenie",
+          "none": "Brak",
+          "detail": "Opublikowano {{date}}.",
+          "detailNone": "Nikt nie opublikował jeszcze wersji kontekstu.",
+          "action": "Wskaż osobę →"
+        }
+      },
+      "blocker": {
+        "conflict": {
+          "title": "Konflikt: {{path}}",
+          "action": "Rozstrzygnij →"
+        },
+        "pending": {
+          "title": "Oczekuje na zatwierdzenie",
+          "detail": "{{count}} faktów bez decyzji.",
+          "action": "Przejrzyj →"
+        },
+        "noVersion": {
+          "title": "Brak opublikowanej wersji",
+          "detail": "Nikt nie zatwierdził jeszcze wersji kontekstu organizacji.",
+          "action": "Opublikuj →"
+        }
+      },
+      "loading": "Sprawdzam aktualny stan organizacji…",
+      "error": {
+        "title": "Nie można potwierdzić gotowości",
+        "detail": "Nie udało się odczytać bieżącego stanu organizacji. Dane nie zostały zmienione.",
+        "retry": "Spróbuj ponownie"
+      },
+      "dimsHeading": "Pięć wymiarów gotowości",
+      "blockersHeading": "Co blokuje i kogo zatrzymuje",
+      "blockersSubheading": "Każda pozycja mówi, czego dotyczy i co zrobić dalej.",
+      "ready": "Gotowe",
+      "blockersCount": "{{count}} blokad",
+      "noBlockers": "Nie ma otwartych konfliktów ani oczekujących decyzji.",
+      "footer": {
+        "claims": "Twierdzenia razem",
+        "rejected": "Odrzucone",
+        "publication": "Ostatnia publikacja"
+      }
+    },
+    "setupWizard": {
+      "badge": "Nowa organizacja",
+      "heading": "Utwórz przestrzeń dla swojego zespołu",
+      "subheading": "Zacznij od nazwy. Resztę możesz doprecyzować teraz albo później w ustawieniach organizacji.",
+      "bullet1": "Tworzysz wspólną przestrzeń dla decyzji, wiedzy i pracy zespołu.",
+      "bullet2": "Domena, kraj i branża pomagają ustawić sensowny kontekst od startu.",
+      "bullet3": "Członków zespołu i dodatkowe ustawienia dodasz później.",
+      "orgName": "Nazwa organizacji",
+      "orgNamePh": "Np. „VTS Group\" lub „PMO Europa\"",
+      "orgNameHint": "To jedyne pole wymagane na start.",
+      "domain": "Domena lub strona www",
+      "domainPh": "np. vtsgroup.com",
+      "country": "Kraj",
+      "selectOrSkip": "Wybierz lub pomiń",
+      "detailsSummary": "Doprecyzuj teraz lub zrób to później",
+      "detailsHint": "rola, branża, skala, VAT",
+      "userTitle": "Twoje stanowisko",
+      "userTitlePh": "np. CFO, PMO Lead",
+      "phone": "Telefon",
+      "userRole": "Twoja rola",
+      "notNow": "Nie teraz",
+      "orgType": "Typ organizacji",
+      "industry": "Branża",
+      "companySize": "Wielkość organizacji",
+      "vat": "NIP / VAT",
+      "vatPh": "np. LU12345678 lub PL1234567890",
+      "memoryTitle": "Pamięć organizacji",
+      "memoryBody": "System będzie zapamiętywał kontekst organizacji, ustalenia i wnioski zespołu, żeby kolejne interakcje miały ciągłość.",
+      "memoryConsent": "Rozumiem i akceptuję, że pamięć pracy należy do organizacji, a nie do pojedynczej osoby.",
+      "memoryRequired": "Potwierdzenie pamięci organizacji jest wymagane, aby utworzyć workspace.",
+      "changeLater": "Wszystko to zmienisz później w ustawieniach organizacji.",
+      "skip": "Pomiń konfigurację",
+      "submit": "Utwórz organizację",
+      "submitting": "Tworzenie…",
+      "created": "Organizacja utworzona. Dane Trial uzupełnione.",
+      "createFailed": "Nie udało się utworzyć organizacji",
+      "industryOption": {
+        "technology": "Technologia / Software",
+        "financial": "Usługi finansowe",
+        "healthcare": "Zdrowie / Life Sciences",
+        "manufacturing": "Produkcja / Przemysł",
+        "professional": "Usługi profesjonalne",
+        "other": "Inna branża"
+      },
+      "countryOption": {
+        "PL": "Polska",
+        "DE": "Niemcy",
+        "UK": "Wielka Brytania",
+        "US": "Stany Zjednoczone",
+        "OTHER": "Inny"
+      },
+      "userRoleOption": {
+        "EXECUTIVE": "Zarząd / C-Suite",
+        "DIRECTOR": "Dyrektor / Senior Manager",
+        "MANAGER": "Manager / Team Lead",
+        "SPECIALIST": "Specjalista / Ekspert",
+        "CONSULTANT": "Konsultant zewnętrzny"
+      },
+      "userRoleDesc": {
+        "EXECUTIVE": "Decyzje strategiczne, alokacja zasobów",
+        "DIRECTOR": "Decyzje operacyjne, koordynacja zespołów",
+        "MANAGER": "Decyzje taktyczne, realizacja celów",
+        "SPECIALIST": "Wiedza domenowa, perspektywa merytoryczna",
+        "CONSULTANT": "Rola doradcza, obiektywna facylitacja"
+      },
+      "orgTypeOption": {
+        "OPERATING": "Firma operacyjna",
+        "CONSULTING": "Konsulting / advisory"
+      }
+    },
+    "contextStore": {
+      "saved": "Zapisano",
+      "readbackFailed": "Zapis wykonany, ale odczyt zwrotny z serwera nie zgadza się z zapisanymi danymi."
+    },
+    "contextUploader": {
+      "forTab": "Dla: {{tab}}",
+      "lead": "Wgraj pliki, które pomogą AI lepiej zrozumieć kontekst.",
+      "whatToUpload": "Co warto wgrać?",
+      "recommendedFor": "Rekomendowane dla: {{tab}}",
+      "title": "Dokumenty pomocnicze",
+      "processed": "Przetworzono: {{message}}",
+      "error": "Błąd: {{message}}"
     }
   },
   "megatrends": {

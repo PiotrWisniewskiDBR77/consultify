@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { formatListDateTime } from '../../utils/listDateFormat';
+
 interface AuditEntry {
   id: string;
   organizationId: string;
@@ -137,7 +139,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString();
+    return formatListDateTime(date.toISOString());
   };
 
   return (

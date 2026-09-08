@@ -89,21 +89,21 @@ describe('OrganizationScopeCollaborationScreen', () => {
     expect(screen.getByTestId('org-card-scope')).toBeInTheDocument();
     expect(screen.getByTestId('org-card-collaboration')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Zakład A')).toBeInTheDocument();
-    expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:5');
-    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Uzupełnione:2');
+    expect(screen.getByTestId('chip-all')).toHaveTextContent('All:5');
+    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Filled in:2');
   });
 
   it('wybór segmentu trafia do tego samego store, co stary ekran (setGoals)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Współpilot' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Co-pilot' }));
     expect(setGoals).toHaveBeenCalledWith({ aiRole: 'partner' });
   });
 
   it('dodanie pozycji zakresu trafia do updateGoalsList("inScope", …)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByText('Dodaj obszar'));
+    fireEvent.click(screen.getByText('Add area'));
     expect(updateGoalsList).toHaveBeenCalledWith(
       'inScope',
       expect.arrayContaining([
@@ -138,13 +138,13 @@ describe('OrganizationScopeCollaborationScreen', () => {
       renderScreen();
 
       const collaborationCard = screen.getByTestId('org-card-collaboration');
-      expect(screen.getByText('Archetyp transformacji')).toBeInTheDocument();
-      expect(screen.getByText('Rola AI')).toBeInTheDocument();
-      expect(screen.getByText('Rytm nadzoru')).toBeInTheDocument();
+      expect(screen.getByText('Transformation archetype')).toBeInTheDocument();
+      expect(screen.getByText('Role of AI')).toBeInTheDocument();
+      expect(screen.getByText('Steering cadence')).toBeInTheDocument();
       // Podpisy muszą być rzeczywiście W KARCIE, nie gdzieś obok.
-      expect(collaborationCard).toHaveTextContent('Archetyp transformacji');
-      expect(collaborationCard).toHaveTextContent('Rola AI');
-      expect(collaborationCard).toHaveTextContent('Rytm nadzoru');
+      expect(collaborationCard).toHaveTextContent('Transformation archetype');
+      expect(collaborationCard).toHaveTextContent('Role of AI');
+      expect(collaborationCard).toHaveTextContent('Steering cadence');
     }
   );
 });

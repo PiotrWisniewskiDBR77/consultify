@@ -26,14 +26,14 @@ describe('OrganizationScreenShell', () => {
       <MemoryRouter>
         <OrganizationScreenShell
           sections={[
-            { id: 'identity', label: 'Tożsamość' },
-            { id: 'scale', label: 'Skala' },
+            { id: 'identity', label: 'Identity' },
+            { id: 'scale', label: 'Scale' },
           ]}
           activeSection="identity"
           onSectionChange={vi.fn()}
           chips={[
-            { id: 'all', label: 'Wszystkie', count: 17 },
-            { id: 'missing', label: 'Do uzupełnienia', count: 0 },
+            { id: 'all', label: 'All', count: 17 },
+            { id: 'missing', label: 'To be completed', count: 0 },
           ]}
           activeChip="all"
           onChipChange={vi.fn()}
@@ -44,8 +44,8 @@ describe('OrganizationScreenShell', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Tożsamość')).toBeInTheDocument();
-    expect(screen.getByText('Skala')).toBeInTheDocument();
+    expect(screen.getByText('Identity')).toBeInTheDocument();
+    expect(screen.getByText('Scale')).toBeInTheDocument();
     // Licznik widoczny także dla zera (kanon Menu 3).
     expect(screen.getByTestId('standard-chip-missing')).toHaveTextContent('0');
     expect(screen.getByTestId('org-state-panel')).toBeInTheDocument();

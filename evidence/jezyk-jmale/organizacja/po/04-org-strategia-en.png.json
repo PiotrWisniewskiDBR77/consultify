@@ -1,0 +1,313 @@
+{
+ "ekran": "04-org-strategia",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/strategy/risks-opportunities",
+ "obcychSlowUI": 73,
+ "obcychLiniiUI": 41,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Powrót do pulpitu",
+   "trafienia": [
+    "Powrót"
+   ]
+  },
+  {
+   "linia": "Kontekst biznesowy, źródła i gotowość decyzyjna",
+   "trafienia": [
+    "źródła",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "PROFIL ORGANIZACJI",
+   "trafienia": [
+    "PROFIL",
+    "ORGANIZACJI"
+   ]
+  },
+  {
+   "linia": "Tożsamość i model działania",
+   "trafienia": [
+    "Tożsamość",
+    "działania"
+   ]
+  },
+  {
+   "linia": "Kierunek i ograniczenia",
+   "trafienia": [
+    "Kierunek",
+    "ograniczenia"
+   ]
+  },
+  {
+   "linia": "CELE I OCZEKIWANIA",
+   "trafienia": [
+    "CELE"
+   ]
+  },
+  {
+   "linia": "Cele i mierniki",
+   "trafienia": [
+    "Cele",
+    "mierniki"
+   ]
+  },
+  {
+   "linia": "Zakres i tryb współpracy",
+   "trafienia": [
+    "Zakres",
+    "współpracy"
+   ]
+  },
+  {
+   "linia": "WYZWANIA",
+   "trafienia": [
+    "WYZWANIA"
+   ]
+  },
+  {
+   "linia": "Wyzwania i dowody",
+   "trafienia": [
+    "Wyzwania",
+    "dowody"
+   ]
+  },
+  {
+   "linia": "Przyczyny i blokery",
+   "trafienia": [
+    "Przyczyny",
+    "blokery"
+   ]
+  },
+  {
+   "linia": "Ryzyka i szanse",
+   "trafienia": [
+    "Ryzyka",
+    "szanse"
+   ]
+  },
+  {
+   "linia": "Scenariusze i brief",
+   "trafienia": [
+    "Scenariusze"
+   ]
+  },
+  {
+   "linia": "ŹRÓDŁA I WIEDZA",
+   "trafienia": [
+    "ŹRÓDŁA"
+   ]
+  },
+  {
+   "linia": "Źródła i twierdzenia",
+   "trafienia": [
+    "Źródła"
+   ]
+  },
+  {
+   "linia": "Graf wiedzy",
+   "trafienia": [
+    "Graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "GOTOWOŚĆ I NADZÓR",
+   "trafienia": [
+    "GOTOWOŚĆ",
+    "NADZÓR"
+   ]
+  },
+  {
+   "linia": "Gotowość organizacji",
+   "trafienia": [
+    "Gotowość",
+    "organizacji"
+   ]
+  },
+  {
+   "linia": "Ryzyka i szanse",
+   "trafienia": [
+    "Ryzyka",
+    "szanse"
+   ]
+  },
+  {
+   "linia": "Kontekst Teresy: 720 elementów · zaktualizowano 2 dni temu",
+   "trafienia": [
+    "elementów"
+   ]
+  },
+  {
+   "linia": "Teresa korzysta z tego kontekstu, aby odpowiadać na Twoje pytania",
+   "trafienia": [
+    "odpowiadać"
+   ]
+  },
+  {
+   "linia": "Zobacz graf wiedzy",
+   "trafienia": [
+    "graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "Ryzyka",
+   "trafienia": [
+    "Ryzyka"
+   ]
+  },
+  {
+   "linia": "Szanse",
+   "trafienia": [
+    "Szanse"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "Ryzyka",
+   "trafienia": [
+    "Ryzyka"
+   ]
+  },
+  {
+   "linia": "Co mogłoby wykoleić tę transformację?",
+   "trafienia": [
+    "mogłoby",
+    "wykoleić",
+    "tę",
+    "transformację"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj ryzyko",
+   "trafienia": [
+    "Dodaj",
+    "ryzyko"
+   ]
+  },
+  {
+   "linia": "Szanse",
+   "trafienia": [
+    "Szanse"
+   ]
+  },
+  {
+   "linia": "Jakie mocne strony można wykorzystać?",
+   "trafienia": [
+    "można",
+    "wykorzystać"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj szansę",
+   "trafienia": [
+    "Dodaj",
+    "szansę"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  }
+ ]
+}

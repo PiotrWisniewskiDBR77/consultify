@@ -26,6 +26,7 @@
 
 import { AlertTriangle, TrendingUp } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
@@ -38,16 +39,21 @@ import {
 
 export type RisksOpportunitiesSection = 'risks' | 'strengths';
 
-export const RISKS_OPPORTUNITIES_SECTIONS: Array<{ id: RisksOpportunitiesSection; label: string }> = [
-  { id: 'risks', label: 'Ryzyka' },
-  { id: 'strengths', label: 'Szanse' },
+export const RISKS_OPPORTUNITIES_SECTIONS: Array<{
+  id: RisksOpportunitiesSection;
+  labelKey: string;
+  en: string;
+}> = [
+  { id: 'risks', labelKey: 'organization.redesign.risks.sections.risks', en: 'Risks' },
+  { id: 'strengths', labelKey: 'organization.redesign.risks.sections.strengths', en: 'Opportunities' },
 ];
 
-const SEVERITY_OPTIONS = [
-  { value: 'Critical', label: 'Krytyczna' },
-  { value: 'High', label: 'Wysoka' },
-  { value: 'Medium', label: 'Średnia' },
-  { value: 'Low', label: 'Niska' },
+/** Waga ryzyka = enum → słownik kluczy (PLAN §2 pkt 6), nie polski literał. */
+const SEVERITY_KEYS: Array<{ value: string; labelKey: string; en: string }> = [
+  { value: 'Critical', labelKey: 'organization.redesign.severity.critical', en: 'Critical' },
+  { value: 'High', labelKey: 'organization.redesign.severity.high', en: 'High' },
+  { value: 'Medium', labelKey: 'organization.redesign.severity.medium', en: 'Medium' },
+  { value: 'Low', labelKey: 'organization.redesign.severity.low', en: 'Low' },
 ];
 
 export interface RisksOpportunitiesRenderArgs {
@@ -66,6 +72,7 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
   contextSync?: OrgContextSyncHandle;
   children: (args: RisksOpportunitiesRenderArgs) => React.ReactNode;
 }> = ({ contextSync, children }) => {
+  const { t } = useTranslation();
   const { synthesis, updateSynthesisList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<RisksOpportunitiesSection>('risks');
   const [activeChip, setActiveChip] = useState<string>('all');
@@ -131,12 +138,16 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
 
   const sections: StandardModuleTab[] = RISKS_OPPORTUNITIES_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
+  }));
+  const severityOptions = SEVERITY_KEYS.map((item) => ({
+    value: item.value,
+    label: t(item.labelKey, item.en),
   }));
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: counts.all },
-    { id: 'filled', label: 'Uzupełnione', count: counts.filled },
-    { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
+    { id: 'all', label: t('organization.redesign.chips.all', 'All'), count: counts.all },
+    { id: 'filled', label: t('organization.redesign.chips.filled', 'Filled in'), count: counts.filled },
+    { id: 'missing', label: t('organization.redesign.chips.missing', 'To fill in'), count: counts.missing },
   ];
 
   const handleSave = useCallback(async () => {
@@ -152,7 +163,9 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
     completenessNote: contextStore.completenessNote,
     onSave: handleSave,
     saving: contextStore.saving,
-    saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
+    saveLabel: saved
+      ? t('organization.redesign.panel.saved', 'Saved')
+      : t('organization.redesign.panel.save', 'Save changes'),
   };
 
   const content = (
@@ -160,22 +173,39 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
       {showField('risks') && (
         <OrgSectionCard
           id="risks"
-          title="Ryzyka"
+          title={t('organization.redesign.risks.sections.risks', 'Risks')}
           icon={AlertTriangle}
-          lead="Co mogłoby wykoleić tę transformację?"
+          lead={t('organization.redesign.risks.risksLead', 'What could derail this transformation?')}
         >
           <OrgRecordList
             columns={[
-              { key: 'risk', label: 'Ryzyko / zagrożenie', placeholder: 'np. Opór kadry średniej' },
-              { key: 'why', label: 'Dlaczego (przyczyna)', placeholder: 'np. Obawa o redukcję etatów' },
-              { key: 'severity', label: 'Waga', type: 'select', options: SEVERITY_OPTIONS },
-              { key: 'mitigation', label: 'Strategia mitygacji', placeholder: 'np. Program zarządzania zmianą' },
+              {
+                key: 'risk',
+                label: t('organization.redesign.risks.col.risk', 'Risk / threat'),
+                placeholder: t('organization.redesign.risks.col.riskPh', 'e.g. Middle management resistance'),
+              },
+              {
+                key: 'why',
+                label: t('organization.redesign.risks.col.why', 'Why (root cause)'),
+                placeholder: t('organization.redesign.risks.col.whyPh', 'e.g. Fear of job cuts'),
+              },
+              {
+                key: 'severity',
+                label: t('organization.redesign.risks.col.severity', 'Severity'),
+                type: 'select',
+                options: severityOptions,
+              },
+              {
+                key: 'mitigation',
+                label: t('organization.redesign.risks.col.mitigation', 'Mitigation strategy'),
+                placeholder: t('organization.redesign.risks.col.mitigationPh', 'e.g. Change management programme'),
+              },
             ]}
             items={synthesis.risks as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={riskHandlers.onAdd}
             onUpdate={riskHandlers.onUpdate}
             onRemove={riskHandlers.onRemove}
-            addLabel="Dodaj ryzyko"
+            addLabel={t('organization.redesign.risks.addRisk', 'Add risk')}
           />
         </OrgSectionCard>
       )}
@@ -183,21 +213,33 @@ export const OrganizationRisksOpportunitiesScreen: React.FC<{
       {showField('strengths') && (
         <OrgSectionCard
           id="strengths"
-          title="Szanse"
+          title={t('organization.redesign.risks.sections.strengths', 'Opportunities')}
           icon={TrendingUp}
-          lead="Jakie mocne strony można wykorzystać?"
+          lead={t('organization.redesign.risks.strengthsLead', 'Which strengths can we build on?')}
         >
           <OrgRecordList
             columns={[
-              { key: 'enabler', label: 'Mocna strona / szansa', placeholder: 'np. Silny zespół inżynierski' },
-              { key: 'seen', label: 'Dowód / gdzie widoczne', placeholder: 'np. Wyniki R&D' },
-              { key: 'leverage', label: 'Jak wykorzystać', placeholder: 'np. Jako pilotażowych liderów' },
+              {
+                key: 'enabler',
+                label: t('organization.redesign.risks.col.enabler', 'Strength / opportunity'),
+                placeholder: t('organization.redesign.risks.col.enablerPh', 'e.g. Strong engineering team'),
+              },
+              {
+                key: 'seen',
+                label: t('organization.redesign.risks.col.seen', 'Evidence / where it shows'),
+                placeholder: t('organization.redesign.risks.col.seenPh', 'e.g. R&D results'),
+              },
+              {
+                key: 'leverage',
+                label: t('organization.redesign.risks.col.leverage', 'How to use it'),
+                placeholder: t('organization.redesign.risks.col.leveragePh', 'e.g. As pilot champions'),
+              },
             ]}
             items={synthesis.strengths as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={strengthHandlers.onAdd}
             onUpdate={strengthHandlers.onUpdate}
             onRemove={strengthHandlers.onRemove}
-            addLabel="Dodaj szansę"
+            addLabel={t('organization.redesign.risks.addOpportunity', 'Add opportunity')}
           />
         </OrgSectionCard>
       )}

@@ -19,11 +19,11 @@ import {
 describe('OrgSectionCard — Szczegóły techniczne', () => {
   it('nie renderuje bloku bez techDetails', () => {
     render(
-      <OrgSectionCard id="x" title="Karta">
+      <OrgSectionCard id="x" title="Charter">
         <p>treść</p>
       </OrgSectionCard>
     );
-    expect(screen.queryByText('Szczegóły techniczne')).not.toBeInTheDocument();
+    expect(screen.queryByText('Technical details')).not.toBeInTheDocument();
   });
 
   it('pokazuje identyfikatory dopiero po rozwinięciu', async () => {
@@ -31,14 +31,14 @@ describe('OrgSectionCard — Szczegóły techniczne', () => {
     render(
       <OrgSectionCard
         id="identity"
-        title="Tożsamość"
-        techDetails={[{ label: 'Identyfikator organizacji', value: 'org_7c1f-a904' }]}
+        title="Identity"
+        techDetails={[{ label: 'Organization identifier', value: 'org_7c1f-a904' }]}
       >
         <p>treść</p>
       </OrgSectionCard>
     );
 
-    expect(screen.getByText('Szczegóły techniczne')).toBeInTheDocument();
+    expect(screen.getByText('Technical details')).toBeInTheDocument();
     expect(screen.queryByText('org_7c1f-a904')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('org-card-identity-tech-toggle'));
@@ -51,7 +51,7 @@ describe('pochodzenie faktu (provenance)', () => {
     render(
       <OrgTextField
         id="org-description"
-        label="Opis organizacji"
+        label="Organization description"
         value="Metalpol"
         provenance="Dokument · zatwierdzone 31.03.2026"
         onChange={vi.fn()}
@@ -64,9 +64,9 @@ describe('pochodzenie faktu (provenance)', () => {
     render(
       <OrgSelectField
         id="org-industry"
-        label="Branża"
+        label="Industry"
         value="a"
-        options={[{ value: 'a', label: 'Przemysł' }]}
+        options={[{ value: 'a', label: 'Industrial' }]}
         provenance="Odpowiedź z wywiadu · niezatwierdzone 18.08.2026"
         onChange={vi.fn()}
       />

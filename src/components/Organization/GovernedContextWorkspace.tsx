@@ -257,7 +257,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
         contentHash: reopened.contentHash,
       });
       setNotice(
-        t('organization.governance.published', {
+        t('organization.governance.published', 'Immutable version {{version}} was published.', {
           version: version.version,
           defaultValue: 'Immutable version {{version}} was published.',
         })
@@ -568,7 +568,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                     {claimPathLabel(claimPath, t)}
                   </p>
                   <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                    {t('organization.governance.conflictSummary', {
+                    {t('organization.governance.conflictSummary', '{{count}} sourced claims disagree. Review each proposal before publishing.', {
                       count: entries.length,
                       defaultValue:
                         '{{count}} sourced claims disagree. Review each proposal before publishing.',
@@ -679,7 +679,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
               >
                 <div>
                   <p className="font-medium text-c-text">
-                    {t('organization.governance.version', {
+                    {t('organization.governance.version', 'Version {{version}}', {
                       version: version.version,
                       defaultValue: 'Version {{version}}',
                     })}
@@ -689,7 +689,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                   </p>
                   <p className="font-mono text-xs text-c-text-muted">{version.contentHash}</p>
                   <p className="text-xs text-c-text-secondary">
-                    {t('organization.governance.claimCount', {
+                    {t('organization.governance.claimCount', '{{count}} claims', {
                       count: version.claimCount,
                       defaultValue: '{{count}} claims',
                     })}
@@ -715,13 +715,13 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       {selected && (
         <section
           className="rounded-2xl border border-c-info/40 bg-c-info/5 p-5"
-          aria-label={t('organization.governance.version', {
+          aria-label={t('organization.governance.version', 'Version {{version}}', {
             version: selected.version,
             defaultValue: 'Version {{version}}',
           })}
         >
           <h3 className="font-semibold text-c-text">
-            {t('organization.governance.version', {
+            {t('organization.governance.version', 'Version {{version}}', {
               version: selected.version,
               defaultValue: 'Version {{version}}',
             })}

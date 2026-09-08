@@ -100,20 +100,20 @@ describe('OrganizationDirectionConstraintsScreen', () => {
     renderScreen();
 
     await waitFor(() =>
-      expect(screen.getByLabelText('Misja')).toHaveValue('Pomagamy klientom przemysłowym rosnąć.')
+      expect(screen.getByLabelText('Mission Statement')).toHaveValue('Pomagamy klientom przemysłowym rosnąć.')
     );
-    expect(screen.getByLabelText('Priorytety strategiczne')).toHaveValue(
+    expect(screen.getByLabelText('Strategic Priorities')).toHaveValue(
       'Skalowanie praktyki operacyjnej'
     );
-    expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:15');
-    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Uzupełnione:7');
+    expect(screen.getByTestId('chip-all')).toHaveTextContent('All:15');
+    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Filled in:7');
   });
 
   it('jeden „Zapisz zmiany" zapisuje komplet pól i weryfikuje odczyt zwrotny', async () => {
     renderScreen();
     await waitFor(() => expect(screen.getByTestId('org-card-position')).toBeInTheDocument());
 
-    fireEvent.change(screen.getByLabelText('Ograniczenia budżetowe'), {
+    fireEvent.change(screen.getByLabelText('Budget Constraints'), {
       target: { value: 'Budżet ograniczony do 500k PLN' },
     });
     fireEvent.click(screen.getByTestId('org-state-panel-save'));
@@ -141,10 +141,10 @@ describe('OrganizationDirectionConstraintsScreen', () => {
       await waitFor(() => expect(screen.getByTestId('org-card-technology')).toBeInTheDocument());
       const technologyCard = screen.getByTestId('org-card-technology');
 
-      expect(screen.getByLabelText('Dojrzałość cyfrowa (1-7)')).toBeInTheDocument();
-      expect(screen.getByLabelText('Poziom adopcji chmury')).toBeInTheDocument();
-      expect(screen.getByLabelText('Stos technologiczny')).toBeInTheDocument();
-      expect(screen.getByLabelText('Budżet cyfrowy (% przychodu)')).toBeInTheDocument();
+      expect(screen.getByLabelText('Digital Maturity (1-7)')).toBeInTheDocument();
+      expect(screen.getByLabelText('Cloud Adoption')).toBeInTheDocument();
+      expect(screen.getByLabelText('Technology Stack')).toBeInTheDocument();
+      expect(screen.getByLabelText('Digital Budget (% of IT spend)')).toBeInTheDocument();
 
       // „Obecne systemy" (core_systems/SAP/Oracle/Salesforce) NIE należy do tego
       // ekranu ani na starym, ani na nowym — żyje w „Tożsamość i model działania"

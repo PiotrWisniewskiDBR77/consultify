@@ -20,6 +20,7 @@
 
 import { Loader2, Save } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
 
@@ -101,23 +102,34 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
   filledFields,
   totalFields,
   approvedFacts,
-  completenessNote = 'Kompletność danych — nie jest to gotowość decyzyjna.',
+  completenessNote,
   decisions = [],
-  resolveLabel = 'Rozstrzygnij konflikty',
+  resolveLabel,
   onResolveDecisions,
   sourcesSummary,
   sources = [],
-  fieldSourcesLabel = 'Pokaż źródła pola',
+  fieldSourcesLabel,
   onShowFieldSources,
   onSave,
   saving = false,
-  saveLabel = 'Zapisz zmiany',
+  saveLabel,
   onPublish,
   publishing = false,
-  publishLabel = 'Opublikuj wersję kontekstu',
-  publishNote = 'Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.',
+  publishLabel,
+  publishNote,
   className,
 }) => {
+  // Domyślne teksty panelu idą przez `t()`, nie przez polskie wartości domyślne
+  // parametrów — inaczej użytkownik EN widziałby polski panel (kanał A z PLAN §1).
+  const { t } = useTranslation();
+  const completenessNoteText =
+    completenessNote ?? t('organization.redesign.panel.completenessNote', 'Data completeness — this is not decision readiness.');
+  const resolveLabelText = resolveLabel ?? t('organization.redesign.panel.resolveConflicts', 'Resolve conflicts');
+  const fieldSourcesLabelText =
+    fieldSourcesLabel ?? t('organization.redesign.panel.fieldSources', 'Show field sources');
+  const saveLabelText = saveLabel ?? t('organization.redesign.panel.save', 'Save changes');
+  const publishLabelText = publishLabel ?? t('organization.redesign.panel.publish', 'Publish context version');
+  const publishNoteText = publishNote ?? t('organization.redesign.panel.publishNote', 'Publishing creates an immutable version that the other modules read.');
   const hasCompleteness = typeof filledFields === 'number' && typeof totalFields === 'number';
   const percent =
     hasCompleteness && (totalFields as number) > 0
@@ -126,14 +138,14 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
 
   return (
     <aside
-      aria-label="Stan tego ekranu"
+      aria-label={t('organization.redesign.panel.aria', 'State of this screen')}
       data-testid="org-state-panel"
       className={cn('flex w-full flex-col gap-3', className)}
     >
       {(hasCompleteness || typeof approvedFacts === 'number') && (
         <section className={CARD}>
           <header className={CARD_HEADER}>
-            <span className={cn(L1, 'flex-1')}>Stan danych</span>
+            <span className={cn(L1, 'flex-1')}>{t('organization.redesign.panel.dataState', 'Data state')}</span>
             {versionLabel && <span className={L5}>{versionLabel}</span>}
           </header>
           <div className="p-3">
@@ -143,7 +155,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
                   <p className="text-[22px] font-semibold tabular-nums tracking-tight text-c-text">
                     {filledFields}/{totalFields}
                   </p>
-                  <p className={L5}>Pola uzupełnione</p>
+                  <p className={L5}>{t('organization.redesign.panel.filledFields', 'Fields filled in')}</p>
                 </div>
               )}
               {typeof approvedFacts === 'number' && (
@@ -151,7 +163,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
                   <p className="text-[22px] font-semibold tabular-nums tracking-tight text-c-text">
                     {approvedFacts}
                   </p>
-                  <p className={L5}>Zatwierdzone fakty</p>
+                  <p className={L5}>{t('organization.redesign.panel.approvedFacts', 'Approved facts')}</p>
                 </div>
               )}
             </div>
@@ -161,7 +173,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={percent}
-                aria-label="Kompletność pól ekranu"
+                aria-label={t('organization.redesign.panel.completenessAria', 'Screen field completeness')}
                 className="my-2 h-1 overflow-hidden rounded-full bg-c-border-subtle"
               >
                 <span
@@ -170,7 +182,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
                 />
               </div>
             )}
-            <p className={L5}>{completenessNote}</p>
+            <p className={L5}>{completenessNoteText}</p>
           </div>
         </section>
       )}
@@ -178,7 +190,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
       {decisions.length > 0 && (
         <section className={CARD}>
           <header className={CARD_HEADER}>
-            <span className={cn(L1, 'flex-1')}>Wymaga decyzji</span>
+            <span className={cn(L1, 'flex-1')}>{t('organization.redesign.panel.needsDecision', 'Needs a decision')}</span>
             <span className="inline-flex items-center gap-1.5 text-[11px] text-c-warning">
               <StatusDot tone="warning" />
               {decisions.length}
@@ -201,7 +213,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
           {onResolveDecisions && (
             <div className="p-3">
               <button type="button" className={ACTION} onClick={onResolveDecisions}>
-                {resolveLabel}
+                {resolveLabelText}
               </button>
             </div>
           )}
@@ -211,7 +223,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
       {(sources.length > 0 || sourcesSummary) && (
         <section className={CARD}>
           <header className={CARD_HEADER}>
-            <span className={cn(L1, 'flex-1')}>Źródła</span>
+            <span className={cn(L1, 'flex-1')}>{t('organization.redesign.panel.sources', 'Sources')}</span>
             {sourcesSummary && <span className={L5}>{sourcesSummary}</span>}
           </header>
           {sources.length > 0 && (
@@ -245,7 +257,7 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
           {onShowFieldSources && (
             <div className="p-3">
               <button type="button" className={ACTION} onClick={onShowFieldSources}>
-                {fieldSourcesLabel}
+                {fieldSourcesLabelText}
               </button>
             </div>
           )}
@@ -268,17 +280,17 @@ export const OrganizationStatePanel: React.FC<OrganizationStatePanelProps> = ({
                 ) : (
                   <Save aria-hidden="true" className="h-4 w-4" />
                 )}
-                {saving ? 'Zapisywanie…' : saveLabel}
+                {saving ? t('organization.redesign.panel.saving', 'Saving…') : saveLabelText}
               </button>
             )}
             {onPublish && (
               <button type="button" className={ACTION} onClick={onPublish} disabled={publishing}>
-                {publishLabel}
+                {publishLabelText}
               </button>
             )}
           </div>
-          {publishNote && (
-            <p className={cn(L5, 'border-t border-c-border-subtle px-4 py-3')}>{publishNote}</p>
+          {publishNoteText && (
+            <p className={cn(L5, 'border-t border-c-border-subtle px-4 py-3')}>{publishNoteText}</p>
           )}
         </section>
       )}

@@ -26,6 +26,7 @@
 
 import { Goal, LineChart } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
@@ -46,24 +47,25 @@ import {
 
 export type GoalsMetricsSection = 'intent' | 'metrics';
 
-export const GOALS_METRICS_SECTIONS: Array<{ id: GoalsMetricsSection; label: string }> = [
-  { id: 'intent', label: 'Intencja strategiczna' },
-  { id: 'metrics', label: 'Mierniki sukcesu' },
+export const GOALS_METRICS_SECTIONS: Array<{ id: GoalsMetricsSection; labelKey: string; en: string }> = [
+  { id: 'intent', labelKey: 'organization.redesign.goalsMetrics.sections.intent', en: 'Strategic intent' },
+  { id: 'metrics', labelKey: 'organization.redesign.goalsMetrics.sections.metrics', en: 'Success metrics' },
 ];
 
-const TOP_PRIORITIES: Array<{ id: string; label: string }> = [
-  { id: 'eff', label: 'Efektywność / redukcja kosztów' },
-  { id: 'growth', label: 'Wzrost / zwiększenie sprzedaży' },
-  { id: 'inv', label: 'Innowacje / nowe produkty' },
-  { id: 'qual', label: 'Jakość / zgodność' },
-  { id: 'speed', label: 'Szybkość / zwinność' },
-  { id: 'cust', label: 'Doświadczenie klienta' },
+const TOP_PRIORITIES: Array<{ id: string; labelKey: string; en: string }> = [
+  { id: 'eff', labelKey: 'organization.redesign.goalsMetrics.priority.eff', en: 'Efficiency / cost reduction' },
+  { id: 'growth', labelKey: 'organization.redesign.goalsMetrics.priority.growth', en: 'Growth / higher sales' },
+  { id: 'inv', labelKey: 'organization.redesign.goalsMetrics.priority.inv', en: 'Innovation / new products' },
+  { id: 'qual', labelKey: 'organization.redesign.goalsMetrics.priority.qual', en: 'Quality / compliance' },
+  { id: 'speed', labelKey: 'organization.redesign.goalsMetrics.priority.speed', en: 'Speed / agility' },
+  { id: 'cust', labelKey: 'organization.redesign.goalsMetrics.priority.cust', en: 'Customer experience' },
 ];
 
-const TIMEFRAME_OPTIONS = [
-  { value: '3m', label: '3 miesiące' },
-  { value: '6m', label: '6 miesięcy' },
-  { value: '12m', label: '12 miesięcy' },
+/** Horyzont = enum zapisywany w kontekście → słownik kluczy, nie polski literał. */
+const TIMEFRAME_KEYS: Array<{ value: string; labelKey: string; en: string }> = [
+  { value: '3m', labelKey: 'organization.redesign.goalsMetrics.timeframe.3m', en: '3 months' },
+  { value: '6m', labelKey: 'organization.redesign.goalsMetrics.timeframe.6m', en: '6 months' },
+  { value: '12m', labelKey: 'organization.redesign.goalsMetrics.timeframe.12m', en: '12 months' },
 ];
 
 export interface GoalsMetricsRenderArgs {
@@ -82,6 +84,7 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
   contextSync?: OrgContextSyncHandle;
   children: (args: GoalsMetricsRenderArgs) => React.ReactNode;
 }> = ({ contextSync, children }) => {
+  const { t } = useTranslation();
   const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<GoalsMetricsSection>('intent');
   const [activeChip, setActiveChip] = useState<string>('all');
@@ -131,12 +134,16 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
 
   const sections: StandardModuleTab[] = GOALS_METRICS_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
+  }));
+  const timeframeOptions = TIMEFRAME_KEYS.map((item) => ({
+    value: item.value,
+    label: t(item.labelKey, item.en),
   }));
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: counts.all },
-    { id: 'filled', label: 'Uzupełnione', count: counts.filled },
-    { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
+    { id: 'all', label: t('organization.redesign.chips.all', 'All'), count: counts.all },
+    { id: 'filled', label: t('organization.redesign.chips.filled', 'Filled in'), count: counts.filled },
+    { id: 'missing', label: t('organization.redesign.chips.missing', 'To fill in'), count: counts.missing },
   ];
 
   const handleSave = useCallback(async () => {
@@ -152,19 +159,21 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
     completenessNote: contextStore.completenessNote,
     onSave: handleSave,
     saving: contextStore.saving,
-    saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
+    saveLabel: saved
+      ? t('organization.redesign.panel.saved', 'Saved')
+      : t('organization.redesign.panel.save', 'Save changes'),
   };
 
   const content = (
     <>
       {(showField('primaryObjective') || showField('secondaryObjectives') || showField('topPriorities')) && (
-        <OrgSectionCard id="intent" title="Intencja strategiczna" icon={Goal}>
+        <OrgSectionCard id="intent" title={t('organization.redesign.goalsMetrics.sections.intent', 'Strategic intent')} icon={Goal}>
           <OrgFieldGrid className="mb-4">
             <OrgFieldColumn>
               {showField('primaryObjective') && (
                 <OrgTextField
                   id="goals-primary-objective"
-                  label="Cel nadrzędny"
+                  label={t('organization.redesign.goalsMetrics.primaryObjective', 'Primary objective')}
                   multiline
                   value={goals.primaryObjective}
                   onChange={(value) => setGoals({ primaryObjective: value })}
@@ -175,7 +184,7 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
               {showField('secondaryObjectives') && (
                 <OrgTextField
                   id="goals-secondary-objectives"
-                  label="Cele drugorzędne"
+                  label={t('organization.redesign.goalsMetrics.secondaryObjectives', 'Secondary objectives')}
                   multiline
                   value={goals.secondaryObjectives}
                   onChange={(value) => setGoals({ secondaryObjectives: value })}
@@ -185,8 +194,12 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
           </OrgFieldGrid>
           {showField('topPriorities') && (
             <div>
-              <p className={cn(ORG_L1, 'mb-2')}>Priorytety (maks. 3)</p>
-              <div role="group" aria-label="Priorytety" className="flex flex-wrap gap-2">
+              <p className={cn(ORG_L1, 'mb-2')}>{t('organization.redesign.goalsMetrics.prioritiesHeading', 'Priorities (max. 3)')}</p>
+              <div
+                role="group"
+                aria-label={t('organization.redesign.goalsMetrics.prioritiesAria', 'Priorities')}
+                className="flex flex-wrap gap-2"
+              >
                 {TOP_PRIORITIES.map((priority) => {
                   const active = goals.topPriorities.includes(priority.id);
                   return (
@@ -208,7 +221,7 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
                           : 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:border-c-border'
                       )}
                     >
-                      {priority.label}
+                      {t(priority.labelKey, priority.en)}
                     </button>
                   );
                 })}
@@ -219,19 +232,36 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
       )}
 
       {showField('kpis') && (
-        <OrgSectionCard id="metrics" title="Mierniki sukcesu (KPI)" icon={LineChart}>
+        <OrgSectionCard id="metrics" title={t('organization.redesign.goalsMetrics.metricsTitle', 'Success metrics (KPIs)')} icon={LineChart}>
           <OrgRecordList
             columns={[
-              { key: 'name', label: 'Nazwa KPI', placeholder: 'np. OEE' },
-              { key: 'baseline', label: 'Wartość bazowa', placeholder: 'np. 60%' },
-              { key: 'target', label: 'Cel', placeholder: 'np. 85%' },
-              { key: 'timeframe', label: 'Horyzont', type: 'select', options: TIMEFRAME_OPTIONS },
+              {
+                key: 'name',
+                label: t('organization.redesign.goalsMetrics.col.name', 'KPI name'),
+                placeholder: t('organization.redesign.goalsMetrics.col.namePh', 'e.g. OEE'),
+              },
+              {
+                key: 'baseline',
+                label: t('organization.redesign.goalsMetrics.col.baseline', 'Baseline value'),
+                placeholder: t('organization.redesign.goalsMetrics.col.baselinePh', 'e.g. 60%'),
+              },
+              {
+                key: 'target',
+                label: t('organization.redesign.goalsMetrics.col.target', 'Target'),
+                placeholder: t('organization.redesign.goalsMetrics.col.targetPh', 'e.g. 85%'),
+              },
+              {
+                key: 'timeframe',
+                label: t('organization.redesign.goalsMetrics.col.timeframe', 'Horizon'),
+                type: 'select',
+                options: timeframeOptions,
+              },
             ]}
             items={goals.kpis as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={kpiHandlers.onAdd}
             onUpdate={kpiHandlers.onUpdate}
             onRemove={kpiHandlers.onRemove}
-            addLabel="Dodaj miernik"
+            addLabel={t('organization.redesign.goalsMetrics.addMetric', 'Add metric')}
           />
         </OrgSectionCard>
       )}

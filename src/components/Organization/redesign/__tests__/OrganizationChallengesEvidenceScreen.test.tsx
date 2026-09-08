@@ -60,7 +60,7 @@ function renderScreen(contextSync: OrgContextSyncHandle = makeContextSync()) {
 
 const CHALLENGES_FIXTURE = {
   declaredChallenges: [
-    { id: 'c1', challenge: 'Wysoki wskaźnik braków', area: 'Jakość', severity: 'High', notes: '' },
+    { id: 'c1', challenge: 'Wysoki wskaźnik braków', area: 'Quality', severity: 'High', notes: '' },
   ],
   rootCauseAnswers: {},
   evidence: [],
@@ -84,14 +84,14 @@ describe('OrganizationChallengesEvidenceScreen', () => {
     expect(screen.getByTestId('org-card-challenges')).toBeInTheDocument();
     expect(screen.getByTestId('org-card-evidence')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Wysoki wskaźnik braków')).toBeInTheDocument();
-    expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:2');
-    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Uzupełnione:1');
+    expect(screen.getByTestId('chip-all')).toHaveTextContent('All:2');
+    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Filled in:1');
   });
 
   it('dodanie dowodu trafia do updateChallengesList("evidence", …)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByText('Dodaj dowód'));
+    fireEvent.click(screen.getByText('Add evidence'));
     expect(updateChallengesList).toHaveBeenCalledWith(
       'evidence',
       expect.arrayContaining([expect.objectContaining({ metric: '' })])
@@ -114,7 +114,7 @@ describe('OrganizationChallengesEvidenceScreen', () => {
     renderScreen();
 
     expect(screen.getByText('Dokumenty pomocnicze')).toBeInTheDocument();
-    expect(screen.getByText('Dla: Dowody')).toBeInTheDocument();
+    expect(screen.getByText('Dla: Evidence')).toBeInTheDocument();
   });
 
   it('„Zapisz zmiany" woła contextSync.saveNow() — JEDYNY pisarz do serwera', () => {

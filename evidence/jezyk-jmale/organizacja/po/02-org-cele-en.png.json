@@ -1,0 +1,331 @@
+{
+ "ekran": "02-org-cele",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/goals/strategic-intent",
+ "obcychSlowUI": 76,
+ "obcychLiniiUI": 44,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Powrót do pulpitu",
+   "trafienia": [
+    "Powrót"
+   ]
+  },
+  {
+   "linia": "Kontekst biznesowy, źródła i gotowość decyzyjna",
+   "trafienia": [
+    "źródła",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "PROFIL ORGANIZACJI",
+   "trafienia": [
+    "PROFIL",
+    "ORGANIZACJI"
+   ]
+  },
+  {
+   "linia": "Tożsamość i model działania",
+   "trafienia": [
+    "Tożsamość",
+    "działania"
+   ]
+  },
+  {
+   "linia": "Kierunek i ograniczenia",
+   "trafienia": [
+    "Kierunek",
+    "ograniczenia"
+   ]
+  },
+  {
+   "linia": "CELE I OCZEKIWANIA",
+   "trafienia": [
+    "CELE"
+   ]
+  },
+  {
+   "linia": "Cele i mierniki",
+   "trafienia": [
+    "Cele",
+    "mierniki"
+   ]
+  },
+  {
+   "linia": "Zakres i tryb współpracy",
+   "trafienia": [
+    "Zakres",
+    "współpracy"
+   ]
+  },
+  {
+   "linia": "WYZWANIA",
+   "trafienia": [
+    "WYZWANIA"
+   ]
+  },
+  {
+   "linia": "Wyzwania i dowody",
+   "trafienia": [
+    "Wyzwania",
+    "dowody"
+   ]
+  },
+  {
+   "linia": "Przyczyny i blokery",
+   "trafienia": [
+    "Przyczyny",
+    "blokery"
+   ]
+  },
+  {
+   "linia": "Ryzyka i szanse",
+   "trafienia": [
+    "Ryzyka",
+    "szanse"
+   ]
+  },
+  {
+   "linia": "Scenariusze i brief",
+   "trafienia": [
+    "Scenariusze"
+   ]
+  },
+  {
+   "linia": "ŹRÓDŁA I WIEDZA",
+   "trafienia": [
+    "ŹRÓDŁA"
+   ]
+  },
+  {
+   "linia": "Źródła i twierdzenia",
+   "trafienia": [
+    "Źródła"
+   ]
+  },
+  {
+   "linia": "Graf wiedzy",
+   "trafienia": [
+    "Graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "GOTOWOŚĆ I NADZÓR",
+   "trafienia": [
+    "GOTOWOŚĆ",
+    "NADZÓR"
+   ]
+  },
+  {
+   "linia": "Gotowość organizacji",
+   "trafienia": [
+    "Gotowość",
+    "organizacji"
+   ]
+  },
+  {
+   "linia": "Cele i oczekiwania",
+   "trafienia": [
+    "Cele"
+   ]
+  },
+  {
+   "linia": "Cele i mierniki",
+   "trafienia": [
+    "Cele",
+    "mierniki"
+   ]
+  },
+  {
+   "linia": "Kontekst Teresy: 720 elementów · zaktualizowano 2 dni temu",
+   "trafienia": [
+    "elementów"
+   ]
+  },
+  {
+   "linia": "Teresa korzysta z tego kontekstu, aby odpowiadać na Twoje pytania",
+   "trafienia": [
+    "odpowiadać"
+   ]
+  },
+  {
+   "linia": "Zobacz graf wiedzy",
+   "trafienia": [
+    "graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "Mierniki sukcesu",
+   "trafienia": [
+    "Mierniki"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "CEL NADRZĘDNY",
+   "trafienia": [
+    "CEL",
+    "NADRZĘDNY"
+   ]
+  },
+  {
+   "linia": "CELE DRUGORZĘDNE",
+   "trafienia": [
+    "CELE",
+    "DRUGORZĘDNE"
+   ]
+  },
+  {
+   "linia": "Efektywność / redukcja kosztów",
+   "trafienia": [
+    "Efektywność",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Wzrost / zwiększenie sprzedaży",
+   "trafienia": [
+    "zwiększenie",
+    "sprzedaży"
+   ]
+  },
+  {
+   "linia": "Innowacje / nowe produkty",
+   "trafienia": [
+    "nowe"
+   ]
+  },
+  {
+   "linia": "Jakość / zgodność",
+   "trafienia": [
+    "Jakość",
+    "zgodność"
+   ]
+  },
+  {
+   "linia": "Szybkość / zwinność",
+   "trafienia": [
+    "Szybkość",
+    "zwinność"
+   ]
+  },
+  {
+   "linia": "Doświadczenie klienta",
+   "trafienia": [
+    "Doświadczenie"
+   ]
+  },
+  {
+   "linia": "Mierniki sukcesu (KPI)",
+   "trafienia": [
+    "Mierniki"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj miernik",
+   "trafienia": [
+    "Dodaj"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  }
+ ]
+}

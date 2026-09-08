@@ -26,10 +26,12 @@
 import { BarChart3, Briefcase, Building2, Globe, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../routes/routeConfig';
+import { formatListDate } from '../../../utils/listDateFormat';
 import { Api } from '../../../services/api';
 import {
   type GovernedClaim,
@@ -69,12 +71,14 @@ export type IdentityOperatingSection = 'identity' | 'scale' | 'delivery' | 'mark
 
 export const IDENTITY_OPERATING_SECTIONS: Array<{
   id: IdentityOperatingSection;
-  label: string;
+  /** Klucz i18n etykiety — literał nigdy nie trafia do JSX (PLAN §2 pkt 4). */
+  labelKey: string;
+  en: string;
 }> = [
-  { id: 'identity', label: 'Tożsamość' },
-  { id: 'scale', label: 'Skala' },
-  { id: 'delivery', label: 'Model dostawy' },
-  { id: 'markets', label: 'Rynki i systemy' },
+  { id: 'identity', labelKey: 'organization.redesign.sections.identity', en: 'Identity' },
+  { id: 'scale', labelKey: 'organization.redesign.sections.scale', en: 'Scale' },
+  { id: 'delivery', labelKey: 'organization.redesign.sections.delivery', en: 'Delivery model' },
+  { id: 'markets', labelKey: 'organization.redesign.sections.markets', en: 'Markets & systems' },
 ];
 
 interface OrgContextConflict {
@@ -94,7 +98,9 @@ interface OrgContextResponse {
 interface ScreenField {
   id: keyof OrgProfile;
   section: IdentityOperatingSection;
-  label: string;
+  /** Klucz i18n etykiety pola — używany też przez wyszukiwarkę Menu 3. */
+  labelKey: string;
+  en: string;
   /** Ścieżka twierdzenia w kontekście organizacji — wiąże pole z konfliktem. */
   claimPath?: string;
 }
@@ -103,84 +109,84 @@ const SCREEN_FIELDS: ScreenField[] = [
   {
     id: 'organization_type',
     section: 'identity',
-    label: 'Typ organizacji',
+    labelKey: 'organization.redesign.fields.organizationType', en: 'Organization type',
     claimPath: 'profile.organizationType',
   },
-  { id: 'industry', section: 'identity', label: 'Branża', claimPath: 'profile.industry' },
+  { id: 'industry', section: 'identity', labelKey: 'organization.profile.fields.industry', en: 'Industry', claimPath: 'profile.industry' },
   {
     id: 'industry_subsector',
     section: 'identity',
-    label: 'Podbranża',
+    labelKey: 'organization.profile.fields.subIndustry', en: 'Sub-Industry',
     claimPath: 'profile.industrySubsector',
   },
   {
     id: 'industry_code',
     section: 'identity',
-    label: 'Kod branży (PKD)',
+    labelKey: 'organization.profile.fields.industryCode', en: 'Industry Code',
     claimPath: 'profile.industryCode',
   },
   {
     id: 'description',
     section: 'identity',
-    label: 'Opis organizacji',
+    labelKey: 'organization.redesign.fields.organizationDescription', en: 'Organization description',
     claimPath: 'profile.description',
   },
   {
     id: 'companySize',
     section: 'scale',
-    label: 'Wielkość firmy',
+    labelKey: 'organization.profile.fields.companySize', en: 'Company Size',
     claimPath: 'profile.companySize',
   },
   {
     id: 'employee_count',
     section: 'scale',
-    label: 'Liczba pracowników',
+    labelKey: 'organization.profile.fields.employeeCount', en: 'Employee Count',
     claimPath: 'profile.employeeCount',
   },
   {
     id: 'annual_revenue',
     section: 'scale',
-    label: 'Przychód roczny',
+    labelKey: 'organization.profile.fields.annualRevenue', en: 'Annual Revenue',
     claimPath: 'profile.annualRevenue',
   },
   {
     id: 'founding_year',
     section: 'scale',
-    label: 'Rok założenia',
+    labelKey: 'organization.profile.fields.foundingYear', en: 'Founding Year',
     claimPath: 'profile.foundingYear',
   },
   {
     id: 'headquarters_country',
     section: 'scale',
-    label: 'Kraj siedziby',
+    labelKey: 'organization.profile.fields.headquartersCountry', en: 'Headquarters Country',
     claimPath: 'profile.location',
   },
   {
     id: 'delivery_model',
     section: 'delivery',
-    label: 'Model dostarczania',
+    labelKey: 'organization.profile.fields.deliveryModel', en: 'Delivery Model',
     claimPath: 'operations.deliveryModel',
   },
   {
     id: 'revenue_model',
     section: 'delivery',
-    label: 'Model przychodowy / finansowania',
+    labelKey: 'organization.profile.fields.revenueFundingModel', en: 'Revenue / Funding Model',
     claimPath: 'profile.revenueModel',
   },
-  { id: 'primary_markets', section: 'markets', label: 'Rynki podstawowe' },
-  { id: 'customer_segments', section: 'markets', label: 'Segmenty klientów' },
-  { id: 'key_competitors', section: 'markets', label: 'Kluczowi konkurenci' },
+  { id: 'primary_markets', section: 'markets', labelKey: 'organization.profile.fields.primaryMarkets', en: 'Primary Markets' },
+  { id: 'customer_segments', section: 'markets', labelKey: 'organization.profile.fields.customerSegments', en: 'Customer Segments' },
+  { id: 'key_competitors', section: 'markets', labelKey: 'organization.profile.fields.keyCompetitors', en: 'Key Competitors' },
   {
     id: 'core_systems',
     section: 'markets',
-    label: 'Systemy rdzeniowe',
+    labelKey: 'organization.profile.fields.coreSystems', en: 'Core Systems',
     claimPath: 'systems.coreSystems',
   },
 ];
 
 function fieldById(id: keyof OrgProfile): ScreenField {
   const found = SCREEN_FIELDS.find((field) => field.id === id);
-  if (!found) throw new Error(`Nieznane pole ekranu: ${String(id)}`);
+  if (!found) throw new Error(`Unknown screen field: ${String(id)}`);
   return found;
 }
 
@@ -191,28 +197,40 @@ function isFilled(profile: OrgProfile, field: keyof OrgProfile): boolean {
   return String(value ?? '').trim().length > 0;
 }
 
-function formatDatePl(iso: string | null | undefined): string | null {
+/**
+ * Data pochodzenia faktu — locale z KONTA (SSOT `listDateFormat`), nigdy
+ * `pl-PL` na sztywno: użytkownik EN dostawał polski zapis daty (K7).
+ */
+function formatClaimDate(iso: string | null | undefined): string | null {
   if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const sformatowana = formatListDate(iso, '');
+  return sformatowana || null;
 }
 
-/** Etykieta typu źródła twierdzenia — spójna z `GovernedContextWorkspace`. */
-const SOURCE_TYPE_LABELS: Record<string, string> = {
-  document: 'Dokument',
-  interview_answer: 'Odpowiedź z wywiadu',
-  interview_context: 'Kontekst wywiadu',
-  manual_entry: 'Wpisane ręcznie',
-  organization_profile: 'Profil organizacji',
+/**
+ * Typ źródła twierdzenia = ENUM z serwera → SŁOWNIK kluczy i18n (PLAN §2 pkt 6).
+ * Zakaz renderowania surowej wartości i zakaz polskiej etykiety w kodzie.
+ */
+const SOURCE_TYPE_KEYS: Record<string, string> = {
+  document: 'organization.redesign.sourceType.document',
+  interview_answer: 'organization.redesign.sourceType.interview_answer',
+  interview_context: 'organization.redesign.sourceType.interview_context',
+  manual_entry: 'organization.redesign.sourceType.manual_entry',
+  organization_profile: 'organization.redesign.sourceType.organization_profile',
 };
 
 /** Pochodzenie faktu (prototyp `.prov`): „Źródło · zatwierdzone/data". */
-function formatProvenance(claim: GovernedClaim | undefined): string | undefined {
+function formatProvenance(
+  claim: GovernedClaim | undefined,
+  t: TFunction
+): string | undefined {
   if (!claim) return undefined;
-  const sourceLabel = SOURCE_TYPE_LABELS[claim.sourceType] ?? claim.sourceType;
-  const date = formatDatePl(claim.decidedAt ?? claim.createdAt);
-  const approval = claim.approved ? 'zatwierdzone' : 'niezatwierdzone';
+  const sourceKey = SOURCE_TYPE_KEYS[claim.sourceType];
+  const sourceLabel = sourceKey ? t(sourceKey) : claim.sourceType;
+  const date = formatClaimDate(claim.decidedAt ?? claim.createdAt);
+  const approval = claim.approved
+    ? t('organization.redesign.provenance.approved', 'approved')
+    : t('organization.redesign.provenance.notApproved', 'not approved');
   return date ? `${sourceLabel} · ${approval} ${date}` : `${sourceLabel} · ${approval}`;
 }
 
@@ -238,16 +256,16 @@ function bestClaimByPath(claims: GovernedClaim[]): Map<string, GovernedClaim> {
   return map;
 }
 
-function formatRelative(iso: string | null | undefined): string {
-  if (!iso) return 'nigdy';
+function formatRelative(iso: string | null | undefined, t: TFunction): string {
+  if (!iso) return t('organization.redesign.relative.never', 'never');
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return 'nigdy';
+  if (Number.isNaN(then)) return t('organization.redesign.relative.never', 'never');
   const minutes = Math.floor((Date.now() - then) / 60_000);
-  if (minutes < 1) return 'przed chwilą';
-  if (minutes < 60) return `${minutes} min temu`;
+  if (minutes < 1) return t('organization.redesign.relative.justNow', 'just now');
+  if (minutes < 60) return t('organization.redesign.relative.minutesAgo', '{{count}} min ago', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} godz. temu`;
-  return `${Math.floor(hours / 24)} dni temu`;
+  if (hours < 24) return t('organization.redesign.relative.hoursAgo', '{{count}} h ago', { count: hours });
+  return t('organization.redesign.relative.daysAgo', '{{count}} days ago', { count: Math.floor(hours / 24) });
 }
 
 export interface IdentityOperatingScreenRenderArgs {
@@ -367,9 +385,9 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     (id: keyof OrgProfile) => {
       const field = fieldById(id);
       if (!field.claimPath) return undefined;
-      return formatProvenance(bestClaimByClaimPath.get(field.claimPath));
+      return formatProvenance(bestClaimByClaimPath.get(field.claimPath), t);
     },
-    [bestClaimByClaimPath]
+    [bestClaimByClaimPath, t]
   );
 
   const update = useCallback(<K extends keyof OrgProfile>(field: K, value: OrgProfile[K]) => {
@@ -428,9 +446,11 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     (field: ScreenField) => {
       const query = searchValue.trim().toLowerCase();
       if (!query) return true;
-      return field.label.toLowerCase().includes(query);
+      // Wyszukiwarka Menu 3 filtruje po etykiecie W JĘZYKU UŻYTKOWNIKA — inaczej
+      // użytkownik EN musiałby wpisać polskie słowo, żeby cokolwiek znaleźć.
+      return t(field.labelKey, field.en).toLowerCase().includes(query);
     },
-    [searchValue]
+    [searchValue, t]
   );
 
   const shownFields = useMemo(
@@ -491,10 +511,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
         );
       }
       setProfile((previous) => ({ ...previous, ...readback.profile }));
-      toast.success(t('organization.profile.saved', 'Profil zapisany'));
+      toast.success(t('organization.profile.saved', 'Profile saved'));
     } catch (error) {
       toast.error(
-        (error as Error)?.message || t('organization.profile.saveFailed', 'Nie udało się zapisać')
+        (error as Error)?.message || t('organization.profile.saveFailed', 'Failed to save')
       );
     } finally {
       setSaving(false);
@@ -515,7 +535,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     const values = conflict.values?.length ?? 0;
     return {
       tone: 'warning' as const,
-      label: `${values} niezgodnych wartości ze źródeł`,
+      label: t('organization.redesign.status.conflictingValues', '{{count}} conflicting values from sources', { count: values }),
     };
   };
 
@@ -523,7 +543,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     sectionApplicable(section.id)
   ).map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
   }));
 
   // Jeżeli aktywna zakładka zniknęła (np. użytkownik wyczyścił „Typ
@@ -538,10 +558,10 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
   }, [sections.map((section) => section.id).join('|')]);
 
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: counts.all },
-    { id: 'filled', label: 'Uzupełnione', count: counts.filled },
-    { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
-    { id: 'conflicts', label: 'Konflikty', count: counts.conflicts },
+    { id: 'all', label: t('organization.redesign.chips.all', 'All'), count: counts.all },
+    { id: 'filled', label: t('organization.redesign.chips.filled', 'Filled in'), count: counts.filled },
+    { id: 'missing', label: t('organization.redesign.chips.missing', 'To fill in'), count: counts.missing },
+    { id: 'conflicts', label: t('organization.redesign.chips.conflicts', 'Conflicts'), count: counts.conflicts },
   ];
 
   const statePanel: OrganizationStatePanelProps = {
@@ -557,26 +577,33 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
       .map((conflict) => ({
         id: conflict.claimPath,
         field: conflict.claimPath,
-        detail: `${conflict.values?.length ?? 0} wartości ze źródeł jest niezgodnych`,
+        detail: t('organization.redesign.status.conflictingValuesDetail', '{{count}} values from sources do not agree', {
+          count: conflict.values?.length ?? 0,
+        }),
       })),
     onResolveDecisions: goToSources,
     sourcesSummary:
       typeof context?.counts?.claims === 'number'
-        ? `${context.counts.claims} twierdzeń`
+        ? t('organization.redesign.sources.claimsCount', '{{count}} claims', { count: context.counts.claims })
         : undefined,
     sources: context
       ? [
           {
             id: 'context-items',
-            label: 'Elementy kontekstu',
-            detail: `${context.counts?.items ?? 0} pozycji źródłowych`,
+            label: t('organization.redesign.sources.contextItems', 'Context items'),
+            detail: t('organization.redesign.sources.contextItemsDetail', '{{count}} source records', {
+              count: context.counts?.items ?? 0,
+            }),
             status: (context.counts?.conflicts ?? 0) > 0 ? 'warning' : 'ok',
-            statusLabel: (context.counts?.conflicts ?? 0) > 0 ? 'Konflikty' : 'OK',
+            statusLabel:
+              (context.counts?.conflicts ?? 0) > 0
+                ? t('organization.redesign.sources.conflicts', 'Conflicts')
+                : 'OK',
           },
           {
             id: 'context-updated',
-            label: 'Ostatnia aktualizacja',
-            detail: formatRelative(context.snapshotUpdatedAt),
+            label: t('organization.redesign.sources.lastUpdate', 'Last update'),
+            detail: formatRelative(context.snapshotUpdatedAt, t),
           },
         ]
       : [],
@@ -596,7 +623,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
       aria-live="polite"
       className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-[13px] text-c-text-muted"
     >
-      Wczytywanie profilu organizacji…
+      {t('organization.redesign.loading.profile', 'Loading the organization profile…')}
     </div>
   ) : (
     <>
@@ -604,20 +631,29 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
         <div ref={registerSection('identity')}>
           <OrgSectionCard
             id="identity"
-            title="Tożsamość"
+            title={t('organization.redesign.sections.identity', 'Identity')}
             icon={Building2}
-            lead="Typ organizacji ustala, o co Teresa pyta dalej."
+            lead={t('organization.redesign.identity.lead', 'The organization type decides what Teresa asks about next.')}
             status={
               counts.conflicts > 0
-                ? { tone: 'warning', label: `${counts.conflicts} konfliktów źródeł` }
+                ? {
+                    tone: 'warning',
+                    label: t('organization.redesign.status.sourceConflicts', '{{count}} source conflicts', {
+                      count: counts.conflicts,
+                    }),
+                  }
                 : undefined
             }
-            techDetails={orgId ? [{ label: 'Identyfikator organizacji', value: orgId }] : undefined}
+            techDetails={
+              orgId
+                ? [{ label: t('organization.redesign.techDetails.orgId', 'Organization identifier'), value: orgId }]
+                : undefined
+            }
           >
             {shows('organization_type') && (
               <div className="mb-4">
                 <OrgChoiceSegment
-                  label="Typ organizacji"
+                  label={t('organization.redesign.fields.organizationType', 'Organization type')}
                   value={profile.organization_type}
                   options={ORG_TYPES.map((type) => ({
                     value: type.value as string,
@@ -637,7 +673,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('industry') && (
                   <OrgSelectField
                     id="org-industry"
-                    label="Branża"
+                    label={t('organization.profile.fields.industry', 'Industry')}
                     value={profile.industry}
                     status={conflictStatus(fieldById('industry'))}
                     provenance={provenanceFor('industry')}
@@ -654,7 +690,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('industry_subsector') && (
                   <OrgTextField
                     id="org-subsector"
-                    label="Podbranża"
+                    label={t('organization.profile.fields.subIndustry', 'Sub-Industry')}
                     value={profile.industry_subsector}
                     onChange={(value) => update('industry_subsector', value)}
                   />
@@ -662,7 +698,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('industry_code') && (
                   <OrgTextField
                     id="org-industry-code"
-                    label="Kod branży (PKD)"
+                    label={t('organization.profile.fields.industryCode', 'Industry Code')}
                     value={profile.industry_code}
                     onChange={(value) => update('industry_code', value)}
                   />
@@ -672,7 +708,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('description') && (
                   <OrgTextField
                     id="org-description"
-                    label="Opis organizacji"
+                    label={t('organization.redesign.fields.organizationDescription', 'Organization description')}
                     multiline
                     value={profile.description}
                     status={conflictStatus(fieldById('description'))}
@@ -688,13 +724,17 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
 
       {sectionHasContent('scale') && (
         <div ref={registerSection('scale')}>
-          <OrgSectionCard id="scale" title="Skala" icon={BarChart3}>
+          <OrgSectionCard
+            id="scale"
+            title={t('organization.redesign.sections.scale', 'Scale')}
+            icon={BarChart3}
+          >
             <OrgFieldGrid>
               <OrgFieldColumn>
                 {shows('companySize') && (
                   <OrgSelectField
                     id="org-company-size"
-                    label="Wielkość firmy"
+                    label={t('organization.profile.fields.companySize', 'Company Size')}
                     value={profile.companySize}
                     provenance={provenanceFor('companySize')}
                     options={COMPANY_SIZES.map((size) => ({
@@ -710,7 +750,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('employee_count') && (
                   <OrgTextField
                     id="org-employee-count"
-                    label="Liczba pracowników"
+                    label={t('organization.profile.fields.employeeCount', 'Employee Count')}
                     type="number"
                     value={profile.employee_count === null ? '' : String(profile.employee_count)}
                     onChange={(value) =>
@@ -721,7 +761,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('annual_revenue') && (
                   <OrgTextField
                     id="org-annual-revenue"
-                    label="Przychód roczny"
+                    label={t('organization.profile.fields.annualRevenue', 'Annual Revenue')}
                     type="number"
                     value={profile.annual_revenue === null ? '' : String(profile.annual_revenue)}
                     onChange={(value) =>
@@ -734,7 +774,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('headquarters_country') && (
                   <OrgTextField
                     id="org-hq-country"
-                    label="Kraj siedziby"
+                    label={t('organization.profile.fields.headquartersCountry', 'Headquarters Country')}
                     value={profile.headquarters_country}
                     onChange={(value) => update('headquarters_country', value)}
                   />
@@ -742,7 +782,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('founding_year') && (
                   <OrgTextField
                     id="org-founding-year"
-                    label="Rok założenia"
+                    label={t('organization.profile.fields.foundingYear', 'Founding Year')}
                     type="number"
                     value={profile.founding_year === null ? '' : String(profile.founding_year)}
                     onChange={(value) =>
@@ -760,15 +800,15 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
         <div ref={registerSection('delivery')}>
           <OrgSectionCard
             id="delivery"
-            title="Model dostawy"
+            title={t('organization.redesign.sections.delivery', 'Delivery model')}
             icon={Briefcase}
             status={
               deliveryMissingCount > 0
                 ? {
                     tone: 'muted',
-                    label: `${deliveryMissingCount} ${
-                      deliveryMissingCount === 1 ? 'pole' : 'pola'
-                    } do uzupełnienia`,
+                    label: t('organization.redesign.status.fieldsToFill', '{{count}} fields to fill in', {
+                      count: deliveryMissingCount,
+                    }),
                   }
                 : undefined
             }
@@ -778,7 +818,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('delivery_model') && (
                   <OrgSelectField
                     id="org-delivery-model"
-                    label="Model dostarczania"
+                    label={t('organization.profile.fields.deliveryModel', 'Delivery Model')}
                     value={profile.delivery_model}
                     provenance={provenanceFor('delivery_model')}
                     options={DELIVERY_MODELS.map((model) => ({
@@ -796,7 +836,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('revenue_model') && (
                   <OrgSelectField
                     id="org-revenue-model"
-                    label="Model przychodowy / finansowania"
+                    label={t('organization.profile.fields.revenueFundingModel', 'Revenue / Funding Model')}
                     value={profile.revenue_model}
                     provenance={provenanceFor('revenue_model')}
                     options={REVENUE_MODELS.map((model) => ({
@@ -817,13 +857,17 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
 
       {sectionHasContent('markets') && (
         <div ref={registerSection('markets')}>
-          <OrgSectionCard id="markets" title="Rynki i systemy rdzeniowe" icon={Globe}>
+          <OrgSectionCard
+            id="markets"
+            title={t('organization.redesign.sections.marketsFull', 'Markets & core systems')}
+            icon={Globe}
+          >
             <OrgFieldGrid className="mb-4">
               <OrgFieldColumn>
                 {shows('primary_markets') && (
                   <OrgListField
                     id="org-primary-markets"
-                    label="Rynki podstawowe"
+                    label={t('organization.profile.fields.primaryMarkets', 'Primary Markets')}
                     value={profile.primary_markets}
                     onChange={(value) => update('primary_markets', value)}
                   />
@@ -831,7 +875,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('customer_segments') && (
                   <OrgListField
                     id="org-customer-segments"
-                    label="Segmenty klientów"
+                    label={t('organization.profile.fields.customerSegments', 'Customer Segments')}
                     value={profile.customer_segments}
                     onChange={(value) => update('customer_segments', value)}
                   />
@@ -841,7 +885,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
                 {shows('key_competitors') && (
                   <OrgListField
                     id="org-key-competitors"
-                    label="Kluczowi konkurenci"
+                    label={t('organization.profile.fields.keyCompetitors', 'Key Competitors')}
                     value={profile.key_competitors}
                     onChange={(value) => update('key_competitors', value)}
                   />
@@ -850,7 +894,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
             </OrgFieldGrid>
             {shows('core_systems') && (
               <OrgTagToggleGroup
-                label="Systemy rdzeniowe"
+                label={t('organization.profile.fields.coreSystems', 'Core Systems')}
                 options={CORE_SYSTEMS_OPTIONS}
                 value={profile.core_systems}
                 onChange={(value) => update('core_systems', value)}
@@ -862,7 +906,7 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
 
       {shownFields.length === 0 && (
         <p className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-[13px] text-c-text-muted">
-          Żadne pole tego ekranu nie pasuje do wybranego filtra.
+          {t('organization.redesign.filter.noMatch', 'No field on this screen matches the selected filter.')}
         </p>
       )}
     </>
@@ -879,7 +923,11 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
         onChipChange: setActiveChip,
         searchValue,
         onSearch: setSearchValue,
-        primaryCta: { label: 'Dodaj źródło', icon: Plus, onClick: goToSources },
+        primaryCta: {
+          label: t('organization.redesign.cta.addSource', 'Add source'),
+          icon: Plus,
+          onClick: goToSources,
+        },
         statePanel,
         content,
       })}
