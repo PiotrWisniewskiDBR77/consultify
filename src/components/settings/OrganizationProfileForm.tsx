@@ -138,7 +138,7 @@ const REGULATIONS = [
 ];
 
 const CURRENCIES = [
-  { code: 'PLN', symbol: 'zł', label: 'PLN – Polski złoty' },
+  { code: 'PLN', symbol: 'zł', label: 'PLN – Polish Zloty' },
   { code: 'EUR', symbol: '€', label: 'EUR – Euro' },
   { code: 'USD', symbol: '$', label: 'USD – US Dollar' },
   { code: 'GBP', symbol: '£', label: 'GBP – British Pound' },
