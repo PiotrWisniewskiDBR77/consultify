@@ -19,6 +19,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { listCapacityRoles } from '@/services/initiatives-execution/runtimeApi';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface RoleOption {
   roleId: string;
@@ -105,7 +106,7 @@ export function PlanRoleDemandEditor({
     );
     setSaveState(saved ? 'SAVED' : 'FAILED');
     if (saved)
-      setSavedAt(new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }));
+      setSavedAt(new Date().toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' }));
   };
 
   if (state === 'LOADING')

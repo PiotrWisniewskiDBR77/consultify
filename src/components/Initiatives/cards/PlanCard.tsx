@@ -74,6 +74,12 @@ export interface PlanCardWindowPatch {
   latest?: string | null;
 }
 
+// [ODMROZENIE 05_INITIATIVES DEC-453] STOP: nie przełączono na `localeListy()` — moduł-poziom
+// helper czyta z paczki `i18next` wprost, a test tej karty mockuje TYLKO `@/i18n` i hook
+// `react-i18next` (nie realny pakiet `i18next`), więc `localeListy()` widzi w teście domyślny
+// (nie-PL) język i psuje separator dziesiętny („5.5" zamiast „5,5"). Poprawny fix wymaga
+// przekazania `i18n.language` z hooka komponentu do tych funkcji (refaktor podpisu, poza
+// zakresem samej naprawy języka) — zgłoszone jako dług J-wspólne, patrz meldunek paczki J6.
 const formatPolishDate = (value: string | null) => {
   if (!value) return 'Nieznane';
   const date = new Date(value);

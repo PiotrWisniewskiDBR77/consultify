@@ -56,6 +56,7 @@ import {
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
+import { localeListy } from '@/utils/listDateFormat';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
@@ -184,7 +185,7 @@ const COMPACT_TABS: { id: CompactTab; labelKey: string; icon: React.ElementType 
 const formatDate = (d?: string) => {
   if (!d) return '—';
   try {
-    return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    return new Date(d).toLocaleDateString(localeListy(), { day: '2-digit', month: 'short' });
   } catch {
     return d;
   }
@@ -685,7 +686,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             label={t('initiatives.compact.timeline')}
             value={
               initiative?.plannedEndDate
-                ? new Date(initiative.plannedEndDate).toLocaleDateString('en-GB', {
+                ? new Date(initiative.plannedEndDate).toLocaleDateString(localeListy(), {
                     day: '2-digit',
                     month: 'short',
                   })

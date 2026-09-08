@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+import { localeListy } from '@/utils/listDateFormat';
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
@@ -316,7 +317,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(localeListy(), {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -325,7 +326,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return '-';
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,

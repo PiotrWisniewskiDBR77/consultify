@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { InitiativeStatus } from '../types/core';
 import { Initiative } from '../types/domain';
+import { localeListy } from '../utils/listDateFormat';
 import { StatusTransitionDropdown } from './PMO/StatusTransitionDropdown';
 
 type Quarter = string;
@@ -84,8 +85,8 @@ const generateMonths = (startYear: number, numMonths: number) => {
       index: i,
       month,
       year,
-      label: new Date(year, month).toLocaleDateString('pl-PL', { month: 'short' }),
-      fullLabel: new Date(year, month).toLocaleDateString('pl-PL', {
+      label: new Date(year, month).toLocaleDateString(localeListy(), { month: 'short' }),
+      fullLabel: new Date(year, month).toLocaleDateString(localeListy(), {
         month: 'long',
         year: 'numeric',
       }),

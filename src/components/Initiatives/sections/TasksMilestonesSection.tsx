@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps, TaskItem } from './types';
@@ -269,12 +270,7 @@ function inferRemovalRank(reason: string): number {
   return 50;
 }
 
-const formatDueDate = (value?: string) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString();
-};
+const formatDueDate = (value?: string) => formatListDate(value);
 
 // ==========================================
 // MAIN SECTION COMPONENT

@@ -6,6 +6,7 @@ import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactSh
 import { CAPACITY_ANALYSIS_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
 import i18n from '@/i18n';
+import { localeListy } from '@/utils/listDateFormat';
 import {
   CapacityOptionsPanel,
   type CapacityComparison,
@@ -394,7 +395,7 @@ export function CapacityAnalysisCard({
             {i18n.t('initiatives.capacityAnalysis.publish', 'Publish analysis')}
           </button>
         ) : (
-          `${i18n.t('initiatives.capacityAnalysis.publishedAt', 'Opublikowano')} ${scenario.publishedAt ? new Intl.DateTimeFormat('pl-PL').format(new Date(scenario.publishedAt)) : '—'}`
+          `${i18n.t('initiatives.capacityAnalysis.publishedAt', 'Published')} ${scenario.publishedAt ? new Intl.DateTimeFormat(localeListy()).format(new Date(scenario.publishedAt)) : '—'}`
         )}
       </div>
     ),

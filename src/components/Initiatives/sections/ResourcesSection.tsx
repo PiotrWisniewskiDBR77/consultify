@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { BudgetControlPanel } from '@/components/Execution/BudgetControlPanel';
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { BudgetItem, IntangibleAssetItem, ResourceItem, ToolItem } from './types';
@@ -2443,10 +2444,10 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       </span>
                     </td>
                     <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                      {item.startDate ? new Date(item.startDate).toLocaleDateString() : '—'}
+                      {formatListDate(item.startDate)}
                     </td>
                     <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                      {item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'}
+                      {formatListDate(item.endDate)}
                     </td>
                     <td
                       className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
@@ -3145,10 +3146,10 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     {item.cost ? fmtCurrency(item.cost, item.currency, isPolish) : '—'}
                   </td>
                   <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                    {item.validFrom ? new Date(item.validFrom).toLocaleDateString() : '—'}
+                    {formatListDate(item.validFrom)}
                   </td>
                   <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                    {item.validUntil ? new Date(item.validUntil).toLocaleDateString() : '—'}
+                    {formatListDate(item.validUntil)}
                   </td>
                   <td className="py-2.5 pr-2">
                     <span className={STATUS_BADGE_SHELL}>
