@@ -4290,9 +4290,15 @@ router.post(
               // ogólnych danych organizacji i udawać odpowiedzi modułowej.
               ...(moduleGrounding.citations.length === 0
                 ? {
+                    // J1/J20 (2026-09-08): prompt zaczynal sie od „Odpowiedz po
+                    // polsku", wiec konto EN dostawalo polska odpowiedz mimo
+                    // users.language='en'. Jezyk rozstrzyga blok
+                    // [LANGUAGE INSTRUCTION] doklejany na koncu przez AIPipeline
+                    // (§2.8 PLANU jezykowego: jezyk AI = jezyk interfejsu).
                     prompt:
-                      'Odpowiedz po polsku jednym krótkim komunikatem: „Brak danych w module.” ' +
-                      'Możesz dodać, jakiego rekordu brakuje. Nie omawiaj profilu organizacji, inicjatyw ani zadań z innych modułów.',
+                      'Answer with one short message saying the module has no data. ' +
+                      'You may add which record is missing. Do not discuss the organization profile, ' +
+                      'initiatives or tasks from other modules.',
                   }
                 : {}),
               options: {

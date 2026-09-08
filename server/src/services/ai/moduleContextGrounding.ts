@@ -500,7 +500,12 @@ export async function buildModuleContextGrounding(
       systemInstructionAddon: [
         `## DANE MODUŁU W ZASIĘGU — ${MODULE_LABELS_PL[moduleKey].toUpperCase()}`,
         'BRAK DANYCH W MODULE dla tej organizacji i tego widoku.',
-        'Odpowiedz po polsku i powiedz wprost: „Brak danych w module”.',
+        // J1/J20 (2026-09-08): bylo „Odpowiedz po polsku" — instrukcja wymuszala
+        // POLSKI niezaleznie od jezyka konta, wiec konto EN dostawalo polska
+        // odpowiedz na pusty modul. Jezyk rozstrzyga WYLACZNIE blok
+        // [LANGUAGE INSTRUCTION] doklejany na koncu przez AIPipeline
+        // (services/ai/languagePolicy.ts) — zasada §2.8 PLANU jezykowego.
+        'Say plainly that the module has no data, in the response language required below.',
         'Nie zastępuj danych modułu ogólnym profilem organizacji, pamięcią ani przykładowymi danymi.',
         'Nie wymyślaj źródeł; liczba użytych źródeł ma pozostać równa 0.',
       ].join('\n'),

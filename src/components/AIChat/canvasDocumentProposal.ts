@@ -19,6 +19,13 @@
  * `{ text }`), tego samego, z którego korzystają inne narzędzia w aplikacji.
  */
 
+/**
+ * Swiadomie `i18next`, a NIE `@/i18n` — ten sam powod co w
+ * `src/utils/listDateFormat.ts`: `@/i18n` inicjalizuje detektor jezyka i backend
+ * HTTP, wiec import stad wciagalby to do kazdego testu tego modulu.
+ */
+import i18n from 'i18next';
+
 /** Zdarzenie „wstaw zatwierdzoną treść do otwartego dokumentu obok". */
 export const CANVAS_DOCUMENT_APPLY_EVENT = 'canvas-document-apply';
 
@@ -111,7 +118,10 @@ export async function requestDocumentProposal(
       : typeof localStorage !== 'undefined'
         ? localStorage.getItem('token')
         : null;
-  const isPolish = String(params.language || 'pl')
+  // J1/J20 (2026-09-08): domyslka jezyka byla przybita na polski, wiec brak
+  // jawnego `params.language` dawal POLSKI system prompt kontu angielskiemu.
+  // Teraz domyslka idzie za jezykiem interfejsu (§2.8 PLANU jezykowego).
+  const isPolish = String(params.language || i18n.language || 'en')
     .toLowerCase()
     .startsWith('pl');
 
