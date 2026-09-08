@@ -126,9 +126,37 @@ const AXIS_NAME_BY_ID: Record<string, string> = Object.fromEntries(
  * mockuje `react-i18next` — dokładnie ten sam powód, dla którego robi tak
  * `src/utils/listDateFormat.ts`.
  */
+/**
+ * unitId (obszar) -> para nazw ze STRUKTURY metodyki.
+ *
+ * Skompilowany pakiet (`compileDrdPack`) zapisuje w `MethodUnit.name` wariant
+ * POLSKI (`area.namePL || area.name`) i ta nazwa wchodzi do zamrożonych
+ * rekordów — nie ruszamy jej, bo zmiana jądra zmieniłaby treść już zamrożonych
+ * Outputów. Wybór językowy robimy tu, w warstwie ETYKIET raportu, czytając tę
+ * samą `DRD_STRUCTURE`, z której pakiet był kompilowany.
+ */
+const UNIT_NAMES_BY_ID: Record<string, { pl: string; en: string }> = Object.fromEntries(
+  DRD_STRUCTURE.flatMap((axis) =>
+    axis.areas.map((area) => [
+      area.id,
+      { pl: area.namePL || area.name, en: area.name || area.namePL },
+    ])
+  )
+);
+
 /** Czy interfejs jest w tej chwili po polsku. */
 function interfejsPoPolsku(): boolean {
   return String(i18n.language || '').toLowerCase().startsWith('pl');
+}
+
+/**
+ * Nazwa obszaru (jednostki oceny) w języku interfejsu; `zPakietu` to bezpieczny
+ * wariant dla identyfikatorów spoza struktury (obcy pakiet, inna wersja).
+ */
+function nazwaObszaru(unitId: string, zPakietu: string): string {
+  const para = UNIT_NAMES_BY_ID[unitId];
+  if (!para) return zPakietu;
+  return interfejsPoPolsku() ? para.pl : para.en;
 }
 
 /**
@@ -191,7 +219,7 @@ export function resolveDrdUnitLabel(
   if (!unit || !unit.parentId) return null;
   return {
     unitId: unit.unitId,
-    unitName: unit.name,
+    unitName: nazwaObszaru(unit.unitId, unit.name),
     axisId: unit.parentId,
     axisName: nazwaOsiZId(unit.parentId),
     order: unit.order,
