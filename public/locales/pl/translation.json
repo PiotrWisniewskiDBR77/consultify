@@ -6490,7 +6490,7 @@
       "downloadManifest": "Pobierz manifest",
       "downloadReportMd": "Pobierz raport MD",
       "creatingDraft": "Tworzenie draftu...",
-      "newDraftFromPublished": "Nowy draft z publikacji",
+      "newDraftFromPublished": "Nowy szkic z publikacji",
       "backendWillBlockTheTransition": "Backend zablokuje przejście, dopóki blockery nie znikną.",
       "publishRequiresReviewFirst": "Publikacja wymaga najpierw review.",
       "publishRequiresFullPassWith": "Publikacja wymaga pełnego PASS bez ostrzeżeń.",
@@ -6804,7 +6804,7 @@
         "contradiction": "Sprzeczność",
         "emerging_pattern": "Wzorzec"
       },
-      "newDraftFromVersion": "Utworzono nowy draft z opublikowanej wersji v{{version}}.",
+      "newDraftFromVersion": "Utworzono nowy szkic z opublikowanej wersji v{{version}}.",
       "candidatesNeedEvidence": "{{count}} kandydatów wymaga dowodów.",
       "candidatesNeedSplit": "{{count}} kandydatów wymaga splitu sprzeczności.",
       "findingsUnresolvedReadback": "{{count}} findingów nie ma potwierdzonego readbacku.",
@@ -7870,7 +7870,14 @@
       "collapse": "Zwiń",
       "copyDetails": "Kopiuj szczegóły"
     },
-    "defaultSessionName": "Sesja wywiadu"
+    "defaultSessionName": "Sesja wywiadu",
+    "sessionProgress": "Postęp sesji",
+    "contextBanner": {
+      "body": "Masz kontekst organizacji z wcześniejszej sesji wywiadu. Wykorzystaj go, żeby wzbogacić swoją pracę."
+    },
+    "summary": {
+      "exportHint": "Wyeksportuj ten kontekst, aby wzbogacić Narzędzia lub Ocenę"
+    }
   },
   "assessment": {
     "reportView": {
@@ -28553,7 +28560,18 @@
     "chooseDay": "Wybierz dzień",
     "noSlots": "Brak wolnych terminów w najbliższych 14 dniach.",
     "slotsAvailable": "{{count}} wol.",
-    "chooseDayFromList": "Wybierz dzień z listy po lewej."
+    "chooseDayFromList": "Wybierz dzień z listy po lewej.",
+    "changeSlot": "zmień termin",
+    "fullName": "Imię i nazwisko",
+    "fullNamePlaceholder": "Jan Kowalski",
+    "email": "E-mail",
+    "emailPlaceholder": "jan@firma.pl",
+    "topic": "Temat (opcjonalnie)",
+    "topicPlaceholder": "Czego dotyczy spotkanie?",
+    "submit": "Zarezerwuj termin",
+    "confirmedTitle": "Rezerwacja przyjęta",
+    "confirmedWith": "Spotkanie z {{name}}:",
+    "confirmedNote": "Wyślemy potwierdzenie na podany adres e-mail po akceptacji terminu."
   },
   "valuation": {
     "basket": {
@@ -33029,7 +33047,19 @@
     "confirmDeleteBulk_other": "Usunąć {{count}} programów audytowych?",
     "aiHintSummarize": "Podsumuj audyt",
     "aiHintNextSteps": "Następne kroki",
-    "noSuggestedPlan": "Brak sugerowanego planu"
+    "noSuggestedPlan": "Brak sugerowanego planu",
+    "history": {
+      "noActions": "Brak zapisanych akcji."
+    },
+    "report": {
+      "noItems": "Brak pozycji."
+    },
+    "actionCards": {
+      "aria": "Karty działania — Audyty"
+    },
+    "drdMatrix": {
+      "legend": "Każdy obszar wybranej osi. Kolor komórki = najwyższy wybrany poziom dojrzałości."
+    }
   },
   "audits": {
     "method": {

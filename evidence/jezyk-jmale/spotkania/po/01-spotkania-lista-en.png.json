@@ -1,0 +1,75 @@
+{
+ "ekran": "01-spotkania-lista",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/meetings",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Migracja platformy — spotkanie inicjujące",
+   "trafienia": [
+    "spotkanie",
+    "inicjujące"
+   ]
+  },
+  {
+   "linia": "1:1 z Anną — przegląd architektury backendu",
+   "trafienia": [
+    "Anną",
+    "przegląd"
+   ]
+  },
+  {
+   "linia": "Planowanie Sprintu 14 — produkt i inżynieria",
+   "trafienia": [
+    "inżynieria"
+   ]
+  },
+  {
+   "linia": "Komitet sterujący — program transformacji Q2",
+   "trafienia": [
+    "sterujący"
+   ]
+  },
+  {
+   "linia": "Demo dla klienta — transformacja cyfrowa Acme Corp",
+   "trafienia": [
+    "dla"
+   ]
+  },
+  {
+   "linia": "Start wersji beta — decyzja Go/No-Go",
+   "trafienia": [
+    "decyzja"
+   ]
+  },
+  {
+   "linia": "1:1 z CTO — cotygodniowe spotkanie",
+   "trafienia": [
+    "spotkanie"
+   ]
+  },
+  {
+   "linia": "Gotowość do SOC 2 — briefing z audytorem zewnętrznym",
+   "trafienia": [
+    "Gotowość",
+    "zewnętrznym"
+   ]
+  },
+  {
+   "linia": "Zaplanuj i wykonaj dla mnie inicatywe której celem jest zrobienie planu…",
+   "trafienia": [
+    "dla",
+    "której",
+    "jest"
+   ]
+  }
+ ]
+}

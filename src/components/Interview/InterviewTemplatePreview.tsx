@@ -1,6 +1,7 @@
 import { Copy, ExternalLink, Pencil, Trash2, UserPlus } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 import {
   type ActionRow,
@@ -134,7 +135,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
         trailing={
           <span className="text-[11px] text-[var(--c-text-muted)]">
             {t('interview.templatePreview.created')}:{' '}
-            {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : '—'}
+            {formatListDate(template.createdAt)}
           </span>
         }
       >

@@ -1,0 +1,16 @@
+{
+ "ekran": "01-wywiad",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/interview",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  }
+ ]
+}

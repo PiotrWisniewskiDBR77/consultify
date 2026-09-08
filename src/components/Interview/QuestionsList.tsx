@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 import {
   type ActionRow,
@@ -875,7 +876,7 @@ Rules:
                       <User size={12} />
                       <span>{item.answeredBy}</span>
                       <span>•</span>
-                      <span>{new Date(item.answeredAt).toLocaleString()}</span>
+                      <span>{formatListDateTime(item.answeredAt)}</span>
                     </div>
                   )}
                 </div>

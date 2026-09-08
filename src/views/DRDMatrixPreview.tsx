@@ -18,6 +18,7 @@
  * production DRDAssessmentEditor.
  */
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MaturityMatrix } from '@/components/MaturityMatrix';
 import {
@@ -50,6 +51,7 @@ function highestLevel(scores: number[] | undefined): number {
 }
 
 export const DRDMatrixPreview: React.FC = () => {
+  const { t } = useTranslation();
   // Axis id 1..7
   const [axisId, setAxisId] = useState<number>(1);
   // Local, in-memory scores: { areaId: number[] }
@@ -137,7 +139,7 @@ export const DRDMatrixPreview: React.FC = () => {
             Matrix overview
           </h2>
           <p className="text-[11px] text-c-text-secondary mb-3 leading-relaxed">
-            Every area of the selected axis. Cell color = highest selected maturity level.
+            {t('audit.drdMatrix.legend', 'Every area of the selected axis. Cell color = highest selected maturity level.')}
           </p>
           <div className="grid grid-cols-1 gap-1.5">
             {areas.map((area) => {

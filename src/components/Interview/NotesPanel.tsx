@@ -8,6 +8,7 @@
 import { Edit3, FileText, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { MetaChip } from '@/components/ui/primitives';
@@ -281,7 +282,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                         )}
                       </div>
                       <p className="text-xs text-[var(--c-text-muted)] mt-1">
-                        {new Date(note.updatedAt).toLocaleString()}
+                        {formatListDateTime(note.updatedAt)}
                       </p>
                     </div>
 

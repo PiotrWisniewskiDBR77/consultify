@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 import { DatePicker, Select } from '@/components/shared/forms';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
@@ -2255,7 +2256,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                     )}
                     {session.completedAt && (
                       <span className="ml-2 font-normal text-slate-500">
-                        • {new Date(session.completedAt).toLocaleDateString()}
+                        • {formatListDate(session.completedAt)}
                       </span>
                     )}
                   </div>

@@ -108,7 +108,10 @@ const PL_SLOWA = new Set([
   'raport','raporty','poziom','okres','autor','stan','danych','ryzyka','ryzyko','decyzje','decyzja','zadanie','zadania',
   'osób','osob','popyt','podaż','podaz','obłożenie','oblozenie','zaległość','zaleglosc','tygodni','tygodnie',
   'wykonane','odrzucone','zrobione','trwa','ponownie','spróbuj','sprobuj','ładowanie','ladowanie','od',
-  'sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','paz','lis','gru',
+  // 'mar' WYPADA z listy polskiej: to jednocześnie angielski skrót marca („Mar 18,
+  // 2026"), więc na ekranie EN dawał 9 fałszywych trafień na samej liście spotkań.
+  // Ta sama klasa błędu, którą J7b usunął po stronie EN_SLOWA ('jan'/'mar').
+  'sty','lut','kwi','maj','cze','lip','sie','wrz','paź','paz','lis','gru',
   'założenie','zalozenie','zależność','zaleznosc','sygnały','sygnaly','sygnał','sygnal',
   'cele','cel','wyzwania','profil','profilu','organizacji','organizacja','tożsamość','tozsamosc','branża','branza',
   'wielkość','wielkosc','przychód','przychod','pracowników','pracownikow','kierunek','ograniczenia','mierniki',
@@ -125,7 +128,7 @@ const EN_SLOWA = new Set([
   'readiness','scope','collaboration','sources','claims','meetings','meeting','interview','audits','audit',
   'results','initiatives','execution','settings','search','filter','columns','preview','actions',
 ]);
-const NEUTRALNE = new Set(['problem','model','status','kpi','raid','sla','ok','pmo','roi','ai','okr','crm','erp','id','sso','mfa','api','pdf','csv','drd','b2b','b2c','pkd','vat','nip','ceo','cto','it','hr','esg']);
+const NEUTRALNE = new Set(['problem','model','mar','status','kpi','raid','sla','ok','pmo','roi','ai','okr','crm','erp','id','sso','mfa','api','pdf','csv','drd','b2b','b2c','pkd','vat','nip','ceo','cto','it','hr','esg']);
 
 function liniePodejrzane(text, lang) {
   const wynik = { ui: [], dane: [] };

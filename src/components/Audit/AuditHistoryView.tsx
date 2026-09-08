@@ -11,6 +11,8 @@ import {
   User,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { localeListy } from '../../utils/listDateFormat';
 
 import { Api } from '../../services/api';
 
@@ -88,7 +90,7 @@ const AuditEventCard: React.FC<{ event: AuditEvent }> = ({ event }) => {
   const Icon = getActionIcon(event.action);
   const label = getActionLabel(event.action);
 
-  const formattedTime = new Date(event.createdAt).toLocaleString('pl-PL', {
+  const formattedTime = new Date(event.createdAt).toLocaleString(localeListy(), {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -133,6 +135,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
   limit = 20,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -195,7 +198,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
           ) : events.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <History size={32} className="mx-auto mb-2 opacity-50" />
-              <p>Brak zapisanych akcji.</p>
+              <p>{t('audit.history.noActions', 'No saved actions.')}</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
@@ -219,7 +222,7 @@ export const AuditHistoryCompact: React.FC<{
 }> = ({ lastEvent, onClick }) => {
   if (!lastEvent) return null;
 
-  const formattedTime = new Date(lastEvent.createdAt).toLocaleString('pl-PL', {
+  const formattedTime = new Date(lastEvent.createdAt).toLocaleString(localeListy(), {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

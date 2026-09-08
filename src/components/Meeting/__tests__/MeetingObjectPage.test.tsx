@@ -233,12 +233,12 @@ describe('MeetingObjectPage', () => {
     render(<MeetingObjectPage />);
 
     await screen.findByText('Write recap');
-    const button = screen.getByRole('button', { name: 'Zrób zadanie' });
+    const button = screen.getByRole('button', { name: 'Create task' });
     button.click();
     button.click();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith('/api/meeting/meeting-1/notes/note-1/action-items/0/task', { method: 'POST', credentials: 'include' });
-    expect(await screen.findByRole('button', { name: 'Zadanie utworzone' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Task created' })).toBeDisabled();
   });
 
   it('Decyzje i działania section shows meeting decisions and follow-ups', async () => {
@@ -300,10 +300,10 @@ describe('MeetingObjectPage', () => {
     render(<MeetingObjectPage />);
 
     await screen.findByText('Quarterly Review');
-    screen.getByText('Decyzje i działania').click();
+    screen.getByText('Decisions & actions').click();
     expect(navigateMock).toHaveBeenCalledWith('/meetings/meeting-1/decisions');
 
-    screen.getByText('Protokół').click();
+    screen.getByText('Minutes').click();
     expect(navigateMock).toHaveBeenCalledWith('/meetings/meeting-1/minutes');
   });
 

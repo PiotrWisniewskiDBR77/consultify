@@ -535,7 +535,7 @@ export const MeetingHub: React.FC = () => {
               if (briefingMeeting) openMeetingDocument(briefingMeeting);
             }}
             className={getMenu3AiButtonClass(false)}
-            title={t('meeting.actions.operatorBrief', 'Open operator brief')}
+            title={t('meeting.actions.operatorBrief', 'Operator brief')}
           >
             <Sparkles size={12} />
             <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
@@ -1341,7 +1341,7 @@ export const MeetingHub: React.FC = () => {
                                   className="h-8 rounded-full bg-c-text px-3 text-xs text-c-surface disabled:opacity-50"
                                 >
                                   {decidingNoteId === note.id
-                                    ? t('common.saving', 'Saving…')
+                                    ? t('common.saving', 'Saving...')
                                     : t('meeting.notes.approve', 'Approve and materialize')}
                                 </button>
                               </div>

@@ -101,6 +101,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import i18n from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
@@ -406,7 +407,7 @@ function renderGenericKeyValue(content: unknown): React.ReactNode {
 
 function renderGenericList(content: unknown): React.ReactNode {
   if (!Array.isArray(content) || content.length === 0) {
-    return <p className="text-sm text-c-text-muted">Brak pozycji.</p>;
+    return <p className="text-sm text-c-text-muted">{i18n.t('audit.report.noItems', 'No items.')}</p>;
   }
   if (typeof content[0] !== 'object' || content[0] === null) {
     return (
@@ -478,7 +479,7 @@ function renderGenericGroup(content: unknown): React.ReactNode {
 }
 
 function renderGenericTable(content: unknown): React.ReactNode {
-  if (!Array.isArray(content) || content.length === 0) return <p className="text-sm text-c-text-muted">Brak pozycji.</p>;
+  if (!Array.isArray(content) || content.length === 0) return <p className="text-sm text-c-text-muted">{i18n.t('audit.report.noItems', 'No items.')}</p>;
   const keys = Array.from(
     new Set(content.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row as object) : [])))
   );
