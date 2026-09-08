@@ -83,8 +83,11 @@ export function sprawdzCel(url: string, oczekiwanyHost: string): string {
   const host = toz.split('/')[0]!;
   if (!host.includes(oczekiwanyHost))
     throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
-  if (!/consultify_kopia_d\d+/i.test(toz))
-    throw new Error(`Cel NIE jest kopią lokalną „consultify_kopia_d<numer paczki>" (dostał: nazwa bazy ukryta, sprawdzono wzorcem). STOP.`);
+  const nazwaBazy = toz.split('/').slice(1).join('/');
+  if (!WZORZEC_BAZY_KOPII.test(nazwaBazy))
+    throw new Error(
+      'Cel NIE jest lokalną kopią pokazową paczki (dostał: nazwa bazy ukryta, sprawdzono wąskim wzorcem consultify_kopia_d<numer>). STOP.'
+    );
   return toz;
 }
 
