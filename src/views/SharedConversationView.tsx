@@ -27,6 +27,7 @@ interface ShareData {
 }
 
 export const SharedConversationView: React.FC = () => {
+  const { t } = useTranslation();
   const { token = '' } = useParams<{ token: string }>();
   const [data, setData] = useState<ShareData | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'notfound' | 'password' | 'error'>(

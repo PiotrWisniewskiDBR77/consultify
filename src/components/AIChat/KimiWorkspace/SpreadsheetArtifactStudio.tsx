@@ -146,6 +146,49 @@ const parseA1Cell = (address: string): { rowIndex: number; colIndex: number } | 
 };
 
 /**
+ * ETYKIETY PASKA NARZĘDZI (Menu 3) — J1, 2026-09-08.
+ *
+ * `spreadsheetArtifactCommands.ts` trzyma w polu o nazwie `labelKey` NIE klucz,
+ * tylko POLSKI napis, a Studio przepuszczało go dalej wprost
+ * (`resolveLabel={(label) => label}`). Efekt: cały pasek narzędzi arkusza —
+ * Waluta · Procent · Pogrubienie · Wstaw/Usuń wiersz i kolumnę — mówił po polsku
+ * do konta angielskiego. Skaner językowy tego NIE widział: to nie jest ani
+ * `t()`, ani tekst w JSX, tylko pole obiektu w innym pliku.
+ *
+ * Tłumaczymy po `commandId` (stabilny identyfikator), a nie po napisie —
+ * mapowanie po tekście rozjechałoby się przy pierwszej zmianie kopii.
+ * Rejestr zostaje nietknięty, więc jego testy kontraktowe dalej stoją.
+ */
+const ETYKIETY_KOMEND: Record<string, { klucz: string; en: string }> = {
+  'xlsx.history.undo': { klucz: 'excele.cmd.xlsx_history_undo', en: 'Undo' },
+  'xlsx.history.redo': { klucz: 'excele.cmd.xlsx_history_redo', en: 'Redo' },
+  'xlsx.format.currency': { klucz: 'excele.cmd.xlsx_format_currency', en: 'Currency' },
+  'xlsx.format.percent': { klucz: 'excele.cmd.xlsx_format_percent', en: 'Percent' },
+  'xlsx.format.bold': { klucz: 'excele.cmd.xlsx_format_bold', en: 'Bold' },
+  'xlsx.format.number': { klucz: 'excele.cmd.xlsx_format_number', en: 'Number' },
+  'xlsx.format.general': { klucz: 'excele.cmd.xlsx_format_general', en: 'General format' },
+  'xlsx.format.italic': { klucz: 'excele.cmd.xlsx_format_italic', en: 'Italic' },
+  'xlsx.format.wrap': { klucz: 'excele.cmd.xlsx_format_wrap', en: 'Wrap text' },
+  'xlsx.format.alignLeft': { klucz: 'excele.cmd.xlsx_format_alignLeft', en: 'Align left' },
+  'xlsx.format.alignCenter': { klucz: 'excele.cmd.xlsx_format_alignCenter', en: 'Align centre' },
+  'xlsx.format.alignRight': { klucz: 'excele.cmd.xlsx_format_alignRight', en: 'Align right' },
+  'xlsx.row.insertAbove': { klucz: 'excele.cmd.xlsx_row_insertAbove', en: 'Insert row' },
+  'xlsx.row.insertBelow': { klucz: 'excele.cmd.xlsx_row_insertBelow', en: 'Insert row below' },
+  'xlsx.row.delete': { klucz: 'excele.cmd.xlsx_row_delete', en: 'Delete row' },
+  'xlsx.column.insertLeft': { klucz: 'excele.cmd.xlsx_column_insertLeft', en: 'Insert column' },
+  'xlsx.column.insertRight': { klucz: 'excele.cmd.xlsx_column_insertRight', en: 'Insert column to the right' },
+  'xlsx.column.delete': { klucz: 'excele.cmd.xlsx_column_delete', en: 'Delete column' },
+  'xlsx.cell.edit': { klucz: 'excele.cmd.xlsx_cell_edit', en: 'Edit cell' },
+  'xlsx.selection.clear': { klucz: 'excele.cmd.xlsx_selection_clear', en: 'Clear contents' },
+  'xlsx.find.open': { klucz: 'excele.cmd.xlsx_find_open', en: 'Find' },
+  'xlsx.replace.open': { klucz: 'excele.cmd.xlsx_replace_open', en: 'Find and replace' },
+  'xlsx.view.freezePanes': { klucz: 'excele.cmd.xlsx_view_freezePanes', en: 'Freeze the first row and column' },
+  'xlsx.clipboard.copy': { klucz: 'excele.cmd.xlsx_clipboard_copy', en: 'Copy' },
+  'xlsx.clipboard.cut': { klucz: 'excele.cmd.xlsx_clipboard_cut', en: 'Cut' },
+  'xlsx.clipboard.paste': { klucz: 'excele.cmd.xlsx_clipboard_paste', en: 'Paste' },
+};
+
+/**
  * Flagged adapter for an already-open workbook. It intentionally exposes only
  * capabilities backed by the current runtime: sheet switching, cell/formula
  * editing, persistence, export and the global Teresa handoff. Planned Office
@@ -2276,7 +2319,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           <ArtifactMenu3
             registry={registry}
             context={commandContext}
-            resolveLabel={(label) => label}
+            resolveLabel={(label, command) => {
+              const wpis = ETYKIETY_KOMEND[command.commandId];
+              return wpis ? t(wpis.klucz, wpis.en) : label;
+            }}
             // 9 miejsc = Cofnij · Ponów · Waluta · Procent · Pogrubienie ·
             // Wstaw/Usuń wiersz · Wstaw/Usuń kolumnę. Domyślne 7 wypychało
             // wstawianie kolumn pod „Więcej" — to była pierwsza przyczyna
@@ -2436,7 +2482,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   <span className="text-c-text-secondary">{t('excele.studio.governance.flow', 'Approval flow')}</span>
                   <span className="rounded-md bg-c-surface-raised px-2 py-1 text-xs text-c-text">
                     {approvalState?.state === 'review'
-                      ? t('excele.studio.approval.inReview', 'In review')
+                      ? t('excele.studio.approval.inReview', 'Under review')
                       : approvalState?.state === 'approved' && approvalState.currentForVersion
                         ? t('excele.studio.approval.current', 'Current approval')
                         : approvalState?.state === 'approved'

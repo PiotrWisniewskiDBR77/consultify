@@ -549,6 +549,7 @@ function ChartBlockView({
   block: CanvasArtifactBlock;
   onCopy: () => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const metrics = chartShape(block);
   const spec = React.useMemo(() => chartSpecShape(block), [block]);
   const data = isRecord(block.data) ? block.data : {};

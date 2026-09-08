@@ -4829,9 +4829,14 @@ router.post(
       if (aiModes?.multiAgent && message) {
         try {
           const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
+          // J1 (2026-09-08), §2.5 PLANU jezykowego: serwer wysyla KOD, nie zdanie.
+          // Do tej pory szlo tu polskie zdanie, ktore konto EN dostaloby po polsku.
+          // UCZCIWIE: `useAIStream` NIE obsluguje dzis ramki `status` (obsluzone sa
+          // deliverable/reasoning/tool_step/trust_bundle/...), wiec ta ramka jest
+          // martwa — kod i klucz sa po to, zeby po jej podlaczeniu nie wrocil polski.
           emitSSE({
             type: 'status',
-            message: 'Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...',
+            code: 'MULTI_AGENT_STARTED',
           });
 
           const decisionResult = await runDecisionRoom(
@@ -4906,7 +4911,7 @@ router.post(
           );
           emitSSE({
             type: 'status',
-            message: 'Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...',
+            code: 'MULTI_AGENT_UNAVAILABLE',
           });
           // Fall through to standard pipeline
         }

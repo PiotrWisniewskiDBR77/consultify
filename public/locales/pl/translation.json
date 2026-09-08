@@ -20926,6 +20926,10 @@
       "ownerId": "Identyfikator wlasciciela projektu",
       "ownerName": "Imie i nazwisko wlasciciela projektu",
       "budgetLimit": "Limit budzetu agenta"
+    },
+    "status": {
+      "MULTI_AGENT_STARTED": "Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)…",
+      "MULTI_AGENT_UNAVAILABLE": "Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy…"
     }
   },
   "aiChat": {
@@ -33548,6 +33552,34 @@
         "reject": "Zwróć do poprawy"
       },
       "contextMenuAria": "Akcje zaznaczenia {{address}}"
+    },
+    "cmd": {
+      "xlsx_history_undo": "Cofnij",
+      "xlsx_history_redo": "Ponów",
+      "xlsx_format_currency": "Waluta",
+      "xlsx_format_percent": "Procent",
+      "xlsx_format_bold": "Pogrubienie",
+      "xlsx_format_number": "Liczba",
+      "xlsx_format_general": "Format ogólny",
+      "xlsx_format_italic": "Kursywa",
+      "xlsx_format_wrap": "Zawijaj tekst",
+      "xlsx_format_alignLeft": "Wyrównaj do lewej",
+      "xlsx_format_alignCenter": "Wyśrodkuj",
+      "xlsx_format_alignRight": "Wyrównaj do prawej",
+      "xlsx_row_insertAbove": "Wstaw wiersz",
+      "xlsx_row_insertBelow": "Wstaw wiersz niżej",
+      "xlsx_row_delete": "Usuń wiersz",
+      "xlsx_column_insertLeft": "Wstaw kolumnę",
+      "xlsx_column_insertRight": "Wstaw kolumnę z prawej",
+      "xlsx_column_delete": "Usuń kolumnę",
+      "xlsx_cell_edit": "Edytuj komórkę",
+      "xlsx_selection_clear": "Wyczyść zawartość",
+      "xlsx_find_open": "Znajdź",
+      "xlsx_replace_open": "Znajdź i zamień",
+      "xlsx_view_freezePanes": "Zamroź pierwszy wiersz i kolumnę",
+      "xlsx_clipboard_copy": "Kopiuj",
+      "xlsx_clipboard_cut": "Wytnij",
+      "xlsx_clipboard_paste": "Wklej"
     }
   },
   "aiActions": {

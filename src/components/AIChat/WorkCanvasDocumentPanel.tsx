@@ -74,6 +74,7 @@ import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 import { CanvasPresentationView } from './CanvasPresentationView';
 import { CanvasViewModeControl } from './CanvasViewModeControl';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
 
@@ -3297,7 +3298,7 @@ function WorkCanvasMarkdownDocumentPanel({
       );
       setLatestDiff(buildLineDiff(documentState.contentMd, version.contentMd));
       setStatusFeedback(
-        `Restored Canvas version from ${new Date(version.createdAt).toLocaleString()}.`
+        `Restored Canvas version from ${formatListDateTime(version.createdAt)}.`
       );
       await loadVersions();
     } catch (error) {
@@ -5183,7 +5184,7 @@ function WorkCanvasMarkdownDocumentPanel({
           {shareInfo.expiresAt ? (
             <span className="text-[10px] text-slate-400 dark:text-slate-500">
               {t('canvas.panel.share.expires', 'expires')}{' '}
-              {new Date(shareInfo.expiresAt).toLocaleDateString()}
+              {formatListDate(shareInfo.expiresAt)}
             </span>
           ) : null}
           <button

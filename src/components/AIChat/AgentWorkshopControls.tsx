@@ -24,6 +24,8 @@
  */
 import { CalendarClock, CheckCircle2, OctagonX, Play, X } from 'lucide-react';
 import React, { useState } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
@@ -123,6 +125,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
   errorMessage,
   width = 'var(--ntype-right-panel-width)',
 }) => {
+  const { t } = useTranslation();
   const awaitingSteps = plan.steps.filter((s) => s.status === 'awaiting_approval');
   const progressPct =
     plan.totalSteps > 0 ? Math.round((plan.completedSteps / plan.totalSteps) * 100) : 0;

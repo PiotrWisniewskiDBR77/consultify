@@ -19648,6 +19648,10 @@
       "ownerId": "Project owner user ID",
       "ownerName": "Project owner name",
       "budgetLimit": "Agent budget limit"
+    },
+    "status": {
+      "MULTI_AGENT_STARTED": "Starting the multi-agent analysis (CFO, CTO, CHRO, COO)…",
+      "MULTI_AGENT_UNAVAILABLE": "Multi-agent mode is unavailable — switching to the standard analysis…"
     }
   },
   "aiChat": {
@@ -31266,7 +31270,7 @@
         "error": "The change was rejected by policy, or a version conflict occurred."
       },
       "approval": {
-        "inReview": "In review",
+        "inReview": "Under review",
         "current": "Current approval",
         "stale": "Approval out of date",
         "rejected": "Sent back for changes",
@@ -31282,6 +31286,34 @@
         "reject": "Send back for changes"
       },
       "contextMenuAria": "Selection actions: {{address}}"
+    },
+    "cmd": {
+      "xlsx_history_undo": "Undo",
+      "xlsx_history_redo": "Redo",
+      "xlsx_format_currency": "Currency",
+      "xlsx_format_percent": "Percent",
+      "xlsx_format_bold": "Bold",
+      "xlsx_format_number": "Number",
+      "xlsx_format_general": "General format",
+      "xlsx_format_italic": "Italic",
+      "xlsx_format_wrap": "Wrap text",
+      "xlsx_format_alignLeft": "Align left",
+      "xlsx_format_alignCenter": "Align centre",
+      "xlsx_format_alignRight": "Align right",
+      "xlsx_row_insertAbove": "Insert row",
+      "xlsx_row_insertBelow": "Insert row below",
+      "xlsx_row_delete": "Delete row",
+      "xlsx_column_insertLeft": "Insert column",
+      "xlsx_column_insertRight": "Insert column to the right",
+      "xlsx_column_delete": "Delete column",
+      "xlsx_cell_edit": "Edit cell",
+      "xlsx_selection_clear": "Clear contents",
+      "xlsx_find_open": "Find",
+      "xlsx_replace_open": "Find and replace",
+      "xlsx_view_freezePanes": "Freeze the first row and column",
+      "xlsx_clipboard_copy": "Copy",
+      "xlsx_clipboard_cut": "Cut",
+      "xlsx_clipboard_paste": "Paste"
     }
   },
   "aiActions": {

@@ -17,6 +17,7 @@
 import React from 'react';
 
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 export interface MiniBarChartSeries {
   labels: string[];
@@ -80,7 +81,7 @@ export const MiniBarChart: React.FC<MiniBarChartProps> = ({ series, height = 80 
               style={{ width: '100%', maxWidth: 28, height }}
             >
               <rect x={0} y={100 - pct} width={10} height={pct} rx={1} className="fill-c-chart-1">
-                <title>{`${labels[i]}: ${v.toLocaleString('pl-PL')}`}</title>
+                <title>{`${labels[i]}: ${formatListNumber(v)}`}</title>
               </rect>
             </svg>
             <span

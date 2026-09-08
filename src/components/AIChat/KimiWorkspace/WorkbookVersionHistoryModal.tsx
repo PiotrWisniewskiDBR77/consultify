@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface VersionRow {
   id: string;
@@ -160,7 +161,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                     {t('excele.versionHistory.version', 'Wersja')} {v.version}
                   </div>
                   <div className="truncate text-c-text-muted">
-                    {new Date(v.created_at).toLocaleString('pl-PL')} &middot; {v.sheet_count}{' '}
+                    {formatListDateTime(v.created_at)} &middot; {v.sheet_count}{' '}
                     {t('excele.versionHistory.sheets', 'arkusz(e)')}
                   </div>
                 </div>

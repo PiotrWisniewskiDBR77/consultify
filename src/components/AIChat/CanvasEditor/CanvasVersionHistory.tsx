@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { CanvasVersionSummary } from '@/types/canvasWorkspace';
 
 import { CanvasMarkdownRenderer } from '../CanvasMarkdownRenderer';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 /**
  * B1 — Canvas version history popover. Lists draft snapshots (newest first,
@@ -25,7 +26,7 @@ function formatRelativeTime(iso: string, t: (key: string, fallback: string) => s
   if (hours < 24) return `${hours} ${t('canvas.versionHistory.hoursAgo', 'h ago')}`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} ${t('canvas.versionHistory.daysAgo', 'd ago')}`;
-  return new Date(timestamp).toLocaleDateString();
+  return formatListDate(timestamp);
 }
 
 interface CanvasVersionHistoryProps {
@@ -108,7 +109,7 @@ export function CanvasVersionHistory({
                   type="button"
                   onClick={() => setPreviewVersionId(isPreviewed ? null : version.id)}
                   className="w-full text-left"
-                  title={new Date(version.createdAt).toLocaleString()}
+                  title={formatListDateTime(version.createdAt)}
                 >
                   <div className="font-semibold text-slate-700 dark:text-slate-100">
                     {version.operationType}

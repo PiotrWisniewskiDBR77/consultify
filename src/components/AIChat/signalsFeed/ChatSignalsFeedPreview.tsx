@@ -8,6 +8,7 @@ import { StandardPreview } from '@/components/standard/StandardPreview';
 import { resolveDestination } from './signalDestination';
 import { localizedSignal, refTypeLabel, relativeTime } from './signalPresentation';
 import type { SignalDTO } from './signalTypes';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 /**
  * FIX-6 (dyżur 26 chat-signals-front, odbiór P1.6) — cztery bezpieczne
@@ -78,7 +79,7 @@ export const ChatSignalsFeedPreview: React.FC<{
           ...(signal.isMine ? [{ label: t('chatSignals.mine') }] : []),
         ],
         trailing: (
-          <span title={new Date(signal.freshness.lastObservedAt).toLocaleString()}>{view.age}</span>
+          <span title={formatListDateTime(signal.freshness.lastObservedAt)}>{view.age}</span>
         ),
       }}
       details={{

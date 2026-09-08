@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useChatProjectStore } from '../../store/useChatProjectStore';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 type Role = 'owner' | 'editor' | 'viewer';
 interface Member {
@@ -519,7 +520,7 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                       <li key={event.id} className="text-[9px] text-slate-500 break-all">
                         {event.action || '—'} · {event.actorId || '—'} ·{' '}
                         {String(payload.version ?? '—')} · {String(payload.contentHash ?? '—')} ·{' '}
-                        {event.timestamp ? new Date(event.timestamp).toLocaleString() : '—'}
+                        {formatListDateTime(event.timestamp)}
                       </li>
                     );
                   })}

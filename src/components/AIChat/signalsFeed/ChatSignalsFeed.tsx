@@ -16,6 +16,7 @@ import { resolveDestination } from './signalDestination';
 import { localizedSignal, severityRank } from './signalPresentation';
 import type { SignalDTO, SignalsFeedResponse } from './signalTypes';
 import { type SignalsApi, useSignalsFeed } from './useSignalsFeed';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 type FeedRow = TableRow & { dto: SignalDTO; title: string };
 
@@ -131,7 +132,7 @@ export const ChatSignalsFeed: React.FC<{
       label: t('chatSignals.columns.age'),
       width: '120px',
       render: (row: FeedRow) => (
-        <span title={new Date(row.dto.firstObservedAt).toLocaleString()}>
+        <span title={formatListDateTime(row.dto.firstObservedAt)}>
           {localizedSignal(row.dto, t).age}
         </span>
       ),
@@ -174,7 +175,7 @@ export const ChatSignalsFeed: React.FC<{
       setNotice(
         action === 'snooze' && snoozedUntil
           ? t('chatSignals.notice.snoozeUntil', {
-              until: new Date(snoozedUntil).toLocaleString(),
+              until: formatListDateTime(snoozedUntil),
             })
           : t(`chatSignals.notice.${action}`)
       );

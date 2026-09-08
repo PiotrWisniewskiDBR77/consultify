@@ -12,6 +12,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { QaAxisName, QaBand, QaReport } from '@/services/api/tablePlatform.api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 const BAND_COLORS: Record<QaBand, string> = {
   green: 'bg-emerald-500/80',
@@ -120,7 +121,7 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
           </span>
         </div>
         <span className="text-[10px] text-c-text-secondary">
-          {new Date(report.computedAt).toLocaleString()}
+          {formatListDateTime(report.computedAt)}
         </span>
       </div>
       <div

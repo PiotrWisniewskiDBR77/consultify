@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { Artifact } from '../../../types';
 import { ArtifactEditor } from './ArtifactEditor';
 import { ArtifactViewer } from './ArtifactViewer';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface ArtifactsPanelProps {
   artifacts: Artifact[];
@@ -283,7 +284,7 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                 </span>
               )}
             </span>
-            <span>{new Date(activeArtifact.createdAt).toLocaleString()}</span>
+            <span>{formatListDateTime(activeArtifact.createdAt)}</span>
           </div>
         </div>
       )}

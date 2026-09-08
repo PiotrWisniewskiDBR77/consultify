@@ -49,15 +49,45 @@ for (const q of [
   }
   for (const v of out.split('\n')) {
     const s = v.trim();
-    if (s) DANE.add(s.toLowerCase());
+    if (!s) continue;
+    DANE.add(s.toLowerCase());
+    // Markdown łamie JEDNĄ odpowiedź modelu na dziesiątki linii ekranu, a psql
+    // oddaje ją jako jeden rekord. Bez rozbicia na linie licznik policzył 333
+    // słowa treści rozmowy jako „obcy język interfejsu" (zmierzone na PRZED).
+    for (const linia of s.split(/\\n|\n/)) {
+      const l = linia.trim();
+      if (l.length >= 8) DANE.add(l.toLowerCase());
+    }
   }
 }
 
 const DANE_LISTA = [...DANE];
+
+/**
+ * Normalizacja do porównania EKRAN ↔ BAZA.
+ *
+ * Zmierzone 08.09: ekran wątku dawał 320 „obcych słów interfejsu", a wszystkie
+ * pochodziły z polskiej ODPOWIEDZI MODELU — czyli z danych (kategoria K6), nie
+ * z interfejsu. Porównanie linia-w-linię nie działało, bo renderer markdown
+ * zjada znaczniki listy, numerację i pogrubienia, więc linia na ekranie nigdy
+ * nie jest znakowo równa linii w `conversation_messages.content`.
+ * Zdejmujemy więc wszystko, co dokłada markdown, i sklejamy białe znaki.
+ */
+const norm = (s) =>
+  String(s)
+    .toLowerCase()
+    .replace(/[*_`#>]/g, ' ')
+    .replace(/^\s*(?:[-•–]|\d+[.)])\s*/gm, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Cała treść rozmów jako JEDEN znormalizowany korpus — po nim szukamy linii ekranu. */
+const KORPUS = norm(DANE_LISTA.join(' \n '));
+
 /**
  * Linia pochodzi z DANYCH (nie z interfejsu), gdy pokrywa się z wartością
- * z bazy. Tytuły rozmów na liście bywają ucięte wielokropkiem, więc
- * porównujemy też prefiks.
+ * z bazy albo siedzi w korpusie treści rozmów. Tytuły na liście bywają ucięte
+ * wielokropkiem, więc porównujemy też prefiks.
  */
 function czyDane(linia) {
   const l = linia.toLowerCase().trim();
@@ -65,7 +95,9 @@ function czyDane(linia) {
   if (DANE.has(l)) return true;
   const ucieta = l.replace(/(\.\.\.|…)$/, '').trim();
   if (ucieta.length >= 8 && DANE_LISTA.some((d) => d.startsWith(ucieta))) return true;
-  return DANE_LISTA.some((d) => d.length >= 12 && l.includes(d));
+  if (DANE_LISTA.some((d) => d.length >= 12 && l.includes(d))) return true;
+  const n = norm(l).replace(/(\.\.\.|…)$/, '').trim();
+  return n.length >= 12 && KORPUS.includes(n);
 }
 
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
@@ -135,13 +167,15 @@ function liniePodejrzane(text, lang) {
   return wynik;
 }
 
-async function ustawJezyk(p, lang) {
-  sql(`UPDATE users SET language='${lang}' WHERE email='audyt@dbr77.local'`);
-  await p.evaluate((l) => localStorage.setItem('i18nextLng', l), lang);
-}
-
 async function zrzut(p, nazwa, lang) {
   await p.waitForTimeout(2000);
+  let wykryty = await jezykPowloki(p);
+  if (wykryty && wykryty !== lang) {
+    console.log(`  ! powłoka w języku ${wykryty}, oczekiwano ${lang} — przeładowuję`);
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForTimeout(2500);
+    wykryty = await jezykPowloki(p);
+  }
   const text = await p.evaluate(() => document.body.innerText);
   const plik = path.join(OUT, `${nazwa}-${lang}.png`);
   await p.screenshot({ path: plik });
@@ -150,6 +184,8 @@ async function zrzut(p, nazwa, lang) {
     ekran: nazwa,
     jezyk: lang,
     url: p.url(),
+    jezykPowloki: wykryty,
+    zgodnyJezyk: wykryty === null ? null : wykryty === lang,
     obcychSlowUI: w.ui.reduce((a, x) => a + x.trafienia.length, 0),
     obcychLiniiUI: w.ui.length,
     ui: w.ui,
@@ -178,22 +214,42 @@ async function klik(p, locator, opis) {
 }
 
 const b = await chromium.launch();
-const c = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
-const p = await c.newPage();
-await p.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
-await p.waitForTimeout(1500);
-await p.locator('input[type="email"]').first().fill('audyt@dbr77.local');
-await p.locator('input[type="password"]').first().fill('AudytDBR77!2026');
-await p.locator('input[type="password"]').first().press('Enter');
-await p.waitForURL((u) => !String(u).includes('/login'), { timeout: 40000 });
-await p.waitForTimeout(1500);
-await p.evaluate(() => {
-  const K = 'consultify-storage';
-  const r = localStorage.getItem(K);
-  const o = r ? JSON.parse(r) : { state: {}, version: 0 };
-  o.state = { ...(o.state || {}), theme: 'light' };
-  localStorage.setItem(K, JSON.stringify(o));
-});
+
+/**
+ * ŚWIEŻE LOGOWANIE NA KAŻDY JĘZYK — świadomie, zamiast przełączania w locie.
+ *
+ * Przełączanie języka na żywo (UPDATE users.language + localStorage + reload)
+ * zmierzyłem 08.09 jako NIEWIARYGODNE: powłoka zostawała w poprzednim języku,
+ * bo bootstrap czyta użytkownika odtworzonego z localStorage, a moduł Czatu ma
+ * WŁASNY, lepki wybór języka (`chatLanguage`: `consultify-preferred-chat-lang`
+ * + `chatLanguageByConversationId` w `consultify-conversations`), który
+ * przeżywa przeładowanie. Nowy kontekst przeglądarki = pusty localStorage =
+ * jedyne źródło języka to konto. Dowód nie może stać na przyrządzie, który
+ * pokazuje inny język, niż deklaruje nazwa pliku.
+ */
+async function zalogujDlaJezyka(lang) {
+  sql(`UPDATE users SET language='${lang}' WHERE email='audyt@dbr77.local'`);
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+  await page.evaluate((l) => localStorage.setItem('i18nextLng', l), lang);
+  await page.locator('input[type="email"]').first().fill('audyt@dbr77.local');
+  await page.locator('input[type="password"]').first().fill('AudytDBR77!2026');
+  await page.locator('input[type="password"]').first().press('Enter');
+  await page.waitForURL((u) => !String(u).includes('/login'), { timeout: 40000 });
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => {
+    const K = 'consultify-storage';
+    const r = localStorage.getItem(K);
+    const o = r ? JSON.parse(r) : { state: {}, version: 0 };
+    o.state = { ...(o.state || {}), theme: 'light' };
+    localStorage.setItem(K, JSON.stringify(o));
+  });
+  return { ctx, page };
+}
+
+let { ctx: c, page: p } = await zalogujDlaJezyka('en');
 
 // Rozmowa z treścią — do ekranu wątku i oceny odpowiedzi.
 const ROZMOWA = sql(
@@ -209,17 +265,17 @@ const idz = async (url) => {
 
 const raport = [];
 for (const lang of ['en', 'pl']) {
-  await ustawJezyk(p, lang);
+  if (lang !== 'en') {
+    await c.close();
+    ({ ctx: c, page: p } = await zalogujDlaJezyka(lang));
+  }
 
   // 1. Czat — stan pusty (powitanie, wybór wyjścia, pole wpisu, podpowiedzi)
   await idz('/chat');
   raport.push(await zrzut(p, '01-czat-pusty', lang));
 
   // 2. Menu „Narzędzia AI" (Pracuj z AI) — ToolsMenu
-  await klik(p, p.locator('button[aria-label], button').filter({ hasText: re('Narzędzia AI', 'AI tools') }), 'Narzędzia AI');
-  if (!(await p.locator('[role=menu], [role=dialog]').first().isVisible().catch(() => false))) {
-    await klik(p, p.locator('[aria-label*="narzędzia" i], [aria-label*="AI tools" i]'), 'Narzędzia AI (aria)');
-  }
+  await klik(p, p.locator('[aria-label="AI tools"], [aria-label="Narzędzia AI"]'), 'Narzędzia AI');
   raport.push(await zrzut(p, '02-menu-narzedzia-ai', lang));
   await p.keyboard.press('Escape');
 
@@ -231,7 +287,7 @@ for (const lang of ['en', 'pl']) {
 
   // 4. Wybór trybu skupienia / źródeł (FocusModeSelector)
   await idz('/chat');
-  await klik(p, p.locator('button').filter({ hasText: re('Współ-myśliciel|Co-Thinker', 'Co-Thinker') }), 'Co-Thinker');
+  await klik(p, p.locator('[aria-label="Co-Thinker"], [aria-label*="myśliciel" i]'), 'Co-Thinker');
   raport.push(await zrzut(p, '04-tryb-zrodel', lang));
   await p.keyboard.press('Escape');
 
@@ -241,9 +297,14 @@ for (const lang of ['en', 'pl']) {
   raport.push(await zrzut(p, '05-lista-watkow', lang));
 
   // 6. Kebab wątku — akcje rozmowy (zmiana nazwy, projekt, usunięcie)
+  const wierszRozmowy = p.locator('[data-testid*="conversation"], aside a, aside li').first();
+  await wierszRozmowy.hover().catch(() => {});
+  await p.waitForTimeout(600);
   await klik(
     p,
-    p.locator('[aria-label*="akcje" i], [aria-label*="actions" i], [aria-label*="Więcej" i], [aria-label*="More" i]'),
+    p.locator(
+      '[aria-label*="akcje" i], [aria-label*="actions" i], [aria-label*="Więcej" i], [aria-label*="More" i], [aria-label*="options" i]'
+    ),
     'kebab wątku'
   );
   raport.push(await zrzut(p, '06-kebab-watku', lang));
@@ -266,7 +327,7 @@ for (const lang of ['en', 'pl']) {
 
   // 9. Panel pracy / artefaktów (Canvas)
   await idz(`/chat${ROZMOWA ? '/' + ROZMOWA : ''}`);
-  await klik(p, p.locator('[aria-label*="panel pracy" i], [aria-label*="work panel" i]'), 'panel pracy');
+  await klik(p, p.locator('[aria-label="Open work panel"], [aria-label*="panel pracy" i]'), 'panel pracy');
   raport.push(await zrzut(p, '09-panel-artefaktow', lang));
 
   // 10. Arkusz (Excele) — prawy panel/rail: 34 polskie defaulty
@@ -276,10 +337,10 @@ for (const lang of ['en', 'pl']) {
   // 11. Arkusz — prawy panel szczegółów
   await klik(
     p,
-    p.locator('[aria-label*="Szczegóły arkusza" i], [aria-label*="Sheet details" i], [aria-label*="details" i]'),
-    'prawy panel arkusza'
+    p.locator('[aria-label="Sources and assumptions"], [aria-label="Źródła i założenia"]'),
+    'arkusz — zakładka Źródła'
   );
-  raport.push(await zrzut(p, '11-arkusz-prawy-panel', lang));
+  raport.push(await zrzut(p, '11-arkusz-zrodla', lang));
 
   // 12. Prezentacje — wybór trybu startu
   await idz('/prezentacje');

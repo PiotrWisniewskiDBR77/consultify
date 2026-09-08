@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
 import { recalcWorkbook, type FormulaSheet } from '@/utils/workbookFormulaEngine';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 const asNumber = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -12,7 +13,9 @@ const asNumber = (value: unknown): number | null => {
 };
 
 const display = (value: unknown): string =>
-  typeof value === 'number' ? value.toLocaleString('pl-PL', { maximumFractionDigits: 1 }) : String(value ?? '—');
+  typeof value === 'number'
+    ? formatListNumber(Number(value.toFixed(1)))
+    : String(value ?? '—');
 
 export const WorkbookBoardSummary: React.FC<{ sheets: WorkbookGridSheet[]; rawSheets?: FormulaSheet[] | null; activeSheetName?: string }> = ({ sheets, rawSheets, activeSheetName }) => {
   const computedSheets = useMemo<WorkbookGridSheet[]>(() => {

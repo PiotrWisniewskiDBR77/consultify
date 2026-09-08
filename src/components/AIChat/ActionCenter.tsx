@@ -46,6 +46,7 @@ function statusLabel(status: string | undefined): string {
 }
 
 export const ActionCenter: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const selectedActionId = searchParams.get('actionId');
   const [actions, setActions] = React.useState<ActionCenterAction[]>([]);

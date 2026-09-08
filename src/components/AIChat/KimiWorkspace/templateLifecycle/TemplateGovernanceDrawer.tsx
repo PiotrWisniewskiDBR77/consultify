@@ -23,6 +23,7 @@ import {
 } from '@/services/api/templateLifecycle.api';
 
 import { TemplateLifecycleBadge } from './TemplateLifecycleBadge';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 export interface TemplateGovernanceDrawerProps {
   open: boolean;
@@ -47,10 +48,7 @@ function fmtDate(iso: string): string {
   try {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`;
+    return formatListDateTime(d);
   } catch {
     return iso;
   }
