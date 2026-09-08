@@ -13,6 +13,7 @@
  * an empty state prompting model selection — never a synthetic demo tree („Dane
  * demo = twarz produktu", zakaz syntetycznego fallbacku na produkcji).
  */
+import { ft } from '../../Finance/shared/financeT';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -390,7 +391,7 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
           >
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-xs font-medium uppercase tracking-wide text-indigo-500">
-                Wynik what-if
+                {ft('finance.driverPlanner.whatIfResult', 'What-if result')}
               </span>
               <span
                 className="font-mono text-lg font-semibold tabular-nums text-indigo-900 dark:text-indigo-100"
@@ -482,7 +483,7 @@ export const DriverPlannerPanel: React.FC<DriverPlannerPanelProps> = ({
           {tornadoBars.length > 0 && baseResult !== null && (
             <div className="space-y-2" data-testid="driver-tornado">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Wrażliwość (tornado)
+                {ft('finance.driverPlanner.sensitivity', 'Sensitivity (tornado)')}
               </h4>
               <TornadoChart bars={tornadoBars} base={baseResult} formatValue={formatValue} />
             </div>

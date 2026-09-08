@@ -96,7 +96,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           <input
             value={modelRef}
             onChange={(e) => setModelRef(e.target.value)}
-            placeholder={t('finance.link.financeRefPlaceholder', 'np. identyfikator modelu')}
+            placeholder={t('finance.link.financeRefPlaceholder', 'e.g. model identifier')}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
         </div>

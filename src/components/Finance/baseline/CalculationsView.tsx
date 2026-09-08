@@ -12,6 +12,7 @@
  * emituje automatycznego finansowania; ten widok tylko RENDERUJE to, co
  * silnik zwrócił, nie koryguje.
  */
+import { ft } from '../shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -180,7 +181,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
             className="rounded-md border border-c-border-subtle bg-c-bg px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             data-testid="baseline-granularity-select"
           >
-            <option value="monthly">Miesięcznie</option>
+            <option value="monthly">{ft('finance.calculations.monthly', 'Monthly')}</option>
             <option value="quarterly">Kwartalnie</option>
             <option value="yearly">Rocznie</option>
           </select>
@@ -200,12 +201,12 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       {/* ── Stan compute — NIGDY surowy "Request timed out" (OWN-FIN-018). ── */}
       {computeState === 'computing' && (
         <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-computing-banner">
-          Trwa przeliczanie modelu (solver zbieżności iteruje po każdym miesiącu)…
+          {ft('finance.calculations.computing', 'Recalculating the model (the convergence solver iterates over every month)…')}
         </div>
       )}
       {computeState === 'recovering' && (
         <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-recovering-banner">
-          Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…
+          {ft('finance.calculations.slowConnection', 'The connection took longer than usual — checking whether the calculation finished anyway…')}
         </div>
       )}
       {computeState === 'failed' && computeErrorDetail && (
@@ -245,11 +246,11 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       */}
       <div className="flex-1 overflow-auto pb-16">
         {loadingOutputs ? (
-          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">Wczytuję wyliczenia…</div>
+          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">{ft('finance.calculations.loading', 'Loading calculations…')}</div>
         ) : outputs.length === 0 && groupedPeriods.length === 0 ? (
           <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 p-6 text-center">
-            <p className="text-sm font-semibold text-c-text">Brak wyliczeń</p>
-            <p className="max-w-sm text-xs text-c-text-muted">Uruchom przeliczenie, aby zobaczyć prognozowany P&amp;L, bilans i przepływy.</p>
+            <p className="text-sm font-semibold text-c-text">{ft('finance.calculations.empty', 'No calculations')}</p>
+            <p className="max-w-sm text-xs text-c-text-muted">{ft('finance.calculations.emptyHint', 'Run a calculation to see the forecast P&L, balance sheet and cash flows.')}</p>
           </div>
         ) : (
           (['P&L', 'BS', 'CF'] as const).map((statementType) => (

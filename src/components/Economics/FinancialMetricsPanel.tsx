@@ -5,6 +5,7 @@
  * with visual indicators and explanations.
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
   ArrowDownRight,
@@ -188,7 +189,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
           }
           status={irrStatus}
           icon={<Percent size={20} className={statusColors[irrStatus].text} />}
-          tooltip="Internal Rate of Return - discount rate at which NPV = 0"
+          tooltip={ft('finance.metrics.irrHint', 'Internal Rate of Return — the discount rate at which NPV = 0')}
         />
 
         <MetricCard

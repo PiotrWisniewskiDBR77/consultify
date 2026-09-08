@@ -7,6 +7,7 @@
  * fund / defer / kill. Kolory wg §1.
  */
 
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 export interface PortfolioPoint {
@@ -90,7 +91,7 @@ export const PortfolioBubble: React.FC<PortfolioBubbleProps> = ({
         data-testid="portfolio-bubble"
         className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
       >
-        Brak danych — dodaj pozycje portfela
+        {ft('finance.charts.portfolioBubble.empty', 'No data — add portfolio items')}
       </div>
     );
   }

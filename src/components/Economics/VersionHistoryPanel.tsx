@@ -5,6 +5,7 @@
  * Supports creating snapshots, comparing versions, and restoring.
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   Bookmark,
   Calendar,
@@ -261,7 +262,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             {showCreateForm && (
               <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
                 <h4 className="font-medium text-navy-900 dark:text-white mb-4">
-                  Create new version
+                  {ft('finance.versionHistory.createNew', 'Create new version')}
                 </h4>
                 <div className="space-y-3">
                   <input
@@ -394,10 +395,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                   <History className="text-slate-600 dark:text-slate-500" size={28} />
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  No zapisanych version
+                  {ft('finance.versionHistory.empty', 'No saved versions')}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-500">
-                  Create first version to track changesy
+                  {ft('finance.versionHistory.emptyHint', 'Create the first version to track changes')}
                 </p>
               </div>
             ) : (

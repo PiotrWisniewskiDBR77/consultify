@@ -45,6 +45,7 @@
  * workspace to resolve `authorId` to a real name, so it stays labeled as an ID rather than being
  * dressed up as a name), just not the primary thing the reader's eye lands on.
  */
+import { ft } from '../../shared/financeT';
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -169,7 +170,7 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
 
   return (
     <div className="w-full space-y-4" data-testid="valuation-source-step">
-      <h2 className="text-sm font-semibold text-c-text">Źródło wyceny</h2>
+      <h2 className="text-sm font-semibold text-c-text">{ft('finance.valuationSteps.valuationSource', 'Valuation source')}</h2>
       <p className="text-xs text-c-text-muted">
         Ta wersja wyceny (<span className="font-mono">{businessVersionId}</span>
         {variant ? `, wariant „${variant.name}"` : ''}) musi wskazywać dokładną, zatwierdzoną wersję
@@ -179,7 +180,7 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
 
       {lineage === null && (
         <p className="text-xs text-c-text-muted" data-testid="source-step-loading">
-          Wczytywanie powiązania źródła…
+          {ft('finance.valuationSteps.loadingSourceLink', 'Loading the source link…')}
         </p>
       )}
 
@@ -224,22 +225,22 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
                     aria-hidden
                     className="transition-transform duration-150 group-open:rotate-90"
                   />
-                  Szczegóły techniczne
+                  {ft('finance.valuationSteps.technicalDetails', 'Technical details')}
                 </summary>
                 <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
-                  <dt>ID wersji źródłowej</dt>
+                  <dt>{ft('finance.valuationSteps.sourceVersionId', 'Source version ID')}</dt>
                   <dd className="font-mono text-c-text">{edge.sourceVersionId}</dd>
                   <dt>ID wersji docelowej</dt>
                   <dd className="font-mono text-c-text">{edge.targetVersionId}</dd>
-                  <dt>Typ powiązania</dt>
+                  <dt>{ft('finance.valuationSteps.linkType', 'Link type')}</dt>
                   <dd className="text-c-text">{formatFreeformLineageCode(edge.edgeType)}</dd>
-                  <dt>Hash migawki założeń</dt>
+                  <dt>{ft('finance.valuationSteps.assumptionsSnapshotHash', 'Assumptions snapshot hash')}</dt>
                   <dd className="font-mono text-c-text">{edge.assumptionSnapshotHash ?? '—'}</dd>
                   <dt>Compute run</dt>
                   <dd className="font-mono text-c-text">{edge.computeRunId ?? '—'}</dd>
                   <dt>Autor (ID techniczne)</dt>
                   <dd className="font-mono text-c-text">{edge.authorId ?? '—'}</dd>
-                  <dt>ID powiązania</dt>
+                  <dt>{ft('finance.valuationSteps.linkId', 'Link ID')}</dt>
                   <dd className="font-mono text-c-text">{edge.edgeId}</dd>
                 </dl>
               </details>

@@ -85,7 +85,7 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
       expect(
         screen
           .getAllByTestId('finance-status-announcer')
-          .some((el) => el.textContent?.includes('Eksport gotowy'))
+          .some((el) => el.textContent?.includes('Export ready'))
       ).toBe(true)
     );
   });
@@ -123,7 +123,7 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
       expect(
         screen
           .getAllByTestId('finance-status-announcer')
-          .some((el) => el.textContent?.includes('Podgląd gotowy'))
+          .some((el) => el.textContent?.includes('Preview ready'))
       ).toBe(true)
     );
 
@@ -132,7 +132,7 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
       expect(
         screen
           .getAllByTestId('finance-status-announcer')
-          .some((el) => el.textContent?.includes('Zastosowano'))
+          .some((el) => el.textContent?.includes('Applied'))
       ).toBe(true)
     );
   });

@@ -413,7 +413,7 @@ export function FinanceCommentsPanel({
           <div className="mt-2 flex gap-1.5">
             <input
               className="flex-1 rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              placeholder={t('finance.comments.newChecklistItemPlaceholder', 'Nowa pozycja checklisty…')}
+              placeholder={t('finance.comments.newChecklistItemPlaceholder', 'New checklist item…')}
               value={newChecklistItem}
               onChange={(e) => setNewChecklistItem(e.target.value)}
               data-testid="checklist-new-item-input"

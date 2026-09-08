@@ -202,7 +202,7 @@ export function FinanceSavedViewsPanel({
           <p className="text-xs font-medium text-c-text-primary">{t('finance.savedViews.saveCurrent', 'Save current view')}</p>
           <input
             className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            placeholder={t('finance.savedViews.namePlaceholder', 'Nazwa widoku…')}
+            placeholder={t('finance.savedViews.namePlaceholder', 'View name…')}
             value={newViewName}
             onChange={(e) => setNewViewName(e.target.value)}
             data-testid="saved-view-name-input"

@@ -75,7 +75,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
         </h3>
         <div>
           <label className="text-xs text-slate-500">
-            {t('finance.prediction.budgetName', 'Nazwa')}
+            {t('finance.prediction.budgetName', 'Name')}
           </label>
           <input
             value={title}
@@ -92,7 +92,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-slate-500">
-              {t('finance.prediction.periodStart', 'Okres od')}
+              {t('finance.prediction.periodStart', 'Period from')}
             </label>
             <input
               type="month"
@@ -106,7 +106,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           </div>
           <div>
             <label className="text-xs text-slate-500">
-              {t('finance.prediction.periodEnd', 'Okres do')}
+              {t('finance.prediction.periodEnd', 'Period to')}
             </label>
             <input
               type="month"

@@ -16,6 +16,7 @@
  *
  * Wpięty w FinanceHub (zakładka „models", za flagą valueOffice).
  */
+import { ft } from '../../Finance/shared/financeT';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -313,14 +314,14 @@ export const ValueOfficePanel: React.FC<Props> = ({
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Value Office — motor wartości transformacji
+          {ft('finance.valueOffice.heading', 'Value Office — the transformation value engine')}
         </h3>
         {loading && (
           <span
             className="text-xs text-slate-400 dark:text-slate-500"
             data-testid="value-office-busy"
           >
-            Ładowanie…
+            {ft('finance.valueOffice.loading', 'Loading…')}
           </span>
         )}
       </div>
@@ -332,7 +333,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
           data-testid="kpi-total-identified"
         >
           <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Zidentyfikowana wartość
+            {ft('finance.valueOffice.identifiedValue', 'Identified value')}
           </p>
           <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
             {fmtMoney(bridge?.totalIdentified ?? 0)}
@@ -343,7 +344,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
           data-testid="kpi-total-realized"
         >
           <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Zrealizowana wartość
+            {ft('finance.valueOffice.realizedValue', 'Realised value')}
           </p>
           <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
             {fmtMoney(bridge?.totalRealized ?? 0)}
@@ -354,7 +355,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
       {/* Most wartości */}
       <section data-testid="value-bridge-chart">
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Most wartości (Baseline→Realized→Banked)
+          {ft('finance.valueOffice.valueBridge', 'Value bridge (Baseline→Realized→Banked)')}
         </h4>
         <FinanceWaterfall steps={bridge?.steps ?? []} />
       </section>

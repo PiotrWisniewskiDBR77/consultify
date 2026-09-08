@@ -37,7 +37,7 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
     );
     expect(screen.getByTestId('safe-sibling')).toBeInTheDocument();
     expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument();
-    expect(screen.getByText(/Nie udało się wyświetlić: Wycena DBR77 FY2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Could not display: Wycena DBR77 FY2026/)).toBeInTheDocument();
   });
 
   it('pokazuje correlation ID w UI', () => {
@@ -47,8 +47,8 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
       </FinanceErrorBoundary>
     );
     const correlationEl = screen.getByTestId('finance-error-boundary-correlation-id');
-    expect(correlationEl.textContent).toMatch(/ID zgłoszenia:/);
-    expect(correlationEl.textContent!.length).toBeGreaterThan('ID zgłoszenia: '.length);
+    expect(correlationEl.textContent).toMatch(/Report ID:/);
+    expect(correlationEl.textContent!.length).toBeGreaterThan('Report ID: '.length);
   });
 
   it('KONTROLA NEGATYWNA: „Ponów” cofa stan błędu i pozwala normalnemu drzewu wyrenderować się ponownie', () => {
@@ -68,7 +68,7 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
     );
     expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Ponów'));
+    fireEvent.click(screen.getByText('Retry'));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('recovered')).toBeInTheDocument();
@@ -104,7 +104,7 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
     expect(screen.getByTestId('selected-artifact')).toHaveTextContent('artifact-42');
     expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Ponów'));
+    fireEvent.click(screen.getByText('Retry'));
 
     // Artefakt wybrany w rodzicu — niezmieniony.
     expect(screen.getByTestId('selected-artifact')).toHaveTextContent('artifact-42');

@@ -25893,7 +25893,9 @@
         "submit": "Wskaż źródło",
         "submitting": "Zapisywanie…",
         "noCandidates": "Brak zatwierdzonych wersji Baseline lub Scenariusza w tej organizacji. Najpierw zatwierdź model bazowy albo scenariusz."
-      }
+      },
+      "sendAsCandidate": "Wyślij jako kandydata na Initiative",
+      "verifyingSource": "Weryfikowanie źródła rekomendacji…"
     },
     "budget": {
       "approve": "Zatwierdź",
@@ -26848,7 +26850,12 @@
       "blockedByDemo": {
         "title": "Most wartości i portfel decyzyjny są niedostępne w trybie demo",
         "body": "Workspace demo jest tylko do odczytu i blokuje zapytanie do motoru wartości. Reszta kokpitu działa, ale ta część historii wartości nie jest pokazana — nie traktuj jej jako wykonanej kalkulacji."
-      }
+      },
+      "valueBridge": "Most wartości (Baseline→Realized→Banked)",
+      "realizedValue": "Zrealizowana wartość",
+      "identifiedValue": "Zidentyfikowana wartość",
+      "loading": "Ładowanie…",
+      "heading": "Value Office — motor wartości transformacji"
     },
     "driverPlanner": {
       "title": "Planowanie driver-based + what-if",
@@ -26857,7 +26864,9 @@
       "empty": {
         "title": "Wybierz model finansowy",
         "body": "Drzewo driverów rozkłada prognozę wybranego modelu (EBIT = Przychód − COGS − Opex − Amortyzacja). Wybierz model z listy, aby planować i uruchamiać what-if na jego realnych danych."
-      }
+      },
+      "sensitivity": "Wrażliwość (tornado)",
+      "whatIfResult": "Wynik symulacji „co jeśli”"
     },
     "errors": {
       "realSourceTitle": "Źródło danych finansowych wymaga uwagi",
@@ -26901,6 +26910,240 @@
         "review": "W przeglądzie",
         "approved": "Zatwierdzone"
       }
+    },
+    "common": {
+      "save": "Zapisz",
+      "confirm": "Potwierdź",
+      "cancel": "Anuluj",
+      "remove": "Usuń",
+      "value": "Wartość",
+      "quality": "Jakość",
+      "source": "Źródło",
+      "retry": "Ponów"
+    },
+    "benefits": {
+      "addMeasurement": "Dodaj measurement"
+    },
+    "digitization": {
+      "saveChanges": "Zapisz changesy",
+      "toggleHelp": "Pokaż/ukryj pomoc"
+    },
+    "evidence": {
+      "addHint": "Dodaj dowód potwierdzający ocenę",
+      "addNew": "Dodaj nowy dowód"
+    },
+    "excelImport": {
+      "checkSummary": "Sprawdź podsumowanie i potwierdź import",
+      "readyToImport": "Gotowe do importu",
+      "mayTakeSeconds": "To może potrwać kilka sekund",
+      "checkRecognition": "Sprawdź, czy plik został poprawnie rozpoznany"
+    },
+    "metrics": {
+      "irrHint": "Wewnętrzna stopa zwrotu — stopa dyskontowa, przy której NPV = 0"
+    },
+    "initiativeIntegration": {
+      "linkedHint": "Analiza zostanie powiązana z tą inicjatywą i dostępna w module Finanse",
+      "transferHint": "Dane zostaną przeniesione automatycznie:",
+      "fullAnalysisHint": "Przeprowadź pełną analizę NPV, IRR, okresu zwrotu i wrażliwości dla tej inicjatywy.",
+      "openAnalysisHint": "Kliknij „Otwórz analizę\", żeby zobaczyć pełne oceny i przeprowadzić szczegółową analizę finansową"
+    },
+    "charts": {
+      "waterfall": {
+        "title": "Wykres mostka wartości (waterfall)",
+        "empty": "Brak danych — dodaj kroki mostka wartości"
+      },
+      "footballField": {
+        "empty": {
+          "title": "Football field wyceny — brak danych"
+        }
+      },
+      "goldenThread": {
+        "broken": "· zerwana nić",
+        "empty": "Brak danych — połącz inicjatywy z KPI i wartością, aby zobaczyć złotą nić."
+      },
+      "portfolioBubble": {
+        "empty": "Brak danych — dodaj pozycje portfela"
+      },
+      "sCurve": {
+        "today": "dziś",
+        "title": "Krzywa S realizacji wartości: plan vs realizacja",
+        "empty": {
+          "title": "Krzywa S — brak danych"
+        }
+      },
+      "heatmap": {
+        "empty": {
+          "title": "Heatmapa wrażliwości — brak danych"
+        }
+      },
+      "tornado": {
+        "title": "Wykres tornado — wrażliwość jednozmiennowa",
+        "empty": "Brak danych — dodaj drivery wrażliwości"
+      }
+    },
+    "investmentAppraisal": {
+      "npvVsThreshold": "NPV względem progu opłacalności (0)",
+      "unavailable": "Analiza niedostępna chwilowo — spróbuj ponownie.",
+      "computing": "Liczę…"
+    },
+    "varianceBridge": {
+      "loading": "Ładowanie analizy wariancji…",
+      "empty": "Brak danych budżetowych — dodaj pozycje plan/wykonanie.",
+      "unavailable": "Analiza wariancji niedostępna chwilowo — widok działa normalnie.",
+      "title": "Budżet vs wykonanie (variance bridge)"
+    },
+    "analysisWizard": {
+      "incomplete": "Kreator jest niekompletny — wróć i uzupełnij brakujące kroki.",
+      "readyToCreate": "Gotowe do utworzenia. Kliknij „Utwórz i przelicz”, aby założyć analizę i uruchomić pierwsze przeliczenie.",
+      "customFormula": "Własna formuła (piaskownica)",
+      "pickAtLeastOne": "Wybierz przynajmniej jeden.",
+      "searchKpi": "Szukaj wskaźnika…",
+      "industry": "Branża",
+      "pickPeriods": "Wybierz okresy do analizy (historyczne i prognozowane).",
+      "noSources": "Brak dostępnych źródeł — potrzebny jest zatwierdzony pakiet sprawozdań.",
+      "pickSourceHint": "Wybierz pakiet sprawozdań (Statement Pack Version), z którego analiza pobierze dane źródłowe.",
+      "close": "Zamknij kreator"
+    },
+    "analysisKpi": {
+      "noPreviousVersions": "Brak wcześniejszych wersji tego wskaźnika.",
+      "lineage": "Lineage — źródło danych",
+      "benchmarkUnavailable": "Benchmark niedostępny dla tego wskaźnika.",
+      "industryBenchmark": "Benchmark branżowy",
+      "formulaAndInputs": "Formuła i składniki",
+      "currentValue": "Wartość bieżąca",
+      "closeDetail": "Zamknij kartę szczegółową",
+      "chartOverTime": "Wykres wartości w czasie",
+      "notEnoughData": "Brak wystarczających danych do wykresu."
+    },
+    "reasonDialog": {
+      "title": "Podaj powód"
+    },
+    "actionCards": {
+      "title": "Karty działania — Finanse"
+    },
+    "scenario": {
+      "implementationCostImpactAria": "Koszt wdrożenia wpływu",
+      "implementationCostPerImpact": "Koszt wdrożenia (per-impact)",
+      "impactProbability": "Prawdopodobieństwo wpływu",
+      "impactConfidence": "Confidence wpływu",
+      "impactStartPeriod": "Okres startu wpływu",
+      "impactSize": "Wielkość wpływu",
+      "addImpact": "+ Dodaj wpływ",
+      "implementationCost": "Koszt wdrożenia",
+      "rampUpMonthsAria": "Ramp-up w miesiącach",
+      "rampUpMonths": "Ramp-up (miesiące)",
+      "defaultStartPeriod": "Domyślny okres startu",
+      "initiativeOwner": "Właściciel inicjatywy",
+      "owner": "Właściciel",
+      "noInitiatives": "Brak inicjatyw — dodaj pierwszą powyżej.",
+      "clientPreviewHint": "Podgląd kliencki, nieautorytatywny — uruchom „Uruchom preflight\" w pasku, żeby dostać realną (Layer 2, waluta) analizę serwera.",
+      "addInitiative": "+ Dodaj inicjatywę",
+      "chainHint": "Łańcuch: inicjatywa → założenie → driver/KPI → linia sprawozdania → prognoza.",
+      "noOverrides": "Brak nadpisań — dodaj pierwsze powyżej.",
+      "addOverride": "+ Dodaj nadpisanie"
+    },
+    "scenarioResults": {
+      "noExceptions": "Brak wyjątków.",
+      "exceptionRegister": "Rejestr wyjątków (DEC-FIN-009)",
+      "noEbitdaData": "Brak danych EBITDA/Net Debt.",
+      "noCashData": "Brak danych o gotówce lub polityce min. cash — wyjątek, nie blokada.",
+      "liquidityHeadroom": "Zapas płynności",
+      "comparisonHeader": "Porównanie ze scenariuszem bazowym — absolutne / Δ / %"
+    },
+    "advisor": {
+      "frozen": "Zamrożone",
+      "empty": "Brak wygenerowanych wniosków dla tego wariantu.",
+      "loading": "Wczytywanie wniosków…",
+      "humanApprovalHint": "i nie zastępuje zatwierdzenia przez człowieka. Działa wyłącznie na świeżej, jeszcze niezatwierdzonej wersji kandydackiej.",
+      "doesNotApprove": "nie zatwierdza decyzji"
+    },
+    "valuationSteps": {
+      "assumptionsTitle": "Założenia — WACC i struktura kapitału",
+      "exportUnavailable": "Eksport wyceny nie jest dziś dostępny",
+      "addMethod": "Dodaj metodę",
+      "readiness": "Gotowość",
+      "noEvBridge": "Brak zapisanego mostu EV→Equity dla tego wariantu.",
+      "equityValue": "Wartość kapitału własnego (Equity Value)",
+      "divergenceWarnings": "Ostrzeżenia o rozbieżności metod",
+      "methodRange": "Przedział wyników metod:",
+      "evHeading": "Wartość przedsiębiorstwa (EV) — nagłówek",
+      "loadingResults": "Wczytywanie wyników…",
+      "sensitivityGridAria": "Siatka wrażliwości EV: wiersze = wzrost terminalny g, kolumny = WACC",
+      "sensitivityTitle": "Wrażliwość — WACC × wzrost terminalny (5×5)",
+      "linkId": "ID powiązania",
+      "assumptionsSnapshotHash": "Hash migawki założeń",
+      "linkType": "Typ powiązania",
+      "sourceVersionId": "ID wersji źródłowej",
+      "technicalDetails": "Szczegóły techniczne",
+      "loadingSourceLink": "Wczytywanie powiązania źródła…",
+      "valuationSource": "Źródło wyceny"
+    },
+    "assumptions": {
+      "emptyModel": "Ten model nie ma jeszcze żadnych założeń.",
+      "impactPreview": "Podgląd wpływu",
+      "forecastValue": "Wartość prognozy",
+      "calibrationRule": "Reguła kalibracji",
+      "assumption": "Założenie",
+      "removeRowConfirm": "Usunąć wiersz założenia?",
+      "removeRow": "Usuń wiersz założenia",
+      "addRow": "Dodaj wiersz",
+      "customName": "Nazwa założenia (własna)",
+      "addAssumption": "Dodaj założenie",
+      "saveAnyway": "Zapisz mimo to",
+      "hasWarnings": "Zestaw założeń ma ostrzeżenia",
+      "confirmSaveWithWarnings": "Potwierdź zapis zestawu założeń mimo ostrzeżeń",
+      "addAssumptionButton": "+ Dodaj założenie",
+      "scheduleInertHint2": "Ten harmonogram nie zasila dziś wyliczeń (silnik go jeszcze nie czyta) — wiersz zapisze się, ale nie zmieni żadnej liczby w „Wyliczeniach\".",
+      "customCodePlaceholder": "np. HEADCOUNT_GROWTH_PCT"
+    },
+    "calculations": {
+      "emptyHint": "Uruchom przeliczenie, aby zobaczyć prognozowany P&L, bilans i przepływy.",
+      "empty": "Brak wyliczeń",
+      "loading": "Wczytuję wyliczenia…",
+      "slowConnection": "Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…",
+      "computing": "Trwa przeliczanie modelu (solver zbieżności iteruje po każdym miesiącu)…",
+      "monthly": "Miesięcznie"
+    },
+    "errorBoundary": {
+      "backToList": "Wróć do listy",
+      "correlationId": "ID zgłoszenia:",
+      "detail": "Szczegół:",
+      "title": "Nie udało się wyświetlić: {{label}}",
+      "body": "Wystąpił nieoczekiwany błąd w tym dokumencie. Reszta obszaru roboczego (lista, pasek, inne dokumenty) działa dalej — Twój wybrany artefakt i niezapisane zmiany są zachowane."
+    },
+    "utilities": {
+      "compareUnavailable": "Porównanie będzie dostępne po utworzeniu drugiej wersji artefaktu.",
+      "title": "Narzędzia Finance"
+    },
+    "statementTable": {
+      "noCanonicalLineId": "Brak canonicalLineId — grupowane po kodzie źródłowym"
+    },
+    "reconciliation": {
+      "bucketBreakdown": "Podział po bucketach",
+      "detailFailed": "Nie udało się wczytać detalu tego przebiegu."
+    },
+    "relatedArtifacts": {
+      "empty": "Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.",
+      "notLoaded": "Powiązane artefakty nie zostały jeszcze wczytane."
+    },
+    "sourceEvidence": {
+      "sourceAmount": "Kwota źródłowa",
+      "noMappingRow": "Wybrany przebieg rekoncyliacji nie zawiera wiersza mapowania dla tej komórki.",
+      "mappingPath": "Ścieżka mapowania (rekoncyliacja)",
+      "noEvidence": "Brak zapisanego dowodu źródłowego dla tej wartości (sourceRef = brak).",
+      "sourceEvidence": "Dowód źródłowy",
+      "adjustmentReason": "Powód korekty",
+      "valueNature": "Charakter wartości",
+      "currencyScale": "Waluta / skala (tej komórki)",
+      "missingReason": "Powód braku"
+    },
+    "aiRecommendations": {
+      "createInitiative": "Utwórz inicjatywę"
+    },
+    "versionHistory": {
+      "createNew": "Utwórz nową wersję",
+      "empty": "Brak zapisanych wersji",
+      "emptyHint": "Utwórz pierwszą wersję, żeby śledzić zmiany"
     }
   },
   "portfolio": {

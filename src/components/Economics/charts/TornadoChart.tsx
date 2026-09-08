@@ -10,6 +10,7 @@
  * część powyżej `base` = zysk (--fin-positive / emerald).
  */
 
+import { ft } from '../../Finance/shared/financeT';
 import React, { useMemo, useState } from 'react';
 
 export interface TornadoBar {
@@ -99,7 +100,7 @@ export const TornadoChart: React.FC<TornadoChartProps> = ({
         data-testid="tornado-chart"
         className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
       >
-        Brak danych — dodaj drivery wrażliwości
+        {ft('finance.charts.tornado.empty', 'No data — add sensitivity drivers')}
       </div>
     );
   }
@@ -111,7 +112,7 @@ export const TornadoChart: React.FC<TornadoChartProps> = ({
         viewBox={`0 0 ${VIEW_W} ${svgH}`}
         width="100%"
         role="img"
-        aria-label="Wykres tornado — wrażliwość jednozmiennowa"
+        aria-label={ft('finance.charts.tornado.title', 'Tornado chart — one-way sensitivity')}
         className="select-none"
       >
         {/* Linia bazowa (pionowa) */}

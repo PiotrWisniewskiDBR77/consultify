@@ -26,6 +26,7 @@
  * (celowo — check-list-canon R1 skanuje pod kątem tych tokenów).
  */
 
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 import {
@@ -202,7 +203,7 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
                     // TONE_SHELL.warning (już zweryfikowana kontrastowo tam).
                     <span
                       className="ml-1.5 shrink-0 rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-amber-900 dark:text-amber-300"
-                      title="Brak canonicalLineId — grupowane po kodzie źródłowym"
+                      title={ft('finance.statementTable.noCanonicalLineId', 'No canonicalLineId — grouped by source code')}
                     >
                       nieprzypisana
                     </span>

@@ -29,6 +29,7 @@
  * capability; mounting it is a separate step gated by the project's own
  * visual-acceptance process.
  */
+import { ft } from '../../Finance/shared/financeT';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { BulletChart } from '@/components/Economics/charts';
@@ -353,7 +354,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
 
       {bound && loading && (
         <p className="mb-3 text-xs text-c-text-muted" data-testid="appraise-loading">
-          Liczę…
+          {ft('finance.investmentAppraisal.computing', 'Calculating…')}
         </p>
       )}
 
@@ -365,7 +366,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
 
       {failed && (
         <p className="text-sm text-c-text-muted" data-testid="appraise-failed">
-          Analiza niedostępna chwilowo — spróbuj ponownie.
+          {ft('finance.investmentAppraisal.unavailable', 'Analysis is temporarily unavailable — please try again.')}
         </p>
       )}
 
@@ -405,7 +406,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
           {/* NPV vs break-even threshold (0) */}
           <div className="border-t border-c-border-subtle pt-2">
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-              NPV względem progu opłacalności (0)
+              {ft('finance.investmentAppraisal.npvVsThreshold', 'NPV against the break-even threshold (0)')}
             </p>
             <BulletChart
               label="NPV"

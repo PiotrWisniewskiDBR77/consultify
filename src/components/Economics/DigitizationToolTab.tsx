@@ -5,6 +5,7 @@
  * Features axis selection, area evaluation, and score visualization
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
   Building,
@@ -468,7 +469,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
-                <span className="text-slate-600 dark:text-slate-300">Zapisz changesy</span>
+                <span className="text-slate-600 dark:text-slate-300">{ft('finance.digitization.saveChanges', 'Save changes')}</span>
                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
                   Ctrl+S
                 </kbd>
@@ -486,7 +487,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                 </kbd>
               </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-slate-600 dark:text-slate-300">Show/hide help</span>
+                <span className="text-slate-600 dark:text-slate-300">{ft('finance.digitization.toggleHelp', 'Show/hide help')}</span>
                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
                   ?
                 </kbd>

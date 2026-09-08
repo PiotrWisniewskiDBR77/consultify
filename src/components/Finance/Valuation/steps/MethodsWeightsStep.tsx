@@ -4,6 +4,7 @@
  * live, client-side, via `validateBasketWeights` before the batch PATCH is even sent), and
  * cross-checks are never weighted.
  */
+import { ft } from '../../shared/financeT';
 import React, { useEffect, useState } from 'react';
 
 import type { ValuationBasketUpdate } from '@/services/api/financeV2.api';
@@ -97,7 +98,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
         <thead>
           <tr className="border-b border-c-border-subtle text-c-text-muted">
             <th className="py-1.5 pr-2">Metoda</th>
-            <th className="py-1.5 pr-2">Gotowość</th>
+            <th className="py-1.5 pr-2">{ft('finance.valuationSteps.readiness', 'Readiness')}</th>
             <th className="py-1.5 pr-2">Wynik (EV)</th>
             <th className="py-1.5 pr-2">W koszyku</th>
             <th className="py-1.5 pr-2">Waga %</th>
@@ -226,7 +227,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
           onClick={() => onCreateMethod(newMethodType)}
           className="inline-flex min-h-[2.75rem] items-center rounded-xl border border-c-border-subtle bg-c-surface px-3 text-xs font-semibold text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Dodaj metodę
+          {ft('finance.valuationSteps.addMethod', 'Add method')}
         </button>
       </div>
     </div>

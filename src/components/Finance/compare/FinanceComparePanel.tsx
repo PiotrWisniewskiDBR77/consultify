@@ -278,7 +278,7 @@ export function FinanceComparePanel({
           className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-6"
           data-testid="compare-summary"
         >
-          <SummaryTile label={t('finance.compare.rows', 'Wiersze')} value={result.summary.totalRows} />
+          <SummaryTile label={t('finance.compare.rows', 'Rows')} value={result.summary.totalRows} />
           <SummaryTile label={t('finance.compare.bothSides', 'Obie strony')} value={result.summary.bothPresent} />
           <SummaryTile label={t('finance.compare.missingInA', 'Missing in A')} value={result.summary.missingInA} />
           <SummaryTile label={t('finance.compare.missingInB', 'Missing in B')} value={result.summary.missingInB} />

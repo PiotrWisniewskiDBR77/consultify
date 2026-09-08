@@ -56,11 +56,11 @@ type ExportState =
 function exportStateMessage(state: ExportState, t: TFunction): string {
   switch (state.kind) {
     case 'idle':
-      return t('finance.exportImport.export.idle', 'Eksport gotowy do uruchomienia.');
+      return t('finance.exportImport.export.idle', 'Export is ready to run.');
     case 'exporting':
       return t('finance.exportImport.export.exporting', 'Exporting .xlsx file…');
     case 'exported':
-      return t('finance.exportImport.export.exported', 'Eksport gotowy: wersja v{{version}}.', {
+      return t('finance.exportImport.export.exported', 'Export ready: version v{{version}}.', {
         version: state.manifest.businessVersionNo,
       });
     case 'error':
@@ -81,7 +81,7 @@ function importStateMessage(state: ImportState, t: TFunction): string {
     case 'parsed':
       return state.manifestIssues.length > 0
         ? `${t('finance.exportImport.import.manifestIssues', 'Manifest ma problemy')}: ${state.manifestIssues.join('; ')}`
-        : t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+        : t('finance.exportImport.import.parsed', 'Loaded {{count}} rows. Manifest OK.', {
             count: state.rows.length,
           });
     case 'previewing':
@@ -105,7 +105,7 @@ function importStateMessage(state: ImportState, t: TFunction): string {
     case 'applied':
       return t(
         'finance.exportImport.import.applied',
-        'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+        'Applied: {{added}} added, {{changed}} changed, {{cleared}} cleared.',
         {
           added: state.appliedCount.added,
           changed: state.appliedCount.changed,
@@ -258,7 +258,7 @@ export function FinanceExportImportPanel({
         </button>
         {exportState.kind === 'exported' ? (
           <p className="text-[11px] text-c-text-secondary" data-testid="export-manifest-summary">
-            {t('finance.exportImport.version', 'Wersja')} v{exportState.manifest.businessVersionNo} ·{' '}
+            {t('finance.exportImport.version', 'Version')} v{exportState.manifest.businessVersionNo} ·{' '}
             {t('finance.exportImport.unit', 'jednostka')} {financeUnitLabel(exportState.manifest.defaultUnit)} ·{' '}
             {t('finance.exportImport.source', 'source')} {exportState.manifest.source}
           </p>
@@ -335,7 +335,7 @@ export function FinanceExportImportPanel({
               </p>
             ) : (
               <p className="text-xs text-c-text-secondary">
-                {t('finance.exportImport.import.parsed', 'Wczytano {{count}} wierszy. Manifest OK.', {
+                {t('finance.exportImport.import.parsed', 'Loaded {{count}} rows. Manifest OK.', {
                   count: importState.rows.length,
                 })}
               </p>
@@ -359,10 +359,10 @@ export function FinanceExportImportPanel({
         {importState.kind === 'previewed' ? (
           <div className="flex flex-col gap-2" data-testid="import-preview">
             <div className="grid grid-cols-4 gap-2 text-xs">
-              <SummaryTile label={t('finance.exportImport.added', 'Dodane')} value={importState.preview.diff.toAdd.length} />
-              <SummaryTile label={t('finance.exportImport.changed', 'Zmienione')} value={importState.preview.diff.toChange.length} />
-              <SummaryTile label={t('finance.exportImport.cleared', 'Wyczyszczone')} value={importState.preview.diff.toClear.length} />
-              <SummaryTile label={t('finance.exportImport.unchanged', 'Bez zmian')} value={importState.preview.diff.unchangedCount} />
+              <SummaryTile label={t('finance.exportImport.added', 'Added')} value={importState.preview.diff.toAdd.length} />
+              <SummaryTile label={t('finance.exportImport.changed', 'Changed')} value={importState.preview.diff.toChange.length} />
+              <SummaryTile label={t('finance.exportImport.cleared', 'Cleared')} value={importState.preview.diff.toClear.length} />
+              <SummaryTile label={t('finance.exportImport.unchanged', 'Unchanged')} value={importState.preview.diff.unchangedCount} />
             </div>
             {importState.preview.rowErrors.length > 0 ? (
               <div
@@ -415,14 +415,14 @@ export function FinanceExportImportPanel({
           >
             {t(
               'finance.exportImport.import.applied',
-              'Zastosowano: dodane {{added}}, zmienione {{changed}}, wyczyszczone {{cleared}}.',
+              'Applied: {{added}} added, {{changed}} changed, {{cleared}} cleared.',
               {
                 added: importState.appliedCount.added,
                 changed: importState.appliedCount.changed,
                 cleared: importState.appliedCount.cleared,
               }
             )}{' '}
-            {t('finance.exportImport.newWorkingRevision', 'Nowa robocza rewizja: {{id}}.', {
+            {t('finance.exportImport.newWorkingRevision', 'New working revision: {{id}}.', {
               id: importState.newWorkingRevisionId,
             })}
           </div>

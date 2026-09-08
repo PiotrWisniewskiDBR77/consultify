@@ -5,6 +5,7 @@
  * Based on PDFImportWizard pattern
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertTriangle,
   CheckCircle,
@@ -302,7 +303,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               <div className="text-center mb-4">
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">File Previewu</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Check if file was correctly recognized
+                  {ft('finance.excelImport.checkRecognition', 'Check if the file was recognised correctly')}
                 </p>
               </div>
 
@@ -373,7 +374,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 animate-spin" />
                   <p className="text-slate-600 dark:text-slate-400">Importing data...</p>
                   <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
-                    This may take a few seconds
+                    {ft('finance.excelImport.mayTakeSeconds', 'This may take a few seconds')}
                   </p>
                 </div>
               ) : (
@@ -381,10 +382,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   <div className="text-center mb-4">
                     <CheckCircle className="w-16 h-16 mx-auto mb-4 text-emerald-500" />
                     <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                      Gotowe do importu
+                      {ft('finance.excelImport.readyToImport', 'Ready to import')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Check summary and confirm import
+                      {ft('finance.excelImport.checkSummary', 'Check the summary and confirm the import')}
                     </p>
                   </div>
 

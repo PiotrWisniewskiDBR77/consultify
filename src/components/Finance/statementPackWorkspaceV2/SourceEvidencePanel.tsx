@@ -25,6 +25,7 @@
  *   obiekt      — dopasowany wiersz mapowania.
  */
 
+import { ft } from '../shared/financeT';
 import React from 'react';
 
 import {
@@ -69,7 +70,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
       </div>
 
       <dl className="space-y-2 text-xs">
-        <Row label="Wartość">
+        <Row label={ft('finance.common.value', 'Value')}>
           <span className={`tabular-nums font-semibold ${display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}>
             {display.text}
           </span>
@@ -88,11 +89,11 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           </span>
         </Row>
         {reason && (
-          <Row label="Powód braku">
+          <Row label={ft('finance.sourceEvidence.missingReason', 'Reason for the gap')}>
             <span className="text-c-text-secondary">{reason}</span>
           </Row>
         )}
-        <Row label="Waluta / skala (tej komórki)">
+        <Row label={ft('finance.sourceEvidence.currencyScale', 'Currency / scale (of this cell)')}>
           <span className="text-c-text-secondary">
             {cell.value.presentationCurrency} · {cell.value.unit}
             {cell.value.presentationCurrency !== cell.value.nativeCurrency && (
@@ -100,7 +101,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
             )}
           </span>
         </Row>
-        <Row label="Charakter wartości">
+        <Row label={ft('finance.sourceEvidence.valueNature', 'Nature of the value')}>
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
               cell.value.isAdjustment ? 'bg-c-warning/10 text-c-warning' : 'bg-c-surface-raised text-c-text-secondary'
@@ -110,7 +111,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           </span>
         </Row>
         {cell.value.isAdjustment && cell.value.adjustmentReason && (
-          <Row label="Powód korekty">
+          <Row label={ft('finance.sourceEvidence.adjustmentReason', 'Adjustment reason')}>
             <span className="text-c-text-secondary">{cell.value.adjustmentReason}</span>
           </Row>
         )}
@@ -135,7 +136,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
       </dl>
 
       <div className="mt-4 border-t border-c-border-subtle pt-3">
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">Dowód źródłowy</p>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">{ft('finance.sourceEvidence.sourceEvidence', 'Source evidence')}</p>
         {sourceRefEntries && sourceRefEntries.length > 0 ? (
           <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-ref">
             {sourceRefEntries.map(([key, value]) => (
@@ -147,7 +148,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           </dl>
         ) : (
           <p className="text-[11px] text-c-text-muted" data-testid="source-evidence-ref-missing">
-            Brak zapisanego dowodu źródłowego dla tej wartości (sourceRef = brak).
+            {ft('finance.sourceEvidence.noEvidence', 'No source evidence saved for this value (sourceRef = none).')}
           </p>
         )}
       </div>
@@ -155,11 +156,11 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
       {mappingRow !== undefined && (
         <div className="mt-4 border-t border-c-border-subtle pt-3" data-testid="source-evidence-mapping">
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
-            Ścieżka mapowania (rekoncyliacja)
+            {ft('finance.sourceEvidence.mappingPath', 'Mapping path (reconciliation)')}
           </p>
           {mappingRow === null ? (
             <p className="text-[11px] text-c-text-muted" data-testid="source-evidence-mapping-missing">
-              Wybrany przebieg rekoncyliacji nie zawiera wiersza mapowania dla tej komórki.
+              {ft('finance.sourceEvidence.noMappingRow', 'The selected reconciliation run has no mapping row for this cell.')}
             </p>
           ) : (
             <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-mapping-row">
@@ -170,7 +171,7 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-c-text-muted">Kwota źródłowa</dt>
+                <dt className="text-c-text-muted">{ft('finance.sourceEvidence.sourceAmount', 'Source amount')}</dt>
                 <dd className="font-mono text-c-text">{mappingRow.sourceAmount ?? '—'}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">

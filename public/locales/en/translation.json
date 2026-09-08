@@ -24629,7 +24629,11 @@
       "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval.",
       "cfNone": "None",
       "saved": "Saved",
-      "versionConflict": "Someone else changed this model since you last loaded it. Refresh to see the current version, then try again."
+      "versionConflict": "Someone else changed this model since you last loaded it. Refresh to see the current version, then try again.",
+      "scenarios": {
+        "setBaseline": "Set as baseline"
+      },
+      "serverVersion": "server version"
     },
     "tabs": {
       "models": "Models",
@@ -24794,7 +24798,9 @@
         "submit": "Set source",
         "submitting": "Saving…",
         "noCandidates": "No approved Baseline or Scenario versions in this organization. Approve a baseline model or a scenario first."
-      }
+      },
+      "sendAsCandidate": "Send as an Initiative candidate",
+      "verifyingSource": "Verifying the recommendation source…"
     },
     "budget": {
       "valuate": "Valuate Budget",
@@ -25596,7 +25602,12 @@
       "blockedByDemo": {
         "title": "Value bridge and decision portfolio are not available in demo mode",
         "body": "The read-only demo workspace blocks the value engine request. The rest of the cockpit is unaffected, but this part of the value story is not shown — do not read it as a completed calculation."
-      }
+      },
+      "valueBridge": "Value bridge (Baseline→Realized→Banked)",
+      "realizedValue": "Realised value",
+      "identifiedValue": "Identified value",
+      "loading": "Loading…",
+      "heading": "Value Office — the transformation value engine"
     },
     "driverPlanner": {
       "title": "Driver-based planning + what-if",
@@ -25605,7 +25616,9 @@
       "empty": {
         "title": "Select a financial model",
         "body": "The driver tree decomposes a selected model’s forecast (EBIT = Revenue − COGS − Opex − Depreciation). Pick a model from the list to plan and run what-if on its real figures."
-      }
+      },
+      "sensitivity": "Sensitivity (tornado)",
+      "whatIfResult": "What-if result"
     },
     "valuePanels": {
       "bankingValue": "Banking value",
@@ -25641,7 +25654,242 @@
     },
     "blocked": "Access to the Finance module is restricted by your organization's policy.",
     "link": {
-      "failed": "Could not create the link"
+      "failed": "Could not create the link",
+      "financeRefPlaceholder": "e.g. model identifier"
+    },
+    "common": {
+      "save": "Save",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "remove": "Delete",
+      "value": "Value",
+      "quality": "Quality",
+      "source": "Source",
+      "retry": "Retry"
+    },
+    "benefits": {
+      "addMeasurement": "Add measurement"
+    },
+    "digitization": {
+      "saveChanges": "Save changes",
+      "toggleHelp": "Show/hide help"
+    },
+    "evidence": {
+      "addHint": "Add evidence to support the assessment",
+      "addNew": "Add new evidence"
+    },
+    "excelImport": {
+      "checkSummary": "Check the summary and confirm the import",
+      "readyToImport": "Ready to import",
+      "mayTakeSeconds": "This may take a few seconds",
+      "checkRecognition": "Check if the file was recognised correctly"
+    },
+    "metrics": {
+      "irrHint": "Internal Rate of Return — the discount rate at which NPV = 0"
+    },
+    "initiativeIntegration": {
+      "linkedHint": "The analysis will be linked to this initiative and available in the Finance module",
+      "transferHint": "Data will be transferred automatically:",
+      "fullAnalysisHint": "Run a full NPV, IRR, payback period and sensitivity analysis for this initiative.",
+      "openAnalysisHint": "Click \"Open Analysis\" to see the full scores and run a detailed financial analysis"
+    },
+    "charts": {
+      "waterfall": {
+        "title": "Value bridge chart (waterfall)",
+        "empty": "No data — add value bridge steps"
+      },
+      "footballField": {
+        "empty": {
+          "title": "Valuation football field — no data"
+        }
+      },
+      "goldenThread": {
+        "broken": "· broken thread",
+        "empty": "No data — connect initiatives to KPIs and value to see the golden thread."
+      },
+      "portfolioBubble": {
+        "empty": "No data — add portfolio items"
+      },
+      "sCurve": {
+        "today": "today",
+        "title": "Value delivery S-curve: plan vs actual",
+        "empty": {
+          "title": "S-curve — no data"
+        }
+      },
+      "heatmap": {
+        "empty": {
+          "title": "Sensitivity heatmap — no data"
+        }
+      },
+      "tornado": {
+        "title": "Tornado chart — one-way sensitivity",
+        "empty": "No data — add sensitivity drivers"
+      }
+    },
+    "investmentAppraisal": {
+      "npvVsThreshold": "NPV against the break-even threshold (0)",
+      "unavailable": "Analysis is temporarily unavailable — please try again.",
+      "computing": "Calculating…"
+    },
+    "varianceBridge": {
+      "loading": "Loading variance analysis…",
+      "empty": "No budget data — add plan/actual items.",
+      "unavailable": "Variance analysis is temporarily unavailable — the view keeps working.",
+      "title": "Budget vs actual (variance bridge)"
+    },
+    "analysisWizard": {
+      "incomplete": "The wizard is incomplete — go back and fill in the missing steps.",
+      "readyToCreate": "Ready to create. Click \"Create and calculate\" to set up the analysis and run the first calculation.",
+      "customFormula": "Custom formula (sandbox)",
+      "pickAtLeastOne": "Choose at least one.",
+      "searchKpi": "Search for an indicator…",
+      "industry": "Industry",
+      "pickPeriods": "Choose the periods to analyse (historical and forecast).",
+      "noSources": "No sources available — an approved statement pack is required.",
+      "pickSourceHint": "Choose the statement pack (Statement Pack Version) the analysis will draw its source data from.",
+      "close": "Close the wizard"
+    },
+    "analysisKpi": {
+      "noPreviousVersions": "No earlier versions of this indicator.",
+      "lineage": "Lineage — data source",
+      "benchmarkUnavailable": "No benchmark available for this indicator.",
+      "industryBenchmark": "Industry benchmark",
+      "formulaAndInputs": "Formula and inputs",
+      "currentValue": "Current value",
+      "closeDetail": "Close the detail card",
+      "chartOverTime": "Value over time chart",
+      "notEnoughData": "Not enough data for a chart."
+    },
+    "reasonDialog": {
+      "title": "Give a reason"
+    },
+    "actionCards": {
+      "title": "Action cards — Finance"
+    },
+    "scenario": {
+      "implementationCostImpactAria": "Impact implementation cost",
+      "implementationCostPerImpact": "Implementation cost (per impact)",
+      "impactProbability": "Impact probability",
+      "impactConfidence": "Impact confidence",
+      "impactStartPeriod": "Impact start period",
+      "impactSize": "Impact size",
+      "addImpact": "+ Add impact",
+      "implementationCost": "Implementation cost",
+      "rampUpMonthsAria": "Ramp-up in months",
+      "rampUpMonths": "Ramp-up (months)",
+      "defaultStartPeriod": "Default start period",
+      "initiativeOwner": "Initiative owner",
+      "owner": "Owner",
+      "noInitiatives": "No initiatives — add the first one above.",
+      "clientPreviewHint": "Client-side preview, not authoritative — run \"Run preflight\" in the bar to get the real server analysis (Layer 2, currency).",
+      "addInitiative": "+ Add initiative",
+      "chainHint": "Chain: initiative → assumption → driver/KPI → statement line → forecast.",
+      "noOverrides": "No overrides — add the first one above.",
+      "addOverride": "+ Add override"
+    },
+    "scenarioResults": {
+      "noExceptions": "No exceptions.",
+      "exceptionRegister": "Exception register (DEC-FIN-009)",
+      "noEbitdaData": "No EBITDA/Net Debt data.",
+      "noCashData": "No cash or minimum-cash policy data — an exception, not a blocker.",
+      "liquidityHeadroom": "Liquidity headroom",
+      "comparisonHeader": "Comparison against the base scenario — absolute / Δ / %"
+    },
+    "advisor": {
+      "frozen": "Frozen",
+      "empty": "No conclusions generated for this variant.",
+      "loading": "Loading conclusions…",
+      "humanApprovalHint": "and does not replace human approval. It works only on a fresh, not yet approved candidate version.",
+      "doesNotApprove": "does not approve decisions"
+    },
+    "valuationSteps": {
+      "assumptionsTitle": "Assumptions — WACC and capital structure",
+      "exportUnavailable": "Valuation export is not available today",
+      "addMethod": "Add method",
+      "readiness": "Readiness",
+      "noEvBridge": "No saved EV→Equity bridge for this variant.",
+      "equityValue": "Equity value",
+      "divergenceWarnings": "Method divergence warnings",
+      "methodRange": "Range of method results:",
+      "evHeading": "Enterprise value (EV) — headline",
+      "loadingResults": "Loading results…",
+      "sensitivityGridAria": "EV sensitivity grid: rows = terminal growth g, columns = WACC",
+      "sensitivityTitle": "Sensitivity — WACC × terminal growth (5×5)",
+      "linkId": "Link ID",
+      "assumptionsSnapshotHash": "Assumptions snapshot hash",
+      "linkType": "Link type",
+      "sourceVersionId": "Source version ID",
+      "technicalDetails": "Technical details",
+      "loadingSourceLink": "Loading the source link…",
+      "valuationSource": "Valuation source"
+    },
+    "assumptions": {
+      "emptyModel": "This model has no assumptions yet.",
+      "impactPreview": "Impact preview",
+      "forecastValue": "Forecast value",
+      "calibrationRule": "Calibration rule",
+      "assumption": "Assumption",
+      "removeRowConfirm": "Delete the assumption row?",
+      "removeRow": "Delete assumption row",
+      "addRow": "Add row",
+      "customName": "Assumption name (custom)",
+      "addAssumption": "Add assumption",
+      "saveAnyway": "Save anyway",
+      "hasWarnings": "The assumption set has warnings",
+      "confirmSaveWithWarnings": "Confirm saving the assumption set despite warnings",
+      "addAssumptionButton": "+ Add assumption",
+      "scheduleInertHint2": "This schedule does not feed the calculations today (the engine does not read it yet) — the row will be saved, but it will not change any number in \"Calculations\".",
+      "customCodePlaceholder": "e.g. HEADCOUNT_GROWTH_PCT"
+    },
+    "calculations": {
+      "emptyHint": "Run a calculation to see the forecast P&L, balance sheet and cash flows.",
+      "empty": "No calculations",
+      "loading": "Loading calculations…",
+      "slowConnection": "The connection took longer than usual — checking whether the calculation finished anyway…",
+      "computing": "Recalculating the model (the convergence solver iterates over every month)…",
+      "monthly": "Monthly"
+    },
+    "errorBoundary": {
+      "backToList": "Back to list",
+      "correlationId": "Report ID:",
+      "detail": "Detail:",
+      "title": "Could not display: {{label}}",
+      "body": "An unexpected error occurred in this document. The rest of the workspace (list, bar, other documents) keeps working — your selected artefact and unsaved changes are preserved."
+    },
+    "utilities": {
+      "compareUnavailable": "Comparison becomes available once a second version of the artefact exists.",
+      "title": "Finance tools"
+    },
+    "statementTable": {
+      "noCanonicalLineId": "No canonicalLineId — grouped by source code"
+    },
+    "reconciliation": {
+      "bucketBreakdown": "Breakdown by bucket",
+      "detailFailed": "Could not load the detail of this run."
+    },
+    "relatedArtifacts": {
+      "empty": "No artefact of this type from this statement yet.",
+      "notLoaded": "Related artefacts have not been loaded yet."
+    },
+    "sourceEvidence": {
+      "sourceAmount": "Source amount",
+      "noMappingRow": "The selected reconciliation run has no mapping row for this cell.",
+      "mappingPath": "Mapping path (reconciliation)",
+      "noEvidence": "No source evidence saved for this value (sourceRef = none).",
+      "sourceEvidence": "Source evidence",
+      "adjustmentReason": "Adjustment reason",
+      "valueNature": "Nature of the value",
+      "currencyScale": "Currency / scale (of this cell)",
+      "missingReason": "Reason for the gap"
+    },
+    "aiRecommendations": {
+      "createInitiative": "Create initiative"
+    },
+    "versionHistory": {
+      "createNew": "Create new version",
+      "empty": "No saved versions",
+      "emptyHint": "Create the first version to track changes"
     }
   },
   "portfolio": {

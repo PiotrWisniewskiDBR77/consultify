@@ -8,6 +8,7 @@
  * (`computeMethodResultRange`) — a single weighted point estimate is never the only thing on
  * screen when more than one method has a result.
  */
+import { ft } from '../../shared/financeT';
 import React from 'react';
 
 import { valuationMethodTypeLabel, type ValuationResultsDto } from '@/services/api/financeV2.types';
@@ -36,7 +37,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
   if (!results) {
     return (
       <p className="text-xs text-c-text-muted" data-testid="results-step-loading">
-        Wczytywanie wyników…
+        {ft('finance.valuationSteps.loadingResults', 'Loading results…')}
       </p>
     );
   }
@@ -47,7 +48,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
   return (
     <div className="max-w-5xl space-y-5" data-testid="valuation-results-step">
       <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
-        <p className="text-xs text-c-text-muted">Wartość przedsiębiorstwa (EV) — nagłówek</p>
+        <p className="text-xs text-c-text-muted">{ft('finance.valuationSteps.evHeading', 'Enterprise value (EV) — headline')}</p>
         <p className="mt-1 text-2xl font-semibold text-c-text" data-testid="headline-ev">
           {headline.value === null ? '—' : `${fmt(headline.value)}${results.currency ? ` ${results.currency}` : ''}`}
         </p>
@@ -63,7 +64,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
           data-material={range.hasMaterialDisagreement}
           className={`rounded-lg border px-3 py-2 text-xs ${range.hasMaterialDisagreement ? 'border-c-warning/30 bg-c-warning/10 text-c-warning' : 'border-c-border-subtle bg-c-surface text-c-text-secondary'}`}
         >
-          Przedział wyników metod: <span className="font-mono">{fmt(range.min as number)}{results.currency ? ` ${results.currency}` : ''}</span> –{' '}
+          {ft('finance.valuationSteps.methodRange', 'Range of method results:')} <span className="font-mono">{fmt(range.min as number)}{results.currency ? ` ${results.currency}` : ''}</span> –{' '}
           <span className="font-mono">{fmt(range.max as number)}{results.currency ? ` ${results.currency}` : ''}</span>
           {range.spreadPct !== null &&
             ` (rozrzut ${range.spreadPct.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`}
@@ -103,7 +104,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
 
       {results.methodAgreementWarnings.length > 0 && (
         <div className="space-y-1" data-testid="method-agreement-warnings">
-          <p className="text-xs font-semibold text-c-text">Ostrzeżenia o rozbieżności metod</p>
+          <p className="text-xs font-semibold text-c-text">{ft('finance.valuationSteps.divergenceWarnings', 'Method divergence warnings')}</p>
           {results.methodAgreementWarnings.map((w) => (
             <p key={w.ruleId} className="text-xs text-c-warning">
               {w.title} — {w.narrative}
@@ -123,7 +124,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
             <dd className="text-c-text">
               {fmtDecimalString(results.bridge.header.enterprise_value_decimal)}
             </dd>
-            <dt>Wartość kapitału własnego (Equity Value)</dt>
+            <dt>{ft('finance.valuationSteps.equityValue', 'Equity value')}</dt>
             <dd className="text-c-text">
               {fmtDecimalString(results.bridge.header.equity_value_decimal)}
             </dd>
@@ -132,7 +133,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
       )}
       {!results.bridge && (
         <p className="text-xs text-c-text-muted" data-testid="results-bridge-missing">
-          Brak zapisanego mostu EV→Equity dla tego wariantu.
+          {ft('finance.valuationSteps.noEvBridge', 'No saved EV→Equity bridge for this variant.')}
         </p>
       )}
     </div>

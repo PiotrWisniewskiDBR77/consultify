@@ -89,7 +89,7 @@ describe('FinanceComparePanel — ogłaszanie stanów dynamicznych (a11y, Pakiet
     await waitFor(() => {
       const status = screen.getByTestId('finance-status-announcer');
       expect(status).toHaveAttribute('aria-live', 'assertive');
-      expect(status).toHaveTextContent(/Błąd porównania/);
+      expect(status).toHaveTextContent(/Comparison error/);
     });
   });
 

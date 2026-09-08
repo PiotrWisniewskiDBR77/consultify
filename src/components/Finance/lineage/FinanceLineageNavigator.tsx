@@ -346,7 +346,7 @@ export function FinanceLineageNavigator({
                     className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     onClick={() => onCreateNew?.(action)}
                   >
-                    + {t('finance.lineage.new', 'Nowy')}: {isEn ? financeArtifactTypeLabelEn(action.targetArtifactType) : financeArtifactTypeLabel(action.targetArtifactType)}
+                    + {t('finance.lineage.new', 'New')}: {isEn ? financeArtifactTypeLabelEn(action.targetArtifactType) : financeArtifactTypeLabel(action.targetArtifactType)}
                   </button>
                 ))}
               </div>

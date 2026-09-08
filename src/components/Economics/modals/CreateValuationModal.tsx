@@ -126,7 +126,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         </h3>
         <div>
           <label className="text-xs text-slate-500">
-            {t('finance.valuation.name', 'Nazwa wyceny')}
+            {t('finance.valuation.name', 'Valuation name')}
           </label>
           <input
             value={title}

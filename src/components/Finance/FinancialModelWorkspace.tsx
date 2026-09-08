@@ -1180,7 +1180,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         >
                           {baselineBusyId === s.id
                             ? t('finance.model.scenarios.settingBaseline', 'Ustawiam…')
-                            : t('finance.model.scenarios.setBaseline', 'Ustaw jako baseline')}
+                            : t('finance.model.scenarios.setBaseline', 'Set as baseline')}
                         </button>
                       )}
                     </div>
@@ -1424,7 +1424,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         {saveConflict?.serverVersion != null && (
                           <>
                             {' '}
-                            ({t('finance.model.serverVersion', 'wersja serwera')}:{' '}
+                            ({t('finance.model.serverVersion', 'server version')}:{' '}
                             {saveConflict.serverVersion})
                           </>
                         )}

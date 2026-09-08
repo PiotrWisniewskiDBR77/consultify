@@ -5,6 +5,7 @@
  * Includes variance analysis, trend visualization, and measurement entry.
  */
 
+import { ft } from '../Finance/shared/financeT';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -254,7 +255,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus size={18} />
-          Dodaj measurement
+          {ft('finance.benefits.addMeasurement', 'Add measurement')}
         </button>
       </div>
 
@@ -369,7 +370,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
               onClick={() => setShowMeasurementModal(true)}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium"
             >
-              Dodaj measurement
+              {ft('finance.benefits.addMeasurement', 'Add measurement')}
             </button>
           </div>
         ) : (
@@ -675,7 +676,7 @@ const MeasurementModal: React.FC<{
               ) : (
                 <>
                   <Check size={18} />
-                  Zapisz
+                  {ft('finance.common.save', 'Save')}
                 </>
               )}
             </button>

@@ -735,7 +735,7 @@ function IdentityBadge({
       className={`hidden shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium sm:inline-flex ${toneClass}`}
       title={
         version.hasUncommittedWorkingRevision
-          ? t('finance.workspaceBar.draftUnsaved', 'Wersja robocza — niezapisane zmiany')
+          ? t('finance.workspaceBar.draftUnsaved', 'Draft — unsaved changes')
           : undefined
       }
       data-testid="finance-workspace-bar-identity-badge"
