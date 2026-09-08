@@ -90,7 +90,7 @@ function normalizeClient(client: LegacyPartnerClient): Client {
       client.clientName ||
         client.organizationName ||
         client.name ||
-        i18n.t('partner.clientAccess.fallbackOrganization', 'Organizacja')
+        i18n.t('partner.clientAccess.fallbackOrganization', 'Organization')
     ),
     organizationName:
       typeof client.organizationName === 'string'
@@ -103,7 +103,7 @@ function normalizeClient(client: LegacyPartnerClient): Client {
     accessLevel:
       typeof client.accessLevel === 'string'
         ? client.accessLevel
-        : i18n.t('partner.clientAccess.fallbackAccessLevel', 'dostęp partnerski'),
+        : i18n.t('partner.clientAccess.fallbackAccessLevel', 'partner access'),
     plan: typeof client.plan === 'string' ? client.plan : undefined,
     userCount:
       typeof client.userCount === 'number'
@@ -125,10 +125,10 @@ function normalizeEmployee(employee: LegacyPartnerEmployee): Employee {
       typeof employee.employeeName === 'string' && employee.employeeName.trim().length > 0
         ? employee.employeeName
         : combinedName ||
-          String(employee.email || i18n.t('partner.clientAccess.fallbackTeamMember', 'Członek zespołu')),
+          String(employee.email || i18n.t('partner.clientAccess.fallbackTeamMember', 'Team member')),
     email: String(employee.email || ''),
     accessType: String(
-      employee.accessType || employee.role || i18n.t('partner.clientAccess.fallbackMember', 'Członek')
+      employee.accessType || employee.role || i18n.t('partner.clientAccess.fallbackMember', 'Member')
     ),
     permissionSet:
       typeof employee.permissionSet === 'string'
@@ -234,13 +234,13 @@ export const ClientAccessView: React.FC = () => {
         setAccessLink(referralLink);
         toast.success(t('partner.clientAccess.linkGenerated'));
       } else if (isFeatureNotAvailable(response)) {
-        toast(t('partner.clientAccess.featureSoon', 'Wkrótce dostępne'));
+        toast(t('partner.clientAccess.featureSoon', 'Coming soon'));
       } else {
         toast.error(response?.error || t('partner.clientAccess.linkFailed'));
       }
     } catch (err: any) {
       if (isFeatureNotAvailable(err)) {
-        toast(t('partner.clientAccess.featureSoon', 'Wkrótce dostępne'));
+        toast(t('partner.clientAccess.featureSoon', 'Coming soon'));
         return;
       }
       console.error('Error generating access link:', err);
@@ -383,7 +383,7 @@ export const ClientAccessView: React.FC = () => {
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
-                {t('partner.clientAccess.allRegions', 'Wszystkie regiony')}
+                {t('partner.clientAccess.allRegions', 'All regions')}
               </button>
               {regions.map((region) => (
                 <button
@@ -584,7 +584,7 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
               <>
                 <span className="text-slate-600">·</span>
                 <span>
-                  {t('partner.clientAccess.userCount', '{{count}} użytkowników', {
+                  {t('partner.clientAccess.userCount', '{{count}} users', {
                     count: client.userCount,
                   })}
                 </span>

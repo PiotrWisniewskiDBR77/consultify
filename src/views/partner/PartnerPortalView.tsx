@@ -74,6 +74,7 @@ import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 import { PartnerOnboardingOrientation, PartnerStartRouter } from './PartnerStartRouter';
+import { formatListDate, formatListNumber, formatListTime, localeListy } from '@/utils/listDateFormat';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -343,7 +344,7 @@ const DashboardSection: React.FC = () => {
         },
         {
           label: t('partner.dashboard.monthlyRevenue', 'Monthly Revenue'),
-          value: `€${(s.monthlyRevenue || 0).toLocaleString()}`,
+          value: `€${formatListNumber(s.monthlyRevenue || 0, '0')}`,
           change: `${(s.revenueChange ?? 0) > 0 ? '+' : ''}${s.revenueChange ?? 0}%`,
           changeType: (s.revenueChange ?? 0) >= 0 ? ('positive' as const) : ('negative' as const),
           icon: TrendingUp,
@@ -416,7 +417,7 @@ const DashboardSection: React.FC = () => {
         <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.dashboard.freshHint',
-            'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
+            'Your data will appear here after your first referrals and commission transactions.'
           )}
         </div>
       )}
@@ -720,7 +721,7 @@ const normalizeMetricsPayload = (payload: any): MetricsData | null => {
 const MetricsSection: React.FC = () => {
   const { t } = useTranslation();
   const formatEuro = useCallback((value: number) => {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 2,
@@ -805,7 +806,7 @@ const MetricsSection: React.FC = () => {
           label: t('partner.metrics.totalRevenue', 'Total Revenue'),
           value: formatEuro(metricsData.revenue.totalYTD || 0),
           change: `${metricsData.revenue.change > 0 ? '+' : ''}${metricsData.revenue.change}%`,
-          period: t('partner.metrics.vsLastQuarter', 'względem poprzedniego kwartału'),
+          period: t('partner.metrics.vsLastQuarter', 'vs. previous quarter'),
           isPositive: metricsData.revenue.change >= 0,
         },
         {
@@ -826,7 +827,7 @@ const MetricsSection: React.FC = () => {
             metricsData.clients.avgProjectDuration < 5
               ? t('partner.metrics.good', 'Dobrze')
               : t('partner.metrics.slow', 'Wolno'),
-          period: t('partner.metrics.average', 'średnio'),
+          period: t('partner.metrics.average', 'on average'),
           isPositive: metricsData.clients.avgProjectDuration < 5,
         },
         {
@@ -906,7 +907,7 @@ const MetricsSection: React.FC = () => {
         <div className="rounded-xl border border-c-border bg-c-surface-raised p-4 text-sm text-c-text-secondary dark:border-c-border dark:bg-c-surface-hover dark:text-c-text-secondary">
           {t(
             'partner.metrics.freshHint',
-            'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
+            'Your data will appear here after your first referrals and commission transactions.'
           )}
         </div>
       )}
@@ -962,22 +963,22 @@ const MetricsSection: React.FC = () => {
           <div className="space-y-4">
             {[
               {
-                label: t('partner.metrics.clientAcquisition', 'Pozyskiwanie klientów'),
+                label: t('partner.metrics.clientAcquisition', 'Client acquisition'),
                 score: performanceBreakdown.clientAcquisition || 0,
                 color: 'bg-sky-500',
               },
               {
-                label: t('partner.metrics.projectDelivery', 'Realizacja projektów'),
+                label: t('partner.metrics.projectDelivery', 'Project delivery'),
                 score: performanceBreakdown.projectDelivery || 0,
                 color: 'bg-emerald-500',
               },
               {
-                label: t('partner.metrics.customerSatisfaction', 'Zadowolenie klientów'),
+                label: t('partner.metrics.customerSatisfaction', 'Customer satisfaction'),
                 score: performanceBreakdown.customerSatisfaction || 0,
                 color: 'bg-blue-500',
               },
               {
-                label: t('partner.metrics.certificationProgress', 'Postęp certyfikacji'),
+                label: t('partner.metrics.certificationProgress', 'Certification progress'),
                 score: performanceBreakdown.certificationProgress || 0,
                 color: 'bg-amber-500',
               },
@@ -1014,7 +1015,7 @@ const MetricsSection: React.FC = () => {
                   key={index}
                   className="flex-1 rounded-t bg-c-text-secondary transition-all duration-300 hover:bg-c-text"
                   style={{ height: `${height}%` }}
-                  title={`€${value.toLocaleString()}`}
+                  title={`€${formatListNumber(value, '0')}`}
                 />
               );
             })}
@@ -1075,7 +1076,7 @@ export function resolveClientDisplayName(
   const isPlaceholder = !name || name.toLowerCase() === 'organization';
   const isRawUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name);
   if (isPlaceholder || isRawUuid) {
-    return { label: t('partner.clients.unavailable', 'Klient niedostępny'), resolved: false };
+    return { label: t('partner.clients.unavailable', 'Client unavailable'), resolved: false };
   }
   return { label: name, resolved: true };
 }
@@ -1252,12 +1253,12 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 rather than a dead button. Self-connect/client-mgmt lands in v1.1. */}
             <button
               disabled
-              title={t('partner.clientAccess.featureSoon', 'Wkrótce dostępne')}
+              title={t('partner.clientAccess.featureSoon', 'Coming soon')}
               className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-4 text-sm font-medium text-c-text-muted dark:bg-navy-800 dark:text-c-text-muted"
             >
               {t('partner.clients.addOrganization', 'Add Organization')}
               <span className="rounded bg-slate-300/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary dark:bg-navy-700 dark:text-slate-300">
-                {t('partner.common.comingSoon', 'Wkrótce')}
+                {t('partner.common.comingSoon', 'Coming soon')}
               </span>
             </button>
           </div>
@@ -1299,7 +1300,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               render: (org) => (
                 <span className="text-sm text-c-text-secondary">
                   {org.industry === 'Unspecified'
-                    ? t('partner.clients.industryUnspecified', 'Nie określono')
+                    ? t('partner.clients.industryUnspecified', 'Not specified')
                     : org.industry}
                 </span>
               ),
@@ -1347,7 +1348,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   status={String(org.status)}
                   label={t(
                     `partner.clients.status.${String(org.status).toLowerCase()}`,
-                    t('partner.clients.status.unknown', 'Nieznany status')
+                    t('partner.clients.status.unknown', 'Unknown status')
                   )}
                 />
               ),
@@ -1413,7 +1414,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-c-text-secondary">
-                      {t('partner.common.progress', 'Postęp')}
+                      {t('partner.common.progress', 'Progress')}
                     </span>
                     <span className="font-medium text-c-text">{project.progress}%</span>
                   </div>
@@ -1427,7 +1428,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 {project.targetEndDate && (
                   <p className="text-xs text-c-text-muted mt-3">
                     {t('partner.clients.targetDate', 'Termin')}:{' '}
-                    {new Date(project.targetEndDate).toLocaleDateString()}
+                    {formatListDate(project.targetEndDate)}
                   </p>
                 )}
               </div>
@@ -1475,7 +1476,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 <div>
                   <span className="font-medium text-c-text">{org.name}</span>
                   <p className="text-sm text-c-text-secondary">
-                    {t('partner.clients.usersCount', '{{count}} użytkowników', {
+                    {t('partner.clients.usersCount', '{{count}} users', {
                       count: org.users,
                     })}
                   </p>
@@ -1717,7 +1718,7 @@ const CertificationSection: React.FC<{
   const getDisplayStatus = (status: string) => {
     switch (status) {
       case 'completed':
-        return t('partner.certification.status.completed', 'Ukończono');
+        return t('partner.certification.status.completed', 'Completed');
       case 'in_progress':
       case 'in-progress':
         return t('partner.certification.status.inProgress', 'W toku');
@@ -1729,12 +1730,12 @@ const CertificationSection: React.FC<{
       case 'prerequisite_incomplete':
         return t(
           'partner.certification.status.prerequisiteIncomplete',
-          'Nieukończony warunek wstępny'
+          'Prerequisite not completed'
         );
       case 'academy_incomplete':
-        return t('partner.certification.status.academyIncomplete', 'Nieukończona akademia');
+        return t('partner.certification.status.academyIncomplete', 'Academy not completed');
       default:
-        return t('partner.certification.status.unknown', 'Nieznany status');
+        return t('partner.certification.status.unknown', 'Unknown status');
     }
   };
 
@@ -1753,7 +1754,7 @@ const CertificationSection: React.FC<{
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-c-text">
-              {t('partner.certification.learningPath', 'Ścieżka nauki')}
+              {t('partner.certification.learningPath', 'Learning path')}
             </h2>
             <p className="text-c-text-secondary">
               {t(
@@ -1775,7 +1776,7 @@ const CertificationSection: React.FC<{
           <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
             <GraduationCap className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
             <p className="text-c-text-secondary">
-              {t('partner.certification.noCourses', 'Brak dostępnych kursów')}
+              {t('partner.certification.noCourses', 'No courses available')}
             </p>
           </div>
         ) : (
@@ -1841,7 +1842,7 @@ const CertificationSection: React.FC<{
                           <BookOpen className="w-4 h-4" />
                           {t(
                             'partner.certification.modulesProgress',
-                            '{{completed}}/{{total}} modułów',
+                            '{{completed}}/{{total}} modules',
                             {
                               completed: course.completedModules || 0,
                               total: course.modules,
@@ -1854,7 +1855,7 @@ const CertificationSection: React.FC<{
                           <span className="px-2 py-1 rounded-full bg-c-surface-raised text-c-text-muted">
                             {course.examMode === 'review'
                               ? t('partner.certification.examMode.review', 'Ocena operatora')
-                              : t('partner.certification.examMode.exam', 'Egzamin')}
+                              : t('partner.certification.examMode.exam', 'Exam')}
                           </span>
                         )}
                         {course.reviewState && (
@@ -1878,7 +1879,7 @@ const CertificationSection: React.FC<{
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="text-c-text-secondary">
-                              {t('partner.common.progress', 'Postęp')}
+                              {t('partner.common.progress', 'Progress')}
                             </span>
                             <span className="font-medium text-c-text">{course.progress}%</span>
                           </div>
@@ -1899,15 +1900,15 @@ const CertificationSection: React.FC<{
                           className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors"
                         >
                           {isExpanded
-                            ? t('partner.certification.hideModules', 'Ukryj moduły')
-                            : t('partner.certification.viewModules', 'Pokaż moduły')}
+                            ? t('partner.certification.hideModules', 'Hide modules')
+                            : t('partner.certification.viewModules', 'Show modules')}
                         </button>
                         {docHref && (
                           <button
                             onClick={() => navigate(docHref)}
                             className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-c-border hover:text-c-text-secondary transition-colors"
                           >
-                            {t('partner.certification.openGuide', 'Otwórz przewodnik')}
+                            {t('partner.certification.openGuide', 'Open guide')}
                           </button>
                         )}
                       </div>
@@ -1941,7 +1942,7 @@ const CertificationSection: React.FC<{
                                         })
                                       : t(
                                           `partner.certification.moduleKind.${module.moduleKind}`,
-                                          'Moduł'
+                                          'Module'
                                         )}
                                   </span>
                                 </div>
@@ -1961,7 +1962,7 @@ const CertificationSection: React.FC<{
                                     >
                                       <ExternalLink className="w-3 h-3" />
                                       {module.articleLabel ||
-                                        t('partner.certification.openArticle', 'Otwórz artykuł')}
+                                        t('partner.certification.openArticle', 'Open article')}
                                     </button>
                                   )}
                                 </div>
@@ -1974,7 +1975,7 @@ const CertificationSection: React.FC<{
                         <p className="mt-3 text-xs text-c-text-muted">
                           {t(
                             'partner.certification.completePrevious',
-                            'Ukończ wcześniejsze kursy, aby odblokować'
+                            'Complete the earlier courses to unlock'
                           )}
                         </p>
                       )}
@@ -2000,12 +2001,12 @@ const CertificationSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-c-text">
-            {t('partner.certification.exams', 'Egzaminy certyfikacyjne')}
+            {t('partner.certification.exams', 'Certification exams')}
           </h2>
           <p className="text-c-text-secondary">
             {t(
               'partner.certification.examsDesc',
-              'Zdaj egzaminy, aby zdobyć oficjalne certyfikaty'
+              'Pass the exams to earn official certificates'
             )}
           </p>
         </div>
@@ -2023,7 +2024,7 @@ const CertificationSection: React.FC<{
                     </div>
                     <div>
                       <h4 className="font-medium text-c-text">
-                        {t('partner.certification.courseExam', 'Egzamin: {{name}}', {
+                        {t('partner.certification.courseExam', 'Exam: {{name}}', {
                           name: course.name,
                         })}
                       </h4>
@@ -2031,11 +2032,11 @@ const CertificationSection: React.FC<{
                         {course.certificateId
                           ? t('partner.certification.examStatus.passed', 'Zdano')
                           : course.examEligible
-                            ? t('partner.certification.examStatus.available', 'Dostępny')
+                            ? t('partner.certification.examStatus.available', 'Available')
                             : course.blockedReason ||
                               t(
                                 'partner.certification.examStatus.completeAcademy',
-                                'Najpierw ukończ akademię'
+                                'Complete the academy first'
                               )}
                       </p>
                     </div>
@@ -2053,7 +2054,7 @@ const CertificationSection: React.FC<{
                       onClick={() => startExam(course.id)}
                       className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors"
                     >
-                      {t('partner.certification.takeExam', 'Rozpocznij egzamin')}
+                      {t('partner.certification.takeExam', 'Start the exam')}
                     </button>
                   )}
                 </div>
@@ -2066,7 +2067,7 @@ const CertificationSection: React.FC<{
             <p className="text-c-text-secondary">
               {t(
                 'partner.certification.examsEmpty',
-                'Ukończ ścieżkę nauki, aby odblokować egzaminy'
+                'Complete the learning path to unlock the exams'
               )}
             </p>
           </div>
@@ -2081,14 +2082,14 @@ const CertificationSection: React.FC<{
                     {(() => {
                       const certName = certifications.find((c) => c.id === examCertId)?.name;
                       return certName
-                        ? `${certName} — ${t('partner.certification.examTitle', 'Egzamin certyfikacyjny')}`
-                        : t('partner.certification.examTitle', 'Egzamin certyfikacyjny');
+                        ? `${certName} — ${t('partner.certification.examTitle', 'Certification exam')}`
+                        : t('partner.certification.examTitle', 'Certification exam');
                     })()}
                   </h3>
                   <p className="text-sm text-c-text-muted">
                     {examDeadlineAt
-                      ? `${t('partner.certification.deadline', 'Termin')}: ${new Date(examDeadlineAt).toLocaleTimeString()}`
-                      : t('common.loading', 'Ładowanie…')}
+                      ? `${t('partner.certification.deadline', 'Deadline')}: ${formatListTime(examDeadlineAt)}`
+                      : t('common.loading', 'Loading…')}
                   </p>
                 </div>
                 <button
@@ -2101,7 +2102,7 @@ const CertificationSection: React.FC<{
 
               {examQuestions.length === 0 ? (
                 <div className="mt-4 text-sm text-c-text-muted">
-                  {t('common.loading', 'Ładowanie…')}
+                  {t('common.loading', 'Loading…')}
                 </div>
               ) : (
                 <div className="mt-4 space-y-4 max-h-[60vh] overflow-auto pr-1">
@@ -2146,7 +2147,7 @@ const CertificationSection: React.FC<{
                 >
                   {examResult.passed
                     ? t('partner.certification.examStatus.passed', 'Zdano')
-                    : t('partner.certification.examStatus.failed', 'Nie zdano')}{' '}
+                    : t('partner.certification.examStatus.failed', 'Not passed')}{' '}
                   • {t('partner.certification.score', 'Wynik')}: {examResult.scorePercent}%
                 </div>
               )}
@@ -2180,12 +2181,12 @@ const CertificationSection: React.FC<{
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-c-text">
-            {t('partner.certification.certificates', 'Twoje certyfikaty')}
+            {t('partner.certification.certificates', 'Your certificates')}
           </h2>
           <p className="text-c-text-secondary">
             {t(
               'partner.certification.certificatesDesc',
-              'Pobieraj i udostępniaj swoje certyfikaty'
+              'Download and share your certificates'
             )}
           </p>
         </div>
@@ -2222,12 +2223,12 @@ const CertificationSection: React.FC<{
                   <h4 className="font-medium text-c-text">{cert.name}</h4>
                   <p className="text-sm text-c-text-secondary">
                     {t('partner.certification.issued', 'Issued')}:{' '}
-                    {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
+                    {formatListDate(cert.completedAt)}
                   </p>
                   {cert.validUntil && (
                     <p className="text-xs text-c-text-muted mt-1">
                       {t('partner.certification.validUntil', 'Valid until')}:{' '}
-                      {new Date(cert.validUntil).toLocaleDateString()}
+                      {formatListDate(cert.validUntil)}
                     </p>
                   )}
                 </div>
@@ -2344,16 +2345,16 @@ const ResourcesSection: React.FC<{
       window.open(`/api/partners/resources/${resourceId}/download`, '_blank');
     } catch (err: any) {
       console.error('Error downloading resource:', err);
-      toast.error(t('partner.resources.downloadError', 'Nie udało się pobrać zasobu.'));
+      toast.error(t('partner.resources.downloadError', 'Could not download the resource.'));
     } finally {
       setDownloading(null);
     }
   };
 
   const titles: Record<string, string> = {
-    documentation: t('partner.sidebar.documentation', 'Dokumentacja'),
-    marketing: t('partner.sidebar.marketing', 'Materiały marketingowe'),
-    'case-studies': t('partner.sidebar.caseStudies', 'Studia przypadków'),
+    documentation: t('partner.sidebar.documentation', 'Documentation'),
+    marketing: t('partner.sidebar.marketing', 'Marketing materials'),
+    'case-studies': t('partner.sidebar.caseStudies', 'Case studies'),
     templates: t('partner.sidebar.templates', 'Szablony PMO'),
   };
 
@@ -2409,7 +2410,7 @@ const ResourcesSection: React.FC<{
         <div>
           <h2 className="text-xl font-semibold text-c-text">{titles[subsection]}</h2>
           <p className="text-c-text-secondary">
-            {t('partner.resources.desc', 'Pobierz materiały dla swojego partnerstwa')}
+            {t('partner.resources.desc', 'Download materials for your partnership')}
           </p>
         </div>
         <button
@@ -2426,7 +2427,7 @@ const ResourcesSection: React.FC<{
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <h3 className="text-base font-semibold text-c-text">
-                {t('partner.resources.canonicalDocs', 'Dokumentacja programu partnerskiego')}
+                {t('partner.resources.canonicalDocs', 'Partner program documentation')}
               </h3>
               <div className="mt-3 space-y-3">
                 {docsBridge.map((doc) => (
@@ -2465,7 +2466,7 @@ const ResourcesSection: React.FC<{
                       <div className="mt-1 text-xs text-c-text-muted">
                         {t(
                           `partner.certification.apiStatus.${item.status}`,
-                          t('partner.certification.status.unknown', 'Nieznany status')
+                          t('partner.certification.status.unknown', 'Unknown status')
                         )}
                         {item.reviewState
                           ? ` • ${t(`partner.certification.reviewState.${item.reviewState}`, 'Wymaga oceny')}`
@@ -2477,7 +2478,7 @@ const ResourcesSection: React.FC<{
                           className="mt-3 inline-flex items-center gap-1 text-xs text-c-text-secondary dark:text-c-text-secondary"
                         >
                           <ExternalLink className="w-3 h-3" />
-                          {t('partner.resources.openGuide', 'Otwórz materiał pomocniczy')}
+                          {t('partner.resources.openGuide', 'Open supporting material')}
                         </button>
                       )}
                     </div>
@@ -2500,13 +2501,13 @@ const ResourcesSection: React.FC<{
           <p className="text-c-text font-medium">
             {t(
               'partner.resources.degradedTitle',
-              'Biblioteka materiałów jest chwilowo niedostępna'
+              'The resource library is temporarily unavailable'
             )}
           </p>
           <p className="text-c-text-secondary text-sm mt-1">
             {t(
               'partner.resources.degradedDescription',
-              'Nie udało się odczytać katalogu, więc nie wiemy, ile materiałów tu jest. To nie znaczy, że jest pusty.'
+              'The catalogue could not be read, so the number of available materials is unknown.'
             )}
           </p>
           {resources?.capabilityCode && (
@@ -2517,7 +2518,7 @@ const ResourcesSection: React.FC<{
             onClick={fetchResources}
             className="mt-4 px-4 py-2 rounded-lg border border-c-border text-c-text text-sm hover:bg-c-surface-hover"
           >
-            {t('partner.resources.retry', 'Spróbuj ponownie')}
+            {t('partner.resources.retry', 'Try again')}
           </button>
         </div>
       ) : items.length === 0 ? (
@@ -2527,7 +2528,7 @@ const ResourcesSection: React.FC<{
         >
           <FileText className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
           <p className="text-c-text-secondary">
-            {t('partner.resources.empty', 'Brak materiałów w tej kategorii')}
+            {t('partner.resources.empty', 'No materials in this category')}
           </p>
         </div>
       ) : (
@@ -2818,7 +2819,7 @@ const ProfileSection: React.FC<{
               {t('partner.profile.companyInfo', 'Informacje o firmie')}
             </h2>
             <p className="text-c-text-secondary">
-              {t('partner.profile.companyInfoDesc', 'Zarządzaj danymi swojej firmy')}
+              {t('partner.profile.companyInfoDesc', 'Manage your company details')}
             </p>
           </div>
           <button
@@ -2901,7 +2902,7 @@ const ProfileSection: React.FC<{
               className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-              {t('common.saveChanges', 'Zapisz zmiany')}
+              {t('common.saveChanges', 'Save changes')}
             </button>
           </div>
         </div>
@@ -2919,7 +2920,7 @@ const ProfileSection: React.FC<{
           <p className="text-c-text-secondary">
             {t(
               'partner.profile.specializationsDesc',
-              'Wybierz frameworki, w których się specjalizujesz'
+              'Pick the frameworks you specialize in'
             )}
           </p>
         </div>
@@ -2965,7 +2966,7 @@ const ProfileSection: React.FC<{
               className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-              {t('partner.profile.saveSpecializations', 'Zapisz specjalizacje')}
+              {t('partner.profile.saveSpecializations', 'Save specializations')}
             </button>
           </div>
         </div>
@@ -2978,10 +2979,10 @@ const ProfileSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-c-text">
-            {t('partner.profile.regions', 'Regiony działalności')}
+            {t('partner.profile.regions', 'Regions covered')}
           </h2>
           <p className="text-c-text-secondary">
-            {t('partner.profile.regionsDesc', 'Wybierz regiony, w których działasz')}
+            {t('partner.profile.regionsDesc', 'Pick the regions you operate in')}
           </p>
         </div>
 
@@ -3009,7 +3010,7 @@ const ProfileSection: React.FC<{
               className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-              {t('partner.profile.saveRegions', 'Zapisz regiony')}
+              {t('partner.profile.saveRegions', 'Save regions')}
             </button>
           </div>
         </div>
@@ -3022,12 +3023,12 @@ const ProfileSection: React.FC<{
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-c-text">
-          {t('partner.profile.publicListing', 'Publiczna wizytówka')}
+          {t('partner.profile.publicListing', 'Public listing')}
         </h2>
         <p className="text-c-text-secondary">
           {t(
             'partner.profile.publicListingDesc',
-            'Zarządzaj swoją widocznością w katalogu partnerów'
+            'Manage your visibility in the partner directory'
           )}
         </p>
       </div>
@@ -3036,12 +3037,12 @@ const ProfileSection: React.FC<{
         <div className="flex items-center justify-between mb-6">
           <div>
             <h4 className="font-medium text-c-text">
-              {t('partner.profile.directoryVisibility', 'Widoczność w katalogu')}
+              {t('partner.profile.directoryVisibility', 'Directory visibility')}
             </h4>
             <p className="text-sm text-c-text-secondary">
               {t(
                 'partner.profile.directoryVisibilityDesc',
-                'Pokaż profil w publicznym katalogu partnerów'
+                'Show your profile in the public partner directory'
               )}
             </p>
           </div>
@@ -3065,7 +3066,7 @@ const ProfileSection: React.FC<{
 
         <div className="border-t border-c-border-subtle pt-6">
           <h4 className="font-medium text-c-text mb-4">
-            {t('partner.profile.preview', 'Podgląd')}
+            {t('partner.profile.preview', 'Preview')}
           </h4>
           <div className="bg-c-surface-raised/50 dark:bg-navy-700/30 rounded-xl p-4">
             <div className="flex items-start gap-4">
@@ -3079,7 +3080,7 @@ const ProfileSection: React.FC<{
                 <p className="text-sm text-c-text-secondary">
                   {organization?.tier || t('partner.profile.partnerTier', 'Partner')} •{' '}
                   {selectedRegions.join(', ') ||
-                    t('partner.profile.noRegions', 'Nie wybrano regionów')}
+                    t('partner.profile.noRegions', 'No regions selected')}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   {selectedSpecializations.length > 0 ? (
@@ -3093,7 +3094,7 @@ const ProfileSection: React.FC<{
                     ))
                   ) : (
                     <span className="text-xs text-c-text-muted">
-                      {t('partner.profile.noSpecializations', 'Nie wybrano specjalizacji')}
+                      {t('partner.profile.noSpecializations', 'No specializations selected')}
                     </span>
                   )}
                 </div>
@@ -3144,23 +3145,23 @@ const PartnerOrientationPanel: React.FC<{
       )}
       <h1 className="mt-5 text-2xl font-semibold text-c-text">
         {isError
-          ? t('partner.day12.connectionErrorTitle', 'Nie udało się ustalić statusu połączenia')
-          : t('partner.day12.unconnectedTitle', 'Profil partnera nie jest jeszcze podłączony')}
+          ? t('partner.day12.connectionErrorTitle', 'We could not determine the connection status')
+          : t('partner.day12.unconnectedTitle', 'The Partner profile is not connected yet')}
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
         {isError
           ? t(
               'partner.day12.connectionErrorDescription',
-              'Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.'
+              'We do not show sign-up or program content until the status is confirmed by the server. Please try again.'
             )
           : canConnect
             ? t(
                 'partner.day12.unconnectedAdminDescription',
-                'Twoja organizacja nie jest jeszcze podłączona do programu partnerskiego. Jako administrator możesz ją podłączyć teraz — portal otworzy się z danymi Twojej organizacji.'
+                'Your organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data.'
               )
             : t(
                 'partner.day12.unconnectedDescription',
-                'Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.'
+                'This screen only checks the connection to the partner workspace. Your organization administrator can confirm the next step outside this dashboard.'
               )}
       </p>
       {isError && onRetry ? (
@@ -3169,7 +3170,7 @@ const PartnerOrientationPanel: React.FC<{
           onClick={onRetry}
           className="mt-6 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
-          {t('partner.day12.retryConnection', 'Sprawdź ponownie')}
+          {t('partner.day12.retryConnection', 'Check again')}
         </button>
       ) : null}
       {!isError && canConnect && onConnect ? (
@@ -3181,8 +3182,8 @@ const PartnerOrientationPanel: React.FC<{
           className="mt-6 rounded-lg border border-c-border bg-c-surface-hover px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-60"
         >
           {connecting
-            ? t('partner.day12.connecting', 'Podłączanie…')
-            : t('partner.day12.connectOrganization', 'Podłącz organizację jako partnera')}
+            ? t('partner.day12.connecting', 'Connecting…')
+            : t('partner.day12.connectOrganization', 'Connect this organization as a partner')}
         </button>
       ) : null}
     </section>
@@ -3235,10 +3236,10 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
         idempotencyKey
       );
       await fetchConnection();
-      toast.success(t('partner.day12.connectSuccess', 'Organizacja podłączona do programu partnerskiego'));
+      toast.success(t('partner.day12.connectSuccess', 'The organization has been connected to the partner program'));
     } catch {
       toast.error(
-        t('partner.day12.connectFailed', 'Nie udało się podłączyć organizacji. Spróbuj ponownie.')
+        t('partner.day12.connectFailed', 'Could not connect the organization. Please try again.')
       );
     } finally {
       setConnecting(false);
@@ -3294,33 +3295,33 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       dashboard: t('partner.sidebar.dashboard', 'Dashboard'),
       metrics: t('partner.sidebar.metrics', 'Metrics'),
       // Referrals
-      'referral-tools': t('partner.sidebar.referralTools', 'Moje linki i kody'),
-      'referral-analytics': t('partner.sidebar.referralAnalytics', 'Analityka kliknięć'),
-      'referred-organizations': t('partner.sidebar.referredOrganizations', 'Poleceni klienci'),
+      'referral-tools': t('partner.sidebar.referralTools', 'My links and codes'),
+      'referral-analytics': t('partner.sidebar.referralAnalytics', 'Click analytics'),
+      'referred-organizations': t('partner.sidebar.referredOrganizations', 'Referred clients'),
       // Earnings
-      earnings: t('partner.sidebar.earnings', 'Prowizje'),
-      statements: t('partner.sidebar.statements', 'Wyciągi'),
-      payouts: t('partner.sidebar.payouts', 'Historia wypłat'),
-      'payout-settings': t('partner.sidebar.payoutSettings', 'Ustawienia wypłat'),
+      earnings: t('partner.sidebar.earnings', 'Earnings'),
+      statements: t('partner.sidebar.statements', 'Statements'),
+      payouts: t('partner.sidebar.payouts', 'Payout history'),
+      'payout-settings': t('partner.sidebar.payoutSettings', 'Payout settings'),
       // Clients
-      'client-access': t('partner.sidebar.clientAccess', 'Dostęp klientów'),
-      organizations: t('partner.sidebar.organizations', 'Organizacje'),
+      'client-access': t('partner.sidebar.clientAccess', 'Client access'),
+      organizations: t('partner.sidebar.organizations', 'Organizations'),
       projects: t('partner.sidebar.projects', 'Projekty'),
-      users: t('partner.sidebar.users', 'Członkowie zespołu'),
+      users: t('partner.sidebar.users', 'Team members'),
       // Academy
-      'learning-path': t('partner.sidebar.learningPath', 'Ścieżka nauki'),
-      exams: t('partner.sidebar.exams', 'Egzaminy'),
-      certificates: t('partner.sidebar.certificates', 'Certyfikaty'),
+      'learning-path': t('partner.sidebar.learningPath', 'Learning path'),
+      exams: t('partner.sidebar.exams', 'Exams'),
+      certificates: t('partner.sidebar.certificates', 'Certificates'),
       // Resources
-      documentation: t('partner.sidebar.documentation', 'Dokumentacja'),
-      marketing: t('partner.sidebar.marketing', 'Materiały marketingowe'),
-      'case-studies': t('partner.sidebar.caseStudies', 'Studia przypadków'),
+      documentation: t('partner.sidebar.documentation', 'Documentation'),
+      marketing: t('partner.sidebar.marketing', 'Marketing materials'),
+      'case-studies': t('partner.sidebar.caseStudies', 'Case studies'),
       templates: t('partner.sidebar.templates', 'Szablony PMO'),
       // Profile
       'company-info': t('partner.sidebar.companyInfo', 'Informacje o firmie'),
       specializations: t('partner.sidebar.specializations', 'Specjalizacje'),
       regions: t('partner.sidebar.regions', 'Regiony'),
-      'public-listing': t('partner.sidebar.publicListing', 'Publiczna wizytówka'),
+      'public-listing': t('partner.sidebar.publicListing', 'Public listing'),
     };
 
     const parentLabels: Partial<
@@ -3331,61 +3332,61 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       metrics: { label: t('partner.sidebar.partnerHome', 'Home'), section: 'partner-home' },
       // Referrals
       'referral-tools': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       'referral-analytics': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       'referred-organizations': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       // Earnings
-      earnings: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
-      statements: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
-      payouts: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
+      earnings: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
+      statements: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
+      payouts: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
       'payout-settings': {
-        label: t('partner.sidebar.groups.earnings', 'Prowizje'),
+        label: t('partner.sidebar.groups.earnings', 'EARNINGS'),
         section: 'earnings',
       },
       // Clients
       'client-access': {
-        label: t('partner.sidebar.groups.clients', 'Klienci'),
+        label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'),
         section: 'client-access',
       },
       organizations: {
-        label: t('partner.sidebar.groups.clients', 'Klienci'),
+        label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'),
         section: 'client-access',
       },
-      projects: { label: t('partner.sidebar.groups.clients', 'Klienci'), section: 'client-access' },
-      users: { label: t('partner.sidebar.groups.clients', 'Klienci'), section: 'client-access' },
+      projects: { label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'), section: 'client-access' },
+      users: { label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'), section: 'client-access' },
       // Academy
       'learning-path': {
-        label: t('partner.sidebar.groups.academy', 'Akademia'),
+        label: t('partner.sidebar.groups.academy', 'ACADEMY'),
         section: 'learning-path',
       },
-      exams: { label: t('partner.sidebar.groups.academy', 'Akademia'), section: 'learning-path' },
+      exams: { label: t('partner.sidebar.groups.academy', 'ACADEMY'), section: 'learning-path' },
       certificates: {
-        label: t('partner.sidebar.groups.academy', 'Akademia'),
+        label: t('partner.sidebar.groups.academy', 'ACADEMY'),
         section: 'learning-path',
       },
       // Resources
       documentation: {
-        label: t('partner.sidebar.groups.resources', 'Materiały'),
+        label: t('partner.sidebar.groups.resources', 'Resources'),
         section: 'documentation',
       },
       marketing: {
-        label: t('partner.sidebar.groups.resources', 'Materiały'),
+        label: t('partner.sidebar.groups.resources', 'Resources'),
         section: 'documentation',
       },
       'case-studies': {
-        label: t('partner.sidebar.groups.resources', 'Materiały'),
+        label: t('partner.sidebar.groups.resources', 'Resources'),
         section: 'documentation',
       },
       templates: {
-        label: t('partner.sidebar.groups.resources', 'Materiały'),
+        label: t('partner.sidebar.groups.resources', 'Resources'),
         section: 'documentation',
       },
       // Profile

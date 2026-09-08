@@ -20,6 +20,7 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import { type CommissionStatement, PARTNER_PMO_MAPPING } from './types';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 function formatStatementPeriod(start?: string, end?: string): string {
   const startLabel = typeof start === 'string' ? start.slice(0, 10) : '';
@@ -107,7 +108,7 @@ function buildLiveStatements(
 }
 
 export const CommissionView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [statements, setStatements] = useState<CommissionStatement[]>([]);
   const [statementsLoading, setStatementsLoading] = useState(true);
@@ -202,10 +203,13 @@ export const CommissionView: React.FC = () => {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Commission Runtime Summary
+                {t('partner.commission.runtimeTitle', 'Commission runtime summary')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Governed statement and payout readback for the active commission surface.
+                {t(
+                  'partner.commission.runtimeSubtitle',
+                  'Governed statement and payout readback for the active commission surface.'
+                )}
               </p>
             </div>
             <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
@@ -214,38 +218,43 @@ export const CommissionView: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-950/20 p-4">
               <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Paid statements
+                {t('partner.commission.paidStatements', 'Paid statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.paidAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.paidAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {statementSummary.paidCount} settled statement
-                {statementSummary.paidCount === 1 ? '' : 's'}
+                {t('partner.commission.settledCount', '{{count}} settled statements', {
+                  count: statementSummary.paidCount,
+                })}
               </div>
             </div>
 
             <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/20 p-4">
               <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Approved statements
+                {t('partner.commission.approvedStatements', 'Approved statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.approvedAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.approvedAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {statementSummary.approvedCount} awaiting payout
+                {t('partner.commission.awaitingPayoutCount', '{{count}} awaiting payout', {
+                  count: statementSummary.approvedCount,
+                })}
               </div>
             </div>
 
             <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20 p-4">
               <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Pending statements
+                {t('partner.commission.pendingStatements', 'Pending statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.pendingAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.pendingAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {statementSummary.pendingCount} still under review
+                {t('partner.commission.underReviewCount', '{{count}} still under review', {
+                  count: statementSummary.pendingCount,
+                })}
               </div>
             </div>
           </div>
@@ -255,12 +264,16 @@ export const CommissionView: React.FC = () => {
               <AlertTriangle size={18} className="mt-0.5 text-amber-500" />
               <div>
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  Deal intelligence unavailable on governed runtime
+                  {t(
+                    'partner.commission.dealIntelUnavailableTitle',
+                    'Deal intelligence is unavailable on the governed runtime'
+                  )}
                 </div>
                 <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  This surface no longer shows placeholder deal pipeline projections. Commission
-                  intelligence will return only after a real partner-authenticated deal-pipeline
-                  contract lands.
+                  {t(
+                    'partner.commission.dealIntelUnavailableBody',
+                    'This screen no longer shows placeholder deal pipeline projections. Commission intelligence returns only once a real partner-authenticated deal-pipeline contract lands.'
+                  )}
                 </div>
               </div>
             </div>
@@ -276,9 +289,11 @@ export const CommissionView: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">
-                  Commission Statements
+                  {t('partner.commission.statementsTitle', 'Commission statements')}
                 </h3>
-                <p className="text-xs text-slate-400">Historical statements and payouts</p>
+                <p className="text-xs text-slate-400">
+                  {t('partner.commission.statementsSubtitle', 'Historical statements and payouts')}
+                </p>
               </div>
             </div>
             <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
@@ -287,7 +302,7 @@ export const CommissionView: React.FC = () => {
           <div className="space-y-3">
             {statementsLoading && (
               <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
-                Loading commission statements...
+                {t('partner.commission.statementsLoading', 'Loading commission statements…')}
               </div>
             )}
 
@@ -302,18 +317,24 @@ export const CommissionView: React.FC = () => {
                   </div>
                   <div className="text-xs text-slate-400">
                     {statement.paymentReference
-                      ? `Ref ${statement.paymentReference}`
+                      ? t('partner.commission.statementRef', 'Ref {{ref}}', {
+                          ref: statement.paymentReference,
+                        })
                       : statement.deals.length > 0
-                        ? `${statement.deals.length} deal${statement.deals.length !== 1 ? 's' : ''}`
-                        : 'Historical statement'}
+                        ? t('partner.commission.statementDeals', '{{count}} deals', {
+                            count: statement.deals.length,
+                          })
+                        : t('partner.commission.statementHistorical', 'Historical statement')}
                     {statement.paidAt &&
-                      ` · Paid ${new Date(statement.paidAt).toLocaleDateString()}`}
+                      ` · ${t('partner.commission.statementPaidOn', 'Paid {{date}}', {
+                        date: new Date(statement.paidAt).toLocaleDateString(i18n.language),
+                      })}`}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="font-semibold text-slate-900 dark:text-white">
-                      ${statement.totalAmount.toLocaleString()}
+                      ${formatListNumber(statement.totalAmount, '0')}
                     </div>
                     <div
                       className={`text-xs ${
@@ -324,11 +345,11 @@ export const CommissionView: React.FC = () => {
                             : 'text-amber-500'
                       }`}
                     >
-                      {statement.status}
+                      {t(`partner.commission.statementStatus.${statement.status}`, statement.status)}
                     </div>
                   </div>
                   <button className="rounded-xl border border-slate-200 dark:border-navy-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 transition hover:border-brand/30">
-                    View
+                    {t('partner.commission.statementView', 'View')}
                   </button>
                 </div>
               </div>
@@ -336,7 +357,7 @@ export const CommissionView: React.FC = () => {
 
             {!statementsLoading && statements.length === 0 && (
               <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
-                No commission statements yet
+                {t('partner.commission.noStatements', 'No commission statements yet')}
               </div>
             )}
           </div>
@@ -353,26 +374,33 @@ export const CommissionView: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">
-                Commission inquiry routing unavailable
+                {t(
+                  'partner.commission.inquiryUnavailableTitle',
+                  'Commission inquiry routing is unavailable'
+                )}
               </h3>
               <p className="text-xs text-slate-400">
-                This partner surface no longer pretends to submit inquiries without a governed
-                partner-user support contract.
+                {t(
+                  'partner.commission.inquiryUnavailableBody',
+                  'This screen no longer pretends to submit inquiries without a governed partner-user support contract.'
+                )}
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 p-4 text-sm text-slate-600 dark:text-slate-300">
-              Review the governed statement history above and use partner resources for current
-              commission guidance while inquiry routing remains outside the bounded partner runtime.
+              {t(
+                'partner.commission.inquiryUnavailableHint',
+                'Review the governed statement history above and use the partner resources for current commission guidance while inquiry routing stays outside the bounded partner runtime.'
+              )}
             </div>
 
             <button
               onClick={navigate(AppView.PARTNER_RESOURCES)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] px-4 py-3 text-sm font-semibold text-white dark:text-navy-950 transition hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]"
             >
-              Open Partner Resources
+              {t('partner.commission.openResources', 'Open partner resources')}
             </button>
           </div>
         </div>
@@ -381,7 +409,9 @@ export const CommissionView: React.FC = () => {
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/40 p-6">
           <div className="mb-4 flex items-center gap-2">
             <HelpCircle size={18} className="text-slate-500" />
-            <h3 className="font-semibold text-slate-900 dark:text-white">Commission FAQ</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white">
+              {t('partner.commission.faqTitle', 'Commission FAQ')}
+            </h3>
           </div>
 
           <div className="space-y-4 text-sm">

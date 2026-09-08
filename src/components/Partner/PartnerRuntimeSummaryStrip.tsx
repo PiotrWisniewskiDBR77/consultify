@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { localeListy } from '@/utils/listDateFormat';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -154,7 +155,7 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
           },
           {
             label: t('partner.metrics.runtimeReadyForPayout', 'Ready for payout'),
-            value: `${new Intl.NumberFormat('pl-PL', {
+            value: `${new Intl.NumberFormat(localeListy(), {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(

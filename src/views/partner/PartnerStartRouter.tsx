@@ -128,12 +128,12 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
       >
         <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-amber-600 dark:text-amber-400" />
         <p className="font-medium text-c-text">
-          {t('partner.start.unknownTitle', 'Nie udało się ustalić statusu Twojego programu')}
+          {t('partner.start.unknownTitle', 'We could not determine your program status')}
         </p>
         <p className="mt-1 text-sm text-c-text-secondary">
           {t(
             'partner.start.unknownDescription',
-            'Nie pokazujemy Ci ekranu rejestracji, bo nie wiemy, na jakim etapie jesteś. Spróbuj ponownie za chwilę.'
+            'We are not showing the sign-up screen because we do not know your current program stage. Please try again in a moment.'
           )}
         </p>
         <button
@@ -141,7 +141,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
           onClick={() => void load()}
           className="mt-4 rounded-lg border border-c-border px-4 py-2 text-sm text-c-text hover:bg-c-surface-hover"
         >
-          {t('partner.start.retry', 'Spróbuj ponownie')}
+          {t('partner.start.retry', 'Try again')}
         </button>
       </div>
     );
@@ -161,7 +161,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
       >
         <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-amber-600 dark:text-amber-400" />
         <p className="font-medium text-c-text">
-          {t('partner.start.unknownPhaseTitle', 'Nieznany etap programu partnerskiego')}
+          {t('partner.start.unknownPhaseTitle', 'Unknown partner program stage')}
         </p>
         <p className="mt-1 font-mono text-xs text-c-text-muted">{String(status.lifecyclePhase)}</p>
       </div>
@@ -178,22 +178,22 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
   const tiles = [
     {
       id: 'gross',
-      label: t('partner.start.grossEarned', 'Zarobione łącznie'),
+      label: t('partner.start.grossEarned', 'Earned in total'),
       value: formatMoney(status.balances?.grossEarned ?? 0, currency, locale),
     },
     {
       id: 'available',
-      label: t('partner.start.availableToPayout', 'Gotowe do wypłaty'),
+      label: t('partner.start.availableToPayout', 'Ready for payout'),
       value: formatMoney(status.balances?.availableToPayout ?? 0, currency, locale),
     },
     {
       id: 'paid',
-      label: t('partner.start.paidOut', 'Wypłacone'),
+      label: t('partner.start.paidOut', 'Paid out'),
       value: formatMoney(status.balances?.paidOut ?? 0, currency, locale),
     },
     {
       id: 'held',
-      label: t('partner.start.heldAmount', 'Wstrzymane'),
+      label: t('partner.start.heldAmount', 'On hold'),
       value: formatMoney(status.balances?.heldAmount ?? 0, currency, locale),
     },
   ];
@@ -202,10 +202,10 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
     <div className="space-y-6" data-testid="partner-start-active">
       <div>
         <h1 className="text-2xl font-semibold text-c-text">
-          {t('partner.start.activeTitle', 'Twój program partnerski')}
+          {t('partner.start.activeTitle', 'Your partner program')}
         </h1>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('partner.start.activeSubtitle', 'Aktualne saldo, status programu i następny krok.')}
+          {t('partner.start.activeSubtitle', 'Current balance, program status and the next step.')}
         </p>
       </div>
 
@@ -217,7 +217,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
           <AlertTriangle className="mr-2 inline h-4 w-4 text-amber-600 dark:text-amber-400" />
           {t(
             'partner.start.degraded',
-            'Saldo pokazujemy z ograniczeniami — rejestr programu był chwilowo nieczytelny.'
+            'The balance is shown with limitations because part of the program data could not be read.'
           )}
         </div>
       )}
@@ -239,7 +239,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
         <p className="text-xs text-c-text-secondary" data-testid="partner-start-reconciliation">
           {t(
             'partner.start.paidProjection',
-            'Kwota wypłacona pochodzi z rejestru zakończonych wypłat; część nie została jeszcze zaksięgowana w rejestrze programu.'
+            'The paid-out amount comes from the completed payouts register; part of the data has not been posted to the program ledger yet.'
           )}
         </p>
       )}
@@ -247,7 +247,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
       {Array.isArray(status.whatNext) && status.whatNext.length > 0 && (
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
           <h2 className="text-sm font-semibold text-c-text">
-            {t('partner.start.whatNext', 'Następny krok')}
+            {t('partner.start.whatNext', 'Next step')}
           </h2>
           <ul className="mt-3 space-y-2">
             {status.whatNext.map((step, index) => (
@@ -274,14 +274,14 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
           )}
         >
           <Wallet className="h-4 w-4" />
-          {t('partner.start.goToEarnings', 'Przejdź do prowizji')}
+          {t('partner.start.goToEarnings', 'Go to commissions')}
         </button>
         <button
           type="button"
           onClick={() => onNavigateSection?.('referral-tools')}
           className="inline-flex items-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover"
         >
-          {t('partner.start.goToReferralTools', 'Moje linki i kody')}
+          {t('partner.start.goToReferralTools', 'My links and codes')}
         </button>
       </div>
     </div>
@@ -296,12 +296,12 @@ export const PartnerOnboardingOrientation: React.FC = () => {
       data-testid="partner-orientation-onboarding"
     >
       <h1 className="text-2xl font-semibold text-c-text">
-        {t('partner.day12.onboardingTitle', 'Konfiguracja przestrzeni partnera trwa')}
+        {t('partner.day12.onboardingTitle', 'Your partner workspace is being set up')}
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-c-text-secondary">
         {t(
           'partner.day12.onboardingDescription',
-          'Połączenie jest aktywne. Dokończ wymagane kroki operacyjne w przestrzeni partnera; ten pulpit nie wyświetla treści rejestracyjnych ani marketingowych.'
+          'The connection is active. Finish the required operational steps in the partner workspace; this dashboard does not show sign-up or marketing content.'
         )}
       </p>
     </section>

@@ -493,51 +493,73 @@ export const OnboardingChecklistSection: React.FC = () => {
 };
 
 export const AcademyPreviewSection: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <section className="space-y-5" aria-labelledby="partner-enablement-title">
       <SectionHeading
-        eyebrow="Enablement"
-        title="Use only the resources available to your program state"
-        description="Documentation and onboarding guidance are available entry points. Academy, certification and other workspace capabilities remain subject to account access and runtime status."
+        eyebrow={t('partner.providerHome.enablement.eyebrow', 'Enablement')}
+        title={t(
+          'partner.providerHome.enablement.title',
+          'Use only the resources available to your program state'
+        )}
+        description={t(
+          'partner.providerHome.enablement.description',
+          'Documentation and onboarding guidance are available entry points. Academy, certification and other workspace capabilities remain subject to account access and runtime status.'
+        )}
       />
       <div className="grid gap-4 lg:grid-cols-3">
         <div className={sectionCard}>
           <BookOpen className="h-5 w-5 text-c-text-secondary" />
           <h3 id="partner-enablement-title" className="mt-3 font-semibold text-c-text">
-            Program documentation
+            {t('partner.providerHome.enablement.docs.title', 'Program documentation')}
           </h3>
           <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-            Review the program model, responsibilities and working guidance.
+            {t(
+              'partner.providerHome.enablement.docs.body',
+              'Review the program model, responsibilities and working guidance.'
+            )}
           </p>
           <button
             type="button"
             onClick={() => navigate(PARTNER_DOCS.overview.href)}
             className="mt-4 text-sm font-semibold text-c-text underline decoration-c-border underline-offset-4"
           >
-            Open documentation
+            {t('partner.providerHome.enablement.docs.cta', 'Open documentation')}
           </button>
         </div>
         <div className={sectionCard}>
           <FileCheck2 className="h-5 w-5 text-c-text-secondary" />
-          <h3 className="mt-3 font-semibold text-c-text">Partner Academy</h3>
+          <h3 className="mt-3 font-semibold text-c-text">
+            {t('partner.providerHome.enablement.academy.title', 'Partner academy')}
+          </h3>
           <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-            Structured enablement may be available after activation; access and progress are
-            verified in the partner workspace.
+            {t(
+              'partner.providerHome.enablement.academy.body',
+              'Structured enablement may be available after activation; access and progress are verified in the partner workspace.'
+            )}
           </p>
           <div className="mt-3">
-            <StatusBadge tone="limited">Access-dependent</StatusBadge>
+            <StatusBadge tone="limited">
+              {t('partner.providerHome.enablement.academy.badge', 'Access-dependent')}
+            </StatusBadge>
           </div>
         </div>
         <div className={sectionCard}>
           <LifeBuoy className="h-5 w-5 text-c-text-secondary" />
-          <h3 className="mt-3 font-semibold text-c-text">Deal and operational support</h3>
+          <h3 className="mt-3 font-semibold text-c-text">
+            {t('partner.providerHome.enablement.support.title', 'Deal and operational support')}
+          </h3>
           <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-            Support scope and response expectations follow the applicable agreement, not this
-            overview.
+            {t(
+              'partner.providerHome.enablement.support.body',
+              'Support scope and response expectations follow the applicable agreement, not this overview.'
+            )}
           </p>
           <div className="mt-3">
-            <StatusBadge tone="limited">Agreement-dependent</StatusBadge>
+            <StatusBadge tone="limited">
+              {t('partner.providerHome.enablement.support.badge', 'Agreement-dependent')}
+            </StatusBadge>
           </div>
         </div>
       </div>
@@ -546,6 +568,7 @@ export const AcademyPreviewSection: React.FC = () => {
 };
 
 export const ContactPartnerManagerSection: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <section
@@ -556,14 +579,19 @@ export const ContactPartnerManagerSection: React.FC = () => {
     >
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-          Need a fit conversation?
+          {t('partner.providerHome.contact.eyebrow', 'Need a fit conversation?')}
         </p>
         <h2 className="mt-2 text-xl font-semibold text-c-text">
-          Discuss the cooperation model, not provisional terms
+          {t(
+            'partner.providerHome.contact.title',
+            'Discuss the cooperation model, not provisional terms'
+          )}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-c-text-secondary">
-          Use the approved contact route. A named program owner will appear only after publication
-          authority is confirmed.
+          {t(
+            'partner.providerHome.contact.body',
+            'Use the approved contact route. A named program owner appears only after publication authority is confirmed.'
+          )}
         </p>
       </div>
       <button
@@ -571,7 +599,7 @@ export const ContactPartnerManagerSection: React.FC = () => {
         onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
         className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm font-semibold text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus-ring)]"
       >
-        Contact Consultify
+        {t('partner.providerHome.contact.cta', 'Contact Consultify')}
         <ArrowRight className="h-4 w-4" />
       </button>
     </section>

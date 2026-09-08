@@ -10,6 +10,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { localeListy } from '@/utils/listDateFormat';
 import {
   V8PartnerApi,
   type V8PartnerAttribution,
@@ -120,14 +121,14 @@ const stateClass: Record<SurfaceState, string> = {
 
 function money(value: number | undefined, currency: string): string {
   try {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency || 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number(value) || 0);
   } catch {
-    return `${new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency || 'EUR'}`;
+    return `${new Intl.NumberFormat(localeListy(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency || 'EUR'}`;
   }
 }
 
@@ -198,7 +199,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       icon: Link2,
       state: snapshot.attributions.state,
       value: String(snapshot.attributions.total),
-      detail: t('partner.canonicalRuntime.activeAttributions', 'Aktywne polecenia: {{count}}', {
+      detail: t('partner.canonicalRuntime.activeAttributions', 'Active referrals: {{count}}', {
         count: snapshot.attributions.active,
       }),
     },
@@ -209,7 +210,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       state: snapshot.participantLedger.state,
       value: String(snapshot.participantLedger.entries.length),
       detail: latestParticipantFact
-        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Zapisano ostatnie polecenie')
+        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Latest referral recorded')
         : t('partner.canonicalRuntime.noReferralsRecorded', 'No immutable referral facts recorded'),
     },
     {
@@ -220,7 +221,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       value: money(snapshot.program?.balances?.availableToPayout, currency),
       detail: t(
         'partner.canonicalRuntime.payoutEligibilityDetail',
-        'Widoczne saldo ma charakter informacyjny. Możliwość wypłaty zależy od zatwierdzonych zasad programu.'
+        'The balance shown is informational. Payout eligibility depends on the approved program rules.'
       ),
     },
   ];

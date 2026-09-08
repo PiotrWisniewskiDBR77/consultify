@@ -18,6 +18,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { AcademyModule, PartnerCertification } from '../../views/partner/types';
 
@@ -51,23 +53,40 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; icon: React.Re
   },
 };
 
-const CERTIFICATION_INFO: Record<string, { label: string; description: string; color: string }> = {
-  CONSULTIFY_CERTIFIED: {
-    label: 'Consultify Certified Partner',
-    description: 'Completed all required methodology modules',
-    color: 'from-navy-900 to-blue-700',
-  },
-  CO_SELL_EXPERT: {
-    label: 'Co-Sell Expert',
-    description: 'Mastered co-selling best practices and deal registration',
-    color: 'from-emerald-500 to-blue-600',
-  },
-  ENTERPRISE_PARTNER: {
-    label: 'Enterprise Partner',
-    description: 'Advanced integration patterns and compliance certification',
-    color: 'from-amber-500 to-amber-600',
-  },
+const CERTIFICATION_COLORS: Record<string, string> = {
+  CONSULTIFY_CERTIFIED: 'from-navy-900 to-blue-700',
+  CO_SELL_EXPERT: 'from-emerald-500 to-blue-600',
+  ENTERPRISE_PARTNER: 'from-amber-500 to-amber-600',
 };
+
+/** Etykiety certyfikatow ida przez slownik (PLAN.md §2.6: zakaz renderowania
+ *  surowej wartosci enumu i zakaz zaszywania napisu obok koloru). */
+function certificationInfo(t: TFunction, type: string) {
+  const fallback: Record<string, { label: string; description: string }> = {
+    CONSULTIFY_CERTIFIED: {
+      label: 'Consultify Certified Partner',
+      description: 'Completed all required methodology modules',
+    },
+    CO_SELL_EXPERT: {
+      label: 'Co-Sell Expert',
+      description: 'Mastered co-selling best practices and deal registration',
+    },
+    ENTERPRISE_PARTNER: {
+      label: 'Enterprise Partner',
+      description: 'Advanced integration patterns and compliance certification',
+    },
+  };
+  const base = fallback[type];
+  return {
+    color: CERTIFICATION_COLORS[type] || 'from-navy-900 to-blue-700',
+    label: base
+      ? t(`partner.academy.certifications.${type}.label`, base.label)
+      : t('partner.academy.certifications.unknown.label', 'Partner certificate'),
+    description: base
+      ? t(`partner.academy.certifications.${type}.description`, base.description)
+      : t('partner.academy.certifications.unknown.description', 'Certificate details unavailable'),
+  };
+}
 
 export const AcademyProgress: React.FC<AcademyProgressProps> = ({
   modules,
@@ -75,6 +94,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
   onStartModule,
   onViewCertification,
 }) => {
+  const { t, i18n } = useTranslation();
   // Calculate progress stats
   const stats = useMemo(() => {
     const totalModules = modules.length;
@@ -126,17 +146,17 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-                Partner Development Academy
+                {t('partner.academy.title', 'Partner Development Academy')}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Build expertise in Consultify methodology
+                {t('partner.academy.subtitle', 'Build expertise in the Consultify methodology')}
               </p>
             </div>
           </div>
           {stats.certificationReady && (
             <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
               <CheckCircle2 size={12} className="mr-1 inline" />
-              Certification Ready
+              {t('partner.academy.certificationReady', 'Certification ready')}
             </div>
           )}
         </div>
@@ -145,22 +165,24 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
         <div className="mb-4 grid gap-4 md:grid-cols-4">
           <StatCard
             icon={<BookOpen size={16} />}
-            label="Modules Completed"
+            label={t('partner.academy.stats.modulesCompleted', 'Modules completed')}
             value={`${stats.completedModules}/${stats.totalModules}`}
           />
           <StatCard
             icon={<Clock size={16} />}
-            label="Total Duration"
-            value={`${stats.totalDuration} min`}
+            label={t('partner.academy.stats.totalDuration', 'Total duration')}
+            value={t('partner.academy.stats.minutes', '{{count}} min', {
+              count: stats.totalDuration,
+            })}
           />
           <StatCard
             icon={<Star size={16} />}
-            label="Average Score"
+            label={t('partner.academy.stats.averageScore', 'Average score')}
             value={stats.averageScore > 0 ? `${stats.averageScore}%` : '—'}
           />
           <StatCard
             icon={<Award size={16} />}
-            label="Certifications"
+            label={t('partner.academy.stats.certifications', 'Certifications')}
             value={certifications.length.toString()}
           />
         </div>
@@ -168,7 +190,9 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
         {/* Progress Bar */}
         <div>
           <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="text-slate-600 dark:text-slate-300">Overall Progress</span>
+            <span className="text-slate-600 dark:text-slate-300">
+              {t('partner.academy.overallProgress', 'Overall progress')}
+            </span>
             <span className="font-semibold text-navy-900 dark:text-white">
               {stats.progressPercent}%
             </span>
@@ -186,11 +210,11 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
       {certifications.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white/90 p-6 dark:border-navy-700 dark:bg-navy-900/60">
           <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Your Certifications
+            {t('partner.academy.yourCertifications', 'Your certifications')}
           </h4>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {certifications.map((cert) => {
-              const info = CERTIFICATION_INFO[cert.type];
+              const info = certificationInfo(t, cert.type);
               return (
                 <div
                   key={cert.id}
@@ -199,12 +223,16 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                 >
                   <div className="mb-3 flex items-center gap-2">
                     <Trophy size={20} />
-                    <span className="text-xs font-medium text-white/80">Certified</span>
+                    <span className="text-xs font-medium text-white/80">
+                      {t('partner.academy.certified', 'Certified')}
+                    </span>
                   </div>
                   <div className="font-semibold">{info.label}</div>
                   <div className="mt-1 text-xs text-white/80">{info.description}</div>
                   <div className="mt-3 text-xs text-white/60">
-                    Earned {new Date(cert.earnedAt).toLocaleDateString()}
+                    {t('partner.academy.earnedOn', 'Earned {{date}}', {
+                      date: new Date(cert.earnedAt).toLocaleDateString(i18n.language),
+                    })}
                   </div>
                 </div>
               );
@@ -235,16 +263,20 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                     {category.charAt(0) + category.slice(1).toLowerCase()}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {completedInCategory}/{categoryModules.length} completed
+                    {t('partner.academy.completedOfTotal', '{{done}}/{{total}} completed', {
+                      done: completedInCategory,
+                      total: categoryModules.length,
+                    })}
                   </p>
                 </div>
               </div>
               <div className="text-xs text-slate-400 dark:text-slate-500">
-                {categoryModules.reduce((sum, m) => {
-                  const min = parseInt(m.duration.replace(' min', ''));
-                  return sum + (isNaN(min) ? 0 : min);
-                }, 0)}{' '}
-                min total
+                {t('partner.academy.minutesTotal', '{{count}} min total', {
+                  count: categoryModules.reduce((sum, m) => {
+                    const min = parseInt(m.duration.replace(' min', ''));
+                    return sum + (isNaN(min) ? 0 : min);
+                  }, 0),
+                })}
               </div>
             </div>
 
@@ -266,15 +298,17 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-6 text-center dark:border-navy-600 dark:bg-navy-900/40">
           <Lock size={32} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
           <h4 className="font-semibold text-navy-900 dark:text-white">
-            Unlock Consultify Certification
+            {t('partner.academy.unlockTitle', 'Unlock Consultify certification')}
           </h4>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Complete {stats.requiredModules - stats.completedRequired} more required module
-            {stats.requiredModules - stats.completedRequired !== 1 ? 's' : ''} to earn your
-            certification
+            {t(
+              'partner.academy.unlockBody',
+              'Complete {{count}} more required module to earn your certification',
+              { count: stats.requiredModules - stats.completedRequired }
+            )}
           </p>
           <button className="mt-4 rounded-xl bg-c-text px-6 py-2 text-sm font-semibold text-c-bg transition hover:bg-c-text-secondary">
-            Continue Learning
+            {t('partner.academy.continueLearning', 'Continue learning')}
           </button>
         </div>
       )}
@@ -306,6 +340,7 @@ interface ModuleCardProps {
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
+  const { t } = useTranslation();
   const isCompleted = !!module.completedAt;
 
   return (
@@ -335,7 +370,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
             </span>
             {module.requiredForCertification && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-300">
-                Required
+                {t('partner.academy.moduleRequired', 'Required')}
               </span>
             )}
           </div>
@@ -351,7 +386,9 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
             <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               {module.score}%
             </div>
-            <div className="text-xs text-slate-400 dark:text-slate-500">Score</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500">
+              {t('partner.academy.moduleScore', 'Score')}
+            </div>
           </div>
         )}
         <div className="text-right">
@@ -365,7 +402,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
             onClick={onStart}
             className="flex items-center gap-1 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-semibold text-white dark:text-navy-950 transition hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF]"
           >
-            Start <ChevronRight size={12} />
+            {t('partner.academy.moduleStart', 'Start')} <ChevronRight size={12} />
           </button>
         )}
       </div>

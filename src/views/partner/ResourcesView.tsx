@@ -1,11 +1,13 @@
 import { ArrowRight, BookOpen, GraduationCap, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { PARTNER_DOCS } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
 export const ResourcesView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -13,25 +15,27 @@ export const ResourcesView: React.FC = () => {
       <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
         <div className="rounded-2xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/60 p-8">
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-            Partner Knowledge Hub
+            {t('partner.resourcesHub.title', 'Partner knowledge hub')}
           </h1>
           <p className="mt-3 max-w-3xl text-slate-500 dark:text-slate-400">
-            Start from canonical public docs, then continue into the partner portal for academy,
-            exams, certificates, and gated resources.
+            {t(
+              'partner.resourcesHub.subtitle',
+              'Start from the canonical public docs, then continue into the partner portal for the academy, exams, certificates and gated resources.'
+            )}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
               className="inline-flex items-center gap-2 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-medium text-white"
             >
-              Open portal resources
+              {t('partner.resourcesHub.openPortal', 'Open portal resources')}
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(PARTNER_DOCS.overview.href)}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200"
             >
-              Open partner docs
+              {t('partner.resourcesHub.openDocs', 'Open partner docs')}
             </button>
           </div>
         </div>
@@ -39,23 +43,29 @@ export const ResourcesView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             {
-              title: 'Public docs',
-              description:
-                'Program overview, application flow, payouts, certification, FAQ, and case studies.',
+              title: t('partner.resourcesHub.cards.docs.title', 'Public docs'),
+              description: t(
+                'partner.resourcesHub.cards.docs.description',
+                'Program overview, application flow, payouts, certification, FAQ and case studies.'
+              ),
               icon: BookOpen,
               action: () => navigate(PARTNER_DOCS.overview.href),
             },
             {
-              title: 'Partner academy',
-              description:
-                'Track-based learning paths with modules, exam eligibility, and review states.',
+              title: t('partner.resourcesHub.cards.academy.title', 'Partner academy'),
+              description: t(
+                'partner.resourcesHub.cards.academy.description',
+                'Track-based learning paths with modules, exam eligibility and review states.'
+              ),
               icon: GraduationCap,
               action: () => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`),
             },
             {
-              title: 'Governed readiness',
-              description:
-                'Operator review, payout readiness, and certificates stay visible in the portal.',
+              title: t('partner.resourcesHub.cards.readiness.title', 'Governed readiness'),
+              description: t(
+                'partner.resourcesHub.cards.readiness.description',
+                'Operator review, payout readiness and certificates stay visible in the portal.'
+              ),
               icon: ShieldCheck,
               action: () => navigate(`${ROUTES.PARTNER.LANDING}?tab=certificates`),
             },

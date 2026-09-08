@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowRight, Brain, CheckCircle, Clock, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -38,6 +39,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
   onCancel,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
 
   const [state, setState] = useState<ConfirmationState>({
@@ -65,7 +67,9 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
         confirmedAt: new Date().toISOString(),
       });
 
-      toast.success('Gotowe. Przejdźmy do konfiguracji organizacji.');
+      toast.success(
+        t('trial.transition.proceedSuccess', 'Done. Let us move on to setting up the organization.')
+      );
 
       if (onConfirm) {
         onConfirm();
@@ -73,7 +77,9 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
         setCurrentView(AppView.ORG_SETUP_WIZARD);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Błąd podczas przejścia');
+      toast.error(
+        error.message || t('trial.transition.proceedFailed', 'The transition could not be completed')
+      );
     } finally {
       setState((prev) => ({ ...prev, isSubmitting: false }));
     }
@@ -97,11 +103,11 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
               <AlertTriangle className="text-amber-600 dark:text-amber-400" size={20} />
             </div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-              Przed utworzeniem organizacji
+              {t('trial.transition.title', 'Before you create an organization')}
             </h2>
           </div>
           <p className="text-slate-600 dark:text-slate-400 text-sm">
-            Upewnij się, że rozumiesz, co oznacza ten krok.
+            {t('trial.transition.subtitle', 'Make sure you understand what this step means.')}
           </p>
         </div>
 
@@ -128,12 +134,14 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
               <div className="flex items-center gap-2 mb-1">
                 <Clock size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="font-semibold text-navy-900 dark:text-white">
-                  Rozumiem, że to wymaga czasu
+                  {t('trial.transition.time.title', 'I understand this takes time')}
                 </span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Praca z systemem to nie szybkie rozwiązanie. Wymaga zaangażowania i regularnej pracy
-                z zespołem.
+                {t(
+                  'trial.transition.time.body',
+                  'Working with the system is not a quick fix. It takes commitment and regular work with your team.'
+                )}
               </p>
             </div>
           </label>
@@ -159,12 +167,14 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
               <div className="flex items-center gap-2 mb-1">
                 <Users size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="font-semibold text-navy-900 dark:text-white">
-                  To narzędzie dla zespołów
+                  {t('trial.transition.team.title', 'This is a tool for teams')}
                 </span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                System jest zaprojektowany dla organizacji. Największą wartość przynosi, gdy pracuje
-                z nim więcej niż jedna osoba.
+                {t(
+                  'trial.transition.team.body',
+                  'The system is designed for organizations. It is worth the most when more than one person works in it.'
+                )}
               </p>
             </div>
           </label>
@@ -190,12 +200,14 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
               <div className="flex items-center gap-2 mb-1">
                 <Brain size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="font-semibold text-navy-900 dark:text-white">
-                  System będzie pamiętał naszą pracę
+                  {t('trial.transition.memory.title', 'The system will remember our work')}
                 </span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Każda decyzja, dyskusja i wniosek zostanie zapisany. To tworzy ciągłość, ale oznacza
-                też odpowiedzialność.
+                {t(
+                  'trial.transition.memory.body',
+                  'Every decision, discussion and conclusion is recorded. That creates continuity, but it also creates responsibility.'
+                )}
               </p>
             </div>
           </label>
@@ -207,7 +219,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
             onClick={handleCancel}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
-            Wróć
+            {t('trial.transition.back', 'Back')}
           </button>
 
           <button
@@ -225,11 +237,11 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
             {state.isSubmitting ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Przechodzę...</span>
+                <span>{t('trial.transition.inProgress', 'Continuing…')}</span>
               </>
             ) : (
               <>
-                <span>Rozumiem, kontynuuj</span>
+                <span>{t('trial.transition.confirm', 'I understand, continue')}</span>
                 <ArrowRight size={18} />
               </>
             )}
@@ -243,15 +255,17 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
               <>
                 <CheckCircle size={16} className="text-green-500" />
                 <span className="text-green-600 dark:text-green-400">
-                  Wszystkie potwierdzenia zaznaczone
+                  {t('trial.transition.allConfirmed', 'All confirmations are ticked')}
                 </span>
               </>
             ) : (
               <span className="text-slate-600 dark:text-slate-500">
-                {3 -
-                  [state.timeCommitment, state.teamScope, state.memoryAware].filter(Boolean)
-                    .length}{' '}
-                pozostało
+                {t('trial.transition.remaining', '{{count}} left', {
+                  count:
+                    3 -
+                    [state.timeCommitment, state.teamScope, state.memoryAware].filter(Boolean)
+                      .length,
+                })}
               </span>
             )}
           </div>

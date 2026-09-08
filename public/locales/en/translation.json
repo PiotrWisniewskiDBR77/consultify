@@ -1625,7 +1625,45 @@
           "title": "DRD Framework Certification",
           "description": "Deep dive into Digital Readiness Diagnostic methodology."
         }
-      }
+      },
+      "certifications": {
+        "unknown": {
+          "label": "Partner certificate",
+          "description": "Certificate details unavailable"
+        },
+        "CONSULTIFY_CERTIFIED": {
+          "label": "Consultify Certified Partner",
+          "description": "Completed all required methodology modules"
+        },
+        "CO_SELL_EXPERT": {
+          "label": "Co-Sell Expert",
+          "description": "Mastered co-selling best practices and deal registration"
+        },
+        "ENTERPRISE_PARTNER": {
+          "label": "Enterprise Partner",
+          "description": "Advanced integration patterns and compliance certification"
+        }
+      },
+      "certificationReady": "Certification ready",
+      "stats": {
+        "modulesCompleted": "Modules completed",
+        "totalDuration": "Total duration",
+        "minutes": "{{count}} min",
+        "averageScore": "Average score",
+        "certifications": "Certifications"
+      },
+      "overallProgress": "Overall progress",
+      "yourCertifications": "Your certifications",
+      "certified": "Certified",
+      "earnedOn": "Earned {{date}}",
+      "completedOfTotal": "{{done}}/{{total}} completed",
+      "minutesTotal": "{{count}} min total",
+      "unlockTitle": "Unlock Consultify certification",
+      "unlockBody": "Complete {{count}} more required module to earn your certification",
+      "continueLearning": "Continue learning",
+      "moduleRequired": "Required",
+      "moduleScore": "Score",
+      "moduleStart": "Start"
     },
     "contact": {
       "title": "Questions? Let's Talk!",
@@ -1773,7 +1811,11 @@
       "col": {
         "status": "Status"
       },
-      "userCount": "{{count}} users"
+      "userCount": "{{count}} users",
+      "fallbackOrganization": "Organization",
+      "fallbackTeamMember": "Team member",
+      "fallbackMember": "Member",
+      "fallbackAccessLevel": "partner access"
     },
     "dashboard": {
       "startProject": "Start Project",
@@ -1817,7 +1859,11 @@
         "benefits": "Commission tracking and settlements",
         "resource": "Client access management"
       },
-      "freshHint": "Your data will appear here after your first referrals and commission transactions."
+      "freshHint": "Your data will appear here after your first referrals and commission transactions.",
+      "complete": "Complete",
+      "completed": "completed",
+      "certificationsInLearningPath": "You will find certification details in the Learning path",
+      "certificationsUnavailable": "Certification status is temporarily unavailable"
     },
     "metrics": {
       "title": "Metrics",
@@ -1845,7 +1891,18 @@
       "clientAcquisition": "Client Acquisition",
       "projectDelivery": "Project Delivery",
       "certificationProgress": "Certification Progress",
-      "freshHint": "Your data will appear here after your first referrals and commission transactions."
+      "freshHint": "Your data will appear here after your first referrals and commission transactions.",
+      "runtimeConversionRate": "Conversion rate",
+      "runtimePaidCustomers": "Paying customers",
+      "runtimeReadyForPayout": "Ready for payout",
+      "runtimeReferralClicks": "Referral link clicks",
+      "runtimeTitle": "Partner program summary",
+      "runtimeSubtitle": "Current performance data for the signed-in partner.",
+      "detailUnique": "{{count}} unique",
+      "detailSignups": "{{count}} sign-ups",
+      "detailTrials": "{{count}} trials",
+      "detailLifecycle": "stage: {{phase}}",
+      "detailPending": "{{count}} pending"
     },
     "certification": {
       "learningPath": "Learning Path",
@@ -1902,6 +1959,9 @@
       "examMode": {
         "review": "Operator review",
         "exam": "Exam-based"
+      },
+      "moduleKind": {
+        "default": "Module"
       }
     },
     "clients": {
@@ -1920,14 +1980,20 @@
       "col": {
         "organization": "Organization",
         "assessment": "Assessment",
-        "status": "Status"
+        "status": "Status",
+        "industry": "Industry",
+        "projects": "Projects",
+        "users": "Users"
       },
       "status": {
         "active": "Active",
         "onboarding": "Onboarding",
         "inactive": "Inactive",
         "unknown": "Unknown status"
-      }
+      },
+      "technicalId": "Identifier",
+      "unavailable": "Client unavailable",
+      "organizationsDesc": "Manage the organizations covered by your partnership"
     },
     "resources": {
       "desc": "Download partner toolkit resources",
@@ -1935,7 +2001,10 @@
       "downloadError": "Couldn't download the resource.",
       "canonicalDocs": "Canonical partner docs",
       "academyStatus": "Academy status",
-      "openGuide": "Open supporting guide"
+      "openGuide": "Open supporting guide",
+      "retry": "Try again",
+      "degradedDescription": "The catalogue could not be read, so the number of available materials is unknown.",
+      "degradedTitle": "The resource library is temporarily unavailable"
     },
     "profile": {
       "companyInfo": "Company Info",
@@ -1957,7 +2026,9 @@
       "yourCompany": "Your company",
       "partnerTier": "Partner",
       "noRegions": "No regions selected",
-      "noSpecializations": "No specializations selected"
+      "noSpecializations": "No specializations selected",
+      "companyName": "Company name",
+      "taxId": "Tax ID / VAT number"
     },
     "home": {
       "title": "Home",
@@ -2136,6 +2207,23 @@
         "failed": "Failed",
         "cancelled": "Cancelled",
         "unknown": "Unknown status"
+      },
+      "paidSuffix": "paid out",
+      "itemsCount": "Items: {{count}}",
+      "approvedAmount": "Approved: {{amount}}",
+      "heldAmount": "On hold: {{amount}}",
+      "lastMonthAmount": "Previous month: {{amount}}",
+      "transactionType": {
+        "initial": "First payment",
+        "subscription": "Subscription",
+        "subscription_renewal": "Subscription renewal",
+        "renewal": "Renewal",
+        "upsell": "Upsell",
+        "subscription_upgrade": "Subscription upgrade",
+        "one_time": "One-off",
+        "new_contract": "New contract",
+        "refund": "Refund",
+        "bonus": "Bonus"
       }
     },
     "payouts": {
@@ -2148,7 +2236,25 @@
       "title": "Payout Settings",
       "subtitle": "Configure your payout preferences and bank details",
       "saved": "Payout settings updated",
-      "saveFailed": "Failed to update payout settings"
+      "saveFailed": "Failed to update payout settings",
+      "operationsUnavailable": "Payout operations are unavailable",
+      "operationsUnavailableDesc": "Commission accrual and payout operations are unavailable. Historical settings remain available read-only.",
+      "method": "Payout method",
+      "historicalValue": "Historical value",
+      "bankDetails": "Bank account details",
+      "accountHolder": "Account holder",
+      "bankName": "Bank name",
+      "preferences": "Payout settings",
+      "minimumThreshold": "Minimum payout threshold",
+      "minimumThresholdDesc": "The minimum amount required to request a payout",
+      "historicalOnly": "Historical data only",
+      "historicalOnlyDesc": "These values are kept as historical data only and cannot be changed in the Partner workspace.",
+      "methods": {
+        "bank_transfer": "Bank transfer",
+        "paypal": "PayPal",
+        "stripe": "Stripe",
+        "wise": "Wise"
+      }
     },
     "commission": {
       "faq": {
@@ -2158,6 +2264,36 @@
         "incorrectAmountAnswer": "Use the inquiry form above, selecting 'Statement question'. Include the statement number and details of the discrepancy. Finance Team will respond within 2 business days.",
         "pmoMapping": "How are deals mapped to PMO standards?",
         "pmoMappingAnswer": "Each deal registration is automatically mapped to GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), and commission settlement to BENEFITS_REALIZATION (Clause 4.4.1)."
+      },
+      "runtimeTitle": "Commission runtime summary",
+      "runtimeSubtitle": "Governed statement and payout readback for the active commission surface.",
+      "paidStatements": "Paid statements",
+      "settledCount": "{{count}} settled statements",
+      "approvedStatements": "Approved statements",
+      "awaitingPayoutCount": "{{count}} awaiting payout",
+      "pendingStatements": "Pending statements",
+      "underReviewCount": "{{count}} still under review",
+      "dealIntelUnavailableTitle": "Deal intelligence is unavailable on the governed runtime",
+      "dealIntelUnavailableBody": "This screen no longer shows placeholder deal pipeline projections. Commission intelligence returns only once a real partner-authenticated deal-pipeline contract lands.",
+      "statementsTitle": "Commission statements",
+      "statementsSubtitle": "Historical statements and payouts",
+      "statementsLoading": "Loading commission statements…",
+      "statementRef": "Ref {{ref}}",
+      "statementDeals": "{{count}} deals",
+      "statementHistorical": "Historical statement",
+      "statementPaidOn": "Paid {{date}}",
+      "statementView": "View",
+      "noStatements": "No commission statements yet",
+      "inquiryUnavailableTitle": "Commission inquiry routing is unavailable",
+      "inquiryUnavailableBody": "This screen no longer pretends to submit inquiries without a governed partner-user support contract.",
+      "inquiryUnavailableHint": "Review the governed statement history above and use the partner resources for current commission guidance while inquiry routing stays outside the bounded partner runtime.",
+      "openResources": "Open partner resources",
+      "faqTitle": "Commission FAQ",
+      "statementStatus": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "PAID": "Paid",
+        "REJECTED": "Rejected"
       }
     },
     "referrals": {
@@ -2171,7 +2307,67 @@
       "tipSignature": "Add your referral code to your email signature",
       "tipCaseStudies": "Share case studies alongside your referral link for higher trust",
       "copyCode": "Copy referral code",
-      "copyLinkAction": "Copy referral link"
+      "copyLinkAction": "Copy referral link",
+      "analyticsTitle": "Click analytics",
+      "analyticsSubtitle": "Review referral performance alongside your active campaign links.",
+      "campaign": "Campaign",
+      "campaignCreated": "Campaign link created",
+      "campaignDeleted": "Campaign link deleted",
+      "campaignLinks": "Campaign links",
+      "campaignLinksDesc": "Track the performance of campaigns tagged with UTM parameters",
+      "clicks": "Clicks",
+      "codeHint": "Clients can enter this code when they sign up",
+      "confirmDelete": "Delete this campaign link?",
+      "convRate": "Conversion %",
+      "conversions": "Paying",
+      "copied": "Copied to clipboard",
+      "copyFailed": "Could not copy",
+      "copyLink": "Copy link",
+      "createCampaign": "Create campaign link",
+      "createFailed": "Could not create the campaign",
+      "customerAttributedAt": "Attributed on",
+      "customerCommissionDuration": "Commission period",
+      "customerCommissionEarned": "Commission earned",
+      "customerCommissionRate": "Commission rate",
+      "customerFirstPayment": "First payment",
+      "customerLifetimeValue": "Customer lifetime value",
+      "customerSignupCompleted": "Sign-up completed",
+      "getQR": "Get QR code",
+      "loadError": "Could not load the referral tools",
+      "identityMissingError": "Referral data is being prepared. Refresh the screen in a moment.",
+      "nameRequired": "A campaign name is required",
+      "newCampaign": "New campaign",
+      "noLink": "Your referral link is not available yet",
+      "noCampaigns": "You have no campaign links yet. Create the first one to start tracking.",
+      "noReferredCustomers": "No referred clients",
+      "noReferredCustomersDesc": "Referred organizations will appear here once they are attributed.",
+      "preview": "Preview",
+      "qrAlt": "QR code for the referral link",
+      "qrFailed": "Could not create the QR code",
+      "qrHint": "Scan to open the referral link",
+      "qrTitle": "Referral QR code",
+      "referredCustomersList": "Referred clients",
+      "referredCustomersListDesc": "The list of clients attributed to your referrals.",
+      "referredOrganizationsTitle": "Referred clients",
+      "referredOrganizationsSubtitle": "See the client acquisition summary and the referral tools in use.",
+      "signups": "Sign-ups",
+      "tips": "Tips to improve conversion",
+      "title": "My referral links and codes",
+      "subtitle": "Share your own links and codes to record referrals.",
+      "yourCode": "Your referral code",
+      "yourLink": "Your referral link",
+      "v8AnalyticsRuntimeTitle": "Referral performance",
+      "v8AnalyticsRuntimeSubtitle": "Clicks, sign-ups and the conversion rate of your referrals.",
+      "v8ConversionRate": "Conversion rate",
+      "v8PaidCustomers": "Paying customers",
+      "v8RuntimeTitle": "Referral summary",
+      "v8RuntimeSubtitle": "A summary of referral clicks and conversions.",
+      "v8ReferredOrganizationsRuntimeTitle": "Client acquisition summary",
+      "v8ReferredOrganizationsRuntimeSubtitle": "Sign-ups, trials and moves to a paid plan among referred clients.",
+      "v8Signups": "Sign-ups",
+      "v8TotalClicks": "Total clicks",
+      "detailSources": "{{count}} sources",
+      "detailTrackedDays": "{{count}} tracked days"
     },
     "canonicalRuntime": {
       "title": "Current partner programme status",
@@ -2205,6 +2401,12 @@
         "onboarding": "Onboarding",
         "pending": "Pending",
         "suspended": "Suspended"
+      },
+      "organizationStatus": {
+        "active": "Active partner organization",
+        "onboarding": "Partner organization is being set up",
+        "pending": "Partner organization is awaiting review",
+        "suspended": "Partner organization is suspended"
       }
     },
     "common": {
@@ -2212,7 +2414,234 @@
       "progress": "Progress"
     },
     "layout": {
-      "breadcrumbs": "Breadcrumbs"
+      "breadcrumbs": "Breadcrumbs",
+      "closeNavigation": "Close partner navigation",
+      "openNavigation": "Open partner navigation"
+    },
+    "apply": {
+      "backToProgram": "Back to the partner program page",
+      "badge": "Partner program qualification",
+      "submit": "Send partner application",
+      "submitting": "Sending…",
+      "successTitle": "Your application has been sent",
+      "title": "Join the Consultify partner program",
+      "subtitle": "This is a short qualification step for new candidates. We review fit, business model and room for co-operation before inviting you to the next step.",
+      "successBody": "Your application is waiting for review. We will decide on the invitation to the next step based on the information you provided.",
+      "checklist": {
+        "noLogin": "First step, no sign-in required",
+        "reviewed": "Reviewed in the same approval queue as other superadmin requests",
+        "qualify": "Built to qualify serious commercial partners quickly"
+      },
+      "formBadge": "Application form",
+      "formTitle": "Tell us how you want to grow with Consultify",
+      "fields": {
+        "fullName": "Full name",
+        "email": "Work email address",
+        "company": "Company",
+        "website": "Website",
+        "country": "Country",
+        "role": "Your role",
+        "teamSize": "Team size",
+        "focusArea": "Main focus area",
+        "message": "Why do you want to join?",
+        "messagePlaceholder": "Tell us about your market, your clients or your rollout plans."
+      },
+      "errors": {
+        "submitFailed": "Could not send the partner application"
+      }
+    },
+    "start": {
+      "activeSubtitle": "Current balance, program status and the next step.",
+      "activeTitle": "Your partner program",
+      "availableToPayout": "Ready for payout",
+      "goToEarnings": "Go to commissions",
+      "goToReferralTools": "My links and codes",
+      "grossEarned": "Earned in total",
+      "heldAmount": "On hold",
+      "paidOut": "Paid out",
+      "retry": "Try again",
+      "unknownPhaseTitle": "Unknown partner program stage",
+      "unknownTitle": "We could not determine your program status",
+      "whatNext": "Next step",
+      "degraded": "The balance is shown with limitations because part of the program data could not be read.",
+      "paidProjection": "The paid-out amount comes from the completed payouts register; part of the data has not been posted to the program ledger yet.",
+      "unknownDescription": "We are not showing the sign-up screen because we do not know your current program stage. Please try again in a moment."
+    },
+    "program": {
+      "truthBoundary": "Commercial information and the options available to you depend on a confirmed program status and the agreement in force."
+    },
+    "ecosystem": {
+      "noData": "No partner ecosystem data",
+      "partnerStatus": "Partner status",
+      "complianceScore": "Compliance score",
+      "networkEffect": "Network effect",
+      "totalCommission": "Total commission",
+      "dealsWon": "{{count}} deals won",
+      "dealsCreated": "Deals created",
+      "winRate": "{{percent}}% win rate",
+      "activeClients": "Active clients",
+      "withActiveAccess": "With active access",
+      "referralConversions": "Referral conversions",
+      "benchmarks": "{{count}} benchmarks",
+      "healthTitle": "Ecosystem health",
+      "realTimeMonitoring": "Real-time monitoring",
+      "overallHealthScore": "Overall health score",
+      "dealPipeline": "Deal pipeline",
+      "activeCount": "{{count}} active",
+      "clientEngagement": "Client engagement",
+      "clientsCount": "{{count}} clients",
+      "networkGrowth": "Network growth",
+      "multiplier": "{{value}}x multiplier",
+      "pmoDomains": "PMO standards compliance domains"
+    },
+    "resourcesHub": {
+      "title": "Partner knowledge hub",
+      "subtitle": "Start from the canonical public docs, then continue into the partner portal for the academy, exams, certificates and gated resources.",
+      "openPortal": "Open portal resources",
+      "openDocs": "Open partner docs",
+      "cards": {
+        "docs": {
+          "title": "Public docs",
+          "description": "Program overview, application flow, payouts, certification, FAQ and case studies."
+        },
+        "academy": {
+          "title": "Partner academy",
+          "description": "Track-based learning paths with modules, exam eligibility and review states."
+        },
+        "readiness": {
+          "title": "Governed readiness",
+          "description": "Operator review, payout readiness and certificates stay visible in the portal."
+        }
+      }
+    },
+    "lifecycleCanon": {
+      "steps": {
+        "apply": {
+          "title": "Apply and qualify",
+          "description": "Application, fit review and first ecosystem qualification happen before activation."
+        },
+        "activate": {
+          "title": "Activate partner profile",
+          "description": "Accept the agreement and lock the commercial tier before deeper workspace access."
+        },
+        "workspace": {
+          "title": "Finish workspace and payouts",
+          "description": "Enable onboarding operations, payout readiness and partner workspace ownership."
+        },
+        "grow": {
+          "title": "Grow through academy and progression",
+          "description": "Enablement, certification and tier progression turn activation into an active partner lifecycle."
+        }
+      },
+      "badge": "Partner lifecycle canon",
+      "title": "One path from application to active partner",
+      "subtitle": "Recruitment, activation, enablement and earnings should read as one governed ecosystem lifecycle rather than separate partner pages.",
+      "journey": "Canonical partner journey",
+      "stepDone": "Done",
+      "stepOpen": "Open",
+      "closureTitle": "What closure must include",
+      "closure": {
+        "ownership": "Application, activation and enablement need one visible ownership chain.",
+        "reinforce": "Tier progression, academy and earnings should reinforce each other instead of living in separate silos.",
+        "workspace": "Active partner status should unlock a real workspace, not just a bounded shell."
+      },
+      "progress": "Lifecycle progress",
+      "chips": {
+        "application": "Application",
+        "activation": "Activation",
+        "academy": "Academy",
+        "earnings": "Earnings"
+      }
+    },
+    "commissionIntel": {
+      "insights": {
+        "strongWinRate": {
+          "title": "Strong win rate",
+          "description": "Your {{percent}}% win rate is above average. Keep leveraging what works."
+        },
+        "winRateOptimization": {
+          "title": "Win rate optimization",
+          "description": "The current win rate is {{percent}}%. Consider reviewing your deal qualification criteria."
+        },
+        "pipeline": {
+          "title": "Commission pipeline",
+          "description": "{{amount}} in potential commission from {{count}} active deals."
+        },
+        "stalled": {
+          "title": "Stalled deals detected",
+          "description": "{{count}} deals have been in progress for over 30 days without moving forward."
+        },
+        "pendingPayouts": {
+          "title": "Pending payouts",
+          "description": "{{amount}} in commission statements awaiting payment."
+        }
+      },
+      "actions": {
+        "viewAcademyModule": "View academy module",
+        "reviewDeals": "Review deals",
+        "viewDetails": "View details",
+        "viewStatements": "View statements"
+      },
+      "title": "Commission intelligence",
+      "subtitle": "AI-powered insights and predictions",
+      "noInsights": "No insights yet. Keep registering deals to unlock AI recommendations.",
+      "projectionsTitle": "Commission projections",
+      "forecastLabel": "Q1 2026 forecast",
+      "projection": {
+        "earned": "Earned",
+        "earnedSubtitle": "Closed won deals",
+        "pipeline": "Pipeline",
+        "pipelineSubtitle": "Active opportunities",
+        "projected": "Projected",
+        "projectedSubtitle": "Based on a {{percent}}% win rate",
+        "quarterTotal": "Q1 total",
+        "quarterTotalSubtitle": "Expected quarterly total"
+      },
+      "activeDeals": "Active deals",
+      "viewAll": "View all",
+      "noActiveDeals": "No active deals in the pipeline",
+      "submitInquiry": "Submit inquiry",
+      "submitInquiryHint": "Commission questions or updates",
+      "viewStatements": "View statements",
+      "viewStatementsHint": "Historical payouts and reports",
+      "dealValue": "{{amount}} deal value",
+      "commissionRate": "{{percent}}% rate",
+      "dealStatus": {
+        "REGISTERED": "Registered",
+        "QUALIFIED": "Qualified",
+        "PROPOSAL": "Proposal",
+        "NEGOTIATION": "Negotiation",
+        "WON": "Won",
+        "LOST": "Lost"
+      }
+    },
+    "providerHome": {
+      "enablement": {
+        "eyebrow": "Enablement",
+        "title": "Use only the resources available to your program state",
+        "description": "Documentation and onboarding guidance are available entry points. Academy, certification and other workspace capabilities remain subject to account access and runtime status.",
+        "docs": {
+          "title": "Program documentation",
+          "body": "Review the program model, responsibilities and working guidance.",
+          "cta": "Open documentation"
+        },
+        "academy": {
+          "title": "Partner academy",
+          "body": "Structured enablement may be available after activation; access and progress are verified in the partner workspace.",
+          "badge": "Access-dependent"
+        },
+        "support": {
+          "title": "Deal and operational support",
+          "body": "Support scope and response expectations follow the applicable agreement, not this overview.",
+          "badge": "Agreement-dependent"
+        }
+      },
+      "contact": {
+        "eyebrow": "Need a fit conversation?",
+        "title": "Discuss the cooperation model, not provisional terms",
+        "body": "Use the approved contact route. A named program owner appears only after publication authority is confirmed.",
+        "cta": "Contact Consultify"
+      }
     }
   },
   "common": {
@@ -33734,6 +34163,61 @@
       "startTrial": "Sign up & Start Trial",
       "subtitle": "Your own workspace, 7 days free",
       "title": "Start Your 7-Day Trial"
+    },
+    "entry": {
+      "errors": {
+        "invalidCode": "The access code is invalid or has expired.",
+        "verificationUnavailable": "The verification system is temporarily unavailable. Please try again later."
+      },
+      "codeAccepted": "Access verified. Moving on to trial registration.",
+      "brandTagline": "Decision Partner",
+      "backToHome": "Back to the home page",
+      "statusBadge": "Status: selective access",
+      "heroTitle": "This is not another free trial.",
+      "heroBody": "The DBR77 method takes discipline and commitment. Entering the trial stage means starting work on the real structure of your organization.",
+      "benefits": {
+        "readiness": {
+          "title": "Readiness check",
+          "body": "AI helps you judge whether your organization is ready for strategic change."
+        },
+        "context": {
+          "title": "Working on context",
+          "body": "Access to the modules you need to define your strategic axes."
+        },
+        "noCommitment": {
+          "title": "No financial commitment",
+          "body": "At this stage we ask for your time and thinking, not for a credit card."
+        }
+      },
+      "trustLayer": "DBR77 trust layer enforced",
+      "activateTitle": "Activate your access",
+      "activateBody": "Enter the code you received from your consultant or from the referral system to start validation.",
+      "codePlaceholder": "ENTER CODE (e.g. REF-1234)",
+      "verifying": "Verifying…",
+      "continue": "Continue to validation"
+    },
+    "transition": {
+      "proceedSuccess": "Done. Let us move on to setting up the organization.",
+      "proceedFailed": "The transition could not be completed",
+      "title": "Before you create an organization",
+      "subtitle": "Make sure you understand what this step means.",
+      "time": {
+        "title": "I understand this takes time",
+        "body": "Working with the system is not a quick fix. It takes commitment and regular work with your team."
+      },
+      "team": {
+        "title": "This is a tool for teams",
+        "body": "The system is designed for organizations. It is worth the most when more than one person works in it."
+      },
+      "memory": {
+        "title": "The system will remember our work",
+        "body": "Every decision, discussion and conclusion is recorded. That creates continuity, but it also creates responsibility."
+      },
+      "back": "Back",
+      "inProgress": "Continuing…",
+      "confirm": "I understand, continue",
+      "allConfirmed": "All confirmations are ticked",
+      "remaining": "{{count}} left"
     }
   },
   "audit": {
@@ -49618,5 +50102,71 @@
   "artifactMenu3": {
     "more": "More tools",
     "ariaLabel": "Contextual tools"
+  },
+  "subscriber": {
+    "dashboard": {
+      "title": "Consultify subscriber dashboard",
+      "subtitle": "Enter the dashboard token your Consultify operator gave you.",
+      "tokenLabel": "Dashboard token",
+      "tokenPlaceholder": "64-character token from your operator",
+      "tokenHelp": "Your token is held only in this browser tab and is cleared when you close it. Never share this token publicly.",
+      "continue": "Continue",
+      "signOut": "Sign out",
+      "refresh": "Refresh",
+      "loading": "Loading dashboard…",
+      "refreshing": "Refreshing…",
+      "tryAgain": "Try again",
+      "signature": {
+        "title": "Signing secret",
+        "whyTitle": "Why this matters",
+        "whyBody": "HMAC signatures let you verify each webhook came from Consultify and was not tampered with in transit. Rotating the secret regularly limits the blast radius of a leak.",
+        "rotationOverdue": "Your signing secret is overdue for rotation.",
+        "rotationDueSoon": "Your signing secret should be rotated soon."
+      },
+      "delivery": {
+        "title": "Delivery summary",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "sent": "Sent",
+        "failed": "Failed",
+        "suppressed": "Suppressed",
+        "dryRun": "Dry-run",
+        "consecutiveFailures": "Consecutive failures:",
+        "lastDispatch": "Last dispatch:",
+        "lastFailure": "Last failure:"
+      },
+      "warnings": {
+        "heading": "Warnings and reasons",
+        "none": "No warnings reported."
+      },
+      "invalidToken": "That does not look like a valid dashboard token. Tokens are 64 lowercase hex characters.",
+      "errors": {
+        "unauthorized": {
+          "title": "Token rejected",
+          "body": "The dashboard token was not accepted. It may have expired, been revoked, or been issued for a different subscription. Sign out and request a fresh token from your Consultify operator."
+        },
+        "forbidden": {
+          "title": "Access denied",
+          "body": "This token is valid but does not have permission to view the dashboard. Contact your Consultify operator."
+        },
+        "rateLimited": {
+          "title": "Too many requests",
+          "body": "You have requested the dashboard too many times in a short period. Wait a minute and try again. We recommend polling no faster than once every 5 minutes."
+        },
+        "storageUnavailable": {
+          "title": "Service temporarily unavailable",
+          "body": "The dashboard backend is temporarily unable to reach its storage layer. This is usually transient — try again in a moment."
+        },
+        "network": {
+          "title": "Network error",
+          "body": "We could not reach the dashboard. Check your connection and try again."
+        }
+      },
+      "never": "never",
+      "secondsAgo": "{{count}}s ago",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
   }
 }

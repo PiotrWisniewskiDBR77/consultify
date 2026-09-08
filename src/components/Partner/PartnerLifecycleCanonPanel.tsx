@@ -8,6 +8,8 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import type { V8PartnerOnboardingStatus } from '@/services/api/v8';
 
@@ -25,7 +27,7 @@ type StepCopy = {
   completed: boolean;
 };
 
-function buildSteps(status?: V8PartnerOnboardingStatus | null): StepCopy[] {
+function buildSteps(t: TFunction, status?: V8PartnerOnboardingStatus | null): StepCopy[] {
   const hasPortalState = Boolean(status);
   const agreementReady = Boolean(status?.termsAccepted && status?.privacyAccepted);
   const tierReady = Boolean(status?.pricingTier);
@@ -35,33 +37,41 @@ function buildSteps(status?: V8PartnerOnboardingStatus | null): StepCopy[] {
   return [
     {
       id: 'apply',
-      title: 'Apply and qualify',
-      description:
-        'Application, fit review, and first ecosystem qualification happen before activation.',
+      title: t('partner.lifecycleCanon.steps.apply.title', 'Apply and qualify'),
+      description: t(
+        'partner.lifecycleCanon.steps.apply.description',
+        'Application, fit review and first ecosystem qualification happen before activation.'
+      ),
       icon: Users,
       completed: hasPortalState,
     },
     {
       id: 'activate',
-      title: 'Activate partner profile',
-      description:
-        'Accept the agreement and lock the commercial tier before deeper workspace access.',
+      title: t('partner.lifecycleCanon.steps.activate.title', 'Activate partner profile'),
+      description: t(
+        'partner.lifecycleCanon.steps.activate.description',
+        'Accept the agreement and lock the commercial tier before deeper workspace access.'
+      ),
       icon: UserCheck,
       completed: agreementReady && tierReady,
     },
     {
       id: 'workspace',
-      title: 'Finish workspace and payouts',
-      description:
-        'Enable onboarding operations, payout readiness, and partner workspace ownership.',
+      title: t('partner.lifecycleCanon.steps.workspace.title', 'Finish workspace and payouts'),
+      description: t(
+        'partner.lifecycleCanon.steps.workspace.description',
+        'Enable onboarding operations, payout readiness and partner workspace ownership.'
+      ),
       icon: CreditCard,
       completed: payoutReady,
     },
     {
       id: 'grow',
-      title: 'Grow through academy and progression',
-      description:
-        'Enablement, certification, and tier progression turn activation into an active partner lifecycle.',
+      title: t('partner.lifecycleCanon.steps.grow.title', 'Grow through academy and progression'),
+      description: t(
+        'partner.lifecycleCanon.steps.grow.description',
+        'Enablement, certification and tier progression turn activation into an active partner lifecycle.'
+      ),
       icon: GraduationCap,
       completed: activeReady,
     },
@@ -73,7 +83,8 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
   compact = false,
   className = '',
 }) => {
-  const steps = buildSteps(status);
+  const { t } = useTranslation();
+  const steps = buildSteps(t, status);
   const completedCount = steps.filter((step) => step.completed).length;
   const progress = Math.round((completedCount / steps.length) * 100);
 
@@ -89,18 +100,20 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
             <ShieldCheck size={14} />
-            Partner lifecycle canon
+            {t('partner.lifecycleCanon.badge', 'Partner lifecycle canon')}
           </div>
           <h2
             className={`mt-3 font-semibold tracking-tight text-slate-900 dark:text-white ${compact ? 'text-lg' : 'text-2xl lg:text-3xl'}`}
           >
-            One path from application to active partner
+            {t('partner.lifecycleCanon.title', 'One path from application to active partner')}
           </h2>
           <p
             className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
           >
-            Recruitment, activation, enablement, and earnings should read as one governed ecosystem
-            lifecycle rather than separate partner pages.
+            {t(
+              'partner.lifecycleCanon.subtitle',
+              'Recruitment, activation, enablement and earnings should read as one governed ecosystem lifecycle rather than separate partner pages.'
+            )}
           </p>
         </div>
 
@@ -109,7 +122,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
         >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
-              Canonical partner journey
+              {t('partner.lifecycleCanon.journey', 'Canonical partner journey')}
             </div>
             <div className={`grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               {steps.map((step, index) => {
@@ -137,7 +150,9 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
                               : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
                           }`}
                         >
-                          {step.completed ? 'Done' : 'Open'}
+                          {step.completed
+                            ? t('partner.lifecycleCanon.stepDone', 'Done')
+                            : t('partner.lifecycleCanon.stepOpen', 'Open')}
                         </span>
                         {index < steps.length - 1 ? (
                           <ArrowRight size={14} className="text-slate-300 dark:text-slate-600" />
@@ -158,13 +173,22 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
 
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
-              What closure must include
+              {t('partner.lifecycleCanon.closureTitle', 'What closure must include')}
             </div>
             <div className="space-y-3">
               {[
-                'Application, activation, and enablement need one visible ownership chain.',
-                'Tier progression, academy, and earnings should reinforce each other instead of living in separate silos.',
-                'Active partner status should unlock a real workspace, not just a bounded shell.',
+                t(
+                  'partner.lifecycleCanon.closure.ownership',
+                  'Application, activation and enablement need one visible ownership chain.'
+                ),
+                t(
+                  'partner.lifecycleCanon.closure.reinforce',
+                  'Tier progression, academy and earnings should reinforce each other instead of living in separate silos.'
+                ),
+                t(
+                  'partner.lifecycleCanon.closure.workspace',
+                  'Active partner status should unlock a real workspace, not just a bounded shell.'
+                ),
               ].map((item) => (
                 <div
                   key={item}
@@ -180,7 +204,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
 
             <div className="mt-4 rounded-xl border border-dashed border-c-border bg-c-surface-raised p-3">
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
-                Lifecycle progress
+                {t('partner.lifecycleCanon.progress', 'Lifecycle progress')}
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <div className="h-2 flex-1 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
@@ -194,7 +218,12 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {['Application', 'Activation', 'Academy', 'Earnings'].map((item) => (
+                {[
+                  t('partner.lifecycleCanon.chips.application', 'Application'),
+                  t('partner.lifecycleCanon.chips.activation', 'Activation'),
+                  t('partner.lifecycleCanon.chips.academy', 'Academy'),
+                  t('partner.lifecycleCanon.chips.earnings', 'Earnings'),
+                ].map((item) => (
                   <span
                     key={item}
                     className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm dark:bg-navy-900 dark:text-slate-200"

@@ -37,6 +37,7 @@ import {
   type V8PartnerReferralTools,
 } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface CampaignLink {
   id: string;
@@ -578,7 +579,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         <p className="font-medium text-c-text">{customer.organizationName}</p>
                       ) : (
                         <p className="font-medium italic text-c-text-muted">
-                          {t('partner.clients.unavailable', 'Klient niedostępny')}
+                          {t('partner.clients.unavailable', 'Client unavailable')}
                         </p>
                       )}
                       <p className="mt-1 text-sm text-c-text-secondary">
@@ -602,7 +603,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                     </span>
                     <span>
                       {t('partner.referrals.customerCommissionEarned', 'Commission earned')} €
-                      {customer.totalCommissionEarned.toLocaleString()}
+                      {formatListNumber(customer.totalCommissionEarned, '0')}
                     </span>
                   </div>
                   {(customer.signupCompletedAt ||
@@ -653,7 +654,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         </div>
                         <div className="mt-1 text-sm font-medium text-c-text">
                           {customer.lifetimeValue !== undefined
-                            ? `€${customer.lifetimeValue.toLocaleString()}`
+                            ? `€${formatListNumber(customer.lifetimeValue, '0')}`
                             : t('common.notAvailable', 'Not available')}
                         </div>
                       </div>

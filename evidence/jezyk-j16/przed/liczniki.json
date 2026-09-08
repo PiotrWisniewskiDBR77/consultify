@@ -1,0 +1,1303 @@
+[
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "01-connect-owner-bez-partnera",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "The Partner profile is not connected yet",
+   "Connect this organization as a partner"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "02-connect-przekierowanie-z-zakladki",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "The Partner profile is not connected yet",
+   "Connect this organization as a partner"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "03-connect-trasa-legacy",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "The Partner profile is not connected yet",
+   "Connect this organization as a partner"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "04-zostan-partnerem",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 9,
+  "angielskie": [
+   "Find the right model for your first joint client opportunity.",
+   "Start with the way you create value",
+   "Move through six stages with an owner, output and proof at each step",
+   "Make the boundaries explicit before the client conversation",
+   "Who owns the client relationship?",
+   "How are data and confidentiality handled?",
+   "Who owns IP and branding?",
+   "What support is included?",
+   "What happens after the first deal?"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "05-zgloszenie-partnera",
+  "napisowUi": 24,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 5,
+  "angielskie": [
+   "Apply to join the Consultify Partner Program",
+   "Tell us how you want to grow with Consultify",
+   "Your role",
+   "Why do you want to join?",
+   "Tell us about your market, clients, or rollout ambitions."
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "06-cennik-partnera",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 9,
+  "angielskie": [
+   "Find the right model for your first joint client opportunity.",
+   "Start with the way you create value",
+   "Move through six stages with an owner, output and proof at each step",
+   "Make the boundaries explicit before the client conversation",
+   "Who owns the client relationship?",
+   "How are data and confidentiality handled?",
+   "Who owns IP and branding?",
+   "What support is included?",
+   "What happens after the first deal?"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "07-aktywacja-trial",
+  "napisowUi": 8,
+  "polskichUi": 5,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Wróć na stronę główną",
+   "To nie jest kolejny program \"Free Trial\".",
+   "Aktywuj dostęp",
+   "WPROWADŹ KOD (np. REF-1234)"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "en",
+  "ekran": "08-pulpit-subskrybenta",
+  "napisowUi": 7,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "64-character token from your operator"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "11-home",
+  "napisowUi": 48,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Twój program partnerski",
+   "Przejdź do prowizji"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "12-pulpit",
+  "napisowUi": 61,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Welcome back"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "13-metryki",
+  "napisowUi": 50,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "14-linki-kody",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Your Referral Link"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "15-analityka-klikniec",
+  "napisowUi": 64,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Your Referral Link"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "16-poleceni-klienci",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Your Referral Link"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "17-zarobki",
+  "napisowUi": 62,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "18-zestawienia",
+  "napisowUi": 62,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "19-wyplaty",
+  "napisowUi": 46,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "20-ustawienia-wyplat",
+  "napisowUi": 49,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Ustawienia wypłat"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "21-dostep-klienta",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "22-organizacje",
+  "napisowUi": 58,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "23-projekty",
+  "napisowUi": 46,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "24-uzytkownicy",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "25-sciezka-nauki",
+  "napisowUi": 46,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "26-egzaminy",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "27-certyfikaty",
+  "napisowUi": 46,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "28-dokumentacja",
+  "napisowUi": 55,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Activation and payout readiness",
+   "Academy and certification"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "29-materialy-marketingowe",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "en",
+  "ekran": "30-dane-firmy",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to app",
+   "Company Name"
+  ]
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "01-connect-owner-bez-partnera",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Profil partnera nie jest jeszcze podłączony",
+   "Podłącz organizację jako partnera"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "02-connect-przekierowanie-z-zakladki",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Profil partnera nie jest jeszcze podłączony",
+   "Podłącz organizację jako partnera"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "03-connect-trasa-legacy",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Profil partnera nie jest jeszcze podłączony",
+   "Podłącz organizację jako partnera"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "04-zostan-partnerem",
+  "napisowUi": 45,
+  "polskichUi": 28,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Zostań partnerem",
+   "Przełącz na ciemny motyw",
+   "Zaloguj się",
+   "Otwórz menu",
+   "Wybierz właściwy model dla pierwszej wspólnej szansy sprzedażowej.",
+   "Rozpocznij zgłoszenie",
+   "Zacznij od sposobu, w jaki tworzysz wartość",
+   "Typy partnerów",
+   "Właściciel firmy konsultingowej",
+   "Niezależny konsultant",
+   "Integrator systemów",
+   "Wybierz model odpowiedzialności przed rozmową o warunkach handlowych",
+   "Wspólna sprzedaż",
+   "Odsprzedaż",
+   "Partnerstwo strategiczne / wspólna oferta",
+   "Przejdź przez sześć etapów — każdy z właścicielem, rezultatem i dowodem",
+   "Sprzedaż",
+   "Pilotaż",
+   "Ustal granice przed rozmową z klientem",
+   "Kto odpowiada za relację z klientem?",
+   "Kto odpowiada za realizację?",
+   "Jak chronione są dane i poufność?",
+   "Kto odpowiada za własność intelektualną i markę?",
+   "Jak ustalane są warunki handlowe?",
+   "Jak dołączyć?",
+   "Co dzieje się po pierwszej transakcji?",
+   "Zapytaj Annę najpierw"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "05-zgloszenie-partnera",
+  "napisowUi": 24,
+  "polskichUi": 15,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Zostań partnerem",
+   "Przełącz na ciemny motyw",
+   "Zaloguj się",
+   "Otwórz menu",
+   "Dołącz do programu partnerskiego Consultify",
+   "Opowiedz nam, jak chcesz rozwijać się z Consultify",
+   "Imię i nazwisko",
+   "Służbowy adres e-mail",
+   "Wielkość zespołu",
+   "Główny obszar działania",
+   "Dlaczego chcesz dołączyć?",
+   "Opowiedz nam o swoim rynku, klientach lub planach wdrożenia.",
+   "Wyślij zgłoszenie partnerskie",
+   "Zapytaj Annę najpierw"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "06-cennik-partnera",
+  "napisowUi": 45,
+  "polskichUi": 28,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Zostań partnerem",
+   "Przełącz na ciemny motyw",
+   "Zaloguj się",
+   "Otwórz menu",
+   "Wybierz właściwy model dla pierwszej wspólnej szansy sprzedażowej.",
+   "Rozpocznij zgłoszenie",
+   "Zacznij od sposobu, w jaki tworzysz wartość",
+   "Typy partnerów",
+   "Właściciel firmy konsultingowej",
+   "Niezależny konsultant",
+   "Integrator systemów",
+   "Wybierz model odpowiedzialności przed rozmową o warunkach handlowych",
+   "Wspólna sprzedaż",
+   "Odsprzedaż",
+   "Partnerstwo strategiczne / wspólna oferta",
+   "Przejdź przez sześć etapów — każdy z właścicielem, rezultatem i dowodem",
+   "Sprzedaż",
+   "Pilotaż",
+   "Ustal granice przed rozmową z klientem",
+   "Kto odpowiada za relację z klientem?",
+   "Kto odpowiada za realizację?",
+   "Jak chronione są dane i poufność?",
+   "Kto odpowiada za własność intelektualną i markę?",
+   "Jak ustalane są warunki handlowe?",
+   "Jak dołączyć?",
+   "Co dzieje się po pierwszej transakcji?",
+   "Zapytaj Annę najpierw"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "07-aktywacja-trial",
+  "napisowUi": 8,
+  "polskichUi": 5,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Wróć na stronę główną",
+   "To nie jest kolejny program \"Free Trial\".",
+   "Aktywuj dostęp",
+   "WPROWADŹ KOD (np. REF-1234)"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "owner",
+  "lang": "pl",
+  "ekran": "08-pulpit-subskrybenta",
+  "napisowUi": 7,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "64-character token from your operator"
+  ]
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "11-home",
+  "napisowUi": 49,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Twój program partnerski",
+   "Przejdź do prowizji"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "12-pulpit",
+  "napisowUi": 62,
+  "polskichUi": 22,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Historia poleceń",
+   "Kwota możliwa do wypłaty",
+   "Odśwież",
+   "Pobierz materiały",
+   "Ostatnia aktywność",
+   "Postęp certyfikacji"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "13-metryki",
+  "napisowUi": 51,
+  "polskichUi": 20,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież",
+   "Wynik wydajności",
+   "Rozkład wyniku",
+   "Przychód w czasie"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "14-linki-kody",
+  "napisowUi": 66,
+  "polskichUi": 28,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Moje linki i kody polecające",
+   "Podsumowanie poleceń",
+   "Skopiuj kod polecający",
+   "Twój link polecający",
+   "Skopiuj link polecający",
+   "Podgląd",
+   "Zmień szerokość kolumny: Kampania",
+   "KLIKNIĘCIA",
+   "Zmień szerokość kolumny: Kliknięcia",
+   "Zmień szerokość kolumny: Rejestracje",
+   "PŁACĄCY",
+   "Zmień szerokość kolumny: Płacący"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "15-analityka-klikniec",
+  "napisowUi": 65,
+  "polskichUi": 27,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Skuteczność poleceń",
+   "Skopiuj kod polecający",
+   "Twój link polecający",
+   "Skopiuj link polecający",
+   "Podgląd",
+   "Zmień szerokość kolumny: Kampania",
+   "KLIKNIĘCIA",
+   "Zmień szerokość kolumny: Kliknięcia",
+   "Zmień szerokość kolumny: Rejestracje",
+   "PŁACĄCY",
+   "Zmień szerokość kolumny: Płacący"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "16-poleceni-klienci",
+  "napisowUi": 65,
+  "polskichUi": 27,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Podsumowanie pozyskanych klientów",
+   "Skopiuj kod polecający",
+   "Twój link polecający",
+   "Skopiuj link polecający",
+   "Podgląd",
+   "Zmień szerokość kolumny: Kampania",
+   "KLIKNIĘCIA",
+   "Zmień szerokość kolumny: Kliknięcia",
+   "Zmień szerokość kolumny: Rejestracje",
+   "PŁACĄCY",
+   "Zmień szerokość kolumny: Płacący"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "17-zarobki",
+  "napisowUi": 62,
+  "polskichUi": 25,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Podsumowanie zarobków",
+   "Wypłaty",
+   "Nie można teraz wysłać zapytania dotyczącego prowizji",
+   "Zmień szerokość kolumny: Klient",
+   "Zmień szerokość kolumny: Typ",
+   "Zmień szerokość kolumny: Kwota",
+   "Zmień szerokość kolumny: Prowizja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "18-zestawienia",
+  "napisowUi": 62,
+  "polskichUi": 26,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Podsumowanie zarobków",
+   "Wyciągi prowizyjne",
+   "Wypłaty",
+   "Nie można teraz wysłać zapytania dotyczącego prowizji",
+   "Zmień szerokość kolumny: Klient",
+   "Zmień szerokość kolumny: Typ",
+   "Zmień szerokość kolumny: Kwota",
+   "Zmień szerokość kolumny: Prowizja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "19-wyplaty",
+  "napisowUi": 47,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Podsumowanie zarobków"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "20-ustawienia-wyplat",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Podsumowanie zarobków",
+   "Metoda wypłaty"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "21-dostep-klienta",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Pobierz link dostępu",
+   "Zgodność"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "22-organizacje",
+  "napisowUi": 59,
+  "polskichUi": 26,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież",
+   "Dodaj organizację",
+   "Zmień szerokość kolumny: Organizacja",
+   "BRANŻA",
+   "Zmień szerokość kolumny: Branża",
+   "UŻYTKOWNICY",
+   "Zmień szerokość kolumny: Użytkownicy",
+   "Zmień szerokość kolumny: Projekty",
+   "Zmień szerokość kolumny: Ocena",
+   "Filtruj Status, brak aktywnego filtra"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "23-projekty",
+  "napisowUi": 47,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "24-uzytkownicy",
+  "napisowUi": 46,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "25-sciezka-nauki",
+  "napisowUi": 47,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "26-egzaminy",
+  "napisowUi": 46,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "27-certyfikaty",
+  "napisowUi": 47,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "28-dokumentacja",
+  "napisowUi": 56,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "29-materialy-marketingowe",
+  "napisowUi": 54,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "rola": "partner",
+  "lang": "pl",
+  "ekran": "30-dane-firmy",
+  "napisowUi": 54,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analityka kliknięć",
+   "Historia wypłat",
+   "Ustawienia wypłat",
+   "ZARZĄDZANIE KLIENTAMI",
+   "Menedżer dostępu klientów",
+   "Członkowie zespołu",
+   "Ścieżka nauki",
+   "Wizytówka publiczna",
+   "Materiały marketingowe",
+   "Studia przypadków",
+   "Powrót do aplikacji",
+   "Odśwież",
+   "Zapisz zmiany"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ }
+]

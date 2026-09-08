@@ -17,9 +17,11 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CommissionStatement, PARTNER_PMO_MAPPING, PartnerDeal } from '../../views/partner/types';
 import { PMODomainBadge } from './EcosystemAnalytics';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface CommissionIntelligenceProps {
   deals: PartnerDeal[];
@@ -42,6 +44,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
   onViewDeal,
   onSubmitInquiry,
 }) => {
+  const { t } = useTranslation();
   // AI-generated insights based on deal data
   const aiInsights = useMemo<AIInsight[]>(() => {
     const insights: AIInsight[] = [];
@@ -60,16 +63,24 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
     if (winRate >= 50) {
       insights.push({
         type: 'success',
-        title: 'Strong Win Rate',
-        description: `Your ${winRate.toFixed(0)}% win rate is above average. Continue leveraging successful patterns.`,
+        title: t('partner.commissionIntel.insights.strongWinRate.title', 'Strong win rate'),
+        description: t(
+          'partner.commissionIntel.insights.strongWinRate.description',
+          'Your {{percent}}% win rate is above average. Keep leveraging what works.',
+          { percent: winRate.toFixed(0) }
+        ),
       });
     } else if (winRate > 0 && winRate < 30) {
       insights.push({
         type: 'warning',
-        title: 'Win Rate Optimization',
-        description: `Current win rate is ${winRate.toFixed(0)}%. Consider reviewing deal qualification criteria.`,
+        title: t('partner.commissionIntel.insights.winRateOptimization.title', 'Win rate optimization'),
+        description: t(
+          'partner.commissionIntel.insights.winRateOptimization.description',
+          'The current win rate is {{percent}}%. Consider reviewing your deal qualification criteria.',
+          { percent: winRate.toFixed(0) }
+        ),
         action: 'review-qualification',
-        actionLabel: 'View Academy Module',
+        actionLabel: t('partner.commissionIntel.actions.viewAcademyModule', 'View academy module'),
       });
     }
 
@@ -78,10 +89,14 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
     if (pipelineValue > 10000) {
       insights.push({
         type: 'opportunity',
-        title: 'Commission Pipeline',
-        description: `$${pipelineValue.toLocaleString()} in potential commission from ${inProgressDeals.length} active deals.`,
+        title: t('partner.commissionIntel.insights.pipeline.title', 'Commission pipeline'),
+        description: t(
+          'partner.commissionIntel.insights.pipeline.description',
+          '{{amount}} in potential commission from {{count}} active deals.',
+          { amount: `$${formatListNumber(pipelineValue, '0')}`, count: inProgressDeals.length }
+        ),
         action: 'view-pipeline',
-        actionLabel: 'Review Deals',
+        actionLabel: t('partner.commissionIntel.actions.reviewDeals', 'Review deals'),
       });
     }
 
@@ -92,10 +107,14 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
     if (stalledDeals.length > 0) {
       insights.push({
         type: 'warning',
-        title: 'Stalled Deals Detected',
-        description: `${stalledDeals.length} deal(s) have been in progress for over 30 days without advancement.`,
+        title: t('partner.commissionIntel.insights.stalled.title', 'Stalled deals detected'),
+        description: t(
+          'partner.commissionIntel.insights.stalled.description',
+          '{{count}} deals have been in progress for over 30 days without moving forward.',
+          { count: stalledDeals.length }
+        ),
         action: 'review-stalled',
-        actionLabel: 'View Details',
+        actionLabel: t('partner.commissionIntel.actions.viewDetails', 'View details'),
       });
     }
 
@@ -107,15 +126,19 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
       const pendingAmount = pendingStatements.reduce((sum, s) => sum + s.totalAmount, 0);
       insights.push({
         type: 'opportunity',
-        title: 'Pending Payouts',
-        description: `$${pendingAmount.toLocaleString()} in commission statements awaiting payment.`,
+        title: t('partner.commissionIntel.insights.pendingPayouts.title', 'Pending payouts'),
+        description: t(
+          'partner.commissionIntel.insights.pendingPayouts.description',
+          '{{amount}} in commission statements awaiting payment.',
+          { amount: `$${formatListNumber(pendingAmount, '0')}` }
+        ),
         action: 'view-statements',
-        actionLabel: 'View Statements',
+        actionLabel: t('partner.commissionIntel.actions.viewStatements', 'View statements'),
       });
     }
 
     return insights;
-  }, [deals, statements]);
+  }, [deals, statements, t]);
 
   // Commission projections
   const projections = useMemo(() => {
@@ -153,10 +176,10 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-              Commission Intelligence
+              {t('partner.commissionIntel.title', 'Commission intelligence')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              AI-powered insights and predictions
+              {t('partner.commissionIntel.subtitle', 'AI-powered insights and predictions')}
             </p>
           </div>
           <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
@@ -167,7 +190,10 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
           {aiInsights.length === 0 ? (
             <div className="rounded-xl bg-white/50 p-4 text-center text-sm text-slate-500 dark:text-slate-400 dark:bg-navy-900/50">
               <Sparkles size={20} className="mx-auto mb-2 text-brand" />
-              No insights available yet. Keep registering deals to unlock AI recommendations.
+              {t(
+                'partner.commissionIntel.noInsights',
+                'No insights yet. Keep registering deals to unlock AI recommendations.'
+              )}
             </div>
           ) : (
             aiInsights.map((insight, index) => <InsightCard key={index} insight={insight} />)
@@ -179,38 +205,45 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
       <div className="rounded-xl border border-slate-200 bg-white/90 p-6 dark:border-navy-700 dark:bg-navy-900/60">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-            Commission Projections
+            {t('partner.commissionIntel.projectionsTitle', 'Commission projections')}
           </h3>
           <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
             <Calendar size={12} />
-            Q1 2026 Forecast
+            {t('partner.commissionIntel.forecastLabel', 'Q1 2026 forecast')}
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ProjectionCard
-            label="Earned"
-            value={`$${projections.earned.toLocaleString()}`}
+            label={t('partner.commissionIntel.projection.earned', 'Earned')}
+            value={`$${formatListNumber(projections.earned, '0')}`}
             status="completed"
-            subtitle="Closed won deals"
+            subtitle={t('partner.commissionIntel.projection.earnedSubtitle', 'Closed won deals')}
           />
           <ProjectionCard
-            label="Pipeline"
-            value={`$${projections.pipeline.toLocaleString()}`}
+            label={t('partner.commissionIntel.projection.pipeline', 'Pipeline')}
+            value={`$${formatListNumber(projections.pipeline, '0')}`}
             status="pending"
-            subtitle="Active opportunities"
+            subtitle={t('partner.commissionIntel.projection.pipelineSubtitle', 'Active opportunities')}
           />
           <ProjectionCard
-            label="Projected"
-            value={`$${projections.projected.toLocaleString()}`}
+            label={t('partner.commissionIntel.projection.projected', 'Projected')}
+            value={`$${formatListNumber(projections.projected, '0')}`}
             status="projected"
-            subtitle={`Based on ${projections.winRate.toFixed(0)}% win rate`}
+            subtitle={t(
+              'partner.commissionIntel.projection.projectedSubtitle',
+              'Based on a {{percent}}% win rate',
+              { percent: projections.winRate.toFixed(0) }
+            )}
           />
           <ProjectionCard
-            label="Q1 Total"
-            value={`$${projections.quarterlyTotal.toLocaleString()}`}
+            label={t('partner.commissionIntel.projection.quarterTotal', 'Q1 total')}
+            value={`$${formatListNumber(projections.quarterlyTotal, '0')}`}
             status="total"
-            subtitle="Expected quarterly total"
+            subtitle={t(
+              'partner.commissionIntel.projection.quarterTotalSubtitle',
+              'Expected quarterly total'
+            )}
             highlight
           />
         </div>
@@ -219,12 +252,14 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
       {/* Deal Pipeline Overview */}
       <div className="rounded-xl border border-slate-200 bg-white/90 p-6 dark:border-navy-700 dark:bg-navy-900/60">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Active Deals</h3>
+          <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+            {t('partner.commissionIntel.activeDeals', 'Active deals')}
+          </h3>
           <button
             onClick={() => onViewDeal?.('all')}
             className="flex items-center gap-1 text-sm font-semibold text-brand hover:underline"
           >
-            View All <ChevronRight size={14} />
+            {t('partner.commissionIntel.viewAll', 'View all')} <ChevronRight size={14} />
           </button>
         </div>
 
@@ -238,7 +273,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
 
           {deals.filter((d) => d.status !== 'WON' && d.status !== 'LOST').length === 0 && (
             <div className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500 dark:text-slate-400 dark:bg-navy-950/40">
-              No active deals in pipeline
+              {t('partner.commissionIntel.noActiveDeals', 'No active deals in the pipeline')}
             </div>
           )}
         </div>
@@ -255,9 +290,11 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
               <DollarSign size={18} className="text-brand" />
             </div>
             <div>
-              <div className="font-semibold text-navy-900 dark:text-white">Submit Inquiry</div>
+              <div className="font-semibold text-navy-900 dark:text-white">
+                {t('partner.commissionIntel.submitInquiry', 'Submit inquiry')}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Commission questions or updates
+                {t('partner.commissionIntel.submitInquiryHint', 'Commission questions or updates')}
               </div>
             </div>
           </div>
@@ -270,9 +307,11 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
               <TrendingUp size={18} className="text-slate-600 dark:text-slate-300" />
             </div>
             <div>
-              <div className="font-semibold text-navy-900 dark:text-white">View Statements</div>
+              <div className="font-semibold text-navy-900 dark:text-white">
+                {t('partner.commissionIntel.viewStatements', 'View statements')}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Historical payouts & reports
+                {t('partner.commissionIntel.viewStatementsHint', 'Historical payouts and reports')}
               </div>
             </div>
           </div>
@@ -359,6 +398,7 @@ const ProjectionCard: React.FC<ProjectionCardProps> = ({
 };
 
 const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, onView }) => {
+  const { t } = useTranslation();
   const statusColors: Record<string, string> = {
     REGISTERED: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
     QUALIFIED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
@@ -378,23 +418,27 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
         <div>
           <div className="font-semibold text-navy-900 dark:text-white">{deal.clientName}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            ${deal.dealValue.toLocaleString()} deal value
+            {t('partner.commissionIntel.dealValue', '{{amount}} deal value', {
+              amount: `$${formatListNumber(deal.dealValue, '0')}`,
+            })}
           </div>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="text-right">
           <div className="font-semibold text-emerald-600 dark:text-emerald-400">
-            ${deal.commissionAmount.toLocaleString()}
+            ${formatListNumber(deal.commissionAmount, '0')}
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
-            {deal.commissionRate}% rate
+            {t('partner.commissionIntel.commissionRate', '{{percent}}% rate', {
+              percent: deal.commissionRate,
+            })}
           </div>
         </div>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[deal.status]}`}
         >
-          {deal.status}
+          {t(`partner.commissionIntel.dealStatus.${deal.status}`, deal.status)}
         </span>
       </div>
     </div>
