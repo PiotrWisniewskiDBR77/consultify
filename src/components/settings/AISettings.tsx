@@ -53,6 +53,7 @@ import {
 } from '../../types';
 import { LLMProviderConfig } from '../../types/domain/ai';
 import { ProactivitySelector } from '../AISettings';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface AISettingsProps {
   currentUser: User;
@@ -685,7 +686,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </span>
                   </div>
                   <p className="text-3xl font-bold text-c-text">
-                    {costSummary.totalRequestsThisMonth.toLocaleString()}
+                    {formatListNumber(costSummary.totalRequestsThisMonth)}
                   </p>
                   <p className="text-xs text-c-text-muted mt-1">AI interactions</p>
                 </div>

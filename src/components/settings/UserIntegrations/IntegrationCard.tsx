@@ -9,6 +9,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { UserIntegration } from '../../../hooks/useUserIntegrations';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface ProviderConfig {
   id: string;
@@ -106,7 +107,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
               {connection?.lastSyncAt && (
                 <p className="text-xs text-c-text-secondary mt-1">
                   {t('settings.integrations.lastSync', 'Last sync')}:{' '}
-                  {new Date(connection.lastSyncAt).toLocaleString()}
+                  {formatListDateTime(connection.lastSyncAt)}
                 </p>
               )}
             </div>

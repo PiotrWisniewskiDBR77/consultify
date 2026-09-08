@@ -34,6 +34,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Progress } from '../ui/progress';
 import { Select } from '../ui/select';
 import { Skeleton } from '../ui/skeleton';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface AIUsageDashboardProps {
   currentUser: User;
@@ -178,7 +179,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,

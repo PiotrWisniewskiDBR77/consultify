@@ -35,6 +35,7 @@ import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { EasySyncSetupShellPanel } from '../shared/EasySyncSetupShellPanel';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // Webhook types
 interface WebhookSubscription {
@@ -1026,9 +1027,9 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   ? t('settings.integrations.governedEntryCreated', 'Governed entry created')
                   : t('settings.integrations.lastGovernedEvent', 'Last governed event');
               const lastOperationalValue = connected?.last_synced_at
-                ? new Date(connected.last_synced_at).toLocaleString()
+                ? formatListDateTime(connected.last_synced_at)
                 : connected?.created_at
-                  ? new Date(connected.created_at).toLocaleString()
+                  ? formatListDateTime(connected.created_at)
                   : '—';
               const Icon = PROVIDER_ICON[p.name] || PROVIDER_ICON[p.id] || Puzzle;
 
@@ -1432,7 +1433,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         className="border-t border-c-border-subtle dark:border-navy-700"
                       >
                         <td className="p-3 text-c-text">
-                          {l.startedAt ? new Date(l.startedAt).toLocaleString() : '—'}
+                          {l.startedAt ? formatListDateTime(l.startedAt) : '—'}
                         </td>
                         <td className="p-3">
                           <span

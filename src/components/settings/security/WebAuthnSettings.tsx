@@ -26,6 +26,7 @@ import { EmptyState } from '@/components/ui/composed';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { api } from '../../../services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface WebAuthnCredential {
   id: string;
@@ -365,10 +366,10 @@ const WebAuthnSettings: React.FC = () => {
                           {credential.deviceName || 'Unnamed Passkey'}
                         </h4>
                         <div className="flex items-center gap-3 text-sm text-c-text-secondary">
-                          <span>Added {new Date(credential.createdAt).toLocaleDateString()}</span>
+                          <span>Added {formatListDate(credential.createdAt)}</span>
                           {credential.lastUsedAt && (
                             <span>
-                              • Last used {new Date(credential.lastUsedAt).toLocaleDateString()}
+                              • Last used {formatListDate(credential.lastUsedAt)}
                             </span>
                           )}
                         </div>

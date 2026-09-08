@@ -30,6 +30,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { DoNotDisturbHours, OutOfOfficePeriod, User, WorkingHours } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface AvailabilityStatusSectionProps {
   currentUser: User;
@@ -564,7 +565,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
           <div className="flex items-center gap-2">
             <Calendar size={18} className="text-amber-500" />
             <span className="font-medium text-c-text">
-              {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+              {formatListDate(startDate)} - {formatListDate(endDate)}
             </span>
             {isPast && (
               <span className="text-xs text-c-text-muted">

@@ -20,6 +20,7 @@ import { Banner } from '@/components/shared/Banner';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface SettingsExportImportProps {
   currentUser: User;
@@ -370,7 +371,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                     {importPreview?.exportedAt && (
                       <>
                         {t('settings.importExport.exportedAt', 'Exported')}:{' '}
-                        {new Date(importPreview.exportedAt).toLocaleDateString()}
+                        {formatListDate(importPreview.exportedAt)}
                       </>
                     )}
                   </p>

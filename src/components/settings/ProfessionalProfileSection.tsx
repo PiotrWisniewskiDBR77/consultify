@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { Certification, Education, SocialLinks, User, WorkExperience } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ProfessionalProfileSectionProps {
   currentUser: User;
@@ -531,9 +532,9 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
           <h4 className="font-semibold text-c-text">{cert.name}</h4>
           <p className="text-sm text-c-text-secondary">{cert.issuer}</p>
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
-            <span>Issued: {new Date(cert.issueDate).toLocaleDateString()}</span>
+            <span>Issued: {formatListDate(cert.issueDate)}</span>
             {cert.expiryDate && (
-              <span>Expires: {new Date(cert.expiryDate).toLocaleDateString()}</span>
+              <span>Expires: {formatListDate(cert.expiryDate)}</span>
             )}
           </div>
         </div>
@@ -790,8 +791,8 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           <p className="text-sm text-c-text-secondary">{work.company}</p>
           {work.location && <p className="text-xs text-c-text-muted mt-1">{work.location}</p>}
           <div className="flex gap-4 mt-2 text-xs text-c-text-muted">
-            <span>{new Date(work.startDate).toLocaleDateString()}</span>
-            {work.endDate && <span>- {new Date(work.endDate).toLocaleDateString()}</span>}
+            <span>{formatListDate(work.startDate)}</span>
+            {work.endDate && <span>- {formatListDate(work.endDate)}</span>}
             {work.isCurrent && <span className="text-green-600">Current</span>}
           </div>
         </div>

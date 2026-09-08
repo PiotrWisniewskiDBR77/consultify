@@ -48,6 +48,7 @@ import { isMfaMvpEnabled } from '../../../utils/mfaMvpFlag';
 import { DegradedState } from '../../Admin/AdminState';
 import { MFASetup } from '../../Profile/MFASetup';
 import { SettingsDivider, SettingsSection } from '../shared';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface AuthenticationAccessPageProps {
   currentUser: User;
@@ -701,7 +702,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                     </div>
                   </div>
                   <span className="text-xs text-c-text-muted">
-                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
+                    {event.timestamp ? formatListDateTime(event.timestamp) : ''}
                   </span>
                 </div>
               ))}

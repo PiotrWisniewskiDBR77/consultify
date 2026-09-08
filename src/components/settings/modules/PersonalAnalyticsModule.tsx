@@ -29,6 +29,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 interface PersonalAnalyticsModuleProps {
   currentUser: User;
@@ -143,7 +144,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
               <div
                 key={di}
                 className={`w-4 h-4 rounded-sm ${getColor(day.score)}`}
-                title={`${new Date(day.date).toLocaleDateString()}: ${day.tasks} tasks, Score: ${day.score}`}
+                title={`${formatListDate(day.date)}: ${day.tasks} tasks, Score: ${day.score}`}
               />
             ))}
           </div>
@@ -263,7 +264,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           {dailyActivity.slice(-7).map((day, i) => (
             <div key={i} className="flex items-center gap-4">
               <span className="text-sm text-c-text-muted w-24">
-                {new Date(day.date).toLocaleDateString('en-US', {
+                {new Date(day.date).toLocaleDateString(localeListy(), {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',

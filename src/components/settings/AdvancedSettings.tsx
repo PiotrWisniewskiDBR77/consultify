@@ -38,6 +38,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface AdvancedSettingsProps {
   currentUser: User;
@@ -404,9 +405,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   </div>
                   <p className="text-xs text-c-text-secondary mt-1">
                     {t('settings.advanced.created', 'Created')}:{' '}
-                    {new Date(apiKey.createdAt).toLocaleDateString()}
+                    {formatListDate(apiKey.createdAt)}
                     {apiKey.lastUsed &&
-                      ` • ${t('settings.advanced.lastUsed', 'Last used')}: ${new Date(apiKey.lastUsed).toLocaleDateString()}`}
+                      ` • ${t('settings.advanced.lastUsed', 'Last used')}: ${formatListDate(apiKey.lastUsed)}`}
                   </p>
                 </div>
                 <button

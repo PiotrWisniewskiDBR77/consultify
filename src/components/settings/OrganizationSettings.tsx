@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 interface OrganizationSettingsProps {
   currentUser: User;
@@ -353,7 +354,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </h3>
           <div className="flex flex-col items-center justify-center py-4">
             <div className="text-4xl font-bold text-navy-900 mb-1">
-              {selectedOrg?.token_balance?.toLocaleString() || 0}
+              {formatListNumber(selectedOrg?.token_balance, '0')}
             </div>
             <div className="text-sm text-c-text-muted">Available Tokens</div>
           </div>
@@ -460,13 +461,13 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     </td>
                     <td className="px-4 py-2 font-mono text-navy-900">
                       {entry.type === 'CREDIT' ? '+' : '-'}
-                      {entry.amount?.toLocaleString()}
+                      {formatListNumber(entry.amount)}
                     </td>
                     <td className="px-4 py-2 text-c-text-secondary truncate max-w-xs">
                       {entry.reason || entry.ref_entity_type || '-'}
                     </td>
                     <td className="px-4 py-2 text-c-text-muted text-xs">
-                      {new Date(entry.created_at).toLocaleString()}
+                      {formatListDateTime(entry.created_at)}
                     </td>
                   </tr>
                 ))}
@@ -642,7 +643,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   {member.role}
                 </span>
                 <div className="text-xs text-c-text-muted">
-                  Joined {new Date(member.created_at).toLocaleDateString()}
+                  Joined {formatListDate(member.created_at)}
                 </div>
               </div>
             </div>

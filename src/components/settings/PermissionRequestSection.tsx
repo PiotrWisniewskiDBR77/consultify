@@ -37,6 +37,7 @@ import {
   PermissionRequestType,
   User,
 } from '../../types';
+import { formatListDate, formatListTime } from '@/utils/listDateFormat';
 
 interface PermissionRequestSectionProps {
   currentUser: User;
@@ -477,8 +478,8 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                           </div>
                         )}
                         <p className="text-xs text-c-text-secondary mt-2">
-                          {new Date(request.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(request.createdAt).toLocaleTimeString()}
+                          {formatListDate(request.createdAt)} at{' '}
+                          {formatListTime(request.createdAt)}
                         </p>
                       </div>
                     </div>

@@ -40,6 +40,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface SecurityDashboardProps {
   currentUser: User;
@@ -252,7 +253,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
     if (diffHours < 1) return t('common.justNow', 'Just now');
     if (diffHours < 24) return t('common.hoursAgo', '{{count}} hours ago', { count: diffHours });
     if (diffDays < 7) return t('common.daysAgo', '{{count}} days ago', { count: diffDays });
-    return date.toLocaleDateString();
+    return formatListDate(date);
   };
 
   if (loading) {

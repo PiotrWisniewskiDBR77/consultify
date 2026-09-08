@@ -44,6 +44,7 @@ import { EmptyState } from '@/components/ui/composed';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
+import { formatListDateTime, localeListy } from '@/utils/listDateFormat';
 
 interface IntegrationAnalyticsSettingsProps {
   className?: string;
@@ -218,7 +219,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
@@ -539,7 +540,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                         className="hover:bg-c-surface-raised dark:hover:bg-navy-800/50"
                       >
                         <td className="px-4 py-3 text-xs text-c-text-secondary">
-                          {new Date(log.created_at).toLocaleString()}
+                          {formatListDateTime(log.created_at)}
                         </td>
                         <td className="px-4 py-3 text-xs font-mono text-c-text-secondary">
                           {log.endpoint}

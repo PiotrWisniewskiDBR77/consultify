@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface LoginEvent {
   id: string;
@@ -78,7 +79,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return formatListDateTime(dateString);
   };
 
   return (

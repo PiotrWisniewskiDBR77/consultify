@@ -36,6 +36,7 @@ import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { isMfaMvpEnabled } from '../../../utils/mfaMvpFlag';
 import { DegradedState } from '../../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from '../shared';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 interface SecurityOverviewPageProps {
   currentUser: User;
@@ -190,7 +191,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       statusLabel: t('settings.securityOverview.passwordSet', 'Set'),
       description: status.passwordLastChanged
         ? t('settings.securityOverview.lastChanged', 'Last changed {{date}}', {
-            date: new Date(status.passwordLastChanged).toLocaleDateString(),
+            date: formatListDate(status.passwordLastChanged),
           })
         : t('settings.securityOverview.updateRegularly', 'Update regularly for best security'),
       action: () => navigateTo('auth-access'),
@@ -336,7 +337,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
   };
 
   const colorMap = {

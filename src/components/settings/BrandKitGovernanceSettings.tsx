@@ -17,6 +17,7 @@
 import { AlertTriangle, CheckCircle2, Lock, Palette, Save, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListTime } from '@/utils/listDateFormat';
 
 type Confidentiality = 'public' | 'internal' | 'confidential';
 
@@ -211,7 +212,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       } else {
         setStaleWarning('Saved but read-back is stale — please refresh.');
       }
-      setSavedAt(new Date().toLocaleTimeString());
+      setSavedAt(formatListTime());
     } catch {
       setSaveError('Failed to save brand kit. Please retry.');
     } finally {

@@ -34,6 +34,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import TeresaMark from '../../shared/TeresaMark';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface AIModelSelectionSettingsProps {
   currentUser: User;
@@ -425,7 +426,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <p className="text-sm text-c-text-muted">Maximum length of AI responses</p>
               </div>
               <span className="text-lg font-mono text-c-accent">
-                {settings.maxTokens.toLocaleString()}
+                {formatListNumber(settings.maxTokens)}
               </span>
             </div>
             <input

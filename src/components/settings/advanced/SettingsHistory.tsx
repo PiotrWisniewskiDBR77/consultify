@@ -14,6 +14,7 @@ import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 interface SettingsHistoryProps {
   currentUser: User;
@@ -123,12 +124,12 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
     if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-    return date.toLocaleDateString();
+    return formatListDate(date);
   };
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
   };
 
   const getActionColor = (action: string) => {

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/composed';
 import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument, User } from '../../types';
 import { DegradedState } from '../Admin/AdminState';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface LegalSettingsProps {
   currentUser: User;
@@ -116,7 +117,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(undefined, {
+    return new Date(dateStr).toLocaleDateString(localeListy(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

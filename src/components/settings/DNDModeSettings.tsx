@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface DNDModeSettingsProps {
   currentUser: User;
@@ -105,7 +106,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
   const formatUntil = (until: string) => {
     if (!until) return '';
     const date = new Date(until);
-    return date.toLocaleString();
+    return formatListDateTime(date);
   };
 
   return (

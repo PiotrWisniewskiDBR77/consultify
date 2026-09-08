@@ -45,6 +45,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 interface AdvancedSecuritySettingsProps {
   currentUser: User;
@@ -458,9 +459,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 Password last changed:{' '}
-                {new Date(passwordPolicy.passwordLastChanged).toLocaleDateString()}
+                {formatListDate(passwordPolicy.passwordLastChanged)}
                 {passwordPolicy.passwordExpiresAt && (
-                  <> • Expires: {new Date(passwordPolicy.passwordExpiresAt).toLocaleDateString()}</>
+                  <> • Expires: {formatListDate(passwordPolicy.passwordExpiresAt)}</>
                 )}
               </p>
             </div>
@@ -830,7 +831,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       {location.city}, {location.region}, {location.country}
                     </p>
                     <p className="text-sm text-c-text-muted">
-                      {location.ip_address} • {new Date(location.created_at).toLocaleString()}
+                      {location.ip_address} • {formatListDateTime(location.created_at)}
                     </p>
                     <div className="flex gap-2 mt-1">
                       {location.is_vpn && (
@@ -915,7 +916,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       </p>
                       <p className="text-sm text-c-text-secondary">{activity.description}</p>
                       <p className="text-xs text-c-text-muted mt-1">
-                        {activity.ip_address} • {new Date(activity.created_at).toLocaleString()}
+                        {activity.ip_address} • {formatListDateTime(activity.created_at)}
                       </p>
                     </div>
                   </div>

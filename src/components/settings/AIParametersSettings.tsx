@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface AIParametersSettingsProps {
   currentUser: User;
@@ -144,7 +145,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.maxTokens', 'Max Tokens per Response')}
           </label>
-          <span className="text-sm text-c-text-muted">{maxTokens.toLocaleString()}</span>
+          <span className="text-sm text-c-text-muted">{formatListNumber(maxTokens)}</span>
         </div>
         <input
           type="number"
@@ -163,7 +164,7 @@ export const AIParametersSettings: React.FC<AIParametersSettingsProps> = ({
           <label className="text-sm font-medium text-c-text-secondary">
             {t('settings.ai.parameters.contextWindow', 'Context Window Size')}
           </label>
-          <span className="text-sm text-c-text-muted">{contextWindowSize.toLocaleString()}</span>
+          <span className="text-sm text-c-text-muted">{formatListNumber(contextWindowSize)}</span>
         </div>
         <select
           value={contextWindowSize}
