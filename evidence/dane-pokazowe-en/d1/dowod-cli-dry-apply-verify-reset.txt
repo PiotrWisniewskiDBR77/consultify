@@ -1,0 +1,233 @@
+=== DRY-RUN ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         reset
+[rdzen] reset: usunięto organizację "northwind" + 9 kont (kaskada: członkostwa, zespoły, projekty, profil).
+
+=== DRY-RUN (na czystej bazie) ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         dry-run
+
+--- PLAN ---
+organizacja: utworzy
+profil:      utworzy
+osoba        james.whitfield@northwind.example  utworzy
+osoba        sarah.mitchell@northwind.example   utworzy
+osoba        robert.chen@northwind.example      utworzy
+osoba        emily.carter@northwind.example     utworzy
+osoba        daniel.osei@northwind.example      utworzy
+osoba        laura.novak@northwind.example      utworzy
+osoba        michael.grant@northwind.example    utworzy
+osoba        priya.sharma@northwind.example     utworzy
+osoba        thomas.baker@northwind.example     utworzy
+członkostwo  james.whitfield                    utworzy
+członkostwo  sarah.mitchell                     utworzy
+członkostwo  robert.chen                        utworzy
+członkostwo  emily.carter                       utworzy
+członkostwo  daniel.osei                        utworzy
+członkostwo  laura.novak                        utworzy
+członkostwo  michael.grant                      utworzy
+członkostwo  priya.sharma                       utworzy
+członkostwo  thomas.baker                       utworzy
+zespół       plant-operations                   utworzy
+zespół       engineering-quality                utworzy
+zesp.członek plant-operations/sarah.mitchell    utworzy
+zesp.członek plant-operations/james.whitfield   utworzy
+zesp.członek plant-operations/emily.carter      utworzy
+zesp.członek plant-operations/michael.grant     utworzy
+zesp.członek plant-operations/priya.sharma      utworzy
+zesp.członek engineering-quality/robert.chen    utworzy
+zesp.członek engineering-quality/daniel.osei    utworzy
+zesp.członek engineering-quality/laura.novak    utworzy
+zesp.członek engineering-quality/thomas.baker   utworzy
+projekt      operational-excellence-programme   utworzy
+projekt      digital-automation-roadmap         utworzy
+
+[rdzen] dry-run: plan obejmuje 1 organizację + profil + 9 osób + 9 członkostw + 2 zespoły + 9 członków zespołów + 2 projekty. 33 rzeczy do zmiany. Nic nie zapisano.
+
+=== APPLY #1 ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         apply
+
+--- PLAN ---
+organizacja: utworzy
+profil:      utworzy
+osoba        james.whitfield@northwind.example  utworzy
+osoba        sarah.mitchell@northwind.example   utworzy
+osoba        robert.chen@northwind.example      utworzy
+osoba        emily.carter@northwind.example     utworzy
+osoba        daniel.osei@northwind.example      utworzy
+osoba        laura.novak@northwind.example      utworzy
+osoba        michael.grant@northwind.example    utworzy
+osoba        priya.sharma@northwind.example     utworzy
+osoba        thomas.baker@northwind.example     utworzy
+członkostwo  james.whitfield                    utworzy
+członkostwo  sarah.mitchell                     utworzy
+członkostwo  robert.chen                        utworzy
+członkostwo  emily.carter                       utworzy
+członkostwo  daniel.osei                        utworzy
+członkostwo  laura.novak                        utworzy
+członkostwo  michael.grant                      utworzy
+członkostwo  priya.sharma                       utworzy
+członkostwo  thomas.baker                       utworzy
+zespół       plant-operations                   utworzy
+zespół       engineering-quality                utworzy
+zesp.członek plant-operations/sarah.mitchell    utworzy
+zesp.członek plant-operations/james.whitfield   utworzy
+zesp.członek plant-operations/emily.carter      utworzy
+zesp.członek plant-operations/michael.grant     utworzy
+zesp.członek plant-operations/priya.sharma      utworzy
+zesp.członek engineering-quality/robert.chen    utworzy
+zesp.członek engineering-quality/daniel.osei    utworzy
+zesp.członek engineering-quality/laura.novak    utworzy
+zesp.członek engineering-quality/thomas.baker   utworzy
+projekt      operational-excellence-programme   utworzy
+projekt      digital-automation-roadmap         utworzy
+
+[rdzen] hasło (1 wspólne dla 9 kont) zapisane do /private/tmp/dane-pokazowe-en/northwind-konta.txt (chmod 600). NIE jest drukowane.
+
+[rdzen] utworzono=33 zmieniono=0 pominieto=0
+
+=== APPLY #2 (idempotencja, oczekiwane utworzono=0 zmieniono=0) ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         apply
+
+--- PLAN ---
+organizacja: bez zmian
+profil:      bez zmian
+osoba        james.whitfield@northwind.example  bez zmian
+osoba        sarah.mitchell@northwind.example   bez zmian
+osoba        robert.chen@northwind.example      bez zmian
+osoba        emily.carter@northwind.example     bez zmian
+osoba        daniel.osei@northwind.example      bez zmian
+osoba        laura.novak@northwind.example      bez zmian
+osoba        michael.grant@northwind.example    bez zmian
+osoba        priya.sharma@northwind.example     bez zmian
+osoba        thomas.baker@northwind.example     bez zmian
+członkostwo  james.whitfield                    bez zmian
+członkostwo  sarah.mitchell                     bez zmian
+członkostwo  robert.chen                        bez zmian
+członkostwo  emily.carter                       bez zmian
+członkostwo  daniel.osei                        bez zmian
+członkostwo  laura.novak                        bez zmian
+członkostwo  michael.grant                      bez zmian
+członkostwo  priya.sharma                       bez zmian
+członkostwo  thomas.baker                       bez zmian
+zespół       plant-operations                   bez zmian
+zespół       engineering-quality                bez zmian
+zesp.członek plant-operations/sarah.mitchell    bez zmian
+zesp.członek plant-operations/james.whitfield   bez zmian
+zesp.członek plant-operations/emily.carter      bez zmian
+zesp.członek plant-operations/michael.grant     bez zmian
+zesp.członek plant-operations/priya.sharma      bez zmian
+zesp.członek engineering-quality/robert.chen    bez zmian
+zesp.członek engineering-quality/daniel.osei    bez zmian
+zesp.członek engineering-quality/laura.novak    bez zmian
+zesp.członek engineering-quality/thomas.baker   bez zmian
+projekt      operational-excellence-programme   bez zmian
+projekt      digital-automation-roadmap         bez zmian
+
+[rdzen] utworzono=0 zmieniono=0 pominieto=33
+[rdzen] idempotentnie: nic nie było do zrobienia.
+
+=== VERIFY (po apply) ===
+[verify] cel: 127.0.0.1:54418/consultify_kopia_d1
+[verify] organizacja: Northwind Manufacturing Ltd.
+[verify] OK   organizacje (id=northwind)                              oczekiwane=1 rzeczywiste=1
+[verify] OK   użytkownicy                                             oczekiwane=9 rzeczywiste=9
+[verify] OK   członkostwa ACTIVE                                      oczekiwane=9 rzeczywiste=9
+[verify] OK   zespoły                                                 oczekiwane=2 rzeczywiste=2
+[verify] OK   projekty                                                oczekiwane=2 rzeczywiste=2
+[verify] OK   profile organizacji                                     oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa OWNER                                       oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa ADMIN                                       oczekiwane=2 rzeczywiste=2
+[verify] OK   członkostwa MEMBER                                      oczekiwane=6 rzeczywiste=6
+[verify] OK   users.role spoza słownika (stanowisko wpisane jako rola) oczekiwane=0 rzeczywiste=0
+[verify] OK   osoby przeciążone (alokacja > weekly_capacity_hours)    oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy z language != en                            oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy spoza domeny @northwind.example             oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 13 asercji przeszły.
+
+=== RESET ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         reset
+[rdzen] reset: usunięto organizację "northwind" + 9 kont (kaskada: członkostwa, zespoły, projekty, profil).
+
+=== VERIFY (po reset, oczekiwane same zera) ===
+[verify] cel: 127.0.0.1:54418/consultify_kopia_d1
+[verify] OK   organizacje (id=northwind)                              oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy                                             oczekiwane=0 rzeczywiste=0
+[verify] OK   członkostwa ACTIVE                                      oczekiwane=0 rzeczywiste=0
+[verify] OK   zespoły                                                 oczekiwane=0 rzeczywiste=0
+[verify] OK   projekty                                                oczekiwane=0 rzeczywiste=0
+[verify] OK   profile organizacji                                     oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 6 asercji przeszły.
+
+=== APPLY #3 (odtworzenie danych do zrzutow ekranu) ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d1
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[rdzen] tryb:         apply
+
+--- PLAN ---
+organizacja: utworzy
+profil:      utworzy
+osoba        james.whitfield@northwind.example  utworzy
+osoba        sarah.mitchell@northwind.example   utworzy
+osoba        robert.chen@northwind.example      utworzy
+osoba        emily.carter@northwind.example     utworzy
+osoba        daniel.osei@northwind.example      utworzy
+osoba        laura.novak@northwind.example      utworzy
+osoba        michael.grant@northwind.example    utworzy
+osoba        priya.sharma@northwind.example     utworzy
+osoba        thomas.baker@northwind.example     utworzy
+członkostwo  james.whitfield                    utworzy
+członkostwo  sarah.mitchell                     utworzy
+członkostwo  robert.chen                        utworzy
+członkostwo  emily.carter                       utworzy
+członkostwo  daniel.osei                        utworzy
+członkostwo  laura.novak                        utworzy
+członkostwo  michael.grant                      utworzy
+członkostwo  priya.sharma                       utworzy
+członkostwo  thomas.baker                       utworzy
+zespół       plant-operations                   utworzy
+zespół       engineering-quality                utworzy
+zesp.członek plant-operations/sarah.mitchell    utworzy
+zesp.członek plant-operations/james.whitfield   utworzy
+zesp.członek plant-operations/emily.carter      utworzy
+zesp.członek plant-operations/michael.grant     utworzy
+zesp.członek plant-operations/priya.sharma      utworzy
+zesp.członek engineering-quality/robert.chen    utworzy
+zesp.członek engineering-quality/daniel.osei    utworzy
+zesp.członek engineering-quality/laura.novak    utworzy
+zesp.członek engineering-quality/thomas.baker   utworzy
+projekt      operational-excellence-programme   utworzy
+projekt      digital-automation-roadmap         utworzy
+
+[rdzen] hasło (1 wspólne dla 9 kont) zapisane do /private/tmp/dane-pokazowe-en/northwind-konta.txt (chmod 600). NIE jest drukowane.
+
+[rdzen] utworzono=33 zmieniono=0 pominieto=0
+
+=== VERIFY (koncowy stan) ===
+[verify] cel: 127.0.0.1:54418/consultify_kopia_d1
+[verify] organizacja: Northwind Manufacturing Ltd.
+[verify] OK   organizacje (id=northwind)                              oczekiwane=1 rzeczywiste=1
+[verify] OK   użytkownicy                                             oczekiwane=9 rzeczywiste=9
+[verify] OK   członkostwa ACTIVE                                      oczekiwane=9 rzeczywiste=9
+[verify] OK   zespoły                                                 oczekiwane=2 rzeczywiste=2
+[verify] OK   projekty                                                oczekiwane=2 rzeczywiste=2
+[verify] OK   profile organizacji                                     oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa OWNER                                       oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa ADMIN                                       oczekiwane=2 rzeczywiste=2
+[verify] OK   członkostwa MEMBER                                      oczekiwane=6 rzeczywiste=6
+[verify] OK   users.role spoza słownika (stanowisko wpisane jako rola) oczekiwane=0 rzeczywiste=0
+[verify] OK   osoby przeciążone (alokacja > weekly_capacity_hours)    oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy z language != en                            oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy spoza domeny @northwind.example             oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 13 asercji przeszły.
