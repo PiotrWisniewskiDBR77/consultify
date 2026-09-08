@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "data": "2026-09-08T19:52:41.981Z",
+    "data": "2026-09-08T19:59:08.414Z",
     "root": "/Users/piotrwisniewski/Developer/wt/j2-mojapraca",
-    "sha": "d7c7f3e437e375b8cd7e4d8300799c31f9a74014"
+    "sha": "985791e0a2266c08676e167d39703d911a598c0c"
   },
   "suma": {
     "K1": 2,
@@ -12,11 +12,11 @@
     "K3a": 1815,
     "K3aKLUCZ": 429,
     "K3b": 7,
-    "K4pl": 969,
+    "K4pl": 953,
     "K4en": 1283,
     "K5pl": 258,
     "K5en": 1822,
-    "K7": 849
+    "K7": 848
   },
   "moduly": {
     "01 Chat": {
@@ -41,11 +41,11 @@
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 78,
+      "K4pl": 62,
       "K4en": 71,
       "K5pl": 1,
       "K5en": 61,
-      "K7": 75
+      "K7": 74
     },
     "03 Interview": {
       "K1": 0,
