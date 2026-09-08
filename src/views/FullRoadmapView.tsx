@@ -326,10 +326,10 @@ export const FullRoadmapView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-navy-900 dark:text-white text-sm">
-                    Manual Schedule Overrides
+                    {translate('initiatives.fullRoadmap.manualOverrides.title', 'Manual Schedule Overrides')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    You have manually moved initiatives. AI optimization is paused.
+                    {translate('initiatives.fullRoadmap.manualOverrides.subtitle', 'You have manually moved initiatives. AI optimization is paused.')}
                   </p>
                 </div>
               </div>
@@ -338,7 +338,7 @@ export const FullRoadmapView: React.FC = () => {
                   onClick={() => setHasManualChanges(false)}
                   className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                 >
-                  Keep Changes
+                  {translate('initiatives.fullRoadmap.manualOverrides.keepChanges', 'Keep Changes')}
                 </button>
                 <button
                   onClick={() => setShowRebalanceModal(true)}
@@ -358,7 +358,7 @@ export const FullRoadmapView: React.FC = () => {
                     <polyline points="1 20 1 14 7 14"></polyline>
                     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                   </svg>
-                  Rebalance with AI
+                  {translate('initiatives.fullRoadmap.manualOverrides.rebalanceWithAi', 'Rebalance with AI')}
                 </button>
               </div>
             </div>
@@ -394,12 +394,12 @@ export const FullRoadmapView: React.FC = () => {
           <div className="absolute inset-0 z-50 bg-slate-500/50 dark:bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-8">
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl max-w-4xl w-full p-8 shadow-2xl transition-colors">
               <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                Strategy Decision: Select Pilot
+                {translate('initiatives.fullRoadmap.pilotDecision.title', 'Strategy Decision: Select Pilot')}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 mb-8">
-                Risk Management Protocol: We recommend starting with a "Quick Win" Pilot before full
-                rollout. Select <strong>one</strong> high-impact, low-complexity initiative to
-                validate the strategy.
+                {translate('initiatives.fullRoadmap.pilotDecision.bodyBeforeOne', 'Risk Management Protocol: We recommend starting with a "Quick Win" Pilot before full rollout. Select')}{' '}
+                <strong>{translate('initiatives.fullRoadmap.pilotDecision.one', 'one')}</strong>{' '}
+                {translate('initiatives.fullRoadmap.pilotDecision.bodyAfterOne', 'high-impact, low-complexity initiative to validate the strategy.')}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-h-96 overflow-y-auto">
@@ -439,7 +439,7 @@ export const FullRoadmapView: React.FC = () => {
                   }}
                   className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white px-4 text-sm transition-colors"
                 >
-                  Review Roadmap Again
+                  {translate('initiatives.fullRoadmap.pilotDecision.reviewAgain', 'Review Roadmap Again')}
                 </button>
               </div>
             </div>

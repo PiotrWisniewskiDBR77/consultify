@@ -783,17 +783,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     () => [
       {
         id: 'list' as ModuleTab,
-        label: 'Inicjatywy',
+        label: t('initiatives.tabs.list', 'Initiatives'),
         icon: <List size={16} />,
       },
       {
         id: 'plan' as ModuleTab,
-        label: 'Plan',
+        label: t('initiatives.tabs.plan', 'Plan'),
         icon: <CalendarClock size={16} />,
       },
       {
         id: 'capacity' as ModuleTab,
-        label: 'Obciążenie',
+        label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
       ...(PORTFOLIO_HEALTH_ENABLED
@@ -2399,7 +2399,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           data-testid="initiatives-menu3-chip-all"
         >
           <span className={MENU_3_ALL_DOT_CLASS} />
-          <span>Wszystkie</span>
+          <span>{t('common.all', 'All')}</span>
           <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
             {lifecyclePresetCounts.all ?? 0}
           </span>
@@ -2533,7 +2533,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // nie surowe `allInitiatives.length` (które ignorowało przełącznik
   // Aktywne/Wszystkie oraz filtry projektu i priorytetu, stąd "72" obok "63" i "60").
   const lifecycleDropdownOptions = [
-    { id: 'all', label: 'Wszystkie', count: statusCounts.all ?? 0 },
+    { id: 'all', label: t('common.all', 'All'), count: statusCounts.all ?? 0 },
     ...Object.values(InitiativeStatus).map((status) => ({
       id: status,
       label: getLocalizedStatusLabel(status, t),

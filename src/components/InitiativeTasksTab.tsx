@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle, CheckSquare, Clock, Plus, Square, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -22,6 +23,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
   currentUser = { id: '', email: '', role: 'user', firstName: '', lastName: '' } as User,
   initiative,
 }) => {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -67,7 +69,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error('Failed to create task', error);
-      toast.error('Failed to create task');
+      toast.error(t('initiatives.tasksTab.createFailed', 'Failed to create task'));
     }
   };
 
@@ -167,11 +169,11 @@ export const InitiativeTasksTab: React.FC<Props> = ({
         }
         fetchTasks();
       } else {
-        alert('No tasks generated');
+alert(t('initiatives.tasksTab.noTasksGenerated', 'No tasks generated'));
       }
     } catch (error) {
       console.error('Failed to generate tasks', error);
-      alert('AI Generation failed');
+alert(t('initiatives.tasksTab.aiGenerationFailed', 'AI Generation failed'));
     } finally {
       setIsGenerating(false);
     }
@@ -182,7 +184,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <h3 className="text-c-text font-bold text-lg">Strategic Execution</h3>
+          <h3 className="text-c-text font-bold text-lg">{t('initiatives.tasksTab.title', 'Strategic Execution')}</h3>
           <span className="bg-c-surface-raised text-c-text-secondary text-xs px-2 py-0.5 rounded-full border border-c-border">
             {tasks.length}
           </span>
@@ -198,7 +200,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             ) : (
               <span className="text-lg">✨</span>
             )}
-            {isGenerating ? 'Generating Plan...' : 'Generate with AI'}
+            {isGenerating ? t('initiatives.tasksTab.generatingPlan', 'Generating Plan...') : t('initiatives.tasksTab.generateWithAi', 'Generate with AI')}
           </button>
           <div className="flex bg-c-surface-raised rounded border border-c-border p-1">
             {['all', 'todo', 'in_progress', 'completed'].map((s) => (
@@ -212,7 +214,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             ))}
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)} size="sm" icon={<Plus size={16} />}>
-            Add Task
+            {t('initiatives.tasksTab.addTask', 'Add Task')}
           </Button>
         </div>
       </div>
@@ -222,21 +224,21 @@ export const InitiativeTasksTab: React.FC<Props> = ({
         <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-500/30 flex items-center justify-between animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-              {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
+              {t('initiatives.tasksTab.selectedCount', { defaultValue: '{{count}} task selected', count: selectedTaskIds.size })}
             </span>
             <button
               onClick={() => setSelectedTaskIds(new Set())}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Clear
+              {t('common.clear', 'Clear')}
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-c-text-muted mr-2">Set status:</span>
+            <span className="text-xs text-c-text-muted mr-2">{t('initiatives.tasksTab.setStatus', 'Set status:')}</span>
             {[
-              { status: TaskStatus.TODO, label: 'Todo', color: 'bg-c-border-strong' },
-              { status: TaskStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-500' },
-              { status: TaskStatus.DONE, label: 'Done', color: 'bg-green-500' },
+              { status: TaskStatus.TODO, label: t('initiatives.tasksTab.status.todo', 'Todo'), color: 'bg-c-border-strong' },
+              { status: TaskStatus.IN_PROGRESS, label: t('initiatives.tasksTab.status.inProgress', 'In Progress'), color: 'bg-blue-500' },
+              { status: TaskStatus.DONE, label: t('initiatives.tasksTab.status.done', 'Done'), color: 'bg-green-500' },
             ].map(({ status, label, color }) => (
               <button
                 key={status}
@@ -272,17 +274,19 @@ export const InitiativeTasksTab: React.FC<Props> = ({
               )}
             </button>
             <span className="text-xs text-c-text-muted">
-              {selectedTaskIds.size === filteredTasks.length ? 'Deselect all' : 'Select all'}
+              {selectedTaskIds.size === filteredTasks.length
+                ? t('initiatives.tasksTab.deselectAll', 'Deselect all')
+                : t('initiatives.tasksTab.selectAll', 'Select all')}
             </span>
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-10 text-c-text-muted">Loading tasks...</div>
+          <div className="text-center py-10 text-c-text-muted">{t('initiatives.tasksTab.loading', 'Loading tasks...')}</div>
         ) : filteredTasks.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-c-border rounded-xl bg-c-surface-raised">
             <CheckCircle size={32} className="mx-auto mb-2 text-c-text-secondary" />
-            <p className="text-c-text-muted">No tasks found. Create one to get started.</p>
+            <p className="text-c-text-muted">{t('initiatives.tasksTab.empty', 'No tasks found. Create one to get started.')}</p>
           </div>
         ) : (
           filteredTasks.map((task) => (
@@ -344,7 +348,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                     </div>
                     {task.assignee
                       ? `${task.assignee.firstName} ${task.assignee.lastName}`
-                      : 'Unassigned'}
+                      : t('initiatives.tasksTab.unassigned', 'Unassigned')}
                   </span>
                   {task.dueDate && (
                     <span className="flex items-center gap-1">
@@ -358,7 +362,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                   </span>
                   {task.signedOff && (
                     <span className="flex items-center gap-1 text-green-500">
-                      <CheckCircle size={12} /> Signed
+                      <CheckCircle size={12} /> {t('initiatives.tasksTab.signed', 'Signed')}
                     </span>
                   )}
                 </div>

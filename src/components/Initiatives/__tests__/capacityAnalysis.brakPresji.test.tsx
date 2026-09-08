@@ -80,14 +80,21 @@ describe('P15-K5 — propozycje zmian z doradcy', () => {
       />
     );
     // MUTACJA: zastap panel stalym zdaniem („Uruchom Pracuj z AI…") -> RED.
-    expect(screen.getAllByRole('region', { name: /^Opcja obciążenia:/ })).toHaveLength(3);
+    // [ODMROZENIE 05_INITIATIVES J6b] aria-label przeszedl na klucz i18n
+    // `initiatives.capacityOptions.optionAriaPrefix` — w tescie bez zaladowanych
+    // zasobow renderuje sie domyslna wartosc, ktora jest po angielsku (§2.3: default
+    // t() zawsze EN, polski tekst zyje wylacznie w public/locales/pl/translation.json).
+    expect(screen.getAllByRole('region', { name: /^Load option:/ })).toHaveLength(3);
     expect(screen.getByText(/Przesuń kolejność prac dla zasobu rola Controls Engineer/)).toBeInTheDocument();
     expect(screen.getAllByText(/Controls Engineer/).length).toBeGreaterThanOrEqual(3);
   });
 
   it('bez odpowiedzi doradcy mowi wprost, ze porownania nie ma', () => {
     render(<CapacityAnalysisCard onBack={() => undefined} onAnalyze={() => undefined} onPublish={() => undefined} scenario={scenario} />);
-    expect(screen.getByText(/Brak zapisanego porównania/)).toBeInTheDocument();
+    // [ODMROZENIE 05_INITIATIVES J6b] tekst przeszedl na klucz i18n
+    // `initiatives.capacityOptions.noSavedComparison` — domyslna wartosc w tescie
+    // (bez zaladowanych zasobow) jest po angielsku, patrz komentarz wyzej.
+    expect(screen.getByText(/No saved comparison/)).toBeInTheDocument();
   });
 });
 

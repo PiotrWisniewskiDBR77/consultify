@@ -14,6 +14,7 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   getAxisColor,
@@ -159,6 +160,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
   onInitiativeClick,
   projectId,
 }) => {
+  const { t } = useTranslation();
   const [waves, setWaves] = useState<RoadmapWave[]>([]);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
@@ -344,7 +346,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
               <div className="flex items-center justify-center h-48 text-c-text-muted">
                 <div className="text-center">
                   <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No initiatives with timeline data</p>
+                  <p className="text-sm">{t('initiatives.portfolioTimeline.empty', 'No initiatives with timeline data')}</p>
                 </div>
               </div>
             ) : (
@@ -383,15 +385,15 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
       <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-c-border bg-c-bg text-xs text-c-text-muted">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-c-accent" />
-          <span>Today</span>
+          <span>{t('initiatives.portfolioTimeline.legend.today', 'Today')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <AlertTriangle size={12} className="text-danger-500" />
-          <span>Critical Path</span>
+          <span>{t('initiatives.portfolioTimeline.legend.criticalPath', 'Critical Path')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <ArrowRight size={12} />
-          <span>Dependency</span>
+          <span>{t('initiatives.portfolioTimeline.legend.dependency', 'Dependency')}</span>
         </div>
       </div>
     </div>

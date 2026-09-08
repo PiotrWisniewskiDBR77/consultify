@@ -83,6 +83,20 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'stakeholders', label: 'Stakeholders', icon: <Users size={16} /> },
   { id: 'risks', label: 'Risks', icon: <AlertTriangle size={16} /> },
 ];
+/** i18n keys for `TABS`/`GATE_DEFINITIONS` labels — EN default = literal above. */
+const TAB_LABEL_KEYS: Record<TabId, string> = {
+  overview: 'initiatives.sidePanel.tabs.overview',
+  tasks: 'initiatives.sidePanel.tabs.tasks',
+  decisions: 'initiatives.sidePanel.tabs.decisions',
+  financials: 'initiatives.sidePanel.tabs.financials',
+  stakeholders: 'initiatives.sidePanel.tabs.stakeholders',
+  risks: 'initiatives.sidePanel.tabs.risks',
+};
+const GATE_LABEL_KEYS: Record<string, string> = {
+  GO_NO_GO: 'initiatives.sidePanel.gates.goNoGo',
+  RESOURCES_COMMIT: 'initiatives.sidePanel.gates.resourcesCommit',
+  SCHEDULE_LOCK: 'initiatives.sidePanel.gates.scheduleLock',
+};
 
 const GATE_DEFINITIONS = [
   {
@@ -334,7 +348,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <AlertTriangle size={14} />
-              Risk Score
+              {t('initiatives.sidePanel.riskScore', 'Risk Score')}
             </div>
             <div
               className={`text-lg font-semibold ${
@@ -352,7 +366,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <CheckCircle2 size={14} />
-              Value Score
+              {t('initiatives.sidePanel.valueScore', 'Value Score')}
             </div>
             <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
               {initiative.valueScore || 0}/100
@@ -568,7 +582,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         {/* Risk Score */}
         <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-500 dark:text-slate-400">Overall Risk Score</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{t('initiatives.sidePanel.overallRiskScore', 'Overall Risk Score')}</span>
             <span
               className={`text-lg font-bold ${
                 (initiative?.riskScore || 0) > 70
@@ -879,7 +893,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     key={gate.id}
                     className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300"
                   >
-                    <span>{gate.label}</span>
+                    <span>{t(GATE_LABEL_KEYS[gate.id] || '', gate.label)}</span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                         gateStatus.status === 'APPROVED'
@@ -1015,10 +1029,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     onChange={(e) => setGateType(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm"
                   >
-                    <option value="">Select gate</option>
+                    <option value="">{t('initiatives.sidePanel.selectGate', 'Select gate')}</option>
                     {GATE_DEFINITIONS.map((gate) => (
                       <option key={gate.id} value={gate.id}>
-                        {gate.label}
+                        {t(GATE_LABEL_KEYS[gate.id] || '', gate.label)}
                       </option>
                     ))}
                   </select>
@@ -1032,7 +1046,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     onChange={(e) => setGateOwnerId(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm"
                   >
-                    <option value="">Select owner</option>
+                    <option value="">{t('initiatives.sidePanel.selectOwner', 'Select owner')}</option>
                     {users.map((user) => (
                       <option key={user.id} value={user.id}>
                         {user.firstName} {user.lastName}
@@ -1209,7 +1223,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     }`}
                   >
                     {tab.icon}
-                    {tab.label}
+                    {t(TAB_LABEL_KEYS[tab.id], tab.label)}
                   </button>
                 ))}
               </div>

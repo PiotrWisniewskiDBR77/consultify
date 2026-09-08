@@ -34,6 +34,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { EmptyState } from '@/components/ui/composed/EmptyState';
@@ -80,6 +81,7 @@ const PRIORITY_CONFIG = {
 };
 
 export const InitiativeManagementView: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('review');
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -231,10 +233,10 @@ export const InitiativeManagementView: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-              Initiative Management
+              {t('initiatives.managementView.title', 'Initiative Management')}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Review and approve initiatives before execution
+              {t('initiatives.managementView.subtitle', 'Review and approve initiatives before execution')}
             </p>
           </div>
         </div>
@@ -283,7 +285,7 @@ export const InitiativeManagementView: React.FC = () => {
               onChange={(e) => setFilterProject(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
             >
-              <option value="">All Projects</option>
+              <option value="">{t('initiatives.managementView.allProjects', 'All Projects')}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -298,7 +300,7 @@ export const InitiativeManagementView: React.FC = () => {
               onChange={(e) => setFilterLocation(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
             >
-              <option value="">All Locations</option>
+              <option value="">{t('initiatives.managementView.allLocations', 'All Locations')}</option>
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -318,7 +320,7 @@ export const InitiativeManagementView: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search initiatives..."
+              placeholder={t('initiatives.managementView.searchPlaceholder', 'Search initiatives...')}
               className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
             />
           </div>
@@ -448,7 +450,7 @@ export const InitiativeManagementView: React.FC = () => {
 
                       {/* Budget */}
                       <div className="text-sm">
-                        <span className="text-slate-500 dark:text-slate-400">Budget: </span>
+                        <span className="text-slate-500 dark:text-slate-400">{t('initiatives.managementView.budget', 'Budget')}: </span>
                         <span className="font-medium text-navy-900 dark:text-white">
                           {formatCurrency(initiative.costCapex)}
                         </span>
@@ -464,7 +466,7 @@ export const InitiativeManagementView: React.FC = () => {
 
                       {/* Completeness */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">Charter:</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{t('initiatives.managementView.charter', 'Charter')}:</span>
                         <InitiativeCompletenessChecker
                           initiative={initiative}
                           compact

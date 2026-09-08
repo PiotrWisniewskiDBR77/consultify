@@ -282,9 +282,9 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               className="p-1 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-[9px] font-bold px-1.5"
-              title="Why is this placed here?"
+              title={t('initiatives.card.whyPlacedHereTitle', 'Why is this placed here?')}
             >
-              Why here?
+              {t('initiatives.card.whyHere', 'Why here?')}
             </button>
             <button
               className="p-1 rounded bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10"
@@ -347,7 +347,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             <div className="flex gap-2">
               <div className="min-w-[4px] w-1 bg-indigo-400/50 rounded-full h-auto"></div>
               <div>
-                <span className="text-[10px] font-bold text-indigo-400 uppercase">Why Here?</span>
+                <span className="text-[10px] font-bold text-indigo-400 uppercase">{t('initiatives.card.whyHereLabel', 'Why Here?')}</span>
                 <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
                   {initiative.placementReason}
                 </p>

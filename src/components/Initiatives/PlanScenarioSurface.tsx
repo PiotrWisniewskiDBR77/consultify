@@ -1303,20 +1303,20 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Potwierdzenie publikacji z konfliktami"
+      aria-label={t('initiatives.planScenario.publishConfirm.dialogAria', 'Publish confirmation with conflicts')}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6"
     >
       <div className="w-full max-w-lg rounded-xl border border-c-border bg-c-surface p-6 shadow-xl">
-        <h2 className="text-lg font-semibold">Plan zawiera konflikty</h2>
+        <h2 className="text-lg font-semibold">{t('initiatives.planScenario.publishConfirm.title', 'The plan has conflicts')}</h2>
         <p className="mt-2 text-sm text-c-text-secondary">
-          Potwierdzenie zostanie zapisane w śladzie planu wraz z osobą, czasem i liczbą konfliktów.
+          {t('initiatives.planScenario.publishConfirm.body', 'The confirmation will be recorded in the plan trail together with the person, time and number of conflicts.')}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             className="rounded-lg border border-c-border px-3 py-2"
             onClick={() => setPublishConfirmationPending(null)}
           >
-            Anuluj
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             className="rounded-lg border border-c-border px-3 py-2 font-medium"
@@ -1327,7 +1327,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               })
             }
           >
-            Publikuję mimo {publishConfirmationPending} konfliktów
+            {t('initiatives.planScenario.publishConfirm.confirmButton', {
+              defaultValue: 'Publish despite {{count}} conflicts',
+              count: publishConfirmationPending,
+            })}
           </button>
         </div>
       </div>

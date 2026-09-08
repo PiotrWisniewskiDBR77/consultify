@@ -825,7 +825,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       }
                     />
                     <p className="text-xs text-c-text-muted">
-                      Define the specific decision executives need to make today.
+                      {t('initiative.decisionToMakeHint', 'Define the specific decision executives need to make today.')}
                     </p>
                   </div>
                   <div className="w-64 space-y-2">
@@ -837,7 +837,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       onChange={(val: string) =>
                         setInitiative({ ...initiative, decisionOwnerId: val })
                       }
-                      placeholder="Select Owner..."
+                      placeholder={t('initiative.selectOwnerPlaceholder', 'Select Owner...')}
                       options={users.map((u) => ({
                         value: u.id,
                         label: `${u.firstName} ${u.lastName}`,
@@ -856,11 +856,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       </h3>
                       <div className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] space-y-3">
                         <p className="text-xs text-c-text-muted font-mono mb-2">
-                          Structure: Achieve [X] by changing [Y] so that [Z improves]
+                          {t('initiative.oneLinerStructureHint', 'Structure: Achieve [X] by changing [Y] so that [Z improves]')}
                         </p>
                         <textarea
                           className="w-full bg-transparent text-lg font-medium text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none resize-none h-20"
-                          placeholder="This initiative exists to..."
+                          placeholder={t('initiative.oneLinerPlaceholder', 'This initiative exists to...')}
                           value={initiative.applicantOneLiner || ''}
                           onChange={(e) =>
                             setInitiative({
@@ -884,7 +884,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </label>
                           <input
                             className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
-                            placeholder="What is visible?"
+                            placeholder={t('initiative.symptomPlaceholder', 'What is visible?')}
                             value={initiative.problemStructured?.symptom || ''}
                             onChange={(e) =>
                               setInitiative({
@@ -907,7 +907,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </label>
                           <input
                             className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
-                            placeholder="Why is it happening?"
+                            placeholder={t('initiative.rootCausePlaceholder', 'Why is it happening?')}
                             value={initiative.problemStructured?.rootCause || ''}
                             onChange={(e) =>
                               setInitiative({
@@ -930,7 +930,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </label>
                           <input
                             className="w-full bg-c-surface border border-c-border-subtle rounded p-2 text-c-text text-sm"
-                            placeholder="What if we do nothing?"
+                            placeholder={t('initiative.costOfInactionPlaceholder', 'What if we do nothing?')}
                             value={initiative.problemStructured?.costOfInaction || ''}
                             onChange={(e) =>
                               setInitiative({
@@ -1705,7 +1705,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </h3>
                     <div className="bg-[color-mix(in_srgb,var(--c-warning)_13%,transparent)] p-4 rounded border border-c-warning mt-2">
                       <p className="text-xs text-c-warning mb-2">
-                        Scope In / Out definition determines the boundary of AI monitoring.
+                        {t('initiative.scopeGuardHint', 'Scope In / Out definition determines the boundary of AI monitoring.')}
                       </p>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -3034,10 +3034,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
               onClick={onClose}
               className="text-c-text-muted hover:text-c-text dark:hover:text-c-text text-sm font-medium"
             >
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </button>
             <Button onClick={handleSave} icon={<Save size={18} />}>
-              Save Initiative Charter
+              {t('initiative.saveCharter', 'Save Initiative Charter')}
             </Button>
           </div>
         </div>

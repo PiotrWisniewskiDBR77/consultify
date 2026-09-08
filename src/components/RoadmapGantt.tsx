@@ -772,8 +772,8 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           <div className="flex items-center justify-center h-48 text-c-text-muted">
             <div className="text-center">
               <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p>No approved initiatives on roadmap</p>
-              <p className="text-sm">Approve initiatives to add them here</p>
+              <p>{t('initiatives.roadmapGantt.noApproved', 'No approved initiatives on roadmap')}</p>
+              <p className="text-sm">{t('initiatives.roadmapGantt.approveHint', 'Approve initiatives to add them here')}</p>
             </div>
           </div>
         ) : (
@@ -937,7 +937,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             onOpenScheduleChat(init.id);
                           }}
                           className="p-1 rounded text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors shrink-0 opacity-0 group-hover:opacity-100"
-                          title="Chat about this initiative"
+                          title={t('initiatives.roadmapGantt.chatAboutInitiative', 'Chat about this initiative')}
                         >
                           <MessageSquare size={12} />
                         </button>

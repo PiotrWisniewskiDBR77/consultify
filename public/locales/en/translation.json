@@ -2466,7 +2466,8 @@
     "moreOpenDocuments": "More open documents ({{count}})",
     "sampleData": "SAMPLE DATA",
     "verifying": "Verifying…",
-    "copyLink": "Copy link"
+    "copyLink": "Copy link",
+    "publish": "Publish"
   },
   "superadmin": {
     "confirm": {
@@ -10276,7 +10277,10 @@
       "analysis": "Analysis",
       "observability": "Observability",
       "candidates": "Candidates",
-      "portfolioHealth": "Portfolio health"
+      "portfolioHealth": "Portfolio health",
+      "list": "Initiatives",
+      "plan": "Plan",
+      "capacity": "Load"
     },
     "capacityAdvisor": {
       "propose": "Propose options",
@@ -10347,12 +10351,55 @@
       "emptyDescription": "Change the filter or open the tools for the active capacity scenario.",
       "archiveNote": "Published capacity history is immutable",
       "destructiveNote": "Capacity scenarios are superseded, not deleted",
-      "resourceOwnerFallback": "Resource owner"
+      "resourceOwnerFallback": "Resource owner",
+      "workbench": {
+        "title": "Load tools",
+        "sourcePlan": "Source plan",
+        "closeAria": "Close load tools",
+        "saveDraft": "Save draft",
+        "conflict": "The scenario has changed. Refresh the data before trying again.",
+        "notSaved": "Changes were not saved.",
+        "demand": "Demand",
+        "supply": "Availability",
+        "constraints": "Constraints",
+        "owner": "owner",
+        "proposedAssignments": "Proposed assignments",
+        "periods": "periods"
+      },
+      "commitment": {
+        "title": "Resource commitment",
+        "subtitle": "The request, the assignee’s acceptance and the Resource Manager’s decision are separate steps.",
+        "closeEditor": "Close commitment",
+        "openEditor": "Manage commitment",
+        "conditions": "conditions",
+        "rationale": "rationale",
+        "sendRequest": "Send request",
+        "assigneeAccept": "Assignee acceptance",
+        "confirm": "Confirm availability",
+        "confirmConditional": "Confirm conditionally",
+        "decline": "Decline availability"
+      }
     },
     "plan": {
       "label": "Plan",
       "portfolioFallback": "Source portfolio",
-      "listAria": "Plans list"
+      "listAria": "Plans list",
+      "newPlan": "New plan",
+      "filters": {
+        "drafts": "Drafts",
+        "published": "Published",
+        "conflicted": "With conflicts"
+      },
+      "columns": {
+        "name": "Name",
+        "portfolio": "Portfolio / version",
+        "horizon": "Horizon",
+        "initiatives": "Initiatives in plan",
+        "conflicts": "Conflicts",
+        "updatedAt": "Updated",
+        "author": "Author"
+      },
+      "unnamed": "Unnamed plan"
     },
     "sampleData": {
       "message": "This register shows sample data, not your organization's data."
@@ -10428,7 +10475,14 @@
         "addCapacity": "Add capacity — decision recorded, the plan is unchanged."
       },
       "variantApplied": "Selection saved. Details and the link to the plan are in the \"Decisions\" section.",
-      "variantNoShift": "The advisor found no feasible shift — the decision is recorded, the plan is unchanged."
+      "variantNoShift": "The advisor found no feasible shift — the decision is recorded, the plan is unchanged.",
+      "createForm": {
+        "nameLabel": "Analysis name",
+        "namePlaceholder": "e.g. Baseline plan — load v1",
+        "sourcePlanLabel": "Published source plan",
+        "create": "Create analysis",
+        "noPublishedPlan": "No published plan with a confirmed timeline. Publish a plan first."
+      }
     },
     "planScenario": {
       "status": {
@@ -10630,6 +10684,13 @@
         "readOnly": "The plan is published — role load is read-only.",
         "saved": "Saved {{time}}",
         "failed": "Role load was not saved."
+      },
+      "publishConfirm": {
+        "dialogAria": "Publish confirmation with conflicts",
+        "title": "The plan has conflicts",
+        "body": "The confirmation will be recorded in the plan trail together with the person, time and number of conflicts.",
+        "confirmButton_one": "Publish despite {{count}} conflict",
+        "confirmButton_other": "Publish despite {{count}} conflicts"
       }
     },
     "analysis": {
@@ -12668,7 +12729,10 @@
     "candidateInboxAria": "Candidate inbox",
     "thisInitiative": "this initiative",
     "card": {
-      "nextStep": "Next step"
+      "nextStep": "Next step",
+      "whyPlacedHereTitle": "Why is this placed here?",
+      "whyHere": "Why here?",
+      "whyHereLabel": "Why Here?"
     },
     "observability": {
       "funnelTitle": "Portfolio conversion funnel",
@@ -13042,7 +13106,18 @@
       "openCapacityAnalysis": "Open analysis",
       "newCapacityAnalysis": "New analysis from this plan",
       "capacitySheetAria": "Role capacity from the analysis",
-      "capacityModeBlocked": "The role-capacity mode requires a published capacity analysis for this plan version — create one in Capacity."
+      "capacityModeBlocked": "The role-capacity mode requires a published capacity analysis for this plan version — create one in Capacity.",
+      "backToList": "Back to list",
+      "properties": {
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "status": "Status",
+        "version": "Version",
+        "portfolioVersion": "Source portfolio version"
+      },
+      "sourcePortfolio": "Source portfolio",
+      "publishedOn": "Published",
+      "remainsDraft": "The plan remains a draft."
     },
     "planSolver": {
       "selected": "The solver picked {{period}}: {{dependency}}; the initiative window intersects that period; {{capacity}}. Awaiting human confirmation.",
@@ -13075,6 +13150,220 @@
     "canonical": {
       "contextLabel": "Initiative context",
       "noDescription": "No description."
+    },
+    "generatorModal": {
+      "noOptions": "No items to choose from.",
+      "title": "Generate initiatives",
+      "subtitle": {
+        "config": "Choose a source and run the generator",
+        "running": "Generating…",
+        "done": "Done"
+      },
+      "step1": {
+        "label": "Data source"
+      },
+      "step2": {
+        "chooseSourceFirst": "First choose a source."
+      },
+      "step": {
+        "chooseTemplate": "Choose an initiative template",
+        "loadingTemplates": "Loading templates…",
+        "selectTemplatePlaceholder": "— select a template —"
+      },
+      "methodology": {
+        "label": "Methodology"
+      },
+      "count": {
+        "label": "Number of initiatives",
+        "decrease": "Decrease",
+        "increase": "Increase"
+      },
+      "advanced": {
+        "toggle": "Advanced options",
+        "includeChatContext": "Include chat context",
+        "consultantNote": "Consultant note (optional)",
+        "consultantNotePlaceholder": "Constraints, client priorities, expected outcomes…"
+      },
+      "running": {
+        "title": "Generating initiatives…",
+        "canCloseHint": "You can close this window — the process continues in the background.",
+        "generated": "Generated",
+        "batches": "Batches"
+      },
+      "done": {
+        "title": "Generation complete",
+        "subtitle": "Initiative drafts are saved and linked to the source.",
+        "previewCount": "Preview ({{count}})",
+        "andMore": "…and {{count}} more"
+      },
+      "starting": "Starting…",
+      "submitted": "Submitted {{count}} initiatives for review",
+      "submitFailed": "Failed to submit",
+      "submitForReview": "Submit for review"
+    },
+    "capacityOptions": {
+      "kind": {
+        "resequence": "Change order",
+        "scopeSplit": "Split scope",
+        "addCapacity": "Increase availability"
+      },
+      "noConfirmedValue": "no confirmed value",
+      "sectionAria": "Capacity options comparison",
+      "title": "Constraint resolution options",
+      "subtitle": "This is a comparison only. Selecting an option creates a controlled request for the next decision and does not change the plan, baseline version or assignment by itself.",
+      "nextInputLabel": "Next controlled decision",
+      "nextInput": {
+        "materialChange": "Plan change",
+        "scheduleDecision": "Schedule decision"
+      },
+      "noSavedComparison": "No saved comparison for this scenario.",
+      "optionAriaPrefix": "Load option:",
+      "impact": {
+        "date": "Date",
+        "scope": "Scope",
+        "cost": "Cost",
+        "risk": "Risk"
+      },
+      "assumptions": "Assumptions",
+      "initiatives": "Initiatives:",
+      "periods": "Periods:",
+      "resources": "Resources:",
+      "selected": "Selected for the next decision",
+      "select": "Select for the next decision",
+      "governedRequest": "Controlled request:",
+      "option": "option",
+      "comparisonVersion": "comparison v"
+    },
+    "portfolioMatrix": {
+      "quadrant": {
+        "quickWins": "Quick Wins",
+        "majorInvest": "Major Investment",
+        "niceToHave": "Nice to Have",
+        "avoid": "Avoid/Reduce"
+      },
+      "tooltip": {
+        "value": "Value",
+        "risk": "Risk",
+        "budget": "Budget"
+      },
+      "axis": {
+        "lowRisk": "Low Risk",
+        "highRisk": "High Risk",
+        "lowValue": "Low Value",
+        "highValue": "High Value"
+      },
+      "empty": "No initiatives in this quadrant",
+      "legend": {
+        "initiative": "Initiative (size = budget)",
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      }
+    },
+    "portfolioTimeline": {
+      "empty": "No initiatives with timeline data",
+      "legend": {
+        "today": "Today",
+        "criticalPath": "Critical Path",
+        "dependency": "Dependency"
+      }
+    },
+    "sidePanel": {
+      "riskScore": "Risk Score",
+      "valueScore": "Value Score",
+      "overallRiskScore": "Overall Risk Score",
+      "selectOwner": "Select owner",
+      "tabs": {
+        "overview": "Overview",
+        "tasks": "Tasks",
+        "decisions": "Decisions",
+        "financials": "Financials",
+        "stakeholders": "Stakeholders",
+        "risks": "Risks"
+      },
+      "gates": {
+        "goNoGo": "Go/No-Go",
+        "resourcesCommit": "Resources Commit",
+        "scheduleLock": "Schedule Lock"
+      },
+      "selectGate": "Select gate"
+    },
+    "tasksTab": {
+      "addTask": "Add Task",
+      "selectedCount_one": "{{count}} task selected",
+      "selectedCount_few": "{{count}} tasks selected",
+      "selectedCount_many": "{{count}} tasks selected",
+      "selectedCount_other": "{{count}} tasks selected",
+      "setStatus": "Set status:",
+      "status": {
+        "todo": "Todo",
+        "inProgress": "In Progress",
+        "done": "Done"
+      },
+      "deselectAll": "Deselect all",
+      "selectAll": "Select all",
+      "loading": "Loading tasks...",
+      "empty": "No tasks found. Create one to get started.",
+      "unassigned": "Unassigned",
+      "signed": "Signed",
+      "createFailed": "Failed to create task",
+      "title": "Strategic Execution",
+      "generatingPlan": "Generating Plan...",
+      "generateWithAi": "Generate with AI",
+      "noTasksGenerated": "No tasks generated",
+      "aiGenerationFailed": "AI Generation failed"
+    },
+    "taskBoard": {
+      "generating": "Generating...",
+      "generatePlan": "Generate Plan",
+      "newTask": "New Task",
+      "noTasks": "No tasks",
+      "generateFailed": "Failed to generate tasks. Please try again."
+    },
+    "rebalanceModal": {
+      "title": "Rebalance Roadmap",
+      "subtitle": "AI has analyzed your roadmap and proposes these adjustments.",
+      "analyzing": "Analyzing workload distribution...",
+      "loadVariance": "Load Variance",
+      "variance": {
+        "low": "Low",
+        "medium": "Med",
+        "high": "High"
+      },
+      "applyNewSchedule": "Apply New Schedule"
+    },
+    "roadmapGantt": {
+      "noApproved": "No approved initiatives on roadmap",
+      "approveHint": "Approve initiatives to add them here",
+      "chatAboutInitiative": "Chat about this initiative"
+    },
+    "managementView": {
+      "title": "Initiative Management",
+      "subtitle": "Review and approve initiatives before execution",
+      "allProjects": "All Projects",
+      "allLocations": "All Locations",
+      "searchPlaceholder": "Search initiatives...",
+      "budget": "Budget",
+      "charter": "Charter"
+    },
+    "fullRoadmap": {
+      "manualOverrides": {
+        "title": "Manual Schedule Overrides",
+        "subtitle": "You have manually moved initiatives. AI optimization is paused.",
+        "keepChanges": "Keep Changes",
+        "rebalanceWithAi": "Rebalance with AI"
+      },
+      "pilotDecision": {
+        "title": "Strategy Decision: Select Pilot",
+        "bodyBeforeOne": "Risk Management Protocol: We recommend starting with a \"Quick Win\" Pilot before full rollout. Select",
+        "one": "one",
+        "bodyAfterOne": "high-impact, low-complexity initiative to validate the strategy.",
+        "reviewAgain": "Review Roadmap Again"
+      }
+    },
+    "portfolioGrid": {
+      "criticalPath": "Critical Path"
     }
   },
   "execution": {
@@ -30016,7 +30305,16 @@
     "valueTimingLongTerm": "Long term",
     "valueTimingShortTerm": "Short term",
     "versionHistory": "Version history",
-    "viewBrief": "View brief"
+    "viewBrief": "View brief",
+    "decisionToMakeHint": "Define the specific decision executives need to make today.",
+    "selectOwnerPlaceholder": "Select Owner...",
+    "oneLinerStructureHint": "Structure: Achieve [X] by changing [Y] so that [Z improves]",
+    "oneLinerPlaceholder": "This initiative exists to...",
+    "symptomPlaceholder": "What is visible?",
+    "rootCausePlaceholder": "Why is it happening?",
+    "costOfInactionPlaceholder": "What if we do nothing?",
+    "scopeGuardHint": "Scope In / Out definition determines the boundary of AI monitoring.",
+    "saveCharter": "Save Initiative Charter"
   },
   "table": {
     "incorrectPassword": "Incorrect password",

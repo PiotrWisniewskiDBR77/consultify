@@ -881,7 +881,8 @@
     "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})",
     "sampleData": "PRZYKŁADOWE DANE",
     "verifying": "Weryfikowanie…",
-    "copyLink": "Kopiuj link"
+    "copyLink": "Kopiuj link",
+    "publish": "Opublikuj"
   },
   "superadmin": {
     "confirm": {
@@ -9712,7 +9713,10 @@
       "analysis": "Analiza",
       "observability": "Obserwowalność",
       "candidates": "Kandydaci",
-      "portfolioHealth": "Zdrowie portfela"
+      "portfolioHealth": "Zdrowie portfela",
+      "list": "Inicjatywy",
+      "plan": "Plan",
+      "capacity": "Obciążenie"
     },
     "capacityAdvisor": {
       "propose": "Zaproponuj opcje",
@@ -9783,12 +9787,55 @@
       "emptyDescription": "Zmień filtr albo otwórz narzędzia aktywnego wariantu obciążenia.",
       "archiveNote": "Opublikowana historia obciążenia jest niezmienna",
       "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
-      "resourceOwnerFallback": "Właściciel zasobów"
+      "resourceOwnerFallback": "Właściciel zasobów",
+      "workbench": {
+        "title": "Narzędzia obciążenia",
+        "sourcePlan": "Plan źródłowy",
+        "closeAria": "Zamknij narzędzia obciążenia",
+        "saveDraft": "Zapisz szkic",
+        "conflict": "Wariant został zmieniony. Odśwież dane przed ponowną próbą.",
+        "notSaved": "Nie zapisano zmian.",
+        "demand": "Zapotrzebowanie",
+        "supply": "Dostępność",
+        "constraints": "Ograniczenia",
+        "owner": "właściciel",
+        "proposedAssignments": "Proponowane przydziały",
+        "periods": "okresy"
+      },
+      "commitment": {
+        "title": "Zobowiązanie zasobowe",
+        "subtitle": "Wniosek, akceptacja wskazanej osoby i decyzja Resource Managera są odrębnymi krokami.",
+        "closeEditor": "Zamknij zobowiązanie",
+        "openEditor": "Zarządzaj zobowiązaniem",
+        "conditions": "warunki",
+        "rationale": "uzasadnienie",
+        "sendRequest": "Wyślij wniosek",
+        "assigneeAccept": "Akceptacja wskazanej osoby",
+        "confirm": "Potwierdź dostępność",
+        "confirmConditional": "Potwierdź warunkowo",
+        "decline": "Odrzuć dostępność"
+      }
     },
     "plan": {
       "label": "Plan działania",
       "portfolioFallback": "Portfel źródłowy",
-      "listAria": "Lista planów"
+      "listAria": "Lista planów",
+      "newPlan": "Nowy plan",
+      "filters": {
+        "drafts": "Szkice",
+        "published": "Opublikowane",
+        "conflicted": "Z konfliktami"
+      },
+      "columns": {
+        "name": "Nazwa",
+        "portfolio": "Portfel / wersja",
+        "horizon": "Horyzont",
+        "initiatives": "Inicjatyw w planie",
+        "conflicts": "Konflikty",
+        "updatedAt": "Zaktualizowano",
+        "author": "Autor"
+      },
+      "unnamed": "Plan bez nazwy"
     },
     "sampleData": {
       "message": "Ten rejestr pokazuje dane pokazowe, nie dane Twojej organizacji."
@@ -9864,7 +9911,14 @@
         "addCapacity": "Dołóż moce — decyzja zapisana, plan bez zmian."
       },
       "variantApplied": "Wybór zapisany. Szczegóły i link do planu znajdziesz w sekcji „Decyzje\".",
-      "variantNoShift": "Doradca nie wyliczył wykonalnego przesunięcia — decyzja zapisana, plan bez zmian."
+      "variantNoShift": "Doradca nie wyliczył wykonalnego przesunięcia — decyzja zapisana, plan bez zmian.",
+      "createForm": {
+        "nameLabel": "Nazwa analizy",
+        "namePlaceholder": "np. Plan bazowy — obciążenie v1",
+        "sourcePlanLabel": "Opublikowany plan źródłowy",
+        "create": "Utwórz analizę",
+        "noPublishedPlan": "Brak opublikowanego planu z potwierdzoną osią czasu. Najpierw opublikuj plan."
+      }
     },
     "planScenario": {
       "status": {
@@ -10066,6 +10120,15 @@
         "readOnly": "Plan jest opublikowany — obciążenie ról jest tylko do odczytu.",
         "saved": "Zapisano {{time}}",
         "failed": "Nie zapisano obciążenia ról."
+      },
+      "publishConfirm": {
+        "dialogAria": "Potwierdzenie publikacji z konfliktami",
+        "title": "Plan zawiera konflikty",
+        "body": "Potwierdzenie zostanie zapisane w śladzie planu wraz z osobą, czasem i liczbą konfliktów.",
+        "confirmButton_one": "Publikuję mimo {{count}} konfliktu",
+        "confirmButton_few": "Publikuję mimo {{count}} konfliktów",
+        "confirmButton_many": "Publikuję mimo {{count}} konfliktów",
+        "confirmButton_other": "Publikuję mimo {{count}} konfliktów"
       }
     },
     "analysis": {
@@ -11269,7 +11332,7 @@
       "kpiBaselinePlaceholder": "Baseline (np. 45 min)",
       "kpiTargetPlaceholder": "Cel (np. 15 min)",
       "kpiHint": "Bez mierzalnego celu to życzenie, nie inicjatywa.",
-      "draftBadgeTitle": "Tworzysz DRAFT",
+      "draftBadgeTitle": "Tworzysz szkic",
       "submitForReview": "Wyślij do review",
       "governanceHint": "Do modułu Inicjatyw (REVIEW) promuje PM / Lead / PMO — nie konsultant.",
       "plannedStart": "Start (planowany)",
@@ -11282,7 +11345,7 @@
       "oneItemPerLine": "jeden punkt na linię",
       "killCriteriaLabel": "Kryteria zatrzymania (kill criteria)",
       "keyRisksLabel": "Kluczowe ryzyka (RAID)",
-      "draftCreated": "Utworzono draft inicjatywy",
+      "draftCreated": "Utworzono szkic inicjatywy",
       "createFailed": "Nie udało się utworzyć"
     },
     "gateReadinessSection": {
@@ -11620,7 +11683,7 @@
       "aiWorking": "AI pracuje...",
       "loading": "Ładuję...",
       "composeTeam": "Kompozycja zespołu",
-      "consultantsPending": "Konsultanci (pending)",
+      "consultantsPending": "Konsultanci (oczekujący)",
       "consultantsPendingHint": "Zaproszeni, ale jeszcze niezaakceptowani lub bez pełnego konta.",
       "code": "kod",
       "projectRole": "Rola w projekcie",
@@ -12110,7 +12173,10 @@
     "candidateInboxAria": "Skrzynka kandydatów",
     "thisInitiative": "tę inicjatywę",
     "card": {
-      "nextStep": "Następny krok"
+      "nextStep": "Następny krok",
+      "whyPlacedHereTitle": "Dlaczego to jest tutaj umieszczone?",
+      "whyHere": "Dlaczego tu?",
+      "whyHereLabel": "Dlaczego tu?"
     },
     "observability": {
       "funnelTitle": "Lejek konwersji portfela",
@@ -12484,7 +12550,18 @@
       "openCapacityAnalysis": "Otwórz analizę",
       "newCapacityAnalysis": "Nowa analiza z tego planu",
       "capacitySheetAria": "Obciążenie ról z analizy",
-      "capacityModeBlocked": "Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu."
+      "capacityModeBlocked": "Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu.",
+      "backToList": "Wróć do listy",
+      "properties": {
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "status": "Status",
+        "version": "Wersja",
+        "portfolioVersion": "Wersja portfela źródłowego"
+      },
+      "sourcePortfolio": "Portfel źródłowy",
+      "publishedOn": "Opublikowano",
+      "remainsDraft": "Plan pozostaje szkicem."
     },
     "planSolver": {
       "selected": "Solver wybrał {{period}}: {{dependency}}; okno inicjatywy obejmuje ten okres; {{capacity}}. Do potwierdzenia przez człowieka.",
@@ -12517,6 +12594,220 @@
     "canonical": {
       "contextLabel": "Kontekst inicjatywy",
       "noDescription": "Brak opisu."
+    },
+    "generatorModal": {
+      "noOptions": "Brak pozycji do wyboru.",
+      "title": "Generuj inicjatywy",
+      "subtitle": {
+        "config": "Wybierz źródło i uruchom generator",
+        "running": "Trwa generowanie…",
+        "done": "Gotowe"
+      },
+      "step1": {
+        "label": "Źródło danych"
+      },
+      "step2": {
+        "chooseSourceFirst": "Najpierw wybierz źródło."
+      },
+      "step": {
+        "chooseTemplate": "Wybierz template inicjatywy",
+        "loadingTemplates": "Ładowanie template’ów…",
+        "selectTemplatePlaceholder": "— wybierz template —"
+      },
+      "methodology": {
+        "label": "Metodologia"
+      },
+      "count": {
+        "label": "Liczba inicjatyw",
+        "decrease": "Zmniejsz",
+        "increase": "Zwiększ"
+      },
+      "advanced": {
+        "toggle": "Opcje zaawansowane",
+        "includeChatContext": "Uwzględnij kontekst czatu",
+        "consultantNote": "Notatka konsultanta (opcjonalnie)",
+        "consultantNotePlaceholder": "Ograniczenia, priorytety klienta, oczekiwane rezultaty…"
+      },
+      "running": {
+        "title": "Generowanie inicjatyw…",
+        "canCloseHint": "Możesz zamknąć okno — proces kontynuuje w tle.",
+        "generated": "Wygenerowano",
+        "batches": "Partie"
+      },
+      "done": {
+        "title": "Generowanie zakończone",
+        "subtitle": "Drafty inicjatyw są zapisane i powiązane ze źródłem.",
+        "previewCount": "Podgląd ({{count}})",
+        "andMore": "…i {{count}} więcej"
+      },
+      "starting": "Uruchamiam…",
+      "submitted": "Przesłano {{count}} inicjatyw do przeglądu",
+      "submitFailed": "Nie udało się przesłać",
+      "submitForReview": "Prześlij do przeglądu"
+    },
+    "capacityOptions": {
+      "kind": {
+        "resequence": "Zmień kolejność",
+        "scopeSplit": "Podziel zakres",
+        "addCapacity": "Zwiększ dostępność"
+      },
+      "noConfirmedValue": "brak potwierdzonej wartości",
+      "sectionAria": "Porównanie opcji obciążenia",
+      "title": "Opcje rozwiązania ograniczeń",
+      "subtitle": "To jest wyłącznie porównanie. Wybór tworzy kontrolowany wniosek do kolejnej decyzji i nie zmienia samodzielnie planu, bazowej wersji ani przydziału.",
+      "nextInputLabel": "Kolejna kontrolowana decyzja",
+      "nextInput": {
+        "materialChange": "Zmiana planu",
+        "scheduleDecision": "Decyzja harmonogramowa"
+      },
+      "noSavedComparison": "Brak zapisanego porównania dla tego wariantu.",
+      "optionAriaPrefix": "Opcja obciążenia:",
+      "impact": {
+        "date": "Termin",
+        "scope": "Zakres",
+        "cost": "Koszt",
+        "risk": "Ryzyko"
+      },
+      "assumptions": "Założenia",
+      "initiatives": "Inicjatywy:",
+      "periods": "Okresy:",
+      "resources": "Zasoby:",
+      "selected": "Wybrano do dalszej decyzji",
+      "select": "Wybierz do dalszej decyzji",
+      "governedRequest": "Kontrolowany wniosek:",
+      "option": "opcja",
+      "comparisonVersion": "porównanie v"
+    },
+    "portfolioMatrix": {
+      "quadrant": {
+        "quickWins": "Szybkie wygrane",
+        "majorInvest": "Duża inwestycja",
+        "niceToHave": "Miło mieć",
+        "avoid": "Unikaj/Ogranicz"
+      },
+      "tooltip": {
+        "value": "Wartość",
+        "risk": "Ryzyko",
+        "budget": "Budżet"
+      },
+      "axis": {
+        "lowRisk": "Niskie ryzyko",
+        "highRisk": "Wysokie ryzyko",
+        "lowValue": "Niska wartość",
+        "highValue": "Wysoka wartość"
+      },
+      "empty": "Brak inicjatyw w tej ćwiartce",
+      "legend": {
+        "initiative": "Inicjatywa (rozmiar = budżet)",
+        "critical": "Krytyczny",
+        "high": "Wysoki",
+        "medium": "Średni",
+        "low": "Niski"
+      }
+    },
+    "portfolioTimeline": {
+      "empty": "Brak inicjatyw z danymi osi czasu",
+      "legend": {
+        "today": "Dziś",
+        "criticalPath": "Ścieżka krytyczna",
+        "dependency": "Zależność"
+      }
+    },
+    "sidePanel": {
+      "riskScore": "Wynik ryzyka",
+      "valueScore": "Wynik wartości",
+      "overallRiskScore": "Łączny wynik ryzyka",
+      "selectOwner": "Wybierz właściciela",
+      "tabs": {
+        "overview": "Przegląd",
+        "tasks": "Zadania",
+        "decisions": "Decyzje",
+        "financials": "Finanse",
+        "stakeholders": "Interesariusze",
+        "risks": "Ryzyka"
+      },
+      "gates": {
+        "goNoGo": "Go/No-Go",
+        "resourcesCommit": "Zobowiązanie zasobowe",
+        "scheduleLock": "Blokada harmonogramu"
+      },
+      "selectGate": "Wybierz bramkę"
+    },
+    "tasksTab": {
+      "addTask": "Dodaj zadanie",
+      "selectedCount_one": "{{count}} zadanie zaznaczone",
+      "selectedCount_few": "{{count}} zadania zaznaczone",
+      "selectedCount_many": "{{count}} zadań zaznaczonych",
+      "selectedCount_other": "{{count}} zadania zaznaczone",
+      "setStatus": "Ustaw status:",
+      "status": {
+        "todo": "Do zrobienia",
+        "inProgress": "W toku",
+        "done": "Gotowe"
+      },
+      "deselectAll": "Odznacz wszystkie",
+      "selectAll": "Zaznacz wszystkie",
+      "loading": "Wczytywanie zadań...",
+      "empty": "Nie znaleziono zadań. Utwórz pierwsze, aby zacząć.",
+      "unassigned": "Nieprzypisane",
+      "signed": "Podpisano",
+      "createFailed": "Nie udało się utworzyć zadania",
+      "title": "Realizacja strategiczna",
+      "generatingPlan": "Generowanie planu...",
+      "generateWithAi": "Generuj z AI",
+      "noTasksGenerated": "Nie wygenerowano zadań",
+      "aiGenerationFailed": "Generowanie AI nie powiodło się"
+    },
+    "taskBoard": {
+      "generating": "Generowanie...",
+      "generatePlan": "Generuj plan",
+      "newTask": "Nowe zadanie",
+      "noTasks": "Brak zadań",
+      "generateFailed": "Nie udało się wygenerować zadań. Spróbuj ponownie."
+    },
+    "rebalanceModal": {
+      "title": "Zrównoważ mapę drogową",
+      "subtitle": "AI przeanalizowało Twoją mapę drogową i proponuje te korekty.",
+      "analyzing": "Analiza rozkładu obciążenia...",
+      "loadVariance": "Zmienność obciążenia",
+      "variance": {
+        "low": "Niska",
+        "medium": "Śr.",
+        "high": "Wysoka"
+      },
+      "applyNewSchedule": "Zastosuj nowy harmonogram"
+    },
+    "roadmapGantt": {
+      "noApproved": "Brak zatwierdzonych inicjatyw na mapie drogowej",
+      "approveHint": "Zatwierdź inicjatywy, aby dodać je tutaj",
+      "chatAboutInitiative": "Czat o tej inicjatywie"
+    },
+    "managementView": {
+      "title": "Zarządzanie inicjatywami",
+      "subtitle": "Przejrzyj i zatwierdź inicjatywy przed realizacją",
+      "allProjects": "Wszystkie projekty",
+      "allLocations": "Wszystkie lokalizacje",
+      "searchPlaceholder": "Szukaj inicjatyw...",
+      "budget": "Budżet",
+      "charter": "Karta"
+    },
+    "fullRoadmap": {
+      "manualOverrides": {
+        "title": "Ręczne nadpisania harmonogramu",
+        "subtitle": "Ręcznie przesunięto inicjatywy. Optymalizacja AI jest wstrzymana.",
+        "keepChanges": "Zachowaj zmiany",
+        "rebalanceWithAi": "Zrównoważ z AI"
+      },
+      "pilotDecision": {
+        "title": "Decyzja strategiczna: wybierz pilotaż",
+        "bodyBeforeOne": "Protokół zarządzania ryzykiem: zalecamy rozpoczęcie od pilotażu typu „szybka wygrana\" przed pełnym wdrożeniem. Wybierz",
+        "one": "jedną",
+        "bodyAfterOne": "inicjatywę o wysokim wpływie i niskiej złożoności, aby zweryfikować strategię.",
+        "reviewAgain": "Przejrzyj mapę drogową ponownie"
+      }
+    },
+    "portfolioGrid": {
+      "criticalPath": "Ścieżka krytyczna"
     }
   },
   "execution": {
@@ -32312,7 +32603,16 @@
     "valueTimingLongTerm": "Długoterminowy",
     "valueTimingShortTerm": "Krótkoterminowy",
     "versionHistory": "Historia wersji",
-    "viewBrief": "Zobacz brief"
+    "viewBrief": "Zobacz brief",
+    "decisionToMakeHint": "Określ konkretną decyzję, którą kierownictwo musi dziś podjąć.",
+    "selectOwnerPlaceholder": "Wybierz właściciela...",
+    "oneLinerStructureHint": "Struktura: Osiągnij [X] poprzez zmianę [Y], dzięki czemu [Z się poprawi]",
+    "oneLinerPlaceholder": "Ta inicjatywa istnieje, aby...",
+    "symptomPlaceholder": "Co jest widoczne?",
+    "rootCausePlaceholder": "Dlaczego to się dzieje?",
+    "costOfInactionPlaceholder": "Co jeśli nic nie zrobimy?",
+    "scopeGuardHint": "Definicja zakresu (co wchodzi / nie wchodzi) wyznacza granicę monitoringu AI.",
+    "saveCharter": "Zapisz kartę inicjatywy"
   },
   "table": {
     "incorrectPassword": "Nieprawidłowe hasło",

@@ -80,7 +80,7 @@ function toGridCard(initiative: PortfolioInitiative, t: (key: string) => string)
     },
   ];
   if (initiative.isCriticalPath) {
-    chips.push({ id: 'critical-path', label: 'Critical Path', tone: 'danger' });
+    chips.push({ id: 'critical-path', label: t('initiatives.portfolioGrid.criticalPath'), tone: 'danger' });
   }
 
   const owner = initiative.ownerBusiness;
