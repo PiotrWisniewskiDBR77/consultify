@@ -43,7 +43,8 @@ describe('Karta Zadania V2 — kontrakt właściciela', () => {
     ]) {
       expect(componentSource).toContain(key);
     }
-    const card = (pl as Record<string, Record<string, Record<string, string>>>).myWork.taskCardV2;
+    const card = (pl as unknown as Record<string, Record<string, Record<string, string>>>)
+      .myWork.taskCardV2;
     expect(card.closureConditions).toBe('Warunki zamknięcia');
     expect(card.missingTitle).toBe('Brakujące — nazwane, nie „brak danych”');
     expect(card.roleAndRights).toBe('Rola i uprawnienia');

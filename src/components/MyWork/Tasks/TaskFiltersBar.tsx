@@ -208,6 +208,7 @@ const PMOCategoryFilter: React.FC<{
   selected: PMOCategory[];
   onChange: (selected: PMOCategory[]) => void;
 }> = ({ selected, onChange }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
