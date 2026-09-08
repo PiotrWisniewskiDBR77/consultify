@@ -1,0 +1,14 @@
+materialy-lista (http://127.0.0.1:3201/reports)
+  polskie znaki: 0
+
+spotkania-lista (http://127.0.0.1:3201/meetings)
+  polskie znaki: 0
+
+spotkanie-notatka (http://127.0.0.1:3201/meetings/2e124a9f-30cd-5ea8-bf77-49441a1861bf)
+  polskie znaki: 0
+
+czat-watek (http://127.0.0.1:3201/chat/017b0fd4-655e-5072-8454-36b4c6817ef1)
+  polskie znaki: 0
+
+moja-praca-skrzynka (http://127.0.0.1:3201/my-work)
+  polskie znaki: 0

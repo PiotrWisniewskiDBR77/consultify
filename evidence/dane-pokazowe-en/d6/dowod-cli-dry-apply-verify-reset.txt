@@ -1,0 +1,95 @@
+=== DRY-RUN ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: dry-run
+
+[materialy] utworzono=0 zmieniono=0 pominieto=80
+[materialy] dry-run: transakcja wykonana i wycofana (ROLLBACK) — nic nie zapisano.
+
+=== APPLY #1 ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: apply
+
+[materialy] utworzono=0 zmieniono=0 pominieto=80
+[materialy] idempotentnie: nic nie było do zrobienia.
+
+=== APPLY #2 (idempotencja: musi dać utworzono=0 zmieniono=0) ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: apply
+
+[materialy] utworzono=0 zmieniono=0 pominieto=80
+[materialy] idempotentnie: nic nie było do zrobienia.
+
+=== VERIFY (po apply) ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: verify
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=4 rzeczywiste=4
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=16 rzeczywiste=16
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=2 rzeczywiste=2
+[verify] OK   talie ze slide_count > 0 (koherentne z deck_json)            oczekiwane=2 rzeczywiste=2
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=12 rzeczywiste=12
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=1 rzeczywiste=1
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=7 rzeczywiste=7
+[verify] OK   spotkania (meetings)                                         oczekiwane=2 rzeczywiste=2
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=8 rzeczywiste=8
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=2 rzeczywiste=2
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=3 rzeczywiste=3
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=11 rzeczywiste=11
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=6 rzeczywiste=6
+[verify] FAIL skrzynka OWNER-a — sekcja overdue_sla_breach                 oczekiwane=2 rzeczywiste=0
+[verify] OK   dokumenty z polskim znakiem w tytule (ma być 0)              oczekiwane=0 rzeczywiste=0
+
+[verify] FAIL: 1 asercji nie przeszło.
+
+=== RESET ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: reset
+[materialy] reset: usunięto 87 wierszy paczki D6 (organizacja "northwind" nietknięta).
+
+=== VERIFY (po reset — oczekiwane WSZYSTKO=0) ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: verify
+[verify] stan: PO --reset (dokumenty=0) — oczekiwane WSZYSTKO=0.
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=0 rzeczywiste=0
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=0 rzeczywiste=0
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=0 rzeczywiste=0
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=0 rzeczywiste=0
+[verify] OK   spotkania (meetings)                                         oczekiwane=0 rzeczywiste=0
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=0 rzeczywiste=0
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=0 rzeczywiste=0
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=0 rzeczywiste=0
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=0 rzeczywiste=0
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 13 asercji przeszły.
+
+=== APPLY (finalne, dla zrzutow i galerii) ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: apply
+
+[materialy] utworzono=80 zmieniono=0 pominieto=0
+
+=== VERIFY (finalne) ===
+[materialy] cel:  127.0.0.1:54418/consultify_kopia_d6
+[materialy] tryb: verify
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=4 rzeczywiste=4
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=16 rzeczywiste=16
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=2 rzeczywiste=2
+[verify] OK   talie ze slide_count > 0 (koherentne z deck_json)            oczekiwane=2 rzeczywiste=2
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=12 rzeczywiste=12
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=1 rzeczywiste=1
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=7 rzeczywiste=7
+[verify] OK   spotkania (meetings)                                         oczekiwane=2 rzeczywiste=2
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=8 rzeczywiste=8
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=2 rzeczywiste=2
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=3 rzeczywiste=3
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=11 rzeczywiste=11
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a — sekcja overdue_sla_breach                 oczekiwane=2 rzeczywiste=2
+[verify] OK   dokumenty z polskim znakiem w tytule (ma być 0)              oczekiwane=0 rzeczywiste=0
+
+[verify] PASS: wszystkie 16 asercji przeszły.
