@@ -134,6 +134,63 @@ export const MENU_3_ACTION_DANGER = cn(
 
 export const MENU_3_ALL_DOT_CLASS = 'h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500';
 
+/**
+ * ── MENU 2 · SEGMENT (przełącznik dwu-/trzy-stanowy) ────────────────────────
+ *
+ * Kanon TRIADA §A2: „od PRAWEJ do środka: primary CTA → segment przełącznika
+ * → dodatkowe filtry". Segment to JEDEN kształt — grupa pigułek w jednej
+ * obwódce, wysokość h-9 jak każda inna kontrolka Menu 2.
+ *
+ * POWÓD ISTNIENIA (uwaga właściciela 08.09.2026, Realizacja → Praca,
+ * „w menu też chaos"): przełącznik zakresu „Aktywne / Wszystkie" istniał
+ * w DWÓCH wariantach tego samego pstryczka — Inicjatywy `h-8` + `p-0.5` +
+ * `border-slate-200/60` + `bg-c-surface` na aktywnym, Realizacja `h-9` +
+ * `bg-c-surface-raised` + `bg-c-surface/80` na aktywnym. Ta sama funkcja,
+ * dwa wyglądy obok siebie w sąsiadujących modułach — dokładnie to, co
+ * właściciel nazwał chaosem. SSOT tutaj, bo `ModuleMenu3.tsx` jest już
+ * SSOT-em prymitywów pasków (MENU_1_*, MENU_2_TAB_*, MENU_3_*), a segment
+ * jest prymitywem, nie komponentem — nowego komponentu paska świadomie
+ * NIE budujemy (zakaz z kanonu).
+ *
+ * Wysokość h-9 (nie h-8) wyrównuje segment do pigułek zakładek, dropdownów
+ * filtrów i primary CTA w tym samym wierszu — kanon §C3 (siatka 4px) i
+ * §C4 (h-9 = 36 px).
+ */
+export const MENU_2_SEGMENT_GROUP =
+  'inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5';
+
+const MENU_2_SEGMENT_ITEM_BASE =
+  'inline-flex h-8 items-center justify-center rounded-full px-3 text-[11px] font-medium whitespace-nowrap transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-c-bg';
+
+export const MENU_2_SEGMENT_ITEM_ACTIVE = cn(
+  MENU_2_SEGMENT_ITEM_BASE,
+  'bg-c-surface text-c-text shadow-sm'
+);
+
+export const MENU_2_SEGMENT_ITEM_INACTIVE = cn(
+  MENU_2_SEGMENT_ITEM_BASE,
+  'text-c-text-muted hover:bg-state-hover hover:text-c-text'
+);
+
+/**
+ * Kontener slotu `filterControls` (prawy klaster Menu 2, na lewo od segmentu
+ * i CTA). `flex-wrap` w tym miejscu ZŁAMAŁO pasek na zrzucie właściciela
+ * (08.09.2026, Praca @2000 px: baner w linii 1, select w linii 2, „Nowe
+ * zadanie" w linii 3). Kanon §A2 mówi „jedna linia" — więc kontener nie ma
+ * prawa zawijać, a jego dzieci nie mają prawa się kurczyć.
+ */
+export const MENU_2_FILTERS_ROW = 'flex min-w-0 items-center gap-2';
+
+/**
+ * Kontrolka filtra Menu 2 (natywny `<select>` tam, gdzie testy sterują nim
+ * przez `selectOption`/`fireEvent.change`) — ten sam kształt co przycisk
+ * `Menu2PresetDropdown`, żeby dwa filtry obok siebie nie wyglądały jak dwa
+ * różne systemy. `max-w-[220px]` + `shrink-0`: select nie rozpycha paska
+ * długą nazwą realizacji i nie daje się ścisnąć do zawinięcia.
+ */
+export const MENU_2_FILTER_SELECT =
+  'h-9 max-w-[220px] shrink-0 truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
 export function Menu3Row({
   children,
   className,
