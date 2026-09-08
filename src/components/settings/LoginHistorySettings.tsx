@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface LoginEvent {
   id: string;
@@ -49,18 +50,36 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="text-green-500" size={18} aria-label="Successful" />;
+        return (
+          <CheckCircle
+            className="text-green-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusSuccess', 'Successful')}
+          />
+        );
       case 'failed':
-        return <XCircle className="text-danger-500" size={18} aria-label="Failed" />;
+        return (
+          <XCircle
+            className="text-danger-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusFailed', 'Failed')}
+          />
+        );
       case 'suspicious':
-        return <AlertTriangle className="text-amber-500" size={18} aria-label="Suspicious" />;
+        return (
+          <AlertTriangle
+            className="text-amber-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusSuspicious', 'Suspicious')}
+          />
+        );
       default:
         return null;
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return formatListDateTime(dateString);
   };
 
   return (

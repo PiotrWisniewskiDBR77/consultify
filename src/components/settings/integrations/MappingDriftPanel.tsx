@@ -30,6 +30,7 @@ import { v8Get } from '../../../services/api/v8/client';
 import { V8SyncApi, V8SyncMappingData } from '../../../services/api/v8/sync';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface MappingOverviewItem {
   integrationId: string;
@@ -54,7 +55,7 @@ const normalizeJson = (value: unknown) => JSON.stringify(value ?? []);
 const formatTimestamp = (timestamp: string | null | undefined) => {
   if (!timestamp) return '—';
   const date = new Date(timestamp);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
 };
 
 const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({

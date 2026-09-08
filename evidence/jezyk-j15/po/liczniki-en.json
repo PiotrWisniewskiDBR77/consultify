@@ -1,0 +1,544 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-przeglad",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "02-profil",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "03-avatar",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "04-podpisy-mailowe",
+  "napisowUi": 34,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Create First Signature"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "05-godziny-pracy",
+  "napisowUi": 34,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "06-jezyk",
+  "napisowUi": 35,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "07-regionalne",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 5,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Day of Week",
+   "Preview of Your Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "08-bezpieczenstwo-przeglad",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "09-haslo",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "10-mfa",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "11-kody-zapasowe",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "12-sesje-aktywnosc",
+  "napisowUi": 40,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "13-historia-logowan",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "14-panel-bezpieczenstwa",
+  "napisowUi": 38,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "15-powiadomienia",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "16-powiadomienia-email",
+  "napisowUi": 40,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "17-powiadomienia-dostepnosc",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "18-integracje-aplikacje",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "19-integracje-klucze-api",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "20-integracje-webhooki",
+  "napisowUi": 36,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "21-prywatnosc",
+  "napisowUi": 43,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Share Activity with AI"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "22-kontrola-danych",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Explore the sample workspace"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "23-wyglad",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "24-dostepnosc",
+  "napisowUi": 57,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "25-ai-zachowanie",
+  "napisowUi": 61,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "e.g., \"I prefer concise responses with bullet points. Focus on practical solutions.\""
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "26-ai-prywatnosc",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "27-ai-zuzycie",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "28-historia-ustawien",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "29-import-eksport",
+  "napisowUi": 47,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "30-pulpit",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "31-wyszukiwarka",
+  "napisowUi": 54,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ }
+]

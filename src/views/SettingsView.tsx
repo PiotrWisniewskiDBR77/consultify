@@ -285,7 +285,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     toast.error(
       t(
         'settings.pilot.sectionUnavailableForRole',
-        'Ta sekcja nie jest dostępna w Twojej roli podczas pilota. Skontaktuj się z administratorem, jeśli potrzebujesz dostępu.'
+        'This section is not available for your role during the pilot. Contact an administrator if you need access.'
       )
     );
     navigate(getPilotDefaultSettingsRoute(), { replace: true });

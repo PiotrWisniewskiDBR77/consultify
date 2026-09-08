@@ -34,6 +34,7 @@ import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface TrustedDevicesSettingsProps {
   currentUser: User;
@@ -182,7 +183,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
+    return new Date(dateString).toLocaleDateString(localeListy(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

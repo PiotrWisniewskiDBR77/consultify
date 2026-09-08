@@ -45,6 +45,7 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/primitives/Button';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '../ui/use-toast';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 interface RecoveryOptions {
   recoveryEmail: string;
@@ -182,7 +183,22 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
 
   // Download codes as file
   const handleDownloadCodes = () => {
-    const content = `Consultify Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nStore these codes in a safe place. Each code can only be used once.`;
+    // Plik z kodami zapasowymi szedl PO ANGIELSKU niezaleznie od jezyka konta —
+    // a to jedyny artefakt, ktory uzytkownik zapisuje u siebie i czyta pozniej,
+    // gdy nie moze sie zalogowac. Tresc idzie w jezyku interfejsu.
+    const content = [
+      t('settings.recovery.fileTitle', 'Consultify backup codes'),
+      t('settings.recovery.fileGenerated', 'Generated: {{date}}', {
+        date: formatListDateTime(new Date()),
+      }),
+      '',
+      ...backupCodes,
+      '',
+      t(
+        'settings.recovery.fileFooter',
+        'Store these codes in a safe place. Each code can only be used once.'
+      ),
+    ].join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -443,7 +459,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
               {recoveryOptions.lastBackupCodesGenerated && (
                 <p className="text-xs text-c-text-secondary mt-1">
                   {t('settings.recovery.lastGenerated', 'Last generated: {{date}}', {
-                    date: new Date(recoveryOptions.lastBackupCodesGenerated).toLocaleDateString(),
+                    date: formatListDate(recoveryOptions.lastBackupCodesGenerated),
                   })}
                 </p>
               )}

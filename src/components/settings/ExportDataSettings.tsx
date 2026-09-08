@@ -51,6 +51,7 @@ import { Select } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '../ui/use-toast';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ExportRequest {
   id: string;
@@ -297,7 +298,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
                       <div className="flex items-center gap-3 mt-1 text-xs text-c-text-muted">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {new Date(request.requestedAt).toLocaleDateString()}
+                          {formatListDate(request.requestedAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <FileText className="w-3 h-3" />

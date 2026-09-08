@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout, InlineTable, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface ContextResponse {
   counts: {
@@ -105,7 +106,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
     () =>
       timeline.map((item) => ({
         ...item,
-        createdAtLabel: item.createdAt ? new Date(item.createdAt).toLocaleString() : '',
+        createdAtLabel: item.createdAt ? formatListDateTime(item.createdAt) : '',
       })),
     [timeline]
   );

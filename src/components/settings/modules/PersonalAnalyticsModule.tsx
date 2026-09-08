@@ -29,6 +29,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 interface PersonalAnalyticsModuleProps {
   currentUser: User;
@@ -143,7 +144,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
               <div
                 key={di}
                 className={`w-4 h-4 rounded-sm ${getColor(day.score)}`}
-                title={`${new Date(day.date).toLocaleDateString()}: ${day.tasks} tasks, Score: ${day.score}`}
+                title={`${formatListDate(day.date)}: ${day.tasks} tasks, Score: ${day.score}`}
               />
             ))}
           </div>
@@ -165,7 +166,9 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             <BarChart3 size={28} className="text-blue-500" />
             Personal Analytics
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">Track your productivity and performance</p>
+          <p className="text-c-text-muted text-sm mt-1">
+            {t('settings.analytics.subtitle', 'Track your productivity and performance')}
+          </p>
         </div>
         <div className="flex gap-2">
           <select
@@ -174,10 +177,10 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             disabled={!!loadError}
             className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
+            <option value="week">{t('settings.analytics.rangeWeek', 'This Week')}</option>
+            <option value="month">{t('settings.analytics.rangeMonth', 'This Month')}</option>
+            <option value="quarter">{t('settings.analytics.rangeQuarter', 'This Quarter')}</option>
+            <option value="year">{t('settings.analytics.rangeYear', 'This Year')}</option>
           </select>
           <button
             disabled={!!loadError}
@@ -261,7 +264,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           {dailyActivity.slice(-7).map((day, i) => (
             <div key={i} className="flex items-center gap-4">
               <span className="text-sm text-c-text-muted w-24">
-                {new Date(day.date).toLocaleDateString('en-US', {
+                {new Date(day.date).toLocaleDateString(localeListy(), {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',

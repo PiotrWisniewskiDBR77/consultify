@@ -16,6 +16,8 @@
 
 import { AlertTriangle, CheckCircle2, Lock, Palette, Save, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatListTime } from '@/utils/listDateFormat';
 
 type Confidentiality = 'public' | 'internal' | 'confidential';
 
@@ -112,6 +114,7 @@ const brandKitsEqual = (a: BrandKit, b: BrandKit): boolean =>
 export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProps> = ({
   canEdit = false,
 }) => {
+  const { t } = useTranslation();
   const [brandKit, setBrandKit] = useState<BrandKit>(DEFAULT_BRAND_KIT);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -209,7 +212,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       } else {
         setStaleWarning('Saved but read-back is stale — please refresh.');
       }
-      setSavedAt(new Date().toLocaleTimeString());
+      setSavedAt(formatListTime(new Date()));
     } catch {
       setSaveError('Failed to save brand kit. Please retry.');
     } finally {
@@ -238,8 +241,10 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
             Brand Kit Governance
           </h3>
           <p className="text-c-text-muted text-sm mt-1">
-            Centrally manage colors, headers, footers, and confidentiality defaults applied to
-            generated presentations.
+            {t(
+              'settings.brandKit.subtitle',
+              'Centrally manage colors, headers, footers, and confidentiality defaults applied to generated presentations.'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -310,7 +315,9 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       {/* Loading skeleton */}
       {loading && !loadError && (
         <div className={cardClass}>
-          <p className="text-sm text-c-text-muted">Loading brand kit...</p>
+          <p className="text-sm text-c-text-muted">
+            {t('settings.brandKit.loading', 'Loading brand kit...')}
+          </p>
           <div className="mt-4 space-y-3 animate-pulse">
             <div className="h-9 rounded-md bg-c-surface-raised" />
             <div className="h-9 rounded-md bg-c-surface-raised" />
@@ -456,7 +463,9 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                 />
                 <span>
                   <span className="block text-sm font-medium text-navy-900">Show page numbers</span>
-                  <span className={helperTextClass}>Render page numbers in the slide footer.</span>
+                  <span className={helperTextClass}>
+                    {t('settings.brandKit.pageNumbersHint', 'Render page numbers in the slide footer.')}
+                  </span>
                 </span>
               </label>
 
@@ -477,7 +486,10 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                     Show confidentiality marker
                   </span>
                   <span className={helperTextClass}>
-                    Display the confidentiality classification on every slide.
+                    {t(
+                      'settings.brandKit.confidentialityHint',
+                      'Display the confidentiality classification on every slide.'
+                    )}
                   </span>
                 </span>
               </label>
@@ -523,7 +535,10 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                   className={textInputClass}
                   value={brandKit.disclaimer}
                   disabled={inputDisabled}
-                  placeholder="This document contains confidential information..."
+                  placeholder={t(
+                    'settings.brandKit.disclaimerPlaceholder',
+                    'This document contains confidential information...'
+                  )}
                   onChange={(event) => updateField('disclaimer', event.target.value)}
                 />
               </div>

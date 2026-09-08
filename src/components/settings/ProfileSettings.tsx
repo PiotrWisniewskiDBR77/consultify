@@ -21,6 +21,7 @@ import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ProfileSettingsProps {
   currentUser: User;
@@ -576,7 +577,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     {formState.outOfOfficeUntil && (
                       <span>
                         {t('settings.profile.outOfOfficeUntil', 'until {{date}}', {
-                          date: new Date(formState.outOfOfficeUntil).toLocaleDateString(),
+                          date: formatListDate(formState.outOfOfficeUntil),
                         })}
                       </span>
                     )}

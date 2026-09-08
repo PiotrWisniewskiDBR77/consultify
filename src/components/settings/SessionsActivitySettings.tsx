@@ -27,6 +27,7 @@ import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from './shared/SettingsSection';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,7 +64,7 @@ const getDeviceIcon = (deviceInfo: string) => {
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
 };
 
 const statusConfig = {

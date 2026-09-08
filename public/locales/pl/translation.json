@@ -17281,7 +17281,14 @@
       "defaultSet": "Domyślny podpis zaktualizowany",
       "defaultSetDesc": "Domyślny podpis został zaktualizowany",
       "copied": "Skopiowano",
-      "copiedDesc": "Podpis skopiowany do schowka"
+      "copiedDesc": "Podpis skopiowany do schowka",
+      "formattingTip": "Wskazówka: możesz używać emoji i prostego formatowania. HTML nie jest obsługiwany.",
+      "emptyTitle": "Nie masz jeszcze podpisów",
+      "emptyBody": "Utwórz pierwszy podpis e-mail, którego będziesz używać w korespondencji.",
+      "tipConcise": "Zachowaj zwięzłość — podaj tylko niezbędne dane kontaktowe",
+      "tipConsistent": "Stosuj jeden format we wszystkich podpisach",
+      "tipRole": "Podaj swoją rolę i firmę, żeby dać kontekst zawodowy",
+      "tipLinks": "Dodaj adekwatne linki społecznościowe lub adres portfolio, jeśli to na miejscu"
     },
     "work": {
       "title": "Preferencje pracy",
@@ -17515,7 +17522,10 @@
       "remove": "Usuń zdjęcie",
       "guideline4": "Profesjonalne zdjęcia pomagają budować zaufanie w zespole"
     },
-    "billing": "Rozliczenia",
+    "billing": {
+      "plansUnavailable": "Aktualne plany cenowe są chwilowo niedostępne. Odśwież stronę albo spróbuj ponownie, gdy usługi rozliczeń wrócą.",
+      "manualSubscription": "Ta subskrypcja jest prowadzona ręcznie, poza Stripe. Odnowieniami umowy, statusem faktur i zmianami dostępu zajmuje się Twój opiekun."
+    },
     "financeDefaults": "Domyślne ustawienia finansowe",
     "financeDefaultsDesc": "Wartości domyślne dla nowych wycen, budżetów i modeli finansowych w całej organizacji.",
     "defaultWacc": "Domyślny WACC (%)",
@@ -17698,7 +17708,7 @@
       "privacyDesc": "Kontroluj, do jakich danych może uzyskać dostęp sztuczna inteligencja, w jaki sposób jest ona przechowywana i czy jest wykorzystywana do szkolenia modeli.",
       "privacyError": "Nie udało się zapisać ustawień prywatności AI",
       "privacySaved": "Zapisano ustawienia prywatności AI",
-      "privacyTitle": "Dane i prywatność AI",
+      "privacyTitle": "Prywatność i nadzór nad danymi",
       "quickTemplates": "Szybkie szablony",
       "rememberContext": "Kontekst projektu",
       "rememberContextDesc": "Zachowaj kontekst dotyczący swoich projektów, zadań i struktury organizacyjnej.",
@@ -17735,7 +17745,39 @@
       "tips": "Wskazówki",
       "toneSection": "Ton i komunikacja",
       "vectorDesc": "Zoptymalizowany pod kątem przepływów pracy konsultantów: analizy wywiadów, generowania raportów i rekomendacji strategicznych.",
-      "whatToRemember": "O czym pamiętać"
+      "whatToRemember": "O czym pamiętać",
+      "autoDetectIntentHint": "AI samo rozpozna, czy potrzebujesz krótkiej, czy szczegółowej odpowiedzi",
+      "tierTitle": "Domyślny poziom wydajności",
+      "tierSubtitle": "Wybierz preferowaną równowagę między szybkością, możliwościami i kosztem.",
+      "usageTitle": "Twoje zużycie AI",
+      "usageSubtitle": "Śledź swoje koszty i zużycie AI w tym miesiącu.",
+      "thisMonth": "w tym miesiącu",
+      "byokTitle": "Własne klucze dostawców",
+      "byokSubtitle": "Podłącz zewnętrznych dostawców w bezpieczny sposób.",
+      "addApiKey": "Dodaj nowy klucz API",
+      "keyStoredLocally": "Przechowywany lokalnie w Twojej przeglądarce. Nigdy nie trafia na nasze serwery.",
+      "ollamaModelHint": "Używany, gdy Czat jest kierowany do Ollamy.",
+      "ollamaUseEndpoint": "Użyj tego punktu końcowego Ollamy do czatu",
+      "modelBehaviorTitle": "Zachowanie modelu",
+      "modelBehaviorSubtitle": "Ustaw szczegółowe parametry generowania i personę.",
+      "systemInstructionsPlaceholder": "np. Jesteś starszym architektem rozwiązań. W odpowiedziach zawsze stawiaj bezpieczeństwo i skalowalność na pierwszym miejscu...",
+      "responseModeTitle": "Tryb odpowiedzi",
+      "responseModeSubtitle": "Ustaw domyślną długość i styl odpowiedzi.",
+      "personaTitle": "Definicja persony",
+      "personaSubtitle": "Określ swoją rolę, aby dopasować odpowiedzi AI.",
+      "proactivityTitle": "Poziom proaktywności AI",
+      "proactivitySubtitle": "Zdecyduj, jak aktywnie AI ma Ci pomagać.",
+      "reactiveMode": "Tryb reaktywny",
+      "reactiveModeHint": "AI milczy, dopóki wprost nie poprosisz. Dla doświadczonych użytkowników, którzy chcą pełnej kontroli i pomocy tylko na życzenie.",
+      "balancedMode": "Tryb zrównoważony",
+      "balancedModeHint": "AI podpowiada, gdy to trafne, ale najważniejsze kroki zostawia Tobie. Zalecany dla większości użytkowników.",
+      "proactiveMode": "Tryb proaktywny",
+      "proactiveModeHint": "AI śledzi Twoją pracę i sama proponuje pomoc, a nawet zaczyna rozmowę o możliwych problemach.",
+      "orgLimitTitle": "Limit organizacji",
+      "orgLimitBody": "Twoja organizacja ustawiła maksymalny poziom proaktywności na <0>{{level}}</0>. Skontaktuj się z administratorem, jeśli potrzebujesz wyższego.",
+      "privacySubtitle": "Zarządzaj tym, jak Twoje dane są przetwarzane i przechowywane.",
+      "piiRedactionHint": "Automatycznie wykrywa i zamazuje adresy e-mail, numery telefonów i wzorce kart płatniczych przed wysłaniem do modelu.",
+      "webSearchHint": "Pozwala modelowi szukać w sieci bieżących informacji. Może wydłużyć czas odpowiedzi."
     },
     "aiUsage": {
       "title": "Przegląd użycia AI",
@@ -17973,7 +18015,10 @@
       "connectProvider": "Podłącz {{name}}",
       "notConfigured": "Ta integracja nie jest jeszcze dostępna — nie została skonfigurowana na serwerze.",
       "oauthSuccess": "Połączenie zakończone pomyślnie",
-      "viewMappings": "Wyświetl mapowania"
+      "viewMappings": "Wyświetl mapowania",
+      "subtitle": "Podłącz zewnętrzne narzędzia, żeby usprawnić swoją pracę.",
+      "orgRequiredBody": "Integracje konfiguruje się na poziomie organizacji. Najpierw utwórz organizację lub do niej dołącz w ustawieniach organizacji.",
+      "channelMappingHint": "Przypisz co najmniej jeden projekt do kanału Slack lub Teams. Opcjonalne adresy webhooków w mapowaniu mogą zastąpić domyślny webhook dla danego projektu."
     },
     "availability": {
       "title": "Dostępność i skupienie",
@@ -18293,7 +18338,46 @@
         "organizationDesc": "Tylko członkowie organizacji",
         "private": "Prywatny",
         "privateDesc": "Profil ukryty przed innymi"
-      }
+      },
+      "overallProfile": "Cały profil",
+      "overallProfileHint": "Kto może oglądać stronę Twojego profilu",
+      "avatar": "Zdjęcie profilowe",
+      "avatarHint": "Kto widzi Twoje zdjęcie profilowe",
+      "email": "Adres e-mail",
+      "emailHint": "Kto widzi Twój adres e-mail",
+      "phone": "Numer telefonu",
+      "phoneHint": "Kto widzi Twój numer telefonu",
+      "activityStatus": "Pokazuj status aktywności",
+      "activityStatusHint": "Pozwól innym widzieć, kiedy jesteś online",
+      "lastSeen": "Pokazuj ostatnią obecność",
+      "lastSeenHint": "Pokazuj, kiedy ostatnio byłeś aktywny",
+      "activityFeed": "Strumień aktywności",
+      "activityFeedHint": "Kto widzi Twój strumień aktywności",
+      "directory": "Pokazuj w katalogu osób",
+      "directoryHint": "Bądź widoczny w katalogu osób organizacji",
+      "search": "Pokazuj w wynikach wyszukiwania",
+      "searchHint": "Pozwól innym znaleźć Cię przez wyszukiwarkę",
+      "sectionProfile": "Widoczność profilu",
+      "sectionActivity": "Sterowanie aktywnością",
+      "sectionDirectory": "Katalog i wyszukiwanie",
+      "sectionSections": "Sekcje profilu",
+      "sectionsHint": "Wybierz, które sekcje są widoczne w Twoim profilu",
+      "taskActivity": "Aktywność w zadaniach",
+      "projectActivity": "Aktywność w projektach",
+      "commentActivity": "Aktywność w komentarzach",
+      "mentionsFrom": "Zezwól na wzmianki @ od",
+      "messagesFrom": "Zezwól na wiadomości bezpośrednie od",
+      "noteTitle": "Uwaga o prywatności",
+      "noteBody": "Administratorzy mogą mieć dostęp do Twoich informacji niezależnie od tych ustawień — ze względu na zgodność i bezpieczeństwo.",
+      "sectionBio": "Bio / O mnie",
+      "sectionSkills": "Umiejętności",
+      "sectionCertifications": "Certyfikaty",
+      "sectionEducation": "Wykształcenie",
+      "sectionWorkHistory": "Historia zatrudnienia",
+      "sectionSocialLinks": "Linki społecznościowe",
+      "audienceAll": "Wszyscy",
+      "audienceTeam": "Tylko członkowie zespołu",
+      "audienceNone": "Nikt"
     },
     "shortcuts": {
       "title": "Skróty klawiszowe",
@@ -18783,7 +18867,13 @@
         "create_task": "Utwórz zadanie"
       }
     },
-    "security": "Bezpieczeństwo",
+    "security": {
+      "questionSelectPlaceholder": "-- Wybierz pytanie albo utwórz własne --",
+      "answerPlaceholder": "Twoja odpowiedź",
+      "pendingVerification": "Oczekuje na weryfikację",
+      "geoAlertsTitle": "Alerty geolokalizacyjne",
+      "geoAlertsHint": "Powiadom o logowaniu z nowej lokalizacji"
+    },
     "appearance": {
       "label": "Wygląd",
       "title": "Motyw i wygląd",
@@ -18907,7 +18997,16 @@
       "languageChangeError": "Nie udało się zmienić języka",
       "languageDesc": "Wybierz preferowany język interfejsu.",
       "languageTenantHint": "Domyślne ustawienia języka organizacji pozostają tutaj tylko do odczytu. Nadal możesz zastąpić język interfejsu dla własnego konta.",
-      "languageTitle": "Język"
+      "languageTitle": "Język",
+      "layout": {
+        "subtitle": "Ustaw układ swojego obszaru pracy",
+        "startupTitle": "Widok startowy",
+        "startupHint": "Wybierz widok pokazywany po zalogowaniu",
+        "toolbarTitle": "Elementy paska narzędzi",
+        "toolbarHint": "Wybierz elementy widoczne na górnym pasku narzędzi",
+        "quickAccessTitle": "Menu szybkiego dostępu",
+        "quickAccessHint": "Dostosuj szybkie akcje w menu +"
+      }
     },
     "sidebar": {
       "title": "USTAWIENIA",
@@ -19082,10 +19181,6 @@
         "title": "Dane i prywatność AI",
         "subtitle": "Kontroluj dostęp do danych, retencję i ustawienia zgodności"
       },
-      "prompt-library": {
-        "title": "Biblioteka promptów",
-        "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
-      },
       "ai-prompt-library": {
         "title": "Biblioteka promptów",
         "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
@@ -19143,18 +19238,6 @@
         "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
       },
       "notifications-availability": {
-        "title": "Dostępność",
-        "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
-      },
-      "email-digest": {
-        "title": "E-mail i podsumowania",
-        "subtitle": "Wybierz, które e-maile chcesz otrzymywać i jak mają być podsumowywane"
-      },
-      "desktop-sounds": {
-        "title": "Pulpit i dźwięki",
-        "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
-      },
-      "availability": {
         "title": "Dostępność",
         "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
       },
@@ -19276,7 +19359,10 @@
       "unavailable": "Odzyskiwanie konta jest chwilowo niedostępne.",
       "saved": "Zapisane",
       "error": "Błąd",
-      "saveFailed": "Nie udało się zapisać"
+      "saveFailed": "Nie udało się zapisać",
+      "fileTitle": "Kody zapasowe Consultify",
+      "fileGenerated": "Wygenerowano: {{date}}",
+      "fileFooter": "Przechowuj te kody w bezpiecznym miejscu. Każdego kodu można użyć tylko raz."
     },
     "modules": {
       "notifications": "Powiadomienia"
@@ -19361,7 +19447,12 @@
     "analytics": {
       "exported": "Wyeksportowany",
       "status": "Status",
-      "error": "Błąd"
+      "error": "Błąd",
+      "subtitle": "Śledź swoją produktywność i wyniki",
+      "rangeWeek": "Ten tydzień",
+      "rangeMonth": "Ten miesiąc",
+      "rangeQuarter": "Ten kwartał",
+      "rangeYear": "Ten rok"
     },
     "password": {
       "error": "Błąd",
@@ -19431,7 +19522,12 @@
     },
     "dataControls": {
       "saved": "Zapisane",
-      "error": "Błąd"
+      "error": "Błąd",
+      "portabilityHint": "Przenieś swoje dane na inne platformy albo zaimportuj dane skądinąd.",
+      "importTitle": "Importuj dane",
+      "importSources": "Z ClickUp, Monday, Asany",
+      "important": "Ważne",
+      "deletionWarning": "Usunięcie danych jest trwałe i nieodwracalne. Jeśli potrzebujesz kopii, wyeksportuj dane przed usunięciem."
     },
     "saveFailed": "Nie udało się zapisać",
     "responseStyle": {
@@ -19618,6 +19714,168 @@
       "viewAll": "Zobacz wszystkie",
       "viewAvailability": "Zobacz dostępność",
       "viewFullHistory": "Zobacz pełną historię"
+    },
+    "pilot": {
+      "sectionUnavailableForRole": "Ta sekcja nie jest dostępna w Twojej roli podczas pilota. Skontaktuj się z administratorem, jeśli potrzebujesz dostępu."
+    },
+    "aiSecurity": {
+      "title": "Ustawienia bezpieczeństwa AI",
+      "subtitle": "Konfiguracja funkcji AI dla organizacji",
+      "featuresTitle": "Włączone funkcje",
+      "features": {
+        "chat": {
+          "label": "Czat AI",
+          "description": "Konwersacje z asystentem AI"
+        },
+        "reports": {
+          "label": "Generowanie raportów",
+          "description": "Raporty audytu tworzone przez AI"
+        },
+        "initiatives": {
+          "label": "Generowanie inicjatyw",
+          "description": "Inicjatywy podpowiadane przez AI"
+        },
+        "magicWand": {
+          "label": "Magic Wand",
+          "description": "Autouzupełnianie pól formularzy"
+        },
+        "taskAdvisor": {
+          "label": "Doradca zadań",
+          "description": "Rekomendacje zadań"
+        },
+        "webResearch": {
+          "label": "Wyszukiwanie w internecie",
+          "description": "Przeszukiwanie sieci"
+        }
+      },
+      "modelsTitle": "Dozwolone modele",
+      "modelsHint": "Odznacz modele, które chcesz wyłączyć dla użytkowników",
+      "limitsTitle": "Limity zapytań",
+      "limitAdd": "Dodaj limit",
+      "limitAddShort": "Dodaj",
+      "limitRuleName": "Nazwa reguły",
+      "limitValue": "Limit",
+      "limitsEmpty": "Brak skonfigurowanych limitów. Używane są domyślne limity systemowe.",
+      "limits": {
+        "perMinute": "Na minutę",
+        "perHour": "Na godzinę",
+        "perDay": "Na dzień",
+        "perMonth": "Na miesiąc"
+      },
+      "advancedTitle": "Ustawienia zaawansowane",
+      "maxTokens": "Maksymalna liczba tokenów na zapytanie",
+      "retentionDays": "Retencja danych (dni)",
+      "retentionHint": "Logi AI starsze niż ta liczba dni będą automatycznie usuwane",
+      "allowWebResearch": "Pozwól na wyszukiwanie w internecie",
+      "allowToolCalling": "Pozwól na wykonywanie akcji (MCP Tools)",
+      "save": "Zapisz ustawienia",
+      "saved": "Ustawienia zapisane"
+    },
+    "profileNudge": {
+      "doneTitle": "Gotowe!",
+      "doneBody": "Dzięki za uzupełnienie profilu. Teraz dopasujemy pytania do Twojego obszaru.",
+      "stepCounter": "Krok {{current}} z {{total}}",
+      "departmentTitle": "W jakim dziale pracujesz?",
+      "seniorityTitle": "Na jakim poziomie jest Twoje stanowisko?",
+      "tenureTitle": "Jak długo pracujesz w firmie?",
+      "expertiseTitle": "Jakie masz kompetencje?",
+      "departmentHint": "Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.",
+      "seniorityHint": "Dopasujemy pytania do perspektywy Twojego stanowiska.",
+      "tenureHint": "Twoje doświadczenie w firmie ma znaczenie dla kontekstu odpowiedzi.",
+      "expertiseHint": "Opcjonalne — wybierz kilka, które najlepiej Cię opisują.",
+      "later": "Uzupełnię później",
+      "save": "Zapisz",
+      "next": "Dalej",
+      "tenure": {
+        "under1": "Poniżej roku",
+        "1to3": "1–3 lata",
+        "3to5": "3–5 lat",
+        "5to10": "5–10 lat",
+        "over10": "Ponad 10 lat"
+      }
+    },
+    "brandKit": {
+      "subtitle": "Zarządzaj centralnie kolorami, nagłówkami, stopkami i domyślną klauzulą poufności stosowanymi w generowanych prezentacjach.",
+      "loading": "Wczytywanie zestawu marki...",
+      "pageNumbersHint": "Pokazuj numery stron w stopce slajdu.",
+      "confidentialityHint": "Pokazuj klauzulę poufności na każdym slajdzie.",
+      "disclaimerPlaceholder": "Ten dokument zawiera informacje poufne..."
+    },
+    "loginHistory": {
+      "statusSuccess": "Udane",
+      "statusFailed": "Nieudane",
+      "statusSuspicious": "Podejrzane"
+    },
+    "orgProfile": {
+      "subtitle": "Opisz kontekst swojej organizacji, żeby AI mogła podpowiadać wnioski strategiczne",
+      "prioritiesPlaceholder": "np. transformacja cyfrowa, doświadczenie klienta, optymalizacja kosztów"
+    },
+    "organization": {
+      "loading": "Wczytywanie danych organizacji...",
+      "emptyTitle": "Nie znaleziono organizacji",
+      "emptyBody": "Nie należysz obecnie do żadnej organizacji. Utwórz ją, żeby zacząć pracę zespołową i współdzielenie tokenów.",
+      "subtitle": "Zarządzaj członkami, rozliczeniami i tokenami.",
+      "trialUpgradeHint": "Przejdź na plan płatny, żeby odblokować pełne funkcje i znieść limity.",
+      "tokenLogReason": "Powód",
+      "tokenLogWhen": "Kiedy",
+      "inviteIdNote": "* Uwaga: w tym wydaniu użyj identyfikatora użytkownika, jeśli wyszukiwanie po adresie e-mail nie jest skonfigurowane."
+    },
+    "professionalProfile": {
+      "companyName": "Nazwa firmy"
+    },
+    "profileCompleteness": {
+      "congratulations": "Gratulacje!",
+      "completeBody": "Twój profil jest kompletny. Korzystasz z Consultify w pełni.",
+      "incompleteBody": "Uzupełnij profil, żeby odblokować wszystkie funkcje i dostawać dopasowane rekomendacje."
+    },
+    "history": {
+      "subtitle": "Przeglądaj i przywracaj wcześniejsze zmiany ustawień",
+      "range7d": "Ostatnie 7 dni",
+      "range30d": "Ostatnie 30 dni",
+      "range90d": "Ostatnie 90 dni",
+      "rangeAll": "Cały okres"
+    },
+    "search": {
+      "title": "Wyszukiwarka ustawień",
+      "subtitle": "Szybko znajdź dowolne ustawienie",
+      "placeholder": "Szukaj ustawień... (Cmd+K)",
+      "favoritesEmpty": "Oznacz ustawienia gwiazdką, żeby trafiły tutaj",
+      "recentEmpty": "Tu pojawią się Twoje ostatnie wyszukiwania",
+      "keyboardHint": "Naciśnij <0>⌘K</0> w dowolnym miejscu, żeby szukać ustawień"
+    },
+    "aiBehavior": {
+      "tasksTitle": "AI w zadaniach",
+      "tasksDescription": "Pomoc AI przy zarządzaniu zadaniami",
+      "learnTitle": "Ucz się z mojej pracy",
+      "learnDescription": "AI z czasem dopasowuje się do Twojego stylu",
+      "personalityHint": "Wybierz, jak AI ma się z Tobą komunikować",
+      "contextHint": "Z jakich informacji AI może korzystać, żeby lepiej odpowiadać",
+      "historyTitle": "Dane historyczne",
+      "historyDescription": "Ucz się z Twojej dotychczasowej pracy"
+    },
+    "aiModels": {
+      "perUseCaseTitle": "Model do zastosowania",
+      "perUseCaseHint": "Wybierz różne modele do różnych zadań"
+    },
+    "quickActions": {
+      "subtitle": "Skonfiguruj paletę poleceń i szybkie akcje",
+      "paletteTitle": "Paleta poleceń",
+      "paletteHint": "Szybki dostęp skrótem Cmd+K"
+    },
+    "notificationRules": {
+      "whenType": "Gdy typ powiadomienia to:",
+      "empty": "Brak własnych reguł",
+      "addFirst": "Dodaj pierwszą regułę",
+      "digestHint": "Grupuj powiadomienia i odbieraj je jako podsumowanie"
+    },
+    "webauthn": {
+      "unsupportedTitle": "Klucze dostępu nieobsługiwane",
+      "unsupportedBody": "Twoja przeglądarka lub urządzenie nie obsługuje kluczy dostępu (WebAuthn). Użyj nowoczesnej przeglądarki: Chrome, Safari, Firefox lub Edge.",
+      "renamePlaceholder": "Wpisz nową nazwę",
+      "tipRemoveUnused": "Usuń klucze dostępu z urządzeń, których już nie używasz"
+    },
+    "integrationsMarketplace": {
+      "deprecated": "Ten widok zastąpiły Połączone aplikacje w Ustawieniach."
     }
   },
   "showcase": {

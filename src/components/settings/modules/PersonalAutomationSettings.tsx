@@ -32,6 +32,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface PersonalAutomationSettingsProps {
   currentUser: User;
@@ -400,7 +401,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                 <p className="text-xs text-c-text-secondary mt-3">
                   {t('settings.personalAutomation.lastRun', {
                     defaultValue: 'Last run: {{date}} • {{count}} total runs',
-                    date: new Date(rule.lastRun).toLocaleString(),
+                    date: formatListDateTime(rule.lastRun),
                     count: rule.runCount,
                   })}
                 </p>
@@ -479,7 +480,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     </div>
                   </div>
                   <span className="text-sm text-c-text-secondary">
-                    {new Date(log.timestamp).toLocaleString()}
+                    {formatListDateTime(log.timestamp)}
                   </span>
                 </div>
               ))}

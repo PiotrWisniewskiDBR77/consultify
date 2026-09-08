@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ConnectedAccountsProps {
   currentUser: User;
@@ -217,7 +218,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                         </p>
                         <p className="text-xs text-c-text-secondary mt-0.5">
                           {t('settings.connectedAccounts.connectedOn', 'Connected')}{' '}
-                          {new Date(connectionInfo.connectedAt).toLocaleDateString()}
+                          {formatListDate(connectionInfo.connectedAt)}
                         </p>
                       </div>
                     ) : (

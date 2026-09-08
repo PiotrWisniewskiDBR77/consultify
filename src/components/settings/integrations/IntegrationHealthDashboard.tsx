@@ -36,6 +36,7 @@ import { shouldFallbackToLegacySync, V8SyncApi } from '../../../services/api/v8/
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDateTime, formatListNumber } from '@/utils/listDateFormat';
 
 interface IntegrationHealthDashboardProps {
   currentUser: User;
@@ -79,7 +80,7 @@ interface IntegrationHealthRow {
 
 const formatTimestamp = (timestamp: string) => {
   const date = new Date(timestamp);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
 };
 
 export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProps> = ({
@@ -358,7 +359,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
           </div>
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-c-text">
-              {totalStats.requestsThisMonth.toLocaleString()}
+              {formatListNumber(totalStats.requestsThisMonth)}
             </p>
             <p className="text-sm text-c-text-muted">
               {t('integrations.health.statThisMonth', 'This Month')}
@@ -401,7 +402,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       <p className="text-sm text-c-text-muted">
                         {t('integrations.health.lastSync', 'Last sync')}:{' '}
                         {integration.lastSync
-                          ? new Date(integration.lastSync).toLocaleString()
+                          ? formatListDateTime(integration.lastSync)
                           : '—'}
                         {integration.errorCount > 0 && (
                           <span className="ml-2 text-danger-500 font-medium">

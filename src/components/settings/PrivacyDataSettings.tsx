@@ -37,6 +37,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface PrivacyDataSettingsProps {
   currentUser: User;
@@ -593,7 +594,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             {lastExportDate && (
               <p className="text-xs text-c-text-muted mb-3">
                 {t('settings.privacy.lastExport', 'Last export:')}{' '}
-                {new Date(lastExportDate).toLocaleDateString()}
+                {formatListDate(lastExportDate)}
               </p>
             )}
             <button

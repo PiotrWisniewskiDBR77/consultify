@@ -46,6 +46,7 @@ import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 interface APIKey {
   id: string;
@@ -592,7 +593,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                       {t('settings.api.quota', 'Quota')}
                     </span>
                     <span className="text-c-text-secondary">
-                      {key.quotaUsed?.toLocaleString() || 0} / {key.quotaLimit.toLocaleString()}
+                      {formatListNumber(key.quotaUsed, '0')} / {formatListNumber(key.quotaLimit)}
                     </span>
                   </div>
                   <div className="w-full bg-c-surface-raised rounded-full h-2">
@@ -610,7 +611,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   {key.quotaResetAt && (
                     <p className="text-xs text-c-text-secondary mt-1">
                       {t('settings.api.resetsAt', 'Resets')}:{' '}
-                      {new Date(key.quotaResetAt).toLocaleDateString()}
+                      {formatListDate(key.quotaResetAt)}
                     </p>
                   )}
                 </div>
@@ -643,7 +644,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <Calendar size={12} />
                   <span>
                     {t('settings.api.expires', 'Expires')}:{' '}
-                    {new Date(key.expiresAt).toLocaleDateString()}
+                    {formatListDate(key.expiresAt)}
                   </span>
                 </div>
               )}

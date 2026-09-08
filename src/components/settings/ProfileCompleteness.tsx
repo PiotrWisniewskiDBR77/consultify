@@ -428,15 +428,23 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
           <div className="flex items-center gap-3">
             <Sparkles className="text-green-500" size={20} />
             <p className="text-sm text-green-700 dark:text-green-300">
-              <span className="font-medium">Congratulations!</span> Your profile is complete. You're
-              getting the most out of Consultify.
+              <span className="font-medium">
+                {t('settings.profileCompleteness.congratulations', 'Congratulations!')}
+              </span>{' '}
+              {t(
+                'settings.profileCompleteness.completeBody',
+                "Your profile is complete. You're getting the most out of Consultify."
+              )}
             </p>
           </div>
         </div>
       ) : (
         <div className="px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle dark:border-navy-700">
           <p className="text-sm text-c-text-muted">
-            Complete your profile to unlock all features and get personalized recommendations.
+            {t(
+              'settings.profileCompleteness.incompleteBody',
+              'Complete your profile to unlock all features and get personalized recommendations.'
+            )}
           </p>
         </div>
       )}

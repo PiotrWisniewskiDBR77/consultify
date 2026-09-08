@@ -43,6 +43,7 @@ import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface SecurityEventsSettingsProps {
   currentUser: User;
@@ -230,7 +231,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleString(undefined, {
+    return date.toLocaleString(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

@@ -19,6 +19,7 @@ import { QuietHoursSettingsType as QuietHoursType, User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface AvailabilitySettingsProps {
   currentUser: User;
@@ -247,7 +248,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
   const formatUntil = (until: string) => {
     if (!until) return '';
     const date = new Date(until);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDateTime(date);
   };
 
   const cardClass = 'bg-c-surface-raised border border-c-border-subtle rounded-lg p-5';

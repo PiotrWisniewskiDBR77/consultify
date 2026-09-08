@@ -24,6 +24,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 /**
  * MFASetup Component - Enhanced
@@ -370,7 +371,22 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   };
 
   const downloadCodes = () => {
-    const content = `Consultify Backup Codes\nGenerated: ${new Date().toLocaleDateString()}\n\n${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}\n\nKeep these codes safe. Each code can only be used once.`;
+    // Patrz komentarz w RecoveryOptionsSettings: plik z kodami zapasowymi to
+    // jedyny artefakt czytany, gdy uzytkownik nie moze sie zalogowac — musi byc
+    // w jezyku jego interfejsu, nie na sztywno po angielsku.
+    const content = [
+      t('settings.recovery.fileTitle', 'Consultify backup codes'),
+      t('settings.recovery.fileGenerated', 'Generated: {{date}}', {
+        date: formatListDate(new Date()),
+      }),
+      '',
+      ...backupCodes.map((code, i) => `${i + 1}. ${code}`),
+      '',
+      t(
+        'settings.recovery.fileFooter',
+        'Store these codes in a safe place. Each code can only be used once.'
+      ),
+    ].join('\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

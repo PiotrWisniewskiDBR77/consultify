@@ -138,7 +138,7 @@ const REGULATIONS = [
 ];
 
 const CURRENCIES = [
-  { code: 'PLN', symbol: 'zł', label: 'PLN – Polski złoty' },
+  { code: 'PLN', symbol: 'zł', label: 'PLN – Polish Zloty' },
   { code: 'EUR', symbol: '€', label: 'EUR – Euro' },
   { code: 'USD', symbol: '$', label: 'USD – US Dollar' },
   { code: 'GBP', symbol: '£', label: 'GBP – British Pound' },
@@ -486,7 +486,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
             Strategic Profile
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
-            Define your organization context for AI-powered strategic insights
+            {t(
+              'settings.orgProfile.subtitle',
+              'Define your organization context for AI-powered strategic insights'
+            )}
           </p>
         </div>
 
@@ -771,7 +774,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <CommaListInput
                   value={profile.strategic_priorities || []}
                   onChange={(val) => updateField('strategic_priorities', val)}
-                  placeholder="e.g., Digital transformation, Customer experience, Cost optimization"
+                  placeholder={t(
+                    'settings.orgProfile.prioritiesPlaceholder',
+                    'e.g., Digital transformation, Customer experience, Cost optimization'
+                  )}
                   className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)] focus:outline-none"
                 />
               </div>

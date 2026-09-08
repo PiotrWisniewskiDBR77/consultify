@@ -38,6 +38,7 @@ import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { formatListDate, formatListNumber, localeListy } from '@/utils/listDateFormat';
 
 interface BillingSubscriptionModuleProps {
   currentUser: User;
@@ -347,11 +348,11 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           <span className="text-c-text-secondary">{label}</span>
           <div className="flex items-center gap-2">
             <span className="font-medium text-c-text">
-              {used.toLocaleString()}
+              {formatListNumber(used)}
               {unit}{' '}
               {isUnlimited
                 ? `(${t('access.upgrade.unlimited')})`
-                : `/ ${limit.toLocaleString()}${unit}`}
+                : `/ ${formatListNumber(limit)}${unit}`}
             </span>
             {isApproaching && (
               <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
@@ -578,17 +579,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 )}
                 {subscription?.currentPeriodEnd && (
                   <p className="text-emerald-100 mt-2">
-                    Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                    Renews on {formatListDate(subscription.currentPeriodEnd)}
                   </p>
                 )}
                 {subscription?.renewalAt && (
                   <p className="text-emerald-100 mt-2">
-                    Contract renewal {new Date(subscription.renewalAt).toLocaleDateString()}
+                    Contract renewal {formatListDate(subscription.renewalAt)}
                   </p>
                 )}
                 {snapshot?.isTrial && snapshot.trialExpiresAt && (
                   <p className="text-emerald-100 mt-2">
-                    Trial expires {new Date(snapshot.trialExpiresAt).toLocaleDateString()}
+                    Trial expires {formatListDate(snapshot.trialExpiresAt)}
                     {snapshot.trialDaysLeft > 0 && ` (${snapshot.trialDaysLeft} days left)`}
                   </p>
                 )}
@@ -659,8 +660,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
           ) : (
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6 text-sm text-c-text-muted dark:border-navy-700">
-              Live pricing plans are currently unavailable. Refresh the page or retry after billing
-              services recover.
+              {t(
+                'settings.billing.plansUnavailable',
+                'Live pricing plans are currently unavailable. Refresh the page or retry after billing services recover.'
+              )}
             </div>
           )}
 
@@ -677,8 +680,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           )}
           {isManualBilling && (
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 text-sm text-c-text-secondary dark:border-navy-700">
-              This subscription is managed manually outside Stripe. Contract renewals, invoice
-              status, and access changes are handled by your account team.
+              {t(
+                'settings.billing.manualSubscription',
+                'This subscription is managed manually outside Stripe. Contract renewals, invoice status, and access changes are handled by your account team.'
+              )}
             </div>
           )}
         </>
@@ -781,7 +786,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     <div>
                       <p className="font-medium text-c-text">Invoice {invoice.id}</p>
                       <p className="text-sm text-c-text-muted">
-                        {new Date(invoice.date).toLocaleDateString()}
+                        {formatListDate(invoice.date)}
                       </p>
                       {invoice.source && (
                         <p className="text-xs text-c-text-muted uppercase tracking-wide mt-1">
@@ -794,7 +799,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-c-text font-medium">
-                      {new Intl.NumberFormat('en-US', {
+                      {new Intl.NumberFormat(localeListy(), {
                         style: 'currency',
                         currency: invoice.currency || 'USD',
                       }).format(invoice.amount)}

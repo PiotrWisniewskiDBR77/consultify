@@ -254,38 +254,38 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Shield size={20} className="text-blue-500" />
-          Profile Visibility
+          {t('settings.privacy.sectionProfile', 'Profile Visibility')}
         </h3>
 
         <VisibilitySelector
           value={settings.profileVisibility}
           onChange={(v) => setSettings({ ...settings, profileVisibility: v })}
-          label="Overall Profile"
-          description="Who can view your profile page"
+          label={t('settings.privacy.overallProfile', 'Overall Profile')}
+          description={t('settings.privacy.overallProfileHint', 'Who can view your profile page')}
           icon={Users}
         />
 
         <VisibilitySelector
           value={settings.avatarVisibility}
           onChange={(v) => setSettings({ ...settings, avatarVisibility: v })}
-          label="Profile Picture"
-          description="Who can see your profile photo"
+          label={t('settings.privacy.avatar', 'Profile Picture')}
+          description={t('settings.privacy.avatarHint', 'Who can see your profile photo')}
           icon={Image}
         />
 
         <VisibilitySelector
           value={settings.emailVisibility}
           onChange={(v) => setSettings({ ...settings, emailVisibility: v })}
-          label="Email Address"
-          description="Who can see your email"
+          label={t('settings.privacy.email', 'Email Address')}
+          description={t('settings.privacy.emailHint', 'Who can see your email')}
           icon={Mail}
         />
 
         <VisibilitySelector
           value={settings.phoneVisibility}
           onChange={(v) => setSettings({ ...settings, phoneVisibility: v })}
-          label="Phone Number"
-          description="Who can see your phone number"
+          label={t('settings.privacy.phone', 'Phone Number')}
+          description={t('settings.privacy.phoneHint', 'Who can see your phone number')}
           icon={Phone}
         />
       </div>
@@ -294,30 +294,30 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Activity size={20} className="text-green-500" />
-          Activity Controls
+          {t('settings.privacy.sectionActivity', 'Activity Controls')}
         </h3>
 
         <ToggleSetting
           value={settings.showActivityStatus}
           onChange={(v) => setSettings({ ...settings, showActivityStatus: v })}
-          label="Show Activity Status"
-          description="Let others see when you're online"
+          label={t('settings.privacy.activityStatus', 'Show Activity Status')}
+          description={t('settings.privacy.activityStatusHint', "Let others see when you're online")}
           icon={Eye}
         />
 
         <ToggleSetting
           value={settings.showLastSeen}
           onChange={(v) => setSettings({ ...settings, showLastSeen: v })}
-          label="Show Last Seen"
-          description="Display when you were last active"
+          label={t('settings.privacy.lastSeen', 'Show Last Seen')}
+          description={t('settings.privacy.lastSeenHint', 'Display when you were last active')}
           icon={Activity}
         />
 
         <VisibilitySelector
           value={settings.activityFeedVisibility}
           onChange={(v) => setSettings({ ...settings, activityFeedVisibility: v })}
-          label="Activity Feed"
-          description="Who can see your activity feed"
+          label={t('settings.privacy.activityFeed', 'Activity Feed')}
+          description={t('settings.privacy.activityFeedHint', 'Who can see your activity feed')}
           icon={Activity}
         />
 
@@ -331,7 +331,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onChange={(e) => setSettings({ ...settings, showTaskActivity: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm">Task Activity</span>
+              <span className="text-sm">{t('settings.privacy.taskActivity', 'Task Activity')}</span>
             </label>
             <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
@@ -342,7 +342,9 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 }
                 className="rounded"
               />
-              <span className="text-sm">Project Activity</span>
+              <span className="text-sm">
+                {t('settings.privacy.projectActivity', 'Project Activity')}
+              </span>
             </label>
             <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
@@ -353,7 +355,9 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 }
                 className="rounded"
               />
-              <span className="text-sm">Comment Activity</span>
+              <span className="text-sm">
+                {t('settings.privacy.commentActivity', 'Comment Activity')}
+              </span>
             </label>
           </div>
         </div>
@@ -363,28 +367,30 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Search size={20} className="text-amber-500" />
-          Directory & Search
+          {t('settings.privacy.sectionDirectory', 'Directory & Search')}
         </h3>
 
         <ToggleSetting
           value={settings.showInDirectory}
           onChange={(v) => setSettings({ ...settings, showInDirectory: v })}
-          label="Show in Directory"
-          description="Appear in the organization's people directory"
+          label={t('settings.privacy.directory', 'Show in Directory')}
+          description={t('settings.privacy.directoryHint', "Appear in the organization's people directory")}
           icon={BookUser}
         />
 
         <ToggleSetting
           value={settings.showInSearch}
           onChange={(v) => setSettings({ ...settings, showInSearch: v })}
-          label="Appear in Search Results"
-          description="Allow others to find you via search"
+          label={t('settings.privacy.search', 'Appear in Search Results')}
+          description={t('settings.privacy.searchHint', 'Allow others to find you via search')}
           icon={Search}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
-            <label className="block font-medium text-c-text">Allow @mentions from</label>
+            <label className="block font-medium text-c-text">
+              {t('settings.privacy.mentionsFrom', 'Allow @mentions from')}
+            </label>
             <select
               value={settings.allowMentionsFrom}
               onChange={(e) =>
@@ -392,14 +398,18 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               }
               className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
-              <option value="all">Everyone</option>
-              <option value="team">Team members only</option>
-              <option value="none">Nobody</option>
+              <option value="all">{t('settings.privacy.audienceAll', 'Everyone')}</option>
+              <option value="team">
+                {t('settings.privacy.audienceTeam', 'Team members only')}
+              </option>
+              <option value="none">{t('settings.privacy.audienceNone', 'Nobody')}</option>
             </select>
           </div>
 
           <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
-            <label className="block font-medium text-c-text">Allow direct messages from</label>
+            <label className="block font-medium text-c-text">
+              {t('settings.privacy.messagesFrom', 'Allow direct messages from')}
+            </label>
             <select
               value={settings.allowDirectMessagesFrom}
               onChange={(e) =>
@@ -407,9 +417,11 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               }
               className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
-              <option value="all">Everyone</option>
-              <option value="team">Team members only</option>
-              <option value="none">Nobody</option>
+              <option value="all">{t('settings.privacy.audienceAll', 'Everyone')}</option>
+              <option value="team">
+                {t('settings.privacy.audienceTeam', 'Team members only')}
+              </option>
+              <option value="none">{t('settings.privacy.audienceNone', 'Nobody')}</option>
             </select>
           </div>
         </div>
@@ -419,20 +431,36 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Info size={20} className="text-indigo-500" />
-          Profile Sections
+          {t('settings.privacy.sectionSections', 'Profile Sections')}
         </h3>
         <p className="text-sm text-c-text-muted">
-          Choose which sections are visible on your profile
+          {t('settings.privacy.sectionsHint', 'Choose which sections are visible on your profile')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            { key: 'showBio', label: 'Bio / About Me' },
-            { key: 'showSkills', label: 'Skills' },
-            { key: 'showCertifications', label: 'Certifications' },
-            { key: 'showEducation', label: 'Education' },
-            { key: 'showWorkHistory', label: 'Work History' },
-            { key: 'showSocialLinks', label: 'Social Links' },
+            { key: 'showBio', labelKey: 'settings.privacy.sectionBio', label: 'Bio / About Me' },
+            { key: 'showSkills', labelKey: 'settings.privacy.sectionSkills', label: 'Skills' },
+            {
+              key: 'showCertifications',
+              labelKey: 'settings.privacy.sectionCertifications',
+              label: 'Certifications',
+            },
+            {
+              key: 'showEducation',
+              labelKey: 'settings.privacy.sectionEducation',
+              label: 'Education',
+            },
+            {
+              key: 'showWorkHistory',
+              labelKey: 'settings.privacy.sectionWorkHistory',
+              label: 'Work History',
+            },
+            {
+              key: 'showSocialLinks',
+              labelKey: 'settings.privacy.sectionSocialLinks',
+              label: 'Social Links',
+            },
           ].map((item) => (
             <label
               key={item.key}
@@ -444,7 +472,9 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-c-text-secondary">{item.label}</span>
+              <span className="text-sm text-c-text-secondary">
+                {t(item.labelKey, item.label)}
+              </span>
             </label>
           ))}
         </div>
@@ -455,10 +485,12 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         <div className="flex items-start gap-3">
           <Info size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p className="font-medium mb-1">Privacy Note</p>
+            <p className="font-medium mb-1">{t('settings.privacy.noteTitle', 'Privacy Note')}</p>
             <p>
-              Administrators may have access to your information regardless of these settings for
-              compliance and security purposes.
+              {t(
+                'settings.privacy.noteBody',
+                'Administrators may have access to your information regardless of these settings for compliance and security purposes.'
+              )}
             </p>
           </div>
         </div>

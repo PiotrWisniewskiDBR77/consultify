@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/composed';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface IntegrationHealthSettingsProps {
   className?: string;
@@ -270,7 +271,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                   {status.checked_at && (
                     <p className="text-xs text-c-text-muted mb-3">
                       {t('settings.health.lastChecked', 'Last checked')}:{' '}
-                      {new Date(status.checked_at).toLocaleString()}
+                      {formatListDateTime(status.checked_at)}
                     </p>
                   )}
 
@@ -327,7 +328,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                           </div>
                           <div className="text-right">
                             <p className="text-xs text-c-text-muted">
-                              {new Date(check.checked_at).toLocaleString()}
+                              {formatListDateTime(check.checked_at)}
                             </p>
                             {check.error_message && (
                               <p className="text-xs text-danger-600 dark:text-danger-400 mt-1 truncate max-w-xs">

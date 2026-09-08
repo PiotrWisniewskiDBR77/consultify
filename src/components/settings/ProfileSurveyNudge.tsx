@@ -37,12 +37,16 @@ const SENIORITY_OPTIONS = [
   'Zarząd / C-level',
 ];
 
+/**
+ * `value` idzie do bazy i zostaje bez zmian; tłumaczona jest wyłącznie
+ * ETYKIETA (reguła programu §2.6 — enum przez słownik, nigdy surowa wartość).
+ */
 const TENURE_OPTIONS = [
-  { value: '<1', label: 'Poniżej roku' },
-  { value: '1-3', label: '1–3 lata' },
-  { value: '3-5', label: '3–5 lat' },
-  { value: '5-10', label: '5–10 lat' },
-  { value: '10+', label: 'Ponad 10 lat' },
+  { value: '<1', labelKey: 'settings.profileNudge.tenure.under1', label: 'Under a year' },
+  { value: '1-3', labelKey: 'settings.profileNudge.tenure.1to3', label: '1–3 years' },
+  { value: '3-5', labelKey: 'settings.profileNudge.tenure.3to5', label: '3–5 years' },
+  { value: '5-10', labelKey: 'settings.profileNudge.tenure.5to10', label: '5–10 years' },
+  { value: '10+', labelKey: 'settings.profileNudge.tenure.over10', label: 'Over 10 years' },
 ];
 
 const EXPERTISE_POOL = [
@@ -211,9 +215,14 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
               <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center">
                 <Sparkles size={32} className="text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-navy-900 mb-2">Gotowe!</h3>
+              <h3 className="text-xl font-bold text-navy-900 mb-2">
+                {t('settings.profileNudge.doneTitle', 'All set!')}
+              </h3>
               <p className="text-c-text-muted text-sm">
-                Dzięki za uzupełnienie profilu. Teraz dopasujemy pytania do Twojego obszaru.
+                {t(
+                  'settings.profileNudge.doneBody',
+                  'Thanks for completing your profile. We will now match the questions to your area.'
+                )}
               </p>
             </div>
           ) : (
@@ -224,23 +233,46 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-c-accent uppercase tracking-wider">
-                    Krok {stepIndex + 1} z {STEPS.length}
+                    {t('settings.profileNudge.stepCounter', 'Step {{current}} of {{total}}', {
+                      current: stepIndex + 1,
+                      total: STEPS.length,
+                    })}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-navy-900">
-                  {step === 'department' && 'W jakim dziale pracujesz?'}
-                  {step === 'seniority' && 'Na jakim poziomie jest Twoje stanowisko?'}
-                  {step === 'tenure' && 'Jak długo pracujesz w firmie?'}
-                  {step === 'expertise' && 'Jakie masz kompetencje?'}
+                  {step === 'department' &&
+                    t('settings.profileNudge.departmentTitle', 'Which department do you work in?')}
+                  {step === 'seniority' &&
+                    t('settings.profileNudge.seniorityTitle', 'What is your seniority level?')}
+                  {step === 'tenure' &&
+                    t(
+                      'settings.profileNudge.tenureTitle',
+                      'How long have you been with the company?'
+                    )}
+                  {step === 'expertise' &&
+                    t('settings.profileNudge.expertiseTitle', 'What are your areas of expertise?')}
                 </h3>
                 <p className="text-sm text-c-text-muted mt-1">
                   {step === 'department' &&
-                    'Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.'}
-                  {step === 'seniority' && 'Dopasujemy pytania do perspektywy Twojego stanowiska.'}
+                    t(
+                      'settings.profileNudge.departmentHint',
+                      'This helps us pick the right questions for your area.'
+                    )}
+                  {step === 'seniority' &&
+                    t(
+                      'settings.profileNudge.seniorityHint',
+                      'We will match the questions to the perspective of your role.'
+                    )}
                   {step === 'tenure' &&
-                    'Twoje doświadczenie w firmie ma znaczenie dla kontekstu odpowiedzi.'}
+                    t(
+                      'settings.profileNudge.tenureHint',
+                      'Your time with the company shapes the context of your answers.'
+                    )}
                   {step === 'expertise' &&
-                    'Opcjonalne — wybierz kilka, które najlepiej Cię opisują.'}
+                    t(
+                      'settings.profileNudge.expertiseHint',
+                      'Optional — pick a few that describe you best.'
+                    )}
                 </p>
               </div>
 
@@ -313,7 +345,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                             tenure === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
                           }
                         />
-                        {opt.label}
+                        {t(opt.labelKey, opt.label)}
                       </button>
                     ))}
                   </div>
@@ -368,7 +400,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                   onClick={handleDismiss}
                   className="text-xs text-c-text-secondary hover:text-c-text-secondary transition-colors"
                 >
-                  Uzupełnię później
+                  {t('settings.profileNudge.later', 'I will finish later')}
                 </button>
                 <button
                   type="button"
@@ -380,7 +412,9 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                       : 'bg-c-surface-raised text-c-text-secondary cursor-not-allowed'
                   }`}
                 >
-                  {stepIndex === STEPS.length - 1 ? 'Zapisz' : 'Dalej'}
+                  {stepIndex === STEPS.length - 1
+                    ? t('settings.profileNudge.save', 'Save')
+                    : t('settings.profileNudge.next', 'Next')}
                   <ChevronRight size={16} />
                 </button>
               </div>

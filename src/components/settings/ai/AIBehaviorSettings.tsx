@@ -240,8 +240,8 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.enableInTasks}
             onChange={(v) => setSettings({ ...settings, enableInTasks: v })}
             icon={ListTodo}
-            title="AI in Tasks"
-            description="AI help with task management"
+            title={t('settings.aiBehavior.tasksTitle', 'AI in Tasks')}
+            description={t('settings.aiBehavior.tasksDescription', 'AI help with task management')}
           />
           <ToggleCard
             enabled={settings.enableAutocomplete}
@@ -254,8 +254,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.enableLearningFromWork}
             onChange={(v) => setSettings({ ...settings, enableLearningFromWork: v })}
             icon={GraduationCap}
-            title="Learn from My Work"
-            description="AI adapts to your style over time"
+            title={t('settings.aiBehavior.learnTitle', 'Learn from My Work')}
+            description={t(
+              'settings.aiBehavior.learnDescription',
+              'AI adapts to your style over time'
+            )}
           />
           <ToggleCard
             enabled={settings.enableProactiveInsights}
@@ -273,7 +276,9 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           <Smile size={20} className="text-amber-500" />
           AI Personality
         </h3>
-        <p className="text-sm text-c-text-muted">Choose how AI communicates with you</p>
+        <p className="text-sm text-c-text-muted">
+          {t('settings.aiBehavior.personalityHint', 'Choose how AI communicates with you')}
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {personalities.map((p) => {
@@ -382,7 +387,10 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           Context Sources
         </h3>
         <p className="text-sm text-c-text-muted">
-          What information AI can use for better responses
+          {t(
+            'settings.aiBehavior.contextHint',
+            'What information AI can use for better responses'
+          )}
         </p>
 
         <div className="space-y-3">
@@ -397,8 +405,8 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             enabled={settings.useHistoricalData}
             onChange={(v) => setSettings({ ...settings, useHistoricalData: v })}
             icon={GraduationCap}
-            title="Historical Data"
-            description="Learn from your past work"
+            title={t('settings.aiBehavior.historyTitle', 'Historical Data')}
+            description={t('settings.aiBehavior.historyDescription', 'Learn from your past work')}
           />
           <ToggleCard
             enabled={settings.useTeamPatterns}

@@ -37,6 +37,7 @@ import { MetaChip, StatusChip } from '@/components/ui/primitives';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface WebhookConfig {
   id: string;
@@ -590,7 +591,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       {webhook.lastTriggered && (
                         <p className="text-xs text-c-text-muted mt-1">
                           {t('settings.webhooks.lastTriggered', 'Last triggered')}:{' '}
-                          {new Date(webhook.lastTriggered).toLocaleString()}
+                          {formatListDateTime(webhook.lastTriggered)}
                         </p>
                       )}
                     </div>
@@ -869,7 +870,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                               </div>
                               <div className="text-right">
                                 <p className="text-xs text-c-text-muted">
-                                  {new Date(delivery.created_at).toLocaleString()}
+                                  {formatListDateTime(delivery.created_at)}
                                 </p>
                                 {delivery.status === 'failed' && (
                                   <button

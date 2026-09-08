@@ -4,7 +4,7 @@
 
 import { ArrowRight, Clock, Loader2, Search, Star, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { User } from '../../../types';
 
@@ -313,9 +313,11 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
       <div>
         <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <Search size={28} className="text-blue-500" />
-          Settings Search
+          {t('settings.search.title', 'Settings Search')}
         </h2>
-        <p className="text-c-text-muted text-sm mt-1">Quickly find any setting</p>
+        <p className="text-c-text-muted text-sm mt-1">
+          {t('settings.search.subtitle', 'Quickly find any setting')}
+        </p>
       </div>
 
       {/* Search Input */}
@@ -332,7 +334,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search settings... (Cmd+K)"
+          placeholder={t('settings.search.placeholder', 'Search settings... (Cmd+K)')}
           className="w-full pl-12 pr-4 py-4 text-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
         {query && (
@@ -403,7 +405,9 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
               Favorites
             </h3>
             {favoriteSettings.length === 0 ? (
-              <p className="text-sm text-c-text-muted">Star settings to add them here</p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.search.favoritesEmpty', 'Star settings to add them here')}
+              </p>
             ) : (
               <div className="space-y-2">
                 {favoriteSettings.map((setting) => (
@@ -427,7 +431,9 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
               Recent Searches
             </h3>
             {recentSearches.length === 0 ? (
-              <p className="text-sm text-c-text-muted">Your recent searches will appear here</p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.search.recentEmpty', 'Your recent searches will appear here')}
+              </p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {recentSearches.map((search, i) => (
@@ -477,8 +483,11 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
       {/* Keyboard Hint */}
       <div className="text-center text-sm text-c-text-secondary">
-        Press <kbd className="px-2 py-0.5 bg-c-surface-raised rounded text-xs">⌘K</kbd> anywhere to
-        search settings
+        <Trans
+          i18nKey="settings.search.keyboardHint"
+          defaults="Press <0>⌘K</0> anywhere to search settings"
+          components={[<kbd key="skrot" className="px-2 py-0.5 bg-c-surface-raised rounded text-xs" />]}
+        />
       </div>
     </div>
   );

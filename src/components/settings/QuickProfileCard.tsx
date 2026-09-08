@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/primitives/Button';
+import { localeListy } from '@/utils/listDateFormat';
 
 export type PresenceStatus = 'online' | 'away' | 'busy' | 'dnd' | 'offline';
 
@@ -92,7 +93,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
   useEffect(() => {
     const updateTime = () => {
       const timezone = currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const time = new Date().toLocaleTimeString('en-US', {
+      const time = new Date().toLocaleTimeString(localeListy(), {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
