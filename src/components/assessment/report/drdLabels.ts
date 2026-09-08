@@ -139,7 +139,7 @@ const UNIT_NAMES_BY_ID: Record<string, { pl: string; en: string }> = Object.from
   DRD_STRUCTURE.flatMap((axis) =>
     axis.areas.map((area) => [
       area.id,
-      { pl: area.namePL || area.name, en: area.name || area.namePL },
+      { pl: area.namePL || area.name, en: area.name || area.namePL || area.id },
     ])
   )
 );
@@ -170,7 +170,7 @@ function nazwaOsiZId(axisId: string): string {
 }
 
 function nazwaOsiWJezyku(namePL: string | undefined, name: string): string {
-  return interfejsPoPolsku() ? namePL || name : name || namePL;
+  return interfejsPoPolsku() ? namePL || name : name || namePL || '';
 }
 
 /**

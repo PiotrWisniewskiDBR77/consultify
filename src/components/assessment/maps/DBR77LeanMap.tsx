@@ -686,6 +686,7 @@ const WorkstationCard: React.FC<{
   expanded?: boolean;
   onToggleExpand: () => void;
 }> = ({ workstation, activePhase, onChange, onDelete, readOnly, expanded, onToggleExpand }) => {
+  const { t } = useTranslation();
   const phaseConfig = DBR77_PHASES.find((p) => p.id === activePhase)!;
   const roleEvolutionConfig = DBR77_ROLE_EVOLUTION[workstation.automationPotential.roleEvolution];
 
