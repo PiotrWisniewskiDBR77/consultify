@@ -75,8 +75,8 @@ export function sprawdzCel(url: string, oczekiwanyHost: string): string {
   const host = toz.split('/')[0]!;
   if (!host.includes(oczekiwanyHost))
     throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
-  if (!/consultify_kopia_d1/i.test(toz))
-    throw new Error(`Cel NIE jest bazą „consultify_kopia_d1" (dostał: nazwa bazy ukryta, sprawdzono wzorcem). STOP.`);
+  if (!/consultify_kopia_d\d+/i.test(toz))
+    throw new Error(`Cel NIE jest bazą „consultify_kopia_d<N>" (dostał: nazwa bazy ukryta, sprawdzono wzorcem). STOP.`);
   return toz;
 }
 
