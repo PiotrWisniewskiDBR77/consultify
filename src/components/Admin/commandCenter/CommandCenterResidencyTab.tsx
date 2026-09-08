@@ -99,7 +99,7 @@ export const CommandCenterResidencyTab: React.FC = () => {
       <EmptyState
         variant="error"
         title={error}
-        primaryAction={{ label: 'Retry', onClick: () => void load() }}
+        primaryAction={{ label: t('common.retry', 'Retry'), onClick: () => void load() }}
       />
     );
   }

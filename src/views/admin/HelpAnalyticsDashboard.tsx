@@ -101,8 +101,7 @@ interface DashboardData {
 }
 
 export const HelpAnalyticsDashboard: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const { t } = useTranslation();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
