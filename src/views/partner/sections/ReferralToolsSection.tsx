@@ -578,7 +578,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         <p className="font-medium text-c-text">{customer.organizationName}</p>
                       ) : (
                         <p className="font-medium italic text-c-text-muted">
-                          {t('partner.clients.unavailable', 'Klient niedostępny')}
+                          {t('partner.clients.unavailable', 'Client unavailable')}
                         </p>
                       )}
                       <p className="mt-1 text-sm text-c-text-secondary">

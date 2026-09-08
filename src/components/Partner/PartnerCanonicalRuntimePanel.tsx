@@ -209,7 +209,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       state: snapshot.participantLedger.state,
       value: String(snapshot.participantLedger.entries.length),
       detail: latestParticipantFact
-        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Zapisano ostatnie polecenie')
+        ? t('partner.canonicalRuntime.latestReferralRecorded', 'Latest referral recorded')
         : t('partner.canonicalRuntime.noReferralsRecorded', 'No immutable referral facts recorded'),
     },
     {
@@ -220,7 +220,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       value: money(snapshot.program?.balances?.availableToPayout, currency),
       detail: t(
         'partner.canonicalRuntime.payoutEligibilityDetail',
-        'Widoczne saldo ma charakter informacyjny. Możliwość wypłaty zależy od zatwierdzonych zasad programu.'
+        'The balance shown is informational. Payout eligibility depends on the approved program rules.'
       ),
     },
   ];
