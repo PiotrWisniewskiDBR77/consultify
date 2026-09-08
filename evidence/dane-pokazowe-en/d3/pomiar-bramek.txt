@@ -1,0 +1,12 @@
+POMIAR BRAMEK (transition-preflight) — 2026-09-08T08:14:31Z, API 4179 na kopii d3
+Zrodlo: GET /api/initiatives/:id/transition-preflight (ten sam kod, ktorym PATCH /status odmawia).
+
+--- draft (DRAFT) onHold=false
+    -> PENDING_APPROVAL gate=SUBMIT_FOR_REVIEW rola=true warunek=true blokada=- []
+--- approved (APPROVED) onHold=false
+    -> IN_EXECUTION gate=START rola=true warunek=true blokada=- []
+    -> REJECTED gate=REJECT rola=true warunek=true blokada=- []
+--- pending (PENDING_APPROVAL) onHold=false
+    -> APPROVED gate=APPROVE rola=true warunek=true blokada=- []
+    -> DRAFT gate=SEND_BACK rola=true warunek=true blokada=- []
+    -> REJECTED gate=REJECT rola=true warunek=true blokada=- []

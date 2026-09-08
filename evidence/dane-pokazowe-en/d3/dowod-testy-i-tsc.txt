@@ -1,0 +1,8 @@
+TYPECHECK serwera — 2026-09-08T08:14:39Z
+polecenie: NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit
+wynik: EXIT=0, zero bledow (log pusty)
+
+TESTY seedu (bez bazy) — vitest.orphans.config.ts server/tests/seed-demo-en
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Duration  2.36s (transform 595ms, setup 1.10s, import 498ms, tests 62ms, environment 0ms)
