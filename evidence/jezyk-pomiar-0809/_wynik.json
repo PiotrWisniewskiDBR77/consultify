@@ -1,0 +1,428 @@
+{
+  "data": "2026-09-08T06:18:15.160Z",
+  "ekrany": [
+    {
+      "nr": "01",
+      "modul": "chat",
+      "trasa": "/chat",
+      "url": "http://127.0.0.1:3195/chat",
+      "zrzut": "01-chat-en.png",
+      "linieTekstu": 30,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "02",
+      "modul": "my-work",
+      "trasa": "/my-work",
+      "url": "http://127.0.0.1:3195/my-work",
+      "zrzut": "02-my-work-en.png",
+      "linieTekstu": 32,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "03",
+      "modul": "interview",
+      "trasa": "/interview",
+      "url": "http://127.0.0.1:3195/interview",
+      "zrzut": "03-interview-en.png",
+      "linieTekstu": 32,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "04",
+      "modul": "tools",
+      "trasa": "/discovery-tools",
+      "url": "http://127.0.0.1:3195/discovery-tools",
+      "zrzut": "04-tools-en.png",
+      "linieTekstu": 317,
+      "polskichLinii": 2,
+      "przyklady": [
+        {
+          "tekst": "Narzędzia",
+          "dowod": "diakrytyk:ę"
+        },
+        {
+          "tekst": "Automatyzacja procesów",
+          "dowod": "diakrytyk:ó"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "05",
+      "modul": "assessment",
+      "trasa": "/assessment/overview",
+      "url": "http://127.0.0.1:3195/assessment/overview?tab=library",
+      "zrzut": "05-assessment-en.png",
+      "linieTekstu": 46,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "06",
+      "modul": "initiatives",
+      "trasa": "/initiatives",
+      "url": "http://127.0.0.1:3195/initiatives",
+      "zrzut": "06-initiatives-en.png",
+      "linieTekstu": 988,
+      "polskichLinii": 130,
+      "przyklady": [
+        {
+          "tekst": "Obciążenie",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Wszystkie",
+          "dowod": "pl:wszystkie"
+        },
+        {
+          "tekst": "NASTĘPNA BRAMKA",
+          "dowod": "diakrytyk:Ę"
+        },
+        {
+          "tekst": "GOTOWOŚĆ",
+          "dowod": "diakrytyk:Ś"
+        },
+        {
+          "tekst": "WŁAŚCICIEL",
+          "dowod": "diakrytyk:Ł"
+        },
+        {
+          "tekst": "NASTĘPNE DZIAŁANIE",
+          "dowod": "diakrytyk:Ę"
+        },
+        {
+          "tekst": "Wdrożenie RPA",
+          "dowod": "diakrytyk:ż"
+        },
+        {
+          "tekst": "Brak opisu problemu",
+          "dowod": "pl:brak"
+        },
+        {
+          "tekst": "Nie oceniono",
+          "dowod": "pl:nie"
+        },
+        {
+          "tekst": "Zaplanuj realizację",
+          "dowod": "diakrytyk:ę"
+        },
+        {
+          "tekst": "Pewność: Nieznana",
+          "dowod": "diakrytyk:ś,pl:nieznana"
+        },
+        {
+          "tekst": "Nie dotyczy",
+          "dowod": "pl:nie"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "07",
+      "modul": "execution",
+      "trasa": "/execution",
+      "url": "http://127.0.0.1:3195/execution?tab=list&view=table",
+      "zrzut": "07-execution-en.png",
+      "linieTekstu": 75,
+      "polskichLinii": 4,
+      "przyklady": [
+        {
+          "tekst": "System wizyjny kontroli jakości",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Piotr Wiśniewski",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Poprawa realizacji korzyści programu",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "System zarządzania jakością 4.0",
+          "dowod": "diakrytyk:ą"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "08",
+      "modul": "results",
+      "trasa": "/results/kpi",
+      "url": "http://127.0.0.1:3195/results/kpi",
+      "zrzut": "08-results-en.png",
+      "linieTekstu": 59,
+      "polskichLinii": 4,
+      "przyklady": [
+        {
+          "tekst": "Karta wyników transformacji",
+          "dowod": "diakrytyk:ó"
+        },
+        {
+          "tekst": "Piotr Wiśniewski",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Plant Balanced Scorecard — Zakład DBR77",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "KPI jakości — sierpień 2026",
+          "dowod": "diakrytyk:ś"
+        }
+      ],
+      "bledy": [
+        "HTTP 404 http://127.0.0.1:3195/api/vnext/results/kpi/scorecards/e084d7e6-3a4d-5bc6-8a3c-02a2183acd1f/review-snapshots/published",
+        "HTTP 404 http://127.0.0.1:3195/api/vnext/results/kpi/scorecards/4fdc1bb9-dd71-4dda-a4a4-9e03fa87faf4/review-snapshots/published",
+        "HTTP 404 http://127.0.0.1:3195/api/vnext/results/kpi/scorecards/5adb4916-f55d-5a63-9c01-e5fdf168519f/review-snapshots/published",
+        "HTTP 404 http://127.0.0.1:3195/api/vnext/results/kpi/scorecards/dfe5344c-f46a-53e1-97bd-43f9827af95a/review-snapshots/published",
+        "HTTP 404 http://127.0.0.1:3195/api/vnext/results/kpi/scorecards/614183c5-8aa8-4665-a386-9dfce2a995a9/review-snapshots/published"
+      ]
+    },
+    {
+      "nr": "09",
+      "modul": "finance",
+      "trasa": "/finance",
+      "url": "http://127.0.0.1:3195/finance?tab=statements",
+      "zrzut": "09-finance-en.png",
+      "linieTekstu": 40,
+      "polskichLinii": 1,
+      "przyklady": [
+        {
+          "tekst": "Grupa Kapitałowa CD PROJEKT",
+          "dowod": "diakrytyk:ł"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "10",
+      "modul": "materials",
+      "trasa": "/presentations",
+      "url": "http://127.0.0.1:3195/presentations",
+      "zrzut": "10-materials-en.png",
+      "linieTekstu": 182,
+      "polskichLinii": 12,
+      "przyklady": [
+        {
+          "tekst": "Przegląd korzyści transformacji",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Piotr Wiśniewski",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Dla zarządu z wyników pilota automatyzacji faktur",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Dla zarządu z wyników pilota automatyzacji faktur — do decyzji o skalowaniu n…",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "MCG-2026: Prezentacja dla Całej Firmy",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "Business Case PdM dla Zarządu DBR77",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "DBR77 Industrial Intelligence Scale-Up 2026 — Business Case dla Zarządu",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Transformacja operacyjna DBR77: Predyktywne utrzymanie ruchu i zarządzanie energią",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Inwestycja w Predykcyjne Utrzymanie Ruchu - Uzasadnienie dla Zarządu DBR77",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Strategia AI - Prezentacja dla Zarządu",
+          "dowod": "diakrytyk:ą"
+        },
+        {
+          "tekst": "Presentation: Krótki dokument: plan wdrożenia AI w dziale obsługi klienta.",
+          "dowod": "diakrytyk:ó"
+        },
+        {
+          "tekst": "O korzyściach z automatyzacji obsługi klienta.",
+          "dowod": "diakrytyk:ś"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "11",
+      "modul": "audits",
+      "trasa": "/audit-programs",
+      "url": "http://127.0.0.1:3195/audit-programs?tab=library",
+      "zrzut": "11-audits-en.png",
+      "linieTekstu": 37,
+      "polskichLinii": 1,
+      "przyklady": [
+        {
+          "tekst": "Audyt gotowości do robotyzacji — linia spawalnicza",
+          "dowod": "diakrytyk:ś"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "12",
+      "modul": "meeting",
+      "trasa": "/meetings",
+      "url": "http://127.0.0.1:3195/meetings",
+      "zrzut": "12-meeting-en.png",
+      "linieTekstu": 15,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "13",
+      "modul": "organization",
+      "trasa": "/organization/profile",
+      "url": "http://127.0.0.1:3195/organization/profile/identity-scale",
+      "zrzut": "13-organization-en.png",
+      "linieTekstu": 113,
+      "polskichLinii": 23,
+      "przyklady": [
+        {
+          "tekst": "Tożsamość",
+          "dowod": "diakrytyk:ż"
+        },
+        {
+          "tekst": "Dodaj źródło",
+          "dowod": "diakrytyk:ź,pl:dodaj"
+        },
+        {
+          "tekst": "Wszystkie",
+          "dowod": "pl:wszystkie"
+        },
+        {
+          "tekst": "Uzupełnione",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "Do uzupełnienia",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "BRANŻA",
+          "dowod": "diakrytyk:Ż"
+        },
+        {
+          "tekst": "PODBRANŻA",
+          "dowod": "diakrytyk:Ż"
+        },
+        {
+          "tekst": "KOD BRANŻY (PKD)",
+          "dowod": "diakrytyk:Ż"
+        },
+        {
+          "tekst": "Szczegóły techniczne",
+          "dowod": "diakrytyk:ó"
+        },
+        {
+          "tekst": "WIELKOŚĆ FIRMY",
+          "dowod": "diakrytyk:Ś"
+        },
+        {
+          "tekst": "LICZBA PRACOWNIKÓW",
+          "dowod": "diakrytyk:Ó"
+        },
+        {
+          "tekst": "PRZYCHÓD ROCZNY",
+          "dowod": "diakrytyk:Ó"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "14",
+      "modul": "admin",
+      "trasa": "/admin",
+      "url": "http://127.0.0.1:3195/admin/team/members",
+      "zrzut": "14-admin-en.png",
+      "linieTekstu": 203,
+      "polskichLinii": 10,
+      "przyklady": [
+        {
+          "tekst": "Piotr Wiśniewski",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Role for Piotr Wiśniewski",
+          "dowod": "diakrytyk:ś"
+        },
+        {
+          "tekst": "Krzysztof Zieliński",
+          "dowod": "diakrytyk:ń"
+        },
+        {
+          "tekst": "Role for Krzysztof Zieliński",
+          "dowod": "diakrytyk:ń"
+        },
+        {
+          "tekst": "Paweł Mroczkowski",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "Role for Paweł Mroczkowski",
+          "dowod": "diakrytyk:ł"
+        },
+        {
+          "tekst": "Jan Zieliński",
+          "dowod": "diakrytyk:ń"
+        },
+        {
+          "tekst": "Role for Jan Zieliński",
+          "dowod": "diakrytyk:ń"
+        },
+        {
+          "tekst": "Katarzyna Wójcik",
+          "dowod": "diakrytyk:ó"
+        },
+        {
+          "tekst": "Role for Katarzyna Wójcik",
+          "dowod": "diakrytyk:ó"
+        }
+      ],
+      "bledy": []
+    },
+    {
+      "nr": "15",
+      "modul": "settings",
+      "trasa": "/settings/profile",
+      "url": "http://127.0.0.1:3195/settings/profile",
+      "zrzut": "15-settings-en.png",
+      "linieTekstu": 82,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    },
+    {
+      "nr": "16",
+      "modul": "partner",
+      "trasa": "/partner",
+      "url": "http://127.0.0.1:3195/partner?tab=partner-home",
+      "zrzut": "16-partner-en.png",
+      "linieTekstu": 51,
+      "polskichLinii": 0,
+      "przyklady": [],
+      "bledy": []
+    }
+  ]
+}

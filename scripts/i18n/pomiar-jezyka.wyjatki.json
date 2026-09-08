@@ -1,0 +1,91 @@
+{
+  "_opis": "Wyjatki i slowniki dla scripts/i18n/pomiar-jezyka.mjs. Edytuj TU, nie w kodzie skanera.",
+  "_wersja": "2026-09-08",
+
+  "nazwyWlasne": [
+    "Consultify", "Consultinity", "DBR77", "Teresa", "Studio", "Vegas", "Harvard", "Oxford",
+    "OKR", "OKRs", "KPI", "KPIs", "RAID", "ROI", "NPV", "IRR", "TCO", "EBITDA", "CAPEX", "OPEX",
+    "SAP", "ERP", "MES", "WMS", "CRM", "PLM", "SCADA", "PLC", "IoT", "IIoT", "RPA", "OEE",
+    "ISO", "IEC", "GDPR", "RODO", "NIS2", "SOC", "SOC2", "HIPAA", "PCI", "DSS",
+    "SIRI", "ADMA", "DRD", "Lean", "Kaizen", "Kanban", "Scrum", "Gantt", "Agile", "PMO",
+    "AI", "ML", "LLM", "GPT", "OpenAI", "Anthropic", "Claude", "Gemini", "Kimi", "DeepSeek",
+    "Excel", "Word", "PowerPoint", "Outlook", "Teams", "Slack", "Jira", "Notion", "Figma",
+    "Google", "Microsoft", "Azure", "AWS", "Railway", "GitHub", "Stripe", "Sellix",
+    "PDF", "DOCX", "XLSX", "PPTX", "CSV", "JSON", "XML", "HTML", "URL", "API", "SDK", "MCP",
+    "SSO", "SAML", "SCIM", "OAuth", "MFA", "TOTP", "JWT", "UUID", "SLA", "SOP", "BOM",
+    "PLN", "EUR", "USD", "GBP", "VAT", "NIP", "REGON", "KRS", "IBAN",
+    "Industry", "Assessment", "Discovery", "Canvas", "Deck", "Sheet", "Whiteboard",
+    "Piotr", "Kasia", "Tomek", "Irina", "Justyna",
+    "Enterprise", "Starter", "Professional", "Pro", "Trial", "Beta", "Alpha",
+    "SuperAdmin", "Admin", "Partner", "Sponsor"
+  ],
+
+  "pomijaneWartosci": [
+    "^https?://",
+    "^mailto:",
+    "^/[a-zA-Z0-9/_.-]*$",
+    "^#[0-9a-fA-F]{3,8}$",
+    "^[A-Z0-9_.:-]+$",
+    "^[0-9\\s.,%+-]+$",
+    "^\\{\\{[^}]+\\}\\}$",
+    "^[a-z][a-zA-Z0-9]*$"
+  ],
+
+  "pomijaneKlucze": [
+    "^_",
+    "\\.(url|href|link|icon|iconName|color|colour|hex|slug|code|id|key|regex|pattern|format|locale|lang|currency|testId|dataTestId)$",
+    "^(languages|locales|currencies|countries|timezones)\\."
+  ],
+
+  "pomijaneSciezki": [
+    "/__tests__/",
+    "/__mocks__/",
+    "\\.test\\.(ts|tsx|js|jsx|mjs)$",
+    "\\.spec\\.(ts|tsx|js|jsx|mjs)$",
+    "\\.stories\\.(ts|tsx)$",
+    "^dev-render/",
+    "^scripts/",
+    "^tests/",
+    "^node_modules/",
+    "^src/components/demo/",
+    "^src/data/demo",
+    "\\.d\\.ts$"
+  ],
+
+  "_uwagaSlowniki": "silne = 1 trafienie wystarczy; slabe = potrzebne 2 rozne trafienia. Slowa musza byc male literami, dopasowanie po granicy slowa, bez rozroznienia wielkosci liter.",
+
+  "polskieSilne": [
+    "nie", "oraz", "brak", "wg", "zapisano", "szkic", "jest", "sie", "się", "przez",
+    "tylko", "wszystkie", "wybierz", "anuluj", "zapisz", "usun", "usuń", "dodaj",
+    "wprowadz", "wprowadź", "pokaz", "pokaż", "ukryj", "wiecej", "więcej", "nieznany",
+    "nieznana", "nieznane", "oczekujace", "oczekujące", "zaakceptowano", "odrzucono",
+    "wymagane", "opcjonalne", "gotowe", "trwa", "prosze", "proszę", "musi", "moze", "może",
+    "czy", "ktore", "które", "ktory", "który", "jesli", "jeśli", "aby", "lub", "gdy",
+    "sprawdz", "sprawdź", "utworz", "utwórz", "edytuj", "zamknij", "otworz", "otwórz"
+  ],
+  "polskieSlabe": [
+    "nazwa", "opis", "wartosc", "wartość", "liczba", "uzytkownik", "użytkownik", "firma",
+    "klient", "zadanie", "wynik", "ocena", "inicjatywa", "wdrozenie", "wdrożenie", "koszt",
+    "przychod", "przychód", "oszczednosc", "oszczędność", "ryzyko", "dzien", "dzień", "dni",
+    "miesiac", "miesiąc", "rok", "godzina", "ostatni", "pierwszy", "nowy", "nowa", "nowe",
+    "raport", "wykres", "tabela", "arkusz", "spotkanie", "narzedzie", "narzędzie",
+    "dokument", "prezentacja", "wlasciciel", "właściciel", "termin", "postep", "postęp"
+  ],
+
+  "angielskieSilne": [
+    "the", "and", "with", "from", "this", "that", "these", "those", "your", "you",
+    "unknown", "pending", "draft", "please", "loading", "failed", "successfully",
+    "should", "would", "could", "will", "was", "were", "been", "have", "has",
+    "there", "which", "where", "when", "what", "about", "into", "than", "them",
+    "cannot", "does", "doesn", "isn", "aren", "here", "now", "again", "back"
+  ],
+  "angielskieSlabe": [
+    "save", "saved", "delete", "deleted", "create", "created", "update", "updated",
+    "edit", "cancel", "search", "select", "settings", "description", "value",
+    "name", "date", "user", "users", "company", "customer", "task", "tasks",
+    "result", "results", "score", "initiative", "cost", "revenue", "savings", "risk",
+    "day", "days", "month", "year", "hour", "last", "first", "new", "report",
+    "chart", "table", "sheet", "meeting", "tool", "document", "presentation",
+    "owner", "deadline", "progress", "close", "open", "add", "remove", "show", "hide"
+  ]
+}
