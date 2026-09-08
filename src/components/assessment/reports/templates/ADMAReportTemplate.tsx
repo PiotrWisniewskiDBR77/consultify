@@ -39,6 +39,7 @@ import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
 import { ConclusionExecutiveSummary, ConclusionGapCards, FoFRoadBar } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
 import { formatListDate } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 interface ADMAReportTemplateProps {
   data: ADMAAssessmentData;
@@ -84,6 +85,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
   showLegalNotice = true,
   conclusionSource,
 }) => {
+  const { t } = useTranslation();
   // Calculate pillar scores
   const pillarScores = (Object.keys(ADMA_PILLARS) as ADMAPillarId[]).map((pillarId) => ({
     id: pillarId,
@@ -181,10 +183,14 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 mb-8 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>ADMA (Advanced Digital Maturity Assessment)</strong> jest narzędziem opracowanym
-            przez <strong>European Commission</strong> w ramach programu{' '}
-            <strong>Digital Innovation Hubs</strong>. Wykorzystanie w celach edukacyjnych. Oficjalna
-            ocena wymaga współpracy z autoryzowanym DIH.
+            <strong>ADMA (Advanced Digital Maturity Assessment)</strong>{' '}
+            {t('assessment.reportTemplates.adma.legalNoticeA', 'is a tool developed by the')}{' '}
+            <strong>European Commission</strong>{' '}
+            {t('assessment.reportTemplates.adma.legalNoticeB', 'under the')} <strong>Digital Innovation Hubs</strong>{' '}
+            {t(
+              'assessment.reportTemplates.adma.legalNoticeC',
+              'programme. Used here for educational purposes. An official assessment requires working with an authorised DIH.'
+            )}
           </div>
         </div>
       )}
@@ -202,7 +208,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={20} />
-          Droga do Factory of the Future (FoF ≥ 4)
+          {t('assessment.reportTemplates.adma.roadToFoF', 'Road to the Factory of the Future (FoF ≥ 4)')}
         </h2>
         <FoFRoadBar
           benchmark={conclusion.fofRoad.benchmark}
@@ -227,7 +233,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} />
-          Wyniki (dowód)
+          {t('assessment.reportTemplates.common.resultsEvidence', 'Results (evidence)')}
         </h2>
         <div className="grid grid-cols-6 gap-4">
           {/* Overall Score */}
@@ -275,7 +281,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} />
-          Ocena Pięciu Filarów
+          {t('assessment.reportTemplates.adma.fivePillars', 'Five pillars assessment')}
         </h2>
         <div className="space-y-4">
           {pillarScores.map((pillar) => {
@@ -570,7 +576,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       {/* Maturity Level Legend */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">
-          Poziomy Dojrzałości ADMA
+          {t('assessment.reportTemplates.adma.maturityLevels', 'ADMA maturity levels')}
         </h2>
         <div className="grid grid-cols-5 gap-2">
           {ADMA_MATURITY_LEVELS.map((level) => (
@@ -656,7 +662,10 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                 ))}
               </div>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-3">
-                These areas require additional data collection or clarification.
+                {t(
+                  'assessment.reportTemplates.adma.dataGapsHint',
+                  'These areas require additional data collection or clarification.'
+                )}
               </p>
             </div>
           </section>

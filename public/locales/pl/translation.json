@@ -8814,6 +8814,24 @@
           "whereAreWe": "Sesja DRD, jednostka {{unit}}, poziom {{level}}. {{answered}}/{{total}} jednostek dotkniętych.",
           "why": "Oś „{{axis}}” wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy."
         }
+      },
+      "legacy": {
+        "revisionNotice": "Rewizja sesji {{id}} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).",
+        "cell": {
+          "reviewRequiredLong": "above-gap: potwierdzone poza kolejnością, wymaga przeglądu"
+        },
+        "workingChapter": "Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i targetów co Interview i Matrix.",
+        "frozen": {
+          "evidence": "Dowody: {{list}}",
+          "noReport": "Brak wygenerowanego raportu.",
+          "overallResult": "Wynik ogólny: {{value}}",
+          "participants": "Uczestnicy: {{list}}",
+          "recommendations": "Rekomendacje: {{list}}",
+          "snapshotNote": "Renderowane ze snapshotu Outputu v{{version}} — zmiana sesji po freeze nie zmieni tego raportu.",
+          "noDrafts": "Brak draftów.",
+          "reopenNote": "frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded”."
+        },
+        "evidenceCollected": "Zebrano {{count}} dowód/-ody dla tej jednostki."
       }
     },
     "glossary": {
@@ -9684,6 +9702,64 @@
       "delete": "Usuń",
       "edit": "Edytuj",
       "approve": "Zatwierdź"
+    },
+    "reportTemplates": {
+      "dbr77": {
+        "tasksPerDay": "Zadań/dzień:",
+        "avgTaskTime": "Śr. czas zadania:",
+        "errors": "Błędy:",
+        "overtime": "Nadgodziny:",
+        "kaizenPerMonth": "Kaizen/miesiąc:",
+        "rolloutTime": "Czas wdrożenia:",
+        "roleEvolution": "Ewolucja roli:",
+        "estimatedAnnualSavings": "Szacowane oszczędności roczne",
+        "methodName": "Metoda DBR77 Lean 4.0",
+        "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify.",
+        "processes": "Procesów",
+        "workstations": "Stanowisk",
+        "savingsPerYear": "PLN oszczędności/rok",
+        "roleEvolutionTitle": "Ewolucja Ról",
+        "allMetricsCollected": "Zebrano wszystkie kluczowe metryki",
+        "next": {
+          "approve": "Zatwierdź ocenę, aby odblokować generowanie inicjatyw",
+          "createInitiatives": "Utwórz inicjatywy z rekomendacji roadmapy",
+          "dataGaps": "Uzupełnij luki w danych, by podnieść pewność",
+          "gemba": "Zaplanuj kolejne przejścia gemba"
+        }
+      },
+      "common": {
+        "keyFindings": "Kluczowe ustalenia",
+        "dataGaps": "Luki w danych",
+        "nextSteps": "Następne kroki",
+        "recommendedNextSteps": "Rekomendowane Następne Kroki",
+        "shortTerm": "Krótkoterminowe (0-6 mies.)",
+        "longTerm": "Długoterminowe (6-18 mies.)",
+        "resultsEvidence": "Wyniki (dowód)",
+        "recommendations": "Rekomendacje"
+      },
+      "cmmi": {
+        "legalNoticeA": "jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego",
+        "legalNoticeB": ". Implementacja w Consultify służy wyłącznie celom edukacyjnym i wewnętrznej samooceny.",
+        "maturityLevelTitle": "Poziom Dojrzałości Organizacji",
+        "practiceAreaMatrix": "Macierz Obszarów Praktyk",
+        "improveTo": "Doskonalenie {{name}} ({{code}}) do poziomu {{level}}",
+        "reachLevel": "Osiągnięcie poziomu {{level}} CMMI",
+        "quantitativeMeasures": "Wdrożenie pomiarów ilościowych procesów",
+        "formalCertification": "Rozważenie formalnej certyfikacji CMMI"
+      },
+      "adma": {
+        "legalNoticeA": "jest narzędziem opracowanym przez",
+        "legalNoticeB": "w ramach programu",
+        "legalNoticeC": ". Wykorzystanie w celach edukacyjnych. Oficjalna ocena wymaga współpracy z autoryzowanym DIH.",
+        "roadToFoF": "Droga do fabryki przyszłości (FoF ≥ 4)",
+        "fivePillars": "Ocena Pięciu Filarów",
+        "maturityLevels": "Poziomy Dojrzałości ADMA",
+        "dataGapsHint": "Te obszary wymagają dodatkowego zebrania danych lub wyjaśnienia."
+      },
+      "siri": {
+        "legalNoticeA": "jest narzędziem opracowanym przez",
+        "legalNoticeB": "we współpracy z"
+      }
     }
   },
   "initiatives": {

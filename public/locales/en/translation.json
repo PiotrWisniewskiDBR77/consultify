@@ -9426,6 +9426,24 @@
           "whereAreWe": "DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.",
           "why": "Axis “{{axis}}” needs this unit confirmed to unlock the next levels."
         }
+      },
+      "legacy": {
+        "revisionNotice": "Revision of session {{id}} (created by a reopen — the previous Output stays untouched and is marked superseded after the next freeze).",
+        "cell": {
+          "reviewRequiredLong": "above-gap: confirmed out of order, needs review"
+        },
+        "workingChapter": "The working report chapter uses the same state of answers, evidence and targets as Interview and Matrix.",
+        "frozen": {
+          "evidence": "Evidence: {{list}}",
+          "noReport": "No report has been generated.",
+          "overallResult": "Overall result: {{value}}",
+          "participants": "Participants: {{list}}",
+          "recommendations": "Recommendations: {{list}}",
+          "snapshotNote": "Rendered from the snapshot of Output v{{version}} — changing the session after the freeze will not change this report.",
+          "noDrafts": "No drafts.",
+          "reopenNote": "frozen → active creates a NEW session (a revision); this Output stays untouched and gets the “superseded” status after the next freeze."
+        },
+        "evidenceCollected": "{{count}} piece(s) of evidence collected for this unit."
       }
     },
     "glossary": {
@@ -10280,6 +10298,64 @@
       "delete": "Delete",
       "edit": "Edit",
       "approve": "Approve"
+    },
+    "reportTemplates": {
+      "dbr77": {
+        "tasksPerDay": "Tasks/day:",
+        "avgTaskTime": "Avg. task time:",
+        "errors": "Errors:",
+        "overtime": "Overtime:",
+        "kaizenPerMonth": "Kaizen/month:",
+        "rolloutTime": "Rollout time:",
+        "roleEvolution": "Role evolution:",
+        "estimatedAnnualSavings": "Estimated annual savings",
+        "methodName": "The DBR77 Lean 4.0 method",
+        "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method.",
+        "processes": "Processes",
+        "workstations": "Workstations",
+        "savingsPerYear": "PLN saved/year",
+        "roleEvolutionTitle": "Role evolution",
+        "allMetricsCollected": "All key metrics collected",
+        "next": {
+          "approve": "Approve the assessment to unlock initiative generation",
+          "createInitiatives": "Create initiatives from the roadmap recommendations",
+          "dataGaps": "Address data gaps for higher confidence",
+          "gemba": "Schedule follow-up gemba walks"
+        }
+      },
+      "common": {
+        "keyFindings": "Key findings",
+        "dataGaps": "Data gaps",
+        "nextSteps": "Next steps",
+        "recommendedNextSteps": "Recommended next steps",
+        "shortTerm": "Short term (0–6 months)",
+        "longTerm": "Long term (6–18 months)",
+        "resultsEvidence": "Results (evidence)",
+        "recommendations": "Recommendations"
+      },
+      "cmmi": {
+        "legalNoticeA": "is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited",
+        "legalNoticeB": ". The implementation in Consultify serves educational and internal self-assessment purposes only.",
+        "maturityLevelTitle": "Organisation maturity level",
+        "practiceAreaMatrix": "Practice area matrix",
+        "improveTo": "Improve {{name}} ({{code}}) to level {{level}}",
+        "reachLevel": "Reach CMMI level {{level}}",
+        "quantitativeMeasures": "Introduce quantitative process measurement",
+        "formalCertification": "Consider formal CMMI certification"
+      },
+      "adma": {
+        "legalNoticeA": "is a tool developed by the",
+        "legalNoticeB": "under the",
+        "legalNoticeC": "programme. Used here for educational purposes. An official assessment requires working with an authorised DIH.",
+        "roadToFoF": "Road to the Factory of the Future (FoF ≥ 4)",
+        "fivePillars": "Five pillars assessment",
+        "maturityLevels": "ADMA maturity levels",
+        "dataGapsHint": "These areas require additional data collection or clarification."
+      },
+      "siri": {
+        "legalNoticeA": "is a tool developed by the",
+        "legalNoticeB": "in cooperation with"
+      }
     }
   },
   "initiatives": {
