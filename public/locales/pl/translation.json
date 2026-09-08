@@ -12152,7 +12152,7 @@
         "HANDOFF_AND_START_DATE_REQUIRED": "Wymagany przyjęty handoff i termin startu realizacji.",
         "OPEN_WORK_BLOCKS_CLOSURE": "Zamknięcie blokują otwarte zadania lub nierozstrzygnięte decyzje.",
         "GATE_BLOCKED": "Bramka gotowości niespełniona — uzupełnij: {{items}}.",
-        "AUTHOR_ONLY": "To działanie może wykonać wyłącznie autor inicjatywy.",
+        "AUTHOR_ONLY": "Tylko autor lub administrator może przesłać szkic do zatwierdzenia.",
         "INVALID_TRANSITION": "To przejście nie istnieje dla bieżącego statusu.",
         "UNEXPECTED_CURRENT_STATUS": "Status inicjatywy zmienił się w międzyczasie — odśwież widok.",
         "MISSING_TRANSITION_GATE": "To przejście nie ma zdefiniowanej bramki i nie może zostać wykonane.",

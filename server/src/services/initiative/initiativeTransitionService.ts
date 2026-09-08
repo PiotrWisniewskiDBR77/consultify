@@ -606,8 +606,20 @@ export async function executeInitiativeTransition(
           error: conditionFailure.error, rule: conditionFailure.rule,
         } };
       }
+      // DEC-453: resolved ONCE for a human actor and reused below (role-gate
+      // check) — the authorOnly carve-out (ADMIN/OWNER, or a draft with no
+      // recorded author) needs the same effectiveRoles the gate check needs,
+      // and computing it twice would be a second, driftable copy of "who is
+      // this actor" for the same request.
+      const humanAccessCtx = isSystemActor
+        ? null
+        : await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
       if (transitionDefinition.authorOnly && !isSystemActor) {
-        const authorFailure = evaluateInitiativeAuthorOnly(lockedRow, actorId);
+        const authorFailure = evaluateInitiativeAuthorOnly(
+          lockedRow,
+          actorId,
+          humanAccessCtx?.effectiveRoles
+        );
         if (authorFailure) {
           return { kind: 'error', statusCode: 403, body: {
             error: authorFailure.error, rule: authorFailure.rule,
@@ -653,7 +665,8 @@ export async function executeInitiativeTransition(
         // gate-readiness read models use to render the CTA bar. Previously this
         // was a fourth hand-rolled copy of the rule, so a drift would have shown
         // the user a button that the writer then refused.
-        const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
+        // (accessCtx already resolved above, for the authorOnly check.)
+        const accessCtx = humanAccessCtx;
         const steeringBoardEnabled = accessCtx.steeringBoardEnabled;
         const effectiveRequiredRoles = resolveGateRequiredRoles(gate, steeringBoardEnabled);
 

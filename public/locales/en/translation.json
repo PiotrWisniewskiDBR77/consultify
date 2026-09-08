@@ -12710,7 +12710,7 @@
         "HANDOFF_AND_START_DATE_REQUIRED": "An accepted handoff and a start date are required.",
         "OPEN_WORK_BLOCKS_CLOSURE": "Open tasks or unresolved decisions block closure.",
         "GATE_BLOCKED": "Gate readiness not met — complete: {{items}}.",
-        "AUTHOR_ONLY": "Only the initiative author can perform this action.",
+        "AUTHOR_ONLY": "Only the initiative author or an organization admin can submit a draft for approval.",
         "INVALID_TRANSITION": "This transition does not exist for the current status.",
         "UNEXPECTED_CURRENT_STATUS": "The status changed meanwhile — refresh the view.",
         "MISSING_TRANSITION_GATE": "This transition has no governed gate and cannot run.",

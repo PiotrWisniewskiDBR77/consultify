@@ -94,8 +94,26 @@ export const RACI_ROLE_TOKENS = {
 export type RaciLetter = keyof typeof RACI_ROLE_TOKENS;
 export type RaciRoleToken = (typeof RACI_ROLE_TOKENS)[RaciLetter];
 
-/** Admin-band roles. The resolver injects `ADMIN` for system admins. */
-const ADMIN_ROLES = new Set(['ADMIN', 'SUPERADMIN']);
+/**
+ * Admin-band roles. The resolver injects `ADMIN` for system admins (this
+ * folds in org OWNER — `initiativeAccessResolver.normalizeSystemRoleHint`
+ * maps `OWNER` to `SUPERADMIN` before it ever reaches `effectiveRoles`).
+ * Exported so DEC-453's `authorOnly` bypass (evaluateInitiativeAuthorOnly,
+ * initiativeTransitionConditions.ts) reads the exact same admin definition
+ * `canExecuteGate` already uses for the role-based gate check — one place
+ * decides "is this actor an org admin", not two that can drift.
+ */
+export const ADMIN_ROLES = new Set(['ADMIN', 'SUPERADMIN']);
+
+/**
+ * True when any of the actor's effective roles is in the admin band.
+ * DEC-453: also used to let an ADMIN/OWNER execute an `authorOnly` transition
+ * (e.g. SUBMIT_FOR_REVIEW) on an initiative they didn't create — the same
+ * carve-out `canExecuteGate` already gives admins for the role check below.
+ */
+export function hasOrgAdminRole(effectiveRoles: readonly string[] | null | undefined): boolean {
+  return (effectiveRoles || []).some((role) => ADMIN_ROLES.has(upper(role)));
+}
 
 /**
  * Allow-list for artifact EDIT capability (top bar + cards + AI + context
@@ -264,7 +282,7 @@ export function canExecuteGate(input: GateExecutionInput): boolean {
   const roles = uniq((input.effectiveRoles || []).map(upper).filter(Boolean));
   if (input.conditionSatisfied === false) return false;
   if (!input.gate) return false;
-  if (roles.some((role) => ADMIN_ROLES.has(role))) return true;
+  if (hasOrgAdminRole(roles)) return true;
   const required = resolveGateRequiredRoles(input.gate, input.steeringBoardEnabled);
   return required.some((role) => roles.includes(upper(role)));
 }
