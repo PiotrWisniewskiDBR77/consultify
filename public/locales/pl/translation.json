@@ -20885,6 +20885,10 @@
     },
     "sources": {
       "details": "Szczegóły źródeł"
+    },
+    "toolSteps": {
+      "title": "Kroki narzędzi",
+      "ariaLabel": "Kroki narzędzi Teresy"
     }
   },
   "aiChat": {
@@ -32594,7 +32598,8 @@
       "noMutationsYet": "Brak propozycji mutacji.",
       "commit": "Zatwierdź",
       "versionLineage": "Historia wersji",
-      "provenanceFooter": "Stopka proweniencji"
+      "provenanceFooter": "Stopka proweniencji",
+      "runtimeDisabledHint": "Środowisko uruchomieniowe artefaktów wymaga ustawienia <0>ENABLE_V8_GLOBAL=true</0> na serwerze. Skontaktuj się z administratorem, aby włączyć tę funkcję."
     },
     "wave6ContextLearningPanel": {
       "wave6ContextAndLearning": "Wave 6 — Kontekst i uczenie",
@@ -33270,6 +33275,220 @@
       "ai": {
         "desc": "Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami."
       }
+    },
+    "studio": {
+      "reviewer": {
+        "unnamed": "Użytkownik"
+      },
+      "sheetDefaultName": "Arkusz {{index}}",
+      "sources": {
+        "unknown": "Nieznane źródło",
+        "groupEvidence": "Dowód",
+        "groupBinding": "Powiązanie zakresu",
+        "title": "Źródła i założenia",
+        "subtitle": "Pochodzenie danych zapisane razem z tym skoroszytem. Brak wpisu oznacza UNKNOWN.",
+        "bindLabel": "Powiąż źródło z zaznaczeniem",
+        "namePlaceholder": "Nazwa źródła",
+        "refLabel": "Odnośnik do źródła",
+        "refPlaceholder": "URL lub identyfikator (opcjonalnie)",
+        "bindAction": "Powiąż z zaznaczeniem",
+        "selectFirst": "Najpierw zaznacz komórkę lub zakres.",
+        "bindFailed": "Nie udało się zapisać powiązania. Spróbuj ponownie.",
+        "goTo": "Przejdź do źródła {{label}}",
+        "unbind": "Usuń powiązanie",
+        "unknownEmpty": "UNKNOWN — do skoroszytu nie przypisano źródeł ani referencji dowodowych."
+      },
+      "error": {
+        "rename": "Nie udało się zmienić nazwy skoroszytu. Odśwież dane i spróbuj ponownie.",
+        "sheetStructure": "Nie udało się zmienić struktury arkuszy. Spróbuj ponownie.",
+        "replace": "Nie udało się wykonać zamiany. Żadna komórka nie została zmieniona.",
+        "singleSheetStructure": "Nie udało się zmienić struktury arkusza. Spróbuj ponownie.",
+        "format": "Nie udało się sformatować zaznaczenia. Spróbuj ponownie.",
+        "undo": "Nie udało się cofnąć zmiany arkuszy.",
+        "redo": "Nie udało się ponowić zmiany arkuszy."
+      },
+      "confirm": {
+        "restore": "Przywrócić wersję {{version}} jako nową wersję skoroszytu?",
+        "deleteRows": "Usunąć {{count}} zaznaczonych wierszy z danymi?",
+        "deleteColumns": "Usunąć {{count}} zaznaczonych kolumn z danymi?",
+        "deleteSheet": "Usunąć arkusz „{{name}}” z danymi?"
+      },
+      "sheetFallback": "Arkusz",
+      "classification": {
+        "public": "Publiczny",
+        "confidential": "Poufny",
+        "internal": "Wewnętrzny"
+      },
+      "lifecycle": {
+        "inReview": "Do przeglądu",
+        "approved": "Zatwierdzony",
+        "final": "Finalny",
+        "draft": "Szkic"
+      },
+      "share": {
+        "manage": "Zarządzaj udostępnieniem",
+        "share": "Udostępnij",
+        "title": "Udostępnianie skoroszytu",
+        "hint": "Publiczny link działa wyłącznie dla klasyfikacji Publiczny. Ponowne utworzenie rotuje token i natychmiast unieważnia poprzedni.",
+        "active": "Aktywny",
+        "inactive": "Brak aktywnego linku",
+        "expires": "Wygasa",
+        "copyNew": "Kopiuj nowy link",
+        "needsPublic": "Najpierw ustaw klasyfikację Publiczny",
+        "rotate": "Rotuj link i skopiuj",
+        "create": "Utwórz link na 7 dni",
+        "error": "Operacja została odrzucona. Sprawdź klasyfikację, uprawnienia i aktualny stan."
+      },
+      "copyInternalLink": "Kopiuj link wewnętrzny",
+      "exportXlsx": "Eksportuj XLSX",
+      "exportTooltipFinal": "Eksport finalny z aktualnie zatwierdzonej wersji",
+      "exportTooltipDraft": "Eksport roboczy; finalny wymaga aktualnego zatwierdzenia",
+      "menu": {
+        "copy": "Kopiuj",
+        "cut": "Wytnij",
+        "paste": "Wklej",
+        "addComment": "Dodaj komentarz",
+        "showSource": "Pokaż źródło",
+        "clearRange": "Wyczyść zakres",
+        "clearContents": "Wyczyść zawartość",
+        "noSources": "Skoroszyt nie ma zapisanych źródeł"
+      },
+      "comments": {
+        "onCell": "Komentarz do {{address}}",
+        "loading": "Wczytywanie komentarzy…",
+        "resolve": "Rozwiąż",
+        "empty": "Brak otwartych komentarzy.",
+        "onWorkbook": "Komentarz do skoroszytu",
+        "saveFailed": "Nie udało się zapisać komentarza. Treść pozostała w polu."
+      },
+      "completeSection": "Uzupełnij tę sekcję",
+      "addSheet": "Dodaj arkusz",
+      "renameSheetLabel": "Nowa nazwa arkusza {{name}}",
+      "sheetHiddenSuffix": "ukryty",
+      "sheetActionsLabel": "Akcje arkusza {{name}}",
+      "sheetMenu": {
+        "rename": "Zmień nazwę",
+        "duplicate": "Duplikuj",
+        "moveUp": "Przenieś wyżej",
+        "moveDown": "Przenieś niżej",
+        "delete": "Usuń",
+        "show": "Pokaż",
+        "hide": "Ukryj"
+      },
+      "workbookFallback": "Skoroszyt",
+      "saving": "Zapisywanie…",
+      "qa": {
+        "title": "Kontrola jakości",
+        "subtitle": "Konkretne problemy z możliwością przejścia do arkusza lub komórki.",
+        "empty": "Brak otwartych problemów QA.",
+        "unavailable": "Raport QA nie jest dostępny dla tej wersji."
+      },
+      "wholeWorkbook": "Cały skoroszyt",
+      "revision": {
+        "cellEdit": "Edycja komórki",
+        "rangeEdit": "Edycja zakresu",
+        "rangeClear": "Wyczyszczenie zakresu",
+        "replaceAll": "Znajdź i zamień",
+        "undo": "Cofnięcie zmiany",
+        "restore": "Przywrócenie wersji",
+        "sheetAdd": "Dodanie arkusza",
+        "sheetRename": "Zmiana nazwy arkusza",
+        "sheetDelete": "Usunięcie arkusza",
+        "sheetDuplicate": "Duplikacja arkusza",
+        "sheetReorder": "Zmiana kolejności arkuszy"
+      },
+      "versions": {
+        "title": "Historia wersji",
+        "current": "Bieżąca wersja: {{version}}",
+        "loading": "Wczytywanie historii…",
+        "error": "Nie udało się wczytać lub przywrócić wersji. Odśwież historię i spróbuj ponownie.",
+        "item": "Wersja {{version}}",
+        "currentSuffix": "bieżąca",
+        "restore": "Przywróć",
+        "empty": "Brak zapisanych rewizji skoroszytu."
+      },
+      "refresh": "Odśwież",
+      "tab": {
+        "sheets": "Arkusze",
+        "comments": "Komentarze"
+      },
+      "saveErrorBanner": "Nie udało się zapisać zmiany na serwerze. Wartość widoczna w siatce NIE jest zapisana — odśwież arkusz i wpisz ją ponownie.",
+      "search": {
+        "replaceRegion": "Znajdź i zamień w skoroszycie",
+        "findRegion": "Znajdź w skoroszycie",
+        "find": "Znajdź",
+        "close": "Zamknij wyszukiwanie",
+        "queryLabel": "Szukany tekst",
+        "queryPlaceholder": "Wartość lub formuła",
+        "previous": "Poprzedni",
+        "next": "Następny",
+        "replaceLabel": "Zamień na",
+        "replacePlaceholder": "Nowa wartość",
+        "replaceAll": "Zamień wszystko ({{count}})",
+        "scopeLabel": "Zakres wyszukiwania",
+        "scopeSheet": "Bieżący arkusz",
+        "matchCase": "Wielkość liter",
+        "wholeCell": "Cała komórka",
+        "position": "{{index}} z {{total}}",
+        "noResults": "Brak wyników",
+        "hint": "Wpisz szukany tekst"
+      },
+      "gridLoadFailed": "Nie udało się wczytać komórek skoroszytu.",
+      "rightPanel": {
+        "aria": "Szczegóły skoroszytu",
+        "actions": "Akcje",
+        "properties": "Właściwości",
+        "sourcesEmpty": "Ten skoroszyt nie ma jeszcze podpiętych źródeł."
+      },
+      "detail": {
+        "fileName": "Nazwa pliku",
+        "format": "Format",
+        "classification": "Klasyfikacja",
+        "status": "Status",
+        "version": "Wersja"
+      },
+      "toolbarAria": "Narzędzia arkusza",
+      "stats": {
+        "aria": "Statystyki zaznaczenia",
+        "sum": "Suma",
+        "average": "Średnia",
+        "count": "Licznik"
+      },
+      "zoom": {
+        "aria": "Powiększenie arkusza",
+        "out": "Pomniejsz arkusz",
+        "fit": "Dopasuj arkusz",
+        "in": "Powiększ arkusz"
+      },
+      "governance": {
+        "classificationTitle": "Klasyfikacja skoroszytu",
+        "statusTitle": "Status skoroszytu",
+        "classificationHint": "Publiczny link jest dostępny wyłącznie dla materiałów publicznych.",
+        "statusHint": "Zatwierdzenie i status finalny wymagają aktualnej akceptacji.",
+        "needsApproval": "Najpierw uzyskaj aktualne zatwierdzenie",
+        "currentValue": "Aktualny",
+        "flow": "Obieg zatwierdzania",
+        "downgradeReason": "Uzasadnienie obniżenia klasyfikacji",
+        "downgradePlaceholder": "Wymagane przy zmianie na mniej restrykcyjną",
+        "error": "Zmiana została odrzucona przez politykę lub wystąpił konflikt wersji."
+      },
+      "approval": {
+        "inReview": "W przeglądzie",
+        "current": "Aktualne zatwierdzenie",
+        "stale": "Zatwierdzenie nieaktualne",
+        "rejected": "Zwrócony do poprawy",
+        "notSubmitted": "Nieprzekazany"
+      },
+      "review": {
+        "chooseReviewer": "Wybierz recenzenta",
+        "searchPlaceholder": "Szukaj po nazwie lub e-mailu",
+        "noReviewer": "Brak dostępnego recenzenta innego niż autor.",
+        "submit": "Przekaż do przeglądu",
+        "approve": "Zatwierdź",
+        "rejectReason": "Powód zwrotu do poprawy",
+        "reject": "Zwróć do poprawy"
+      },
+      "contextMenuAria": "Akcje zaznaczenia {{address}}"
     }
   },
   "aiActions": {
@@ -46481,7 +46700,9 @@
       "noResults": "Brak wyników",
       "noMatch": "Żaden klocek nie pasuje do „{{query}}\".",
       "comingSoon": "Wkrótce",
-      "approval": "zgoda"
+      "approval": "zgoda",
+      "frozen": "Plan już wystartował — schemat jest zamrożony.",
+      "hint": "Kliknij, żeby dodać na koniec. Przeciągnij, żeby wstawić w wybrane miejsce."
     },
     "canvas": {
       "vaultLevelPlaceholder": "— wybierz sejf —",
@@ -47849,5 +48070,61 @@
     "inDevelopment": "Ta funkcja jest w budowie.",
     "scopeInPlaceholder": "Wypisz pozycje objęte pilotażem…",
     "noGoBody": "Pilotaż nieudany. Przemyśl strategię ponownie."
+  },
+  "agentWorkshop": {
+    "planStatus": {
+      "planning": "Schemat w edycji",
+      "scheduled": "Zaplanowany",
+      "awaitingApproval": "Czeka na zgodę",
+      "executing": "W trakcie wykonania",
+      "paused": "Wstrzymany",
+      "completed": "Zakończony",
+      "completedWithErrors": "Zakończony z błędami",
+      "failed": "Nieudany",
+      "cancelled": "Zatrzymany"
+    },
+    "stepStatus": {
+      "pending": "Oczekuje",
+      "running": "W toku",
+      "completed": "Gotowe",
+      "failed": "Błąd",
+      "skipped": "Pominięty"
+    },
+    "controls": {
+      "ariaWithTitle": "Sterowanie agentem — {{title}}",
+      "aria": "Sterowanie agentem",
+      "planningHint": "Schemat jest edytowalny. „Uruchom proces\" zapisuje go w backendzie i startuje wykonanie."
+    },
+    "section": {
+      "controls": "Sterowanie",
+      "progress": "Postęp",
+      "approvals": "Zgody",
+      "log": "Przebieg",
+      "report": "Raport"
+    },
+    "approvals": {
+      "empty": "Żaden krok nie czeka na zgodę.",
+      "step": "Krok {{index}}"
+    },
+    "log": {
+      "empty": "Brak kroków — schemat jest pusty."
+    },
+    "report": {
+      "empty": "Raport pojawi się po zakończeniu."
+    },
+    "action": {
+      "run": "Uruchom proces",
+      "schedule": "Zaplanuj na termin",
+      "stop": "Zatrzymaj",
+      "approveStep": "Zatwierdź krok"
+    },
+    "schedule": {
+      "ariaLabel": "Data i godzina uruchomienia"
+    },
+    "progress": {
+      "now": "Teraz — krok {{index}} z {{total}}",
+      "notStarted": "Proces jeszcze nie wystartował.",
+      "noCurrentStep": "Brak kroku w toku."
+    }
   }
 }

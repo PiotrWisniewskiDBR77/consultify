@@ -1,6 +1,6 @@
 import { Check, FileText, GitBranch, RefreshCw, X } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -258,19 +258,16 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           {t('aios.wave5ArtifactRuntimePanel.artifactsUnavailable')}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-          {isPolish ? (
-            <>
-              Środowisko uruchomieniowe artefaktów wymaga ustawienia{' '}
-              <code className="font-mono">ENABLE_V8_GLOBAL=true</code> na serwerze. Skontaktuj się z
-              administratorem, aby włączyć tę funkcję.
-            </>
-          ) : (
-            <>
-              The Artifacts runtime requires{' '}
-              <code className="font-mono">ENABLE_V8_GLOBAL=true</code> on the server. Contact your
-              administrator to enable this feature.
-            </>
-          )}
+          {/*
+            J1 (2026-09-08): przedtem `isPolish ? ... : ...` — dwa warianty
+            zdania zaszyte wprost w JSX, poza zasiegiem slownika. Teraz jedno
+            zdanie z <0> jako znacznikiem kodu; wersja PL w pl/translation.json.
+          */}
+          <Trans
+            i18nKey="aios.wave5ArtifactRuntimePanel.runtimeDisabledHint"
+            defaults="The Artifacts runtime requires <0>ENABLE_V8_GLOBAL=true</0> on the server. Contact your administrator to enable this feature."
+            components={[<code key="flag" className="font-mono" />]}
+          />
         </p>
         <pre className="mt-2 text-[10px] text-slate-400 dark:text-slate-600 whitespace-pre-wrap max-w-xs">
           {loadError}

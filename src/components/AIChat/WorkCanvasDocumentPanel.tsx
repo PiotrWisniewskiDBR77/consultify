@@ -4371,7 +4371,7 @@ function WorkCanvasMarkdownDocumentPanel({
                               rel="noopener noreferrer"
                               className="shrink-0 font-medium text-sky-600 hover:underline dark:text-sky-400"
                             >
-                              Otwórz
+                              {t('common.open', 'Open')}
                             </a>
                           </div>
                         );

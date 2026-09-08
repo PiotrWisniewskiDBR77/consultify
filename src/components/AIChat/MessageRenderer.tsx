@@ -1181,7 +1181,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   )}
                 </div>
-              ) : aiProviderError ? null : ( // CHAT-OWN-016: tresc bledu pokazuje blok wyzej — nie dublujemy jej markdownem
+              ) : aiProviderError ? null : ( // CHAT-OWN-016: blok wyzej juz pokazuje tresc bledu; markdown jej powtarzac ma zakaz
                 <>
                   {(() => {
                     const ideaHintRegex = /💡\s*IDEA_HINT:\s*(.+?)\s*\|\s*(.+)/g;

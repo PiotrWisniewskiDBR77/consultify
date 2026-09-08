@@ -1,15 +1,17 @@
 import { CheckCircle2, Clock, Loader2, ShieldX, XCircle } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ToolStepEvent } from './toolSteps';
 
 export type ToolStep = Pick<ToolStepEvent, 'toolName' | 'status' | 'costUsd'>;
 
 export function ToolStepList({ steps }: { steps: ToolStep[] }): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <div className="not-prose mb-3 rounded-lg border border-c-border bg-c-surface p-3 text-c-text">
-      <div className="mb-2 text-xs font-semibold">Kroki narzędzi</div>
-      <ol className="space-y-2" aria-label="Kroki narzędzi Teresy">
+      <div className="mb-2 text-xs font-semibold">{t('chat.toolSteps.title', 'Tool steps')}</div>
+      <ol className="space-y-2" aria-label={t('chat.toolSteps.ariaLabel', "Teresa's tool steps")}>
         {steps.map((step, index) => {
           const Icon =
             step.status === 'running'

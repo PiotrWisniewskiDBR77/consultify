@@ -19583,6 +19583,10 @@
     },
     "sources": {
       "details": "Sources details"
+    },
+    "toolSteps": {
+      "title": "Tool steps",
+      "ariaLabel": "Teresa's tool steps"
     }
   },
   "aiChat": {
@@ -30342,7 +30346,8 @@
       "noMutationsYet": "No mutations yet.",
       "commit": "Commit",
       "versionLineage": "Version Lineage",
-      "provenanceFooter": "Provenance Footer"
+      "provenanceFooter": "Provenance Footer",
+      "runtimeDisabledHint": "The Artifacts runtime requires <0>ENABLE_V8_GLOBAL=true</0> on the server. Contact your administrator to enable this feature."
     },
     "wave6ContextLearningPanel": {
       "wave6ContextAndLearning": "Wave 6 Context and Learning",
@@ -30980,6 +30985,220 @@
       "loading": "Loading...",
       "refresh": "Refresh",
       "restore": "Restore"
+    },
+    "studio": {
+      "reviewer": {
+        "unnamed": "User"
+      },
+      "sheetDefaultName": "Sheet {{index}}",
+      "sources": {
+        "unknown": "Unknown source",
+        "groupEvidence": "Evidence",
+        "groupBinding": "Range binding",
+        "title": "Sources and assumptions",
+        "subtitle": "Data provenance stored with this workbook. No entry means UNKNOWN.",
+        "bindLabel": "Bind a source to the selection",
+        "namePlaceholder": "Source name",
+        "refLabel": "Source reference",
+        "refPlaceholder": "URL or identifier (optional)",
+        "bindAction": "Bind to selection",
+        "selectFirst": "Select a cell or a range first.",
+        "bindFailed": "Failed to save the binding. Please try again.",
+        "goTo": "Go to source {{label}}",
+        "unbind": "Remove binding",
+        "unknownEmpty": "UNKNOWN — no sources or evidence references are attached to this workbook."
+      },
+      "error": {
+        "rename": "Failed to rename the workbook. Refresh the data and try again.",
+        "sheetStructure": "Failed to change the sheet structure. Please try again.",
+        "replace": "The replacement failed. No cell was changed.",
+        "singleSheetStructure": "Failed to change the sheet structure. Please try again.",
+        "format": "Failed to format the selection. Please try again.",
+        "undo": "Failed to undo the sheet change.",
+        "redo": "Failed to redo the sheet change."
+      },
+      "confirm": {
+        "restore": "Restore version {{version}} as a new workbook version?",
+        "deleteRows": "Delete {{count}} selected rows with data?",
+        "deleteColumns": "Delete {{count}} selected columns with data?",
+        "deleteSheet": "Delete the sheet “{{name}}” with its data?"
+      },
+      "sheetFallback": "Sheet",
+      "classification": {
+        "public": "Public",
+        "confidential": "Confidential",
+        "internal": "Internal"
+      },
+      "lifecycle": {
+        "inReview": "In review",
+        "approved": "Approved",
+        "final": "Final",
+        "draft": "Draft"
+      },
+      "share": {
+        "manage": "Manage sharing",
+        "share": "Share",
+        "title": "Workbook sharing",
+        "hint": "A public link works only for the Public classification. Creating it again rotates the token and immediately invalidates the previous one.",
+        "active": "Active",
+        "inactive": "No active link",
+        "expires": "Expires",
+        "copyNew": "Copy the new link",
+        "needsPublic": "Set the Public classification first",
+        "rotate": "Rotate the link and copy",
+        "create": "Create a 7-day link",
+        "error": "The operation was rejected. Check the classification, permissions and current state."
+      },
+      "copyInternalLink": "Copy internal link",
+      "exportXlsx": "Export XLSX",
+      "exportTooltipFinal": "Final export from the currently approved version",
+      "exportTooltipDraft": "Draft export; a final one needs a current approval",
+      "menu": {
+        "copy": "Copy",
+        "cut": "Cut",
+        "paste": "Paste",
+        "addComment": "Add comment",
+        "showSource": "Show source",
+        "clearRange": "Clear range",
+        "clearContents": "Clear contents",
+        "noSources": "This workbook has no saved sources"
+      },
+      "comments": {
+        "onCell": "Comment on {{address}}",
+        "loading": "Loading comments…",
+        "resolve": "Resolve",
+        "empty": "No open comments.",
+        "onWorkbook": "Comment on the workbook",
+        "saveFailed": "Failed to save the comment. The text is still in the field."
+      },
+      "completeSection": "Complete this section",
+      "addSheet": "Add sheet",
+      "renameSheetLabel": "New name for sheet {{name}}",
+      "sheetHiddenSuffix": "hidden",
+      "sheetActionsLabel": "Sheet actions: {{name}}",
+      "sheetMenu": {
+        "rename": "Rename",
+        "duplicate": "Duplicate",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "delete": "Delete",
+        "show": "Show",
+        "hide": "Hide"
+      },
+      "workbookFallback": "Workbook",
+      "saving": "Saving…",
+      "qa": {
+        "title": "Quality control",
+        "subtitle": "Concrete issues with a jump to the sheet or the cell.",
+        "empty": "No open QA issues.",
+        "unavailable": "The QA report is not available for this version."
+      },
+      "wholeWorkbook": "Whole workbook",
+      "revision": {
+        "cellEdit": "Cell edit",
+        "rangeEdit": "Range edit",
+        "rangeClear": "Range cleared",
+        "replaceAll": "Find and replace",
+        "undo": "Change undone",
+        "restore": "Version restored",
+        "sheetAdd": "Sheet added",
+        "sheetRename": "Sheet renamed",
+        "sheetDelete": "Sheet deleted",
+        "sheetDuplicate": "Sheet duplicated",
+        "sheetReorder": "Sheets reordered"
+      },
+      "versions": {
+        "title": "Version history",
+        "current": "Current version: {{version}}",
+        "loading": "Loading history…",
+        "error": "Failed to load or restore the version. Refresh the history and try again.",
+        "item": "Version {{version}}",
+        "currentSuffix": "current",
+        "restore": "Restore",
+        "empty": "No saved workbook revisions."
+      },
+      "refresh": "Refresh",
+      "tab": {
+        "sheets": "Sheets",
+        "comments": "Comments"
+      },
+      "saveErrorBanner": "Failed to save the change on the server. The value shown in the grid is NOT saved — refresh the sheet and enter it again.",
+      "search": {
+        "replaceRegion": "Find and replace in the workbook",
+        "findRegion": "Find in the workbook",
+        "find": "Find",
+        "close": "Close search",
+        "queryLabel": "Search text",
+        "queryPlaceholder": "Value or formula",
+        "previous": "Previous",
+        "next": "Next",
+        "replaceLabel": "Replace with",
+        "replacePlaceholder": "New value",
+        "replaceAll": "Replace all ({{count}})",
+        "scopeLabel": "Search scope",
+        "scopeSheet": "Current sheet",
+        "matchCase": "Match case",
+        "wholeCell": "Whole cell",
+        "position": "{{index}} of {{total}}",
+        "noResults": "No results",
+        "hint": "Type the text to find"
+      },
+      "gridLoadFailed": "Failed to load the workbook cells.",
+      "rightPanel": {
+        "aria": "Workbook details",
+        "actions": "Actions",
+        "properties": "Properties",
+        "sourcesEmpty": "This workbook has no sources attached yet."
+      },
+      "detail": {
+        "fileName": "File name",
+        "format": "Format",
+        "classification": "Classification",
+        "status": "Status",
+        "version": "Version"
+      },
+      "toolbarAria": "Sheet tools",
+      "stats": {
+        "aria": "Selection statistics",
+        "sum": "Sum",
+        "average": "Average",
+        "count": "Count"
+      },
+      "zoom": {
+        "aria": "Sheet zoom",
+        "out": "Zoom out",
+        "fit": "Fit sheet",
+        "in": "Zoom in"
+      },
+      "governance": {
+        "classificationTitle": "Workbook classification",
+        "statusTitle": "Workbook status",
+        "classificationHint": "A public link is available only for public materials.",
+        "statusHint": "Approval and the final status require a current sign-off.",
+        "needsApproval": "Get a current approval first",
+        "currentValue": "Current",
+        "flow": "Approval flow",
+        "downgradeReason": "Justification for lowering the classification",
+        "downgradePlaceholder": "Required when moving to a less restrictive level",
+        "error": "The change was rejected by policy, or a version conflict occurred."
+      },
+      "approval": {
+        "inReview": "In review",
+        "current": "Current approval",
+        "stale": "Approval out of date",
+        "rejected": "Sent back for changes",
+        "notSubmitted": "Not submitted"
+      },
+      "review": {
+        "chooseReviewer": "Choose a reviewer",
+        "searchPlaceholder": "Search by name or e-mail",
+        "noReviewer": "No reviewer other than the author is available.",
+        "submit": "Submit for review",
+        "approve": "Approve",
+        "rejectReason": "Reason for sending back",
+        "reject": "Send back for changes"
+      },
+      "contextMenuAria": "Selection actions: {{address}}"
     }
   },
   "aiActions": {
@@ -43919,7 +44138,9 @@
       "noResults": "No results",
       "noMatch": "No block matches \"{{query}}\".",
       "comingSoon": "Coming soon",
-      "approval": "approval"
+      "approval": "approval",
+      "frozen": "The plan already started — the diagram is frozen.",
+      "hint": "Click to append at the end. Drag to insert at a chosen position."
     },
     "canvas": {
       "vaultLevelPlaceholder": "— choose a vault —",
@@ -45273,5 +45494,61 @@
     "inDevelopment": "This feature is in development.",
     "scopeInPlaceholder": "List items included in the pilot…",
     "noGoBody": "Pilot failed. Re-evaluate strategy."
+  },
+  "agentWorkshop": {
+    "planStatus": {
+      "planning": "Diagram in edit",
+      "scheduled": "Scheduled",
+      "awaitingApproval": "Awaiting approval",
+      "executing": "Running",
+      "paused": "Paused",
+      "completed": "Completed",
+      "completedWithErrors": "Completed with errors",
+      "failed": "Failed",
+      "cancelled": "Stopped"
+    },
+    "stepStatus": {
+      "pending": "Pending",
+      "running": "In progress",
+      "completed": "Done",
+      "failed": "Error",
+      "skipped": "Skipped"
+    },
+    "controls": {
+      "ariaWithTitle": "Agent controls — {{title}}",
+      "aria": "Agent controls",
+      "planningHint": "The diagram is editable. “Run the process” saves it on the server and starts the run."
+    },
+    "section": {
+      "controls": "Controls",
+      "progress": "Progress",
+      "approvals": "Approvals",
+      "log": "Run log",
+      "report": "Report"
+    },
+    "approvals": {
+      "empty": "No step is waiting for approval.",
+      "step": "Step {{index}}"
+    },
+    "log": {
+      "empty": "No steps — the diagram is empty."
+    },
+    "report": {
+      "empty": "The report appears once the run finishes."
+    },
+    "action": {
+      "run": "Run the process",
+      "schedule": "Schedule for a date",
+      "stop": "Stop",
+      "approveStep": "Approve step"
+    },
+    "schedule": {
+      "ariaLabel": "Run date and time"
+    },
+    "progress": {
+      "now": "Now — step {{index}} of {{total}}",
+      "notStarted": "The process has not started yet.",
+      "noCurrentStep": "No step is running."
+    }
   }
 }
