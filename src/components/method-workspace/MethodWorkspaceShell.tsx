@@ -138,7 +138,7 @@ function viewModeOptions(
   return [
     { id: 'interview', label: t('methodWorkspace.tabs.interview', 'Wywiad'), icon: <MessageSquareText size={13} /> },
     { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Macierz'), icon: <LayoutGrid size={13} /> },
-    { id: 'report', label: t('methodWorkspace.tabs.report', 'Raport'), icon: <FileText size={13} /> },
+    { id: 'report', label: t('methodWorkspace.tabs.report', 'Report'), icon: <FileText size={13} /> },
   ];
 }
 
@@ -224,7 +224,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         data-testid="method-workspace-loading"
         className="flex h-full items-center justify-center text-sm text-c-text-muted"
       >
-        {t('methodWorkspace.loading', 'Ładowanie sesji…')}
+        {t('methodWorkspace.loading', 'Loading session…')}
       </div>
     );
   }
@@ -255,7 +255,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <LogOut size={13} />
-          {t('methodWorkspace.exit', 'Wyjdź')}
+          {t('methodWorkspace.exit', 'Exit')}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -290,7 +290,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             onClick={() => setMenu3Open((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menu3Open}
-            aria-label={t('methodWorkspace.moreOptions', 'Więcej opcji')}
+            aria-label={t('methodWorkspace.moreOptions', 'More options')}
             className="rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <MoreVertical size={16} />
@@ -305,7 +305,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                {t('methodWorkspace.menu.duplicate', 'Duplikuj jako nową')}
+                {t('methodWorkspace.menu.duplicate', 'Duplicate as new')}
               </button>
               <button
                 type="button"
@@ -319,7 +319,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                {t('methodWorkspace.menu.share', 'Udostępnij / kopiuj link')}
+                {t('methodWorkspace.menu.share', 'Share / copy link')}
               </button>
               <button
                 type="button"
@@ -418,7 +418,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-c-danger" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-c-text">
-              {t('methodWorkspace.saveFailedToast', 'Nie udało się zapisać — spróbuj ponownie')}
+              {t('methodWorkspace.saveFailedToast', 'Could not save — try again')}
             </p>
             {saveErrorMessage && (
               <p className="mt-0.5 text-xs text-c-text-muted">{saveErrorMessage}</p>
@@ -429,14 +429,14 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 onClick={onSaveRetry}
                 className="rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs font-semibold text-c-text hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                {t('methodWorkspace.saveRetry', 'Ponów zapis')}
+                {t('methodWorkspace.saveRetry', 'Retry save')}
               </button>
               <button
                 type="button"
                 onClick={onSaveStay}
                 className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                {t('methodWorkspace.saveDismiss', 'Zamknij')}
+                {t('methodWorkspace.saveDismiss', 'Dismiss')}
               </button>
             </div>
           </div>
@@ -462,7 +462,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             total: readiness.totalUnits,
           })}
           {readiness.unitsMissingEvidence > 0 &&
-            ` · ${t('methodWorkspace.unitsMissingEvidence', '{{count}} bez dowodu', {
+            ` · ${t('methodWorkspace.unitsMissingEvidence', '{{count}} without evidence', {
               count: readiness.unitsMissingEvidence,
             })}`}
         </div>
