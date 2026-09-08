@@ -12249,6 +12249,7 @@
     },
     "planSolver": {
       "selected": "Solver wybrał {{period}}: {{dependency}}; okno inicjatywy obejmuje ten okres; {{capacity}}. Do potwierdzenia przez człowieka.",
+      "unknownCode": "Uzasadnienie: kod {{code}}",
       "dependency": {
         "noPredecessor": "brak zaplanowanego poprzednika",
         "afterDependency": "po okresie poprzednika ({{period}})"

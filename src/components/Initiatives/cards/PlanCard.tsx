@@ -883,6 +883,7 @@ export function PlanCard({
           busy={busy}
           proposal={proposalRows ?? null}
           proposalConflicts={proposalConflicts}
+          resolveName={nameOf}
           savedLabel={savedLabel}
           onClose={() => setGenerator(false)}
           onGenerate={(input) => (onGenerate ? onGenerate(input) : onAnalyze(input.mode))}

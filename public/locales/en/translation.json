@@ -12807,6 +12807,7 @@
     },
     "planSolver": {
       "selected": "The solver picked {{period}}: {{dependency}}; the initiative window intersects that period; {{capacity}}. Awaiting human confirmation.",
+      "unknownCode": "Rationale: code {{code}}",
       "dependency": {
         "noPredecessor": "no scheduled predecessor",
         "afterDependency": "after the predecessor period ({{period}})"

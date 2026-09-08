@@ -2,6 +2,8 @@ import { Check, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formatPlanSolverReason } from '../planSolverReason';
+
 export type PlanGenerationMode = 'DEPENDENCIES' | 'CAPACITY' | 'MIXED';
 
 /** Inicjatywa MODUŁU kwalifikująca się do planowania (kwalifikację liczy serwer). */
@@ -49,6 +51,7 @@ export function GeneratorPlanuModal({
   busy,
   proposal,
   proposalConflicts,
+  resolveName,
   savedLabel,
   onClose,
   onGenerate,
@@ -68,6 +71,13 @@ export function GeneratorPlanuModal({
   capacityModesBlockedReason?: string | null;
   proposal?: GeneratorProposalRow[] | null;
   proposalConflicts?: string[];
+  /**
+   * Zamienia identyfikator inicjatywy na jej nazwę wewnątrz uzasadnień solvera
+   * (np. ścieżka cyklu zależności) — TEN SAM `nameOf`, który karta planu buduje
+   * z `initiatives` + `plannable` (patrz `PlanCard.tsx`). Bez propa spada na
+   * identity (surowy UUID zamiast nazwy — defekt K28, nie brak tłumaczenia).
+   */
+  resolveName?: (initiativeId: string) => string;
   /** „Zapisano hh:mm" — znacznik z ODPOWIEDZI serwera po zatwierdzeniu propozycji. */
   savedLabel?: string | null;
   onClose: () => void;
@@ -75,6 +85,7 @@ export function GeneratorPlanuModal({
   onReview: (outcome: 'ACCEPT' | 'REJECT') => void;
 }) {
   const { t } = useTranslation();
+  const nameOf = resolveName ?? ((id: string) => id);
   const [allowConditional, setAllowConditional] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [start, setStart] = useState(() => new Date().toISOString().slice(0, 10));
@@ -285,9 +296,11 @@ export function GeneratorPlanuModal({
                         <td className="py-1 pr-3 whitespace-nowrap">
                           {row.from} – {row.to}
                         </td>
-                        <td className="py-1 pr-3">{row.rationale}</td>
+                        <td className="py-1 pr-3">{formatPlanSolverReason(row.rationale, t, nameOf)}</td>
                         <td className="py-1">
-                          {row.conflict ?? t('common.none', 'Brak')}
+                          {row.conflict
+                            ? formatPlanSolverReason(row.conflict, t, nameOf)
+                            : t('common.none', 'Brak')}
                         </td>
                       </tr>
                     ))}
@@ -296,7 +309,7 @@ export function GeneratorPlanuModal({
                 {(proposalConflicts ?? []).length > 0 && (
                   <ul className="mt-2 list-disc pl-4 text-sm">
                     {(proposalConflicts ?? []).map((conflict) => (
-                      <li key={conflict}>{conflict}</li>
+                      <li key={conflict}>{formatPlanSolverReason(conflict, t, nameOf)}</li>
                     ))}
                   </ul>
                 )}

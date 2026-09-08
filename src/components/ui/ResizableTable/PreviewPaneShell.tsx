@@ -41,7 +41,22 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
   return (
     <div
       className={[
-        'h-full flex flex-col overflow-hidden',
+        /*
+         * NAPRAWA (przejscie CTO 08.09, DEC-453, defekt 1): `h-full …
+         * overflow-hidden` byl BEZWARUNKOWY — takze dla `embedded`. Ten wariant
+         * renderuje sie ZAGNIEZDZONY wewnatrz prawdziwej (nie-embedded) powloki,
+         * ktorej wlasny content-div juz ma `overflow-y-auto` i liczy dostepna
+         * wysokosc (komentarz nizej: „parent layout already owns header and
+         * footer chrome"). Wymuszanie tu DRUGIEGO `h-full` bez `min-h-0`
+         * przycinalo (`overflow-hidden`) kazdy blok, ktory nie zmiescil sie w
+         * przydzielonej wysokosci flexa — w Inicjatywach byl to POWOD blokady
+         * przycisku „Zatwierdz inicjatywe" (ETAP INICJATYWY, ostatni blok
+         * `<StandardPreview>`): wizualnie znikal, a stopka „Kopiuj link"
+         * prawdziwej powloki wygladala jakby go zaslaniala. `embedded` renderuje
+         * teraz naturalna wysokosc (`flex flex-col`, bez `h-full`/`overflow-hidden`)
+         * — rodzic przewija WSZYSTKO, wlacznie z ostatnim blokiem.
+         */
+        embedded ? 'flex flex-col' : 'h-full flex flex-col overflow-hidden',
         embedded ? '' : 'rounded-xl border border-slate-200/70 dark:border-white/[0.06]',
         embedded ? '' : 'bg-white/70 dark:bg-navy-900/70',
         embedded ? '' : 'backdrop-blur',

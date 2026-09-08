@@ -196,4 +196,66 @@ describe('P15-K3 — uzasadnienie solvera jako kod', () => {
       formatPlanSolverReason('Zakres zatwierdzony w przepływie P11.', tlumacz(katalogPl))
     ).toBe('Zakres zatwierdzony w przepływie P11.');
   });
+
+  /**
+   * DEFEKT 2 (przejscie CTO 08.09, DEC-453) — generator planu pokazywal
+   * dokladnie ten napis, `SOLVER-1:SELECTED;period=Tydzie%C5%84%203;…`, w
+   * kolumnie „Uzasadnienie" bo omijal ten dekoder. Trzy kody + kod nieznany +
+   * procentowo zakodowany polski okres — funkcja mapujaca musi przejsc
+   * wszystkie pieć bez zadnego surowego `SOLVER-1:` na wyjsciu.
+   */
+  it('DEFEKT 2 — dekoduje procentowo zakodowany polski okres (Tydzień 3) w kodzie SELECTED', () => {
+    const kod = 'SOLVER-1:SELECTED;period=Tydzie%C5%84%203;dep=NO_PREDECESSOR;cap=NO_CAPACITY_SCENARIO';
+    expect(decodePlanSolverReason(kod)).toEqual({
+      code: 'SELECTED',
+      period: 'Tydzień 3',
+      dependency: { code: 'NO_PREDECESSOR' },
+      capacity: { code: 'NO_CAPACITY_SCENARIO' },
+      humanReviewRequired: true,
+    });
+    const napis = formatPlanSolverReason(kod, tlumacz(katalogPl));
+    expect(napis).toBe(
+      'Solver wybrał Tydzień 3: brak zaplanowanego poprzednika; okno inicjatywy obejmuje ten okres; brak powiązanej opublikowanej analizy obciążenia. Do potwierdzenia przez człowieka.'
+    );
+    expect(napis).not.toContain(PREFIX_SERWERA);
+  });
+
+  it('DEFEKT 2 — trzy kody konfliktu/zalozenia dekoduja sie na polskie zdania', () => {
+    const przypadki: Array<[string, RegExp]> = [
+      ['SOLVER-1:NO_PERIODS', /Plan nie ma żadnych okresów\./],
+      [
+        'SOLVER-1:MISSING_DEPENDENCY;initiativeId=a;dependencyId=b',
+        /Zależność spoza planu: a → b/,
+      ],
+      [
+        'SOLVER-1:DEMAND_UNKNOWN_FOR_INITIATIVE;initiativeId=a;period=Tydzie%C5%84%202',
+        /Popyt nieznany dla „a" w okresie Tydzień 2/,
+      ],
+    ];
+    for (const [kod, oczekiwane] of przypadki) {
+      const napis = formatPlanSolverReason(kod, tlumacz(katalogPl));
+      expect(napis).toMatch(oczekiwane);
+      expect(napis).not.toContain(PREFIX_SERWERA);
+    }
+  });
+
+  it('DEFEKT 2 — kod, ktorego dekoder nie zna, dostaje uczciwy tekst zamiast surowego ciagu', () => {
+    const kod = 'SOLVER-1:FUTURE_CODE_Z_KOLEJNEJ_PACZKI;foo=bar';
+    expect(decodePlanSolverReason(kod)).toBeNull();
+    const napis = formatPlanSolverReason(kod, tlumacz(katalogPl));
+    expect(napis).toBe('Uzasadnienie: kod FUTURE_CODE_Z_KOLEJNEJ_PACZKI');
+    expect(napis).not.toContain(PREFIX_SERWERA);
+  });
+
+  it('DEFEKT 2 — kod nieznany w postaci JSON (rowniez po ucieczce sanitizera) dostaje ten sam uczciwy tekst', () => {
+    expect(formatPlanSolverReason('SOLVER-1:{"code":"FUTURE_JSON_CODE"}', tlumacz(katalogPl))).toBe(
+      'Uzasadnienie: kod FUTURE_JSON_CODE'
+    );
+    expect(
+      formatPlanSolverReason(
+        'SOLVER-1:{&quot;code&quot;:&quot;FUTURE_JSON_CODE&quot;}',
+        tlumacz(katalogPl)
+      )
+    ).toBe('Uzasadnienie: kod FUTURE_JSON_CODE');
+  });
 });
