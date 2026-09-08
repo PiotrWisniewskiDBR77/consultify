@@ -586,7 +586,12 @@ router.get(
         userRole: req.user?.role || 'USER',
       });
       if (!canAccess)
-        return res.status(403).json({ success: false, error: 'Brak dostępu do projektu' });
+        return res.status(403).json({
+        success: false,
+        errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+        code: 'PROJECT_ACCESS_FORBIDDEN',
+        error: 'Brak dostępu do projektu',
+      });
     }
 
     try {
@@ -613,7 +618,12 @@ router.get(
       });
     } catch (err: unknown) {
       logger.error('[AgentPlanRoutes] Get folders failed', { err });
-      return res.status(500).json({ success: false, error: 'Nie udało się pobrać folderów' });
+      return res.status(500).json({
+        success: false,
+        errorCode: 'KNOWLEDGE_VAULT_FOLDERS_FAILED',
+        code: 'KNOWLEDGE_VAULT_FOLDERS_FAILED',
+        error: 'Nie udało się pobrać folderów',
+      });
     }
   })
 );
@@ -644,7 +654,12 @@ router.post(
       if (!rawProjectId) {
         return res
           .status(400)
-          .json({ success: false, error: 'projectId wymagany dla scope=project' });
+          .json({
+            success: false,
+            errorCode: 'VAULT_PROJECT_ID_REQUIRED',
+            code: 'VAULT_PROJECT_ID_REQUIRED',
+            error: 'projectId wymagany dla scope=project',
+          });
       }
       const canAccess = await contextDocumentService.canAccessProject({
         organizationId: orgId,
@@ -653,7 +668,12 @@ router.post(
         userRole: req.user?.role || 'USER',
       });
       if (!canAccess)
-        return res.status(403).json({ success: false, error: 'Brak dostępu do projektu' });
+        return res.status(403).json({
+        success: false,
+        errorCode: 'PROJECT_ACCESS_FORBIDDEN',
+        code: 'PROJECT_ACCESS_FORBIDDEN',
+        error: 'Brak dostępu do projektu',
+      });
     }
 
     try {
@@ -680,7 +700,12 @@ router.post(
       });
     } catch (err: unknown) {
       logger.error('[AgentPlanRoutes] Create folder failed', { err });
-      return res.status(500).json({ success: false, error: 'Nie udało się utworzyć folderu' });
+      return res.status(500).json({
+        success: false,
+        errorCode: 'KNOWLEDGE_VAULT_FOLDER_CREATE_FAILED',
+        code: 'KNOWLEDGE_VAULT_FOLDER_CREATE_FAILED',
+        error: 'Nie udało się utworzyć folderu',
+      });
     }
   })
 );
@@ -704,7 +729,12 @@ router.put(
       return res.json({ success: true, ...result });
     } catch (err: unknown) {
       logger.error('[AgentPlanRoutes] Update folder failed', { err });
-      return res.status(500).json({ success: false, error: 'Nie udało się zaktualizować folderu' });
+      return res.status(500).json({
+        success: false,
+        errorCode: 'KNOWLEDGE_VAULT_FOLDER_UPDATE_FAILED',
+        code: 'KNOWLEDGE_VAULT_FOLDER_UPDATE_FAILED',
+        error: 'Nie udało się zaktualizować folderu',
+      });
     }
   })
 );
@@ -722,7 +752,12 @@ router.delete(
       return res.json({ success: true, ...result });
     } catch (err: unknown) {
       logger.error('[AgentPlanRoutes] Delete folder failed', { err });
-      return res.status(500).json({ success: false, error: 'Nie udało się usunąć folderu' });
+      return res.status(500).json({
+        success: false,
+        errorCode: 'KNOWLEDGE_VAULT_FOLDER_DELETE_FAILED',
+        code: 'KNOWLEDGE_VAULT_FOLDER_DELETE_FAILED',
+        error: 'Nie udało się usunąć folderu',
+      });
     }
   })
 );

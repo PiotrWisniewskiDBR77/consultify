@@ -115,6 +115,22 @@ export const ENUM_FALLBACKS_EN: Readonly<Record<string, Readonly<Record<string, 
 
 export type EnumDomain = keyof typeof ENUM_FALLBACKS_EN;
 
+/**
+ * Domeny, ktore maja JUZ swoja przestrzen kluczy w `public/locales/*` i nie
+ * dostaja drugiej pod `enums.*`. Zasada: jeden napis — jeden klucz. Bez tej
+ * mapy `initiativeGateAction` mialby dwa komplety tlumaczen (tu i pod
+ * `initiatives.lifecycle.action.*`, ktorego uzywa `gateActionLabelKey`
+ * w `src/services/initiativeLifecycle.ts`) i rozjechalyby sie przy pierwszej
+ * zmianie slownictwa.
+ */
+const DOMAIN_KEY_NAMESPACE: Readonly<Record<string, string>> = Object.freeze({
+  initiativeGateAction: 'initiatives.lifecycle.action',
+});
+
+function enumKey(domain: string, value: string): string {
+  return `${DOMAIN_KEY_NAMESPACE[domain] ?? `enums.${domain}`}.${value}`;
+}
+
 /** Czy dla tej pary (domena, wartość) mamy autoryzowaną etykietę. */
 export function isKnownEnumValue(domain: string, value: unknown): boolean {
   const raw = typeof value === 'string' ? value.trim() : '';
@@ -131,7 +147,7 @@ export function enumLabel(domain: string, value: unknown, t: EnumTranslateFn): s
   const raw = typeof value === 'string' ? value.trim() : '';
   const table = ENUM_FALLBACKS_EN[domain as EnumDomain];
   if (raw && table && Object.prototype.hasOwnProperty.call(table, raw)) {
-    return t(`enums.${domain}.${raw}`, table[raw]);
+    return t(enumKey(domain, raw), table[raw]);
   }
   return t(ENUM_UNKNOWN_KEY, ENUM_UNKNOWN_EN);
 }

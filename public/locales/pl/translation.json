@@ -293,7 +293,28 @@
     "VAULT_VERSION_CONFLICT": "Dokument zmienił się w międzyczasie — odśwież i spróbuj ponownie.",
     "VAULT_VERSION_CREATE_FAILED": "Nie udało się zapisać nowej wersji dokumentu.",
     "VAULT_VERSION_RESTORE_FAILED": "Nie udało się przywrócić wersji dokumentu.",
-    "API_ERROR_GENERIC": "Coś poszło nie tak. Spróbuj ponownie."
+    "API_ERROR_GENERIC": "Coś poszło nie tak. Spróbuj ponownie.",
+    "ANALYSES_READ_FAILED": "Nie udało się wczytać listy analiz. To błąd odczytu, nie pusta lista.",
+    "BENEFIT_ACTUAL_APPEND_ONLY": "Zarejestrowana wartość rzeczywista zmieniła się równolegle — nic nie nadpisano. Odśwież dane i spróbuj ponownie.",
+    "BILLING_ALERTS_UNAVAILABLE": "Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.",
+    "BUSINESS_CASE_ENDPOINT_RETIRED": "Ten endpoint był stubem i nie generuje już pustego dokumentu. Użyj POST /api/v8/advisory/business-case.",
+    "FINANCE_STORAGE_UNAVAILABLE": "Ta część Finance nie ma jeszcze zaplecza w tej bazie. Nic nie zostało zapisane — spróbuj ponownie po udostępnieniu magazynu.",
+    "INITIATIVE_MATERIALIZE_EMPTY_PORTFOLIO": "Portfel jest pusty lub generacja materiału nie powiodła się.",
+    "INITIATIVE_MATERIALIZE_FAILED": "Nie udało się wygenerować materiału (brak inicjatywy lub dane niewystarczające).",
+    "ORGANIZATION_CONTEXT_MISSING": "Brak kontekstu organizacji.",
+    "PROJECT_ACCESS_FORBIDDEN": "Brak dostępu do projektu.",
+    "RESULTS_ACTUAL_SOURCE_REQUIRED": "Wartość rzeczywista pozostaje niezmieniona. Opublikuj snapshot Actual w Results i otwórz uzgodnienie z jego dokładnym identyfikatorem.",
+    "ROI_RECONCILIATION_STORAGE_UNAVAILABLE": "Nie udało się sprawdzić powiązanego ROI Case — nic nie zostało zapisane, zarejestrowana wartość rzeczywista pozostaje niezmieniona.",
+    "TRIAL_ENTRY_ORGANIZATION_REQUIRED": "Ta funkcja wymaga organizacji. Jesteś w fazie Trial Entry.",
+    "TRIAL_ENTRY_RESTRICTION": "Ta funkcja nie jest dostępna w Trial Entry. Załóż organizację, aby kontynuować.",
+    "VAULT_DOCUMENT_DELETE_FORBIDDEN": "Brak uprawnień do usunięcia dokumentu.",
+    "VAULT_DOCUMENT_EDIT_FORBIDDEN": "Brak uprawnień do edycji dokumentu.",
+    "VAULT_EXPECTED_VERSION_INVALID": "expectedVersion musi być liczbą całkowitą.",
+    "VAULT_FOLDER_PROJECT_MISMATCH": "Folder należy do innego projektu.",
+    "VAULT_FOLDER_SCOPE_MISMATCH": "Folder należy do innego poziomu sejfu.",
+    "VAULT_SCOPE_INVALID": "scope musi być jednym z: user, project, organization.",
+    "VAULT_VERSION_NUMBER_INVALID": "versionNumber musi być dodatnią liczbą całkowitą.",
+    "VAULT_PROJECT_ID_REQUIRED": "projectId jest wymagany dla scope=project."
   },
   "transformationScenarios": {
     "banner": {
@@ -9630,7 +9651,20 @@
       "compliance": "Zgodność"
     },
     "columns": {
-      "areaOrAxis": "Obszar / oś"
+      "areaOrAxis": "Obszar / oś",
+      "name": "Inicjatywa",
+      "status": "Status",
+      "gateName": "Następna bramka",
+      "gateReadiness": "Gotowość",
+      "owner": "Właściciel",
+      "nextAction": "Następne działanie",
+      "expectedImpact": "Oczekiwany efekt",
+      "plannedWindow": "Planowane okno",
+      "healthState": "Kondycja",
+      "updatedAt": "Aktualizacja",
+      "source": "Źródło",
+      "confidence": "Pewność",
+      "noProblemSummary": "Brak opisu problemu"
     },
     "approval": {
       "needsTasks": "Dodaj przynajmniej jedno zadanie przed zmianą statusu.",
@@ -12469,6 +12503,10 @@
         "demandUnknownForInitiative": "Popyt nieznany dla „{{initiative}}\" w okresie {{period}} — ograniczenie mocy nie zostało zastosowane.",
         "advisorShift": "Przesunięcie z wariantu doradcy: „{{initiative}}\" o {{periods}} okres(y) później."
       }
+    },
+    "canonical": {
+      "contextLabel": "Kontekst inicjatywy",
+      "noDescription": "Brak opisu."
     }
   },
   "execution": {
@@ -46757,19 +46795,6 @@
       "STALE": "Nieaktualne",
       "SOURCE_UNAVAILABLE": "Źródło niedostępne",
       "UNKNOWN": "Nieznane"
-    },
-    "initiativeGateAction": {
-      "CREATE_DRAFT": "Utwórz szkic",
-      "SUBMIT_FOR_REVIEW": "Prześlij do zatwierdzenia",
-      "APPROVE": "Zatwierdź inicjatywę",
-      "SEND_BACK": "Zwróć do szkicu",
-      "REJECT": "Odrzuć inicjatywę",
-      "START": "Rozpocznij realizację",
-      "COMPLETE": "Zamknij inicjatywę",
-      "CANCEL": "Anuluj inicjatywę",
-      "BLOCK": "Wstrzymaj realizację",
-      "UNBLOCK": "Wznów realizację",
-      "ARCHIVE": "Zarchiwizuj"
     },
     "priority": {
       "CRITICAL": "Krytyczny",

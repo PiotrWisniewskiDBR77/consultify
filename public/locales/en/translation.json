@@ -293,7 +293,28 @@
     "VAULT_VERSION_CONFLICT": "The document changed in the meantime — refresh and try again.",
     "VAULT_VERSION_CREATE_FAILED": "The new document version could not be saved.",
     "VAULT_VERSION_RESTORE_FAILED": "The document version could not be restored.",
-    "API_ERROR_GENERIC": "Something went wrong. Please try again."
+    "API_ERROR_GENERIC": "Something went wrong. Please try again.",
+    "ANALYSES_READ_FAILED": "The list of analyses could not be loaded. This is a read failure, not an empty list.",
+    "BENEFIT_ACTUAL_APPEND_ONLY": "The recorded actual value changed in parallel — nothing was overwritten. Refresh the data and try again.",
+    "BILLING_ALERTS_UNAVAILABLE": "The budget thresholds could not be saved permanently. The settings are unchanged.",
+    "BUSINESS_CASE_ENDPOINT_RETIRED": "This endpoint was a stub and no longer produces an empty document. Use POST /api/v8/advisory/business-case instead.",
+    "FINANCE_STORAGE_UNAVAILABLE": "This part of Finance has no storage in this database yet. Nothing was saved — try again once storage is available.",
+    "INITIATIVE_MATERIALIZE_EMPTY_PORTFOLIO": "The portfolio is empty or the material could not be generated.",
+    "INITIATIVE_MATERIALIZE_FAILED": "The material could not be generated (no initiative, or not enough data).",
+    "ORGANIZATION_CONTEXT_MISSING": "No organization context.",
+    "PROJECT_ACCESS_FORBIDDEN": "You do not have access to this project.",
+    "RESULTS_ACTUAL_SOURCE_REQUIRED": "The actual value is unchanged. Publish an Actual snapshot in Results and open the reconciliation with its exact identifier.",
+    "ROI_RECONCILIATION_STORAGE_UNAVAILABLE": "The linked ROI Case could not be checked — nothing was saved and the recorded actual value is unchanged.",
+    "TRIAL_ENTRY_ORGANIZATION_REQUIRED": "This feature requires an organization. You are in the Trial Entry phase.",
+    "TRIAL_ENTRY_RESTRICTION": "This feature is not available in Trial Entry. Create an organization to continue.",
+    "VAULT_DOCUMENT_DELETE_FORBIDDEN": "You do not have permission to delete this document.",
+    "VAULT_DOCUMENT_EDIT_FORBIDDEN": "You do not have permission to edit this document.",
+    "VAULT_EXPECTED_VERSION_INVALID": "expectedVersion must be an integer.",
+    "VAULT_FOLDER_PROJECT_MISMATCH": "The folder belongs to a different project.",
+    "VAULT_FOLDER_SCOPE_MISMATCH": "The folder belongs to a different safe level.",
+    "VAULT_SCOPE_INVALID": "scope must be one of: user, project, organization.",
+    "VAULT_VERSION_NUMBER_INVALID": "versionNumber must be a positive integer.",
+    "VAULT_PROJECT_ID_REQUIRED": "projectId is required for scope=project."
   },
   "transformationScenarios": {
     "banner": {
@@ -10194,7 +10215,20 @@
       "compliance": "Compliance"
     },
     "columns": {
-      "areaOrAxis": "Area / Axis"
+      "areaOrAxis": "Area / Axis",
+      "name": "Initiative",
+      "status": "Status",
+      "gateName": "Next gate",
+      "gateReadiness": "Readiness",
+      "owner": "Owner",
+      "nextAction": "Next action",
+      "expectedImpact": "Expected impact",
+      "plannedWindow": "Planned window",
+      "healthState": "Health",
+      "updatedAt": "Updated",
+      "source": "Source",
+      "confidence": "Confidence",
+      "noProblemSummary": "No problem description"
     },
     "approval": {
       "needsTasks": "Add at least one task before changing status.",
@@ -13027,6 +13061,10 @@
         "demandUnknownForInitiative": "Demand unknown for \"{{initiative}}\" in period {{period}} - the capacity constraint was not applied.",
         "advisorShift": "Shift from the advisor option: \"{{initiative}}\" by {{periods}} period(s)."
       }
+    },
+    "canonical": {
+      "contextLabel": "Initiative context",
+      "noDescription": "No description."
     }
   },
   "execution": {
@@ -44093,19 +44131,6 @@
       "STALE": "Stale",
       "SOURCE_UNAVAILABLE": "Source unavailable",
       "UNKNOWN": "Unknown"
-    },
-    "initiativeGateAction": {
-      "CREATE_DRAFT": "Create draft",
-      "SUBMIT_FOR_REVIEW": "Submit for approval",
-      "APPROVE": "Approve initiative",
-      "SEND_BACK": "Send back to draft",
-      "REJECT": "Reject initiative",
-      "START": "Start execution",
-      "COMPLETE": "Close initiative",
-      "CANCEL": "Cancel initiative",
-      "BLOCK": "Put execution on hold",
-      "UNBLOCK": "Resume execution",
-      "ARCHIVE": "Archive"
     },
     "priority": {
       "CRITICAL": "Critical",

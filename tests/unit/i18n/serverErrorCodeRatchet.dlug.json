@@ -1,0 +1,5 @@
+{
+  "_opis": "J17 — zamrozony dlug: polskie zdania z serwera bez kodu bledu, ktore skaner tolerowal w chwili postawienia bramki. Wpis wolno USUNAC (naprawa), NIGDY dopisac nowy. Na dzien 2026-09-08 lista jest PUSTA: wszystkie naruszenia z pomiaru K5pl w skanowanym zakresie (server/src/routes, server/src/middleware) dostaly kod.",
+  "_zakres": "res.status(4xx|5xx).json({...}) w server/src/routes/** i server/src/middleware/**",
+  "dlug": []
+}
