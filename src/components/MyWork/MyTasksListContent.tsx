@@ -98,6 +98,7 @@ import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
 import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // duplicateIdentity — CB-04/RB-019/RV-029.
 //
@@ -1027,7 +1028,7 @@ const TaskTableRow: React.FC<{
                 className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-c-border bg-c-surface-raised text-c-text-secondary"
                 title={
                   (task as any).triaged_at
-                    ? `Triaged ${new Date((task as any).triaged_at).toLocaleDateString()}`
+                    ? `Triaged ${formatListDate((task as any).triaged_at)}`
                     : 'Triaged'
                 }
               >

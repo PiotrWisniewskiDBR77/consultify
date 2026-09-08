@@ -14,6 +14,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { RecordSource, SourceType } from '@/services/api/recordProvenance.api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 const MAX_SOURCES_PER_RECORD = 50;
 
@@ -58,7 +59,7 @@ function fmtDate(iso: string | null | undefined): string {
   try {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleDateString();
+    return formatListDate(d);
   } catch {
     return '';
   }

@@ -24,6 +24,7 @@ import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface DistributionBuilderProps {
   baseId: string;
@@ -489,7 +490,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                           </>
                         )}
                         {dist.last_sent_at && (
-                          <> · {new Date(dist.last_sent_at).toLocaleDateString()}</>
+                          <> · {formatListDate(dist.last_sent_at)}</>
                         )}
                       </div>
                     </div>

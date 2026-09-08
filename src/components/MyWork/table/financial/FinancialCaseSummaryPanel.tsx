@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPct } from './financialFormat';
 import type { FinancialCaseInput, FinancialCaseStatus, FinancialDriver } from './financialTypes';
 import { MIN_DRIVERS_PER_KIND } from './financialTypes';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 export interface FinancialCaseSummaryPanelProps {
   caseMeta: Omit<FinancialCaseInput, 'drivers'>;
@@ -165,7 +166,7 @@ export const FinancialCaseSummaryPanel: React.FC<FinancialCaseSummaryPanelProps>
               {t('ideas.financial.lastComputed', 'Last computed')}
             </div>
             <div className="text-c-text text-right font-medium">
-              {new Date(lastComputedAt).toLocaleString('pl-PL')}
+              {formatListDateTime(lastComputedAt)}
             </div>
           </>
         )}

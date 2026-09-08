@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export interface ActivityEntry {
   id: string;
@@ -177,7 +178,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     if (diff < 60_000) return t('ideas.mindmap.now', 'now');
     if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
     if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h`;
-    return new Date(ts).toLocaleDateString();
+    return formatListDate(ts);
   }, []);
 
   if (!open) return null;

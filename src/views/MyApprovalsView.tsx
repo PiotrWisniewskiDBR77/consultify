@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface Approval {
   id: string;
@@ -151,7 +152,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
     } else if (diffHours < 24) {
       return `${diffHours}h left`;
     } else {
-      return date.toLocaleDateString();
+      return formatListDate(date);
     }
   };
 

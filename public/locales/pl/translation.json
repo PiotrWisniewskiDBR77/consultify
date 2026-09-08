@@ -2410,7 +2410,21 @@
     "title": "Moja Praca",
     "home": "Strona główna",
     "manager": "Menedżer",
-    "inbox": "Skrzynka",
+    "inbox": {
+      "urgency": {
+        "critical": "Krytyczne",
+        "high": "Wysokie",
+        "normal": "Normalne",
+        "low": "Niskie"
+      },
+      "triage": {
+        "accept_today": "Dziś",
+        "schedule": "Zaplanuj",
+        "delegate": "Deleguj",
+        "archive": "Archiwum",
+        "reject": "Odrzuć"
+      }
+    },
     "focus": {
       "label": "Fokus",
       "columns": {
@@ -2504,7 +2518,13 @@
           "critical": "Krytyczny"
         }
       },
-      "removeFromFocus": "Usuń z fokusu"
+      "removeFromFocus": "Usuń z fokusu",
+      "timeBlock": {
+        "morning": "Rano",
+        "afternoon": "Popołudnie",
+        "buffer": "Bufor",
+        "bufferTime": "Elastyczny"
+      }
     },
     "radar": {
       "pulseLabel": "Radar · kontekst, pomysły i spokojny kierunek",
@@ -5567,6 +5587,13 @@
         "updateFailed": "Nie udało się zaktualizować zadania",
         "taskDeleted": "Zadanie usunięte",
         "deleteFailed": "Nie udało się usunąć zadania"
+      },
+      "pmoGroup": {
+        "blocking_phase": "🔴 Blokujące Fazę",
+        "blocking_initiative": "🟠 Blokujące Inicjatywy",
+        "awaiting_decision": "🟡 Oczekujące na Decyzję",
+        "overdue": "⚫ Przeterminowane",
+        "other": "✅ Pozostałe"
       }
     },
     "ideaMap": {
@@ -5742,6 +5769,14 @@
       "ownerUnset": "Nie wskazano",
       "fieldDependencies": "Zależności",
       "dependencyCount": "{{known}} z {{total}} rozpoznanych"
+    },
+    "pmoCategory": {
+      "blocking_phase": "Blokujące Fazę",
+      "blocking_initiative": "Blokujące Inicjatywę",
+      "decision_required": "Oczekuje Decyzji",
+      "overdue": "Termin Krytyczny",
+      "strategic": "Wysoki Priorytet Strategiczny",
+      "standard": "Standardowe"
     }
   },
   "step1": {

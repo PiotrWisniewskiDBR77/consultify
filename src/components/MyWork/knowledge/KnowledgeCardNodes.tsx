@@ -19,6 +19,7 @@ import {
   MM_MIN_NODE_WIDTH,
   useNodeHasExplicitSize,
 } from '../mindmap/MindMapNodeResizer';
+import { formatListDate } from '@/utils/listDateFormat';
 
 /**
  * Ręczna zmiana rozmiaru (2026-07-27): karty wiedzy są węzłami Mapy Myśli,
@@ -167,7 +168,7 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
       {data?.createdAt && (
         <div className="mt-1 text-[7px] text-c-tag-9">
-          {new Date(data.createdAt).toLocaleDateString()}
+          {formatListDate(data.createdAt)}
         </div>
       )}
 

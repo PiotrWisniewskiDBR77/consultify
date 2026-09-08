@@ -44,6 +44,7 @@ import {
   renderMentionText,
   useMentionAutocomplete,
 } from './mentionAutocomplete';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1277,7 +1278,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       {cmt.userName || 'User'}
                     </span>
                     <span className="text-[9px] text-slate-600">
-                      {new Date(cmt.createdAt).toLocaleDateString()}
+                      {formatListDate(cmt.createdAt)}
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">

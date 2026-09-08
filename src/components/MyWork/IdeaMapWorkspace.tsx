@@ -148,6 +148,7 @@ import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
 import { useIdeaConfidentialityGate } from './useIdeaConfidentialityGate';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // React StrictMode can remount brand-new workspaces in development.
 // Keep one creation request per temporary draft id to avoid duplicate ideas.
@@ -3903,7 +3904,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const conversions = result.conversions || [];
         const resolved = await Promise.all(
           conversions.map(async (conversion) => {
-            const fallbackTitle = `${conversion.targetType} · ${new Date(conversion.createdAt).toLocaleDateString()}`;
+            const fallbackTitle = `${conversion.targetType} · ${formatListDate(conversion.createdAt)}`;
             const real = conversion.targetId
               ? await resolveConversionTargetName(conversion.targetType, conversion.targetId)
               : {};

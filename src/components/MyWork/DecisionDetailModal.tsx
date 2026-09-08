@@ -29,6 +29,7 @@ import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { Decision } from './DecisionsList';
 import RelatedObjectPreview from './RelatedObjectPreview';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface DecisionDetail extends Decision {
   auditTrail?: AuditEntry[];
@@ -98,17 +99,10 @@ const getTypeLabel = (type: string): string => {
   return types[type] || type.replace(/_/g, ' ');
 };
 
-// Format date for display
-const formatDateTime = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+// Format date for display — SSOT list (`formatListDateTime`): jeden zapis daty
+// w calym produkcie i locale z KONTA. Poprzednia wersja miala 'en-US' na
+// sztywno, wiec konto polskie dostawalo „Feb 5, 2026".
+const formatDateTime = (dateStr: string): string => formatListDateTime(dateStr, dateStr);
 
 // Section component
 const Section: React.FC<{ title: string; icon?: React.ReactNode; children: React.ReactNode }> = ({

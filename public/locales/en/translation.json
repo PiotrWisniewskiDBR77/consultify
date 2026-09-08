@@ -3081,7 +3081,21 @@
     "title": "My Work",
     "home": "Home",
     "manager": "Manager",
-    "inbox": "Inbox",
+    "inbox": {
+      "urgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "triage": {
+        "accept_today": "Today",
+        "schedule": "Schedule",
+        "delegate": "Delegate",
+        "archive": "Archive",
+        "reject": "Reject"
+      }
+    },
     "focus": {
       "label": "Focus",
       "columns": {
@@ -3175,7 +3189,13 @@
           "critical": "Critical"
         }
       },
-      "removeFromFocus": "Remove from focus"
+      "removeFromFocus": "Remove from focus",
+      "timeBlock": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "buffer": "Buffer",
+        "bufferTime": "Flexible"
+      }
     },
     "radar": {
       "pulseLabel": "Radar · context, ideas, and a gentle steer",
@@ -6206,6 +6226,13 @@
         "updateFailed": "Failed to update task",
         "taskDeleted": "Task deleted",
         "deleteFailed": "Failed to delete task"
+      },
+      "pmoGroup": {
+        "blocking_phase": "🔴 Blocking the phase",
+        "blocking_initiative": "🟠 Blocking initiatives",
+        "awaiting_decision": "🟡 Awaiting a decision",
+        "overdue": "⚫ Overdue",
+        "other": "✅ Everything else"
       }
     },
     "ideaMap": {
@@ -6381,6 +6408,14 @@
       "ownerUnset": "Not named",
       "fieldDependencies": "Dependencies",
       "dependencyCount": "{{known}} of {{total}} identified"
+    },
+    "pmoCategory": {
+      "blocking_phase": "Blocking the phase",
+      "blocking_initiative": "Blocking an initiative",
+      "decision_required": "Awaiting a decision",
+      "overdue": "Critical deadline",
+      "strategic": "High strategic priority",
+      "standard": "Standard"
     }
   },
   "step1": {

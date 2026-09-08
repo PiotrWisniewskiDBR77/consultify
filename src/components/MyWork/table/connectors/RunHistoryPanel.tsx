@@ -13,6 +13,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Connector, ConnectorRun } from './useConnectors';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -129,7 +130,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
         />
         <StatCard
           label={t('myWorkTable.runHistoryPanel.imported')}
-          value={stats.totalImported.toLocaleString()}
+          value={formatListNumber(stats.totalImported, '0')}
         />
         <StatCard
           label={t('myWorkTable.runHistoryPanel.successes')}

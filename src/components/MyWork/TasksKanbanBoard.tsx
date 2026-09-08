@@ -808,31 +808,31 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           if (httpStatus === 404) {
             message = t(
               'myWork.kanban.statusFailedNotFound',
-              'Nie zapisano: zadanie „{{title}}" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.',
+              'Not saved: task "{{title}}" no longer exists (it may have been deleted or reassigned). Refresh the board.',
               ctx
             );
           } else if (httpStatus === 401 || httpStatus === 403) {
             message = t(
               'myWork.kanban.statusFailedForbidden',
-              'Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}". Poproś właściciela zadania o zmianę.',
+              'Not saved: you do not have permission to change the status of "{{title}}". Ask the task owner to change it.',
               ctx
             );
           } else if (httpStatus >= 500) {
             message = t(
               'myWork.kanban.statusFailedServer',
-              'Nie zapisano „{{title}}" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.',
+              'Not saved "{{title}}" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.',
               { ...ctx, code: httpStatus }
             );
           } else if (!httpStatus) {
             message = t(
               'myWork.kanban.statusFailedOffline',
-              'Nie zapisano „{{title}}" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.',
+              'Not saved "{{title}}" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.',
               ctx
             );
           } else {
             message = t(
               'myWork.kanban.statusFailedGeneric',
-              'Nie zapisano „{{title}}" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie.',
+              'Not saved "{{title}}" → {{column}} ({{code}}). The card was moved back — please try again.',
               { ...ctx, code: httpStatus }
             );
           }

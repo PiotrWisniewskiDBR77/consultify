@@ -18,6 +18,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface RelatedObjectPreviewProps {
   type: string;
@@ -87,8 +88,7 @@ const getTypeIcon = (type: string) => {
 // Format date
 const formatDate = (dateStr?: string): string => {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return formatListDate(dateStr, dateStr);
 };
 
 export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({

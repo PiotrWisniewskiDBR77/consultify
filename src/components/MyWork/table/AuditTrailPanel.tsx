@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { getHeaders } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ function relativeTime(ts: string, t: TFunction): string {
   if (hours < 24) return t('myWorkTable.auditTrailPanel.hoursAgo', { value: hours });
   const days = Math.floor(hours / 24);
   if (days < 7) return t('myWorkTable.auditTrailPanel.daysAgo', { value: days });
-  return new Date(ts).toLocaleDateString();
+  return formatListDate(ts);
 }
 
 function formatValue(val: unknown): string {

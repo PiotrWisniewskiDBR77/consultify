@@ -6,6 +6,7 @@
 import { AlertCircle, CalendarClock, CheckCircle, Clock } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface DueDateIndicatorProps {
   dueDate?: string | Date;
@@ -62,7 +63,7 @@ const getRelativeTime = (dueDate: Date, t: (key: string, fallback: string) => st
   if (diffDays <= 7) {
     return t('myWork.dueDate.inDays', `In ${diffDays} days`);
   }
-  return dueDate.toLocaleDateString();
+  return formatListDate(dueDate);
 };
 
 /**
@@ -149,7 +150,7 @@ export const DueDateIndicator: React.FC<DueDateIndicatorProps> = ({
     displayText = t('myWork.dueDate.completed', 'Completed');
   } else if (dueDate) {
     const due = new Date(dueDate);
-    displayText = showRelative ? getRelativeTime(due, t) : due.toLocaleDateString();
+    displayText = showRelative ? getRelativeTime(due, t) : formatListDate(due);
 
     // Add time if specified
     if (dueTime) {

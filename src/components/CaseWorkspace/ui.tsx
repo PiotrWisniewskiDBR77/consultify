@@ -26,6 +26,7 @@ import React, {
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 
 import type { CaseApiFailure } from './types';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Fokus ────────────────────────────────────────────────────────────────────
 // Jeden łańcuch klas fokusu dla całego modułu. Niebieski `c-focus`, NIGDY
@@ -101,24 +102,14 @@ export function useRemainingHeight(
 
 // ── Daty ─────────────────────────────────────────────────────────────────────
 
+// SSOT dat list (`formatListDate`) — locale z KONTA, nie z przegladarki, i ten
+// sam zapis co w kazdej innej tabeli produktu. Poprzednio 'pl-PL' na sztywno.
 export function formatDate(value: string | null | undefined): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return formatListDate(value);
 }
 
 export function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString('pl-PL', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatListDateTime(value);
 }
 
 /** „3 dni temu" / „za 2 dni" — bez bibliotek, po polsku. */

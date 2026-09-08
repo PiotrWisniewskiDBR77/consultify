@@ -55,6 +55,7 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface Decision {
   id: string;
@@ -128,7 +129,7 @@ const decisionToGenericItem = (d: Decision): GenericListItem => ({
   priority: d.priority || 'MEDIUM',
   priorityVariant: getDecisionPriorityVariant(d.priority),
   dueDate: d.dueDate
-    ? new Date(d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    ? formatListDate(d.dueDate)
     : undefined,
   isOverdue: d.isOverdue,
   assignee: d.ownerName || undefined,
@@ -568,8 +569,7 @@ const StatusTimeline: React.FC<{
   const { t } = useTranslation();
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+    return formatListDate(dateStr, dateStr);
   };
 
   if (isOverdue && daysOverdue > 0) {

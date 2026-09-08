@@ -43,6 +43,7 @@ import type { FocusBoardProps, FocusSuggestion, FocusTask, TimeBlock } from '../
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface ExtendedFocusBoardProps extends Partial<FocusBoardProps> {
   onTaskClick?: (taskId: string) => void;
@@ -130,22 +131,22 @@ const timeBlockConfig: Record<
   }
 > = {
   morning: {
-    label: 'Rano',
+    label: 'Morning',
     icon: <Sun size={16} />,
     gradient: 'time-block-morning',
     time: '8:00 - 12:00',
   },
   afternoon: {
-    label: 'Popołudnie',
+    label: 'Afternoon',
     icon: <Moon size={16} />,
     gradient: 'time-block-afternoon',
     time: '12:00 - 17:00',
   },
   buffer: {
-    label: 'Bufor',
+    label: 'Buffer',
     icon: <Clock size={16} />,
     gradient: 'time-block-buffer',
-    time: 'Elastyczny',
+    time: 'Flexible',
   },
 };
 
@@ -541,7 +542,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               {t('myWork.focus.title', "Today's Focus")}
             </h2>
             <p className="text-xs text-c-text-muted">
-              {new Date().toLocaleDateString('pl-PL', {
+              {new Date().toLocaleDateString(localeListy(), {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

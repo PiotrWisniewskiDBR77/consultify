@@ -196,6 +196,7 @@ import { IDEA_PANEL_AI_SLOT_ID } from './panel/ideaPanel6Sections';
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
+import { localeListy } from '@/utils/listDateFormat';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -2031,7 +2032,7 @@ function MindMapInner({
       meta?: Partial<Pick<DebugEntry, 'source' | 'detail' | 'reaction' | 'severity'>>
     ) => {
       if (!debugEnabled) return;
-      const ts = new Date().toLocaleTimeString('en-GB', {
+      const ts = new Date().toLocaleTimeString(localeListy(), {
         hour12: false,
         fractionalSecondDigits: 3,
       });
@@ -2155,7 +2156,7 @@ function MindMapInner({
             ...parsed.slice(-(MAX_DEBUG_ENTRIES - 1)),
             {
               id: uid(),
-              ts: new Date().toLocaleTimeString('en-GB', {
+              ts: new Date().toLocaleTimeString(localeListy(), {
                 hour12: false,
                 fractionalSecondDigits: 3,
               }),

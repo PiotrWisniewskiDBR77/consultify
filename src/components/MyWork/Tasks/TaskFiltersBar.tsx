@@ -281,7 +281,7 @@ const PMOCategoryFilter: React.FC<{
                                         `}
                   >
                     <span>{config.emoji}</span>
-                    <span className="truncate">{config.label}</span>
+                    <span className="truncate">{t(config.labelKey, config.label)}</span>
                   </button>
                 );
               })}

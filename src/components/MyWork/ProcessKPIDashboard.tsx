@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -193,7 +194,7 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
           <KPICard
             icon={<DollarSign size={14} className="text-emerald-600 dark:text-emerald-400" />}
             label={t('processFlow.kpiDashboard.estCost', 'Est. Cost')}
-            value={`$${kpis.totalCost.toLocaleString()}`}
+            value={`$${formatListNumber(kpis.totalCost, '0')}`}
             color="bg-emerald-100 dark:bg-emerald-900/40"
           />
         )}

@@ -1,16 +1,17 @@
+import { localeListy } from '@/utils/listDateFormat';
 /** Formatting helpers shared by the Financial Case driver table / summary / charts. */
 
 export function formatMoney(value: number | null | undefined, currency: string): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
   try {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency || 'PLN',
       maximumFractionDigits: 0,
     }).format(value);
   } catch {
     // Unknown/invalid ISO currency code — never silently rescale, show raw with the code.
-    return `${value.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} ${currency}`;
+    return `${value.toLocaleString(localeListy(), { maximumFractionDigits: 0 })} ${currency}`;
   }
 }
 

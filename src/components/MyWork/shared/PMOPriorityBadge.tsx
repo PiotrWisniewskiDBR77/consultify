@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { PMOCategory, PMOCategoryConfig } from '../../../types/myWork';
 
@@ -30,7 +31,8 @@ interface PMOPriorityBadgeProps {
 export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   blocking_phase: {
     key: 'blocking_phase',
-    label: 'Blokujące Fazę',
+    labelKey: 'myWork.pmoCategory.blocking_phase',
+    label: 'Blocking the phase',
     emoji: '🔴',
     color: {
       border: 'border-danger-200 dark:border-danger-500/40',
@@ -42,7 +44,8 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   },
   blocking_initiative: {
     key: 'blocking_initiative',
-    label: 'Blokujące Inicjatywę',
+    labelKey: 'myWork.pmoCategory.blocking_initiative',
+    label: 'Blocking an initiative',
     emoji: '🟠',
     color: {
       border: 'border-amber-200 dark:border-amber-500/40',
@@ -54,7 +57,8 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   },
   decision_required: {
     key: 'decision_required',
-    label: 'Oczekuje Decyzji',
+    labelKey: 'myWork.pmoCategory.decision_required',
+    label: 'Awaiting a decision',
     emoji: '🟡',
     color: {
       border: 'border-amber-200 dark:border-amber-500/30',
@@ -66,7 +70,8 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   },
   deadline_critical: {
     key: 'deadline_critical',
-    label: 'Termin Krytyczny',
+    labelKey: 'myWork.pmoCategory.overdue',
+    label: 'Critical deadline',
     emoji: '⚫',
     color: {
       border: 'border-slate-300 dark:border-slate-600',
@@ -78,7 +83,8 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   },
   high_strategic: {
     key: 'high_strategic',
-    label: 'Wysoki Priorytet Strategiczny',
+    labelKey: 'myWork.pmoCategory.strategic',
+    label: 'High strategic priority',
     emoji: '🔵',
     color: {
       border: 'border-blue-200 dark:border-blue-500/30',
@@ -90,7 +96,8 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
   },
   routine: {
     key: 'routine',
-    label: 'Standardowe',
+    labelKey: 'myWork.pmoCategory.standard',
+    label: 'Standard',
     emoji: '⚪',
     color: {
       border: 'border-slate-200 dark:border-slate-700',
@@ -139,6 +146,7 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
   showIcon = true,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const config = PMO_CATEGORY_CONFIG[category];
 
   if (!config) {
@@ -167,12 +175,14 @@ export const PMOPriorityBadge: React.FC<PMOPriorityBadgeProps> = ({
                 ${sizeClasses[size]}
                 ${className}
             `}
-      title={config.label}
+      title={t(config.labelKey, config.label)}
     >
       {showIcon && (
         <span className={config.color.icon}>{getCategoryIcon(category, iconSizes[size])}</span>
       )}
-      {showLabel && <span className="truncate max-w-[120px]">{config.label}</span>}
+      {showLabel && (
+        <span className="truncate max-w-[120px]">{t(config.labelKey, config.label)}</span>
+      )}
       {!showLabel && !showIcon && <span>{config.emoji}</span>}
     </span>
   );
@@ -185,6 +195,7 @@ export const PMOCategoryDot: React.FC<{ category: PMOCategory; className?: strin
   category,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const config = PMO_CATEGORY_CONFIG[category];
 
   if (!config) return null;
@@ -192,7 +203,7 @@ export const PMOCategoryDot: React.FC<{ category: PMOCategory; className?: strin
   return (
     <span
       className={`w-2 h-2 rounded-full ${config.color.bg} ${config.color.border} border ${className}`}
-      title={config.label}
+      title={t(config.labelKey, config.label)}
     />
   );
 };

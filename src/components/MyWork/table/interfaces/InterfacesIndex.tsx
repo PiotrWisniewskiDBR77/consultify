@@ -24,6 +24,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { InterfaceDesigner } from '../InterfaceDesigner';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export function InterfacesIndex({
   const handleCreateFromTemplate = useCallback(
     async (template: InterfaceTemplate) => {
       try {
-        const name = `${template.label} — ${new Date().toLocaleDateString()}`;
+        const name = `${template.label} — ${formatListDate(new Date())}`;
         if (onCreateView) {
           const created = await onCreateView(name, 'interface', { blocks: template.blocks });
           if (created) {
@@ -391,7 +392,7 @@ export function InterfacesIndex({
             {iface.updatedAt && (
               <p className="mb-4 text-xs text-c-text-muted">
                 {t('interfacesIndex.lastModified', 'Last modified')}{' '}
-                {new Date(iface.updatedAt).toLocaleDateString()}
+                {formatListDate(iface.updatedAt)}
               </p>
             )}
 

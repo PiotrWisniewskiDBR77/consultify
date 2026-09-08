@@ -1,3 +1,4 @@
+import { localeListy } from '@/utils/listDateFormat';
 /**
  * formulaEngineCore — Pure (browser-safe) port of the server formula engine.
  *
@@ -728,7 +729,7 @@ export const BUILTINS: Record<string, BuiltinFn> = {
     if (!d) return null;
     const tz = args[1] != null ? String(args[1]) : 'UTC';
     try {
-      return d.toLocaleString('en-US', { timeZone: tz });
+      return d.toLocaleString(localeListy(), { timeZone: tz });
     } catch {
       return d.toISOString();
     }

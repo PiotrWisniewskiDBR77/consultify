@@ -9,6 +9,7 @@ import React from 'react';
 
 import { Task } from '../../types';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface TaskRowProps {
   task: Task;
@@ -51,8 +52,7 @@ const formatDueDate = (dueDate?: string | Date): string => {
     return 'Tomorrow';
   }
 
-  // Format as "Jan 15" or "Dec 3"
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatListDate(date);
 };
 
 const isOverdue = (dueDate?: string | Date): boolean => {

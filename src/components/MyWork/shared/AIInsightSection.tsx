@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '@/utils/listDateFormat';
 
 export interface AIInsight {
   id: string;
@@ -178,7 +179,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                   {lastGeneratedAt && (
                     <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 flex items-center gap-1">
                       <Clock size={10} />
-                      {new Date(lastGeneratedAt).toLocaleTimeString()}
+                      {new Date(lastGeneratedAt).toLocaleTimeString(localeListy())}
                     </span>
                   )}
                 </div>

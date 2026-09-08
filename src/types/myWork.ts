@@ -591,6 +591,12 @@ export type PMOCategoryColor = {
  */
 export interface PMOCategoryConfig {
   key: PMOCategory;
+  /**
+   * Klucz i18n etykiety kategorii (J2, 09.09). `label` zostaje jako
+   * ANGIELSKI default dla `t(labelKey, label)` — polski żyje w
+   * `public/locales/pl/translation.json`, nie w kodzie.
+   */
+  labelKey: string;
   label: string;
   emoji: string;
   color: PMOCategoryColor;

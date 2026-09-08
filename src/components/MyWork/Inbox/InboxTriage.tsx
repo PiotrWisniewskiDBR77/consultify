@@ -45,6 +45,7 @@ import type {
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface ExtendedInboxTriageProps extends Partial<InboxTriageProps> {
   onItemClick?: (item: InboxItem) => void;
@@ -55,25 +56,25 @@ interface ExtendedInboxTriageProps extends Partial<InboxTriageProps> {
  */
 const urgencyConfig = {
   critical: {
-    label: 'Krytyczne',
+    label: 'Critical',
     className: 'inbox-critical',
     icon: <AlertTriangle size={14} />,
     color: 'text-danger-500',
   },
   high: {
-    label: 'Wysokie',
+    label: 'High',
     className: 'inbox-high',
     icon: <Bell size={14} />,
     color: 'text-amber-500',
   },
   normal: {
-    label: 'Normalne',
+    label: 'Normal',
     className: 'inbox-normal',
     icon: <Inbox size={14} />,
     color: 'text-slate-500 dark:text-slate-400',
   },
   low: {
-    label: 'Niskie',
+    label: 'Low',
     className: 'inbox-low',
     icon: <Archive size={14} />,
     color: 'text-slate-600 dark:text-slate-500',
@@ -97,6 +98,8 @@ const itemTypeIcons: Record<InboxItemType, React.ReactNode> = {
  */
 const triageActions: Array<{
   action: TriageAction;
+  /** Klucz i18n etykiety; `label` to ANGIELSKI default (PLAN JEZYK §2.3). */
+  labelKey: string;
   label: string;
   icon: React.ReactNode;
   className: string;
@@ -104,35 +107,40 @@ const triageActions: Array<{
 }> = [
   {
     action: 'accept_today',
-    label: 'Dziś',
+    labelKey: 'myWork.inbox.triage.accept_today',
+    label: 'Today',
     icon: <CheckCircle size={14} />,
     className: 'triage-accept',
     shortcut: 'T',
   },
   {
     action: 'schedule',
-    label: 'Zaplanuj',
+    labelKey: 'myWork.inbox.triage.schedule',
+    label: 'Schedule',
     icon: <Calendar size={14} />,
     className: 'triage-schedule',
     shortcut: 'S',
   },
   {
     action: 'delegate',
-    label: 'Deleguj',
+    labelKey: 'myWork.inbox.triage.delegate',
+    label: 'Delegate',
     icon: <UserPlus size={14} />,
     className: 'triage-delegate',
     shortcut: 'D',
   },
   {
     action: 'archive',
-    label: 'Archiwum',
+    labelKey: 'myWork.inbox.triage.archive',
+    label: 'Archive',
     icon: <Archive size={14} />,
     className: 'triage-archive',
     shortcut: 'A',
   },
   {
     action: 'reject',
-    label: 'Odrzuć',
+    labelKey: 'myWork.inbox.triage.reject',
+    label: 'Reject',
     icon: <XCircle size={14} />,
     className: 'triage-reject',
     shortcut: 'X',
@@ -197,7 +205,7 @@ const InboxItemCard: React.FC<{
               </span>
             </div>
             <span className="text-[10px] text-slate-600 dark:text-slate-500">
-              {new Date(item.receivedAt).toLocaleTimeString('pl-PL', {
+              {new Date(item.receivedAt).toLocaleTimeString(localeListy(), {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -253,7 +261,7 @@ const InboxItemCard: React.FC<{
                     onTriage(ta.action);
                   }}
                   className={`p-2 rounded-lg transition-colors ${ta.className}`}
-                  title={`${ta.label} (${ta.shortcut})`}
+                  title={`${t(ta.labelKey, ta.label)} (${ta.shortcut})`}
                 >
                   {ta.icon}
                 </button>
@@ -539,7 +547,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
                 key={ta.action}
                 onClick={() => handleBulkTriage(ta.action)}
                 className={`p-2 rounded-lg transition-colors ${ta.className}`}
-                title={ta.label}
+                title={t(ta.labelKey, ta.label)}
               >
                 {ta.icon}
               </button>

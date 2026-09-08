@@ -73,6 +73,7 @@ import {
   useMentionAutocomplete,
 } from '../mentionAutocomplete';
 import { AddEvidenceModal } from './AddEvidenceModal';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Types (superset) ───────────────────────────────────────────────────────────
 
@@ -1691,7 +1692,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                         {cmt.userName || 'User'}
                       </span>
                       <span className="text-[9px] text-c-text-secondary">
-                        {new Date(cmt.createdAt).toLocaleDateString()}
+                        {formatListDate(cmt.createdAt)}
                       </span>
                     </div>
                     <div className="text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed whitespace-pre-wrap">
@@ -2056,7 +2057,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                     className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
                   >
                     <div className="text-[10px] text-c-text-secondary mb-1">
-                      {new Date(entry.timestamp).toLocaleString()}
+                      {formatListDateTime(entry.timestamp)}
                     </div>
                     <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text">
                       {entry.resultSummary}

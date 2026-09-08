@@ -36,6 +36,7 @@ import {
   RiskScoreCell,
   SourceReferenceCell,
 } from './cells';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -152,8 +153,7 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
 
 const DateDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
-  const d = new Date(String(value));
-  const str = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+  const str = formatListDate(String(value), String(value));
   return <span className="text-xs text-c-text tabular-nums px-1">{str}</span>;
 };
 
@@ -314,10 +314,9 @@ const FormulaDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   let formatted: string;
   if (resultType === 'number' || typeof value === 'number') {
     const num = Number(value);
-    formatted = Number.isFinite(num) ? num.toLocaleString() : String(value);
+    formatted = Number.isFinite(num) ? formatListNumber(num, String(value)) : String(value);
   } else if (resultType === 'date') {
-    const d = new Date(String(value));
-    formatted = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+    formatted = formatListDate(String(value), String(value));
   } else if (resultType === 'boolean' || typeof value === 'boolean') {
     formatted = value ? '✓' : '✗';
   } else {

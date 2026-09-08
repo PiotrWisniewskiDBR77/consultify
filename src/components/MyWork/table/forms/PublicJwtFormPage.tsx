@@ -35,6 +35,7 @@ import {
 } from '@/services/api/tablePlatform.api';
 
 import { type PublicFormField, PublicFormFieldInput } from './PublicFormFieldInput';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface FormFieldConfig {
   fieldId: string;
@@ -305,7 +306,7 @@ export function PublicJwtFormPage({
             data-testid="public-jwt-form-expiry-warning"
           >
             {t('ideas.table.publicForm.linkExpires', 'This private link expires {{date}}.', {
-              date: new Date(context.publicLinkExpiresAt).toLocaleString(),
+              date: formatListDateTime(context.publicLinkExpiresAt),
             })}
           </p>
         ) : null}

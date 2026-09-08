@@ -6,6 +6,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { offlineQueue } from './OfflineQueue';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 function formatRelativeTime(t: TFunction, ts: number | null): string {
   if (!ts) return '';
@@ -107,7 +108,7 @@ export const OfflineIndicator: React.FC = () => {
       {syncLabel && (
         <span
           className="text-[10px] opacity-60 whitespace-nowrap"
-          title={lastSync ? new Date(lastSync).toLocaleString() : undefined}
+          title={lastSync ? formatListDateTime(lastSync) : undefined}
         >
           {t('myWorkTable.offlineIndicator.lastSync', 'Last sync: {{time}}', { time: syncLabel })}
         </span>

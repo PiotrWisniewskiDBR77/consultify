@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ScrollEdgeFade } from '../shared/ScrollEdgeFade';
 import { useScrollEdges } from '../shared/useScrollEdges';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ActionItem {
   id: string;
@@ -134,10 +135,7 @@ const ActionItemCard: React.FC<{
         {item.dueDate && (
           <span className="flex items-center gap-1">
             <Calendar size={10} />
-            {new Date(item.dueDate).toLocaleDateString('pl-PL', {
-              day: 'numeric',
-              month: 'short',
-            })}
+            {formatListDate(item.dueDate)}
           </span>
         )}
       </div>

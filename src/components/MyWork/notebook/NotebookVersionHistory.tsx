@@ -13,6 +13,7 @@
 import { Clock, History, Loader2, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface NotebookVersion {
   id: string;
@@ -156,8 +157,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
 
   const formatTime = (iso: string | null): string => {
     if (!iso) return '';
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleString();
+    return formatListDateTime(iso, String(iso));
   };
 
   const selected = versions.find((v) => v.id === selectedId) || null;

@@ -63,6 +63,7 @@ import type {
   TableNode,
 } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 function extractLinkedIds(val: unknown): string[] {
   if (val == null) return [];
@@ -757,8 +758,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
   const formatTime = (iso: string) => {
     try {
-      const d = new Date(iso);
-      return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return formatListDateTime(iso, iso);
     } catch {
       return iso;
     }
