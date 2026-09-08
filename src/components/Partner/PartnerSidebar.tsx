@@ -155,7 +155,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
         items: [
           {
             id: 'referral-tools',
-            label: t('partner.sidebar.referralTools', 'My Links & Codes'),
+            label: t('partner.sidebar.referralTools', 'My links and codes'),
             icon: Link2,
             badge: t('partner.sidebar.new', 'New'),
             badgeType: 'new',
@@ -169,7 +169,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
           },
           {
             id: 'referred-organizations',
-            label: t('partner.sidebar.referredOrganizations', 'Referred Customers'),
+            label: t('partner.sidebar.referredOrganizations', 'Referred clients'),
             icon: Share2,
             keywords: ['referred', 'customers', 'attributions'],
           },
@@ -181,7 +181,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
         items: [
           {
             id: 'earnings',
-            label: t('partner.sidebar.earnings', 'Commission Earnings'),
+            label: t('partner.sidebar.earnings', 'Earnings'),
             icon: DollarSign,
             keywords: ['earnings', 'commissions', 'revenue'],
           },

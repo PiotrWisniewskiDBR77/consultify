@@ -90,7 +90,7 @@ function normalizeClient(client: LegacyPartnerClient): Client {
       client.clientName ||
         client.organizationName ||
         client.name ||
-        i18n.t('partner.clientAccess.fallbackOrganization', 'Organizacja')
+        i18n.t('partner.clientAccess.fallbackOrganization', 'Organization')
     ),
     organizationName:
       typeof client.organizationName === 'string'

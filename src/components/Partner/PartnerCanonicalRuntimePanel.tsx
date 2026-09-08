@@ -199,7 +199,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       icon: Link2,
       state: snapshot.attributions.state,
       value: String(snapshot.attributions.total),
-      detail: t('partner.canonicalRuntime.activeAttributions', 'Aktywne polecenia: {{count}}', {
+      detail: t('partner.canonicalRuntime.activeAttributions', 'Active referrals: {{count}}', {
         count: snapshot.attributions.active,
       }),
     },

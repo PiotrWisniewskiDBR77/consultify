@@ -1855,7 +1855,7 @@ const CertificationSection: React.FC<{
                           <span className="px-2 py-1 rounded-full bg-c-surface-raised text-c-text-muted">
                             {course.examMode === 'review'
                               ? t('partner.certification.examMode.review', 'Ocena operatora')
-                              : t('partner.certification.examMode.exam', 'Egzamin')}
+                              : t('partner.certification.examMode.exam', 'Exam')}
                           </span>
                         )}
                         {course.reviewState && (
@@ -2001,7 +2001,7 @@ const CertificationSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-c-text">
-            {t('partner.certification.exams', 'Egzaminy certyfikacyjne')}
+            {t('partner.certification.exams', 'Certification exams')}
           </h2>
           <p className="text-c-text-secondary">
             {t(
@@ -2024,7 +2024,7 @@ const CertificationSection: React.FC<{
                     </div>
                     <div>
                       <h4 className="font-medium text-c-text">
-                        {t('partner.certification.courseExam', 'Egzamin: {{name}}', {
+                        {t('partner.certification.courseExam', 'Exam: {{name}}', {
                           name: course.name,
                         })}
                       </h4>
@@ -2054,7 +2054,7 @@ const CertificationSection: React.FC<{
                       onClick={() => startExam(course.id)}
                       className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors"
                     >
-                      {t('partner.certification.takeExam', 'Rozpocznij egzamin')}
+                      {t('partner.certification.takeExam', 'Start the exam')}
                     </button>
                   )}
                 </div>
@@ -2082,8 +2082,8 @@ const CertificationSection: React.FC<{
                     {(() => {
                       const certName = certifications.find((c) => c.id === examCertId)?.name;
                       return certName
-                        ? `${certName} — ${t('partner.certification.examTitle', 'Egzamin certyfikacyjny')}`
-                        : t('partner.certification.examTitle', 'Egzamin certyfikacyjny');
+                        ? `${certName} — ${t('partner.certification.examTitle', 'Certification exam')}`
+                        : t('partner.certification.examTitle', 'Certification exam');
                     })()}
                   </h3>
                   <p className="text-sm text-c-text-muted">
@@ -2181,7 +2181,7 @@ const CertificationSection: React.FC<{
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-c-text">
-            {t('partner.certification.certificates', 'Twoje certyfikaty')}
+            {t('partner.certification.certificates', 'Your certificates')}
           </h2>
           <p className="text-c-text-secondary">
             {t(
@@ -2352,7 +2352,7 @@ const ResourcesSection: React.FC<{
   };
 
   const titles: Record<string, string> = {
-    documentation: t('partner.sidebar.documentation', 'Dokumentacja'),
+    documentation: t('partner.sidebar.documentation', 'Documentation'),
     marketing: t('partner.sidebar.marketing', 'Marketing materials'),
     'case-studies': t('partner.sidebar.caseStudies', 'Case studies'),
     templates: t('partner.sidebar.templates', 'Szablony PMO'),
@@ -2427,7 +2427,7 @@ const ResourcesSection: React.FC<{
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <h3 className="text-base font-semibold text-c-text">
-                {t('partner.resources.canonicalDocs', 'Dokumentacja programu partnerskiego')}
+                {t('partner.resources.canonicalDocs', 'Partner program documentation')}
               </h3>
               <div className="mt-3 space-y-3">
                 {docsBridge.map((doc) => (
@@ -3295,25 +3295,25 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       dashboard: t('partner.sidebar.dashboard', 'Dashboard'),
       metrics: t('partner.sidebar.metrics', 'Metrics'),
       // Referrals
-      'referral-tools': t('partner.sidebar.referralTools', 'Moje linki i kody'),
+      'referral-tools': t('partner.sidebar.referralTools', 'My links and codes'),
       'referral-analytics': t('partner.sidebar.referralAnalytics', 'Click analytics'),
-      'referred-organizations': t('partner.sidebar.referredOrganizations', 'Poleceni klienci'),
+      'referred-organizations': t('partner.sidebar.referredOrganizations', 'Referred clients'),
       // Earnings
-      earnings: t('partner.sidebar.earnings', 'Prowizje'),
+      earnings: t('partner.sidebar.earnings', 'Earnings'),
       statements: t('partner.sidebar.statements', 'Statements'),
       payouts: t('partner.sidebar.payouts', 'Payout history'),
       'payout-settings': t('partner.sidebar.payoutSettings', 'Payout settings'),
       // Clients
       'client-access': t('partner.sidebar.clientAccess', 'Client access'),
-      organizations: t('partner.sidebar.organizations', 'Organizacje'),
+      organizations: t('partner.sidebar.organizations', 'Organizations'),
       projects: t('partner.sidebar.projects', 'Projekty'),
       users: t('partner.sidebar.users', 'Team members'),
       // Academy
       'learning-path': t('partner.sidebar.learningPath', 'Learning path'),
-      exams: t('partner.sidebar.exams', 'Egzaminy'),
-      certificates: t('partner.sidebar.certificates', 'Certyfikaty'),
+      exams: t('partner.sidebar.exams', 'Exams'),
+      certificates: t('partner.sidebar.certificates', 'Certificates'),
       // Resources
-      documentation: t('partner.sidebar.documentation', 'Dokumentacja'),
+      documentation: t('partner.sidebar.documentation', 'Documentation'),
       marketing: t('partner.sidebar.marketing', 'Marketing materials'),
       'case-studies': t('partner.sidebar.caseStudies', 'Case studies'),
       templates: t('partner.sidebar.templates', 'Szablony PMO'),
@@ -3332,44 +3332,44 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
       metrics: { label: t('partner.sidebar.partnerHome', 'Home'), section: 'partner-home' },
       // Referrals
       'referral-tools': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       'referral-analytics': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       'referred-organizations': {
-        label: t('partner.sidebar.groups.referrals', 'Polecenia'),
+        label: t('partner.sidebar.groups.referrals', 'REFERRALS'),
         section: 'referral-tools',
       },
       // Earnings
-      earnings: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
-      statements: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
-      payouts: { label: t('partner.sidebar.groups.earnings', 'Prowizje'), section: 'earnings' },
+      earnings: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
+      statements: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
+      payouts: { label: t('partner.sidebar.groups.earnings', 'EARNINGS'), section: 'earnings' },
       'payout-settings': {
-        label: t('partner.sidebar.groups.earnings', 'Prowizje'),
+        label: t('partner.sidebar.groups.earnings', 'EARNINGS'),
         section: 'earnings',
       },
       // Clients
       'client-access': {
-        label: t('partner.sidebar.groups.clients', 'Klienci'),
+        label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'),
         section: 'client-access',
       },
       organizations: {
-        label: t('partner.sidebar.groups.clients', 'Klienci'),
+        label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'),
         section: 'client-access',
       },
-      projects: { label: t('partner.sidebar.groups.clients', 'Klienci'), section: 'client-access' },
-      users: { label: t('partner.sidebar.groups.clients', 'Klienci'), section: 'client-access' },
+      projects: { label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'), section: 'client-access' },
+      users: { label: t('partner.sidebar.groups.clients', 'CLIENT MANAGEMENT'), section: 'client-access' },
       // Academy
       'learning-path': {
-        label: t('partner.sidebar.groups.academy', 'Akademia'),
+        label: t('partner.sidebar.groups.academy', 'ACADEMY'),
         section: 'learning-path',
       },
-      exams: { label: t('partner.sidebar.groups.academy', 'Akademia'), section: 'learning-path' },
+      exams: { label: t('partner.sidebar.groups.academy', 'ACADEMY'), section: 'learning-path' },
       certificates: {
-        label: t('partner.sidebar.groups.academy', 'Akademia'),
+        label: t('partner.sidebar.groups.academy', 'ACADEMY'),
         section: 'learning-path',
       },
       // Resources

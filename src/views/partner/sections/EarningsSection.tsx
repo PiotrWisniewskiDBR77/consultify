@@ -501,7 +501,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               ),
               detail:
                 programStatus?.hold && programStatus.hold.amount > 0
-                  ? t('partner.earnings.heldAmount', 'Wstrzymane: {{amount}}', {
+                  ? t('partner.earnings.heldAmount', 'On hold: {{amount}}', {
                       amount: formatCurrency(
                         programStatus.hold.amount,
                         programStatus.balances.currency ?? v8Summary.currency
@@ -670,7 +670,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <h2 className="text-xl font-semibold text-c-text">
               {subsection === 'statements'
                 ? t('partner.earnings.statementsHeading', 'Commission statements')
-                : t('partner.earnings.title', 'Prowizja partnerska')}
+                : t('partner.earnings.title', 'Partner commission')}
             </h2>
             <p className="text-c-text-secondary">
               {subsection === 'statements'

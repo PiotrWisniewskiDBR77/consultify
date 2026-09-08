@@ -193,7 +193,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
     },
     {
       id: 'held',
-      label: t('partner.start.heldAmount', 'Wstrzymane'),
+      label: t('partner.start.heldAmount', 'On hold'),
       value: formatMoney(status.balances?.heldAmount ?? 0, currency, locale),
     },
   ];
@@ -281,7 +281,7 @@ export const PartnerStartRouter: React.FC<PartnerStartRouterProps> = ({
           onClick={() => onNavigateSection?.('referral-tools')}
           className="inline-flex items-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover"
         >
-          {t('partner.start.goToReferralTools', 'Moje linki i kody')}
+          {t('partner.start.goToReferralTools', 'My links and codes')}
         </button>
       </div>
     </div>
