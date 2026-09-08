@@ -19,6 +19,19 @@ Gałąź: `mvp/inicjatywy-lancuch-20260907` (do stagingu). Noc 07/08.09: P15 (Pl
 4. **Decyzje i ryzyka** — chip Decyzje: „Nowa decyzja” (termin, decydent) → odśwież. Chip Ryzyka: „Nowa pozycja RAID” (prawdopodobieństwo × wpływ = ekspozycja liczona) → odśwież; kebab „Eskaluj do problemu”. Chip **Sygnały (42)** — sygnały opóźnień z systemu; wiersz → „Przygotuj interwencję” → w Decyzjach pojawia się decyzja o przesunięciu terminu, sygnał ma stan „Interwencja”.
 5. **Raporty** — lista raportów 4 poziomów (Zarząd / Komitet / PMO / Właściciel inicjatywy), „Nowy raport”.
 
+## Dogrywka 08.09 rano (po Twoim pierwszym wejściu na staging)
+Twoje zrzuty z 05:50 (pusty Kokpit, „Brak inicjatyw w realizacji”, timeouty 15 s w Pracy i Zasobach, „Platform SuperAdmin” jako stanowisko) odtworzone na kopii Twojej bazy i naprawione:
+- **Proces API głodzony nieskończoną pętlą** w rodowodzie projektu (`postgresInitiativeReader.ts`): jedna Twoja inicjatywa bez projektu wpadała w rekurencję bez końca, każde wejście w Pracę lub Zasoby zjadało CPU i pamięć serwera, stąd puste ekrany i timeouty. Strażnik cyklu, 45 s bez odpowiedzi → 0,014 s.
+- Lista realizacji wpuszczała pozycję, której nie da się otworzyć (baner „nie udało się pobrać zasobów z 1 realizacji”) — teraz ta sama zasada co przy pojedynczej.
+- Podgląd osoby w Zasobach: „Zadania w tym tygodniu” i „Zadania zaległe” zamiast mylącego „Zadania 0” przy 341 h zaległości. „Platform SuperAdmin” to wpis w polu stanowisko w Twojej bazie, nie kod (przegląd danych, pkt 3).
+- **Martwa sesja po resecie hasła** (to, co widziałeś jako „Nie udało się załadować kanonicznego rejestru raportów”): po resecie ekran logowania z komunikatem, a każde 401 kończy sesję zamiast pustych ekranów.
+- **Szkic bez autora może przesłać administrator** (52 z 69 Twoich szkiców nie dało się przesłać). Zasada: autor, administrator/właściciel organizacji, albo każdy uprawniony gdy szkic nie ma autora.
+- Mail resetu hasła po polsku, nadawca „Consultify”, przycisk (zrzut wysłany do akceptacji).
+- AI na stagingu: Gemini naprawione (wycofany model), Anthropic i OpenRouter zdrowe; **OpenAI i DeepSeek bez środków na kontach** — doładowanie po Twojej stronie, nie blokuje (domyślny dostawca to OpenRouter).
+- Przegląd danych DBR77: `PRZEGLAD_DANYCH_DBR77_20260908.md` (tabela decyzji usunąć/uzupełnić/zostawić). Najpilniejsze przed pokazem: 5 z 8 inicjatyw w realizacji nie ma projektu, dat ani zadań; 13 z 17 osób bez stanowiska.
+
+Nowy STOP (nienaprawiony, do paczki): przy każdej edycji zadania bez właściciela serwer wpisuje jako właściciela osobę edytującą, a kolumna „Osoba” w Pracy to pokazuje (`TaskController.ts:1567`, `ExecutionWorkSurface.tsx:499`). Dotyczy 34 Twoich zadań.
+
 ## Co NIE działa albo czeka na Twoją decyzję (uczciwie)
 | # | Co | Waga | Co proponuję |
 |---|---|---|---|
