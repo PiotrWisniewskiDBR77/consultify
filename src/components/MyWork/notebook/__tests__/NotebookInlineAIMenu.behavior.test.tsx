@@ -74,7 +74,7 @@ describe('NotebookInlineAIMenu governed lifecycle', () => {
     const onApplied = await reachPreview();
     expect(screen.getByText('Original text')).toBeInTheDocument();
     expect(screen.getByText('Revised text')).toBeInTheDocument();
-    expect(screen.getByText(/Źródło: Teresa · akcja „Shorten” ·/)).toBeInTheDocument();
+    expect(screen.getByText(/Source: Teresa · akcja „Shorten” ·/)).toBeInTheDocument();
     const approve = screen.getByTestId('notebook-inline-ai-approve');
     fireEvent.click(approve);
     fireEvent.click(approve);
@@ -87,7 +87,7 @@ describe('NotebookInlineAIMenu governed lifecycle', () => {
     resolveProposal.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({});
     await reachPreview();
     fireEvent.click(screen.getByTestId('notebook-inline-ai-reject'));
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Nie udało się'));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Could not reject the proposal.'));
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(resolveProposal).toHaveBeenCalledTimes(2));
     expect(resolveProposal).toHaveBeenLastCalledWith('proposal-1', 'rejected');

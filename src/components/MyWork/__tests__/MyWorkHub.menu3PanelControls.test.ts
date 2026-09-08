@@ -32,7 +32,7 @@ describe('MyWorkHub renderuje kanoniczny StandardModuleBar (MP-MENU3)', () => {
   it('renderuje pigułki w prawym klastrze Menu 3 Skrzynki — tryb normalny', () => {
     // Sąsiaduje z istniejącym przyciskiem „Wstępna klasyfikacja AI" (AI Triage) —
     // ten sam prawy klaster (`MENU_3_RIGHT_CLASS`), nie osobny wiersz.
-    const aiTriageIdx = source.indexOf("t('myWork.hub.aITriage', 'Wstępna klasyfikacja AI')");
+    const aiTriageIdx = source.indexOf("t('myWork.hub.aITriage', 'AI Triage')");
     const panelControlsIdx = source.indexOf('{jedenPanelControls}', aiTriageIdx);
     expect(aiTriageIdx).toBeGreaterThan(0);
     expect(panelControlsIdx).toBeGreaterThan(aiTriageIdx);

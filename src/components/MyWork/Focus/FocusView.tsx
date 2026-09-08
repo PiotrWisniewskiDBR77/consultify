@@ -520,7 +520,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
             <RowActionsMenu
               size="sm"
               sections={(() => {
-                const comingSoon = t('common.comingSoonBackend', 'Wkrótce (backend)');
+                const comingSoon = t('common.comingSoonBackend', 'Coming soon (backend)');
                 const sections: RowActionSection[] = [
                   // GÓRA — kontekst (canon §9.1): focus-specific actions.
                   {
@@ -555,13 +555,13 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                     actions: [
                       {
                         id: 'open-preview',
-                        label: t('myWork.focus.actions.openPreview', 'Otwórz podgląd'),
+                        label: t('myWork.focus.actions.openPreview', 'Open preview'),
                         icon: ChevronRight,
                         onClick: () => onSelect(item),
                       },
                       {
                         id: 'edit',
-                        label: t('myWork.focus.actions.edit', 'Edytuj'),
+                        label: t('myWork.focus.actions.edit', 'Edit'),
                         icon: Edit2,
                         onClick: () => onOpenFull(item),
                       },
@@ -578,7 +578,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                         ? [
                             {
                               id: 'delay',
-                              label: t('myWork.focus.actions.delay', 'Przesuń termin'),
+                              label: t('myWork.focus.actions.delay', 'Reschedule'),
                               icon: Clock,
                               disabled: true,
                               description: comingSoon,

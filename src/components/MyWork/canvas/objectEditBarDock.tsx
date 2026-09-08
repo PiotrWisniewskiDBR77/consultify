@@ -148,7 +148,7 @@ export function buildStyleGroups({
       {
         kind: 'popover',
         id: 'font-size',
-        label: t('canvasEditBar.fontSize', 'Wielkość'),
+        label: t('canvasEditBar.fontSize', 'Size'),
         text: String(style.fontSize ?? 11),
         disabled,
         render: (close) => (
@@ -174,7 +174,7 @@ export function buildStyleGroups({
         kind: 'button',
         id: 'underline',
         icon: Underline,
-        label: t('canvasEditBar.underline', 'Podkreślenie'),
+        label: t('canvasEditBar.underline', 'Underline'),
         active: !!style.underline,
         disabled,
         onClick: () =>
@@ -196,7 +196,7 @@ export function buildStyleGroups({
       render: (close) => (
         <ColorPalettePopover
           title={t('canvasEditBar.textColor', 'Kolor tekstu')}
-          resetLabel={t('canvasEditBar.resetDefault', 'Domyślny')}
+          resetLabel={t('canvasEditBar.resetDefault', 'Default')}
           value={style.textColor}
           onPick={(c) => onPatch({ textColor: c })}
           close={close}
@@ -211,13 +211,13 @@ export function buildStyleGroups({
       kind: 'popover',
       id: 'bg-color',
       icon: PaintBucket,
-      label: t('canvasEditBar.bgColor', 'Kolor tła'),
+      label: t('canvasEditBar.bgColor', 'Background color'),
       swatch: style.bgColor ?? null,
       disabled,
       render: (close) => (
         <ColorPalettePopover
-          title={t('canvasEditBar.bgColor', 'Kolor tła')}
-          resetLabel={t('canvasEditBar.resetBg', 'Bez własnego tła')}
+          title={t('canvasEditBar.bgColor', 'Background color')}
+          resetLabel={t('canvasEditBar.resetBg', 'No custom background')}
           value={style.bgColor}
           onPick={(c) => onPatch({ bgColor: c })}
           close={close}
@@ -236,7 +236,7 @@ export function buildStyleGroups({
       render: (close) => (
         <ColorPalettePopover
           title={t('canvasEditBar.borderColor', 'Kolor ramki')}
-          resetLabel={t('canvasEditBar.resetBorder', 'Bez własnej ramki')}
+          resetLabel={t('canvasEditBar.resetBorder', 'No custom border')}
           value={style.borderColor}
           onPick={(c) => onPatch({ borderColor: c })}
           close={close}
@@ -249,7 +249,7 @@ export function buildStyleGroups({
       kind: 'popover',
       id: 'shape',
       icon: Shapes,
-      label: t('canvasEditBar.shapeTitle', 'Kształt obiektu'),
+      label: t('canvasEditBar.shapeTitle', 'Object shape'),
       disabled,
       render: (close) => (
         <ShapePalettePopover

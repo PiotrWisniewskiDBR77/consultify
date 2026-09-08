@@ -5610,7 +5610,7 @@ function MindMapInner({
           kind: 'popover',
           id: 'arrows',
           icon: MoveRight,
-          label: t('canvasEditBar.arrowTitle', 'Strzałki i kierunek'),
+          label: t('canvasEditBar.arrowTitle', 'Arrows and direction'),
           disabled: nodeDisabled,
           align: 'center',
           render: (close) => (
@@ -5667,7 +5667,7 @@ function MindMapInner({
     return {
       title: isMulti
         ? t('ideas.mindmap.nSelected', '{{count}} selected', { count: info.nodeIds.length }).trim()
-        : t('canvasEditBar.titleNode', 'Węzeł'),
+        : t('canvasEditBar.titleNode', 'Node'),
       groups: [growth, ...styleGroups, structure],
     };
   }, [

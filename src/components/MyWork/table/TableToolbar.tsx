@@ -738,7 +738,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {showGroupMenu && (
           <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-2">
             <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {t('ideas.table.groupBy', 'Grupuj wg')}
+              {t('ideas.table.groupBy', 'Group by')}
             </div>
             <button
               onClick={() => {

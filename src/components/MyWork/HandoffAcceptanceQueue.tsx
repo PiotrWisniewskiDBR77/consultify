@@ -48,7 +48,7 @@ export const HandoffAcceptanceQueue = () => {
   const cols: TableColumn[] = [
     { id: 'title', label: t('p9Handoff.colHandoff', 'Przekazanie'), sortable: true },
     { id: 'initiativeId', label: t('p9Handoff.colInitiative', 'Inicjatywa'), sortable: true },
-    { id: 'pack', label: t('p9Handoff.colPackage', 'Zamrożony pakiet'), sortable: true },
+    { id: 'pack', label: t('p9Handoff.colPackage', 'Frozen package'), sortable: true },
     { id: 'caseId', label: t('p9Handoff.colCase', 'Sprawa realizacji'), sortable: true },
     { id: 'dueAt', label: t('p9Handoff.colDue', 'Termin'), sortable: true },
   ];
@@ -132,15 +132,15 @@ export const HandoffAcceptanceQueue = () => {
   if (state === 'LOADING')
     return (
       <section aria-label="Handoff acceptances" className="p-4" role="status">
-        {t('p9Handoff.loading', 'Wczytywanie przekazań…')}
+        {t('p9Handoff.loading', 'Loading handoff acceptances…')}
       </section>
     );
   if (state === 'ERROR')
     return (
       <section aria-label="Handoff acceptances" className="p-4" role="alert">
-        {t('p9Handoff.unavailable', 'Kolejka przekazań niedostępna.')}{' '}
+        {t('p9Handoff.unavailable', 'Handoff queue unavailable.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          {t('p9Handoff.retry', 'Spróbuj ponownie')}
+          {t('p9Handoff.retry', 'Retry')}
         </button>
       </section>
     );
@@ -148,10 +148,10 @@ export const HandoffAcceptanceQueue = () => {
   return (
     <section aria-label="Handoff acceptances" className="border-b border-c-border p-4">
       <h3 className="font-semibold text-c-text">
-        {t('p9Handoff.acceptanceHeading', 'Do akceptacji — przekazania czekające na Ciebie')}
+        {t('p9Handoff.acceptanceHeading', 'For acceptance — handoffs waiting on you')}
       </h3>
       <p className="text-xs text-c-text-muted">
-        {t('p9Handoff.acceptanceSubtitle', 'Wyłącznie zamrożony pakiet. Akceptacja tworzy kanoniczną sprawę realizacji.')}
+        {t('p9Handoff.acceptanceSubtitle', 'Exact frozen package only. Acceptance creates the canonical Execution Case.')}
       </p>
       {receipt && (
         <p role="status" className="rounded border border-c-success/40 p-3">

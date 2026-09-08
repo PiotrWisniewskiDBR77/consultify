@@ -10,7 +10,7 @@ describe('IdeaElementInspector tool-specific states', () => {
     'uses the common empty state for %s',
     (tool) => {
       render(<IdeaElementInspector element={null} tool={tool} />);
-      expect(screen.getByText('Zaznacz element, aby zobaczyć właściwości')).toBeInTheDocument();
+      expect(screen.getByText('Select an element to see its properties')).toBeInTheDocument();
     }
   );
 
@@ -45,6 +45,6 @@ describe('IdeaElementInspector tool-specific states', () => {
   it('does not invent a state selector for Process Flow', () => {
     render(<IdeaElementInspector element={{ id: 'edge-1', label: 'Edge' }} tool="process" />);
     expect(screen.queryByLabelText('Stan')).not.toBeInTheDocument();
-    expect(screen.getByText('To narzędzie nie prowadzi stanu elementu')).toBeInTheDocument();
+    expect(screen.getByText('This tool does not track element state')).toBeInTheDocument();
   });
 });

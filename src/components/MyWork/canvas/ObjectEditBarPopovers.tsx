@@ -121,7 +121,7 @@ export const FontSizePopover: React.FC<{
   const { t } = useTranslation();
   return (
     <div className={`${PANEL} w-[112px]`}>
-      <div className={CAPTION}>{t('canvasEditBar.fontSize', 'Wielkość')}</div>
+      <div className={CAPTION}>{t('canvasEditBar.fontSize', 'Size')}</div>
       <div className="grid grid-cols-2 gap-1">
         {CANVAS_FONT_SIZES.map((size) => (
           <button
@@ -173,7 +173,7 @@ export const ShapePalettePopover: React.FC<{
   const { t } = useTranslation();
   return (
     <div className={`${PANEL} w-[168px]`}>
-      <div className={CAPTION}>{t('canvasEditBar.shapeTitle', 'Kształt obiektu')}</div>
+      <div className={CAPTION}>{t('canvasEditBar.shapeTitle', 'Object shape')}</div>
       <div className="grid grid-cols-3 gap-1">
         {CANVAS_SHAPES.map((s) => (
           <button
@@ -299,7 +299,7 @@ export const TextInputPopover: React.FC<{
         className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       />
       <button type="button" onClick={commit} className={`${ROW_BTN} mt-1.5 justify-center`}>
-        {confirmLabel ?? t('canvasEditBar.save', 'Zapisz')}
+        {confirmLabel ?? t('canvasEditBar.save', 'Save')}
       </button>
     </div>
   );
@@ -335,7 +335,7 @@ export const ArrowDirectionPopover: React.FC<{
   const { t } = useTranslation();
   return (
     <div className={`${PANEL} w-[176px]`}>
-      <div className={CAPTION}>{title ?? t('canvasEditBar.arrowTitle', 'Strzałki i kierunek')}</div>
+      <div className={CAPTION}>{title ?? t('canvasEditBar.arrowTitle', 'Arrows and direction')}</div>
       {ARROW_OPTIONS.map((opt) => (
         <button
           key={opt.id}

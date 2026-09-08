@@ -859,7 +859,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     {
       id: 'comfortable',
       icon: Maximize2,
-      label: t('ideas.table.viewRouter.densityComfortable', 'Luźny'),
+      label: t('ideas.table.viewRouter.densityComfortable', 'Comfortable'),
     },
   ];
 
@@ -869,7 +869,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
           normalny/luźny. Czysto prezentacyjne, domyślnie normalny. */}
       <div className="flex items-center justify-end gap-1.5 px-0.5 pb-1">
         <span className="text-[10px] text-c-text-muted">
-          {t('ideas.table.viewRouter.rowDensity', 'Gęstość wierszy')}
+          {t('ideas.table.viewRouter.rowDensity', 'Row density')}
         </span>
         <div className="inline-flex items-center gap-0.5 rounded-lg border border-c-border-subtle bg-c-surface p-0.5">
           {densityOptions.map(({ id, icon: Icon, label }) => (
@@ -954,7 +954,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                     <button
                       type="button"
                       onClick={() => handleHeaderSortClick(col.key)}
-                      title={t('ideas.table.viewRouter.sortColumn', 'Sortuj wg {{name}}', {
+                      title={t('ideas.table.viewRouter.sortColumn', 'Sort by {{name}}', {
                         name: col.header,
                       })}
                       className="flex w-full items-center gap-1 rounded px-0.5 py-0.5 text-left outline-none hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -973,7 +973,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                       onChange={(e) => handleQuickFilterChange(col.key, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                       placeholder={t('ideas.table.viewRouter.filterColumn', 'Filtruj…')}
-                      aria-label={`${t('ideas.table.viewRouter.filterColumnAria', 'Filtruj wg')} ${col.header}`}
+                      aria-label={`${t('ideas.table.viewRouter.filterColumnAria', 'Filter by')} ${col.header}`}
                       className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal text-c-text outline-none placeholder:text-c-text-muted focus-visible:ring-2 focus-visible:ring-c-focus"
                     />
                     {/* Fala 8 — uchwyt zmiany szerokości kolumny (drag, min 60px). */}
@@ -982,7 +982,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                       aria-orientation="vertical"
                       aria-label={t(
                         'ideas.table.viewRouter.resizeColumn',
-                        'Zmień szerokość kolumny'
+                        'Resize column'
                       )}
                       onMouseDown={beginColumnResize(col.key)}
                       className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-c-info/40 active:bg-c-info/60"

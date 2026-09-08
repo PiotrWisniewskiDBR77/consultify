@@ -1308,7 +1308,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           : effectiveMode === 'draw'
             ? t('ideas.mindmap.drw', 'RYSOWANIE')
             : effectiveMode === 'connect'
-              ? t('ideas.mindmap.lnk', 'ŁĄCZENIE')
+              ? t('ideas.mindmap.lnk', 'CONNECT')
               : t('ideas.mindmap.sel', 'ZAZNACZANIE')}
       </span>
     </div>

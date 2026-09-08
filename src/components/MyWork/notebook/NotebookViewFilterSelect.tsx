@@ -49,11 +49,11 @@ export const NotebookViewFilterSelect: React.FC<NotebookViewFilterSelectProps> =
   const { t } = useTranslation();
 
   const options: Array<{ key: NotebookViewLens; label: string }> = [
-    { key: 'all', label: t('notebook.notebookContent.label31', 'Wszystkie') },
-    { key: 'pinned', label: t('notebook.notebookContent.label32', 'Przypięte') },
+    { key: 'all', label: t('notebook.notebookContent.label31', 'All') },
+    { key: 'pinned', label: t('notebook.notebookContent.label32', 'Pinned') },
     { key: 'recent', label: t('notebook.notebookContent.label33', 'Ostatnie') },
-    { key: 'toReview', label: t('notebook.notebookContent.label34', 'Do przeglądu') },
-    { key: 'fresh', label: t('notebook.notebookContent.label35', 'Świeże') },
+    { key: 'toReview', label: t('notebook.notebookContent.label34', 'To review') },
+    { key: 'fresh', label: t('notebook.notebookContent.label35', 'Fresh') },
     { key: 'orphaned', label: t('notebook.notebookContent.label36', 'Osierocone') },
   ];
 

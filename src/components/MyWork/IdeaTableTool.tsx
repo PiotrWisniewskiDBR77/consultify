@@ -1254,7 +1254,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         fieldCount: appliedFields,
       });
       toast.success(
-        t('myWorkTable.fieldProposal.applied', 'Zastosowano {{count}} pól', {
+        t('myWorkTable.fieldProposal.applied', 'Applied {{count}} field(s)', {
           count: appliedFields,
         })
       );
@@ -1921,7 +1921,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             }
             await effectiveRefresh();
           } catch {
-            toast.error(t('ideas.table.start.blankFailed', 'Nie udało się założyć wierszy'));
+            toast.error(t('ideas.table.start.blankFailed', 'Could not create the rows'));
           }
         })();
       }
@@ -2432,7 +2432,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       },
       {
         id: 'more',
-        heading: t('ideas.table.overflow.sectionMore', 'Więcej'),
+        heading: t('ideas.table.overflow.sectionMore', 'More'),
         items: [
           {
             id: 'financial-case',
@@ -2594,7 +2594,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             disabled: !usePlatform,
             disabledReason: t(
               'ideas.table.recordTemplates.requiresPlatformTable',
-              'Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym.'
+              'Record templates require a platform table — this table still runs on the legacy engine.'
             ),
             testId: 'idea-table-overflow-record-templates',
           },
@@ -3708,7 +3708,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   jest osiągalne. Renderuje się TYLKO przy fladze ON. */}
               {guidedBar && (
                 <TableBarOverflowMenu
-                  title={t('ideas.table.overflow.title', 'Więcej narzędzi')}
+                  title={t('ideas.table.overflow.title', 'More tools')}
                   sections={guidedBarOverflowSections}
                 />
               )}
@@ -4388,7 +4388,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
                               <div className="mx-auto max-w-xl text-c-text-muted">
                                 <div className="text-sm font-semibold mb-1">
-                                  {t('ideas.table.noFilterResultsTitle', 'Brak wyników filtra')}
+                                  {t('ideas.table.noFilterResultsTitle', 'No filter results')}
                                 </div>
                                 <div className="text-[11px] leading-relaxed">
                                   {t('ideas.table.noFilterResultsBody', {
@@ -4409,7 +4409,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
                                   >
                                     <X size={14} />
-                                    {t('ideas.table.clearFilter', 'Wyczyść filtr')}
+                                    {t('ideas.table.clearFilter', 'Clear filter')}
                                   </button>
                                 </div>
                               </div>

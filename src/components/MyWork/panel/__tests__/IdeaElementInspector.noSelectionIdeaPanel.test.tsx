@@ -52,7 +52,7 @@ describe('IdeaElementInspector — panel idei bez zaznaczenia', () => {
     // `t()`, which this component writes in Polish — see translation.json for
     // the real English copy.)
     expect(
-      screen.getByText('Kliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola')
+      screen.getByText('Click a node, row, card, or edge to see its fields')
     ).toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('IdeaElementInspector — panel idei bez zaznaczenia', () => {
 
     // Collapsed sections render their header but not their empty-state body text
     // until expanded (same contract the with-selection branch already has).
-    expect(screen.queryByText('Brak powiązań.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No relations.')).not.toBeInTheDocument();
     expect(screen.getByText('Relations')).toBeInTheDocument();
     expect(screen.getByText('Comments')).toBeInTheDocument();
     expect(screen.getByText('History')).toBeInTheDocument();

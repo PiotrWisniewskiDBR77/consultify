@@ -549,7 +549,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       {/* Rail header — title + close, no tabs (DEC-69). */}
       <div className="flex h-11 items-center gap-2 border-b border-c-border-subtle px-4">
         <span className="flex-1 min-w-0 truncate text-[12.5px] font-semibold text-c-text">
-          {activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+          {activePage.title || t('notebook.rightRail.untitled', 'Untitled')}
         </span>
         <button
           type="button"
@@ -590,7 +590,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             {onOpenSources && onCreateAIProposal && onReviewAIProposal && onConvert ? (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                  {t('notebook.rightRail.workflow', 'Przepływ pracy')}
+                  {t('notebook.rightRail.workflow', 'Workflow')}
                 </p>
                 <NotebookProgressChip
                   isPolish={isPolishRail}
@@ -628,7 +628,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             <ActionRow
               actionId="rail:share"
               icon={<Share2 size={15} />}
-              label={t('notebook.rightRail.share', 'Udostępnij')}
+              label={t('notebook.rightRail.share', 'Share')}
               onClick={onShare}
             />
             <ActionRow
@@ -636,7 +636,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
               icon={<Copy size={15} />}
               label={t('notebook.rightRail.copyLink', 'Kopiuj link')}
               disabled
-              title={t('notebook.rightRail.copyLinkReason', 'Akcja czeka na definicję zakresu')}
+              title={t('notebook.rightRail.copyLinkReason', 'Action is waiting for its scope to be defined')}
             />
             <ActionRow
               actionId="rail:version-history"
@@ -954,7 +954,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                         type="button"
                         onClick={() => onRemoveTag(tag)}
                         className="opacity-0 transition-opacity hover:text-c-danger group-hover/tag:opacity-100"
-                        aria-label={t('notebook.rightRail.removeTag', 'Usuń tag {{tag}}', { tag })}
+                        aria-label={t('notebook.rightRail.removeTag', 'Remove tag {{tag}}', { tag })}
                       >
                         <X size={9} />
                       </button>
@@ -999,7 +999,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 entries={readNotebookOutline(editor, activePage.contentJson)}
                 emptyLabel={t(
                   'notebook.rightRail.structureEmpty',
-                  'Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek.'
+                  'This note has no headings yet — the structure appears once you add one.'
                 )}
               />
             </div>
@@ -1064,7 +1064,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           undefined,
           activePage.captureMetadata?.sourceId ? (
             <div className="space-y-1 text-[11.5px] text-c-text-secondary">
-              <p>{t('notebook.rightRail.evidenceCaptured', 'Notatka powstała z przechwytu:')}</p>
+              <p>{t('notebook.rightRail.evidenceCaptured', 'This note was created from a capture:')}</p>
               <code className="block break-all text-[10px] text-c-text-muted">
                 {activePage.captureMetadata.sourceType || 'source'}:
                 {activePage.captureMetadata.sourceId}
@@ -1074,7 +1074,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             <p className="text-xs italic text-c-text-muted">
               {t(
                 'notebook.rightRail.noEvidence',
-                'Ta notatka nie ma zapisanych źródeł ani założeń.'
+                'This note has no saved sources or assumptions.'
               )}
             </p>
           )
@@ -1086,7 +1086,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           canonLabel('comments'),
           0,
           <p className="text-xs italic text-c-text-muted">
-            {t('notebook.rightRail.noComments', 'Brak komentarzy do tego dokumentu.')}
+            {t('notebook.rightRail.noComments', 'No comments on this document.')}
           </p>
         )}
 
@@ -1101,14 +1101,14 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 <History size={13} aria-hidden="true" />
                 {t(
                   'notebook.rightRail.versionHistoryOpenHint',
-                  'Historia wersji otwarta poniżej dokumentu — patrz sekcja Akcje.'
+                  'Version history is open below the document — see the Actions section.'
                 )}
               </p>
             ) : (
               <p className="text-[11.5px] text-c-text-muted">
                 {t(
                   'notebook.rightRail.versionHistoryHint',
-                  'Otwórz historię wersji w sekcji Akcje, żeby zobaczyć poprzednie zapisy.'
+                  'Open version history in the Actions section to see earlier saves.'
                 )}
               </p>
             )}
@@ -1128,7 +1128,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   // Notatnik deklaruje TREŚĆ trzech trybów; wygląd narzuca `ArtifactRightRail`.
   // ═══════════════════════════════════════════════════════════════════
   if (artifactRailEnabled) {
-    const noteLabel = activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu');
+    const noteLabel = activePage.title || t('notebook.rightRail.untitled', 'Untitled');
 
     // Komendy Teresy = WYŁĄCZNIE realne akcje, które ta szyna już dostaje
     // z NotebookContent. Zero chipów bez handlera — atrapa w pasie Teresy
@@ -1145,13 +1145,13 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     if (onConvert) {
       teresaCommands.push({
         id: 'convert-task',
-        label: t('notebook.rightRail.teresaConvertTask', 'Zamień w zadanie'),
+        label: t('notebook.rightRail.teresaConvertTask', 'Turn into a task'),
         icon: ClipboardList,
         onClick: () => onConvert('task'),
       });
       teresaCommands.push({
         id: 'convert-initiative',
-        label: t('notebook.rightRail.teresaConvertInitiative', 'Zamień w inicjatywę'),
+        label: t('notebook.rightRail.teresaConvertInitiative', 'Turn into an initiative'),
         icon: Layers,
         onClick: () => onConvert('initiative'),
         disabled: canConvertDeliverable === false,
@@ -1167,14 +1167,14 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         icon: ListTree,
         contextLabel: t(
           'notebook.rightRail.structureHint',
-          'Nagłówki dokumentu — nawigacja PO artefakcie, nie metadana o nim.'
+          'Document headings — navigation THROUGH the artefact, not metadata about it.'
         ),
         content: (
           <NotebookOutlineList
             entries={outline}
             emptyLabel={t(
               'notebook.rightRail.structureEmpty',
-              'Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek.'
+              'This note has no headings yet — the structure appears once you add one.'
             )}
           />
         ),
@@ -1198,14 +1198,14 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           messages: [],
           emptyLabel: t(
             'notebook.rightRail.teresaEmpty',
-            'Ta notatka nie ma jeszcze własnego wątku rozmowy — otwórz rozmowę, żeby zacząć.'
+            'This note has no conversation thread of its own yet — open a conversation to start one.'
           ),
           // BRAK `onSend`: pole pisania renderuje się wyłączone z jawnym
           // powodem. Wątek per-notatka to praca toru funkcji (kontrakt
           // danych), nie toru grafiki — patrz §"Połowa funkcjonalna" analizy.
           composeDisabledReason: t(
             'notebook.rightRail.teresaComposeDisabled',
-            'Pisanie wprost w pasie będzie możliwe, gdy notatka dostanie własny wątek rozmowy.'
+            'Writing straight into the rail will be possible once the note has its own conversation thread.'
           ),
           /*
             ★ DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wejście
@@ -1258,7 +1258,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             {t('notebook.rightRail.eyebrow', 'Notebook')}
           </p>
           <h2 className="truncate text-sm font-semibold text-c-text">
-            {t('notebook.rightRail.panelTitle', 'Szczegóły notatki')}
+            {t('notebook.rightRail.panelTitle', 'Note details')}
           </h2>
         </div>
       )}
@@ -1276,7 +1276,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   const blokTozsamosci = teresaContent ? (
     <header className="px-4 pb-3 pt-3.5">
       <h2 className="min-w-0 truncate text-[15px] font-semibold leading-snug tracking-tight text-c-text">
-        {activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+        {activePage.title || t('notebook.rightRail.untitled', 'Untitled')}
       </h2>
       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
         <span>{t('notebook.rightRail.objectKind', 'Notatka')}</span>
@@ -1337,7 +1337,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     <IdeaNotebookRightPanelPrototypeGate
       context="notebook"
       language={isPolishRail ? 'pl' : 'en'}
-      title={activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+      title={activePage.title || t('notebook.rightRail.untitled', 'Untitled')}
       ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
       onClose={onClose}
       sections={specASections}

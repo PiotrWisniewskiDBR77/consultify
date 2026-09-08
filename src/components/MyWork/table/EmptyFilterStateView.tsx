@@ -29,12 +29,12 @@ export const EmptyFilterStateView: React.FC<EmptyFilterStateViewProps> = ({ onCl
         <SearchX className="h-9 w-9 text-c-text-secondary" strokeWidth={1.5} />
       </div>
       <h3 className="text-base font-semibold text-c-text tracking-tight">
-        {t('ideas.table.emptyFilterState.headline', 'Brak wyników dla filtra')}
+        {t('ideas.table.emptyFilterState.headline', 'No results for this filter')}
       </h3>
       <p className="mt-2 text-sm text-c-text-muted leading-relaxed">
         {t(
           'ideas.table.emptyFilterState.description',
-          'Żaden rekord nie pasuje do aktywnych filtrów. Wyczyść filtry, aby zobaczyć wszystkie rekordy.'
+          'No record matches the active filters. Clear the filters to see all records.'
         )}
       </p>
       <div className="mt-8">
@@ -44,7 +44,7 @@ export const EmptyFilterStateView: React.FC<EmptyFilterStateViewProps> = ({ onCl
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-c-text px-4 py-2.5 text-xs font-semibold text-c-surface shadow-sm hover:brightness-95 transition-colors"
         >
           <FilterX className="h-3.5 w-3.5 shrink-0" />
-          {t('ideas.table.emptyFilterState.clearFilters', 'Wyczyść filtry')}
+          {t('ideas.table.emptyFilterState.clearFilters', 'Clear filters')}
         </button>
       </div>
     </div>

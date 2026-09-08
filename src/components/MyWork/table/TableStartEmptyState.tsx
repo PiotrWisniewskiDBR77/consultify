@@ -84,9 +84,9 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
       title: t('ideas.table.start.template.title', 'Z szablonu'),
       description: t(
         'ideas.table.start.template.description',
-        'Gotowa rama konsultingowa — SWOT, rejestr ryzyk, plan działań. Wstawia kolumny i przykładowe wiersze, które podmieniasz na swoje.'
+        'A ready consulting frame — SWOT, risk register, action plan. Adds the columns and sample rows you then replace with your own.'
       ),
-      action: t('ideas.table.start.template.action', 'Wybierz szablon'),
+      action: t('ideas.table.start.template.action', 'Pick a template'),
       onClick: onStartFromTemplate,
       recommended: true,
       testId: 'table-start-template',
@@ -97,9 +97,9 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
       title: t('ideas.table.start.ai.title', 'Z AI'),
       description: t(
         'ideas.table.start.ai.description',
-        'Napisz jednym zdaniem, co chcesz śledzić. AI zaproponuje kolumny i pierwsze wiersze — zatwierdzasz albo poprawiasz.'
+        'Say in one sentence what you want to track. AI proposes the columns and first rows — you approve or adjust.'
       ),
-      action: t('ideas.table.start.ai.action', 'Opisz tabelę'),
+      action: t('ideas.table.start.ai.action', 'Describe the table'),
       onClick: onStartWithAI,
       testId: 'table-start-ai',
     },
@@ -109,9 +109,9 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
       title: t('ideas.table.start.blank.title', 'Pusta z sugerowanymi kolumnami'),
       description: t(
         'ideas.table.start.blank.description',
-        'Nazwa, Status, Priorytet, Właściciel i trzy puste wiersze. Tabela powstaje od razu — resztę dokładasz sam.'
+        'Name, Status, Priority, Owner and three empty rows. The table appears immediately — you add the rest.'
       ),
-      action: t('ideas.table.start.blank.action', 'Zacznij pustą'),
+      action: t('ideas.table.start.blank.action', 'Start blank'),
       onClick: onStartBlank,
       testId: 'table-start-blank',
     },
@@ -129,17 +129,17 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
         <Table2 className="h-8 w-8 text-c-text-secondary" strokeWidth={1.5} />
       </div>
       <h3 className="text-base font-semibold tracking-tight text-c-text">
-        {t('ideas.table.start.headline', 'Ta tabela jest jeszcze pusta')}
+        {t('ideas.table.start.headline', 'This table is still empty')}
       </h3>
       <p className="mt-2 max-w-lg text-center text-sm leading-relaxed text-c-text-muted">
         {locked
           ? t(
               'ideas.table.start.lockedDescription',
-              'Tabela nie ma jeszcze wierszy, a widok jest tylko do odczytu — nic tu nie zbudujesz.'
+              'The table has no rows yet and this view is read-only — nothing can be built here.'
             )
           : t(
               'ideas.table.start.description',
-              'Wybierz jedną z trzech dróg — każda zakłada kolumny i wiersze od razu, bez wypełniania formularza.'
+              'Pick one of three ways in — each one creates columns and rows straight away, no form to fill in.'
             )}
       </p>
 
@@ -181,7 +181,7 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
                   className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <Columns3 className="h-3.5 w-3.5 shrink-0" />
-                  {t('ideas.table.newColumn', 'Dodaj pole')}
+                  {t('ideas.table.newColumn', 'New column')}
                 </button>
               )}
               {onImportCSV && (
@@ -192,7 +192,7 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
                   className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
-                  {t('ideas.table.start.importCsv', 'Mam już dane w pliku — wczytaj CSV')}
+                  {t('ideas.table.start.importCsv', 'I already have the data in a file — import CSV')}
                 </button>
               )}
             </div>

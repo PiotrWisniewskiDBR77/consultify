@@ -3247,10 +3247,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       return (
         <div className="space-y-2 text-sm">
           <label className="flex items-center justify-between gap-2">
-            <span>{t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}</span>
+            <span>{t('myWork.ideaInspector.nodeColor', 'Branch color')}</span>
             <input
               type="color"
-              aria-label={t('myWork.ideaInspector.nodeColor', 'Kolor gałęzi')}
+              aria-label={t('myWork.ideaInspector.nodeColor', 'Branch color')}
               value={meta?.color || '#94a3b8'}
               onChange={(e) => {
                 const nodeId = selection.primaryId;
@@ -3260,8 +3260,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             />
           </label>
           <p className="text-c-text-secondary">
-            {t('myWork.ideaInspector.nodeShape', 'Kształt')}:{' '}
-            {meta?.shape || t('myWork.ideaInspector.nodeShapeDefault', 'domyślny')}
+            {t('myWork.ideaInspector.nodeShape', 'Shape')}:{' '}
+            {meta?.shape || t('myWork.ideaInspector.nodeShapeDefault', 'default')}
           </p>
         </div>
       );
@@ -3271,12 +3271,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         <div className="space-y-1 text-sm">
           <p>
             {t('myWork.ideaInspector.lane', 'Tor')}:{' '}
-            {meta?.laneName || meta?.laneId || t('myWork.ideaInspector.laneNone', 'Brak toru')}
+            {meta?.laneName || meta?.laneId || t('myWork.ideaInspector.laneNone', 'No lane')}
           </p>
           <p className="text-c-text-secondary">
             {t(
               'myWork.ideaInspector.edgeHint',
-              'Kierunek i styl krawędzi edytujesz na kanwie po kliknięciu strzałki.'
+              'Edit edge direction and style on the canvas by clicking the arrow.'
             )}
           </p>
         </div>
@@ -3286,7 +3286,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (!whiteboardSession) {
         return (
           <p className="text-sm text-c-text-secondary">
-            {t('myWork.ideaInspector.noSession', 'Brak aktywnej sesji warsztatu')}
+            {t('myWork.ideaInspector.noSession', 'No active workshop session')}
           </p>
         );
       }

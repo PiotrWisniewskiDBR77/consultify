@@ -113,8 +113,8 @@ export const AITableFieldProposal: React.FC<AITableFieldProposalProps> = ({
             <div className="flex items-center gap-1 text-[11px] font-bold text-c-text">
               <SourceIcon size={11} className="text-c-info" />
               {proposal.source === 'refresh'
-                ? t('myWorkTable.fieldProposal.refreshTitle', 'Odświeżenie z artefaktów')
-                : t('myWorkTable.fieldProposal.autofillTitle', 'Autofill z artefaktów')}
+                ? t('myWorkTable.fieldProposal.refreshTitle', 'Refresh from artifacts')
+                : t('myWorkTable.fieldProposal.autofillTitle', 'Autofill from artifacts')}
             </div>
             <div className="text-[9px] text-c-text-muted">
               {t('myWorkTable.fieldProposal.summary', {
@@ -135,13 +135,13 @@ export const AITableFieldProposal: React.FC<AITableFieldProposalProps> = ({
             className="px-2 py-1 rounded-lg text-[10px] font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {allSelected
-              ? t('myWorkTable.fieldProposal.deselectAll', 'Odznacz wszystkie')
-              : t('myWorkTable.fieldProposal.selectAll', 'Zaznacz wszystkie')}
+              ? t('myWorkTable.fieldProposal.deselectAll', 'Deselect all')
+              : t('myWorkTable.fieldProposal.selectAll', 'Select all')}
           </button>
           <button
             onClick={onReject}
             className="ml-1 p-1 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-            title={t('myWorkTable.fieldProposal.dismiss', 'Odrzuć')}
+            title={t('myWorkTable.fieldProposal.dismiss', 'Dismiss')}
           >
             <X size={12} />
           </button>
@@ -219,7 +219,7 @@ export const AITableFieldProposal: React.FC<AITableFieldProposalProps> = ({
           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-danger-600 dark:text-danger-400 bg-danger-500/10 hover:bg-danger-500/20 transition-colors"
         >
           <X size={11} />
-          {t('myWorkTable.fieldProposal.reject', 'Odrzuć')}
+          {t('myWorkTable.fieldProposal.reject', 'Reject')}
         </button>
         <button
           onClick={handleApply}

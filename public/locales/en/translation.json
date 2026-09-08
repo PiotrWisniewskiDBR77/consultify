@@ -4166,7 +4166,9 @@
       "lineageOrganization": "Organization",
       "lineageUpdated": "Updated",
       "lineageSourceStatus": "Source status",
-      "lineageInitiative": "Initiative"
+      "lineageInitiative": "Initiative",
+      "possibleDuplicate": "Possible duplicate ({{count}})",
+      "possibleDuplicateHint": "Another item has the same title, section and source — check whether this is a duplicate."
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -4951,7 +4953,8 @@
       "sourcesAndAssumptions": "Sources & assumptions",
       "sourceArtifact": "Source artifact",
       "sourceDocuments": "Source documents",
-      "sessionsAndNotes": "Sessions, notes & findings"
+      "sessionsAndNotes": "Sessions, notes & findings",
+      "moreActions": "More actions"
     },
     "taskDetail": {
       "label": "Notify only",
@@ -6309,7 +6312,16 @@
       "stageField": "Stage",
       "createdField": "Created",
       "updatedField": "Updated",
-      "noActivity": "No activity"
+      "noActivity": "No activity",
+      "activity": {
+        "addedAttachment": "added an attachment",
+        "aiSuggested": "AI suggested",
+        "changedStatus": "changed the status: {{oldValue}} → {{newValue}}",
+        "commented": "commented",
+        "created": "created",
+        "edited": "changed {{field}}"
+      },
+      "close": "Close inspector"
     },
     "initiatives": {
       "createdFromChatToast": "Initiative created from chat"
@@ -35405,7 +35417,8 @@
       "popupBlockedForPdf": "Pop-up blocked. Please allow pop-ups to export the PDF.",
       "failedToRenderImageRetry": "Failed to render the mind map image. Please close this tab and try again.",
       "pdfReadyPrintDialog": "PDF ready — use the print dialog to save it.",
-      "pdfExportFailedRetry": "PDF export failed. Please try again."
+      "pdfExportFailedRetry": "PDF export failed. Please try again.",
+      "branchHealthLabel": "Branch health: {{score}}%"
     },
     "financial": {
       "dialogTitle": "Financial case",
@@ -35827,7 +35840,19 @@
       "tags": "Tags",
       "addTag": "+ tag",
       "removeTag": "Remove tag {{tag}}",
-      "untitled": "Untitled"
+      "untitled": "Untitled",
+      "copyLinkReason": "Action is waiting for its scope to be defined",
+      "evidenceCaptured": "This note was created from a capture:",
+      "noComments": "No comments on this document.",
+      "noEvidence": "This note has no saved sources or assumptions.",
+      "share": "Share",
+      "structureHint": "Document headings — navigation THROUGH the artefact, not metadata about it.",
+      "teresaComposeDisabled": "Writing straight into the rail will be possible once the note has its own conversation thread.",
+      "teresaConvertInitiative": "Turn into an initiative",
+      "teresaConvertTask": "Turn into a task",
+      "teresaEmpty": "This note has no conversation thread of its own yet — open a conversation to start one.",
+      "versionHistoryHint": "Open version history in the Actions section to see earlier saves.",
+      "versionHistoryOpenHint": "Version history is open below the document — see the Actions section."
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
@@ -38273,7 +38298,9 @@
       "proposalFailed": "Failed to create AI proposal.",
       "executeFailed": "AI error. Please try again.",
       "approveFailed": "Failed to approve.",
-      "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
+      "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
+      "provenance": "Source: Teresa",
+      "rejectFailed": "Could not reject the proposal."
     }
   },
   "myWorkMindmap": {
@@ -43941,7 +43968,8 @@
       "both": "Both ways"
     },
     "edgeLabel": "Label",
-    "edgeCondition": "Connection type"
+    "edgeCondition": "Connection type",
+    "save": "Save"
   },
   "statusChip": {
     "onboarding": "Onboarding",
