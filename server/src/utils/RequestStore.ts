@@ -17,6 +17,13 @@ import { v4 as uuidv4 } from 'uuid';
 interface RequestStore {
   correlationId: string;
   startTime: number;
+  /**
+   * Pamięć podręczna ważna WYŁĄCZNIE w obrębie jednego żądania HTTP.
+   * Powstaje razem ze store'em i ginie wraz z nim — nic nie przecieka
+   * między żądaniami ani między użytkownikami, więc zero zmiany semantyki:
+   * w obrębie jednego żądania te same argumenty i tak dawały ten sam wynik.
+   */
+  memo: Map<string, Promise<unknown>>;
 }
 
 // ==========================================
@@ -53,7 +60,7 @@ export const correlationMiddleware = (req: Request, res: Response, next: NextFun
   const correlationId = sanitizeCorrelationId(req.get('X-Correlation-ID')) || uuidv4();
 
   // Store it in AsyncLocalStorage
-  storage.run({ correlationId, startTime: Date.now() }, () => {
+  storage.run({ correlationId, startTime: Date.now(), memo: new Map() }, () => {
     // Also attach to request and response for convenience
     (req as Request & { correlationId?: string }).correlationId = correlationId;
     res.set('X-Correlation-ID', correlationId);
@@ -84,6 +91,30 @@ export const getStartTime = (): number | null => {
   return store ? store.startTime : null;
 };
 
+/**
+ * Policz `fabryka()` RAZ na żądanie HTTP dla danego `klucz`.
+ *
+ * Poza żądaniem (skrypty CLI, konsumenci kolejek, testy jednostkowe) store nie
+ * istnieje — wtedy wołamy `fabryka()` normalnie, BEZ pamiętania. Dzięki temu
+ * zachowanie poza HTTP nie zmienia się ani o krok.
+ *
+ * Odrzucony `Promise` jest usuwany z pamięci, żeby błąd jednego wywołania nie
+ * przykleił się do całego żądania i nie zamienił chwilowej awarii bazy w trwałe
+ * „brak uprawnień” do końca żądania.
+ */
+export const memoizeInRequest = <T>(klucz: string, fabryka: () => Promise<T>): Promise<T> => {
+  const store = storage.getStore();
+  if (!store) return fabryka();
+  const zapamietany = store.memo.get(klucz);
+  if (zapamietany) return zapamietany as Promise<T>;
+  const swiezy = fabryka();
+  store.memo.set(klucz, swiezy as Promise<unknown>);
+  void swiezy.catch(() => {
+    if (store.memo.get(klucz) === (swiezy as Promise<unknown>)) store.memo.delete(klucz);
+  });
+  return swiezy;
+};
+
 // ==========================================
 // DEFAULT EXPORT
 // ==========================================
@@ -93,6 +124,7 @@ const requestStore = {
   getCorrelationId,
   getStore,
   getStartTime,
+  memoizeInRequest,
 };
 
 export default requestStore;

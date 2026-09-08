@@ -14,6 +14,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 
 import { get as dbGet } from '../utils/DbPromise.js';
+import { memoizeInRequest } from '../utils/RequestStore.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -193,9 +194,13 @@ const safeRespond = (
  * Check if user is in Trial Entry status
  */
 export async function isTrialEntryUser(userId: string): Promise<boolean> {
-  const userRow = await dbGet<UserRow>(`SELECT status AS user_status FROM users WHERE id = ?`, [
-    userId,
-  ]);
+  // WYDAJNOSC [ODMROZENIE 06_EXECUTION DEC-453]: status uzytkownika byl czytany
+  // po 4 razy na jedno zadanie (ten guard + highRiskSurfaceGuard, kazdy na kilku
+  // montowaniach). Liczymy raz na zadanie; poza zadaniem HTTP (skrypty, testy)
+  // `memoizeInRequest` przepuszcza wywolanie bez pamietania.
+  const userRow = await memoizeInRequest(JSON.stringify(['users.status', userId]), () =>
+    dbGet<UserRow>(`SELECT status AS user_status FROM users WHERE id = ?`, [userId])
+  );
   const status = safeRead(() => String(userRow?.user_status || ''), '')
     .trim()
     .toUpperCase();
