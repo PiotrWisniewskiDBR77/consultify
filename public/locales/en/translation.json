@@ -26265,7 +26265,8 @@
     "statementType": {
       "pl": "Profit and loss",
       "bs": "Balance sheet",
-      "cf": "Cash flow statement"
+      "cf": "Cash flow statement",
+      "cfShort": "Cash Flow"
     },
     "bridge": {
       "checkFailed": "Could not check this record in the new system.",

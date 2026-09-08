@@ -50,7 +50,7 @@ import {
 } from './financeTypes';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 import { normalizeSensitivityGrid } from './normalizeSensitivityGrid';
-import { statementReadinessLabel } from '../Finance/labels/financeEnums';
+import { statementLineLabel, statementReadinessLabel } from '../Finance/labels/financeEnums';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -237,7 +237,7 @@ export function useFinancePreview({
     const statementLabels = {
       'P&L': 'P&L',
       BS: t('finance.preview.statementBS', 'Balance Sheet'),
-      CF: 'Cash Flow',
+      CF: t('finance.statementType.cfShort', 'Cash Flow'),
     };
 
     return (

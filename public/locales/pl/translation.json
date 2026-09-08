@@ -27208,7 +27208,8 @@
     "statementType": {
       "pl": "Rachunek zysków i strat",
       "bs": "Bilans",
-      "cf": "Rachunek przepływów pieniężnych"
+      "cf": "Rachunek przepływów pieniężnych",
+      "cfShort": "Przepływy pieniężne"
     },
     "bridge": {
       "checkFailed": "Nie udało się sprawdzić tego rekordu w nowym systemie.",
