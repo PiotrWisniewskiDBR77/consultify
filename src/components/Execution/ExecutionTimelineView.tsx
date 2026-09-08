@@ -104,27 +104,42 @@ interface PortfolioDependency {
 // STATUS COLORS
 // ============================================
 
-const STATUS_COLORS: Record<
+export const STATUS_COLORS: Record<
   InitiativeStatus,
   { bg: string; border: string; text: string; progress: string }
 > = {
+  // ODMROZENIE 05_INITIATIVES DEC-453 (przegląd DBR77, 2026-09-08): ten obiekt
+  // miał KAŻDY status zdefiniowany 2-4 razy (kolejne redakcje doklejały nowy
+  // blok kolorów zamiast zastąpić stary). W literale obiektu JS późniejszy
+  // klucz cicho nadpisuje wcześniejszy — bez błędu, bez ostrzeżenia — więc
+  // realnie obowiązywała TYLKO ostatnia definicja każdego statusu, a
+  // pozostałe leżały martwe. Efekt widoczny na danych DBR77: legenda pod
+  // wykresem (dalej w tym pliku) renderowała „W realizacji" DWA RAZY
+  // (ten sam klucz React), bo tamta tablica kopiowała ten sam błąd. Skutkiem
+  // ubocznym duplikatów było też złamanie kanonu UI: finalny (jedyny
+  // obowiązujący) kolor IN_EXECUTION wskazywał na `danger` (czerwień), a
+  // czerwień w tym repo jest zarezerwowana WYŁĄCZNIE dla semantyki
+  // krytycznej (TRIADA_KANON §3) — zwykły status "w realizacji" nie jest
+  // stanem krytycznym. Poniżej: JEDNA definicja na status, 7 kluczy (komplet
+  // enuma `InitiativeStatus`), bez czerwieni poza tym, co już było
+  // zarezerwowane gdzie indziej w pliku (ring krytycznej ścieżki).
+  [InitiativeStatus.PROPOSED]: {
+    bg: 'bg-slate-500/20',
+    border: 'border-slate-500/50',
+    text: 'text-c-text-muted',
+    progress: 'bg-slate-500',
+  },
+  [InitiativeStatus.DRAFT]: {
+    bg: 'bg-slate-500/20',
+    border: 'border-slate-500/50',
+    text: 'text-c-text-muted',
+    progress: 'bg-slate-500',
+  },
   [InitiativeStatus.PENDING_APPROVAL]: {
     bg: 'bg-amber-500/20',
     border: 'border-amber-500/50',
     text: 'text-amber-400',
     progress: 'bg-amber-500',
-  },
-  [InitiativeStatus.PENDING_APPROVAL]: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/50',
-    text: 'text-blue-400',
-    progress: 'bg-blue-500',
-  },
-  [InitiativeStatus.APPROVED]: {
-    bg: 'bg-emerald-500/20',
-    border: 'border-emerald-500/50',
-    text: 'text-emerald-400',
-    progress: 'bg-emerald-500',
   },
   [InitiativeStatus.APPROVED]: {
     // §9.2④ crimson is NEVER a status — use info/blue-violet, not primary(=crimson)
@@ -139,53 +154,17 @@ const STATUS_COLORS: Record<
     text: 'text-blue-400',
     progress: 'bg-blue-500',
   },
-  [InitiativeStatus.IN_EXECUTION]: {
-    bg: 'bg-danger-500/20',
-    border: 'border-danger-500/50',
-    text: 'text-danger-400',
-    progress: 'bg-danger-500',
-  },
   [InitiativeStatus.CLOSED]: {
     bg: 'bg-green-500/20',
     border: 'border-green-500/50',
     text: 'text-green-400',
     progress: 'bg-green-500',
   },
-  [InitiativeStatus.CLOSED]: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/50',
-    text: 'text-blue-400',
-    progress: 'bg-blue-500',
-  },
-  [InitiativeStatus.DRAFT]: {
-    bg: 'bg-slate-500/20',
-    border: 'border-slate-500/50',
-    text: 'text-c-text-muted',
-    progress: 'bg-slate-500',
-  },
-  [InitiativeStatus.PENDING_APPROVAL]: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/50',
-    text: 'text-blue-400',
-    progress: 'bg-blue-500',
-  },
-  [InitiativeStatus.PENDING_APPROVAL]: {
-    bg: 'bg-amber-500/20',
-    border: 'border-amber-500/50',
-    text: 'text-amber-400',
-    progress: 'bg-amber-500',
-  },
   [InitiativeStatus.REJECTED]: {
     bg: 'bg-gray-500/20',
     border: 'border-gray-500/50',
     text: 'text-gray-600',
     progress: 'bg-gray-500',
-  },
-  [InitiativeStatus.CLOSED]: {
-    bg: 'bg-slate-500/20',
-    border: 'border-slate-500/50',
-    text: 'text-c-text-muted',
-    progress: 'bg-slate-500',
   },
 };
 
@@ -1550,10 +1529,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-c-border-subtle bg-c-surface text-xs flex-wrap">
         <div className="flex items-center gap-4">
           {[
+            InitiativeStatus.DRAFT,
+            InitiativeStatus.PENDING_APPROVAL,
             InitiativeStatus.APPROVED,
             InitiativeStatus.IN_EXECUTION,
-            InitiativeStatus.IN_EXECUTION,
             InitiativeStatus.CLOSED,
+            InitiativeStatus.REJECTED,
           ].map((status) => (
             <div key={status} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded ${STATUS_COLORS[status].progress}`} />

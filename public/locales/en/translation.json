@@ -12316,8 +12316,8 @@
       "label": "Scope",
       "active": "Active",
       "all": "All",
-      "activeHint": "Review → Promoted → Planning → Approved → Scheduled",
-      "allHint": "Full lifecycle including Draft, Executing, Blocked, Done, Archived..."
+      "activeHint": "Draft → Pending approval → Approved → In execution",
+      "allHint": "Full lifecycle including Draft, Pending approval, Approved, In execution, On hold, Closed, Rejected"
     },
     "charter": {
       "short": "Charter"
