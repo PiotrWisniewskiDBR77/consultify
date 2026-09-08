@@ -1,0 +1,7 @@
+{
+  "nazwa": "99-awaria-12-15",
+  "opis": "Nieprzechwycony blad: locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"text\"]').first()\n",
+  "url": "http://127.0.0.1:3190/execution?tab=control&view=table",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:35:44.537Z"
+}

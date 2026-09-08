@@ -1,0 +1,8 @@
+{
+  "nazwa": "01-lista-initiatives",
+  "opis": "Lista Inicjatyw — widok domyslny z chipami statusow",
+  "url": "http://127.0.0.1:3190/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:09:00.345Z",
+  "czasLadowaniaMs": 5246
+}

@@ -1,0 +1,11 @@
+{
+  "nazwa": "13a-decyzje-i-ryzyka",
+  "opis": "Zakladka Decyzje i ryzyka — widok domyslny",
+  "url": "http://127.0.0.1:3190/execution?tab=control&view=table",
+  "bledyKonsoli": [
+    "[ExecutionHub] Failed to load tasks: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at Object.getTasks (http://127.0.0.1:3190/src/services/api.ts:3300:23)",
+    "[ExecutionHub] Failed to load: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at listExecutionCases (http://127.0.0.1:3190/src/services/initiatives-execut",
+    "[ExecutionHub] Failed to load: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at listExecutionCases (http://127.0.0.1:3190/src/services/initiatives-execut"
+  ],
+  "czas": "2026-09-08T05:29:51.702Z"
+}

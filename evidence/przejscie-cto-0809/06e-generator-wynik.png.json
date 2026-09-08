@@ -1,0 +1,8 @@
+{
+  "nazwa": "06e-generator-wynik",
+  "opis": "Wynik generatora po 5125ms (propozycja widoczna: true)",
+  "url": "http://127.0.0.1:3190/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:19:38.857Z",
+  "czasGenerowaniaMs": 5125
+}

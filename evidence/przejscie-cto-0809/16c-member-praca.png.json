@@ -1,0 +1,22 @@
+{
+  "nazwa": "16c-member-praca",
+  "opis": "MEMBER — zakladka Praca",
+  "url": "http://127.0.0.1:3190/execution?tab=work&view=table",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "[ExecutionWorkSurface] katalog osób nieosiągalny: Error: Insufficient permissions\n    at handleResponse (http://127.0.0.1:3190/src/services/api/baseClient.ts:176:15)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "[ExecutionWorkSurface] katalog osób nieosiągalny: Error: Insufficient permissions\n    at handleResponse (http://127.0.0.1:3190/src/services/api/baseClient.ts:176:15)"
+  ],
+  "czas": "2026-09-08T05:37:04.164Z"
+}

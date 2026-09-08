@@ -1,0 +1,2 @@
+2026-09-08T05:16:17.004Z GET 404 /api/initiatives/runtime-v1/plan-scenarios/plan-2082051e-3441-40a8-b58b-c872ec679185/analysis-proposals
+    {"error":{"code":"NOT_FOUND"}}

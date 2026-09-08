@@ -1,0 +1,59 @@
+2026-09-08T05:36:58.824Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:36:58.989Z 403 /api/v8/execution-control/manager/lanes/action-queue/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:36:59.451Z 403 /api/v8/execution-control/manager/lanes/decisions/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:36:59.489Z 403 /api/v8/execution-control/manager/lanes/blockers/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:00.196Z 403 /api/v8/execution-control/manager/lanes/workload/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:00.331Z 403 /api/v8/execution-control/manager/lanes/risk/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:00.397Z 403 /api/v8/execution-control/manager/lanes/people-change/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:01.751Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:02.354Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:02.637Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:02.753Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:02.834Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:07.043Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}
+
+2026-09-08T05:37:07.350Z 403 /api/v8/execution-control/manager/lanes/action-queue/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:07.871Z 403 /api/v8/execution-control/manager/lanes/decisions/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:07.877Z 403 /api/v8/execution-control/manager/lanes/blockers/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:07.904Z 403 /api/v8/execution-control/manager/lanes/workload/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:07.937Z 403 /api/v8/execution-control/manager/lanes/risk/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:07.937Z 403 /api/v8/execution-control/manager/lanes/people-change/problems
+    {"error":"Permission denied","required":"manage_workstreams","code":"PERMISSION_DENIED"}
+
+2026-09-08T05:37:09.252Z 403 /api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members
+    {"error":"Insufficient permissions"}

@@ -1,0 +1,15 @@
+{
+  "nazwa": "12a-zasoby-tabela",
+  "opis": "Zakladka Zasoby — tabela bez banera bledu",
+  "url": "http://127.0.0.1:3190/execution?tab=resources&view=table",
+  "bledyKonsoli": [
+    "[ExecutionWorkSurface] katalog osób nieosiągalny: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at Object.getOrganizationMembers (http://127.0.0.1:3190/s",
+    "[ExecutionHub] Failed to load: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at listExecutionCases (http://127.0.0.1:3190/src/services/initiatives-execut",
+    "[ExecutionHub] Failed to load: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at listExecutionCases (http://127.0.0.1:3190/src/services/initiatives-execut",
+    "[ExecutionWorkSurface] /api/tasks nieosiągalne: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at Object.getTasks (http://127.0.0.1:3190/src/services/api.",
+    "[ExecutionWorkSurface] /api/tasks nieosiągalne: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at Object.getTasks (http://127.0.0.1:3190/src/services/api.",
+    "[ExecutionWorkSurface] katalog osób nieosiągalny: TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at Object.getOrganizationMembers (http://127.0.0.1:3190/s",
+    "Failed to fetch notifications TypeError: Failed to fetch\n    at window.fetch (http://127.0.0.1:3190/src/services/globalAuthFetchGuard.ts:34:28)\n    at window.fetch (http://127.0.0.1:3190/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://127.0.0.1:3190/src/services/csrfClient.ts:78:14)\n    at fetchWithRetryInner (http://127.0.0.1:3190/src/services/api.ts:579:17)\n   "
+  ],
+  "czas": "2026-09-08T05:29:46.958Z"
+}

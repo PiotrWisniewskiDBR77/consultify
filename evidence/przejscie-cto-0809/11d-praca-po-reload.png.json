@@ -1,0 +1,7 @@
+{
+  "nazwa": "11d-praca-po-reload",
+  "opis": "Po reload — sprawdz czy termin trwaly",
+  "url": "http://127.0.0.1:3190/execution?tab=work&view=table",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:29:42.262Z"
+}

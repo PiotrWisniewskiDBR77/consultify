@@ -1,0 +1,17 @@
+{
+  "nazwa": "17a-sesja-wygasla",
+  "opis": "Po skasowaniu ciasteczek — oczekiwany ekran logowania z komunikatem \"Sesja wygasla\"",
+  "url": "http://127.0.0.1:3190/login?redirect=%2Fexecution",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to fetch tasks Error: Failed to fetch personal tasks\n    at Object.getPersonalTasks (http://127.0.0.1:3190/src/services/api.ts:3385:26)\n    at async fetchTasks (http://127.0.0.1:3190/src/components/TaskDropdown.tsx:28:19)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to fetch tasks Error: Failed to fetch personal tasks\n    at Object.getPersonalTasks (http://127.0.0.1:3190/src/services/api.ts:3385:26)\n    at async fetchTasks (http://127.0.0.1:3190/src/components/TaskDropdown.tsx:28:19)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "czas": "2026-09-08T05:37:18.006Z"
+}

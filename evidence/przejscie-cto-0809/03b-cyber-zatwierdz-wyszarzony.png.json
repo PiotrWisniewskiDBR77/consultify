@@ -1,0 +1,9 @@
+{
+  "nazwa": "03b-cyber-zatwierdz-wyszarzony",
+  "opis": "Przycisk \"Zatwierdz\" disabled=true. Powod: Zatwierdź inicjatywę: Brakuje aktualnej decyzji GO komitetu.",
+  "url": "http://127.0.0.1:3190/initiatives?open=7eb944f9-c5b9-4162-8bff-23b0d620f9f3&mode=drawer",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:10:31.144Z",
+  "disabled": true,
+  "powodTxt": "Zatwierdź inicjatywę: Brakuje aktualnej decyzji GO komitetu."
+}

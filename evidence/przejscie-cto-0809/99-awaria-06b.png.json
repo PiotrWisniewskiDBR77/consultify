@@ -1,0 +1,7 @@
+{
+  "nazwa": "99-awaria-06b",
+  "opis": "Nieprzechwycony blad: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByText('Obciążenie ról', { exact: true }).first()\n    - locator resolved to <span class=\"whitespace-nowrap flex-1 min-w-0 truncate\">Obciążenie ról</span>\n  - attempting click action\n    2 × waiting for element to be visible, enabl",
+  "url": "http://127.0.0.1:3190/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:21:11.101Z"
+}

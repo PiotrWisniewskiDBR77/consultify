@@ -1,0 +1,7 @@
+{
+  "nazwa": "10b-realizacje-podglad",
+  "opis": "Podglad pierwszej realizacji — akcje lancucha widoczne",
+  "url": "http://127.0.0.1:3190/execution?tab=list&view=table",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:29:29.825Z"
+}

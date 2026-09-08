@@ -1,0 +1,16 @@
+{
+  "nazwa": "16d-member-decyzje",
+  "opis": "MEMBER — Decyzje i ryzyka (sprawdz brak \"Nowa decyzja\")",
+  "url": "http://127.0.0.1:3190/execution?tab=control&view=table",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "czas": "2026-09-08T05:37:09.592Z"
+}

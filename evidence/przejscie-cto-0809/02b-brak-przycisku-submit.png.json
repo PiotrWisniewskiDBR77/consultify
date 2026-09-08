@@ -1,0 +1,7 @@
+{
+  "nazwa": "02b-brak-przycisku-submit",
+  "opis": "Brak przycisku SUBMIT_FOR_REVIEW w sekcji Zarzadzanie (sprawdz stan actions.length===0)",
+  "url": "http://127.0.0.1:3190/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T05:09:05.684Z"
+}
