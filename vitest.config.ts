@@ -282,6 +282,12 @@ export default defineConfig({
       // still matches zero tests, since positional paths are intersected
       // with `include`, not additive to it.
       'tests/v8/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // J0 (docs/program/JEZYK_EN_PL_20260908) — bramka spójności językowej:
+      // testy funkcji klasyfikującej (wykryjPolski/wykryjAngielski) żyją obok
+      // narzędzia w scripts/i18n/__tests__/, nie w tests/**, więc bez tego
+      // glob'a są martwe dla `npm run test:unit` mimo `git add` (ten sam
+      // gap co komentarze niżej dla tests/v8, tests/resultsVnext...).
+      'scripts/i18n/__tests__/*.{test,spec}.mjs',
       // Table Platform service tests
       'server/src/services/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
       // V8 integration tests (nested under __tests__/integration/)
