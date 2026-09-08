@@ -1283,7 +1283,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     {isMine && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/30"
-                        title="Assigned to you"
+                        title={t('assessment.drd.editor.assignedToYou', 'Assigned to you')}
                       >
                         <User className="w-3 h-3" />
                         me
@@ -1960,36 +1960,55 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <div className={isExplanationExpanded ? '' : 'line-clamp-2'}>
                               {lvl.description}{' '}
                               <span className="text-slate-500 dark:text-slate-400">
-                                Use evidence (screenshot, report, system log, procedure, KPI) to
-                                justify your choice.
+                                {t(
+                                  'assessment.drd.editor.useEvidence',
+                                  'Use evidence (screenshot, report, system log, procedure, KPI) to justify your choice.'
+                                )}
                               </span>
                             </div>
 
                             {isExplanationExpanded && (
                               <div className="mt-3 space-y-2">
                                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  How to decide
+                                  {t('assessment.drd.editor.howToDecide', 'How to decide')}
                                 </div>
                                 <ul className="space-y-1">
                                   <li>
-                                    <span className="font-semibold">Achieved</span>: this is in
-                                    place and used in practice (not only a pilot).
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.achieved', 'Achieved')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.achievedHint',
+                                      ': this is in place and used in practice (not only a pilot).'
+                                    )}
                                   </li>
                                   <li>
-                                    <span className="font-semibold">Target</span>: desired “to‑be”
-                                    level (planned / roadmap target).
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.target', 'Target')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.targetHint',
+                                      ': the desired “to-be” level (planned / roadmap target).'
+                                    )}
                                   </li>
                                   <li>
-                                    <span className="font-semibold">Skip</span>: explicitly mark
-                                    “not planned” for this level.
+                                    <span className="font-semibold">
+                                      {t('assessment.drd.editor.skip', 'Skip')}
+                                    </span>
+                                    {t(
+                                      'assessment.drd.editor.skipHint',
+                                      ': explicitly mark “not planned” for this level.'
+                                    )}
                                   </li>
                                 </ul>
                                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  Tip
+                                  {t('assessment.drd.editor.tip', 'Tip')}
                                 </div>
                                 <div>
-                                  If you’re unsure, add a short comment + attach a quick artifact.
-                                  You can always change your mind later.
+                                  {t(
+                                    'assessment.drd.editor.tipBody',
+                                    'If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later.'
+                                  )}
                                 </div>
                               </div>
                             )}

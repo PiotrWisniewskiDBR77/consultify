@@ -474,7 +474,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   />
                   <div className="flex justify-between mt-1.5">
                     <span className="text-xs text-c-text-muted">
-                      Give your assessment a descriptive name
+                      {t('assessment.newModal.nameHint', 'Give your assessment a descriptive name')}
                     </span>
                     <span
                       className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-c-text-muted'}`}
@@ -533,7 +533,10 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     id="assessment-description"
                     value={assessmentDescription}
                     onChange={(e) => setAssessmentDescription(e.target.value)}
-                    placeholder="Describe the scope and objectives of this assessment..."
+                    placeholder={t(
+                      'assessment.newModal.descriptionPlaceholder',
+                      'Describe the scope and objectives of this assessment…'
+                    )}
                     maxLength={1000}
                     rows={3}
                     className="
@@ -545,7 +548,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   />
                   <div className="flex justify-between mt-1.5">
                     <span className="text-xs text-c-text-muted">
-                      Optional context for this assessment
+                      {t('assessment.newModal.descriptionHint', 'Optional context for this assessment')}
                     </span>
                     <span
                       className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-c-text-muted'}`}
@@ -558,7 +561,10 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
               {selectedFramework === 'DRD' && (
                 <p className="text-sm text-c-text-secondary">
-                  The canonical session label will be assigned from its Method Core identifier.
+                  {t(
+                    'assessment.newModal.canonicalLabel',
+                    'The canonical session label will be assigned from its Method Core identifier.'
+                  )}
                 </p>
               )}
 
@@ -583,7 +589,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   "
                   disabled={isSubmitting}
                 >
-                  Back
+                  {t('assessment.newModal.back', 'Back')}
                 </button>
                 <button
                   type="submit"

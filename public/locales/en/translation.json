@@ -8695,12 +8695,18 @@
         "reportScope": "Report Scope",
         "sectionFallback": "Section {{n}}",
         "moreSections": "+{{count}} more sections"
-      }
+      },
+      "backToList": "Back to list"
     },
     "newModal": {
       "comingSoonBadge": "Coming soon",
       "comingSoonToast": "This framework is coming soon.",
-      "comingSoonError": "This framework is coming soon and cannot be started yet."
+      "comingSoonError": "This framework is coming soon and cannot be started yet.",
+      "nameHint": "Give your assessment a descriptive name",
+      "descriptionPlaceholder": "Describe the scope and objectives of this assessment…",
+      "descriptionHint": "Optional context for this assessment",
+      "canonicalLabel": "The canonical session label will be assigned from its Method Core identifier.",
+      "back": "Back"
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -9470,7 +9476,18 @@
         "consultantGuidance": "Consultant guidance",
         "whyItMatters": "Why it matters: ",
         "howToScoreLevel": "How to score this level: ",
-        "pitfalls": "Watch out for: "
+        "pitfalls": "Watch out for: ",
+        "assignedToYou": "Assigned to you",
+        "useEvidence": "Use evidence (screenshot, report, system log, procedure, KPI) to justify your choice.",
+        "achieved": "Achieved",
+        "achievedHint": ": this is in place and used in practice (not only a pilot).",
+        "target": "Target",
+        "targetHint": ": the desired “to-be” level (planned / roadmap target).",
+        "skip": "Skip",
+        "skipHint": ": explicitly mark “not planned” for this level.",
+        "howToDecide": "How to decide",
+        "tip": "Tip",
+        "tipBody": "If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later."
       },
       "ownerMatrix": {
         "closeCellDetails": "Close cell details"
@@ -10365,7 +10382,8 @@
         "shortTerm": "Short term (0–6 months)",
         "longTerm": "Long term (6–18 months)",
         "resultsEvidence": "Results (evidence)",
-        "recommendations": "Recommendations"
+        "recommendations": "Recommendations",
+        "nextStepsLabel": "Next steps:"
       },
       "cmmi": {
         "legalNoticeA": "is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited",
@@ -10388,7 +10406,9 @@
       },
       "siri": {
         "legalNoticeA": "is a tool developed by the",
-        "legalNoticeB": "in cooperation with"
+        "legalNoticeB": "in cooperation with",
+        "dataGapsHint": "These areas require additional data collection before a complete assessment can be concluded.",
+        "nextStepsBody": "Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment."
       }
     },
     "presentationView": {
@@ -10419,7 +10439,8 @@
     "dbr77Map": {
       "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential. It supports a full analysis of processes and workstations.",
       "addProcess": "Add a process",
-      "addWorkstation": "Add a workstation"
+      "addWorkstation": "Add a workstation",
+      "tasksPerDay": "Tasks/day"
     },
     "admaMap": {
       "peerAverage": "Peer average",
@@ -10429,6 +10450,39 @@
       "legalNoticeC": ". The SIRI structure is used in Consultify for an",
       "educationalPurpose": "educational purpose",
       "legalNoticeD": "only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor."
+    },
+    "activityLog": {
+      "empty": "No activity recorded yet",
+      "emptyHint": "Actions will appear here as you work on the assessment"
+    },
+    "importedReport": {
+      "loading": "Loading the imported report…",
+      "notFound": "Report not found"
+    },
+    "levelAttachments": {
+      "empty": "No attachments for this level"
+    },
+    "requestAccess": {
+      "title": "Request edit access",
+      "subtitle": "You do not have permission to edit this assessment",
+      "assessmentLabel": "Assessment:",
+      "yourRole": "Your role:",
+      "justificationPlaceholder": "Explain why you need access to this assessment…",
+      "approvalHint": "Your request will be sent to the assessment owner for approval.",
+      "whatNext": "What happens next?",
+      "whatNextBody": "The assessment owner will receive a notification about your request. You will be notified once they approve or decline it."
+    },
+    "sessionEditor": {
+      "loading": "Loading assessment…",
+      "backToAssessment": "Back to Assessment",
+      "saveAndExit": "Save and exit",
+      "whatToDoNext": "What to do next",
+      "continueInChat": "Continue in Chat with the same assessment context",
+      "prepareReport": "Prepare a report from this run",
+      "attachContext": "Attach context from general chat",
+      "attachContextHint": "This will store a reference + the last messages in the assessment context.",
+      "loadingShort": "Loading…",
+      "saveBeforeExit": "Do you want to save your changes before exiting?"
     }
   },
   "initiatives": {

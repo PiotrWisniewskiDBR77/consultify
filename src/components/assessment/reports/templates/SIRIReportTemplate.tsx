@@ -613,8 +613,10 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 ))}
               </div>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-3">
-                These areas require additional data collection before a complete assessment can be
-                concluded.
+                {t(
+                  'assessment.reportTemplates.siri.dataGapsHint',
+                  'These areas require additional data collection before a complete assessment can be concluded.'
+                )}
               </p>
             </div>
           </section>
@@ -709,8 +711,11 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             </div>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            <strong>Next steps:</strong> Review findings with stakeholders, prioritize initiatives,
-            create detailed implementation plans, schedule follow-up assessment.
+            <strong>{t('assessment.reportTemplates.common.nextStepsLabel', 'Next steps:')}</strong>{' '}
+            {t(
+              'assessment.reportTemplates.siri.nextStepsBody',
+              'Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment.'
+            )}
           </p>
         </div>
       </section>

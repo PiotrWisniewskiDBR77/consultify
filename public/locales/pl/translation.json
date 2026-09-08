@@ -8083,12 +8083,18 @@
         "reportScope": "Zakres raportu",
         "sectionFallback": "Sekcja {{n}}",
         "moreSections": "+{{count}} więcej sekcji"
-      }
+      },
+      "backToList": "Wróć do listy"
     },
     "newModal": {
       "comingSoonBadge": "Wkrótce",
       "comingSoonToast": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.",
-      "comingSoonError": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji."
+      "comingSoonError": "Ten framework jest wkrótce dostępny — nie można jeszcze rozpocząć sesji.",
+      "nameHint": "Nadaj ocenie opisową nazwę",
+      "descriptionPlaceholder": "Opisz zakres i cele tej oceny…",
+      "descriptionHint": "Opcjonalny kontekst dla tej oceny",
+      "canonicalLabel": "Kanoniczna etykieta sesji zostanie nadana z identyfikatora Method Core.",
+      "back": "Wstecz"
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -8858,7 +8864,18 @@
         "consultantGuidance": "Podpowiedź konsultanta",
         "whyItMatters": "Dlaczego to ważne: ",
         "howToScoreLevel": "Jak oceniać poziom: ",
-        "pitfalls": "Uważaj na: "
+        "pitfalls": "Uważaj na: ",
+        "assignedToYou": "Przypisane do Ciebie",
+        "useEvidence": "Uzasadnij wybór dowodem (zrzut ekranu, raport, log systemu, procedura, KPI).",
+        "achieved": "Osiągnięty",
+        "achievedHint": ": jest wdrożone i używane w praktyce (nie tylko pilotaż).",
+        "target": "Cel",
+        "targetHint": ": pożądany poziom „to-be” (planowany / cel roadmapy).",
+        "skip": "Pomiń",
+        "skipHint": ": jawnie oznacz „nieplanowane” dla tego poziomu.",
+        "howToDecide": "Jak zdecydować",
+        "tip": "Wskazówka",
+        "tipBody": "Jeśli nie masz pewności, dodaj krótki komentarz i dołącz szybki artefakt. Zawsze możesz to później zmienić."
       },
       "ownerMatrix": {
         "closeCellDetails": "Zamknij szczegóły komórki"
@@ -9769,7 +9786,8 @@
         "shortTerm": "Krótkoterminowe (0-6 mies.)",
         "longTerm": "Długoterminowe (6-18 mies.)",
         "resultsEvidence": "Wyniki (dowód)",
-        "recommendations": "Rekomendacje"
+        "recommendations": "Rekomendacje",
+        "nextStepsLabel": "Następne kroki:"
       },
       "cmmi": {
         "legalNoticeA": "jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego",
@@ -9792,7 +9810,9 @@
       },
       "siri": {
         "legalNoticeA": "jest narzędziem opracowanym przez",
-        "legalNoticeB": "we współpracy z"
+        "legalNoticeB": "we współpracy z",
+        "dataGapsHint": "Te obszary wymagają zebrania dodatkowych danych, zanim ocena będzie kompletna.",
+        "nextStepsBody": "Omów ustalenia z interesariuszami, ustal priorytety inicjatyw, przygotuj szczegółowe plany wdrożenia i zaplanuj kolejną ocenę."
       }
     },
     "presentationView": {
@@ -9823,7 +9843,8 @@
     "dbr77Map": {
       "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk pracy.",
       "addProcess": "Dodaj proces",
-      "addWorkstation": "Dodaj stanowisko"
+      "addWorkstation": "Dodaj stanowisko",
+      "tasksPerDay": "Zadań/dzień"
     },
     "admaMap": {
       "peerAverage": "Średnia (peers)",
@@ -9833,6 +9854,39 @@
       "legalNoticeC": ". Wykorzystanie struktury SIRI w Consultify ma wyłącznie",
       "educationalPurpose": "cel edukacyjny",
       "legalNoticeD": "i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora."
+    },
+    "activityLog": {
+      "empty": "Nie zapisano jeszcze żadnej aktywności",
+      "emptyHint": "Działania pojawią się tutaj w trakcie pracy nad oceną"
+    },
+    "importedReport": {
+      "loading": "Wczytywanie zaimportowanego raportu…",
+      "notFound": "Nie znaleziono raportu"
+    },
+    "levelAttachments": {
+      "empty": "Brak załączników dla tego poziomu"
+    },
+    "requestAccess": {
+      "title": "Poproś o prawo edycji",
+      "subtitle": "Nie masz uprawnień do edycji tej oceny",
+      "assessmentLabel": "Ocena:",
+      "yourRole": "Twoja rola:",
+      "justificationPlaceholder": "Wyjaśnij, dlaczego potrzebujesz dostępu do tej oceny…",
+      "approvalHint": "Prośba trafi do właściciela oceny do zatwierdzenia.",
+      "whatNext": "Co dalej?",
+      "whatNextBody": "Właściciel oceny dostanie powiadomienie o prośbie. Otrzymasz informację, gdy ją zatwierdzi albo odrzuci."
+    },
+    "sessionEditor": {
+      "loading": "Wczytywanie oceny…",
+      "backToAssessment": "Wróć do Oceny",
+      "saveAndExit": "Zapisz i wyjdź",
+      "whatToDoNext": "Co robić dalej",
+      "continueInChat": "Kontynuuj w Czacie z tym samym kontekstem oceny",
+      "prepareReport": "Przygotuj raport z tego przebiegu",
+      "attachContext": "Dołącz kontekst z czatu ogólnego",
+      "attachContextHint": "Zapisze to odniesienie i ostatnie wiadomości w kontekście oceny.",
+      "loadingShort": "Wczytywanie…",
+      "saveBeforeExit": "Czy zapisać zmiany przed wyjściem?"
     }
   },
   "initiatives": {

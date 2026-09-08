@@ -742,7 +742,9 @@ const WorkstationCard: React.FC<{
           {activePhase === 'MEASURE' && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400">Tasks/Day</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('assessment.dbr77Map.tasksPerDay', 'Tasks/day')}
+                </label>
                 <input
                   type="number"
                   value={workstation.currentState.tasksPerDay}
