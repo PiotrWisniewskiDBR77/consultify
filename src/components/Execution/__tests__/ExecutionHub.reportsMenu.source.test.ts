@@ -21,9 +21,16 @@
  * dawało DWA CTA robiące to samo razem z kaflami pustego stanu tabeli. Ten
  * sam wzorzec, którym Decyzje/RAID dają swoje jedyne CTA widoku
  * (`ExecutionControlSurface.tsx`: `onNewItem` tam NIGDY nie jest ustawiany
- * dla ich zakładki) — CTA „Dodaj raport" żyje teraz WYŁĄCZNIE w rejestrowanym
- * węźle Menu 2 `ExecutionReportsSurface` (`AddReportMenu`, patrz
- * `ExecutionReportsSurface.addReportMenu.test.tsx`).
+ * dla ich zakładki) — CTA „Dodaj raport" żyje teraz w primary CTA
+ * rejestrowanym przez `ExecutionReportsSurface`.
+ *
+ * ODBIÓR SPÓJNOŚCI 08.09 (DEC-453, wieczór): CTA żył od popołudnia jako
+ * lokalny `AddReportMenu` (`btn-secondary`, jasny obrys) WEWNĄTRZ
+ * `onRegisterFilterControl` — jedyny CTA modułu inaczej wystylizowany niż
+ * ciemne primary CTA Pracy/Zasobów/Decyzji i ryzyka obok. Przeniesiony do
+ * `onRegisterPrimaryCta` (wariant `menu`, `StandardModuleBar`/
+ * `PrimaryCtaMenuButton`) — TEN SAM kanał i wygląd co reszta zakładek.
+ * Zachowanie menu: `ExecutionReportsSurface.addReportMenu.test.tsx`.
  */
 import { readFileSync } from 'node:fs';
 
@@ -68,8 +75,8 @@ describe('Raporty — Menu 3 (4 chipy) i CTA w Menu 2, 1.12-R4b + P16-R6', () =>
     // Mutacja: przywrócenie gałęzi `activeTab === 'reports'` z
     // `dispatch('execution:reports-new-report')` (stan sprzed 08.09) ma
     // przewrócić ten test — dawałoby DWA CTA raportu naraz (to primary +
-    // „Dodaj raport" w `AddReportMenu`), dokładnie błąd gęstości, który
-    // zgłosił właściciel.
+    // „Dodaj raport" rejestrowane przez `onRegisterPrimaryCta`), dokładnie
+    // błąd gęstości, który zgłosił właściciel.
     expect(menuCtaBlock).not.toContain("activeTab === 'reports'");
     expect(menuCtaBlock).not.toContain("dispatch('execution:reports-new-report')");
     expect(menuCtaBlock).not.toContain("t('executionReports.action.newReport'");
@@ -90,11 +97,15 @@ describe('Raporty — Menu 3 (4 chipy) i CTA w Menu 2, 1.12-R4b + P16-R6', () =>
     expect(executionHubSource).not.toContain("dispatch('execution:reports-new-report')");
   });
 
-  it('ExecutionReportsSurface dla reports rejestruje kontrolkę Menu 2 (`onRegisterFilterControl`)', () => {
+  it('ExecutionReportsSurface dla reports rejestruje kontrolkę Menu 2 (`onRegisterFilterControl`) i primary CTA (`onRegisterPrimaryCta`)', () => {
     const idx = executionHubSource.indexOf('<ExecutionReportsSurface');
     const end = executionHubSource.indexOf('/>', idx);
     const block = executionHubSource.slice(idx, end);
     expect(block).toContain('onRegisterFilterControl={setReportsFilterControl}');
+    // DEC-453 (odbiór spójności 08.09 wieczór): drugi kanał, TEN SAM co
+    // Praca/Zasoby/Decyzje i ryzyka — mutacja: usuń tę linię → CTA „Dodaj
+    // raport" wraca do bycia jedynym `btn-secondary` w slocie filtrów.
+    expect(block).toContain('onRegisterPrimaryCta={setReportsPrimaryCta}');
   });
 
   // [ODMROZENIE 06_EXECUTION DEC-453] P16-R6 (D6, test l): przyciski

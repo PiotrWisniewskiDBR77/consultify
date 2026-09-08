@@ -1,3 +1,5 @@
+import type { StandardPrimaryCtaMenuItem } from '@/components/standard/StandardModuleBar';
+
 export interface ExecutionMenu3Contract {
   activePreset?: string;
   onCountsChange?: (counts: Record<string, number>) => void;
@@ -23,6 +25,20 @@ export interface ExecutionSurfacePrimaryCta {
   testId?: string;
   disabled?: boolean;
   disabledReason?: string;
+  /**
+   * Wariant z rozwijanym menu (`StandardPrimaryCta.menu` — kanon: JEDEN
+   * komponent CTA, kilka wariantów). Raporty: „Dodaj raport" niósł dotąd
+   * cztery pozycje startowe + „Własny raport…" jako `btn-secondary` w slocie
+   * filtrów (DEC-453, 08.09.2026) — teraz ten sam wygląd (ciemny wypełniony)
+   * co Praca/Zasoby/Decyzje i ryzyka, z rozwijanym menu zamiast wprost
+   * `onClick`.
+   */
+  menu?: {
+    ariaLabel?: string;
+    items: StandardPrimaryCtaMenuItem[];
+    customLabel?: string;
+    onCustom?: () => void;
+  };
 }
 
 export const countExecutionPresets = <T>(

@@ -36,6 +36,7 @@ const hub = zrodlo('ExecutionHub.tsx');
 const praca = zrodlo('ExecutionWorkSurface.tsx');
 const zasoby = zrodlo('ExecutionResourcesSurface.tsx');
 const sterowanie = zrodlo('ExecutionControlSurface.tsx');
+const raporty = zrodlo('ExecutionReportsSurface.tsx');
 
 /**
  * Usuwa komentarze (`//`, `/* … *\/`, `{/* … *\/}`) — inaczej test mierzyłby
@@ -74,6 +75,45 @@ const POWIERZCHNIE: Array<[string, string]> = [
   ['Zasoby', zasoby],
   ['Decyzje i ryzyka', sterowanie],
 ];
+
+/**
+ * Raporty NIE wchodzi do `POWIERZCHNIE` powyżej: jej slot filtrów legalnie
+ * niesie `<button>` — przełącznik widoku „Raporty | Definicje" (role="tab",
+ * NIE akcja tworzenia) — więc ogólna asercja „zero `<button>` w slocie
+ * filtrów" dawałaby fałszywy czerwony. Dostaje własny, węższy komplet
+ * asercji niżej: brak `btn-secondary` (dawny jasny obrys CTA) i DOKŁADNIE
+ * jedna rejestracja `onRegisterPrimaryCta`.
+ */
+describe('Menu 2 · Raporty: CTA „Dodaj raport" ciemny primary, nie btn-secondary', () => {
+  it('slot filtrów NIE niesie żadnego CTA (`btn-secondary` usunięty razem z `AddReportMenu`)', () => {
+    const slot = slotFiltrow(raporty);
+    // Mutacja: przywróć `AddReportMenu`/`btn-secondary` do slotu filtrów → RED.
+    expect(slot).not.toContain('btn-secondary');
+    expect(slot).not.toContain('AddReportMenu');
+  });
+
+  it('slot filtrów NIE zawija i bierze klasę z SSOT (`MENU_2_FILTERS_ROW`)', () => {
+    const slot = slotFiltrow(raporty);
+    expect(slot).not.toContain('flex-wrap');
+    expect(slot).toContain('MENU_2_FILTERS_ROW');
+  });
+
+  it('rejestruje DOKŁADNIE jeden primary CTA — „Dodaj raport", wariant `menu`', () => {
+    // Mutacja: dopisz drugie `onRegisterPrimaryCta({ … })` albo wróć z CTA
+    // do slotu filtrów (`AddReportMenu`) → RED.
+    const rejestracje = raporty.match(/onRegisterPrimaryCta\(\{/g) ?? [];
+    expect(rejestracje).toHaveLength(1);
+    expect(raporty).toContain("testId: 'execution-reports-add-report-menu'");
+    // Wariant z rozwijanym menu — TEN SAM komponent CTA co Praca/Zasoby/
+    // Decyzje i ryzyka (`StandardModuleBar`/`PrimaryCtaMenuButton`), różni
+    // się tylko obecnością `menu:` zamiast zwykłego `onClick`.
+    expect(raporty).toContain('menu: {');
+  });
+
+  it('CTA znika w widoku „Definicje" (rejestruje `null`, nie duplikuje działania)', () => {
+    expect(raporty).toContain("if (registerMode !== 'RUNS') {");
+  });
+});
 
 describe('Menu 2 · slot filtrów niesie WYŁĄCZNIE filtry', () => {
   it.each(POWIERZCHNIE)(
@@ -146,6 +186,10 @@ describe('ExecutionHub · pasek modułu', () => {
     expect(hub).toContain('workPrimaryCta ?? undefined');
     expect(hub).toContain('resourcesPrimaryCta ?? undefined');
     expect(hub).toContain('controlPrimaryCta ?? undefined');
+    // DEC-453 (odbiór spójności 08.09 wieczór): Raporty dołączają do tego
+    // samego kanału — CTA „Dodaj raport" przestaje być jedynym `btn-secondary`
+    // obok ciemnych primary CTA sąsiednich zakładek.
+    expect(hub).toContain('reportsPrimaryCta ?? undefined');
   });
 
   it('slot filtrów gospodarza nie zawija i nie niesie liczników', () => {
