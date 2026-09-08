@@ -22856,12 +22856,86 @@
       "command": {
         "label": "Centrum dowodzenia",
         "description": "Postawa zaufania i kontroli — SOC2, DLP, rezydencja danych, retencja, polityka AI"
+      },
+      "domain": {
+        "team": "Zespół i dostęp",
+        "billing": "Rozliczenia i plany",
+        "ai": "Sterowanie AI",
+        "security": "Bezpieczeństwo i tożsamość",
+        "audit": "Dziennik audytu",
+        "command": "Centrum dowodzenia",
+        "health": "Stan systemu"
+      },
+      "screen": {
+        "members": "Użytkownicy",
+        "invitations": "Zaproszenia",
+        "roles-permissions": "Role i uprawnienia",
+        "teams": "Zespoły",
+        "guests-external": "Goście i dostęp zewnętrzny",
+        "access-requests": "Wnioski o dostęp",
+        "access-reviews": "Przeglądy dostępów",
+        "ownership": "Własność",
+        "overview": "Przegląd",
+        "plan-limits": "Plan i limity",
+        "usage-costs": "Wykorzystanie i koszty",
+        "payment-methods": "Metody płatności",
+        "invoices": "Faktury",
+        "seats-licences": "Miejsca i licencje",
+        "billing-details": "Dane rozliczeniowe",
+        "budgets-alerts": "Budżety i alerty",
+        "plan-history": "Historia zmian planu",
+        "policy-autonomy": "Polityka i autonomia",
+        "personas": "Persony",
+        "models-providers": "Modele i dostawcy",
+        "ai-limits-budgets": "Limity i budżety",
+        "data-privacy": "Dane i prywatność",
+        "quality-evaluations": "Ewaluacje jakości",
+        "ai-incidents": "Incydenty AI",
+        "configuration-versions": "Wersje konfiguracji",
+        "ai-operations": "Operacje AI",
+        "ai-audit": "Audyt AI",
+        "security-policy": "Polityka bezpieczeństwa",
+        "sso": "SSO",
+        "scim-lifecycle": "SCIM i cykl życia",
+        "sessions": "Sesje",
+        "api-access": "Dostęp API",
+        "domains": "Domeny",
+        "service-accounts": "Konta usługowe",
+        "security-alerts": "Alerty bezpieczeństwa",
+        "break-glass": "Break-glass",
+        "risk-summary": "Podsumowanie ryzyka",
+        "events": "Zdarzenia",
+        "high-risk-changes": "Zmiany wysokiego ryzyka",
+        "compliance-evidence": "Dowody zgodności",
+        "retention-export": "Retencja i eksport",
+        "integrity": "Integralność",
+        "legal-hold": "Wstrzymanie prawne",
+        "export-history": "Historia eksportów",
+        "attention-queue": "Kolejka uwagi",
+        "cost-capacity": "Koszt i pojemność",
+        "organization-defaults": "Ustawienia domyślne organizacji",
+        "agent-trace": "Ślad agentów",
+        "audit": "Audyt SOC2",
+        "dlp": "DLP",
+        "residency": "Rezydencja danych",
+        "retention": "Retencja",
+        "ai-policy": "Polityka AI",
+        "benchmark": "Benchmark konsultingowy",
+        "service-status": "Stan usług",
+        "dependencies": "Zależności",
+        "diagnostics": "Diagnostyka",
+        "incident-history": "Historia incydentów",
+        "queues-jobs": "Kolejki i zadania",
+        "sla-slo": "SLA / SLO",
+        "platform-operations": "Operacje platformowe"
       }
     },
     "shell": {
-      "title": "Administracja zespołu",
+      "title": "PANEL ADMINISTRATORA",
       "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji.",
-      "breadcrumb": "Panel administratora"
+      "breadcrumb": "Panel administratora",
+      "description": "Dostęp, polityki organizacji, dowody i bezpieczne operacje",
+      "navigation": "Nawigacja panelu administratora"
     },
     "section": {
       "people": {
@@ -25282,6 +25356,10 @@
         "invitations": "Wyślij zaproszenie",
         "domains": "Zarządzaj zweryfikowanymi domenami"
       }
+    },
+    "platformOperations": {
+      "unauthorizedTitle": "Brak uprawnień",
+      "unauthorizedBody": "Operacje platformowe nie należą do administracji klienta i wymagają jawnej capability operatora platformy."
     }
   },
   "access": {

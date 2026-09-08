@@ -305,7 +305,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [navigate, setCurrentView]);
 
   const content = useMemo(() => {
-    const domainConfig = getAdminDomains(i18n?.resolvedLanguage || i18n?.language || 'pl').find(
+    const domainConfig = getAdminDomains(t).find(
       (domain) => domain.id === resolvedLocation.domain
     );
     const childConfig = domainConfig?.children.find(
@@ -317,11 +317,14 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           role="alert"
           className="rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] p-6"
         >
-          <h2 className="text-base font-semibold text-[var(--c-text)]">UNAUTHORIZED</h2>
+          <h2 className="text-base font-semibold text-[var(--c-text)]">
+            {t('admin.platformOperations.unauthorizedTitle', 'Unauthorized')}
+          </h2>
           <p className="mt-2 text-sm text-[var(--c-text-secondary)]">
-            {i18n.language?.toLowerCase().startsWith('pl')
-              ? 'Operacje platformowe nie należą do administracji klienta i wymagają jawnej capability operatora platformy.'
-              : 'Platform operations are outside customer administration and require an explicit Platform Operator capability.'}
+            {t(
+              'admin.platformOperations.unauthorizedBody',
+              'Platform operations are outside customer administration and require an explicit Platform Operator capability.'
+            )}
           </p>
         </section>
       );
@@ -538,7 +541,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
 
   const legacySection = DOMAIN_LEGACY[resolvedLocation.domain];
   const meta = SECTION_META[legacySection];
-  const screenLabel = getAdminDomains(i18n?.resolvedLanguage || i18n?.language || 'pl')
+  const screenLabel = getAdminDomains(t)
     .find((domain) => domain.id === resolvedLocation.domain)
     ?.children.find((screen) => screen.id === resolvedLocation.screen)?.label;
 

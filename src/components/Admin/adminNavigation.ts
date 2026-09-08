@@ -23,7 +23,10 @@ import {
   WalletCards,
 } from 'lucide-react';
 
-import type { DomainNavigationModule } from '../settings/shared/DomainNavigation';
+import type {
+  DomainNavigationChild,
+  DomainNavigationModule,
+} from '../settings/shared/DomainNavigation';
 
 export type AdminDomain = 'team' | 'billing' | 'ai' | 'security' | 'audit' | 'command' | 'health';
 export type AdminScreen =
@@ -94,115 +97,141 @@ export interface AdminLocation {
   screen: AdminScreen;
 }
 
-const c = (id: AdminScreen, label: string, icon = FileText) => ({ id, label, icon });
+/**
+ * Etykieta ekranu = KLUCZ i18n + angielski `defaultValue`.
+ *
+ * Do 09.09 ten plik trzymał DWA równoległe słowniki napisów (`ADMIN_DOMAINS`
+ * po polsku i `ADMIN_SCREEN_EN`/`ADMIN_DOMAIN_EN` po angielsku) i przełączał
+ * je funkcją `getAdminDomains(language)`. Żaden z nich nie przechodził przez
+ * i18n, więc 136 napisów całego menu panelu było poza tłumaczeniami — i poza
+ * zasięgiem przyrządu pomiarowego, bo to plik `.ts`, a nie `.tsx`.
+ * Teraz jest jedno źródło: klucz + angielski default (reguła §2.3 PLAN.md),
+ * polski wyłącznie w `public/locales/pl/translation.json`.
+ */
+const c = (id: AdminScreen, labelKey: string, label: string, icon = FileText) => ({
+  id,
+  labelKey,
+  label,
+  icon,
+});
 
-export const ADMIN_DOMAINS: DomainNavigationModule<AdminDomain, AdminScreen>[] = [
+/** Wpis nawigacji nosi KLUCZ i18n obok angielskiego napisu domyślnego. */
+export type AdminNavScreen = DomainNavigationChild<AdminScreen> & { labelKey: string };
+export type AdminNavDomain = Omit<
+  DomainNavigationModule<AdminDomain, AdminScreen>,
+  'children'
+> & { labelKey: string; children: AdminNavScreen[] };
+
+export const ADMIN_DOMAINS: AdminNavDomain[] = [
   {
     id: 'team',
-    label: 'Zespół i dostęp',
+    labelKey: 'admin.nav.domain.team',
+    label: 'Team & Access',
     children: [
-      c('members', 'Użytkownicy', Users),
-      c('invitations', 'Zaproszenia', UserCheck),
-      c('roles-permissions', 'Role i uprawnienia', ShieldCheck),
-      c('teams', 'Zespoły', Users),
-      c('guests-external', 'Goście i dostęp zewnętrzny', Network),
-      c('access-requests', 'Wnioski o dostęp', FileClock),
-      c('access-reviews', 'Przeglądy dostępów', UserCheck),
-      c('ownership', 'Własność', Building2),
+      c('members', 'admin.nav.screen.members', 'Members', Users),
+      c('invitations', 'admin.nav.screen.invitations', 'Invitations', UserCheck),
+      c('roles-permissions', 'admin.nav.screen.roles-permissions', 'Roles & Permissions', ShieldCheck),
+      c('teams', 'admin.nav.screen.teams', 'Teams', Users),
+      c('guests-external', 'admin.nav.screen.guests-external', 'Guests & External Access', Network),
+      c('access-requests', 'admin.nav.screen.access-requests', 'Access Requests', FileClock),
+      c('access-reviews', 'admin.nav.screen.access-reviews', 'Access Reviews', UserCheck),
+      c('ownership', 'admin.nav.screen.ownership', 'Ownership', Building2),
     ],
   },
   {
     id: 'billing',
-    label: 'Rozliczenia i plany',
+    labelKey: 'admin.nav.domain.billing',
+    label: 'Billing & Plans',
     children: [
-      c('overview', 'Przegląd', Gauge),
-      c('plan-limits', 'Plan i limity', CreditCard),
-      c('usage-costs', 'Wykorzystanie i koszty', Activity),
-      c('payment-methods', 'Metody płatności', WalletCards),
-      c('invoices', 'Faktury', Receipt),
-      c('seats-licences', 'Miejsca i licencje', Users),
-      c('billing-details', 'Dane rozliczeniowe', Building2),
-      c('budgets-alerts', 'Budżety i alerty', AlertTriangle),
-      c('plan-history', 'Historia zmian planu', FileClock),
+      c('overview', 'admin.nav.screen.overview', 'Overview', Gauge),
+      c('plan-limits', 'admin.nav.screen.plan-limits', 'Plan & Limits', CreditCard),
+      c('usage-costs', 'admin.nav.screen.usage-costs', 'Usage & Costs', Activity),
+      c('payment-methods', 'admin.nav.screen.payment-methods', 'Payment Methods', WalletCards),
+      c('invoices', 'admin.nav.screen.invoices', 'Invoices', Receipt),
+      c('seats-licences', 'admin.nav.screen.seats-licences', 'Seats & Licences', Users),
+      c('billing-details', 'admin.nav.screen.billing-details', 'Billing Details', Building2),
+      c('budgets-alerts', 'admin.nav.screen.budgets-alerts', 'Budgets & Alerts', AlertTriangle),
+      c('plan-history', 'admin.nav.screen.plan-history', 'Plan Change History', FileClock),
     ],
   },
   {
     id: 'ai',
-    label: 'Sterowanie AI',
+    labelKey: 'admin.nav.domain.ai',
+    label: 'AI Control',
     children: [
-      c('policy-autonomy', 'Polityka i autonomia', ShieldCheck),
-      c('personas', 'Persony', Bot),
-      c('models-providers', 'Modele i dostawcy', Sparkles),
-      c('ai-limits-budgets', 'Limity i budżety', SlidersHorizontal),
-      c('data-privacy', 'Dane i prywatność', ShieldCheck),
-      c('quality-evaluations', 'Ewaluacje jakości', Activity),
-      c('ai-incidents', 'Incydenty AI', AlertTriangle),
-      c('configuration-versions', 'Wersje konfiguracji', FileClock),
-      c('ai-operations', 'Operacje AI', SlidersHorizontal),
-      c('ai-audit', 'Audyt AI', ScrollText),
+      c('policy-autonomy', 'admin.nav.screen.policy-autonomy', 'Policy & Autonomy', ShieldCheck),
+      c('personas', 'admin.nav.screen.personas', 'Personas', Bot),
+      c('models-providers', 'admin.nav.screen.models-providers', 'Models & Providers', Sparkles),
+      c('ai-limits-budgets', 'admin.nav.screen.ai-limits-budgets', 'Limits & Budgets', SlidersHorizontal),
+      c('data-privacy', 'admin.nav.screen.data-privacy', 'Data & Privacy', ShieldCheck),
+      c('quality-evaluations', 'admin.nav.screen.quality-evaluations', 'Quality Evaluations', Activity),
+      c('ai-incidents', 'admin.nav.screen.ai-incidents', 'AI Incidents', AlertTriangle),
+      c('configuration-versions', 'admin.nav.screen.configuration-versions', 'Configuration Versions', FileClock),
+      c('ai-operations', 'admin.nav.screen.ai-operations', 'AI Operations', SlidersHorizontal),
+      c('ai-audit', 'admin.nav.screen.ai-audit', 'AI Audit', ScrollText),
     ],
   },
   {
     id: 'security',
-    label: 'Bezpieczeństwo i tożsamość',
+    labelKey: 'admin.nav.domain.security',
+    label: 'Security & Identity',
     children: [
-      c('security-policy', 'Polityka bezpieczeństwa', ShieldCheck),
-      c('sso', 'SSO', KeyRound),
-      c('scim-lifecycle', 'SCIM i cykl życia', Users),
-      c('sessions', 'Sesje', Activity),
-      c('api-access', 'Dostęp API', KeyRound),
-      c('domains', 'Domeny', Network),
-      c('service-accounts', 'Konta usługowe', Bot),
-      c('security-alerts', 'Alerty bezpieczeństwa', AlertTriangle),
-      c('break-glass', 'Break-glass', KeyRound),
-      c('risk-summary', 'Podsumowanie ryzyka', Gauge),
+      c('security-policy', 'admin.nav.screen.security-policy', 'Security Policy', ShieldCheck),
+      c('sso', 'admin.nav.screen.sso', 'SSO', KeyRound),
+      c('scim-lifecycle', 'admin.nav.screen.scim-lifecycle', 'SCIM & Lifecycle', Users),
+      c('sessions', 'admin.nav.screen.sessions', 'Sessions', Activity),
+      c('api-access', 'admin.nav.screen.api-access', 'API Access', KeyRound),
+      c('domains', 'admin.nav.screen.domains', 'Domains', Network),
+      c('service-accounts', 'admin.nav.screen.service-accounts', 'Service Accounts', Bot),
+      c('security-alerts', 'admin.nav.screen.security-alerts', 'Security Alerts', AlertTriangle),
+      c('break-glass', 'admin.nav.screen.break-glass', 'Break-glass', KeyRound),
+      c('risk-summary', 'admin.nav.screen.risk-summary', 'Risk Summary', Gauge),
     ],
   },
   {
     id: 'audit',
-    label: 'Dziennik audytu',
+    labelKey: 'admin.nav.domain.audit',
+    label: 'Audit Log',
     children: [
-      c('events', 'Zdarzenia', ScrollText),
-      c('high-risk-changes', 'Zmiany wysokiego ryzyka', AlertTriangle),
-      c('compliance-evidence', 'Dowody zgodności', ShieldCheck),
-      c('retention-export', 'Retencja i eksport', FileText),
-      c('integrity', 'Integralność', ShieldCheck),
-      c('legal-hold', 'Wstrzymanie prawne', FileClock),
-      c('export-history', 'Historia eksportów', FileClock),
+      c('events', 'admin.nav.screen.events', 'Events', ScrollText),
+      c('high-risk-changes', 'admin.nav.screen.high-risk-changes', 'High-risk Changes', AlertTriangle),
+      c('compliance-evidence', 'admin.nav.screen.compliance-evidence', 'Compliance Evidence', ShieldCheck),
+      c('retention-export', 'admin.nav.screen.retention-export', 'Retention & Export', FileText),
+      c('integrity', 'admin.nav.screen.integrity', 'Integrity', ShieldCheck),
+      c('legal-hold', 'admin.nav.screen.legal-hold', 'Legal Hold', FileClock),
+      c('export-history', 'admin.nav.screen.export-history', 'Export History', FileClock),
     ],
   },
   {
     id: 'command',
-    // G14 13-16 (dyżur 2026-09-03) — było „Centrum administracyjne", ale nagłówek
-    // ekranu (i18n `commandCenter.title`, AdminCommandCenterPanel.tsx:983) mówi
-    // „Centrum dowodzenia" — rozjazd nazw, źródło zamieszania właściciela
-    // (TRIAZ_UWAG_20260902.md UW-14-02). Ujednolicone na nazwę z ekranu.
-    label: 'Centrum dowodzenia',
+    labelKey: 'admin.nav.domain.command',
+    label: 'Admin Command Center',
     children: [
-      c('overview', 'Przegląd', Gauge),
-      c('attention-queue', 'Kolejka uwagi', AlertTriangle),
-      c('cost-capacity', 'Koszt i pojemność', Activity),
-      c('organization-defaults', 'Ustawienia domyślne organizacji', SlidersHorizontal),
-      c('agent-trace', 'Ślad agentów', Bot),
-      c('audit', 'Audyt SOC2', ScrollText),
-      c('dlp', 'DLP', Lock),
-      c('residency', 'Rezydencja danych', Globe),
-      c('retention', 'Retencja', Clock),
-      c('ai-policy', 'Polityka AI', Sparkles),
-      c('benchmark', 'Benchmark konsultingowy', ClipboardCheck),
+      c('overview', 'admin.nav.screen.overview', 'Overview', Gauge),
+      c('attention-queue', 'admin.nav.screen.attention-queue', 'Attention Queue', AlertTriangle),
+      c('cost-capacity', 'admin.nav.screen.cost-capacity', 'Cost & Capacity', Activity),
+      c('organization-defaults', 'admin.nav.screen.organization-defaults', 'Organization Defaults', SlidersHorizontal),
+      c('agent-trace', 'admin.nav.screen.agent-trace', 'Agent Trace', Bot),
+      c('audit', 'admin.nav.screen.audit', 'SOC2 Audit', ScrollText),
+      c('dlp', 'admin.nav.screen.dlp', 'DLP', Lock),
+      c('residency', 'admin.nav.screen.residency', 'Data Residency', Globe),
+      c('retention', 'admin.nav.screen.retention', 'Retention', Clock),
+      c('ai-policy', 'admin.nav.screen.ai-policy', 'AI Policy', Sparkles),
+      c('benchmark', 'admin.nav.screen.benchmark', 'Consulting Benchmark', ClipboardCheck),
     ],
   },
   {
     id: 'health',
-    label: 'Stan systemu',
+    labelKey: 'admin.nav.domain.health',
+    label: 'System Health',
     children: [
-      c('service-status', 'Stan usług', Activity),
-      c('dependencies', 'Zależności', Network),
-      c('diagnostics', 'Diagnostyka', SlidersHorizontal),
-      c('incident-history', 'Historia incydentów', AlertTriangle),
-      c('queues-jobs', 'Kolejki i zadania', FileClock),
-      c('sla-slo', 'SLA / SLO', Gauge),
-      c('platform-operations', 'Operacje platformowe', KeyRound),
+      c('service-status', 'admin.nav.screen.service-status', 'Service Status', Activity),
+      c('dependencies', 'admin.nav.screen.dependencies', 'Dependencies', Network),
+      c('diagnostics', 'admin.nav.screen.diagnostics', 'Diagnostics', SlidersHorizontal),
+      c('incident-history', 'admin.nav.screen.incident-history', 'Incident History', AlertTriangle),
+      c('queues-jobs', 'admin.nav.screen.queues-jobs', 'Queues & Jobs', FileClock),
+      c('sla-slo', 'admin.nav.screen.sla-slo', 'SLA / SLO', Gauge),
+      c('platform-operations', 'admin.nav.screen.platform-operations', 'Platform Operations', KeyRound),
     ],
   },
 ];
@@ -217,88 +246,19 @@ export const ADMIN_DEFAULTS: Record<AdminDomain, AdminScreen> = {
   health: 'service-status',
 };
 
-const ADMIN_DOMAIN_EN: Record<AdminDomain, string> = {
-  team: 'Team & Access',
-  billing: 'Billing & Plans',
-  ai: 'AI Control',
-  security: 'Security & Identity',
-  audit: 'Audit Log',
-  command: 'Admin Command Center',
-  health: 'System Health',
-};
+type AdminLabelTranslator = (key: string, defaultValue: string) => string;
 
-const ADMIN_SCREEN_EN: Partial<Record<AdminScreen, string>> = {
-  members: 'Members',
-  invitations: 'Invitations',
-  'roles-permissions': 'Roles & Permissions',
-  teams: 'Teams',
-  'guests-external': 'Guests & External Access',
-  'access-requests': 'Access Requests',
-  'access-reviews': 'Access Reviews',
-  ownership: 'Ownership',
-  overview: 'Overview',
-  'plan-limits': 'Plan & Limits',
-  'usage-costs': 'Usage & Costs',
-  'payment-methods': 'Payment Methods',
-  invoices: 'Invoices',
-  'seats-licences': 'Seats & Licences',
-  'billing-details': 'Billing Details',
-  'budgets-alerts': 'Budgets & Alerts',
-  'plan-history': 'Plan Change History',
-  'policy-autonomy': 'Policy & Autonomy',
-  personas: 'Personas',
-  'models-providers': 'Models & Providers',
-  'ai-limits-budgets': 'Limits & Budgets',
-  'data-privacy': 'Data & Privacy',
-  'quality-evaluations': 'Quality Evaluations',
-  'ai-incidents': 'AI Incidents',
-  'configuration-versions': 'Configuration Versions',
-  'organization-defaults': 'Organization Defaults',
-  'ai-operations': 'AI Operations',
-  'ai-audit': 'AI Audit',
-  'security-policy': 'Security Policy',
-  sso: 'SSO',
-  'scim-lifecycle': 'SCIM & Lifecycle',
-  sessions: 'Sessions',
-  'api-access': 'API Access',
-  domains: 'Domains',
-  'service-accounts': 'Service Accounts',
-  'security-alerts': 'Security Alerts',
-  'break-glass': 'Break-glass',
-  'risk-summary': 'Risk Summary',
-  events: 'Events',
-  'high-risk-changes': 'High-risk Changes',
-  'compliance-evidence': 'Compliance Evidence',
-  'retention-export': 'Retention & Export',
-  integrity: 'Integrity',
-  'legal-hold': 'Legal Hold',
-  'export-history': 'Export History',
-  'attention-queue': 'Attention Queue',
-  'cost-capacity': 'Cost & Capacity',
-  'agent-trace': 'Agent Trace',
-  audit: 'SOC2 Audit',
-  dlp: 'DLP',
-  residency: 'Data Residency',
-  retention: 'Retention',
-  'ai-policy': 'AI Policy',
-  benchmark: 'Consulting Benchmark',
-  'service-status': 'Service Status',
-  dependencies: 'Dependencies',
-  diagnostics: 'Diagnostics',
-  'incident-history': 'Incident History',
-  'queues-jobs': 'Queues & Jobs',
-  'sla-slo': 'SLA / SLO',
-  'platform-operations': 'Platform Operations',
-};
-
-export function getAdminDomains(language?: string) {
-  if (language?.toLowerCase().startsWith('pl')) return ADMIN_DOMAINS;
+/**
+ * Jedyne wejście do etykiet menu panelu. Przyjmuje tłumacza (`t`), nie kod
+ * języka: nazwy mają iść przez i18n, a nie przez `if (język === 'pl')`.
+ */
+export function getAdminDomains(t: AdminLabelTranslator) {
   return ADMIN_DOMAINS.map((domain) => ({
     ...domain,
-    label: ADMIN_DOMAIN_EN[domain.id],
+    label: t(domain.labelKey, domain.label),
     children: domain.children.map((screen) => ({
       ...screen,
-      label: ADMIN_SCREEN_EN[screen.id] || screen.label,
+      label: t(screen.labelKey, screen.label),
     })),
   }));
 }

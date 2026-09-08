@@ -21400,12 +21400,86 @@
       "command": {
         "label": "Command Center",
         "description": "Trust & control posture — SOC2, DLP, residency, retention, AI policy"
+      },
+      "domain": {
+        "team": "Team & Access",
+        "billing": "Billing & Plans",
+        "ai": "AI Control",
+        "security": "Security & Identity",
+        "audit": "Audit Log",
+        "command": "Admin Command Center",
+        "health": "System Health"
+      },
+      "screen": {
+        "members": "Members",
+        "invitations": "Invitations",
+        "roles-permissions": "Roles & Permissions",
+        "teams": "Teams",
+        "guests-external": "Guests & External Access",
+        "access-requests": "Access Requests",
+        "access-reviews": "Access Reviews",
+        "ownership": "Ownership",
+        "overview": "Overview",
+        "plan-limits": "Plan & Limits",
+        "usage-costs": "Usage & Costs",
+        "payment-methods": "Payment Methods",
+        "invoices": "Invoices",
+        "seats-licences": "Seats & Licences",
+        "billing-details": "Billing Details",
+        "budgets-alerts": "Budgets & Alerts",
+        "plan-history": "Plan Change History",
+        "policy-autonomy": "Policy & Autonomy",
+        "personas": "Personas",
+        "models-providers": "Models & Providers",
+        "ai-limits-budgets": "Limits & Budgets",
+        "data-privacy": "Data & Privacy",
+        "quality-evaluations": "Quality Evaluations",
+        "ai-incidents": "AI Incidents",
+        "configuration-versions": "Configuration Versions",
+        "ai-operations": "AI Operations",
+        "ai-audit": "AI Audit",
+        "security-policy": "Security Policy",
+        "sso": "SSO",
+        "scim-lifecycle": "SCIM & Lifecycle",
+        "sessions": "Sessions",
+        "api-access": "API Access",
+        "domains": "Domains",
+        "service-accounts": "Service Accounts",
+        "security-alerts": "Security Alerts",
+        "break-glass": "Break-glass",
+        "risk-summary": "Risk Summary",
+        "events": "Events",
+        "high-risk-changes": "High-risk Changes",
+        "compliance-evidence": "Compliance Evidence",
+        "retention-export": "Retention & Export",
+        "integrity": "Integrity",
+        "legal-hold": "Legal Hold",
+        "export-history": "Export History",
+        "attention-queue": "Attention Queue",
+        "cost-capacity": "Cost & Capacity",
+        "organization-defaults": "Organization Defaults",
+        "agent-trace": "Agent Trace",
+        "audit": "SOC2 Audit",
+        "dlp": "DLP",
+        "residency": "Data Residency",
+        "retention": "Retention",
+        "ai-policy": "AI Policy",
+        "benchmark": "Consulting Benchmark",
+        "service-status": "Service Status",
+        "dependencies": "Dependencies",
+        "diagnostics": "Diagnostics",
+        "incident-history": "Incident History",
+        "queues-jobs": "Queues & Jobs",
+        "sla-slo": "SLA / SLO",
+        "platform-operations": "Platform Operations"
       }
     },
     "shell": {
-      "title": "Team Admin",
+      "title": "ADMIN PANEL",
       "subtitle": "Manage team access and commercial controls for your organization.",
-      "breadcrumb": "Admin panel"
+      "breadcrumb": "Admin panel",
+      "description": "Access, organization policies, evidence, and safe operations",
+      "navigation": "Admin Panel navigation"
     },
     "section": {
       "people": {
@@ -23815,6 +23889,10 @@
         "invitations": "Send an invitation",
         "domains": "Manage verified domains"
       }
+    },
+    "platformOperations": {
+      "unauthorizedTitle": "Unauthorized",
+      "unauthorizedBody": "Platform operations are outside customer administration and require an explicit Platform Operator capability."
     }
   },
   "access": {
