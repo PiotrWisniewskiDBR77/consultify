@@ -23,7 +23,11 @@ export const TAG = 'northwind-demo-2026';
 // Przestrzeń nazw UUIDv5 wyłącznie dla tego seeda — stała, nigdy nie zmieniać
 // (zmiana przestawiłaby WSZYSTKIE deterministyczne id i złamała idempotencję).
 export const PRZESTRZEN = 'f3a9c6d2-6b7e-5e1a-9c4b-2d7f1a8e6c30';
-export const ORG_ID = 'northwind';
+/**
+ * Slug organizacji — CZYTELNA tozsamosc seeda (klucz materialu dla `det`,
+ * nazwa pliku hasel, e-maile). NIE jest identyfikatorem wiersza.
+ */
+export const ORG_SLUG = 'northwind';
 export const ORG_NAZWA = 'Northwind Manufacturing Ltd.';
 export const DOMENA = 'northwind.example';
 
@@ -39,6 +43,28 @@ export function uuidV5(nazwa: string, przestrzen: string): string {
 
 /** Deterministyczne id: `rodzaj` np. 'user'/'team'/'project', `klucz` np. e-mail/slug. */
 export const det = (rodzaj: string, klucz: string): string => uuidV5(`${TAG}|${rodzaj}|${klucz}`, PRZESTRZEN);
+
+/**
+ * IDENTYFIKATOR organizacji = deterministyczny UUIDv5 z tej samej przestrzeni
+ * nazw co reszta seeda (D4b, DECYZJA 1).
+ *
+ * DLACZEGO NIE TEKST „northwind" (zmierzone w D4 na kopii `consultify_kopia_d4`):
+ * `organizations.id` jest `text`, ale DWANASCIE tabel trzyma `organization_id`
+ * typu `uuid` — m.in. `report_definitions` i `execution_report_snapshots`
+ * (pelna lista: multi_framework_initiatives, multi_framework_reports,
+ * partner_attributions, partner_client_organizations,
+ * partner_commission_transactions, siri_dimension_scores,
+ * siri_prioritisation_snapshots, tp_scim_tokens, tp_service_accounts,
+ * tp_sso_configs). Zapytanie z tekstem „northwind" konczy sie
+ * `invalid input syntax for type uuid`, a `dbAll` polyka wyjatek i zwraca
+ * pusta liste — zakladka „Raporty" byla CICHO pusta mimo dwoch raportow
+ * w `status_reports`. UUID przechodzi przez oba typy.
+ *
+ * Slug zostaje CZYTELNA tozsamoscia: `organizations` NIE MA kolumny `slug`
+ * (sprawdzone w `information_schema.columns` 08.09 — sa tylko `id` i `name`),
+ * wiec nazwa firmy jest jedynym miejscem, gdzie widac „Northwind".
+ */
+export const ORG_ID = det('organization', ORG_SLUG);
 
 // ============================================================================
 // Słownik ról — TYLKO to, co dopuszcza `organization_members_role_check`

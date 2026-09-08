@@ -35,6 +35,7 @@ import {
   Licznik,
   ORG_ID,
   ORG_NAZWA,
+  ORG_SLUG,
   czytajWspolneArgumenty,
   det,
   losoweHaslo,
@@ -416,7 +417,7 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
            preferred_language = EXCLUDED.preferred_language, communication_style = EXCLUDED.communication_style,
            currency = EXCLUDED.currency, updated_at = CURRENT_TIMESTAMP`,
         [
-          det('profile', ORG_ID),
+          det('profile', ORG_SLUG),
           ORG_ID,
           PROFIL.industry,
           PROFIL.industry_subsector,
@@ -499,7 +500,7 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
         `INSERT INTO organization_members (id, organization_id, user_id, role, status)
          VALUES ($1,$2,$3,$4,'ACTIVE')
          ON CONFLICT (organization_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'ACTIVE'`,
-        [det('member', `${ORG_ID}|${emailOsoby(o)}`), ORG_ID, userId, o.rola]
+        [det('member', `${ORG_SLUG}|${emailOsoby(o)}`), ORG_ID, userId, o.rola]
       );
       if (stan === 'utworzy') lic.utworz();
       else lic.zmien();
@@ -610,7 +611,7 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
 }
 
 // ============================================================================
-// Reset — kasuje WYŁĄCZNIE organization_id='northwind'
+// Reset — kasuje WYŁĄCZNIE organization_id = ORG_ID (Northwind)
 // ============================================================================
 async function reset(c: PoolClient): Promise<void> {
   const org = await c.query('SELECT id FROM organizations WHERE id = $1', [ORG_ID]);

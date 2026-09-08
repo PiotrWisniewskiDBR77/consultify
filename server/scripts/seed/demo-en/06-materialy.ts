@@ -50,7 +50,7 @@
  *
  * `--reset` kasuje WYŁĄCZNIE wiersze utworzone przez TĘ paczkę (adresowane
  * po deterministycznych id) — nie rusza organizacji, osób ani innych paczek
- * (D2-D5), które współdzielą `organization_id='northwind'`.
+ * (D2-D5), które współdzielą `organization_id = ORG_ID (Northwind)`.
  */
 import { createHash } from 'node:crypto';
 

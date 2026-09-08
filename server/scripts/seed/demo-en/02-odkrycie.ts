@@ -1033,7 +1033,7 @@ async function verify(c: PoolClient, pool: import('pg').Pool, url: string, oczek
 }
 
 // ----------------------------------------------------------------------------
-// RESET — kasuje WYŁĄCZNIE dane D2 dla organization_id='northwind'. Kolejność
+// RESET — kasuje WYŁĄCZNIE dane D2 dla organization_id = ORG_ID (Northwind). Kolejność
 // respektuje FK (dzieci przed rodzicami); `tools` (katalog globalny) NIE JEST
 // ruszany.
 // ----------------------------------------------------------------------------
