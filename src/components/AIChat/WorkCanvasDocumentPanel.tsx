@@ -1969,8 +1969,8 @@ function WorkCanvasMarkdownDocumentPanel({
     const blankTemplate: StarterTemplate = {
       id: 'document',
       label: t('canvas.panel.newMenu.blank', 'Czysty dokument'),
-      title: t('canvas.panel.newMenu.blankTitle', 'Nowy dokument'),
-      description: t('canvas.panel.newMenu.blankDesc', 'Puste — zaczynasz od zera z Teresą.'),
+      title: t('canvas.panel.newMenu.blankTitle', 'New document'),
+      description: t('canvas.panel.newMenu.blankDesc', 'Empty — start from scratch with Teresa.'),
       capability: 'real',
       capabilityNote: t(
         'canvas.panel.newMenu.blankCapabilityNote',
@@ -3664,7 +3664,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       (próg 4,5:1). slate-600 — 6,9:1 na slate-100, 7,6:1 na
                       białym. dark:text-slate-400 bez zmian (0 naruszeń). */}
                   <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
-                    {t('canvas.panel.newMenu.blankDesc', 'Puste — zaczynasz od zera z Teresą.')}
+                    {t('canvas.panel.newMenu.blankDesc', 'Empty — start from scratch with Teresa.')}
                   </div>
                 </button>
 
@@ -4576,7 +4576,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     zobacz src/utils/canvasDevDiagnosticsFlag.ts. */}
                 <details className="group mt-3 border-b border-slate-200 pb-1 dark:border-white/10">
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.workflow', 'Przepływy pracy')}</span>
+                    <span>{t('canvas.panel.groups.workflow', 'Workflow')}</span>
                     <ChevronDown
                       size={14}
                       className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"

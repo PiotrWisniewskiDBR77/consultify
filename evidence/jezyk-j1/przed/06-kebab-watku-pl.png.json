@@ -1,0 +1,84 @@
+{
+ "ekran": "06-kebab-watku",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/chat",
+ "obcychSlowUI": 6,
+ "obcychLiniiUI": 6,
+ "ui": [
+  {
+   "linia": "Skip to main content",
+   "trafienia": [
+    "content"
+   ]
+  },
+  {
+   "linia": "Plan review",
+   "trafienia": [
+    "review"
+   ]
+  },
+  {
+   "linia": "Select",
+   "trafienia": [
+    "Select"
+   ]
+  },
+  {
+   "linia": "Create folder",
+   "trafienia": [
+    "Create"
+   ]
+  },
+  {
+   "linia": "Create organization folder",
+   "trafienia": [
+    "Create"
+   ]
+  },
+  {
+   "linia": "THIS WEEK",
+   "trafienia": [
+    "WEEK"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Feedback",
+   "trafienia": [
+    "Feedback"
+   ]
+  },
+  {
+   "linia": "New conversation",
+   "trafienia": [
+    "New",
+    "conversation"
+   ]
+  },
+  {
+   "linia": "Cost Reduction Strategies without Quality Loss",
+   "trafienia": [
+    "Quality"
+   ]
+  },
+  {
+   "linia": "Cost Reduction Strategies without Quality Loss (Branch)",
+   "trafienia": [
+    "Quality"
+   ]
+  },
+  {
+   "linia": "Cost Reduction Strategies without Quality Loss (Branch)",
+   "trafienia": [
+    "Quality"
+   ]
+  },
+  {
+   "linia": "Transformation_signal: The system looks collaborative enough to push one strong storyline forward.",
+   "trafienia": [
+    "The"
+   ]
+  }
+ ]
+}

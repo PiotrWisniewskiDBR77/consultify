@@ -127,7 +127,7 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
               className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <Replace size={13} />
-              {t('aiChat.documentProposal.replace', 'Zastąp sekcję')}
+              {t('aiChat.documentProposal.replace', 'Replace section')}
             </button>
           )}
 
@@ -138,7 +138,7 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
             className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={13} />
-            {t('aiChat.documentProposal.reject', 'Odrzuć')}
+            {t('aiChat.documentProposal.reject', 'Reject')}
           </button>
         </div>
       )}
@@ -146,7 +146,7 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
       {state === 'applied' && (
         <div className="mt-3 inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
           <Check size={13} />
-          {t('aiChat.documentProposal.appliedNote', 'Treść jest w dokumencie obok.')}
+          {t('aiChat.documentProposal.appliedNote', 'The content is in the document next to you.')}
         </div>
       )}
     </div>

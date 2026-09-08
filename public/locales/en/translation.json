@@ -29728,7 +29728,11 @@
   },
   "v8": {
     "artifactRun": {
-      "openInOutputs": "View in Outputs"
+      "openInOutputs": "View in Outputs",
+      "executionRun": "Material creation run",
+      "failureStage": "Failure at the material creation stage",
+      "preflightCheckPassed": "Check passed",
+      "runFailed": "Failed to create the material. Try again."
     }
   },
   "billing": {
@@ -30878,7 +30882,8 @@
     "templateFormatUnsupported": "This template doesn't create presentations.",
     "templateResolveFailed": "Couldn't resolve the template. Please try again.",
     "template": {
-      "backToLibrary": "Back to Library"
+      "backToLibrary": "Back to Library",
+      "goToProvenance": "Go to Provenance and rights"
     },
     "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
     "kpi": {
@@ -30905,12 +30910,76 @@
     "breadcrumb": {
       "new": "New presentation",
       "open": "Presentation"
+    },
+    "blank": {
+      "retry": "Try again",
+      "title": "New presentation"
+    },
+    "blankFailed": "Failed to create a blank presentation.",
+    "blankFailedPermanent": "Failed to create a blank presentation. Try again or go back to Materials.",
+    "reopenBackToLibrary": "Back to presentations",
+    "reopenFailedBlocking": "Failed to open the presentation. Its content is unavailable or damaged.",
+    "tri": {
+      "aiDesc": "Describe the deck — AI will build the slides and the content.",
+      "heading": "How do you want to start the presentation?",
+      "subheading": "Choose a mode — all three are equally valid."
     }
   },
   "excele": {
     "breadcrumb": {
       "new": "New sheet",
       "open": "Sheet"
+    },
+    "rightPanel": {
+      "allFiles": "All files",
+      "ariaLabel": "Sheet details",
+      "checkpoint": "Create checkpoint",
+      "commentsEmpty": "Comments are coming soon",
+      "historyEmpty": "History will appear once the sheet is generated",
+      "historyFailed": "Generation failed",
+      "openWorkspace": "Open in the sheet",
+      "properties": "Properties",
+      "propertiesEmpty": "Properties will appear once the sheet is generated",
+      "quality": "Quality",
+      "relations": "Related items",
+      "relationsEmpty": "No related items",
+      "revokeShare": "Revoke sharing",
+      "share": "Share (copy link)",
+      "sourceTable": "Source table",
+      "structureEmpty": "This workbook has no sheets yet — the structure will appear once it is generated.",
+      "structureHint": "Workbook sheets — navigation THROUGH the artifact, not metadata about it."
+    },
+    "rightRail": {
+      "checkpoint": "Create checkpoint",
+      "collapseLabel": "Collapse or expand the toolbar",
+      "historyEmpty": "History will appear once the sheet is generated",
+      "historyFailed": "Generation failed",
+      "quality": "Quality",
+      "revokeShare": "Revoke sharing",
+      "selectedSubtitle": "Nothing is selected — properties of the whole document.",
+      "share": "Share (copy link)",
+      "sources": "Sources and numbers",
+      "sourcesEmpty": "This sheet has no recorded data source yet — inserting facts with provenance is the next wave of this feature.",
+      "sourcesSubtitle": "Where the data in this sheet came from.",
+      "sourcesTitle": "Sources and numbers",
+      "sourceTable": "Source table",
+      "structureDisabled": "The sheet has no tab to show yet",
+      "structureEmpty": "The sheet has no tab yet."
+    },
+    "triChooser": {
+      "ai": {
+        "desc": "Describe the sheet — AI will build a multi-sheet workbook with formulas."
+      }
+    },
+    "versionHistory": {
+      "confirmAction": "Restore",
+      "confirmMessage": "Restore version {{version}}? The current state will be kept in history as a new version.",
+      "conflict": "Version conflict: the workbook changed in the meantime (current version: {{version}}). Refresh and try again.",
+      "empty": "No history saved yet — edit a cell to create the first version.",
+      "loadFailed": "Failed to load version history.",
+      "loading": "Loading...",
+      "refresh": "Refresh",
+      "restore": "Restore"
     }
   },
   "aiActions": {
@@ -43837,7 +43906,8 @@
         "label": "Outlook / Calendar",
         "hint": "Mail and appointments.",
         "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
-      }
+      },
+      "soonBadge": "Soon"
     },
     "palette": {
       "ariaLabel": "Agent block palette",
@@ -43878,7 +43948,14 @@
         "results": "Results",
         "tables": "Tables",
         "vault": "Vault"
-      }
+      },
+      "blockTool": "Tool",
+      "emptyHint": "Drag a block from the palette on the right, or click it, to add the first step.",
+      "moveDown": "Move down",
+      "moveUp": "Move up",
+      "noteHint": "A note on the diagram — the agent does not run it.",
+      "removeBlock": "Remove block",
+      "vaultLevelUnset": "— no level selected —"
     }
   },
   "views": {

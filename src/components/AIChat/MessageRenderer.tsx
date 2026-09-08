@@ -2152,8 +2152,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             disabled={isDisabled || msg.isStreaming || !canRegenerate}
             data-testid="message-action-regenerate"
             className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            title={t('chat.actions.regenerate', 'Ponów odpowiedź')}
-            aria-label={t('chat.actions.regenerate', 'Ponów odpowiedź')}
+            title={t('chat.actions.regenerate', 'Regenerate response')}
+            aria-label={t('chat.actions.regenerate', 'Regenerate response')}
           >
             <RefreshCw size={12} />
           </button>

@@ -1,0 +1,16 @@
+{
+ "ekran": "08-ocena-odpowiedzi",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/chat/a196ee85-b59b-406e-9084-2640fb048022",
+ "obcychSlowUI": 1,
+ "obcychLiniiUI": 1,
+ "ui": [
+  {
+   "linia": "create",
+   "trafienia": [
+    "create"
+   ]
+  }
+ ],
+ "dane": []
+}

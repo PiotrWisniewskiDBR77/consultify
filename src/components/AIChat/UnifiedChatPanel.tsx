@@ -2201,12 +2201,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const preferredSystem = (payload as any)?.preferredSystem || payloadKind;
         const fallbackTitle =
           payloadKind === 'process_flow'
-            ? t('chat.titles.processFlow', 'Przepływ procesu')
+            ? t('chat.titles.processFlow', 'Process Flow')
             : payloadKind === 'table'
-              ? t('chat.titles.ideasTable', 'Tabela pomysłów')
+              ? t('chat.titles.ideasTable', 'Ideas Table')
               : payloadKind === 'whiteboard'
                 ? t('chat.titles.whiteboard', 'Tablica')
-                : t('chat.titles.idea', 'Mapa myśli');
+                : t('chat.titles.idea', 'Idea');
         const mmTitle = String(payload.title || fallbackTitle).slice(0, 120);
         const seedText = String((payload as any)?.seedText || mmTitle);
         const creationPayload: IdeaWorkspaceCreationPayload = {
@@ -4666,7 +4666,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           const docId = String((resp as any)?.docId || '');
           if (!docId) {
             toast.error(
-              t('aiChat.attachments.urlIngestFailed', 'Nie udało się przetworzyć linku.'),
+              t('aiChat.attachments.urlIngestFailed', "Couldn't process the link."),
               {
                 duration: 4000,
               }
@@ -4696,7 +4696,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             kind: 'url',
           });
           toast.error(
-            t('aiChat.attachments.urlError', 'Błąd przetwarzania linku: {{error}}', {
+            t('aiChat.attachments.urlError', 'Error processing link: {{error}}', {
               error: String(err?.message || '').slice(0, 120),
             }),
             { duration: 5000 }
@@ -7366,7 +7366,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     prompt: t(
                       'aiChat.homeCards.market.kickoff',
-                      'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
+                      'I want to do a market analysis. Ask me the questions you need to define the industry, segment, geography, customers, competitors, and differentiation. Start with 5 questions.'
                     ),
                     // Market analysis = web-backed market research mode.
                     preset: { marketResearch: true, webSearch: true },
@@ -7381,7 +7381,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
                     prompt: t(
                       'aiChat.homeCards.finance.kickoff',
-                      'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
+                      'I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure.'
                     ),
                     // Financial analysis = data/metrics/tables-first answer style.
                     preset: { responseStyle: 'analyst' },
@@ -7399,7 +7399,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     prompt: t(
                       'aiChat.homeCards.consulting.kickoff',
-                      'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
+                      'I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain).'
                     ),
                     // Classic consulting = multi-consultant persona system prompt.
                     preset: { coThinkerMode: 'multi_consultant' },
@@ -7417,7 +7417,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     ),
                     prompt: t(
                       'aiChat.homeCards.digital.kickoff',
-                      'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
+                      'I want to assess digital transformation readiness. Which areas should we evaluate and what criteria should we use? Ask me 5 questions and propose a quick diagnostic plan.'
                     ),
                     // Digital transformation = multi-step deep-thinking diagnosis.
                     preset: { deepResearch: true },

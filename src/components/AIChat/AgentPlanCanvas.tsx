@@ -609,7 +609,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
               <p className="mt-1 text-xs text-c-text-muted">
                 {t(
                   'agentPlan.canvas.emptyHint',
-                  'Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.'
+                  'Drag a block from the palette on the right, or click it, to add the first step.'
                 )}
               </p>
             </div>
@@ -714,7 +714,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             ? ` · ${
                                 typeof block.toolInput?.vault_safe_name === 'string'
                                   ? block.toolInput.vault_safe_name
-                                  : t('agentPlan.canvas.vaultLevelUnset', '— poziom nie wybrany —')
+                                  : t('agentPlan.canvas.vaultLevelUnset', '— no level selected —')
                               }${
                                 typeof block.toolInput?.vault_folder_name === 'string'
                                   ? ` / ${block.toolInput.vault_folder_name}`
@@ -736,7 +736,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           <p className="mt-1 text-[11px] italic text-c-text-muted">
                             {t(
                               'agentPlan.canvas.noteHint',
-                              'Notatka na schemacie — agent jej nie wykonuje.'
+                              'A note on the diagram — the agent does not run it.'
                             )}
                           </p>
                         ) : null}
@@ -773,7 +773,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                 className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <option value="">
-                                  {t('agentPlan.canvas.vaultLevelPlaceholder', '— wybierz sejf —')}
+                                  {t('agentPlan.canvas.vaultLevelPlaceholder', '— choose a vault —')}
                                 </option>
                                 {(vaultSafes ?? []).map((safe) => (
                                   <option key={safe.id} value={safe.id}>
@@ -861,7 +861,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               <select
                                 value={block.toolName ?? DEFAULT_TOOL_NAME}
                                 onChange={(e) => setBlockTool(index, e.target.value)}
-                                aria-label={t('agentPlan.canvas.blockTool', 'Narzędzie')}
+                                aria-label={t('agentPlan.canvas.blockTool', 'Tool')}
                                 className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 {TOOL_CATALOG.map((tool) => (
@@ -887,7 +887,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           />
                           <button
                             type="button"
-                            aria-label={t('agentPlan.canvas.moveUp', 'Przesuń w górę')}
+                            aria-label={t('agentPlan.canvas.moveUp', 'Move up')}
                             onClick={() => moveBlock(index, -1)}
                             disabled={index === 0}
                             className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -896,7 +896,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           </button>
                           <button
                             type="button"
-                            aria-label={t('agentPlan.canvas.moveDown', 'Przesuń w dół')}
+                            aria-label={t('agentPlan.canvas.moveDown', 'Move down')}
                             onClick={() => moveBlock(index, 1)}
                             disabled={index === blocks.length - 1}
                             className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -905,7 +905,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           </button>
                           <button
                             type="button"
-                            aria-label={t('agentPlan.canvas.removeBlock', 'Usuń klocek')}
+                            aria-label={t('agentPlan.canvas.removeBlock', 'Remove block')}
                             onClick={() => removeBlock(index)}
                             className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >

@@ -33134,7 +33134,8 @@
     "templateFormatUnsupported": "Ten wzorzec nie tworzy prezentacji.",
     "templateResolveFailed": "Nie udało się rozwiązać wzorca. Spróbuj ponownie.",
     "template": {
-      "backToLibrary": "Wróć do Biblioteki"
+      "backToLibrary": "Wróć do Biblioteki",
+      "goToProvenance": "Przejdź do Pochodzenie i prawa"
     },
     "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów.",
     "kpi": {
@@ -33161,6 +33162,19 @@
     "breadcrumb": {
       "new": "Nowa prezentacja",
       "open": "Prezentacja"
+    },
+    "blank": {
+      "retry": "Spróbuj ponownie",
+      "title": "Nowa prezentacja"
+    },
+    "blankFailed": "Nie udało się utworzyć pustej prezentacji.",
+    "blankFailedPermanent": "Nie udało się utworzyć pustej prezentacji. Spróbuj ponownie albo wróć do Materiałów.",
+    "reopenBackToLibrary": "Wróć do prezentacji",
+    "reopenFailedBlocking": "Nie udało się otworzyć prezentacji. Jej treść jest niedostępna lub uszkodzona.",
+    "tri": {
+      "aiDesc": "Opisz deck — AI zbuduje slajdy i treść.",
+      "heading": "Jak chcesz zacząć prezentację?",
+      "subheading": "Wybierz tryb — wszystkie trzy są równorzędne."
     }
   },
   "excele": {
@@ -33192,7 +33206,9 @@
       "share": "Udostępnij i skopiuj link",
       "sheets": "Arkusze",
       "sourceTable": "Tabela źródłowa",
-      "versionHistory": "Historia wersji"
+      "versionHistory": "Historia wersji",
+      "structureEmpty": "Ten skoroszyt nie ma jeszcze arkuszy — struktura pojawi się po wygenerowaniu.",
+      "structureHint": "Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim."
     },
     "rightRail": {
       "resize": "Zmień szerokość panelu",
@@ -33249,6 +33265,11 @@
       "sheets": "arkusze",
       "title": "Historia wersji",
       "version": "Wersja"
+    },
+    "triChooser": {
+      "ai": {
+        "desc": "Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami."
+      }
     }
   },
   "aiActions": {
@@ -46447,7 +46468,8 @@
         "label": "Outlook / Kalendarz",
         "hint": "Poczta i terminy.",
         "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
-      }
+      },
+      "soonBadge": "Wkrótce"
     },
     "palette": {
       "ariaLabel": "Paleta klocków agenta",
@@ -46488,7 +46510,14 @@
         "results": "Wyniki",
         "tables": "Tabele",
         "vault": "Sejf"
-      }
+      },
+      "blockTool": "Narzędzie",
+      "emptyHint": "Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.",
+      "moveDown": "Przesuń w dół",
+      "moveUp": "Przesuń w górę",
+      "noteHint": "Notatka na schemacie — agent jej nie wykonuje.",
+      "removeBlock": "Usuń klocek",
+      "vaultLevelUnset": "— poziom nie wybrany —"
     }
   },
   "views": {

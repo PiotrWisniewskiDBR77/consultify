@@ -114,12 +114,12 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
           {isExpanded ? (
             <>
               <ChevronUp size={12} />
-              {t('common.showLess', 'Pokaż mniej')}
+              {t('common.showLess', 'Show less')}
             </>
           ) : (
             <>
               <ChevronDown size={12} />
-              {t('aiActions.showMore', 'Pokaż więcej')} (+{hiddenCount})
+              {t('aiActions.showMore', 'Show more')} (+{hiddenCount})
             </>
           )}
         </button>

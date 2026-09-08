@@ -131,14 +131,14 @@ export function useExceleRightPanelSections({
           <PreviewActionButton
             variant="neutral"
             icon={Eye}
-            label={t('excele.rightPanel.openWorkspace', 'Otwórz w arkuszu')}
+            label={t('excele.rightPanel.openWorkspace', 'Open in the sheet')}
             onClick={() => onPreviewFile?.()}
             disabled={!onPreviewFile}
           />
           <PreviewActionButton
             variant="neutral"
             icon={FolderOpen}
-            label={t('excele.rightPanel.allFiles', 'Wszystkie pliki')}
+            label={t('excele.rightPanel.allFiles', 'All files')}
             onClick={() => onAllFiles?.()}
             disabled={!onAllFiles}
           />
@@ -154,7 +154,7 @@ export function useExceleRightPanelSections({
           <PreviewActionButton
             variant="neutral"
             icon={Sparkles}
-            label={t('excele.rightPanel.checkpoint', 'Utwórz punkt kontrolny')}
+            label={t('excele.rightPanel.checkpoint', 'Create checkpoint')}
             onClick={() => onCheckpoint?.()}
             disabled={!onCheckpoint || !workbookId}
           />
@@ -162,7 +162,7 @@ export function useExceleRightPanelSections({
             <PreviewActionButton
               variant="neutral"
               icon={ShieldOff}
-              label={t('excele.rightPanel.revokeShare', 'Cofnij udostępnienie')}
+              label={t('excele.rightPanel.revokeShare', 'Revoke sharing')}
               onClick={() => onRevokeShare?.()}
               disabled={!onRevokeShare || !workbookId}
             />
@@ -170,7 +170,7 @@ export function useExceleRightPanelSections({
             <PreviewActionButton
               variant="neutral"
               icon={Link2}
-              label={t('excele.rightPanel.share', 'Udostępnij (kopiuj link)')}
+              label={t('excele.rightPanel.share', 'Share (copy link)')}
               onClick={() => onShare?.()}
               disabled={!onShare || !workbookId}
             />
@@ -187,11 +187,11 @@ export function useExceleRightPanelSections({
     },
     properties: {
       id: 'properties',
-      label: t('excele.rightPanel.properties', 'Właściwości'),
+      label: t('excele.rightPanel.properties', 'Properties'),
       isEmpty: !preview,
       emptyLabel: t(
         'excele.rightPanel.propertiesEmpty',
-        'Właściwości pojawią się po wygenerowaniu arkusza'
+        'Properties will appear once the sheet is generated'
       ),
       children: (
         <dl className="space-y-2 text-xs">
@@ -205,7 +205,7 @@ export function useExceleRightPanelSections({
           </div>
           {typeof qualityScore === 'number' && (
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-c-text-muted">{t('excele.rightPanel.quality', 'Jakość')}</dt>
+              <dt className="text-c-text-muted">{t('excele.rightPanel.quality', 'Quality')}</dt>
               <dd className="text-c-text font-medium tabular-nums">
                 {Math.round(qualityScore * 100)}%
               </dd>
@@ -227,16 +227,16 @@ export function useExceleRightPanelSections({
     },
     relations: {
       id: 'relations',
-      label: t('excele.rightPanel.relations', 'Powiązania'),
+      label: t('excele.rightPanel.relations', 'Related items'),
       isEmpty: !workbookId || !onPreviewFile,
-      emptyLabel: t('excele.rightPanel.relationsEmpty', 'Brak powiązanych obiektów'),
+      emptyLabel: t('excele.rightPanel.relationsEmpty', 'No related items'),
       children: (
         <button
           type="button"
           onClick={() => onPreviewFile?.()}
           className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle px-3 py-2 text-xs text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
-          <span className="truncate">{t('excele.rightPanel.sourceTable', 'Tabela źródłowa')}</span>
+          <span className="truncate">{t('excele.rightPanel.sourceTable', 'Source table')}</span>
           <span aria-hidden="true">{'→'}</span>
         </button>
       ),
@@ -245,7 +245,7 @@ export function useExceleRightPanelSections({
       id: 'comments',
       label: t('excele.rightPanel.comments', 'Komentarze'),
       isEmpty: true,
-      emptyLabel: t('excele.rightPanel.commentsEmpty', 'Komentarze będą dostępne wkrótce'),
+      emptyLabel: t('excele.rightPanel.commentsEmpty', 'Comments are coming soon'),
       children: null,
     },
     history: {
@@ -254,8 +254,8 @@ export function useExceleRightPanelSections({
       icon: Sparkles,
       isEmpty: taskSteps.length === 0,
       emptyLabel: isFailed
-        ? failureReason || t('excele.rightPanel.historyFailed', 'Generowanie nie powiodło się')
-        : t('excele.rightPanel.historyEmpty', 'Historia pojawi się po wygenerowaniu'),
+        ? failureReason || t('excele.rightPanel.historyFailed', 'Generation failed')
+        : t('excele.rightPanel.historyEmpty', 'History will appear once the sheet is generated'),
       children: (
         <ol className="space-y-1.5">
           {taskSteps.map((step) => (
@@ -302,14 +302,14 @@ function buildExceleStructureTypeMode(
     icon: ListTree,
     contextLabel: t(
       'excele.rightPanel.structureHint',
-      'Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim.'
+      'Workbook sheets — navigation THROUGH the artifact, not metadata about it.'
     ),
     content:
       sheetNames.length === 0 ? (
         <p className="text-xs italic text-c-text-muted">
           {t(
             'excele.rightPanel.structureEmpty',
-            'Ten skoroszyt nie ma jeszcze arkuszy — struktura pojawi się po wygenerowaniu.'
+            'This workbook has no sheets yet — the structure will appear once it is generated.'
           )}
         </p>
       ) : (
@@ -339,7 +339,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = (props) => {
     return (
       <ArtifactRightRail
         title={props.preview?.fileName || undefined}
-        ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
+        ariaLabel={t('excele.rightPanel.ariaLabel', 'Sheet details')}
         artifact={{ sections }}
         typeModes={[buildExceleStructureTypeMode(props.preview, t)]}
       />
@@ -350,7 +350,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = (props) => {
     // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o ten arkusz" usunięty
     // z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
     <ArtifactRightPanel
-      ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
+      ariaLabel={t('excele.rightPanel.ariaLabel', 'Sheet details')}
       sections={sections}
     />
   );

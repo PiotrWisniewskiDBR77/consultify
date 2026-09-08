@@ -128,7 +128,7 @@ const PaletteItem: React.FC<{
           <div className="flex items-center gap-1.5">
             <span className="truncate text-xs font-medium text-c-text-muted">{label}</span>
             <span className="shrink-0 rounded-full border border-c-border-subtle px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">
-              {t('agentPlan.catalog.soonBadge', 'Wkrótce')}
+              {t('agentPlan.catalog.soonBadge', 'Soon')}
             </span>
           </div>
           <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{hint}</p>

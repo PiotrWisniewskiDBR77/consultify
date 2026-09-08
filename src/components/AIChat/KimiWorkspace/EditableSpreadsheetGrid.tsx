@@ -796,7 +796,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             }}
             placeholder={t(
               'kimi.excele.formulaBarEmpty',
-              'Zaznacz komórkę, aby zobaczyć jej treść'
+              'Select a cell to see its content'
             )}
             className="flex-1 min-w-0 bg-transparent text-xs font-mono text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
@@ -813,13 +813,13 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             {saveState === 'saved' && (
               <>
                 <Check size={11} className="text-c-success" />
-                {t('kimi.excele.saved', 'Zapisano')}
+                {t('kimi.excele.saved', 'Saved')}
               </>
             )}
             {saveState === 'error' && (
               <>
                 <AlertTriangle size={11} className="text-c-danger" />
-                {t('kimi.excele.saveFailed', 'Błąd zapisu')}
+                {t('kimi.excele.saveFailed', 'Save failed')}
               </>
             )}
           </span>

@@ -1,0 +1,75 @@
+{
+ "ekran": "10-arkusz",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3217/excele",
+ "obcychSlowUI": 20,
+ "obcychLiniiUI": 9,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Materiały",
+   "trafienia": [
+    "Materiały"
+   ]
+  },
+  {
+   "linia": "Arkusze",
+   "trafienia": [
+    "Arkusze"
+   ]
+  },
+  {
+   "linia": "Nowy arkusz",
+   "trafienia": [
+    "Nowy",
+    "arkusz"
+   ]
+  },
+  {
+   "linia": "Jak chcesz zacząć arkusz?",
+   "trafienia": [
+    "zacząć",
+    "arkusz"
+   ]
+  },
+  {
+   "linia": "Wybierz tryb — wszystkie trzy są równorzędne.",
+   "trafienia": [
+    "Wybierz",
+    "wszystkie",
+    "są",
+    "równorzędne"
+   ]
+  },
+  {
+   "linia": "Pusta siatka (1 arkusz). Wypełniasz sam, bez AI.",
+   "trafienia": [
+    "Pusta",
+    "arkusz",
+    "Wypełniasz"
+   ]
+  },
+  {
+   "linia": "Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami.",
+   "trafienia": [
+    "arkusz",
+    "skoroszyt",
+    "formułami"
+   ]
+  },
+  {
+   "linia": "Zacznij od gotowego szablonu arkusza.",
+   "trafienia": [
+    "arkusza"
+   ]
+  }
+ ],
+ "dane": []
+}

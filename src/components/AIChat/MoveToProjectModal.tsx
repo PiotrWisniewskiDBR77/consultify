@@ -174,7 +174,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     } catch (e: any) {
       setError(
         e?.message ||
-          t('aiChat.moveToFolderFailed', 'Nie udało się przenieść rozmowy. Spróbuj ponownie.')
+          t('aiChat.moveToFolderFailed', 'Failed to move conversation. Please try again.')
       );
     } finally {
       setBusyId(null);
@@ -192,7 +192,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     } catch (e: any) {
       setError(
         e?.message ||
-          t('aiChat.createFolderFailed', 'Nie udało się utworzyć folderu. Spróbuj ponownie.')
+          t('aiChat.createFolderFailed', 'Failed to create folder. Please try again.')
       );
       setBusyId(null);
     }

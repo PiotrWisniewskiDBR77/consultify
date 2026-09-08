@@ -183,7 +183,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       setAIConfig({ customInstructions: customInstructions.trim() } as any);
       toast.success(t('aiChat.menu.instructionsSaved', 'Instrukcje zapisane'));
     } catch {
-      toast.error(t('aiChat.menu.instructionsSaveError', 'Nie udalo sie zapisac'));
+      toast.error(t('aiChat.menu.instructionsSaveError', 'Failed to save instructions'));
     } finally {
       setIsSavingInstructions(false);
     }
@@ -331,8 +331,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           }
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
-        title={t('aiChat.menu.tools', 'Narzędzia AI')}
-        aria-label={t('aiChat.menu.tools', 'Narzędzia AI')}
+        title={t('aiChat.menu.tools', 'AI tools')}
+        aria-label={t('aiChat.menu.tools', 'AI tools')}
       >
         <IconComponent size={20} />
         {activeModeCount > 0 && (
@@ -382,7 +382,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   mode.id === 'showReasoning'
                     ? t(
                         'aiChat.menu.modes.showReasoning.tooltip',
-                        'Pokazuje tok myślenia modelu (wolniejsze, droższe)'
+                        "Shows the model's chain of thought (slower, more expensive)"
                       )
                     : undefined
                 }
@@ -413,7 +413,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Steering section header — first-class "how Teresa should answer" surface */}
           <div className="px-3.5 pt-1.5 pb-1">
             <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
-              {t('aiChat.menu.steeringHeading', 'Jak Teresa ma odpowiadać')}
+              {t('aiChat.menu.steeringHeading', 'How Teresa should answer')}
             </span>
           </div>
 
@@ -450,7 +450,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 toast.error(
                   t(
                     'aiChat.conversation.addToProjectRequiresConversation',
-                    'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+                    'Send your first message before adding the conversation to a project.'
                   )
                 );
                 onToolSelect('addToProject');
@@ -524,7 +524,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               <p className="text-[12px] text-slate-600 dark:text-slate-500 mb-5">
                 {t(
                   'aiChat.menu.steeringSubtitle',
-                  'Ustaw, jak Teresa ma odpowiadać — styl i własne instrukcje obowiązują w każdej rozmowie.'
+                  'Set how Teresa should respond — the style and your own instructions apply in every conversation.'
                 )}
               </p>
 
