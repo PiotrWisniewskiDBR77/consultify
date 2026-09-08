@@ -646,7 +646,7 @@ async function main() {
   for (const o of OSOBY) sprawdzRoleSlownika(o.rola, `osoba ${o.slug}`);
 
   const url = wymaganyUrl();
-  const toz = sprawdzCel(url, opcje.oczekiwanyHost);
+  const toz = sprawdzCel(url, opcje.oczekiwanyHost, opcje.celZdalny);
   const pool = otworzPool(url);
   const c = await pool.connect();
 

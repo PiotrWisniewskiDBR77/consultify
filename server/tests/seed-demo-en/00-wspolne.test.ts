@@ -6,6 +6,7 @@ import {
   sprawdzRoleSlownika,
   tozsamosc,
   uuidV5,
+  zbudujCelZdalny,
 } from '../../scripts/seed/demo-en/00-wspolne';
 
 describe('00-wspolne — UUIDv5 deterministyczne (paczka D1, docs/program/DANE_POKAZOWE_EN_20260908/PLAN.md §D1)', () => {
@@ -166,5 +167,81 @@ describe('tozsamosc — normalizacja identyfikatora celu', () => {
   it('normalizuje wielkość liter hosta i nazwy bazy', () => {
     const url = 'postgresql://postgres:postgres@127.0.0.1:54418/Consultify_Kopia_D1';
     expect(tozsamosc(url)).toBe('127.0.0.1:54418/consultify_kopia_d1');
+  });
+});
+
+// ============================================================================
+// D8 — TRYB ZDALNY (staging). Guard ma przepuścić WYŁĄCZNIE staging i WYŁĄCZNIE
+// przy jednoczesnym spełnieniu trzech warunków. Brak któregokolwiek = odmowa.
+// ============================================================================
+describe('00-wspolne — tryb zdalny --cel-zdalny staging (paczka D8)', () => {
+  const ARG_KOMPLET = ['--cel-zdalny', 'staging', '--rozumiem-staging'];
+  const ENV_OK = { ALLOW_STAGING_SEED: '1' };
+  const URL_STAGING = 'postgresql://u:p@thomas.proxy.rlwy.net:52567/railway';
+  const URL_DEMO = 'postgresql://u:p@trolley.proxy.rlwy.net:52567/railway';
+  const URL_PROD = 'postgresql://u:p@centerbeam.proxy.rlwy.net:52567/railway';
+
+  it('bez --cel-zdalny w ogóle zwraca null (tryb lokalny D1-D7 niezmieniony)', () => {
+    expect(zbudujCelZdalny(['--apply', '--oczekiwany-host', '127.0.0.1'], ENV_OK)).toBeNull();
+  });
+
+  it('komplet trzech warunków → cel zdalny „staging"', () => {
+    expect(zbudujCelZdalny(ARG_KOMPLET, ENV_OK)).toEqual({ cel: 'staging' });
+    expect(zbudujCelZdalny(['--cel-zdalny=staging', '--rozumiem-staging'], ENV_OK)).toEqual({ cel: 'staging' });
+  });
+
+  it('WARUNEK 1 — brak/inna wartość --cel-zdalny: odmowa (demo i produkcja nie mają trybu zdalnego)', () => {
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'demo', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'produkcja', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
+    expect(() => zbudujCelZdalny(['--cel-zdalny', '', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
+  });
+
+  it('WARUNEK 2 — brak ALLOW_STAGING_SEED=1: odmowa', () => {
+    expect(() => zbudujCelZdalny(ARG_KOMPLET, {})).toThrow(/ALLOW_STAGING_SEED=1/);
+    expect(() => zbudujCelZdalny(ARG_KOMPLET, { ALLOW_STAGING_SEED: '0' })).toThrow(/ALLOW_STAGING_SEED=1/);
+    expect(() => zbudujCelZdalny(ARG_KOMPLET, { ALLOW_STAGING_SEED: 'true' })).toThrow(/ALLOW_STAGING_SEED=1/);
+  });
+
+  it('WARUNEK 3 — brak --rozumiem-staging: odmowa', () => {
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'staging'], ENV_OK)).toThrow(/--rozumiem-staging/);
+  });
+
+  it('cel zdalny przepuszcza staging (thomas) — i tylko przy zgodnym --oczekiwany-host', () => {
+    const zdalny = zbudujCelZdalny(ARG_KOMPLET, ENV_OK);
+    expect(sprawdzCel(URL_STAGING, 'thomas', zdalny)).toBe('thomas.proxy.rlwy.net:52567/railway');
+    expect(() => sprawdzCel(URL_STAGING, 'trolley', zdalny)).toThrow(/nie pasuje/i);
+  });
+
+  it('cel zdalny ODMAWIA demo (trolley) i produkcji (centerbeam) — nawet z kompletem trzech warunków', () => {
+    const zdalny = zbudujCelZdalny(ARG_KOMPLET, ENV_OK);
+    expect(() => sprawdzCel(URL_DEMO, 'trolley', zdalny)).toThrow(/DEMO \(trolley\)/);
+    expect(() => sprawdzCel(URL_PROD, 'centerbeam', zdalny)).toThrow(/PRODUKCJĘ/);
+  });
+
+  it('cel zdalny ODMAWIA dowolnego innego hosta (host bez „thomas")', () => {
+    const zdalny = zbudujCelZdalny(ARG_KOMPLET, ENV_OK);
+    expect(() => sprawdzCel('postgresql://u:p@jakis.inny.host:5432/railway', 'jakis', zdalny)).toThrow(/nie zawiera „thomas"/);
+    expect(() => sprawdzCel('postgresql://u:p@127.0.0.1:54418/consultify_kopia_d11', '127.0.0.1', zdalny)).toThrow(/nie zawiera „thomas"/);
+  });
+
+  it('BEZ celu zdalnego staging dalej jest ODRZUCANY (regresja D1-D7 nie może się otworzyć)', () => {
+    expect(() => sprawdzCel(URL_STAGING, 'thomas')).toThrow(/demo\/staging/);
+    expect(() => sprawdzCel(URL_STAGING, 'thomas', null)).toThrow(/demo\/staging/);
+  });
+
+  it('MUTACJA — guard sprawdzający tylko JEDEN z trzech warunków przepuściłby staging bez env i bez potwierdzenia; produkcyjna wersja tego NIE robi', () => {
+    const mutantTylkoFlaga = (argv: string[]): { cel: 'staging' } | null =>
+      argv.includes('--cel-zdalny') ? { cel: 'staging' } : null;
+    // mutant: przepuszcza sam „--cel-zdalny staging" bez env i bez potwierdzenia
+    expect(mutantTylkoFlaga(['--cel-zdalny', 'staging'])).toEqual({ cel: 'staging' });
+    // produkcja: odmawia obu brakom
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'staging'], {})).toThrow();
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'staging'], ENV_OK)).toThrow();
+  });
+
+  it('MUTACJA — gdyby tryb zdalny nie sprawdzał hosta, „trolley" (demo) przeszedłby jako staging; produkcyjna wersja tego NIE robi', () => {
+    const mutantBezHosta = (url: string): string => tozsamosc(url); // BRAK sprawdzenia thomas/trolley
+    expect(() => mutantBezHosta(URL_DEMO)).not.toThrow(); // mutant: przepuszcza demo
+    expect(() => sprawdzCel(URL_DEMO, 'trolley', { cel: 'staging' })).toThrow(/DEMO \(trolley\)/); // produkcja: odmawia
   });
 });

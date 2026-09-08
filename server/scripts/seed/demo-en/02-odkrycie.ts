@@ -481,7 +481,7 @@ const DRD_EVIDENCE_STRENGTH = 'E2';
 async function main() {
   const opcje = czytajWspolneArgumenty(process.argv.slice(2));
   const url = wymaganyUrl();
-  const toz = sprawdzCel(url, opcje.oczekiwanyHost);
+  const toz = sprawdzCel(url, opcje.oczekiwanyHost, opcje.celZdalny);
   const pool = otworzPool(url);
   const c = await pool.connect();
 
