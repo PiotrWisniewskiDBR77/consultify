@@ -5,6 +5,7 @@
  * Includes variance analysis, trend visualization, and measurement entry.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
 import { ft } from '../Finance/shared/financeT';
 import {
   AlertTriangle,
@@ -99,11 +100,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   }, [analysisId]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatListCurrency(value, currency, { maximumFractionDigits: 0 });
   };
 
   const formatPercent = (value: number | undefined | null) => {

@@ -5,6 +5,7 @@
  * Supports adding links, notes, and uploading documents.
  */
 
+import { formatListDate } from '../../utils/listDateFormat';
 import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
@@ -277,7 +278,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           )}
                           <span>{item.uploaded_by_name || 'User'}</span>
                           <span>•</span>
-                          <span>{new Date(item.uploaded_at).toLocaleDateString('pl-PL')}</span>
+                          <span>{formatListDate(item.uploaded_at)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

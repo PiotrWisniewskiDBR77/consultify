@@ -8,6 +8,7 @@
  * (`computeMethodResultRange`) — a single weighted point estimate is never the only thing on
  * screen when more than one method has a result.
  */
+import { formatListNumber, formatListPercent } from '../../../../utils/listDateFormat';
 import { ft } from '../../shared/financeT';
 import React from 'react';
 
@@ -21,7 +22,7 @@ export interface ResultsStepProps {
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString('pl-PL', { maximumFractionDigits: 0 });
+  return formatListNumber(n, '—', { maximumFractionDigits: 0 });
 }
 
 /** Decimal string -> pl-PL thousands-grouped display, `'—'` for null/unparsable (never a raw un-grouped digit string). */
@@ -67,9 +68,11 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
           {ft('finance.valuationSteps.methodRange', 'Range of method results:')} <span className="font-mono">{fmt(range.min as number)}{results.currency ? ` ${results.currency}` : ''}</span> –{' '}
           <span className="font-mono">{fmt(range.max as number)}{results.currency ? ` ${results.currency}` : ''}</span>
           {range.spreadPct !== null &&
-            ` (rozrzut ${range.spreadPct.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`}
+            ` ${ft('finance.valuationSteps.spread', '(spread {{pct}})', {
+              pct: formatListPercent(range.spreadPct / 100, 1),
+            })}`}
           {range.hasMaterialDisagreement &&
-            ' — istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika.'}
+            ` ${ft('finance.valuationSteps.materialDisagreement', '— the methods disagree materially, do not treat the headline as certain.')}`}
         </div>
       )}
 

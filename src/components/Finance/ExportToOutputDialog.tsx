@@ -5,6 +5,7 @@
  * DBR77: Layer-2 modal, rounded-xl, cards with hover:ring-2.
  */
 
+import { formatListDate } from '../../utils/listDateFormat';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, FileText, Loader2, Presentation, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -171,11 +172,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
 
   if (!open) return null;
 
-  const analysisDate = new Date().toLocaleDateString('pl-PL', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const analysisDate = formatListDate(new Date());
 
   return (
     <AnimatePresence>

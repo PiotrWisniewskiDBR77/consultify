@@ -1,3 +1,4 @@
+import { formatListDate } from '../../utils/listDateFormat';
 import { BarChart3, Calculator, FileText, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
@@ -339,7 +340,7 @@ export function formatAge(
   if (hours < 1) return t('finance.preview.ageJustNow', 'Just now');
   if (hours < 24) return t('finance.preview.ageHours', '{{hours}}h ago', { hours });
   if (days < 7) return t('finance.preview.ageDays', '{{days}}d ago', { days });
-  return d.toLocaleDateString('pl-PL');
+  return formatListDate(d);
 }
 
 export function isWorkableStatement(

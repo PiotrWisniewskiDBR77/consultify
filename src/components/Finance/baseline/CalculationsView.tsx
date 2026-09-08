@@ -12,6 +12,7 @@
  * emituje automatycznego finansowania; ten widok tylko RENDERUJE to, co
  * silnik zwrócił, nie koryguje.
  */
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import { ft } from '../shared/financeT';
 import React, { useMemo, useState } from 'react';
 
@@ -182,17 +183,23 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
             data-testid="baseline-granularity-select"
           >
             <option value="monthly">{ft('finance.calculations.monthly', 'Monthly')}</option>
-            <option value="quarterly">Kwartalnie</option>
-            <option value="yearly">Rocznie</option>
+            <option value="quarterly">{ft('finance.calculations.quarterly', 'Quarterly')}</option>
+            <option value="yearly">{ft('finance.calculations.yearly', 'Yearly')}</option>
           </select>
           <span data-testid="baseline-last-compute-label">
             {lastComputedAt
-              ? `Ostatnie udane przeliczenie: ${lastComputedAt.toLocaleString('pl-PL')}${wasRecovered ? ' (odzyskane po przerwaniu połączenia)' : ''}`
-              : 'Jeszcze nie przeliczono'}
+              ? `${ft('finance.calculations.lastSuccess', 'Last successful calculation: {{when}}', {
+                  when: formatListDateTime(lastComputedAt),
+                })}${wasRecovered ? ` ${ft('finance.calculations.recovered', '(recovered after the connection dropped)')}` : ''}`
+              : ft('finance.calculations.neverComputed', 'Not calculated yet')}
           </span>
           {stale.stale && (
             <span className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning" data-testid="baseline-stale-badge">
-              {stale.reason === 'ASSUMPTIONS_EDITED' ? 'Nieaktualne — założenia zmienione' : stale.reason === 'SOURCE_CHANGED' ? 'Nieaktualne — źródło zmienione' : 'Nie przeliczono'}
+              {stale.reason === 'ASSUMPTIONS_EDITED'
+                ? ft('finance.calculations.staleAssumptions', 'Outdated — assumptions changed')
+                : stale.reason === 'SOURCE_CHANGED'
+                  ? ft('finance.calculations.staleSource', 'Outdated — source changed')
+                  : ft('finance.calculations.notComputed', 'Not calculated')}
             </span>
           )}
         </div>

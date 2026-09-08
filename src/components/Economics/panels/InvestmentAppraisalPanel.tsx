@@ -29,6 +29,7 @@
  * capability; mounting it is a separate step gated by the project's own
  * visual-acceptance process.
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import { ft } from '../../Finance/shared/financeT';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -127,7 +128,7 @@ const VERDICT_LABEL: Record<AppraisalVerdict, string> = {
 
 const fmtMoney = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 0 });
 };
 
 const fmtPct = (v: number | null | undefined): string => {

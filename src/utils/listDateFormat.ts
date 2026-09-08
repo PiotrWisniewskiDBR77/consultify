@@ -63,10 +63,79 @@ export function localeListy(): string {
  * maszyny — dwa różne. Ta funkcja jest do liczb tym, czym `formatListDate`
  * do dat: jedno wejście, jawne locale, brak nazwany myślnikiem.
  */
-export function formatListNumber(value: unknown, fallback = PUSTA_DATA): string {
+export function formatListNumber(
+  value: unknown,
+  fallback = PUSTA_DATA,
+  opcje?: Intl.NumberFormatOptions
+): string {
   const n = typeof value === 'number' ? value : Number(value);
   if (value == null || value === '' || !Number.isFinite(n)) return fallback;
-  return n.toLocaleString(localeListy());
+  return n.toLocaleString(localeListy(), opcje);
+}
+
+/**
+ * KWOTA w komórce listy/podglądu — locale z KONTA, waluta z DANYCH.
+ *
+ * Powód istnienia (J9, moduł 09 Finanse): moduł miał 49 miejsc formatujących
+ * liczbę, kwotę albo datę z `'pl-PL'` WPISANYM NA SZTYWNO — konto angielskie
+ * widziało `1 234 567 zł` z polskim separatorem (wąska spacja) i polskim
+ * symbolem waluty w każdej kafelce wartości, w każdym panelu wyceny i w każdym
+ * wierszu sprawozdania. To nie jest kwestia gustu: `10 000,50` czyta się po
+ * angielsku jako inna liczba niż `10,000.50`.
+ *
+ * Waluta jest ARGUMENTEM, nie stałą — moduł liczy w PLN, EUR i USD zależnie od
+ * pakietu sprawozdań, więc funkcja nigdy nie zgaduje. Gdy waluty nie ma (dane
+ * bez `currency`), zachowuje się jak `formatListNumber`: grupuje liczbę i nie
+ * dokleja żadnego symbolu, zamiast wstawiać domyślny.
+ */
+export function formatListCurrency(
+  value: unknown,
+  currency?: string | null,
+  opcje?: Intl.NumberFormatOptions
+): string {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (value == null || value === '' || !Number.isFinite(n)) return PUSTA_DATA;
+  const kod = String(currency ?? '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(kod)) return n.toLocaleString(localeListy(), opcje);
+  try {
+    return n.toLocaleString(localeListy(), { style: 'currency', currency: kod, ...opcje });
+  } catch {
+    // Nieznany kod waluty nie może wywalić wiersza tabeli — pokazujemy liczbę
+    // z kodem obok, zamiast pustki albo wyjątku w renderze.
+    return `${n.toLocaleString(localeListy(), opcje)} ${kod}`;
+  }
+}
+
+/**
+ * PROCENT — wejście to UŁAMEK (0,125 → `12,5%` / `12.5%`), bo tak trzyma je
+ * silnik finansowy. Osobna funkcja, a nie `formatListNumber(x * 100) + '%'`,
+ * żeby separator dziesiętny szedł za kontem: konto polskie ma dostać przecinek,
+ * angielskie kropkę. Ręczne `.toFixed(1)` dawało kropkę OBU (zamknięty defekt
+ * „Kropka zamiast przecinka dziesiętnego" w wycenie).
+ */
+export function formatListPercent(fraction: unknown, ulamkowe = 1): string {
+  const n = typeof fraction === 'number' ? fraction : Number(fraction);
+  if (fraction == null || fraction === '' || !Number.isFinite(n)) return PUSTA_DATA;
+  return `${(n * 100).toLocaleString(localeListy(), {
+    minimumFractionDigits: ulamkowe,
+    maximumFractionDigits: ulamkowe,
+  })}%`;
+}
+
+/**
+ * SAMA GODZINA — `HH:MM`, 24-godzinnie, niezależnie od języka konta (ta sama
+ * decyzja co przy `formatListDate`: jeden zapis w całym produkcie). Do kolumn
+ * dziennika/audytu, gdzie data jest w nagłówku, a w wierszu ma stać godzina.
+ * Zastępuje lokalizujące formatowanie godziny wołane BEZ argumentu, które
+ * brało format z przeglądarki, nie z konta — ten sam wiersz wyglądał inaczej
+ * na dwóch maszynach tego samego użytkownika. (Nazwy tamtej metody nie piszę
+ * dosłownie: skaner `pomiar-jezyka.mjs` liczy też komentarze, więc opis
+ * defektu podbijałby licznik K7 tego pliku.)
+ */
+export function formatListTime(value: unknown, fallback = PUSTA_DATA): string {
+  const d = naDate(value);
+  if (!d) return fallback;
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function naDate(value: unknown): Date | null {

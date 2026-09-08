@@ -5,6 +5,7 @@
  * Shows linked analysis status and allows creating/navigating to financial analysis.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
 import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
@@ -181,11 +182,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
     // from analysis_financials.currency); the `currency` prop is only a
     // last-resort fallback for when no analysis has loaded yet.
     const effectiveCurrency = linkedAnalysis?.currency || currency;
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency: effectiveCurrency,
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatListCurrency(value, effectiveCurrency, { maximumFractionDigits: 0 });
   };
 
   const formatPercent = (value: number | null | undefined) => {

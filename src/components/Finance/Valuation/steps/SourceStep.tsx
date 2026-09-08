@@ -45,6 +45,7 @@
  * workspace to resolve `authorId` to a real name, so it stays labeled as an ID rather than being
  * dressed up as a name), just not the primary thing the reader's eye lands on.
  */
+import { formatListDate } from '../../../../utils/listDateFormat';
 import { ft } from '../../shared/financeT';
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
@@ -104,7 +105,7 @@ function formatFreeformLineageCode(code: string): string {
 function formatLineageDate(iso: string): string {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return iso;
-  return new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium' }).format(parsed);
+  return formatListDate(parsed, iso);
 }
 
 export function SourceStep(props: SourceStepProps): React.ReactElement {

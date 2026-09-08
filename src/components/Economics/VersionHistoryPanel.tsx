@@ -5,6 +5,7 @@
  * Supports creating snapshots, comparing versions, and restoring.
  */
 
+import { formatListDate } from '../../utils/listDateFormat';
 import { ft } from '../Finance/shared/financeT';
 import {
   Bookmark,
@@ -448,7 +449,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
                               <span className="flex items-center gap-1">
                                 <Calendar size={12} />
-                                {new Date(version.created_at).toLocaleDateString('pl-PL')}
+                                {formatListDate(version.created_at)}
                               </span>
                               <span className="flex items-center gap-1">
                                 <User size={12} />

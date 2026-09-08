@@ -12,6 +12,7 @@
  * którego nie da się uczciwie podłączyć bez kroku mapowania.
  */
 
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import { ft } from '../shared/financeT';
 import React from 'react';
 
@@ -137,7 +138,7 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
                   isSelected ? 'text-c-text-secondary' : 'text-c-text-muted'
                 }`}
               >
-                <span>{new Date(run.createdAt).toLocaleString('pl-PL')}</span>
+                <span>{formatListDateTime(run.createdAt)}</span>
                 <span className="tabular-nums">Residual: {formatPct(run.totals.residualPct)}</span>
               </div>
             </button>

@@ -5,6 +5,7 @@
  * with visual indicators and explanations.
  */
 
+import { formatListCurrency } from '../../utils/listDateFormat';
 import { ft } from '../Finance/shared/financeT';
 import {
   AlertCircle,
@@ -48,12 +49,10 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
 }) => {
   const formatCurrency = (value: number | null) => {
     if (value === null) return '—';
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency,
+    return formatListCurrency(value, currency, {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    });
   };
 
   const formatPercent = (value: number | null) => {

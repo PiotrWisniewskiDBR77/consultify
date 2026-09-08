@@ -15,6 +15,7 @@
  * Fail-soft: a request error degrades to a quiet inline notice, never throws.
  * Behind flag `m16ValueSuite` (default OFF) — see financeFeatureFlags.ts.
  */
+import { formatListDate, formatListNumber } from '../../../utils/listDateFormat';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,13 +28,13 @@ import {
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 0 });
 };
 
 const fmtDate = (v: string | null | undefined): string => {
   if (!v) return '—';
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString('pl-PL');
+  return Number.isNaN(d.getTime()) ? v : formatListDate(d);
 };
 
 export interface ValueLedgerPanelProps {

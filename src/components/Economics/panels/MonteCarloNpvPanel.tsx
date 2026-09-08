@@ -13,6 +13,7 @@
  * Fail-soft: a request error degrades to a quiet inline notice, never throws.
  * Behind flag `m16ValuationSuite` (default OFF) — see financeFeatureFlags.ts.
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,7 +35,7 @@ interface DriverRow {
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 0 });
 };
 
 const fmtPct = (v: number | null | undefined): string => {

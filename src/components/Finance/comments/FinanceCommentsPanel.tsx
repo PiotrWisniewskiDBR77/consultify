@@ -15,6 +15,7 @@
  * Za flagą `financeCommentsV1` (default OFF): przy `enabled=false` renderuje
  * `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -57,7 +58,7 @@ type LoadState =
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleString('pl-PL');
+    return formatListDateTime(iso, iso);
   } catch {
     return iso;
   }

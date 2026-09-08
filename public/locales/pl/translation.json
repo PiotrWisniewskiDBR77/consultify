@@ -27076,7 +27076,9 @@
       "sourceVersionId": "ID wersji źródłowej",
       "technicalDetails": "Szczegóły techniczne",
       "loadingSourceLink": "Wczytywanie powiązania źródła…",
-      "valuationSource": "Źródło wyceny"
+      "valuationSource": "Źródło wyceny",
+      "spread": "(rozrzut {{pct}})",
+      "materialDisagreement": "— istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika."
     },
     "assumptions": {
       "emptyModel": "Ten model nie ma jeszcze żadnych założeń.",
@@ -27102,7 +27104,15 @@
       "loading": "Wczytuję wyliczenia…",
       "slowConnection": "Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…",
       "computing": "Trwa przeliczanie modelu (solver zbieżności iteruje po każdym miesiącu)…",
-      "monthly": "Miesięcznie"
+      "monthly": "Miesięcznie",
+      "lastSuccess": "Ostatnie udane przeliczenie: {{when}}",
+      "recovered": "(odzyskane po przerwaniu połączenia)",
+      "neverComputed": "Jeszcze nie przeliczono",
+      "staleAssumptions": "Nieaktualne — założenia zmienione",
+      "staleSource": "Nieaktualne — źródło zmienione",
+      "notComputed": "Nie przeliczono",
+      "quarterly": "Kwartalnie",
+      "yearly": "Rocznie"
     },
     "errorBoundary": {
       "backToList": "Wróć do listy",
@@ -27144,6 +27154,11 @@
       "createNew": "Utwórz nową wersję",
       "empty": "Brak zapisanych wersji",
       "emptyHint": "Utwórz pierwszą wersję, żeby śledzić zmiany"
+    },
+    "number": {
+      "billions": "{{value}} mld",
+      "millions": "{{value}} mln",
+      "thousands": "{{value}} tys."
     }
   },
   "portfolio": {

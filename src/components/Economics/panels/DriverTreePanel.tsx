@@ -15,6 +15,7 @@
  * Fail-soft otherwise: a request error degrades to a quiet inline notice.
  * Behind flag `m16AdvancedSuite` (default OFF) — see financeFeatureFlags.ts.
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -52,7 +53,7 @@ const OPS: DriverOp[] = ['+', '-', '*', '/', 'sum', 'product'];
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 }).format(v);
+  return formatListNumber(v, '—', { maximumFractionDigits: 1 });
 };
 
 export interface DriverTreePanelProps {

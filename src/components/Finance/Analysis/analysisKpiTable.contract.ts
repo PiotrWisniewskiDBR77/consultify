@@ -14,6 +14,7 @@
  * downstream.
  */
 
+import { formatListNumber } from '../../../utils/listDateFormat';
 import { Decimal } from 'decimal.js';
 
 import { financeKpiCommentLabel } from '../../../labels/financeKpiCommentLabels';
@@ -257,13 +258,13 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
 // funkcji nie widzi tego defektu.
 // ---------------------------------------------------------------------------
 
-// Polski separator dziesiętny (przecinek, nie kropka) — ten sam wzorzec co
-// `formatAnalysisKpiValueForDisplay` (financeV2.types.ts, `toLocaleString('pl-PL')`).
+// Separator dziesiętny WEDŁUG KONTA (przecinek dla PL, kropka dla EN) — przez
+// SSOT `formatListNumber`, nie przez locale wpisane w wywołanie (J9, 08.09).
 // NAPRAWIONE (powtórka 08-31): `.toFixed(1)` dawało „+7.1%"/„-12.3%" z kropką —
 // dokładnie ta sama klasa defektu, którą wcześniej zamknięto na
 // finance-valuation-workspace („Kropka zamiast przecinka dziesiętnego").
 function formatPlPercent1(n: number): string {
-  return n.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return formatListNumber(n, '—', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 export function formatYoyDeltaText(yoy: YoyDelta): string {

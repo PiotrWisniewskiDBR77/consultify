@@ -10,6 +10,7 @@
  * the user type the label (defaulting to the `'PRIMARY'` convention this package assumes, since
  * no discovery endpoint exists to confirm the real convention other packages use).
  */
+import { formatListNumber } from '../../../../utils/listDateFormat';
 import { ft } from '../../shared/financeT';
 import React, { useState } from 'react';
 
@@ -37,7 +38,7 @@ export interface SensitivityStepProps {
 function fmtCellValue(raw: string | null): string {
   if (raw === null) return '—';
   const n = Number(raw);
-  return Number.isFinite(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : raw;
+  return Number.isFinite(n) ? formatListNumber(n, raw, { maximumFractionDigits: 0 }) : raw;
 }
 
 export function SensitivityStep(props: SensitivityStepProps): React.ReactElement {

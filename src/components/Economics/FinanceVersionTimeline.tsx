@@ -1,3 +1,4 @@
+import { formatListDate } from '../../utils/listDateFormat';
 import { CheckCircle2, Clock, GitCommit } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,13 +49,13 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
                 </span>
               )}
               <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-auto whitespace-nowrap">
-                {new Date(snap.createdAt).toLocaleDateString('pl-PL')}
+                {formatListDate(snap.createdAt)}
               </span>
             </div>
             {snap.switchoverDate && (
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('finance.lane.versions.switchover', 'Switchover')}{' '}
-                {new Date(snap.switchoverDate).toLocaleDateString('pl-PL')}
+                {formatListDate(snap.switchoverDate)}
                 {snap.switchoverActor &&
                   ` ${t('finance.lane.versions.by', 'by')} ${snap.switchoverActor}`}
               </p>

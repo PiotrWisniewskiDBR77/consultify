@@ -4,6 +4,7 @@
  * live, client-side, via `validateBasketWeights` before the batch PATCH is even sent), and
  * cross-checks are never weighted.
  */
+import { formatListNumber } from '../../../../utils/listDateFormat';
 import { ft } from '../../shared/financeT';
 import React, { useEffect, useState } from 'react';
 
@@ -181,7 +182,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
         <p className="text-xs text-c-text-muted" data-testid="weighted-recommendation-summary">
           Ważona rekomendacja:{' '}
           <span className="font-mono text-c-text">
-            {weightedRecommendation.weightedEnterpriseValue.toLocaleString('pl-PL')}
+            {formatListNumber(weightedRecommendation.weightedEnterpriseValue)}
           </span>
         </p>
       )}

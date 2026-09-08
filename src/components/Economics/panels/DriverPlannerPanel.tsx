@@ -13,6 +13,7 @@
  * an empty state prompting model selection — never a synthetic demo tree („Dane
  * demo = twarz produktu", zakaz syntetycznego fallbacku na produkcji).
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import { ft } from '../../Finance/shared/financeT';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -104,10 +105,19 @@ export function evalTree(
 
 const defaultFormat = (value: number): string => {
   const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)} mld`;
-  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(2)} mln`;
-  if (abs >= 1_000) return `${(value / 1_000).toFixed(1)} tys.`;
-  return value.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+  if (abs >= 1_000_000_000)
+    return ft('finance.number.billions', '{{value}}bn', {
+      value: formatListNumber(value / 1_000_000_000, '—', { maximumFractionDigits: 2 }),
+    });
+  if (abs >= 1_000_000)
+    return ft('finance.number.millions', '{{value}}m', {
+      value: formatListNumber(value / 1_000_000, '—', { maximumFractionDigits: 2 }),
+    });
+  if (abs >= 1_000)
+    return ft('finance.number.thousands', '{{value}}k', {
+      value: formatListNumber(value / 1_000, '—', { maximumFractionDigits: 1 }),
+    });
+  return formatListNumber(value, '—', { maximumFractionDigits: 2 });
 };
 
 const OP_SYMBOL: Record<DriverOp, string> = {

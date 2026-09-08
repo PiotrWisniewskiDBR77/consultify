@@ -13,6 +13,7 @@
  * ★ V-5: brak martwej przestrzeni — grid wypełnia pełną szerokość
  * (`w-full`, kolumny `minmax`, nie stałe px).
  */
+import { formatListPercent } from '../../../utils/listDateFormat';
 import { ft } from '../shared/financeT';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -59,7 +60,7 @@ function formatPctAwareValue(
   return formatFinanceValueForDisplay(
     value,
     unit === 'PCT'
-      ? (n) => `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 2 })}%`
+      ? (n) => formatListPercent(n, 2)
       : undefined
   );
 }

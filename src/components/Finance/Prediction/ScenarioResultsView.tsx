@@ -4,6 +4,7 @@
  * provisional, DEC-FIN-009 pełna wersja) i badge świeżości (`stale` gdy założenia zmieniły się po
  * ostatnim compute — wyniki NIE są kasowane).
  */
+import { formatListNumber } from '../../../utils/listDateFormat';
 import { ft } from '../shared/financeT';
 import React from 'react';
 
@@ -152,7 +153,7 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
           {liquidity === null || liquidity.liquidityHeadroom === null ? (
             <p className="text-sm text-c-text-muted">{ft('finance.scenarioResults.noCashData', 'No cash or minimum-cash policy data — an exception, not a blocker.')}</p>
           ) : (
-            <p className="text-lg tabular-nums text-c-text">{liquidity.liquidityHeadroom.toLocaleString('pl-PL')} PLN</p>
+            <p className="text-lg tabular-nums text-c-text">{formatListNumber(liquidity.liquidityHeadroom)} PLN</p>
           )}
         </div>
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">

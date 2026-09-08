@@ -26083,7 +26083,9 @@
       "sourceVersionId": "Source version ID",
       "technicalDetails": "Technical details",
       "loadingSourceLink": "Loading the source link…",
-      "valuationSource": "Valuation source"
+      "valuationSource": "Valuation source",
+      "spread": "(spread {{pct}})",
+      "materialDisagreement": "— the methods disagree materially, do not treat the headline as certain."
     },
     "assumptions": {
       "emptyModel": "This model has no assumptions yet.",
@@ -26109,7 +26111,15 @@
       "loading": "Loading calculations…",
       "slowConnection": "The connection took longer than usual — checking whether the calculation finished anyway…",
       "computing": "Recalculating the model (the convergence solver iterates over every month)…",
-      "monthly": "Monthly"
+      "monthly": "Monthly",
+      "lastSuccess": "Last successful calculation: {{when}}",
+      "recovered": "(recovered after the connection dropped)",
+      "neverComputed": "Not calculated yet",
+      "staleAssumptions": "Outdated — assumptions changed",
+      "staleSource": "Outdated — source changed",
+      "notComputed": "Not calculated",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
     },
     "errorBoundary": {
       "backToList": "Back to list",
@@ -26201,6 +26211,11 @@
       "valuationsRealSourceFailed": "Failed to load real valuations from the active data source.",
       "budgetsRealSourceFailed": "Failed to load real budgets from the active data source.",
       "demoModeRequiresRealSource": "Demo mode is enabled, but this module requires real source data."
+    },
+    "number": {
+      "billions": "{{value}}bn",
+      "millions": "{{value}}m",
+      "thousands": "{{value}}k"
     }
   },
   "portfolio": {

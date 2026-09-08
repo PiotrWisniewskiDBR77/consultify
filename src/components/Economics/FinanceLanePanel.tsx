@@ -1,3 +1,4 @@
+import { formatListDateTime, formatListTime } from '../../utils/listDateFormat';
 import {
   AlertTriangle,
   ArrowRight,
@@ -201,7 +202,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                         {auditEntry.length > 0 && (
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                             {auditEntry.at(-1)?.at
-                              ? new Date(auditEntry.at(-1)!.at).toLocaleString('pl-PL')
+                              ? formatListDateTime(auditEntry.at(-1)!.at)
                               : ''}{' '}
                             {auditEntry.at(-1)?.detail && `— ${auditEntry.at(-1)!.detail}`}
                           </p>
@@ -299,7 +300,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                 {[...(activeLaneRun?.auditTrail || [])].reverse().map((entry, i) => (
                   <div key={i} className="flex items-start gap-2 text-[11px]">
                     <span className="text-slate-600 dark:text-slate-500 whitespace-nowrap font-mono">
-                      {new Date(entry.at).toLocaleTimeString()}
+                      {formatListTime(entry.at)}
                     </span>
                     <span className="text-slate-600 dark:text-slate-300">
                       <span className="font-medium">{entry.step}</span> → {entry.outcome}
@@ -317,7 +318,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                   {mutationAudits.map((a) => (
                     <div key={a.auditId} className="flex items-start gap-2 text-[11px]">
                       <span className="text-slate-600 dark:text-slate-500 whitespace-nowrap font-mono">
-                        {new Date(a.createdAt).toLocaleTimeString()}
+                        {formatListTime(a.createdAt)}
                       </span>
                       <span className="text-slate-600 dark:text-slate-300">
                         {a.mutationType} →{' '}

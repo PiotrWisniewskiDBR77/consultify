@@ -1,3 +1,4 @@
+import { formatListDate } from '../../utils/listDateFormat';
 import {
   BarChart3,
   Calculator,
@@ -396,7 +397,7 @@ export function useFinancePreview({
         if (row.startDate)
           metaPills.push({
             label: t('finance.columns.start', 'Start'),
-            value: new Date(row.startDate).toLocaleDateString('pl-PL'),
+            value: formatListDate(row.startDate),
           });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;

@@ -16,6 +16,7 @@
  * Za flagą `financeCompareV1` (default OFF): przy `enabled=false` renderuje
  * `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
+import { formatListNumber, formatListPercent } from '../../../utils/listDateFormat';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -90,12 +91,12 @@ async function runCompare(request: FinanceCompareRequest): Promise<CompareResult
 
 function formatNumber(n: number | null): string {
   if (n === null) return '—';
-  return n.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+  return formatListNumber(n, '—', { maximumFractionDigits: 2 });
 }
 
 function formatPct(n: number | null): string {
   if (n === null) return '—';
-  return `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 1 })}%`;
+  return formatListPercent(n, 1);
 }
 
 /**
