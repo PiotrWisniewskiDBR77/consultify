@@ -1,0 +1,13 @@
+Cześć Piotr,
+
+Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta Consultify.
+
+Ustaw nowe hasło: https://demo.consultify.ai/reset-password?token=6f9c2e1a7b3d4c5e8f0a1b2c3d4e5f60
+
+Link jest ważny 60 minut.
+
+Jeśli to nie Ty prosiłeś o zmianę hasła, zignoruj tę wiadomość. Twoje hasło pozostaje bez zmian.
+
+—
+Consultify · AI-native system realizacji doradztwa
+Ta wiadomość została wysłana automatycznie, nie odpowiadaj na nią.
