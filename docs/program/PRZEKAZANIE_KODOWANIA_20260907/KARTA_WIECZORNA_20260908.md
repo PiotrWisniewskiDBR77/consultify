@@ -14,10 +14,10 @@ Staging: `996d914591` (druga paczka, punkt cofnięcia `c36dc94359`; pierwsza `c3
 - **Mail resetu hasła** po polsku/angielsku z nadawcą „Consultify”.
 
 ## Baza pokazowa Northwind (po angielsku) — gotowa do Twojego odbioru na kopii
-Seed idempotentny `server/scripts/seed/demo-en/` (D1–D6 + D4b): organizacja z UUID, 9 osób ze stanowiskami, 13 inicjatyw w 7 statusach, 4 realizacje kanoniczne z pełnym łańcuchem przekazania, 36 zadań, 7 RAID, 9 decyzji, 8 KPI z pomiarami, OKR, ROI, 4 sprawozdania, budżet, 4 dokumenty, 2 talie, skoroszyt, 2 spotkania, 3 wątki czatu, wywiady, narzędzia, ocena. Galeria 16 modułów: `evidence/dane-pokazowe-en/d7-galeria/GALERIA.md` (14 pełnych na galerii; Audyty zasiane po galerii — pakiet, program z 6 kryteriami, 3 ustalenia; Partnerzy puste celowo). **Nic z tego nie jest jeszcze na stagingu ani demo** — to D8 po Twoim „tak” na galerię i na raport dry-run usuwania 325 organizacji śmieciowych (30 659 wierszy) plus decyzja o 38 715 sierotach.
+Seed idempotentny `server/scripts/seed/demo-en/` (D1–D6 + D4b): organizacja z UUID, 9 osób ze stanowiskami, 13 inicjatyw w 7 statusach, 4 realizacje kanoniczne z pełnym łańcuchem przekazania, 36 zadań, 7 RAID, 9 decyzji, 8 KPI z pomiarami, OKR, ROI, 4 sprawozdania, budżet, 4 dokumenty, 2 talie, skoroszyt, 2 spotkania, 3 wątki czatu, wywiady, narzędzia, ocena. Galeria 16 modułów: `evidence/dane-pokazowe-en/d7-galeria/GALERIA.md` (14 pełnych na galerii; Audyty zasiane po galerii — pakiet, program z 6 kryteriami, 3 ustalenia; Partnerzy puste celowo). **Northwind jest już na stagingu** (zasiana 08.09 wieczorem, zmierzona w żywej bazie: 13 inicjatyw, 4 realizacje kanoniczne, 42 zadania, KPI, budżet, audyt, materiały; DBR77 nietknięta). Konta: `james.whitfield@northwind.example` (OWNER) i 8 osób, hasło w `~/Developer/consultify-secrets/northwind-konta-STAGING.txt` — podam Ci je osobno. Usuwanie 325 organizacji śmieciowych (30 659 wierszy) i 38 715 sierot nadal czeka na Twoje „tak”; demo dostanie to samo po Twoim „tak”.
 
 ## Decyzje, których potrzebuję (tak/nie)
-1. Galeria Northwind wygląda dobrze → wgrywamy seed na staging (D8)?
+1. Northwind na stagingu — zaakceptowana do pokazu? (galeria z kopii + dowód ze stagingu w drodze)
 2. Usuwamy 325 organizacji śmieciowych na stagingu wg raportu dry-run (dump zrobiony)?
 3. Atelier Toys i Nordwind Components — usunąć po dumpie?
 4. VTS Group S.A. — usunąć?
