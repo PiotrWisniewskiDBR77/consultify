@@ -8,6 +8,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 import { syncChatSuggestionsPreferenceFromServer } from '@/services/chatSuggestionsPreference';
+import { setPendingLoginRedirectReason } from '@/services/authRedirectReason';
 import { reconcileDemoAuthProfile } from '@/services/demoSessionAdoption';
 import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
@@ -270,8 +271,19 @@ function AppContent() {
   useEffect(() => {
     const handleTokenExpired = () => {
       console.log('[Auth] Token expired event received');
+      // 2026-09-08 auth-401-po-resecie fix: a revoked/expired session (e.g. a
+      // password reset on another tab/device) used to only clear Zustand
+      // state here and rely on the next render to bounce the user to
+      // /login — but a user sitting on an already-mounted protected screen
+      // (RouterSync never re-fires until something changes) kept seeing
+      // themself "logged in" while every API call kept failing with 401.
+      // Drop a reason RouterSync's own (already-authoritative) redirect
+      // picks up — do NOT navigate() here too: RouterSync reacts to
+      // `currentUser.isAuthenticated` flipping false in this same commit and
+      // always wins that race, silently overwriting a `navigate()` called
+      // from here with its generic `?redirect=` target.
+      setPendingLoginRedirectReason('session_expired');
       logout({ reload: false });
-      // Optional: Redirect handled by state change in AppRoutes
     };
 
     window.addEventListener('auth:token-expired', handleTokenExpired);

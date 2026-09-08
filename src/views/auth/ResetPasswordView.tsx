@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AuthService } from '@/services/modules/AuthService';
+import { useAppStore } from '@/store/useAppStore';
 
 export const ResetPasswordView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const logout = useAppStore((s) => s.logout);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -96,6 +98,17 @@ export const ResetPasswordView: React.FC = () => {
     try {
       await AuthService.resetPassword(token, newPassword);
       setStatus('success');
+      // auth-401-po-resecie (2026-09-08): the backend already revokes every
+      // refresh token and clears the auth cookies on a successful reset, but
+      // this browser's localStorage (`token`/`refreshToken`/`user`/
+      // `consultify-storage`) was untouched — if this device was already
+      // logged in (e.g. Piotr resetting his own password mid-session), the
+      // app kept rendering him as authenticated while every subsequent API
+      // call failed with 401. Clear the local session immediately and land
+      // on the login screen with an explicit reason instead of waiting for
+      // the next failed API call to notice.
+      logout({ reload: false });
+      navigate('/login?reason=password_reset', { replace: true });
     } catch (err: any) {
       setStatus('error');
       setErrorMsg(

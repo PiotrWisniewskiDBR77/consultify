@@ -11,12 +11,21 @@ import { installDocumentLifecycleWebPerf } from './bootstrap/documentLifecycleWe
 import { RuntimeDiagnosticPanel } from './components/RuntimeDiagnosticPanel';
 import { installCsrfFetchInterceptor } from './services/csrfClient';
 import { installFeedbackCollector } from './services/feedbackCollector';
+import { installGlobalAuthFetchGuard } from './services/globalAuthFetchGuard';
 import { getRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from './utils/runtimeDiagnostics';
 
 declare global {
   interface Window {
     __consultifyBlockAppBoot?: boolean;
   }
+}
+
+// auth-401-po-resecie (2026-09-08): must run before any app code fetches
+// anything, so no early direct-fetch call site can slip past the guard.
+try {
+  installGlobalAuthFetchGuard();
+} catch (guardError) {
+  console.warn('[index.tsx] Global auth fetch guard bootstrap failed:', guardError);
 }
 
 try {

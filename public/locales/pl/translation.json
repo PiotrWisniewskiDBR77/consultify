@@ -14479,6 +14479,8 @@
     }
   },
   "auth": {
+    "sessionExpiredMessage": "Sesja wygasła. Zaloguj się ponownie.",
+    "passwordResetMessage": "Hasło zmienione. Zaloguj się nowym hasłem.",
     "logIn": "Zaloguj się",
     "logOut": "Wyloguj się",
     "welcomeBack": "Witamy ponownie",

@@ -1489,6 +1489,24 @@ export const AppRoutes: React.FC = () => {
                   targetMode={SessionMode.FREE}
                   onAuthSuccess={handleAuthSuccess}
                   onBack={() => navigate('/')}
+                  sessionMessage={(() => {
+                    // 2026-09-08 auth-401-po-resecie fix: `?reason=` is written by
+                    // the global session-expiry guard (App.tsx `auth:token-expired`
+                    // handler) and by ResetPasswordView on a successful reset —
+                    // both end the local session and land here; without this the
+                    // login form gave no explanation for why the user was bounced.
+                    const reason = new URLSearchParams(location.search).get('reason');
+                    if (reason === 'session_expired') {
+                      return t('auth.sessionExpiredMessage', 'Sesja wygasła. Zaloguj się ponownie.');
+                    }
+                    if (reason === 'password_reset') {
+                      return t(
+                        'auth.passwordResetMessage',
+                        'Hasło zmienione. Zaloguj się nowym hasłem.'
+                      );
+                    }
+                    return undefined;
+                  })()}
                 />
               </AuthLayout>
             )

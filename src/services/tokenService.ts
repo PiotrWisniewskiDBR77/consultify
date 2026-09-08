@@ -95,6 +95,18 @@ class TokenService {
     }
     clearPersonalTasksCache();
     this.scheduleRefresh(token);
+    // auth-401-po-resecie (2026-09-08): `init()` (which registers the
+    // `auth-error` listener consumed by `handleAuthError` -> refresh ->
+    // `auth:token-expired` -> logout) previously only ran from App.tsx's
+    // mount-time effect, gated on a token already sitting in localStorage
+    // BEFORE the app mounted. A fresh login within the same SPA session
+    // (the overwhelmingly common case — no page reload) writes the token
+    // to storage AFTER that effect already ran once with an empty
+    // dependency array, so it never re-checked — leaving the session with
+    // no listener at all until the next full page load. Call it here too
+    // (idempotent — `init()` no-ops if already initialized) so the very
+    // first token this tab ever receives also wires up the recovery chain.
+    this.init();
   }
 
   /**

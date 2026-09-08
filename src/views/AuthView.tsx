@@ -32,6 +32,14 @@ interface AuthViewProps {
   targetMode: SessionMode;
   onAuthSuccess: (user: { status?: string; message?: string }) => void;
   onBack: () => void;
+  /**
+   * Informational banner shown above the login form — e.g. after the
+   * global 401 guard ends a stale session (`?reason=session_expired`) or
+   * right after a successful password reset (`?reason=password_reset`).
+   * Already-translated string; the caller (AppRoutes) resolves it from the
+   * `reason` query param so this view stays route-agnostic.
+   */
+  sessionMessage?: string;
 }
 
 type InviteCodeInfo = {
@@ -196,6 +204,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   targetMode,
   onAuthSuccess,
   onBack,
+  sessionMessage,
 }) => {
   const { t } = useTranslation();
   const [step, setStep] = useState<AuthStep>(initialStep);
@@ -1187,6 +1196,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <h2 className="text-2xl font-bold text-c-text mb-2">{t('auth.welcomeBack')}</h2>
         <p className="text-c-text-muted text-sm">{t('auth.signInText')}</p>
       </div>
+
+      {sessionMessage && (
+        <div
+          className="flex items-center gap-2 text-c-info text-sm justify-center bg-c-info/10 p-3 rounded border border-c-info/20"
+          role="status"
+          aria-live="polite"
+        >
+          <AlertCircle size={16} />
+          {sessionMessage}
+        </div>
+      )}
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1.5">

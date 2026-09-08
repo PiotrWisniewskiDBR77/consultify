@@ -14993,6 +14993,8 @@
     }
   },
   "auth": {
+    "sessionExpiredMessage": "Your session has expired. Please sign in again.",
+    "passwordResetMessage": "Password changed. Sign in with your new password.",
     "logIn": "Log in",
     "logOut": "Log out",
     "welcomeBack": "Welcome back",

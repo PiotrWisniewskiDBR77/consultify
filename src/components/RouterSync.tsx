@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getAppViewFromPath } from '../routes/routeConfig';
+import { consumePendingLoginRedirectReason } from '../services/authRedirectReason';
 import { useAppStore } from '../store/useAppStore';
 import { AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
@@ -282,7 +283,15 @@ export const RouterSync: React.FC = () => {
       // consumer above (auth-route branch). Bounded to this app's own
       // relative URLs only (no external redirect target is ever accepted).
       const attemptedTarget = `${path}${location.search}`;
-      const loginTarget = `/login?redirect=${encodeURIComponent(attemptedTarget)}`;
+      // 2026-09-08 auth-401-po-resecie fix: this effect is the single
+      // authority for this redirect (it always wins a race against a
+      // `navigate()` called elsewhere in the same commit, e.g. App.tsx's
+      // `auth:token-expired` handler), so a "why was I logged out" reason
+      // has to be surfaced HERE rather than fought over from outside.
+      const redirectReason = consumePendingLoginRedirectReason();
+      const loginTarget =
+        `/login?redirect=${encodeURIComponent(attemptedTarget)}` +
+        (redirectReason ? `&reason=${encodeURIComponent(redirectReason)}` : '');
       console.log('[RouterSync] Not authenticated, redirecting to', loginTarget);
       isNavigatingRef.current = true;
       navigate(loginTarget, { replace: true });
