@@ -1,5 +1,9 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
+// Komponent KLASOWY — bez dostepu do `useTranslation`; ekran awarii nie
+// przerysowuje sie po zmianie jezyka, wiec instancja i18n wystarczy.
+import i18n from '@/i18n';
+
 import { addFeedbackBreadcrumb } from '../services/feedbackCollector';
 
 interface Props {
@@ -164,7 +168,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReport}
                 className="w-full py-3 bg-amber-600 hover:bg-amber-700 rounded-lg font-bold transition-colors"
               >
-                Zgłoś ten błąd z pełnym kontekstem
+                {i18n.t('errors.boundary.reportWithContext', 'Report this error with full context')}
               </button>
               <button
                 onClick={this.handleReset}

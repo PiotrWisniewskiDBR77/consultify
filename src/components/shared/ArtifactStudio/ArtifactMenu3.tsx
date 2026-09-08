@@ -1,5 +1,6 @@
 import { ChevronDown, MoreVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ArtifactCommand,
@@ -83,10 +84,11 @@ export const ArtifactMenu3: React.FC<ArtifactMenu3Props> = ({
   context,
   resolveLabel,
   maxVisible = 7,
-  ariaLabel = 'Narzędzia kontekstowe',
+  ariaLabel,
   className,
   onCommandError,
 }) => {
+  const { t } = useTranslation();
   const { visibleCommands, execute } = useArtifactCommands(registry, context, {
     placement: 'menu3',
   });
@@ -121,7 +123,7 @@ export const ArtifactMenu3: React.FC<ArtifactMenu3Props> = ({
   return (
     <div
       role="toolbar"
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t('artifactMenu3.ariaLabel', 'Contextual tools')}
       data-testid="artifact-menu3"
       data-selection-kind={context.selection.kind}
       className={`flex h-12 flex-shrink-0 items-center gap-1 overflow-visible border-b border-c-border-subtle bg-c-surface px-3 ${className ?? ''}`}
@@ -146,17 +148,17 @@ export const ArtifactMenu3: React.FC<ArtifactMenu3Props> = ({
             onClick={() => setOverflowOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={overflowOpen}
-            aria-label="Więcej narzędzi"
+            aria-label={t('artifactMenu3.more', 'More tools')}
             data-testid="artifact-menu3-overflow"
           >
             <MoreVertical size={16} aria-hidden="true" />
-            <span>Więcej</span>
+            <span>{t('common.more', 'More')}</span>
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           {overflowOpen ? (
             <div
               role="menu"
-              aria-label="Więcej narzędzi"
+              aria-label={t('artifactMenu3.more', 'More tools')}
               className="absolute right-0 top-full z-dropdown mt-1 min-w-56 rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
               data-testid="artifact-menu3-overflow-menu"
             >

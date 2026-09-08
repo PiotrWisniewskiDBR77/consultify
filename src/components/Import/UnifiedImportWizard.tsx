@@ -318,7 +318,7 @@ const UploadStep: React.FC<{
             {isPolish ? (
               <>
                 Przeciągnij plik tutaj lub{' '}
-                <span className="text-blue-500 font-medium">kliknij aby wybrać</span>
+                <span className="text-blue-500 font-medium">{t('import.clickToChoose', 'click to choose')}</span>
               </>
             ) : (
               <>

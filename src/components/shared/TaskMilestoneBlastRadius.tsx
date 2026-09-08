@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface MilestoneBlastRadiusRef {
   milestoneId: string;
@@ -31,6 +32,7 @@ const stateLabel = (value: string) =>
   })[value] ?? value.replaceAll('_', ' ');
 
 export const TaskMilestoneBlastRadius: React.FC<Props> = ({ task }) => {
+  const { t } = useTranslation();
   const refs = task.blastRadius ?? [];
   if (!(task.milestoneIds?.length || refs.length)) return null;
   return (
@@ -38,7 +40,9 @@ export const TaskMilestoneBlastRadius: React.FC<Props> = ({ task }) => {
       aria-label="Task milestone blast radius"
       className="mt-3 rounded border border-c-border p-3"
     >
-      <h4 className="text-sm font-semibold">Wpływ na kamienie milowe</h4>
+      <h4 className="text-sm font-semibold">
+        {t('tasks.milestoneImpact', 'Impact on milestones')}
+      </h4>
       {refs.length === 0 ? (
         <p role="status" className="mt-1 text-xs text-c-text-muted">
           Powiązane kamienie: {task.milestoneIds?.join(', ')} · dokładne wersje NIEZNANE

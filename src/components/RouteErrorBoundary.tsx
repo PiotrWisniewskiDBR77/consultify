@@ -1,6 +1,11 @@
 import { AlertTriangle, Home, MessageSquareWarning, RefreshCw } from 'lucide-react';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
+// Komponent KLASOWY — nie ma jak wywołać `useTranslation`, więc sięgamy po
+// instancję i18n wprost. Ekran awarii i tak nie przerysowuje się po zmianie
+// języka (użytkownik trafia tu raz, po czym przeładowuje stronę).
+import i18n from '@/i18n';
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -158,11 +163,11 @@ export class RouteErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-2">
-              Coś poszło nie tak
+              {i18n.t('errors.route.title', 'Something went wrong')}
             </h1>
 
             <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-              Wystąpił nieoczekiwany błąd podczas ładowania tej strony.
+              {i18n.t('errors.route.message', 'An unexpected error occurred while loading this page.')}
             </p>
 
             <div
@@ -171,11 +176,13 @@ export class RouteErrorBoundary extends Component<Props, State> {
               aria-live="assertive"
             >
               <p className="text-sm text-red-700 dark:text-red-300 font-medium">
-                Strona napotkała problem i została bezpiecznie zatrzymana.
+                {i18n.t('errors.route.halted', 'The page hit a problem and was stopped safely.')}
               </p>
               <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony
-                głównej.
+                {i18n.t(
+                  'errors.route.detailsHidden',
+                  'Technical details are not shown. Try again or go back to the home page.'
+                )}
               </p>
             </div>
             {this.state.telemetryDelivery === 'sent' && (
@@ -209,7 +216,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
-                Spróbuj ponownie
+                {i18n.t('common.tryAgain', 'Try again')}
               </button>
 
               <button
@@ -217,7 +224,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-navy-900 text-white rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
               >
                 <Home className="w-4 h-4" />
-                Strona główna
+                {i18n.t('common.homePage', 'Home page')}
               </button>
             </div>
 
@@ -226,7 +233,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
             >
               <MessageSquareWarning className="w-4 h-4" />
-              Zgłoś ten błąd
+              {i18n.t('errors.route.report', 'Report this error')}
             </button>
           </div>
         </div>

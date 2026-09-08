@@ -7,6 +7,7 @@
 
 import { ArrowRight, Equal, Minus, Plus } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DiffViewProps {
   original: string | object;
@@ -75,6 +76,7 @@ export function DiffView({
   showLineNumbers = true,
   className = '',
 }: DiffViewProps) {
+  const { t } = useTranslation();
   const originalStr = useMemo(
     () => (typeof original === 'string' ? original : JSON.stringify(original, null, 2)),
     [original]
@@ -143,7 +145,7 @@ export function DiffView({
       {/* Original Column */}
       <div className="border rounded-lg overflow-hidden">
         <div className="bg-danger-50 dark:bg-danger-900/30 px-3 py-2 border-b text-sm font-medium text-danger-700 dark:text-danger-300">
-          Oryginał
+          {t('ai.diff.original', 'Original')}
         </div>
         <div className="max-h-96 overflow-auto">
           {diff.map((line, idx) => (

@@ -314,7 +314,17 @@
     "VAULT_FOLDER_SCOPE_MISMATCH": "Folder należy do innego poziomu sejfu.",
     "VAULT_SCOPE_INVALID": "scope musi być jednym z: user, project, organization.",
     "VAULT_VERSION_NUMBER_INVALID": "versionNumber musi być dodatnią liczbą całkowitą.",
-    "VAULT_PROJECT_ID_REQUIRED": "projectId jest wymagany dla scope=project."
+    "VAULT_PROJECT_ID_REQUIRED": "projectId jest wymagany dla scope=project.",
+    "route": {
+      "title": "Coś poszło nie tak",
+      "message": "Wystąpił nieoczekiwany błąd podczas ładowania tej strony.",
+      "halted": "Strona napotkała problem i została bezpiecznie zatrzymana.",
+      "detailsHidden": "Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony głównej.",
+      "report": "Zgłoś ten błąd"
+    },
+    "boundary": {
+      "reportWithContext": "Zgłoś ten błąd z pełnym kontekstem"
+    }
   },
   "transformationScenarios": {
     "banner": {
@@ -596,6 +606,9 @@
     "skipToContent": "Przejdź do głównej treści",
     "teresa": {
       "label": "Teresa"
+    },
+    "split": {
+      "assistantSubtitle": "Twój asystent transformacji"
     }
   },
   "common": {
@@ -893,7 +906,9 @@
     "publish": "Opublikuj",
     "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…",
     "loadingTools": "Ładowanie narzędzi…",
-    "reasonRequired": "Powód (wymagany)"
+    "reasonRequired": "Powód (wymagany)",
+    "homePage": "Strona główna",
+    "learnMore": "Dowiedz się więcej"
   },
   "superadmin": {
     "confirm": {
@@ -24860,6 +24875,10 @@
         "fixPayment": "Napraw metodę płatności",
         "reactivate": "Reaktywuj subskrypcję"
       }
+    },
+    "forbidden": {
+      "title": "Brak uprawnień",
+      "dismiss": "Zamknij komunikat"
     }
   },
   "legal": {
@@ -33201,6 +33220,27 @@
     "applyProposedSchedule": "Zastosuj proponowany harmonogram",
     "actions": {
       "reject": "Odrzuć"
+    },
+    "draftReview": {
+      "confidence": "{{percent}}% pewności",
+      "expiringSoon": "Wygasa wkrótce",
+      "original": "Oryginał:",
+      "aiSuggestion": "Sugestia AI:",
+      "loading": "Ładowanie sugestii…",
+      "emptyTitle": "Brak sugestii do przeglądu",
+      "emptyBody": "Nowe sugestie AI pojawią się tutaj"
+    },
+    "feedback": {
+      "thanks": "Dziękujemy za opinię!",
+      "whatToImprove": "Co można poprawić?",
+      "placeholder": "Opisz problem lub sugestię…",
+      "addComment": "Dodaj komentarz"
+    },
+    "diff": {
+      "original": "Oryginał"
+    },
+    "maxMode": {
+      "recommendedFor": "Zalecane dla: planowania strategicznego, złożonych analiz, decyzji krytycznych"
     }
   },
   "comingSoon": "Już wkrótce",
@@ -48235,5 +48275,49 @@
       "composeLabel": "Wiadomość do Teresy",
       "send": "Wyślij"
     }
+  },
+  "emptyStates": {
+    "team": {
+      "title": "Pracujesz sam?",
+      "body": "Niektóre decyzje wymagają wielu perspektyw. Zaproś członków zespołu, aby wnieśli swoje punkty widzenia.",
+      "invite": "Zaproś do zespołu",
+      "trustNote": "Każda osoba dostaje indywidualne zaproszenie z własnym dostępem"
+    },
+    "axis": {
+      "title": "Brak osi decyzyjnych",
+      "description": "Oś decyzyjna to przestrzeń do ustrukturyzowania jednego tematu strategicznego. Zacznij od pustej osi lub wybierz gotowy szablon."
+    },
+    "orPickTemplate": "Lub wybierz szablon"
+  },
+  "charts": {
+    "comparison": {
+      "pickAnalyses": "Wybierz analizy do porównania"
+    },
+    "radar": {
+      "average": "Średnia:"
+    }
+  },
+  "import": {
+    "clickToChoose": "kliknij aby wybrać"
+  },
+  "modelSelector": {
+    "checkingConnection": "Sprawdzanie połączenia…"
+  },
+  "canonicalWork": {
+    "noRoleAssigned": "Brak przypisania roli użytkownika. Akcje zarządcze są zablokowane.",
+    "level": {
+      "warning": "Ostrzeżenie",
+      "critical": "Krytyczny"
+    }
+  },
+  "tasks": {
+    "milestoneImpact": "Wpływ na kamienie milowe"
+  },
+  "v4ComingSoon": {
+    "submitted": "Zgłoszenie wysłane"
+  },
+  "artifactMenu3": {
+    "more": "Więcej narzędzi",
+    "ariaLabel": "Narzędzia kontekstowe"
   }
 }

@@ -314,7 +314,17 @@
     "VAULT_FOLDER_SCOPE_MISMATCH": "The folder belongs to a different safe level.",
     "VAULT_SCOPE_INVALID": "scope must be one of: user, project, organization.",
     "VAULT_VERSION_NUMBER_INVALID": "versionNumber must be a positive integer.",
-    "VAULT_PROJECT_ID_REQUIRED": "projectId is required for scope=project."
+    "VAULT_PROJECT_ID_REQUIRED": "projectId is required for scope=project.",
+    "route": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred while loading this page.",
+      "halted": "The page hit a problem and was stopped safely.",
+      "detailsHidden": "Technical details are not shown. Try again or go back to the home page.",
+      "report": "Report this error"
+    },
+    "boundary": {
+      "reportWithContext": "Report this error with full context"
+    }
   },
   "transformationScenarios": {
     "banner": {
@@ -596,6 +606,9 @@
     "skipToContent": "Skip to main content",
     "teresa": {
       "label": "Teresa"
+    },
+    "split": {
+      "assistantSubtitle": "Your transformation assistant"
     }
   },
   "landing": {
@@ -2495,7 +2508,9 @@
     "publish": "Publish",
     "loadingSlow": "This is taking longer than usual…",
     "loadingTools": "Loading tools…",
-    "reasonRequired": "Reason (required)"
+    "reasonRequired": "Reason (required)",
+    "homePage": "Home page",
+    "learnMore": "Learn more"
   },
   "superadmin": {
     "confirm": {
@@ -23588,6 +23603,10 @@
         "fixPayment": "Fix Payment Method",
         "reactivate": "Reactivate Subscription"
       }
+    },
+    "forbidden": {
+      "title": "No permission",
+      "dismiss": "Dismiss this message"
     }
   },
   "legal": {
@@ -31065,6 +31084,27 @@
     "applyProposedSchedule": "Apply proposed schedule",
     "actions": {
       "reject": "Reject"
+    },
+    "draftReview": {
+      "confidence": "{{percent}}% confidence",
+      "expiringSoon": "Expiring soon",
+      "original": "Original:",
+      "aiSuggestion": "AI suggestion:",
+      "loading": "Loading suggestions…",
+      "emptyTitle": "No suggestions to review",
+      "emptyBody": "New AI suggestions will appear here"
+    },
+    "feedback": {
+      "thanks": "Thanks for the feedback!",
+      "whatToImprove": "What could be better?",
+      "placeholder": "Describe the problem or suggestion…",
+      "addComment": "Add a comment"
+    },
+    "diff": {
+      "original": "Original"
+    },
+    "maxMode": {
+      "recommendedFor": "Recommended for: strategic planning, complex analysis, critical decisions"
     }
   },
   "comingSoon": "Coming soon",
@@ -45855,5 +45895,49 @@
         }
       }
     }
+  },
+  "emptyStates": {
+    "team": {
+      "title": "Working on your own?",
+      "body": "Some decisions need more than one perspective. Invite your teammates so they can add theirs.",
+      "invite": "Invite to the team",
+      "trustNote": "Everyone gets their own invitation with their own access"
+    },
+    "axis": {
+      "title": "No decision axes yet",
+      "description": "A decision axis is a space for structuring one strategic topic. Start from an empty axis or pick a ready-made template."
+    },
+    "orPickTemplate": "Or pick a template"
+  },
+  "charts": {
+    "comparison": {
+      "pickAnalyses": "Choose analyses to compare"
+    },
+    "radar": {
+      "average": "Average:"
+    }
+  },
+  "import": {
+    "clickToChoose": "click to choose"
+  },
+  "modelSelector": {
+    "checkingConnection": "Checking connection…"
+  },
+  "canonicalWork": {
+    "noRoleAssigned": "No user role assigned. Governance actions are blocked.",
+    "level": {
+      "warning": "Warning",
+      "critical": "Critical"
+    }
+  },
+  "tasks": {
+    "milestoneImpact": "Impact on milestones"
+  },
+  "v4ComingSoon": {
+    "submitted": "Request sent"
+  },
+  "artifactMenu3": {
+    "more": "More tools",
+    "ariaLabel": "Contextual tools"
   }
 }

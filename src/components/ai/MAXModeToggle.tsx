@@ -11,6 +11,7 @@
 
 import { AlertTriangle, Brain, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MAXModeToggleProps {
   enabled: boolean;
@@ -29,6 +30,7 @@ export function MAXModeToggle({
   showWarning = true,
   compact = false,
 }: MAXModeToggleProps) {
+  const { t } = useTranslation();
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleToggle = () => {
@@ -131,7 +133,10 @@ export function MAXModeToggle({
           <div className="text-xs text-amber-700 dark:text-amber-300">
             <p className="font-medium">MAX Mode zużywa {tokenMultiplier}x więcej tokenów</p>
             <p className="mt-0.5 text-amber-600 dark:text-amber-400">
-              Zalecane dla: planowania strategicznego, złożonych analiz, decyzji krytycznych
+              {t(
+                'ai.maxMode.recommendedFor',
+                'Recommended for: strategic planning, complex analysis, critical decisions'
+              )}
             </p>
           </div>
         </div>

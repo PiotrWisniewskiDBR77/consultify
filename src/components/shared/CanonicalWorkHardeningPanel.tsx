@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   readExecutionCase,
@@ -81,6 +82,7 @@ const actionLabel = (value: TaskAction | DecisionAction) =>
   })[value];
 
 export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, onReadback }) => {
+  const { t } = useTranslation();
   const isTask = Boolean(item.taskId);
   const id = item.taskId ?? item.decisionId ?? '';
   const terminal = (isTask ? taskTerminal : decisionTerminal).includes(item.status);
@@ -183,7 +185,10 @@ export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, on
       {item.reopenReason && <div>Powód ponownego otwarcia: {item.reopenReason}</div>}
       {!actorId && (
         <div role="alert" className="text-c-warning">
-          Brak przypisania roli użytkownika. Akcje zarządcze są zablokowane.
+          {t(
+            'canonicalWork.noRoleAssigned',
+            'No user role assigned. Governance actions are blocked.'
+          )}
         </div>
       )}
       <div className="rounded-md border border-c-border p-2 text-xs text-c-text-muted">
@@ -221,8 +226,8 @@ export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, on
             value={level}
             onChange={(event) => setLevel(event.target.value as 'WARNING' | 'CRITICAL')}
           >
-            <option value="WARNING">Ostrzeżenie</option>
-            <option value="CRITICAL">Krytyczny</option>
+            <option value="WARNING">{t('canonicalWork.level.warning', 'Warning')}</option>
+            <option value="CRITICAL">{t('canonicalWork.level.critical', 'Critical')}</option>
           </select>
         </label>
       )}
