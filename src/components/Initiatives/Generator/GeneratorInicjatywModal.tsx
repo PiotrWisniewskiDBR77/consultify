@@ -16,6 +16,7 @@
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
@@ -66,6 +67,7 @@ export function GeneratorInicjatywModal({
   wstepnyWybor,
   onCompleted,
 }: GeneratorInicjatywModalProps) {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<'config' | 'running' | 'done'>('config');
   const [tryb, setTryb] = useState<string>('');
   const [glowny, setGlowny] = useState<string[]>([]);
@@ -346,7 +348,7 @@ export function GeneratorInicjatywModal({
         className="max-h-44 overflow-auto rounded-xl border border-c-border bg-c-surface divide-y divide-c-border-subtle"
       >
         {opcje.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-c-text-muted">Brak pozycji do wyboru.</div>
+          <div className="px-4 py-3 text-sm text-c-text-muted">{t('initiatives.generatorModal.noOptions', 'No items to choose from.')}</div>
         ) : (
           opcje.map((o) => (
             <label
@@ -392,7 +394,7 @@ export function GeneratorInicjatywModal({
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => !disableClose && onClose()}
-        aria-label="Zamknij"
+        aria-label={t('common.close', 'Close')}
       />
 
       <div
@@ -409,13 +411,13 @@ export function GeneratorInicjatywModal({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-c-text">Generuj inicjatywy</h2>
+              <h2 className="text-lg font-semibold text-c-text">{t('initiatives.generatorModal.title', 'Generate initiatives')}</h2>
               <p className="text-sm text-c-text-muted">
                 {phase === 'config'
-                  ? 'Wybierz źródło i uruchom generator'
+                  ? t('initiatives.generatorModal.subtitle.config', 'Choose a source and run the generator')
                   : phase === 'running'
-                    ? 'Trwa generowanie…'
-                    : 'Gotowe'}
+                    ? t('initiatives.generatorModal.subtitle.running', 'Generating…')
+                    : t('initiatives.generatorModal.subtitle.done', 'Done')}
               </p>
             </div>
           </div>
@@ -423,7 +425,7 @@ export function GeneratorInicjatywModal({
             type="button"
             onClick={onClose}
             disabled={disableClose}
-            aria-label="Zamknij"
+            aria-label={t('common.close', 'Close')}
             className="p-2 rounded-full hover:bg-c-surface-hover text-c-text-muted transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X className="w-5 h-5" />
@@ -436,7 +438,7 @@ export function GeneratorInicjatywModal({
             <div className="space-y-5">
               {/* 1. Źródło danych */}
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-c-text">1. Źródło danych</label>
+                <label className="text-sm font-semibold text-c-text">1. {t('initiatives.generatorModal.step1.label', 'Data source')}</label>
                 <div
                   className={cn(
                     'grid gap-3',
@@ -475,7 +477,7 @@ export function GeneratorInicjatywModal({
                 {ladujeGlowne ? (
                   <div className="flex items-center gap-2 h-11 px-4 text-sm text-c-text-muted">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Ładowanie…
+                    {t('common.loading', 'Loading…')}
                   </div>
                 ) : (
                   listaWyboru(
@@ -496,12 +498,12 @@ export function GeneratorInicjatywModal({
                   </label>
                   {!glowny[0] ? (
                     <div className="h-11 px-4 flex items-center text-sm text-c-text-muted">
-                      {adapter.krokWtorny.tekstBezPoprzednika || 'Najpierw wybierz źródło.'}
+                      {adapter.krokWtorny.tekstBezPoprzednika || t('initiatives.generatorModal.step2.chooseSourceFirst', 'First choose a source.')}
                     </div>
                   ) : ladujeWtorne ? (
                     <div className="flex items-center gap-2 h-11 px-4 text-sm text-c-text-muted">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Ładowanie…
+                      {t('common.loading', 'Loading…')}
                     </div>
                   ) : (
                     listaWyboru(
@@ -519,12 +521,12 @@ export function GeneratorInicjatywModal({
               {adapter.wymagaTemplate ? (
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-c-text">
-                    {numerTemplate} Wybierz template inicjatywy
+                    {numerTemplate} {t('initiatives.generatorModal.step.chooseTemplate', 'Choose an initiative template')}
                   </label>
                   {ladujeTemplates ? (
                     <div className="flex items-center gap-2 h-11 px-4 text-sm text-c-text-muted">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Ładowanie template’ów…
+                      {t('initiatives.generatorModal.step.loadingTemplates', 'Loading templates…')}
                     </div>
                   ) : (
                     <select
@@ -533,7 +535,7 @@ export function GeneratorInicjatywModal({
                       onChange={(e) => setTemplateId(e.target.value)}
                       className={POLE}
                     >
-                      <option value="">— wybierz template —</option>
+                      <option value="">{t('initiatives.generatorModal.step.selectTemplatePlaceholder', '— select a template —')}</option>
                       {templates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -556,7 +558,7 @@ export function GeneratorInicjatywModal({
                 {adapter.wymagaMetodologii ? (
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-c-text">
-                      {numerKonfig} Metodologia
+                      {numerKonfig} {t('initiatives.generatorModal.methodology.label', 'Methodology')}
                     </label>
                     <select
                       data-testid="generator-metodologia"
@@ -574,11 +576,11 @@ export function GeneratorInicjatywModal({
                 ) : null}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-c-text">Liczba inicjatyw</label>
+                  <label className="text-sm font-semibold text-c-text">{t('initiatives.generatorModal.count.label', 'Number of initiatives')}</label>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      aria-label="Zmniejsz"
+                      aria-label={t('initiatives.generatorModal.count.decrease', 'Decrease')}
                       onClick={() => setLiczba((p) => Math.max(1, p - 5))}
                       className="h-11 w-11 rounded-xl border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
@@ -594,7 +596,7 @@ export function GeneratorInicjatywModal({
                     />
                     <button
                       type="button"
-                      aria-label="Zwiększ"
+                      aria-label={t('initiatives.generatorModal.count.increase', 'Increase')}
                       onClick={() => setLiczba((p) => Math.min(adapter.maxLiczba, p + 5))}
                       className="h-11 w-11 rounded-xl border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
@@ -615,7 +617,7 @@ export function GeneratorInicjatywModal({
                 ) : (
                   <ChevronDown className="w-4 h-4" />
                 )}
-                Opcje zaawansowane
+                {t('initiatives.generatorModal.advanced.toggle', 'Advanced options')}
               </button>
 
               {showAdvanced && (
@@ -627,18 +629,18 @@ export function GeneratorInicjatywModal({
                       onChange={(e) => setIncludeChatContext(e.target.checked)}
                       className="w-4 h-4 rounded border-c-border focus:ring-c-focus"
                     />
-                    <span className="text-sm text-c-text-secondary">Uwzględnij kontekst czatu</span>
+                    <span className="text-sm text-c-text-secondary">{t('initiatives.generatorModal.advanced.includeChatContext', 'Include chat context')}</span>
                   </label>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-c-text">
-                      Notatka konsultanta (opcjonalnie)
+                      {t('initiatives.generatorModal.advanced.consultantNote', 'Consultant note (optional)')}
                     </label>
                     <textarea
                       value={consultantBrief}
                       onChange={(e) => setConsultantBrief(e.target.value)}
                       rows={3}
-                      placeholder="Ograniczenia, priorytety klienta, oczekiwane rezultaty…"
+                      placeholder={t('initiatives.generatorModal.advanced.consultantNotePlaceholder', 'Constraints, client priorities, expected outcomes…')}
                       className="w-full px-3 py-2 rounded-xl border text-sm border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                     />
                   </div>
@@ -652,21 +654,21 @@ export function GeneratorInicjatywModal({
                 <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-navy-900 dark:border-slate-100 border-t-transparent animate-spin" />
                 <Sparkles size={24} className="absolute inset-0 m-auto text-c-text-muted" />
               </div>
-              <div className="mt-4 text-base font-semibold text-c-text">Generowanie inicjatyw…</div>
+              <div className="mt-4 text-base font-semibold text-c-text">{t('initiatives.generatorModal.running.title', 'Generating initiatives…')}</div>
               <div className="mt-1 text-sm text-c-text-muted">
-                Możesz zamknąć okno — proces kontynuuje w tle.
+                {t('initiatives.generatorModal.running.canCloseHint', 'You can close this window — the process continues in the background.')}
               </div>
 
               {postep && (
                 <div className="mt-6 w-full max-w-xs text-left space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-c-text-secondary">Wygenerowano</span>
+                    <span className="text-c-text-secondary">{t('initiatives.generatorModal.running.generated', 'Generated')}</span>
                     <span className="font-medium text-c-text">
                       {postep.generatedCount}/{postep.requestedCount}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-c-text-secondary">Partie</span>
+                    <span className="text-c-text-secondary">{t('initiatives.generatorModal.running.batches', 'Batches')}</span>
                     <span className="font-medium text-c-text">
                       {postep.batchesSucceeded + postep.batchesFailed}/{postep.batchesPlanned}
                     </span>
@@ -679,9 +681,9 @@ export function GeneratorInicjatywModal({
               <div className="flex items-start gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <div className="text-sm font-semibold text-c-text">Generowanie zakończone</div>
+                  <div className="text-sm font-semibold text-c-text">{t('initiatives.generatorModal.done.title', 'Generation complete')}</div>
                   <div className="text-sm text-c-text-secondary">
-                    Drafty inicjatyw są zapisane i powiązane ze źródłem.
+                    {t('initiatives.generatorModal.done.subtitle', 'Initiative drafts are saved and linked to the source.')}
                   </div>
                 </div>
               </div>
@@ -693,7 +695,7 @@ export function GeneratorInicjatywModal({
               {wynik.length > 0 && (
                 <div className="rounded-xl border border-c-border-subtle overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-c-border-subtle bg-c-surface-raised text-sm font-medium text-c-text">
-                    Podgląd ({wynik.length})
+                    {t('initiatives.generatorModal.done.previewCount', { defaultValue: 'Preview ({{count}})', count: wynik.length })}
                   </div>
                   <div className="max-h-48 overflow-auto divide-y divide-c-border-subtle">
                     {wynik.slice(0, 10).map((it) => (
@@ -704,7 +706,7 @@ export function GeneratorInicjatywModal({
                     ))}
                     {wynik.length > 10 && (
                       <div className="px-4 py-2.5 text-xs text-c-text-muted">
-                        …i {wynik.length - 10} więcej
+                        {t('initiatives.generatorModal.done.andMore', { defaultValue: '…and {{count}} more', count: wynik.length - 10 })}
                       </div>
                     )}
                   </div>
@@ -719,7 +721,7 @@ export function GeneratorInicjatywModal({
           {phase === 'config' ? (
             <>
               <button type="button" onClick={onClose} disabled={disableClose} className={PRZYCISK_WTORNY}>
-                Anuluj
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -731,19 +733,19 @@ export function GeneratorInicjatywModal({
                 {starting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Uruchamiam…
+                    {t('initiatives.generatorModal.starting', 'Starting…')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    Generuj inicjatywy
+                    {t('initiatives.generatorModal.title', 'Generate initiatives')}
                   </>
                 )}
               </button>
             </>
           ) : phase === 'running' ? (
             <button type="button" onClick={onClose} className={PRZYCISK_WTORNY}>
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           ) : (
             <>
@@ -754,10 +756,10 @@ export function GeneratorInicjatywModal({
                     setSubmitting(true);
                     try {
                       const updated = await adapter.przeslijDoPrzegladu!(uchwyt);
-                      toast.success(`Przesłano ${updated} inicjatyw do przeglądu`);
+                      toast.success(t('initiatives.generatorModal.submitted', { defaultValue: 'Submitted {{count}} initiatives for review', count: updated }));
                       onCompleted?.();
                     } catch (e: any) {
-                      toast.error(e?.message || 'Nie udało się przesłać');
+                      toast.error(e?.message || t('initiatives.generatorModal.submitFailed', 'Failed to submit'));
                     } finally {
                       setSubmitting(false);
                     }
@@ -770,7 +772,7 @@ export function GeneratorInicjatywModal({
                   ) : (
                     <ArrowRight className="w-4 h-4" />
                   )}
-                  Prześlij do przeglądu
+                  {t('initiatives.generatorModal.submitForReview', 'Submit for review')}
                 </button>
               ) : null}
               <button
@@ -781,7 +783,7 @@ export function GeneratorInicjatywModal({
                 }}
                 className={PRZYCISK_GLOWNY}
               >
-                Zamknij
+                {t('common.close', 'Close')}
               </button>
             </>
           )}

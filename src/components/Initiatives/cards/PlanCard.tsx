@@ -74,24 +74,36 @@ export interface PlanCardWindowPatch {
   latest?: string | null;
 }
 
-// [ODMROZENIE 05_INITIATIVES DEC-453] STOP: nie przełączono na `localeListy()` — moduł-poziom
-// helper czyta z paczki `i18next` wprost, a test tej karty mockuje TYLKO `@/i18n` i hook
-// `react-i18next` (nie realny pakiet `i18next`), więc `localeListy()` widzi w teście domyślny
-// (nie-PL) język i psuje separator dziesiętny („5.5" zamiast „5,5"). Poprawny fix wymaga
-// przekazania `i18n.language` z hooka komponentu do tych funkcji (refaktor podpisu, poza
-// zakresem samej naprawy języka) — zgłoszone jako dług J-wspólne, patrz meldunek paczki J6.
-const formatPolishDate = (value: string | null) => {
-  if (!value) return 'Nieznane';
+// [ODMROZENIE 05_INITIATIVES DEC-453] J6b: helpery daty/FTE dostają `locale` jawnie
+// z hooka komponentu (`useTranslation().i18n.language`), zamiast czytać moduł-poziomowo
+// z pakietu `i18next` (`localeListy()`) — ten sam powód co w komentarzu STOP wyżej: test
+// tej karty mockuje TYLKO `@/i18n` i hook `react-i18next`, nie realny `i18next`, więc
+// czytanie z singletona w teście widziało domyślny (nie-PL) język i psuło separator
+// dziesiętny („5.5" zamiast „5,5"). Przekazanie `locale` jako argumentu usuwa tę zależność.
+/** Kod języka konta (`i18n.language`, np. „pl"/„en") → tag BCP-47 dla `Intl`. */
+const planCardLocaleTag = (language: string | null | undefined): string =>
+  String(language || '')
+    .toLowerCase()
+    .startsWith('pl')
+    ? 'pl-PL'
+    : 'en-GB';
+const formatPolishDate = (value: string | null, locale: string) => {
+  const unknown = locale.startsWith('pl') ? 'Nieznane' : 'Unknown';
+  if (!value) return unknown;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Nieznane' : new Intl.DateTimeFormat('pl-PL').format(date);
+  return Number.isNaN(date.getTime()) ? unknown : new Intl.DateTimeFormat(locale).format(date);
 };
-/** „Nieznane" zamiast zera — brak liczby nie jest twierdzeniem o zerze. */
-const fteText = (value: number | null) =>
+/** „Nieznane"/„Unknown" zamiast zera — brak liczby nie jest twierdzeniem o zerze. */
+const fteText = (value: number | null, locale: string) =>
   value === null
-    ? 'Nieznane'
-    : new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 }).format(value);
-const windowUnitLabel = (value: string) =>
-  ({ WEEK: 'Tydzień', MONTH: 'Miesiąc', QUARTER: 'Kwartał' })[value] ?? value;
+    ? locale.startsWith('pl')
+      ? 'Nieznane'
+      : 'Unknown'
+    : new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
+const windowUnitLabel = (value: string, locale: string) =>
+  (locale.startsWith('pl')
+    ? { WEEK: 'Tydzień', MONTH: 'Miesiąc', QUARTER: 'Kwartał' }
+    : { WEEK: 'Week', MONTH: 'Month', QUARTER: 'Quarter' })[value] ?? value;
 /** ISO → wartość `<input type="date">`; pusty napis dla braku daty. */
 const toDateInput = (value: string | null) => (value ? value.slice(0, 10) : '');
 const toDateIso = (value: string) => (value ? `${value}T00:00:00.000Z` : null);
@@ -171,7 +183,8 @@ export function PlanCard({
   onOpenCapacityAnalysis?: () => void;
   onNewCapacityAnalysis?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const planCardLocale = planCardLocaleTag(i18n.language);
   const [section, setSection] = useState('horizon');
   const [generator, setGenerator] = useState(false);
   const [readMode, setReadMode] = useState(false);
@@ -311,7 +324,7 @@ export function PlanCard({
               className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border-subtle py-2 last:border-b-0"
             >
               <span className="min-w-0">
-                {nameOf(window.initiativeId)} · {formatPolishDate(window.target)}
+                {nameOf(window.initiativeId)} · {formatPolishDate(window.target, planCardLocale)}
               </span>
               {editable && onRemoveInitiative && (
                 <button
@@ -428,8 +441,8 @@ export function PlanCard({
                 </div>
               ) : (
                 <p>
-                  {formatPolishDate(window.earliest)} → {formatPolishDate(window.target)} →{' '}
-                  {formatPolishDate(window.latest)}
+                  {formatPolishDate(window.earliest, planCardLocale)} → {formatPolishDate(window.target, planCardLocale)} →{' '}
+                  {formatPolishDate(window.latest, planCardLocale)}
                 </p>
               )}
               {rowError[window.initiativeId] && (
@@ -441,8 +454,8 @@ export function PlanCard({
                       })
                     : t('initiatives.planCard.errorHorizon', {
                         defaultValue: 'Data musi mieścić się w horyzoncie planu ({{from}} – {{to}}).',
-                        from: formatPolishDate(horizon?.start ?? null),
-                        to: formatPolishDate(horizon?.end ?? null),
+                        from: formatPolishDate(horizon?.start ?? null, planCardLocale),
+                        to: formatPolishDate(horizon?.end ?? null, planCardLocale),
                       })}
                 </p>
               )}
@@ -610,12 +623,12 @@ export function PlanCard({
     horizon: (
       <div className={box}>
         <p>
-          {windowUnitLabel(scenario.windowUnit)} · {scenario.timezone}
+          {windowUnitLabel(scenario.windowUnit, planCardLocale)} · {scenario.timezone}
         </p>
         <ul>
           {scenario.periods.map((period) => (
             <li key={period.periodId}>
-              {formatPolishDate(period.start)} – {formatPolishDate(period.end)}
+              {formatPolishDate(period.start, planCardLocale)} – {formatPolishDate(period.end, planCardLocale)}
             </li>
           ))}
         </ul>
@@ -686,13 +699,13 @@ export function PlanCard({
                   <tr key={row.key} className="border-b border-c-border-subtle">
                     <td className="px-3 py-2">{row.periodId}</td>
                     <td className="px-3 py-2">{row.roleLabel}</td>
-                    <td className="px-3 py-2">{fteText(row.demand)}</td>
-                    <td className="px-3 py-2">{fteText(row.supply)}</td>
+                    <td className="px-3 py-2">{fteText(row.demand, planCardLocale)}</td>
+                    <td className="px-3 py-2">{fteText(row.supply, planCardLocale)}</td>
                     <td className="px-3 py-2">
                       {row.gap !== null && row.gap < 0 ? (
-                        <span className="font-medium text-c-danger">{fteText(row.gap)}</span>
+                        <span className="font-medium text-c-danger">{fteText(row.gap, planCardLocale)}</span>
                       ) : (
-                        fteText(row.gap)
+                        fteText(row.gap, planCardLocale)
                       )}
                     </td>
                   </tr>
@@ -737,8 +750,8 @@ export function PlanCard({
       <div className={box}>
         <p>
           {scenario.publishedAt
-            ? `Opublikowano ${formatPolishDate(scenario.publishedAt)}`
-            : 'Plan pozostaje szkicem.'}
+            ? `${t('initiatives.planCard.publishedOn', 'Published')} ${formatPolishDate(scenario.publishedAt, planCardLocale)}`
+            : t('initiatives.planCard.remainsDraft', 'The plan remains a draft.')}
         </p>
         {savedLabel && (
           <p className="text-sm text-c-text-muted" role="status">
@@ -772,7 +785,7 @@ export function PlanCard({
           className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           onClick={onBack}
         >
-          Wróć do listy
+          {t('initiatives.planCard.backToList', 'Back to list')}
         </button>
       ),
       actionIds: ['back'],
@@ -781,23 +794,23 @@ export function PlanCard({
       label: 'Właściwości',
       children: (
         <ArtifactPropertiesTable
-          propertyLabel="Właściwość"
-          valueLabel="Wartość"
+          propertyLabel={t('initiatives.planCard.properties.propertyLabel', 'Property')}
+          valueLabel={t('initiatives.planCard.properties.valueLabel', 'Value')}
           rows={[
             {
               id: 'status',
-              label: 'Status',
+              label: t('initiatives.planCard.properties.status', 'Status'),
               value:
                 scenario.status === 'DRAFT'
-                  ? 'Szkic'
+                  ? t('initiatives.planScenario.status.draft')
                   : scenario.status === 'PUBLISHED'
-                    ? 'Opublikowany'
-                    : 'Zastąpiony',
+                    ? t('initiatives.planScenario.status.published')
+                    : t('initiatives.planScenario.status.superseded'),
             },
-            { id: 'version', label: 'Wersja', value: scenario.scenarioVersion, mono: true },
+            { id: 'version', label: t('initiatives.planCard.properties.version', 'Version'), value: scenario.scenarioVersion, mono: true },
             {
               id: 'portfolio',
-              label: 'Wersja portfela źródłowego',
+              label: t('initiatives.planCard.properties.portfolioVersion', 'Source portfolio version'),
               value: scenario.portfolioScenarioVersion,
               mono: true,
             },
@@ -805,7 +818,7 @@ export function PlanCard({
         />
       ),
     },
-    relations: { label: 'Powiązania', children: <p className="text-sm">Portfel źródłowy</p> },
+    relations: { label: 'Powiązania', children: <p className="text-sm">{t('initiatives.planCard.sourcePortfolio', 'Source portfolio')}</p> },
     evidence: scenario.assumptions.length
       ? {
           label: 'Źródła i założenia',
@@ -819,7 +832,7 @@ export function PlanCard({
         }
       : { pominieta: true as const, reason: 'Brak zapisanych założeń.' },
     comments: { pominieta: true as const, reason: 'Plan nie ma osobnego wątku komentarzy.' },
-    history: { label: 'Historia', children: <div className="text-sm">Wersja {scenario.scenarioVersion}</div> },
+    history: { label: 'Historia', children: <div className="text-sm">{t('initiatives.planCard.properties.version', 'Version')} {scenario.scenarioVersion}</div> },
   };
   return (
     <StandardArtifactShell

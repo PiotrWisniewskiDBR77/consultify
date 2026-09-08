@@ -7,6 +7,7 @@
 
 import { AlertTriangle, Info, MinusCircle, ThumbsUp, TrendingUp, Zap } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   getAxisColor,
@@ -48,6 +49,14 @@ const QUADRANTS = {
   },
 };
 
+/** Klucze i18n odpowiadające etykietom `QUADRANTS` (EN default = wartość powyżej). */
+const QUADRANT_LABEL_KEYS: Record<keyof typeof QUADRANTS, string> = {
+  quickWins: 'initiatives.portfolioMatrix.quadrant.quickWins',
+  majorInvest: 'initiatives.portfolioMatrix.quadrant.majorInvest',
+  niceToHave: 'initiatives.portfolioMatrix.quadrant.niceToHave',
+  avoid: 'initiatives.portfolioMatrix.quadrant.avoid',
+};
+
 // ============================================
 // BUBBLE COMPONENT
 // ============================================
@@ -61,6 +70,7 @@ interface BubbleProps {
 }
 
 const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const priorityColors = getPriorityColors(initiative.priority);
   const axisColor = getAxisColor(initiative.axis);
@@ -126,10 +136,10 @@ const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
             {initiative.name.length > 22 ? initiative.name.slice(0, 22) + '...' : initiative.name}
           </text>
           <text x={10} y={8} className="fill-c-text-secondary text-[10px]">
-            Value: {initiative.valueScore} | Risk: {initiative.riskScore}
+            {t('initiatives.portfolioMatrix.tooltip.value', 'Value')}: {initiative.valueScore} | {t('initiatives.portfolioMatrix.tooltip.risk', 'Risk')}: {initiative.riskScore}
           </text>
           <text x={10} y={22} className="fill-c-text-muted text-[10px]">
-            Budget: ${(initiative.budget / 1000).toFixed(0)}K
+            {t('initiatives.portfolioMatrix.tooltip.budget', 'Budget')}: ${(initiative.budget / 1000).toFixed(0)}K
           </text>
         </g>
       )}
@@ -145,6 +155,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
   initiatives,
   onInitiativeClick,
 }) => {
+  const { t } = useTranslation();
   const [selectedQuadrant, setSelectedQuadrant] = useState<string | null>(null);
 
   // Calculate bubble positions and sizes
@@ -209,7 +220,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
               : 'text-c-text-muted hover:bg-c-surface-raised'
           }`}
         >
-          All ({initiatives.length})
+          {t('common.all', 'All')} ({initiatives.length})
         </button>
 
         {Object.entries(QUADRANTS).map(([key, q]) => (
@@ -223,7 +234,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
             }`}
           >
             <q.icon size={14} />
-            {q.label} ({quadrantCounts[key]})
+            {t(QUADRANT_LABEL_KEYS[key as keyof typeof QUADRANTS], q.label)} ({quadrantCounts[key]})
           </button>
         ))}
       </div>
@@ -239,7 +250,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
             <div className="p-3 flex items-center gap-2">
               <Zap size={16} className={MATRIX_QUADRANT_COLORS.quickWins.label} />
               <span className={`text-sm font-medium ${MATRIX_QUADRANT_COLORS.quickWins.label}`}>
-                Quick Wins
+                {t(QUADRANT_LABEL_KEYS.quickWins, QUADRANTS.quickWins.label)}
               </span>
             </div>
           </div>
@@ -250,7 +261,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           >
             <div className="p-3 flex items-center gap-2 justify-end">
               <span className={`text-sm font-medium ${MATRIX_QUADRANT_COLORS.majorInvest.label}`}>
-                Major Investment
+                {t(QUADRANT_LABEL_KEYS.majorInvest, QUADRANTS.majorInvest.label)}
               </span>
               <TrendingUp size={16} className={MATRIX_QUADRANT_COLORS.majorInvest.label} />
             </div>
@@ -264,7 +275,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
               <div className="flex items-center gap-2">
                 <ThumbsUp size={16} className={MATRIX_QUADRANT_COLORS.niceToHave.label} />
                 <span className={`text-sm font-medium ${MATRIX_QUADRANT_COLORS.niceToHave.label}`}>
-                  Nice to Have
+                  {t(QUADRANT_LABEL_KEYS.niceToHave, QUADRANTS.niceToHave.label)}
                 </span>
               </div>
             </div>
@@ -277,7 +288,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
             <div className="h-full flex items-end justify-end p-3">
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium ${MATRIX_QUADRANT_COLORS.avoid.label}`}>
-                  Avoid/Reduce
+                  {t(QUADRANT_LABEL_KEYS.avoid, QUADRANTS.avoid.label)}
                 </span>
                 <MinusCircle size={16} className={MATRIX_QUADRANT_COLORS.avoid.label} />
               </div>
@@ -287,19 +298,19 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
 
         {/* Axis labels */}
         <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex items-center gap-1 text-xs text-c-text-muted">
-          <span>Low Risk</span>
+          <span>{t('initiatives.portfolioMatrix.axis.lowRisk', 'Low Risk')}</span>
           <div className="w-20 h-px bg-c-border-strong" />
           <AlertTriangle size={12} />
           <div className="w-20 h-px bg-c-border-strong" />
-          <span>High Risk</span>
+          <span>{t('initiatives.portfolioMatrix.axis.highRisk', 'High Risk')}</span>
         </div>
 
         <div className="absolute right-2 top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-1 text-xs text-c-text-muted origin-center">
-          <span>Low Value</span>
+          <span>{t('initiatives.portfolioMatrix.axis.lowValue', 'Low Value')}</span>
           <div className="w-20 h-px bg-c-border-strong" />
           <TrendingUp size={12} />
           <div className="w-20 h-px bg-c-border-strong" />
-          <span>High Value</span>
+          <span>{t('initiatives.portfolioMatrix.axis.highValue', 'High Value')}</span>
         </div>
 
         {/* SVG for bubbles */}
@@ -325,7 +336,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-c-text-muted">
               <Info className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No initiatives in this quadrant</p>
+              <p className="text-sm">{t('initiatives.portfolioMatrix.empty', 'No initiatives in this quadrant')}</p>
             </div>
           </div>
         )}
@@ -335,23 +346,23 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
       <div className="shrink-0 flex items-center justify-center gap-6 pt-4 text-xs text-c-text-muted">
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-full bg-c-focus-solid" />
-          <span>Initiative (size = budget)</span>
+          <span>{t('initiatives.portfolioMatrix.legend.initiative', 'Initiative (size = budget)')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-c-danger" />
-          <span>Critical</span>
+          <span>{t('initiatives.portfolioMatrix.legend.critical', 'Critical')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-c-warning" />
-          <span>High</span>
+          <span>{t('initiatives.portfolioMatrix.legend.high', 'High')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-c-info" />
-          <span>Medium</span>
+          <span>{t('initiatives.portfolioMatrix.legend.medium', 'Medium')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-c-success" />
-          <span>Low</span>
+          <span>{t('initiatives.portfolioMatrix.legend.low', 'Low')}</span>
         </div>
       </div>
     </div>

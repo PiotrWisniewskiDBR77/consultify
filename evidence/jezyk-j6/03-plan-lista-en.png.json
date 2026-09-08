@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-plan-lista-en",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3203/initiatives?tab=plan",
+  "czas": "2026-09-08T09:41:19.014Z",
+  "podejrzanePolskieLiniiWEN": [
+    "Piotr Wiśniewski"
+  ],
+  "liczbaPodejrzanychLinii": 1
+}

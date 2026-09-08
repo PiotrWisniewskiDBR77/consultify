@@ -1,5 +1,6 @@
 import { Check, Sliders, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -16,6 +17,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
   onApply,
   initiatives,
 }) => {
+  const { t } = useTranslation();
   const [options, setOptions] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -54,10 +56,10 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <Sliders size={20} className="text-blue-500" />
-              Rebalance Roadmap
+              {t('initiatives.rebalanceModal.title', 'Rebalance Roadmap')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              AI has analyzed your roadmap and proposes these adjustments.
+              {t('initiatives.rebalanceModal.subtitle', 'AI has analyzed your roadmap and proposes these adjustments.')}
             </p>
           </div>
           <button
@@ -74,7 +76,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">
-                Analyzing workload distribution...
+                {t('initiatives.rebalanceModal.analyzing', 'Analyzing workload distribution...')}
               </p>
             </div>
           ) : (
@@ -104,13 +106,17 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
                   {/* Mini Visualization Placeholder */}
                   <div className="space-y-1 mt-auto pt-4 border-t border-slate-200 dark:border-navy-700">
                     <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-500 font-semibold uppercase">
-                      <span>Load Variance</span>
+                      <span>{t('initiatives.rebalanceModal.loadVariance', 'Load Variance')}</span>
                       <span
                         className={
                           idx === 0 ? 'text-green-500' : 'text-slate-500 dark:text-slate-400'
                         }
                       >
-                        {idx === 0 ? 'Low' : idx === 1 ? 'Med' : 'High'}
+                        {idx === 0
+                          ? t('initiatives.rebalanceModal.variance.low', 'Low')
+                          : idx === 1
+                            ? t('initiatives.rebalanceModal.variance.medium', 'Med')
+                            : t('initiatives.rebalanceModal.variance.high', 'High')}
                       </span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
@@ -132,14 +138,14 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
             onClick={onClose}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-navy-900 border border-transparent hover:bg-slate-200 dark:hover:bg-navy-700/50 dark:hover:text-white transition-colors"
           >
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading || selectedIdx === null}
             className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            Apply New Schedule
+            {t('initiatives.rebalanceModal.applyNewSchedule', 'Apply New Schedule')}
           </button>
         </div>
       </div>

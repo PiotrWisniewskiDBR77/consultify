@@ -310,7 +310,7 @@ export const CapacityScenarioSurface: React.FC<
     const formatRange = (range: Range) =>
       range.low == null || range.base == null || range.high == null
         ? range.knowledgeState
-        : `${range.low}/${range.base}/${range.high} ${capacityUnitLabel(scenario.windowUnit, true)}`;
+        : `${range.low}/${range.base}/${range.high} ${capacityUnitLabel(scenario.windowUnit, i18n.language.startsWith('pl'))}`;
     // 98-rola-zespol-duplikat (2026-08-30): kolumna „Rola / zespół” powtarzała
     // co do znaku kolumnę „Opiekun” dla wierszy okresu — obie brały
     // `period.supply.ownerId` i obie szły przez `actorLabel()`. To są jednak dwie
@@ -1085,17 +1085,17 @@ export const CapacityScenarioSurface: React.FC<
       {showCreate && (
         <div className="mb-3 flex flex-wrap items-end gap-3 rounded border border-c-border p-3">
           <label className="text-xs">
-            Nazwa analizy
+            {t('initiatives.capacityAnalysis.createForm.nameLabel', 'Analysis name')}
             <input
               aria-label="Capacity analysis name"
               className="mt-1 block rounded border border-c-border bg-c-surface p-2"
               value={newAnalysisId}
               onChange={(event) => setNewAnalysisId(event.target.value)}
-              placeholder="np. Plan bazowy — obciążenie v1"
+              placeholder={t('initiatives.capacityAnalysis.createForm.namePlaceholder', 'e.g. Baseline plan — load v1')}
             />
           </label>
           <label className="text-xs">
-            Opublikowany plan źródłowy
+            {t('initiatives.capacityAnalysis.createForm.sourcePlanLabel', 'Published source plan')}
             <select
               aria-label="Capacity source plan"
               className="mt-1 block rounded border border-c-border bg-c-surface p-2"
@@ -1115,14 +1115,14 @@ export const CapacityScenarioSurface: React.FC<
             disabled={!newAnalysisId.trim() || !newPlanId || writeState === 'SAVING'}
             onClick={() => void createAnalysis()}
           >
-            Utwórz analizę
+            {t('initiatives.capacityAnalysis.createForm.create', 'Create analysis')}
           </button>
           <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>
-            Anuluj
+            {t('common.cancel', 'Cancel')}
           </button>
           {publishedPlans.length === 0 && (
             <p className="w-full text-xs text-c-warning">
-              Brak opublikowanego planu z potwierdzoną osią czasu. Najpierw opublikuj plan.
+              {t('initiatives.capacityAnalysis.createForm.noPublishedPlan', 'No published plan with a confirmed timeline. Publish a plan first.')}
             </p>
           )}
         </div>
@@ -1319,13 +1319,13 @@ export const CapacityScenarioSurface: React.FC<
             },
             {
               id: 'affectedInitiatives',
-              label: 'Dotknięte inicjatywy',
+              label: t('initiatives.capacityAdvisor.columns.affectedInitiatives', 'Affected initiatives'),
               sortable: true,
               render: (row) => renderKnowledgeToken(row.affectedInitiatives),
             },
             {
               id: 'freshness',
-              label: 'Aktualność założeń',
+              label: t('initiatives.capacityAdvisor.columns.freshness', 'Assumption freshness'),
               sortable: true,
               render: (row) =>
                 row.freshness === 'UNKNOWN'
@@ -1334,7 +1334,7 @@ export const CapacityScenarioSurface: React.FC<
             },
             {
               id: 'proposedResponse',
-              label: 'Proponowana reakcja',
+              label: t('initiatives.capacityAdvisor.columns.proposedResponse', 'Proposed response'),
               sortable: true,
               render: (row) => renderKnowledgeToken(row.proposedResponse),
             },
@@ -1385,10 +1385,10 @@ export const CapacityScenarioSurface: React.FC<
         >
           <div className="flex flex-wrap justify-between gap-3">
             <div>
-              <h3 className="font-semibold">Narzędzia obciążenia</h3>
+              <h3 className="font-semibold">{t('initiatives.capacityAdvisor.workbench.title', 'Load tools')}</h3>
               <p className="text-xs">
-                Plan źródłowy · v{scenario.planScenarioVersion} ·{' '}
-                {capacityUnitLabel(scenario.windowUnit, true)} ·{' '}
+                {t('initiatives.capacityAdvisor.workbench.sourcePlan', 'Source plan')} · v{scenario.planScenarioVersion} ·{' '}
+                {capacityUnitLabel(scenario.windowUnit, i18n.language.startsWith('pl'))} ·{' '}
                 {scenario.timezone}
               </p>
             </div>
@@ -1396,24 +1396,24 @@ export const CapacityScenarioSurface: React.FC<
               <button
                 type="button"
                 className="btn-ghost"
-                aria-label="Zamknij narzędzia obciążenia"
+                aria-label={t('initiatives.capacityAdvisor.workbench.closeAria', 'Close load tools')}
                 onClick={() => setWorkspaceOpen(false)}
               >
-                <X size={15} /> Zamknij
+                <X size={15} /> {t('common.close', 'Close')}
               </button>
               <button
                 className="btn-secondary"
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('UPDATE')}
               >
-                Zapisz szkic
+                {t('initiatives.capacityAdvisor.workbench.saveDraft', 'Save draft')}
               </button>
               <button
                 className="btn-secondary"
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('PUBLISH')}
               >
-                Opublikuj
+                {t('common.publish', 'Publish')}
               </button>
             </div>
           </div>
@@ -1421,11 +1421,11 @@ export const CapacityScenarioSurface: React.FC<
             <p role="alert" className="text-c-danger">
               {writeRule
                 ? i18n.t(`initiatives.planScenario.errors.${writeRule}`, {
-                    defaultValue: 'Nie zapisano zmian.',
+                    defaultValue: 'Changes were not saved.',
                   })
                 : writeState === 'CONFLICT'
-                  ? 'Wariant został zmieniony. Odśwież dane przed ponowną próbą.'
-                  : 'Nie zapisano zmian.'}
+                  ? t('initiatives.capacityAdvisor.workbench.conflict', 'The scenario has changed. Refresh the data before trying again.')
+                  : t('initiatives.capacityAdvisor.workbench.notSaved', 'Changes were not saved.')}
             </p>
           )}
           <div className="mt-4 space-y-3">
@@ -1436,21 +1436,21 @@ export const CapacityScenarioSurface: React.FC<
                   {formatPeriodDate(p.start)} – {formatPeriodDate(p.end)}
                 </span>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <RangeView label="Zapotrzebowanie" value={p.demand} resolveMemberName={resolveMemberName} />
-                  <RangeView label="Dostępność" value={p.supply} resolveMemberName={resolveMemberName} />
+                  <RangeView label={t('initiatives.capacityAdvisor.workbench.demand', 'Demand')} value={p.demand} resolveMemberName={resolveMemberName} />
+                  <RangeView label={t('initiatives.capacityAdvisor.workbench.supply', 'Availability')} value={p.supply} resolveMemberName={resolveMemberName} />
                 </div>
               </article>
             ))}
             <div>
-              <h4 className="font-medium">Ograniczenia</h4>
+              <h4 className="font-medium">{t('initiatives.capacityAdvisor.workbench.constraints', 'Constraints')}</h4>
               {scenario.constraints.map((c) => (
                 <p key={c.constraintId}>
-                  {knowledgeLabel(c.state)} · {c.detail} · właściciel {actorLabel(c.ownerId)}
+                  {knowledgeLabel(c.state)} · {c.detail} · {t('initiatives.capacityAdvisor.workbench.owner', 'owner')} {actorLabel(c.ownerId)}
                 </p>
               ))}
             </div>
             <div>
-              <h4 className="font-medium">Proponowane przydziały</h4>
+              <h4 className="font-medium">{t('initiatives.capacityAdvisor.workbench.proposedAssignments', 'Proposed assignments')}</h4>
               {scenario.proposedAssignments.map((a) => (
                 <button
                   key={a.assignmentId}
@@ -1463,7 +1463,7 @@ export const CapacityScenarioSurface: React.FC<
                     }))
                   }
                 >
-                  {actorLabel(a.resourceOrRoleId)} · okresy {a.periodIds.join(', ')} ·{' '}
+                  {actorLabel(a.resourceOrRoleId)} · {t('initiatives.capacityAdvisor.workbench.periods', 'periods')} {a.periodIds.join(', ')} ·{' '}
                   {knowledgeLabel(a.demand.knowledgeState)}
                 </button>
               ))}
@@ -1518,10 +1518,9 @@ export const CapacityScenarioSurface: React.FC<
             />
             <div className="flex items-center justify-between border-t border-c-border pt-3">
               <div>
-                <h4 className="font-medium">Zobowiązanie zasobowe</h4>
+                <h4 className="font-medium">{t('initiatives.capacityAdvisor.commitment.title', 'Resource commitment')}</h4>
                 <p className="text-xs text-c-text-muted">
-                  Wniosek, akceptacja wskazanej osoby i decyzja Resource Managera są odrębnymi
-                  krokami.
+                  {t('initiatives.capacityAdvisor.commitment.subtitle', 'The request, the assignee’s acceptance and the Resource Manager’s decision are separate steps.')}
                 </p>
               </div>
               <button
@@ -1529,7 +1528,9 @@ export const CapacityScenarioSurface: React.FC<
                 className="btn-secondary"
                 onClick={() => setCommitmentEditorOpen((open) => !open)}
               >
-                {commitmentEditorOpen ? 'Zamknij zobowiązanie' : 'Zarządzaj zobowiązaniem'}
+                {commitmentEditorOpen
+                  ? t('initiatives.capacityAdvisor.commitment.closeEditor', 'Close commitment')
+                  : t('initiatives.capacityAdvisor.commitment.openEditor', 'Manage commitment')}
               </button>
             </div>
             {commitmentEditorOpen && (
@@ -1557,7 +1558,7 @@ export const CapacityScenarioSurface: React.FC<
                   </label>
                 ))}
                 <label className="text-xs">
-                  conditions
+                  {t('initiatives.capacityAdvisor.commitment.conditions', 'conditions')}
                   <textarea
                     aria-label="Capacity commitment conditions"
                     className="block w-full rounded border border-c-border bg-c-background p-2"
@@ -1566,7 +1567,7 @@ export const CapacityScenarioSurface: React.FC<
                   />
                 </label>
                 <label className="text-xs">
-                  rationale
+                  {t('initiatives.capacityAdvisor.commitment.rationale', 'rationale')}
                   <textarea
                     aria-label="Capacity commitment rationale"
                     className="block w-full rounded border border-c-border bg-c-background p-2"
@@ -1581,7 +1582,7 @@ export const CapacityScenarioSurface: React.FC<
                     disabled={commitmentWrite.state === 'PENDING'}
                     onClick={() => void request()}
                   >
-                    Wyślij wniosek
+                    {t('initiatives.capacityAdvisor.commitment.sendRequest', 'Send request')}
                   </button>
                   <button
                     className="btn-secondary"
@@ -1589,7 +1590,7 @@ export const CapacityScenarioSurface: React.FC<
                     disabled={commitmentWrite.state === 'PENDING'}
                     onClick={() => void accept()}
                   >
-                    Akceptacja wskazanej osoby
+                    {t('initiatives.capacityAdvisor.commitment.assigneeAccept', 'Assignee acceptance')}
                   </button>
                   <button
                     className="btn-secondary"
@@ -1597,21 +1598,21 @@ export const CapacityScenarioSurface: React.FC<
                     disabled={commitmentWrite.state === 'PENDING'}
                     onClick={() => void decide('CONFIRMED')}
                   >
-                    Potwierdź dostępność
+                    {t('initiatives.capacityAdvisor.commitment.confirm', 'Confirm availability')}
                   </button>
                   <button
                     className="btn-secondary"
                     aria-label="RM conditional"
                     onClick={() => void decide('CONDITIONALLY_CONFIRMED')}
                   >
-                    Potwierdź warunkowo
+                    {t('initiatives.capacityAdvisor.commitment.confirmConditional', 'Confirm conditionally')}
                   </button>
                   <button
                     className="btn-secondary"
                     aria-label="RM decline"
                     onClick={() => void decide('DECLINED')}
                   >
-                    Odrzuć dostępność
+                    {t('initiatives.capacityAdvisor.commitment.decline', 'Decline availability')}
                   </button>
                 </div>
               </div>

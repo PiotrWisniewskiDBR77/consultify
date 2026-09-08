@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -17,6 +18,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
   initiative,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [activePhase, setActivePhase] = useState<Phase>('design');
   const [tasks, setTasks] = useState<Task[]>([]);
   // const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
       }
       await loadTasks();
     } catch {
-      alert('Failed to generate tasks. Please try again.');
+      alert(t('initiatives.taskBoard.generateFailed', 'Failed to generate tasks. Please try again.'));
     } finally {
       setGenerating(false);
     }
@@ -103,7 +105,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
       <div className="h-16 border-b border-c-border dark:border-white/10 flex items-center justify-between px-6 bg-c-surface">
         <div className="flex items-center gap-4">
           <button onClick={onClose} className="text-c-text-muted hover:text-c-text">
-            Back
+            {t('common.back', 'Back')}
           </button>
           <div className="h-6 w-px bg-c-border"></div>
           <div>
@@ -139,11 +141,11 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
                             ${generating ? 'bg-c-surface-raised text-c-text-muted' : 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'}
                         `}
           >
-            {generating ? 'Generating...' : '✨ Generate Plan'}
+            {generating ? t('initiatives.taskBoard.generating', 'Generating...') : `✨ ${t('initiatives.taskBoard.generatePlan', 'Generate Plan')}`}
           </button>
 
           <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-            <Plus size={16} /> New Task
+            <Plus size={16} /> {t('initiatives.taskBoard.newTask', 'New Task')}
           </button>
         </div>
       </div>
@@ -178,7 +180,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
                   ))}
                   {phaseTasks.length === 0 && (
                     <div className="h-24 border-2 border-dashed border-c-border dark:border-white/5 rounded-lg flex items-center justify-center">
-                      <span className="text-xs text-c-text-secondary">No tasks</span>
+                      <span className="text-xs text-c-text-secondary">{t('initiatives.taskBoard.noTasks', 'No tasks')}</span>
                     </div>
                   )}
                 </div>
