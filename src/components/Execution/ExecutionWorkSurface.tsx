@@ -41,6 +41,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { liczebnik } from '@/utils/liczebnik';
+import { formatListDate, formatListDateTime, PUSTA_DATA } from '@/utils/listDateFormat';
 
 import { Banner } from '@/components/shared/Banner';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
@@ -114,37 +115,47 @@ interface Milestone {
   evidenceRefs: string[];
   sourceVersions: { executionCaseVersion: number; baselineVersion: number };
 }
-const workKindLabel: Record<WorkKind, string> = { TASK: 'Zadanie', DECISION: 'Decyzja' };
+/**
+ * J7b: słowniki module-scope trzymają ANGIELSKI (zasada §2.3 PLANU językowego —
+ * `defaultValue` w kodzie jest zawsze angielski, polski żyje wyłącznie
+ * w `public/locales/pl/translation.json`). Do 08.09 były polskie, więc
+ * użytkownik EN widział „Wykonane" i „Oczekuje na decyzję" w kolumnie Status.
+ */
+const workKindLabel: Record<WorkKind, string> = { TASK: 'Task', DECISION: 'Decision' };
 const workStatusLabel: Record<string, string> = {
-  DRAFT: 'Szkic',
-  PENDING: 'Oczekuje na decyzję',
-  OPEN: 'Otwarte',
-  BLOCKED: 'Zablokowane',
-  COMPLETED: 'Wykonane',
-  CANCELED: 'Anulowane',
-  APPROVED: 'Zatwierdzone',
-  CONDITIONALLY_APPROVED: 'Zatwierdzone warunkowo',
-  REJECTED: 'Odrzucone',
-  RETURNED: 'Zwrócone',
-  READY: 'Gotowy',
-  AT_RISK: 'Zagrożony',
-  ACHIEVED: 'Osiągnięty',
-  UNKNOWN: 'Brak danych',
+  DRAFT: 'Draft',
+  PENDING: 'Awaiting decision',
+  OPEN: 'Open',
+  BLOCKED: 'Blocked',
+  COMPLETED: 'Completed',
+  CANCELED: 'Cancelled',
+  APPROVED: 'Approved',
+  CONDITIONALLY_APPROVED: 'Conditionally approved',
+  REJECTED: 'Rejected',
+  RETURNED: 'Returned',
+  READY: 'Ready',
+  AT_RISK: 'At risk',
+  ACHIEVED: 'Achieved',
+  UNKNOWN: 'No data',
   // Zmierzone na zrzucie PO (05.09, execution-tab-work): realne zadania ze
   // stagingu przychodzą ze statusem IN_PROGRESS, którego ta mapa nie znała —
   // kolumna Status mieszała polskie „Otwarte"/„Oczekuje na decyzję" z surowym
   // IN_PROGRESS w sąsiednich wierszach tej samej tabeli.
-  IN_PROGRESS: 'W toku',
+  IN_PROGRESS: 'In progress',
   // 1.12-R1 (B), zmierzone na zrzucie /execution?tab=work: realne zadania
   // z `/api/tasks` niosą słownik `TaskStatus` (TODO/IN_PROGRESS/BLOCKED/DONE)
   // plus `REVIEW` — kolumna Status pisała surowe „TODO", „REVIEW", „DONE"
   // obok polskich „W toku"/„Zablokowane" w sąsiednich wierszach.
-  TODO: 'Do zrobienia',
-  REVIEW: 'W przeglądzie',
-  IN_REVIEW: 'W przeglądzie',
-  DONE: 'Wykonane',
-  CANCELLED: 'Anulowane',
+  TODO: 'To do',
+  REVIEW: 'In review',
+  IN_REVIEW: 'In review',
+  DONE: 'Done',
+  CANCELLED: 'Cancelled',
 };
+
+/** Rodzaj elementu pracy w języku interfejsu (klucz `execution.work.kind.*`). */
+const etykietaRodzaju = (kind: string, t: (key: string, fallback: string) => string): string =>
+  t(`execution.work.kind.${String(kind ?? '').toLowerCase()}`, workKindLabel[kind as WorkKind] ?? String(kind ?? ''));
 /**
  * Nazwisko osoby — z KATALOGU OSÓB, nie z zamiany myślnika na spację.
  *
@@ -242,8 +253,8 @@ const naWartoscDaty = (value: string | null | undefined): string => {
  */
 const etykietaStatusu = (status: string, t: (key: string, fallback: string) => string): string => {
   const serwerowy = String(status ?? '').toLowerCase();
-  const polski = workStatusLabel[String(status ?? '').toUpperCase()] ?? String(status ?? '');
-  return t(`execution.work.status.${serwerowy}`, polski);
+  const angielski = workStatusLabel[String(status ?? '').toUpperCase()] ?? String(status ?? '');
+  return t(`execution.work.status.${serwerowy}`, angielski);
 };
 
 /**
@@ -408,32 +419,15 @@ const buildCols = ({
  * naprawdę filtruje na stand-upie: wszystko · po terminie · zablokowane.
  */
 const workPresets = ['all', 'overdue', 'blocked'] as const;
-const formatDateTime = (value: string | null | undefined) => {
-  // „UNKNOWN" po angielsku na polskim ekranie — widoczne w KAŻDYM wierszu
-  // kolumny „Termin / SLA" (zrzut PO 05.09), bo realne zadania stagingu nie
-  // niosą `slaAt`.
-  if (!value) return 'brak';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'brak';
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed);
-};
+/**
+ * J7b: daty przez SSOT list (`src/utils/listDateFormat.ts`). Do 08.09 stało tu
+ * `Intl.DateTimeFormat('pl-PL', { month: 'short' })`, więc konto angielskie
+ * dostawało „05 lut 2026" w KAŻDYM wierszu kolumny „Due".
+ */
+const formatDateTime = (value: string | null | undefined) =>
+  formatListDateTime(value, PUSTA_DATA);
 /** Sam termin, bez godziny — kolumna „Termin" ma być czytelna, nie precyzyjna do minuty. */
-const formatDate = (value: string | null | undefined) => {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '—';
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(parsed);
-};
+const formatDate = (value: string | null | undefined) => formatListDate(value);
 
 /**
  * 1.12-R1 (B): wiersze z KANONICZNEGO rejestru `runtime-v1`.
@@ -697,7 +691,7 @@ export const ExecutionWorkSurface = ({
             : count === 1
               ? 'delivery'
               : 'deliveries',
-          defaultValue: 'Niepełne dane: {{count}} {{unit}} bez odpowiedzi',
+          defaultValue: 'Incomplete data: {{count}} {{unit}} not responding',
         })}
         message={unreachableCaseIds.join(', ')}
         />
@@ -874,7 +868,7 @@ export const ExecutionWorkSurface = ({
         return t('execution.work.edit.transitionBlocked', {
           z: etykietaStatusu(przejscie[1], t),
           na: etykietaStatusu(przejscie[2], t),
-          defaultValue: 'Nie można zmienić statusu z „{{z}}” na „{{na}}”.',
+          defaultValue: 'The status cannot change from "{{z}}" to "{{na}}".',
         }) as unknown as string;
       }
       if (/Blocking decisions/i.test(surowy)) {
@@ -884,12 +878,12 @@ export const ExecutionWorkSurface = ({
       if (/Blocked reason is required/i.test(surowy)) {
         return t(
           'execution.work.edit.blockedReasonRequired',
-          'Status „Zablokowane” wymaga podania powodu blokady.'
+          'Status "Blocked" requires a blocking reason.'
         );
       }
       return t('execution.work.edit.failed', {
         powod: surowy || t('execution.work.edit.unknownReason', 'no response from server'),
-        defaultValue: 'Nie udało się zapisać zmiany: {{powod}}',
+        defaultValue: 'The change could not be saved: {{powod}}',
       }) as unknown as string;
     },
     [t]
@@ -921,7 +915,7 @@ export const ExecutionWorkSurface = ({
           powod: t('execution.work.edit.closeBlocked', {
             z: etykietaStatusu(biezacy, t),
             defaultValue:
-              'Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”.',
+              'A task in status "{{z}}" cannot be closed — set it to "In progress" or "In review" first.',
           }) as unknown as string,
         };
       return { mozna: true, powod: '' };
@@ -1120,9 +1114,13 @@ export const ExecutionWorkSurface = ({
   const caseLabel = useCallback(
     (id: string) => {
       const executionCase = cases.find((candidate) => candidate.executionCaseId === id);
-      return executionCase?.initiativeTitle || executionCase?.title || 'Powiązana realizacja';
+      return (
+        executionCase?.initiativeTitle ||
+        executionCase?.title ||
+        t('execution.work.linkedCase', 'Linked delivery')
+      );
     },
-    [cases]
+    [cases, t]
   );
   const formFromRow = (row: Row) => {
     const source = row.source ?? {};
@@ -1416,30 +1414,30 @@ export const ExecutionWorkSurface = ({
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
-        <p>Nie udało się załadować kanonicznego rejestru pracy.</p>
+        <p>{t('execution.work.loadFailed', 'Could not load the canonical work register.')}</p>
         <button
           type="button"
           className="btn-secondary mt-3"
           onClick={() => (caseId ? void load(caseId) : void loadCases())}
         >
-          Spróbuj ponownie
+          {t('common.retry', 'Try again')}
         </button>
       </div>
     );
   const fieldLabels: Record<string, string> = {
-    title: 'Tytuł',
-    description: 'Opis i oczekiwany rezultat',
-    assigneeId: 'Osoba realizująca',
-    ownerId: 'Właściciel',
-    authorityId: 'Osoba decyzyjna',
-    dueAt: 'Termin',
-    slaAt: 'Termin reakcji (SLA)',
-    evidenceRefs: 'Dowody / załączniki',
-    blockers: 'Blokujące decyzje',
-    dependencies: 'Zależności',
-    milestoneIds: 'Powiązane kamienie milowe',
-    rationale: 'Uzasadnienie',
-    conditions: 'Warunki decyzji',
+    title: t('execution.work.field.title', 'Title'),
+    description: t('execution.work.field.description', 'Description and expected outcome'),
+    assigneeId: t('execution.work.field.assignee', 'Assignee'),
+    ownerId: t('execution.work.field.owner', 'Owner'),
+    authorityId: t('execution.work.field.authority', 'Decision maker'),
+    dueAt: t('execution.work.field.due', 'Due date'),
+    slaAt: t('execution.work.field.sla', 'Response deadline (SLA)'),
+    evidenceRefs: t('execution.work.field.evidence', 'Evidence / attachments'),
+    blockers: t('execution.work.field.blockers', 'Blocking decisions'),
+    dependencies: t('execution.work.field.dependencies', 'Dependencies'),
+    milestoneIds: t('execution.work.field.milestones', 'Linked milestones'),
+    rationale: t('execution.work.field.rationale', 'Rationale'),
+    conditions: t('execution.work.field.conditions', 'Decision conditions'),
   };
   const visibleFields =
     toolMode === 'TASK'
@@ -1611,9 +1609,14 @@ export const ExecutionWorkSurface = ({
       {documentId && (
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-semibold">{selected?.title || 'Element pracy'}</h2>
+            <h2 className="font-semibold">
+              {selected?.title || t('execution.work.item', 'Work item')}
+            </h2>
             <p className="text-sm text-c-text-muted">
-              Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.
+              {t(
+                'execution.work.documentLead',
+                'Canonical task or decision document with its controls, evidence and dependencies.'
+              )}
             </p>
           </div>
         </div>
@@ -1629,15 +1632,22 @@ export const ExecutionWorkSurface = ({
         <div data-testid="execution-work-loading" className="flex min-h-0 flex-1 flex-col gap-3">
           {loadingPhase === 'slow' && (
             <p role="status" className="text-sm text-c-text-muted">
-              Wczytywanie trwa dłużej niż zwykle…
+              {t('common.loadingSlow', 'This is taking longer than usual…')}
             </p>
           )}
-          <SkeletonState variant="table" rows={6} label="Wczytuję kanoniczny rejestr pracy" />
+          <SkeletonState
+            variant="table"
+            rows={6}
+            label={t('execution.work.loading', 'Loading the canonical work register')}
+          />
         </div>
       )}
       {!caseId && state === 'READY' && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
-          Brak kanonicznych zadań i decyzji w dostępnych realizacjach.
+          {t(
+            'execution.work.emptyRegister',
+            'No canonical tasks or decisions in the available deliveries.'
+          )}
         </div>
       )}
       {!documentId && state === 'READY' && rows.length > 0 && (
@@ -1670,28 +1680,32 @@ export const ExecutionWorkSurface = ({
                 title={r.title}
                 onClose={() => setSelectedId(null)}
                 onOpenFull={() => void openWorkspace(r)}
-                openLabel="Otwórz element pracy"
+                openLabel={t('execution.work.preview.open', 'Open work item')}
                 meta={{
                   pills: [
-                    { label: workKindLabel[r.kind], tone: 'neutral' },
+                    { label: etykietaRodzaju(r.kind, t), tone: 'neutral' },
                     {
-                      label: workStatusLabel[r.status] ?? r.status,
+                      label: etykietaStatusu(r.status, t),
                       tone: r.status === 'COMPLETED' ? 'success' : 'info',
                     },
                   ],
                   trailing: <span className="text-xs">v{r.version}</span>,
-                  recommendation: r.source.nextAction ?? 'Sprawdź kompletność i następny krok.',
+                  recommendation:
+                    r.source.nextAction ??
+                    t('execution.work.preview.nextStep', 'Check completeness and the next step.'),
                 }}
                 details={{
-                  label: 'Szczegóły pracy',
-                  text: r.source.description || 'Brak dodatkowego opisu.',
+                  label: t('execution.work.preview.details', 'Work details'),
+                  text:
+                    r.source.description ||
+                    t('execution.work.preview.noDescription', 'No additional description.'),
                   properties: [
                     {
                       id: 'owner',
-                      label: 'Odpowiedzialny',
+                      label: t('execution.work.field.owner', 'Owner'),
                       value: businessLabel(
                         r.owner,
-                        'Nieprzypisany',
+                        t('execution.work.unassigned', 'Unassigned'),
                         t,
                         resolveMemberName,
                         isPolish
@@ -1700,7 +1714,11 @@ export const ExecutionWorkSurface = ({
                     // 1.12-R1 (B): „Termin / SLA" rozdzielone — SLA było puste
                     // w każdym wierszu realnych danych (tabela `tasks` nie ma
                     // `slaAt`), więc podgląd pisał „· SLA brak" jako fakt.
-                    { id: 'due', label: 'Termin', value: r.dueAt || 'Brak terminu' },
+                    {
+                      id: 'due',
+                      label: t('execution.work.field.due', 'Due date'),
+                      value: r.dueAt || t('execution.work.noDue', 'No due date'),
+                    },
                     {
                       id: 'slip',
                       // Ta sama nazwa co kolumna w tabeli — podgląd i wiersz
@@ -1709,25 +1727,42 @@ export const ExecutionWorkSurface = ({
                       value:
                         r.slipDays == null
                           ? '—'
-                          : `${r.slipDays} ${liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])}`,
+                          : `${r.slipDays} ${
+                              isPolish
+                                ? liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])
+                                : r.slipDays === 1
+                                  ? 'day'
+                                  : 'days'
+                            }`,
                     },
                     {
                       id: 'case',
-                      label: r.origin === 'tasks' ? 'Inicjatywa' : 'Realizacja',
+                      label:
+                        r.origin === 'tasks'
+                          ? t('execution.work.field.initiative', 'Initiative')
+                          : t('execution.work.field.case', 'Delivery'),
                       value:
                         r.origin === 'tasks'
-                          ? r.initiativeName || 'Bez inicjatywy'
+                          ? r.initiativeName ||
+                            t('execution.work.noInitiative', 'Without initiative')
                           : caseLabel(r.executionCaseId),
                     },
                     {
                       id: 'evidence',
-                      label: 'Dowody',
+                      label: t('execution.work.field.evidenceShort', 'Evidence'),
                       value: r.source.evidenceRefs?.length
-                        ? `${r.source.evidenceRefs.length} ${liczebnik(
-                            r.source.evidenceRefs.length,
-                            ['powiązany dowód', 'powiązane dowody', 'powiązanych dowodów']
-                          )}`
-                        : 'Brak wymaganych dowodów',
+                        ? `${r.source.evidenceRefs.length} ${
+                            isPolish
+                              ? liczebnik(r.source.evidenceRefs.length, [
+                                  'powiązany dowód',
+                                  'powiązane dowody',
+                                  'powiązanych dowodów',
+                                ])
+                              : r.source.evidenceRefs.length === 1
+                                ? 'linked evidence item'
+                                : 'linked evidence items'
+                          }`
+                        : t('execution.work.noEvidence', 'No evidence required'),
                     },
                   ],
                   onCopy: () => void navigator.clipboard?.writeText(r.title),
@@ -1739,10 +1774,13 @@ export const ExecutionWorkSurface = ({
                       : []
                     : [
                         { label: caseLabel(r.executionCaseId), onClick: () => undefined },
-                        { label: 'Powiązana inicjatywa', onClick: () => undefined },
+                        {
+                          label: t('execution.work.linkedInitiative', 'Linked initiative'),
+                          onClick: () => undefined,
+                        },
                       ]
                 }
-                relationsEmptyLabel="Brak powiązań"
+                relationsEmptyLabel={t('execution.work.noRelations', 'No relations')}
                 /*
                  * D5 — te same trzy akcje co w wierszu, w bloku akcji podglądu.
                  * „Otwórz" ZNIKA z paska: nagłówek podglądu ma już swój
@@ -1781,7 +1819,7 @@ export const ExecutionWorkSurface = ({
                         informational: [
                           {
                             id: 'open',
-                            label: 'Otwórz element pracy',
+                            label: t('execution.work.preview.open', 'Open work item'),
                             variant: 'positive',
                             icon: Eye,
                             shortcut: 'O',
@@ -1901,7 +1939,10 @@ export const ExecutionWorkSurface = ({
                   primary: [
                     {
                       id: 'open',
-                      label: work.kind === 'TASK' ? 'Otwórz zadanie' : 'Otwórz decyzję',
+                      label:
+                        work.kind === 'TASK'
+                          ? t('execution.work.openTask', 'Open task')
+                          : t('execution.work.openDecision', 'Open decision'),
                       icon: ArrowRight,
                       onClick: openWorkspaceForAction,
                     },
@@ -1918,7 +1959,7 @@ export const ExecutionWorkSurface = ({
                       ? [
                           {
                             id: 'request-decision',
-                            label: 'Przekaż do decyzji',
+                            label: t('execution.work.requestDecision', 'Send for decision'),
                             onClick: openWorkspaceForAction,
                           },
                         ]
@@ -1927,7 +1968,7 @@ export const ExecutionWorkSurface = ({
                       ? [
                           {
                             id: 'decide',
-                            label: 'Rozstrzygnij decyzję',
+                            label: t('execution.work.resolveDecision', 'Resolve decision'),
                             onClick: openWorkspaceForAction,
                           },
                         ]
@@ -1938,11 +1979,17 @@ export const ExecutionWorkSurface = ({
                       setSelectedId(String(row.id));
                       setShowWorkspace(false);
                     },
-                    archiveNote: 'Elementy pracy podlegają retencji Execution Case.',
+                    archiveNote: t(
+                      'execution.work.archiveNote',
+                      'Work items follow the Execution Case retention policy.'
+                    ),
                   },
                   destructive: {
-                    label: 'Usuń',
-                    note: 'Kanoniczny element pracy nie może zostać usunięty.',
+                    label: t('common.delete', 'Delete'),
+                    note: t(
+                      'execution.work.deleteNote',
+                      'A canonical work item cannot be deleted.'
+                    ),
                   },
                 };
               }}
@@ -1960,7 +2007,7 @@ export const ExecutionWorkSurface = ({
             <h3 className="font-semibold">{selected.title}</h3>
             {!documentId && (
               <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>
-                Zamknij workspace
+                {t('execution.work.closeWorkspace', 'Close workspace')}
               </button>
             )}
           </div>
@@ -1985,14 +2032,16 @@ export const ExecutionWorkSurface = ({
           aria-label="Execution Milestones"
           className="mt-4 rounded border border-c-border p-4"
         >
-          <h3 className="font-semibold">Kamienie milowe</h3>
+          <h3 className="font-semibold">{t('execution.work.milestones', 'Milestones')}</h3>
           <p className="text-xs text-c-text-muted">
-            Realizacja v{caseVersion || 'Brak danych'} · zaakceptowana wersja bazowa v
-            {baselineRef.version || 'Brak danych'}
+            {t('execution.work.caseVersion', 'Delivery')} v
+            {caseVersion || t('common.noData', 'No data')} ·{' '}
+            {t('execution.work.baselineVersion', 'accepted baseline')} v
+            {baselineRef.version || t('common.noData', 'No data')}
           </p>
           {milestones.length === 0 ? (
             <p role="status" className="mt-2 text-sm text-c-text-muted">
-              Brak kanonicznych kamieni milowych.
+              {t('execution.work.noMilestones', 'No canonical milestones.')}
             </p>
           ) : (
             <ul className="mt-2 grid gap-2 md:grid-cols-2">
@@ -2000,21 +2049,29 @@ export const ExecutionWorkSurface = ({
                 <li key={m.milestoneId} className="rounded border border-c-border p-3 text-sm">
                   <strong>{m.title}</strong> · {m.milestoneId} v{m.version}
                   <div>
-                    {workStatusLabel[m.status] ?? m.status} · gotowość{' '}
-                    {workStatusLabel[m.readiness] ?? m.readiness}
-                  </div>
-                  <div>Właściciel: {actorLabel(m.ownerId, t, resolveMemberName, isPolish)}</div>
-                  <div>
-                    Termin {formatDateTime(m.targetAt)} · prognoza {formatDateTime(m.forecastAt)}
+                    {etykietaStatusu(m.status, t)} ·{' '}
+                    {t('execution.work.readiness', 'readiness')}{' '}
+                    {etykietaStatusu(m.readiness, t)}
                   </div>
                   <div>
-                    Odchylenie{' '}
+                    {t('execution.work.field.owner', 'Owner')}:{' '}
+                    {actorLabel(m.ownerId, t, resolveMemberName, isPolish)}
+                  </div>
+                  <div>
+                    {t('execution.work.field.due', 'Due date')} {formatDateTime(m.targetAt)} ·{' '}
+                    {t('execution.work.forecast', 'forecast')} {formatDateTime(m.forecastAt)}
+                  </div>
+                  <div>
+                    {t('execution.work.variance', 'Variance')}{' '}
                     {m.forecastVarianceDays === null
-                      ? 'Brak danych'
-                      : `${m.forecastVarianceDays} dni`}
+                      ? t('common.noData', 'No data')
+                      : `${m.forecastVarianceDays} ${t('execution.work.days', 'days')}`}
                   </div>
                   <div>
-                    Dowody: {m.evidenceRefs.length ? m.evidenceRefs.join(', ') : 'Brak danych'}
+                    {t('execution.work.field.evidenceShort', 'Evidence')}:{' '}
+                    {m.evidenceRefs.length
+                      ? m.evidenceRefs.join(', ')
+                      : t('common.noData', 'No data')}
                   </div>
                   <div className="text-xs text-c-text-muted">
                     Case v{m.sourceVersions.executionCaseVersion} · baseline {m.baselineRef.ref} v
@@ -2049,7 +2106,7 @@ export const ExecutionWorkSurface = ({
               disabled={!caseId || !baselineRef.ref || baselineRef.version < 1}
               onClick={() => void createMilestone()}
             >
-              Utwórz kamień milowy
+              {t('execution.actions.newMilestone', 'New milestone')}
             </button>
           )}
         </section>
@@ -2062,14 +2119,19 @@ export const ExecutionWorkSurface = ({
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">
-                {toolMode === 'TASK' ? 'Edytor zadania' : 'Edytor decyzji'}
+                {toolMode === 'TASK'
+                  ? t('execution.work.taskEditor', 'Task editor')
+                  : t('execution.work.decisionEditor', 'Decision editor')}
               </h3>
               <p className="text-xs text-c-text-muted">
-                Uzupełnij dane biznesowe; identyfikatory techniczne są nadawane przez system.
+                {t(
+                  'execution.work.editorLead',
+                  'Fill in the business data; technical identifiers are assigned by the system.'
+                )}
               </p>
             </div>
             <button className="btn-secondary" onClick={() => setToolMode('NONE')}>
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -2089,15 +2151,15 @@ export const ExecutionWorkSurface = ({
             {toolMode === 'TASK' && (
               <>
                 <button className="btn-secondary" onClick={() => void createTask()}>
-                  Utwórz zadanie
+                  {t('execution.work.create.submit', 'Create task')}
                 </button>
                 {selected?.kind === 'TASK' && (
                   <>
                     <button className="btn-secondary" onClick={() => void act('update')}>
-                      Zapisz zmiany
+                      {t('common.saveChanges', 'Save changes')}
                     </button>
                     <button className="btn-secondary" onClick={() => void act('complete')}>
-                      Oznacz jako wykonane
+                      {t('execution.work.markDone', 'Mark as done')}
                     </button>
                   </>
                 )}
@@ -2106,13 +2168,13 @@ export const ExecutionWorkSurface = ({
             {toolMode === 'DECISION' && (
               <>
                 <button className="btn-secondary" onClick={() => void createDecision()}>
-                  Utwórz decyzję
+                  {t('execution.work.createDecision', 'Create decision')}
                 </button>
                 {selected?.kind === 'DECISION' && (
                   <>
                     {selected.status === 'DRAFT' && (
                       <button className="btn-secondary" onClick={() => void act('request')}>
-                        Przekaż do decyzji
+                        {t('execution.work.requestDecision', 'Send for decision')}
                       </button>
                     )}
                     {selected.status === 'PENDING' && (

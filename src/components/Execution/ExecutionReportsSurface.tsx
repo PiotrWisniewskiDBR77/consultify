@@ -32,6 +32,8 @@ import {
   readExecutionReportRun,
 } from '@/services/executionReports/executionReportsApi';
 
+import { formatListDate } from '@/utils/listDateFormat';
+
 import { ExecutionReportDocument } from './ExecutionReportDocument';
 import {
   buildExecutionReportSnapshot,
@@ -84,60 +86,108 @@ interface DefinitionRow extends TableRow {
   definition: any;
 }
 type ReportRegisterItem = { kind: 'DEFINITION'; row: DefinitionRow } | { kind: 'RUN'; row: Row };
-const formatDate = (value: unknown) => {
-  if (!value) return 'UNKNOWN';
-  const date = new Date(String(value));
-  if (Number.isNaN(date.getTime())) return 'UNKNOWN';
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-};
+/** J7b: data przez SSOT list — było `Intl.DateTimeFormat('pl-PL')`. */
+const formatDate = (value: unknown) => formatListDate(value, 'UNKNOWN');
 
-const reportStatusLabel = (value: string) =>
-  ({
-    DRAFT: 'Szkic',
-    VALIDATED: 'Zweryfikowany',
-    FROZEN: 'Zamrożony',
-    APPROVED: 'Zatwierdzony',
-    PUBLISHED: 'Opublikowany',
-    RETURNED: 'Zwrócony',
-    FAILED: 'Błąd',
-    SUPERSEDED: 'Zastąpiony',
-  })[value] ||
-  value ||
-  'UNKNOWN';
+/** J7b: status raportu przez `t()` z angielskim domyślnym (§2.3 PLANU). */
+const reportStatusLabel = (value: string, t: (key: string, fallback: string) => string) => {
+  const angielskie: Record<string, string> = {
+    DRAFT: 'Draft',
+    VALIDATED: 'Validated',
+    FROZEN: 'Frozen',
+    APPROVED: 'Approved',
+    PUBLISHED: 'Published',
+    RETURNED: 'Returned',
+    FAILED: 'Failed',
+    SUPERSEDED: 'Superseded',
+  };
+  const klucz = String(value ?? '');
+  if (angielskie[klucz])
+    return t(`executionReports.status.${klucz.toLowerCase()}`, angielskie[klucz]);
+  return klucz || 'UNKNOWN';
+};
 const referenceLabel = (value: string | null | undefined, fallback = '—') =>
   value
     ? value.replace(/^(execution_case|initiative|report|project)[-_:]?/i, '').replace(/[-_]+/g, ' ')
     : fallback;
-const sourceTypeLabel = (value: string | null | undefined) =>
-  ({
-    execution_case: 'Realizacja',
-    execution_task: 'Zadanie',
-    execution_decision: 'Decyzja',
-    execution_milestone: 'Kamień milowy',
-    operational_allocation: 'Przydział zasobu',
-    intervention_case: 'Interwencja',
-    finance: 'Finanse',
-    results: 'Wyniki / KPI',
-  })[String(value ?? '').toLowerCase()] || 'Źródło';
+const sourceTypeLabel = (
+  value: string | null | undefined,
+  t: (key: string, fallback: string) => string
+) => {
+  const angielskie: Record<string, string> = {
+    execution_case: 'Delivery',
+    execution_task: 'Task',
+    execution_decision: 'Decision',
+    execution_milestone: 'Milestone',
+    operational_allocation: 'Resource allocation',
+    intervention_case: 'Intervention',
+    finance: 'Finance',
+    results: 'Results / KPI',
+  };
+  const klucz = String(value ?? '').toLowerCase();
+  if (angielskie[klucz]) return t(`executionReports.sourceType.${klucz}`, angielskie[klucz]);
+  return t('executionReports.sourceType.other', 'Source');
+};
 
-const columns: TableColumn[] = [
-  { id: 'title', label: 'Raport', sortable: true, width: '300px' },
-  { id: 'level', label: 'Poziom', sortable: true, filterable: true, width: '190px' },
-  { id: 'status', label: 'Status', sortable: true, filterable: true, width: '150px' },
-  { id: 'period', label: 'Okres', sortable: true, width: '220px' },
-  { id: 'asOf', label: 'Stan danych na', sortable: true, width: '160px' },
-  { id: 'author', label: 'Autor', sortable: true, width: '170px' },
+/**
+ * J7b: nagłówki tabeli Raportów były POLSKIE WPROST — na koncie EN świeciły
+ * „RAPORT · POZIOM · OKRES · STAN DANYCH NA · AUTOR" (zrzut PRZED
+ * `evidence/jezyk-j7/przed/15-raporty-lista-en.png`). Teraz przez `t()`.
+ */
+const kolumnyRaportow = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  { id: 'title', label: t('executionReports.columns.title', 'Report'), sortable: true, width: '300px' },
+  {
+    id: 'level',
+    label: t('executionReports.columns.level', 'Level'),
+    sortable: true,
+    filterable: true,
+    width: '190px',
+  },
+  {
+    id: 'status',
+    label: t('executionReports.columns.status', 'Status'),
+    sortable: true,
+    filterable: true,
+    width: '150px',
+  },
+  { id: 'period', label: t('executionReports.columns.period', 'Period'), sortable: true, width: '220px' },
+  { id: 'asOf', label: t('executionReports.columns.asOf', 'Data as of'), sortable: true, width: '160px' },
+  { id: 'author', label: t('executionReports.columns.author', 'Author'), sortable: true, width: '170px' },
 ];
-const definitionColumns: TableColumn[] = [
-  { id: 'title', label: 'Definicja raportu', sortable: true, width: '280px' },
-  { id: 'level', label: 'Poziom', sortable: true, filterable: true, width: '190px' },
-  { id: 'cadence', label: 'Kadencja', sortable: true, filterable: true, width: '150px' },
-  { id: 'audience', label: 'Odbiorcy', sortable: true, width: '230px' },
-  { id: 'state', label: 'Status', sortable: true, filterable: true, width: '150px' },
+const kolumnyDefinicji = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('executionReports.columns.definition', 'Report definition'),
+    sortable: true,
+    width: '280px',
+  },
+  {
+    id: 'level',
+    label: t('executionReports.columns.level', 'Level'),
+    sortable: true,
+    filterable: true,
+    width: '190px',
+  },
+  {
+    id: 'cadence',
+    label: t('executionReports.columns.cadence', 'Cadence'),
+    sortable: true,
+    filterable: true,
+    width: '150px',
+  },
+  {
+    id: 'audience',
+    label: t('executionReports.columns.audience', 'Audience'),
+    sortable: true,
+    width: '230px',
+  },
+  {
+    id: 'state',
+    label: t('executionReports.columns.status', 'Status'),
+    sortable: true,
+    filterable: true,
+    width: '150px',
+  },
 ];
 // 1.12-R4b: 11 presetów → 3 (kanon Menu 3 ≤3 chipy — zrzut R4
 // `evidence/1-12-r4/03-zdrowie-programu.png` pokazał rząd wychodzący poza
@@ -158,29 +208,33 @@ const TILE_DEFAULT_PERIOD_DAYS: Record<string, number> = {
   'program-health': 14,
 };
 const TILE_DEFAULT_PERIOD_DAYS_FALLBACK = 30;
-const distributionLabels: Record<string, string> = {
-  receiptId: 'Identyfikator dystrybucji',
-  audience: 'Odbiorcy',
-  distributedAt: 'Data dystrybucji',
-};
-const followUpLabels: Record<string, string> = {
-  executionCaseId: 'Realizacja',
-  taskId: 'Identyfikator zadania',
-  title: 'Tytuł',
-  description: 'Opis',
-  assigneeId: 'Wykonawca',
-  ownerId: 'Właściciel',
-  dueAt: 'Termin',
-  slaAt: 'SLA',
-  evidenceRefs: 'Dowody',
-};
-const definitionBusinessLabels: Record<string, string> = {
-  purpose: 'Cel raportu',
-  audience: 'Odbiorcy (jeden w wierszu)',
-  cadence: 'Częstotliwość',
-  ownerId: 'Właściciel definicji',
-  approverId: 'Niezależny zatwierdzający',
-};
+const distributionLabels = (
+  t: (key: string, fallback: string) => string
+): Record<string, string> => ({
+  receiptId: t('executionReports.distributionField.receiptId', 'Distribution identifier'),
+  audience: t('executionReports.columns.audience', 'Audience'),
+  distributedAt: t('executionReports.distributionField.distributedAt', 'Distribution date'),
+});
+const followUpLabels = (t: (key: string, fallback: string) => string): Record<string, string> => ({
+  executionCaseId: t('executionReports.followUp.case', 'Delivery'),
+  taskId: t('executionReports.followUp.taskId', 'Task identifier'),
+  title: t('executionReports.followUp.title', 'Title'),
+  description: t('executionReports.followUp.description', 'Description'),
+  assigneeId: t('executionReports.followUp.assignee', 'Assignee'),
+  ownerId: t('executionReports.followUp.owner', 'Owner'),
+  dueAt: t('executionReports.followUp.due', 'Due date'),
+  slaAt: t('executionReports.followUp.sla', 'SLA'),
+  evidenceRefs: t('executionReports.followUp.evidence', 'Evidence'),
+});
+const definitionBusinessLabels = (
+  t: (key: string, fallback: string) => string
+): Record<string, string> => ({
+  purpose: t('executionReports.definitionField.purpose', 'Report purpose'),
+  audience: t('executionReports.definitionField.audience', 'Audience (one per line)'),
+  cadence: t('executionReports.definitionField.cadence', 'Cadence'),
+  ownerId: t('executionReports.definitionField.owner', 'Definition owner'),
+  approverId: t('executionReports.definitionField.approver', 'Independent approver'),
+});
 
 /**
  * Uwaga właściciela 08.09 (staging, 0 raportów): własna plansza „Wygeneruj
@@ -359,8 +413,8 @@ export const ExecutionReportsSurface = ({
       setRows(
         reportRuns.map((x) => ({
           id: x.reportRunId,
-          title: `${definitionNames.get(x.definitionRef.definitionId) ?? 'Raport'} · ${formatDate(x.asOf)}`,
-          status: reportStatusLabel(x.status),
+          title: `${definitionNames.get(x.definitionRef.definitionId) ?? t('executionReports.fallbackName', 'Report')} · ${formatDate(x.asOf)}`,
+          status: reportStatusLabel(x.status, t),
           rawStatus: x.status,
           definition: `${definitionNames.get(x.definitionRef.definitionId) ?? x.definitionRef.definitionId} · v${x.definitionRef.version}`,
           period: `${formatDate(x.period.start)} – ${formatDate(x.period.end)}`,
@@ -377,7 +431,7 @@ export const ExecutionReportsSurface = ({
           return {
             id: definition.definitionId,
             title: current?.name ?? definition.definitionId,
-            state: reportStatusLabel(current?.state ?? 'UNKNOWN'),
+            state: reportStatusLabel(current?.state ?? 'UNKNOWN', t),
             rawState: current?.state ?? 'UNKNOWN',
             currentVersion: definition.currentVersion,
             aggregateVersion: definition.version,
@@ -410,8 +464,8 @@ export const ExecutionReportsSurface = ({
       setRows(
         executionReviewReportRuns.map((x) => ({
           id: x.reportRunId,
-          title: `${names.get(x.definitionRef.definitionId) ?? 'Raport'} · ${formatDate(x.asOf)}`,
-          status: reportStatusLabel(x.status),
+          title: `${names.get(x.definitionRef.definitionId) ?? t('executionReports.fallbackName', 'Report')} · ${formatDate(x.asOf)}`,
+          status: reportStatusLabel(x.status, t),
           rawStatus: x.status,
           definition: `${names.get(x.definitionRef.definitionId) ?? x.definitionRef.definitionId} · v${x.definitionRef.version}`,
           period: `${formatDate(x.period.start)} – ${formatDate(x.period.end)}`,
@@ -426,7 +480,7 @@ export const ExecutionReportsSurface = ({
           return {
             id: definition.definitionId,
             title: current?.name ?? definition.definitionId,
-            state: reportStatusLabel(current?.state ?? 'UNKNOWN'),
+            state: reportStatusLabel(current?.state ?? 'UNKNOWN', t),
             rawState: current?.state ?? 'UNKNOWN',
             currentVersion: definition.currentVersion,
             aggregateVersion: definition.version,
@@ -482,7 +536,9 @@ export const ExecutionReportsSurface = ({
     try {
       setOpenRun(await readExecutionReportRun(id));
     } catch {
-      setGenerateError('Nie udało się otworzyć dokumentu raportu.');
+      setGenerateError(
+        t('executionReports.errors.openDocument', 'The report document could not be opened.')
+      );
     }
   }, []);
 
@@ -554,7 +610,9 @@ export const ExecutionReportsSurface = ({
         setOpenRun({ ...created, payload: snapshot });
       } catch (error) {
         setGenerateError(
-          error instanceof Error ? error.message : 'Nie udało się wygenerować migawki.'
+          error instanceof Error
+            ? error.message
+            : t('executionReports.errors.generate', 'The snapshot could not be generated.')
         );
       } finally {
         setGenerating(false);
@@ -1072,9 +1130,9 @@ export const ExecutionReportsSurface = ({
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
-        <p>Nie udało się załadować kanonicznego rejestru raportów.</p>
+        <p>{t('executionReports.loadFailed', 'Could not load the canonical report register.')}</p>
         <button type="button" className="btn-secondary mt-3" onClick={() => void load()}>
-          Spróbuj ponownie
+          {t('common.retry', 'Try again')}
         </button>
       </div>
     );
@@ -1158,7 +1216,9 @@ export const ExecutionReportsSurface = ({
           </div>
         </section>
       )}
-      {state === 'LOADING' && <p role="status">Ładowanie raportów…</p>}
+      {state === 'LOADING' && (
+        <p role="status">{t('executionReports.loading', 'Loading reports…')}</p>
+      )}
       {registerMode === 'DEFINITIONS' && (
         <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
           <h3 className="font-semibold">
@@ -1280,7 +1340,7 @@ export const ExecutionReportsSurface = ({
                   title={row.title}
                   onClose={() => setSelectedDefinitionId(null)}
                   onOpenFull={() => setShowDefinitionEditor(true)}
-                  openLabel="Otwórz definicję"
+                  openLabel={t('executionReports.openDefinition', 'Open definition')}
                   meta={{
                     pills: [
                       {
@@ -1293,26 +1353,29 @@ export const ExecutionReportsSurface = ({
                     ),
                     recommendation:
                       row.rawState === 'PUBLISHED'
-                        ? 'Gotowa do użycia'
-                        : 'Dokończ walidację i zatwierdzenie',
+                        ? t('executionReports.definitionReady', 'Ready to use')
+                        : t(
+                            'executionReports.definitionUnfinished',
+                            'Finish validation and approval'
+                          ),
                   }}
                   details={{
-                    label: 'Kontrakt raportu',
+                    label: t('executionReports.contract', 'Report contract'),
                     text: version?.purpose || '—',
                     properties: [
                       {
                         id: 'owner',
-                        label: 'Właściciel',
+                        label: t('executionReports.field.owner', 'Owner'),
                         value: referenceLabel(version?.ownerName || version?.ownerId),
                       },
                       {
                         id: 'approver',
-                        label: 'Zatwierdzający',
+                        label: t('executionReports.field.approver', 'Approver'),
                         value: referenceLabel(version?.approverName || version?.approverId),
                       },
                       {
                         id: 'audience',
-                        label: 'Odbiorcy',
+                        label: t('executionReports.columns.audience', 'Audience'),
                         value:
                           version?.audience
                             ?.map((value: string) => referenceLabel(value))
@@ -1320,12 +1383,12 @@ export const ExecutionReportsSurface = ({
                       },
                       {
                         id: 'cadence',
-                        label: 'Częstotliwość',
+                        label: t('executionReports.columns.cadence', 'Cadence'),
                         value: version?.cadence || '—',
                       },
                       {
                         id: 'scope',
-                        label: 'Zakres projektów',
+                        label: t('executionReports.field.scope', 'Project scope'),
                         value:
                           version?.scope?.projectIds
                             ?.map((value: string) => referenceLabel(value))
@@ -1334,15 +1397,18 @@ export const ExecutionReportsSurface = ({
                     ],
                   }}
                   relations={(version?.sourceBindings ?? []).map((source: any) => ({
-                    label: `${sourceTypeLabel(source.sourceType)} · ${referenceLabel(source.label || source.name || source.sourceId)}`,
+                    label: `${sourceTypeLabel(source.sourceType, t)} · ${referenceLabel(source.label || source.name || source.sourceId)}`,
                   }))}
-                  relationsEmptyLabel="Brak źródeł definicji"
+                  relationsEmptyLabel={t(
+                    'executionReports.noDefinitionSources',
+                    'No definition sources'
+                  )}
                 />
               );
             }}
           >
             <StandardTable
-              columns={definitionColumns}
+              columns={kolumnyDefinicji(t)}
               data={visibleDefinitions}
               selectedRowId={selectedDefinitionId}
               onRowClick={(row) => setSelectedDefinitionId(row.id)}
@@ -1377,7 +1443,7 @@ export const ExecutionReportsSurface = ({
                     : [
                         {
                           id: 'open-definition',
-                          label: 'Otwórz definicję',
+                          label: t('executionReports.openDefinition', 'Open definition'),
                           onClick: () => {
                             setSelectedDefinitionId(row.id);
                             setShowDefinitionEditor(true);
@@ -1401,13 +1467,15 @@ export const ExecutionReportsSurface = ({
               className="mt-3 rounded border border-c-border p-4"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="font-semibold">Edytor definicji raportu</h3>
+                <h3 className="font-semibold">
+                  {t('executionReports.definitionEditor', 'Report definition editor')}
+                </h3>
                 <button className="btn-secondary" onClick={() => setShowDefinitionEditor(false)}>
-                  Zamknij
+                  {t('common.close', 'Close')}
                 </button>
               </div>
               <label className="text-xs">
-                Nazwa techniczna
+                {t('executionReports.technicalName', 'Technical name')}
                 <input
                   aria-label="Report Definition ID"
                   value={definitionId}
@@ -1418,7 +1486,7 @@ export const ExecutionReportsSurface = ({
               <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                 {Object.entries(definitionBusiness).map(([key, value]) => (
                   <label key={key} className="text-xs">
-                    {definitionBusinessLabels[key] ?? key}
+                    {definitionBusinessLabels(t)[key] ?? key}
                     {key === 'purpose' || key === 'audience' ? (
                       <textarea
                         aria-label={`Report Definition business ${key}`}
@@ -1450,15 +1518,18 @@ export const ExecutionReportsSurface = ({
               <label className="mt-3 flex items-center gap-2 text-xs">
                 <input
                   type="checkbox"
-                  aria-label="Zaawansowany kontrakt definicji"
+                  aria-label={t('executionReports.advancedContract', 'Advanced definition contract')}
                   checked={advancedDefinitionContract}
                   onChange={(event) => setAdvancedDefinitionContract(event.target.checked)}
                 />
-                Pokaż kontrakt źródeł, formuł i dostępu (tryb zaawansowany)
+                {t(
+                  'executionReports.showContract',
+                  'Show the sources, formulas and access contract (advanced mode)'
+                )}
               </label>
               {advancedDefinitionContract && (
                 <label className="mt-2 block text-xs">
-                  Kontrakt źródeł, formuł i dostępu
+                  {t('executionReports.contractSources', 'Sources, formulas and access contract')}
                   <textarea
                     aria-label="Report Definition contract JSON"
                     value={definitionJson}
@@ -1468,7 +1539,10 @@ export const ExecutionReportsSurface = ({
                 </label>
               )}
               <label className="mt-2 block text-xs">
-                Dozwolone projekty (jeden identyfikator w wierszu)
+                {t(
+                  'executionReports.allowedProjects',
+                  'Allowed projects (one identifier per line)'
+                )}
                 <textarea
                   aria-label="Report Definition project IDs"
                   value={scopeProjectIds}
@@ -1483,16 +1557,18 @@ export const ExecutionReportsSurface = ({
                   checked={generalBacklogAllowed}
                   onChange={(event) => setGeneralBacklogAllowed(event.target.checked)}
                 />
-                Uwzględnij jawnie backlog ogólny
+                {t('executionReports.includeGeneralBacklog', 'Explicitly include the general backlog')}
               </label>
               {!scopeProjectIds.trim() && !generalBacklogAllowed && (
                 <p role="alert" className="mt-2 text-c-warning">
-                  Wymagany jest jawny zakres projektów. Domyślny zakres całej organizacji jest
-                  niedozwolony.
+                  {t(
+                    'executionReports.scopeRequired',
+                    'An explicit project scope is required. Defaulting to the whole organisation is not allowed.'
+                  )}
                 </p>
               )}
               <label className="mt-2 block text-xs">
-                Uzasadnienie niezależnego zatwierdzenia
+                {t('executionReports.approvalRationale', 'Independent approval rationale')}
                 <textarea
                   aria-label="Report Definition publish rationale"
                   value={definitionRationale}
@@ -1506,7 +1582,7 @@ export const ExecutionReportsSurface = ({
                   disabled={!scopeProjectIds.trim() && !generalBacklogAllowed}
                   onClick={() => void createDefinition()}
                 >
-                  Utwórz definicję
+                  {t('executionReports.action.createDefinition', 'Create definition')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -1518,7 +1594,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('UPDATE_DRAFT')}
                 >
-                  Zapisz szkic
+                  {t('executionReports.action.saveDraft', 'Save draft')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -1529,7 +1605,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('VALIDATE')}
                 >
-                  Zweryfikuj definicję
+                  {t('executionReports.action.validateDefinition', 'Validate definition')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -1540,7 +1616,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('PUBLISH')}
                 >
-                  Opublikuj definicję
+                  {t('executionReports.action.publishDefinition', 'Publish definition')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -1552,12 +1628,15 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('CREATE_VERSION')}
                 >
-                  Utwórz kolejną wersję
+                  {t('executionReports.action.createVersion', 'Create next version')}
                 </button>
               </div>
               {write === 'FAILED' && (
                 <p role="alert" className="mt-2 text-c-danger">
-                  Zakres jest pusty, nieaktualny albo niedozwolony. Definicja nie została zmieniona.
+                  {t(
+                    'executionReports.scopeRejected',
+                    'The scope is empty, stale or not allowed. The definition was not changed.'
+                  )}
                 </p>
               )}
             </section>
@@ -1637,31 +1716,38 @@ export const ExecutionReportsSurface = ({
               meta={{
                 pills: [
                   {
-                    label: reportStatusLabel(r.status),
+                    label: reportStatusLabel(r.status, t),
                     tone: r.source.status === 'PUBLISHED' ? 'success' : 'neutral',
                   },
                 ],
                 trailing: <span className="text-xs text-c-text-muted">v{r.version}</span>,
                 recommendation:
                   r.source.status === 'PUBLISHED'
-                    ? 'Przejrzyj lub odśwież raport'
-                    : 'Dokończ przygotowanie raportu',
+                    ? t('executionReports.reviewOrRefresh', 'Review or refresh the report')
+                    : t('executionReports.finishPreparation', 'Finish preparing the report'),
               }}
               details={{
-                label: 'Zakres raportu',
-                text: `${r.period} · stan danych na ${r.asOf}`,
+                label: t('executionReports.reportScope', 'Report scope'),
+                text: t('executionReports.periodAsOf', '{{period}} · data as of {{asOf}}', {
+                  period: r.period,
+                  asOf: r.asOf,
+                }),
                 properties: [
-                  { id: 'definition', label: 'Definicja', value: r.definition },
+                  {
+                    id: 'definition',
+                    label: t('executionReports.columns.definition', 'Report definition'),
+                    value: r.definition,
+                  },
                   {
                     id: 'audience',
-                    label: 'Odbiorcy',
+                    label: t('executionReports.columns.audience', 'Audience'),
                     value:
                       r.source.audience?.map((value: string) => referenceLabel(value)).join(', ') ||
                       '—',
                   },
                   {
                     id: 'scope',
-                    label: 'Zakres',
+                    label: t('executionReports.field.scopeShort', 'Scope'),
                     value:
                       r.source.scopeRefs
                         ?.map((value: string) => referenceLabel(value))
@@ -1671,31 +1757,35 @@ export const ExecutionReportsSurface = ({
                     ? [
                         {
                           id: 'parent',
-                          label: 'Rodzic',
+                          label: t('executionReports.field.parent', 'Parent'),
                           value: `Parent ${r.source.parentRunRef.reportRunId} v${r.source.parentRunRef.version}`,
                         },
                       ]
                     : []),
                   {
                     id: 'hash',
-                    label: 'Hash migawki',
+                    label: t('executionReports.field.hash', 'Snapshot hash'),
                     value: r.source.contentHash || 'NOT_FROZEN',
                   },
-                  { id: 'sources', label: 'Źródła', value: String(r.source.sources?.length ?? 0) },
+                  {
+                    id: 'sources',
+                    label: t('executionReports.field.sources', 'Sources'),
+                    value: String(r.source.sources?.length ?? 0),
+                  },
                 ],
               }}
               relations={(r.source.sources ?? []).map((source: any) => ({
-                label: `${sourceTypeLabel(source.sourceType)} · ${referenceLabel(source.label || source.name || source.sourceId)} · v${source.version}`,
+                label: `${sourceTypeLabel(source.sourceType, t)} · ${referenceLabel(source.label || source.name || source.sourceId)} · v${source.version}`,
                 value: `${source.freshness ?? 'UNKNOWN'} · ${source.accessState ?? 'UNKNOWN'} · confidence ${source.confidence ?? 'UNKNOWN'}`,
                 onClick: () => undefined,
               }))}
-              relationsEmptyLabel="Brak źródeł"
+              relationsEmptyLabel={t('executionReports.noSources', 'No sources')}
             />
             )
           }
         >
           <StandardTable
-            columns={columns}
+            columns={kolumnyRaportow(t)}
             data={visibleRuns}
             selectedRowId={selectedId}
             onRowClick={(r) => setSelectedId(r.id)}
@@ -1746,27 +1836,31 @@ export const ExecutionReportsSurface = ({
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="font-semibold">Generator raportu</h3>
+            <h3 className="font-semibold">
+              {t('executionReports.runEditor', 'Report generator')}
+            </h3>
             <button className="btn-secondary" onClick={() => setShowRunEditor(false)}>
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           {selected?.source.status === 'PUBLISHED' && !refreshEditorOpen && (
             <button className="btn-primary mb-3" onClick={() => setRefreshEditorOpen(true)}>
-              Odśwież jako nowy szkic
+              {t('executionReports.action.refreshDraft', 'Refresh as a new draft')}
             </button>
           )}
           {(!selected || selected.source.status !== 'PUBLISHED' || refreshEditorOpen) && (
             <>
               <label className="mb-2 block text-xs">
-                Opublikowana definicja raportu
+                {t('executionReports.publishedDefinition', 'Published report definition')}
                 <select
                   aria-label="ReportRun published Definition version"
                   value={publishedDefinitionRef}
                   onChange={(event) => setPublishedDefinitionRef(event.target.value)}
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
                 >
-                  <option value="">Wybierz opublikowaną definicję</option>
+                  <option value="">
+                    {t('executionReports.pickPublishedDefinition', 'Pick a published definition')}
+                  </option>
                   {definitions.flatMap((definition) =>
                     (definition.definition.versions ?? [])
                       .filter((version: any) => version.state === 'PUBLISHED')
@@ -1784,10 +1878,18 @@ export const ExecutionReportsSurface = ({
               </label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {[
-                  ['reportRunId', 'Identyfikator raportu', 'text'],
-                  ['periodStart', 'Początek okresu', 'datetime-local'],
-                  ['periodEnd', 'Koniec okresu', 'datetime-local'],
-                  ['asOf', 'Stan danych na', 'datetime-local'],
+                  ['reportRunId', t('executionReports.field.runId', 'Report identifier'), 'text'],
+                  [
+                    'periodStart',
+                    t('executionReports.field.periodStart', 'Period start'),
+                    'datetime-local',
+                  ],
+                  [
+                    'periodEnd',
+                    t('executionReports.field.periodEnd', 'Period end'),
+                    'datetime-local',
+                  ],
+                  ['asOf', t('executionReports.columns.asOf', 'Data as of'), 'datetime-local'],
                 ].map(([key, label, type]) => (
                   <label key={key} className="text-xs">
                     {label}
@@ -1803,7 +1905,7 @@ export const ExecutionReportsSurface = ({
                   </label>
                 ))}
                 <label className="text-xs sm:col-span-2">
-                  Odbiorcy — jedna grupa w wierszu
+                  {t('executionReports.audienceLines', 'Audience — one group per line')}
                   <textarea
                     aria-label="ReportRun audience"
                     value={runDraft.audience}
@@ -1814,7 +1916,7 @@ export const ExecutionReportsSurface = ({
                   />
                 </label>
                 <label className="text-xs sm:col-span-2 xl:col-span-1">
-                  Zakres — jedna referencja w wierszu
+                  {t('executionReports.scopeLines', 'Scope — one reference per line')}
                   <textarea
                     aria-label="ReportRun scope refs"
                     value={runDraft.scopeRefs}
@@ -1831,7 +1933,7 @@ export const ExecutionReportsSurface = ({
                   checked={advancedRunContract}
                   onChange={(event) => setAdvancedRunContract(event.target.checked)}
                 />
-                Zaawansowany kontrakt JSON
+                {t('executionReports.advancedJson', 'Advanced JSON contract')}
               </label>
               {advancedRunContract && (
                 <textarea
@@ -1853,14 +1955,14 @@ export const ExecutionReportsSurface = ({
                 }
                 onClick={() => void create()}
               >
-                Utwórz lub odśwież raport
+                {t('executionReports.action.createOrRefresh', 'Create or refresh report')}
               </button>
               <div className="mt-3 grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
                 <button className="btn-secondary" onClick={() => void transition('VALIDATE')}>
-                  Zweryfikuj źródła
+                  {t('executionReports.action.validateSources', 'Validate sources')}
                 </button>
                 <button className="btn-secondary" onClick={() => void transition('FREEZE')}>
-                  Zamroź migawkę
+                  {t('executionReports.action.freeze', 'Freeze snapshot')}
                 </button>
                 <textarea
                   aria-label="Report approval rationale"
@@ -1872,19 +1974,19 @@ export const ExecutionReportsSurface = ({
                   className="btn-secondary"
                   onClick={() => void transition('DECIDE', 'APPROVED')}
                 >
-                  Zatwierdź niezależnie
+                  {t('executionReports.action.approve', 'Approve independently')}
                 </button>
                 <button
                   className="btn-secondary"
                   onClick={() => void transition('DECIDE', 'RETURNED')}
                 >
-                  Zwróć raport
+                  {t('executionReports.action.return', 'Return report')}
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {Object.keys(distribution).map((k) => (
                   <label key={k} className="min-w-0 text-xs">
-                    {distributionLabels[k] ?? k}
+                    {distributionLabels(t)[k] ?? k}
                     <input
                       aria-label={`Report distribution ${k}`}
                       type={k === 'distributedAt' ? 'datetime-local' : 'text'}
@@ -1900,14 +2002,14 @@ export const ExecutionReportsSurface = ({
                 disabled={selected?.source.status !== 'APPROVED'}
                 onClick={() => void transition('PUBLISH')}
               >
-                Opublikuj zatwierdzoną migawkę
+                {t('executionReports.action.publish', 'Publish the approved snapshot')}
               </button>
             </>
           )}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {Object.keys(followUp).map((k) => (
               <label key={k} className="min-w-0 text-xs">
-                {followUpLabels[k] ?? k}
+                {followUpLabels(t)[k] ?? k}
                 {k === 'executionCaseId' ? (
                   <select
                     aria-label="Report follow-up executionCaseId"
@@ -1917,7 +2019,9 @@ export const ExecutionReportsSurface = ({
                     }
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="">Wybierz realizację</option>
+                    <option value="">
+                      {t('executionReports.pickCase', 'Pick a delivery')}
+                    </option>
                     {executionCases.map((item) => (
                       <option key={item.executionCaseId} value={item.executionCaseId}>
                         {/* EXE-1 (G14 05-08, 2026-09-03): server now sends
@@ -1945,25 +2049,39 @@ export const ExecutionReportsSurface = ({
             disabled={!['APPROVED', 'PUBLISHED'].includes(selected?.source.status ?? '')}
             onClick={() => void createAndLinkFollowUp()}
           >
-            Utwórz i powiąż zadanie następcze
+            {t('executionReports.action.createFollowUp', 'Create and link a follow-up task')}
           </button>
-          {write === 'FAILED' && <p role="alert">Nie zapisano zmiany raportu.</p>}
+          {write === 'FAILED' && (
+            <p role="alert">
+              {t('executionReports.writeFailed', 'The report change was not saved.')}
+            </p>
+          )}
           {receipt && (
             <div role="status" className="rounded border border-c-success/40 p-3">
-              <strong>{reportStatusLabel(receipt.status)}</strong>
-              <p>Hash migawki: {receipt.contentHash ?? 'Jeszcze nie zamrożono'}</p>
+              <strong>{reportStatusLabel(receipt.status, t)}</strong>
+              <p>
+                {t('executionReports.field.hash', 'Snapshot hash')}:{' '}
+                {receipt.contentHash ?? t('executionReports.notFrozen', 'Not frozen yet')}
+              </p>
               {receipt.exportPackage && (
-                <p>Zamrożony pakiet pozostaje w kanonicznym raporcie i jest odtwarzalny.</p>
+                <p>
+                  {t(
+                    'executionReports.frozenPackage',
+                    'The frozen package stays in the canonical report and is reproducible.'
+                  )}
+                </p>
               )}
               {receipt.distributionReceipts?.map((d: any) => (
                 <p key={d.receiptId}>
-                  Dystrybucja {d.receiptId} · {d.audience} · hash {d.contentHash}
+                  {t('executionReports.distribution', 'Distribution')} {d.receiptId} · {d.audience}{' '}
+                  · hash {d.contentHash}
                 </p>
               ))}
               {receipt.followUpTaskRef && (
                 <p>
-                  Zadanie następcze {receipt.followUpTaskRef.taskId} v
-                  {receipt.followUpTaskRef.version} · potwierdzenie{' '}
+                  {t('executionReports.followUpTask', 'Follow-up task')}{' '}
+                  {receipt.followUpTaskRef.taskId} v{receipt.followUpTaskRef.version} ·{' '}
+                  {t('executionReports.receipt', 'receipt')}{' '}
                   {receipt.followUpTaskRef.receiptClientRequestId}
                 </p>
               )}
