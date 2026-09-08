@@ -129,11 +129,41 @@ export class PostgresInitiativeReader {
     return result.rowCount === 1;
   }
 
+  /**
+   * STRAZNIK CYKLU rodowodu projektu — [ODMROZENIE 06_EXECUTION DEC-453].
+   *
+   * POMIAR 2026-09-08 na KOPII STAGINGU (organizacja DBR77, dane wlasciciela):
+   * `GET /api/initiatives/runtime-v1/execution-cases/<id>/work` dla realizacji
+   * `a3e05d4a-…--acceptance--execution-case` NIE ODPOWIADAL WCALE (curl -m 45:
+   * `http=000 t=45.0`), a `pg_stat_activity` pokazywal w kolko TO SAMO zapytanie
+   * `SELECT payload_json FROM ie_aggregate_state …`. Proces API po 25 takich
+   * porzuconych wywolaniach trzymal ~30 % CPU i rosl o ~0,5 MB/s (987 → 1029 MB
+   * w 75 s) — czyli kazde wejscie w zakladke Praca/Zasoby zostawialo w serwerze
+   * nieskonczona petle, ktorej przerwanie polaczenia przez przegladarke NIE
+   * zatrzymuje.
+   *
+   * PRZYCZYNA: rodowod schodzil `execution_case → initiativeId → initiative`,
+   * a KAZDY agregat `initiative` w tej bazie ma w `payload_json.initiativeId`
+   * WLASNE id (16/16 wierszy sprawdzone). Galaz `if (payload.initiativeId)`
+   * nizej wolala wiec sama siebie z tymi samymi argumentami — bez konca.
+   * 15 z 16 inicjatyw ratowal wczesniejszy `return [payload.projectId]`;
+   * inicjatywa akceptacyjna DBR77 `projectId` NIE MA, wiec jako jedyna
+   * wpadala w petle. Dokladnie dlatego „na danych testowych dzialalo".
+   *
+   * KONTRAKT: kazda para (typ, id) odwiedzana jest CO NAJWYZEJ RAZ w jednym
+   * przejsciu. Powrot do juz odwiedzonego wezla (w tym do samego siebie)
+   * konczy galaz pustym rodowodem — czyli tak, jak konczy sie ona dzis dla
+   * agregatu bez `projectId`. Zaden rodowod bez cyklu nie zmienia wyniku.
+   */
   async resolveProjectIdsForAggregate(
     organizationId: string,
     aggregateType: string,
-    aggregateId: string
+    aggregateId: string,
+    visited: Set<string> = new Set()
   ): Promise<string[]> {
+    const node = `${aggregateType}|${aggregateId}`;
+    if (visited.has(node)) return [];
+    visited.add(node);
     const row = await this.pool.query<{ payload_json: Record<string, any> }>(
       `SELECT payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type=$2 AND aggregate_id=$3`,
       [organizationId, aggregateType, aggregateId]
@@ -152,29 +182,38 @@ export class PostgresInitiativeReader {
       return this.resolveProjectIdsForAggregate(
         organizationId,
         'report_definition',
-        payload.definitionRef?.definitionId
+        payload.definitionRef?.definitionId,
+        visited
       );
     if (payload.executionCaseId && aggregateType !== 'execution_case')
       return this.resolveProjectIdsForAggregate(
         organizationId,
         'execution_case',
-        payload.executionCaseId
+        payload.executionCaseId,
+        visited
       );
     if (payload.initiativeId)
-      return this.resolveProjectIdsForAggregate(organizationId, 'initiative', payload.initiativeId);
+      return this.resolveProjectIdsForAggregate(
+        organizationId,
+        'initiative',
+        payload.initiativeId,
+        visited
+      );
     if (aggregateType === 'material_change') {
       const target = payload.target;
       if (target?.initiativeId)
         return this.resolveProjectIdsForAggregate(
           organizationId,
           'initiative',
-          target.initiativeId
+          target.initiativeId,
+          visited
         );
       if (target?.aggregateType && target?.aggregateId)
         return this.resolveProjectIdsForAggregate(
           organizationId,
           target.aggregateType,
-          target.aggregateId
+          target.aggregateId,
+          visited
         );
     }
     if (aggregateType === 'plan_scenario')
@@ -182,14 +221,16 @@ export class PostgresInitiativeReader {
         ? this.resolveProjectIdsForAggregate(
             organizationId,
             'portfolio_scenario',
-            payload.portfolioScenarioId
+            payload.portfolioScenarioId,
+            visited
           )
         : [];
     if (aggregateType === 'capacity_scenario')
       return this.resolveProjectIdsForAggregate(
         organizationId,
         'plan_scenario',
-        payload.planScenarioId
+        payload.planScenarioId,
+        visited
       );
     if (aggregateType === 'portfolio_scenario')
       return typeof payload.scope?.portfolioId === 'string' ? [payload.scope.portfolioId] : [];
@@ -197,10 +238,16 @@ export class PostgresInitiativeReader {
       return this.resolveProjectIdsForAggregate(
         organizationId,
         'results_acceptance',
-        payload.resultsCaseRef?.resultsCaseId
+        payload.resultsCaseRef?.resultsCaseId,
+        visited
       );
     if (aggregateType === 'archive_manifest')
-      return this.resolveProjectIdsForAggregate(organizationId, 'initiative', payload.initiativeId);
+      return this.resolveProjectIdsForAggregate(
+        organizationId,
+        'initiative',
+        payload.initiativeId,
+        visited
+      );
     return [];
   }
 
