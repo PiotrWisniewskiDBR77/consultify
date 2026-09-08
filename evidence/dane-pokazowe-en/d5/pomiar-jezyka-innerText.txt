@@ -1,0 +1,82 @@
+Pomiar jezyka na renderowanym innerText — organizacja northwind (D5), 2026-09-08T09:53:26.832Z
+Regula: dane pokazowe MUSZA byc po angielsku. Diakrytyki spoza danych = etykiety interfejsu (PL) — dlug programu JEZYK, zgloszony jako STOP.
+
+=== 01-wyniki-kpi-lista-owner-light (http://127.0.0.1:3205/results/kpi) ===
+Wyniki > KPI — 8 definicji Northwind, konto OWNER
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 01c-wyniki-kpi-raport-otwarty-light (http://127.0.0.1:3205/results/kpi/scorecards/dc5e6424-d893-42d2-bdfc-4d7e2e5d5ba1) ===
+Raport KPI otwarty — tabela 8 miernikow Northwind
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 02-wyniki-kpi-karta-oee-light (http://127.0.0.1:3205/results/kpi/d5f2f341-e040-40d9-9087-5bdf397a81e2) ===
+Karta KPI „OEE — Line 3" z 6 pomiarami i trendem
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 02b-wyniki-kpi-karta-scrap-light (http://127.0.0.1:3205/results/kpi/c028f7f9-eb8b-4ef6-81a7-4c580906bf52) ===
+Karta KPI „Scrap Rate" — mierniki niżej-lepiej
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 03-wyniki-okr-lista-owner-light (http://127.0.0.1:3205/results/okr) ===
+Wyniki > OKR — zestaw firmowy Q3 FY2026
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 03b-wyniki-okr-raport-light (http://127.0.0.1:3205/results/okr/497c9b33-2cf4-42d0-8818-61b41246ac0f) ===
+Raport OKR — 3 cele i 6 kluczowych wynikow
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 04-wyniki-roi-lista-owner-light (http://127.0.0.1:3205/results/roi) ===
+Wyniki > ROI — przypadek MES Rollout Line 3
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 04b-wyniki-roi-karta-light (http://127.0.0.1:3205/results/roi/6522faae-326c-4053-9085-65e1bd7dd203) ===
+Karta ROI — zalozenia, koszty, korzysci, wynik przebiegu
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 05-finanse-sprawozdania-owner-light (http://127.0.0.1:3205/finance?tab=statements) ===
+Finanse > Sprawozdania — paczka 4 kwartalow GBP, konto OWNER
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 06-finanse-budzet-owner-light (http://127.0.0.1:3205/finance?tab=prediction) ===
+Finanse > Prognoza/Budzety — budzet programu FY2026 z pozycjami
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 01b-wyniki-kpi-lista-owner-dark (http://127.0.0.1:3205/results/kpi) ===
+Wyniki > KPI, motyw ciemny, konto OWNER
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 05b-finanse-sprawozdania-owner-dark (http://127.0.0.1:3205/finance?tab=statements) ===
+Finanse > Sprawozdania, motyw ciemny, konto OWNER
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 07-wyniki-kpi-member-light (http://127.0.0.1:3205/interview) ===
+Wyniki > KPI z konta MEMBER (Emily Carter) — bramka OWNER/ADMIN
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 08-finanse-member-light (http://127.0.0.1:3205/chat) ===
+Finanse z konta MEMBER — BetaGate MODULE_ECONOMICS
+znakow diakrytycznych PL: 0
+slowa PL: (brak)
+
+=== 06b-finanse-budzet-pozycje-owner-light (http://127.0.0.1:3205/finance?tab=prediction, karta otwarta -> Inputs) ===
+Finanse > Prognoza > budzet otwarty — Baselines P&L z 11 liniami kanonicznymi i wartosciami (uzupelnienie brakujacego zrzutu "budzet z pozycjami")
+znakow diakrytycznych PL: 0 (weryfikacja wzrokowa zrzutu — wszystkie etykiety i wartosci po angielsku)
+slowa PL: (brak)
+
+=== 06c-finanse-budzet-inicjatywy-owner-light (http://127.0.0.1:3205/finance?tab=prediction, karta otwarta -> Initiatives (4)) ===
+Finanse > Prognoza > budzet otwarty — zakladka Initiatives, 4 powiazane inicjatywy IN_EXECUTION (MES Rollout Line 3, Predictive Maintenance for CNC Line, Warehouse Automation Pilot, Skills Matrix & Upskilling)
+znakow diakrytycznych PL: 0 (weryfikacja wzrokowa zrzutu — wszystkie etykiety po angielsku)
+slowa PL: (brak)

@@ -1,0 +1,99 @@
+Dług programu JEZYK (J8/J9) — polskie etykiety interfejsu w modułach Wyniki
+i Finanse, paczka D5 (`docs/program/DANE_POKAZOWE_EN_20260908/PLAN.md` §D5).
+Zmierzone 2026-09-08 na kopii lokalnej `consultify_kopia_d5`, organizacja
+„northwind" po angielsku. NIE dane pokazowe — to etykiety UI, twardo wpisane
+w kod frontendu, niezależne od locale konta.
+
+=== JAK ZMIERZONE ===
+14 zrzutów dowodowych D5 (`evidence/dane-pokazowe-en/d5/*.png` +
+`pomiar-jezyka-innerText.txt`, konta OWNER/MEMBER, jasny+ciemny) ma
+ZERO znaków diakrytycznych PL w renderowanym `innerText` po ustabilizowaniu
+ekranu (wystarczający `waitForTimeout`). JEDNO pierwsze podejście do zrzutu
+„01c-wyniki-kpi-raport-otwarty-light" (14s oczekiwania) złapało ekran W
+TRAKCIE ładowania — treść szkieletu + komunikat „Ładowanie trwa dłużej niż
+zwykle…". Po ponownym zrzucie (dłuższe oczekiwanie) ekran domknął się i
+komunikat zniknął. WNIOSEK: to nie usterka danych ani zrzutu — to REALNY,
+zawsze-polski string w komponencie fallbacku ładowania tras, widoczny dla
+KAŻDEGO użytkownika (każdego locale), za każdym razem, gdy chunk trasy ładuje
+się dłużej niż próg. Poniżej pełna lista miejsc znalezionych `grep`-em w
+`src/components/ResultsVNext/**`, `src/components/Finance/**` i
+`src/routes/DeferredRouteLoadingFallback.tsx` — nie założona, zweryfikowana
+w kodzie.
+
+=== J8 — TWARDO POLSKIE, BEZ WARIANTU ANGIELSKIEGO (najpoważniejsze) ===
+Te napisy nie mają angielskiej wersji w kodzie w ogóle — pokażą się po
+polsku KAŻDEMU użytkownikowi, niezależnie od jego locale:
+
+  src/routes/DeferredRouteLoadingFallback.tsx:33
+    <LoadingState template="panel" label="Ładowanie narzędzi…" />
+  src/routes/DeferredRouteLoadingFallback.tsx:36
+    Ładowanie trwa dłużej niż zwykle…
+    — TO JEST komunikat złapany na pierwszym zrzucie 01c. Globalny fallback
+      dla KAŻDEJ trasy ładowanej leniwie (lazy route), w tym /results/kpi i
+      /finance — pokazuje się zawsze, gdy chunk JS ładuje się > progu
+      wewnętrznego, bez względu na `i18nextLng`.
+    Test istniejący (ale asercja ma polski string jako oczekiwany —
+    utrwala usterkę zamiast ją łapać):
+      src/routes/__tests__/DeferredRouteLoadingFallback.test.tsx:27
+      expect(screen.getByText('Ładowanie trwa dłużej niż zwykle…')).toBeInTheDocument();
+
+  src/components/Finance/baseline/CalculationsView.tsx:208
+    Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…
+
+  src/components/Finance/Valuation/steps/ResultsStep.tsx:39      Wczytywanie wyników…
+  src/components/Finance/Valuation/steps/SourceStep.tsx:182      Wczytywanie powiązania źródła…
+  src/components/Finance/Valuation/steps/MethodsWeightsStep.tsx:63   Wczytywanie metod…
+  src/components/Finance/Valuation/steps/AdvisorStep.tsx:109      Wczytywanie wniosków…
+  src/components/Finance/Valuation/steps/SensitivityStep.tsx:119  'Wczytywanie…' : 'Wczytaj siatkę' (OBIE gałęzie po polsku)
+
+  src/components/ResultsVNext/roi/RoiCaseCreateModal.tsx:249      'Wczytywanie inicjatyw…'
+
+=== J9 — WARUNKOWO POLSKIE (zależą od `isPolish`/`t()`, ale bywają
+    trafione zanim locale się ustabilizuje — ryzyko migotania PL->EN) ===
+Te MAJĄ wariant angielski w kodzie (`t('Ładowanie…', 'Loading…')` albo
+`isPolish ? 'Wczytywanie…' : 'Loading…'`), więc przy poprawnie ustawionym
+`i18nextLng=en` powinny renderować się po angielsku — i na wszystkich 14
+zrzutach D5 renderowały się po angielsku. Ryzyko: krótkie okno przed
+ustaleniem `isPolish`/kontekstu i18n mogłoby pokazać polski wariant (nie
+zaobserwowane w tej paczce, ale ten sam kształt co J8 powyżej — zależny od
+czasu ładowania, nie od danych):
+
+  src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:672
+  src/components/ResultsVNext/roi/roiRegistryPresenters.tsx:417,434,457
+  src/components/ResultsVNext/roi/card/RoiCaseCardPage.tsx:610
+  src/components/ResultsVNext/roi/RoiCaseAssumptionsNarrative.tsx:379
+  src/components/ResultsVNext/roi/RoiCaseToolPage.tsx:120
+  src/components/ResultsVNext/okr/OkrSetDraftFormModal.tsx:290,328
+  src/components/ResultsVNext/okr/OkrCarryForwardDialog.tsx:146
+  src/components/ResultsVNext/okr/OkrCheckInRecordDialog.tsx:177,224
+  src/components/ResultsVNext/okr/OkrObjectiveCardPage.tsx:668,1125,1193
+  src/components/ResultsVNext/okr/OkrSetToolPage.tsx:110
+  src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview.tsx:366,744,1008
+  src/components/ResultsVNext/kpiTool/KpiToolPage.tsx:917,1252,1342,1427,1486,1625,1702,1752
+  src/components/ResultsVNext/kpiScorecards/kpiScorecardPresenters.tsx:333,428
+  src/components/Finance/comments/FinanceCommentsPanel.tsx:208,214 (klucz i18n 'finance.comments.loading')
+  src/components/Finance/savedViews/FinanceSavedViewsPanel.tsx:141,147 (klucz 'finance.savedViews.loading')
+  src/components/Finance/lineage/FinanceLineageNavigator.tsx:214,220 (klucz 'finance.lineage.loading')
+
+=== ZAKRES POMIARU ===
+Grep ograniczony do `src/components/ResultsVNext/**` i
+`src/components/Finance/**` (moduły tej paczki) + jeden plik globalny
+(`DeferredRouteLoadingFallback.tsx`, trafiony bezpośrednio na zrzucie).
+NIE jest to pełny audyt aplikacji — inne moduły (Execution, MyWork —
+`Wczytywanie trwa dłużej niż zwykle…` w `ExecutionResourcesSurface.tsx:765`,
+`ExecutionWorkSurface.tsx:1638`, `IdeaMapWorkspace.tsx:4550`) mają ten sam
+wzorzec i prawdopodobnie tę samą przyczynę (`DeferredRouteLoadingFallback`
+lub lokalna kopia tego samego komunikatu) — poza zakresem D5, zgłaszam jako
+sygnał, nie jako zmierzone tu.
+
+=== REKOMENDACJA (nie wykonana w tej paczce — poza zakresem seedu danych) ===
+1. `DeferredRouteLoadingFallback.tsx:33,36` — przepisać przez `t()`/i18next
+   z angielskim wariantem, tak jak większość reszty modułu Results już robi.
+   To jedyne miejsce w tej liście złapane NA ŻYWO na zrzucie dowodowym.
+2. Zaktualizować `DeferredRouteLoadingFallback.test.tsx:27`, który dziś
+   asercją UTRWALA polski string jako oczekiwany wynik — po naprawie #1 ten
+   test musi się zmienić razem z komponentem, inaczej znowu zamaskuje regres
+   (por. pamięć „Klucz istnieje ≠ przetłumaczony").
+3. Sekcja Finance/Valuation (5 miejsc) nie ma NIGDZIE wariantu angielskiego —
+   to nie jest brakujące tłumaczenie klucza i18n, to brak i18n w ogóle w tym
+   podkatalogu.
