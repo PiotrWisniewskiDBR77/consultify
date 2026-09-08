@@ -1023,7 +1023,33 @@ export const ExecutionResourcesSurface = ({
                         planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0
                       ),
                     },
-                    { id: 'tasks', label: 'Zadania', value: String(row.taskCount) },
+                    /*
+                     * [ODMROZENIE 06_EXECUTION DEC-453] POMIAR 2026-09-08,
+                     * dane DBR77: podglad Piotra Wisniewskiego pokazywal obok
+                     * siebie „Zaleglosc 341 h" oraz „Zadania 0" i „Przydzialy
+                     * kanoniczne 0" — czytane wprost: liczba wzieta znikad.
+                     * Obie zerowe liczby byly poprawne, tylko o czym INNYM:
+                     * `taskCount` to zadania POPYTU TEGO TYGODNIA
+                     * (workloadCapacityService.ts — petla popytu pomija
+                     * zadania po terminie), a przydzialy kanoniczne to zupelnie
+                     * inne zrodlo (`ie_aggregate_state`) niz zaleglosc
+                     * (tabela `tasks`). Etykieta nazywa teraz okno, ktorego
+                     * liczba dotyczy, a obok stoi liczba zadan, z ktorych ta
+                     * zaleglosc naprawde jest policzona (102 zadania Piotra).
+                     */
+                    {
+                      id: 'tasks',
+                      label: 'Zadania w tym tygodniu',
+                      value: String(row.taskCount),
+                    },
+                    {
+                      id: 'backlogTasks',
+                      label: 'Zadania zaległe',
+                      value: String(
+                        planPeople.find((person) => person.userId === row.userId)?.backlogTasks
+                          ?.length ?? 0
+                      ),
+                    },
                     {
                       id: 'allocations',
                       label: 'Przydziały kanoniczne',
