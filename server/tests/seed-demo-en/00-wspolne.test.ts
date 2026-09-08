@@ -96,9 +96,18 @@ describe('00-wspolne — guard hosta (odmowa produkcji/demo/staging i błędnego
     expect(() => sprawdzCel(OK_URL, 'innyhost')).toThrow(/nie pasuje/i);
   });
 
-  it('ODMAWIA gdy baza nie jest "consultify_kopia_d1" — nawet przy pasującym hoście', () => {
+  it('ODMAWIA gdy baza nie jest "consultify_kopia_d<numer>" — nawet przy pasującym hoście', () => {
+    // Wzorzec `consultify_kopia_d\d+` (nie literalne "d1") od paczki D6:
+    // 00-wspolne.ts jest reużywane przez WSZYSTKIE podskrypty D1-D8, każdy
+    // pracuje na własnej kopii lokalnej (`consultify_kopia_d1`…`consultify_kopia_d8`).
     const url = 'postgresql://postgres:postgres@127.0.0.1:54418/consultify_staging_kopia';
-    expect(() => sprawdzCel(url, '54418')).toThrow(/consultify_kopia_d1/);
+    expect(() => sprawdzCel(url, '54418')).toThrow(/consultify_kopia_d/);
+  });
+
+  it('przepuszcza dowolną kopię paczki "consultify_kopia_d<numer>" (D6 dzieli 00-wspolne.ts z D1, własna baza)', () => {
+    const url = 'postgresql://postgres:postgres@127.0.0.1:54418/consultify_kopia_d6';
+    expect(() => sprawdzCel(url, '54418')).not.toThrow();
+    expect(sprawdzCel(url, '54418')).toBe('127.0.0.1:54418/consultify_kopia_d6');
   });
 
   it('MUTACJA — gdyby guard porównywał tylko prefiks hosta bez segmentu bazy, złapałby staging na tym samym porcie; produkcyjna wersja tego NIE robi', () => {
