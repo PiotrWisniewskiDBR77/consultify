@@ -366,7 +366,7 @@ const TeresaModePanel: React.FC<{ mode: ArtifactRailTeresaMode }> = ({ mode }) =
         {messages.length === 0 ? (
           <p className="text-xs italic text-c-text-muted">
             {mode.emptyLabel ??
-              t('artifactRail.teresa.empty', 'Ten artefakt nie ma jeszcze rozmowy z Teresą.')}
+              t('artifactRail.teresa.empty', 'This artifact has no conversation with Teresa yet.')}
           </p>
         ) : (
           messages.map((message) =>
@@ -435,10 +435,10 @@ const TeresaModePanel: React.FC<{ mode: ArtifactRailTeresaMode }> = ({ mode }) =
             placeholder={
               canSend
                 ? t('artifactRail.teresa.placeholder', 'Napisz do Teresy…')
-                : t('artifactRail.teresa.composeUnavailable', 'Pisanie niedostępne')
+                : t('artifactRail.teresa.composeUnavailable', 'Composing unavailable')
             }
             title={canSend ? undefined : mode.composeDisabledReason}
-            aria-label={t('artifactRail.teresa.composeLabel', 'Wiadomość do Teresy')}
+            aria-label={t('artifactRail.teresa.composeLabel', 'Message to Teresa')}
             className="min-h-[20px] flex-1 resize-none bg-transparent text-xs text-c-text placeholder:text-c-text-muted focus:outline-none disabled:cursor-not-allowed"
             data-testid="artifact-rail-teresa-compose"
           />
@@ -446,7 +446,7 @@ const TeresaModePanel: React.FC<{ mode: ArtifactRailTeresaMode }> = ({ mode }) =
             type="button"
             onClick={submit}
             disabled={!canSend || draft.trim().length === 0}
-            aria-label={t('artifactRail.teresa.send', 'Wyślij')}
+            aria-label={t('artifactRail.teresa.send', 'Send')}
             title={canSend ? undefined : mode.composeDisabledReason}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-focus text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
           >

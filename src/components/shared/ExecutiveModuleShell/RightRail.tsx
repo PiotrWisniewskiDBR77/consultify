@@ -198,7 +198,7 @@ export const RightRail: React.FC<RightRailProps> = ({
     <aside
       className="hidden sm:flex flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
-      aria-label={isLeft ? t('mels.leftRailPanel', 'Panel narzędzi (lewy)') : t('mels.rightRailPanel', 'Panel narzędzi (prawy)')}
+      aria-label={isLeft ? t('mels.leftRailPanel', 'Tool panel (left)') : t('mels.rightRailPanel', 'Tool panel (right)')}
       data-testid={testId ?? 'mels-right-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}
       data-side={side}

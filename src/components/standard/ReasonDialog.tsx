@@ -98,7 +98,7 @@ export const ReasonDialog: React.FC<ReasonDialogProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            aria-label={t('common.close', 'Zamknij')}
+            aria-label={t('common.close', 'Close')}
             className="p-1.5 rounded-md text-c-text-muted hover:bg-c-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={16} />
@@ -106,7 +106,7 @@ export const ReasonDialog: React.FC<ReasonDialogProps> = ({
         </div>
         <div className="px-4 py-4 space-y-2">
           <label htmlFor={inputId} className="block text-xs font-medium text-c-text-secondary">
-            {label ?? t('common.reasonRequired', 'Powód (wymagany)')}
+            {label ?? t('common.reasonRequired', 'Reason (required)')}
           </label>
           <textarea
             id={inputId}
@@ -132,7 +132,7 @@ export const ReasonDialog: React.FC<ReasonDialogProps> = ({
             onClick={onCancel}
             className="inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-xs font-medium text-c-text-secondary hover:bg-c-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {t('common.cancel', 'Anuluj')}
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             type="button"

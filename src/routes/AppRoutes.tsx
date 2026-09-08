@@ -1497,12 +1497,12 @@ export const AppRoutes: React.FC = () => {
                     // login form gave no explanation for why the user was bounced.
                     const reason = new URLSearchParams(location.search).get('reason');
                     if (reason === 'session_expired') {
-                      return t('auth.sessionExpiredMessage', 'Sesja wygasła. Zaloguj się ponownie.');
+                      return t('auth.sessionExpiredMessage', 'Your session has expired. Please sign in again.');
                     }
                     if (reason === 'password_reset') {
                       return t(
                         'auth.passwordResetMessage',
-                        'Hasło zmienione. Zaloguj się nowym hasłem.'
+                        'Password changed. Sign in with your new password.'
                       );
                     }
                     return undefined;
@@ -3945,7 +3945,7 @@ export const AppRoutes: React.FC = () => {
           path="*"
           element={
             currentUser?.isAuthenticated ? (
-              <MainLayout breadcrumbs={breadcrumbs || [t('notFoundPage.title', 'Nie ma takiej strony')]}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('notFoundPage.title', 'This page does not exist')]}>
                 <NotFoundPage />
               </MainLayout>
             ) : (

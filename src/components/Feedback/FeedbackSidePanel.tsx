@@ -321,7 +321,7 @@ export const FeedbackSidePanel: React.FC = () => {
       try {
         if (!file.type?.startsWith('image/')) {
           toast.error(
-            t('feedback.attach.notAnImage', 'Plik musi być obrazem (PNG, JPG, GIF lub WebP).')
+            t('feedback.attach.notAnImage', 'The file has to be an image (PNG, JPG, GIF or WebP).')
           );
           return;
         }
@@ -329,7 +329,7 @@ export const FeedbackSidePanel: React.FC = () => {
           toast.error(
             t(
               'feedback.attach.tooLarge',
-              'Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz.'
+              'That screenshot is too large (about 1.4 MB max). Compress it or crop the image.'
             )
           );
           return;
@@ -342,7 +342,7 @@ export const FeedbackSidePanel: React.FC = () => {
         });
         if (!dataUrl || dataUrl.length < 100) {
           toast.error(
-            t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
+            t('feedback.attach.readFailed', 'We could not read the file. Please try again.')
           );
           return;
         }
@@ -359,13 +359,13 @@ export const FeedbackSidePanel: React.FC = () => {
           height: dims.height || 0,
           fileName: fileName || (file as File).name || 'screenshot.png',
         });
-        toast.success(t('feedback.attach.uploaded', 'Screenshot dodany do zgłoszenia.'), {
+        toast.success(t('feedback.attach.uploaded', 'Screenshot added to the report.'), {
           duration: 1500,
         });
       } catch (err) {
         console.warn('[FeedbackSidePanel] loadScreenshotFromFile failed:', err);
         toast.error(
-          t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
+          t('feedback.attach.readFailed', 'We could not read the file. Please try again.')
         );
       }
     },
@@ -798,7 +798,7 @@ export const FeedbackSidePanel: React.FC = () => {
               },
               {
                 value: 'MEDIUM',
-                label: t('feedback.severity.medium', 'Średni'),
+                label: t('feedback.severity.medium', 'Medium'),
                 color: 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20',
               },
               {
@@ -948,7 +948,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {isPreparingDossier ? (
               <span className="inline-flex items-center gap-1 text-slate-600">
                 <Loader2 size={12} className="animate-spin" />
-                {t('feedback.attach.preparing', 'Przygotowuję…')}
+                {t('feedback.attach.preparing', 'Preparing…')}
               </span>
             ) : null}
           </div>
@@ -960,7 +960,7 @@ export const FeedbackSidePanel: React.FC = () => {
               className="h-3.5 w-3.5"
               disabled={!!uploadedScreenshot}
             />
-            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku (opcjonalnie)')}
+            {t('feedback.attach.screenshot', 'Attach a screenshot of the current view (optional)')}
           </label>
           <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
             <input
@@ -971,7 +971,7 @@ export const FeedbackSidePanel: React.FC = () => {
             />
             {t(
               'feedback.attach.diagnostics',
-              'Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)'
+              'Attach console logs, network errors and breadcrumbs (no form values)'
             )}
           </label>
 
@@ -986,27 +986,27 @@ export const FeedbackSidePanel: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               title={t(
                 'feedback.attach.uploadHint',
-                'Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V).'
+                'Upload your own screenshot (PNG/JPG, about 1.4 MB max) or paste an image from the clipboard (Ctrl/Cmd+V).'
               )}
             >
               <Upload size={12} />
               {uploadedScreenshot
-                ? t('feedback.attach.replace', 'Wymień screenshot')
-                : t('feedback.attach.upload', 'Wgraj własny screenshot')}
+                ? t('feedback.attach.replace', 'Replace screenshot')
+                : t('feedback.attach.upload', 'Upload your own screenshot')}
             </button>
             {uploadedScreenshot ? (
               <button
                 type="button"
                 onClick={() => setUploadedScreenshot(null)}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-danger-600 dark:text-slate-400 dark:hover:text-danger-400 transition-colors"
-                title={t('feedback.attach.remove', 'Usuń załączony screenshot')}
+                title={t('feedback.attach.remove', 'Remove the attached screenshot')}
               >
                 <X size={12} />
-                {t('feedback.attach.removeShort', 'Usuń')}
+                {t('feedback.attach.removeShort', 'Remove')}
               </button>
             ) : (
               <span className="text-[10px] text-slate-600 dark:text-slate-500">
-                {t('feedback.attach.pasteHint', 'lub wklej (Ctrl/⌘+V)')}
+                {t('feedback.attach.pasteHint', 'or paste (Ctrl/⌘+V)')}
               </span>
             )}
             <input
@@ -1049,7 +1049,7 @@ export const FeedbackSidePanel: React.FC = () => {
               <div className="px-2 py-1 text-[10px] text-slate-600">
                 {t(
                   'feedback.attach.previewHint',
-                  'Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.'
+                  'Passwords and email fields are blurred automatically. Use the data-feedback-redact attribute for anything else that is sensitive.'
                 )}
               </div>
             </div>
@@ -1130,7 +1130,7 @@ export const FeedbackSidePanel: React.FC = () => {
           {[
             {
               value: 'missing',
-              label: t('feedback.feature.categories.missing', 'Brakująca funkcja'),
+              label: t('feedback.feature.categories.missing', 'Missing feature'),
               icon: AlertTriangle,
             },
             {
@@ -1200,8 +1200,8 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <div className="flex gap-2">
           {[
-            { value: 'low', label: t('feedback.feature.impactLevels.low', 'Dobrze mieć') },
-            { value: 'medium', label: t('feedback.feature.impactLevels.medium', 'Ważne') },
+            { value: 'low', label: t('feedback.feature.impactLevels.low', 'Nice to have') },
+            { value: 'medium', label: t('feedback.feature.impactLevels.medium', 'Important') },
             { value: 'high', label: t('feedback.feature.impactLevels.high', 'Krytyczne') },
           ].map(({ value, label }) => (
             <button
@@ -1253,13 +1253,13 @@ export const FeedbackSidePanel: React.FC = () => {
       {successReference ? (
         <div className="mt-3 flex flex-col items-center gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {t('feedback.success.reference', 'Numer zgłoszenia')}
+            {t('feedback.success.reference', 'Report number')}
           </span>
           <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-navy-900 px-2.5 py-1 rounded-lg">
             #{successReference}
           </span>
           <span className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[220px]">
-            {t('feedback.success.referenceHint', 'Powiadomimy Cię tutaj, gdy zmieni się status.')}
+            {t('feedback.success.referenceHint', 'We will let you know here when the status changes.')}
           </span>
         </div>
       ) : null}
@@ -1426,7 +1426,7 @@ export const FeedbackSidePanel: React.FC = () => {
         {!showSuccess && (
           <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
             <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
-              {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
+              {t('feedback.footer', 'Sending feedback as')}{' '}
               <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>
           </div>

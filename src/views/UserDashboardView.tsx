@@ -94,11 +94,11 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
     try {
       await Api.markAllNotificationsRead();
       toast.success(
-        t('dashboard.shortcuts.allMarkedRead', 'Wszystkie powiadomienia oznaczone jako przeczytane')
+        t('dashboard.shortcuts.allMarkedRead', 'All notifications marked as read')
       );
     } catch (error) {
       console.error('Failed to mark all as read', error);
-      toast.error(t('dashboard.shortcuts.error', 'Wystąpił błąd'));
+      toast.error(t('dashboard.shortcuts.error', 'Something went wrong'));
     }
   }, [t]);
 

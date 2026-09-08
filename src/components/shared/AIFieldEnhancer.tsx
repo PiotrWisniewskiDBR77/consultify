@@ -175,27 +175,27 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         case 'NO_LLM_PROVIDER':
           return t(
             'sharedComponents.aiFieldEnhancer.errNoProvider',
-            'nie skonfigurowano dostawcy AI'
+            'no AI provider is configured'
           );
         case 'AI_BUDGET_EXHAUSTED':
-          return t('sharedComponents.aiFieldEnhancer.errBudget', 'wyczerpany budżet AI');
+          return t('sharedComponents.aiFieldEnhancer.errBudget', 'the AI budget is used up');
         case 'ACCESS_BLOCKED':
           return t(
             'sharedComponents.aiFieldEnhancer.errAccessBlocked',
-            'dostęp do AI jest zablokowany dla tej organizacji'
+            'AI access is blocked for this organization'
           );
         case 'EMPTY_LLM_RESPONSE':
         case 'EMPTY_AI_RESPONSE':
-          return t('sharedComponents.aiFieldEnhancer.errEmpty', 'AI zwróciło pustą odpowiedź');
+          return t('sharedComponents.aiFieldEnhancer.errEmpty', 'AI returned an empty response');
         case 'LLM_CALL_FAILED':
           return t(
             'sharedComponents.aiFieldEnhancer.errCallFailed',
-            'wywołanie AI nie powiodło się'
+            'the AI call failed'
           );
         default:
           return (
             String((err as Error)?.message || '').trim() ||
-            t('sharedComponents.aiFieldEnhancer.errUnavailable', 'AI jest chwilowo niedostępne')
+            t('sharedComponents.aiFieldEnhancer.errUnavailable', 'AI is temporarily unavailable')
           );
       }
     },

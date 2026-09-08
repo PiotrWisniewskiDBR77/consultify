@@ -530,9 +530,9 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   // ale poprawka domyślnej wartości naprawia wszystkie naraz,
                   // a wywołujący ze swoją etykietą dalej ją nadpisują.
                   propertyLabel={
-                    details.propertyLabel ?? t('standardPreview.property', 'Właściwość')
+                    details.propertyLabel ?? t('standardPreview.property', 'Property')
                   }
-                  valueLabel={details.valueLabel ?? t('standardPreview.value', 'Wartość')}
+                  valueLabel={details.valueLabel ?? t('standardPreview.value', 'Value')}
                 />
               ) : null}
             </PreviewDetailsSection>

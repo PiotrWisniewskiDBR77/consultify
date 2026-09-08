@@ -2477,7 +2477,8 @@
     "copyLink": "Copy link",
     "publish": "Publish",
     "loadingSlow": "This is taking longer than usual…",
-    "loadingTools": "Loading tools…"
+    "loadingTools": "Loading tools…",
+    "reasonRequired": "Reason (required)"
   },
   "superadmin": {
     "confirm": {
@@ -45673,6 +45674,18 @@
       "now": "Now — step {{index}} of {{total}}",
       "notStarted": "The process has not started yet.",
       "noCurrentStep": "No step is running."
+    }
+  },
+  "mels": {
+    "leftRailPanel": "Tool panel (left)",
+    "rightRailPanel": "Tool panel (right)"
+  },
+  "artifactRail": {
+    "teresa": {
+      "empty": "This artifact has no conversation with Teresa yet.",
+      "composeUnavailable": "Composing unavailable",
+      "composeLabel": "Message to Teresa",
+      "send": "Send"
     }
   }
 }

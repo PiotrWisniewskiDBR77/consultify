@@ -892,7 +892,8 @@
     "copyLink": "Kopiuj link",
     "publish": "Opublikuj",
     "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…",
-    "loadingTools": "Ładowanie narzędzi…"
+    "loadingTools": "Ładowanie narzędzi…",
+    "reasonRequired": "Powód (wymagany)"
   },
   "superadmin": {
     "confirm": {
@@ -48225,6 +48226,14 @@
       "now": "Teraz — krok {{index}} z {{total}}",
       "notStarted": "Proces jeszcze nie wystartował.",
       "noCurrentStep": "Brak kroku w toku."
+    }
+  },
+  "artifactRail": {
+    "teresa": {
+      "empty": "Ten artefakt nie ma jeszcze rozmowy z Teresą.",
+      "composeUnavailable": "Pisanie niedostępne",
+      "composeLabel": "Wiadomość do Teresy",
+      "send": "Wyślij"
     }
   }
 }
