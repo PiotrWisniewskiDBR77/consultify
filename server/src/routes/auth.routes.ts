@@ -30,6 +30,11 @@ import {
 } from '../services/demo/demoSignupProvisioning.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import {
+  escapeHtml,
+  renderCtaButton,
+  renderTransactionalEmailLayout,
+} from '../services/email/transactionalEmailLayout.js';
+import {
   isQuickAccessEndpointEnabled,
   QUICK_ACCESS_DISABLED_CODE,
   QUICK_ACCESS_INVALID_PIN_CODE,
@@ -126,12 +131,100 @@ const APLIX_DEFAULT_TEMPLATE_NAMES = [
   'APLIX Plant - Charlotte Leadership',
 ] as const;
 
-const buildPasswordResetEmailHtml = (resetLink: string): string => `
-  <h2>Password Reset Request</h2>
-  <p>Click the link below to reset your password. This link expires in ${authRuntimeConfig.passwordResetTtlMinutes} minutes.</p>
-  <p><a href="${resetLink}">${resetLink}</a></p>
-  <p>If you did not request this, you can safely ignore this email.</p>
-`;
+/**
+ * Resolve which language to render the password reset email in. `users.language`
+ * (server/migrations/20260726_users_language_preference.sql) is the account-level
+ * SSOT; anything other than the literal `"en"` defaults to Polish, matching the
+ * product default (Polish-first, English opt-in).
+ */
+export const resolvePasswordResetEmailLang = (userLanguage: unknown): 'pl' | 'en' =>
+  String(userLanguage || '')
+    .trim()
+    .toLowerCase() === 'en'
+    ? 'en'
+    : 'pl';
+
+export const PASSWORD_RESET_EMAIL_SUBJECT: Record<'pl' | 'en', string> = {
+  pl: 'Consultify — reset hasła',
+  en: 'Consultify — password reset',
+};
+
+/**
+ * Builds the localized HTML + plain-text password reset email. Wraps the
+ * shared table-based transactional layout (server/src/services/email/
+ * transactionalEmailLayout.ts) — see that file for why a dedicated shell was
+ * added instead of reusing the billing .hbs templates (crimson CTA there).
+ */
+export const buildPasswordResetEmail = (params: {
+  lang: 'pl' | 'en';
+  firstName?: string | null;
+  resetLink: string;
+  ttlMinutes: number;
+}): { html: string; text: string } => {
+  const { lang, firstName, resetLink, ttlMinutes } = params;
+  const trimmedName = String(firstName || '').trim();
+  const safeName = escapeHtml(trimmedName);
+
+  const copy =
+    lang === 'en'
+      ? {
+          greeting: trimmedName ? `Hi ${safeName},` : 'Hello,',
+          intro: 'We received a request to reset the password for your Consultify account.',
+          ctaLabel: 'Set a new password',
+          copyHint: "If the button doesn't work, copy this address:",
+          ttl: `This link is valid for ${ttlMinutes} minutes.`,
+          safety:
+            'If you did not request a password change, you can safely ignore this email. Your password will remain unchanged.',
+        }
+      : {
+          greeting: trimmedName ? `Cześć ${safeName},` : 'Dzień dobry,',
+          intro: 'Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta Consultify.',
+          ctaLabel: 'Ustaw nowe hasło',
+          copyHint: 'Jeśli przycisk nie działa, skopiuj adres:',
+          ttl: `Link jest ważny ${ttlMinutes} minut.`,
+          safety:
+            'Jeśli to nie Ty prosiłeś o zmianę hasła, zignoruj tę wiadomość. Twoje hasło pozostaje bez zmian.',
+        };
+
+  const safeResetLink = escapeHtml(resetLink);
+
+  const bodyHtml = `
+              <p style="margin:0 0 16px 0;">${copy.greeting}</p>
+              <p style="margin:0 0 16px 0;">${copy.intro}</p>
+              ${renderCtaButton(copy.ctaLabel, resetLink)}
+              <p style="margin:0 0 8px 0;color:#6B7280;font-size:13px;">${copy.copyHint}</p>
+              <p style="margin:0 0 16px 0;word-break:break-all;font-size:13px;"><a href="${safeResetLink}" style="color:#2563EB;">${safeResetLink}</a></p>
+              <p style="margin:0 0 16px 0;">${copy.ttl}</p>
+              <p style="margin:0;color:#6B7280;font-size:13px;">${copy.safety}</p>`;
+
+  const html = renderTransactionalEmailLayout({
+    lang,
+    title: PASSWORD_RESET_EMAIL_SUBJECT[lang],
+    bodyHtml,
+  });
+
+  const footerText =
+    lang === 'en'
+      ? 'Consultify · AI-native consulting delivery system\nThis message was sent automatically, please do not reply.'
+      : 'Consultify · AI-native system realizacji doradztwa\nTa wiadomość została wysłana automatycznie, nie odpowiadaj na nią.';
+
+  const text = [
+    copy.greeting,
+    '',
+    copy.intro,
+    '',
+    `${copy.ctaLabel}: ${resetLink}`,
+    '',
+    copy.ttl,
+    '',
+    copy.safety,
+    '',
+    '—',
+    footerText,
+  ].join('\n');
+
+  return { html, text };
+};
 
 async function assignAplixDefaultInterviews(params: {
   organizationId: string;
@@ -2518,8 +2611,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const normalizedEmail = normalizeAuthEmail(req.body?.email);
 
-    const user = await dbGet<{ id: string; email: string; status?: string }>(
-      buildCaseInsensitiveUserEmailLookupQuery('id, email, status'),
+    const user = await dbGet<{
+      id: string;
+      email: string;
+      status?: string;
+      first_name?: string | null;
+      language?: string | null;
+    }>(
+      buildCaseInsensitiveUserEmailLookupQuery('id, email, status, first_name, language'),
       [normalizedEmail]
     );
 
@@ -2548,13 +2647,21 @@ router.post(
     );
 
     const resetLink = buildPasswordResetLink(token, req);
+    const emailLang = resolvePasswordResetEmailLang(user.language);
+    const { html: resetEmailHtml, text: resetEmailText } = buildPasswordResetEmail({
+      lang: emailLang,
+      firstName: user.first_name,
+      resetLink,
+      ttlMinutes: authRuntimeConfig.passwordResetTtlMinutes,
+    });
 
     try {
       const emailService = (await import('../services/emailService.js')).default;
       const delivered = await emailService.send({
         to: user.email,
-        subject: 'Consultify — Password Reset',
-        html: buildPasswordResetEmailHtml(resetLink),
+        subject: PASSWORD_RESET_EMAIL_SUBJECT[emailLang],
+        html: resetEmailHtml,
+        text: resetEmailText,
         // Never treat a console-only / rejected send as a delivered reset link.
         requireDelivery: true,
       });

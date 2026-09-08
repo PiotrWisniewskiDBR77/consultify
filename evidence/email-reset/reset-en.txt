@@ -1,0 +1,13 @@
+Hi Jane,
+
+We received a request to reset the password for your Consultify account.
+
+Set a new password: https://demo.consultify.ai/reset-password?token=6f9c2e1a7b3d4c5e8f0a1b2c3d4e5f60
+
+This link is valid for 60 minutes.
+
+If you did not request a password change, you can safely ignore this email. Your password will remain unchanged.
+
+—
+Consultify · AI-native consulting delivery system
+This message was sent automatically, please do not reply.

@@ -16,6 +16,9 @@ import {
   renderTemplate as renderEmailTemplate,
   templateExists as emailTemplateExists,
 } from './email/emailTemplateRenderer.js';
+import { formatFromAddress } from './email/fromAddress.js';
+
+export { formatFromAddress };
 
 // ==========================================
 // TYPES
@@ -25,6 +28,8 @@ interface SendEmailOptions {
   to: string;
   subject: string;
   html?: string;
+  /** Plain-text companion body. Sent alongside `html` when a real SMTP transport is used. */
+  text?: string;
   template?: string;
   data?: Record<string, unknown>;
   /** Return false unless a configured provider acknowledges the message. */
@@ -139,7 +144,16 @@ export function setDependencies(
 export async function send(options: SendEmailOptions): Promise<boolean> {
   await initDeps();
 
-  const { to, subject, html, template, data, attachments = [], requireDelivery = false } = options;
+  const {
+    to,
+    subject,
+    html,
+    text,
+    template,
+    data,
+    attachments = [],
+    requireDelivery = false,
+  } = options;
 
   // 0. Render Handlebars .hbs template when one exists for `template`.
   //    An explicit `html` always wins (caller opted out of the template).
@@ -193,12 +207,21 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
   // configure this as EMAIL_FROM; SMTP_FROM is the historical name. When
   // neither is set, fall back to the authenticated mailbox — never to a
   // hard-coded foreign domain.
-  const smtpFrom =
+  const rawSmtpFrom =
     settings['smtp_from'] ||
     process.env.SMTP_FROM ||
     process.env.EMAIL_FROM ||
     smtpUser ||
     '"Consultify System" <system@consultify.com>';
+
+  // Recipients (and mail clients) were seeing a bare address —
+  // "hello@consultinity.com <hello@consultinity.com>" — because EMAIL_FROM is
+  // configured as a plain mailbox with no display name. If the configured
+  // value doesn't already carry a "Name <email>" / "\"Name\" <email>" form,
+  // wrap it with EMAIL_FROM_NAME (default "Consultify") WITHOUT touching the
+  // address itself — the envelope/auth mailbox must stay exactly what SMTP_*
+  // configured it to be.
+  const smtpFrom = formatFromAddress(rawSmtpFrom, process.env.EMAIL_FROM_NAME);
 
   const smtpConfig: SMTPConfig = {
     host: settings['smtp_host'] || process.env.SMTP_HOST,
@@ -230,6 +253,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
         html:
           renderedHtml ||
           `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
+        text,
         attachments,
       });
       logger.info('[EMAIL SERVICE] Sent successfully via SMTP');
