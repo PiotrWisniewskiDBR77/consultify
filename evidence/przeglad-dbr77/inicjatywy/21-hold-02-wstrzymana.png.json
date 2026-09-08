@@ -1,0 +1,8 @@
+{
+  "nazwa": "21-hold-02-wstrzymana",
+  "opis": "Po \"Wstrzymaj\" i odswiezeniu — pigulka \"Wstrzymana\"",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T04:29:13.162Z",
+  "stanBazy": "IN_EXECUTION|t"
+}

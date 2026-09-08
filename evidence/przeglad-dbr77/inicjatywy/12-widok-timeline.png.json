@@ -1,0 +1,11 @@
+{
+  "nazwa": "12-widok-timeline",
+  "opis": "Widok \"timeline\" na scope Wszystkie",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [
+    "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. IN_EXECUTION",
+    "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. IN_EXECUTION",
+    "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. IN_EXECUTION"
+  ],
+  "czas": "2026-09-08T04:19:21.331Z"
+}
