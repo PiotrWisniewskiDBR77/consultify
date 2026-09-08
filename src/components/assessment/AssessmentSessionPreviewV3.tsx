@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export type AssessmentSessionPreviewDetails = {
   id: string;
@@ -131,11 +132,11 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
       },
       {
         label: t('assessment.preview.created', 'Created'),
-        value: createdAt ? createdAt.toLocaleDateString() : '—',
+        value: formatListDate(createdAt),
       },
       {
         label: t('assessment.preview.updated', 'Updated'),
-        value: updatedAt ? updatedAt.toLocaleDateString() : '—',
+        value: formatListDate(updatedAt),
       },
     ],
     [createdAt, framework, t, progress, status, updatedAt]

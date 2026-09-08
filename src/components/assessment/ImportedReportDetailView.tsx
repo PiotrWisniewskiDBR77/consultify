@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -281,7 +282,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {data.detectedFramework} · Uploaded{' '}
-              {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : ''}
+              {data.createdAt ? formatListDate(data.createdAt) : ''}
             </p>
           </div>
         </div>

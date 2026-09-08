@@ -51,6 +51,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 type SupportedFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
 
@@ -2593,7 +2594,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </span>
                   <div className="mt-1 text-sm">
                     {assessment?.created_at
-                      ? new Date(assessment.created_at).toLocaleString()
+                      ? formatListDateTime(assessment.created_at)
                       : '—'}
                   </div>
                 </div>
@@ -2603,7 +2604,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </span>
                   <div className="mt-1 text-sm">
                     {assessment?.updated_at
-                      ? new Date(assessment.updated_at).toLocaleString()
+                      ? formatListDateTime(assessment.updated_at)
                       : '—'}
                   </div>
                 </div>

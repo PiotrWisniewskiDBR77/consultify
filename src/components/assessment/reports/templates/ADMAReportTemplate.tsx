@@ -38,6 +38,7 @@ import {
 import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
 import { ConclusionExecutiveSummary, ConclusionGapCards, FoFRoadBar } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface ADMAReportTemplateProps {
   data: ADMAAssessmentData;
@@ -169,7 +170,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
               {organizationName}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+              {assessmentDate || formatListDate(new Date())}
             </p>
           </div>
         </div>
@@ -762,7 +763,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">ADMA 2.0 Assessment • {organizationName}</p>
       </footer>
     </div>

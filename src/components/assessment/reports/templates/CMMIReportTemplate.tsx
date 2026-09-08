@@ -30,6 +30,7 @@ import {
   CMMICategoryConfig,
 } from '../../../../services/cmmiStructure';
 import { CMMIAssessmentData, CMMICategoryId } from '../../../../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface CMMIReportTemplateProps {
   data: CMMIAssessmentData;
@@ -116,7 +117,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
               {organizationName}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+              {assessmentDate || formatListDate(new Date())}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
               Model: {data.metadata?.model || 'DEV'}
@@ -479,7 +480,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">CMMI Assessment (Educational) • {organizationName}</p>
         <p className="mt-1 text-[10px]">CMMI® is a registered trademark of ISACA</p>
       </footer>

@@ -39,6 +39,7 @@ import {
 import { ADMAReportTemplate } from './reports/templates/ADMAReportTemplate';
 import { DRDReportTemplate } from './reports/templates/DRDReportTemplate';
 import { SIRIReportTemplate } from './reports/templates/SIRIReportTemplate';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface ReportContent {
   executiveSummary: string;
@@ -420,7 +421,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <span className="text-xs text-green-500 flex items-center gap-1">
                 <CheckCircle2 size={12} />
                 Zapisano{' '}
-                {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                {lastSaved.toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
             {error && <span className="text-xs text-danger-500">{error}</span>}

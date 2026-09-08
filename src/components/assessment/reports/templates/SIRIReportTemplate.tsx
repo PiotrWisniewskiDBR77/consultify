@@ -40,6 +40,7 @@ import {
 import { SIRIAssessmentData } from '../../../../types';
 import { ConclusionExecutiveSummary, ConclusionGapCards } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ============================================
 // COLOR CLASSES HELPER (Tailwind requires full class names)
@@ -228,7 +229,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
               {organizationName}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+              {assessmentDate || formatListDate(new Date())}
             </p>
           </div>
         </div>
@@ -710,7 +711,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">SIRI Assessment • {organizationName}</p>
       </footer>
     </div>

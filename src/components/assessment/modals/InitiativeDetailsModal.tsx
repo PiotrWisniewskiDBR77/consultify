@@ -35,6 +35,9 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -117,14 +120,15 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
 };
 
-const AXIS_LABELS: Record<string, string> = {
-  processes: 'Procesy',
-  digitalProducts: 'Produkty Cyfrowe',
-  businessModels: 'Modele Biznesowe',
-  dataManagement: 'Zarządzanie Danymi',
-  culture: 'Kultura',
-  cybersecurity: 'Cyberbezpieczeństwo',
-  aiMaturity: 'Dojrzałość AI',
+/** Osie DRD — klucz i18n + angielski default; polskie warianty w `pl/translation.json`. */
+const AXIS_LABELS: Record<string, { key: string; en: string }> = {
+  processes: { key: 'assessment.axisLabels.processes', en: 'Processes' },
+  digitalProducts: { key: 'assessment.axisLabels.digitalProducts', en: 'Digital Products' },
+  businessModels: { key: 'assessment.axisLabels.businessModels', en: 'Business Models' },
+  dataManagement: { key: 'assessment.axisLabels.dataManagement', en: 'Data Management' },
+  culture: { key: 'assessment.axisLabels.culture', en: 'Culture' },
+  cybersecurity: { key: 'assessment.axisLabels.cybersecurity', en: 'Cybersecurity' },
+  aiMaturity: { key: 'assessment.axisLabels.aiMaturity', en: 'AI Maturity' },
 };
 
 interface InitiativeDetailsModalProps {
@@ -147,6 +151,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   onAddToRoadmap,
   embedded = false,
 }) => {
+  const { t } = useTranslation();
   const [initiative, setInitiative] = useState<Initiative | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,11 +171,13 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           const data = await response.json();
           setInitiative(data);
         } else {
-          setError('Nie udało się pobrać szczegółów inicjatywy');
+          setError(
+            t('assessment.initiativeDetails.errors.load', 'The initiative details could not be loaded')
+          );
         }
       } catch (err) {
         console.error('[InitiativeDetailsModal] Fetch error:', err);
-        setError('Błąd połączenia');
+        setError(t('assessment.initiativeDetails.errors.connection', 'Connection error'));
       } finally {
         setLoading(false);
       }
@@ -180,9 +187,11 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   }, [initiativeId]);
 
   // Format currency
+  // K7 (program językowy): locale z KONTA przez wspólny `localeListy()`,
+  // nigdy przybite 'pl-PL' — inaczej użytkownik EN widzi polski separator.
   const formatCurrency = (value: number | null | undefined) => {
     if (value == null) return '-';
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'PLN',
       maximumFractionDigits: 0,
@@ -190,14 +199,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   };
 
   // Format date
-  const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pl-PL', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
+  const formatDate = (dateStr: string | undefined) => formatListDate(dateStr, '-');
 
   // Get status config
   const getStatusConfig = (status: string) => {
@@ -266,13 +268,17 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
               </span>
               {initiative.axis && (
                 <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted rounded-full text-xs">
-                  {AXIS_LABELS[initiative.axis] || initiative.axis}
+                  {AXIS_LABELS[initiative.axis]
+                    ? t(AXIS_LABELS[initiative.axis].key, AXIS_LABELS[initiative.axis].en)
+                    : initiative.axis}
                 </span>
               )}
             </div>
             <h2 className="text-xl font-bold text-c-text truncate">{initiative.name}</h2>
             {initiative.area && (
-              <p className="text-sm text-c-text-muted mt-1">Obszar: {initiative.area}</p>
+              <p className="text-sm text-c-text-muted mt-1">
+                {t('assessment.initiativeDetails.area', 'Area: {{area}}', { area: initiative.area })}
+              </p>
             )}
           </div>
           <button
@@ -300,7 +306,9 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           <div className="bg-c-accent-soft rounded-xl p-4 border border-c-accent dark:border-c-accent">
             <div className="flex items-center gap-2 text-c-accent dark:text-c-accent mb-1">
               <DollarSign size={16} />
-              <span className="text-xs font-medium">Wartość biznesowa</span>
+              <span className="text-xs font-medium">
+                {t('assessment.initiativeDetails.businessValue', 'Business value')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-c-accent dark:text-c-accent">
               {formatCurrency(initiative.businessValue)}
@@ -316,7 +324,9 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           <div className="bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] rounded-xl p-4 border-l-2 border-c-warning">
             <div className="flex items-center gap-2 text-c-warning mb-1">
               <Calendar size={16} />
-              <span className="text-xs font-medium">OPEX (rocznie)</span>
+              <span className="text-xs font-medium">
+                {t('assessment.initiativeDetails.opex', 'OPEX (per year)')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-c-warning">
               {formatCurrency(initiative.costOpex)}
@@ -331,7 +341,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
                   <FileText size={16} className="text-c-accent" />
-                  Opis
+                  {t('assessment.initiativeDetails.description', 'Description')}
                 </h3>
                 <p className="text-sm text-c-text-secondary bg-c-surface-raised dark:bg-c-bg rounded-lg p-4">
                   {initiative.summary}
@@ -342,7 +352,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
                   <Lightbulb size={16} className="text-c-warning" />
-                  Hipoteza
+                  {t('assessment.initiativeDetails.hypothesis', 'Hypothesis')}
                 </h3>
                 <p className="text-sm text-c-text-secondary bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] rounded-lg p-4 border-l-2 border-c-warning">
                   {initiative.hypothesis}
@@ -356,17 +366,21 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         <div>
           <h3 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
             <Calendar size={16} className="text-c-info" />
-            Harmonogram
+            {t('assessment.initiativeDetails.timeline', 'Timeline')}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-3">
-              <p className="text-xs text-c-text-muted mb-1">Planowany start</p>
+              <p className="text-xs text-c-text-muted mb-1">
+                {t('assessment.initiativeDetails.plannedStart', 'Planned start')}
+              </p>
               <p className="text-sm font-medium text-c-text">
                 {formatDate(initiative.plannedStartDate)}
               </p>
             </div>
             <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-3">
-              <p className="text-xs text-c-text-muted mb-1">Planowane zakończenie</p>
+              <p className="text-xs text-c-text-muted mb-1">
+                {t('assessment.initiativeDetails.plannedEnd', 'Planned end')}
+              </p>
               <p className="text-sm font-medium text-c-text">
                 {formatDate(initiative.plannedEndDate)}
               </p>
@@ -402,7 +416,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
               <User size={16} className="text-c-text-muted" />
-              Właściciele
+              {t('assessment.initiativeDetails.owners', 'Owners')}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               {initiative.ownerBusiness && (
@@ -446,7 +460,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-4 border border-c-border-subtle">
             <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
               <Target size={16} className="text-c-accent" />
-              Źródło
+              {t('assessment.initiativeDetails.source', 'Source')}
             </h3>
             <div className="text-sm text-c-text-secondary">
               <p>
@@ -458,8 +472,16 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
 
         {/* Stats */}
         <div className="flex items-center justify-between text-xs text-c-text-muted pt-4 border-t border-c-border-subtle">
-          <span>Utworzono: {formatDate(initiative.createdAt)}</span>
-          <span>{initiative.taskCount} zadań</span>
+          <span>
+            {t('assessment.initiativeDetails.createdAt', 'Created: {{date}}', {
+              date: formatDate(initiative.createdAt),
+            })}
+          </span>
+          <span>
+            {t('assessment.initiativeDetails.taskCount', '{{count}} tasks', {
+              count: initiative.taskCount,
+            })}
+          </span>
         </div>
       </div>
 
@@ -473,7 +495,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 className="flex items-center gap-1.5 px-3 py-2 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg text-sm font-medium transition-colors"
               >
                 <Trash2 size={16} />
-                Usuń
+                {t('assessment.initiativeDetails.delete', 'Delete')}
               </button>
             )}
           </div>
@@ -484,7 +506,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 className="flex items-center gap-1.5 px-4 py-2 bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg text-sm font-medium transition-colors"
               >
                 <Edit size={16} />
-                Edytuj
+                {t('assessment.initiativeDetails.edit', 'Edit')}
               </button>
             )}
             {onApprove && (initiative.status === 'DRAFT' || initiative.status === 'PROPOSED') && (
@@ -493,7 +515,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 className="flex items-center gap-1.5 px-4 py-2 bg-c-success hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <ThumbsUp size={16} />
-                Zatwierdź
+                {t('assessment.initiativeDetails.approve', 'Approve')}
               </button>
             )}
             {onAddToRoadmap && initiative.status === 'APPROVED' && (

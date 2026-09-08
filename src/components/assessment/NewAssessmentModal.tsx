@@ -20,6 +20,7 @@ import {
 import { Api } from '@/services/api';
 import { isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { useAppStore } from '@/store/useAppStore';
+import { localeListy } from '@/utils/listDateFormat';
 
 // Types
 export type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -187,7 +188,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
       // Auto-generate a default name
       const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
       const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', {
+      const dateStr = now.toLocaleDateString(localeListy(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric',

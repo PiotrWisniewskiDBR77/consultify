@@ -49,6 +49,7 @@ import type {
 } from '@/services/api/v8/assessment';
 import { V8AssessmentApi } from '@/services/api/v8/assessment';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface AssessmentQualityReviewPanelProps {
   assessmentId: string;
@@ -577,7 +578,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 </span>
                 <span className="text-slate-500 dark:text-slate-400">
                   {' '}
-                  · {new Date(rev.createdAt).toLocaleString()} · {rev.rationale}
+                  · {formatListDateTime(rev.createdAt)} · {rev.rationale}
                 </span>
               </li>
             ))}
@@ -596,7 +597,10 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
               Niezmienny output istnieje
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Zaakceptowano {new Date(report.acceptedAt).toLocaleString()} przez {report.acceptedBy}
+              {t('assessment.qualityReview.acceptedBy', 'Accepted {{date}} by {{who}}', {
+                date: formatListDateTime(report.acceptedAt),
+                who: report.acceptedBy,
+              })}
             </p>
           </div>
         ) : (

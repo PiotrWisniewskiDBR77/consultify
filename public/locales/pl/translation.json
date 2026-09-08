@@ -8186,7 +8186,8 @@
         "return": "Odeślij do poprawy",
         "accepted": "Zaakceptowano",
         "returned": "Odesłano"
-      }
+      },
+      "acceptedBy": "Zaakceptowano {{date}} przez {{who}}"
     },
     "presentation": {
       "methodPack": "Pakiet metodyczny",
@@ -9631,7 +9632,59 @@
         "openGenerator": "Otwórz generator"
       }
     },
-    "breadcrumb": "Ocena"
+    "breadcrumb": "Ocena",
+    "transferToRoadmap": {
+      "priority": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny"
+      },
+      "priorityLabel": "Priorytet",
+      "errors": {
+        "pickQuarter": "Wybierz kwartał",
+        "transferFailed": "Nie udało się przenieść do roadmapy",
+        "connection": "Błąd połączenia"
+      },
+      "title": "Dodaj do Roadmapy",
+      "success": "Dodano do Roadmapy!",
+      "successHint": "Inicjatywa została zaplanowana",
+      "targetQuarter": "Docelowy kwartał",
+      "notes": "Notatki (opcjonalne)",
+      "notesPlaceholder": "Dodatkowe uwagi dotyczące planowania...",
+      "cancel": "Anuluj",
+      "transferring": "Przenoszę..."
+    },
+    "axisLabels": {
+      "processes": "Procesy",
+      "digitalProducts": "Produkty Cyfrowe",
+      "businessModels": "Modele Biznesowe",
+      "dataManagement": "Zarządzanie Danymi",
+      "culture": "Kultura",
+      "cybersecurity": "Cyberbezpieczeństwo",
+      "aiMaturity": "Dojrzałość AI"
+    },
+    "initiativeDetails": {
+      "errors": {
+        "load": "Nie udało się pobrać szczegółów inicjatywy",
+        "connection": "Błąd połączenia"
+      },
+      "area": "Obszar: {{area}}",
+      "businessValue": "Wartość biznesowa",
+      "opex": "OPEX (rocznie)",
+      "description": "Opis",
+      "hypothesis": "Hipoteza",
+      "timeline": "Harmonogram",
+      "plannedStart": "Planowany start",
+      "plannedEnd": "Planowane zakończenie",
+      "owners": "Właściciele",
+      "source": "Źródło",
+      "createdAt": "Utworzono: {{date}}",
+      "taskCount": "{{count}} zadań",
+      "delete": "Usuń",
+      "edit": "Edytuj",
+      "approve": "Zatwierdź"
+    }
   },
   "initiatives": {
     "fullView": {

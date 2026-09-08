@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { StandardTable, type TableColumn as StandardTableColumn } from '@/components/standard';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 // ============================================
 // Types
@@ -870,7 +871,7 @@ const AreaOrgCell: FC<{ member: TeamMember; isInitiative: boolean }> = ({
 const AddedCell: FC<{ member: TeamMember }> = ({ member }) => (
   <span className="text-xs text-slate-500 dark:text-slate-400">
     {member.assignedAt
-      ? new Date(member.assignedAt).toLocaleDateString('pl-PL', {
+      ? new Date(member.assignedAt).toLocaleDateString(localeListy(), {
           day: 'numeric',
           month: 'short',
           year: 'numeric',
@@ -1206,7 +1207,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                             assignment.assignedUserId}
                           {assignment.dueAt && (
                             <span className="ml-2">
-                              • Due: {new Date(assignment.dueAt).toLocaleDateString('pl-PL')}
+                              • Due: {formatListDate(assignment.dueAt)}
                             </span>
                           )}
                         </div>

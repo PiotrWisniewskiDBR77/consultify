@@ -46,6 +46,7 @@ import {
   DBR77ProcessAssessment,
   DBR77WorkstationAssessment,
 } from '../../../../types';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 interface DBR77ReportTemplateProps {
   data: DBR77AssessmentData;
@@ -267,7 +268,7 @@ const WorkstationPage: React.FC<{
               Szacowane oszczędności roczne
             </p>
             <p className="text-2xl font-bold text-emerald-600">
-              {(workstation.automationPotential.estimatedSavings || 0).toLocaleString('pl-PL')} PLN
+              {formatListNumber(workstation.automationPotential.estimatedSavings || 0)} PLN
             </p>
           </div>
         </div>
@@ -334,7 +335,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             {organizationName}
           </p>
           <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
-            {assessmentDate || new Date().toLocaleDateString('pl-PL')}
+            {assessmentDate || formatListDate(new Date())}
           </p>
         </div>
 
@@ -407,7 +408,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-emerald-600">
-                      {(ws.automationPotential.estimatedSavings || 0).toLocaleString()} PLN
+                      {formatListNumber(ws.automationPotential.estimatedSavings || 0)} PLN
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {ws.automationPotential.taskAutomationPercent}% automatyzacji
@@ -573,7 +574,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                 <div className="flex items-start gap-2">
                   <DollarSign className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} />
                   <span>
-                    Estimated savings: {data.summary.totalEstimatedSavings.toLocaleString()} PLN/yr
+                    Estimated savings: {formatListNumber(data.summary.totalEstimatedSavings)} PLN/yr
                   </span>
                 </div>
               )}
@@ -622,7 +623,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-200 dark:border-navy-700 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-        <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+        <p>Raport wygenerowany przez Consultify • {formatListDate(new Date())}</p>
         <p className="mt-1">DBR77 Lean 4.0 Assessment • {organizationName}</p>
       </footer>
     </div>

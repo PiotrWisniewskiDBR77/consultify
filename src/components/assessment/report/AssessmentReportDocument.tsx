@@ -72,11 +72,12 @@ import {
 } from './drdLabels';
 import { describeMaturityPosition } from './maturityBands';
 import type { AssessmentReportData, ReportFinding } from './types';
+import { localeListy } from '@/utils/listDateFormat';
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('pl-PL', {
+    return new Intl.DateTimeFormat(localeListy(), {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -91,9 +92,11 @@ function formatDateTime(iso: string | null | undefined): string {
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('pl-PL', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-      new Date(iso)
-    );
+    return new Intl.DateTimeFormat(localeListy(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(iso));
   } catch {
     return iso;
   }

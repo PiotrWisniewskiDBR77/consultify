@@ -8798,7 +8798,8 @@
         "return": "Send back for correction",
         "accepted": "Accepted",
         "returned": "Sent back"
-      }
+      },
+      "acceptedBy": "Accepted {{date}} by {{who}}"
     },
     "presentation": {
       "methodPack": "Method pack",
@@ -10227,7 +10228,59 @@
         "openGenerator": "Open generator"
       }
     },
-    "breadcrumb": "Assessment"
+    "breadcrumb": "Assessment",
+    "transferToRoadmap": {
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "priorityLabel": "Priority",
+      "errors": {
+        "pickQuarter": "Pick a quarter",
+        "transferFailed": "The transfer to the roadmap failed",
+        "connection": "Connection error"
+      },
+      "title": "Add to the roadmap",
+      "success": "Added to the roadmap!",
+      "successHint": "The initiative has been scheduled",
+      "targetQuarter": "Target quarter",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Additional planning remarks…",
+      "cancel": "Cancel",
+      "transferring": "Transferring…"
+    },
+    "axisLabels": {
+      "processes": "Processes",
+      "digitalProducts": "Digital Products",
+      "businessModels": "Business Models",
+      "dataManagement": "Data Management",
+      "culture": "Culture",
+      "cybersecurity": "Cybersecurity",
+      "aiMaturity": "AI Maturity"
+    },
+    "initiativeDetails": {
+      "errors": {
+        "load": "The initiative details could not be loaded",
+        "connection": "Connection error"
+      },
+      "area": "Area: {{area}}",
+      "businessValue": "Business value",
+      "opex": "OPEX (per year)",
+      "description": "Description",
+      "hypothesis": "Hypothesis",
+      "timeline": "Timeline",
+      "plannedStart": "Planned start",
+      "plannedEnd": "Planned end",
+      "owners": "Owners",
+      "source": "Source",
+      "createdAt": "Created: {{date}}",
+      "taskCount": "{{count}} tasks",
+      "delete": "Delete",
+      "edit": "Edit",
+      "approve": "Approve"
+    }
   },
   "initiatives": {
     "fullView": {

@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { EmptyState } from '../../ui/composed/EmptyState';
 import { ErrorState, LoadingState } from '../../ui/primitives';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface Version {
   version: number;
@@ -153,7 +154,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   // Format date
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('pl-PL', {
+    return date.toLocaleDateString(localeListy(), {
       day: 'numeric',
       month: 'long',
       year: 'numeric',

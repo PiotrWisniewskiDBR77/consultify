@@ -24,6 +24,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { localeListy } from '@/utils/listDateFormat';
 
 // ==========================================
 // TYPES
@@ -157,7 +158,8 @@ function formatTimestamp(ts: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays} days ago`;
 
-  return date.toLocaleDateString('en-US', {
+  // K7: locale z konta (localeListy), nigdy przybite 'en-US'.
+  return date.toLocaleDateString(localeListy(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -167,7 +169,7 @@ function formatTimestamp(ts: string): string {
 
 function formatFullTimestamp(ts: string): string {
   const date = new Date(ts);
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(localeListy(), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
