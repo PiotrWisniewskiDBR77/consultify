@@ -206,4 +206,22 @@ if [ -n "$STAGED_ENV_FLAGS" ]; then
   fi
 fi
 
+# 14) Bramka spójności językowej (J0, docs/program/JEZYK_EN_PL_20260908/PLAN.md
+#     §J0) — zapadka (ratchet): liczba obcojęzycznych miejsc (K1/K1def/K2/K3a/
+#     K3aKLUCZ/K3b/K4pl/K4en/K5pl/K5en/K7) nie może wzrosnąć, ani w SUMIE, ani
+#     w ŻADNYM module — patrz check-focus-canon.sh K-41 dla uzasadnienia
+#     per-modułowego ratchetu (suma globalna chowa regresję za cudzą poprawą).
+#     Tryb --staged liczy tylko DOTKNIĘTE pliki (delta stara/nowa treść), więc
+#     jest tani nawet gdy commit nie dotyka src/server/src wcale. Odpala się
+#     zawsze (nie tylko przy zmianie .ts/.tsx), bo sam decyduje wewnątrz co
+#     realnie trzeba przeliczyć.
+if ! node scripts/i18n/pomiar-jezyka.mjs --baseline docs/program/JEZYK_EN_PL_20260908/baseline.json --staged; then
+  echo "" >&2
+  echo "  ⛔ Commit zablokowany: wzrosła liczba obcojęzycznych miejsc w interfejsie" >&2
+  echo "     (bramka J0, docs/program/JEZYK_EN_PL_20260908/J0_BRAMKA.md)." >&2
+  echo "     Napraw defekt, albo — jeśli to naprawa (spadek) — zamroź nowy baseline:" >&2
+  echo "     node scripts/i18n/pomiar-jezyka.mjs --json > docs/program/JEZYK_EN_PL_20260908/baseline.json" >&2
+  exit 1
+fi
+
 exit 0

@@ -107,6 +107,9 @@ jobs:
       - name: Canonical-16 module bindings gate (AppRoutes/menuConfig/manifest parity)
         run: npm run verify:canonical-16
 
+      - name: Language consistency ratchet gate (J0, EN/PL — docs/program/JEZYK_EN_PL_20260908/)
+        run: npm run check:jezyk:ci
+
       - name: Job duration
         if: always()
         run: |

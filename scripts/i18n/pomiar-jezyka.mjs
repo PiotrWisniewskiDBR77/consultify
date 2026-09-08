@@ -27,7 +27,14 @@
  *   node scripts/i18n/pomiar-jezyka.mjs                 # raport tekstowy per moduł
  *   node scripts/i18n/pomiar-jezyka.mjs --json          # surowe liczby (do bramki)
  *   node scripts/i18n/pomiar-jezyka.mjs --json > baseline.json
- *   node scripts/i18n/pomiar-jezyka.mjs --baseline <plik>  # RATCHET: kod 1 gdy liczba rośnie
+ *   node scripts/i18n/pomiar-jezyka.mjs --baseline <plik>  # RATCHET pełny skan: kod 1 gdy
+ *                                                          # rośnie SUMA albo KTÓRYKOLWIEK moduł
+ *   node scripts/i18n/pomiar-jezyka.mjs --baseline <plik> --staged   # RATCHET szybki (pre-commit):
+ *                                                          # liczy tylko pliki dotknięte w indeksie
+ *                                                          # gita (git diff --cached), deltę dodaje
+ *                                                          # do baseline. Spada na --baseline pełny,
+ *                                                          # gdy commit dotyka public/locales/**.json
+ *                                                          # (K1/K2/K3a/K3b zależą od całego pliku).
  *   node scripts/i18n/pomiar-jezyka.mjs --modul Initiatives   # tylko jeden moduł
  *   node scripts/i18n/pomiar-jezyka.mjs --kategoria K1        # tylko jedna kategoria
  *   node scripts/i18n/pomiar-jezyka.mjs --przyklady 20        # więcej przykładów
@@ -40,6 +47,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -282,8 +290,16 @@ const KATEGORIE = {
   K7: 'daty/liczby/waluty bez locale albo z locale na sztywno',
 };
 
+function aktualnySha() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+}
+
 const wynik = {
-  _meta: { data: new Date().toISOString(), root: ROOT },
+  _meta: { data: new Date().toISOString(), root: ROOT, sha: aktualnySha() },
   suma: Object.fromEntries(Object.keys(KATEGORIE).map((k) => [k, 0])),
   moduly: Object.fromEntries(
     MODULY.map((m) => [m, Object.fromEntries(Object.keys(KATEGORIE).map((k) => [k, 0]))]),
@@ -318,10 +334,7 @@ const DEFAULTY = new Map();
 const WZ_T_DEFAULT =
   /\bt\(\s*(["'`])([A-Za-z0-9_$]+(?:\.[A-Za-z0-9_$[\]]+)+)\1\s*,\s*(["'])((?:[^"'\\]|\\.){3,200})\3/g;
 
-function skanujDefaultyT() {
-  const pliki = [
-    ...listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)),
-  ];
+function skanujDefaultyT(pliki) {
   for (const rel of pliki) {
     const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     if (!tresc.includes('t(')) continue;
@@ -340,10 +353,44 @@ function skanujDefaultyT() {
   }
 }
 
+// --- wersje "czyste" (bez zapisu do globalnego `wynik`) — używane przez tryb
+// szybki (--staged), który liczy tylko DELTĘ starej/nowej treści dotkniętych
+// plików, bez chodzenia po całym repo. Ta sama logika regexów co wyżej,
+// żeby tryb szybki i pełny skan nigdy się nie rozjechały.
+function analizujDefaultyZawartosc(tresc, kluczeEnBazy) {
+  const w = { K1def: 0, K1defWID: 0 };
+  if (!tresc || !tresc.includes('t(')) return w;
+  WZ_T_DEFAULT.lastIndex = 0;
+  let m;
+  while ((m = WZ_T_DEFAULT.exec(tresc))) {
+    const klucz = m[2];
+    const tekst = m[4];
+    const pl = wykryjPolski(tekst);
+    if (pl) {
+      w.K1def += 1;
+      if (kluczeEnBazy && !kluczeEnBazy.has(bazaKlucza(klucz))) w.K1defWID += 1;
+    }
+  }
+  return w;
+}
+
 // ---------------------------------------------------------------------------
 // K1 / K2 / K3 — pliki tłumaczeń
 // ---------------------------------------------------------------------------
 const KLUCZE_EN = new Set();
+
+/** Jak KLUCZE_EN, ale bez chodzenia po całym repo — czyta tylko namespace'y
+ *  public/locales/en/*.json (kilka małych plików + translation.json, żadnego
+ *  katalogu src/server/src). Używane przez tryb szybki (--staged). */
+function wczytajKluczeEnSzybko() {
+  const dirEn = path.join(ROOT, 'public/locales/en');
+  const zbior = new Set();
+  for (const f of fs.readdirSync(dirEn).filter((n) => n.endsWith('.json'))) {
+    const obj = JSON.parse(fs.readFileSync(path.join(dirEn, f), 'utf8'));
+    for (const k of splaszcz(obj).keys()) zbior.add(bazaKlucza(k));
+  }
+  return zbior;
+}
 
 /** polskie defaulty, dla ktorych NIE MA klucza w EN -> widoczne na stale */
 function skanujDefaultyWidoczne() {
@@ -406,8 +453,7 @@ function skanujTlumaczenia() {
 const ATRYBUTY_TEKSTOWE = /\b(placeholder|title|label|aria-label|ariaLabel|alt|tooltip|emptyText|helperText|subtitle|heading|confirmText|cancelText|okText|description)\s*=\s*(["'])([^"'{}]{3,160})\2/g;
 const TEKST_JSX = />\s*([^<>{}\n][^<>{}]{2,160})\s*</g;
 
-function skanujJsx() {
-  const pliki = listujPliki(path.join(ROOT, 'src'), (n) => n.endsWith('.tsx'));
+function skanujJsx(pliki) {
   for (const rel of pliki) {
     const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const linie = tresc.split('\n');
@@ -436,6 +482,34 @@ function skanujJsx() {
       zapiszTekst(m.index, kandydat);
     }
   }
+}
+
+function analizujJsxZawartosc(tresc) {
+  const w = { K4pl: 0, K4en: 0 };
+  if (!tresc) return w;
+  const linie = tresc.split('\n');
+  const licz = (offset, tekst) => {
+    const nrLinii = tresc.slice(0, offset).split('\n').length;
+    const linia = linie[nrLinii - 1] || '';
+    if (/\bt\s*\(/.test(linia) && linia.indexOf(tekst.trim()) > linia.indexOf('t(')) return;
+    if (/^\s*(\/\/|\*|\/\*|import |export \* )/.test(linia)) return;
+    const pl = wykryjPolski(tekst);
+    if (pl) { w.K4pl += 1; return; }
+    const en = wykryjAngielski(tekst);
+    if (en) w.K4en += 1;
+  };
+  let m;
+  ATRYBUTY_TEKSTOWE.lastIndex = 0;
+  while ((m = ATRYBUTY_TEKSTOWE.exec(tresc))) licz(m.index, m[3]);
+  TEKST_JSX.lastIndex = 0;
+  while ((m = TEKST_JSX.exec(tresc))) {
+    const kandydat = m[1].trim();
+    if (!/[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]{3,}/.test(kandydat)) continue;
+    if (/^[A-Za-z]+\s*=/.test(kandydat)) continue;
+    if (/;|=>|\bconst\b|\blet\b|\breturn\b|\bfunction\b|useState|useRef|useMemo|&&|\|\||\?\?|===|!==/.test(kandydat)) continue;
+    licz(m.index, kandydat);
+  }
+  return w;
 }
 
 // ---------------------------------------------------------------------------
@@ -474,15 +548,16 @@ function modulSerwera(rel) {
   return WSPOLNE;
 }
 
-function skanujSerwer() {
-  // Świadome zawężenie: tylko powierzchnie, których treść realnie wychodzi
-  // odpowiedzią HTTP do przeglądarki. `services/` i `repositories/` rzucają
-  // setki błędów wewnętrznych, które bywają łapane i nigdy nie widoczne —
-  // liczenie ich zawyżałoby pomiar.
-  const katalogi = ['routes', 'middleware', 'validators', 'schemas', 'controllers'];
-  const pliki = katalogi.flatMap((k) =>
-    listujPliki(path.join(ROOT, 'server/src', k), (n) => n.endsWith('.ts')),
-  );
+/** katalogi serwera, których treść realnie wychodzi odpowiedzią HTTP do
+ *  przeglądarki. `services/` i `repositories/` rzucają setki błędów
+ *  wewnętrznych, które bywają łapane i nigdy nie widoczne — liczenie ich
+ *  zawyżałoby pomiar. Współdzielone przez pełny skan i tryb szybki. */
+const KATALOGI_SERWERA = ['routes', 'middleware', 'validators', 'schemas', 'controllers'];
+function jestKodemSerwerowymUI(rel) {
+  return new RegExp(`^server/src/(${KATALOGI_SERWERA.join('|')})/`).test(rel);
+}
+
+function skanujSerwer(pliki) {
   for (const rel of pliki) {
     const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const modul = modulSerwera(rel);
@@ -502,6 +577,24 @@ function skanujSerwer() {
   }
 }
 
+function analizujSerwerZawartosc(tresc) {
+  const w = { K5pl: 0, K5en: 0 };
+  if (!tresc) return w;
+  for (const wz of WZORCE_SERWERA) {
+    wz.lastIndex = 0;
+    let m;
+    while ((m = wz.exec(tresc))) {
+      const tekst = m[2];
+      if (/^[A-Z0-9_.:-]+$/.test(tekst)) continue;
+      const pl = wykryjPolski(tekst);
+      if (pl) { w.K5pl += 1; continue; }
+      const en = wykryjAngielski(tekst);
+      if (en) w.K5en += 1;
+    }
+  }
+  return w;
+}
+
 // ---------------------------------------------------------------------------
 // K7 — daty/liczby/waluty
 // ---------------------------------------------------------------------------
@@ -514,11 +607,7 @@ const WZORCE_DATY = [
   [/new Intl\.(?:DateTimeFormat|NumberFormat)\(\s*(["'])(en-US|en-GB|pl-PL|de-DE)\1/g, 'Intl z locale na sztywno'],
 ];
 
-function skanujDaty() {
-  const pliki = [
-    ...listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)),
-    ...listujPliki(path.join(ROOT, 'server/src'), (n) => /\.(ts|tsx)$/.test(n)),
-  ];
+function skanujDaty(pliki) {
   for (const rel of pliki) {
     const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const modul = rel.startsWith('src/') ? modulZeSciezki(rel) : WSPOLNE;
@@ -531,6 +620,16 @@ function skanujDaty() {
       }
     }
   }
+}
+
+function analizujDatyZawartosc(tresc) {
+  let n = 0;
+  if (!tresc) return { K7: 0 };
+  for (const [wz] of WZORCE_DATY) {
+    wz.lastIndex = 0;
+    while (wz.exec(tresc)) n += 1;
+  }
+  return { K7: n };
 }
 
 // ---------------------------------------------------------------------------
@@ -578,54 +677,254 @@ function raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria) {
 }
 
 // ---------------------------------------------------------------------------
-// main
+// bramka (RATCHET) — wspólne porównanie z baseline, per SUMA i per MODUŁ.
+// Per-moduł jest tu, bo bramka global-only chowa regresję jednego modułu za
+// niezwiązaną poprawą gdzieś indziej (dokładnie klasa błędu K-41 opisana w
+// scripts/check-focus-canon.sh — "bezpiecznik nagradza defekt").
 // ---------------------------------------------------------------------------
-const argv = process.argv.slice(2);
-function arg(nazwa, domyslna = null) {
-  const i = argv.indexOf(nazwa);
-  return i >= 0 ? argv[i + 1] : domyslna;
-}
-const chceJson = argv.includes('--json');
-const baseline = arg('--baseline');
-const limitPrzykladow = Number(arg('--przyklady', '3'));
-const filtrModul = arg('--modul');
-const filtrKategoria = arg('--kategoria');
-
-skanujDefaultyT();
-skanujTlumaczenia();
-skanujDefaultyWidoczne();
-skanujJsx();
-skanujSerwer();
-skanujDaty();
-
-// przykłady przycinamy do 25 na kategorię w JSON, żeby plik bramki był mały
-for (const k of Object.keys(wynik.przyklady)) wynik.przyklady[k] = wynik.przyklady[k].slice(0, 25);
-wynik.plikiTop = Object.fromEntries(Object.entries(wynik.plikiTop).sort((a, b) => b[1] - a[1]).slice(0, 30));
-
-if (baseline) {
-  if (!fs.existsSync(baseline)) {
-    console.error(`BRAK PLIKU BAZOWEGO: ${baseline}. Wygeneruj: node scripts/i18n/pomiar-jezyka.mjs --json > ${baseline}`);
-    process.exit(2);
-  }
-  const bazowy = JSON.parse(fs.readFileSync(baseline, 'utf8'));
+function porownajZBaseline(bazowy, sumaAktualna, modulyAktualne) {
   const wzrosty = [];
   for (const k of Object.keys(KATEGORIE)) {
     const przed = bazowy.suma?.[k] ?? 0;
-    const teraz = wynik.suma[k];
-    if (teraz > przed) wzrosty.push(`${k}: ${przed} -> ${teraz} (+${teraz - przed})`);
+    const teraz = sumaAktualna[k] ?? 0;
+    if (teraz > przed) wzrosty.push(`SUMA ${k}: ${przed} -> ${teraz} (+${teraz - przed})`);
   }
+  const wszystkieModuly = new Set([
+    ...Object.keys(bazowy.moduly || {}),
+    ...Object.keys(modulyAktualne || {}),
+  ]);
+  for (const modul of wszystkieModuly) {
+    for (const k of Object.keys(KATEGORIE)) {
+      const przed = bazowy.moduly?.[modul]?.[k] ?? 0;
+      const teraz = modulyAktualne?.[modul]?.[k] ?? 0;
+      if (teraz > przed) wzrosty.push(`${modul} / ${k}: ${przed} -> ${teraz} (+${teraz - przed})`);
+    }
+  }
+  return wzrosty;
+}
+
+function raportujWzrosty(wzrosty) {
+  console.error('BRAMKA JĘZYKOWA — LICZBA OBCOJĘZYCZNYCH MIEJSC WZROSŁA:');
+  for (const w of wzrosty) console.error('  ' + w);
+  console.error('Napraw albo zaktualizuj baseline świadomie (tylko przy spadku).');
+}
+
+// ---------------------------------------------------------------------------
+// tryb szybki (--staged) — dla pre-commit. Zamiast chodzić po całym repo
+// (pełny skan: ~7-8s, za wolno na commit), liczy DELTĘ starej (git show
+// HEAD:<plik>) i nowej (working tree) treści WYŁĄCZNIE dla plików dotkniętych
+// w indeksie gita, i dokłada tę deltę do baseline. To jest MATEMATYCZNIE
+// dokładne (nie przybliżenie) dla kategorii K1def/K1defWID/K4pl/K4en/K5pl/
+// K5en/K7, bo każde trafienie tych kategorii siedzi w JEDNYM pliku — jeśli
+// baseline.json trafnie opisuje stan HEAD, a zmienia się tylko treść
+// dotkniętych plików, to (baseline + delta dotkniętych plików) == wynik
+// pełnego skanu, bez potrzeby go uruchamiać.
+//
+// K1/K2/K3a/K3aKLUCZ/K3b zależą od CAŁEJ zawartości public/locales/{en,pl}
+// (klucz obecny/nieobecny w całym pliku, nie w jednej linii) — gdy commit
+// dotyka tych plików, tryb szybki NIE próbuje ich różnicować i spada na
+// pełny skan (wolniejszy, ale poprawny). K3aKLUCZ ma jeszcze jedną, świadomą
+// nieprecyzję: sprawdza defaultValue tylko w DOTKNIĘTYCH plikach źródłowych,
+// nie w całym repo — omówione w J0_BRAMKA.md.
+function gitTouchedFiles() {
+  try {
+    const out = execFileSync(
+      'git',
+      ['diff', '--cached', '--name-only', '--diff-filter=ACMRD'],
+      { cwd: ROOT, encoding: 'utf8' },
+    );
+    return out.split('\n').map((s) => s.trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function gitOldContent(rel) {
+  try {
+    // stdio: plik nowy (brak w HEAD) daje "fatal: ... not in 'HEAD'" na stderr —
+    // to oczekiwane i obsłużone przez catch, więc nie ma co straszyć nim w konsoli hooka.
+    return execFileSync('git', ['show', `HEAD:${rel}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return ''; // plik nowy (nie istniał w HEAD) — stara treść jest pusta
+  }
+}
+
+function trybSzybki(baselinePath) {
+  if (!fs.existsSync(baselinePath)) {
+    console.error(`BRAK PLIKU BAZOWEGO: ${baselinePath}. Wygeneruj: node scripts/i18n/pomiar-jezyka.mjs --json > ${baselinePath}`);
+    return 2;
+  }
+  const bazowy = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+  const dotkniete = gitTouchedFiles();
+
+  const dotykaTlumaczen = dotkniete.some((f) => /^public\/locales\/(en|pl)\/.*\.json$/.test(f));
+  if (dotykaTlumaczen) {
+    console.error('BRAMKA JĘZYKOWA: commit dotyka public/locales/**.json — tryb szybki nie');
+    console.error('  potrafi bezpiecznie policzyć K1/K2/K3a/K3b z samej delty, robię pełny skan.');
+    return trybPelny(baselinePath, bazowy);
+  }
+
+  const dotknieteSrc = dotkniete.filter((f) => /^(src|server\/src)\/.*\.(ts|tsx)$/.test(f));
+  if (dotknieteSrc.length === 0) {
+    console.log('BRAMKA JĘZYKOWA (szybki tryb): OK — brak dotkniętych plików źródłowych .ts/.tsx.');
+    return 0;
+  }
+
+  const kluczeEnBazy = wczytajKluczeEnSzybko();
+  const delty = {};
+  const deltyModul = {};
+  const dodaj = (modul, kat, n) => {
+    if (!n) return;
+    delty[kat] = (delty[kat] || 0) + n;
+    deltyModul[modul] = deltyModul[modul] || {};
+    deltyModul[modul][kat] = (deltyModul[modul][kat] || 0) + n;
+  };
+
+  for (const rel of dotknieteSrc) {
+    const pelna = path.join(ROOT, rel);
+    const nowaTresc = fs.existsSync(pelna) ? fs.readFileSync(pelna, 'utf8') : '';
+    const staraTresc = gitOldContent(rel);
+
+    if (rel.startsWith('src/')) {
+      const modul = modulZeSciezki(rel);
+      const nowe = analizujDefaultyZawartosc(nowaTresc, kluczeEnBazy);
+      const stare = analizujDefaultyZawartosc(staraTresc, kluczeEnBazy);
+      dodaj(modul, 'K1def', nowe.K1def - stare.K1def);
+      dodaj(modul, 'K1defWID', nowe.K1defWID - stare.K1defWID);
+
+      if (rel.endsWith('.tsx')) {
+        const noweJsx = analizujJsxZawartosc(nowaTresc);
+        const stareJsx = analizujJsxZawartosc(staraTresc);
+        dodaj(modul, 'K4pl', noweJsx.K4pl - stareJsx.K4pl);
+        dodaj(modul, 'K4en', noweJsx.K4en - stareJsx.K4en);
+      }
+
+      const noweDaty = analizujDatyZawartosc(nowaTresc);
+      const stareDaty = analizujDatyZawartosc(staraTresc);
+      dodaj(modul, 'K7', noweDaty.K7 - stareDaty.K7);
+    } else if (jestKodemSerwerowymUI(rel)) {
+      const modul = modulSerwera(rel);
+      const noweSrv = analizujSerwerZawartosc(nowaTresc);
+      const stareSrv = analizujSerwerZawartosc(staraTresc);
+      dodaj(modul, 'K5pl', noweSrv.K5pl - stareSrv.K5pl);
+      dodaj(modul, 'K5en', noweSrv.K5en - stareSrv.K5en);
+
+      const noweDaty = analizujDatyZawartosc(nowaTresc);
+      const stareDaty = analizujDatyZawartosc(staraTresc);
+      dodaj(WSPOLNE, 'K7', noweDaty.K7 - stareDaty.K7);
+    } else {
+      // server/src poza katalogami UI (services/, repositories/...) — nie
+      // liczy się do K5 (świadome zawężenie skanera), ale K7 (daty/liczby)
+      // mierzy CAŁY server/src w pełnym skanie, więc licz to też tutaj.
+      const noweDaty = analizujDatyZawartosc(nowaTresc);
+      const stareDaty = analizujDatyZawartosc(staraTresc);
+      dodaj(WSPOLNE, 'K7', noweDaty.K7 - stareDaty.K7);
+    }
+  }
+
+  const sumaAktualna = { ...bazowy.suma };
+  for (const [k, d] of Object.entries(delty)) sumaAktualna[k] = (sumaAktualna[k] || 0) + d;
+  const modulyAktualne = JSON.parse(JSON.stringify(bazowy.moduly || {}));
+  for (const [modul, kats] of Object.entries(deltyModul)) {
+    if (!modulyAktualne[modul]) modulyAktualne[modul] = Object.fromEntries(Object.keys(KATEGORIE).map((k) => [k, 0]));
+    for (const [k, d] of Object.entries(kats)) modulyAktualne[modul][k] = (modulyAktualne[modul][k] || 0) + d;
+  }
+
+  const wzrosty = porownajZBaseline(bazowy, sumaAktualna, modulyAktualne);
   if (wzrosty.length) {
-    console.error('BRAMKA JĘZYKOWA — LICZBA OBCOJĘZYCZNYCH MIEJSC WZROSŁA:');
-    for (const w of wzrosty) console.error('  ' + w);
-    console.error('Napraw albo zaktualizuj baseline świadomie (tylko przy spadku).');
-    process.exit(1);
+    raportujWzrosty(wzrosty);
+    return 1;
+  }
+  const zmienioneKategorie = Object.entries(delty).filter(([, d]) => d !== 0);
+  console.log(
+    'BRAMKA JĘZYKOWA (szybki tryb — tylko dotknięte pliki): OK.' +
+      (zmienioneKategorie.length ? ' Zmiany: ' + zmienioneKategorie.map(([k, d]) => `${k} ${d > 0 ? '+' : ''}${d}`).join(', ') : ''),
+  );
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// tryb pełny — chodzi po całym repo (src/**, server/src/**, public/locales/**).
+// Używany zawsze w CI, i jako spadek trybu szybkiego, gdy dotknięte są pliki
+// tłumaczeń.
+// ---------------------------------------------------------------------------
+function trybPelny(baselinePath, bazowyPrzekazany, przytnijPrzykladyDo25 = true) {
+  skanujDefaultyT(listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)));
+  skanujTlumaczenia();
+  skanujDefaultyWidoczne();
+  skanujJsx(listujPliki(path.join(ROOT, 'src'), (n) => n.endsWith('.tsx')));
+  skanujSerwer(KATALOGI_SERWERA.flatMap((k) => listujPliki(path.join(ROOT, 'server/src', k), (n) => n.endsWith('.ts'))));
+  skanujDaty([
+    ...listujPliki(path.join(ROOT, 'src'), (n) => /\.(ts|tsx)$/.test(n)),
+    ...listujPliki(path.join(ROOT, 'server/src'), (n) => /\.(ts|tsx)$/.test(n)),
+  ]);
+
+  // przykłady przycinamy do 25 na kategorię TYLKO gdy wynik idzie do pliku
+  // (JSON/baseline) — żeby plik bramki był mały. Raport tekstowy (--przyklady N)
+  // ma dostać tyle, ile poprosił wywołujący (raportTekstowy i tak tnie sam).
+  if (przytnijPrzykladyDo25) {
+    for (const k of Object.keys(wynik.przyklady)) wynik.przyklady[k] = wynik.przyklady[k].slice(0, 25);
+  }
+  wynik.plikiTop = Object.fromEntries(Object.entries(wynik.plikiTop).sort((a, b) => b[1] - a[1]).slice(0, 30));
+
+  if (!baselinePath) return null; // wołający chce tylko wypełnić `wynik` (raport/--json)
+
+  const bazowy = bazowyPrzekazany || JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+  const wzrosty = porownajZBaseline(bazowy, wynik.suma, wynik.moduly);
+  if (wzrosty.length) {
+    raportujWzrosty(wzrosty);
+    return 1;
   }
   const spadki = Object.keys(KATEGORIE)
     .map((k) => [k, (bazowy.suma?.[k] ?? 0) - wynik.suma[k]])
     .filter(([, d]) => d > 0);
   console.log('BRAMKA JĘZYKOWA: OK (nic nie wzrosło).' + (spadki.length ? ' Spadki: ' + spadki.map(([k, d]) => `${k} -${d}`).join(', ') : ''));
-  process.exit(0);
+  return 0;
 }
 
-if (chceJson) console.log(JSON.stringify(wynik, null, 2));
-else console.log(raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria));
+// ---------------------------------------------------------------------------
+// main — odpala się TYLKO gdy plik jest wołany bezpośrednio z CLI (`node
+// pomiar-jezyka.mjs ...`), NIE przy `import` z testu. Bez tej strażnicy sam
+// import tego modułu (np. z pliku testowego funkcji klasyfikującej) odpalałby
+// pełny skan repo (kilka-kilkanaście sekund) i mógłby wywołać process.exit()
+// w środku importu — dlatego funkcje klasyfikujące (wykryjPolski/wykryjAngielski/
+// bazaKlucza/oczysc) są wyeksportowane osobno, do użycia bez efektów ubocznych.
+// ---------------------------------------------------------------------------
+function main() {
+  const argv = process.argv.slice(2);
+  function arg(nazwa, domyslna = null) {
+    const i = argv.indexOf(nazwa);
+    return i >= 0 ? argv[i + 1] : domyslna;
+  }
+  const chceJson = argv.includes('--json');
+  const baseline = arg('--baseline');
+  const chceStaged = argv.includes('--staged');
+  const limitPrzykladow = Number(arg('--przyklady', '3'));
+  const filtrModul = arg('--modul');
+  const filtrKategoria = arg('--kategoria');
+
+  if (baseline && chceStaged) {
+    process.exit(trybSzybki(baseline));
+  }
+
+  if (baseline) {
+    if (!fs.existsSync(baseline)) {
+      console.error(`BRAK PLIKU BAZOWEGO: ${baseline}. Wygeneruj: node scripts/i18n/pomiar-jezyka.mjs --json > ${baseline}`);
+      process.exit(2);
+    }
+    process.exit(trybPelny(baseline));
+  }
+
+  trybPelny(null, null, chceJson);
+  if (chceJson) console.log(JSON.stringify(wynik, null, 2));
+  else console.log(raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria));
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}
+
+// Eksport dla testów (scripts/i18n/__tests__/pomiar-jezyka.klasyfikacja.test.mjs)
+// — WYŁĄCZNIE czyste funkcje klasyfikujące, bez efektów ubocznych (nie liczą do
+// `wynik`, nie dotykają dysku poza odczytem, nie wołają process.exit).
+export { wykryjPolski, wykryjAngielski, bazaKlucza, oczysc, wartoOceniac };
