@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 
 interface ComplianceCheckpoint {
@@ -68,16 +69,25 @@ interface CustomComplianceTemplateEditorProps {
 
 // Built-in base templates
 const BASE_TEMPLATES = [
-  { id: 'ISO21500', name: 'ISO 21500:2021', description: 'Project Management guidance' },
+  {
+    id: 'ISO21500',
+    name: 'ISO 21500:2021',
+    descriptionKey: 'admin.ai.complianceTemplate.base.iso21500',
+  },
   {
     id: 'PMBOK7',
     name: 'PMI PMBOK® 7th Edition',
-    description: 'Project Management Body of Knowledge',
+    descriptionKey: 'admin.ai.complianceTemplate.base.pmbok7',
   },
-  { id: 'PRINCE2', name: 'PRINCE2®', description: 'Projects IN Controlled Environments' },
-  { id: 'GDPR', name: 'GDPR', description: 'General Data Protection Regulation' },
-  { id: 'SOC2', name: 'SOC 2 Type II', description: 'Service Organization Control' },
-  { id: 'CUSTOM', name: 'Blank Template', description: 'Start from scratch' },
+  { id: 'PRINCE2', name: 'PRINCE2®', descriptionKey: 'admin.ai.complianceTemplate.base.prince2' },
+  { id: 'GDPR', name: 'GDPR', descriptionKey: 'admin.ai.complianceTemplate.base.gdpr' },
+  { id: 'SOC2', name: 'SOC 2 Type II', descriptionKey: 'admin.ai.complianceTemplate.base.soc2' },
+  {
+    id: 'CUSTOM',
+    nameKey: 'admin.ai.complianceTemplate.base.customName',
+    name: 'Blank Template',
+    descriptionKey: 'admin.ai.complianceTemplate.base.customDesc',
+  },
 ];
 
 export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEditorProps> = ({
@@ -86,6 +96,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
   onSave,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [template, setTemplate] = useState<ComplianceTemplate>(
     () =>
       existingTemplate || {
@@ -139,14 +150,20 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       ISO21500: [
         {
           id: generateId(),
-          name: 'Project Governance',
-          description: 'Governance and decision-making processes',
+          name: t('admin.ai.complianceTemplate.seed.projectGovernance', 'Project Governance'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.projectGovernanceDesc',
+            'Governance and decision-making processes'
+          ),
           expanded: true,
           checkpoints: [
             {
               id: generateId(),
-              name: 'Audit Trail Enabled',
-              description: 'All AI actions are logged',
+              name: t('admin.ai.complianceTemplate.seed.auditTrail', 'Audit Trail Enabled'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.auditTrailDesc',
+                'All AI actions are logged'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
@@ -154,16 +171,22 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             },
             {
               id: generateId(),
-              name: 'Policy Defined',
-              description: 'AI policy level is configured',
+              name: t('admin.ai.complianceTemplate.seed.policyDefined', 'Policy Defined'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.policyDefinedDesc',
+                'AI policy level is configured'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Roles Configured',
-              description: 'AI roles are assigned',
+              name: t('admin.ai.complianceTemplate.seed.rolesConfigured', 'Roles Configured'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.rolesConfiguredDesc',
+                'AI roles are assigned'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
@@ -172,21 +195,30 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         },
         {
           id: generateId(),
-          name: 'Resource Management',
-          description: 'AI resource allocation and limits',
+          name: t('admin.ai.complianceTemplate.seed.resourceManagement', 'Resource Management'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.resourceManagementDesc',
+            'AI resource allocation and limits'
+          ),
           checkpoints: [
             {
               id: generateId(),
-              name: 'Usage Limits Set',
-              description: 'Token and API limits configured',
+              name: t('admin.ai.complianceTemplate.seed.usageLimits', 'Usage Limits Set'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.usageLimitsDesc',
+                'Token and API limits configured'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Budget Control Active',
-              description: 'Monthly budget is defined',
+              name: t('admin.ai.complianceTemplate.seed.budgetControl', 'Budget Control Active'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.budgetControlDesc',
+                'Monthly budget is defined'
+              ),
               required: false,
               weight: 1,
               validationType: 'automatic',
@@ -197,30 +229,42 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       GDPR: [
         {
           id: generateId(),
-          name: 'Data Protection',
-          description: 'Personal data protection measures',
+          name: t('admin.ai.complianceTemplate.seed.dataProtection', 'Data Protection'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.dataProtectionDesc',
+            'Personal data protection measures'
+          ),
           expanded: true,
           checkpoints: [
             {
               id: generateId(),
-              name: 'PII Detection',
-              description: 'PII detection is enabled',
+              name: t('admin.ai.complianceTemplate.seed.piiDetection', 'PII Detection'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.piiDetectionDesc',
+                'PII detection is enabled'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Data Retention Policy',
-              description: 'Retention periods are defined',
+              name: t('admin.ai.complianceTemplate.seed.retentionPolicy', 'Data Retention Policy'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.retentionPolicyDesc',
+                'Retention periods are defined'
+              ),
               required: true,
               weight: 3,
               validationType: 'manual',
             },
             {
               id: generateId(),
-              name: 'Consent Management',
-              description: 'User consent is obtained',
+              name: t('admin.ai.complianceTemplate.seed.consentManagement', 'Consent Management'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.consentManagementDesc',
+                'User consent is obtained'
+              ),
               required: true,
               weight: 3,
               validationType: 'manual',
@@ -229,21 +273,30 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         },
         {
           id: generateId(),
-          name: 'Rights Management',
-          description: 'Data subject rights',
+          name: t('admin.ai.complianceTemplate.seed.rightsManagement', 'Rights Management'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.rightsManagementDesc',
+            'Data subject rights'
+          ),
           checkpoints: [
             {
               id: generateId(),
-              name: 'Right to Erasure',
-              description: 'Data can be deleted on request',
+              name: t('admin.ai.complianceTemplate.seed.rightToErasure', 'Right to Erasure'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.rightToErasureDesc',
+                'Data can be deleted on request'
+              ),
               required: true,
               weight: 2,
               validationType: 'manual',
             },
             {
               id: generateId(),
-              name: 'Data Portability',
-              description: 'Data export is available',
+              name: t('admin.ai.complianceTemplate.seed.dataPortability', 'Data Portability'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.dataPortabilityDesc',
+                'Data export is available'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
@@ -254,30 +307,42 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       SOC2: [
         {
           id: generateId(),
-          name: 'Security',
-          description: 'Security controls and measures',
+          name: t('admin.ai.complianceTemplate.seed.security', 'Security'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.securityDesc',
+            'Security controls and measures'
+          ),
           expanded: true,
           checkpoints: [
             {
               id: generateId(),
-              name: 'Access Control',
-              description: 'Role-based access is enforced',
+              name: t('admin.ai.complianceTemplate.seed.accessControl', 'Access Control'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.accessControlDesc',
+                'Role-based access is enforced'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Encryption',
-              description: 'Data encryption is enabled',
+              name: t('admin.ai.complianceTemplate.seed.encryption', 'Encryption'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.encryptionDesc',
+                'Data encryption is enabled'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Audit Logging',
-              description: 'Security events are logged',
+              name: t('admin.ai.complianceTemplate.seed.auditLogging', 'Audit Logging'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.auditLoggingDesc',
+                'Security events are logged'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
@@ -288,22 +353,34 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       PMBOK7: [
         {
           id: generateId(),
-          name: 'Performance Monitoring',
-          description: 'AI performance measurement',
+          name: t(
+            'admin.ai.complianceTemplate.seed.performanceMonitoring',
+            'Performance Monitoring'
+          ),
+          description: t(
+            'admin.ai.complianceTemplate.seed.performanceMonitoringDesc',
+            'AI performance measurement'
+          ),
           expanded: true,
           checkpoints: [
             {
               id: generateId(),
-              name: 'Metrics Tracking',
-              description: 'Performance metrics are collected',
+              name: t('admin.ai.complianceTemplate.seed.metricsTracking', 'Metrics Tracking'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.metricsTrackingDesc',
+                'Performance metrics are collected'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Quality Validation',
-              description: 'AI output quality is checked',
+              name: t('admin.ai.complianceTemplate.seed.qualityValidation', 'Quality Validation'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.qualityValidationDesc',
+                'AI output quality is checked'
+              ),
               required: true,
               weight: 3,
               validationType: 'automatic',
@@ -314,14 +391,20 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       PRINCE2: [
         {
           id: generateId(),
-          name: 'Business Case',
-          description: 'AI value and justification',
+          name: t('admin.ai.complianceTemplate.seed.businessCase', 'Business Case'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.businessCaseDesc',
+            'AI value and justification'
+          ),
           expanded: true,
           checkpoints: [
             {
               id: generateId(),
-              name: 'ROI Tracking',
-              description: 'AI ROI is measured',
+              name: t('admin.ai.complianceTemplate.seed.roiTracking', 'ROI Tracking'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.roiTrackingDesc',
+                'AI ROI is measured'
+              ),
               required: false,
               weight: 2,
               validationType: 'manual',
@@ -330,21 +413,30 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         },
         {
           id: generateId(),
-          name: 'Change Theme',
-          description: 'Configuration and change management',
+          name: t('admin.ai.complianceTemplate.seed.changeTheme', 'Change Theme'),
+          description: t(
+            'admin.ai.complianceTemplate.seed.changeThemeDesc',
+            'Configuration and change management'
+          ),
           checkpoints: [
             {
               id: generateId(),
-              name: 'Version Control',
-              description: 'Prompt versions are tracked',
+              name: t('admin.ai.complianceTemplate.seed.versionControl', 'Version Control'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.versionControlDesc',
+                'Prompt versions are tracked'
+              ),
               required: true,
               weight: 2,
               validationType: 'automatic',
             },
             {
               id: generateId(),
-              name: 'Change Approval',
-              description: 'Changes require approval',
+              name: t('admin.ai.complianceTemplate.seed.changeApproval', 'Change Approval'),
+              description: t(
+                'admin.ai.complianceTemplate.seed.changeApprovalDesc',
+                'Changes require approval'
+              ),
               required: false,
               weight: 1,
               validationType: 'manual',
@@ -360,7 +452,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
   const addSection = () => {
     const newSection: ComplianceSection = {
       id: generateId(),
-      name: 'New Section',
+      name: t('admin.ai.complianceTemplate.newSection', 'New section'),
       description: '',
       checkpoints: [],
       expanded: true,
@@ -403,7 +495,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
   const addCheckpoint = (sectionId: string) => {
     const newCheckpoint: ComplianceCheckpoint = {
       id: generateId(),
-      name: 'New Checkpoint',
+      name: t('admin.ai.complianceTemplate.newCheckpoint', 'New checkpoint'),
       description: '',
       required: false,
       weight: 1,
@@ -485,7 +577,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
     a.download = `compliance-template-${template.name.toLowerCase().replace(/\s+/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Template exported');
+    toast.success(t('admin.ai.complianceTemplate.toast.exported', 'Template exported'));
   };
 
   // Import template
@@ -507,9 +599,9 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           },
         });
         setShowBaseTemplateSelector(false);
-        toast.success('Template imported');
+        toast.success(t('admin.ai.complianceTemplate.toast.imported', 'Template imported'));
       } catch (err) {
-        toast.error('Invalid template file');
+        toast.error(t('admin.ai.complianceTemplate.toast.invalidFile', 'Invalid template file'));
       }
     };
     reader.readAsText(file);
@@ -518,11 +610,15 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
   // Save template
   const saveTemplate = async () => {
     if (!template.name.trim()) {
-      toast.error('Please enter a template name');
+      toast.error(
+        t('admin.ai.complianceTemplate.toast.nameRequired', 'Please enter a template name')
+      );
       return;
     }
     if (template.sections.length === 0) {
-      toast.error('Please add at least one section');
+      toast.error(
+        t('admin.ai.complianceTemplate.toast.sectionRequired', 'Please add at least one section')
+      );
       return;
     }
 
@@ -545,13 +641,15 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       });
 
       if (res.ok) {
-        toast.success('Template saved');
+        toast.success(t('admin.ai.complianceTemplate.toast.saved', 'Template saved'));
         onSave?.(template);
       } else {
-        throw new Error('Failed to save');
+        throw new Error(t('admin.ai.complianceTemplate.toast.saveFailed', 'Failed to save'));
       }
     } catch (err) {
-      toast.error('Failed to save template');
+      toast.error(
+        t('admin.ai.complianceTemplate.toast.saveTemplateFailed', 'Failed to save template')
+      );
     }
     setSaving(false);
   };
@@ -569,7 +667,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <FileText size={24} className="text-primary-400" />
-            Create Custom Compliance Template
+            {t('admin.ai.complianceTemplate.createTitle', 'Create custom compliance template')}
           </h2>
           {onClose && (
             <button
@@ -582,7 +680,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         </div>
 
         <p className="text-slate-600 dark:text-slate-500">
-          Choose a base template to start from, or create a blank template:
+          {t(
+            'admin.ai.complianceTemplate.chooseBase',
+            'Choose a base template to start from, or create a blank template:'
+          )}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -592,19 +693,23 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
               onClick={() => selectBaseTemplate(base.id)}
               className="p-6 bg-c-surface/50 border border-white/10 rounded-xl text-left hover:border-c-accent/50 hover:bg-c-accent/5 transition-all"
             >
-              <h3 className="font-semibold text-c-text mb-2">{base.name}</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>
+              <h3 className="font-semibold text-c-text mb-2">
+                {base.nameKey ? t(base.nameKey, base.name) : base.name}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-500">
+                {t(base.descriptionKey, '')}
+              </p>
             </button>
           ))}
         </div>
 
         <div className="border-t border-white/10 pt-6">
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
-            Or import an existing template:
+            {t('admin.ai.complianceTemplate.orImport', 'Or import an existing template:')}
           </p>
           <label className="inline-flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-c-text rounded-lg cursor-pointer transition-colors">
             <Upload size={16} />
-            Import JSON
+            {t('admin.ai.complianceTemplate.importJson', 'Import JSON')}
             <input type="file" accept=".json" onChange={importTemplate} className="hidden" />
           </label>
         </div>
@@ -619,11 +724,13 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         <div>
           <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <FileText size={24} className="text-primary-400" />
-            {existingTemplate ? 'Edit' : 'Create'} Compliance Template
+            {existingTemplate
+              ? t('admin.ai.complianceTemplate.editTitle', 'Edit compliance template')
+              : t('admin.ai.complianceTemplate.createTitle', 'Create custom compliance template')}
           </h2>
           {template.basedOn && (
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
-              Based on: {template.basedOn}
+              {t('admin.ai.complianceTemplate.basedOn', 'Based on')}: {template.basedOn}
             </p>
           )}
         </div>
@@ -633,7 +740,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 rounded-lg transition-colors"
           >
             <Download size={16} />
-            Export
+            {t('admin.ai.complianceTemplate.export', 'Export')}
           </button>
           <button
             onClick={saveTemplate}
@@ -641,7 +748,9 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             className="flex items-center gap-2 p-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium transition-colors disabled:opacity-50"
           >
             <Save size={16} />
-            {saving ? 'Saving...' : 'Save Template'}
+            {saving
+              ? t('common.saving', 'Saving…')
+              : t('admin.ai.complianceTemplate.save', 'Save template')}
           </button>
           {onClose && (
             <button
@@ -664,12 +773,17 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             type="text"
             value={template.name}
             onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Custom AI Governance Framework"
+            placeholder={t(
+              'admin.ai.complianceTemplate.fields.namePlaceholder',
+              'e.g. Custom AI Governance Framework'
+            )}
             className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-primary-500 outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">Version</label>
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
+            {t('admin.ai.complianceTemplate.fields.version', 'Version')}
+          </label>
           <input
             type="text"
             value={template.version}
@@ -680,12 +794,15 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
-            Description
+            {t('admin.ai.complianceTemplate.fields.description', 'Description')}
           </label>
           <textarea
             value={template.description}
             onChange={(e) => setTemplate((prev) => ({ ...prev, description: e.target.value }))}
-            placeholder="Describe the purpose and scope of this compliance framework..."
+            placeholder={t(
+              'admin.ai.complianceTemplate.fields.descriptionPlaceholder',
+              'Describe the purpose and scope of this compliance framework…'
+            )}
             rows={2}
             className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-primary-500 outline-none resize-none"
           />
@@ -714,14 +831,14 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addTag()}
-            placeholder="Add tag..."
+            placeholder={t('admin.ai.complianceTemplate.fields.tagPlaceholder', 'Add tag…')}
             className="flex-1 bg-c-surface-raised/50 border border-c-border-subtle rounded-lg px-3 py-2 text-c-text text-sm focus:border-primary-500 outline-none"
           />
           <button
             onClick={addTag}
             className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 rounded-lg text-sm transition-colors"
           >
-            Add
+            {t('admin.ai.complianceTemplate.add', 'Add')}
           </button>
         </div>
       </div>
@@ -729,17 +846,21 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Sections</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
+            {t('admin.ai.complianceTemplate.stats.sections', 'Sections')}
+          </p>
           <p className="text-2xl font-bold text-c-text">{template.sections.length}</p>
         </div>
         <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
-            Total Checkpoints
+            {t('admin.ai.complianceTemplate.stats.totalCheckpoints', 'Total checkpoints')}
           </p>
           <p className="text-2xl font-bold text-c-text">{totalCheckpoints}</p>
         </div>
         <div className="bg-c-surface/50 border border-white/10 rounded-lg p-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Required</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
+            {t('admin.ai.complianceTemplate.required', 'Required')}
+          </p>
           <p className="text-2xl font-bold text-amber-400">{requiredCheckpoints}</p>
         </div>
       </div>
@@ -747,13 +868,15 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       {/* Sections */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-c-text">Sections</h3>
+          <h3 className="text-lg font-semibold text-c-text">
+            {t('admin.ai.complianceTemplate.stats.sections', 'Sections')}
+          </h3>
           <button
             onClick={addSection}
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
-            Add Section
+            {t('admin.ai.complianceTemplate.addSection', 'Add section')}
           </button>
         </div>
 
@@ -788,7 +911,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       value={section.description}
                       onChange={(e) => updateSection(section.id, { description: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
-                      placeholder="Section description..."
+                      placeholder={t(
+                        'admin.ai.complianceTemplate.fields.sectionDescriptionPlaceholder',
+                        'Section description…'
+                      )}
                       className="block bg-transparent text-sm text-slate-600 dark:text-slate-500 mt-1 focus:outline-none focus:border-b focus:border-primary-500 w-full"
                     />
                   </div>
@@ -835,7 +961,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                               name: e.target.value,
                             })
                           }
-                          placeholder="Checkpoint name"
+                          placeholder={t(
+                            'admin.ai.complianceTemplate.fields.checkpointNamePlaceholder',
+                            'Checkpoint name'
+                          )}
                           className="bg-c-surface-raised/50 border border-c-border-subtle rounded px-2 py-1 text-c-text text-sm"
                         />
                         <input
@@ -846,7 +975,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                               description: e.target.value,
                             })
                           }
-                          placeholder="Description"
+                          placeholder={t(
+                            'admin.ai.complianceTemplate.fields.descriptionShort',
+                            'Description'
+                          )}
                           className="bg-c-surface-raised/50 border border-c-border-subtle rounded px-2 py-1 text-c-text text-sm"
                         />
                         <select
@@ -858,9 +990,15 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                           }
                           className="bg-c-surface-raised/50 border border-c-border-subtle rounded px-2 py-1 text-c-text text-sm"
                         >
-                          <option value="manual">Manual</option>
-                          <option value="automatic">Automatic</option>
-                          <option value="hybrid">Hybrid</option>
+                          <option value="manual">
+                            {t('admin.ai.complianceTemplate.validation.manual', 'Manual')}
+                          </option>
+                          <option value="automatic">
+                            {t('admin.ai.complianceTemplate.validation.automatic', 'Automatic')}
+                          </option>
+                          <option value="hybrid">
+                            {t('admin.ai.complianceTemplate.validation.hybrid', 'Hybrid')}
+                          </option>
                         </select>
                         <div className="flex items-center gap-2">
                           <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500">
@@ -874,7 +1012,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                               }
                               className="rounded bg-c-surface-raised border-slate-600"
                             />
-                            Required
+                            {t('admin.ai.complianceTemplate.required', 'Required')}
                           </label>
                           <input
                             type="number"
@@ -887,7 +1025,10 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                             min={1}
                             max={5}
                             className="w-14 bg-c-surface-raised/50 border border-c-border-subtle rounded px-2 py-1 text-c-text text-sm"
-                            title="Weight (1-5)"
+                            title={t(
+                              'admin.ai.complianceTemplate.fields.weightTitle',
+                              'Weight (1-5)'
+                            )}
                           />
                         </div>
                       </div>
@@ -906,7 +1047,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                     className="w-full py-2 border border-dashed border-c-border-subtle rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:border-primary-500 text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus size={14} />
-                    Add Checkpoint
+                    {t('admin.ai.complianceTemplate.addCheckpoint', 'Add checkpoint')}
                   </button>
                 </div>
               )}
@@ -917,7 +1058,12 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         {template.sections.length === 0 && (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             <Clipboard size={48} className="mx-auto mb-4 opacity-30" />
-            <p>No sections yet. Click "Add Section" to get started.</p>
+            <p>
+              {t(
+                'admin.ai.complianceTemplate.noSections',
+                'No sections yet. Use “Add section” to get started.'
+              )}
+            </p>
           </div>
         )}
       </div>
