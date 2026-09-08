@@ -1,0 +1,285 @@
+{
+  "base": "http://127.0.0.1:3194",
+  "rola": "member",
+  "kiedy": "2026-09-08T06:03:40.074Z",
+  "wyniki": [
+    {
+      "id": "praca",
+      "nazwa": "Praca (MEMBER)",
+      "rola": "member",
+      "msNetworkidle": 1532,
+      "msTresc": 1541,
+      "msPelny": 2407,
+      "timeout": false,
+      "liczbaWywolan": 90,
+      "wierszyWTabeli": 7,
+      "najwolniejsze": [
+        {
+          "url": "/api/v10/teresa/voice-config",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 325
+        },
+        {
+          "url": "/api/organization-context",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 256
+        },
+        {
+          "url": "/api/ai-settings/user",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 201
+        },
+        {
+          "url": "/api/v8/execution-control/budget/overspend-signals",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 99
+        },
+        {
+          "url": "/api/health",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 91
+        },
+        {
+          "url": "/api/mfa/status",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 91
+        },
+        {
+          "url": "/api/health",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 91
+        },
+        {
+          "url": "/api/organizations/current",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 91
+        }
+      ],
+      "topWzorce": [
+        {
+          "wzor": "/api/organizations/:id/members",
+          "n": 6,
+          "msSuma": 369,
+          "msMax": 77
+        },
+        {
+          "wzor": "/api/v10/teresa/voice-config",
+          "n": 1,
+          "msSuma": 325,
+          "msMax": 325
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases",
+          "n": 5,
+          "msSuma": 306,
+          "msMax": 91
+        },
+        {
+          "wzor": "/api/tasks",
+          "n": 4,
+          "msSuma": 263,
+          "msMax": 74
+        },
+        {
+          "wzor": "/api/organization-context",
+          "n": 1,
+          "msSuma": 256,
+          "msMax": 256
+        },
+        {
+          "wzor": "/api/ai-settings/user",
+          "n": 1,
+          "msSuma": 201,
+          "msMax": 201
+        },
+        {
+          "wzor": "/api/organizations/current",
+          "n": 3,
+          "msSuma": 200,
+          "msMax": 91
+        },
+        {
+          "wzor": "/api/health",
+          "n": 2,
+          "msSuma": 182,
+          "msMax": 91
+        },
+        {
+          "wzor": "/api/my-work/personal-tasks",
+          "n": 2,
+          "msSuma": 182,
+          "msMax": 91
+        },
+        {
+          "wzor": "/api/report-builder/definitions",
+          "n": 2,
+          "msSuma": 135,
+          "msMax": 74
+        },
+        {
+          "wzor": "/api/execution-control/capacity/resource-plan",
+          "n": 2,
+          "msSuma": 132,
+          "msMax": 76
+        },
+        {
+          "wzor": "/api/raid",
+          "n": 2,
+          "msSuma": 112,
+          "msMax": 65
+        }
+      ],
+      "bledy": [
+        "FAILED POST /api/analytics/web-vitals :: net::ERR_ABORTED",
+        "FAILED GET /api/health :: net::ERR_ABORTED"
+      ]
+    },
+    {
+      "id": "realizacje",
+      "nazwa": "Realizacje (MEMBER)",
+      "rola": "member",
+      "msNetworkidle": 1507,
+      "msTresc": 1517,
+      "msPelny": 2414,
+      "timeout": false,
+      "liczbaWywolan": 80,
+      "wierszyWTabeli": 8,
+      "najwolniejsze": [
+        {
+          "url": "/api/v10/teresa/voice-config",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 331
+        },
+        {
+          "url": "/api/organization-context",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 257
+        },
+        {
+          "url": "/api/v10/teresa/voice-event",
+          "metoda": "POST",
+          "status": 202,
+          "ms": 241
+        },
+        {
+          "url": "/api/ai-settings/user",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 204
+        },
+        {
+          "url": "/api/v8/execution-control/budget/overspend-signals",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 123
+        },
+        {
+          "url": "/api/v8/execution-control/capacity/timeline",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 113
+        },
+        {
+          "url": "/api/initiatives/runtime-v1/execution-cases",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 112
+        },
+        {
+          "url": "/api/execution-control/capacity/resource-plan?weeks=8",
+          "metoda": "GET",
+          "status": 200,
+          "ms": 102
+        }
+      ],
+      "topWzorce": [
+        {
+          "wzor": "/api/v10/teresa/voice-config",
+          "n": 1,
+          "msSuma": 331,
+          "msMax": 331
+        },
+        {
+          "wzor": "/api/v10/teresa/voice-event",
+          "n": 3,
+          "msSuma": 284,
+          "msMax": 241
+        },
+        {
+          "wzor": "/api/organization-context",
+          "n": 1,
+          "msSuma": 257,
+          "msMax": 257
+        },
+        {
+          "wzor": "/api/ai-settings/user",
+          "n": 1,
+          "msSuma": 204,
+          "msMax": 204
+        },
+        {
+          "wzor": "/api/organizations/current",
+          "n": 3,
+          "msSuma": 201,
+          "msMax": 93
+        },
+        {
+          "wzor": "/api/my-work/personal-tasks",
+          "n": 2,
+          "msSuma": 186,
+          "msMax": 93
+        },
+        {
+          "wzor": "/api/health",
+          "n": 2,
+          "msSuma": 184,
+          "msMax": 92
+        },
+        {
+          "wzor": "/api/execution-control/capacity/resource-plan",
+          "n": 2,
+          "msSuma": 152,
+          "msMax": 102
+        },
+        {
+          "wzor": "/api/report-builder/definitions",
+          "n": 2,
+          "msSuma": 152,
+          "msMax": 90
+        },
+        {
+          "wzor": "/api/tasks",
+          "n": 2,
+          "msSuma": 144,
+          "msMax": 90
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases",
+          "n": 2,
+          "msSuma": 139,
+          "msMax": 112
+        },
+        {
+          "wzor": "/api/v8/execution-control/budget/overspend-signals",
+          "n": 1,
+          "msSuma": 123,
+          "msMax": 123
+        }
+      ],
+      "bledy": [
+        "FAILED POST /api/analytics/web-vitals :: net::ERR_ABORTED",
+        "FAILED GET /api/health :: net::ERR_ABORTED"
+      ]
+    }
+  ]
+}

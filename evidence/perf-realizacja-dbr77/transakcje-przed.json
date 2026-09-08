@@ -1,0 +1,223 @@
+{
+  "api": "http://127.0.0.1:4174",
+  "baza": "consultify_kopia_perf",
+  "kiedy": "2026-09-08T07:12:03.095Z",
+  "wyniki": [
+    {
+      "sciezka": "/api/initiatives/runtime-v1/execution-cases",
+      "status": 200,
+      "mediana": 15,
+      "proby": [
+        127,
+        15,
+        27,
+        5,
+        15
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/management-signals",
+      "status": 200,
+      "mediana": 14,
+      "proby": [
+        19,
+        25,
+        14,
+        4,
+        13
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/interventions",
+      "status": 200,
+      "mediana": 7,
+      "proby": [
+        12,
+        6,
+        7,
+        7,
+        6
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/capacity-options",
+      "status": 200,
+      "mediana": 7,
+      "proby": [
+        7,
+        6,
+        7,
+        6,
+        11
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/report-definitions",
+      "status": 200,
+      "mediana": 6,
+      "proby": [
+        2,
+        9,
+        7,
+        6,
+        0
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/report-runs",
+      "status": 200,
+      "mediana": 8,
+      "proby": [
+        14,
+        0,
+        13,
+        8,
+        5
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work",
+      "status": 200,
+      "mediana": 8,
+      "proby": [
+        7,
+        0,
+        8,
+        13,
+        13
+      ]
+    },
+    {
+      "sciezka": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/allocations",
+      "status": 200,
+      "mediana": 12,
+      "proby": [
+        12,
+        13,
+        10,
+        12,
+        0
+      ]
+    },
+    {
+      "sciezka": "/api/v8/execution-control/manager/lanes/action-queue/problems",
+      "status": 200,
+      "mediana": 10,
+      "proby": [
+        21,
+        16,
+        9,
+        10,
+        9
+      ]
+    },
+    {
+      "sciezka": "/api/v8/execution-control/manager/lanes/blockers/problems",
+      "status": 200,
+      "mediana": 10,
+      "proby": [
+        0,
+        19,
+        9,
+        13,
+        10
+      ]
+    },
+    {
+      "sciezka": "/api/v8/execution-control/capacity/leveling-alerts",
+      "status": 200,
+      "mediana": 9,
+      "proby": [
+        2,
+        0,
+        13,
+        9,
+        15
+      ]
+    },
+    {
+      "sciezka": "/api/v8/execution-control/capacity/timeline",
+      "status": 200,
+      "mediana": 30,
+      "proby": [
+        0,
+        31,
+        30,
+        29,
+        34
+      ]
+    },
+    {
+      "sciezka": "/api/v8/execution-control/budget/overspend-signals",
+      "status": 200,
+      "mediana": 65,
+      "proby": [
+        29,
+        65,
+        68,
+        65,
+        64
+      ]
+    },
+    {
+      "sciezka": "/api/execution-control/capacity/resource-plan",
+      "status": 200,
+      "mediana": 5,
+      "proby": [
+        0,
+        70,
+        6,
+        5,
+        0
+      ]
+    },
+    {
+      "sciezka": "/api/tasks",
+      "status": 200,
+      "mediana": 5,
+      "proby": [
+        12,
+        5,
+        4,
+        5,
+        4
+      ]
+    },
+    {
+      "sciezka": "/api/raid",
+      "status": 200,
+      "mediana": 3,
+      "proby": [
+        4,
+        2,
+        4,
+        3,
+        2
+      ]
+    },
+    {
+      "sciezka": "/api/report-builder/definitions",
+      "status": 200,
+      "mediana": 4,
+      "proby": [
+        9,
+        4,
+        0,
+        6,
+        0
+      ]
+    },
+    {
+      "sciezka": "/api/organizations/current",
+      "status": 200,
+      "mediana": 8,
+      "proby": [
+        8,
+        0,
+        9,
+        0,
+        9
+      ]
+    }
+  ]
+}

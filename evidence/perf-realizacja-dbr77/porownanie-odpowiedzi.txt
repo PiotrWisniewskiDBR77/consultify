@@ -1,0 +1,13 @@
+ZGODNE: 62/64
+ROZNICE:
+  admin /api/v8/execution-control/manager/lanes/action-queue/problems  93944 -> 93944
+  admin /api/v8/execution-control/manager/lanes/risk/problems  99655 -> 99655
+
+Pelne zrzuty odpowiedzi (3x ~1.2 MB) NIE sa commitowane: zawieraja realne dane
+DBR77 (nazwiska, tytuly inicjatyw). Odtworzenie:
+  node scripts/dev/perf-porownaj-odpowiedzi.mjs --out <przed.json>   # przed naprawa
+  node scripts/dev/perf-porownaj-odpowiedzi.mjs --out <po.json>      # po naprawie
+  node scripts/dev/perf-porownaj-odpowiedzi.mjs --porownaj <przed.json> <po.json>
+
+Obie roznice dotycza wylacznie pol liczacych dni (`daysOverdue`, `days_stale`)
+i tekstow `rootCause` je cytujacych — miedzy pomiarami minela doba.
