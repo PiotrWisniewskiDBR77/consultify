@@ -109,6 +109,26 @@ async function main() {
     );
     zestaw.push({ nazwa: 'użytkownicy spoza domeny @northwind.example', oczekiwane: 0, rzeczywiste: spozaDomeny.rows[0].n });
 
+    // Asercja V8: bez ani jednej WŁĄCZONEJ flagi organizacji cała powierzchnia
+    // `/api/v8/*` zwraca 404 V8_ORG_DISABLED na NODE_ENV=production (staging,
+    // demo) — `v8FeatureGate.middleware.ts:7`. Na NODE_ENV=development brak
+    // wierszy jest CICHO przepuszczany, więc ta asercja jest jedynym miejscem,
+    // które łapie różnicę między stanowiskiem lokalnym a stagingiem.
+    const schematV8 = await c.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'v8' AND table_name = 'v8_feature_flags'"
+    );
+    const tabelaFlag = Number(schematV8.rows[0]?.n ?? 0) > 0 ? 'v8.v8_feature_flags' : 'v8_feature_flags';
+    const flagiWlaczone = await c.query<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM ${tabelaFlag} WHERE organization_id = $1 AND enabled = 1`,
+      [ORG_ID]
+    );
+    zestaw.push({ nazwa: 'flagi V8 organizacji WŁĄCZONE (bramka /api/v8 na produkcyjnym NODE_ENV)', oczekiwane: 8, rzeczywiste: flagiWlaczone.rows[0].n });
+    const flagiWszystkie = await c.query<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM ${tabelaFlag} WHERE organization_id = $1`,
+      [ORG_ID]
+    );
+    zestaw.push({ nazwa: 'wiersze flag V8 organizacji (łącznie z wyłączonymi)', oczekiwane: 9, rzeczywiste: flagiWszystkie.rows[0].n });
+
     console.log(`[verify] organizacja: ${ORG_NAZWA}`);
     wypiszIZakoncz(zestaw);
   } finally {
