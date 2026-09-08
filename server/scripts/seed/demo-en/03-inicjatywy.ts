@@ -63,6 +63,7 @@ import {
 import {
   INICJATYWY,
   SLUGI_PLANU,
+  SLUGI_PRZEKAZANIA,
   STATUSY_KANONICZNE,
   doRejestracji,
   rozkladStatusow,
@@ -762,6 +763,8 @@ interface WynikApi {
   przejsciaBledy: string[];
   plan: string;
   obciazenie: string;
+  przekazania: number;
+  przekazaniaBledy: string[];
 }
 
 /**
@@ -822,7 +825,7 @@ async function zapiszDecyzjeGo(): Promise<{ ok: number; bledy: string[] }> {
   return { ok, bledy };
 }
 
-async function etapApi(api: Api, c: PoolClient): Promise<WynikApi> {
+async function etapApi(api: Api, autorytet: Api, menedzer: Api, c: PoolClient): Promise<WynikApi> {
   const wynik: WynikApi = {
     decyzjeGo: 0,
     decyzjeGoBledy: [],
@@ -832,6 +835,8 @@ async function etapApi(api: Api, c: PoolClient): Promise<WynikApi> {
     przejsciaBledy: [],
     plan: 'nie próbowano',
     obciazenie: 'nie próbowano',
+    przekazania: 0,
+    przekazaniaBledy: [],
   };
 
   // --- 1. Decyzje GO (bramka GOVERNANCE_DECISION_MAKING) --------------------
@@ -842,13 +847,14 @@ async function etapApi(api: Api, c: PoolClient): Promise<WynikApi> {
   // --- 2. Agregaty runtime-v1 (STOP 1: TYLKO ze statusu APPROVED/PENDING) ---
   for (const i of doRejestracji()) {
     const id = idInicjatywy(i.slug);
-    // Idempotencja: po pełnym przebiegu moduł stoi na IN_EXECUTION, a `register`
-    // takiego statusu NIE przyjmuje (STOP 1). Agregat już jest — nie wołamy trasy,
-    // żeby nie produkować „błędu", który błędem nie jest.
+    // Idempotencja: po pełnym przebiegu wiersz stoi na IN_EXECUTION, a `register`
+    // takiego statusu NIE przyjmuje. Sprawdzamy ISTNIENIE agregatu, nie jego stan —
+    // po łańcuchu przekazania (D4b) cztery agregaty stoją w `IN_EXECUTION`, więc
+    // warunek „= APPROVED_BACKLOG" kazałby przy drugim `--apply` wołać `register`
+    // jeszcze raz i produkował „błąd", który błędem nie jest.
     const juz = await c.query(
       `SELECT 1 FROM ie_aggregate_state
-        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = $2
-          AND payload_json->>'lifecycleState' = 'APPROVED_BACKLOG'`,
+        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = $2`,
       [ORG_ID, id]
     );
     if (juz.rows.length > 0) {
@@ -894,7 +900,26 @@ async function etapApi(api: Api, c: PoolClient): Promise<WynikApi> {
       wynik.agregatyBledy.push(`${i.slug} (metadane): HTTP ${status} ${JSON.stringify(body).slice(0, 220)}`);
   }
 
-  // --- 3. DOPIERO TERAZ przejście do realizacji (STOP 1) --------------------
+  // --- 3. Plan (CREATE -> PUBLISH), OSIEM okien ------------------------------
+  // Kolejność jest wymuszona bramkami, nie wygodą: plan przyjmuje wyłącznie okna
+  // inicjatyw z agregatem w `APPROVED_BACKLOG` (`planScenario.ts:205-222`), a
+  // `scheduleDecision.ts:144` szuka okna DOKŁADNIE dla bieżącej wersji agregatu.
+  // Dlatego plan powstaje PO uzupełnieniu metadanych (krok 2b bije wersję),
+  // a przed jakimkolwiek przesunięciem cyklu życia.
+  wynik.plan = await zbudujPlanScenariusz(api, c);
+
+  // --- 4. Analiza obciążenia (serwer LICZY arkusz z planu i podaży) ---------
+  wynik.obciazenie = await zbudujObciazenie(api);
+
+  // --- 5. ŁAŃCUCH PRZEKAZANIA -> `execution_case` (D4b, DECYZJA 2) ----------
+  const lancuch = await zbudujLancuchPrzekazania(api, autorytet, menedzer, c);
+  wynik.przekazania = lancuch.ok;
+  wynik.przekazaniaBledy = lancuch.bledy;
+
+  // --- 6. DOPIERO TERAZ przejście WIERSZA do realizacji ---------------------
+  // Agregat już stoi w `IN_EXECUTION` (krok 5). Wiersz klasyczny domykamy na
+  // końcu, bo `register` z kroku 2 nie przyjąłby statusu `IN_EXECUTION`
+  // (`registerModuleInitiativeForPlanning.ts:38`).
   for (const i of INICJATYWY.filter((x) => x.status === 'IN_EXECUTION')) {
     const id = idInicjatywy(i.slug);
     const teraz = await c.query<{ status: string }>('SELECT status FROM initiatives WHERE id = $1', [id]);
@@ -918,12 +943,6 @@ async function etapApi(api: Api, c: PoolClient): Promise<WynikApi> {
       wynik.przejsciaBledy.push(`${i.slug}: HTTP ${status} ${JSON.stringify(body).slice(0, 220)}`);
     }
   }
-
-  // --- 4. Plan (CREATE -> PUBLISH) ------------------------------------------
-  wynik.plan = await zbudujPlanScenariusz(api, c);
-
-  // --- 5. Analiza obciążenia (serwer LICZY arkusz z planu i podaży) ---------
-  wynik.obciazenie = await zbudujObciazenie(api);
 
   return wynik;
 }
@@ -1073,9 +1092,267 @@ async function zbudujObciazenie(api: Api): Promise<string> {
       name: 'Northwind 2027 — Wave 1 capacity analysis',
     }
   );
-  if (status === 200 || status === 201) return 'policzona z planu i podaży organizacji';
-  if (status === 409) return 'bez zmian (analiza już istnieje)';
-  return `BŁĄD: HTTP ${status} ${JSON.stringify(body).slice(0, 300)}`;
+  if (status !== 200 && status !== 201 && status !== 409)
+    return `BŁĄD compute: HTTP ${status} ${JSON.stringify(body).slice(0, 300)}`;
+
+  // D4b (DECYZJA 2): `compute` zostawia analizę w `DRAFT`, a bramka harmonogramu
+  // (`scheduleDecision.ts:131-139`) żąda analizy OPUBLIKOWANEJ i zgodnej wersją
+  // z opublikowanym planem. Bez tego kroku łańcuch przekazania nie ruszy —
+  // i tak samo nie ruszy go człowiek klikający „Nowa analiza" bez publikacji.
+  const stan = await api.zadanie<{ version: number; scenario: Record<string, unknown> }>(
+    'GET',
+    `/api/initiatives/runtime-v1/capacity-scenarios/${CAPACITY_SCENARIO_ID}`
+  );
+  if (stan.status !== 200) return `BŁĄD odczytu analizy: HTTP ${stan.status}`;
+  const scenariusz = stan.body.scenario as Record<string, unknown> & { status?: string };
+  if (scenariusz.status === 'PUBLISHED') return 'opublikowana (bez zmian)';
+
+  const publikuj = await api.zadanie(
+    'POST',
+    `/api/initiatives/runtime-v1/capacity-scenarios/${CAPACITY_SCENARIO_ID}`,
+    {
+      expectedVersion: Number(stan.body.version),
+      clientRequestId: det('capacity-publish', CAPACITY_SCENARIO_ID),
+      operation: 'PUBLISH',
+      scenario: { ...scenariusz, scenarioId: CAPACITY_SCENARIO_ID, status: 'PUBLISHED' },
+    }
+  );
+  if (publikuj.status !== 200 && publikuj.status !== 201)
+    return `BŁĄD PUBLISH analizy: HTTP ${publikuj.status} ${JSON.stringify(publikuj.body).slice(0, 300)}`;
+  return 'policzona z planu i podaży organizacji, OPUBLIKOWANA';
+}
+
+/**
+ * ŁAŃCUCH PRZEKAZANIA (D4b, DECYZJA 2) — cztery `execution_case` przez
+ * KANONICZNYCH PISARZY, po HTTP, tą samą drogą, którą klika przeglądarka.
+ *
+ * Jedynym twórcą agregatu `execution_case` jest akceptacja przekazania
+ * (`handoffAcceptance.ts:224-259`). Nie ma trasy `POST /execution-cases` —
+ * `/execution-cases` w `initiativesExecutionRuntime.routes.ts` jest wyłącznie
+ * do odczytu. Żeby dojść do akceptacji, trzeba przejść CAŁY łańcuch, a każdy
+ * jego krok ma własną bramkę (zmierzone 08.09 na `consultify_kopia_d44`):
+ *
+ *   1. agregat w `APPROVED_BACKLOG`            — `scheduleDecision.ts:208`
+ *   2. OPUBLIKOWANE portfel + plan + analiza   — `scheduleDecision.ts:114-139`
+ *   3. okno planu DOKŁADNIE dla tej inicjatywy I DOKŁADNIE dla jej bieżącej
+ *      wersji agregatu                          — `scheduleDecision.ts:144-146`
+ *   4. `schedule.request` NIE MOŻE mieć autorytetu równego wnioskodawcy
+ *      (bez `selfApproval` w polityce)           — `scheduleDecision.ts:191-197`
+ *   5. `schedule.decide` wykonuje AUTORYTET      — `scheduleDecision.ts:302-310`
+ *   6. `handoff.request` wymaga stanu `SCHEDULED` i DOKŁADNIE tej zamrożonej
+ *      paczki                                    — `handoffAcceptance.ts:88-104`
+ *   7. `handoff.decide` wykonuje EXECUTION MANAGER — `handoffAcceptance.ts:201-207`
+ *
+ * Stąd TRZY sesje: właściciel (wnioskodawca), autorytet harmonogramu i menedżer
+ * realizacji. Jedna sesja nie przejdzie — reguła rozdzielenia ról jest w kodzie,
+ * nie w konfiguracji.
+ *
+ * WERSJONOWANIE: każda komenda bije wersję agregatu o 1, a `decideSchedule`
+ * sprawdza `stored.initiativeVersion === expectedVersion - 1`. Dlatego wersję
+ * czytamy z bazy PRZED każdym krokiem, zamiast ją zakładać.
+ */
+async function zbudujLancuchPrzekazania(
+  wnioskodawca: Api,
+  autorytet: Api,
+  menedzer: Api,
+  c: PoolClient
+): Promise<{ ok: number; bledy: string[] }> {
+  const idAutorytetu = idOsoby('sarah.mitchell');
+  const idMenedzera = idOsoby('robert.chen');
+  const bledy: string[] = [];
+  let ok = 0;
+
+  const wersjaAgregatu = async (id: string): Promise<number | null> => {
+    const r = await c.query<{ version: number }>(
+      `SELECT version FROM ie_aggregate_state
+        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = $2`,
+      [ORG_ID, id]
+    );
+    return r.rows[0] ? Number(r.rows[0].version) : null;
+  };
+  const stanCyklu = async (id: string): Promise<string | null> => {
+    const r = await c.query<{ stan: string | null; sprawa: string | null }>(
+      `SELECT payload_json->>'lifecycleState' AS stan, payload_json->>'executionCaseId' AS sprawa
+         FROM ie_aggregate_state
+        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = $2`,
+      [ORG_ID, id]
+    );
+    return r.rows[0]?.stan ?? null;
+  };
+
+  for (const slug of SLUGI_PRZEKAZANIA) {
+    const i = INICJATYWY.find((x) => x.slug === slug)!;
+    const id = idInicjatywy(slug);
+    const idSprawy = det('execution-case', slug);
+    const terminDecyzji = `${i.planStart}T12:00:00.000Z`;
+
+    try {
+      // Idempotencja: sprawa realizacji już jest — nie powtarzamy łańcucha.
+      const jest = await c.query(
+        `SELECT 1 FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'execution_case' AND aggregate_id = $2`,
+        [ORG_ID, idSprawy]
+      );
+      if (jest.rows.length > 0) {
+        ok += 1;
+        continue;
+      }
+
+      const stanPoczatkowy = await stanCyklu(id);
+      if (stanPoczatkowy !== 'APPROVED_BACKLOG' && stanPoczatkowy !== 'SCHEDULED') {
+        bledy.push(`${slug}: agregat w stanie ${stanPoczatkowy ?? 'BRAK'} — łańcuch wymaga APPROVED_BACKLOG`);
+        continue;
+      }
+
+      const idDecyzjiHarmonogramu = det('schedule-decision', slug);
+      const idDecyzjiPrzekazania = det('handoff-decision', slug);
+
+      // --- 5a. Wniosek o decyzję harmonogramu (wnioskodawca) ----------------
+      if (stanPoczatkowy === 'APPROVED_BACKLOG') {
+        const wersja = await wersjaAgregatu(id);
+        if (wersja === null) {
+          bledy.push(`${slug}: brak agregatu — najpierw register`);
+          continue;
+        }
+        const wniosek = await wnioskodawca.zadanie(
+          'POST',
+          `/api/initiatives/runtime-v1/initiatives/${id}/gates/schedule/requests`,
+          {
+            expectedVersion: wersja,
+            clientRequestId: det('schedule-request', slug),
+            decisionId: idDecyzjiHarmonogramu,
+            authorityId: idAutorytetu,
+            executionManagerId: idMenedzera,
+            dueAt: terminDecyzji,
+            portfolioScenarioId: portfelRoboczyId(),
+            portfolioScenarioVersion: await wersjaScenariusza(c, 'portfolio_scenario', portfelRoboczyId()),
+            planScenarioId: PLAN_SCENARIO_ID,
+            planScenarioVersion: await wersjaScenariusza(c, 'plan_scenario', PLAN_SCENARIO_ID),
+            capacityScenarioId: CAPACITY_SCENARIO_ID,
+            capacityScenarioVersion: await wersjaScenariusza(c, 'capacity_scenario', CAPACITY_SCENARIO_ID),
+            commitmentIds: [],
+            criticalPeriodIds: [],
+            criticalDependencies: [],
+            handoff: migawkaPrzekazania(i, wersja),
+          }
+        );
+        if (wniosek.status < 200 || wniosek.status >= 300) {
+          bledy.push(`${slug} (schedule.request): HTTP ${wniosek.status} ${JSON.stringify(wniosek.body).slice(0, 260)}`);
+          continue;
+        }
+
+        // --- 5b. Decyzja harmonogramu (AUTORYTET, nie wnioskodawca) ---------
+        const wersjaPoWniosku = await wersjaAgregatu(id);
+        const decyzja = await autorytet.zadanie(
+          'POST',
+          `/api/initiatives/runtime-v1/initiatives/${id}/gates/schedule/decisions`,
+          {
+            expectedVersion: wersjaPoWniosku,
+            clientRequestId: det('schedule-decide', slug),
+            decisionId: idDecyzjiHarmonogramu,
+            outcome: 'APPROVED',
+            rationale: `Scheduled against the published Northwind 2027 Wave 1 plan: ${i.streszczenie}`,
+            conditions: [],
+          }
+        );
+        if (decyzja.status < 200 || decyzja.status >= 300) {
+          bledy.push(`${slug} (schedule.decide): HTTP ${decyzja.status} ${JSON.stringify(decyzja.body).slice(0, 260)}`);
+          continue;
+        }
+      }
+
+      // --- 5c. Wniosek o akceptację przekazania (wnioskodawca) --------------
+      const paczka = await c.query<{ pack: string | null }>(
+        `SELECT payload_json->>'handoffPackageId' AS pack FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = $2`,
+        [ORG_ID, id]
+      );
+      const idPaczki = paczka.rows[0]?.pack;
+      if (!idPaczki) {
+        bledy.push(`${slug}: decyzja harmonogramu nie zostawiła zamrożonej paczki przekazania`);
+        continue;
+      }
+      const wersjaPoDecyzji = await wersjaAgregatu(id);
+      const wniosekP = await wnioskodawca.zadanie(
+        'POST',
+        `/api/initiatives/runtime-v1/initiatives/${id}/handoff/requests`,
+        {
+          expectedVersion: wersjaPoDecyzji,
+          clientRequestId: det('handoff-request', slug),
+          decisionId: idDecyzjiPrzekazania,
+          handoffPackageId: idPaczki,
+          handoffPackageVersion: 1,
+          executionCaseId: idSprawy,
+          authorityId: idMenedzera,
+          dueAt: terminDecyzji,
+          rolloutChildren: { pilot: [], waves: [] },
+        }
+      );
+      if (wniosekP.status < 200 || wniosekP.status >= 300) {
+        bledy.push(`${slug} (handoff.request): HTTP ${wniosekP.status} ${JSON.stringify(wniosekP.body).slice(0, 260)}`);
+        continue;
+      }
+
+      // --- 5d. Akceptacja przekazania (EXECUTION MANAGER) -> execution_case -
+      const wersjaPoWniosku2 = await wersjaAgregatu(id);
+      const decyzjaP = await menedzer.zadanie(
+        'POST',
+        `/api/initiatives/runtime-v1/initiatives/${id}/handoff/decisions`,
+        {
+          expectedVersion: wersjaPoWniosku2,
+          clientRequestId: det('handoff-decide', slug),
+          decisionId: idDecyzjiPrzekazania,
+          outcome: 'ACCEPT',
+          gaps: [],
+          blockers: [],
+          rationale: `Delivery accepted the frozen handoff package for "${i.tytul}".`,
+        }
+      );
+      if (decyzjaP.status < 200 || decyzjaP.status >= 300) {
+        bledy.push(`${slug} (handoff.decide): HTTP ${decyzjaP.status} ${JSON.stringify(decyzjaP.body).slice(0, 260)}`);
+        continue;
+      }
+      ok += 1;
+    } catch (e) {
+      bledy.push(`${slug}: ${(e as Error).message}`);
+    }
+  }
+
+  return { ok, bledy };
+}
+
+/** Portfel roboczy zakładany automatycznie przy zapisie planu (`portfolio: 'auto'`). */
+const portfelRoboczyId = () => `portfolio-${ORG_ID}-roboczy`;
+
+/** Wersja scenariusza CZYTANA Z BAZY — bramki porównują ją co do liczby. */
+async function wersjaScenariusza(
+  c: PoolClient,
+  typ: 'portfolio_scenario' | 'plan_scenario' | 'capacity_scenario',
+  id: string
+): Promise<number> {
+  const r = await c.query<{ v: string | null }>(
+    `SELECT payload_json->>'scenarioVersion' AS v FROM ie_aggregate_state
+      WHERE organization_id = $1 AND aggregate_type = $2 AND aggregate_id = $3`,
+    [ORG_ID, typ, id]
+  );
+  return Number(r.rows[0]?.v ?? 0);
+}
+
+/**
+ * Migawka przekazania — to, co zamraża decyzja harmonogramu i co przyjmuje
+ * menedżer realizacji. Treść po ANGIELSKU (dane pokazowe).
+ */
+function migawkaPrzekazania(i: Inicjatywa, wersjaAgregatu: number) {
+  return {
+    scope: { inScope: i.zakresW, outOfScope: i.zakresPoza },
+    selectedOptions: { approach: i.streszczenie },
+    success: { criteria: i.kryteriaSukcesu, expectedRoi: i.oczekiwanyZwrot },
+    baseline: { start: i.planStart, end: i.planKoniec, requiredFte: i.wymaganeFte },
+    openWork: i.produkty.map((produkt, n) => ({ itemId: `${i.slug}--deliverable-${n + 1}`, title: produkt })),
+    raid: i.ryzyka.map((ryzyko, n) => ({ itemId: `${i.slug}--risk-${n + 1}`, title: ryzyko })),
+    outcomeRefs: [`northwind-2027-portfolio-baseline-v1`],
+    sourceVersions: { initiative: wersjaAgregatu },
+  };
 }
 
 // ============================================================================
@@ -1116,6 +1393,14 @@ async function weryfikuj(c: PoolClient): Promise<void> {
         oczekiwane: 0,
         rzeczywiste: await licz(
           'SELECT COUNT(*)::text AS n FROM initiative_lifecycle_gate_decisions WHERE organization_id = $1',
+          [ORG_ID]
+        ),
+      },
+      {
+        nazwa: 'sprawy realizacji (execution_case)',
+        oczekiwane: 0,
+        rzeczywiste: await licz(
+          `SELECT COUNT(*)::text AS n FROM ie_aggregate_state WHERE organization_id = $1 AND aggregate_type = 'execution_case'`,
           [ORG_ID]
         ),
       },
@@ -1274,26 +1559,75 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       ),
     },
     {
-      // BEZPIECZNIK POMIARU 08.09: agregat `APPROVED_BACKLOG` na inicjatywie
-      // realizowanej PRZYKRYWA jej status na liście (rejestr wygrywa z wierszem
-      // klasycznym, DEC-397) i zakładka pokazuje „In execution 0". Ta asercja
-      // pilnuje, żeby regresja nie wróciła po cichu.
-      nazwa: 'agregaty runtime-v1 założone inicjatywom IN_EXECUTION (przykryłyby status na liście)',
+      // BEZPIECZNIK POMIARU, ZWĘŻONY w D4b (DECYZJA 2). Groźny jest agregat, który
+      // UTKNĄŁ w `APPROVED_BACKLOG`/`SCHEDULED` na inicjatywie realizowanej — bo
+      // rejestr wygrywa z wierszem klasycznym (DEC-397) i lista pokazuje wtedy
+      // „In execution 0". Agregat w `IN_EXECUTION` jest STANEM POPRAWNYM:
+      // `statusMapping.ts:22` mapuje go z powrotem na status `IN_EXECUTION`.
+      // Poprzednia wersja („jakikolwiek agregat na IN_EXECUTION = 0") zakazywała
+      // też stanu poprawnego i blokowała łańcuch przekazania.
+      nazwa: 'agregaty w APPROVED_BACKLOG/SCHEDULED na inicjatywie IN_EXECUTION (przykryłyby status)',
       oczekiwane: 0,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM ie_aggregate_state a
            JOIN initiatives i ON i.id = a.aggregate_id AND i.organization_id = a.organization_id
-          WHERE a.organization_id = $1 AND a.aggregate_type = 'initiative' AND i.status = 'IN_EXECUTION'`,
+          WHERE a.organization_id = $1 AND a.aggregate_type = 'initiative' AND i.status = 'IN_EXECUTION'
+            AND a.payload_json->>'lifecycleState' IN ('APPROVED_BACKLOG', 'SCHEDULED')`,
         [ORG_ID]
       ),
     },
     {
-      nazwa: 'agregaty „initiative" NIE w stanie APPROVED_BACKLOG',
+      // Dopuszczalne stany agregatu inicjatywy po pełnym przebiegu: `APPROVED_BACKLOG`
+      // (cztery zatwierdzone, czekają w planie) i `IN_EXECUTION` (cztery po przejściu
+      // łańcucha przekazania). Każdy inny — w tym `SCHEDULED`, czyli łańcuch
+      // PRZERWANY w połowie — jest defektem.
+      nazwa: 'agregaty „initiative" w stanie innym niż APPROVED_BACKLOG albo IN_EXECUTION',
       oczekiwane: 0,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
           WHERE organization_id = $1 AND aggregate_type = 'initiative'
-            AND payload_json->>'lifecycleState' IS DISTINCT FROM 'APPROVED_BACKLOG'`,
+            AND COALESCE(payload_json->>'lifecycleState', '') NOT IN ('APPROVED_BACKLOG', 'IN_EXECUTION')`,
+        [ORG_ID]
+      ),
+    },
+    {
+      // CEL PACZKI D4b: cztery sprawy realizacji założone WYŁĄCZNIE przez
+      // akceptację przekazania (`handoffAcceptance.ts` — jedyny pisarz agregatu
+      // `execution_case`; trasy `POST /execution-cases` nie ma).
+      nazwa: 'sprawy realizacji `execution_case` (przez akceptację przekazania, nie SQL-em)',
+      oczekiwane: SLUGI_PRZEKAZANIA.length,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'execution_case'`,
+        [ORG_ID]
+      ),
+    },
+    {
+      nazwa: 'sprawy realizacji w stanie innym niż ACTIVE',
+      oczekiwane: 0,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'execution_case'
+            AND COALESCE(payload_json->>'state', '') <> 'ACTIVE'`,
+        [ORG_ID]
+      ),
+    },
+    {
+      nazwa: 'zamrożone paczki przekazania (`handoff_package`)',
+      oczekiwane: SLUGI_PRZEKAZANIA.length,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'handoff_package'`,
+        [ORG_ID]
+      ),
+    },
+    {
+      nazwa: 'analizy obciążenia OPUBLIKOWANE (bramka harmonogramu)',
+      oczekiwane: 1,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND aggregate_type = 'capacity_scenario'
+            AND payload_json->>'status' = 'PUBLISHED'`,
         [ORG_ID]
       ),
     },
@@ -1343,6 +1677,31 @@ async function weryfikuj(c: PoolClient): Promise<void> {
            SELECT owner_execution_id FROM initiatives
             WHERE organization_id = $1 AND status = 'IN_EXECUTION' AND owner_execution_id IS NOT NULL
             GROUP BY owner_execution_id HAVING COUNT(*) > 1) q`,
+        [ORG_ID]
+      ),
+    },
+    {
+      // Znak `&` w polu, ktore idzie na zapis PRZEZ HTTP, wraca z bazy jako
+      // `&amp;` i tak sie renderuje na liscie (globalny `inputSanitizationMiddleware`,
+      // `security.utils.ts:60`). Dopoki STOP produktowy nie jest naprawiony,
+      // dane pokazowe MUSZA omijac `&` — ta asercja tego pilnuje.
+      nazwa: 'znak & w tytule/problemie/streszczeniu inicjatyw (sanitizer zamienia go na &amp;)',
+      oczekiwane: 0,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM initiatives
+          WHERE organization_id = $1 AND (name LIKE '%&%' OR COALESCE(title,'') LIKE '%&%'
+                OR COALESCE(problem_statement,'') LIKE '%&%' OR COALESCE(summary,'') LIKE '%&%')`,
+        [ORG_ID]
+      ),
+    },
+    {
+      // Bezpiecznik na wynik: gdyby sanitizer trafil cokolwiek w agregacie
+      // runtime-v1, na ekranie zobaczymy `&amp;`. Mierzymy SKUTEK, nie zamiar.
+      nazwa: 'encje HTML (&amp;) w agregatach runtime-v1 — to, co widac na liscie',
+      oczekiwane: 0,
+      rzeczywiste: await licz(
+        `SELECT COUNT(*)::text AS n FROM ie_aggregate_state
+          WHERE organization_id = $1 AND payload_json::text LIKE '%&amp;%'`,
         [ORG_ID]
       ),
     },
@@ -1512,14 +1871,24 @@ async function main() {
     }
     const api = new Api(d3.apiUrl);
     await api.zaloguj(d3.email, d3.haslo!);
-    const w = await etapApi(api, c);
+    // TRZY sesje — bramki łańcucha przekazania (D4b, DECYZJA 2) egzekwują
+    // ROZDZIELENIE RÓL w kodzie: autorytet harmonogramu nie może być
+    // wnioskodawcą (`scheduleDecision.ts:191-197`), a akceptację przekazania
+    // podpisuje WYŁĄCZNIE wskazany Execution Manager (`handoffAcceptance.ts:201-207`).
+    const autorytet = new Api(d3.apiUrl);
+    await autorytet.zaloguj(`sarah.mitchell@${DOMENA}`, d3.haslo!);
+    const menedzer = new Api(d3.apiUrl);
+    await menedzer.zaloguj(`robert.chen@${DOMENA}`, d3.haslo!);
+
+    const w = await etapApi(api, autorytet, menedzer, c);
     console.log(
       `\n[inicjatywy/api] decyzje GO=${w.decyzjeGo}/${zDecyzjaGo.length} · agregaty=${w.agregaty}/${doRejestracji().length} ` +
         `· przejścia do realizacji=${w.przejscia}/${INICJATYWY.filter((i) => i.status === 'IN_EXECUTION').length}`
     );
     console.log(`[inicjatywy/api] plan:       ${w.plan}`);
     console.log(`[inicjatywy/api] obciążenie: ${w.obciazenie}`);
-    for (const b of [...w.decyzjeGoBledy, ...w.agregatyBledy, ...w.przejsciaBledy])
+    console.log(`[inicjatywy/api] przekazania -> execution_case: ${w.przekazania}/${SLUGI_PRZEKAZANIA.length}`);
+    for (const b of [...w.decyzjeGoBledy, ...w.agregatyBledy, ...w.przekazaniaBledy, ...w.przejsciaBledy])
       console.error(`[inicjatywy/api] BŁĄD ${b}`);
   } finally {
     c.release();

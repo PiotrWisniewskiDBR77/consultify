@@ -345,7 +345,13 @@ export async function detectDelaySignals(
       FROM tasks t
       JOIN initiatives i ON i.id = t.initiative_id
       WHERE i.organization_id = ?
-        AND t.status NOT IN ('DONE', 'CANCELLED')
+        -- [ODMROZENIE 06_EXECUTION DEC-453] Slownik tasks.status jest MALYMI
+        -- literami (task.validators.ts:14-23 — todo/in_progress/review/done/
+        -- blocked/on_hold/backlog/cancelled). Porownanie z 'DONE'/'CANCELLED'
+        -- nie trafialo nigdy, wiec zadanie UKONCZONE dostawalo sygnal opoznienia
+        -- (zmierzone 08.09 na consultify_kopia_d44: 13 sygnalow, w tym 5 dla
+        -- zadan 'done'). Porownujemy przez LOWER, jak workloadCapacityService.ts.
+        AND LOWER(COALESCE(t.status, '')) NOT IN ('done', 'cancelled')
         AND t.due_date IS NOT NULL
     `;
     const taskParams: unknown[] = [organizationId];

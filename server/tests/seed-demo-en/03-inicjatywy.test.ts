@@ -13,6 +13,7 @@ import { det } from '../../scripts/seed/demo-en/00-wspolne';
 import {
   INICJATYWY,
   SLUGI_PLANU,
+  SLUGI_PRZEKAZANIA,
   STATUSY_KANONICZNE,
   doRejestracji,
   rozkladStatusow,
@@ -83,18 +84,36 @@ describe('03-dane-inicjatyw — STOP 1: register odrzuca IN_EXECUTION', () => {
     expect(doRejestracji().length).toBeGreaterThanOrEqual(4);
   });
 
-  it('do register idą WYŁĄCZNIE inicjatywy REALNIE w APPROVED — agregat przykrywa każdy inny status na liście', () => {
-    expect(doRejestracji().every((i) => i.status === 'APPROVED')).toBe(true);
-    expect(doRejestracji().filter((i) => i.status === 'IN_EXECUTION')).toHaveLength(0);
+  it('D4b: do register idą APPROVED i IN_EXECUTION — te drugie przechodzą łańcuch przekazania', () => {
+    expect(doRejestracji().every((i) => i.status === 'APPROVED' || i.status === 'IN_EXECUTION')).toBe(true);
+    expect(doRejestracji().filter((i) => i.status === 'IN_EXECUTION')).toHaveLength(
+      SLUGI_PRZEKAZANIA.length
+    );
+    // `PENDING_APPROVAL` NIE ma łańcucha, który zdjąłby agregat z `APPROVED_BACKLOG`,
+    // więc jego rejestracja PRZYKRYŁABY status „Pending approval" na liście.
     expect(doRejestracji().filter((i) => i.status === 'PENDING_APPROVAL')).toHaveLength(0);
   });
 
-  it('MUTACJA — gdyby do rejestracji szły też IN_EXECUTION i PENDING_APPROVAL, pięć wierszy pokazałoby „Approved" zamiast prawdziwego statusu', () => {
+  it('D4b: KAŻDA inicjatywa z łańcucha przekazania jest w doRejestracji() i ma okno w planie', () => {
+    for (const slug of SLUGI_PRZEKAZANIA) {
+      const i = INICJATYWY.find((x) => x.slug === slug);
+      expect(i, `${slug} musi istnieć w danych`).toBeTruthy();
+      expect(i!.status, `${slug} musi być IN_EXECUTION`).toBe('IN_EXECUTION');
+      expect(doRejestracji().map((x) => x.slug), `${slug} bez agregatu nie przejdzie łańcucha`).toContain(slug);
+      expect(SLUGI_PLANU, `${slug} bez okna planu = „Exact Initiative planned window is missing"`).toContain(slug);
+    }
+  });
+
+  it('MUTACJA — gdyby do rejestracji szedł też PENDING_APPROVAL, jeden wiersz pokazałby „Approved"', () => {
     const mutant = INICJATYWY.filter(
       (i) => i.status === 'APPROVED' || i.status === 'PENDING_APPROVAL' || i.status === 'IN_EXECUTION'
     );
-    expect(mutant.filter((i) => i.status !== 'APPROVED')).toHaveLength(5); // mutant: pięć przykrytych
-    expect(doRejestracji().filter((i) => i.status !== 'APPROVED')).toHaveLength(0); // produkcja: zero
+    // Mutant przykryłby PIĘĆ wierszy, gdyby żaden nie miał łańcucha; realnie
+    // cztery realizowane łańcuch mają, więc przykryty zostałby WYŁĄCZNIE
+    // `PENDING_APPROVAL` — i dlatego on jeden zostaje poza `doRejestracji()`.
+    expect(mutant.filter((i) => i.status !== 'APPROVED')).toHaveLength(5);
+    expect(doRejestracji().filter((i) => i.status === 'PENDING_APPROVAL')).toHaveLength(0);
+    expect(doRejestracji()).toHaveLength(8);
   });
 });
 
@@ -234,7 +253,9 @@ describe('03-dane-inicjatyw — identyfikatory UUIDv5 są stabilne', () => {
 
 describe('03-dane-inicjatyw — plan i analiza obciążenia mają z czego powstać', () => {
   it('cztery inicjatywy planu istnieją i są zarejestrowalne (APPROVED_BACKLOG po register)', () => {
-    expect(SLUGI_PLANU).toHaveLength(4);
+    // D4b: OSIEM okien — cztery `APPROVED` plus cztery realizowane, dla których
+    // `scheduleDecision.ts:144` żąda okna DOKŁADNIE dla ich wersji agregatu.
+    expect(SLUGI_PLANU).toHaveLength(8);
     for (const slug of SLUGI_PLANU) {
       const i = INICJATYWY.find((x) => x.slug === slug);
       expect(i, `slug planu ${slug} nie istnieje w danych`).toBeTruthy();

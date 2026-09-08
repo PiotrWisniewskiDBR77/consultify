@@ -1,0 +1,222 @@
+########## DOWOD CLI paczki D4b — 2026-09-08T10:24:47Z ##########
+baza:  127.0.0.1:54418/consultify_kopia_d44 (TEMPLATE consultify_staging_kopia, SWIEZA)
+stanowisko: API 4186 / Vite 3206; login OWNER james.whitfield@northwind.example
+galaz: mvp/dane-d4b-lancuch-uuid HEAD de35c323f2
+
+=== 1. APPLY #1 pelnego lancucha 01 -> 02 -> 03 -> 04 -> 06 (swieza baza) ===
+[rdzen] cel:          127.0.0.1:54418/consultify_kopia_d44
+[rdzen] organizacja:  Northwind Manufacturing Ltd. (id 468b234c-66c4-54e1-b626-5e0fb3a92f6a)
+organizacja: utworzy
+[rdzen] utworzono=33 zmieniono=0 pominieto=0
+[odkrycie] method-core: tworzę sesję DRD przez prawdziwy HTTP router (39 obszarów)…
+[odkrycie] method-core: sesja 16432eb4-ec42-414b-a83e-7c15d353e316 zamrożona, Output 463f8363-ab8f-44f6-9521-77876fbf8b01 (39 obszarów).
+[odkrycie] utworzono=36 zmieniono=0 pominieto=0
+rozkład docelowy:    PROPOSED=1 DRAFT=1 PENDING_APPROVAL=1 APPROVED=4 IN_EXECUTION=4 CLOSED=1 REJECTED=1 (on_hold=1)
+[inicjatywy/sql] utworzono=141 zmieniono=0 pominieto=0
+[inicjatywy/api] decyzje GO=9/9 · agregaty=8/8 · przejścia do realizacji=4/4
+[inicjatywy/api] plan:       opublikowany (8 inicjatywy w oknach)
+[inicjatywy/api] obciążenie: policzona z planu i podaży organizacji, OPUBLIKOWANA
+[inicjatywy/api] przekazania -> execution_case: 4/4
+[realizacja/sql] [realizacja/sql] utworzono=40 zmieniono=10 pominieto=0
+[realizacja/api] RAID:     utworzone=7 istniejące=0
+[realizacja/api] decyzje:  utworzone=9 istniejące=0 opcje=20 rozstrzygnięcia=3
+[realizacja/api] migawki:  utworzone=2 istniejące=0
+[materialy] utworzono=80 zmieniono=0 pominieto=0
+
+=== 2. APPLY #2 — idempotencja ===
+[rdzen] utworzono=0 zmieniono=0 pominieto=33
+[odkrycie] utworzono=0 zmieniono=0 pominieto=36
+[inicjatywy/sql] utworzono=0 zmieniono=2 pominieto=139
+[inicjatywy/api] decyzje GO=9/9 · agregaty=8/8 · przejścia do realizacji=4/4
+[inicjatywy/api] plan:       bez zmian (plan już opublikowany)
+[inicjatywy/api] obciążenie: opublikowana (bez zmian)
+[inicjatywy/api] przekazania -> execution_case: 4/4
+[realizacja/sql] [realizacja/sql] utworzono=0 zmieniono=2 pominieto=40
+[realizacja/api] RAID:     utworzone=0 istniejące=7
+[realizacja/api] decyzje:  utworzone=0 istniejące=9 opcje=0 rozstrzygnięcia=0
+[realizacja/api] migawki:  utworzone=0 istniejące=2
+[materialy] utworzono=0 zmieniono=0 pominieto=80
+
+UWAGA (zmierzone, NIE naprawiane w D4b): drugi --apply melduje zmieniono=2 w 03
+i zmieniono=2 w 04. To OSCYLACJA na DWOCH kamieniach, ktore D4 celowo przesuwa
+wobec planu bazowego ('Cutover from paper travellers', 'Measured pilot result
+pack'): D3 wpisuje termin ze swoich danych, D4 przesuwa go z powrotem. Stan
+STABILNY (3. przebieg tez 2/2 — nie rosnie), obie bramki --verify zielone.
+Dlug interakcji D3<->D4, nie D4b.
+
+=== 3. VERIFY wszystkich paczek po pelnym lancuchu ===
+--- 03-inicjatywy
+[verify-d3] organizacja: Northwind Manufacturing Ltd. (468b234c-66c4-54e1-b626-5e0fb3a92f6a)
+[verify-d3] rozkład w bazie: APPROVED=4 CLOSED=1 DRAFT=1 IN_EXECUTION=4 PENDING_APPROVAL=1 PROPOSED=1 REJECTED=1
+[verify-d3] OK   inicjatywy                                                       oczekiwane=13 rzeczywiste=13
+[verify-d3] OK   różnych statusów DEC-424                                         oczekiwane=7 rzeczywiste=7
+[verify-d3] OK   statusy spoza słownika DEC-424                                   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy IN_EXECUTION                                          oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   STOP 2: IN_EXECUTION BEZ project_id (fail-closed realizacji)     oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez właściciela wykonania                           oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez dat planu                                       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy z flagą on_hold = TRUE                                oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy bez opisu albo z opisem krótszym niż 200 znaków       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy bez kategorii, priorytetu, autora albo zakresu        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy, gdzie name <> title (obie kolumny tą samą treścią)   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   interesariusze RACI                                              oczekiwane=47 rzeczywiste=47
+[verify-d3] OK   inicjatywy bez jednego „A" (accountable) w RACI                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   wpisy historii statusu (SQL + kanoniczne przejścia do realizacji) oczekiwane=37 rzeczywiste=37
+[verify-d3] OK   przekazania do realizacji (readiness_allowed = TRUE)             oczekiwane=8 rzeczywiste=8
+[verify-d3] OK   decyzje bramkowe GO (approved, GOVERNANCE_DECISION_MAKING)       oczekiwane=9 rzeczywiste=9
+[verify-d3] OK   agregaty runtime-v1 „initiative" (STOP 1: przez register, nie SQL-em) oczekiwane=8 rzeczywiste=8
+[verify-d3] OK   agregaty w APPROVED_BACKLOG/SCHEDULED na inicjatywie IN_EXECUTION (przykryłyby status) oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   agregaty „initiative" w stanie innym niż APPROVED_BACKLOG albo IN_EXECUTION oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   sprawy realizacji `execution_case` (przez akceptację przekazania, nie SQL-em) oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   sprawy realizacji w stanie innym niż ACTIVE                      oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   zamrożone paczki przekazania (`handoff_package`)                 oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   analizy obciążenia OPUBLIKOWANE (bramka harmonogramu)            oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   plany OPUBLIKOWANE (zakładka „Plan")                             oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy w oknach opublikowanego planu                         oczekiwane=8 rzeczywiste=8
+[verify-d3] OK   analizy obciążenia (zakładka „Obciążenie")                       oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy z alokacją FTE ponad zapotrzebowanie                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   osoby prowadzące więcej niż jedną inicjatywę IN_EXECUTION        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   znak & w tytule/problemie/streszczeniu inicjatyw (sanitizer zamienia go na &amp;) oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   encje HTML (&amp;) w agregatach runtime-v1 — to, co widac na liscie oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   pola tekstowe inicjatyw z polskimi znakami (dane muszą być po angielsku) oczekiwane=0 rzeczywiste=0
+[verify-d3] PASS: wszystkie 31 asercji przeszły.
+--- 04-realizacja
+[verify-d4] OK   zadania                                                                oczekiwane=36 rzeczywiste=36
+[verify-d4] OK   zadania BEZ inicjatywy (0 — wymaganie paczki)                          oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   zadania BEZ osoby (0 — wymaganie paczki)                               oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   zadania BEZ rodowodu projektu (realizacja fail-closed)                 oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   zadania BEZ terminu albo BEZ pracochłonności                           oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   zadania PO TERMINIE (otwarte, termin przed bieżącym poniedziałkiem)    oczekiwane=8 rzeczywiste=8
+[verify-d4] OK   zadania na inicjatywach SPOZA czterech realizowanych                   oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   osoby z POPYTEM w oknie 8 tygodni (Zasoby: popyt > 0)                  oczekiwane=9 rzeczywiste=9
+[verify-d4] OK   osoby z ZALEGŁOŚCIĄ (zadania po terminie z godzinami do zrobienia)     oczekiwane=5 rzeczywiste=5
+[verify-d4] OK   osobo-tygodnie z PRZECIĄŻENIEM w pierwszym tygodniu okna (> 105 %)     oczekiwane=1 rzeczywiste=1
+[verify-d4] OK   pozycje RAID                                                           oczekiwane=7 rzeczywiste=7
+[verify-d4] OK   pozycje RAID bez p x w, właściciela, terminu albo planu zaradczego     oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   pozycje RAID z agregatem runtime-v1 (dual-write przez kanonicznego writera) oczekiwane=7 rzeczywiste=7
+[verify-d4] OK   decyzje                                                                oczekiwane=9 rzeczywiste=9
+[verify-d4] OK   decyzje bez decydenta albo bez terminu                                 oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   decyzje PO TERMINIE (otwarte, termin w przeszłości)                    oczekiwane=3 rzeczywiste=3
+[verify-d4] OK   decyzje ROZSTRZYGNIĘTE z uzasadnieniem                                 oczekiwane=3 rzeczywiste=3
+[verify-d4] OK   opcje decyzji (rejestr decision_alternatives)                          oczekiwane=20 rzeczywiste=20
+[verify-d4] OK   decyzje bez ani jednej opcji                                           oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   wpisy historii decyzji (kanoniczny pisarz, nie SQL)                    oczekiwane=12 rzeczywiste=12
+[verify-d4] OK   inicjatywy wstrzymane flagą on_hold (ma zostać wyłącznie ta z D3)      oczekiwane=1 rzeczywiste=1
+[verify-d4] OK   automatyczne blokady inicjatyw założone decyzjami (DECISION_AUTO_BLOCK) oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   kamienie milowe czterech realizowanych inicjatyw                       oczekiwane=8 rzeczywiste=8
+[verify-d4] OK   kamienie bez planu bazowego (baseline_date albo baseline_set_at)       oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   kamienie z terminem przesuniętym wobec planu bazowego                  oczekiwane=2 rzeczywiste=2
+[verify-d4] OK   migawki planu bazowego projektów (plan_baselines)                      oczekiwane=2 rzeczywiste=2
+[verify-d4] OK   raporty statusu (opublikowane)                                         oczekiwane=2 rzeczywiste=2
+[verify-d4] OK   migawki raportów realizacji (org-id typu UUID — DECYZJA 1 D4b)         oczekiwane=2 rzeczywiste=2
+[verify-d4] OK   źródło sygnałów opóźnień: zadania po terminie z inicjatywą (musi być > 0) oczekiwane=8 rzeczywiste=8
+[verify-d4] OK   pola tekstowe realizacji z polskimi znakami (dane muszą być po angielsku) oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   znak & w danych realizacji (sanitizer runtime-v1 zamienia go na &amp;) oczekiwane=0 rzeczywiste=0
+[verify-d4] PASS: wszystkie 31 asercji przeszły.
+--- 06-materialy
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=4 rzeczywiste=4
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=16 rzeczywiste=16
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=2 rzeczywiste=2
+[verify] OK   talie ze slide_count > 0 (koherentne z deck_json)            oczekiwane=2 rzeczywiste=2
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=12 rzeczywiste=12
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=1 rzeczywiste=1
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=7 rzeczywiste=7
+[verify] OK   spotkania (meetings)                                         oczekiwane=2 rzeczywiste=2
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=8 rzeczywiste=8
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=2 rzeczywiste=2
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=3 rzeczywiste=3
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=11 rzeczywiste=11
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=6 rzeczywiste=6
+[verify] OK   skrzynka OWNER-a — sekcja overdue_sla_breach                 oczekiwane=2 rzeczywiste=2
+[verify] OK   dokumenty z polskim znakiem w tytule (ma być 0)              oczekiwane=0 rzeczywiste=0
+[verify] PASS: wszystkie 16 asercji przeszły.
+--- 99-verify
+[verify] cel: 127.0.0.1:54418/consultify_kopia_d44
+[verify] organizacja: Northwind Manufacturing Ltd.
+[verify] OK   organizacje (id=northwind)                              oczekiwane=1 rzeczywiste=1
+[verify] OK   użytkownicy                                             oczekiwane=9 rzeczywiste=9
+[verify] OK   członkostwa ACTIVE                                      oczekiwane=9 rzeczywiste=9
+[verify] OK   zespoły                                                 oczekiwane=2 rzeczywiste=2
+[verify] OK   projekty                                                oczekiwane=2 rzeczywiste=2
+[verify] OK   profile organizacji                                     oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa OWNER                                       oczekiwane=1 rzeczywiste=1
+[verify] OK   członkostwa ADMIN                                       oczekiwane=2 rzeczywiste=2
+[verify] OK   członkostwa MEMBER                                      oczekiwane=6 rzeczywiste=6
+[verify] OK   users.role spoza słownika (stanowisko wpisane jako rola) oczekiwane=0 rzeczywiste=0
+[verify] OK   osoby przeciążone (alokacja > weekly_capacity_hours)    oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy z language != en                            oczekiwane=0 rzeczywiste=0
+[verify] OK   użytkownicy spoza domeny @northwind.example             oczekiwane=0 rzeczywiste=0
+[verify] PASS: wszystkie 13 asercji przeszły.
+--- 02-odkrycie
+OK   interview_sessions (northwind)             oczekiwano=2 rzeczywiste=2
+OK   interview_questions (northwind)            oczekiwano=22 rzeczywiste=22
+OK   interview_answers (northwind, rollup)      oczekiwano=2 rzeczywiste=2
+OK   interview_insights (northwind)             oczekiwano=4 rzeczywiste=4
+OK   tool_sessions (northwind)                  oczekiwano=3 rzeczywiste=3
+OK   assessments (northwind)                    oczekiwano=1 rzeczywiste=1
+OK   assessment_reports (northwind)             oczekiwano=1 rzeczywiste=1
+OK   method_sessions frozen (northwind, drd)    oczekiwano=1 rzeczywiste=1
+OK   method_outputs (northwind, drd)            oczekiwano=1 rzeczywiste=1
+[verify] OK — wszystkie asercje D2 zgadzają się.
+
+=== 4. RESET w ODWROTNEJ kolejnosci 06 -> 04 -> 03 -> 02 -> 01 ===
+[materialy] reset: usunięto 87 wierszy paczki D6 (organizacja "northwind" nietknięta).
+[realizacja] reset: usunięto 36 zadań, 7 pozycji RAID (z agregatami), 9 decyzji (z opcjami i historią), 2 raportów statusu, 2 planów bazowych, 2 migawek; 16 kamieni przywrócono do terminu z planu bazowego; 0 inicjatyw odblokowano po DECISION_AUTO_BLOCK.
+[inicjatywy] reset: usunięto 13 inicjatyw (kaskadą interesariuszy i historii), 9 decyzji bramkowych, agregaty runtime-v1 i łańcuch A05 organizacji „468b234c-66c4-54e1-b626-5e0fb3a92f6a".
+[odkrycie] reset: dane D2 dla northwind skasowane (tools katalog globalny nietknięty).
+[rdzen] reset: usunięto organizację "northwind" + 9 kont (kaskada: członkostwa, zespoły, projekty, profil).
+
+=== 5. VERIFY po RESET — wszystko ma byc zerem ===
+--- 03-inicjatywy
+[verify-d3] OK   inicjatywy                                                       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   interesariusze RACI                                              oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   agregaty runtime-v1 (initiative)                                 oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   decyzje bramkowe GO                                              oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   sprawy realizacji (execution_case)                               oczekiwane=0 rzeczywiste=0
+[verify-d3] PASS: wszystkie 5 asercji przeszły.
+--- 04-realizacja
+[verify-d4] OK   zadania                                                                oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   pozycje RAID                                                           oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   decyzje                                                                oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   raporty statusu                                                        oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   plany bazowe                                                           oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   migawki raportów                                                       oczekiwane=0 rzeczywiste=0
+[verify-d4] OK   kamienie z przesuniętym terminem wobec planu bazowego                  oczekiwane=0 rzeczywiste=0
+[verify-d4] PASS: wszystkie 7 asercji przeszły.
+--- 06-materialy
+[verify] stan: PO --reset (dokumenty=0) — oczekiwane WSZYSTKO=0.
+[verify] OK   dokumenty (report_builder_reports)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   sekcje dokumentów (report_builder_sections)                  oczekiwane=0 rzeczywiste=0
+[verify] OK   talie prezentacji (presentation_decks)                       oczekiwane=0 rzeczywiste=0
+[verify] OK   karty slajdów (presentation_cards)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   skoroszyty (generated_workbooks)                             oczekiwane=0 rzeczywiste=0
+[verify] OK   wpisy w rejestrze artefaktów (v8_output_artifacts+link)      oczekiwane=0 rzeczywiste=0
+[verify] OK   spotkania (meetings)                                         oczekiwane=0 rzeczywiste=0
+[verify] OK   uczestnicy spotkań (meeting_participants)                    oczekiwane=0 rzeczywiste=0
+[verify] OK   notatki ze spotkań (meeting_notes)                           oczekiwane=0 rzeczywiste=0
+[verify] OK   wątki czatu (conversations)                                  oczekiwane=0 rzeczywiste=0
+[verify] OK   wiadomości czatu (conversation_messages)                     oczekiwane=0 rzeczywiste=0
+[verify] OK   zadania osobiste OWNER-a (tasks)                             oczekiwane=0 rzeczywiste=0
+[verify] OK   skrzynka OWNER-a (canonical_inbox_items)                     oczekiwane=0 rzeczywiste=0
+[verify] PASS: wszystkie 13 asercji przeszły.
+(01-rdzen odtworzony przed pomiarem zer, bo pozostale --verify wymagaja istniejacej organizacji)
+
+=== 6. APPLY PONOWNIE po resecie ===
+[odkrycie] utworzono=36 zmieniono=0 pominieto=0
+[inicjatywy/sql] utworzono=141 zmieniono=0 pominieto=0
+[inicjatywy/api] decyzje GO=9/9 · agregaty=8/8 · przejścia do realizacji=4/4
+[inicjatywy/api] plan:       opublikowany (8 inicjatywy w oknach)
+[inicjatywy/api] obciążenie: policzona z planu i podaży organizacji, OPUBLIKOWANA
+[inicjatywy/api] przekazania -> execution_case: 4/4
+[realizacja/sql] [realizacja/sql] utworzono=40 zmieniono=10 pominieto=0
+[realizacja/api] RAID:     utworzone=7 istniejące=0
+[realizacja/api] decyzje:  utworzone=9 istniejące=0 opcje=20 rozstrzygnięcia=3
+[realizacja/api] migawki:  utworzone=2 istniejące=0
+[materialy] utworzono=80 zmieniono=0 pominieto=0
+
+=== 7. VERIFY po ponownym APPLY ===
+[verify-d3] PASS: wszystkie 31 asercji przeszły.
+[verify-d4] PASS: wszystkie 31 asercji przeszły.
+[verify] PASS: wszystkie 16 asercji przeszły.
+[verify] PASS: wszystkie 13 asercji przeszły.

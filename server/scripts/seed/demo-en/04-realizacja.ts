@@ -933,6 +933,19 @@ async function zbudujMigawke(c: PoolClient, klucz: (typeof KLUCZE_MIGAWEK)[numbe
 // ============================================================================
 // VERIFY — asercje TWARDE („== N", nie „>= N")
 // ============================================================================
+/**
+ * ZAKRES ZADAN PACZKI D4 w tabeli `tasks`.
+ *
+ * `tasks` jest WSPOLDZIELONA z paczka D6, ktora zaklada 6 ZADAN OSOBISTYCH
+ * OWNER-a (`task_type='personal'`, bez inicjatywy i bez projektu — zasilaja
+ * Skrzynke „Moja praca"). Bez tego zawezenia asercje D4 mierza cudzy zbior:
+ * po `06-materialy.ts --apply` licznik „zadania" rosl 36 -> 42, „zadania BEZ
+ * inicjatywy" 0 -> 6, a „zadania PO TERMINIE" 8 -> 10 (zmierzone D4b 08.09
+ * na `consultify_kopia_d44`). Ten sam warunek obowiazuje `--reset`, zeby D4
+ * nie kasowal danych D6.
+ */
+const ZADANIA_D4 = "organization_id=$1 AND COALESCE(task_type,'') <> 'personal'";
+
 type Asercja = { nazwa: string; oczekiwane: number; rzeczywiste: number };
 
 async function weryfikuj(c: PoolClient): Promise<void> {
@@ -940,7 +953,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
     Number((await c.query<{ n: string }>(sql, params)).rows[0]?.n ?? 0);
   const idyRealizowanych = SLUGI_REALIZOWANE.map((s) => idInicjatywy(s));
 
-  const zadan = await licz('SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1', [ORG_ID]);
+  const zadan = await licz(`SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4}`, [ORG_ID]);
   if (zadan === 0) {
     // Stan po `--reset`: wszystko musi być zerem.
     wypiszIZakoncz([
@@ -991,7 +1004,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       nazwa: 'zadania BEZ inicjatywy (0 — wymaganie paczki)',
       oczekiwane: 0,
       rzeczywiste: await licz(
-        `SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1 AND (initiative_id IS NULL OR initiative_id='')`,
+        `SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4} AND (initiative_id IS NULL OR initiative_id='')`,
         [ORG_ID]
       ),
     },
@@ -999,7 +1012,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       nazwa: 'zadania BEZ osoby (0 — wymaganie paczki)',
       oczekiwane: 0,
       rzeczywiste: await licz(
-        `SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1 AND (assignee_id IS NULL OR assignee_id='')`,
+        `SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4} AND (assignee_id IS NULL OR assignee_id='')`,
         [ORG_ID]
       ),
     },
@@ -1007,7 +1020,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       nazwa: 'zadania BEZ rodowodu projektu (realizacja fail-closed)',
       oczekiwane: 0,
       rzeczywiste: await licz(
-        `SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1 AND (project_id IS NULL OR project_id='')`,
+        `SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4} AND (project_id IS NULL OR project_id='')`,
         [ORG_ID]
       ),
     },
@@ -1016,7 +1029,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       oczekiwane: 0,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM tasks
-          WHERE organization_id=$1 AND (due_date IS NULL OR estimated_hours IS NULL OR estimated_hours <= 0)`,
+          WHERE ${ZADANIA_D4} AND (due_date IS NULL OR estimated_hours IS NULL OR estimated_hours <= 0)`,
         [ORG_ID]
       ),
     },
@@ -1025,7 +1038,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       oczekiwane: 8,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM tasks
-          WHERE organization_id=$1 AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')
+          WHERE ${ZADANIA_D4} AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')
             AND due_date IS NOT NULL AND due_date < $2::timestamp`,
         [ORG_ID, PONIEDZIALEK_BIEZACY]
       ),
@@ -1034,7 +1047,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       nazwa: 'zadania na inicjatywach SPOZA czterech realizowanych',
       oczekiwane: 0,
       rzeczywiste: await licz(
-        'SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1 AND NOT (initiative_id = ANY($2::text[]))',
+        `SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4} AND NOT (initiative_id = ANY($2::text[]))`,
         [ORG_ID, idyRealizowanych]
       ),
     },
@@ -1043,7 +1056,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       oczekiwane: 9,
       rzeczywiste: await licz(
         `SELECT COUNT(DISTINCT assignee_id)::text AS n FROM tasks
-          WHERE organization_id=$1 AND assignee_id IS NOT NULL
+          WHERE ${ZADANIA_D4} AND assignee_id IS NOT NULL
             AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')`,
         [ORG_ID]
       ),
@@ -1053,7 +1066,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       oczekiwane: 5,
       rzeczywiste: await licz(
         `SELECT COUNT(DISTINCT assignee_id)::text AS n FROM tasks
-          WHERE organization_id=$1 AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')
+          WHERE ${ZADANIA_D4} AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','validated','cancelled')
             AND due_date IS NOT NULL AND due_date < $2::timestamp
             AND COALESCE(estimated_hours,0) - COALESCE(actual_hours,0) > 0`,
         [ORG_ID, PONIEDZIALEK_BIEZACY]
@@ -1066,7 +1079,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
         `SELECT COUNT(*)::text AS n FROM (
            SELECT t.assignee_id, SUM(t.estimated_hours) AS h, MAX(u.weekly_capacity_hours) AS cap
              FROM tasks t JOIN users u ON u.id = t.assignee_id
-            WHERE t.organization_id = $1
+            WHERE t.organization_id = $1 AND COALESCE(t.task_type,'') <> 'personal'
               AND LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','validated','cancelled')
               AND t.created_at >= $2::timestamp AND t.due_date < ($2::timestamp + INTERVAL '7 days')
             GROUP BY t.assignee_id
@@ -1220,27 +1233,29 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       ),
     },
     {
-      // STOP A (zmierzone 08.09): `execution_report_snapshots.organization_id`
-      // jest typu UUID, a `organizations.id` to TEXT — dla slugu „northwind"
-      // zapisu nie da się wykonać, a odczyt zwraca [] po połkniętym wyjątku.
-      // Asercja pilnuje PRAWDY, nie życzenia: dopóki defekt trwa, ma być 0.
-      nazwa: 'migawki raportów realizacji (STOP A: kolumna org-id typu UUID, org-id to slug)',
-      oczekiwane: 0,
+      // STOP A ZAMKNIETY w D4b (DECYZJA 1): `execution_report_snapshots.organization_id`
+      // jest typu UUID (jak 11 innych kolumn `organization_id` w schemacie), wiec
+      // slug „northwind" konczyl sie `invalid input syntax for type uuid`, ktore
+      // `dbAll` polykalo — migawki nie powstawaly, a zakladka „Raporty" byla cicho
+      // pusta. Od D4b `ORG_ID` to deterministyczny UUIDv5 i migawki sie zapisuja.
+      nazwa: 'migawki raportów realizacji (org-id typu UUID — DECYZJA 1 D4b)',
+      oczekiwane: KLUCZE_MIGAWEK.length,
       rzeczywiste: await licz('SELECT COUNT(*)::text AS n FROM execution_report_snapshots WHERE organization_id::text=$1', [
         ORG_ID,
       ]),
     },
     {
-      // Sygnały liczy detektor NA ŻYWO z tej samej reguły (`delayDetectionService.ts:345-377`:
-      // JOIN inicjatyw, `due_date < now`, status poza DONE/CANCELLED). Asercja liczy
-      // dokładnie to zapytanie, żeby „sygnały > 0" było mierzone, nie deklarowane.
+      // Sygnały liczy detektor NA ŻYWO z tej samej reguły (`delayDetectionService.ts`:
+      // JOIN inicjatyw, `due_date < now`, status poza done/cancelled PRZEZ LOWER —
+      // po naprawie D4b DECYZJA 3). Asercja liczy dokładnie to zapytanie, żeby
+      // „sygnały > 0" było mierzone, nie deklarowane.
       nazwa: 'źródło sygnałów opóźnień: zadania po terminie z inicjatywą (musi być > 0)',
       oczekiwane: 8,
       rzeczywiste: await licz(
         `SELECT COUNT(*)::text AS n FROM tasks t JOIN initiatives i ON i.id = t.initiative_id
-          WHERE i.organization_id=$1 AND t.status NOT IN ('DONE','CANCELLED')
-            AND t.due_date IS NOT NULL AND t.due_date < $2::timestamp
-            AND LOWER(COALESCE(t.status,'')) NOT IN ('done','cancelled')`,
+          WHERE i.organization_id=$1
+            AND LOWER(COALESCE(t.status,'')) NOT IN ('done','cancelled')
+            AND t.due_date IS NOT NULL AND t.due_date < $2::timestamp`,
         [ORG_ID, DZIS]
       ),
     },
@@ -1250,7 +1265,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
       rzeczywiste:
         (await licz(
           `SELECT COUNT(*)::text AS n FROM tasks
-            WHERE organization_id=$1 AND (title ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]' OR COALESCE(description,'') ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]'
+            WHERE ${ZADANIA_D4} AND (title ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]' OR COALESCE(description,'') ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]'
                   OR COALESCE(acceptance_criteria,'') ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]')`,
           [ORG_ID]
         )) +
@@ -1282,7 +1297,7 @@ async function weryfikuj(c: PoolClient): Promise<void> {
           [ORG_ID]
         )) +
         (await licz(
-          `SELECT COUNT(*)::text AS n FROM tasks WHERE organization_id=$1 AND (title LIKE '%&%' OR COALESCE(description,'') LIKE '%&%')`,
+          `SELECT COUNT(*)::text AS n FROM tasks WHERE ${ZADANIA_D4} AND (title LIKE '%&%' OR COALESCE(description,'') LIKE '%&%')`,
           [ORG_ID]
         )),
     },
@@ -1369,7 +1384,7 @@ async function reset(c: PoolClient): Promise<string> {
     await c.query(`DELETE FROM ie_outbox_events WHERE organization_id=$1 AND aggregate_type='raid_item'`, [ORG_ID]);
     await c.query(`DELETE FROM ie_audit_events WHERE organization_id=$1 AND aggregate_type='raid_item'`, [ORG_ID]);
     const raid = await c.query('DELETE FROM raid_items WHERE organization_id=$1', [ORG_ID]);
-    const zadania = await c.query('DELETE FROM tasks WHERE organization_id=$1', [ORG_ID]);
+    const zadania = await c.query(`DELETE FROM tasks WHERE ${ZADANIA_D4}`, [ORG_ID]);
     await c.query('COMMIT');
     return (
       `reset: usunięto ${zadania.rowCount} zadań, ${raid.rowCount} pozycji RAID (z agregatami), ` +
