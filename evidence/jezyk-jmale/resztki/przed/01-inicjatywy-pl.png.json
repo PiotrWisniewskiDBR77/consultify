@@ -1,0 +1,202 @@
+{
+ "ekran": "01-inicjatywy",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3218/initiatives",
+ "obcychSlowUI": 9,
+ "obcychLiniiUI": 7,
+ "ui": [
+  {
+   "linia": "Energy consumption varies without an accepted operating baseline.",
+   "trafienia": [
+    "operating"
+   ]
+  },
+  {
+   "linia": "Median changeover is 95 minutes and constrains Line 4 throughput.",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Reduce median changeover to 60 minutes with governed evidence.",
+   "trafienia": [
+    "with",
+    "evidence"
+   ]
+  },
+  {
+   "linia": "Energy consumption varies without an accepted operating baseline.",
+   "trafienia": [
+    "operating"
+   ]
+  },
+  {
+   "linia": "Manual Energy Draft Owner",
+   "trafienia": [
+    "Draft"
+   ]
+  },
+  {
+   "linia": "Median changeover is 95 minutes and constrains Line 4 throughput.",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Reduce median changeover to 60 minutes with governed evidence.",
+   "trafienia": [
+    "with",
+    "evidence"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "New Idea",
+   "trafienia": [
+    "New"
+   ]
+  },
+  {
+   "linia": "F1-26 from assessment",
+   "trafienia": [
+    "from"
+   ]
+  },
+  {
+   "linia": "Automated Changeover Optimization — decision candidate",
+   "trafienia": [
+    "decision"
+   ]
+  },
+  {
+   "linia": "Automated Changeover Optimization — decision candidate",
+   "trafienia": [
+    "decision"
+   ]
+  },
+  {
+   "linia": "Automate and standardize key handover activities to reduce cycle time and improve quality.",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Concentrate the organization's key strengths on the most promising market opportunities. Build a dedicated action plan with 90-day milestones.",
+   "trafienia": [
+    "the",
+    "organization",
+    "with"
+   ]
+  },
+  {
+   "linia": "Identify weaknesses directly exposed to existing threats and launch a remediation program. Priority: most frequently occurring weaknesses in the context of major threats.",
+   "trafienia": [
+    "and",
+    "the",
+    "of"
+   ]
+  },
+  {
+   "linia": "Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.",
+   "trafienia": [
+    "For"
+   ]
+  },
+  {
+   "linia": "Map which strengths can neutralize which threats. Create a \"defense matrix\" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.",
+   "trafienia": [
+    "Create",
+    "for",
+    "the",
+    "new"
+   ]
+  },
+  {
+   "linia": "Map which strengths can neutralize which threats. Create a \"defense matrix\" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.",
+   "trafienia": [
+    "Create",
+    "for",
+    "the",
+    "new"
+   ]
+  },
+  {
+   "linia": "Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.",
+   "trafienia": [
+    "For"
+   ]
+  },
+  {
+   "linia": "Map which strengths can neutralize which threats. Create a \"defense matrix\" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.",
+   "trafienia": [
+    "Create",
+    "for",
+    "the",
+    "new"
+   ]
+  },
+  {
+   "linia": "Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.",
+   "trafienia": [
+    "For"
+   ]
+  },
+  {
+   "linia": "Identify weaknesses directly exposed to existing threats and launch a remediation program. Priority: most frequently occurring weaknesses in the context of major threats.",
+   "trafienia": [
+    "and",
+    "the",
+    "of"
+   ]
+  },
+  {
+   "linia": "Concentrate the organization's key strengths on the most promising market opportunities. Build a dedicated action plan with 90-day milestones.",
+   "trafienia": [
+    "the",
+    "organization",
+    "with"
+   ]
+  },
+  {
+   "linia": "Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]",
+   "trafienia": [
+    "Decisions",
+    "Decision"
+   ]
+  },
+  {
+   "linia": "AI and Automation — Leveraging AI for automation presents a high-impact opportunity to improve efficiency. Market Expansion — Expanding into new markets is an identified strategic goal with potential for significant revenue growth.",
+   "trafienia": [
+    "and",
+    "for",
+    "new",
+    "with"
+   ]
+  },
+  {
+   "linia": "AI and Automation — Leveraging AI for automation presents a high-impact opportunity to improve efficiency. Market Expansion — Expanding into new markets is an identified strategic goal with potential for significant revenue growth.",
+   "trafienia": [
+    "and",
+    "for",
+    "new",
+    "with"
+   ]
+  },
+  {
+   "linia": "Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]",
+   "trafienia": [
+    "Decisions",
+    "Decision"
+   ]
+  },
+  {
+   "linia": "Comprehensive AI Chat audit for scientific research and consulting purposes.",
+   "trafienia": [
+    "audit",
+    "for",
+    "and"
+   ]
+  }
+ ]
+}

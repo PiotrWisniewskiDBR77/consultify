@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -416,7 +417,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 <div className="flex items-center gap-2 text-xs text-c-text-secondary mt-0.5">
                   {item.fileSize && <span>{formatFileSize(item.fileSize)}</span>}
                   {item.description && <span className="truncate">{item.description}</span>}
-                  {uploadedAt ? <span>{new Date(uploadedAt).toLocaleDateString()}</span> : null}
+                  {uploadedAt ? <span>{formatListDate(uploadedAt)}</span> : null}
                 </div>
               </div>
 

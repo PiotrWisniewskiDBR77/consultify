@@ -19,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 import { TeresaMark } from '@/components/shared/TeresaMark';
 
@@ -280,7 +281,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 </span>
               )}
               <span className="text-xs text-[var(--c-text-muted)]">
-                {new Date(msg.createdAt).toLocaleTimeString()}
+                {formatListDateTime(msg.createdAt)}
               </span>
             </div>
             <p className="text-sm text-[var(--c-text)] whitespace-pre-wrap">{msg.content}</p>

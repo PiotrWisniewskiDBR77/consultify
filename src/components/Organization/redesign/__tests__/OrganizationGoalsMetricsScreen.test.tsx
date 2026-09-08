@@ -94,16 +94,16 @@ describe('OrganizationGoalsMetricsScreen', () => {
 
     expect(screen.getByTestId('org-card-intent')).toBeInTheDocument();
     expect(screen.getByTestId('org-card-metrics')).toBeInTheDocument();
-    expect(screen.getByLabelText('Cel nadrzędny')).toHaveValue('Zostać liderem rynku w 3 lata');
+    expect(screen.getByLabelText('Primary objective')).toHaveValue('Zostać liderem rynku w 3 lata');
     expect(screen.getByDisplayValue('OEE')).toBeInTheDocument();
-    expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:4');
-    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Uzupełnione:3');
+    expect(screen.getByTestId('chip-all')).toHaveTextContent('All:4');
+    expect(screen.getByTestId('chip-filled')).toHaveTextContent('Filled in:3');
   });
 
   it('edycja pola trafia do tego samego store, co stary ekran (setGoals)', () => {
     renderScreen();
 
-    fireEvent.change(screen.getByLabelText('Cele drugorzędne'), {
+    fireEvent.change(screen.getByLabelText('Secondary objectives'), {
       target: { value: 'Redukcja emisji CO2' },
     });
     expect(setGoals).toHaveBeenCalledWith({ secondaryObjectives: 'Redukcja emisji CO2' });
@@ -112,7 +112,7 @@ describe('OrganizationGoalsMetricsScreen', () => {
   it('dodanie KPI trafia do updateGoalsList("kpis", …)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByText('Dodaj miernik'));
+    fireEvent.click(screen.getByText('Add metric'));
     expect(updateGoalsList).toHaveBeenCalledWith(
       'kpis',
       expect.arrayContaining([expect.objectContaining({ name: 'OEE' }), expect.objectContaining({ name: '' })])

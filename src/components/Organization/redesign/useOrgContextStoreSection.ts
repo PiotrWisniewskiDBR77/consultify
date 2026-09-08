@@ -49,12 +49,10 @@ export function useOrgContextStoreSection(
     if (!contextSync) return false;
     const ok = await contextSync.saveNow();
     if (ok) {
-      toast.success(t('organization.contextStore.saved', 'Zapisano'));
+      toast.success(t('organization.contextStore.saved', 'Saved'));
     } else {
       toast.error(
-        t(
-          'organization.contextStore.readbackFailed',
-          'Zapis wykonany, ale odczyt zwrotny z serwera nie zgadza się z zapisanymi danymi.'
+        t('organization.contextStore.readbackFailed', 'The save completed, but the read-back from the server does not match the saved data.'
         )
       );
     }

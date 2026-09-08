@@ -1,7 +1,9 @@
 import { Bell, Key, Settings, Shield } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const GovernanceSettings: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold dark:text-white flex items-center gap-2 mb-8">
@@ -13,7 +15,10 @@ export const GovernanceSettings: React.FC = () => {
         <SettingsGroup
           title="Audit Strategy"
           icon={<Shield className="w-5 h-5" />}
-          description="Configure retention and detail level for audit logs."
+          description={t(
+            'organization.governance.settings.auditDescription',
+            'Configure retention and detail level for audit logs.'
+          )}
         >
           <div className="space-y-4 pt-4">
             <ToggleSetting label="High-Fidelity Logging" active={true} />
@@ -38,7 +43,10 @@ export const GovernanceSettings: React.FC = () => {
         <SettingsGroup
           title="Security Posture"
           icon={<Key className="w-5 h-5" />}
-          description="Global security constraints and MFA requirements."
+          description={t(
+            'organization.governance.settings.securityDescription',
+            'Global security constraints and MFA requirements.'
+          )}
         >
           <div className="space-y-4 pt-4">
             <ToggleSetting label="Strict RBAC Enforcement" active={true} />
@@ -50,7 +58,10 @@ export const GovernanceSettings: React.FC = () => {
         <SettingsGroup
           title="Notifications"
           icon={<Bell className="w-5 h-5" />}
-          description="Alerting for governance breaches and events."
+          description={t(
+            'organization.governance.settings.notificationsDescription',
+            'Alerting for governance breaches and events.'
+          )}
         >
           <div className="space-y-4 pt-4">
             <ToggleSetting label="Email on Critical Breach" active={true} />

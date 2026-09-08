@@ -37,19 +37,17 @@ export const MeetingsWave2Placeholder: React.FC = () => {
 
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-c-text">
-          {t('meeting.wave2Placeholder.title', 'Spotkania — planowane w Fali 2')}
+          {t('meeting.wave2Placeholder.title', 'Meetings — planned for Wave 2')}
         </h1>
         <p className="max-w-md text-sm text-c-text-secondary">
-          {t(
-            'meeting.wave2Placeholder.message',
-            'Ten moduł nie wchodzi jeszcze do MVP. Wracamy do niego w kolejnej fali rozwoju.'
+          {t('meeting.wave2Placeholder.message', 'This module isn\'t part of the MVP yet. We\'ll come back to it in the next wave.'
           )}
         </p>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button variant="primary" icon={<MessageCircle />} onClick={handleBackToChat}>
-          {t('notFoundPage.backToChat', 'Wróć do Czatu')}
+          {t('notFoundPage.backToChat', 'Back to Chat')}
         </Button>
       </div>
     </div>

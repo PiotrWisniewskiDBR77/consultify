@@ -17,6 +17,7 @@ import {
   Users,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { InterviewInsight, OrganizationContext } from '@/hooks/useInterviewContext';
 
@@ -98,6 +99,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   onExportToAssessment,
   onViewDetails,
 }) => {
+  const { t } = useTranslation();
   const insightsByCategory = insights.reduce(
     (acc, insight) => {
       const cat = insight.category as InterviewCategory;
@@ -237,7 +239,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
       {/* Export Actions */}
       <div className="p-4 border-t border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)]">
         <p className="text-xs text-[var(--c-text-muted)] mb-3">
-          Export this context to enrich your Tools or Assessment
+          {t('interview.summary.exportHint', 'Export this context to enrich your Tools or Assessment')}
         </p>
         <div className="flex gap-2">
           <button

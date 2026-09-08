@@ -238,7 +238,7 @@ export const OkrReportPage: React.FC = () => {
     () => [
       {
         id: 'objective',
-        label: t('results.okr.report.columns.objective', 'CEL'),
+        label: t('results.okr.report.columns.objective', 'OBJECTIVE'),
         width: '230px',
         dataType: 'text',
         render: (row: OkrReportRow) => {
@@ -246,16 +246,16 @@ export const OkrReportPage: React.FC = () => {
             const group = row as Extract<OkrReportRow, { kind: 'group' }>;
             const ownerLabel =
               group.ownerUserIds.length === 1
-                ? t('results.okr.report.groupOwner', 'właściciel nadrzędny: {{name}}', {
+                ? t('results.okr.report.groupOwner', 'parent owner: {{name}}', {
                     name: memberNameOrUnknown(resolveMemberName, group.ownerUserIds[0], isPolish),
                   })
-                : t('results.okr.report.groupOwners', '{{count}} właścicieli celów', {
+                : t('results.okr.report.groupOwners', '{{count}} objective owners', {
                     count: group.ownerUserIds.length,
                   });
             return (
               <span className="flex items-center gap-3 whitespace-nowrap">
                 <b className="uppercase">
-                  {group.theme ?? t('results.okr.report.noTheme', 'Bez tematu')}
+                  {group.theme ?? t('results.okr.report.noTheme', 'No theme')}
                 </b>
                 <span className="text-xs font-normal text-c-text-secondary">{ownerLabel}</span>
               </span>
@@ -281,7 +281,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'keyResult',
-        label: t('results.okr.report.columns.keyResult', 'KLUCZOWY REZULTAT'),
+        label: t('results.okr.report.columns.keyResult', 'KEY RESULT'),
         width: '280px',
         dataType: 'text',
         render: (row: OkrReportRow) =>
@@ -291,7 +291,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'owner',
-        label: t('results.okr.report.columns.owner', 'WŁAŚCICIEL'),
+        label: t('results.okr.report.columns.owner', 'OWNER'),
         width: '156px',
         dataType: 'owner',
         render: (row: OkrReportRow) => {
@@ -306,7 +306,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'values',
-        label: t('results.okr.report.columns.values', 'START / CEL / BIEŻĄCA'),
+        label: t('results.okr.report.columns.values', 'START / TARGET / CURRENT'),
         width: '178px',
         dataType: 'number',
         render: (row: OkrReportRow) => {
@@ -324,7 +324,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'progress',
-        label: t('results.okr.report.columns.progress', 'POSTĘP'),
+        label: t('results.okr.report.columns.progress', 'PROGRESS'),
         width: '104px',
         dataType: 'number',
         align: 'right',
@@ -343,7 +343,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'confidence',
-        label: t('results.okr.report.columns.confidence', 'PEWNOŚĆ'),
+        label: t('results.okr.report.columns.confidence', 'CONFIDENCE'),
         width: '124px',
         dataType: 'status',
         render: (row: OkrReportRow) => {
@@ -358,7 +358,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'deadline',
-        label: t('results.okr.report.columns.deadline', 'TERMIN'),
+        label: t('results.okr.report.columns.deadline', 'DEADLINE'),
         // K13: data NIGDY nie jest ucinana. „15 gru 2026" w 14 px ma ~96 px,
         // z `px-4` z obu stron potrzeba 128 px — przy 118 px wychodziło
         // „15 gru 20…" (zmierzone na zrzucie 05.09).
@@ -374,7 +374,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'state',
-        label: t('results.okr.report.columns.stateOne', 'STAN'),
+        label: t('results.okr.report.columns.stateOne', 'STATE'),
         width: '150px',
         dataType: 'status',
         render: (row: OkrReportRow) => {
@@ -384,10 +384,8 @@ export const OkrReportPage: React.FC = () => {
             return (
               <OkrStatePill
                 state="no-signal"
-                label={t('results.okr.report.noKeyResults', 'Brak rezultatów')}
-                title={t(
-                  'results.okr.report.noKeyResultsHint',
-                  'Ten cel nie ma jeszcze ani jednego kluczowego rezultatu.'
+                label={t('results.okr.report.noKeyResults', 'No key results')}
+                title={t('results.okr.report.noKeyResultsHint', 'This objective has no key result yet.'
                 )}
               />
             );
@@ -403,7 +401,7 @@ export const OkrReportPage: React.FC = () => {
                       state: okrReportStateLabel(keyResultRow.state, isPolish),
                       date: formatOkrDate(lastCheckIn, isPolish),
                     })
-                  : t('results.okr.report.stateWithoutCheckIn', '{{state}} · bez check-inu', {
+                  : t('results.okr.report.stateWithoutCheckIn', '{{state}} · no check-in yet', {
                       state: okrReportStateLabel(keyResultRow.state, isPolish),
                     })
               }
@@ -413,7 +411,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'team',
-        label: t('results.okr.report.columns.team', 'ZESPÓŁ'),
+        label: t('results.okr.report.columns.team', 'TEAM'),
         width: '150px',
         dataType: 'text',
         defaultVisible: false,
@@ -424,7 +422,7 @@ export const OkrReportPage: React.FC = () => {
       },
       {
         id: 'lastCheckIn',
-        label: t('results.okr.report.columns.lastCheckIn', 'OSTATNI CHECK-IN'),
+        label: t('results.okr.report.columns.lastCheckIn', 'LAST CHECK-IN'),
         width: '158px',
         dataType: 'date',
         defaultVisible: false,
@@ -448,14 +446,14 @@ export const OkrReportPage: React.FC = () => {
       {
         id: 'owner',
         label: filter.ownerUserId
-          ? t('results.okr.report.chipOwnerNamed', 'Właściciel: {{name}}', {
+          ? t('results.okr.report.chipOwnerNamed', 'Owner: {{name}}', {
               name: memberNameOrUnknown(resolveMemberName, filter.ownerUserId, isPolish),
             })
-          : t('results.okr.report.chipOwnerAll', 'Właściciel: wszyscy'),
+          : t('results.okr.report.chipOwnerAll', 'Owner: everyone'),
       },
-      { id: 'all', label: t('results.okr.report.chipAll', 'Wszystkie') },
-      { id: 'risk', label: t('results.okr.report.chipRisk', 'Zagrożone') },
-      { id: 'missing', label: t('results.okr.report.chipMissing', 'Bez check-inu') },
+      { id: 'all', label: t('results.okr.report.chipAll', 'All') },
+      { id: 'risk', label: t('results.okr.report.chipRisk', 'At risk') },
+      { id: 'missing', label: t('results.okr.report.chipMissing', 'No check-in') },
     ],
     [filter.ownerUserId, resolveMemberName, isPolish, t]
   );
@@ -506,7 +504,7 @@ export const OkrReportPage: React.FC = () => {
         moduleBar={{
           breadcrumbs: [
             {
-              label: t('results.okr.report.registryCrumb', 'Raporty OKR'),
+              label: t('results.okr.report.registryCrumb', 'OKR reports'),
               onClick: () => navigate(OKR_REPORT_REGISTRY_PATH),
             },
             { label: set?.title ?? OKR_EMPTY },
@@ -536,7 +534,7 @@ export const OkrReportPage: React.FC = () => {
           filterControls: (
             <label className="flex items-center gap-2 text-xs text-c-text-secondary">
               <Users size={14} aria-hidden="true" />
-              <span className="sr-only">{t('results.okr.report.ownerFilter', 'Właściciel')}</span>
+              <span className="sr-only">{t('results.okr.report.ownerFilter', 'Owner')}</span>
               <select
                 className="h-8 rounded-lg border border-c-border bg-c-surface px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 value={filter.ownerUserId ?? ''}
@@ -548,7 +546,7 @@ export const OkrReportPage: React.FC = () => {
                 }
                 data-testid="okr-report-owner-filter"
               >
-                <option value="">{t('results.okr.report.chipOwnerAll', 'Właściciel: wszyscy')}</option>
+                <option value="">{t('results.okr.report.chipOwnerAll', 'Owner: everyone')}</option>
                 {owners.map((ownerUserId) => (
                   <option key={ownerUserId} value={ownerUserId}>
                     {memberNameOrUnknown(resolveMemberName, ownerUserId, isPolish)}
@@ -558,7 +556,7 @@ export const OkrReportPage: React.FC = () => {
             </label>
           ),
           primaryCta: {
-            label: t('results.okr.report.addObjective', 'Dodaj cel'),
+            label: t('results.okr.report.addObjective', 'Add objective'),
             icon: Plus,
             onClick: () => {
               setFormError(null);
@@ -572,13 +570,11 @@ export const OkrReportPage: React.FC = () => {
               data-testid="okr-report-summary"
             >
               <span className="uppercase tracking-wide text-c-text-muted">
-                {t('results.okr.report.summary', 'Podsumowanie')}
+                {t('results.okr.report.summary', 'Summary')}
               </span>
               <OkrStateCountsCell
                 counts={summary}
-                title={t(
-                  'results.okr.report.stateTooltip',
-                  'na dobrej drodze {{onTrack}} · zagrożone {{atRisk}} · krytyczne {{critical}} · bez check-inu {{noSignal}}',
+                title={t('results.okr.report.stateTooltip', 'on track {{onTrack}} · at risk {{atRisk}} · critical {{critical}} · no check-in {{noSignal}}',
                   summary as unknown as Record<string, number>
                 )}
               />
@@ -601,10 +597,8 @@ export const OkrReportPage: React.FC = () => {
           empty:
             !loading && !error && rows.length === 0
               ? {
-                  title: t('results.okr.report.emptyRowsTitle', 'Brak wierszy dla tego filtra'),
-                  description: t(
-                    'results.okr.report.emptyRowsDescription',
-                    'Żaden kluczowy rezultat nie pasuje do wybranego filtra. Zmień filtr albo dodaj cel do raportu.'
+                  title: t('results.okr.report.emptyRowsTitle', 'No rows for this filter'),
+                  description: t('results.okr.report.emptyRowsDescription', 'No key result matches the selected filter. Change the filter or add an objective to the report.'
                   ),
                 }
               : undefined,
@@ -619,7 +613,7 @@ export const OkrReportPage: React.FC = () => {
                   primary: [
                     {
                       id: 'open',
-                      label: t('results.okr.report.openObjective', 'Otwórz kartę celu'),
+                      label: t('results.okr.report.openObjective', 'Open objective card'),
                       onClick: () => openObjective(row as unknown as OkrReportKeyResultRow),
                     },
                   ],

@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, FileText, Info, Loader2, UploadCloud } from 'lucide-react';
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 
@@ -9,6 +10,7 @@ interface ContextDocUploaderProps {
 }
 
 export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName, suggestions }) => {
+  const { t } = useTranslation();
   const [showHints, setShowHints] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -75,24 +77,28 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
             challenges/goals/strategy) — h4 tu łamał kolejność nagłówków (axe: heading-order,
             zmierzone na org-declared-challenges i rodzeństwie). */}
         <h2 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-          Dokumenty pomocnicze
+          {t('organization.contextUploader.title', 'Supporting documents')}
           <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
-            Dla: {tabName}
+            {t('organization.contextUploader.forTab', 'For: {{tab}}', { tab: tabName })}
           </span>
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {uploadStatus === 'success' ? (
-            <span className="text-green-600 font-medium">Przetworzono: {statusMessage}</span>
+            <span className="text-green-600 font-medium">
+              {t('organization.contextUploader.processed', 'Processed: {{message}}', { message: statusMessage })}
+            </span>
           ) : uploadStatus === 'error' ? (
-            <span className="text-danger-600 font-medium">Błąd: {statusMessage}</span>
+            <span className="text-danger-600 font-medium">
+              {t('organization.contextUploader.error', 'Error: {{message}}', { message: statusMessage })}
+            </span>
           ) : (
             <>
-              Wgraj pliki, które pomogą AI lepiej zrozumieć kontekst.
+              {t('organization.contextUploader.lead', 'Upload files that help the AI understand the context better.')}
               <button
                 onClick={() => setShowHints(!showHints)}
                 className="ml-2 text-c-text font-medium inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary group"
               >
-                Co warto wgrać?
+                {t('organization.contextUploader.whatToUpload', 'What is worth uploading?')}
                 <Info size={12} className="group-hover:scale-110 transition-transform" />
               </button>
             </>
@@ -106,7 +112,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
           <div className="overflow-hidden">
             <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
               <p className="text-[10px] font-bold text-c-text-muted uppercase mb-2">
-                Rekomendowane dla: {tabName}
+                {t('organization.contextUploader.recommendedFor', 'Recommended for: {{tab}}', { tab: tabName })}
               </p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((s) => (

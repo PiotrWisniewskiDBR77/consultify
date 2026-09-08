@@ -19,6 +19,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { formatListNumber } from '../../utils/listDateFormat';
+
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
@@ -331,9 +333,9 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           {t('organization.billing.tokensTitle', 'Token Balance')}
         </h3>
         <div className="mt-3 flex items-end gap-3">
-          <span className="text-3xl font-bold text-c-text">{tokens.toLocaleString()}</span>
+          <span className="text-3xl font-bold text-c-text">{formatListNumber(tokens)}</span>
           <span className="text-sm text-c-text-muted pb-1">
-            / {tokenLimit.toLocaleString()} {t('organization.billing.tokensUnit', 'tokens')}
+            / {formatListNumber(tokenLimit)} {t('organization.billing.tokensUnit', 'tokens')}
           </span>
         </div>
         <div className="mt-3 h-2 rounded-full bg-c-surface-raised overflow-hidden">
@@ -737,8 +739,10 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 </button>
               </div>
               <p className="text-xs text-c-text-muted">
-                DNS verification remains a separate operator step before the domain can be marked
-                verified.
+                {t(
+                  'organization.domains.dnsNote',
+                  'DNS verification remains a separate operator step before the domain can be marked verified.'
+                )}
               </p>
             </div>
           </div>

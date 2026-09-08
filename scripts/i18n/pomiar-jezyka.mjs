@@ -144,9 +144,20 @@ const plSlabe = new Set(WYJATKI.polskieSlabe);
 const enSilne = new Set(WYJATKI.angielskieSilne);
 const enSlabe = new Set(WYJATKI.angielskieSlabe);
 
+/**
+ * Frazy wielowyrazowe uznane za nazwy własne — wycinane PRZED tokenizacją, bo
+ * tokenizator dzieli po znakach niebędących literami i „what-if" rozpadłby się
+ * na „what" + „if" (oba w słowniku angielskim).
+ */
+const frazyWlasne = (WYJATKI.nazwyWlasneFrazy || []).map(
+  (f) => new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+);
+
 /** usuwa to, co nie jest ludzkim tekstem: {{count}}, <tag>, URL, kod */
 function oczysc(tekst) {
-  return String(tekst)
+  let wynik = String(tekst);
+  for (const f of frazyWlasne) wynik = wynik.replace(f, ' ');
+  return wynik
     .replace(/\{\{[^}]*\}\}/g, ' ')
     .replace(/\$\{[^}]*\}/g, ' ')
     .replace(/<[^>]*>/g, ' ')
@@ -453,9 +464,24 @@ function skanujTlumaczenia() {
 const ATRYBUTY_TEKSTOWE = /\b(placeholder|title|label|aria-label|ariaLabel|alt|tooltip|emptyText|helperText|subtitle|heading|confirmText|cancelText|okText|description)\s*=\s*(["'])([^"'{}]{3,160})\2/g;
 const TEKST_JSX = />\s*([^<>{}\n][^<>{}]{2,160})\s*</g;
 
+/**
+ * Wycina TREŚĆ komentarzy blokowych (`/* … *\/`, w JSX `{/* … *\/}`), zostawiając
+ * w ich miejscu spacje i znaki nowej linii — offsety i numery linii zostają bez zmian.
+ *
+ * POWÓD (paczka J-małe, 08.09): heurystyka „pomiń linię zaczynającą się od `*`"
+ * łapie tylko PIERWSZĄ linię komentarza. Wielolinijkowy komentarz JSX, którego
+ * kolejne wiersze nie zaczynają się od gwiazdki, wchodził do wyniku jako tekst
+ * interfejsu — zmierzone na `OrganizationCardPrimitives.tsx:104`
+ * („…here skipped a level everywhere it's used." liczone jako K4en). To był
+ * defekt przyrządu, nie produktu: komentarz nigdy nie trafia na ekran.
+ */
+function bezKomentarzyBlokowych(tresc) {
+  return tresc.replace(/\/\*[\s\S]*?\*\//g, (blok) => blok.replace(/[^\n]/g, ' '));
+}
+
 function skanujJsx(pliki) {
   for (const rel of pliki) {
-    const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const tresc = bezKomentarzyBlokowych(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
     const linie = tresc.split('\n');
     const modul = modulZeSciezki(rel);
     const zapiszTekst = (offset, tekst) => {
@@ -479,14 +505,29 @@ function skanujJsx(pliki) {
       if (/^[A-Za-z]+\s*=/.test(kandydat)) continue; // fragment atrybutu
       // odsiew kodu zlapanego przez generyki TS: `useState<Foo>(null); ... useState<`
       if (/;|=>|\bconst\b|\blet\b|\breturn\b|\bfunction\b|useState|useRef|useMemo|&&|\|\||\?\?|===|!==/.test(kandydat)) continue;
+      // Fragment ternary JSX: `) : loading ? (`, `) : (`, `: null}` — regex tekstu
+      // widzi to, co stoi między `>` i `<` sąsiednich znaczników, więc łapie sam
+      // kod. Zmierzone 08.09: 4 fałszywe K4en w module 07 Realizacja
+      // (BenefitsRegisterPanel, CutoverRunbookPanel, RolloutBaselinePanel,
+      // RolloutStagesPanel — wszystkie na `) : loading ? (`) i 1 fałszywe K4pl
+      // w module 06 (InitiativeDocumentView.tsx:10336, `) : (`).
+      if (/^[)\]}]/.test(kandydat) || /\?\s*\($/.test(kandydat)) continue;
+      // Rzutowanie TS złapane przez generyki: `r as unknown as Record<string, unknown>`
+      // — regex tekstu JSX widzi fragment między `>` i `<` jako zdanie po angielsku.
+      // Zmierzone 08.09 na ResultsKpiRegistryPage.tsx:1681 i bliźniaczym miejscu
+      // w ResultsKpiScorecardDetailPage.tsx (dwa fałszywe K4en w module 08).
+      if (/\bas\s+(unknown|const|never|any)\b|\bas\s+[A-Z]\w*(\[\])?$/.test(kandydat)) continue;
       zapiszTekst(m.index, kandydat);
     }
   }
 }
 
-function analizujJsxZawartosc(tresc) {
+function analizujJsxZawartosc(trescSurowa) {
   const w = { K4pl: 0, K4en: 0 };
-  if (!tresc) return w;
+  if (!trescSurowa) return w;
+  // Ta sama zasada co w `skanujJsx` — inaczej tryb szybki (pre-commit) i tryb
+  // pełny liczyłyby RÓŻNE liczby dla tego samego pliku.
+  const tresc = bezKomentarzyBlokowych(trescSurowa);
   const linie = tresc.split('\n');
   const licz = (offset, tekst) => {
     const nrLinii = tresc.slice(0, offset).split('\n').length;
@@ -607,9 +648,20 @@ const WZORCE_DATY = [
   [/new Intl\.(?:DateTimeFormat|NumberFormat)\(\s*(["'])(en-US|en-GB|pl-PL|de-DE)\1/g, 'Intl z locale na sztywno'],
 ];
 
+/**
+ * Wycina treść komentarzy — blokowych i liniowych — zostawiając białe znaki.
+ *
+ * POWÓD (J-małe): `KpiToolPage.tsx:1224` opisuje w komentarzu defekt
+ * („`undefined.toLocaleString()` wywraca kartę"), a skaner liczył ten opis
+ * jako realne wywołanie bez locale. Komentarz nie renderuje daty.
+ */
+function bezKomentarzy(tresc) {
+  return bezKomentarzyBlokowych(tresc).replace(/\/\/[^\n]*/g, (l) => ' '.repeat(l.length));
+}
+
 function skanujDaty(pliki) {
   for (const rel of pliki) {
-    const tresc = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const tresc = bezKomentarzy(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
     const modul = rel.startsWith('src/') ? modulZeSciezki(rel) : WSPOLNE;
     for (const [wz, opis] of WZORCE_DATY) {
       wz.lastIndex = 0;
@@ -622,9 +674,11 @@ function skanujDaty(pliki) {
   }
 }
 
-function analizujDatyZawartosc(tresc) {
+function analizujDatyZawartosc(trescSurowa) {
   let n = 0;
-  if (!tresc) return { K7: 0 };
+  if (!trescSurowa) return { K7: 0 };
+  // Ta sama zasada co w `skanujDaty` — tryb szybki i pełny muszą liczyć tak samo.
+  const tresc = bezKomentarzy(trescSurowa);
   for (const [wz] of WZORCE_DATY) {
     wz.lastIndex = 0;
     while (wz.exec(tresc)) n += 1;

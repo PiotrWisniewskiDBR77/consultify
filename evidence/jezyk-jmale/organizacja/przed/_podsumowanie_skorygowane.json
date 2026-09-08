@@ -1,0 +1,48 @@
+{
+ "en": 152,
+ "pl": 0,
+ "enOryginal": 152,
+ "plOryginal": 0,
+ "ekrany": {
+  "01-org-tozsamosc-en": {
+   "obceSkorygowane": 40,
+   "obceOryginal": 40,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "01-org-tozsamosc-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "02-org-cele-en": {
+   "obceSkorygowane": 36,
+   "obceOryginal": 36,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "02-org-cele-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "03-org-wyzwania-en": {
+   "obceSkorygowane": 42,
+   "obceOryginal": 42,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "03-org-wyzwania-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "04-org-strategia-en": {
+   "obceSkorygowane": 34,
+   "obceOryginal": 34,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "04-org-strategia-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  }
+ }
+}

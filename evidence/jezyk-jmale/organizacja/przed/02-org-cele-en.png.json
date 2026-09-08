@@ -1,0 +1,153 @@
+{
+ "ekran": "02-org-cele",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/goals/strategic-intent",
+ "obcychSlowUI": 36,
+ "obcychLiniiUI": 20,
+ "ui": [
+  {
+   "linia": "Mierniki sukcesu",
+   "trafienia": [
+    "Mierniki"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "CEL NADRZĘDNY",
+   "trafienia": [
+    "CEL",
+    "NADRZĘDNY"
+   ]
+  },
+  {
+   "linia": "CELE DRUGORZĘDNE",
+   "trafienia": [
+    "CELE",
+    "DRUGORZĘDNE"
+   ]
+  },
+  {
+   "linia": "Efektywność / redukcja kosztów",
+   "trafienia": [
+    "Efektywność",
+    "kosztów"
+   ]
+  },
+  {
+   "linia": "Wzrost / zwiększenie sprzedaży",
+   "trafienia": [
+    "zwiększenie",
+    "sprzedaży"
+   ]
+  },
+  {
+   "linia": "Innowacje / nowe produkty",
+   "trafienia": [
+    "nowe"
+   ]
+  },
+  {
+   "linia": "Jakość / zgodność",
+   "trafienia": [
+    "Jakość",
+    "zgodność"
+   ]
+  },
+  {
+   "linia": "Szybkość / zwinność",
+   "trafienia": [
+    "Szybkość",
+    "zwinność"
+   ]
+  },
+  {
+   "linia": "Doświadczenie klienta",
+   "trafienia": [
+    "Doświadczenie"
+   ]
+  },
+  {
+   "linia": "Mierniki sukcesu (KPI)",
+   "trafienia": [
+    "Mierniki"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj miernik",
+   "trafienia": [
+    "Dodaj"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  }
+ ]
+}

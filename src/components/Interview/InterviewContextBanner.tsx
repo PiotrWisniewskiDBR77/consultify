@@ -7,6 +7,7 @@
 
 import { Brain, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -49,6 +50,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
   targetType,
   targetId,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { context, insights, hasContext, completenessPercent, exportToTarget } =
     useInterviewContext();
@@ -124,8 +126,10 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
           </div>
 
           <p className="text-sm text-[var(--c-text-secondary)] mb-3">
-            You have organizational context from a previous interview session. Use it to enrich your
-            analysis.
+            {t(
+              'interview.contextBanner.body',
+              'You have organizational context from a previous interview session. Use it to enrich your work.'
+            )}
           </p>
 
           {/* Context preview */}

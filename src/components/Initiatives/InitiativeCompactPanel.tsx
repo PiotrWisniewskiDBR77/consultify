@@ -56,7 +56,7 @@ import {
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
-import { localeListy } from '@/utils/listDateFormat';
+import { formatListNumber, localeListy } from '@/utils/listDateFormat';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
@@ -909,7 +909,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
           },
           {
             labelKey: 'initiatives.compact.budget',
-            value: init.estimatedBudget ? `${init.estimatedBudget.toLocaleString()} PLN` : '—',
+            value: init.estimatedBudget ? `${formatListNumber(init.estimatedBudget)} PLN` : '—',
             icon: DollarSign,
           },
         ].map((item) => (
@@ -1343,13 +1343,13 @@ const FinanceTab: React.FC<{
             ? [
                 {
                   labelKey: 'initiatives.compact.budget',
-                  value: budget ? `${Number(budget).toLocaleString()} PLN` : '—',
+                  value: budget ? `${formatListNumber(Number(budget))} PLN` : '—',
                   icon: DollarSign,
                   color: 'text-blue-500',
                 },
                 {
                   labelKey: 'initiatives.compact.spent',
-                  value: spent ? `${Number(spent).toLocaleString()} PLN` : '—',
+                  value: spent ? `${formatListNumber(Number(spent))} PLN` : '—',
                   icon: TrendingUp,
                   color: 'text-amber-500',
                 },

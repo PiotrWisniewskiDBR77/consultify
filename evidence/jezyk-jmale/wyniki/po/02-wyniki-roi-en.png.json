@@ -1,0 +1,28 @@
+{
+ "ekran": "02-wyniki-roi",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/results/roi",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Program poprawy realizacji korzyści",
+   "trafienia": [
+    "korzyści"
+   ]
+  }
+ ]
+}

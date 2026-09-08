@@ -1,0 +1,22 @@
+{
+ "ekran": "01-spotkania-lista",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3218/meetings",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Start wersji beta — decyzja Go/No-Go",
+   "trafienia": [
+    "No"
+   ]
+  },
+  {
+   "linia": "Cloud Migration — Architecture Review",
+   "trafienia": [
+    "Review"
+   ]
+  }
+ ]
+}

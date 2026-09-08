@@ -121,7 +121,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import {
   formatPresentationCount,
   knownPresentation,
@@ -4662,7 +4662,7 @@ export const InterviewHub: React.FC = () => {
         label: t('interview.hub.progress'),
         width: '130px',
         align: 'right',
-        render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} ariaLabel="Postęp sesji" />,
+        render: (row: InterviewSession) => <ProgressCell value={getSessionProgress(row)} ariaLabel={t('interview.sessionProgress', 'Session progress')} />,
       },
       {
         id: 'due',
@@ -6699,7 +6699,7 @@ Return ONLY the answer text (no markdown fences).`;
         sortable: true,
         sortAccessor: (row: InterviewAssignment) => row.session?.completenessPercent || 0,
         render: (row: InterviewAssignment) => (
-          <ProgressCell value={row.session?.completenessPercent || 0} ariaLabel="Postęp sesji" />
+          <ProgressCell value={row.session?.completenessPercent || 0} ariaLabel={t('interview.sessionProgress', 'Session progress')} />
         ),
       },
       {
@@ -6734,7 +6734,7 @@ Return ONLY the answer text (no markdown fences).`;
                 row.submittedAt ? (
                   <span
                     className="inline-flex items-center gap-1 text-xs text-c-text-secondary"
-                    title={new Date(row.submittedAt).toLocaleString()}
+                    title={formatListDateTime(row.submittedAt)}
                   >
                     <Send size={11} className="text-c-text-muted" />
                     {formatListDate(row.submittedAt)}
@@ -8402,7 +8402,7 @@ Return ONLY the answer text (no markdown fences).`;
           width: '130px',
           align: 'right',
           render: (row: InterviewAssignment) => (
-            <ProgressCell value={row.session?.completenessPercent ?? 0} ariaLabel="Postęp sesji" />
+            <ProgressCell value={row.session?.completenessPercent ?? 0} ariaLabel={t('interview.sessionProgress', 'Session progress')} />
           ),
         },
         {

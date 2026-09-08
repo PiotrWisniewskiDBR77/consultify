@@ -552,10 +552,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
         created,
       });
       const message = created
-        ? t('valuation.advisory.candidateCreated', 'Utworzono kandydata na Initiative')
-        : t(
-            'valuation.advisory.candidateAlreadyExists',
-            'To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative'
+        ? t('valuation.advisory.candidateCreated', 'Initiative candidate created')
+        : t('valuation.advisory.candidateAlreadyExists', 'This recommendation has already been sent as an initiative candidate'
           );
       toast(
         (toastMsg) => (
@@ -697,12 +695,10 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-c-text-secondary"
                 >
                   <div className="font-medium text-c-text">
-                    {t('valuation.archiveOnly.title', 'Dane z archiwum wyceny')}
+                    {t('valuation.archiveOnly.title', 'Archived valuation data')}
                   </div>
                   <div className="mt-1">
-                    {t(
-                      'valuation.archiveOnly.body',
-                      'Ten rekord nie ma jeszcze odpowiednika w nowym modelu finansowym, więc wyniki i założenia pochodzą wprost z zapisanej wyceny. Nic nie jest przeliczane ani symulowane.'
+                    {t('valuation.archiveOnly.body', 'This record has no counterpart in the new financial model yet, so results and assumptions come straight from the saved valuation. Nothing is recomputed or simulated.'
                     )}
                   </div>
                 </div>
@@ -873,7 +869,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           >
                             <option value="gordon">{t('valuation.assumptions.gordonGrowth', 'Wzrost Gordona')}</option>
-                            <option value="exit_multiple">{t('valuation.assumptions.exitMultiple', 'Mnożnik wyjścia')}</option>
+                            <option value="exit_multiple">{t('valuation.assumptions.exitMultiple', 'Exit multiple')}</option>
                           </select>
                         </div>
                         {assumptions.terminalMethod === 'gordon' ? (
@@ -970,8 +966,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
-                                <option value="EV/EBIT" disabled>EV/EBIT — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
-                                <option value="EV/Revenue" disabled>EV/Revenue — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
+                                <option value="EV/EBIT" disabled>EV/EBIT — {t('valuation.assumptions.sourceDataRequired', 'source data required')}</option>
+                                <option value="EV/Revenue" disabled>EV/Revenue — {t('valuation.assumptions.sourceDataRequired', 'source data required')}</option>
                               </select>
                             </div>
                           </div>
@@ -1348,9 +1344,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60 transition-colors"
                                     >
                                       <Plus size={12} />
-                                      {t(
-                                        'valuation.advisory.convert',
-                                        'Wyślij jako kandydata na Initiative'
+                                      {t('valuation.advisory.convert', 'Create initiative'
                                       )}
                                     </button>
                                     <button
@@ -1778,26 +1772,20 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           // rather than guessing a URL that wouldn't actually land on the
           // candidate — the toast below opens the hub instead.
           getReopenLink={() => null}
-          title={t('valuation.advisory.candidateModalTitle', 'Wyślij jako kandydata na Initiative')}
+          title={t('valuation.advisory.candidateModalTitle', 'Send as an initiative candidate')}
           noticeText={t(
             'valuation.advisory.candidateModalBody',
             'Zostanie utworzony kandydat na Initiative — nie sama Initiative. Kandydata zaakceptujesz w zakładce „Kandydaci" w Initiatives.'
           )}
-          confirmLabel={t('valuation.advisory.candidateModalConfirm', 'Wyślij')}
-          cancelLabel={t('valuation.advisory.candidateModalCancel', 'Anuluj')}
-          closeLabel={t('valuation.advisory.candidateModalClose', 'Zamknij')}
-          checkingLabel={t(
-            'valuation.advisory.candidateChecking',
-            'Sprawdzanie kwalifikowalności…'
+          confirmLabel={t('valuation.advisory.candidateModalConfirm', 'Send')}
+          cancelLabel={t('valuation.advisory.candidateModalCancel', 'Cancel')}
+          closeLabel={t('valuation.advisory.candidateModalClose', 'Close')}
+          checkingLabel={t('valuation.advisory.candidateChecking', 'Checking availability…'
           )}
-          fitScoreLabel={t('valuation.advisory.candidateFitScore', 'Dopasowanie')}
-          previewErrorFallback={t(
-            'valuation.advisory.candidatePreviewFailed',
-            'Failed to check eligibility'
+          fitScoreLabel={t('valuation.advisory.candidateFitScore', 'Fit')}
+          previewErrorFallback={t('valuation.advisory.candidatePreviewFailed', 'Could not check whether this action is available'
           )}
-          confirmErrorFallback={t(
-            'valuation.advisory.candidateHandoffFailed',
-            'Failed to send candidate'
+          confirmErrorFallback={t('valuation.advisory.candidateHandoffFailed', 'Could not send the candidate'
           )}
           onConfirmed={handleCandidateHandoffConfirmed}
         />

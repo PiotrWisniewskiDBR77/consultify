@@ -38,10 +38,23 @@ function resolvePath(obj: unknown, dotted: string): unknown {
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: any) => {
+    t: (key: string, arg2?: any, arg3?: any) => {
+      // Realne `t()` bierze default jako DRUGI argument, a opcje jako trzeci —
+      // atrapa musi to odwzorować, inaczej `t('k', 'English default', { count })`
+      // gubi interpolację i test mierzy surowy szablon zamiast zdania.
+      const opts = typeof arg2 === 'string' ? { ...(arg3 ?? {}), defaultValue: arg2 } : arg2;
       const resolved = resolvePath(plResource, key);
       if (opts?.returnObjects) return resolved ?? {};
-      return typeof resolved === 'string' ? resolved : (opts?.defaultValue ?? key);
+      const tekst = typeof resolved === 'string' ? resolved : (opts?.defaultValue ?? key);
+      if (!opts || typeof tekst !== 'string') return tekst;
+      // Interpolacja `{{zmienna}}` — dokładnie tak, jak robi to i18next.
+      return Object.keys(opts).reduce(
+        (acc, k) =>
+          k === 'defaultValue' || k === 'returnObjects'
+            ? acc
+            : acc.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'g'), String(opts[k])),
+        tekst
+      );
     },
     i18n: { language: 'pl' },
   }),
@@ -102,9 +115,9 @@ describe('OrganizationScenariosBriefScreen — nazwy scenariuszy po polsku (plan
     );
   });
 
-  it('"Wybrany scenariusz" w Executive brief jest po polsku (selectedScenarioId=ai-powered)', () => {
+  it('"Selected scenario" w Executive brief jest po polsku (selectedScenarioId=ai-powered)', () => {
     renderScreen();
-    // Nazwa pojawia się dwa razy: karta scenariusza + pole "Wybrany scenariusz".
+    // Nazwa pojawia się dwa razy: karta scenariusza + pole "Selected scenario".
     expect(screen.getAllByText('Transformacja napędzana AI').length).toBeGreaterThanOrEqual(2);
   });
 });

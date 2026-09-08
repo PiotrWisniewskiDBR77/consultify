@@ -16,6 +16,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
@@ -156,7 +158,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
 
           <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200 dark:border-navy-700/50">
             <span>
-              Added {new Date(lesson.createdAt).toLocaleDateString('pl-PL')}
+              Added {formatListDate(lesson.createdAt)}
               {lesson.createdByName && ` by ${lesson.createdByName}`}
             </span>
           </div>
@@ -183,6 +185,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: 'SUCCESS' as LessonType,
@@ -312,7 +315,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
             <textarea
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe the lesson learned..."
+              placeholder={t('results.lessons.descriptionPlaceholder', 'Describe the lesson learned…')}
               rows={3}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 resize-none"
             />
@@ -326,7 +329,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
             <textarea
               value={formData.actionTaken}
               onChange={(e) => setFormData((prev) => ({ ...prev, actionTaken: e.target.value }))}
-              placeholder="What was done as a result of this learning?"
+              placeholder={t('results.lessons.actionPlaceholder', 'What was done as a result of this learning?')}
               rows={2}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 resize-none"
             />
@@ -377,6 +380,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
   initiativeName,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -513,7 +517,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
                 onClick={() => setShowAddModal(true)}
                 className="text-blue-400 hover:text-blue-300 text-sm mt-2"
               >
-                Add the first lesson
+                {t('results.lessons.addFirst', 'Add the first lesson')}
               </button>
             )}
           </div>

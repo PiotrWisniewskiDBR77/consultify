@@ -1,0 +1,281 @@
+{
+ "ekran": "01-inicjatywy",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/initiatives",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Wdrożenie RPA",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przeprojektowanie uprawnień decyzyjnych dla wyjątków",
+   "trafienia": [
+    "uprawnień",
+    "dla",
+    "wyjątków"
+   ]
+  },
+  {
+   "linia": "Przebudowa praw decyzyjnych dla wyjątków operacyjnych: kto decyduje, kiedy eskalujemy i jaki jest audyt decyzji.",
+   "trafienia": [
+    "dla",
+    "wyjątków",
+    "jest",
+    "audyt"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „Automatyzacja magazynu WIP\".",
+   "trafienia": [
+    "powiązana",
+    "analizą"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „Robotyzacja gniazda spawalniczego\".",
+   "trafienia": [
+    "powiązana",
+    "analizą"
+   ]
+  },
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „System wizyjny kontroli jakości\".",
+   "trafienia": [
+    "powiązana",
+    "analizą",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa (kopia)",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wdrożenie sieci czujników IoT",
+   "trafienia": [
+    "Wdrożenie",
+    "czujników"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Platforma analityki danych",
+   "trafienia": [
+    "danych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Automatyzacja procesów",
+   "trafienia": [
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "Dane partii są rozproszone pomiędzy systemami i arkuszami.",
+   "trafienia": [
+    "są",
+    "pomiędzy"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Identyfikacja źródła niezgodności w czasie krótszym niż 10 minut.",
+   "trafienia": [
+    "źródła",
+    "niezgodności",
+    "krótszym",
+    "niż"
+   ]
+  },
+  {
+   "linia": "Akademia liderów transformacji",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "Zespoły wdrożeniowe nie mają wspólnego standardu prowadzenia zmian.",
+   "trafienia": [
+    "Zespoły",
+    "wdrożeniowe",
+    "nie",
+    "mają",
+    "wspólnego"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przygotowanie 24 liderów do samodzielnego prowadzenia inicjatyw.",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Osiągnięcie dokładności prognozy 85% i wspólnego planu miesięcznego.",
+   "trafienia": [
+    "Osiągnięcie",
+    "dokładności",
+    "wspólnego",
+    "miesięcznego"
+   ]
+  },
+  {
+   "linia": "Zmiany planu są przekazywane ręcznie i powodują przestoje.",
+   "trafienia": [
+    "są",
+    "ręcznie",
+    "powodują"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wzrost terminowości realizacji zleceń do 94%.",
+   "trafienia": [
+    "terminowości",
+    "zleceń"
+   ]
+  },
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  }
+ ]
+}

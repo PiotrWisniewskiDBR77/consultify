@@ -1,0 +1,197 @@
+{
+ "ekran": "01-org-tozsamosc",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/profile/identity-scale",
+ "obcychSlowUI": 40,
+ "obcychLiniiUI": 28,
+ "ui": [
+  {
+   "linia": "Tożsamość",
+   "trafienia": [
+    "Tożsamość"
+   ]
+  },
+  {
+   "linia": "Dodaj źródło",
+   "trafienia": [
+    "Dodaj",
+    "źródło"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "Tożsamość",
+   "trafienia": [
+    "Tożsamość"
+   ]
+  },
+  {
+   "linia": "Typ organizacji ustala, o co Teresa pyta dalej.",
+   "trafienia": [
+    "organizacji"
+   ]
+  },
+  {
+   "linia": "TYP ORGANIZACJI",
+   "trafienia": [
+    "ORGANIZACJI"
+   ]
+  },
+  {
+   "linia": "BRANŻA",
+   "trafienia": [
+    "BRANŻA"
+   ]
+  },
+  {
+   "linia": "PODBRANŻA",
+   "trafienia": [
+    "PODBRANŻA"
+   ]
+  },
+  {
+   "linia": "KOD BRANŻY (PKD)",
+   "trafienia": [
+    "BRANŻY"
+   ]
+  },
+  {
+   "linia": "OPIS ORGANIZACJI",
+   "trafienia": [
+    "ORGANIZACJI"
+   ]
+  },
+  {
+   "linia": "Szczegóły techniczne",
+   "trafienia": [
+    "Szczegóły"
+   ]
+  },
+  {
+   "linia": "WIELKOŚĆ FIRMY",
+   "trafienia": [
+    "WIELKOŚĆ"
+   ]
+  },
+  {
+   "linia": "LICZBA PRACOWNIKÓW",
+   "trafienia": [
+    "PRACOWNIKÓW"
+   ]
+  },
+  {
+   "linia": "PRZYCHÓD ROCZNY",
+   "trafienia": [
+    "PRZYCHÓD"
+   ]
+  },
+  {
+   "linia": "ROK ZAŁOŻENIA",
+   "trafienia": [
+    "ZAŁOŻENIA"
+   ]
+  },
+  {
+   "linia": "SEGMENTY KLIENTÓW",
+   "trafienia": [
+    "KLIENTÓW"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "ŹRÓDŁA",
+   "trafienia": [
+    "ŹRÓDŁA"
+   ]
+  },
+  {
+   "linia": "720 twierdzeń",
+   "trafienia": [
+    "twierdzeń"
+   ]
+  },
+  {
+   "linia": "1817 pozycji źródłowych",
+   "trafienia": [
+    "źródłowych"
+   ]
+  },
+  {
+   "linia": "Pokaż źródła pola",
+   "trafienia": [
+    "Pokaż",
+    "źródła"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Opublikuj wersję kontekstu",
+   "trafienia": [
+    "wersję"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  }
+ ]
+}

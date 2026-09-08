@@ -12,6 +12,7 @@
 import { BarChart3, GitCompare, Sparkles, Timer, TrendingUp, Wallet } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '../utils/listDateFormat';
 import { useNavigate } from 'react-router-dom';
 
 import { EmptyState } from '@/components/ui';
@@ -93,7 +94,7 @@ function formatCurrency(value?: number | null, currency = 'EUR'): string {
       maximumFractionDigits: 0,
     }).format(value);
   } catch {
-    return `${Math.round(value).toLocaleString()} ${currency}`;
+    return `${formatListNumber(Math.round(value))} ${currency}`;
   }
 }
 
@@ -428,13 +429,13 @@ export const FullROIView: React.FC = () => {
             value={formatPercent(kpis.avgRoi)}
             icon={<TrendingUp size={18} />}
             accent
-            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
+            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model the ROI for a specific initiative.')}
           />
           <KpiCard
             label={t('initiatives.roi.kpi.npv', 'Net Present Value')}
             value={formatCurrency(kpis.totalNpv, kpis.currency)}
             icon={<Wallet size={18} />}
-            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
+            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model the ROI for a specific initiative.')}
           />
           <KpiCard
             label={t('initiatives.roi.kpi.payback', 'Payback Period')}
@@ -447,13 +448,13 @@ export const FullROIView: React.FC = () => {
                 : '—'
             }
             icon={<Timer size={18} />}
-            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
+            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model the ROI for a specific initiative.')}
           />
           <KpiCard
             label={t('initiatives.roi.kpi.analyses', 'Linked Analyses')}
             value={String(kpis.count)}
             icon={<BarChart3 size={18} />}
-            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
+            teresaHint={t('initiatives.roi.teresa.hint', 'Ask Teresa to model the ROI for a specific initiative.')}
           />
         </div>
 

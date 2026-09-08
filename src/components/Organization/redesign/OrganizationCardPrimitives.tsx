@@ -16,6 +16,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, Plus, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
 
@@ -85,6 +86,7 @@ export const OrgSectionCard: React.FC<OrgSectionCardProps> = ({
   children,
   className,
 }) => {
+  const { t } = useTranslation();
   const [techOpen, setTechOpen] = React.useState(false);
   return (
     <section
@@ -130,7 +132,7 @@ export const OrgSectionCard: React.FC<OrgSectionCardProps> = ({
               aria-hidden="true"
               className={cn('h-3 w-3 shrink-0 transition-transform', techOpen && 'rotate-90')}
             />
-            Szczegóły techniczne
+            {t('organization.redesign.primitives.techDetails', 'Technical details')}
           </button>
           {techOpen && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 pb-3 pl-[26px]">
@@ -401,11 +403,17 @@ export const OrgRecordList: React.FC<OrgRecordListProps> = ({
   onAdd,
   onUpdate,
   onRemove,
-  addLabel = 'Dodaj pozycję',
-  emptyLabel = 'Brak pozycji.',
-}) => (
+  addLabel,
+  emptyLabel,
+}) => {
+  // Domyślne etykiety przez `t()`, nie przez polską wartość domyślną parametru —
+  // inaczej ekran EN dostawał polski przycisk „Dodaj pozycję" (PLAN §1 kanał A).
+  const { t } = useTranslation();
+  const addLabelText = addLabel ?? t('organization.redesign.primitives.addItem', 'Add item');
+  const emptyLabelText = emptyLabel ?? t('organization.redesign.primitives.emptyList', 'No items.');
+  return (
   <div className="space-y-2">
-    {items.length === 0 && <p className="text-[13px] text-c-text-muted">{emptyLabel}</p>}
+    {items.length === 0 && <p className="text-[13px] text-c-text-muted">{emptyLabelText}</p>}
     {items.map((item) => (
       <div
         key={item.id}
@@ -413,7 +421,7 @@ export const OrgRecordList: React.FC<OrgRecordListProps> = ({
       >
         <button
           type="button"
-          aria-label="Usuń pozycję"
+          aria-label={t('organization.redesign.primitives.removeItem', 'Remove item')}
           onClick={() => onRemove(item.id)}
           className="absolute right-2 top-2 rounded-md p-1 text-c-text-muted opacity-0 transition-opacity hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] group-hover:opacity-100 group-focus-within:opacity-100"
         >
@@ -470,10 +478,11 @@ export const OrgRecordList: React.FC<OrgRecordListProps> = ({
       className="inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed border-c-border px-3 text-[12px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
     >
       <Plus aria-hidden="true" className="h-3.5 w-3.5" />
-      {addLabel}
+      {addLabelText}
     </button>
   </div>
-);
+  );
+};
 
 /** Tagi wielokrotnego wyboru (prototyp `.tags`) — cichy chip, nigdy status. */
 export const OrgTagToggleGroup: React.FC<{

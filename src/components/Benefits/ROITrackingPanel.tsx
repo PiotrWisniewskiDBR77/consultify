@@ -246,13 +246,13 @@ export const ROITrackingPanel: React.FC = () => {
                 </th>
                 <th className="px-4 py-2 text-right font-medium">CAPEX</th>
                 <th className="px-4 py-2 text-right font-medium">
-                  {t('benefits.roi.projected', 'Projected')}
+                  {t('benefits.roi.projected', 'Projected Benefit')}
                 </th>
                 <th className="px-4 py-2 text-right font-medium">
-                  {t('benefits.roi.realized', 'Realized')}
+                  {t('benefits.roi.realized', 'Realized Benefit')}
                 </th>
                 <th className="px-4 py-2 text-right font-medium">
-                  {t('benefits.roi.variance', 'Variance')}
+                  {t('benefits.roi.variance', 'Portfolio Variance')}
                 </th>
                 <th className="px-4 py-2 text-center font-medium">
                   {t('benefits.roi.confidence', 'Conf.')}

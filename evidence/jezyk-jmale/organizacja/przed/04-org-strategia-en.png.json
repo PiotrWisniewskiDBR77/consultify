@@ -1,0 +1,141 @@
+{
+ "ekran": "04-org-strategia",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/strategy/risks-opportunities",
+ "obcychSlowUI": 34,
+ "obcychLiniiUI": 18,
+ "ui": [
+  {
+   "linia": "Ryzyka",
+   "trafienia": [
+    "Ryzyka"
+   ]
+  },
+  {
+   "linia": "Szanse",
+   "trafienia": [
+    "Szanse"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "Ryzyka",
+   "trafienia": [
+    "Ryzyka"
+   ]
+  },
+  {
+   "linia": "Co mogłoby wykoleić tę transformację?",
+   "trafienia": [
+    "mogłoby",
+    "wykoleić",
+    "tę",
+    "transformację"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj ryzyko",
+   "trafienia": [
+    "Dodaj",
+    "ryzyko"
+   ]
+  },
+  {
+   "linia": "Szanse",
+   "trafienia": [
+    "Szanse"
+   ]
+  },
+  {
+   "linia": "Jakie mocne strony można wykorzystać?",
+   "trafienia": [
+    "można",
+    "wykorzystać"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj szansę",
+   "trafienia": [
+    "Dodaj",
+    "szansę"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  }
+ ]
+}

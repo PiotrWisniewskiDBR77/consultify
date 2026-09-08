@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, Loader2, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '../../../utils/listDateFormat';
 
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
@@ -60,7 +61,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
             </div>
             <div className="text-2xl font-bold text-slate-700 dark:text-white">
               {initiative.costCapex || initiative.cost_capex
-                ? `$${(initiative.costCapex || initiative.cost_capex).toLocaleString()}`
+                ? `$${formatListNumber(initiative.costCapex || initiative.cost_capex)}`
                 : '-'}
             </div>
             <p className="text-xs text-slate-600 mt-1">
@@ -74,7 +75,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
             </div>
             <div className="text-2xl font-bold text-slate-700 dark:text-white">
               {initiative.costOpex || initiative.cost_opex
-                ? `$${(initiative.costOpex || initiative.cost_opex).toLocaleString()}`
+                ? `$${formatListNumber(initiative.costOpex || initiative.cost_opex)}`
                 : '-'}
             </div>
             <p className="text-xs text-slate-600 mt-1">
@@ -96,7 +97,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               NPV
             </div>
             <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-              {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
+              {initiative.npv ? `$${formatListNumber(initiative.npv)}` : '-'}
             </div>
           </div>
           <div className="p-3 rounded-xl bg-c-info/50 dark:bg-c-info/5 border border-c-info/40 dark:border-c-info/20 text-center">

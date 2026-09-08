@@ -26,10 +26,10 @@ describe('P9 meeting action item → task', () => {
     vi.stubGlobal('fetch', request);
     render(<MeetingObjectPage />);
     await screen.findByText('Wyślij raport');
-    const button = screen.getByRole('button', { name: 'Zrób zadanie' });
+    const button = screen.getByRole('button', { name: 'Create task' });
     button.click();
     button.click();
     await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole('button', { name: 'Zadanie utworzone' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Task created' })).toBeDisabled();
   });
 });

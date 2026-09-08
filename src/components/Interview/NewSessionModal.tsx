@@ -23,6 +23,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -181,7 +182,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
         // Start for myself - create session directly from template
         const session = await Api.post(`/interview/templates/${selectedTemplateId}/use`, {
           projectId: currentProjectId,
-          name: `Interview ${new Date().toLocaleDateString()}`,
+          name: `Interview ${formatListDate(new Date().toISOString())}`,
         });
         toast.success(t('interview.newSessionModal.sessionCreated'));
         onCreated(session);

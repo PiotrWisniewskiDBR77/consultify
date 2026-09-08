@@ -1,0 +1,352 @@
+{
+ "ekran": "03-org-wyzwania",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/organization/challenges/declared-challenges",
+ "obcychSlowUI": 82,
+ "obcychLiniiUI": 47,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Powrót do pulpitu",
+   "trafienia": [
+    "Powrót"
+   ]
+  },
+  {
+   "linia": "Kontekst biznesowy, źródła i gotowość decyzyjna",
+   "trafienia": [
+    "źródła",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "PROFIL ORGANIZACJI",
+   "trafienia": [
+    "PROFIL",
+    "ORGANIZACJI"
+   ]
+  },
+  {
+   "linia": "Tożsamość i model działania",
+   "trafienia": [
+    "Tożsamość",
+    "działania"
+   ]
+  },
+  {
+   "linia": "Kierunek i ograniczenia",
+   "trafienia": [
+    "Kierunek",
+    "ograniczenia"
+   ]
+  },
+  {
+   "linia": "CELE I OCZEKIWANIA",
+   "trafienia": [
+    "CELE"
+   ]
+  },
+  {
+   "linia": "Cele i mierniki",
+   "trafienia": [
+    "Cele",
+    "mierniki"
+   ]
+  },
+  {
+   "linia": "Zakres i tryb współpracy",
+   "trafienia": [
+    "Zakres",
+    "współpracy"
+   ]
+  },
+  {
+   "linia": "WYZWANIA",
+   "trafienia": [
+    "WYZWANIA"
+   ]
+  },
+  {
+   "linia": "Wyzwania i dowody",
+   "trafienia": [
+    "Wyzwania",
+    "dowody"
+   ]
+  },
+  {
+   "linia": "Przyczyny i blokery",
+   "trafienia": [
+    "Przyczyny",
+    "blokery"
+   ]
+  },
+  {
+   "linia": "Ryzyka i szanse",
+   "trafienia": [
+    "Ryzyka",
+    "szanse"
+   ]
+  },
+  {
+   "linia": "Scenariusze i brief",
+   "trafienia": [
+    "Scenariusze"
+   ]
+  },
+  {
+   "linia": "ŹRÓDŁA I WIEDZA",
+   "trafienia": [
+    "ŹRÓDŁA"
+   ]
+  },
+  {
+   "linia": "Źródła i twierdzenia",
+   "trafienia": [
+    "Źródła"
+   ]
+  },
+  {
+   "linia": "Graf wiedzy",
+   "trafienia": [
+    "Graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "GOTOWOŚĆ I NADZÓR",
+   "trafienia": [
+    "GOTOWOŚĆ",
+    "NADZÓR"
+   ]
+  },
+  {
+   "linia": "Gotowość organizacji",
+   "trafienia": [
+    "Gotowość",
+    "organizacji"
+   ]
+  },
+  {
+   "linia": "Wyzwania",
+   "trafienia": [
+    "Wyzwania"
+   ]
+  },
+  {
+   "linia": "Wyzwania i dowody",
+   "trafienia": [
+    "Wyzwania",
+    "dowody"
+   ]
+  },
+  {
+   "linia": "Kontekst Teresy: 720 elementów · zaktualizowano 2 dni temu",
+   "trafienia": [
+    "elementów"
+   ]
+  },
+  {
+   "linia": "Teresa korzysta z tego kontekstu, aby odpowiadać na Twoje pytania",
+   "trafienia": [
+    "odpowiadać"
+   ]
+  },
+  {
+   "linia": "Zobacz graf wiedzy",
+   "trafienia": [
+    "graf",
+    "wiedzy"
+   ]
+  },
+  {
+   "linia": "Zadeklarowane wyzwania",
+   "trafienia": [
+    "wyzwania"
+   ]
+  },
+  {
+   "linia": "Dowody",
+   "trafienia": [
+    "Dowody"
+   ]
+  },
+  {
+   "linia": "Wszystkie",
+   "trafienia": [
+    "Wszystkie"
+   ]
+  },
+  {
+   "linia": "Uzupełnione",
+   "trafienia": [
+    "Uzupełnione"
+   ]
+  },
+  {
+   "linia": "Do uzupełnienia",
+   "trafienia": [
+    "uzupełnienia"
+   ]
+  },
+  {
+   "linia": "Zadeklarowane wyzwania",
+   "trafienia": [
+    "wyzwania"
+   ]
+  },
+  {
+   "linia": "Oficjalne problemy zgłoszone przez klienta (symptomy).",
+   "trafienia": [
+    "zgłoszone",
+    "przez"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj wyzwanie",
+   "trafienia": [
+    "Dodaj"
+   ]
+  },
+  {
+   "linia": "Dowody",
+   "trafienia": [
+    "Dowody"
+   ]
+  },
+  {
+   "linia": "Twarde fakty, metryki lub logi potwierdzające istnienie wyzwań.",
+   "trafienia": [
+    "lub",
+    "potwierdzające",
+    "wyzwań"
+   ]
+  },
+  {
+   "linia": "DLA: DOWODY",
+   "trafienia": [
+    "DLA",
+    "DOWODY"
+   ]
+  },
+  {
+   "linia": "Wgraj pliki, które pomogą AI lepiej zrozumieć kontekst.Co warto wgrać?",
+   "trafienia": [
+    "które",
+    "pomogą",
+    "zrozumieć",
+    "wgrać"
+   ]
+  },
+  {
+   "linia": "REKOMENDOWANE DLA: DOWODY",
+   "trafienia": [
+    "DLA",
+    "DOWODY"
+   ]
+  },
+  {
+   "linia": "Eksport surowych danych",
+   "trafienia": [
+    "danych"
+   ]
+  },
+  {
+   "linia": "Raporty finansowe",
+   "trafienia": [
+    "Raporty"
+   ]
+  },
+  {
+   "linia": "Brak pozycji.",
+   "trafienia": [
+    "Brak"
+   ]
+  },
+  {
+   "linia": "Dodaj dowód",
+   "trafienia": [
+    "Dodaj",
+    "dowód"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "Pola uzupełnione",
+   "trafienia": [
+    "uzupełnione"
+   ]
+  },
+  {
+   "linia": "Kompletność danych — nie jest to gotowość decyzyjna.",
+   "trafienia": [
+    "Kompletność",
+    "danych",
+    "nie",
+    "jest",
+    "gotowość"
+   ]
+  },
+  {
+   "linia": "Zapisz zmiany",
+   "trafienia": [
+    "Zapisz"
+   ]
+  },
+  {
+   "linia": "Publikacja tworzy niezmienną wersję, z której korzystają pozostałe moduły.",
+   "trafienia": [
+    "niezmienną",
+    "wersję",
+    "której",
+    "korzystają",
+    "pozostałe",
+    "moduły"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  },
+  {
+   "linia": "Organizacja",
+   "trafienia": [
+    "Organizacja"
+   ]
+  }
+ ]
+}

@@ -1,7 +1,9 @@
 import { History, Lock, ShieldCheck, UserCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const GovernanceDashboard: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex items-center justify-between mb-8">
@@ -47,7 +49,10 @@ export const GovernanceDashboard: React.FC = () => {
                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                    User updated Role permissions
+                    {t(
+                      'organization.governance.dashboard.recentActivity',
+                      'User updated Role permissions'
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     2 minutes ago • admin-001

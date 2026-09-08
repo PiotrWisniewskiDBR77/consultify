@@ -228,7 +228,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
   );
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,

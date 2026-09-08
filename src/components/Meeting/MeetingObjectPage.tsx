@@ -352,7 +352,7 @@ export const MeetingObjectPage: React.FC = () => {
       );
       if (!response.ok) throw new Error(`HTTP_${response.status}`);
       setActionItemTasks((current) => ({ ...current, [key]: 'created' }));
-      toast.success(t('meetingActionItemsP9.taskCreated', 'Zadanie utworzone'));
+      toast.success(t('meetingActionItemsP9.taskCreated', 'Task created'));
     } catch (error) {
       actionItemTaskLocks.current.delete(key);
       console.error('Failed to create task from meeting action item:', error);
@@ -361,7 +361,7 @@ export const MeetingObjectPage: React.FC = () => {
         delete next[key];
         return next;
       });
-      toast.error(t('meetingActionItemsP9.taskCreateFailed', 'Nie udało się utworzyć zadania'));
+      toast.error(t('meetingActionItemsP9.taskCreateFailed', 'Could not create task'));
     }
   };
 
@@ -731,7 +731,7 @@ export const MeetingObjectPage: React.FC = () => {
 
   const minutesContent = (
     <div className="p-5">
-      <SectionCard icon={<FileText size={14} />} title={t('meeting.object.minutes', 'Protokół')}>
+      <SectionCard icon={<FileText size={14} />} title={t('meeting.object.minutes', 'Minutes')}>
         {notesLoading ? (
           <LoadingState variant="spinner" className="h-24" />
         ) : notesError ? (
@@ -781,7 +781,7 @@ export const MeetingObjectPage: React.FC = () => {
                     </div>
                     <div>
                       <div className="mb-1 text-[11px] uppercase tracking-wide text-c-text-muted">
-                        {t('meeting.object.actionItems', 'Działania')}
+                        {t('meeting.object.actionItems', 'Actions')}
                       </div>
                       {actions.length ? (
                         <ul className="space-y-1">
@@ -797,10 +797,10 @@ export const MeetingObjectPage: React.FC = () => {
                                 className="shrink-0 rounded-md border border-c-border px-2 py-1 font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {taskState === 'created'
-                                  ? t('meetingActionItemsP9.taskCreated', 'Zadanie utworzone')
+                                  ? t('meetingActionItemsP9.taskCreated', 'Task created')
                                   : taskState === 'saving'
-                                    ? t('common.saving', 'Zapisywanie…')
-                                    : t('meetingActionItemsP9.createTask', 'Zrób zadanie')}
+                                    ? t('common.saving', 'Saving...')
+                                    : t('meetingActionItemsP9.createTask', 'Create task')}
                               </button>
                             </li>
                           )})}
@@ -1106,8 +1106,8 @@ export const MeetingObjectPage: React.FC = () => {
       id: 'details',
       icon: ClipboardList,
       label: {
-        en: t('meeting.object.sectionDetails', 'Szczegóły'),
-        pl: t('meeting.object.sectionDetails', 'Szczegóły'),
+        en: t('meeting.object.sectionDetails', 'Details'),
+        pl: t('meeting.object.sectionDetails', 'Details'),
       },
       component: detailsContent,
       aiContract: {
@@ -1120,8 +1120,8 @@ export const MeetingObjectPage: React.FC = () => {
       id: 'minutes',
       icon: FileText,
       label: {
-        en: t('meeting.object.minutes', 'Protokół'),
-        pl: t('meeting.object.minutes', 'Protokół'),
+        en: t('meeting.object.minutes', 'Minutes'),
+        pl: t('meeting.object.minutes', 'Minutes'),
       },
       component: minutesContent,
       aiContract: {
@@ -1134,8 +1134,8 @@ export const MeetingObjectPage: React.FC = () => {
       id: 'decisions',
       icon: CheckSquare2,
       label: {
-        en: t('meeting.object.sectionDecisions', 'Decyzje i działania'),
-        pl: t('meeting.object.sectionDecisions', 'Decyzje i działania'),
+        en: t('meeting.object.sectionDecisions', 'Decisions & actions'),
+        pl: t('meeting.object.sectionDecisions', 'Decisions & actions'),
       },
       component: decisionsContent,
       aiContract: {
@@ -1250,7 +1250,7 @@ export const MeetingObjectPage: React.FC = () => {
             {
               buttons: [
                 {
-                  label: `${t('meeting.object.editMeeting', 'Edit meeting')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  label: `${t('meeting.object.editMeeting', 'Edit meeting')} — ${t('common.comingSoon', 'In development')}`,
                   icon: Pencil,
                   colorScheme: 'neutral' as const,
                   flex: true,
@@ -1258,7 +1258,7 @@ export const MeetingObjectPage: React.FC = () => {
                   onClick: () => undefined,
                 },
                 {
-                  label: `${t('meeting.object.generateAiNotesAction', 'Generate AI notes')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  label: `${t('meeting.object.generateAiNotesAction', 'Generate AI notes')} — ${t('common.comingSoon', 'In development')}`,
                   icon: RefreshCw,
                   colorScheme: 'neutral' as const,
                   flex: true,
@@ -1270,7 +1270,7 @@ export const MeetingObjectPage: React.FC = () => {
             {
               buttons: [
                 {
-                  label: `${t('meeting.object.deleteMeeting', 'Delete meeting')} — ${t('common.comingSoon', 'Coming soon')}`,
+                  label: `${t('meeting.object.deleteMeeting', 'Delete meeting')} — ${t('common.comingSoon', 'In development')}`,
                   icon: Trash2,
                   colorScheme: 'red' as const,
                   flex: true,

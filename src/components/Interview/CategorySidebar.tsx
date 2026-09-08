@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // Types
 export type InterviewCategory =
@@ -164,7 +165,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           </span>
           {lastUpdated && (
             <span className="text-xs text-[var(--c-text-muted)] truncate">
-              {new Date(lastUpdated).toLocaleDateString()}
+              {formatListDate(lastUpdated)}
             </span>
           )}
         </div>

@@ -22,6 +22,7 @@
 
 import { FileSearch, ShieldAlert } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { ContextDocUploader } from '../../../views/ContextBuilder/shared/ContextDocUploader';
@@ -35,16 +36,21 @@ import {
 
 export type ChallengesEvidenceSection = 'challenges' | 'evidence';
 
-export const CHALLENGES_EVIDENCE_SECTIONS: Array<{ id: ChallengesEvidenceSection; label: string }> = [
-  { id: 'challenges', label: 'Zadeklarowane wyzwania' },
-  { id: 'evidence', label: 'Dowody' },
+export const CHALLENGES_EVIDENCE_SECTIONS: Array<{
+  id: ChallengesEvidenceSection;
+  labelKey: string;
+  en: string;
+}> = [
+  { id: 'challenges', labelKey: 'organization.redesign.challenges.sections.challenges', en: 'Declared challenges' },
+  { id: 'evidence', labelKey: 'organization.redesign.challenges.sections.evidence', en: 'Evidence' },
 ];
 
-const SEVERITY_OPTIONS = [
-  { value: 'Critical', label: 'Krytyczna' },
-  { value: 'High', label: 'Wysoka' },
-  { value: 'Medium', label: 'Średnia' },
-  { value: 'Low', label: 'Niska' },
+/** Waga wyzwania = enum bazy → słownik kluczy (PLAN §2 pkt 6), nie polski literał. */
+const SEVERITY_KEYS: Array<{ value: string; labelKey: string; en: string }> = [
+  { value: 'Critical', labelKey: 'organization.redesign.severity.critical', en: 'Critical' },
+  { value: 'High', labelKey: 'organization.redesign.severity.high', en: 'High' },
+  { value: 'Medium', labelKey: 'organization.redesign.severity.medium', en: 'Medium' },
+  { value: 'Low', labelKey: 'organization.redesign.severity.low', en: 'Low' },
 ];
 
 export interface ChallengesEvidenceRenderArgs {
@@ -63,6 +69,7 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
   contextSync?: OrgContextSyncHandle;
   children: (args: ChallengesEvidenceRenderArgs) => React.ReactNode;
 }> = ({ contextSync, children }) => {
+  const { t } = useTranslation();
   const { challenges, updateChallengesList } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<ChallengesEvidenceSection>('challenges');
   const [activeChip, setActiveChip] = useState<string>('all');
@@ -130,14 +137,18 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
     [activeChip, fieldFlags]
   );
 
+  const severityOptions = useMemo(
+    () => SEVERITY_KEYS.map((item) => ({ value: item.value, label: t(item.labelKey, item.en) })),
+    [t]
+  );
   const sections: StandardModuleTab[] = CHALLENGES_EVIDENCE_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    label: t(section.labelKey, section.en),
   }));
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: counts.all },
-    { id: 'filled', label: 'Uzupełnione', count: counts.filled },
-    { id: 'missing', label: 'Do uzupełnienia', count: counts.missing },
+    { id: 'all', label: t('organization.redesign.chips.all', 'All'), count: counts.all },
+    { id: 'filled', label: t('organization.redesign.chips.filled', 'Filled in'), count: counts.filled },
+    { id: 'missing', label: t('organization.redesign.chips.missing', 'To fill in'), count: counts.missing },
   ];
 
   const handleSave = useCallback(async () => {
@@ -153,7 +164,9 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
     completenessNote: contextStore.completenessNote,
     onSave: handleSave,
     saving: contextStore.saving,
-    saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
+    saveLabel: saved
+      ? t('organization.redesign.panel.saved', 'Saved')
+      : t('organization.redesign.panel.save', 'Save changes'),
   };
 
   const content = (
@@ -161,16 +174,33 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
       {showField('declaredChallenges') && (
         <OrgSectionCard
           id="challenges"
-          title="Zadeklarowane wyzwania"
+          title={t('organization.redesign.challenges.sections.challenges', 'Declared challenges')}
           icon={ShieldAlert}
-          lead="Oficjalne problemy zgłoszone przez klienta (symptomy)."
+          lead={t('organization.redesign.challenges.challengesLead', 'Official problems reported by the client (symptoms).')}
         >
           <OrgRecordList
             columns={[
-              { key: 'challenge', label: 'Wyzwanie / objaw', placeholder: 'np. Wysoki wskaźnik braków' },
-              { key: 'area', label: 'Obszar', placeholder: 'np. Jakość' },
-              { key: 'severity', label: 'Waga', type: 'select', options: SEVERITY_OPTIONS },
-              { key: 'notes', label: 'Notatka', placeholder: 'Dodatkowy kontekst…' },
+              {
+                key: 'challenge',
+                label: t('organization.redesign.challenges.col.challenge', 'Challenge / symptom'),
+                placeholder: t('organization.redesign.challenges.col.challengePh', 'e.g. High defect rate'),
+              },
+              {
+                key: 'area',
+                label: t('organization.redesign.challenges.col.area', 'Area'),
+                placeholder: t('organization.redesign.challenges.col.areaPh', 'e.g. Quality'),
+              },
+              {
+                key: 'severity',
+                label: t('organization.redesign.challenges.col.severity', 'Severity'),
+                type: 'select',
+                options: severityOptions,
+              },
+              {
+                key: 'notes',
+                label: t('organization.redesign.challenges.col.notes', 'Note'),
+                placeholder: t('organization.redesign.challenges.col.notesPh', 'Extra context…'),
+              },
             ]}
             items={
               challenges.declaredChallenges as unknown as Array<Record<string, string> & { id: string }>
@@ -178,7 +208,7 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
             onAdd={challengeHandlers.onAdd}
             onUpdate={challengeHandlers.onUpdate}
             onRemove={challengeHandlers.onRemove}
-            addLabel="Dodaj wyzwanie"
+            addLabel={t('organization.redesign.challenges.addChallenge', 'Add challenge')}
           />
         </OrgSectionCard>
       )}
@@ -186,33 +216,49 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
       {showField('evidence') && (
         <OrgSectionCard
           id="evidence"
-          title="Dowody"
+          title={t('organization.redesign.challenges.sections.evidence', 'Evidence')}
           icon={FileSearch}
-          lead="Twarde fakty, metryki lub logi potwierdzające istnienie wyzwań."
+          lead={t('organization.redesign.challenges.evidenceLead', 'Hard facts, metrics or logs that confirm the challenges are real.')}
         >
           <div className="mb-4">
             <ContextDocUploader
-              tabName="Dowody"
+              tabName={t('organization.redesign.challenges.sections.evidence', 'Evidence')}
               suggestions={[
-                'Eksport surowych danych',
-                'Dashboard KPI',
-                'Logi systemowe',
-                'Raporty finansowe',
+                t('organization.redesign.challenges.upload.rawExport', 'Raw data export'),
+                t('organization.redesign.challenges.upload.kpiDashboard', 'KPI dashboard'),
+                t('organization.redesign.challenges.upload.systemLogs', 'System logs'),
+                t('organization.redesign.challenges.upload.financialReports', 'Financial reports'),
               ]}
             />
           </div>
           <OrgRecordList
             columns={[
-              { key: 'metric', label: 'Metryka / dana', placeholder: 'np. Braki 12%' },
-              { key: 'symptom', label: 'Objaw / obserwacja', placeholder: 'np. Przestój co godzinę' },
-              { key: 'source', label: 'System / dokument źródłowy', placeholder: 'np. Raport SAP' },
-              { key: 'link', label: 'Link / odniesienie', placeholder: 'np. Strona 12' },
+              {
+                key: 'metric',
+                label: t('organization.redesign.challenges.col.metric', 'Metric / data point'),
+                placeholder: t('organization.redesign.challenges.col.metricPh', 'e.g. Defects 12%'),
+              },
+              {
+                key: 'symptom',
+                label: t('organization.redesign.challenges.col.symptom', 'Symptom / observation'),
+                placeholder: t('organization.redesign.challenges.col.symptomPh', 'e.g. Stoppage every hour'),
+              },
+              {
+                key: 'source',
+                label: t('organization.redesign.challenges.col.source', 'System / source document'),
+                placeholder: t('organization.redesign.challenges.col.sourcePh', 'e.g. SAP report'),
+              },
+              {
+                key: 'link',
+                label: t('organization.redesign.challenges.col.link', 'Link / reference'),
+                placeholder: t('organization.redesign.challenges.col.linkPh', 'e.g. Page 12'),
+              },
             ]}
             items={challenges.evidence as unknown as Array<Record<string, string> & { id: string }>}
             onAdd={evidenceHandlers.onAdd}
             onUpdate={evidenceHandlers.onUpdate}
             onRemove={evidenceHandlers.onRemove}
-            addLabel="Dodaj dowód"
+            addLabel={t('organization.redesign.challenges.addEvidence', 'Add evidence')}
           />
         </OrgSectionCard>
       )}

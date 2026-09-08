@@ -1,0 +1,23 @@
+{
+ "ekran": "01-audyty",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/audit-programs?tab=library",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Audyt gotowości do robotyzacji — linia spawalnicza",
+   "trafienia": [
+    "Audyt",
+    "gotowości"
+   ]
+  }
+ ]
+}

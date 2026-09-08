@@ -83,7 +83,7 @@ describe('OrganizationRisksOpportunitiesScreen', () => {
   it('dodanie szansy trafia do updateSynthesisList("strengths", …)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByText('Dodaj szansę'));
+    fireEvent.click(screen.getByText('Add opportunity'));
     expect(updateSynthesisList).toHaveBeenCalledWith(
       'strengths',
       expect.arrayContaining([expect.objectContaining({ enabler: '' })])

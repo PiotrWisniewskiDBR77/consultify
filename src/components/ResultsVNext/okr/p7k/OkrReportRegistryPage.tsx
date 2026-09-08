@@ -150,9 +150,7 @@ export const OkrReportRegistryPage: React.FC = () => {
   const stateTitle = useCallback(
     (row: RegistryRow) => {
       const counts = row.summary?.stateCounts ?? emptyStateCounts();
-      return t(
-        'results.okr.report.stateTooltip',
-        'na dobrej drodze {{onTrack}} · zagrożone {{atRisk}} · krytyczne {{critical}} · bez check-inu {{noSignal}}',
+      return t('results.okr.report.stateTooltip', 'on track {{onTrack}} · at risk {{atRisk}} · critical {{critical}} · no check-in {{noSignal}}',
         counts as unknown as Record<string, number>
       );
     },
@@ -163,7 +161,7 @@ export const OkrReportRegistryPage: React.FC = () => {
     () => [
       {
         id: 'name',
-        label: t('results.okr.report.columns.name', 'NAZWA'),
+        label: t('results.okr.report.columns.name', 'NAME'),
         width: '236px',
         dataType: 'text',
         sortable: true,
@@ -171,7 +169,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'scope',
-        label: t('results.okr.report.columns.scope', 'ZAKRES'),
+        label: t('results.okr.report.columns.scope', 'SCOPE'),
         // 200 px z POMIARU: najdłuższa etykieta zakresu to „Jednostka
         // biznesowa" (~150 px w 14 px) + `px-4` z obu stron. Przy 181 px
         // (szerokość z prototypu, gdzie zakresem była krótka NAZWA zakładu)
@@ -185,7 +183,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'cycle',
-        label: t('results.okr.report.columns.cycle', 'CYKL'),
+        label: t('results.okr.report.columns.cycle', 'CYCLE'),
         width: '120px',
         dataType: 'text',
         sortable: true,
@@ -193,7 +191,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'objectives',
-        label: t('results.okr.report.columns.objectives', 'CELE'),
+        label: t('results.okr.report.columns.objectives', 'OBJECTIVES'),
         width: '92px',
         dataType: 'number',
         align: 'right',
@@ -206,7 +204,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'results',
-        label: t('results.okr.report.columns.keyResults', 'REZULTATY'),
+        label: t('results.okr.report.columns.keyResults', 'KEY RESULTS'),
         width: '110px',
         dataType: 'number',
         align: 'right',
@@ -219,7 +217,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'state',
-        label: t('results.okr.report.columns.state', 'STAN'),
+        label: t('results.okr.report.columns.state', 'STATE'),
         width: '156px',
         dataType: 'number',
         render: (row: RegistryRow) => (
@@ -231,7 +229,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'owners',
-        label: t('results.okr.report.columns.owners', 'WŁAŚCICIELE'),
+        label: t('results.okr.report.columns.owners', 'OWNERS'),
         width: '124px',
         dataType: 'number',
         align: 'right',
@@ -244,7 +242,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       },
       {
         id: 'checkin',
-        label: t('results.okr.report.columns.lastCheckIn', 'OSTATNI CHECK-IN'),
+        label: t('results.okr.report.columns.lastCheckIn', 'LAST CHECK-IN'),
         width: '158px',
         dataType: 'date',
         sortable: true,
@@ -309,9 +307,7 @@ export const OkrReportRegistryPage: React.FC = () => {
           Array.from(perOwner.entries()).map(([ownerUserId, bucket]) => ({
             id: ownerUserId,
             label: memberNameOrUnknown(resolveMemberName, ownerUserId, isPolish),
-            value: t(
-              'results.okr.report.ownerBreakdownValue',
-              '{{total}} rezultatów · {{atRisk}} zagrożonych · {{critical}} krytycznych',
+            value: t('results.okr.report.ownerBreakdownValue', '{{total}} key results · {{atRisk}} at risk · {{critical}} critical',
               bucket as unknown as Record<string, number>
             ),
           }))
@@ -352,7 +348,7 @@ export const OkrReportRegistryPage: React.FC = () => {
         // która ma pełny formularz z programem i cyklem; nie dublujemy go tu
         // uproszczoną wersją, która pytałaby o mniej niż backend wymaga.
         primaryCta: {
-          label: t('results.okr.report.newReport', 'Nowy raport'),
+          label: t('results.okr.report.newReport', 'New report'),
           icon: Plus,
           onClick: () => navigate('/results/okr/sets'),
           testId: 'okr-report-registry-create-cta',
@@ -370,10 +366,8 @@ export const OkrReportRegistryPage: React.FC = () => {
           !loading && !error && rows.length === 0
             ? {
                 icon: Target,
-                title: t('results.okr.report.emptyTitle', 'Brak raportów OKR'),
-                description: t(
-                  'results.okr.report.emptyDescription',
-                  'Nie ma jeszcze żadnego raportu OKR w tej organizacji. Raport powstaje razem z zestawem celów na wybrany cykl.'
+                title: t('results.okr.report.emptyTitle', 'No OKR reports'),
+                description: t('results.okr.report.emptyDescription', 'There is no OKR report in this organization yet. A report is created together with a set of objectives for a chosen cycle.'
                 ),
               }
             : undefined,
@@ -384,7 +378,7 @@ export const OkrReportRegistryPage: React.FC = () => {
           primary: [
             {
               id: 'open',
-              label: t('results.okr.report.openReport', 'Otwórz raport'),
+              label: t('results.okr.report.openReport', 'Open report'),
               onClick: () => openReport(String(row.id)),
             },
           ],
@@ -397,19 +391,19 @@ export const OkrReportRegistryPage: React.FC = () => {
               title: selectedSet.title,
               onClose: () => setSelectedSetId(null),
               onOpenFull: () => openReport(selectedSet.setId),
-              openLabel: t('results.okr.report.openReport', 'Otwórz raport'),
+              openLabel: t('results.okr.report.openReport', 'Open report'),
               meta: {
                 pills: [
                   {
-                    label: t('results.okr.report.columns.scope', 'ZAKRES'),
+                    label: t('results.okr.report.columns.scope', 'SCOPE'),
                     value: okrSetScopeLabel(selectedSet.scopeType, isPolish),
                   },
                   {
-                    label: t('results.okr.report.columns.cycle', 'CYKL'),
+                    label: t('results.okr.report.columns.cycle', 'CYCLE'),
                     value: cycleNameById.get(selectedSet.cycleId) ?? OKR_EMPTY,
                   },
                   {
-                    label: t('results.okr.report.reportOwner', 'Właściciel raportu'),
+                    label: t('results.okr.report.reportOwner', 'Report owner'),
                     value: memberNameOrUnknown(
                       resolveMemberName,
                       selectedSet.ownerUserId,
@@ -419,16 +413,16 @@ export const OkrReportRegistryPage: React.FC = () => {
                 ],
               },
               details: {
-                label: t('results.okr.report.aboutReport', 'O raporcie'),
+                label: t('results.okr.report.aboutReport', 'About this report'),
                 text: selectedSet.description ?? undefined,
-                propertyLabel: t('results.okr.report.owner', 'Właściciel'),
-                valueLabel: t('results.okr.report.ownerLoad', 'Rezultaty i zagrożenia'),
+                propertyLabel: t('results.okr.report.owner', 'Owner'),
+                valueLabel: t('results.okr.report.ownerLoad', 'Key results and risks'),
                 properties: [
                   ...(selectedSet.reportGoal
                     ? [
                         {
                           id: 'goal',
-                          label: t('results.okr.report.reportGoal', 'Cel raportu'),
+                          label: t('results.okr.report.reportGoal', 'Report goal'),
                           value: selectedSet.reportGoal,
                         },
                       ]
@@ -437,7 +431,7 @@ export const OkrReportRegistryPage: React.FC = () => {
                 ],
                 loading: ownerBreakdownLoading,
               },
-              relationsEmptyLabel: t('results.okr.report.noOwners', 'Brak właścicieli rezultatów'),
+              relationsEmptyLabel: t('results.okr.report.noOwners', 'No key result owners'),
             }
           : null
       }

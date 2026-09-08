@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime } from '../utils/listDateFormat';
 
 import { SplitLayout } from '../components/layout/SplitLayout';
 import { useUserCan } from '../hooks/useUserCan';
@@ -168,7 +169,7 @@ export const ExecutiveView: React.FC = () => {
             Access Restricted
           </h2>
           <p className="text-slate-500 dark:text-slate-400">
-            Executive View is available for Admin and Manager roles only.
+            {t('results.executive.accessRestricted', 'Executive View is available for Admin and Manager roles only.')}
           </p>
         </div>
       </div>
@@ -181,7 +182,7 @@ export const ExecutiveView: React.FC = () => {
       <SplitLayout title="Executive View">
         <div className="flex h-full items-center justify-center">
           <div className="animate-pulse text-slate-600 dark:text-slate-500">
-            Loading executive summary...
+            {t('results.executive.loadingSummary', 'Loading executive summary…')}
           </div>
         </div>
       </SplitLayout>
@@ -328,7 +329,9 @@ export const ExecutiveView: React.FC = () => {
             </h2>
           </div>
           {pendingDecisions.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No pending decisions</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('results.executive.noPendingDecisions', 'No pending decisions')}
+            </p>
           ) : (
             <div className="space-y-2">
               {pendingDecisions.map((decision) => (
@@ -341,7 +344,7 @@ export const ExecutiveView: React.FC = () => {
                     {decision.title}
                   </span>
                   <span className="text-xs text-slate-600 dark:text-slate-500">
-                    {new Date(decision.created_at).toLocaleDateString()}
+                    {formatListDate(decision.created_at)}
                   </span>
                 </div>
               ))}
@@ -371,7 +374,7 @@ export const ExecutiveView: React.FC = () => {
                     {task.title}
                   </span>
                   <span className="text-xs text-danger-400">
-                    Due: {new Date(task.due_date).toLocaleDateString()}
+                    Due: {formatListDate(task.due_date)}
                   </span>
                 </div>
               ))}
@@ -418,7 +421,7 @@ export const ExecutiveView: React.FC = () => {
         {/* Footer - Timestamp */}
         <div className="mt-6 text-center">
           <span className="text-xs text-slate-600 dark:text-slate-500">
-            Last updated: {snapshot ? new Date(snapshot.updatedAt).toLocaleString() : '-'}
+            Last updated: {snapshot ? formatListDateTime(snapshot.updatedAt) : '-'}
           </span>
         </div>
       </div>
