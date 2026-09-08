@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ErrorState, LoadingState } from '@/components/shared/states';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
@@ -12,6 +13,7 @@ import { useDeferredLoading } from '@/hooks/useDeferredLoading';
  * spinner during a cold module load.
  */
 export const DeferredRouteLoadingFallback: React.FC = () => {
+  const { t } = useTranslation();
   const phase = useDeferredLoading(true);
 
   if (phase === 'idle') return null;
@@ -30,10 +32,10 @@ export const DeferredRouteLoadingFallback: React.FC = () => {
       data-testid="route-loading-skeleton"
     >
       <div className="mx-auto max-w-6xl">
-        <LoadingState template="panel" label="Ładowanie narzędzi…" />
+        <LoadingState template="panel" label={t('common.loadingTools', 'Loading tools…')} />
         {phase === 'slow' && (
           <p role="status" className="mt-5 text-center text-sm text-[var(--c-text-muted)]">
-            Ładowanie trwa dłużej niż zwykle…
+            {t('common.loadingSlow', 'This is taking longer than usual…')}
           </p>
         )}
       </div>

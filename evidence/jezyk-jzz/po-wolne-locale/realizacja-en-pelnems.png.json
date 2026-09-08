@@ -1,0 +1,13 @@
+{
+ "ekran": "realizacja",
+ "sciezka": "/execution",
+ "probkaMs": "pelne",
+ "scenariusz": "wolne-locale",
+ "faktycznyMs": 6699,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 6
+}

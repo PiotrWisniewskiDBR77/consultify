@@ -2468,7 +2468,8 @@
     "verifying": "Verifying…",
     "copyLink": "Copy link",
     "publish": "Publish",
-    "loadingSlow": "This is taking longer than usual…"
+    "loadingSlow": "This is taking longer than usual…",
+    "loadingTools": "Loading tools…"
   },
   "superadmin": {
     "confirm": {

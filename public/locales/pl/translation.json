@@ -883,7 +883,8 @@
     "verifying": "Weryfikowanie…",
     "copyLink": "Kopiuj link",
     "publish": "Opublikuj",
-    "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…"
+    "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…",
+    "loadingTools": "Ładowanie narzędzi…"
   },
   "superadmin": {
     "confirm": {
