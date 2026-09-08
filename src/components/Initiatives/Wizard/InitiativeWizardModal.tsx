@@ -48,6 +48,7 @@ import { Api } from '@/services/api';
 import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
+import { localeListy } from '@/utils/listDateFormat';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../../types';
 
@@ -126,7 +127,7 @@ function formatAuditTimestamp(value: string): string {
   try {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('pl-PL', {
+    return date.toLocaleString(localeListy(), {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',

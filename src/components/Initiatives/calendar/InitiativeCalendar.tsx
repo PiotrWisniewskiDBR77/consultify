@@ -164,7 +164,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
         });
       } catch {
         toast.error(
-          t('initiatives.calendar.toast.rescheduleFailed', 'Nie udało się zapisać terminu')
+          t('initiatives.calendar.toast.rescheduleFailed', 'Couldn\'t reschedule')
         );
         // Rollback the optimistic move.
         setOverrides((prev) => {

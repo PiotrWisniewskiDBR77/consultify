@@ -10349,8 +10349,16 @@
       "destructiveNote": "Capacity scenarios are superseded, not deleted",
       "resourceOwnerFallback": "Resource owner"
     },
-    "plan": "Plan",
+    "plan": {
+      "label": "Plan",
+      "portfolioFallback": "Source portfolio",
+      "listAria": "Plans list"
+    },
+    "sampleData": {
+      "message": "This register shows sample data, not your organization's data."
+    },
     "capacityAnalysis": {
+      "listAria": "Workload analyses list",
       "newAnalysis": "New analysis",
       "unnamed": "Unnamed analysis",
       "sourcePlanFallback": "Source plan",

@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { Decision, InitiativeSectionProps } from './types';
@@ -145,12 +146,7 @@ function normalizeStatus(s: string): string {
   return upper;
 }
 
-const formatDueDate = (value?: string) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString();
-};
+const formatDueDate = (value?: string) => formatListDate(value);
 
 type AIDecisionProposal = {
   add: Array<{

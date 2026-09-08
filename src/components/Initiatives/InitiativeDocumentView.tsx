@@ -3809,7 +3809,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // a na serwerze zostawal. Teraz wraca i mowi, dlaczego.
         toast.error(
           error?.message ||
-            t('initiatives.failedToRemoveRaid2', 'Nie udało się usunąć pozycji RAID')
+            t('initiatives.failedToRemoveRaid2', 'Failed to remove RAID item')
         );
         if (removed) {
           setRaidItems((prev) => (prev.some((i) => i.id === id) ? prev : [...prev, removed]));
@@ -3857,7 +3857,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // Do 07.09 ta awaria byla polykana: wiersz zmienial sie na ekranie,
         // serwer zostawal ze stara wartoscia, a uzytkownik nie wiedzial nic.
         toast.error(
-          e?.message || t('initiatives.failedToUpdateResource2', 'Nie udało się zapisać zasobu')
+          e?.message || t('initiatives.failedToUpdateResource2', 'Could not save the resource')
         );
         if (poprzedni) {
           setApiResourceItems((prev) => prev.map((item) => (item.id === id ? poprzedni : item)));
@@ -3876,7 +3876,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.success(t('initiatives.resourceRemoved2'));
       } catch (e: any) {
         toast.error(
-          e?.message || t('initiatives.failedToRemoveResource2', 'Nie udało się usunąć zasobu')
+          e?.message || t('initiatives.failedToRemoveResource2', 'Could not remove the resource')
         );
         if (usuniety) setApiResourceItems((prev) => [...prev, usuniety]);
       }
@@ -3909,7 +3909,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       } catch (e: any) {
         toast.error(
           e?.message ||
-            t('initiatives.failedToUpdateBudgetItem2', 'Nie udało się zapisać pozycji budżetu')
+            t('initiatives.failedToUpdateBudgetItem2', 'Could not save the budget item')
         );
         if (poprzednia) {
           setApiBudgetItems((prev) => prev.map((item) => (item.id === id ? poprzednia : item)));
@@ -3929,7 +3929,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       } catch (e: any) {
         toast.error(
           e?.message ||
-            t('initiatives.failedToRemoveBudgetItem2', 'Nie udało się usunąć pozycji budżetu')
+            t('initiatives.failedToRemoveBudgetItem2', 'Could not remove the budget item')
         );
         if (usunieta) setApiBudgetItems((prev) => [...prev, usunieta]);
       }
@@ -5930,7 +5930,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             stripStatusActions.length === 0
               ? t(
                   'initiatives.statusGovernedGateOnly',
-                  'Status zmienisz w bramce cyklu życia inicjatywy, nie z tej karty.'
+                  'Change status from the lifecycle gate workflow, not from this card.'
                 )
               : undefined;
           const pill = (
@@ -9593,7 +9593,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const authorityId = String(current?.executionManagerId || current?.ownerId || '');
     const expectedVersion = Number(registered?.version ?? current?.version ?? 0);
     if (!handoffPackageId || !authorityId || !expectedVersion) {
-      toast.error(t('p9Handoff.notReady', 'Najpierw uzupełnij pakiet przekazania i kierownika realizacji.'));
+      toast.error(t('p9Handoff.notReady', 'Complete the handoff package and execution manager first.'));
       return;
     }
     try {
@@ -9609,9 +9609,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         rolloutChildren: { pilot: [], waves: [] },
       });
-      toast.success(t('p9Handoff.requested', 'Przekazanie czeka na akceptację w Skrzynce.'));
+      toast.success(t('p9Handoff.requested', 'The handoff is awaiting acceptance in Inbox.'));
     } catch (error: any) {
-      toast.error(error?.message || t('p9Handoff.failed', 'Nie udało się przekazać inicjatywy do realizacji.'));
+      toast.error(error?.message || t('p9Handoff.failed', 'The initiative could not be handed over to execution.'));
     }
   }, [initiative, initiativeId, t]);
 
@@ -9684,7 +9684,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (!readMode) {
       items.push({
         id: 'request-handoff-acceptance',
-        label: t('p9Handoff.requestAction', 'Przekaż do realizacji'),
+        label: t('p9Handoff.requestAction', 'Hand over to execution'),
         icon: ArrowRight,
         onClick: () => void handleRequestHandoffAcceptance(),
       });

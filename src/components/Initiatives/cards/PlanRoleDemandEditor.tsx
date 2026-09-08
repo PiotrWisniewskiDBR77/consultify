@@ -19,6 +19,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { listCapacityRoles } from '@/services/initiatives-execution/runtimeApi';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface RoleOption {
   roleId: string;
@@ -105,13 +106,13 @@ export function PlanRoleDemandEditor({
     );
     setSaveState(saved ? 'SAVED' : 'FAILED');
     if (saved)
-      setSavedAt(new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }));
+      setSavedAt(new Date().toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' }));
   };
 
   if (state === 'LOADING')
     return (
       <p role="status" className="text-sm text-c-text-muted">
-        {t('initiatives.planScenario.roleDemand.loading', 'Wczytuję obciążenie ról…')}
+        {t('initiatives.planScenario.roleDemand.loading', 'Loading role load…')}
       </p>
     );
   if (state === 'ERROR')
@@ -119,7 +120,7 @@ export function PlanRoleDemandEditor({
       <p role="alert" className="text-sm text-c-danger">
         {t(
           'initiatives.planScenario.roleDemand.unavailable',
-          'Nie udało się wczytać obciążenia ról.'
+          'Could not load role load.'
         )}
       </p>
     );
@@ -128,7 +129,7 @@ export function PlanRoleDemandEditor({
       <p className="text-sm text-c-text-muted">
         {t(
           'initiatives.planScenario.roleDemand.noWindows',
-          'Plan nie ma jeszcze żadnej inicjatywy w zakresie — najpierw wybierz je w generatorze.'
+          'The plan has no initiative in scope yet — pick them in the generator first.'
         )}
       </p>
     );
@@ -137,7 +138,7 @@ export function PlanRoleDemandEditor({
       <p className="text-sm text-c-text-muted">
         {t(
           'initiatives.planScenario.roleDemand.noRoles',
-          'Żadna osoba w organizacji nie ma wpisanego stanowiska. Uzupełnij stanowiska w Zespole, aby zaplanować obciążenie ról.'
+          'Nobody in the organization has a job title. Fill in job titles in Team to plan role load.'
         )}
       </p>
     );
@@ -148,7 +149,7 @@ export function PlanRoleDemandEditor({
       <p className="mb-3 text-sm text-c-text-muted">
         {t(
           'initiatives.planScenario.roleDemand.hint',
-          'Wpisz, ile etatów (FTE) każdej roli wymaga inicjatywa w swoim oknie. Te liczby są popytem w analizie obciążenia.'
+          'Enter how many FTE of each role the initiative needs within its window. These numbers are the demand in the load analysis.'
         )}
       </p>
       <table /* §27-exempt: ARKUSZ inicjatywa x rola w karcie planu (macierz FTE do
@@ -209,7 +210,7 @@ export function PlanRoleDemandEditor({
         <p className="mt-3 text-sm text-c-text-muted">
           {t(
             'initiatives.planScenario.roleDemand.readOnly',
-            'Plan jest opublikowany — obciążenie ról jest tylko do odczytu.'
+            'The plan is published — role load is read-only.'
           )}
         </p>
       )}
@@ -220,7 +221,7 @@ export function PlanRoleDemandEditor({
       )}
       {saveState === 'FAILED' && (
         <p role="alert" className="mt-3 text-sm text-c-danger">
-          {t('initiatives.planScenario.roleDemand.failed', 'Nie zapisano obciążenia ról.')}
+          {t('initiatives.planScenario.roleDemand.failed', 'Role load was not saved.')}
           {errorLabel ? ` (${errorLabel})` : ''}
         </p>
       )}

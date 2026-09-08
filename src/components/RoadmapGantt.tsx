@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { InitiativeStatus } from '../types/core';
 import { Initiative } from '../types/domain';
+import { localeListy } from '../utils/listDateFormat';
 import { StatusTransitionDropdown } from './PMO/StatusTransitionDropdown';
 
 type Quarter = string;
@@ -84,8 +85,8 @@ const generateMonths = (startYear: number, numMonths: number) => {
       index: i,
       month,
       year,
-      label: new Date(year, month).toLocaleDateString('pl-PL', { month: 'short' }),
-      fullLabel: new Date(year, month).toLocaleDateString('pl-PL', {
+      label: new Date(year, month).toLocaleDateString(localeListy(), { month: 'short' }),
+      fullLabel: new Date(year, month).toLocaleDateString(localeListy(), {
         month: 'long',
         year: 'numeric',
       }),
@@ -496,14 +497,14 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         toast(
           t(
             'roadmap.toast.clickToCreateDependency',
-            'Kliknij inną inicjatywę, aby utworzyć zależność'
+            'Click another initiative to create a dependency'
           ),
           { icon: '🔗' }
         );
       } else if (linkingFrom !== initiativeId) {
         onCreateDependency?.(linkingFrom, initiativeId, 'FINISH_TO_START');
         setLinkingFrom(null);
-        toast.success(t('roadmap.toast.dependencyCreated', 'Zależność utworzona'));
+        toast.success(t('roadmap.toast.dependencyCreated', 'Dependency created'));
       } else {
         setLinkingFrom(null);
       }

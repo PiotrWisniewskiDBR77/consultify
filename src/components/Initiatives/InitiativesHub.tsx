@@ -2344,10 +2344,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => setShowBulkModal(true)}
           className={MENU_3_ACTION_NEUTRAL}
-          title={t('initiatives.bulkEdit.changeOwnerAction', 'Zmień właściciela')}
+          title={t('initiatives.bulkEdit.changeOwnerAction', 'Change owner')}
         >
           <UserCog className="h-3.5 w-3.5" />
-          {t('initiatives.bulkEdit.changeOwnerAction', 'Zmień właściciela')}
+          {t('initiatives.bulkEdit.changeOwnerAction', 'Change owner')}
         </button>
         {/* Delete — danger, no backend endpoint (DP-5: hidden unless stub flag on) */}
         {showBulkStubActions && (
@@ -2464,7 +2464,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               onClick={() => setIsMenu3KebabOpen((prev) => !prev)}
               aria-haspopup="menu"
               aria-expanded={isMenu3KebabOpen}
-              aria-label={t('initiatives.menu3.more', 'Więcej')}
+              aria-label={t('initiatives.menu3.more', 'More')}
               className={MENU_3_ACTION_NEUTRAL}
               data-testid="initiatives-menu3-kebab"
             >
@@ -2488,7 +2488,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 >
                   {isAdoptingClassic
                     ? t('initiatives.bridge.adopting', 'Przejmowanie…')
-                    : t('initiatives.bridge.action', 'Przejmij klasyczną inicjatywę')}
+                    : t('initiatives.bridge.action', 'Adopt classic initiative')}
                 </button>
               </div>
             )}
@@ -2502,12 +2502,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // opcjonalnie, chipy Menu 3).
   const canonicalMenu3FullOptions: Record<string, Array<{ id: string; label: string }>> = {
     plan: [
-      ['all', t('common.all', 'Wszystkie')],
+      ['all', t('common.all', 'All')],
       ['drafts', t('initiatives.plan.filters.drafts', 'Szkice')],
       ['published', t('initiatives.plan.filters.published', 'Opublikowane')],
     ].map(([id, label]) => ({ id, label })),
     capacity: [
-      ['all', t('common.all', 'Wszystkie')],
+      ['all', t('common.all', 'All')],
       ['drafts', t('initiatives.capacityAnalysis.filters.drafts', 'Szkice')],
       ['published', t('initiatives.capacityAnalysis.filters.published', 'Opublikowane')],
     ].map(([id, label]) => ({ id, label })),
@@ -2702,7 +2702,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 title={t('common.sampleData', 'SAMPLE DATA')}
                 message={t(
                   'initiatives.sampleData.message',
-                  'Ten rejestr pokazuje dane pokazowe, nie dane Twojej organizacji.'
+                  "This register shows sample data, not your organization's data."
                 )}
               />
             </div>

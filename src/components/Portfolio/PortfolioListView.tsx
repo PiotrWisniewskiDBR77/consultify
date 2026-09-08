@@ -615,7 +615,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             actions: [
                               {
                                 id: 'open-preview',
-                                label: t('common.openPreview', 'Otwórz podgląd'),
+                                label: t('common.openPreview', 'Open preview'),
                                 icon: ChevronRight,
                                 onClick: () => onInitiativeClick(initiative),
                               },
@@ -623,7 +623,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 ? [
                                     {
                                       id: 'open-full',
-                                      label: t('common.openFull', 'Otwórz pełny widok'),
+                                      label: t('common.openFull', 'Open full'),
                                       icon: ChevronRight,
                                       onClick: () => onOpenFull(initiative),
                                     },
@@ -631,17 +631,17 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 : []),
                               {
                                 id: 'edit',
-                                label: t('common.edit', 'Edytuj'),
+                                label: t('common.edit', 'Edit'),
                                 icon: Edit2,
                                 onClick: () => onInitiativeClick(initiative),
                               },
                               initiative.status === InitiativeStatus.CLOSED
                                 ? {
                                     id: 'restore',
-                                    label: t('common.restore', 'Przywróć'),
+                                    label: t('common.restore', 'Restore'),
                                     icon: RotateCcw,
                                     disabled: true,
-                                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                                    description: t('common.comingSoonBackend', 'Coming soon (backend)'),
                                     onClick: () => {},
                                   }
                                 : {
@@ -660,7 +660,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                       )
                                         ? t(
                                             'initiatives.archive.hint',
-                                            'Zakończ lub anuluj najpierw'
+                                            'Finish or cancel it first'
                                           )
                                         : undefined,
                                     onClick: () => onArchive?.(initiative),
@@ -670,12 +670,12 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 ? [
                                     {
                                       id: 'delay',
-                                      label: t('common.delay', 'Przesuń termin'),
+                                      label: t('common.delay', 'Delay'),
                                       icon: Clock,
                                       disabled: true,
                                       description: t(
                                         'common.comingSoonBackend',
-                                        'Wkrótce (backend)'
+                                        'Coming soon (backend)'
                                       ),
                                       onClick: () => {},
                                     },
@@ -690,12 +690,12 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             actions: [
                               {
                                 id: 'delete',
-                                label: t('common.delete', 'Usuń'),
+                                label: t('common.delete', 'Delete'),
                                 icon: Trash2,
                                 variant: 'danger' as const,
                                 disabled: !onDelete,
                                 description: !onDelete
-                                  ? t('common.comingSoonBackend', 'Wkrótce (backend)')
+                                  ? t('common.comingSoonBackend', 'Coming soon (backend)')
                                   : undefined,
                                 onClick: () => onDelete?.(initiative),
                               },

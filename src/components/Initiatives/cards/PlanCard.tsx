@@ -74,6 +74,12 @@ export interface PlanCardWindowPatch {
   latest?: string | null;
 }
 
+// [ODMROZENIE 05_INITIATIVES DEC-453] STOP: nie przełączono na `localeListy()` — moduł-poziom
+// helper czyta z paczki `i18next` wprost, a test tej karty mockuje TYLKO `@/i18n` i hook
+// `react-i18next` (nie realny pakiet `i18next`), więc `localeListy()` widzi w teście domyślny
+// (nie-PL) język i psuje separator dziesiętny („5.5" zamiast „5,5"). Poprawny fix wymaga
+// przekazania `i18n.language` z hooka komponentu do tych funkcji (refaktor podpisu, poza
+// zakresem samej naprawy języka) — zgłoszone jako dług J-wspólne, patrz meldunek paczki J6.
 const formatPolishDate = (value: string | null) => {
   if (!value) return 'Nieznane';
   const date = new Date(value);
@@ -487,7 +493,7 @@ export function PlanCard({
                   <p className="text-sm">
                     {window.dependencySnapshot.length
                       ? window.dependencySnapshot.map(nameOf).join(', ')
-                      : t('common.none', 'Brak')}
+                      : t('common.none', 'none')}
                   </p>
                 )}
               </div>
@@ -524,7 +530,7 @@ export function PlanCard({
           </h4>
           <table /* §27-exempt: read-only podglad propozycji w karcie (4 kolumny, bez sortowania/filtrow/kebaba) — nie jest przegladana lista encji */
             className="w-full text-sm"
-            aria-label={t('initiatives.planGenerator.proposalAria', 'Proponowana kolejność')}
+            aria-label={t('initiatives.planGenerator.proposalAria', 'Proposed sequence')}
           >
             <thead>
               <tr className="text-left text-c-text-muted">
@@ -553,7 +559,7 @@ export function PlanCard({
                   <td className="py-1">
                     {row.conflict
                       ? formatPlanSolverReason(row.conflict, t, nameOf)
-                      : t('common.none', 'Brak')}
+                      : t('common.none', 'none')}
                   </td>
                 </tr>
               ))}
@@ -562,10 +568,10 @@ export function PlanCard({
           {editable && proposal?.status === 'PENDING_REVIEW' && (
             <div className="mt-2 flex gap-2">
               <button type="button" className={button} disabled={busy} onClick={() => onReview('ACCEPT')}>
-                {t('initiatives.planGenerator.accept', 'Zatwierdź')}
+                {t('initiatives.planGenerator.accept', 'Approve')}
               </button>
               <button type="button" className={button} disabled={busy} onClick={() => onReview('REJECT')}>
-                {t('initiatives.planGenerator.reject', 'Odrzuć')}
+                {t('initiatives.planGenerator.reject', 'Reject')}
               </button>
             </div>
           )}
@@ -668,7 +674,7 @@ export function PlanCard({
                     {t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}
                   </th>
                   <th className="px-3 py-2">
-                    {t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}
+                    {t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}
                   </th>
                   <th className="px-3 py-2">
                     {t('initiatives.capacityAnalysis.columns.gap', 'Luka')}

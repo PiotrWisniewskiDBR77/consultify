@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps, TaskItem } from './types';
@@ -269,12 +270,7 @@ function inferRemovalRank(reason: string): number {
   return 50;
 }
 
-const formatDueDate = (value?: string) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString();
-};
+const formatDueDate = (value?: string) => formatListDate(value);
 
 // ==========================================
 // MAIN SECTION COMPONENT
@@ -1634,13 +1630,13 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t(
                           'initiatives.tasksMilestonesSection.emptyPlanTitle',
-                          'Ta inicjatywa nie ma jeszcze planu'
+                          'This initiative has no plan yet'
                         )}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {t(
                           'initiatives.tasksMilestonesSection.emptyPlanHint',
-                          'Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.'
+                          'Tasks feed the schedule (Gantt) and initiative progress. Add the first task or let AI propose a complete plan.'
                         )}
                       </p>
                       {!readonly && (
@@ -1654,7 +1650,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                             <Plus size={13} />
                             {t(
                               'initiatives.tasksMilestonesSection.emptyPlanAddFirst',
-                              'Dodaj pierwsze zadanie'
+                              'Add the first task'
                             )}
                           </button>
                           <button

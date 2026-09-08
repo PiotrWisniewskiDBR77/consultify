@@ -424,7 +424,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       portfolio: `${resolveBusinessDisplayLabel({
         displayName: item.portfolioRef.name ?? item.portfolioRef.scenarioId,
         rawId: item.portfolioRef.scenarioId,
-        fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
+        fallback: t('initiatives.plan.portfolioFallback', 'Source portfolio'),
       })} · v${item.portfolioRef.scenarioVersion}`,
       earliest: item.window.earliest ?? 'Unknown',
       latest: item.window.latest ?? 'Unknown',
@@ -435,7 +435,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       author: resolveBusinessDisplayLabel({
         displayName: item.author,
         rawId: item.author,
-        fallback: t('common.unknown', 'Nieznane'),
+        fallback: t('common.unknown', 'unknown'),
       }),
     });
 
@@ -1559,7 +1559,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     const selectedPlan = visiblePlans.find((row) => row.id === selectedId) ?? null;
     return (
       <section
-        aria-label={t('initiatives.plan.listAria', 'Lista planów')}
+        aria-label={t('initiatives.plan.listAria', 'Plans list')}
         className="h-full min-h-0"
       >
         <TableWithPreviewLayout<RegisterRow>
@@ -1601,7 +1601,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   {
                     id: 'conflicts',
                     label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
-                    value: row.conflicts ? String(row.conflicts) : t('common.none', 'Brak'),
+                    value: row.conflicts ? String(row.conflicts) : t('common.none', 'none'),
                   },
                 ],
               }}
@@ -1634,7 +1634,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               {
                 id: 'conflicts',
                 label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
-                render: (row) => (row.conflicts ? row.conflicts : t('common.none', 'Brak')),
+                render: (row) => (row.conflicts ? row.conflicts : t('common.none', 'none')),
               },
               {
                 id: 'updatedAt',
@@ -1652,7 +1652,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
              * „No items found" (domyślny napis `StandardTable`) w polskim UI.
              */
             empty={{
-              title: t('initiatives.planCard.listEmptyTitle', 'Brak planów'),
+              title: t('initiatives.planCard.listEmptyTitle', 'No plans'),
               description: t(
                 'initiatives.planCard.listEmptyDescription',
                 'Załóż pierwszy plan przyciskiem „Nowy plan" — wybierzesz w nim zatwierdzone inicjatywy i horyzont.'

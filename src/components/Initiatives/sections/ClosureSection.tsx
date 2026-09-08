@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -105,12 +106,7 @@ interface ClosureReceipt {
   financeLastError?: string | null;
 }
 
-const formatDateTime = (value?: string | null): string => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString();
-};
+const formatDateTime = (value?: string | null): string => formatListDateTime(value);
 
 export const ClosureSection: React.FC<InitiativeSectionProps> = ({
   expanded,

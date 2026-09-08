@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { Api } from '../../services/api';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
+import { formatListDate, localeListy } from '../../utils/listDateFormat';
 import { formatRoiDisplay } from '../../utils/safeFormat';
 import { InitiativeSourceLink } from '../Initiatives/InitiativeSourceLink';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
@@ -206,7 +207,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         setSelectedTask(null);
       } catch (error: any) {
         console.error('[InitiativeSidePanel] Failed to save task:', error);
-        toast.error(t('portfolio.toast.taskSaveError', 'Nie udało się zapisać zadania'));
+        toast.error(t('portfolio.toast.taskSaveError', 'Couldn\'t save the task'));
       }
     },
     [fetchTasks, t]
@@ -223,7 +224,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(localeListy(), {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
@@ -250,7 +251,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
     }
     if (!initiative.projectId) {
       toast.error(
-        t('portfolio.toast.projectRequired', 'Projekt jest wymagany do zgłoszenia decyzji')
+        t('portfolio.toast.projectRequired', 'A project is required to raise a decision')
       );
       return;
     }
@@ -275,7 +276,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       fetchDecisions();
     } catch (error: any) {
       console.error('[InitiativeSidePanel] Failed to create gate decision:', error);
-      toast.error(t('portfolio.toast.gateDecisionError', 'Nie udało się utworzyć decyzji bramki'));
+      toast.error(t('portfolio.toast.gateDecisionError', 'Couldn\'t create the gate decision'));
     } finally {
       setSubmittingGate(false);
     }
@@ -757,7 +758,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                         {task.dueDate && (
                           <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
                             <Clock size={10} />
-                            {new Date(task.dueDate).toLocaleDateString()}
+                            {formatListDate(task.dueDate)}
                           </span>
                         )}
                       </div>
@@ -969,7 +970,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                           {decision.dueDate && (
                             <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
                               <Clock size={10} />
-                              {new Date(decision.dueDate).toLocaleDateString()}
+                              {formatListDate(decision.dueDate)}
                             </span>
                           )}
                         </div>
