@@ -1,0 +1,7 @@
+{
+  "nazwa": "02-lista-wszystkie",
+  "opis": "Lista Inicjatyw — scope \"Wszystkie\" (powinno pokazac 104 wg bazy)",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T04:17:51.331Z"
+}

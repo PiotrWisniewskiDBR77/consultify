@@ -1,0 +1,5 @@
+2026-09-08T04:29:42.786Z GET 403 /api/v8/interview/insights
+    {"error":"Permission denied","required":"INTERVIEW_INSIGHTS_VIEW","code":"PERMISSION_DENIED"}
+
+2026-09-08T04:29:42.797Z GET 403 /api/v8/interview/insights?scope=active
+    {"error":"Permission denied","required":"INTERVIEW_INSIGHTS_VIEW","code":"PERMISSION_DENIED"}

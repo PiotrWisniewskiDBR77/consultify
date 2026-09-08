@@ -1,0 +1,8 @@
+{
+  "nazwa": "20-hold-01-in-execution-start",
+  "opis": "Podglad IN_EXECUTION \"Transformacja DevOps\" przed Wstrzymaj",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T04:28:57.899Z",
+  "stanBazy": "IN_EXECUTION|f"
+}

@@ -1,0 +1,8 @@
+{
+  "nazwa": "12-lancuch-03-zatwierdz-zablokowany",
+  "opis": "\"Zatwierdz inicjatywe\" — disabled=true. Powod: Zatwierdź inicjatywę: Brakuje aktualnej decyzji GO komitetu.",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T04:28:48.281Z",
+  "stanBazy": "PENDING_APPROVAL|f"
+}

@@ -1,0 +1,8 @@
+{
+  "nazwa": "11-lancuch-02-po-przeslaniu",
+  "opis": "Po \"Przeslij do zatwierdzenia\" (disabled=false)",
+  "url": "http://localhost:3188/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-08T04:28:47.828Z",
+  "stanBazy": "PENDING_APPROVAL|f"
+}
