@@ -659,8 +659,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
           ) : (
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6 text-sm text-c-text-muted dark:border-navy-700">
-              Live pricing plans are currently unavailable. Refresh the page or retry after billing
-              services recover.
+              {t(
+                'settings.billing.plansUnavailable',
+                'Live pricing plans are currently unavailable. Refresh the page or retry after billing services recover.'
+              )}
             </div>
           )}
 
@@ -677,8 +679,10 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           )}
           {isManualBilling && (
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 text-sm text-c-text-secondary dark:border-navy-700">
-              This subscription is managed manually outside Stripe. Contract renewals, invoice
-              status, and access changes are handled by your account team.
+              {t(
+                'settings.billing.manualSubscription',
+                'This subscription is managed manually outside Stripe. Contract renewals, invoice status, and access changes are handled by your account team.'
+              )}
             </div>
           )}
         </>

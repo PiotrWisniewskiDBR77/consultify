@@ -78,7 +78,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
             Quick Actions
           </h2>
           <p className="text-c-text-muted text-sm mt-1">
-            Configure command palette and quick actions
+            {t('settings.quickActions.subtitle', 'Configure command palette and quick actions')}
           </p>
         </div>
         <button
@@ -96,8 +96,12 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
           <div className="flex items-center gap-3">
             <Search size={20} className="text-blue-500" />
             <div>
-              <p className="font-medium text-c-text">Command Palette</p>
-              <p className="text-sm text-c-text-muted">Quick access with Cmd+K</p>
+              <p className="font-medium text-c-text">
+                {t('settings.quickActions.paletteTitle', 'Command Palette')}
+              </p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.quickActions.paletteHint', 'Quick access with Cmd+K')}
+              </p>
             </div>
           </div>
           <button

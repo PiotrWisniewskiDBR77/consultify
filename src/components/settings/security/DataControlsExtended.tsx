@@ -540,7 +540,10 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
           Data Portability
         </h3>
         <p className="text-sm text-c-text-muted">
-          Transfer your data to other platforms or import data from elsewhere.
+          {t(
+            'settings.dataControls.portabilityHint',
+            'Transfer your data to other platforms or import data from elsewhere.'
+          )}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -562,8 +565,12 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
           >
             <Upload size={24} className="text-emerald-600" />
             <div className="text-left">
-              <p className="font-medium text-c-text">Import Data</p>
-              <p className="text-sm text-c-text-muted">From ClickUp, Monday, Asana</p>
+              <p className="font-medium text-c-text">
+                {t('settings.dataControls.importTitle', 'Import Data')}
+              </p>
+              <p className="text-sm text-c-text-muted">
+                {t('settings.dataControls.importSources', 'From ClickUp, Monday, Asana')}
+              </p>
             </div>
           </button>
         </div>
@@ -574,10 +581,12 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         <div className="flex items-start gap-3">
           <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            <p className="font-medium mb-1">Important</p>
+            <p className="font-medium mb-1">{t('settings.dataControls.important', 'Important')}</p>
             <p>
-              Data deletion is permanent and cannot be reversed. Make sure to export your data
-              before deleting if you need a backup.
+              {t(
+                'settings.dataControls.deletionWarning',
+                'Data deletion is permanent and cannot be reversed. Make sure to export your data before deleting if you need a backup.'
+              )}
             </p>
           </div>
         </div>

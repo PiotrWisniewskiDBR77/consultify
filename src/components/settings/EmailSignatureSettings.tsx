@@ -244,10 +244,13 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                 onChange={(e) => setFormContent(e.target.value)}
                 rows={10}
                 className={textareaClass}
-                placeholder="Enter your signature..."
+                placeholder={t('settings.signatures.contentPlaceholder', 'Enter your signature...')}
               />
               <p className="text-xs text-c-text-muted mt-2">
-                Tip: You can use emojis and basic formatting. HTML is not supported.
+                {t(
+                  'settings.signatures.formattingTip',
+                  'Tip: You can use emojis and basic formatting. HTML is not supported.'
+                )}
               </p>
             </div>
 
@@ -291,16 +294,21 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {signatures.length === 0 && !isCreating ? (
         <div className={cardClass + ' p-8 text-center'}>
           <FileText className="w-12 h-12 text-c-text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-c-text mb-2">No signatures yet</h3>
+          <h3 className="text-lg font-semibold text-c-text mb-2">
+            {t('settings.signatures.emptyTitle', 'No signatures yet')}
+          </h3>
           <p className="text-c-text-muted mb-4">
-            Create your first email signature to use across your communications.
+            {t(
+              'settings.signatures.emptyBody',
+              'Create your first email signature to use across your communications.'
+            )}
           </p>
           <button
             onClick={handleCreateNew}
             className="inline-flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
           >
             <Plus size={16} />
-            Create First Signature
+            {t('settings.signatures.createFirst', 'Create First Signature')}
           </button>
         </div>
       ) : (
@@ -381,10 +389,30 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
               <strong>Tips for effective signatures:</strong>
             </p>
             <ul className="text-sm text-blue-600 dark:text-blue-300 mt-2 space-y-1 list-disc list-inside">
-              <li>Keep it concise - include only essential contact information</li>
-              <li>Use a consistent format across all your signatures</li>
-              <li>Include your role and company for professional context</li>
-              <li>Add relevant social links or portfolio URLs if appropriate</li>
+              <li>
+                {t(
+                  'settings.signatures.tipConcise',
+                  'Keep it concise - include only essential contact information'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.signatures.tipConsistent',
+                  'Use a consistent format across all your signatures'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.signatures.tipRole',
+                  'Include your role and company for professional context'
+                )}
+              </li>
+              <li>
+                {t(
+                  'settings.signatures.tipLinks',
+                  'Add relevant social links or portfolio URLs if appropriate'
+                )}
+              </li>
             </ul>
           </div>
         </div>

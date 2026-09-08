@@ -5,6 +5,7 @@
 import { ChevronDown, Clock, History, RotateCcw, Search } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Banner } from '@/components/shared/Banner';
 import { LoadingState } from '@/components/ui/primitives';
@@ -32,6 +33,7 @@ interface HistoryEntry {
 }
 
 export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,7 +157,9 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
           <History size={28} className="text-amber-500" />
           Settings History
         </h2>
-        <p className="text-c-text-muted text-sm mt-1">View and restore previous settings changes</p>
+        <p className="text-c-text-muted text-sm mt-1">
+          {t('settings.history.subtitle', 'View and restore previous settings changes')}
+        </p>
       </div>
 
       {loadError && <DegradedState title="Settings history unavailable" description={loadError} />}
@@ -198,10 +202,10 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
               onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
               className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="all">All time</option>
+              <option value="7d">{t('settings.history.range7d', 'Last 7 days')}</option>
+              <option value="30d">{t('settings.history.range30d', 'Last 30 days')}</option>
+              <option value="90d">{t('settings.history.range90d', 'Last 90 days')}</option>
+              <option value="all">{t('settings.history.rangeAll', 'All time')}</option>
             </select>
           </div>
 

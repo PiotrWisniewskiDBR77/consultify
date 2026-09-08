@@ -49,11 +49,29 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="text-green-500" size={18} aria-label="Successful" />;
+        return (
+          <CheckCircle
+            className="text-green-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusSuccess', 'Successful')}
+          />
+        );
       case 'failed':
-        return <XCircle className="text-danger-500" size={18} aria-label="Failed" />;
+        return (
+          <XCircle
+            className="text-danger-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusFailed', 'Failed')}
+          />
+        );
       case 'suspicious':
-        return <AlertTriangle className="text-amber-500" size={18} aria-label="Suspicious" />;
+        return (
+          <AlertTriangle
+            className="text-amber-500"
+            size={18}
+            aria-label={t('settings.loginHistory.statusSuspicious', 'Suspicious')}
+          />
+        );
       default:
         return null;
     }

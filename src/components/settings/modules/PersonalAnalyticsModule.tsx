@@ -165,7 +165,9 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             <BarChart3 size={28} className="text-blue-500" />
             Personal Analytics
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">Track your productivity and performance</p>
+          <p className="text-c-text-muted text-sm mt-1">
+            {t('settings.analytics.subtitle', 'Track your productivity and performance')}
+          </p>
         </div>
         <div className="flex gap-2">
           <select
@@ -174,10 +176,10 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             disabled={!!loadError}
             className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           >
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
+            <option value="week">{t('settings.analytics.rangeWeek', 'This Week')}</option>
+            <option value="month">{t('settings.analytics.rangeMonth', 'This Month')}</option>
+            <option value="quarter">{t('settings.analytics.rangeQuarter', 'This Quarter')}</option>
+            <option value="year">{t('settings.analytics.rangeYear', 'This Year')}</option>
           </select>
           <button
             disabled={!!loadError}

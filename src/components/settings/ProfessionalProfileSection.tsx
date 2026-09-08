@@ -710,7 +710,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             type="text"
             value={work.company}
             onChange={(e) => onUpdate({ company: e.target.value })}
-            placeholder="Company Name"
+            placeholder={t('settings.professionalProfile.companyName', 'Company Name')}
             className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input

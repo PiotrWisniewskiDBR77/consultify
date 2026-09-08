@@ -169,7 +169,11 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-c-text-muted">Loading organization details...</div>;
+    return (
+      <div className="p-8 text-center text-c-text-muted">
+        {t('settings.organization.loading', 'Loading organization details...')}
+      </div>
+    );
   }
 
   const handleCreateOrganization = async () => {
@@ -196,10 +200,14 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <>
         <div className="p-8 text-center bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 shadow-sm">
           <Building2 size={48} className="mx-auto text-c-text-secondary mb-4" />
-          <h3 className="text-lg font-semibold text-navy-900 mb-2">No Organization Found</h3>
+          <h3 className="text-lg font-semibold text-navy-900 mb-2">
+            {t('settings.organization.emptyTitle', 'No Organization Found')}
+          </h3>
           <p className="text-c-text-muted mb-6 max-w-md mx-auto">
-            You are not currently a member of any organization. Create one to get started with team
-            collaboration and token sharing.
+            {t(
+              'settings.organization.emptyBody',
+              'You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.'
+            )}
           </p>
           <button
             onClick={() => setIsCreateOrgModalOpen(true)}
@@ -273,7 +281,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             <Building2 className="text-c-accent" />
             Organization Settings
           </h2>
-          <p className="text-c-text-muted text-sm mt-1">Manage members, billing, and tokens.</p>
+          <p className="text-c-text-muted text-sm mt-1">
+            {t('settings.organization.subtitle', 'Manage members, billing, and tokens.')}
+          </p>
         </div>
         {organizations.length > 1 && (
           <select
@@ -318,7 +328,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     Trial Active
                   </h4>
                   <p className="text-amber-700 dark:text-amber-500/80 text-xs mt-1">
-                    Upgrade to a paid plan to unlock full features and remove limits.
+                    {t(
+                      'settings.organization.trialUpgradeHint',
+                      'Upgrade to a paid plan to unlock full features and remove limits.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -421,10 +434,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                     Amount
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
-                    Reason
+                    {t('settings.organization.tokenLogReason', 'Reason')}
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-c-text-muted uppercase">
-                    When
+                    {t('settings.organization.tokenLogWhen', 'When')}
                   </th>
                 </tr>
               </thead>
@@ -589,7 +602,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </button>
             </div>
             <p className="text-[10px] text-c-text-muted mt-2">
-              * Note: For this release, please use User ID if Email lookup is not configured.
+              {t(
+                'settings.organization.inviteIdNote',
+                '* Note: For this release, please use User ID if Email lookup is not configured.'
+              )}
             </p>
           </div>
         )}

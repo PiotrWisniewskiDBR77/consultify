@@ -16936,7 +16936,7 @@
       "defaultDemoName": "Professional",
       "add": "Add Signature",
       "empty": "No signatures yet",
-      "createFirst": "Create your first signature",
+      "createFirst": "Create First Signature",
       "default": "Default",
       "setDefault": "Set as default",
       "copy": "Copy",
@@ -16963,7 +16963,14 @@
       "defaultSet": "Default Updated",
       "defaultSetDesc": "Default signature has been updated",
       "copied": "Copied",
-      "copiedDesc": "Signature copied to clipboard"
+      "copiedDesc": "Signature copied to clipboard",
+      "formattingTip": "Tip: You can use emojis and basic formatting. HTML is not supported.",
+      "emptyTitle": "No signatures yet",
+      "emptyBody": "Create your first email signature to use across your communications.",
+      "tipConcise": "Keep it concise - include only essential contact information",
+      "tipConsistent": "Use a consistent format across all your signatures",
+      "tipRole": "Include your role and company for professional context",
+      "tipLinks": "Add relevant social links or portfolio URLs if appropriate"
     },
     "work": {
       "title": "Work Preferences",
@@ -17175,7 +17182,10 @@
         }
       }
     },
-    "billing": "Billing",
+    "billing": {
+      "plansUnavailable": "Live pricing plans are currently unavailable. Refresh the page or retry after billing services recover.",
+      "manualSubscription": "This subscription is managed manually outside Stripe. Contract renewals, invoice status, and access changes are handled by your account team."
+    },
     "financeDefaults": "Finance Defaults",
     "financeDefaultsDesc": "Default values for new valuations, budgets, and financial models across the organization.",
     "defaultWacc": "Default WACC (%)",
@@ -17358,7 +17368,7 @@
       "privacyDesc": "Control what data the AI can access, how it is retained, and whether it is used for model training.",
       "privacyError": "Failed to save AI privacy settings",
       "privacySaved": "AI privacy settings saved",
-      "privacyTitle": "AI Data & Privacy",
+      "privacyTitle": "Data Privacy & Governance",
       "quickTemplates": "Quick Templates",
       "rememberContext": "Project Context",
       "rememberContextDesc": "Retain context about your projects, tasks, and organizational structure.",
@@ -17396,7 +17406,38 @@
       "toneSection": "Tone & Communication",
       "vectorDesc": "Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations.",
       "whatToRemember": "What to Remember",
-      "autoDetectIntentHint": "The AI detects on its own whether you need a short or a detailed answer"
+      "autoDetectIntentHint": "The AI detects on its own whether you need a short or a detailed answer",
+      "tierTitle": "Default Performance Tier",
+      "tierSubtitle": "Select your preferred balance of speed, capability, and cost.",
+      "usageTitle": "Your AI Usage",
+      "usageSubtitle": "Track your personal AI costs and usage this month.",
+      "thisMonth": "this month",
+      "byokTitle": "Bring Your Own Keys",
+      "byokSubtitle": "Connect external providers securely.",
+      "addApiKey": "Add New API Key",
+      "keyStoredLocally": "Stored locally in your browser. Never sent to our servers.",
+      "ollamaModelHint": "Used when Chat is routed to Ollama.",
+      "ollamaUseEndpoint": "Use this Ollama endpoint for chat",
+      "modelBehaviorTitle": "Model Behavior",
+      "modelBehaviorSubtitle": "Configure granular generation parameters and persona.",
+      "systemInstructionsPlaceholder": "e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses...",
+      "responseModeTitle": "Response Mode",
+      "responseModeSubtitle": "Configure default response length and style preferences.",
+      "personaTitle": "Persona Definition",
+      "personaSubtitle": "Define your role to tailor AI responses.",
+      "proactivityTitle": "AI Proactivity Level",
+      "proactivitySubtitle": "Control how actively the AI assists you.",
+      "reactiveMode": "Reactive Mode",
+      "reactiveModeHint": "AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.",
+      "balancedMode": "Balanced Mode",
+      "balancedModeHint": "AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.",
+      "proactiveMode": "Proactive Mode",
+      "proactiveModeHint": "AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.",
+      "orgLimitTitle": "Organization Limit",
+      "orgLimitBody": "Your organization has set the maximum proactivity level to <0>{{level}}</0>. Contact your administrator if you need a higher level.",
+      "privacySubtitle": "Manage how your data is handled and retained.",
+      "piiRedactionHint": "Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.",
+      "webSearchHint": "Enables the model to search the web for real-time information. May increase latency."
     },
     "aiUsage": {
       "title": "AI Usage Overview",
@@ -17634,7 +17675,10 @@
       "connectProvider": "Connect {{name}}",
       "notConfigured": "This integration is not available yet — it has not been configured on the server.",
       "oauthSuccess": "Connection completed successfully",
-      "viewMappings": "View Mappings"
+      "viewMappings": "View Mappings",
+      "subtitle": "Connect external tools to streamline your workflow.",
+      "orgRequiredBody": "Integrations are configured at the organization level. Please create or join an organization first in the Organization settings.",
+      "channelMappingHint": "Assign at least one project to a Slack or Teams channel. Optional mapping webhook URLs can override the default webhook per project."
     },
     "availability": {
       "title": "Availability & Focus",
@@ -17954,7 +17998,46 @@
         "organizationDesc": "Only organization members",
         "private": "Private",
         "privateDesc": "Profile hidden from others"
-      }
+      },
+      "overallProfile": "Overall Profile",
+      "overallProfileHint": "Who can view your profile page",
+      "avatar": "Profile Picture",
+      "avatarHint": "Who can see your profile photo",
+      "email": "Email Address",
+      "emailHint": "Who can see your email",
+      "phone": "Phone Number",
+      "phoneHint": "Who can see your phone number",
+      "activityStatus": "Show Activity Status",
+      "activityStatusHint": "Let others see when you're online",
+      "lastSeen": "Show Last Seen",
+      "lastSeenHint": "Display when you were last active",
+      "activityFeed": "Activity Feed",
+      "activityFeedHint": "Who can see your activity feed",
+      "directory": "Show in Directory",
+      "directoryHint": "Appear in the organization's people directory",
+      "search": "Appear in Search Results",
+      "searchHint": "Allow others to find you via search",
+      "sectionProfile": "Profile Visibility",
+      "sectionActivity": "Activity Controls",
+      "sectionDirectory": "Directory & Search",
+      "sectionSections": "Profile Sections",
+      "sectionsHint": "Choose which sections are visible on your profile",
+      "taskActivity": "Task Activity",
+      "projectActivity": "Project Activity",
+      "commentActivity": "Comment Activity",
+      "mentionsFrom": "Allow @mentions from",
+      "messagesFrom": "Allow direct messages from",
+      "noteTitle": "Privacy Note",
+      "noteBody": "Administrators may have access to your information regardless of these settings for compliance and security purposes.",
+      "sectionBio": "Bio / About Me",
+      "sectionSkills": "Skills",
+      "sectionCertifications": "Certifications",
+      "sectionEducation": "Education",
+      "sectionWorkHistory": "Work History",
+      "sectionSocialLinks": "Social Links",
+      "audienceAll": "Everyone",
+      "audienceTeam": "Team members only",
+      "audienceNone": "Nobody"
     },
     "shortcuts": {
       "title": "Keyboard Shortcuts",
@@ -18444,7 +18527,13 @@
         "create_task": "Create task"
       }
     },
-    "security": "Security",
+    "security": {
+      "questionSelectPlaceholder": "-- Select a question or create custom --",
+      "answerPlaceholder": "Your answer",
+      "pendingVerification": "Pending verification",
+      "geoAlertsTitle": "Geolocation Alerts",
+      "geoAlertsHint": "Alert on login from new locations"
+    },
     "appearance": {
       "label": "Appearance",
       "title": "Theme & Appearance",
@@ -18568,7 +18657,16 @@
       "languageChangeError": "Failed to change language",
       "languageDesc": "Select your preferred language for the interface.",
       "languageTenantHint": "Organization language defaults stay read-only here. You can still override the interface language for your own account.",
-      "languageTitle": "Language"
+      "languageTitle": "Language",
+      "layout": {
+        "subtitle": "Configure your workspace layout",
+        "startupTitle": "Startup View",
+        "startupHint": "Choose which view to show when you log in",
+        "toolbarTitle": "Toolbar Items",
+        "toolbarHint": "Choose which items appear in the header toolbar",
+        "quickAccessTitle": "Quick Access Menu",
+        "quickAccessHint": "Customize quick actions in the + menu"
+      }
     },
     "sidebar": {
       "title": "SETTINGS",
@@ -18986,7 +19084,12 @@
     "analytics": {
       "exported": "Exported",
       "status": "Status",
-      "error": "Error"
+      "error": "Error",
+      "subtitle": "Track your productivity and performance",
+      "rangeWeek": "This Week",
+      "rangeMonth": "This Month",
+      "rangeQuarter": "This Quarter",
+      "rangeYear": "This Year"
     },
     "password": {
       "error": "Error",
@@ -19056,7 +19159,12 @@
     },
     "dataControls": {
       "saved": "Saved",
-      "error": "Error"
+      "error": "Error",
+      "portabilityHint": "Transfer your data to other platforms or import data from elsewhere.",
+      "importTitle": "Import Data",
+      "importSources": "From ClickUp, Monday, Asana",
+      "important": "Important",
+      "deletionWarning": "Data deletion is permanent and cannot be reversed. Make sure to export your data before deleting if you need a backup."
     },
     "saveFailed": "Save failed",
     "responseStyle": {
@@ -19364,6 +19472,89 @@
         "5to10": "5–10 years",
         "over10": "Over 10 years"
       }
+    },
+    "brandKit": {
+      "subtitle": "Centrally manage colors, headers, footers, and confidentiality defaults applied to generated presentations.",
+      "loading": "Loading brand kit...",
+      "pageNumbersHint": "Render page numbers in the slide footer.",
+      "confidentialityHint": "Display the confidentiality classification on every slide.",
+      "disclaimerPlaceholder": "This document contains confidential information..."
+    },
+    "loginHistory": {
+      "statusSuccess": "Successful",
+      "statusFailed": "Failed",
+      "statusSuspicious": "Suspicious"
+    },
+    "orgProfile": {
+      "subtitle": "Define your organization context for AI-powered strategic insights",
+      "prioritiesPlaceholder": "e.g., Digital transformation, Customer experience, Cost optimization"
+    },
+    "organization": {
+      "loading": "Loading organization details...",
+      "emptyTitle": "No Organization Found",
+      "emptyBody": "You are not currently a member of any organization. Create one to get started with team collaboration and token sharing.",
+      "subtitle": "Manage members, billing, and tokens.",
+      "trialUpgradeHint": "Upgrade to a paid plan to unlock full features and remove limits.",
+      "tokenLogReason": "Reason",
+      "tokenLogWhen": "When",
+      "inviteIdNote": "* Note: For this release, please use User ID if Email lookup is not configured."
+    },
+    "professionalProfile": {
+      "companyName": "Company Name"
+    },
+    "profileCompleteness": {
+      "congratulations": "Congratulations!",
+      "completeBody": "Your profile is complete. You're getting the most out of Consultify.",
+      "incompleteBody": "Complete your profile to unlock all features and get personalized recommendations."
+    },
+    "history": {
+      "subtitle": "View and restore previous settings changes",
+      "range7d": "Last 7 days",
+      "range30d": "Last 30 days",
+      "range90d": "Last 90 days",
+      "rangeAll": "All time"
+    },
+    "search": {
+      "title": "Settings Search",
+      "subtitle": "Quickly find any setting",
+      "placeholder": "Search settings... (Cmd+K)",
+      "favoritesEmpty": "Star settings to add them here",
+      "recentEmpty": "Your recent searches will appear here",
+      "keyboardHint": "Press <0>⌘K</0> anywhere to search settings"
+    },
+    "aiBehavior": {
+      "tasksTitle": "AI in Tasks",
+      "tasksDescription": "AI help with task management",
+      "learnTitle": "Learn from My Work",
+      "learnDescription": "AI adapts to your style over time",
+      "personalityHint": "Choose how AI communicates with you",
+      "contextHint": "What information AI can use for better responses",
+      "historyTitle": "Historical Data",
+      "historyDescription": "Learn from your past work"
+    },
+    "aiModels": {
+      "perUseCaseTitle": "Model per Use Case",
+      "perUseCaseHint": "Select different models for specific tasks"
+    },
+    "quickActions": {
+      "subtitle": "Configure command palette and quick actions",
+      "paletteTitle": "Command Palette",
+      "paletteHint": "Quick access with Cmd+K"
+    },
+    "notificationRules": {
+      "whenType": "When notification type is:",
+      "empty": "No custom rules configured",
+      "addFirst": "Add your first rule",
+      "digestHint": "Group notifications together and receive them as a summary"
+    },
+    "webauthn": {
+      "unsupportedTitle": "Passkeys Not Supported",
+      "unsupportedBody": "Your browser or device doesn't support passkeys (WebAuthn). Please use a modern browser like Chrome, Safari, Firefox, or Edge.",
+      "renamePlaceholder": "Enter new name",
+      "tipRemoveUnused": "Remove passkeys from devices you no longer use"
+    },
+    "integrationsMarketplace": {
+      "deprecated": "This view has been replaced by Connected Apps in Settings."
     }
   },
   "showcase": {

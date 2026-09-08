@@ -363,7 +363,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   <div className="px-4 pb-4 space-y-4 border-t border-c-border-subtle dark:border-navy-700 pt-4">
                     <div>
                       <label className="block text-sm font-medium text-c-text-secondary mb-2">
-                        When notification type is:
+                        {t('settings.notificationRules.whenType', 'When notification type is:')}
                       </label>
                       <select
                         value={rule.conditions[0]?.value || ''}
@@ -409,9 +409,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             {rules.length === 0 && (
               <div className="text-center py-8 text-c-text-muted">
                 <Bell size={32} className="mx-auto mb-2 opacity-30" />
-                <p>No custom rules configured</p>
+                <p>{t('settings.notificationRules.empty', 'No custom rules configured')}</p>
                 <button onClick={addRule} className="mt-2 text-amber-600 hover:underline text-sm">
-                  Add your first rule
+                  {t('settings.notificationRules.addFirst', 'Add your first rule')}
                 </button>
               </div>
             )}
@@ -752,7 +752,10 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           {digestSettings.enabled && (
             <div className="space-y-4">
               <p className="text-sm text-c-text-muted">
-                Group notifications together and receive them as a summary
+                {t(
+                  'settings.notificationRules.digestHint',
+                  'Group notifications together and receive them as a summary'
+                )}
               </p>
 
               <div className="grid grid-cols-2 gap-4">

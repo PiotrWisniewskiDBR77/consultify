@@ -339,8 +339,12 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Use Cases Tab */}
       {activeTab === 'usecases' && (
         <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-c-text">Model per Use Case</h3>
-          <p className="text-sm text-c-text-muted">Select different models for specific tasks</p>
+          <h3 className="text-lg font-semibold text-c-text">
+            {t('settings.aiModels.perUseCaseTitle', 'Model per Use Case')}
+          </h3>
+          <p className="text-sm text-c-text-muted">
+            {t('settings.aiModels.perUseCaseHint', 'Select different models for specific tasks')}
+          </p>
 
           {useCases.map((useCase) => {
             const Icon = useCase.icon;

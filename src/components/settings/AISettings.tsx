@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { useRealtimeCosts } from '../../hooks/useRealtimeCosts';
@@ -548,8 +548,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         {activeTab === 'org' && (
           <div className="animate-in fade-in duration-300">
             <SectionHeader
-              title="Default Performance Tier"
-              subtitle="Select your preferred balance of speed, capability, and cost."
+              title={t('settings.ai.tierTitle', 'Default Performance Tier')}
+              subtitle={t(
+                'settings.ai.tierSubtitle',
+                'Select your preferred balance of speed, capability, and cost.'
+              )}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -631,8 +634,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             <div className="mt-12">
               <div className="flex items-center justify-between mb-4">
                 <SectionHeader
-                  title="Your AI Usage"
-                  subtitle="Track your personal AI costs and usage this month."
+                  title={t('settings.ai.usageTitle', 'Your AI Usage')}
+                  subtitle={t(
+                    'settings.ai.usageSubtitle',
+                    'Track your personal AI costs and usage this month.'
+                  )}
                 />
                 <div className="flex items-center gap-2">
                   {costsConnected && (
@@ -666,7 +672,9 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <p className="text-3xl font-bold text-c-text">
                     ${costSummary.totalCostThisMonth.toFixed(2)}
                   </p>
-                  <p className="text-xs text-c-text-muted mt-1">this month</p>
+                  <p className="text-xs text-c-text-muted mt-1">
+                    {t('settings.ai.thisMonth', 'this month')}
+                  </p>
                 </div>
 
                 <div className="bg-c-surface-raised border border-c-border-subtle rounded-xl p-4">
@@ -765,8 +773,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
           <div className="animate-in fade-in duration-300">
             <div className="flex justify-between items-end mb-6">
               <SectionHeader
-                title="Bring Your Own Keys"
-                subtitle="Connect external providers securely."
+                title={t('settings.ai.byokTitle', 'Bring Your Own Keys')}
+                subtitle={t('settings.ai.byokSubtitle', 'Connect external providers securely.')}
               />
               <button
                 onClick={() => {
@@ -785,7 +793,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
                 <h4 className="text-c-text font-medium mb-4 flex items-center gap-2">
                   <Key size={16} className="text-blue-500" />
-                  Add New API Key
+                  {t('settings.ai.addApiKey', 'Add New API Key')}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
@@ -838,7 +846,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     </div>
                     <p className="text-[10px] text-c-text-muted mt-2 flex items-center gap-1">
                       <Lock size={10} />
-                      Stored locally in your browser. Never sent to our servers.
+                      {t(
+                        'settings.ai.keyStoredLocally',
+                        'Stored locally in your browser. Never sent to our servers.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -950,7 +961,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     className="w-full bg-c-surface-raised border border-c-border-subtle rounded-lg px-4 py-3 text-c-text placeholder-c-text-muted focus:border-emerald-500/50 outline-none transition font-mono"
                   />
                   <p className="text-[10px] text-c-text-muted mt-2">
-                    Used when Chat is routed to Ollama.
+                    {t('settings.ai.ollamaModelHint', 'Used when Chat is routed to Ollama.')}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -1069,7 +1080,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             <button
                               onClick={() => activateOllama(String(p.endpoint || ''))}
                               className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-emerald-300 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/10 transition-colors"
-                              title="Use this Ollama endpoint for chat"
+                              title={t(
+                                'settings.ai.ollamaUseEndpoint',
+                                'Use this Ollama endpoint for chat'
+                              )}
                             >
                               Use
                             </button>
@@ -1103,8 +1117,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         {activeTab === 'behavior' && (
           <div className="animate-in fade-in duration-300 max-w-4xl">
             <SectionHeader
-              title="Model Behavior"
-              subtitle="Configure granular generation parameters and persona."
+              title={t('settings.ai.modelBehaviorTitle', 'Model Behavior')}
+              subtitle={t(
+                'settings.ai.modelBehaviorSubtitle',
+                'Configure granular generation parameters and persona.'
+              )}
             />
 
             {/* System Instructions */}
@@ -1120,7 +1137,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               </label>
               <textarea
                 className="w-full bg-c-surface-raised border border-c-border-subtle rounded-xl p-4 text-sm font-mono text-c-text-secondary focus:border-c-border-subtle focus:ring-0 transition-colors h-32 resize-y"
-                placeholder="e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses..."
+                placeholder={t(
+                  'settings.ai.systemInstructionsPlaceholder',
+                  'e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses...'
+                )}
                 value={preferences.systemInstructions || ''}
                 onChange={(e) =>
                   setPreferences({ ...preferences, systemInstructions: e.target.value })
@@ -1227,8 +1247,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 
             {/* Response Mode Settings - NEW */}
             <SectionHeader
-              title="Response Mode"
-              subtitle="Configure default response length and style preferences."
+              title={t('settings.ai.responseModeTitle', 'Response Mode')}
+              subtitle={t(
+                'settings.ai.responseModeSubtitle',
+                'Configure default response length and style preferences.'
+              )}
             />
 
             {/* Mode Selection Cards */}
@@ -1535,8 +1558,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             </div>
 
             <SectionHeader
-              title="Persona Definition"
-              subtitle="Define your role to tailor AI responses."
+              title={t('settings.ai.personaTitle', 'Persona Definition')}
+              subtitle={t('settings.ai.personaSubtitle', 'Define your role to tailor AI responses.')}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
@@ -1578,8 +1601,8 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         {activeTab === 'proactivity' && (
           <div className="animate-in fade-in duration-300 max-w-4xl">
             <SectionHeader
-              title="AI Proactivity Level"
-              subtitle="Control how actively the AI assists you."
+              title={t('settings.ai.proactivityTitle', 'AI Proactivity Level')}
+              subtitle={t('settings.ai.proactivitySubtitle', 'Control how actively the AI assists you.')}
             />
 
             {/* Proactivity Selector */}
@@ -1603,11 +1626,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Pause size={18} className="text-c-text-secondary" />
-                  <h4 className="font-semibold text-c-text text-sm">Reactive Mode</h4>
+                  <h4 className="font-semibold text-c-text text-sm">
+                    {t('settings.ai.reactiveMode', 'Reactive Mode')}
+                  </h4>
                 </div>
                 <p className="text-xs text-c-text-secondary leading-relaxed">
-                  AI remains silent until you explicitly ask. Perfect for experienced users who
-                  prefer full control and only want help when requested.
+                  {t(
+                    'settings.ai.reactiveModeHint',
+                    'AI remains silent until you explicitly ask. Perfect for experienced users who prefer full control and only want help when requested.'
+                  )}
                 </p>
                 <div className="mt-3 pt-3 border-t border-c-border-subtle space-y-1">
                   <div className="flex items-center gap-2 text-xs text-c-text-muted">
@@ -1631,11 +1658,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Scale size={18} className="text-c-accent" />
-                  <h4 className="font-semibold text-c-text text-sm">Balanced Mode</h4>
+                  <h4 className="font-semibold text-c-text text-sm">
+                    {t('settings.ai.balancedMode', 'Balanced Mode')}
+                  </h4>
                 </div>
                 <p className="text-xs text-c-text-secondary leading-relaxed">
-                  AI provides helpful suggestions when relevant, but waits for you to drive major
-                  interactions. Recommended for most users.
+                  {t(
+                    'settings.ai.balancedModeHint',
+                    'AI provides helpful suggestions when relevant, but waits for you to drive major interactions. Recommended for most users.'
+                  )}
                 </p>
                 <div className="mt-3 pt-3 border-t border-c-border-subtle space-y-1">
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
@@ -1659,11 +1690,15 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Zap size={18} className="text-emerald-400" />
-                  <h4 className="font-semibold text-c-text text-sm">Proactive Mode</h4>
+                  <h4 className="font-semibold text-c-text text-sm">
+                    {t('settings.ai.proactiveMode', 'Proactive Mode')}
+                  </h4>
                 </div>
                 <p className="text-xs text-c-text-secondary leading-relaxed">
-                  AI actively monitors your work and proactively offers assistance, even starting
-                  conversations about potential issues.
+                  {t(
+                    'settings.ai.proactiveModeHint',
+                    'AI actively monitors your work and proactively offers assistance, even starting conversations about potential issues.'
+                  )}
                 </p>
                 <div className="mt-3 pt-3 border-t border-c-border-subtle space-y-1">
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
@@ -1684,11 +1719,16 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
                 <AlertCircle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-amber-400 text-sm">Organization Limit</h4>
+                  <h4 className="font-medium text-amber-400 text-sm">
+                    {t('settings.ai.orgLimitTitle', 'Organization Limit')}
+                  </h4>
                   <p className="text-xs text-amber-400/80 mt-1">
-                    Your organization has set the maximum proactivity level to{' '}
-                    <strong>{maxProactivity}</strong>. Contact your administrator if you need a
-                    higher level.
+                    <Trans
+                      i18nKey="settings.ai.orgLimitBody"
+                      defaults="Your organization has set the maximum proactivity level to <0>{{level}}</0>. Contact your administrator if you need a higher level."
+                      values={{ level: maxProactivity }}
+                      components={[<strong key="poziom" />]}
+                    />
                   </p>
                 </div>
               </div>
@@ -1700,8 +1740,11 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
         {activeTab === 'privacy' && (
           <div className="animate-in fade-in duration-300 max-w-4xl">
             <SectionHeader
-              title="Data Privacy & Governance"
-              subtitle="Manage how your data is handled and retained."
+              title={t('settings.ai.privacyTitle', 'Data Privacy & Governance')}
+              subtitle={t(
+                'settings.ai.privacySubtitle',
+                'Manage how your data is handled and retained.'
+              )}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -1728,8 +1771,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   />
                 </div>
                 <p className="text-xs text-c-text-secondary leading-relaxed border-t border-c-border-subtle pt-4">
-                  Automatically detects and redacts emails, phone numbers, and credit card patterns
-                  before sending to the model.
+                  {t(
+                    'settings.ai.piiRedactionHint',
+                    'Automatically detects and redacts emails, phone numbers, and credit card patterns before sending to the model.'
+                  )}
                 </p>
               </div>
 
@@ -1753,8 +1798,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   />
                 </div>
                 <p className="text-xs text-c-text-secondary leading-relaxed border-t border-c-border-subtle pt-4">
-                  Enables the model to search the web for real-time information. May increase
-                  latency.
+                  {t(
+                    'settings.ai.webSearchHint',
+                    'Enables the model to search the web for real-time information. May increase latency.'
+                  )}
                 </p>
               </div>
             </div>

@@ -521,7 +521,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-c-text">Integrations</h2>
-          <p className="text-c-text-muted">Connect external tools to streamline your workflow.</p>
+          <p className="text-c-text-muted">
+            {t(
+              'settings.integrations.subtitle',
+              'Connect external tools to streamline your workflow.'
+            )}
+          </p>
         </div>
         <EasySyncSetupShellPanel compact />
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-8 text-center">
@@ -530,8 +535,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             Organization Required
           </h3>
           <p className="text-amber-700 dark:text-amber-500/80 text-sm max-w-md mx-auto">
-            Integrations are configured at the organization level. Please create or join an
-            organization first in the Organization settings.
+            {t(
+              'settings.integrations.orgRequiredBody',
+              'Integrations are configured at the organization level. Please create or join an organization first in the Organization settings.'
+            )}
           </p>
         </div>
       </div>
@@ -1230,8 +1237,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   <div>
                     <div className="text-sm font-medium text-c-text">Project channel mappings</div>
                     <div className="text-xs text-c-text-muted mt-1">
-                      Assign at least one project to a Slack or Teams channel. Optional mapping
-                      webhook URLs can override the default webhook per project.
+                      {t(
+                        'settings.integrations.channelMappingHint',
+                        'Assign at least one project to a Slack or Teams channel. Optional mapping webhook URLs can override the default webhook per project.'
+                      )}
                     </div>
                   </div>
 

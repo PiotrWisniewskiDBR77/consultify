@@ -597,7 +597,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 }
                 className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
-                <option value={0}>-- Select a question or create custom --</option>
+                <option value={0}>
+                  {t(
+                    'settings.security.questionSelectPlaceholder',
+                    '-- Select a question or create custom --'
+                  )}
+                </option>
                 {predefinedQuestions.map((q) => (
                   <option key={q.id} value={q.id}>
                     {q.question_text}
@@ -619,7 +624,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 type="text"
                 value={newQuestion.answer}
                 onChange={(e) => setNewQuestion({ ...newQuestion, answer: e.target.value })}
-                placeholder="Your answer"
+                placeholder={t('settings.security.answerPlaceholder', 'Your answer')}
                 className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               />
               <div className="flex gap-2">
@@ -767,7 +772,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         </>
                       ) : (
                         <>
-                          <AlertCircle size={12} className="text-amber-500" /> Pending verification
+                          <AlertCircle size={12} className="text-amber-500" />{' '}
+                          {t('settings.security.pendingVerification', 'Pending verification')}
                         </>
                       )}
                     </p>
@@ -954,8 +960,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-c-text">Geolocation Alerts</label>
-                <p className="text-sm text-c-text-muted">Alert on login from new locations</p>
+                <label className="font-medium text-c-text">
+                  {t('settings.security.geoAlertsTitle', 'Geolocation Alerts')}
+                </label>
+                <p className="text-sm text-c-text-muted">
+                  {t('settings.security.geoAlertsHint', 'Alert on login from new locations')}
+                </p>
               </div>
               <button
                 onClick={() =>

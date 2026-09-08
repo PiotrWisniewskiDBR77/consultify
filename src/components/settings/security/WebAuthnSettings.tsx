@@ -248,10 +248,14 @@ const WebAuthnSettings: React.FC = () => {
         <div className="flex items-start gap-3">
           <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
           <div>
-            <h4 className="font-medium text-amber-300">Passkeys Not Supported</h4>
+            <h4 className="font-medium text-amber-300">
+              {t('settings.webauthn.unsupportedTitle', 'Passkeys Not Supported')}
+            </h4>
             <p className="text-sm text-amber-200/70 mt-1">
-              Your browser or device doesn't support passkeys (WebAuthn). Please use a modern
-              browser like Chrome, Safari, Firefox, or Edge.
+              {t(
+                'settings.webauthn.unsupportedBody',
+                "Your browser or device doesn't support passkeys (WebAuthn). Please use a modern browser like Chrome, Safari, Firefox, or Edge."
+              )}
             </p>
           </div>
         </div>
@@ -335,7 +339,7 @@ const WebAuthnSettings: React.FC = () => {
                           type="text"
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
-                          placeholder="Enter new name"
+                          placeholder={t('settings.webauthn.renamePlaceholder', 'Enter new name')}
                           className="px-2 py-1 bg-c-surface border border-c-border-strong rounded text-white text-sm"
                           autoFocus
                         />
@@ -414,7 +418,7 @@ const WebAuthnSettings: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
-            Remove passkeys from devices you no longer use
+            {t('settings.webauthn.tipRemoveUnused', 'Remove passkeys from devices you no longer use')}
           </li>
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
