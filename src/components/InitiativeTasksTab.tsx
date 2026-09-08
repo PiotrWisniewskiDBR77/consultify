@@ -2,6 +2,7 @@ import { ArrowRight, CheckCircle, CheckSquare, Clock, Plus, Square, XCircle } fr
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../utils/listDateFormat';
 
 import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -352,7 +353,7 @@ alert(t('initiatives.tasksTab.aiGenerationFailed', 'AI Generation failed'));
                   </span>
                   {task.dueDate && (
                     <span className="flex items-center gap-1">
-                      <Clock size={12} /> {new Date(task.dueDate).toLocaleDateString()}
+                      <Clock size={12} /> {formatListDate(task.dueDate)}
                     </span>
                   )}
                   <span

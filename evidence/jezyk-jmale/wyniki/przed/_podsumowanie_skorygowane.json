@@ -1,0 +1,38 @@
+{
+ "en": 0,
+ "pl": 0,
+ "enOryginal": 10,
+ "plOryginal": 0,
+ "ekrany": {
+  "01-wyniki-kpi-en": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 4,
+   "liniiPrzeniesionychDoDanych": 3
+  },
+  "01-wyniki-kpi-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "02-wyniki-roi-en": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 1,
+   "liniiPrzeniesionychDoDanych": 1
+  },
+  "02-wyniki-roi-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  },
+  "03-wyniki-okr-en": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 5,
+   "liniiPrzeniesionychDoDanych": 3
+  },
+  "03-wyniki-okr-pl": {
+   "obceSkorygowane": 0,
+   "obceOryginal": 0,
+   "liniiPrzeniesionychDoDanych": 0
+  }
+ }
+}

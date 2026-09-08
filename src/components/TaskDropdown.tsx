@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../utils/listDateFormat';
 
 import { Api } from '@/services/api';
 
@@ -133,7 +134,7 @@ export const TaskDropdown = () => {
       return t('taskDropdown.dOverdue', '{{count}}d overdue', { count: Math.abs(diffDays) });
     if (diffDays === 0) return t('taskDropdown.today', 'Today');
     if (diffDays === 1) return t('taskDropdown.tomorrow', 'Tomorrow');
-    return d.toLocaleDateString();
+    return formatListDate(d.toISOString());
   };
 
   return (

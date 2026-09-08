@@ -1,0 +1,457 @@
+{
+ "ekran": "01-inicjatywy",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3218/initiatives",
+ "obcychSlowUI": 56,
+ "obcychLiniiUI": 25,
+ "ui": [
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "Dane partii są rozproszone pomiędzy systemami i arkuszami.",
+   "trafienia": [
+    "są",
+    "pomiędzy"
+   ]
+  },
+  {
+   "linia": "Identyfikacja źródła niezgodności w czasie krótszym niż 10 minut.",
+   "trafienia": [
+    "źródła",
+    "niezgodności",
+    "krótszym",
+    "niż"
+   ]
+  },
+  {
+   "linia": "Akademia liderów transformacji",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "Zespoły wdrożeniowe nie mają wspólnego standardu prowadzenia zmian.",
+   "trafienia": [
+    "Zespoły",
+    "wdrożeniowe",
+    "nie",
+    "mają",
+    "wspólnego"
+   ]
+  },
+  {
+   "linia": "Przygotowanie 24 liderów do samodzielnego prowadzenia inicjatyw.",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "Osiągnięcie dokładności prognozy 85% i wspólnego planu miesięcznego.",
+   "trafienia": [
+    "Osiągnięcie",
+    "dokładności",
+    "wspólnego",
+    "miesięcznego"
+   ]
+  },
+  {
+   "linia": "Zmiany planu są przekazywane ręcznie i powodują przestoje.",
+   "trafienia": [
+    "są",
+    "ręcznie",
+    "powodują"
+   ]
+  },
+  {
+   "linia": "Wzrost terminowości realizacji zleceń do 94%.",
+   "trafienia": [
+    "terminowości",
+    "zleceń"
+   ]
+  },
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Mikroprzestoje i brak standardu reakcji obniżają OEE.",
+   "trafienia": [
+    "brak",
+    "obniżają"
+   ]
+  },
+  {
+   "linia": "Awarie krytycznych maszyn są diagnozowane dopiero po zatrzymaniu.",
+   "trafienia": [
+    "są"
+   ]
+  },
+  {
+   "linia": "Redukcja nieplanowanych przestojów o 25%.",
+   "trafienia": [
+    "przestojów"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Nadmierny zapas wiąże kapitał, a braki zatrzymują produkcję.",
+   "trafienia": [
+    "wiąże",
+    "kapitał",
+    "zatrzymują",
+    "produkcję"
+   ]
+  },
+  {
+   "linia": "Redukcja zapasu o 18% bez pogorszenia dostępności.",
+   "trafienia": [
+    "dostępności"
+   ]
+  },
+  {
+   "linia": "Redukcja zużycia energii w zakładzie",
+   "trafienia": [
+    "zużycia",
+    "zakładzie"
+   ]
+  },
+  {
+   "linia": "Wysokie koszty energii i brak bieżącej widoczności strat.",
+   "trafienia": [
+    "brak",
+    "bieżącej",
+    "widoczności"
+   ]
+  },
+  {
+   "linia": "Obniżenie zużycia energii o 12% w ciągu 9 miesięcy.",
+   "trafienia": [
+    "Obniżenie",
+    "zużycia",
+    "ciągu",
+    "miesięcy"
+   ]
+  },
+  {
+   "linia": "Automatyzacja kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Kontrola manualna ogranicza przepustowość i wykrywa wady z opóźnieniem.",
+   "trafienia": [
+    "przepustowość",
+    "opóźnieniem"
+   ]
+  },
+  {
+   "linia": "Skrócenie czasu kontroli o 40% i redukcja reklamacji o 20%.",
+   "trafienia": [
+    "Skrócenie"
+   ]
+  },
+  {
+   "linia": "Realizacja korzyści pozostaje poniżej celu i wymaga skoordynowanego planu naprawczego.",
+   "trafienia": [
+    "korzyści",
+    "poniżej"
+   ]
+  },
+  {
+   "linia": "Osiągnąć i utrzymać 90% zweryfikowanej realizacji korzyści.",
+   "trafienia": [
+    "Osiągnąć",
+    "utrzymać",
+    "korzyści"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Audyt Lokalny",
+   "trafienia": [
+    "Audyt"
+   ]
+  },
+  {
+   "linia": "Wdrożenie RPA",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przeprojektowanie uprawnień decyzyjnych dla wyjątków",
+   "trafienia": [
+    "uprawnień",
+    "dla",
+    "wyjątków"
+   ]
+  },
+  {
+   "linia": "Przebudowa praw decyzyjnych dla wyjątków operacyjnych: kto decyduje, kiedy eskalujemy i jaki jest audyt decyzji.",
+   "trafienia": [
+    "dla",
+    "wyjątków",
+    "jest",
+    "audyt"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „Automatyzacja magazynu WIP\".",
+   "trafienia": [
+    "powiązana",
+    "analizą"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „Robotyzacja gniazda spawalniczego\".",
+   "trafienia": [
+    "powiązana",
+    "analizą"
+   ]
+  },
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „System wizyjny kontroli jakości\".",
+   "trafienia": [
+    "powiązana",
+    "analizą",
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa (kopia)",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wdrożenie sieci czujników IoT",
+   "trafienia": [
+    "Wdrożenie",
+    "czujników"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Platforma analityki danych",
+   "trafienia": [
+    "danych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Automatyzacja procesów",
+   "trafienia": [
+    "procesów"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Poprawa realizacji korzyści programu",
+   "trafienia": [
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Mamy 10 pomysłów na AI i budżet na 3. Zestawiamy je w jednej tabeli: koszt, oszczędność, czas wdrożenia, ryzyko i właściciel — żeby wybór był rozmową o liczbach, nie o sympatiach.",
+   "trafienia": [
+    "pomysłów",
+    "budżet",
+    "oszczędność",
+    "wdrożenia",
+    "ryzyko",
+    "właściciel",
+    "żeby",
+    "wybór",
+    "był",
+    "rozmową",
+    "nie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  }
+ ]
+}

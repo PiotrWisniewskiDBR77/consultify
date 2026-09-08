@@ -1,22 +1,22 @@
 {
   "_meta": {
-    "data": "2026-09-08T12:24:41.838Z",
-    "root": "/private/tmp/wt-j7b",
-    "sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95"
+    "data": "2026-09-08T21:35:55.283Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/jmale",
+    "sha": "a02d26f2f701fee0879a0299fd011c6440b835b6"
   },
   "suma": {
     "K1": 2,
-    "K1def": 1218,
-    "K1defWID": 236,
-    "K2": 12,
-    "K3a": 1818,
+    "K1def": 1122,
+    "K1defWID": 202,
+    "K2": 5,
+    "K3a": 1807,
     "K3aKLUCZ": 429,
     "K3b": 7,
-    "K4pl": 969,
-    "K4en": 1283,
+    "K4pl": 891,
+    "K4en": 1233,
     "K5pl": 258,
     "K5en": 1822,
-    "K7": 849
+    "K7": 792
   },
   "moduly": {
     "01 Chat": {
@@ -27,8 +27,8 @@
       "K3a": 20,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 68,
-      "K4en": 34,
+      "K4pl": 67,
+      "K4en": 33,
       "K5pl": 0,
       "K5en": 27,
       "K7": 27
@@ -37,12 +37,12 @@
       "K1": 0,
       "K1def": 182,
       "K1defWID": 23,
-      "K2": 3,
+      "K2": 1,
       "K3a": 3,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 78,
-      "K4en": 71,
+      "K4pl": 77,
+      "K4en": 67,
       "K5pl": 1,
       "K5en": 61,
       "K7": 75
@@ -51,15 +51,15 @@
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 2,
+      "K2": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 3,
-      "K4en": 2,
+      "K4pl": 0,
+      "K4en": 0,
       "K5pl": 0,
       "K5en": 51,
-      "K7": 9
+      "K7": 0
     },
     "04 Tools": {
       "K1": 0,
@@ -69,11 +69,11 @@
       "K3a": 61,
       "K3aKLUCZ": 9,
       "K3b": 0,
-      "K4pl": 83,
-      "K4en": 36,
+      "K4pl": 81,
+      "K4en": 35,
       "K5pl": 49,
       "K5en": 112,
-      "K7": 9
+      "K7": 7
     },
     "05 Assessment": {
       "K1": 0,
@@ -84,7 +84,7 @@
       "K3aKLUCZ": 12,
       "K3b": 0,
       "K4pl": 188,
-      "K4en": 43,
+      "K4en": 41,
       "K5pl": 97,
       "K5en": 76,
       "K7": 30
@@ -97,53 +97,53 @@
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 1,
+      "K4pl": 0,
       "K4en": 0,
       "K5pl": 2,
       "K5en": 97,
-      "K7": 19
+      "K7": 0
     },
     "07 Execution": {
       "K1": 0,
       "K1def": 0,
       "K1defWID": 0,
-      "K2": 1,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 5,
-      "K5pl": 0,
-      "K5en": 63,
-      "K7": 1
-    },
-    "08 Results": {
-      "K1": 0,
-      "K1def": 45,
-      "K1defWID": 7,
       "K2": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 3,
-      "K4en": 8,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 0,
+      "K5en": 63,
+      "K7": 0
+    },
+    "08 Results": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
       "K5pl": 0,
       "K5en": 45,
-      "K7": 10
+      "K7": 0
     },
     "09 Finance": {
       "K1": 0,
       "K1def": 176,
       "K1defWID": 5,
-      "K2": 2,
-      "K3a": 520,
+      "K2": 0,
+      "K3a": 509,
       "K3aKLUCZ": 54,
       "K3b": 0,
-      "K4pl": 183,
-      "K4en": 22,
+      "K4pl": 181,
+      "K4en": 20,
       "K5pl": 6,
       "K5en": 158,
-      "K7": 49
+      "K7": 48
     },
     "10 Materials": {
       "K1": 0,
@@ -154,10 +154,10 @@
       "K3aKLUCZ": 215,
       "K3b": 4,
       "K4pl": 165,
-      "K4en": 89,
+      "K4en": 88,
       "K5pl": 19,
       "K5en": 223,
-      "K7": 67
+      "K7": 65
     },
     "11 Audits": {
       "K1": 0,
@@ -167,21 +167,21 @@
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 4,
-      "K4en": 5,
+      "K4pl": 0,
+      "K4en": 0,
       "K5pl": 14,
       "K5en": 12,
-      "K7": 3
+      "K7": 0
     },
     "12 Meeting": {
       "K1": 0,
-      "K1def": 22,
+      "K1def": 0,
       "K1defWID": 0,
       "K2": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 4,
+      "K4pl": 0,
       "K4en": 0,
       "K5pl": 0,
       "K5en": 12,
@@ -189,17 +189,17 @@
     },
     "13 Organization": {
       "K1": 0,
-      "K1def": 29,
-      "K1defWID": 27,
+      "K1def": 0,
+      "K1defWID": 0,
       "K2": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 53,
-      "K4en": 7,
+      "K4pl": 0,
+      "K4en": 0,
       "K5pl": 1,
       "K5en": 64,
-      "K7": 6
+      "K7": 0
     },
     "14 Admin Panel": {
       "K1": 0,
@@ -209,8 +209,8 @@
       "K3a": 3,
       "K3aKLUCZ": 1,
       "K3b": 0,
-      "K4pl": 10,
-      "K4en": 571,
+      "K4pl": 9,
+      "K4en": 560,
       "K5pl": 13,
       "K5en": 73,
       "K7": 288
@@ -224,7 +224,7 @@
       "K3aKLUCZ": 16,
       "K3b": 0,
       "K4pl": 30,
-      "K4en": 136,
+      "K4en": 135,
       "K5pl": 32,
       "K5en": 196,
       "K7": 81
@@ -251,11 +251,11 @@
       "K3a": 284,
       "K3aKLUCZ": 103,
       "K3b": 3,
-      "K4pl": 72,
+      "K4pl": 69,
       "K4en": 233,
       "K5pl": 21,
       "K5en": 523,
-      "K7": 141
+      "K7": 137
     }
   },
   "przyklady": {
@@ -585,52 +585,10 @@
         "dowod": "en:pending"
       },
       {
-        "modul": "03 Interview",
-        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.newDraftFromPublished",
-        "tekst": "Nowy draft z publikacji",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "03 Interview",
-        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.newDraftFromVersion",
-        "tekst": "Utworzono nowy draft z opublikowanej wersji v{{version}}.",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "public/locales/pl/translation.json:execution.whatIf.title",
-        "tekst": "What-if — symulacja interwencji",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "09 Finance",
-        "gdzie": "public/locales/pl/translation.json:finance.driverPlanner.title",
-        "tekst": "Planowanie driver-based + what-if",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "09 Finance",
-        "gdzie": "public/locales/pl/translation.json:pricing.budget.payg.title",
-        "tekst": "Automatyczny fallback pay-as-you-go",
-        "dowod": "en:you"
-      },
-      {
         "modul": "10 Materials",
         "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
         "tekst": "MUST: {{must}} · SHOULD: {{should}}",
         "dowod": "en:should"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "public/locales/pl/translation.json:myWorkMindmap.aiAction.whatIfAnalysis",
-        "tekst": "What-if analiza",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "public/locales/pl/translation.json:myWorkMindmap.governance.generator.whatIf",
-        "tekst": "Scenariusze what-if",
-        "dowod": "en:what"
       },
       {
         "modul": "ZZ wspólne",
@@ -1244,12 +1202,6 @@
       },
       {
         "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ChatHistorySidebar.tsx:1163",
-        "tekst": ")\n            ) : searchQuery ? (\n              /* Search mode: show flat grouped results (server-side when available) *",
-        "dowod": "en:when"
-      },
-      {
-        "modul": "01 Chat",
         "gdzie": "src/components/AIChat/MessageRenderer.tsx:986",
         "tekst": "My understanding of your task",
         "dowod": "en:your"
@@ -1301,6 +1253,12 @@
         "gdzie": "src/components/AIChat/ResearchSessionsDock.tsx:276",
         "tekst": "Reproducible Deep Research with lifecycle, evidence graph, citations and final report\n            artifacts.",
         "dowod": "en:with,en:and"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/ResearchSessionsDock.tsx:298",
+        "tekst": "Plan research first, then approve and run it as a governed background job.",
+        "dowod": "en:and"
       }
     ],
     "K5pl": [
@@ -1761,7 +1719,7 @@
     ]
   },
   "plikiTop": {
-    "public/locales/pl/translation.json": 441,
+    "public/locales/pl/translation.json": 434,
     "src/views/partner/PartnerPortalView.tsx": 95,
     "server/src/routes/document-studio.routes.ts": 86,
     "server/src/routes/work-canvas.routes.ts": 61,
@@ -1769,7 +1727,6 @@
     "src/views/legal/TermsOfServiceView.tsx": 56,
     "src/components/MyWork/panel/IdeaElementInspector.tsx": 53,
     "src/components/assessment/report/AssessmentReportDocument.tsx": 53,
-    "src/components/Organization/redesign/OrganizationReadinessScreen.tsx": 52,
     "server/src/routes/table-platform.routes.ts": 51,
     "src/components/billing/SubscriptionAnalytics.tsx": 50,
     "server/src/routes/knowledge.routes.ts": 48,
@@ -1790,6 +1747,7 @@
     "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
     "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
     "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31
+    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31,
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31
   }
 }

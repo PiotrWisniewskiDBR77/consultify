@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '../../../utils/listDateFormat';
 
 import { CardBlockRenderer } from '../cards/CardBlockRenderer';
 import { buildBusinessCaseCardSpec } from '../cards/cardSpecBuilders';
@@ -33,10 +34,10 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
   const businessCaseCardSpec = buildBusinessCaseCardSpec(
     {
       ...(initiative.revenueImpact
-        ? { expectedReturn: `+$${initiative.revenueImpact.toLocaleString()}` }
+        ? { expectedReturn: `+$${formatListNumber(initiative.revenueImpact)}` }
         : {}),
       ...(initiative.costSavings
-        ? { investment: `$${initiative.costSavings.toLocaleString()}` }
+        ? { investment: `$${formatListNumber(initiative.costSavings)}` }
         : {}),
       ...(initiative.benefitsRealized ? { payback: `${initiative.benefitsRealized}%` } : {}),
     },
@@ -91,7 +92,7 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
                 {t('initiatives.financialImpactSection.revenue')}
               </div>
               <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                {initiative.revenueImpact ? `+$${initiative.revenueImpact.toLocaleString()}` : '-'}
+                {initiative.revenueImpact ? `+$${formatListNumber(initiative.revenueImpact)}` : '-'}
               </div>
             </div>
             <div>
@@ -100,7 +101,7 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
                 {t('initiatives.financialImpactSection.costSavings')}
               </div>
               <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                {initiative.costSavings ? `$${initiative.costSavings.toLocaleString()}` : '-'}
+                {initiative.costSavings ? `$${formatListNumber(initiative.costSavings)}` : '-'}
               </div>
             </div>
           </div>

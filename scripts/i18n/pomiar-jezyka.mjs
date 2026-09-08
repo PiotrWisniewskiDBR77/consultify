@@ -144,9 +144,20 @@ const plSlabe = new Set(WYJATKI.polskieSlabe);
 const enSilne = new Set(WYJATKI.angielskieSilne);
 const enSlabe = new Set(WYJATKI.angielskieSlabe);
 
+/**
+ * Frazy wielowyrazowe uznane za nazwy własne — wycinane PRZED tokenizacją, bo
+ * tokenizator dzieli po znakach niebędących literami i „what-if" rozpadłby się
+ * na „what" + „if" (oba w słowniku angielskim).
+ */
+const frazyWlasne = (WYJATKI.nazwyWlasneFrazy || []).map(
+  (f) => new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+);
+
 /** usuwa to, co nie jest ludzkim tekstem: {{count}}, <tag>, URL, kod */
 function oczysc(tekst) {
-  return String(tekst)
+  let wynik = String(tekst);
+  for (const f of frazyWlasne) wynik = wynik.replace(f, ' ');
+  return wynik
     .replace(/\{\{[^}]*\}\}/g, ' ')
     .replace(/\$\{[^}]*\}/g, ' ')
     .replace(/<[^>]*>/g, ' ')
@@ -494,6 +505,13 @@ function skanujJsx(pliki) {
       if (/^[A-Za-z]+\s*=/.test(kandydat)) continue; // fragment atrybutu
       // odsiew kodu zlapanego przez generyki TS: `useState<Foo>(null); ... useState<`
       if (/;|=>|\bconst\b|\blet\b|\breturn\b|\bfunction\b|useState|useRef|useMemo|&&|\|\||\?\?|===|!==/.test(kandydat)) continue;
+      // Fragment ternary JSX: `) : loading ? (`, `) : (`, `: null}` — regex tekstu
+      // widzi to, co stoi między `>` i `<` sąsiednich znaczników, więc łapie sam
+      // kod. Zmierzone 08.09: 4 fałszywe K4en w module 07 Realizacja
+      // (BenefitsRegisterPanel, CutoverRunbookPanel, RolloutBaselinePanel,
+      // RolloutStagesPanel — wszystkie na `) : loading ? (`) i 1 fałszywe K4pl
+      // w module 06 (InitiativeDocumentView.tsx:10336, `) : (`).
+      if (/^[)\]}]/.test(kandydat) || /\?\s*\($/.test(kandydat)) continue;
       // Rzutowanie TS złapane przez generyki: `r as unknown as Record<string, unknown>`
       // — regex tekstu JSX widzi fragment między `>` i `<` jako zdanie po angielsku.
       // Zmierzone 08.09 na ResultsKpiRegistryPage.tsx:1681 i bliźniaczym miejscu

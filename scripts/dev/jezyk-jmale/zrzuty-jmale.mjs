@@ -13,6 +13,8 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { chromium } from 'playwright';
 
+import { ZAPYTANIA_DANE } from './dane-zapytania.mjs';
+
 const FAZA = process.argv[2] === 'po' ? 'po' : 'przed';
 const TYLKO = process.argv[3] || null;
 const BASE = 'http://127.0.0.1:3218';
@@ -26,24 +28,7 @@ const sql = (q) =>
 
 // --- wiadro DANE: wartości z bazy, nie z interfejsu -----------------------
 const DANE = new Set();
-for (const q of [
-  'select name from organizations',
-  'select title from initiatives',
-  'select name from initiatives',
-  'select description from initiatives',
-  'select problem_statement from initiatives',
-  'select target_state from initiatives',
-  'select success_criteria from initiatives',
-  'select summary from initiatives',
-  'select hypothesis from initiatives',
-  'select business_value from initiatives',
-  'select title from tasks',
-  'select description from tasks',
-  'select title from decisions',
-  "select coalesce(display_name, first_name || ' ' || last_name) from users",
-  'select first_name from users',
-  'select last_name from users',
-]) {
+for (const q of ZAPYTANIA_DANE) {
   try {
     for (const v of sql(q).split('\n')) {
       const s = v.trim();
@@ -53,44 +38,6 @@ for (const q of [
 }
 // Nazwy własne obiektów modułów — bez nich tytuły z bazy (nazwa karty wyników,
 // zestawu OKR, analizy ROI) liczyłyby się jako polski INTERFEJS na ekranie EN.
-for (const q of [
-  'select title from meetings',
-  'select name from meetings',
-  'select name from audit_programs',
-  'select title from audit_programs',
-  'select title from interviews',
-  'select name from interview_sessions',
-  'select name from kpi_definitions',
-  'select name from kpi_scorecards',
-  'select name from rvn_kpi_scorecards',
-  'select name from rvn_kpi_definitions',
-  'select name from rvn_kpi_scorecard_items',
-  'select name from rvn_roi_cases',
-  'select title from rvn_roi_cases',
-  'select name from kpi_scorecard_items',
-  'select name from kpis',
-  'select title from kpis',
-  'select name from okr_vnext_sets',
-  'select title from okr_vnext_sets',
-  'select title from okr_vnext_objectives',
-  'select name from okr_vnext_objectives',
-  'select title from okr_vnext_key_results',
-  'select name from okr_vnext_key_results',
-  'select title from okr_objectives',
-  'select name from okr_objectives',
-  'select title from okr_key_results',
-  'select name from roi_cases',
-  'select title from roi_cases',
-  'select name from management_reports',
-  'select title from management_reports',
-]) {
-  try {
-    for (const v of sql(q).split('\n')) {
-      const s = v.trim();
-      if (s) DANE.add(s.toLowerCase());
-    }
-  } catch { /* opcjonalna */ }
-}
 const DANE_LISTA = [...DANE];
 function czyDane(linia) {
   const l = linia.toLowerCase().trim();

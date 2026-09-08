@@ -2,6 +2,7 @@ import { Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '../../utils/listDateFormat';
 
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -495,7 +496,7 @@ export function PortfolioAiPanel(props: {
                                 {String(b.quarter)} · {String(b.currency)}
                               </span>
                               <span className="font-medium text-slate-900 dark:text-white">
-                                {Number(b.total || 0).toLocaleString()}
+                                {formatListNumber(Number(b.total || 0))}
                               </span>
                             </div>
                           ))}

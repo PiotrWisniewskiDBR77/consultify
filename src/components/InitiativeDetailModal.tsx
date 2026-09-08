@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime, formatListNumber } from '../utils/listDateFormat';
 
 import {
   InitiativeStatus as InitiativeStatusCodes,
@@ -2175,7 +2176,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   <p className="text-c-text-muted text-sm mb-6">
                     {t('initiative.totalInvestment')}:{' '}
                     <span className="text-c-text font-mono">
-                      ${((initiative.costCapex || 0) + (initiative.costOpex || 0)).toLocaleString()}
+                      ${formatListNumber((initiative.costCapex || 0) + (initiative.costOpex || 0))}
                     </span>
                   </p>
 
@@ -2496,7 +2497,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               <div className="flex items-center gap-2 mt-1 text-xs text-c-text-muted">
                                 <span>{log.user}</span>
                                 <span>•</span>
-                                <span>{new Date(log.date).toLocaleDateString()}</span>
+                                <span>{formatListDate(log.date)}</span>
                               </div>
                             </div>
                           </div>
@@ -2813,7 +2814,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {comment.user?.firstName} {comment.user?.lastName}
                               </span>
                               <span className="text-xs text-c-text-secondary dark:text-c-text-muted">
-                                {new Date(comment.createdAt).toLocaleString()}
+                                {formatListDateTime(comment.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
@@ -2919,7 +2920,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {t('common.statusLabel')} {statusLabel} • Last
                           updated:{' '}
                           {initiative.updatedAt
-                            ? new Date(initiative.updatedAt).toLocaleString()
+                            ? formatListDateTime(initiative.updatedAt)
                             : 'Now'}
                         </p>
                       </div>
@@ -2937,7 +2938,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </p>
                           <p className="text-xs text-c-text-secondary dark:text-c-text-muted">
                             {initiative.createdAt
-                              ? new Date(initiative.createdAt).toLocaleString()
+                              ? formatListDateTime(initiative.createdAt)
                               : 'Unknown'}
                           </p>
                         </div>
@@ -2984,7 +2985,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {version.createdByUser?.firstName} {version.createdByUser?.lastName}
                               </span>
                               <span>•</span>
-                              <span>{new Date(version.createdAt).toLocaleString()}</span>
+                              <span>{formatListDateTime(version.createdAt)}</span>
                             </div>
                           </div>
                         </div>
