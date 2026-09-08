@@ -43493,8 +43493,11 @@
       "title": "Available in Wave 2",
       "body": "This definition is visible in the catalog but does not generate a snapshot yet."
     },
+    "menu2": {
+      "addReport": "Add report",
+      "addReportCustom": "Custom report…"
+    },
     "action": {
-      "newReport": "New report",
       "newContractRun": "Report contract (advanced)",
       "generate": "Generate report",
       "openReport": "Open report",
@@ -43565,9 +43568,7 @@
       },
       "runs": {
         "title": "No reports",
-        "body": "Click “New report”, pick a level and a period — the snapshot is built from real delivery data.",
-        "tilesTitle": "Generate your first report",
-        "tilesBody": "Pick one of the four starter reports — the snapshot is built from real delivery data."
+        "body": "No reports yet. Add a report to see a snapshot built from real delivery data."
       }
     },
     "narrative": {

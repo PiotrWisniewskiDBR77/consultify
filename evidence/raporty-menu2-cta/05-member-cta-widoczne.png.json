@@ -1,0 +1,22 @@
+{
+  "krok": "member",
+  "bledyKonsoli": [
+    "HTTP 403 http://127.0.0.1:3191/api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/action-queue/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/decisions/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/blockers/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/workload/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/people-change/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/v8/execution-control/manager/lanes/risk/problems",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "HTTP 403 http://127.0.0.1:3191/api/organizations/a3e05d4a-5397-419d-b486-8e44366c0063/members",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "url": "http://127.0.0.1:3191/execution?tab=reports&view=table"
+}

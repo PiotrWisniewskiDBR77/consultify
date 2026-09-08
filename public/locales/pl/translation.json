@@ -46157,8 +46157,11 @@
       "title": "Dostępne w Fali 2",
       "body": "Ta definicja jest widoczna w katalogu, ale nie generuje jeszcze migawki."
     },
+    "menu2": {
+      "addReport": "Dodaj raport",
+      "addReportCustom": "Własny raport…"
+    },
     "action": {
-      "newReport": "Nowy raport",
       "newContractRun": "Kontrakt raportu (zaawansowane)",
       "generate": "Wygeneruj raport",
       "openReport": "Otwórz raport",
@@ -46229,9 +46232,7 @@
       },
       "runs": {
         "title": "Brak raportów",
-        "body": "Kliknij „Nowy raport\", wybierz poziom i okres — migawka powstanie z realnych danych realizacji.",
-        "tilesTitle": "Wygeneruj pierwszy raport",
-        "tilesBody": "Wybierz jeden z czterech raportów startowych — migawka powstanie z realnych danych realizacji."
+        "body": "Brak raportów. Dodaj raport, żeby zobaczyć migawkę z realnych danych realizacji."
       }
     },
     "narrative": {
