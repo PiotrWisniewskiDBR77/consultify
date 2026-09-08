@@ -42,7 +42,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
         intentKey
       );
       const created = result.budget;
-      toast.success(t('finance.toast.budgetCreated', 'Budżet utworzony'));
+      toast.success(t('finance.toast.budgetCreated', 'Budget created'));
       onCreated({
         id: `budget-${created.id}`,
         title: String(created.title || title),
@@ -60,7 +60,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
       setIntentKey(crypto.randomUUID());
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
       );
     } finally {
       setCreating(false);
@@ -71,7 +71,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
     <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-          {t('finance.prediction.createTitle', 'Nowy budżet / scenariusz')}
+          {t('finance.prediction.createTitle', 'New budget / scenario')}
         </h3>
         <div>
           <label className="text-xs text-slate-500">
@@ -131,7 +131,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
             }}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           >
-            <option value="monthly">{t('finance.prediction.monthly', 'Miesięczna')}</option>
+            <option value="monthly">{t('finance.prediction.monthly', 'Monthly')}</option>
             <option value="quarterly">{t('finance.prediction.quarterly', 'Kwartalna')}</option>
             <option value="annual">{t('finance.prediction.annual', 'Roczna')}</option>
           </select>

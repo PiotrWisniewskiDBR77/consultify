@@ -2468,7 +2468,8 @@
     "verifying": "Verifying…",
     "copyLink": "Copy link",
     "publish": "Publish",
-    "loadingSlow": "This is taking longer than usual…"
+    "loadingSlow": "This is taking longer than usual…",
+    "reload": "Refresh"
   },
   "superadmin": {
     "confirm": {
@@ -24625,7 +24626,10 @@
       },
       "manualModeNotice": "No source statement — historical lines will not be pulled in. Opening balances start at zero. Use \"Ground on statement\" to seed the model from an approved statement.",
       "seededFromManualBaseline": "Manual / prepared baseline",
-      "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval."
+      "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval.",
+      "cfNone": "None",
+      "saved": "Saved",
+      "versionConflict": "Someone else changed this model since you last loaded it. Refresh to see the current version, then try again."
     },
     "tabs": {
       "models": "Models",
@@ -25635,7 +25639,10 @@
         "approved": "Approved"
       }
     },
-    "blocked": "Access to the Finance module is restricted by your organization's policy."
+    "blocked": "Access to the Finance module is restricted by your organization's policy.",
+    "link": {
+      "failed": "Could not create the link"
+    }
   },
   "portfolio": {
     "toast": {

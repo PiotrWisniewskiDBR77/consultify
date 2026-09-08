@@ -105,7 +105,7 @@ export function FinanceSavedViewsPanel({
     setRowError(null);
     try {
       await deleteFinanceSavedView(viewId);
-      setActionMessage(t('finance.savedViews.deleted', 'Widok usunięty.'));
+      setActionMessage(t('finance.savedViews.deleted', 'View deleted.'));
       load();
     } catch (err) {
       setRowError(describeFinanceV2Error(err).detail);
@@ -138,13 +138,13 @@ export function FinanceSavedViewsPanel({
   let content: React.ReactNode;
 
   if (state.kind === 'loading') {
-    announcerMessage = t('finance.savedViews.loading', 'Ładowanie zapisanych widoków…');
+    announcerMessage = t('finance.savedViews.loading', 'Loading saved views…');
     content = (
       <div
         className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
         data-testid="saved-views-panel-loading"
       >
-        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.loading', 'Ładowanie zapisanych widoków…')}</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.loading', 'Loading saved views…')}</p>
       </div>
     );
   } else if (state.kind === 'error') {
@@ -182,7 +182,7 @@ export function FinanceSavedViewsPanel({
         ) : null}
 
         <ViewGroup
-          title={t('finance.savedViews.team', 'Zespołowe')}
+          title={t('finance.savedViews.team', 'Team')}
           views={teamViews}
           onApplyView={onApplyView}
           onDelete={handleDelete}
@@ -199,7 +199,7 @@ export function FinanceSavedViewsPanel({
         />
 
         <div className="flex flex-col gap-1.5 rounded-md border border-c-border-subtle p-2">
-          <p className="text-xs font-medium text-c-text-primary">{t('finance.savedViews.saveCurrent', 'Zapisz bieżący widok')}</p>
+          <p className="text-xs font-medium text-c-text-primary">{t('finance.savedViews.saveCurrent', 'Save current view')}</p>
           <input
             className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             placeholder={t('finance.savedViews.namePlaceholder', 'Nazwa widoku…')}
@@ -212,7 +212,7 @@ export function FinanceSavedViewsPanel({
               (axe: "select-name" critical) — "Zapisz bieżący widok" wyżej jest
               nagłówkiem sekcji, nie programowo powiązaną etykietą TEGO pola. */}
             <select
-              aria-label={t('finance.savedViews.scopeAria', 'Widoczność zapisywanego widoku')}
+              aria-label={t('finance.savedViews.scopeAria', 'Visibility of the saved view')}
               className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               value={newViewScope}
               onChange={(e) => setNewViewScope(e.target.value as FinanceSavedViewScope)}
@@ -228,7 +228,7 @@ export function FinanceSavedViewsPanel({
               onClick={handleSave}
               data-testid="saved-view-save-submit"
             >
-              {t('finance.savedViews.saveButton', 'Zapisz widok')}
+              {t('finance.savedViews.saveButton', 'Save view')}
             </button>
           </div>
         </div>
@@ -266,7 +266,7 @@ function ViewGroup({
         {title} ({views.length})
       </p>
       {views.length === 0 ? (
-        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.none', 'Brak.')}</p>
+        <p className="text-xs text-c-text-secondary">{t('finance.savedViews.none', 'None.')}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {views.map((view) => (
@@ -303,7 +303,7 @@ function ViewGroup({
                   onClick={() => onDelete(view.id)}
                   data-testid="saved-view-delete"
                 >
-                  {t('finance.savedViews.delete', 'Usuń')}
+                  {t('finance.savedViews.delete', 'Delete')}
                 </button>
               </div>
             </li>

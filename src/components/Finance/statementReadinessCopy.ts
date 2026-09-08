@@ -139,13 +139,13 @@ export function statementPackStateSentence(
   if (status === 'ready') {
     return t(
       'finance.statements.state.ready',
-      'Pakiet jest kompletny: rachunek zysków i strat, bilans oraz rachunek przepływów pieniężnych.'
+      'The pack is complete: profit and loss, balance sheet and cash flow statement.'
     );
   }
   if (status === 'rejected') {
     return t(
       'finance.statements.state.rejected',
-      'Wszystkie sprawozdania w tym pakiecie zostały odrzucone — pakiet nie może zasilić dalszej pracy.'
+      'Every statement in this pack was rejected — the pack cannot seed downstream work.'
     );
   }
   if (sentences.length > 0) {
@@ -155,6 +155,6 @@ export function statementPackStateSentence(
   }
   return t(
     'finance.statements.state.collecting',
-    'Pakiet wciąż zbiera wymagane sprawozdania.'
+    'The pack is still collecting the required statements.'
   );
 }

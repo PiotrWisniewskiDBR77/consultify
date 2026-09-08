@@ -104,7 +104,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
       });
     } catch (e: any) {
       toast.error(
-        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Failed to create')
       );
     } finally {
       setCreating(false);

@@ -293,7 +293,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                   disabled={isSavingName}
                   className={`${CONTROL_BASE_CLASS} shrink-0 min-w-0 bg-c-text px-2.5 text-c-surface hover:brightness-95`}
                 >
-                  {isSavingName ? t('finance.workspaceBar.saving', 'Zapisuję…') : t('finance.workspaceBar.save', 'Zapisz')}
+                  {isSavingName ? t('finance.workspaceBar.saving', 'Saving…') : t('finance.workspaceBar.save', 'Save')}
                 </button>
                 <button
                   type="button"
@@ -301,7 +301,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                   disabled={isSavingName}
                   className={`${CONTROL_BASE_CLASS} shrink-0 min-w-0 border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised`}
                 >
-                  {t('finance.workspaceBar.cancel', 'Anuluj')}
+                  {t('finance.workspaceBar.cancel', 'Cancel')}
                 </button>
               </div>
             ) : (
@@ -311,13 +311,13 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 onClick={() => identity.name.editable && setIsEditingName(true)}
                 title={
                   identity.name.editable
-                    ? t('finance.workspaceBar.renameHint', 'Kliknij, aby zmienić nazwę')
+                    ? t('finance.workspaceBar.renameHint', 'Click to rename')
                     : identity.name.editableBlockedReason === 'STATUS_IMMUTABLE'
                       ? t(
                           'finance.workspaceBar.renameBlockedStatus',
-                          'Nazwy nie można zmienić — wersja jest zatwierdzona/zamknięta. Otwórz ponownie lub utwórz nową wersję.'
+                          "The name can't be changed — this version is approved or closed. Reopen it or create a new version."
                         )
-                      : t('finance.workspaceBar.renameBlockedRole', 'Twoja rola nie pozwala na zmianę nazwy.')
+                      : t('finance.workspaceBar.renameBlockedRole', "Your role doesn't allow renaming.")
                 }
                 className={`group flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                   identity.name.editable ? 'hover:bg-c-surface-raised' : 'cursor-default'
@@ -356,7 +356,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={contextOpen}
-                aria-label={t('finance.workspaceBar.contextDetails', 'Szczegóły kontekstu')}
+                aria-label={t('finance.workspaceBar.contextDetails', 'Context details')}
                 onClick={() => setContextOpen((v) => !v)}
                 className={`${CONTROL_BASE_CLASS} min-w-[2.75rem] text-c-text-muted hover:bg-c-surface-raised`}
               >
@@ -520,7 +520,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
               : pick(primaryMerged.action);
             const primaryTitle = primaryState.available
               ? primaryAccessibleLabel
-              : `${t('finance.workspaceBar.unavailable', 'Niedostępne')}: ${primaryState.reason}`;
+              : `${t('finance.workspaceBar.unavailable', 'Unavailable')}: ${primaryState.reason}`;
 
             if (ICON_ONLY_ACTION_IDS.has(actions.primary.id)) {
               return (
@@ -819,19 +819,19 @@ function ConfirmDestructiveDialog({
         ref={containerRef}
         role="alertdialog"
         aria-modal="true"
-        aria-label={`${t('finance.workspaceBar.confirm', 'Potwierdź')}: ${label}`}
+        aria-label={`${t('finance.workspaceBar.confirm', 'Confirm')}: ${label}`}
         onMouseDown={(e) => e.stopPropagation()}
         className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
       >
         <p className="text-sm font-semibold text-c-text">
-          {t('finance.workspaceBar.confirmDialog.title', 'Potwierdź operację')}
+          {t('finance.workspaceBar.confirmDialog.title', 'Confirm action')}
         </p>
         <p className="mt-1 text-sm text-c-text-secondary">
-          {t('finance.workspaceBar.confirmDialog.body', 'Czy na pewno chcesz wykonać:')}{' '}
+          {t('finance.workspaceBar.confirmDialog.body', 'Are you sure you want to:')}{' '}
           <span className="font-medium text-c-text">{label}</span>?{' '}
           {t(
             'finance.workspaceBar.confirmDialog.irreversible',
-            'Tej operacji nie da się cofnąć jednym kliknięciem.'
+            "This action can't be undone with a single click."
           )}
         </p>
         <div className="mt-4 flex justify-end gap-2">
@@ -840,7 +840,7 @@ function ConfirmDestructiveDialog({
             onClick={onCancel}
             className={`${CONTROL_BASE_CLASS} border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised`}
           >
-            {t('finance.workspaceBar.cancel', 'Anuluj')}
+            {t('finance.workspaceBar.cancel', 'Cancel')}
           </button>
           <button
             ref={confirmRef}
@@ -848,7 +848,7 @@ function ConfirmDestructiveDialog({
             onClick={onConfirm}
             className={`${CONTROL_BASE_CLASS} bg-c-danger px-3.5 text-white hover:brightness-95`}
           >
-            {t('finance.workspaceBar.confirm', 'Potwierdź')}
+            {t('finance.workspaceBar.confirm', 'Confirm')}
           </button>
         </div>
       </div>

@@ -2136,17 +2136,17 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.analyze.modeling', 'Modelowanie'),
           description: t(
             'finance.analyze.modelingHint',
-            'Utwórz model finansowy z gotowego statementu.'
+            'Create a financial model from a ready statement.'
           ),
           disabled: readyStatementRows.length === 0,
           onSelect: () => openModelFlow(readyStatementContext?.id || null),
         },
         {
           id: 'budget',
-          label: t('finance.analyze.budgeting', 'Budżetowanie'),
+          label: t('finance.analyze.budgeting', 'Budgeting'),
           description: t(
             'finance.analyze.budgetingHint',
-            'Przejdź do budżetu i utwórz nową pozycję planowania.'
+            'Go to the budget and create a new planning item.'
           ),
           disabled: false,
           onSelect: () =>
@@ -2164,7 +2164,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
           description: t(
             'finance.analyze.financialAnalysisHint',
-            'Utwórz analizę finansową na bazie gotowych statementów.'
+            'Create a financial analysis based on ready statements.'
           ),
           disabled: readyStatementRows.length === 0,
           onSelect: () =>
@@ -2180,10 +2180,10 @@ export const FinanceHub: React.FC = () => {
         },
         {
           id: 'valuation',
-          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          label: t('finance.analyze.valuation', 'Company valuation'),
           description: t(
             'finance.analyze.valuationFromStatementsHint',
-            'Wycena jest dostępna po utworzeniu modelu, budżetu lub analizy finansowej.'
+            'Valuation is available after creating a model, budget or financial analysis.'
           ),
           disabled: true,
           onSelect: () => undefined,
@@ -2198,7 +2198,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
           description: t(
             'finance.analyze.analysisFromModelHint',
-            'Przejdź do Analizy i utwórz draft w kontekście bieżącego modelu.'
+            'Go to Analysis and create a draft in the context of the current model.'
           ),
           disabled: !modelContext,
           onSelect: () =>
@@ -2213,10 +2213,10 @@ export const FinanceHub: React.FC = () => {
         },
         {
           id: 'valuation',
-          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          label: t('finance.analyze.valuation', 'Company valuation'),
           description: t(
             'finance.analyze.valuationFromModelHint',
-            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu.'
+            'Go to Valuation and create an item based on the current model.'
           ),
           disabled: !modelContext,
           onSelect: () =>
@@ -2241,7 +2241,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
           description: t(
             'finance.analyze.analysisFromPredictionHint',
-            'Przejdź do Analizy i utwórz draft w kontekście bieżącego budżetu lub scenariusza.'
+            'Go to Analysis and create a draft in the context of the current budget or scenario.'
           ),
           disabled: !budgetContext && !modelContext,
           onSelect: () =>
@@ -2256,10 +2256,10 @@ export const FinanceHub: React.FC = () => {
         },
         {
           id: 'valuation',
-          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          label: t('finance.analyze.valuation', 'Company valuation'),
           description: t(
             'finance.analyze.valuationFromPredictionHint',
-            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu lub budżetu.'
+            'Go to Valuation and create an item based on the current model or budget.'
           ),
           disabled: !budgetContext && !modelContext,
           onSelect: () =>
@@ -2287,10 +2287,10 @@ export const FinanceHub: React.FC = () => {
       return [
         {
           id: 'valuation',
-          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          label: t('finance.analyze.valuation', 'Company valuation'),
           description: t(
             'finance.analyze.valuationFromAnalysisHint',
-            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącej analizy.'
+            'Go to Valuation and create an item based on the current analysis.'
           ),
           disabled: !analysisContext,
           onSelect: () =>
@@ -2499,7 +2499,7 @@ export const FinanceHub: React.FC = () => {
     }> = [
       {
         id: 'all',
-        label: t('finance.counters.all', 'Wszystkie'),
+        label: t('finance.counters.all', 'All'),
         count: total,
         active: !activeFilters.some((f) => f.column === 'status'),
       },
@@ -2744,7 +2744,7 @@ export const FinanceHub: React.FC = () => {
               {
                 id: 'confirm',
                 variant: 'positive' as const,
-                label: t('finance.row.confirmStatement', 'Potwierdź'),
+                label: t('finance.row.confirmStatement', 'Confirm'),
                 onClick: async () => {
                   try {
                     await V8FinanceApi.confirmStatementCurrent(selectedStatementRow.id);
@@ -2753,7 +2753,7 @@ export const FinanceHub: React.FC = () => {
                   } catch (e: any) {
                     toast.error(
                       e?.response?.data?.error ||
-                        t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                        t('finance.toast.approveFailed', 'Approval failed')
                     );
                   }
                 },
@@ -2781,14 +2781,14 @@ export const FinanceHub: React.FC = () => {
               {
                 id: 'createModel',
                 variant: 'neutral' as const,
-                label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+                label: t('finance.row.createModelFromStatement', 'Create model'),
                 icon: TrendingUp,
                 onClick: () => handleCreateModelFromStatement(selectedStatementRow),
               },
               {
                 id: 'createAnalysis',
                 variant: 'neutral' as const,
-                label: t('finance.row.createAnalysisFromStatement', 'Utwórz analizę'),
+                label: t('finance.row.createAnalysisFromStatement', 'Create analysis'),
                 onClick: () => handleCreateAnalysisFromStatements(selectedStatementRow),
               },
             ]
@@ -3038,7 +3038,7 @@ export const FinanceHub: React.FC = () => {
                   ? [
                       {
                         id: 'createModel',
-                        label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+                        label: t('finance.row.createModelFromStatement', 'Create model'),
                         icon: TrendingUp,
                         onClick: () => handleCreateModelFromStatement(statementRow),
                       },
@@ -3050,7 +3050,7 @@ export const FinanceHub: React.FC = () => {
                   ? [
                       {
                         id: 'confirm',
-                        label: t('finance.row.confirmStatement', 'Potwierdź'),
+                        label: t('finance.row.confirmStatement', 'Confirm'),
                         onClick: async () => {
                           try {
                             await V8FinanceApi.confirmStatementCurrent(statementRow.id);
@@ -3061,7 +3061,7 @@ export const FinanceHub: React.FC = () => {
                           } catch (e: any) {
                             toast.error(
                               e?.response?.data?.error ||
-                                t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                                t('finance.toast.approveFailed', 'Approval failed')
                             );
                           }
                         },
@@ -3517,7 +3517,7 @@ export const FinanceHub: React.FC = () => {
                 className="h-9 px-4 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 focus-visible:ring-offset-c-bg"
                 onClick={handleShowList}
               >
-                {t('common.backToList', 'Wróć do listy')}
+                {t('common.backToList', 'Back to list')}
               </button>
             </div>
           )}
@@ -3780,7 +3780,7 @@ export const FinanceHub: React.FC = () => {
                       'Return to the list and reopen a supported statement pack, model, analysis, budget, or valuation.'
                     )}
                     action={{
-                      label: t('common.backToList', 'Wróć do listy'),
+                      label: t('common.backToList', 'Back to list'),
                       onClick: handleShowList,
                       // Nawigacja powrotna, nie tworzenie nowego obiektu — bez "+".
                       showPrefix: false,

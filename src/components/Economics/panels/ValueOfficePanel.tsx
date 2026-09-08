@@ -240,7 +240,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
         data-testid="value-office-panel"
       >
         <h3 className="mb-2 text-sm font-semibold text-c-text">
-          {t('finance.valueOffice.title', 'Value Office — motor wartości transformacji')}
+          {t('finance.valueOffice.title', 'Value Office — transformation value engine')}
         </h3>
         <div
           className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4 text-center"
@@ -267,7 +267,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
         data-testid="value-office-panel"
       >
         <h3 className="mb-2 text-sm font-semibold text-c-text">
-          {t('finance.valueOffice.title', 'Value Office — motor wartości transformacji')}
+          {t('finance.valueOffice.title', 'Value Office — transformation value engine')}
         </h3>
         <div
           className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4"

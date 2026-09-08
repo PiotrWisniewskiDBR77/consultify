@@ -56,7 +56,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
       onLinked?.();
       onClose();
     } catch {
-      toast.error(t('finance.link.failed', 'Nie udało się utworzyć powiązania'));
+      toast.error(t('finance.link.failed', 'Could not create the link'));
     } finally {
       setSaving(false);
     }

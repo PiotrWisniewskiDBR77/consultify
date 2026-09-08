@@ -1399,7 +1399,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         data-testid="save-assumptions"
                       >
                         {saveState === 'saving'
-                          ? t('common.saving', 'Zapisuję…')
+                          ? t('common.saving', 'Saving...')
                           : t('common.save', 'Save')}
                       </button>
                       {saveState === 'saved' && (
@@ -1408,7 +1408,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           data-testid="save-success"
                         >
                           <CheckCircle2 size={14} />
-                          {t('finance.model.saved', 'Zapisano')}
+                          {t('finance.model.saved', 'Saved')}
                         </span>
                       )}
                     </div>
@@ -1419,7 +1419,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       >
                         {t(
                           'finance.model.versionConflict',
-                          'Model został zmieniony przez kogoś innego od ostatniego odczytu. Odśwież, aby zobaczyć aktualną wersję, i spróbuj ponownie.'
+                          'Someone else changed this model since you last loaded it. Refresh to see the current version, then try again.'
                         )}
                         {saveConflict?.serverVersion != null && (
                           <>
@@ -1436,7 +1436,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                           className="ml-2 font-medium underline underline-offset-2 hover:no-underline"
                           data-testid="version-conflict-reload"
                         >
-                          {t('common.reload', 'Odśwież')}
+                          {t('common.reload', 'Refresh')}
                         </button>
                       </div>
                     )}
@@ -1672,7 +1672,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               <option value="operating">{t('finance.model.cfOperating', 'Operacyjne')}</option>
                               <option value="investing">{t('finance.model.cfInvesting', 'Inwestycyjne')}</option>
                               <option value="financing">{t('finance.model.cfFinancing', 'Finansowe')}</option>
-                              <option value="none">{t('finance.model.cfNone', 'Brak')}</option>
+                              <option value="none">{t('finance.model.cfNone', 'None')}</option>
                             </select>
                           </div>
                         </div>

@@ -738,7 +738,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
                 >
                   <BarChart3 size={14} />
-                  {t('finance.actions.createAnalysis', 'Utwórz analizę')}
+                  {t('finance.actions.createAnalysis', 'Create analysis')}
                 </button>
               )}
               {statementRow && isWorkable && onCreateModelFromStatement && (
@@ -747,7 +747,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500"
                 >
                   <TrendingUp size={14} />
-                  {t('finance.actions.createModelFromStatement', 'Utwórz model')}
+                  {t('finance.actions.createModelFromStatement', 'Create model')}
                 </button>
               )}
               <button
@@ -773,7 +773,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300"
                 >
                   <CheckCircle2 size={14} />
-                  {t('finance.actions.confirmStatement', 'Potwierdź statement')}
+                  {t('finance.actions.confirmStatement', 'Confirm statement')}
                 </button>
               )}
             </div>
