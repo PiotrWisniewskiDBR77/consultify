@@ -44,7 +44,7 @@ describe('ArtifactMenu3', () => {
 
     render(<ArtifactMenu3 registry={registry} context={context} resolveLabel={(label) => label} />);
 
-    expect(screen.getByRole('toolbar', { name: 'Narzędzia kontekstowe' })).toHaveAttribute(
+    expect(screen.getByRole('toolbar', { name: 'Contextual tools' })).toHaveAttribute(
       'data-selection-kind',
       'text'
     );
@@ -85,7 +85,7 @@ describe('ArtifactMenu3', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More tools' }));
     expect(screen.getByRole('menuitem', { name: 'doc.text.underline' })).toBeVisible();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();

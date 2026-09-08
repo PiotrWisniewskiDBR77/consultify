@@ -3119,7 +3119,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.RESULTS}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Results"
@@ -3145,7 +3145,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'KPI']
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
                 }
                 noPadding
               >
@@ -3173,7 +3173,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'KPI',
                     t('results.kpiScorecard', 'Scorecard'),
                   ]
@@ -3207,7 +3207,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'KPI']
+                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
                 }
                 noPadding
               >
@@ -3237,7 +3237,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'KPI',
                     t('results.kpiDeviationCase', 'Deviation case'),
                   ]
@@ -3262,7 +3262,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.roi', 'ROI')]
                 }
                 noPadding
               >
@@ -3292,7 +3292,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.roi', 'ROI')]
                 }
                 noPadding
               >
@@ -3319,7 +3319,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'ROI',
                     t('results.roiPirOutcomes', 'PIR outcomes'),
                   ]
@@ -3348,7 +3348,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
-                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']}
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.roi', 'ROI')]}
                 noPadding
               >
                 <ProductionModuleGate
@@ -3369,7 +3369,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.okr', 'OKR')]
                 }
                 noPadding
               >
@@ -3395,7 +3395,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.okr', 'OKR')]
                 }
                 noPadding
               >
@@ -3421,7 +3421,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
-                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']}
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), t('layout.breadcrumb.module.okr', 'OKR')]}
                 noPadding
               >
                 <ProductionModuleGate
@@ -3445,7 +3445,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'OKR',
                     t('results.okrObjectiveCard', 'Objective card'),
                   ]
@@ -3473,7 +3473,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'OKR',
                     t('results.okrObjectiveCard', 'Objective card'),
                   ]
@@ -3513,7 +3513,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'OKR',
                     t('results.okrPrograms', 'Programs'),
                   ]
@@ -3539,7 +3539,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Wyniki'),
+                    t('sidebar.results', 'Results'),
                     'OKR',
                     t('results.okrCycles', 'Cycles'),
                   ]

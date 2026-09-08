@@ -42,18 +42,18 @@ export function ActionCard({
   const { t } = useTranslation();
   const critical = card.status === 'OPEN' && card.severity === 'RED';
   const statusLabel = card.status === 'OPEN'
-    ? t('actionCard.status.open', 'OTWARTY')
+    ? t('actionCard.status.open', 'OPEN')
     : t('actionCard.status.closed', 'CLOSED');
   const fields = [
-    [t('actionCard.fields.period', 'Okres'), `${shown(card.periodStart)} – ${shown(card.periodEnd)}`],
-    [t('actionCard.fields.goalMet', 'Goal met?'), card.goalMet ? t('common.yes', 'Tak') : t('common.no', 'No')],
-    [t('actionCard.fields.actionRequired', 'Action required?'), card.actionRequired ? t('common.yes', 'Tak') : t('common.no', 'No')],
-    [t('actionCard.fields.problem', 'Opis problemu'), shown(card.problem)],
+    [t('actionCard.fields.period', 'Period'), `${shown(card.periodStart)} – ${shown(card.periodEnd)}`],
+    [t('actionCard.fields.goalMet', 'Goal met?'), card.goalMet ? t('common.yes', 'Yes') : t('common.no', 'No')],
+    [t('actionCard.fields.actionRequired', 'Action required?'), card.actionRequired ? t('common.yes', 'Yes') : t('common.no', 'No')],
+    [t('actionCard.fields.problem', 'Problem description'), shown(card.problem)],
     [t('actionCard.fields.rootCause', 'Root cause'), shown(card.rootCause)],
     [t('actionCard.fields.action', 'Action description'), shown(card.actionText)],
     [t('actionCard.fields.owner', 'Owner'), shown(card.ownerName)],
-    [t('actionCard.fields.dueDate', 'Termin'), shown(card.dueDate)],
-    [t('actionCard.fields.comment', 'Komentarz'), shown(card.comment)],
+    [t('actionCard.fields.dueDate', 'Due date'), shown(card.dueDate)],
+    [t('actionCard.fields.comment', 'Comment'), shown(card.comment)],
     [t('actionCard.fields.status', 'Status'), statusLabel],
   ] as const;
 

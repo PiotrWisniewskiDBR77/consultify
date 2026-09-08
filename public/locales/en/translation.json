@@ -577,7 +577,8 @@
         "admin": "Administration",
         "interview": "Interview",
         "tools": "Tools",
-        "roi": "ROI"
+        "roi": "ROI",
+        "okr": "OKR"
       },
       "page": {
         "reports": "Reports",

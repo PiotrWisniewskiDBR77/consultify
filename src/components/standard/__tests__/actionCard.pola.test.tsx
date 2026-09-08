@@ -20,7 +20,7 @@ describe('ActionCard — jeden kontrakt pól §2.4', () => {
   it('renderuje wszystkie 10 pól w kolejności arkusza właściciela', () => {
     render(<ActionCard card={card} />);
     const labels = within(screen.getByRole('article')).getAllByRole('term').map((node) => node.textContent);
-    expect(labels).toEqual(['Okres', 'Cel osiągnięty?', 'Działania wymagane?', 'Opis problemu', 'Główna przyczyna', 'Opis działania', 'Odpowiedzialność', 'Termin', 'Komentarz', 'Status']);
+    expect(labels).toEqual(['Period', 'Goal met?', 'Action required?', 'Problem description', 'Root cause', 'Action description', 'Owner', 'Due date', 'Comment', 'Status']);
     expect(screen.getByText('Anna Kowalska')).toBeTruthy();
   });
 
