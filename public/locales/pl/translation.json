@@ -8186,7 +8186,162 @@
         "inProgress": "Przygotowuję plik…",
         "error": "Nie udało się pobrać pliku — kod: {{code}}"
       },
-      "lifecycleSessionRecord": "Zapis sesji oceny — jeszcze nie zamrożony"
+      "lifecycleSessionRecord": "Zapis sesji oceny — jeszcze nie zamrożony",
+      "methodologySourceEn": "Źródło: metodyka DRD w oryginale angielskim — polskiego tłumaczenia tej osi jeszcze nie ma w pakiecie.",
+      "area": {
+        "currentLevel": "Poziom obecny {{level}} — {{title}}",
+        "currentUnresolved": "Poziom obecny nie został w tej ocenie rozstrzygnięty.",
+        "levelDefinitionMissing": "Metodyka przypięta w tym Outpucie nie niesie definicji tego poziomu.",
+        "targetLevel": "Poziom docelowy {{level}} — {{title}}",
+        "targetReached": "Poziom docelowy {{level}} — osiągnięty; definicja jak wyżej.",
+        "assessmentNote": "Notatka z oceny",
+        "noAcceptedEvidence": "Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są poparte zaakceptowanym materiałem dowodowym."
+      },
+      "axis": {
+        "eyebrow": "Oś {{number}} z 7 · skala 1–{{levels}} · {{areas}} obszarów",
+        "assessedCount": "Oceniono {{assessed}} z {{total}} obszarów tej osi.",
+        "axisScore": "Wynik osi: {{score}} (skala 1–{{levels}}).",
+        "scoreOnFreeze": "Wynik osi powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona.",
+        "scoreMissing": "Zamrożony Output nie niesie zagregowanego wyniku tej osi.",
+        "noAreaAssessed": "Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać, czego badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach czytelnika.",
+        "notAssessedAreas": "Obszary tej osi nieobjęte oceną ({{count}})"
+      },
+      "table": {
+        "unitName": "Jednostka oceny",
+        "levels": "Obecny / Cel",
+        "gap": "Luka",
+        "band": "Pozycja na skali",
+        "evidence": "Dowody",
+        "evidenceConfirmed": "Potwierdzone dowodem",
+        "evidenceMissing": "Brak dowodu"
+      },
+      "surveyMode": {
+        "teresaLed": "Sesja była prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store.",
+        "guidedManual": "Sesja była prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji.",
+        "unknown": "Trybu prowadzenia sesji nie zapisano w metadanych."
+      },
+      "moduleAssessment": "Ocena",
+      "intro": {
+        "methodAxes": "— {{axes}} osi transformacji, łącznie {{areas}} obszarów analitycznych, każda oś na własnej skali dojrzałości ({{scales}} poziomów).",
+        "ofTotal": " z {{total}}",
+        "evidenceSplit": ". Dla {{withEvidence}} z nich organizacja dostarczyła dowód, który został przyjęty; dla {{withoutEvidence}} dowodu nie przyjęto — te obszary są w rozdziale 3 wymienione z nazwy i nie są liczone jako zero.",
+        "completeness": "Kompletność dowodowa tej oceny wynosi {{percent}}%.",
+        "notFrozenYet": "Ten wynik nie został jeszcze zamrożony — pochodzi z zapisu sesji oceny",
+        "frozenAt": "Wynik zamrożono {{date}}",
+        "sessionOpened": ", sesję otwarto {{date}}",
+        "approvalRecorded": "Zatwierdzenie zarejestrowano {{date}} (rewizja {{revision}})",
+        "approvalComment": " — „{{comment}}”",
+        "readOfSessionRecord": " dokument jest odczytem zapisu sesji, nie wynikiem zatwierdzonym.",
+        "readOfFrozen": " dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.",
+        "method": "Ocenę przeprowadzono metodyką <1>{{method}}</1> w wersji pakietu <3>{{version}}</3>",
+        "coverage": "Badanie objęło <1>{{units}}</1>{{ofTotal}} obszarów",
+        "coverageAxes": "w <1>{{covered}}</1> z {{total}} osi",
+        "noApprovalRecorded": "Dla tej rewizji <1>nie zarejestrowano zatwierdzenia</1> —",
+        "noApprovalPrefix": "Dla tej rewizji ",
+        "noApprovalStrong": "nie zarejestrowano zatwierdzenia"
+      },
+      "props": {
+        "sessionOwner": "Właściciel sesji",
+        "sessionOpened": "Otwarcie sesji",
+        "resultFrozen": "Zamrożenie wyniku",
+        "sessionRevision": "Rewizja sesji"
+      },
+      "limitationsTitle": "Ograniczenia i założenia",
+      "chapter2": {
+        "titleSeven": "Siedem osi metodyki",
+        "title": "Osie metodyki ({{count}})",
+        "lede": "Dla każdej osi: czym oś jest, a następnie każdy jej obszar analityczny — z definicją poziomu obecnego i docelowego."
+      },
+      "overall": {
+        "title": "Wynik ogólny",
+        "unitsAssessed": "Ocenionych jednostek",
+        "withEvidence": "Z potwierdzonym dowodem",
+        "withoutEvidence": "Bez przyjętego dowodu",
+        "unitsWithGap": "Jednostek z luką",
+        "perDimension": "Wynik per wymiar (oś)",
+        "aggregationOnFreeze": "Wynik zagregowany per wymiar (oś) powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona, więc go tu nie ma. Nie liczymy go zastępczo, żeby dokument nie podał liczby, której nikt nie zatwierdził. Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.",
+        "aggregationMissing": "Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza momentem zamrożenia (patrz „Ograniczenia i założenia” powyżej). Poniżej pełny wynik per jednostka, z których taka agregacja by się składała."
+      },
+      "axisNarrativesUnavailable": "Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją przypiętą w tym Outpucie ({{packId}} {{packVersion}}). Ten Output przypina wersję, której skompilowany pakiet nie zna — dokument pokazuje więc same liczby, bez definicji metodyki, zamiast opisywać poziomy z innej wersji metodyki niż ta, którą oceniano.",
+      "unmapped": {
+        "title": "Jednostki poza strukturą osi",
+        "body": "Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie. Są wymienione, żeby nie wypadły z dokumentu między rozdziałami."
+      },
+      "dimensionsTitle": "Zestawienie zbiorcze wszystkich jednostek",
+      "chapter3": {
+        "title": "Odpowiedzi i wstępna paleta wniosków",
+        "lede": "Co organizacja pokazała na dowód, czego nie pokazała, i co z tego wynika.",
+        "banner": "Zamrożony Output przenosi <1>przyjęty poziom i dowody</1>, a nie dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone z przyjętych poziomów.",
+        "bannerPrefix": "Zamrożony Output przenosi ",
+        "bannerStrong": "przyjęty poziom i dowody",
+        "bannerSuffix": ", a nie dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone z przyjętych poziomów."
+      },
+      "strengthsGaps": {
+        "title": "Mocne strony i luki",
+        "strengths": "Mocne strony ({{count}})",
+        "noStrengths": "Brak jednostek bez luki w tym Outpucie.",
+        "gaps": "Luki ({{count}})",
+        "noGaps": "Brak zidentyfikowanych luk w tym Outpucie.",
+        "gapValue": "luka {{gap}}"
+      },
+      "noKnowledge": {
+        "body": "To nie jest „zero punktów” — to osobna, diagnostyczna kategoria: organizacja nie potrafiła w momencie oceny dostarczyć wystarczającego dowodu dla poniższych jednostek. Zamrożony Output nie rozróżnia dziś „odpowiedziano nie wiem” od „nikt jeszcze nie odpowiedział” na poziomie pojedynczej jednostki (patrz „Ograniczenia i założenia”) — poniższa lista pokazuje jednostki BEZ przyjętego dowodu, czyli obie te sytuacje razem, uczciwie nierozróżnione.",
+        "totalUnits": "Jednostek łącznie",
+        "withAccepted": "Z przyjętym dowodem",
+        "withoutAccepted": "Bez przyjętego dowodu",
+        "completeness": "Kompletność dowodowa",
+        "allCovered": "Każda oceniana jednostka ma przyjęty dowód."
+      },
+      "evidence": {
+        "title": "Dowody",
+        "none": "Ten Output nie ma zarejestrowanych dowodów.",
+        "criterion": "Kryterium",
+        "type": "Typ dowodu",
+        "strength": "Siła",
+        "locator": "Lokalizacja / odniesienie"
+      },
+      "chapter4": {
+        "lede": "Domknięcie: obraz całości i kolejność działań wynikająca z przyjętych poziomów.",
+        "title": "Podsumowanie"
+      },
+      "closing": {
+        "title": "Obraz całości",
+        "coverage": "Ocena objęła {{units}}{{ofTotal}} obszarów{{inAxes}}. W {{withoutGap}} obszarach organizacja jest na poziomie docelowym lub powyżej; w {{withGap}} pozostaje luka",
+        "inAxes": " w {{covered}} z {{total}} osi",
+        "allDocumented": "Każdy oceniany obszar ma przyjęty dowód — wynik można traktować jako udokumentowany w całości.",
+        "someUndocumented": "Dla {{count}} obszarów nie przyjęto dowodu. To nie są zera: to obszary, o których ta ocena nie rozstrzyga, i pierwsza pozycja do domknięcia w kolejnej rundzie.",
+        "orderRationale": "Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym a docelowym — nie z osobnego modelu priorytetyzacji.",
+        "largestGap": ", największa na obszarze <1>{{area}}</1> ({{gap}} poziomy)"
+      },
+      "narrative": {
+        "title": "Treść raportu zapisanego w module Ocena",
+        "source": "Źródło: raport „{{name}}”",
+        "status": " (status: {{status}})",
+        "verbatim": " — treść przepisana z zapisu, bez zmian.",
+        "executiveSummary": "Streszczenie dla zarządu",
+        "detailedAnalysis": "Analiza szczegółowa",
+        "savedItems": "Zapisane pozycje raportu ({{count}})"
+      },
+      "recommendations": {
+        "title": "Rekomendacje priorytetowe",
+        "onFreeze": "Rekomendacje per obszar powstają przy zamrożeniu wyniku (wnioski jądra metodycznego). Ta ocena nie została jeszcze zamrożona — powyżej jest to, co zapisano w raporcie oceny, a luki per obszar widać w zestawieniu zbiorczym w rozdziale 2.",
+        "none": "Brak rekomendacji w tym Outpucie.",
+        "noGap": "bez luki",
+        "priorityRationale": "Uzasadnienie priorytetu: {{value}}",
+        "expectedOutcome": "Oczekiwany efekt: {{value}}"
+      },
+      "footer": {
+        "sessionRecord": "Ten dokument jest odczytem zapisu sesji oceny. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zapisano w warsztacie. Zamrożenie wyniku nadaje mu niezmienność, skrót treści i ślad zatwierdzenia; ta ocena tego jeszcze nie ma.",
+        "frozen": "Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.",
+        "assessment": "Ocena",
+        "methodology": "Metodyka",
+        "createdAt": "Data utworzenia oceny",
+        "frozenAt": "Zamrożono",
+        "outputId": "Identyfikator Outputu",
+        "contentHash": "Skrót treści (hash)",
+        "outputVersion": "Wersja Outputu"
+      },
+      "sessionRecordBanner": "Ten raport powstał z <1>zapisu sesji oceny</1> — obszary, poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego, niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie zamrożony, liczby mogą się jeszcze zmienić."
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",

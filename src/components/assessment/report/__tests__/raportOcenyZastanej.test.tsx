@@ -81,11 +81,11 @@ describe('raport oceny z magazynu zastanego', () => {
     render(<AssessmentReportView outputId="ocena~assess-drd-manufacturing-01" />);
 
     await waitFor(() =>
-      expect(screen.getByText(/Jak prowadzono badanie/i)).toBeInTheDocument()
+      expect(screen.getByText(/How the assessment was run/i)).toBeInTheDocument()
     );
 
     // Rozdział 2 — siedem osi metodyki.
-    expect(screen.getByText(/Siedem osi metodyki/i)).toBeInTheDocument();
+    expect(screen.getByText(/The seven axes of the methodology/i)).toBeInTheDocument();
 
     // ★ MACIERZ: identyfikatory obszarów DRD muszą być na ekranie.
     //   Bez projekcji `current`/`target` siatka nie ma żadnej kolumny.
@@ -93,13 +93,13 @@ describe('raport oceny z magazynu zastanego', () => {
     expect(screen.getAllByText('4A').length).toBeGreaterThan(0);
 
     // Uczciwość źródła — dokument nie twierdzi, że wynik jest zamrożony.
-    expect(screen.getByText(/Zapis sesji oceny — jeszcze nie zamrożony/i)).toBeInTheDocument();
+    expect(screen.getByText(/Assessment session record — not frozen yet/i)).toBeInTheDocument();
     expect(screen.queryByText('Zamrożony (niezmienny)')).not.toBeInTheDocument();
 
     // Notatka konsultanta z realnych danych.
-    expect(screen.getAllByText(/Notatka z oceny/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Assessment note/i).length).toBeGreaterThan(0);
 
     // Treść raportu zapisanego w module Ocena.
-    expect(screen.getByText(/Treść raportu zapisanego w module Ocena/i)).toBeInTheDocument();
+    expect(screen.getByText(/Content of the report saved in the Assessment module/i)).toBeInTheDocument();
   });
 });

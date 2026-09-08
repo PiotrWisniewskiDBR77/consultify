@@ -8798,7 +8798,162 @@
         "inProgress": "Preparing the file…",
         "error": "The file could not be downloaded — code: {{code}}"
       },
-      "lifecycleSessionRecord": "Assessment session record — not frozen yet"
+      "lifecycleSessionRecord": "Assessment session record — not frozen yet",
+      "methodologySourceEn": "Source: the DRD methodology in its English original — this axis has no Polish translation in the pack yet.",
+      "area": {
+        "currentLevel": "Current level {{level}} — {{title}}",
+        "currentUnresolved": "The current level was not determined in this assessment.",
+        "levelDefinitionMissing": "The methodology pinned in this Output carries no definition of this level.",
+        "targetLevel": "Target level {{level}} — {{title}}",
+        "targetReached": "Target level {{level}} — reached; definition as above.",
+        "assessmentNote": "Assessment note",
+        "noAcceptedEvidence": "No accepted evidence for this area — the numbers above come from the session record, but are not backed by accepted evidence material."
+      },
+      "axis": {
+        "eyebrow": "Axis {{number}} of 7 · scale 1–{{levels}} · {{areas}} areas",
+        "assessedCount": "{{assessed}} of {{total}} areas of this axis assessed.",
+        "axisScore": "Axis score: {{score}} (scale 1–{{levels}}).",
+        "scoreOnFreeze": "The axis score is produced when the assessment is frozen — this assessment has not been frozen yet.",
+        "scoreMissing": "The frozen Output carries no aggregated score for this axis.",
+        "noAreaAssessed": "No area of this axis was covered by this assessment. The axis stays in the document so the reader can see what the study did not touch — dropping the chapter would change the perceived scope of the assessment.",
+        "notAssessedAreas": "Areas of this axis not covered ({{count}})"
+      },
+      "table": {
+        "unitName": "Assessment unit",
+        "levels": "Current / Target",
+        "gap": "Gap",
+        "band": "Position on the scale",
+        "evidence": "Evidence",
+        "evidenceConfirmed": "Confirmed by evidence",
+        "evidenceMissing": "No evidence"
+      },
+      "surveyMode": {
+        "teresaLed": "The session was led by the assistant (Teresa), with every step recorded in the event store.",
+        "guidedManual": "The session was led by a consultant — answers and evidence entered manually during the session.",
+        "unknown": "The way the session was run was not recorded in the metadata."
+      },
+      "moduleAssessment": "Assessment",
+      "intro": {
+        "methodAxes": "— {{axes}} transformation axes, {{areas}} analytical areas in total, each axis on its own maturity scale ({{scales}} levels).",
+        "ofTotal": " of {{total}}",
+        "evidenceSplit": ". For {{withEvidence}} of them the organisation provided evidence that was accepted; for {{withoutEvidence}} no evidence was accepted — those areas are listed by name in chapter 3 and are not counted as zero.",
+        "completeness": "The evidence completeness of this assessment is {{percent}}%.",
+        "notFrozenYet": "This result has not been frozen yet — it comes from the assessment session record",
+        "frozenAt": "The result was frozen on {{date}}",
+        "sessionOpened": ", the session was opened on {{date}}",
+        "approvalRecorded": "The approval was recorded on {{date}} (revision {{revision}})",
+        "approvalComment": " — “{{comment}}”",
+        "readOfSessionRecord": " the document is a read-out of the session record, not an approved result.",
+        "readOfFrozen": " the document is a read-out of the frozen result, not an approved result.",
+        "method": "The assessment was carried out with the <1>{{method}}</1> methodology, pack version <3>{{version}}</3>",
+        "coverage": "The study covered <1>{{units}}</1>{{ofTotal}} areas",
+        "coverageAxes": "in <1>{{covered}}</1> of {{total}} axes",
+        "noApprovalRecorded": "For this revision <1>no approval was recorded</1> —",
+        "noApprovalPrefix": "For this revision ",
+        "noApprovalStrong": "no approval was recorded"
+      },
+      "props": {
+        "sessionOwner": "Session owner",
+        "sessionOpened": "Session opened",
+        "resultFrozen": "Result frozen",
+        "sessionRevision": "Session revision"
+      },
+      "limitationsTitle": "Limitations and assumptions",
+      "chapter2": {
+        "titleSeven": "The seven axes of the methodology",
+        "title": "Axes of the methodology ({{count}})",
+        "lede": "For every axis: what the axis is, and then each of its analytical areas — with the definition of the current and the target level."
+      },
+      "overall": {
+        "title": "Overall result",
+        "unitsAssessed": "Units assessed",
+        "withEvidence": "With confirmed evidence",
+        "withoutEvidence": "Without accepted evidence",
+        "unitsWithGap": "Units with a gap",
+        "perDimension": "Result per dimension (axis)",
+        "aggregationOnFreeze": "The aggregated result per dimension (axis) is produced when the assessment is frozen — this assessment has not been frozen yet, so it is not here. We do not compute a stand-in, so that the document never states a number nobody approved. Below is the full result per unit, which such an aggregation would be built from.",
+        "aggregationMissing": "This Output carries no aggregated result per dimension (axis) — the kernel computes that aggregation outside the moment of freezing (see “Limitations and assumptions” above). Below is the full result per unit, which such an aggregation would be built from."
+      },
+      "axisNarrativesUnavailable": "Axis and level descriptions are available only for a DRD pack whose version matches the one pinned in this Output ({{packId}} {{packVersion}}). This Output pins a version the compiled pack does not know — so the document shows the numbers alone, without methodology definitions, rather than describing levels from a different version of the methodology than the one assessed.",
+      "unmapped": {
+        "title": "Units outside the axis structure",
+        "body": "These units cannot be mapped to any axis of the methodology pinned in this Output. They are listed so that they do not fall out of the document between chapters."
+      },
+      "dimensionsTitle": "Summary table of all units",
+      "chapter3": {
+        "title": "Answers and the initial palette of conclusions",
+        "lede": "What the organisation showed as evidence, what it did not show, and what follows from that.",
+        "banner": "A frozen Output carries <1>the accepted level and the evidence</1>, not the literal text of the session answers — that stays in the session event record. What follows is therefore what the document really holds: the evidence material per area, the areas without evidence, and the conclusions derived from the accepted levels.",
+        "bannerPrefix": "A frozen Output carries ",
+        "bannerStrong": "the accepted level and the evidence",
+        "bannerSuffix": ", not the literal text of the session answers — that stays in the session event record. What follows is therefore what the document really holds: the evidence material per area, the areas without evidence, and the conclusions derived from the accepted levels."
+      },
+      "strengthsGaps": {
+        "title": "Strengths and gaps",
+        "strengths": "Strengths ({{count}})",
+        "noStrengths": "No units without a gap in this Output.",
+        "gaps": "Gaps ({{count}})",
+        "noGaps": "No gaps identified in this Output.",
+        "gapValue": "gap {{gap}}"
+      },
+      "noKnowledge": {
+        "body": "This is not “zero points” — it is a separate, diagnostic category: at the time of the assessment the organisation could not provide sufficient evidence for the units below. A frozen Output does not today distinguish “answered I don’t know” from “nobody has answered yet” at the level of a single unit (see “Limitations and assumptions”) — the list below shows the units WITHOUT accepted evidence, that is both situations together, honestly undistinguished.",
+        "totalUnits": "Units in total",
+        "withAccepted": "With accepted evidence",
+        "withoutAccepted": "Without accepted evidence",
+        "completeness": "Evidence completeness",
+        "allCovered": "Every assessed unit has accepted evidence."
+      },
+      "evidence": {
+        "title": "Evidence",
+        "none": "This Output has no registered evidence.",
+        "criterion": "Criterion",
+        "type": "Evidence type",
+        "strength": "Strength",
+        "locator": "Location / reference"
+      },
+      "chapter4": {
+        "lede": "Closing: the whole picture and the order of actions that follows from the accepted levels.",
+        "title": "Summary"
+      },
+      "closing": {
+        "title": "The whole picture",
+        "coverage": "The assessment covered {{units}}{{ofTotal}} areas{{inAxes}}. In {{withoutGap}} areas the organisation is at or above the target level; in {{withGap}} a gap remains",
+        "inAxes": " in {{covered}} of {{total}} axes",
+        "allDocumented": "Every assessed area has accepted evidence — the result can be treated as fully documented.",
+        "someUndocumented": "For {{count}} areas no evidence was accepted. These are not zeros: they are areas this assessment does not decide about, and the first item to close in the next round.",
+        "orderRationale": "The order of actions below follows only from the size of the gap between the current and the target level — not from a separate prioritisation model.",
+        "largestGap": ", the largest in the area <1>{{area}}</1> ({{gap}} levels)"
+      },
+      "narrative": {
+        "title": "Content of the report saved in the Assessment module",
+        "source": "Source: report “{{name}}”",
+        "status": " (status: {{status}})",
+        "verbatim": " — content copied from the record, unchanged.",
+        "executiveSummary": "Executive summary",
+        "detailedAnalysis": "Detailed analysis",
+        "savedItems": "Saved report items ({{count}})"
+      },
+      "recommendations": {
+        "title": "Priority recommendations",
+        "onFreeze": "Per-area recommendations are produced when the result is frozen (conclusions of the method kernel). This assessment has not been frozen yet — above is what was saved in the assessment report, and the per-area gaps are visible in the summary table in chapter 2.",
+        "none": "No recommendations in this Output.",
+        "noGap": "no gap",
+        "priorityRationale": "Priority rationale: {{value}}",
+        "expectedOutcome": "Expected outcome: {{value}}"
+      },
+      "footer": {
+        "sessionRecord": "This document is a read-out of the assessment session record. The content is not recomputed on display — it shows exactly what was saved in the workshop. Freezing the result gives it immutability, a content hash and an approval trace; this assessment does not have that yet.",
+        "frozen": "This document is a read-out of the frozen, immutable Output. The content is not recomputed on display — it shows exactly what was approved at the moment of freezing.",
+        "assessment": "Assessment",
+        "methodology": "Methodology",
+        "createdAt": "Assessment created on",
+        "frozenAt": "Frozen",
+        "outputId": "Output identifier",
+        "contentHash": "Content hash",
+        "outputVersion": "Output version"
+      },
+      "sessionRecordBanner": "This report was produced from the <1>assessment session record</1> — the areas and the current and target levels come from answers saved in the workshop, not from a frozen, immutable Output of the method kernel. The axis structure, area names and level descriptions come from the methodology in the version compiled into this application. Until the result is frozen, the numbers may still change."
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",
