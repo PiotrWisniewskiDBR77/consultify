@@ -1322,6 +1322,27 @@ function rejectScopedPurposeToken(decoded: unknown, res: Response): boolean {
   return true;
 }
 
+/**
+ * Znacznik: dla jakiego tokenu i jakiego kontekstu organizacji pelna weryfikacja
+ * juz przeszla W TYM ZADANIU. Klucz, nie flaga — patrz `kluczWeryfikacji`.
+ */
+const POLE_WERYFIKACJI = '__consultifyAuthVerifiedKey';
+
+/**
+ * Klucz obejmuje WSZYSTKO, co moze zmienic wynik weryfikacji w obrebie jednego
+ * zadania: sam token oraz naglowki kontekstu organizacji (`x-org-context`,
+ * `x-organization-id`), z ktorych `verifyToken` wylicza `req.organizationId`.
+ * Gdyby ktorys z nich zmienil sie miedzy przejsciami, klucz jest inny i pelna
+ * weryfikacja biegnie od nowa — dokladnie jak dotad.
+ */
+function kluczWeryfikacji(req: AuthRequest, token: string): string {
+  return JSON.stringify([
+    token,
+    normalizeBoundedOrgContextId(safeGetHeader(req, 'x-org-context')) || '',
+    normalizeBoundedOrgContextId(safeGetHeader(req, 'x-organization-id')) || '',
+  ]);
+}
+
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!isTestEnv()) {
@@ -1330,6 +1351,42 @@ export const verifyToken = asyncHandler(
     const { jwt: jwtLib, config } = await getDeps();
 
     const token = extractToken(req);
+
+    /*
+     * WYDAJNOSC [ODMROZENIE 06_EXECUTION DEC-453] — zmierzone 2026-09-08 na
+     * kopii danych DBR77 licznikiem wpiętym na wejsciu tej funkcji:
+     *
+     *   GET /api/initiatives/runtime-v1/execution-cases/<id>/allocations
+     *   => verifyToken #1..#8 — OSIEM pelnych weryfikacji na JEDNO zadanie.
+     *
+     * Bierze sie to ze zlozenia montowan: `Gateway.ts` zaklada `verifyToken`
+     * przed routerem (np. linia 697 dla `/api/initiatives`), a router i jego
+     * pod-routery zakladaja go ponownie przez `router.use(verifyToken)`
+     * (`routes/pmo/initiatives.routes.ts:147`). Kazde przejscie to weryfikacja
+     * JWT plus komplet zapytan: `organization_members`, `revoked_tokens`,
+     * `user_sessions` i UPDATE aktywnosci sesji. Log Postgresa dla tego jednego
+     * zadania: 28 zapytan, z czego 22 to powtorzenia z tych osmiu przebiegow.
+     *
+     * To NIE oslabia bramki. Pierwsze przejscie wykonuje pelna weryfikacje ze
+     * wszystkimi odrzuceniami; gdy odrzuci, zadanie konczy sie 401 i kolejnych
+     * przejsc nie ma. Skrot dotyczy wylacznie przypadku, w ktorym ta sama
+     * bramka mialaby policzyc DRUGI raz ten sam token w tym samym zadaniu —
+     * z definicji z tym samym wynikiem. Znacznik zyje na obiekcie `req`, wiec
+     * ginie razem z zadaniem i nic nie przenosi sie miedzy zadaniami ani
+     * miedzy uzytkownikami.
+     */
+    if (token) {
+      const klucz = kluczWeryfikacji(req, token);
+      const juz = safeRead(
+        () => (req as unknown as Record<string, unknown>)[POLE_WERYFIKACJI],
+        undefined
+      );
+      const maPrincipala = Boolean(safeRead(() => req.user?.id, undefined));
+      if (juz === klucz && maPrincipala) {
+        next();
+        return;
+      }
+    }
     if (!isTestEnv()) {
       logger.debug(`[AuthMiddleware] Token extracted: ${token ? 'YES' : 'NO'}`);
     }
@@ -1598,7 +1655,27 @@ export const verifyToken = asyncHandler(
         }
       }
 
-      await checkTokenRevocation(normalizedDecoded, req, res, next);
+      /*
+       * Znacznik stawiamy DOPIERO gdy `checkTokenRevocation` naprawde przepuszcza
+       * dalej (wola `next()` bez bledu). Postawienie go wczesniej oznaczyloby
+       * jako „zweryfikowany” takze token odwolany albo zadanie zakonczone bledem.
+       */
+      const przepuscIOznacz: NextFunction = ((...argumenty: unknown[]) => {
+        const bladPrzekazany = argumenty.length > 0 && argumenty[0] !== undefined;
+        if (!bladPrzekazany && token) {
+          try {
+            (req as unknown as Record<string, unknown>)[POLE_WERYFIKACJI] = kluczWeryfikacji(
+              req,
+              token
+            );
+          } catch {
+            // niepowodzenie zapisu znacznika = brak skrotu, czyli zachowanie sprzed zmiany
+          }
+        }
+        return (next as (...a: unknown[]) => unknown)(...argumenty);
+      }) as NextFunction;
+
+      await checkTokenRevocation(normalizedDecoded, req, res, przepuscIOznacz);
       trackSessionActivity(req, res);
     } catch (err: any) {
       logger.error('[AuthMiddleware] Verification failed:', err.message);
