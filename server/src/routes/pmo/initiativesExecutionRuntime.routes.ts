@@ -4830,17 +4830,35 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         cases.map((item) => item.initiativeId)
       );
+      // [ODMROZENIE 06_EXECUTION DEC-453] Realizacja BEZ RODOWODU PROJEKTU nie
+      // wchodzi na liste. POMIAR 2026-09-08 (kopia stagingu, DBR77): realizacja
+      // `a3e05d4a-…--acceptance--execution-case` stala na liscie, ale jej wlasny
+      // `GET …/work` odpowiadal 404 — bo `canViewAggregate` liczy widocznosc
+      // fail-closed (`authorizeProjects` wymaga `projectIds.length > 0`), a ta
+      // lista pytala `authorize()` o `projectId` rowny `undefined` i dostawala
+      // zgode. Skutek na ekranie: kazde wejscie w Prace i Zasoby konczylo sie
+      // banerem „Nie udalo sie pobrac zasobow z 1 realizacji" — o realizacji,
+      // ktorej system i tak nie pozwala otworzyc.
+      // KONTRAKT: ta sama regula co przy pojedynczym agregacie — brak
+      // `projectId` znaczy „niewidoczna", nie „widoczna dla wszystkich".
+      const projectIdOf = (entry: { initiative: { projectId?: string | null } }) =>
+        typeof entry.initiative.projectId === 'string' && entry.initiative.projectId.trim()
+          ? entry.initiative.projectId
+          : null;
       const decisions = await authorizeProjectsMap(
         actor,
-        [...initiatives.values()].map((entry) => entry.initiative.projectId),
+        [...initiatives.values()]
+          .map((entry) => projectIdOf(entry))
+          .filter((projectId): projectId is string => projectId !== null),
         'initiative.view'
       );
       const visible = cases
         .map((item) => ({ item, initiative: initiatives.get(item.initiativeId) }))
-        .filter(
-          (entry) =>
-            entry.initiative && decisions.get(entry.initiative.initiative.projectId) === true
-        )
+        .filter((entry) => {
+          if (!entry.initiative) return false;
+          const projectId = projectIdOf(entry.initiative);
+          return projectId !== null && decisions.get(projectId) === true;
+        })
         // EXE-1 (G14 05-08, 2026-09-03): the "Wybierz realizację" dropdown
         // (ExecutionReportsSurface.tsx) used to render the raw
         // executionCaseId — the initiative name was already loaded here
