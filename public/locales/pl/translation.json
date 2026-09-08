@@ -11758,8 +11758,8 @@
       "label": "Zakres",
       "active": "Aktywne",
       "all": "Wszystkie",
-      "activeHint": "Przegląd → Promowana → Planowanie → Zatwierdzona → Zaplanowana",
-      "allHint": "Pełny cykl życia z uwzględnieniem statusów: Szkic, W realizacji, Zablokowana, Zakończona, Zarchiwizowana..."
+      "activeHint": "Szkic → Do zatwierdzenia → Zatwierdzona → W realizacji",
+      "allHint": "Pełny cykl życia z uwzględnieniem statusów: Szkic, Do zatwierdzenia, Zatwierdzona, W realizacji, Wstrzymana, Zamknięta, Odrzucona"
     },
     "charter": {
       "short": "Karta"
