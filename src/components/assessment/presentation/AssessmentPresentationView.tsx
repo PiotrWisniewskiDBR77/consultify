@@ -36,6 +36,7 @@ import { extractUnknownReasonBreakdown, isPlausibleRawOutput, toAssessmentOutput
 import { PresentationDeck } from './PresentationDeck';
 import type { RawAssessmentOutputRecord } from './rawOutputTypes';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '@/utils/listDateFormat';
 
 export type PresentationFetchResult = { readonly output: RawAssessmentOutputRecord };
 
@@ -96,7 +97,10 @@ function StateScreen({ children }: { children: React.ReactNode }): React.ReactEl
 export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProps> = ({
   outputId,
   narrative,
-  locale = 'pl',
+  // Locale dat SLAJDÓW szedł domyślnie na 'pl' — angielska prezentacja
+  // drukowała „5 września 2026". Domyślny locale bierzemy z języka konta
+  // (wspólny `localeListy()`), a jawnie podany prop nadal wygrywa.
+  locale = localeListy(),
   fetchOutput = defaultFetchOutput,
   fetchLegacyOutput = fetchOutputForReport,
 }) => {

@@ -78,6 +78,7 @@
  */
 import { compileDrdPack, DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import i18n from 'i18next';
 
 export interface DrdUnitLabel {
   readonly unitId: string;
@@ -109,6 +110,40 @@ function getCompiledDrdPack(): ReturnType<typeof compileDrdPack>['pack'] | null 
 const AXIS_NAME_BY_ID: Record<string, string> = Object.fromEntries(
   DRD_STRUCTURE.map((axis) => [`axis-${axis.id}`, axis.namePL || axis.name])
 );
+
+/**
+ * Nazwa osi/obszaru W JĘZYKU INTERFEJSU.
+ *
+ * `DRD_STRUCTURE` niesie oba warianty (`name` po angielsku, `namePL` po
+ * polsku), a rozsiany po module wzorzec `namePL || name` dawał POLSKĄ nazwę
+ * także użytkownikowi EN — zmierzone na zrzucie raportu z zamrożonego Outputu
+ * przy koncie `language='en'`: „Procesy Sprzedaży", „Cyberbezpieczeństwo",
+ * „Dojrzałość AI" w angielskim dokumencie dla zarządu (program spójności
+ * językowej, docs/program/JEZYK_EN_PL_20260908/PLAN.md §2.1).
+ *
+ * Świadomie `i18next`, a NIE `@/i18n`: ten drugi jest modułem inicjalizującym
+ * (backend HTTP, detektor) i wciągałby to wszystko do każdego testu, który
+ * mockuje `react-i18next` — dokładnie ten sam powód, dla którego robi tak
+ * `src/utils/listDateFormat.ts`.
+ */
+/** Czy interfejs jest w tej chwili po polsku. */
+function interfejsPoPolsku(): boolean {
+  return String(i18n.language || '').toLowerCase().startsWith('pl');
+}
+
+/**
+ * Nazwa osi po identyfikatorze grupy (`axis-N`), w języku interfejsu.
+ * Korzysta z ISTNIEJĄCYCH słowników (`AXIS_NAME_BY_ID` / `AXIS_NAME_EN_BY_ID`)
+ * — żadnej trzeciej kopii struktury.
+ */
+function nazwaOsiZId(axisId: string): string {
+  const slownik = interfejsPoPolsku() ? AXIS_NAME_BY_ID : AXIS_NAME_EN_BY_ID;
+  return slownik[axisId] ?? AXIS_NAME_BY_ID[axisId] ?? axisId;
+}
+
+function nazwaOsiWJezyku(namePL: string | undefined, name: string): string {
+  return interfejsPoPolsku() ? namePL || name : name || namePL;
+}
 
 /**
  * Axis id -> ENGLISH axis name, same source (`DRD_STRUCTURE.name`), no
@@ -158,7 +193,7 @@ export function resolveDrdUnitLabel(
     unitId: unit.unitId,
     unitName: unit.name,
     axisId: unit.parentId,
-    axisName: AXIS_NAME_BY_ID[unit.parentId] ?? unit.parentId,
+    axisName: nazwaOsiZId(unit.parentId),
     order: unit.order,
     levelScale: unit.levelScale,
   };
@@ -181,7 +216,10 @@ export function resolveDrdAxisName(
   methodPackId: string,
   methodPackVersion: string,
   axisGroupId: string,
-  language: DrdSourceLanguage = 'pl'
+  // Domyślnie JĘZYK INTERFEJSU, nie przybite 'pl': ten domyślny parametr
+  // sprawiał, że „Wynik per wymiar (oś)" drukował polskie nazwy osi także
+  // w angielskim raporcie (zmierzone na zrzucie EN, program J5).
+  language: DrdSourceLanguage = interfejsPoPolsku() ? 'pl' : 'en'
 ): string | null {
   if (methodPackId !== DRD_METHOD_PACK_ID) return null;
   const pack = getCompiledDrdPack();
@@ -276,11 +314,11 @@ export function listDrdAxisNarratives(
   return DRD_STRUCTURE.map((axis) => ({
     axisId: `axis-${axis.id}`,
     axisNumber: axis.id,
-    axisName: axis.namePL || axis.name,
+    axisName: nazwaOsiWJezyku(axis.namePL, axis.name),
     description: axis.description ?? null,
     descriptionLanguage: PL_DIACRITICS.test(axis.description ?? '') ? 'pl' : 'en',
     levelCount: axis.levelCount,
-    areas: axis.areas.map((a) => ({ id: a.id, name: a.namePL || a.name })),
+    areas: axis.areas.map((a) => ({ id: a.id, name: nazwaOsiWJezyku(a.namePL, a.name) })),
     levelLanguage: levelCorpusLanguage(axis),
     sharedLevelLadder: sharedLevelLadderOf(axis),
   }));

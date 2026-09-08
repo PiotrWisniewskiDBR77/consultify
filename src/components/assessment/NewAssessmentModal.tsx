@@ -46,6 +46,8 @@ type FrameworkCardMeta = {
   name: string;
   shortName: string;
   description: string;
+  /** Klucz i18n opisu; `description` jest angielskim defaultem (PLAN.md §2.3). */
+  descriptionKey: string;
   icon: React.ReactNode;
   gradient: string;
   border: string;
@@ -59,6 +61,7 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       value: 'DRD',
       name: 'Digital Readiness Diagnosis',
       shortName: 'DRD',
+      descriptionKey: 'assessment.frameworks.drd.description',
       description:
         'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
       icon: <Activity size={20} />,
@@ -70,6 +73,7 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       value: 'SIRI',
       name: 'Smart Industry Readiness Index',
       shortName: 'SIRI',
+      descriptionKey: 'assessment.frameworks.siri.description',
       description:
         'Industry 4.0 readiness framework focusing on process, technology and organization',
       icon: <Cpu size={20} />,
@@ -81,6 +85,7 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       value: 'ADMA',
       name: 'Advanced Digital Maturity Assessment',
       shortName: 'ADMA',
+      descriptionKey: 'assessment.frameworks.adma.description',
       description: 'Advanced assessment model for digital transformation capabilities',
       icon: <Database size={20} />,
       gradient: 'from-blue-500/20 to-blue-600/10',
@@ -91,6 +96,7 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       value: 'CMMI',
       name: 'Capability Maturity Model Integration',
       shortName: 'CMMI',
+      descriptionKey: 'assessment.frameworks.cmmi.description',
       description: 'Process improvement framework for software and product development',
       icon: <Layers size={20} />,
       gradient: 'from-amber-500/20 to-amber-600/10',
@@ -101,6 +107,7 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       value: 'LEAN',
       name: 'Lean 4.0',
       shortName: 'LEAN',
+      descriptionKey: 'assessment.frameworks.lean.description',
       description: 'Lean manufacturing principles integrated with Industry 4.0 technologies',
       icon: <Workflow size={20} />,
       gradient: 'from-green-500/20 to-green-600/10',
@@ -329,12 +336,16 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div>
             <h2 id="modal-title" className="text-lg font-semibold text-c-text">
-              {step === 1 ? 'Select Framework' : 'New Assessment'}
+              {step === 1
+                ? t('assessment.newModal.selectFramework', 'Select framework')
+                : t('assessment.newModal.newAssessment', 'New assessment')}
             </h2>
             <p className="text-sm text-c-text-secondary mt-0.5">
               {step === 1
-                ? 'Choose an assessment framework to get started'
-                : `Creating ${selectedFrameworkData?.shortName} assessment`}
+                ? t('assessment.newModal.selectFrameworkHint', 'Choose an assessment framework to get started')
+                : t('assessment.newModal.creating', 'Creating {{framework}} assessment', {
+                    framework: selectedFrameworkData?.shortName ?? '',
+                  })}
             </p>
           </div>
           <button
@@ -391,7 +402,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                       )}
                     </div>
                     <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">
-                      {framework.description}
+                      {t(framework.descriptionKey, framework.description)}
                     </p>
                   </div>
                   <svg

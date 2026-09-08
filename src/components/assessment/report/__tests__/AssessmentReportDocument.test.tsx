@@ -157,7 +157,7 @@ describe('AssessmentReportDocument', () => {
   // sections down already resolves to full Polish names. Proves the fix and
   // its honest degrade path (unknown pack/version still falls back to the
   // raw id, never a guess).
-  it('resolves aggregation.byGroup axis keys to Polish axis names, not raw axis-N codes', () => {
+  it('resolves aggregation.byGroup axis keys to real axis names in the UI language, not raw axis-N codes', () => {
     const data = buildData({
       aggregation: {
         byGroup: { 'axis-1': 5.0, 'axis-2': null },
@@ -173,8 +173,8 @@ describe('AssessmentReportDocument', () => {
     // consistently in both places, not a collision.
     const overallSection = container.querySelector('#overall') as HTMLElement;
     expect(overallSection).toBeTruthy();
-    expect(within(overallSection).getByText('Procesy Cyfrowe')).toBeInTheDocument();
-    expect(within(overallSection).getByText('Produkty Cyfrowe')).toBeInTheDocument();
+    expect(within(overallSection).getByText('Digital Processes')).toBeInTheDocument();
+    expect(within(overallSection).getByText('Digital Products')).toBeInTheDocument();
     expect(within(overallSection).queryByText('axis-1')).not.toBeInTheDocument();
     expect(within(overallSection).queryByText('axis-2')).not.toBeInTheDocument();
   });
@@ -241,14 +241,18 @@ describe('AssessmentReportDocument', () => {
 
   it('drukuje rozdział KAŻDEJ z siedmiu osi — także tych nieobjętych oceną', () => {
     render(<AssessmentReportDocument data={buildData()} />);
+    // Nazwy osi idą teraz ZA JĘZYKIEM INTERFEJSU (`drdLabels`): atrapa
+    // `react-i18next` w tests/setup.ts raportuje `en`, więc dokument drukuje
+    // angielskie warianty z `DRD_STRUCTURE.name`. Polskie warianty widzi
+    // konto `language='pl'` — dowód wizualny w `evidence/jezyk-j5/`.
     for (const [nr, nazwa] of [
-      [1, 'Procesy Cyfrowe'],
-      [2, 'Produkty Cyfrowe'],
-      [3, 'Cyfrowe Modele Biznesowe'],
-      [4, 'Zarządzanie Danymi'],
-      [5, 'Kultura Transformacji'],
-      [6, 'Cyberbezpieczeństwo'],
-      [7, 'Dojrzałość AI'],
+      [1, 'Digital Processes'],
+      [2, 'Digital Products'],
+      [3, 'Digital Business Models'],
+      [4, 'Data Management'],
+      [5, 'Culture of Transformation'],
+      [6, 'Cybersecurity'],
+      [7, 'AI Maturity'],
     ] as const) {
       expect(screen.getByRole('heading', { name: `${nr}. ${nazwa}` })).toBeTruthy();
     }

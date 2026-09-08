@@ -8094,7 +8094,11 @@
       "descriptionPlaceholder": "Opisz zakres i cele tej oceny…",
       "descriptionHint": "Opcjonalny kontekst dla tej oceny",
       "canonicalLabel": "Kanoniczna etykieta sesji zostanie nadana z identyfikatora Method Core.",
-      "back": "Wstecz"
+      "back": "Wstecz",
+      "selectFramework": "Wybierz model",
+      "newAssessment": "Nowa ocena",
+      "selectFrameworkHint": "Wybierz model oceny, aby zacząć",
+      "creating": "Tworzenie oceny {{framework}}"
     },
     "notes": "Notatki",
     "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
@@ -9887,6 +9891,23 @@
       "attachContextHint": "Zapisze to odniesienie i ostatnie wiadomości w kontekście oceny.",
       "loadingShort": "Wczytywanie…",
       "saveBeforeExit": "Czy zapisać zmiany przed wyjściem?"
+    },
+    "frameworks": {
+      "drd": {
+        "description": "Kompleksowa diagnoza dojrzałości cyfrowej w 7 osiach transformacji (39 obszarów)"
+      },
+      "siri": {
+        "description": "Model gotowości Przemysłu 4.0 skupiony na procesie, technologii i organizacji"
+      },
+      "adma": {
+        "description": "Zaawansowany model oceny zdolności do transformacji cyfrowej"
+      },
+      "cmmi": {
+        "description": "Model doskonalenia procesów wytwarzania oprogramowania i produktów"
+      },
+      "lean": {
+        "description": "Zasady Lean w produkcji połączone z technologiami Przemysłu 4.0"
+      }
     }
   },
   "initiatives": {

@@ -8706,7 +8706,11 @@
       "descriptionPlaceholder": "Describe the scope and objectives of this assessment…",
       "descriptionHint": "Optional context for this assessment",
       "canonicalLabel": "The canonical session label will be assigned from its Method Core identifier.",
-      "back": "Back"
+      "back": "Back",
+      "selectFramework": "Select framework",
+      "newAssessment": "New assessment",
+      "selectFrameworkHint": "Choose an assessment framework to get started",
+      "creating": "Creating {{framework}} assessment"
     },
     "notes": "Notes",
     "notesPlaceholder": "Key observations, context, rationale for the score...",
@@ -10483,6 +10487,23 @@
       "attachContextHint": "This will store a reference + the last messages in the assessment context.",
       "loadingShort": "Loading…",
       "saveBeforeExit": "Do you want to save your changes before exiting?"
+    },
+    "frameworks": {
+      "drd": {
+        "description": "Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)"
+      },
+      "siri": {
+        "description": "Industry 4.0 readiness framework focusing on process, technology and organization"
+      },
+      "adma": {
+        "description": "Advanced assessment model for digital transformation capabilities"
+      },
+      "cmmi": {
+        "description": "Process improvement framework for software and product development"
+      },
+      "lean": {
+        "description": "Lean manufacturing principles integrated with Industry 4.0 technologies"
+      }
     }
   },
   "initiatives": {
