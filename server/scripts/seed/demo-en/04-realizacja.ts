@@ -1406,7 +1406,7 @@ async function main(): Promise<void> {
   const wspolne = czytajWspolneArgumenty(process.argv.slice(2));
   const opcje = czytajOpcjeD4(process.argv.slice(2), wspolne.hasloPlik);
   const url = wymaganyUrl();
-  const cel = sprawdzCel(url, wspolne.oczekiwanyHost);
+  const cel = sprawdzCel(url, wspolne.oczekiwanyHost, wspolne.celZdalny);
 
   const pool = otworzPool(url);
   const c = await pool.connect();

@@ -101,12 +101,62 @@ export function tozsamosc(url: string): string {
  */
 export const WZORZEC_BAZY_KOPII = /^consultify_kopia_d[0-9]+$/i;
 
-export function sprawdzCel(url: string, oczekiwanyHost: string): string {
+/**
+ * TRYB ZDALNY (paczka D8) — jedyna droga, którą seed wolno wycelować poza
+ * lokalną kopię. Domyślnie `null` = zachowanie z D1-D7 (tylko
+ * `consultify_kopia_d<N>` na localhoście).
+ */
+export type CelZdalny = { cel: 'staging' } | null;
+
+/** Fragment hosta, który MUSI wystąpić, żeby cel zdalny został uznany za staging. */
+export const HOST_STAGINGU = 'thomas';
+
+/**
+ * Buduje cel zdalny z argumentów i środowiska. Wymaga JEDNOCZEŚNIE trzech
+ * rzeczy (brak którejkolwiek = odmowa, nigdy „ciche przepuszczenie"):
+ *   1. `--cel-zdalny staging` — inna wartość jest odrzucana wprost,
+ *   2. `ALLOW_STAGING_SEED=1` w środowisku,
+ *   3. `--rozumiem-staging` — świadome potwierdzenie operatora.
+ * Bez `--cel-zdalny` zwraca `null` (tryb lokalny, bez żadnej zmiany zachowania).
+ */
+export function zbudujCelZdalny(argv: string[], env: Record<string, string | undefined> = process.env): CelZdalny {
+  const indeks = argv.findIndex((a) => a === '--cel-zdalny' || a.startsWith('--cel-zdalny='));
+  if (indeks === -1) return null;
+  const arg = argv[indeks]!;
+  const wartosc = arg.includes('=') ? arg.split('=').slice(1).join('=') : (argv[indeks + 1] ?? '');
+  if (wartosc !== 'staging')
+    throw new Error(
+      `Odmowa: --cel-zdalny przyjmuje WYŁĄCZNIE „staging" (dostał „${wartosc}"). Demo (trolley) i produkcja (centerbeam) NIE MAJĄ trybu zdalnego. STOP.`
+    );
+  if (env.ALLOW_STAGING_SEED !== '1')
+    throw new Error('Odmowa: --cel-zdalny staging wymaga zmiennej środowiskowej ALLOW_STAGING_SEED=1. STOP.');
+  if (!argv.includes('--rozumiem-staging'))
+    throw new Error('Odmowa: --cel-zdalny staging wymaga jawnego potwierdzenia --rozumiem-staging. STOP.');
+  return { cel: 'staging' };
+}
+
+export function sprawdzCel(url: string, oczekiwanyHost: string, celZdalny: CelZdalny = null): string {
   const toz = tozsamosc(url);
   if (/centerbeam/i.test(toz)) throw new Error('Cel wskazuje PRODUKCJĘ (centerbeam). STOP.');
-  if (/trolley|thomas/i.test(toz))
-    throw new Error('Cel wskazuje demo/staging (trolley/thomas). Paczki D1-D6 działają WYŁĄCZNIE na kopii lokalnej. STOP.');
   const host = toz.split('/')[0]!;
+
+  if (celZdalny !== null) {
+    // TRYB ZDALNY — dopuszczony WYŁĄCZNIE staging (host zawiera „thomas").
+    if (/trolley/i.test(toz))
+      throw new Error('Cel wskazuje DEMO (trolley). Tryb --cel-zdalny staging dopuszcza WYŁĄCZNIE staging. STOP.');
+    if (!new RegExp(HOST_STAGINGU, 'i').test(host))
+      throw new Error(
+        `Cel zdalny NIE jest stagingiem — host nie zawiera „${HOST_STAGINGU}" (host nie jest pokazywany). Tryb zdalny nie dopuszcza żadnego innego celu. STOP.`
+      );
+    if (!host.includes(oczekiwanyHost))
+      throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
+    return toz;
+  }
+
+  if (/trolley|thomas/i.test(toz))
+    throw new Error(
+      'Cel wskazuje demo/staging (trolley/thomas). Bez --cel-zdalny staging paczki działają WYŁĄCZNIE na kopii lokalnej. STOP.'
+    );
   if (!host.includes(oczekiwanyHost))
     throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
   const nazwaBazy = toz.split('/').slice(1).join('/');
@@ -127,6 +177,8 @@ export type WspolneOpcje = {
   oczekiwanyHost: string;
   resetujHasla: boolean;
   hasloPlik: string;
+  /** `null` = tryb lokalny (D1-D7). `{cel:'staging'}` = D8, wyłącznie po trzech warunkach. */
+  celZdalny: CelZdalny;
 };
 
 const HASLO_PLIK_DOMYSLNY = '/private/tmp/dane-pokazowe-en/northwind-konta.txt';
@@ -158,7 +210,7 @@ export function czytajWspolneArgumenty(argv: string[]): WspolneOpcje {
   if (hasloPlik && !hasloPlik.startsWith('/'))
     throw new Error('--haslo-plik musi być ścieżką bezwzględną poza repozytorium.');
 
-  return { tryb, oczekiwanyHost, resetujHasla, hasloPlik };
+  return { tryb, oczekiwanyHost, resetujHasla, hasloPlik, celZdalny: zbudujCelZdalny(argv) };
 }
 
 export function losoweHaslo(): string {

@@ -179,6 +179,42 @@ const PROFIL = {
   currency: 'GBP',
 };
 
+/**
+ * FLAGI V8 ORGANIZACJI — bez nich cała powierzchnia `/api/v8/*` zwraca 404
+ * `V8_ORG_DISABLED` dla nowej organizacji NA PRODUKCYJNYM `NODE_ENV`.
+ *
+ * ZMIERZONE w D8 na stagingu (nie w planie): `v8FeatureGate.middleware.ts:7`
+ * `allowImplicitOrgRowsFallback()` = `NODE_ENV !== 'production'`. Lokalne
+ * stanowisko dowodowe D1-D7 chodzi na `NODE_ENV=development`, więc organizacja
+ * BEZ ani jednego wiersza w `v8.v8_feature_flags` była tam cicho przepuszczana.
+ * Staging i demo chodzą na `NODE_ENV=production` — tam brak wierszy = 404, co
+ * wywróciło rejestrację budżetu w paczce D5 (`POST /api/v8/finance/budgets`).
+ *
+ * Wartości = LUSTRO organizacji referencyjnej stagingu (DBR77): każdy moduł
+ * poza `finance` i `shadow_mode` włączony. `v8OrgGate` sprawdza „którykolwiek
+ * moduł włączony", nie moduł per trasa (`featureFlagService.ts:isV8Enabled`),
+ * więc `finance=0` NIE blokuje tras finansowych — trzymamy się konfiguracji,
+ * która na stagingu jest sprawdzona, zamiast wymyślać własną.
+ *
+ * Kształt wiersza jest DOKŁADNIE taki, jaki pisze kanoniczny pisarz
+ * `setV8OrgFlag()` (`server/src/services/v8/featureFlagService.ts:160`):
+ * `flag_id = "<orgId>:<module>"`, `enabled` 0/1, `updated_at` ISO.
+ * Trasą API tego zrobić się NIE DA — `PUT /api/v8/admin/feature-flags/:module`
+ * wymaga SUPERADMINA (`feature-flags.routes.ts:34`), którego seed nie ma i
+ * którego wymuszanie zmieniałoby trwale rolę cudzego konta.
+ */
+const FLAGI_V8: Array<{ modul: string; wlaczony: boolean }> = [
+  { modul: 'ai_core', wlaczony: true },
+  { modul: 'chat', wlaczony: true },
+  { modul: 'finance', wlaczony: false },
+  { modul: 'lifecycle', wlaczony: true },
+  { modul: 'multiplayer', wlaczony: true },
+  { modul: 'outputs', wlaczony: true },
+  { modul: 'pm_sync', wlaczony: true },
+  { modul: 'results', wlaczony: true },
+  { modul: 'workspace', wlaczony: true },
+];
+
 // ============================================================================
 // Plan
 // ============================================================================
@@ -192,7 +228,21 @@ type Plan = {
   zespoly: Array<{ slug: string; akcja: StanElementu }>;
   czlonkowieZespolow: Array<{ zespolSlug: string; osobaSlug: string; akcja: StanElementu }>;
   projekty: Array<{ slug: string; akcja: StanElementu }>;
+  flagiV8: Array<{ modul: string; akcja: StanElementu }>;
 };
+
+/**
+ * Tabela flag V8: kanoniczna jest `v8.v8_feature_flags`, ale
+ * `featureFlagService.ts` ma udokumentowany fallback na `public.v8_feature_flags`
+ * tam, gdzie schemat `v8` nie istnieje. Powtarzamy dokładnie ten wybór, żeby
+ * seed nie wywrócił się na bazie bez schematu `v8`.
+ */
+async function tabelaFlagV8(c: PoolClient): Promise<string> {
+  const r = await c.query<{ n: number }>(
+    "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'v8' AND table_name = 'v8_feature_flags'"
+  );
+  return Number(r.rows[0]?.n ?? 0) > 0 ? 'v8.v8_feature_flags' : 'v8_feature_flags';
+}
 
 async function zbudujPlan(c: PoolClient, resetujHasla: boolean): Promise<Plan> {
   const plan: Plan = {
@@ -203,6 +253,7 @@ async function zbudujPlan(c: PoolClient, resetujHasla: boolean): Promise<Plan> {
     zespoly: [],
     czlonkowieZespolow: [],
     projekty: [],
+    flagiV8: [],
   };
 
   // --- Organizacja -----------------------------------------------------------
@@ -356,6 +407,19 @@ async function zbudujPlan(c: PoolClient, resetujHasla: boolean): Promise<Plan> {
     }
   }
 
+  // --- flagi V8 organizacji -------------------------------------------------------
+  const flagi = await c.query<{ module: string; enabled: number }>(
+    `SELECT module, enabled FROM ${await tabelaFlagV8(c)} WHERE organization_id = $1`,
+    [ORG_ID]
+  );
+  for (const f of FLAGI_V8) {
+    const wiersz = flagi.rows.find((r) => r.module === f.modul);
+    plan.flagiV8.push({
+      modul: f.modul,
+      akcja: !wiersz ? 'utworzy' : Number(wiersz.enabled) === (f.wlaczony ? 1 : 0) ? 'bez zmian' : 'zaktualizuje',
+    });
+  }
+
   return plan;
 }
 
@@ -367,7 +431,8 @@ function liczOgolem(plan: Plan) {
     plan.czlonkostwa.filter((m) => m.akcja !== 'bez zmian').length +
     plan.zespoly.filter((z) => z.akcja !== 'bez zmian').length +
     plan.czlonkowieZespolow.filter((m) => m.akcja !== 'bez zmian').length +
-    plan.projekty.filter((p) => p.akcja !== 'bez zmian').length
+    plan.projekty.filter((p) => p.akcja !== 'bez zmian').length +
+    plan.flagiV8.filter((f) => f.akcja !== 'bez zmian').length
   );
 }
 
@@ -590,6 +655,25 @@ async function zapisz(c: PoolClient, plan: Plan, resetujHasla: boolean, hasloPli
       else lic.zmien();
     }
 
+    // --- flagi V8 organizacji ---------------------------------------------------
+    const tabelaFlag = await tabelaFlagV8(c);
+    for (const f of FLAGI_V8) {
+      const stan = plan.flagiV8.find((x) => x.modul === f.modul)!.akcja;
+      if (stan === 'bez zmian') {
+        lic.pomin();
+        continue;
+      }
+      await c.query(
+        `INSERT INTO ${tabelaFlag} (flag_id, organization_id, module, enabled, updated_at, updated_by)
+         VALUES ($1, $2, $3, $4, $5, NULL)
+         ON CONFLICT (organization_id, module)
+         DO UPDATE SET enabled = EXCLUDED.enabled, updated_at = EXCLUDED.updated_at`,
+        [`${ORG_ID}:${f.modul}`, ORG_ID, f.modul, f.wlaczony ? 1 : 0, new Date().toISOString()]
+      );
+      if (stan === 'utworzy') lic.utworz();
+      else lic.zmien();
+    }
+
     await c.query('COMMIT');
   } catch (e) {
     await c.query('ROLLBACK');
@@ -626,6 +710,7 @@ async function reset(c: PoolClient): Promise<void> {
     // i team_members), na końcu organizację (kaskadowo zabiera teams, projects, organization_profiles).
     await c.query('UPDATE organizations SET owner_id = NULL WHERE id = $1', [ORG_ID]);
     const usunieciUzytkownicy = (await c.query('DELETE FROM users WHERE organization_id = $1', [ORG_ID])).rowCount ?? 0;
+    await c.query(`DELETE FROM ${await tabelaFlagV8(c)} WHERE organization_id = $1`, [ORG_ID]);
     await c.query('DELETE FROM organizations WHERE id = $1', [ORG_ID]);
     await c.query('COMMIT');
     console.log(`[rdzen] reset: usunięto organizację "northwind" + ${usunieciUzytkownicy} kont (kaskada: członkostwa, zespoły, projekty, profil).`);
@@ -646,7 +731,7 @@ async function main() {
   for (const o of OSOBY) sprawdzRoleSlownika(o.rola, `osoba ${o.slug}`);
 
   const url = wymaganyUrl();
-  const toz = sprawdzCel(url, opcje.oczekiwanyHost);
+  const toz = sprawdzCel(url, opcje.oczekiwanyHost, opcje.celZdalny);
   const pool = otworzPool(url);
   const c = await pool.connect();
 
@@ -671,6 +756,7 @@ async function main() {
     for (const z of plan.zespoly) console.log(`zespół       ${z.slug.padEnd(34)} ${z.akcja}`);
     for (const m of plan.czlonkowieZespolow) console.log(`zesp.członek ${(m.zespolSlug + '/' + m.osobaSlug).padEnd(34)} ${m.akcja}`);
     for (const p of plan.projekty) console.log(`projekt      ${p.slug.padEnd(34)} ${p.akcja}`);
+    for (const f of plan.flagiV8) console.log(`flaga V8     ${f.modul.padEnd(34)} ${f.akcja}`);
 
     if (konflikty.length > 0) {
       console.error(`\n[rdzen] KONFLIKTY: ${konflikty.length}. Nic nie zapisano.`);
@@ -680,7 +766,7 @@ async function main() {
 
     if (opcje.tryb === 'dry-run') {
       const doZmiany = liczOgolem(plan);
-      console.log(`\n[rdzen] dry-run: plan obejmuje 1 organizację + profil + 9 osób + 9 członkostw + 2 zespoły + ${ZESPOLY.reduce((n, z) => n + z.czlonkowieSlugi.length, 0)} członków zespołów + 2 projekty. ${doZmiany} rzeczy do zmiany. Nic nie zapisano.`);
+      console.log(`\n[rdzen] dry-run: plan obejmuje 1 organizację + profil + 9 osób + 9 członkostw + 2 zespoły + ${ZESPOLY.reduce((n, z) => n + z.czlonkowieSlugi.length, 0)} członków zespołów + 2 projekty + ${FLAGI_V8.length} flag V8. ${doZmiany} rzeczy do zmiany. Nic nie zapisano.`);
       return;
     }
 

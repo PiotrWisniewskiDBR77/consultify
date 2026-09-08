@@ -1795,7 +1795,7 @@ async function main() {
       : { apiUrl: null, email: '', emailZatwierdzajacy: '', haslo: null };
 
   const url = wymaganyUrl();
-  const toz = sprawdzCel(url, opcje.oczekiwanyHost);
+  const toz = sprawdzCel(url, opcje.oczekiwanyHost, opcje.celZdalny);
   const pool = otworzPool(url);
   const c = await pool.connect();
 
