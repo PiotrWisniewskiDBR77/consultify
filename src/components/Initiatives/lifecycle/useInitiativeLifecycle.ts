@@ -85,7 +85,7 @@ export function useInitiativeLifecycle(
       setLoadError(
         t(
           'initiatives.lifecycle.preflightFailed',
-          'Nie udało się sprawdzić dostępnych działań dla tej inicjatywy.'
+          'Could not check the available actions for this initiative.'
         )
       );
     } finally {
@@ -142,7 +142,7 @@ export function useInitiativeLifecycle(
 
   const run = useCallback(
     async (action: InitiativeLifecycleAction, reason?: string): Promise<string | null> => {
-      if (!initiativeId) return t('initiatives.lifecycle.noInitiative', 'Brak inicjatywy.');
+      if (!initiativeId) return t('initiatives.lifecycle.noInitiative', 'No initiative.');
       if (action.disabled) return action.disabledReason;
       if (action.requiresReason && !String(reason || '').trim()) {
         return initiativeRuleMessage('REASON_REQUIRED', t);

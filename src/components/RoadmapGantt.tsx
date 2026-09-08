@@ -496,14 +496,14 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         toast(
           t(
             'roadmap.toast.clickToCreateDependency',
-            'Kliknij inną inicjatywę, aby utworzyć zależność'
+            'Click another initiative to create a dependency'
           ),
           { icon: '🔗' }
         );
       } else if (linkingFrom !== initiativeId) {
         onCreateDependency?.(linkingFrom, initiativeId, 'FINISH_TO_START');
         setLinkingFrom(null);
-        toast.success(t('roadmap.toast.dependencyCreated', 'Zależność utworzona'));
+        toast.success(t('roadmap.toast.dependencyCreated', 'Dependency created'));
       } else {
         setLinkingFrom(null);
       }

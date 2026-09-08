@@ -47,12 +47,12 @@ export const InitiativeReasonDialog: React.FC<InitiativeReasonDialogProps> = ({
       destructive={destructive}
       busy={busy}
       testIdPrefix="initiative-reason"
-      label={t('initiatives.lifecycle.reasonLabel', 'Powód (wymagany)')}
+      label={t('initiatives.lifecycle.reasonLabel', 'Reason (required)')}
       placeholder={t(
         'initiatives.lifecycle.reasonPlaceholder',
-        'Napisz, dlaczego podejmujesz tę decyzję — trafi do historii inicjatywy.'
+        'Explain why you are making this decision — it goes into the initiative history.'
       )}
-      hint={t('initiatives.lifecycle.reasonHint', 'Bez powodu ta operacja nie zostanie zapisana.')}
+      hint={t('initiatives.lifecycle.reasonHint', 'Without a reason this operation will not be saved.')}
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

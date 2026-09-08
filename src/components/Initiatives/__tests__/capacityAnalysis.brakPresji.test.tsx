@@ -23,11 +23,13 @@ const scenario = {
 };
 
 describe('P11 — brak presji', () => {
-  it('pokazuje polski komunikat zamiast pustego ekranu lub błędu', () => {
+  it('pokazuje komunikat zamiast pustego ekranu lub błędu', () => {
     render(<CapacityAnalysisCard noPressure onBack={() => undefined} onAnalyze={() => undefined} onPublish={() => undefined} scenario={scenario} />);
     // P15-K5: komunikat przeszedl na klucz i18n `initiatives.capacityAdvisor.noPressure`
-    // (wymog pl+en); w tescie bez zaladowanych zasobow renderuje sie wartosc domyslna.
-    expect(screen.getByRole('status')).toHaveTextContent(/Brak przeciążeń do rozwiązania/);
+    // (wymog pl+en); w tescie bez zaladowanych zasobow renderuje sie wartosc domyslna, ktora
+    // od [ODMROZENIE 05_INITIATIVES DEC-453] jest po angielsku (reguly J6 §2.3 — default t()
+    // zawsze EN, polski tekst zyje wylacznie w public/locales/pl/translation.json).
+    expect(screen.getByRole('status')).toHaveTextContent(/No overload — there is nothing to resolve/);
   });
 });
 
@@ -121,8 +123,9 @@ describe('P15-K5 — arkusz okres x rola w karcie', () => {
     expect(screen.getAllByText('Controls Engineer').length).toBeGreaterThanOrEqual(1);
     // Luka roli ujemna; separator dziesietny zalezy od jezyka i18n w tescie.
     expect(screen.getByText(/^-2[.,]5$/)).toBeInTheDocument();
-    // Rola bez ani jednej osoby: „Nieznane", nigdy zero.
-    expect(screen.getAllByText('Nieznane').length).toBeGreaterThanOrEqual(1);
+    // Rola bez ani jednej osoby: „Unknown" (default t() po angielsku od
+    // [ODMROZENIE 05_INITIATIVES DEC-453]), nigdy zero.
+    expect(screen.getAllByText('Unknown').length).toBeGreaterThanOrEqual(1);
   });
 });
 

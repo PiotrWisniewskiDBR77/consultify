@@ -108,7 +108,7 @@ export const variantDecisionNote = (
     return shiftPeriods === null
       ? i18n.t(
           'initiatives.capacityAnalysis.decision.resequenceUnknown',
-          'Przesuń kolejność — doradca nie wyliczył wykonalnego przesunięcia, plan bez zmian.'
+          'Resequence — the advisor found no feasible shift, the plan is unchanged.'
         )
       : i18n.t('initiatives.capacityAnalysis.decision.resequence', {
           defaultValue: 'Przesuń kolejność o {{periods}} okres(y) — propozycja do planu.',
@@ -121,7 +121,7 @@ export const variantDecisionNote = (
     );
   return i18n.t(
     'initiatives.capacityAnalysis.decision.addCapacity',
-    'Dołóż moce — decyzja zapisana, plan bez zmian.'
+    'Add capacity — decision recorded, the plan is unchanged.'
   );
 };
 const formatPeriodDate = (value: string) => {
@@ -1021,7 +1021,7 @@ export const CapacityScenarioSurface: React.FC<
     );
     const selectedAnalysis = visibleAnalyses.find((row) => row.id === selectedId) ?? null;
     return (
-      <section aria-label={t('initiatives.capacityAnalysis.listAria', 'Lista analiz obciążenia')} className="h-full min-h-0">
+      <section aria-label={t('initiatives.capacityAnalysis.listAria', 'Workload analyses list')} className="h-full min-h-0">
         <TableWithPreviewLayout<Row>
           selectedId={selectedId}
           selectedItem={selectedAnalysis}
@@ -1033,12 +1033,12 @@ export const CapacityScenarioSurface: React.FC<
           renderPreview={(row) => (
             <StandardPreview
               embedded title={row.title} onClose={() => setSelectedId(null)} onOpenFull={() => void open(row.id)}
-              meta={{ pills: [{ label: scenarioStateLabel(row.state) ?? t('common.unknown', 'Nieznane'), tone: 'neutral' }] }}
+              meta={{ pills: [{ label: scenarioStateLabel(row.state) ?? t('common.unknown', 'unknown'), tone: 'neutral' }] }}
               details={{ properties: [
-                { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Plan źródłowy'), value: row.plan },
+                { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Source plan'), value: row.plan },
                 { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), value: String(row.periods) },
                 { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), value: String(row.roles) },
-                { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), value: row.gaps ? String(row.gaps) : t('common.none', 'Brak') },
+                { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), value: row.gaps ? String(row.gaps) : t('common.none', 'none') },
               ] }}
             />
           )}
@@ -1046,11 +1046,11 @@ export const CapacityScenarioSurface: React.FC<
           <StandardTable
             columns={[
               { id: 'title', label: t('initiatives.capacityAnalysis.columns.name', 'Nazwa'), sortable: true },
-              { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Plan źródłowy'), sortable: true },
+              { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Source plan'), sortable: true },
               { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), sortable: true },
               { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), sortable: true },
-              { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), sortable: true, render: (row) => row.gaps ? row.gaps : t('common.none', 'Brak') },
-              { id: 'state', label: t('common.status', 'Status'), render: (row) => scenarioStateLabel(row.state) ?? t('common.unknown', 'Nieznane') },
+              { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), sortable: true, render: (row) => row.gaps ? row.gaps : t('common.none', 'none') },
+              { id: 'state', label: t('common.status', 'Status'), render: (row) => scenarioStateLabel(row.state) ?? t('common.unknown', 'unknown') },
               { id: 'updatedAt', label: t('initiatives.capacityAnalysis.columns.updatedAt', 'Zaktualizowano'), render: (row) => formatPeriodDate(row.updatedAt) },
             ]}
             data={visibleAnalyses}

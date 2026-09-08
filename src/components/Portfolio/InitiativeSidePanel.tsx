@@ -206,7 +206,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         setSelectedTask(null);
       } catch (error: any) {
         console.error('[InitiativeSidePanel] Failed to save task:', error);
-        toast.error(t('portfolio.toast.taskSaveError', 'Nie udało się zapisać zadania'));
+        toast.error(t('portfolio.toast.taskSaveError', 'Couldn\'t save the task'));
       }
     },
     [fetchTasks, t]
@@ -250,7 +250,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
     }
     if (!initiative.projectId) {
       toast.error(
-        t('portfolio.toast.projectRequired', 'Projekt jest wymagany do zgłoszenia decyzji')
+        t('portfolio.toast.projectRequired', 'A project is required to raise a decision')
       );
       return;
     }
@@ -275,7 +275,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       fetchDecisions();
     } catch (error: any) {
       console.error('[InitiativeSidePanel] Failed to create gate decision:', error);
-      toast.error(t('portfolio.toast.gateDecisionError', 'Nie udało się utworzyć decyzji bramki'));
+      toast.error(t('portfolio.toast.gateDecisionError', 'Couldn\'t create the gate decision'));
     } finally {
       setSubmittingGate(false);
     }

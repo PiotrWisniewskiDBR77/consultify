@@ -1334,7 +1334,7 @@ export const ResourcesSection: React.FC = () => {
         toast(
           t(
             'initiatives.resourcesSection.aiApplyLogFailed',
-            'Zasoby zostały dodane, ale nie zapisano wpisu w śladzie audytu. Powtórz operację, jeśli ten wpis jest potrzebny.'
+            'Resources were added, but the audit-trail entry was not saved. Repeat the action if you need that entry.'
           ),
           { icon: '⚠️' }
         );

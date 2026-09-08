@@ -162,7 +162,7 @@ describe('InitiativesHub smoke', () => {
     // DEC-420: moved from a standalone Menu 3 button into the "Więcej" kebab —
     // with the flag off, the kebab itself must not render.
     expect(screen.queryByTestId('initiatives-menu3-kebab')).not.toBeInTheDocument();
-    expect(screen.queryByText('Przejmij klasyczną inicjatywę')).not.toBeInTheDocument();
+    expect(screen.queryByText('Adopt classic initiative')).not.toBeInTheDocument();
   });
 
   it('confirms and calls the accepted-classic bridge when its flag is on', async () => {
@@ -181,7 +181,7 @@ describe('InitiativesHub smoke', () => {
     // DEC-420: the action now lives in the Menu 3 "Więcej" kebab — open it
     // before clicking the (Polish) menu item.
     fireEvent.click(await screen.findByTestId('initiatives-menu3-kebab'));
-    fireEvent.click(await screen.findByText('Przejmij klasyczną inicjatywę'));
+    fireEvent.click(await screen.findByText('Adopt classic initiative'));
 
     // DEC-397 (MVP fix 2026-09-05): InitiativesHub's fetchData now also
     // backfills legacy rows via `listLegacyInitiatives` (GET

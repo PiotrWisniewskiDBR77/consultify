@@ -9785,8 +9785,16 @@
       "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
       "resourceOwnerFallback": "Właściciel zasobów"
     },
-    "plan": "Plan działania",
+    "plan": {
+      "label": "Plan działania",
+      "portfolioFallback": "Portfel źródłowy",
+      "listAria": "Lista planów"
+    },
+    "sampleData": {
+      "message": "Ten rejestr pokazuje dane pokazowe, nie dane Twojej organizacji."
+    },
     "capacityAnalysis": {
+      "listAria": "Lista analiz obciążenia",
       "newAnalysis": "Nowa analiza",
       "unnamed": "Analiza bez nazwy",
       "sourcePlanFallback": "Plan źródłowy",

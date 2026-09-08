@@ -135,7 +135,7 @@ export function GeneratorPlanuModal({
           <button
             className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             onClick={onClose}
-            aria-label={t('common.close', 'Zamknij')}
+            aria-label={t('common.close', 'Close')}
           >
             <X size={18} />
           </button>
@@ -143,7 +143,7 @@ export function GeneratorPlanuModal({
         <div className="grid gap-3">
           <section className={stepClass}>
             <h3 className="font-semibold">
-              {t('initiatives.planGenerator.step1', '1. Źródło')}
+              {t('initiatives.planGenerator.step1', '1. Source')}
             </h3>
             <p className="text-sm text-c-text-muted">
               {t('initiatives.planGenerator.sourceApproved', {
@@ -164,7 +164,7 @@ export function GeneratorPlanuModal({
             </label>
           </section>
           <section className={stepClass}>
-            <h3 className="font-semibold">{t('initiatives.planGenerator.step2', '2. Wybór')}</h3>
+            <h3 className="font-semibold">{t('initiatives.planGenerator.step2', '2. Selection')}</h3>
             {visible.length ? (
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {visible.map((item) => (
@@ -197,7 +197,7 @@ export function GeneratorPlanuModal({
               <p className="mt-2 text-sm text-c-text-muted">
                 {t(
                   'initiatives.planGenerator.noneEligible',
-                  'Brak inicjatyw kwalifikujących się do planowania.'
+                  'No initiative qualifies for planning.'
                 )}
               </p>
             )}
@@ -208,13 +208,13 @@ export function GeneratorPlanuModal({
             </h3>
             <div className="mt-2 flex flex-wrap gap-3">
               <input
-                aria-label={t('initiatives.planGenerator.startAria', 'Początek horyzontu')}
+                aria-label={t('initiatives.planGenerator.startAria', 'Horizon start')}
                 type="date"
                 value={start}
                 onChange={(event) => setStart(event.target.value)}
               />
               <input
-                aria-label={t('initiatives.planGenerator.periodsAria', 'Liczba okresów')}
+                aria-label={t('initiatives.planGenerator.periodsAria', 'Number of periods')}
                 type="number"
                 min={1}
                 max={104}
@@ -235,10 +235,10 @@ export function GeneratorPlanuModal({
                 onChange={(event) => setMode(event.target.value as PlanGenerationMode)}
               >
                 <option value="DEPENDENCIES">
-                  {t('initiatives.planGenerator.modeDependencies', 'Według zależności')}
+                  {t('initiatives.planGenerator.modeDependencies', 'By dependencies')}
                 </option>
                 <option value="CAPACITY" disabled={Boolean(capacityModesBlockedReason)}>
-                  {t('initiatives.planGenerator.modeCapacity', 'Według obciążenia ról')}
+                  {t('initiatives.planGenerator.modeCapacity', 'By role capacity')}
                 </option>
                 <option value="MIXED" disabled={Boolean(capacityModesBlockedReason)}>
                   {t('initiatives.planGenerator.modeMixed', 'Mieszany')}
@@ -268,11 +268,11 @@ export function GeneratorPlanuModal({
               }
             >
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {t('initiatives.planGenerator.generate', 'Generuj propozycję')}
+              {t('initiatives.planGenerator.generate', 'Generate proposal')}
             </button>
             {proposal && proposal.length > 0 && (
               <div className="mt-3 overflow-x-auto">
-                <table /* §27-exempt: read-only podglad propozycji w oknie decyzji (4 kolumny, bez sortowania/filtrow/kebaba) — nie jest przegladana lista encji, ktora kanon TRIADA oddaje StandardTable */ className="w-full text-sm" aria-label={t('initiatives.planGenerator.proposalAria', 'Proponowana kolejność')}>
+                <table /* §27-exempt: read-only podglad propozycji w oknie decyzji (4 kolumny, bez sortowania/filtrow/kebaba) — nie jest przegladana lista encji, ktora kanon TRIADA oddaje StandardTable */ className="w-full text-sm" aria-label={t('initiatives.planGenerator.proposalAria', 'Proposed sequence')}>
                   <thead>
                     <tr className="text-left text-c-text-muted">
                       <th className="py-1 pr-3">
@@ -300,7 +300,7 @@ export function GeneratorPlanuModal({
                         <td className="py-1">
                           {row.conflict
                             ? formatPlanSolverReason(row.conflict, t, nameOf)
-                            : t('common.none', 'Brak')}
+                            : t('common.none', 'none')}
                         </td>
                       </tr>
                     ))}
@@ -319,29 +319,29 @@ export function GeneratorPlanuModal({
               <p className="mt-3 text-sm text-c-text-muted">
                 {t(
                   'initiatives.planGenerator.emptyProposal',
-                  'Solver nie zaproponował żadnej zmiany okien.'
+                  'The solver proposed no window change.'
                 )}
               </p>
             )}
           </section>
           <section className={stepClass}>
             <h3 className="font-semibold">
-              {t('initiatives.planGenerator.step5', '5. Zatwierdź')}
+              {t('initiatives.planGenerator.step5', '5. Approve')}
             </h3>
             <p className="text-sm text-c-text-muted">
               {t(
                 'initiatives.planGenerator.reviewHint',
-                'Propozycja nie zmienia planu bez decyzji człowieka.'
+                'A proposal never changes the plan without a human decision.'
               )}
             </p>
             {proposal && (
               <div className="mt-2 flex gap-2">
                 <button className={buttonClass} disabled={busy} onClick={() => onReview('ACCEPT')}>
                   <Check size={16} />
-                  {t('initiatives.planGenerator.accept', 'Zatwierdź')}
+                  {t('initiatives.planGenerator.accept', 'Approve')}
                 </button>
                 <button className={buttonClass} disabled={busy} onClick={() => onReview('REJECT')}>
-                  {t('initiatives.planGenerator.reject', 'Odrzuć')}
+                  {t('initiatives.planGenerator.reject', 'Reject')}
                 </button>
               </div>
             )}

@@ -92,14 +92,20 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     render(<InitiativeLifecycleActions initiativeId="ini-1" />);
     await screen.findByTestId('initiative-lifecycle-empty');
     expect(screen.queryByTestId('initiative-lifecycle-transition:PENDING_APPROVAL')).toBeNull();
-    expect(screen.getByTestId('initiative-lifecycle-empty').textContent).toContain('Nie masz uprawnień');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] J17 już przełączył defaultValue t() na
+    // angielski (`fallbackLng: { en: ['en'] }` — polski żyje wyłącznie w pl/translation.json).
+    // Ten mock t() zwraca zawsze fallback niezależnie od `i18n.language`, więc test
+    // sprawdza teraz angielski default, nie polskie tłumaczenie.
+    expect(screen.getByTestId('initiative-lifecycle-empty').textContent).toContain(
+      'You do not have permission'
+    );
   });
 
   it('1b. etap końcowy (zero przejść w macierzy): inne zdanie niż „brak uprawnień"', async () => {
     fetchPreflightMock.mockResolvedValue(preflight({ currentStatus: 'CLOSED', transitions: [] }));
     render(<InitiativeLifecycleActions initiativeId="ini-1" />);
     const terminal = await screen.findByTestId('initiative-lifecycle-terminal');
-    expect(terminal.textContent).toContain('Etap końcowy');
+    expect(terminal.textContent).toContain('Final stage');
     expect(screen.queryByTestId('initiative-lifecycle-empty')).toBeNull();
   });
 
@@ -120,9 +126,11 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
       'initiative-lifecycle-transition:PENDING_APPROVAL'
     )) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(button.textContent).toContain('Prześlij do zatwierdzenia');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] etykieta bramki = enumLabel('initiativeGateAction', …) — angielski (src/utils/enumLabel.ts, J17).
+    expect(button.textContent).toContain('Submit for approval');
     const reason = screen.getByTestId('initiative-lifecycle-reason-transition:PENDING_APPROVAL');
-    expect(reason.textContent).toContain('Karta jest niekompletna');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] initiativeLifecycleMessages.ts niesie już angielski fallback (J17).
+    expect(reason.textContent).toContain('card is incomplete');
     fireEvent.click(button);
     expect(applyTransitionMock).not.toHaveBeenCalled();
   });
@@ -149,8 +157,9 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     render(<InitiativeLifecycleActions initiativeId="ini-1" />);
     await screen.findByTestId('initiative-lifecycle-transition:IN_EXECUTION');
     const reason = screen.getByTestId('initiative-lifecycle-reason-transition:IN_EXECUTION');
-    expect(reason.textContent).toContain('planowane daty startu i końca');
-    expect(reason.textContent).toContain('co najmniej jeden kamień milowy');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] INITIATIVE_READINESS_ITEM_KEYS niesie już angielski fallback (J17).
+    expect(reason.textContent).toContain('planned start and end dates');
+    expect(reason.textContent).toContain('at least one milestone');
     expect(reason.textContent).not.toContain('{{items}}');
   });
 
@@ -168,8 +177,9 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     fireEvent.click(button);
     expect(applyTransitionMock).not.toHaveBeenCalled();
     const dialog = await screen.findByRole('dialog');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] etykieta bramki SEND_BACK = enumLabel EN (J17).
     const confirm = Array.from(dialog.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'Zwróć do szkicu'
+      (b) => b.textContent?.trim() === 'Send back to draft'
     ) as HTMLButtonElement;
     expect(confirm).toBeDefined();
     expect(confirm.disabled).toBe(true);
@@ -194,7 +204,8 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     const button = await screen.findByTestId('initiative-lifecycle-transition:PENDING_APPROVAL');
     fireEvent.click(button);
     await waitFor(() => expect(toastErrorMock).toHaveBeenCalledTimes(1));
-    expect(String(toastErrorMock.mock.calls[0][0])).toContain('Zamknięcie blokują otwarte zadania');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] OPEN_WORK_BLOCKS_CLOSURE niesie już angielski fallback (J17).
+    expect(String(toastErrorMock.mock.calls[0][0])).toContain('Closure is blocked by open tasks');
     expect(toastSuccessMock).not.toHaveBeenCalled();
   });
 
@@ -202,7 +213,8 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     fetchPreflightMock.mockRejectedValue(new Error('500'));
     render(<InitiativeLifecycleActions initiativeId="ini-1" />);
     const error = await screen.findByTestId('initiative-lifecycle-load-error');
-    expect(error.textContent).toContain('Nie udało się sprawdzić');
+    // [ODMROZENIE 05_INITIATIVES DEC-453] initiatives.lifecycle.preflightFailed — default po angielsku (J6).
+    expect(error.textContent).toContain('Could not check the available actions');
   });
 
   it('6. flaga wstrzymania: HOLD wymaga powodu i woła trasę flagi, nie zmiany statusu', async () => {
@@ -222,8 +234,9 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     const dialog = await screen.findByRole('dialog');
     const textarea = dialog.querySelector('textarea') as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'Czekamy na budżet.' } });
+    // [ODMROZENIE 05_INITIATIVES DEC-453] etykieta bramki BLOCK = enumLabel EN (J17).
     const confirm = Array.from(dialog.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'Wstrzymaj realizację'
+      (b) => b.textContent?.trim() === 'Put execution on hold'
     ) as HTMLButtonElement;
     await waitFor(() => expect(confirm.disabled).toBe(false));
     fireEvent.click(confirm);

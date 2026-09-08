@@ -75,22 +75,22 @@ export const countCapacityGaps = (scenario: CapacityCardScenario) =>
         (p) => p.demand.base !== null && p.supply.base !== null && p.demand.base > p.supply.base
       ).length;
 
-const unknownText = () => i18n.t('initiatives.capacityAnalysis.unknownValue', 'Nieznane');
+const unknownText = () => i18n.t('initiatives.capacityAnalysis.unknownValue', 'Unknown');
 const num = (value: number | null) =>
   value === null ? unknownText() : new Intl.NumberFormat(i18n.language === 'pl' ? 'pl-PL' : 'en-US', { maximumFractionDigits: 2 }).format(value);
 const supplySourceLabel = (value: CapacityRoleLine['supplySource']) =>
   ({
-    RESOURCE_PLAN: i18n.t('initiatives.capacityAnalysis.supplySource.resourcePlan', 'Z Zasobów'),
-    MANUAL: i18n.t('initiatives.capacityAnalysis.supplySource.manual', 'Ręcznie'),
-    UNKNOWN: i18n.t('initiatives.capacityAnalysis.supplySource.unknown', 'Nieznane'),
+    RESOURCE_PLAN: i18n.t('initiatives.capacityAnalysis.supplySource.resourcePlan', 'From Resources'),
+    MANUAL: i18n.t('initiatives.capacityAnalysis.supplySource.manual', 'Manual'),
+    UNKNOWN: i18n.t('initiatives.capacityAnalysis.supplySource.unknown', 'Unknown'),
   })[value];
 const demandSourceLabel = (value: CapacityRoleLine['demandSource']) =>
   ({
     PLAN: i18n.t('initiatives.capacityAnalysis.demandSource.plan', 'Z planu'),
-    MANUAL: i18n.t('initiatives.capacityAnalysis.demandSource.manual', 'Ręcznie'),
+    MANUAL: i18n.t('initiatives.capacityAnalysis.demandSource.manual', 'Manual'),
     UNKNOWN: i18n.t(
       'initiatives.capacityAnalysis.demandSource.unknown',
-      'Nieznane (brak podziału na role)'
+      'Unknown (no role breakdown)'
     ),
   })[value];
 
@@ -176,9 +176,9 @@ export function CapacityAnalysisCard({
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.period', 'Okres')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.role', 'Rola')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.gap', 'Luka')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supplySourceShort', 'Źródło podaży')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supplySourceShort', 'Supply source')}</th>
           </tr>
         </thead>
         <tbody>
@@ -199,7 +199,7 @@ export function CapacityAnalysisCard({
                   <td className={cell}>
                     {onSupplyOverride && scenario.status === 'DRAFT' && !readMode ? (
                       <input
-                        aria-label={`${i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')} ${period.periodId} ${role.roleLabel}`}
+                        aria-label={`${i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')} ${period.periodId} ${role.roleLabel}`}
                         className="w-20 rounded border border-c-border bg-c-surface px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                         inputMode="decimal"
                         disabled={supplyBusy}
@@ -241,7 +241,7 @@ export function CapacityAnalysisCard({
       <p className="mb-3 text-sm text-c-text-muted">
         {i18n.t(
           'initiatives.capacityAnalysis.noRoleSheet',
-          'Ta analiza powstała przed wprowadzeniem wymiaru roli. Utwórz nową analizę z opublikowanego planu, aby zobaczyć arkusz okres × rola.'
+          'This analysis predates the role dimension. Create a new analysis from a published plan to see the period × role worksheet.'
         )}
       </p>
       {scenario.periods.map((p) => (
@@ -251,7 +251,7 @@ export function CapacityAnalysisCard({
             {i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}: {num(p.demand.base)}
           </span>
           <span>
-            {i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}: {num(p.supply.base)}
+            {i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}: {num(p.supply.base)}
           </span>
         </div>
       ))}
@@ -261,7 +261,7 @@ export function CapacityAnalysisCard({
   const content: Record<string, React.ReactNode> = {
     source: (
       <div className={box}>
-        {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy')} · v
+        {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Source plan')} · v
         {scenario.planScenarioVersion}
       </div>
     ),
@@ -285,10 +285,10 @@ export function CapacityAnalysisCard({
         ) : (
           <p className="text-sm text-c-text-muted">
             {hasSheet
-              ? i18n.t('initiatives.capacityAnalysis.noGaps', 'Żadna rola nie jest przeciążona.')
+              ? i18n.t('initiatives.capacityAnalysis.noGaps', 'No role is overloaded.')
               : i18n.t(
                   'initiatives.capacityAnalysis.noGapsLegacy',
-                  'Brak wykrytych luk (analiza bez wymiaru roli).'
+                  'No gaps detected (analysis without the role dimension).'
                 )}
           </p>
         )}
@@ -315,7 +315,7 @@ export function CapacityAnalysisCard({
                 className="mt-2 rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 onClick={onPublish}
               >
-                {i18n.t('initiatives.capacityAnalysis.publish', 'Opublikuj analizę')}
+                {i18n.t('initiatives.capacityAnalysis.publish', 'Publish analysis')}
               </button>
             )}
           </div>
@@ -324,7 +324,7 @@ export function CapacityAnalysisCard({
           <p role="status" className="mb-3 text-sm text-c-text-muted">
             {i18n.t(
               'initiatives.capacityAdvisor.noPressure',
-              'Brak przeciążeń do rozwiązania.'
+              'No overload — there is nothing to resolve'
             )}
           </p>
         )}
@@ -337,7 +337,7 @@ export function CapacityAnalysisCard({
                 )
               : i18n.t(
                   'initiatives.capacityAnalysis.variantNoShift',
-                  'Doradca nie wyliczył wykonalnego przesunięcia — decyzja zapisana, plan bez zmian.'
+                  'The advisor found no feasible shift — the decision is recorded, the plan is unchanged.'
                 )}
           </p>
         )}
@@ -391,7 +391,7 @@ export function CapacityAnalysisCard({
             className="rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus"
             onClick={onPublish}
           >
-            {i18n.t('initiatives.capacityAnalysis.publish', 'Opublikuj analizę')}
+            {i18n.t('initiatives.capacityAnalysis.publish', 'Publish analysis')}
           </button>
         ) : (
           `${i18n.t('initiatives.capacityAnalysis.publishedAt', 'Opublikowano')} ${scenario.publishedAt ? new Intl.DateTimeFormat('pl-PL').format(new Date(scenario.publishedAt)) : '—'}`
@@ -406,10 +406,10 @@ export function CapacityAnalysisCard({
   );
   const statusLabel =
     scenario.status === 'DRAFT'
-      ? i18n.t('initiatives.planScenario.status.draft', 'Szkic')
+      ? i18n.t('initiatives.planScenario.status.draft', 'Draft')
       : scenario.status === 'PUBLISHED'
         ? i18n.t('initiatives.planScenario.status.published', 'Opublikowany')
-        : i18n.t('initiatives.planScenario.status.superseded', 'Zastąpiony');
+        : i18n.t('initiatives.planScenario.status.superseded', 'Superseded');
   const right = {
     actions: {
       label: i18n.t('initiatives.capacityAnalysis.panel.actions', 'Akcje'),
@@ -418,17 +418,17 @@ export function CapacityAnalysisCard({
           className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           onClick={onBack}
         >
-          {i18n.t('initiatives.capacityAnalysis.backToList', 'Wróć do listy')}
+          {i18n.t('initiatives.capacityAnalysis.backToList', 'Back to list')}
         </button>
       ),
       actionIds: ['back'],
     },
     properties: {
-      label: i18n.t('initiatives.capacityAnalysis.panel.properties', 'Właściwości'),
+      label: i18n.t('initiatives.capacityAnalysis.panel.properties', 'Properties'),
       children: (
         <ArtifactPropertiesTable
-          propertyLabel={i18n.t('initiatives.capacityAnalysis.panel.property', 'Właściwość')}
-          valueLabel={i18n.t('initiatives.capacityAnalysis.panel.value', 'Wartość')}
+          propertyLabel={i18n.t('initiatives.capacityAnalysis.panel.property', 'Property')}
+          valueLabel={i18n.t('initiatives.capacityAnalysis.panel.value', 'Value')}
           rows={[
             { id: 'status', label: i18n.t('initiatives.capacityAnalysis.panel.status', 'Status'), value: statusLabel },
             {
@@ -454,17 +454,17 @@ export function CapacityAnalysisCard({
       ),
     },
     relations: {
-      label: i18n.t('initiatives.capacityAnalysis.panel.relations', 'Powiązania'),
+      label: i18n.t('initiatives.capacityAnalysis.panel.relations', 'Relations'),
       children: (
         <p className="text-sm">
-          {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy')} ·{' '}
+          {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Source plan')} ·{' '}
           {i18n.t('initiatives.capacityAnalysis.version', 'wersja')} {scenario.planScenarioVersion}
         </p>
       ),
     },
     evidence: scenario.constraints.length
       ? {
-          label: i18n.t('initiatives.capacityAnalysis.panel.evidence', 'Źródła i założenia'),
+          label: i18n.t('initiatives.capacityAnalysis.panel.evidence', 'Sources and assumptions'),
           children: (
             <ul className="list-disc pl-4 text-sm">
               {scenario.constraints.map((item) => (
@@ -475,13 +475,13 @@ export function CapacityAnalysisCard({
         }
       : {
           pominieta: true as const,
-          reason: i18n.t('initiatives.capacityAnalysis.noConstraints', 'Brak zapisanych ograniczeń.'),
+          reason: i18n.t('initiatives.capacityAnalysis.noConstraints', 'No recorded constraints.'),
         },
     comments: {
       pominieta: true as const,
       reason: i18n.t(
         'initiatives.capacityAnalysis.noComments',
-        'Brak mechanizmu komentarzy dla analizy.'
+        'No comment thread for this analysis.'
       ),
     },
     history: {
@@ -513,7 +513,7 @@ export function CapacityAnalysisCard({
         intentionallyNone: true,
         reason: i18n.t(
           'initiatives.capacityAnalysis.primaryNone',
-          'Publikacja jest w sekcji Decyzje.'
+          'Publishing is a decision in the Decisions section.'
         ),
       }}
       sections={sections}
@@ -547,13 +547,13 @@ export function CapacityAnalysisCard({
               uruchom: onAnalyze,
               opis: i18n.t(
                 'initiatives.capacityAnalysis.aiDocument',
-                'Doradca przygotuje wariant całej analizy do oceny.'
+                'The advisor will prepare a whole-analysis variant for review.'
               ),
             },
           }}
         />
       }
-      panelAriaLabel={i18n.t('initiatives.capacityAnalysis.panelAria', 'Szczegóły analizy obciążenia')}
+      panelAriaLabel={i18n.t('initiatives.capacityAnalysis.panelAria', 'Load analysis details')}
     />
   );
 }

@@ -122,12 +122,12 @@ export const InitiativeDraftJourney: React.FC<InitiativeDraftJourneyProps> = ({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center rounded-md bg-teal-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
-              {t('initiatives.draftJourney.badge', 'Szkic')}
+              {t('initiatives.draftJourney.badge', 'Draft')}
             </span>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
               {t(
                 'initiatives.draftJourney.headline',
-                'To jest dokument roboczy inicjatywy — trzy kroki do startu'
+                'This is the initiative working document — three steps to launch'
               )}
             </p>
           </div>
@@ -189,7 +189,7 @@ export const InitiativeDraftJourney: React.FC<InitiativeDraftJourneyProps> = ({
         </div>
         <button
           type="button"
-          aria-label={t('common.dismiss', 'Zamknij')}
+          aria-label={t('common.dismiss', 'Dismiss')}
           data-testid="journey-dismiss"
           onClick={onDismiss}
           className="shrink-0 rounded-md p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"

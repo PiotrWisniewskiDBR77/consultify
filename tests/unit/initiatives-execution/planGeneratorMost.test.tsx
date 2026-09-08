@@ -98,11 +98,11 @@ describe('P15-K2 — generator planu pokazuje wybór i propozycję', () => {
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Predictive Maintenance/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: /Digital Twin/ }));
-    fireEvent.change(screen.getByLabelText('Początek horyzontu'), {
+    fireEvent.change(screen.getByLabelText('Horizon start'), {
       target: { value: '2026-09-07' },
     });
-    fireEvent.change(screen.getByLabelText('Liczba okresów'), { target: { value: '12' } });
-    fireEvent.click(screen.getByRole('button', { name: /Generuj propozycję/ }));
+    fireEvent.change(screen.getByLabelText('Number of periods'), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: /Generate proposal/ }));
 
     expect(onGenerate).toHaveBeenCalledTimes(1);
     expect(onGenerate.mock.calls[0][0]).toEqual({
@@ -127,10 +127,10 @@ describe('P15-K2 — generator planu pokazuje wybór i propozycję', () => {
         onReview={() => undefined}
       />
     );
-    const table = screen.getByRole('table', { name: 'Proponowana kolejność' });
+    const table = screen.getByRole('table', { name: 'Proposed sequence' });
     expect(within(table).getAllByRole('row')).toHaveLength(proposalRows.length + 1);
     expect(within(table).getByText('Solver wybrał Tydzień 1')).toBeTruthy();
-    const approve = screen.getByRole('button', { name: /Zatwierdź/ });
+    const approve = screen.getByRole('button', { name: /Approve/ });
     // Kolejność w DOM: tabela propozycji stoi PRZED przyciskiem decyzji.
     expect(table.compareDocumentPosition(approve) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -145,8 +145,8 @@ describe('P15-K2 — generator planu pokazuje wybór i propozycję', () => {
         onReview={() => undefined}
       />
     );
-    expect(screen.queryByRole('table', { name: 'Proponowana kolejność' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Zatwierdź/ })).toBeNull();
+    expect(screen.queryByRole('table', { name: 'Proposed sequence' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Approve/ })).toBeNull();
   });
 });
 

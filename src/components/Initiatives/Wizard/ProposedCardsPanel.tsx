@@ -85,7 +85,7 @@ export const ProposedCardsPanel: React.FC<ProposedCardsPanelProps> = ({
   const label = useCardLabel();
   const selectedSet = new Set(selected);
 
-  const coreLabel = t('initiatives.proposedCards.core', 'rdzeń');
+  const coreLabel = t('initiatives.proposedCards.core', 'core');
   const coreHeading = t('initiatives.proposedCards.coreHeading', 'Karty rdzenia (zawsze)');
   const proposedHeading = t('initiatives.proposedCards.proposedHeading', 'Proponowane karty (AI)');
 

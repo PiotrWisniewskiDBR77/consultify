@@ -73,7 +73,7 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
         return false;
       }
       toast.success(
-        t('initiatives.lifecycle.applied', 'Zapisano: {{action}}', { action: action.label })
+        t('initiatives.lifecycle.applied', 'Saved: {{action}}', { action: action.label })
       );
       return true;
     },
@@ -119,7 +119,7 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
       <div className={['space-y-2', className || ''].join(' ')}>
         {sectionHeading}
         <div className="text-xs text-c-text-muted">
-          {t('initiatives.lifecycle.loading', 'Sprawdzam dostępne działania…')}
+          {t('initiatives.lifecycle.loading', 'Checking available actions…')}
         </div>
       </div>
     );
@@ -140,11 +140,11 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
           {terminal
             ? t(
                 'initiatives.lifecycle.terminal',
-                'Etap końcowy — ta inicjatywa nie ma już dalszych przejść.'
+                'Final stage — this initiative has no further transitions.'
               )
             : t(
                 'initiatives.lifecycle.none',
-                'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
+                'You do not have permission to change this initiative\'s stage.'
               )}
         </div>
       </div>
@@ -170,7 +170,7 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
             className={[buttonBase, variantClass(action.variant)].join(' ')}
           >
             {pendingActionId === action.id
-              ? t('initiatives.lifecycle.working', 'Zapisuję…')
+              ? t('initiatives.lifecycle.working', 'Saving…')
               : action.label}
           </button>
         ))}
@@ -220,7 +220,7 @@ const InitiativeReasonPrompt: React.FC<{
   return (
     <InitiativeReasonDialog
       open
-      title={t('initiatives.lifecycle.reasonTitle', '{{action}} — podaj powód', {
+      title={t('initiatives.lifecycle.reasonTitle', '{{action}} — provide a reason', {
         action: action.label,
       })}
       confirmLabel={action.label}

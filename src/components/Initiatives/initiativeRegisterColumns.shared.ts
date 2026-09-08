@@ -276,7 +276,7 @@ export const createInitiativeRegisterColumns = (
       // [ODMROZENIE 05_INITIATIVES DEC-402] „Obszar / oś" — patrz
       // `resolveInitiativeAreaOrAxis` powyżej dla źródła danych i pomiaru.
       id: 'areaOrAxis',
-      label: options.t ? options.t('initiatives.columns.areaOrAxis', 'Obszar / oś') : 'Obszar / oś',
+      label: options.t ? options.t('initiatives.columns.areaOrAxis', 'Area / Axis') : 'Obszar / oś',
       width: '150px',
       sortable: true,
       sortAccessor: (raw) => resolveInitiativeAreaOrAxis(raw as InitiativeRegisterRow) || '',
