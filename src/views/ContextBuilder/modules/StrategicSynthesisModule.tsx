@@ -6,6 +6,7 @@ import {
   Info,
   TrendingUp,
 } from 'lucide-react';
+import { formatListNumber } from '@/utils/listDateFormat';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -628,7 +629,7 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                     : '',
                 revenue:
                   realOrgIdentity?.annual_revenue != null
-                    ? [realOrgIdentity.annual_revenue.toLocaleString('pl-PL'), realOrgIdentity.currency]
+                    ? [formatListNumber(realOrgIdentity.annual_revenue, ''), realOrgIdentity.currency]
                         .filter(Boolean)
                         .join(' ')
                     : '',

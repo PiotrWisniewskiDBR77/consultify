@@ -33,14 +33,14 @@ describe('QuestionHelpDisclosure', () => {
   it('expands the examples drawer progressively (level 2 help)', () => {
     render(<QuestionHelpDisclosure question={makeQuestion()} help={null} onAskTeresa={vi.fn()} />);
     expect(screen.queryByText(/Mamy spisaną procedurę/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Przykład i dowody'));
+    fireEvent.click(screen.getByText('Example and evidence'));
     expect(screen.getByText(/Mamy spisaną procedurę/)).toBeInTheDocument();
   });
 
-  it('routes "Zapytaj Teresę" to the caller instead of duplicating the Teresa panel', () => {
+  it('routes "Ask Teresa" to the caller instead of duplicating the Teresa panel', () => {
     const onAskTeresa = vi.fn();
     render(<QuestionHelpDisclosure question={makeQuestion()} help={null} onAskTeresa={onAskTeresa} />);
-    fireEvent.click(screen.getByText('Zapytaj Teresę'));
+    fireEvent.click(screen.getByText('Ask Teresa'));
     expect(onAskTeresa).toHaveBeenCalledWith('explain');
   });
 });

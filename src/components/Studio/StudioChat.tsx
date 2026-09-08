@@ -13,7 +13,9 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Edge, Node } from 'reactflow';
 
 import TeresaMark from '../shared/TeresaMark';
@@ -28,15 +30,21 @@ interface StudioChatProps {
   className?: string;
 }
 
-// Quick action suggestions
-const QUICK_ACTIONS = [
-  { label: 'Create process flow', prompt: 'Create a process flow for ' },
-  { label: 'Add decision node', prompt: 'Add a decision point for ' },
-  { label: 'Create org chart', prompt: 'Create an organization chart for ' },
-  { label: 'Add swimlane', prompt: 'Add a swimlane for ' },
-  { label: 'Create mind map', prompt: 'Create a mind map about ' },
-  { label: 'Create RACI matrix', prompt: 'Create a RACI matrix for ' },
-];
+/**
+ * Szybkie akcje. ETYKIETA idzie za językiem konta, PROMPT zostaje po
+ * angielsku — to wsad dla modelu, nie napis dla człowieka; język odpowiedzi
+ * ustawia osobno `resolveResponseLanguage` (PLAN §2 pkt 8).
+ */
+function szybkieAkcje(t: TFunction): Array<{ label: string; prompt: string }> {
+  return [
+    { label: t('studio.quickActions.processFlow', 'Create process flow'), prompt: 'Create a process flow for ' },
+    { label: t('studio.quickActions.decisionNode', 'Add decision node'), prompt: 'Add a decision point for ' },
+    { label: t('studio.quickActions.orgChart', 'Create org chart'), prompt: 'Create an organization chart for ' },
+    { label: t('studio.quickActions.swimlane', 'Add swimlane'), prompt: 'Add a swimlane for ' },
+    { label: t('studio.quickActions.mindMap', 'Create mind map'), prompt: 'Create a mind map about ' },
+    { label: t('studio.quickActions.raciMatrix', 'Create RACI matrix'), prompt: 'Create a RACI matrix for ' },
+  ];
+}
 
 export const StudioChat: React.FC<StudioChatProps> = ({
   messages,
@@ -46,6 +54,8 @@ export const StudioChat: React.FC<StudioChatProps> = ({
   suggestions = [],
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const QUICK_ACTIONS = useMemo(() => szybkieAkcje(t), [t]);
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -95,14 +105,14 @@ export const StudioChat: React.FC<StudioChatProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-c-text">Studio AI</h3>
-            <p className="text-[10px] text-c-text-muted">Describe your diagram</p>
+            <p className="text-[10px] text-c-text-muted">{t('studio.chat.subtitle', 'Describe your diagram')}</p>
           </div>
         </div>
         {onClear && messages.length > 0 && (
           <button
             onClick={onClear}
             className="p-1.5 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-md transition-colors"
-            title="Clear chat"
+            title={t('studio.chat.clear', 'Clear chat')}
           >
             <Trash2 size={14} />
           </button>
@@ -116,9 +126,12 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-primary-600/20 flex items-center justify-center">
               <TeresaMark size={28} className="text-c-accent" />
             </div>
-            <h4 className="text-c-text font-medium mb-2">Start Creating</h4>
+            <h4 className="text-c-text font-medium mb-2">{t('studio.chat.startCreating', 'Start creating')}</h4>
             <p className="text-sm text-c-text-muted max-w-[200px] mx-auto">
-              Describe the diagram you want to create, and I'll generate it for you.
+              {t(
+                'studio.chat.emptyBody',
+                'Describe the diagram you want to create, and I will generate it for you.'
+              )}
             </p>
           </div>
         )}
@@ -178,7 +191,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             </div>
             <div className="bg-c-surface-raised px-3 py-2 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-c-text-secondary">
-                <span>Generating diagram</span>
+                <span>{t('studio.chat.generating', 'Generating diagram')}</span>
                 <span className="flex gap-0.5">
                   <span
                     className="w-1 h-1 bg-c-text-muted rounded-full animate-bounce"
@@ -209,7 +222,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             className="flex items-center gap-2 text-xs text-c-text-muted hover:text-c-text transition-colors mb-2"
           >
             <Lightbulb size={12} />
-            Quick actions
+            {t('studio.chat.quickActions', 'Quick actions')}
             {showSuggestions ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
 
@@ -258,7 +271,7 @@ export const StudioChat: React.FC<StudioChatProps> = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Describe your diagram..."
+            placeholder={t('studio.chat.inputPlaceholder', 'Describe your diagram…')}
             rows={1}
             className="flex-1 bg-c-surface-raised border border-c-border rounded-lg px-3 py-2 text-sm text-c-text placeholder-c-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-transparent"
             style={{ minHeight: '38px', maxHeight: '120px' }}

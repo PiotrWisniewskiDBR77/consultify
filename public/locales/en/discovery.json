@@ -4,7 +4,6 @@
     "subtitle": "AI-powered consultant conversation",
     "chatTitle": "AI Consultant",
     "chatSubtitle": "Your virtual transformation partner",
-
     "phases": {
       "welcome": "Welcome",
       "ice_breaking": "Context Gathering",
@@ -14,7 +13,6 @@
       "decision": "Decision",
       "completed": "Completed"
     },
-
     "phaseDescriptions": {
       "welcome": "Introduction to discovery session",
       "ice_breaking": "Understanding company and role",
@@ -24,7 +22,6 @@
       "decision": "Next steps and conversion",
       "completed": "Session completed"
     },
-
     "canvas": {
       "title": "Discovery Canvas",
       "categories": {
@@ -40,7 +37,6 @@
       "zoomOut": "Zoom out",
       "fitView": "Fit view"
     },
-
     "nodes": {
       "painPoint": {
         "title": "Pain Point",
@@ -80,7 +76,6 @@
         "quickWin": "Quick Win"
       }
     },
-
     "severity": {
       "1": "Minor",
       "2": "Noticeable",
@@ -88,20 +83,17 @@
       "4": "Critical",
       "5": "Blocking"
     },
-
     "areas": {
       "process": "Process",
       "technology": "Technology",
       "people": "People",
       "data": "Data"
     },
-
     "transformationType": {
       "strategic": "Strategic transformation",
       "operational": "Operational transformation",
       "digital": "Digital transformation"
     },
-
     "recommendations": {
       "title": "Recommendations",
       "matchScore": "Match score",
@@ -110,7 +102,6 @@
       "initiativeIdeas": "Initiative ideas",
       "noRecommendations": "Continue the conversation to receive recommendations"
     },
-
     "actions": {
       "startProject": "Start Project",
       "startProjectDesc": "Create transformation project with this data",
@@ -122,7 +113,6 @@
       "continueChatDesc": "I want to learn more",
       "exportPdf": "Export PDF"
     },
-
     "conversion": {
       "title": "Create Project from Discovery",
       "projectName": "Project name",
@@ -136,9 +126,10 @@
       "createInitiatives": "Create initiatives from ideas",
       "converting": "Creating project...",
       "success": "Project created!",
-      "error": "Failed to create project"
+      "error": "Failed to create project",
+      "cancel": "Cancel",
+      "projectNamePlaceholder": "Project name…"
     },
-
     "version": {
       "title": "Versions",
       "current": "Current",
@@ -147,7 +138,6 @@
       "saved": "Version saved",
       "noVersions": "No saved versions"
     },
-
     "header": {
       "newSession": "New session",
       "client": "Client",
@@ -155,7 +145,6 @@
       "size": "Size",
       "phase": "Phase"
     },
-
     "prompts": {
       "welcome": "Hello! I'm your virtual transformation consultant. I'll help you understand where the biggest opportunities for improvement lie in your organization.\n\nBefore we begin - tell me about yourself and your company. What's your role?",
       "askIndustry": "What industry is your company in and what size is it?",
@@ -165,14 +154,12 @@
       "askImpact": "How much does this cost the company monthly/yearly? (even a rough estimate helps)",
       "recommendationIntro": "Based on our conversation, I see that your situation indicates a need for"
     },
-
     "errors": {
       "loadFailed": "Failed to load session",
       "saveFailed": "Failed to save session",
       "conversionFailed": "Failed to create project",
       "extractionFailed": "Failed to process response"
     },
-
     "tooltips": {
       "addNode": "Add element",
       "deleteNode": "Delete element",

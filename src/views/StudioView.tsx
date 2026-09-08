@@ -19,6 +19,9 @@ import {
   Settings,
   X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import { formatListTime } from '@/utils/listDateFormat';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Edge, Node, ReactFlowProvider } from 'reactflow';
@@ -49,6 +52,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
   linkedInitiativeId,
   onClose,
 }) => {
+  const { t } = useTranslation();
   // UI State
   const [showChat, setShowChat] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -149,7 +153,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <div className="h-full flex items-center justify-center bg-c-bg">
           <div className="text-center">
             <Loader2 size={32} className="text-c-accent animate-spin mx-auto mb-4" />
-            <p className="text-c-text-muted">Loading Studio...</p>
+            <p className="text-c-text-muted">{t('studio.loading', 'Loading Studio…')}</p>
           </div>
         </div>
       </SplitLayout>
@@ -175,18 +179,21 @@ export const StudioView: React.FC<StudioViewProps> = ({
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={document?.name || 'Untitled'}
+                  value={document?.name || t('studio.untitled', 'Untitled')}
                   onChange={(e) => updateMetadata({ name: e.target.value })}
                   className="bg-transparent border-none text-c-text font-medium focus:outline-none focus:ring-1 focus:ring-c-focus rounded px-2 py-1"
                 />
                 {hasUnsavedChanges && (
-                  <span className="w-2 h-2 bg-c-warning rounded-full" title="Unsaved changes" />
+                  <span
+                    className="w-2 h-2 bg-c-warning rounded-full"
+                    title={t('studio.unsavedChanges', 'Unsaved changes')}
+                  />
                 )}
               </div>
 
               {/* Document Type Badge */}
               <div className="px-2 py-0.5 bg-c-accent-soft text-c-accent text-xs rounded-md capitalize">
-                {document?.type?.replace('_', ' ') || 'Diagram'}
+                {document?.type?.replace('_', ' ') || t('studio.diagram', 'Diagram')}
               </div>
             </div>
 
@@ -194,11 +201,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Save Status */}
               {lastSaved && (
                 <span className="text-xs text-c-text-muted">
-                  Saved{' '}
-                  {new Date(lastSaved).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {t('studio.saved', 'Saved')} {formatListTime(lastSaved, '')}
                 </span>
               )}
 
@@ -209,14 +212,14 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text rounded-lg transition-colors text-sm"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Save
+                {t('common.save', 'Save')}
               </button>
 
               {/* Link Button */}
               <button
                 onClick={handleLink}
                 className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
-                title="Link to Task/Project"
+                title={t('studio.linkToTask', 'Link to a task or project')}
               >
                 <Link2 size={18} />
               </button>
@@ -225,7 +228,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               <button
                 onClick={handleExport}
                 className="p-2 text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
-                title="Export"
+                title={t('studio.export.action', 'Export')}
               >
                 <Download size={18} />
               </button>

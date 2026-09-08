@@ -1035,7 +1035,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-c-surface-raised border border-c-border-subtle text-c-text-muted hover:text-c-text hover:bg-c-surface transition-all shadow-lg backdrop-blur-sm dark:bg-white/[0.06] dark:border-white/[0.1] dark:text-c-text-muted dark:hover:text-c-text dark:hover:bg-white/[0.1]"
-          aria-label="Back to top"
+          aria-label={t('knowledge.backToTop', 'Back to top')}
         >
           <ChevronUp size={18} />
         </button>

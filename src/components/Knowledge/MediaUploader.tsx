@@ -27,6 +27,9 @@ import {
   X,
   Youtube,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import { formatListNumber } from '@/utils/listDateFormat';
 import React, { useCallback, useRef, useState } from 'react';
 
 interface ProcessingResult {
@@ -70,6 +73,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   language = 'pl',
   maxFiles = 10,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -491,7 +495,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 />
               </div>
               <p className="text-c-text-muted text-xs mt-2">
-                Extracts main content, title, and metadata from web pages
+                {t('knowledge.uploader.webHint', 'Extracts main content, title, and metadata from web pages')}
               </p>
             </div>
 
@@ -549,7 +553,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   </p>
                   {result.success && result.metadata && (
                     <p className="text-xs text-c-text-secondary dark:text-c-text-muted mt-1">
-                      {result.metadata.wordCount?.toLocaleString()} words •
+                      {formatListNumber(result.metadata.wordCount, '')}{' '}
+                      {t('knowledge.uploader.words', 'words')} •
                       {result.metadata.processingTimeMs
                         ? ` ${(result.metadata.processingTimeMs / 1000).toFixed(1)}s`
                         : ''}

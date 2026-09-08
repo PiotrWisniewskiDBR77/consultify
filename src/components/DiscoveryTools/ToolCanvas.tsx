@@ -154,7 +154,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     if (!stepDefinition) {
       return (
         <div className="flex items-center justify-center h-full text-c-text-secondary">
-          Loading step...
+          {t('discoveryTools.canvas.loadingStep', 'Loading step…')}
         </div>
       );
     }

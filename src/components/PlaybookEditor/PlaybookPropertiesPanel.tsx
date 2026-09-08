@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 import { PlaybookNode as PlaybookNodeType, PlaybookNodeType as NodeType } from '../../types';
@@ -19,11 +20,12 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
   onUpdate,
   onClose,
 }) => {
+  const { t } = useTranslation();
   if (!node) {
     return (
       <div className="w-80 bg-gray-50 dark:bg-navy-800 border-l border-gray-200 p-4">
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Select a node to edit its properties
+          {t('playbook.properties.empty', 'Select a node to edit its properties')}
         </p>
       </div>
     );
@@ -94,7 +96,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
               onChange={(e) => handleActionTypeChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             >
-              <option value="">Select action...</option>
+              <option value="">{t('playbook.properties.selectAction', 'Select an action…')}</option>
               {actionTypes.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -115,7 +117,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
               onChange={(e) => handleDescriptionChange(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              placeholder="Describe what this step does..."
+              placeholder={t('playbook.properties.descriptionPlaceholder', 'Describe what this step does…')}
             />
           </div>
         )}

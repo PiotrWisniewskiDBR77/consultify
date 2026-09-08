@@ -59,7 +59,7 @@ describe('TeresaPreviewPanel', () => {
     const card = screen.getByTestId('teresa-proposal-card');
     expect(card).toHaveAttribute('data-preview-id', 'preview-xyz');
 
-    await user.click(within(card).getByText('Odrzuć'));
+    await user.click(within(card).getByText('Reject'));
     expect(onCommit).toHaveBeenCalledTimes(1);
     const request = onCommit.mock.calls[0][0];
     expect(request.previewId).toBe('preview-xyz');
@@ -79,7 +79,7 @@ describe('TeresaPreviewPanel', () => {
         mode="guided_manual"
       />
     );
-    await user.click(within(screen.getByTestId('teresa-proposal-card')).getByText('Odrzuć'));
+    await user.click(within(screen.getByTestId('teresa-proposal-card')).getByText('Reject'));
     // Panel does not own the queue — it stays exactly as the caller passed it
     // until the caller re-renders with an updated queue.
     expect(screen.getByTestId('teresa-proposal-card')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('TeresaPreviewPanel', () => {
       />
     );
     expect(screen.queryByTestId('teresa-proposal-card')).not.toBeInTheDocument();
-    expect(screen.getByText('Brak oczekujących propozycji.')).toBeInTheDocument();
+    expect(screen.getByText('No pending proposals.')).toBeInTheDocument();
   });
 
   it('shows the before/after diff before any decision can be made', () => {
@@ -109,6 +109,6 @@ describe('TeresaPreviewPanel', () => {
         mode="guided_manual"
       />
     );
-    expect(screen.getByText('Podgląd zmiany')).toBeInTheDocument();
+    expect(screen.getByText('Change preview')).toBeInTheDocument();
   });
 });

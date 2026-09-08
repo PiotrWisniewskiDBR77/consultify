@@ -36,6 +36,24 @@ export const SKIP_REASON_OPTIONS: ReadonlyArray<{ code: DrdSkipReasonCode; label
   Object.keys(SKIP_REASON_LABELS) as DrdSkipReasonCode[]
 ).map((code) => ({ code, label: SKIP_REASON_LABELS[code] }));
 
+/**
+ * ETYKIETY DO INTERFEJSU — osobno od `SKIP_REASON_LABELS`, które są ZAPISEM
+ * do bazy (decyzja właściciela DEC-2026-08-25-55 mówi o czterech kanonicznych
+ * polskich etykietach w polu `justification`; tłumaczenie ich zmieniłoby
+ * zapisane dane). Picker w interfejsie idzie za językiem konta, zapis zostaje
+ * kanoniczny — jedno nie może być drugim.
+ */
+export function skipReasonOptionsUi(
+  t: (klucz: string, domyslny: string) => string
+): ReadonlyArray<{ code: DrdSkipReasonCode; label: string }> {
+  return [
+    { code: 'poza_modelem_operacyjnym', label: t('methodWorkspace.skipReason.outsideOperatingModel', 'outside the operating model') },
+    { code: 'poza_zakresem_zlecenia', label: t('methodWorkspace.skipReason.outsideEngagementScope', 'outside the engagement scope') },
+    { code: 'odroczone_do_kolejnej_rewizji', label: t('methodWorkspace.skipReason.deferredToNextRevision', 'deferred to the next revision') },
+    { code: 'zastapione_innym_rozwiazaniem', label: t('methodWorkspace.skipReason.replacedByAnotherSolution', 'replaced by another solution') },
+  ];
+}
+
 export function isDrdSkipReasonCode(value: string): value is DrdSkipReasonCode {
   return Object.prototype.hasOwnProperty.call(SKIP_REASON_LABELS, value);
 }

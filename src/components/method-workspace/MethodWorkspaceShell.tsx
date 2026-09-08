@@ -137,8 +137,8 @@ function viewModeOptions(
 ): Array<{ id: MethodWorkspaceViewMode; label: string; icon: React.ReactNode }> {
   return [
     { id: 'interview', label: t('methodWorkspace.tabs.interview', 'Wywiad'), icon: <MessageSquareText size={13} /> },
-    { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Macierz'), icon: <LayoutGrid size={13} /> },
-    { id: 'report', label: t('methodWorkspace.tabs.report', 'Raport'), icon: <FileText size={13} /> },
+    { id: 'matrix', label: t('methodWorkspace.tabs.matrix', 'Matrix'), icon: <LayoutGrid size={13} /> },
+    { id: 'report', label: t('methodWorkspace.tabs.report', 'Report'), icon: <FileText size={13} /> },
   ];
 }
 
@@ -224,7 +224,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         data-testid="method-workspace-loading"
         className="flex h-full items-center justify-center text-sm text-c-text-muted"
       >
-        {t('methodWorkspace.loading', 'Ładowanie sesji…')}
+        {t('methodWorkspace.loading', 'Loading session…')}
       </div>
     );
   }
@@ -255,7 +255,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <LogOut size={13} />
-          {t('methodWorkspace.exit', 'Wyjdź')}
+          {t('methodWorkspace.exit', 'Exit')}
         </button>
 
         <div className="min-w-0 flex-1">
@@ -281,7 +281,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Settings size={13} />
-          {t('methodWorkspace.settings', 'Ustawienia')}
+          {t('methodWorkspace.settings', 'Settings')}
         </button>
 
         <div className="relative shrink-0">
@@ -290,7 +290,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             onClick={() => setMenu3Open((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menu3Open}
-            aria-label={t('methodWorkspace.moreOptions', 'Więcej opcji')}
+            aria-label={t('methodWorkspace.moreOptions', 'More options')}
             className="rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <MoreVertical size={16} />
@@ -305,7 +305,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                {t('methodWorkspace.menu.duplicate', 'Duplikuj jako nową')}
+                {t('methodWorkspace.menu.duplicate', 'Duplicate as new')}
               </button>
               <button
                 type="button"
@@ -319,7 +319,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 role="menuitem"
                 className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
               >
-                {t('methodWorkspace.menu.share', 'Udostępnij / kopiuj link')}
+                {t('methodWorkspace.menu.share', 'Share / copy link')}
               </button>
               <button
                 type="button"
@@ -340,22 +340,33 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="grid shrink-0 gap-3 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary md:grid-cols-4"
         >
           <div>
-            <p className="font-semibold text-c-text">Informacje o dokumencie</p>
-            <p>Metoda {methodName} · {packVersionLabel}</p>
-            <p>Wersja sesji v{session.version}</p>
-            {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.documentInfo', 'Document information')}</p>
+            <p>
+              {t('methodWorkspace.info.method', 'Method {{name}}', { name: methodName })} · {packVersionLabel}
+            </p>
+            <p>{t('methodWorkspace.info.sessionVersion', 'Session version v{{version}}', { version: session.version })}</p>
+            {documentSourceLabel && (
+              <p>{t('methodWorkspace.info.source', 'Source: {{label}}', { label: documentSourceLabel })}</p>
+            )}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
             {/* Zapis nie ma już stałej reprezentacji w nagłówku (DEC-415b) —
                 i nie dostaje jej też tutaj: powtarzanie „zapisano" w miejscu,
                 w którym zapis jest automatyczny, to szum, nie informacja
                 (ta sama logika, co przy `degradedMessage` niżej). */}
             <p className="mt-2">
-              Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
+              {t('methodWorkspace.info.evidence', 'Evidence: {{done}}/{{total}}', {
+                done: readiness.totalUnits - readiness.unitsMissingEvidence,
+                total: readiness.totalUnits,
+              })}
             </p>
-            <p>Do przeglądu: {readiness.openDiscrepancies}</p>
+            <p>{t('methodWorkspace.info.toReview', 'To review: {{count}}', { count: readiness.openDiscrepancies })}</p>
             {readiness.freezeBlockers.length > 0 ? (
               <div className="mt-1">
-                <p>Blokery zamrożenia ({readiness.freezeBlockers.length}):</p>
+                <p>
+                  {t('methodWorkspace.info.freezeBlockers', 'Freeze blockers ({{count}}):', {
+                    count: readiness.freezeBlockers.length,
+                  })}
+                </p>
                 <ul className="ml-3 list-disc space-y-0.5">
                   {readiness.freezeBlockers.map((blocker, i) => (
                     <li key={i}>{blocker}</li>
@@ -363,38 +374,65 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 </ul>
               </div>
             ) : (
-              <p>Brak blokerów zamrożenia.</p>
+              <p>{t('methodWorkspace.info.noFreezeBlockers', 'No freeze blockers.')}</p>
             )}
             {/* Raw session UUID — technical detail, not something an
                 operator needs on first glance (the header already shows a
                 short, human-scannable "Sesja {id.slice(0,8)}"). */}
             <details className="mt-2">
               <summary className="cursor-pointer text-c-text-muted hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
-                Szczegóły techniczne
+                {t('methodWorkspace.info.technicalDetails', 'Technical details')}
               </summary>
-              <p className="mt-1 font-mono text-[10px] text-c-text-muted">ID sesji: {session.id}</p>
+              <p className="mt-1 font-mono text-[10px] text-c-text-muted">
+                {t('methodWorkspace.info.sessionId', 'Session ID: {{id}}', { id: session.id })}
+              </p>
             </details>
           </div>
           <div>
-            <p className="font-semibold text-c-text">Zespół i uprawnienia</p>
-            <p>Tryb pracy: {mode === 'teresa_led' ? 'AI assisted' : 'human led'}</p>
-            <p>{readOnly ? 'Tylko odczyt' : 'Edycja dozwolona'}</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.teamAndRights', 'Team and permissions')}</p>
+            <p>
+              {t('methodWorkspace.info.workMode', 'Work mode: {{mode}}', {
+                mode:
+                  mode === 'teresa_led'
+                    ? t('methodWorkspace.info.aiAssisted', 'AI assisted')
+                    : t('methodWorkspace.info.humanLed', 'human led'),
+              })}
+            </p>
+            <p>
+              {readOnly
+                ? t('methodWorkspace.info.readOnly', 'Read only')
+                : t('methodWorkspace.info.editAllowed', 'Editing allowed')}
+            </p>
           </div>
           <div>
             {/* DEC-2026-08-25-56: "Akceptacje", nie "Zatwierdzenia". */}
-            <p className="font-semibold text-c-text">Akceptacje</p>
-            <p>Odpowiedzi: {session.state === 'in_review' || session.state === 'frozen' ? 'w przeglądzie lub zatwierdzone' : 'robocze'}</p>
-            <p>Targety i raport: {session.state === 'frozen' ? 'zamrożone' : 'niezatwierdzone'}</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.approvals', 'Approvals')}</p>
+            <p>
+              {t('methodWorkspace.info.answers', 'Answers: {{state}}', {
+                state:
+                  session.state === 'in_review' || session.state === 'frozen'
+                    ? t('methodWorkspace.info.answersInReview', 'in review or approved')
+                    : t('methodWorkspace.info.answersDraft', 'draft'),
+              })}
+            </p>
+            <p>
+              {t('methodWorkspace.info.targetsAndReport', 'Targets and report: {{state}}', {
+                state:
+                  session.state === 'frozen'
+                    ? t('methodWorkspace.info.frozen', 'frozen')
+                    : t('methodWorkspace.info.notApproved', 'not approved'),
+              })}
+            </p>
             {governanceActions && <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>}
           </div>
           <div>
-            <p className="font-semibold text-c-text">Licencja i wersje</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.licenceAndVersions', 'Licence and versions')}</p>
             {/* 2026-08-26 assessment cleanup: removed "Status subskrypcji: do
                 potwierdzenia przez backend" — a developer TODO note, not
                 real data, left visible on the client's face (no field on
                 `session`/`readiness` backs a subscription status; showing
                 one would just be another fabricated fact). */}
-            <p>Historia wersji dostępna z menu dokumentu</p>
+            <p>{t('methodWorkspace.info.versionHistoryHint', 'Version history is available from the document menu')}</p>
           </div>
           {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}
         </section>
@@ -418,7 +456,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-c-danger" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-c-text">
-              {t('methodWorkspace.saveFailedToast', 'Nie udało się zapisać — spróbuj ponownie')}
+              {t('methodWorkspace.saveFailedToast', 'Could not save — try again')}
             </p>
             {saveErrorMessage && (
               <p className="mt-0.5 text-xs text-c-text-muted">{saveErrorMessage}</p>
@@ -429,14 +467,14 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 onClick={onSaveRetry}
                 className="rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs font-semibold text-c-text hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                {t('methodWorkspace.saveRetry', 'Ponów zapis')}
+                {t('methodWorkspace.saveRetry', 'Retry save')}
               </button>
               <button
                 type="button"
                 onClick={onSaveStay}
                 className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                {t('methodWorkspace.saveDismiss', 'Zamknij')}
+                {t('methodWorkspace.saveDismiss', 'Dismiss')}
               </button>
             </div>
           </div>
@@ -462,7 +500,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             total: readiness.totalUnits,
           })}
           {readiness.unitsMissingEvidence > 0 &&
-            ` · ${t('methodWorkspace.unitsMissingEvidence', '{{count}} bez dowodu', {
+            ` · ${t('methodWorkspace.unitsMissingEvidence', '{{count}} without evidence', {
               count: readiness.unitsMissingEvidence,
             })}`}
         </div>

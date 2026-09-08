@@ -14,81 +14,107 @@ import {
   StickyNote,
   Users,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 
 interface NodeTypeOption {
   type: string;
-  label: string;
+  /** Klucz i18n etykiety węzła — pasek płótna idzie za językiem konta. */
+  labelKey: string;
+  labelDefault: string;
   icon: React.ReactNode;
-  description: string;
+  /** Klucz i18n dymka. */
+  descriptionKey: string;
+  descriptionDefault: string;
 }
 
 const NODE_TYPES: Record<string, NodeTypeOption[]> = {
   process_flow: [
     {
       type: 'processStep',
-      label: 'Process Step',
+      labelKey: 'studio.node.processStep',
+      labelDefault: 'Process step',
       icon: <Square size={16} />,
-      description: 'Action or task',
+      descriptionKey: 'studio.node.desc.actionOrTask',
+      descriptionDefault: 'Action or task',
     },
     {
       type: 'decision',
-      label: 'Decision',
+      labelKey: 'studio.node.decision',
+      labelDefault: 'Decision',
       icon: <Diamond size={16} />,
-      description: 'Yes/No branch',
+      descriptionKey: 'studio.node.desc.yesNoBranch',
+      descriptionDefault: 'Yes/No branch',
     },
     {
       type: 'startEnd',
-      label: 'Start/End',
+      labelKey: 'studio.node.startEnd',
+      labelDefault: 'Start/End',
       icon: <Circle size={16} />,
-      description: 'Flow terminal',
+      descriptionKey: 'studio.node.desc.flowTerminal',
+      descriptionDefault: 'Flow terminal',
     },
-    { type: 'textNode', label: 'Note', icon: <StickyNote size={16} />, description: 'Annotation' },
+    { type: 'textNode', labelKey: 'studio.node.note',
+      labelDefault: 'Note', icon: <StickyNote size={16} />, descriptionKey: 'studio.node.desc.annotation', descriptionDefault: 'Annotation' },
   ],
   org_chart: [
     {
       type: 'orgUnit',
-      label: 'Person/Team',
+      labelKey: 'studio.node.orgUnit',
+      labelDefault: 'Person/Team',
       icon: <Users size={16} />,
-      description: 'Organization unit',
+      descriptionKey: 'studio.node.desc.orgUnit',
+      descriptionDefault: 'Organisation unit',
     },
-    { type: 'textNode', label: 'Note', icon: <StickyNote size={16} />, description: 'Annotation' },
+    { type: 'textNode', labelKey: 'studio.node.note',
+      labelDefault: 'Note', icon: <StickyNote size={16} />, descriptionKey: 'studio.node.desc.annotation', descriptionDefault: 'Annotation' },
   ],
   mindmap: [
     {
       type: 'mindmapNode',
-      label: 'Topic',
+      labelKey: 'studio.node.topic',
+      labelDefault: 'Topic',
       icon: <Circle size={16} />,
-      description: 'Mind map node',
+      descriptionKey: 'studio.node.desc.mindMapNode',
+      descriptionDefault: 'Mind map node',
     },
-    { type: 'textNode', label: 'Note', icon: <StickyNote size={16} />, description: 'Annotation' },
+    { type: 'textNode', labelKey: 'studio.node.note',
+      labelDefault: 'Note', icon: <StickyNote size={16} />, descriptionKey: 'studio.node.desc.annotation', descriptionDefault: 'Annotation' },
   ],
   raci: [
     {
       type: 'raciCell',
-      label: 'RACI Cell',
+      labelKey: 'studio.node.raciCell',
+      labelDefault: 'RACI cell',
       icon: <LayoutGrid size={16} />,
-      description: 'Matrix cell',
+      descriptionKey: 'studio.node.desc.matrixCell',
+      descriptionDefault: 'Matrix cell',
     },
   ],
   swimlane: [
     {
       type: 'swimlane',
-      label: 'Swimlane',
+      labelKey: 'studio.node.swimlane',
+      labelDefault: 'Swimlane',
       icon: <AlignHorizontalDistributeCenter size={16} />,
-      description: 'Department lane',
+      descriptionKey: 'studio.node.desc.departmentLane',
+      descriptionDefault: 'Department lane',
     },
     {
       type: 'processStep',
-      label: 'Process Step',
+      labelKey: 'studio.node.processStep',
+      labelDefault: 'Process step',
       icon: <Square size={16} />,
-      description: 'Action or task',
+      descriptionKey: 'studio.node.desc.actionOrTask',
+      descriptionDefault: 'Action or task',
     },
     {
       type: 'decision',
-      label: 'Decision',
+      labelKey: 'studio.node.decision',
+      labelDefault: 'Decision',
       icon: <Diamond size={16} />,
-      description: 'Yes/No branch',
+      descriptionKey: 'studio.node.desc.yesNoBranch',
+      descriptionDefault: 'Yes/No branch',
     },
   ],
 };
@@ -104,6 +130,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
   onAddNode,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const nodeTypes = NODE_TYPES[diagramType] || NODE_TYPES.process_flow;
@@ -126,14 +153,14 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
               key={nodeType.type}
               onClick={() => onAddNode(nodeType.type)}
               className="group relative flex items-center gap-2 px-3 py-2 text-c-text-muted hover:text-c-text hover:bg-c-surface rounded-lg transition-all"
-              title={nodeType.description}
+              title={t(nodeType.descriptionKey, nodeType.descriptionDefault)}
             >
               {nodeType.icon}
-              <span className="text-xs font-medium">{nodeType.label}</span>
+              <span className="text-xs font-medium">{t(nodeType.labelKey, nodeType.labelDefault)}</span>
 
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-c-surface border border-c-border-subtle rounded text-[10px] text-c-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                {nodeType.description}
+                {t(nodeType.descriptionKey, nodeType.descriptionDefault)}
               </div>
             </button>
           ))}
@@ -142,7 +169,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
 
           <button className="flex items-center gap-1 px-3 py-2 text-c-accent hover:text-c-accent hover:bg-c-accent-soft rounded-lg transition-all">
             <Plus size={14} />
-            <span className="text-xs font-medium">More</span>
+            <span className="text-xs font-medium">{t('common.more', 'More')}</span>
           </button>
         </div>
       )}

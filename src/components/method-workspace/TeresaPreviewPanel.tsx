@@ -12,6 +12,8 @@
  */
 import { AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 import React from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import type { TeresaCommitRequest, TeresaPreview, TeresaStatementKind } from '@/method-core/contracts';
 
@@ -29,14 +31,20 @@ export interface TeresaPreviewPanelProps {
   className?: string;
 }
 
-const STATEMENT_LABEL: Record<TeresaStatementKind, { label: string; tone: string }> = {
-  confirmed_fact: { label: 'Fakt potwierdzony', tone: 'text-c-success' },
-  respondent_declaration: { label: 'Deklaracja respondenta', tone: 'text-c-info' },
-  interpretation: { label: 'Interpretacja', tone: 'text-c-text-secondary' },
-  missing_evidence: { label: 'Brakujący dowód', tone: 'text-c-warning' },
-  proposal: { label: 'Propozycja', tone: 'text-teal-600 dark:text-teal-400' },
-  decision_required: { label: 'Decyzja wymagana', tone: 'text-c-danger' },
-};
+/** Słownik enumu rodzajów wypowiedzi (PLAN §2 pkt 6) — etykiety z `t()`. */
+function etykietyWypowiedzi(t: TFunction): Record<TeresaStatementKind, { label: string; tone: string }> {
+  return {
+    confirmed_fact: { label: t('methodWorkspace.teresa.statement.confirmedFact', 'Confirmed fact'), tone: 'text-c-success' },
+    respondent_declaration: {
+      label: t('methodWorkspace.teresa.statement.respondentDeclaration', 'Respondent declaration'),
+      tone: 'text-c-info',
+    },
+    interpretation: { label: t('methodWorkspace.teresa.statement.interpretation', 'Interpretation'), tone: 'text-c-text-secondary' },
+    missing_evidence: { label: t('methodWorkspace.teresa.statement.missingEvidence', 'Missing evidence'), tone: 'text-c-warning' },
+    proposal: { label: t('methodWorkspace.teresa.statement.proposal', 'Proposal'), tone: 'text-teal-600 dark:text-teal-400' },
+    decision_required: { label: t('methodWorkspace.teresa.statement.decisionRequired', 'Decision required'), tone: 'text-c-danger' },
+  };
+}
 
 function renderDiffValue(value: unknown): string {
   if (value === null || value === undefined) return '—';
@@ -53,6 +61,8 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
   onCommit,
   readOnly = false,
 }) => {
+  const { t } = useTranslation();
+  const STATEMENT_LABEL = React.useMemo(() => etykietyWypowiedzi(t), [t]);
   const isExpired = new Date(preview.expiresAt).getTime() < Date.now();
   const decide = (decision: TeresaCommitRequest['decision']) => {
     onCommit({
@@ -71,10 +81,10 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
     >
       <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 dark:text-teal-300">
         <Sparkles size={13} />
-        Propozycja AI — {preview.intent.capabilityId}
+        {t('methodWorkspace.teresa.aiProposal', 'AI proposal')} — {preview.intent.capabilityId}
         {isExpired && (
           <span className="ml-auto inline-flex items-center gap-1 text-c-warning font-medium">
-            <AlertTriangle size={12} /> Wygasła
+            <AlertTriangle size={12} /> {t('methodWorkspace.teresa.expired', 'Expired')}
           </span>
         )}
       </div>
@@ -92,7 +102,9 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
 
       {preview.proposedChanges.length > 0 && (
         <div className="space-y-1.5 rounded-md border border-c-border-subtle bg-c-surface p-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">Podgląd zmiany</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            {t('methodWorkspace.teresa.changePreview', 'Change preview')}
+          </p>
           {preview.proposedChanges.map((change, i) => (
             <div key={i} className="grid grid-cols-2 gap-2 text-xs">
               <div className="rounded bg-c-surface-raised px-2 py-1 text-c-text-muted line-through decoration-c-danger/50">
@@ -110,7 +122,9 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
       {preview.quality.verdict !== 'valid' && (
         <p className="text-xs text-c-warning flex items-center gap-1">
           <AlertTriangle size={12} />
-          {preview.quality.verdict === 'invalid' ? 'Nie przeszła kontroli jakości' : 'Wymaga przeglądu człowieka'}
+          {preview.quality.verdict === 'invalid'
+            ? t('methodWorkspace.teresa.qualityFailed', 'Did not pass the quality check')
+            : t('methodWorkspace.teresa.needsHumanReview', 'Needs a human review')}
         </p>
       )}
 
@@ -121,7 +135,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
           disabled={isExpired || readOnly}
           className="rounded-md border border-c-success/40 bg-c-success/10 px-2 py-1 text-xs font-medium text-c-success hover:bg-c-success/20 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Zaakceptuj
+          {t('methodWorkspace.teresa.accept', 'Accept')}
         </button>
         <button
           type="button"
@@ -129,7 +143,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
           disabled={isExpired || readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Zaakceptuj z edycją
+          {t('methodWorkspace.teresa.acceptWithEdits', 'Accept with edits')}
         </button>
         <button
           type="button"
@@ -137,7 +151,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
           disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Odrzuć
+          {t('methodWorkspace.teresa.reject', 'Reject')}
         </button>
         <button
           type="button"
@@ -145,7 +159,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
           disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Przemyśl ponownie
+          {t('methodWorkspace.teresa.rethink', 'Rethink')}
         </button>
       </div>
     </div>
@@ -162,9 +176,10 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
   readOnly = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
   return (
     <aside
-      aria-label="Panel współpracy z Teresą"
+      aria-label={t('methodWorkspace.teresa.panelLabel', 'Teresa collaboration panel')}
       data-testid="teresa-preview-panel"
       className={`flex flex-col gap-3 ${className}`}
     >
@@ -179,36 +194,39 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
           disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          {mode === 'teresa_led' ? 'Pracuję samodzielnie' : 'Prowadź Ty'}
+          {mode === 'teresa_led'
+            ? t('methodWorkspace.teresa.workManually', 'I will work on my own')
+            : t('methodWorkspace.teresa.takeLead', 'You take the lead')}
         </button>
       </div>
 
       <dl className="space-y-2.5 text-xs">
         <div>
-          <dt className="font-medium text-c-text-secondary">Gdzie jesteśmy?</dt>
+          <dt className="font-medium text-c-text-secondary">{t('methodWorkspace.teresa.whereAreWe', 'Where are we?')}</dt>
           <dd className="text-c-text mt-0.5">{sixQuestions.whereAreWe}</dd>
         </div>
         <div>
-          <dt className="font-medium text-c-text-secondary">Co teraz jest ważne?</dt>
+          <dt className="font-medium text-c-text-secondary">{t('methodWorkspace.teresa.whatMattersNow', 'What matters now?')}</dt>
           <dd className="text-c-text mt-0.5">{sixQuestions.whatMattersNow}</dd>
         </div>
         <div>
-          <dt className="font-medium text-c-text-secondary">Dlaczego?</dt>
+          <dt className="font-medium text-c-text-secondary">{t('methodWorkspace.teresa.why', 'Why?')}</dt>
           <dd className="text-c-text mt-0.5">{sixQuestions.why}</dd>
         </div>
         <div>
-          <dt className="font-medium text-c-text-secondary">Czego brakuje?</dt>
+          <dt className="font-medium text-c-text-secondary">{t('methodWorkspace.teresa.whatIsMissing', 'What is missing?')}</dt>
           <dd className="text-c-text mt-0.5">{sixQuestions.whatIsMissing}</dd>
         </div>
       </dl>
 
       <div className="space-y-2">
         <p className="text-xs font-semibold text-c-text-secondary">
-          Co proponuje Teresa {proposalQueue.length > 0 ? `(${proposalQueue.length})` : ''}
+          {t('methodWorkspace.teresa.whatTeresaProposes', 'What Teresa proposes')}{' '}
+          {proposalQueue.length > 0 ? `(${proposalQueue.length})` : ''}
         </p>
         {proposalQueue.length === 0 ? (
           <p className="text-xs text-c-text-muted rounded-lg border border-dashed border-c-border-subtle px-3 py-4 text-center">
-            Brak oczekujących propozycji.
+            {t('methodWorkspace.teresa.noPendingProposals', 'No pending proposals.')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -221,7 +239,7 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
 
       <div className="mt-auto rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-          Najbliższy bezpieczny krok
+          {t('methodWorkspace.teresa.nextSafeAction', 'Next safe step')}
         </p>
         <p className="text-xs text-c-text mt-1">{sixQuestions.nextSafeAction}</p>
       </div>

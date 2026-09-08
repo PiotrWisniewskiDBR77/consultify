@@ -149,7 +149,7 @@ describe('Voice transcript reaches InterviewFocusPanel through the SAME handler 
 
     // Manual typing goes through the SAME prop — proven first, as the
     // baseline the voice channel must match exactly.
-    const textarea = screen.getByLabelText('Twoja odpowiedź') as HTMLTextAreaElement;
+    const textarea = screen.getByLabelText('Your answer') as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'Wpisane ręcznie.' } });
     expect(onAnswerChange).toHaveBeenCalledWith(question.question.questionId, 'Wpisane ręcznie.');
     onAnswerChange.mockClear();

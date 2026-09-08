@@ -17,6 +17,8 @@
  */
 import { AlertTriangle, Eye, Sparkles, X } from 'lucide-react';
 import React, { useEffect } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import type { MatrixCellState, MatrixRow, MatrixSelection } from './types';
 
@@ -31,15 +33,21 @@ export interface LiveMatrixProps {
   className?: string;
 }
 
-const ANSWER_STATE_LABEL: Record<string, string> = {
-  confirmed: 'potwierdzone',
-  partial: 'częściowo',
-  no: 'nie',
-  dont_know: 'nie wiem',
-  no_evidence: 'brak dowodu',
-  not_applicable: 'nie dotyczy',
-  unresolved: 'nierozstrzygnięte',
-};
+/**
+ * Słownik enumu stanów odpowiedzi w NAZWIE DOSTĘPNOŚCIOWEJ komórki
+ * (PLAN §2 pkt 6). Czytnik ekranu użytkownika EN dostawał tu polskie słowa.
+ */
+function etykietyStanow(t: TFunction): Record<string, string> {
+  return {
+    confirmed: t('methodWorkspace.matrix.answer.confirmed', 'confirmed'),
+    partial: t('methodWorkspace.matrix.answer.partial', 'partially'),
+    no: t('methodWorkspace.matrix.answer.no', 'no'),
+    dont_know: t('methodWorkspace.matrix.answer.dontKnow', 'do not know'),
+    no_evidence: t('methodWorkspace.matrix.answer.noEvidence', 'no evidence'),
+    not_applicable: t('methodWorkspace.matrix.answer.notApplicable', 'not applicable'),
+    unresolved: t('methodWorkspace.matrix.answer.unresolved', 'unresolved'),
+  };
+}
 
 /**
  * A cell only carries evidence MEANING once someone has actually engaged with
@@ -85,11 +93,15 @@ const Cell: React.FC<{
   maxLevel: number;
   onSelect: () => void;
 }> = ({ cell, unitName, methodName, selected, maxLevel, onSelect }) => {
+  const { t } = useTranslation();
+  const ANSWER_STATE_LABEL = React.useMemo(() => etykietyStanow(t), [t]);
   const engaged = isCellEngaged(cell);
 
   // Not-yet-reached cells never mention evidence at all — there is nothing to
   // report yet, and saying "evidence missing" here would read as a defect.
-  const evidencePhrase = engaged ? `evidence ${cell.evidenceState}` : 'jeszcze nieoceniony';
+  const evidencePhrase = engaged
+    ? `${t('methodWorkspace.matrix.evidence', 'evidence')} ${cell.evidenceState}`
+    : t('methodWorkspace.matrix.notAssessedYet', 'not assessed yet');
 
   // ASM-OWN-013: the global legend (Propozycja AI / Review / Blocker /
   // Evidence luka / Nieoceniony) is gone — the owner never understood what it
@@ -98,15 +110,31 @@ const Cell: React.FC<{
   // instead of disappearing. Precedence mirrors the icon rendering below
   // (Sparkles wins over Eye when both would apply).
   const workflowPhrase = cell.aiProposalPending
-    ? ', Propozycja AI'
+    ? `, ${t('methodWorkspace.matrix.aiProposal', 'AI proposal')}`
     : cell.reviewRequired
-      ? ', Review'
+      ? `, ${t('methodWorkspace.matrix.review', 'Review')}`
       : '';
-  const accessibleName = `${methodName}, ${unitName}, poziom ${cell.level}, ${
-    cell.achieved ? 'osiągnięty' : 'nieosiągnięty'
-  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, ${evidencePhrase}${workflowPhrase}${
-    cell.blocker ? ', blocker' : ''
+  // Nazwa dostępnościowa składana z PRZETŁUMACZONYCH CZĘŚCI, nie z jednego
+  // klucza z interpolacją. Powód jest mierzalny: atrapa `react-i18next`
+  // w `tests/setup.ts` przyjmuje dwa argumenty, więc wzorzec
+  // `t(klucz, default, { zmienne })` zwraca w teście surowy szablon
+  // „{{method}}, {{unit}}…” — testowałbym napis, którego użytkownik nigdy
+  // nie zobaczy. Sklejenie części daje ten sam wynik w produkcie i w teście.
+  const poziomFraza = `${t('methodWorkspace.matrix.level', 'level')} ${cell.level}`;
+  const osiagniecieFraza = cell.achieved
+    ? t('methodWorkspace.matrix.achieved', 'achieved')
+    : t('methodWorkspace.matrix.notAchieved', 'not achieved');
+  const odpowiedzFraza = `${t('methodWorkspace.matrix.answerLabel', 'answer')} ${
+    ANSWER_STATE_LABEL[cell.answerState] || cell.answerState
   }`;
+  const accessibleName = [
+    methodName,
+    unitName,
+    poziomFraza,
+    osiagniecieFraza,
+    odpowiedzFraza,
+    `${evidencePhrase}${workflowPhrase}${cell.blocker ? `, ${t('methodWorkspace.matrix.blocker', 'blocker')}` : ''}`,
+  ].join(', ');
 
   // Kanon: nieoceniony obszar (jeszcze nie dotknięty) NIE jest blokerem ani
   // luką dowodową — dostaje spokojną, neutralną obwódkę niezależnie od
@@ -163,6 +191,7 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
   methodName,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const maxLevel = levels.length > 0 ? Math.max(...levels) : 1;
   const selectedCell =
     selection != null
@@ -185,7 +214,9 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
   return (
     <div data-testid="live-matrix" className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-c-text-secondary">Macierz na żywo</h3>
+        <h3 className="text-xs font-semibold text-c-text-secondary">
+          {t('methodWorkspace.matrix.title', 'Live matrix')}
+        </h3>
       </div>
 
       <div className="overflow-x-auto">
@@ -235,11 +266,11 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                     data-unit-id={row.unitId}
                     className="pl-3 text-[10px] tabular-nums text-c-text-secondary whitespace-nowrap"
                   >
-                    <span title="Obecny poziom">C {summary.current ?? '—'}</span>
+                    <span title={t('methodWorkspace.matrix.currentLevel', 'Current level')}>C {summary.current ?? '—'}</span>
                     <span className="mx-1 text-c-text-muted" aria-hidden="true">
                       ·
                     </span>
-                    <span title="Poziom docelowy">T {summary.target ?? '—'}</span>
+                    <span title={t('methodWorkspace.matrix.targetLevel', 'Target level')}>T {summary.target ?? '—'}</span>
                     <span className="mx-1 text-c-text-muted" aria-hidden="true">
                       ·
                     </span>
@@ -260,7 +291,10 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
       {selection && (
         <div
           role="dialog"
-          aria-label={`Szczegóły komórki: ${selection.unitId}, poziom ${selection.level}`}
+          aria-label={`${t('methodWorkspace.matrix.cellDetails', 'Cell details')}: ${selection.unitId}, ${t(
+        'methodWorkspace.matrix.level',
+        'level'
+      )} ${selection.level}`}
           data-testid="matrix-side-sheet"
           className="rounded-xl border border-c-border bg-c-surface p-4 mt-1"
         >
@@ -271,7 +305,7 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
             <button
               type="button"
               onClick={onCloseSideSheet}
-              aria-label="Zamknij szczegóły komórki"
+              aria-label={t('methodWorkspace.matrix.closeCellDetails', 'Close cell details')}
               className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <X size={14} />

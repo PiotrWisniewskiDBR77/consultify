@@ -8,7 +8,9 @@
  * justification before it can be confirmed (canon forbids unjustified N/A).
  */
 import { AlertCircle, Check, CircleSlash, FileQuestion, HelpCircle, Minus } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import type { MethodAnswerState, ResolutionAction, ResolutionCardData } from './types';
 import { ANSWER_STATE_TONE, ANSWER_TONE_BUTTON_SELECTED } from './answerStateColors';
@@ -23,18 +25,29 @@ export interface AnswerStateControlProps {
   className?: string;
 }
 
-const OPTIONS: Array<{
+/**
+ * SŁOWNIK ENUMU stanów odpowiedzi (PLAN §2 pkt 6): zakaz renderowania surowej
+ * wartości i zakaz stałej tablicy z etykietami w jednym języku. Etykiety
+ * powstają z `t()` przy każdym renderze, więc idą za językiem konta.
+ */
+function opcjeStanow(t: TFunction): Array<{
   id: MethodAnswerState;
   label: string;
   icon: React.ReactNode;
-}> = [
-  { id: 'confirmed', label: 'Potwierdzone', icon: <Check size={14} /> },
-  { id: 'partial', label: 'Częściowo', icon: <Minus size={14} /> },
-  { id: 'no', label: 'Nie', icon: <CircleSlash size={14} /> },
-  { id: 'dont_know', label: 'Nie wiem / potrzebuję pomocy', icon: <HelpCircle size={14} /> },
-  { id: 'no_evidence', label: 'Nie mam dowodu', icon: <FileQuestion size={14} /> },
-  { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} /> },
-];
+}> {
+  return [
+    { id: 'confirmed', label: t('methodWorkspace.answerState.confirmed', 'Confirmed'), icon: <Check size={14} /> },
+    { id: 'partial', label: t('methodWorkspace.answerState.partial', 'Partially'), icon: <Minus size={14} /> },
+    { id: 'no', label: t('methodWorkspace.answerState.no', 'No'), icon: <CircleSlash size={14} /> },
+    {
+      id: 'dont_know',
+      label: t('methodWorkspace.answerState.dontKnow', 'I don’t know / I need help'),
+      icon: <HelpCircle size={14} />,
+    },
+    { id: 'no_evidence', label: t('methodWorkspace.answerState.noEvidence', 'I have no evidence'), icon: <FileQuestion size={14} /> },
+    { id: 'not_applicable', label: t('methodWorkspace.answerState.notApplicable', 'Not applicable'), icon: <AlertCircle size={14} /> },
+  ];
+}
 
 export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
   value,
@@ -44,6 +57,8 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
   disabled = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const OPTIONS = useMemo(() => opcjeStanow(t), [t]);
   const [naJustification, setNaJustification] = useState('');
   const [pendingNa, setPendingNa] = useState(false);
 
@@ -67,7 +82,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
           upchnięcie sześciu przycisków w jednym rzędzie. */}
       <div
         role="radiogroup"
-        aria-label="Stan odpowiedzi"
+        aria-label={t('methodWorkspace.answerState.groupLabel', 'Answer state')}
         className="grid grid-cols-2 gap-2 sm:grid-cols-3"
       >
         {OPTIONS.map((option) => {
@@ -98,7 +113,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
       {pendingNa && value !== 'not_applicable' && (
         <div className="space-y-2 rounded-lg border border-c-border bg-c-surface-raised p-3">
           <label htmlFor="na-justification" className="text-sm font-medium text-c-text">
-            Uzasadnij „Nie dotyczy" (wymagane)
+            {t('methodWorkspace.answerState.naJustifyLabel', 'Justify “Not applicable” (required)')}
           </label>
           <textarea
             id="na-justification"
@@ -106,7 +121,10 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
             onChange={(e) => setNaJustification(e.target.value)}
             rows={2}
             className="w-full rounded-md border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            placeholder="Dlaczego to pytanie nie ma zastosowania w tym przypadku?"
+            placeholder={t(
+              'methodWorkspace.answerState.naJustifyPlaceholder',
+              'Why does this question not apply in this case?'
+            )}
           />
           <div className="flex justify-end gap-2">
             <button
@@ -114,7 +132,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
               onClick={() => setPendingNa(false)}
               className="rounded px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface"
             >
-              Anuluj
+              {t('common.cancel', 'Cancel')}
             </button>
             <button
               type="button"
@@ -125,7 +143,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
               }}
               className="rounded bg-c-surface border border-c-border px-2 py-1 text-xs font-medium text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Potwierdź „Nie dotyczy"
+              {t('methodWorkspace.answerState.naConfirm', 'Confirm “Not applicable”')}
             </button>
           </div>
         </div>

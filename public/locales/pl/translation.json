@@ -912,7 +912,10 @@
     "loadingTools": "Ładowanie narzędzi…",
     "reasonRequired": "Powód (wymagany)",
     "homePage": "Strona główna",
-    "learnMore": "Dowiedz się więcej"
+    "learnMore": "Dowiedz się więcej",
+    "undo": "Cofnij",
+    "redo": "Ponów",
+    "tableWithPreview": "Obszar roboczy tabeli i podglądu"
   },
   "superadmin": {
     "confirm": {
@@ -26823,6 +26826,20 @@
         "emptyNoApprovedReport": "Raport powstaje z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
         "emptyNoApprovedInitiative": "Inicjatywy powstają z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
         "goToSessions": "Przejdź do Sesji"
+      },
+      "category": {
+        "strategic": "Strategiczne",
+        "operational": "Operacyjne",
+        "digital": "Cyfrowe",
+        "automation": "Automatyzacja procesów",
+        "licensed": "Oceny"
+      },
+      "initiative": {
+        "loading": "Wczytywanie szczegółów inicjatywy…",
+        "notFound": "Nie znaleziono inicjatywy",
+        "backToList": "Wróć do listy",
+        "noTasks": "Brak zadań",
+        "noTasksHint": "Zadania powstaną na etapie planowania"
       }
     },
     "integrations": {
@@ -30618,7 +30635,56 @@
       "insights": "Wnioski AI"
     },
     "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
-    "goToBaseline": "Przejdź do Baseline"
+    "goToBaseline": "Przejdź do Baseline",
+    "custom": {
+      "title": "Trendy własne",
+      "subtitle": "Dodaj presje charakterystyczne dla Twojego rynku lub niszy.",
+      "add": "Dodaj trend własny",
+      "radarWatch": "Radar AI",
+      "radarWatchBody": "Obserwuję źródła informacji pod kątem „Carbon Tax Legislation” — wygląda na istotne dla Twojego sektora.",
+      "addToList": "Dodać do listy?",
+      "empty": "Nie dodano jeszcze żadnego trendu własnego.",
+      "newTitle": "Nowy trend własny",
+      "nameLabel": "Nazwa trendu",
+      "namePlaceholder": "np. wojna cenowa lokalnego konkurenta",
+      "descriptionLabel": "Opis / dlaczego istotne?",
+      "descriptionPlaceholder": "Wpływ na sprzedaż w III kwartale…",
+      "typeLabel": "Typ",
+      "type": {
+        "technology": "Technologia",
+        "business": "Biznes",
+        "societal": "Społeczny"
+      },
+      "ring": {
+        "now": "Wpływ teraz",
+        "watch": "Bacznie obserwuj",
+        "horizon": "Na horyzoncie"
+      },
+      "save": "Zapisz trend"
+    },
+    "detail": {
+      "loading": "Wczytywanie szczegółów trendu…",
+      "errorLabel": "Błąd",
+      "goBack": "Wróć",
+      "noTrend": "Nie wybrano trendu.",
+      "whatIsIt": "Czym to jest",
+      "industryImpact": "Wpływ na branżę",
+      "companyImpact": "Wpływ na firmę",
+      "aiInsight": "Insight AI",
+      "impactScoring": "Ocena wpływu",
+      "evidence": "Dowody",
+      "risks": "Ryzyka",
+      "opportunities": "Szanse",
+      "actions": "Działania",
+      "economicImpact": "Wpływ ekonomiczny",
+      "likelihood": "Prawdopodobieństwo (3–5 lat)",
+      "unavoidability": "Nieuchronność",
+      "competitivePressure": "Presja konkurencyjna",
+      "downloadAndRescore": "Pobierz wszystko i przelicz ocenę"
+    },
+    "baseline": {
+      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu."
+    }
   },
   "publicBooking": {
     "header": "Umów spotkanie",
@@ -37555,6 +37621,9 @@
       "recommendation": {
         "confidence": "pewność"
       }
+    },
+    "insight": {
+      "loading": "Wczytywanie insightu…"
     }
   },
   "docs": {
@@ -49936,12 +50005,81 @@
       "opportunities": "Szanse",
       "threats": "Zagrożenia",
       "strategicField": "Pole strategiczne",
-      "tensionsCount": "{{count}} napięć łączy ćwiartki"
+      "tensionsCount": "{{count}} napięć łączy ćwiartki",
+      "evidence": {
+        "fact": "fakt",
+        "observation": "obserwacja",
+        "hypothesis": "hipoteza"
+      },
+      "proposalStatus": {
+        "aiProposed": "Propozycja AI",
+        "rethinking": "Przemyślenie",
+        "accepted": "Zaakceptowane",
+        "rejected": "Odrzucone",
+        "none": "Brak statusu"
+      },
+      "weight": "waga {{value}}",
+      "quadrantOf": "Ćwiartka: {{text}}",
+      "liveField": "Pole strategiczne — na żywo",
+      "tensionsHeading": "Napięcia SO / WO / ST / WT",
+      "missing": "brakuje: {{list}}",
+      "noTensions": "Brak napięć — potrzebne co najmniej dwie zaakceptowane pozycje w sąsiednich ćwiartkach.",
+      "pendingTray": "Poza polem — nie zaakceptowane (nie wchodzi do Output)"
     },
     "report": {
       "execPresentation": "Prezentacja wykonawcza",
       "title": "Raport",
-      "rendererInfo": "Renderer {{version}} · źródła: {{count}}"
+      "rendererInfo": "Renderer {{version}} · źródła: {{count}}",
+      "posture": {
+        "attack": "Atakuj szansę",
+        "repair": "Napraw, by sięgnąć",
+        "defend": "Broń się siłą",
+        "protect": "Chroń ekspozycję"
+      },
+      "strategicTensions": "Napięcia strategiczne",
+      "whatIs": "Co jest",
+      "whatItMeans": "Co to znaczy",
+      "whatToDoFirst": "Co robić najpierw",
+      "evidence": "Dowody"
+    },
+    "generic": {
+      "loadError": "Nie udało się wczytać sesji narzędzia",
+      "defaultTitle": "Sesja narzędzia",
+      "unknownType": "Nieznany typ",
+      "copied": "Skopiowano do schowka",
+      "copyFailed": "Nie udało się skopiować",
+      "loading": "Wczytywanie sesji narzędzia…",
+      "backToList": "Wróć do listy",
+      "loadingDocs": "Wczytywanie dokumentacji narzędzia…",
+      "catalogDocs": "Dokumentacja narzędzia (katalog)",
+      "catalogSource": "Źródło: {{path}}",
+      "sessionContext": "Kontekst sesji (dane techniczne)",
+      "toolType": "Typ narzędzia",
+      "project": "Projekt",
+      "copyJsonData": "Kopiuj dane (JSON)",
+      "whyThisScreen": "Dlaczego widzisz ten ekran",
+      "whyThisScreenBody": "Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu. Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie i można je skopiować albo przekazać dalej.",
+      "answersAndData": "Odpowiedzi i dane sesji (dane techniczne)",
+      "sessionInfo": "Informacje o sesji"
+    },
+    "trace": {
+      "sourceIdea": "Pomysł",
+      "sourceNotebook": "Notatnik",
+      "sourceMyWork": "Moja Praca",
+      "loadError": "Nie udało się wczytać śladu pochodzenia",
+      "title": "Ślad pochodzenia",
+      "loading": "Wczytywanie śladu pochodzenia…",
+      "whatIsThis": "Czym jest ten wpis",
+      "whatIsThisBody": "To nie jest sesja narzędzia i nie ma warsztatu. Ten wpis powstał automatycznie, gdy {{source}} z Mojej Pracy został przekształcony w inicjatywę, zadanie lub decyzję — po to, żeby ten obiekt miał udokumentowane źródło. Pracę prowadzi się w źródle albo w obiekcie, który z niego powstał.",
+      "sourceSummary": "Streszczenie źródła",
+      "source": "Źródło",
+      "kind": "Rodzaj",
+      "identifier": "Identyfikator",
+      "openInMyWork": "Otwórz źródło w Mojej Pracy",
+      "noSourceId": "Ten wpis nie niesie identyfikatora źródła — nie ma dokąd przejść."
+    },
+    "canvas": {
+      "loadingStep": "Wczytywanie kroku…"
     }
   },
   "drd": {
@@ -49995,7 +50133,192 @@
     },
     "unitsAnswered": "{{answered}}/{{total}} jednostek odpowiedzianych",
     "unitsMissingEvidence": "{{count}} bez dowodu",
-    "viewModeAria": "Tryb widoku"
+    "viewModeAria": "Tryb widoku",
+    "saveFailedToast": "Nie udało się zapisać — spróbuj ponownie",
+    "saveRetry": "Ponów zapis",
+    "saveDismiss": "Zamknij",
+    "saveState": {
+      "saved": "Zapisano",
+      "savedAt": "Zapisano {{time}}",
+      "dirty": "Niezapisane zmiany",
+      "saving": "Zapisywanie…",
+      "failed": "Zapis nieudany",
+      "offlineQueued": "Offline — w kolejce",
+      "saveNow": "Zapisz teraz",
+      "retry": "Spróbuj ponownie",
+      "stay": "Zostań"
+    },
+    "answerState": {
+      "confirmed": "Potwierdzone",
+      "partial": "Częściowo",
+      "no": "Nie",
+      "dontKnow": "Nie wiem / potrzebuję pomocy",
+      "noEvidence": "Nie mam dowodu",
+      "notApplicable": "Nie dotyczy",
+      "groupLabel": "Stan odpowiedzi",
+      "naJustifyLabel": "Uzasadnij „Nie dotyczy” (wymagane)",
+      "naJustifyPlaceholder": "Dlaczego to pytanie nie ma zastosowania w tym przypadku?",
+      "naConfirm": "Potwierdź „Nie dotyczy”"
+    },
+    "resolution": {
+      "assignQuestion": "Przypisz pytanie",
+      "requestEvidence": "Poproś o dowód",
+      "askTeresa": "Zapytaj Teresę",
+      "returnLater": "Wróć później",
+      "regionLabel": "Karta rozstrzygnięcia — nie wiem",
+      "title": "To nie jest błąd — to jest luka wiedzy",
+      "subtitle": "„Nie wiem” nie ustawia poziomu i nie liczy się jako zero. Ustalmy, czego brakuje.",
+      "whatIsUnknown": "Czego dokładnie nie wiemy",
+      "likelyOwner": "Kto prawdopodobnie wie",
+      "resolvingArtifact": "Jaki artefakt rozstrzygnie",
+      "freezeImpact": "Wpływ na zamrożenie",
+      "notEstablished": "Nie ustalono",
+      "blocksFreeze": "Blokuje zamrożenie wyniku",
+      "doesNotBlockFreeze": "Nie blokuje zamrożenia",
+      "plannedTooltip": "Planowane — niedostępne w tej wersji.",
+      "planned": "Planowane",
+      "recorded": "Zapisano: {{action}}."
+    },
+    "voice": {
+      "unsupportedTooltip": "Ta przeglądarka nie udostępnia rozpoznawania mowy — użyj klawiatury lub Teresy.",
+      "unsupported": "Mowa niedostępna w tej przeglądarce"
+    },
+    "teresa": {
+      "statement": {
+        "confirmedFact": "Fakt potwierdzony",
+        "respondentDeclaration": "Deklaracja respondenta",
+        "interpretation": "Interpretacja",
+        "missingEvidence": "Brakujący dowód",
+        "proposal": "Propozycja",
+        "decisionRequired": "Decyzja wymagana"
+      },
+      "aiProposal": "Propozycja AI",
+      "expired": "Wygasła",
+      "changePreview": "Podgląd zmiany",
+      "qualityFailed": "Nie przeszła kontroli jakości",
+      "needsHumanReview": "Wymaga przeglądu człowieka",
+      "accept": "Zaakceptuj",
+      "acceptWithEdits": "Zaakceptuj z edycją",
+      "reject": "Odrzuć",
+      "rethink": "Przemyśl ponownie",
+      "panelLabel": "Panel współpracy z Teresą",
+      "workManually": "Pracuję samodzielnie",
+      "takeLead": "Prowadź Ty",
+      "whereAreWe": "Gdzie jesteśmy?",
+      "whatMattersNow": "Co teraz jest ważne?",
+      "why": "Dlaczego?",
+      "whatIsMissing": "Czego brakuje?",
+      "whatTeresaProposes": "Co proponuje Teresa",
+      "noPendingProposals": "Brak oczekujących propozycji.",
+      "nextSafeAction": "Najbliższy bezpieczny krok"
+    },
+    "matrix": {
+      "answer": {
+        "confirmed": "potwierdzone",
+        "partial": "częściowo",
+        "no": "nie",
+        "dontKnow": "nie wiem",
+        "noEvidence": "brak dowodu",
+        "notApplicable": "nie dotyczy",
+        "unresolved": "nierozstrzygnięte"
+      },
+      "evidenceState": "dowód {{state}}",
+      "notAssessedYet": "jeszcze nieoceniony",
+      "aiProposal": "Propozycja AI",
+      "review": "Przegląd",
+      "cellAccessibleName": "{{method}}, {{unit}}, poziom {{level}}, {{achieved}}, odpowiedź {{answer}}, {{evidence}}{{workflow}}{{blocker}}",
+      "achieved": "osiągnięty",
+      "notAchieved": "nieosiągnięty",
+      "blocker": "bloker",
+      "title": "Macierz na żywo",
+      "cellDetailsLabel": "Szczegóły komórki: {{unit}}, poziom {{level}}",
+      "closeCellDetails": "Zamknij szczegóły komórki",
+      "level": "poziom",
+      "evidence": "dowód",
+      "cellDetails": "Szczegóły komórki",
+      "answerLabel": "odpowiedź",
+      "currentLevel": "Obecny poziom",
+      "targetLevel": "Poziom docelowy"
+    },
+    "navigator": {
+      "noStructure": "Method Pack nie dostarczył jeszcze struktury."
+    },
+    "help": {
+      "unavailable": "Treść pomocy niedostępna",
+      "whatItMeans": "Co to znaczy? ",
+      "whyWeAsk": "Dlaczego pytamy? ",
+      "exampleConfirming": "Potwierdzająca: ",
+      "examplePartial": "Częściowa: ",
+      "exampleNegative": "Niepotwierdzająca: ",
+      "commonMistake": "Typowy błąd: ",
+      "examplesAndEvidence": "Przykład i dowody",
+      "typicalEvidence": "Typowe dowody:",
+      "compareLevels": "Porównaj poziomy",
+      "levelTitle": "Poziom {{level}} — {{title}}",
+      "askTeresa": "Zapytaj Teresę",
+      "showLevelDiff": "Pokaż różnicę L-1/L/L+1"
+    },
+    "evidence": {
+      "complete": "Dowód kompletny",
+      "weak": "Dowód słaby",
+      "missing": "Brak dowodu",
+      "conflicting": "Dowody sprzeczne"
+    },
+    "focus": {
+      "noQuestions": "Brak pytań do wyświetlenia w tym obszarze.",
+      "questionPath": "Ścieżka pytania",
+      "multiStepHint": "Ta jednostka ma {{count}} krótkie kroki. Na ekranie pozostaje otwarty tylko bieżący krok.",
+      "stepOf": "Krok {{current}}/{{total}}",
+      "openStep": "Otwórz krok {{number}}: {{wording}}",
+      "yourAnswer": "Twoja odpowiedź",
+      "answerPlaceholder": "Opisz sytuację własnymi słowami…",
+      "dropEvidence": "Przeciągnij dowód lub",
+      "chooseFile": "wybierz plik",
+      "evidenceStrengthTooltip": "Siła dowodu E0–E4 (E0 deklaracja … E4 wynik potwierdzony) — niezależna od poziomu i od statusu zatwierdzenia.",
+      "evidenceStrength": "Siła dowodu: {{value}}",
+      "nextStep": "Następny krok",
+      "back": "Wstecz",
+      "next": "Dalej",
+      "skipWithReason": "Pomiń z uzasadnieniem",
+      "skipReasonLabel": "Powód pominięcia (wybierz kod)",
+      "chooseReason": "Wybierz powód…",
+      "confirm": "Potwierdź",
+      "evidenceStrengthLabel": "Siła dowodu",
+      "previousStep": "Poprzedni krok"
+    },
+    "skipReason": {
+      "outsideOperatingModel": "poza modelem operacyjnym",
+      "outsideEngagementScope": "poza zakresem zlecenia",
+      "deferredToNextRevision": "odroczone do kolejnej rewizji",
+      "replacedByAnotherSolution": "zastąpione innym rozwiązaniem"
+    },
+    "info": {
+      "documentInfo": "Informacje o dokumencie",
+      "method": "Metoda {{name}}",
+      "sessionVersion": "Wersja sesji v{{version}}",
+      "source": "Źródło: {{label}}",
+      "evidence": "Dowody: {{done}}/{{total}}",
+      "toReview": "Do przeglądu: {{count}}",
+      "freezeBlockers": "Blokery zamrożenia ({{count}}):",
+      "noFreezeBlockers": "Brak blokerów zamrożenia.",
+      "technicalDetails": "Szczegóły techniczne",
+      "sessionId": "ID sesji: {{id}}",
+      "teamAndRights": "Zespół i uprawnienia",
+      "workMode": "Tryb pracy: {{mode}}",
+      "aiAssisted": "wspierany przez AI",
+      "humanLed": "prowadzony przez człowieka",
+      "readOnly": "Tylko odczyt",
+      "editAllowed": "Edycja dozwolona",
+      "approvals": "Akceptacje",
+      "answers": "Odpowiedzi: {{state}}",
+      "answersInReview": "w przeglądzie lub zatwierdzone",
+      "answersDraft": "robocze",
+      "targetsAndReport": "Targety i raport: {{state}}",
+      "frozen": "zamrożone",
+      "notApproved": "niezatwierdzone",
+      "licenceAndVersions": "Licencja i wersje",
+      "versionHistoryHint": "Historia wersji dostępna z menu dokumentu"
+    }
   },
   "templateBuilder": {
     "rightPanel": {
@@ -50005,7 +50328,8 @@
       "descHint": "Krótko: do czego służy ten szablon.",
       "availabilityLabel": "Dostępność",
       "themeLabel": "Motyw (branding org)",
-      "themeHint": "Brand Kit organizacji — osobno od struktury (D19)."
+      "themeHint": "Brand Kit organizacji — osobno od struktury (D19).",
+      "toolProperties": "Właściwości"
     },
     "editors": {
       "instructionLabel": "Instrukcja dla generatora",
@@ -50060,7 +50384,8 @@
         "allowedValuesHint": "Rozdziel wartości przecinkami.",
         "minLabel": "Minimum",
         "maxLabel": "Maksimum",
-        "addColumn": "Dodaj kolumnę"
+        "addColumn": "Dodaj kolumnę",
+        "newColumn": "Nowa kolumna"
       }
     },
     "container": {
@@ -50070,7 +50395,10 @@
       "columnsCount": "{{count}} kolumn",
       "addSection": "Dodaj sekcję",
       "addSlide": "Dodaj slajd",
-      "addSheet": "Dodaj arkusz"
+      "addSheet": "Dodaj arkusz",
+      "newSection": "Nowa sekcja",
+      "newSlide": "Nowy slajd",
+      "sheet": "Arkusz"
     },
     "shell": {
       "save": "Zapisz jako szablon",
@@ -50116,6 +50444,10 @@
       "back": "Wstecz",
       "createAndEdit": "Utwórz i edytuj",
       "next": "Dalej"
+    },
+    "structure": {
+      "moveUp": "Przesuń w górę",
+      "moveDown": "Przesuń w dół"
     }
   },
   "list": {
@@ -51090,6 +51422,81 @@
       "minutesAgo": "{{count}} min temu",
       "hoursAgo": "{{count}} godz. temu",
       "daysAgo": "{{count}} dni temu"
+    }
+  },
+  "knowledge": {
+    "backToTop": "Wróć na górę",
+    "uploader": {
+      "webHint": "Wyciąga główną treść, tytuł i metadane ze stron internetowych",
+      "words": "słów"
+    }
+  },
+  "studio": {
+    "chat": {
+      "subtitle": "Opisz swój diagram",
+      "clear": "Wyczyść czat",
+      "startCreating": "Zacznij tworzyć",
+      "emptyBody": "Opisz diagram, który chcesz stworzyć, a wygeneruję go dla Ciebie.",
+      "generating": "Generuję diagram",
+      "quickActions": "Szybkie akcje",
+      "inputPlaceholder": "Opisz swój diagram…"
+    },
+    "quickActions": {
+      "processFlow": "Utwórz mapę procesu",
+      "decisionNode": "Dodaj węzeł decyzyjny",
+      "orgChart": "Utwórz schemat organizacyjny",
+      "swimlane": "Dodaj tor (swimlane)",
+      "mindMap": "Utwórz mapę myśli",
+      "raciMatrix": "Utwórz macierz RACI"
+    },
+    "sidebar": {
+      "newDocument": "Nowy dokument"
+    },
+    "export": {
+      "title": "Eksportuj diagram",
+      "subtitle": "Wybierz format i ustawienia",
+      "action": "Eksportuj"
+    },
+    "loading": "Wczytywanie Studia…",
+    "unavailable": {
+      "title": "Studio nie jest jeszcze dostępne",
+      "body": "Wizualny warsztat AI jest w budowie. Zajrzyj wkrótce — w międzyczasie skorzystaj z Mapy myśli, Mapy procesu albo Tablicy w Mojej Pracy."
+    },
+    "node": {
+      "processStep": "Krok procesu",
+      "decision": "Decyzja",
+      "startEnd": "Start/Koniec",
+      "note": "Notatka",
+      "orgUnit": "Osoba/Zespół",
+      "topic": "Temat",
+      "raciCell": "Komórka RACI",
+      "swimlane": "Tor (swimlane)",
+      "desc": {
+        "actionOrTask": "Działanie lub zadanie",
+        "yesNoBranch": "Rozgałęzienie tak/nie",
+        "flowTerminal": "Początek lub koniec przepływu",
+        "annotation": "Adnotacja",
+        "orgUnit": "Jednostka organizacyjna",
+        "mindMapNode": "Węzeł mapy myśli",
+        "matrixCell": "Komórka macierzy",
+        "departmentLane": "Tor działu"
+      }
+    },
+    "untitled": "Bez tytułu",
+    "unsavedChanges": "Niezapisane zmiany",
+    "diagram": "Diagram",
+    "saved": "Zapisano",
+    "linkToTask": "Powiąż z zadaniem lub projektem"
+  },
+  "playbook": {
+    "properties": {
+      "empty": "Wybierz węzeł, aby edytować jego właściwości",
+      "descriptionPlaceholder": "Opisz, co robi ten krok…",
+      "selectAction": "Wybierz akcję…"
+    },
+    "canvas": {
+      "empty": "Pusta kanwa",
+      "emptyHint": "Użyj paska narzędzi, aby dodać węzły"
     }
   }
 }

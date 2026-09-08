@@ -17,7 +17,7 @@ describe('VoiceAnswerChannel', () => {
     render(<VoiceAnswerChannel onTranscript={vi.fn()} />);
     const degraded = screen.getByTestId('voice-channel-degraded');
     expect(degraded).toBeInTheDocument();
-    expect(degraded).toHaveTextContent('Mowa niedostępna w tej przeglądarce');
+    expect(degraded).toHaveTextContent('Speech is unavailable in this browser');
     // The control is not silently gone — the toggle button is absent, replaced
     // by an explanatory status, never an empty gap.
     expect(screen.queryByTestId('voice-channel-toggle')).not.toBeInTheDocument();

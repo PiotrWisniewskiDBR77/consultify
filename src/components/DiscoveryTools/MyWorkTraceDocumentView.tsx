@@ -18,6 +18,8 @@
  * danych (`answers.origin/source/summary`), bez atrap.
  */
 import { ArrowLeft, ExternalLink, Lightbulb, NotebookPen, Route } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
@@ -40,10 +42,13 @@ type MyWorkTraceDocumentViewProps = {
   onBack: () => void;
 };
 
-const SOURCE_LABEL: Record<string, string> = {
-  idea: 'Pomysł',
-  notebook: 'Notatnik',
-};
+/** Słownik enumu źródła (PLAN §2 pkt 6) — etykiety z `t()`, nie stała mapa. */
+function etykietyZrodla(t: TFunction): Record<string, string> {
+  return {
+    idea: t('discoveryTools.trace.sourceIdea', 'Idea'),
+    notebook: t('discoveryTools.trace.sourceNotebook', 'Notebook'),
+  };
+}
 
 /** Deep link do źródła. Notatnik nie ma trasy per strona — prowadzimy do modułu. */
 export function myWorkSourceHref(source: MyWorkTraceSource | null | undefined): string | null {
@@ -75,6 +80,7 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
   onBack,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
   const [session, setSession] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +95,7 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
         setSession(data);
       } catch (e: unknown) {
         if (!mounted) return;
-        setError(e instanceof Error ? e.message : 'Nie udało się wczytać śladu pochodzenia');
+        setError(e instanceof Error ? e.message : t('discoveryTools.trace.loadError', 'Could not load the provenance trace'));
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -103,14 +109,15 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
   const sourceType = String(trace.source?.type || '')
     .trim()
     .toLowerCase();
-  const sourceLabel = SOURCE_LABEL[sourceType] || 'Moja Praca';
+  const sourceLabel = etykietyZrodla(t)[sourceType] || t('discoveryTools.trace.sourceMyWork', 'My Work');
   const href = myWorkSourceHref(trace.source);
-  const heading = title || String((session as { name?: string } | null)?.name || 'Ślad pochodzenia');
+  const heading =
+    title || String((session as { name?: string } | null)?.name || t('discoveryTools.trace.title', 'Provenance trace'));
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <LoadingState variant="spinner" label="Wczytywanie śladu pochodzenia…" />
+        <LoadingState variant="spinner" label={t('discoveryTools.trace.loading', 'Loading the provenance trace…')} />
       </div>
     );
   }
@@ -123,7 +130,7 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
           className="inline-flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)] rounded"
         >
           <ArrowLeft size={16} />
-          Wróć do listy
+          {t('discoveryTools.generic.backToList', 'Back to the list')}
         </button>
 
         <div className="mt-4 flex items-start gap-3">
@@ -132,7 +139,7 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
           </span>
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.14em] text-c-text-muted">
-              Ślad pochodzenia · {sourceLabel}
+              {t('discoveryTools.trace.title', 'Provenance trace')} · {sourceLabel}
             </div>
             <h1 className="mt-1 text-2xl font-semibold text-c-text truncate">{heading}</h1>
           </div>
@@ -150,12 +157,13 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
               <Route size={16} />
             </span>
             <div>
-              <h2 className="text-sm font-semibold text-c-text">Czym jest ten wpis</h2>
+              <h2 className="text-sm font-semibold text-c-text">{t('discoveryTools.trace.whatIsThis', 'What this entry is')}</h2>
               <p className="mt-1.5 text-sm text-c-text-secondary leading-relaxed">
-                To nie jest sesja narzędzia i nie ma warsztatu. Ten wpis powstał automatycznie,
-                gdy {sourceLabel.toLowerCase()} z Mojej Pracy został przekształcony w inicjatywę,
-                zadanie lub decyzję — po to, żeby ten obiekt miał udokumentowane źródło. Pracę
-                prowadzi się w źródle albo w obiekcie, który z niego powstał.
+                {t(
+                  'discoveryTools.trace.whatIsThisBody',
+                  'This is not a tool session and it has no workspace. The entry was created automatically when {{source}} from My Work was turned into an initiative, a task or a decision — so that object has a documented origin. The work itself happens in the source, or in the object created from it.',
+                  { source: sourceLabel.toLowerCase() }
+                )}
               </p>
             </div>
           </div>
@@ -163,7 +171,7 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
 
         {trace.summary ? (
           <section className="mt-4 rounded-xl border border-c-border bg-c-surface p-5">
-            <h2 className="text-sm font-semibold text-c-text">Streszczenie źródła</h2>
+            <h2 className="text-sm font-semibold text-c-text">{t('discoveryTools.trace.sourceSummary', 'Source summary')}</h2>
             <p
               className="mt-2 text-sm text-c-text-secondary whitespace-pre-wrap"
               data-testid="mywork-trace-summary"
@@ -174,14 +182,14 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
         ) : null}
 
         <section className="mt-4 rounded-xl border border-c-border bg-c-surface p-5">
-          <h2 className="text-sm font-semibold text-c-text">Źródło</h2>
+          <h2 className="text-sm font-semibold text-c-text">{t('discoveryTools.trace.source', 'Source')}</h2>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-c-text-muted">Rodzaj</dt>
+              <dt className="text-c-text-muted">{t('discoveryTools.trace.kind', 'Kind')}</dt>
               <dd className="text-c-text-secondary">{sourceLabel}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-c-text-muted">Identyfikator</dt>
+              <dt className="text-c-text-muted">{t('discoveryTools.trace.identifier', 'Identifier')}</dt>
               <dd className="font-mono text-xs text-c-text-secondary">
                 {trace.source?.id || '—'}
               </dd>
@@ -194,11 +202,11 @@ export const MyWorkTraceDocumentView: React.FC<MyWorkTraceDocumentViewProps> = (
               className="mt-4 inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
             >
               <ExternalLink size={16} />
-              Otwórz źródło w Mojej Pracy
+              {t('discoveryTools.trace.openInMyWork', 'Open the source in My Work')}
             </a>
           ) : (
             <p className="mt-4 text-sm text-c-text-muted">
-              Ten wpis nie niesie identyfikatora źródła — nie ma dokąd przejść.
+              {t('discoveryTools.trace.noSourceId', 'This entry carries no source identifier — there is nowhere to go.')}
             </p>
           )}
         </section>

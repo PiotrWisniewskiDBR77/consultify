@@ -8,6 +8,7 @@
  */
 
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 export interface StructureListItem {
@@ -38,6 +39,7 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
   onMove,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   return (
     <div
       className="flex flex-col h-full min-h-0"
@@ -94,8 +96,8 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
               <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                 <button
                   type="button"
-                  aria-label="Przesuń w górę"
-                  title="Przesuń w górę"
+                  aria-label={t('templateBuilder.structure.moveUp', 'Move up')}
+                  title={t('templateBuilder.structure.moveUp', 'Move up')}
                   disabled={i === 0}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -107,8 +109,8 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
                 </button>
                 <button
                   type="button"
-                  aria-label="Przesuń w dół"
-                  title="Przesuń w dół"
+                  aria-label={t('templateBuilder.structure.moveDown', 'Move down')}
+                  title={t('templateBuilder.structure.moveDown', 'Move down')}
                   disabled={i === items.length - 1}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -120,8 +122,8 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
                 </button>
                 <button
                   type="button"
-                  aria-label="Usuń"
-                  title="Usuń"
+                  aria-label={t('common.delete', 'Delete')}
+                  title={t('common.delete', 'Delete')}
                   disabled={items.length <= 1}
                   onClick={(e) => {
                     e.stopPropagation();

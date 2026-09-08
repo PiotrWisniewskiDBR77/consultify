@@ -118,7 +118,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
 
   return (
     <div className="bg-c-surface rounded-xl shadow-lg p-6 space-y-4" ref={containerRef}>
-      <h2 className="text-2xl font-semibold text-c-text">Trend Radar Map</h2>
+      <h2 className="text-2xl font-semibold text-c-text">{t('megatrends.tabs.radar', 'Trend radar map')}</h2>
 
       {/* Error / loading / content are MUTUALLY EXCLUSIVE. The radar used to be
           drawn underneath the error state, so a failed load still painted a

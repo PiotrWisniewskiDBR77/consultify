@@ -122,20 +122,20 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (draft.type === 'doc')
       return draft.doc.map((s, i) => ({
         id: s.id,
-        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        label: s.title || t('templateBuilder.container.untitled', 'Untitled'),
         meta: pickTemplateLabel(DOC_BLOCK_LABELS, DOC_BLOCK_LABELS_EN, s.block, language),
         index: i + 1,
       }));
     if (draft.type === 'deck')
       return draft.deck.map((s, i) => ({
         id: s.id,
-        label: s.title || t('templateBuilder.container.untitled', 'Bez tytułu'),
+        label: s.title || t('templateBuilder.container.untitled', 'Untitled'),
         meta: pickTemplateLabel(SLIDE_ARCHETYPE_LABELS, SLIDE_ARCHETYPE_LABELS_EN, s.archetype, language),
         index: i + 1,
       }));
     return draft.table.map((sheet, i) => ({
       id: sheet.id,
-      label: sheet.name || t('templateBuilder.container.unnamed', 'Bez nazwy'),
+      label: sheet.name || t('templateBuilder.container.unnamed', 'Unnamed'),
       meta: t('templateBuilder.container.columnsCount', '{{count}} kolumn', {
         count: sheet.columns.length,
       }),
@@ -145,15 +145,15 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   const addLabel =
     draft.type === 'doc'
-      ? t('templateBuilder.container.addSection', 'Dodaj sekcję')
+      ? t('templateBuilder.container.addSection', 'Add section')
       : draft.type === 'deck'
-        ? t('templateBuilder.container.addSlide', 'Dodaj slajd')
-        : t('templateBuilder.container.addSheet', 'Dodaj arkusz');
+        ? t('templateBuilder.container.addSlide', 'Add slide')
+        : t('templateBuilder.container.addSheet', 'Add sheet');
 
   // ── Mutacje listy ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(() => {
     if (draft.type === 'doc') {
-      const element = newDocSection();
+      const element = newDocSection(t('templateBuilder.container.newSection', 'New section'));
       setBuilderState((current) => ({
         draft: { ...current.draft, doc: [...current.draft.doc, element] },
         selectedId: element.id,
@@ -161,19 +161,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       return;
     }
     if (draft.type === 'deck') {
-      const element = newDeckSlide();
+      const element = newDeckSlide(t('templateBuilder.container.newSlide', 'New slide'));
       setBuilderState((current) => ({
         draft: { ...current.draft, deck: [...current.draft.deck, element] },
         selectedId: element.id,
       }));
       return;
     }
-    const element = newWorkbookSheet(`Arkusz ${draft.table.length + 1}`);
+    const element = newWorkbookSheet(
+      `${t('templateBuilder.container.sheet', 'Sheet')} ${draft.table.length + 1}`
+    );
     setBuilderState((current) => ({
       draft: { ...current.draft, table: [...current.draft.table, element] },
       selectedId: element.id,
     }));
-  }, [draft.type, draft.table.length]);
+  }, [draft.type, draft.table.length, t]);
 
   const handleMove = useCallback((id: string, dir: -1 | 1) => {
     setDraft((d) => {
@@ -345,8 +347,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         canSave={canSave}
         saveLabel={
           templateId
-            ? t('templateBuilder.container.saveChanges', 'Zapisz zmiany')
-            : t('templateBuilder.shell.save', 'Zapisz jako szablon')
+            ? t('templateBuilder.container.saveChanges', 'Save changes')
+            : t('templateBuilder.shell.save', 'Save as template')
         }
         validationErrors={validation.errors}
         lifecycle={

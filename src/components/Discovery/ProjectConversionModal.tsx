@@ -104,7 +104,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nazwa projektu..."
+              placeholder={t('discovery.conversion.projectNamePlaceholder', 'Project name…')}
             />
           </div>
 
@@ -204,7 +204,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
           >
-            Anuluj
+            {t('discovery.conversion.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleConvert}

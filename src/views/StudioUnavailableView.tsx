@@ -10,12 +10,14 @@
  */
 
 import { Palette } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 import { SplitLayout } from '../components/layout/SplitLayout';
 import { AppView } from '../types';
 
 export const StudioUnavailableView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <SplitLayout title="Studio" currentView={AppView.STUDIO}>
       <div className="h-full flex items-center justify-center bg-c-bg">
@@ -23,10 +25,12 @@ export const StudioUnavailableView: React.FC = () => {
           <div className="w-12 h-12 rounded-xl bg-c-accent-soft text-c-accent flex items-center justify-center mx-auto mb-4">
             <Palette size={22} />
           </div>
-          <h2 className="text-c-text font-medium mb-2">Studio is not available yet</h2>
+          <h2 className="text-c-text font-medium mb-2">{t('studio.unavailable.title', 'Studio is not available yet')}</h2>
           <p className="text-sm text-c-text-muted">
-            The visual AI workspace is still being built. Check back soon — in the meantime, try
-            Mind Map, Process Flow, or Whiteboard under My Work.
+            {t(
+              'studio.unavailable.body',
+              'The visual AI workspace is still being built. Check back soon — in the meantime, try Mind Map, Process Flow, or Whiteboard under My Work.'
+            )}
           </p>
         </div>
       </div>

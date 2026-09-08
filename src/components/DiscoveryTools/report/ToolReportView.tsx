@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -25,19 +26,31 @@ import type {
 } from '@/toolOutputs/types';
 
 /** Etykiety typu dowodu — hipoteza NIGDY nie udaje faktu. */
-const EVIDENCE_LABEL: Record<EvidenceKind, { pl: string; tone: string }> = {
-  fact: { pl: 'fakt', tone: 'text-c-success' },
-  observation: { pl: 'obserwacja', tone: 'text-c-info' },
-  hypothesis: { pl: 'hipoteza', tone: 'text-c-warning' },
-};
+function etykietyDowodu(t: TFunction): Record<EvidenceKind, { label: string; tone: string }> {
+  return {
+    fact: { label: t('discoveryTools.swot.evidence.fact', 'fact'), tone: 'text-c-success' },
+    observation: { label: t('discoveryTools.swot.evidence.observation', 'observation'), tone: 'text-c-info' },
+    hypothesis: { label: t('discoveryTools.swot.evidence.hypothesis', 'hypothesis'), tone: 'text-c-warning' },
+  };
+}
 
 /** Postawa napięcia — kolory z palety danych `c-tag-*`. */
-const POSTURE_LABEL: Record<string, { pl: string; dot: string }> = {
-  attack: { pl: 'Atakuj szansę', dot: 'bg-c-tag-3' },
-  repair: { pl: 'Napraw, by sięgnąć', dot: 'bg-c-tag-5' },
-  defend: { pl: 'Broń się siłą', dot: 'bg-c-tag-7' },
-  protect: { pl: 'Chroń ekspozycję', dot: 'bg-c-tag-9' },
+const POSTURE_DOT: Record<string, string> = {
+  attack: 'bg-c-tag-3',
+  repair: 'bg-c-tag-5',
+  defend: 'bg-c-tag-7',
+  protect: 'bg-c-tag-9',
 };
+
+/** Słownik enumu postawy napięcia (PLAN §2 pkt 6). */
+function etykietyPostawy(t: TFunction): Record<string, string> {
+  return {
+    attack: t('discoveryTools.report.posture.attack', 'Attack the opportunity'),
+    repair: t('discoveryTools.report.posture.repair', 'Repair to reach it'),
+    defend: t('discoveryTools.report.posture.defend', 'Defend with strength'),
+    protect: t('discoveryTools.report.posture.protect', 'Protect the exposure'),
+  };
+}
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
@@ -53,6 +66,9 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
  * interpretacji tej samej treści (zero zduplikowanej logiki renderowania).
  */
 export function BlockView({ block }: { block: ReportBlock }) {
+  const { t } = useTranslation();
+  const EVIDENCE_LABEL = etykietyDowodu(t);
+  const POSTURE_LABEL = etykietyPostawy(t);
   switch (block.kind) {
     case 'action-title':
       return <h3 className="text-lg font-semibold text-c-text">{block.text}</h3>;
@@ -63,7 +79,7 @@ export function BlockView({ block }: { block: ReportBlock }) {
     case 'evidence-list':
       return (
         <section className="space-y-2">
-          <Eyebrow>Dowody</Eyebrow>
+          <Eyebrow>{t('discoveryTools.report.evidence', 'Evidence')}</Eyebrow>
           <ul className="space-y-1.5">
             {block.items.map((it, i) => (
               <li key={i} className="flex items-baseline gap-2 text-sm text-c-text-secondary">
@@ -74,7 +90,7 @@ export function BlockView({ block }: { block: ReportBlock }) {
                     EVIDENCE_LABEL[it.evidenceKind].tone
                   }`}
                 >
-                  {EVIDENCE_LABEL[it.evidenceKind].pl}
+                  {EVIDENCE_LABEL[it.evidenceKind].label}
                 </span>
               </li>
             ))}
@@ -85,22 +101,22 @@ export function BlockView({ block }: { block: ReportBlock }) {
     case 'tension-list':
       return (
         <section className="space-y-2">
-          <Eyebrow>Napięcia strategiczne</Eyebrow>
+          <Eyebrow>{t('discoveryTools.report.strategicTensions', 'Strategic tensions')}</Eyebrow>
           <ul className="divide-y divide-c-border-subtle">
-            {block.items.map((t, i) => (
+            {block.items.map((tension, i) => (
               <li key={i} className="flex items-center gap-3 py-2">
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${
-                    POSTURE_LABEL[t.posture]?.dot ?? 'bg-c-border-strong'
+                    POSTURE_DOT[tension.posture] ?? 'bg-c-border-strong'
                   }`}
                 />
-                <span className="flex-1 text-sm text-c-text">{t.title}</span>
+                <span className="flex-1 text-sm text-c-text">{tension.title}</span>
                 <span className="text-[11px] text-c-text-muted">
-                  {POSTURE_LABEL[t.posture]?.pl ?? t.posture}
+                  {POSTURE_LABEL[tension.posture] ?? tension.posture}
                 </span>
                 {/* Waga pochodzi z silnika — to jest K1, nie ocena redakcyjna. */}
                 <span className="w-8 text-right text-xs tabular-nums text-c-text-secondary">
-                  {t.priority}
+                  {tension.priority}
                 </span>
               </li>
             ))}
@@ -113,15 +129,15 @@ export function BlockView({ block }: { block: ReportBlock }) {
         <section className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-4">
           <div className="space-y-3">
             <div>
-              <Eyebrow>Co jest</Eyebrow>
+              <Eyebrow>{t('discoveryTools.report.whatIs', 'What it is')}</Eyebrow>
               <p className="mt-1 text-sm font-medium text-c-text">{block.k1Fact}</p>
             </div>
             <div>
-              <Eyebrow>Co to znaczy</Eyebrow>
+              <Eyebrow>{t('discoveryTools.report.whatItMeans', 'What it means')}</Eyebrow>
               <p className="mt-1 text-sm leading-relaxed text-c-text-secondary">{block.k2Meaning}</p>
             </div>
             <div>
-              <Eyebrow>Co robić najpierw</Eyebrow>
+              <Eyebrow>{t('discoveryTools.report.whatToDoFirst', 'What to do first')}</Eyebrow>
               <ol className="mt-1 space-y-1">
                 {block.k3Actions.map((a, i) => (
                   <li key={i} className="flex gap-2 text-sm text-c-text">
@@ -176,15 +192,15 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
   if (archetype !== 'dynamic-swot') return null;
 
   const QUADRANTS: Array<{ key: string; label: string }> = [
-    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Siły') },
-    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Słabości') },
+    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Strengths') },
+    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Weaknesses') },
     { key: 'opportunities', label: t('discoveryTools.swot.opportunities', 'Szanse') },
-    { key: 'threats', label: t('discoveryTools.swot.threats', 'Zagrożenia') },
+    { key: 'threats', label: t('discoveryTools.swot.threats', 'Threats') },
   ];
 
   return (
     <section className="space-y-2">
-      <Eyebrow>{t('discoveryTools.swot.strategicField', 'Pole strategiczne')}</Eyebrow>
+      <Eyebrow>{t('discoveryTools.swot.strategicField', 'Strategic field')}</Eyebrow>
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-c-border-subtle bg-c-border-subtle">
         {QUADRANTS.map((q) => {
           const inQ = (data.items ?? []).filter((i) => i.bucket === q.key);
@@ -207,7 +223,7 @@ function SignatureVisual({ archetype, payload }: { archetype: string; payload: u
       </div>
       {/* Napięcia łączą ćwiartki — bez nich to tylko cztery listy. */}
       <div className="text-[11px] text-c-text-muted">
-        {t('discoveryTools.swot.tensionsCount', '{{count}} napięć łączy ćwiartki', {
+        {t('discoveryTools.swot.tensionsCount', '{{count}} tensions connect the quadrants', {
           count: (data.tensions ?? []).length,
         })}
       </div>
@@ -236,12 +252,12 @@ export function ToolReportView({ doc, presentationMode = false }: ToolReportView
         <Eyebrow>
           {isDeck
             ? t('discoveryTools.report.execPresentation', 'Prezentacja wykonawcza')
-            : t('discoveryTools.report.title', 'Raport')}
+            : t('discoveryTools.report.title', 'Report')}
         </Eyebrow>
         <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-c-text">{doc.title}</h1>
         {!presentationMode && (
           <p className="mt-2 text-xs text-c-text-muted">
-            {t('discoveryTools.report.rendererInfo', 'Renderer {{version}} · źródła: {{count}}', {
+            {t('discoveryTools.report.rendererInfo', 'Renderer {{version}} · sources: {{count}}', {
               version: doc.rendererVersion,
               count: doc.sourceOutputIds.length,
             })}

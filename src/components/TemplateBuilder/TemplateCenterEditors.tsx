@@ -56,7 +56,7 @@ export const DocSectionEditor: React.FC<{
     return (
       <EmptyCenter
         icon={<FileText className="h-6 w-6" aria-hidden />}
-        text={t('templateBuilder.editors.doc.emptyPick', 'Wybierz sekcję z lewej listy.')}
+        text={t('templateBuilder.editors.doc.emptyPick', 'Pick a section from the list on the left.')}
       />
     );
   const blockOpts = (Object.keys(DOC_BLOCK_LABELS) as DocBlockKind[]).map((k) => ({
@@ -72,9 +72,9 @@ export const DocSectionEditor: React.FC<{
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
           <FileText className="w-4 h-4" aria-hidden />
-          {t('templateBuilder.editors.doc.heading', 'Sekcja dokumentu')}
+          {t('templateBuilder.editors.doc.heading', 'Document section')}
         </div>
-        <Field label={t('templateBuilder.editors.doc.titleLabel', 'Tytuł sekcji')}>
+        <Field label={t('templateBuilder.editors.doc.titleLabel', 'Section title')}>
           <TextInput
             value={section.title}
             onChange={(v) => onChange({ title: v })}
@@ -84,7 +84,7 @@ export const DocSectionEditor: React.FC<{
         </Field>
         <Field
           label={t('templateBuilder.editors.doc.blockLabel', 'Typ bloku')}
-          hint={t('templateBuilder.editors.doc.blockHint', 'Jaki element renderuje generator w tej sekcji.')}
+          hint={t('templateBuilder.editors.doc.blockHint', 'What element the generator renders in this section.')}
         >
           <Select
             value={section.block}
@@ -93,7 +93,7 @@ export const DocSectionEditor: React.FC<{
             testId="doc-block"
           />
         </Field>
-        <Field label={t('templateBuilder.editors.doc.depthLabel', 'Długość / głębokość')}>
+        <Field label={t('templateBuilder.editors.doc.depthLabel', 'Length / depth')}>
           <Segmented
             value={section.depth}
             options={depthOpts}
@@ -102,10 +102,10 @@ export const DocSectionEditor: React.FC<{
           />
         </Field>
         <Field
-          label={t('templateBuilder.editors.instructionLabel', 'Instrukcja dla generatora')}
+          label={t('templateBuilder.editors.instructionLabel', 'Instructions for the generator')}
           hint={t(
             'templateBuilder.editors.doc.instructionHint',
-            'Placeholder strukturalny — co ma się tu znaleźć. NIE treść finalna.'
+            'Structural placeholder — what should go here. NOT the final content.'
           )}
         >
           <TextArea
@@ -121,10 +121,10 @@ export const DocSectionEditor: React.FC<{
         <Toggle
           checked={section.aiFilled}
           onChange={(v) => onChange({ aiFilled: v })}
-          label={t('templateBuilder.editors.aiFilledLabel', 'Wypełniane przez AI')}
+          label={t('templateBuilder.editors.aiFilledLabel', 'AI-filled')}
           description={t(
             'templateBuilder.editors.doc.aiFilledDesc',
-            'Gdy wyłączone — sekcja zostaje pusta do ręcznego uzupełnienia.'
+            'When off — the section stays empty for manual completion.'
           )}
         />
       </div>
@@ -144,7 +144,7 @@ export const DeckSlideEditor: React.FC<{
     return (
       <EmptyCenter
         icon={<LayoutTemplate className="h-6 w-6" aria-hidden />}
-        text={t('templateBuilder.editors.deck.emptyPick', 'Wybierz slajd z lewej listy.')}
+        text={t('templateBuilder.editors.deck.emptyPick', 'Pick a slide from the list on the left.')}
       />
     );
   const archOpts = (Object.keys(SLIDE_ARCHETYPE_LABELS) as SlideArchetype[]).map((k) => ({
@@ -156,11 +156,11 @@ export const DeckSlideEditor: React.FC<{
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
           <LayoutTemplate className="w-4 h-4" aria-hidden />
-          {t('templateBuilder.editors.deck.heading', 'Slajd prezentacji')}
+          {t('templateBuilder.editors.deck.heading', 'Presentation slide')}
         </div>
         {/* Podgląd archetypu — schematyczny układ slajdu. */}
         <SlidePreview archetype={slide.archetype} title={slide.title} />
-        <Field label={t('templateBuilder.editors.deck.titleLabel', 'Tytuł slajdu')}>
+        <Field label={t('templateBuilder.editors.deck.titleLabel', 'Slide title')}>
           <TextInput
             value={slide.title}
             onChange={(v) => onChange({ title: v })}
@@ -169,8 +169,8 @@ export const DeckSlideEditor: React.FC<{
           />
         </Field>
         <Field
-          label={t('templateBuilder.editors.deck.archetypeLabel', 'Archetyp układu')}
-          hint={t('templateBuilder.editors.deck.archetypeHint', 'Layout slajdu — zmienia kompozycję, nie treść.')}
+          label={t('templateBuilder.editors.deck.archetypeLabel', 'Layout archetype')}
+          hint={t('templateBuilder.editors.deck.archetypeHint', 'The slide\'s layout — changes composition, not content.')}
         >
           <Select
             value={slide.archetype}
@@ -180,15 +180,15 @@ export const DeckSlideEditor: React.FC<{
           />
         </Field>
         <Field
-          label={t('templateBuilder.editors.instructionLabel', 'Instrukcja dla generatora')}
-          hint={t('templateBuilder.editors.deck.instructionHint', 'Co pokazuje slajd; placeholder strukturalny.')}
+          label={t('templateBuilder.editors.instructionLabel', 'Instructions for the generator')}
+          hint={t('templateBuilder.editors.deck.instructionHint', 'What the slide shows; structural placeholder.')}
         >
           <TextArea
             value={slide.hint}
             onChange={(v) => onChange({ hint: v })}
             placeholder={t(
               'templateBuilder.editors.deck.instructionPlaceholder',
-              'np. wykres udziałów rynkowych + 2 zdania komentarza'
+              'e.g. market-share chart + 2 sentences of commentary'
             )}
             testId="deck-hint"
           />
@@ -196,10 +196,10 @@ export const DeckSlideEditor: React.FC<{
         <Toggle
           checked={slide.aiFilled}
           onChange={(v) => onChange({ aiFilled: v })}
-          label={t('templateBuilder.editors.aiFilledLabel', 'Wypełniane przez AI')}
+          label={t('templateBuilder.editors.aiFilledLabel', 'AI-filled')}
           description={t(
             'templateBuilder.editors.deck.aiFilledDesc',
-            'Gdy wyłączone — slajd zostaje pusty do ręcznego uzupełnienia.'
+            'When off — the slide stays empty for manual completion.'
           )}
         />
       </div>
@@ -258,7 +258,7 @@ const SlidePreview: React.FC<{ archetype: SlideArchetype; title: string }> = ({
       </div>
       <p className="mt-2 text-center text-[11px] text-c-text-muted truncate">
         {pickTemplateLabel(SLIDE_ARCHETYPE_LABELS, SLIDE_ARCHETYPE_LABELS_EN, archetype, i18n.language || 'pl')} ·{' '}
-        {title || t('templateBuilder.editors.deck.untitled', 'bez tytułu')}
+        {title || t('templateBuilder.editors.deck.untitled', 'untitled')}
       </p>
     </div>
   );
@@ -276,7 +276,7 @@ export const WorkbookSheetEditor: React.FC<{
     return (
       <EmptyCenter
         icon={<Table2 className="h-6 w-6" aria-hidden />}
-        text={t('templateBuilder.editors.table.emptyPick', 'Wybierz arkusz z lewej listy.')}
+        text={t('templateBuilder.editors.table.emptyPick', 'Pick a sheet from the list on the left.')}
       />
     );
   const typeOpts = (Object.keys(SHEET_COLUMN_TYPE_LABELS) as SheetColumnType[]).map((k) => ({
@@ -284,10 +284,10 @@ export const WorkbookSheetEditor: React.FC<{
     label: pickTemplateLabel(SHEET_COLUMN_TYPE_LABELS, SHEET_COLUMN_TYPE_LABELS_EN, k, language),
   }));
   const validationOpts: { value: SheetValidationType; label: string }[] = [
-    { value: 'none', label: t('templateBuilder.editors.table.validation.none', 'Brak') },
-    { value: 'list', label: t('templateBuilder.editors.table.validation.list', 'Lista wartości') },
-    { value: 'decimal', label: t('templateBuilder.editors.table.validation.decimal', 'Liczba dziesiętna') },
-    { value: 'whole', label: t('templateBuilder.editors.table.validation.whole', 'Liczba całkowita') },
+    { value: 'none', label: t('templateBuilder.editors.table.validation.none', 'None') },
+    { value: 'list', label: t('templateBuilder.editors.table.validation.list', 'List of values') },
+    { value: 'decimal', label: t('templateBuilder.editors.table.validation.decimal', 'Decimal number') },
+    { value: 'whole', label: t('templateBuilder.editors.table.validation.whole', 'Whole number') },
   ];
   const patchColumn = (id: string, patch: Partial<SheetColumn>) =>
     onChange({
@@ -299,9 +299,9 @@ export const WorkbookSheetEditor: React.FC<{
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
           <Table2 className="w-4 h-4" aria-hidden />
-          {t('templateBuilder.editors.table.heading', 'Arkusz skoroszytu')}
+          {t('templateBuilder.editors.table.heading', 'Workbook sheet')}
         </div>
-        <Field label={t('templateBuilder.editors.table.sheetNameLabel', 'Nazwa arkusza')}>
+        <Field label={t('templateBuilder.editors.table.sheetNameLabel', 'Sheet name')}>
           <TextInput
             value={sheet.name}
             onChange={(name) => onChange({ ...sheet, name })}
@@ -313,11 +313,11 @@ export const WorkbookSheetEditor: React.FC<{
           <div key={column.id} className="space-y-4 rounded-lg border border-c-border p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-c-text">
-                {t('templateBuilder.editors.table.columnN', 'Kolumna {{n}}', { n: index + 1 })}
+                {t('templateBuilder.editors.table.columnN', 'Column {{n}}', { n: index + 1 })}
               </span>
               <button
                 type="button"
-                aria-label={t('templateBuilder.editors.table.deleteColumnN', 'Usuń kolumnę {{n}}', {
+                aria-label={t('templateBuilder.editors.table.deleteColumnN', 'Delete column {{n}}', {
                   n: index + 1,
                 })}
                 disabled={sheet.columns.length === 1}
@@ -332,7 +332,7 @@ export const WorkbookSheetEditor: React.FC<{
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <Field label={t('templateBuilder.editors.table.columnNameLabel', 'Nazwa kolumny')}>
+            <Field label={t('templateBuilder.editors.table.columnNameLabel', 'Column name')}>
               <TextInput
                 value={column.name}
                 onChange={(name) => patchColumn(column.id, { name })}
@@ -362,7 +362,7 @@ export const WorkbookSheetEditor: React.FC<{
             </div>
             {column.type === 'formula' ? (
               <Field
-                label={t('templateBuilder.editors.table.formulaLabel', 'Formuła startowa')}
+                label={t('templateBuilder.editors.table.formulaLabel', 'Starting formula')}
                 hint={t(
                   'templateBuilder.editors.table.formulaHint',
                   'Np. =B2*C2; zostanie zapisana w pierwszym wierszu.'
@@ -377,8 +377,8 @@ export const WorkbookSheetEditor: React.FC<{
               </Field>
             ) : (
               <Field
-                label={t('templateBuilder.editors.table.starterValueLabel', 'Wartość startowa')}
-                hint={t('templateBuilder.editors.table.starterValueHint', 'Opcjonalna wartość pierwszego wiersza.')}
+                label={t('templateBuilder.editors.table.starterValueLabel', 'Starting value')}
+                hint={t('templateBuilder.editors.table.starterValueHint', 'Optional value for the first row.')}
               >
                 <TextInput
                   value={column.starterValue}
@@ -387,7 +387,7 @@ export const WorkbookSheetEditor: React.FC<{
                 />
               </Field>
             )}
-            <Field label={t('templateBuilder.editors.table.validationLabel', 'Walidacja danych')}>
+            <Field label={t('templateBuilder.editors.table.validationLabel', 'Data validation')}>
               <Select
                 value={column.validation.type}
                 options={validationOpts}
@@ -399,8 +399,8 @@ export const WorkbookSheetEditor: React.FC<{
             </Field>
             {column.validation.type === 'list' && (
               <Field
-                label={t('templateBuilder.editors.table.allowedValuesLabel', 'Dozwolone wartości')}
-                hint={t('templateBuilder.editors.table.allowedValuesHint', 'Rozdziel wartości przecinkami.')}
+                label={t('templateBuilder.editors.table.allowedValuesLabel', 'Allowed values')}
+                hint={t('templateBuilder.editors.table.allowedValuesHint', 'Separate values with commas.')}
               >
                 <TextInput
                   value={column.validation.values}
@@ -439,10 +439,15 @@ export const WorkbookSheetEditor: React.FC<{
         <button
           type="button"
           data-testid="sheet-add-column"
-          onClick={() => onChange({ ...sheet, columns: [...sheet.columns, newSheetColumn()] })}
+          onClick={() =>
+            onChange({
+              ...sheet,
+              columns: [...sheet.columns, newSheetColumn(t('templateBuilder.editors.table.newColumn', 'New column'))],
+            })
+          }
           className="inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised"
         >
-          <Plus className="h-4 w-4" aria-hidden /> {t('templateBuilder.editors.table.addColumn', 'Dodaj kolumnę')}
+          <Plus className="h-4 w-4" aria-hidden /> {t('templateBuilder.editors.table.addColumn', 'Add column')}
         </button>
       </div>
     </div>

@@ -126,7 +126,9 @@
       "createInitiatives": "Utwórz inicjatywy z pomysłów",
       "converting": "Tworzenie projektu...",
       "success": "Projekt utworzony!",
-      "error": "Nie udało się utworzyć projektu"
+      "error": "Nie udało się utworzyć projektu",
+      "cancel": "Anuluj",
+      "projectNamePlaceholder": "Nazwa projektu…"
     },
     "version": {
       "title": "Wersje",

@@ -1,0 +1,672 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-biblioteka",
+  "napisowUi": 41,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "02-sesje",
+  "napisowUi": 44,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Open user profile menu",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "03-insighty",
+  "napisowUi": 33,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Table and preview workspace",
+   "No insights yet. Insights are created from approved sessions — approve a session in the Sessions tab."
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "04-raporty",
+  "napisowUi": 31,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "New report",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "05-inicjatywy",
+  "napisowUi": 37,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "New initiative",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "06-okruszki-strategiczne",
+  "napisowUi": 37,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "NarzędziaAnaliza strategiczna"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "07-okruszki-operacyjne",
+  "napisowUi": 37,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "NarzędziaOperacyjne"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "08-okruszki-cyfrowe",
+  "napisowUi": 37,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "NarzędziaCyfrowe"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "09-okruszki-automatyzacja",
+  "napisowUi": 37,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "NarzędziaAutomatyzacja procesów",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "10-picker-kategorie",
+  "napisowUi": 45,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Describe the problem in 1-2 sentences…",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "11-kebab-wiersza",
+  "napisowUi": 45,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "12-podglad-wiersza",
+  "napisowUi": 42,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "13-pstryczek-kolumn",
+  "napisowUi": 59,
+  "polskichUi": 3,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Narzędzia",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Add tool",
+   "Table and preview workspace",
+   "Show row description"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "14-megatrendy",
+  "napisowUi": 21,
+  "polskichUi": 2,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "NarzędziaAnaliza strategicznaMegatrendy"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Could not load megatrends",
+   "Try again"
+  ]
+ },
+ {
+  "lang": "en",
+  "ekran": "15-studio",
+  "napisowUi": 28,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Create org chart",
+   "Describe your diagram..."
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "01-biblioteka",
+  "napisowUi": 43,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "02-sesje",
+  "napisowUi": 46,
+  "polskichUi": 19,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Status: Wszystkie",
+   "Filtruj Typ, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Typ",
+   "Zmień szerokość kolumny: Nazwa",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Filtruj Status, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Status",
+   "POSTĘP",
+   "Zmień szerokość kolumny: Postęp",
+   "Zmień szerokość kolumny: Autor",
+   "Sortuj według: Aktualizacja"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "03-insighty",
+  "napisowUi": 35,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Status: Wszystkie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Zmień szerokość kolumny: Nazwa",
+   "SESJA ŹRÓDŁOWA",
+   "Zmień szerokość kolumny: Sesja źródłowa",
+   "Zmień szerokość kolumny: Status",
+   "Sortuj według: Aktualizacja",
+   "Brak insightów. Insighty powstają z zatwierdzonych sesji — zatwierdź sesję w zakładce Sesje."
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "04-raporty",
+  "napisowUi": 33,
+  "polskichUi": 13,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Status: Wszystkie",
+   "Nowy raport",
+   "Zmień szerokość kolumny: Typ",
+   "Zmień szerokość kolumny: Nazwa",
+   "Zmień szerokość kolumny: Status",
+   "Sortuj według: Aktualizacja"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "05-inicjatywy",
+  "napisowUi": 39,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Status: Wszystkie",
+   "Nowa inicjatywa",
+   "Zmień szerokość kolumny: Inicjatywa",
+   "Filtruj Oś, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Oś",
+   "Zmień szerokość kolumny: Priorytet",
+   "Zmień szerokość kolumny: Status",
+   "Zmień szerokość kolumny: ROI",
+   "Zmień szerokość kolumny: Zadania",
+   "Sortuj według: Aktualizacja"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "06-okruszki-strategiczne",
+  "napisowUi": 39,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "NarzędziaAnaliza strategiczna"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "07-okruszki-operacyjne",
+  "napisowUi": 39,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "NarzędziaOperacyjne"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "08-okruszki-cyfrowe",
+  "napisowUi": 39,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "NarzędziaCyfrowe"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "09-okruszki-automatyzacja",
+  "napisowUi": 39,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "NarzędziaAutomatyzacja procesów",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "10-picker-kategorie",
+  "napisowUi": 47,
+  "polskichUi": 20,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "Szukaj narzędzia…",
+   "Wszystkie",
+   "Zaproponuj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "11-kebab-wiersza",
+  "napisowUi": 47,
+  "polskichUi": 20,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Otwórz",
+   "Podgląd",
+   "Rozpocznij sesję",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "12-podglad-wiersza",
+  "napisowUi": 44,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "Pokaż panel",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "13-pstryczek-kolumn",
+  "napisowUi": 61,
+  "polskichUi": 22,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Narzędzia",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje modułu",
+   "Dodaj narzędzie",
+   "Pokaż panel",
+   "NARZĘDZIE",
+   "Zmień szerokość kolumny: Narzędzie",
+   "Filtruj Kategoria, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Kategoria",
+   "Zmień szerokość kolumny: Tagi",
+   "Filtruj Licencja, brak aktywnego filtra",
+   "Zmień szerokość kolumny: Licencja",
+   "Filtruj Status, brak aktywnego filtra",
+   "Move Narzędzie up",
+   "Move Narzędzie down",
+   "Przywróć domyślne",
+   "Pokaż opis / uzasadnienie",
+   "Automatyzacja procesów"
+  ],
+  "angielskichUi": 1,
+  "angielskie": [
+   "Table and preview workspace"
+  ]
+ },
+ {
+  "lang": "pl",
+  "ekran": "14-megatrendy",
+  "napisowUi": 22,
+  "polskichUi": 13,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Analiza megatrendów",
+   "Baseline branżowy",
+   "Mapa radaru trendów",
+   "Szczegóły trendu",
+   "Własne trendy",
+   "Nie udało się wczytać megatrendów",
+   "Spróbuj ponownie",
+   "NarzędziaAnaliza strategicznaMegatrendy"
+  ],
+  "angielskichUi": 0,
+  "angielskie": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "15-studio",
+  "napisowUi": 29,
+  "polskichUi": 5,
+  "polskie": [
+   "Środowisko LOCAL, wersja 996d9145910b",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika"
+  ],
+  "angielskichUi": 2,
+  "angielskie": [
+   "Create org chart",
+   "Describe your diagram..."
+  ]
+ }
+]
