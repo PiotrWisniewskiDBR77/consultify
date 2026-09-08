@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { formatListDate } from '../utils/listDateFormat';
 
 import { Api } from '@/services/api';
-import { formatListDate } from '@/utils/listDateFormat';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView, Task, TaskPriority, TaskStatus } from '../types';
