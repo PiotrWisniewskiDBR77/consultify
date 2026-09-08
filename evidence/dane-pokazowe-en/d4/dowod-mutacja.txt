@@ -1,0 +1,37 @@
+########## DOWOD MUTACYJNY paczki D4 — 2026-09-08T09:01:26Z ##########
+Testy bez bazy: server/tests/seed-demo-en/04-realizacja.test.ts (vitest.orphans.config.ts).
+
+=== A. STAN ZASTANY — ma byc GREEN ===
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+
+=== B. MUTACJA 1: termin zadania po terminie przesuniety w PRZYSZLOSC (8 -> 7) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/04-realizacja.test.ts > 04-dane-realizacji — liczności wymagane zleceniem D4 > DOKŁADNIE 8 zadań po terminie (otwartych, z terminem przed bieżącym poniedziałkiem)
+AssertionError: expected [ { …(13) }, { …(13) }, …(5) ] to have a length of 8 but got 7
+ FAIL  server/tests/seed-demo-en/04-realizacja.test.ts > 04-dane-realizacji — liczności wymagane zleceniem D4 > zaległość rozkłada się na 5 osób (chip „Z zaległością" ma pokazać 5)
+AssertionError: expected 4 to be 5 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 passed (22)
+
+=== C. MUTACJA 2: znak & w tytule pozycji RAID (pulapka sanitizera runtime-v1) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/04-realizacja.test.ts > 04-dane-realizacji — dwie pułapki językowe > ani jednego znaku & — sanitizer runtime-v1 zamienia go na &amp; i psuje napis na ekranie
+AssertionError: znak & w: Downtime reason codes are not agreed between Quality & Operations: expected true to be false // Object.is equality
+    242|     for (const t of wszystkieTeksty()) expect(t.includes('&'), `znak &…
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+
+=== D. MUTACJA 3: usuniecie rekomendacji z jednej decyzji ===
+     × każda decyzja ma DOKŁADNIE jedną opcję rekomendowaną 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/04-realizacja.test.ts > 04-dane-realizacji — decyzje > każda decyzja ma DOKŁADNIE jedną opcję rekomendowaną
+AssertionError: decyzja dec-cutover-date: expected +0 to be 1 // Object.is equality
+    182|   it('każda decyzja ma DOKŁADNIE jedną opcję rekomendowaną', () => {
+    184|       expect(d.opcje.filter((o) => o.rekomendowana).length, `decyzja $…
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+
+=== E. PRZYWROCENIE — ma byc znowu GREEN ===
+ Test Files  1 passed (1)
+      Tests  22 passed (22)

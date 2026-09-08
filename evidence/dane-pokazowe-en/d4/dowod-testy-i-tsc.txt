@@ -1,0 +1,18 @@
+########## TESTY I TYPY paczki D4 — 2026-09-08T09:35:15Z ##########
+
+=== vitest (bez bazy, vitest.orphans.config.ts) ===
+ RUN  v4.1.8 /private/tmp/wt-d4
+
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  11:35:23
+   Duration  1.81s (transform 679ms, setup 790ms, import 305ms, tests 326ms, environment 0ms)
+
+
+=== tsc -p server/tsconfig.json --noEmit ===
+exit code = 0 (przebieg w tle, zero wierszy wyjscia — pelny log:
+EXIT=0
+
+[exited with code 0]
+)
