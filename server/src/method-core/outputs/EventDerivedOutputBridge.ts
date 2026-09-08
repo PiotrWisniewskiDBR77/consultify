@@ -29,6 +29,7 @@
 
 import { genId, nowIso } from '../db.js';
 import { DEMO_BYPASS_NOTICE } from '../demoBypass.js';
+import { resolveResponseLanguage, type ResponseLanguage } from '../../services/ai/responseLanguage.js';
 import type { MethodEventStore } from '../MethodEventStore.js';
 import type { MethodOutputBridge } from '../MethodSessionService.js';
 import type { EvidenceLocatorInput, FreezeOutputInput, OutputFindingInput } from './MethodOutputService.js';
@@ -164,6 +165,65 @@ export function deriveFindingsFromEvents(events: readonly MethodEvent[]): {
   return { findings, current, target, gap };
 }
 
+/**
+ * ZDANIA ZAMRAŻANE W OUTPUCIE — dwa warianty językowe, nie jeden.
+ *
+ * `scope` i `limitations` są jedynymi polami zamrożonego Outputu, które
+ * użytkownik czyta jako PROZĘ (raport oceny drukuje je dosłownie: rozdział
+ * „Ograniczenia i założenia" i stopka „Ocena"). Do 2026-09 były zaszyte po
+ * polsku niezależnie od języka konta — użytkownik EN dostawał polskie zdania
+ * w dokumencie dla zarządu (program spójności językowej, PLAN.md §2.5/§2.8).
+ *
+ * Wariant wybiera `resolveResponseLanguage` — ten sam mechanizm, którego
+ * używa reszta serwera; przy braku deklaracji języka wypada 'en', bo taka
+ * jest reguła programu dla wersji angielskiej („zero innego języka").
+ * Tekst, nie kod błędu: te pola są ZAMRAŻANE na stałe w rekordzie, więc
+ * zamiana ich na kody unieważniłaby odczyt Outputów już zamrożonych.
+ */
+const TEKSTY_OUTPUTU: Record<
+  ResponseLanguage,
+  {
+    scope: (sessionId: string, packId: string, packVersion: string) => string;
+    aggregationRule: string;
+    limitationTemplates: string;
+    limitationAggregation: string;
+    limitationDemoBypass: string;
+  }
+> = {
+  pl: {
+    scope: (sessionId, packId, packVersion) =>
+      `Sesja ${sessionId} — ${packId}@${packVersion}, zamrożona z event-store.`,
+    aggregationRule:
+      'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — ' +
+      'to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.',
+    limitationTemplates:
+      'Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice ' +
+      'demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych ' +
+      '(unit/level/evidence), NIE analiza LLM ani recenzja metodyka.',
+    limitationAggregation:
+      'aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.',
+    limitationDemoBypass:
+      ' Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem ' +
+      'produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
+  },
+  en: {
+    scope: (sessionId, packId, packVersion) =>
+      `Session ${sessionId} — ${packId}@${packVersion}, frozen from the event store.`,
+    aggregationRule:
+      'EventDerivedOutputBridge does not compute per-axis/pillar aggregation (a method-specific ' +
+      'rule) — that stays on the client side (e.g. drdAdapter.aggregate) before display.',
+    limitationTemplates:
+      'Output generated automatically from the event store (EventDerivedOutputBridge, vertical-slice ' +
+      'demo) — businessMeaning/recommendation are deterministic templates built from real data ' +
+      '(unit/level/evidence), NOT an LLM analysis nor a methodologist review.',
+    limitationAggregation:
+      'aggregation.byGroup is empty — per-axis aggregation is a method rule and is computed client-side.',
+    limitationDemoBypass:
+      ' This Output comes from a session created through the demo bypass — it is NOT a production ' +
+      'result and cannot be approved as released/pilot through this mechanism.',
+  },
+};
+
 export class EventDerivedOutputBridge implements MethodOutputBridge {
   constructor(
     private readonly events: MethodEventStore,
@@ -179,7 +239,11 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
     readonly methodPackVersion: string;
     readonly demoBypassActive: boolean;
     readonly revisionOfSessionId: string | null;
+    /** `users.language` osoby zamrażającej; brak → 'en' (PLAN.md §2.1). */
+    readonly language?: string | null;
   }): Promise<void> {
+    const jezyk = resolveResponseLanguage({ requested: input.language ?? null, samples: [] });
+    const teksty = TEKSTY_OUTPUTU[jezyk];
     const events = await this.events.listBySession(input.organizationId, input.sessionId);
     const { findings, current, target, gap } = deriveFindingsFromEvents(events);
 
@@ -210,16 +274,14 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
       module: input.module,
       methodPackId: input.methodPackId,
       methodPackVersion: input.methodPackVersion,
-      scope: `Sesja ${input.sessionId} — ${input.methodPackId}@${input.methodPackVersion}, zamrożona z event-store.`,
+      scope: teksty.scope(input.sessionId, input.methodPackId, input.methodPackVersion),
       current,
       target,
       gap,
       aggregation: {
         byGroup: {},
         mappingVersion: 'event-derived-v1',
-        rule:
-          'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — ' +
-          'to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.',
+        rule: teksty.aggregationRule,
         excluded: {},
       },
       visualModel: { kind: 'matrix', dataRef: current },
@@ -230,10 +292,8 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
         completenessRatio: totalUnits > 0 ? unitsWithAcceptedEvidence / totalUnits : 0,
       },
       limitations: [
-        'Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice ' +
-          'demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych ' +
-          '(unit/level/evidence), NIE analiza LLM ani recenzja metodyka.',
-        'aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.',
+        teksty.limitationTemplates,
+        teksty.limitationAggregation,
         // ★ Explicit, visible demonstration marker (CLAUDE.md rule #7) — only
         // appended when the SOURCE SESSION was actually created through the
         // demo bypass (server/src/method-core/demoBypass.ts). A production
@@ -244,13 +304,7 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
         // `limitations` rule anyway — an honest Output always states what it
         // does not cover, and "this came from the demo bypass" is exactly
         // that kind of disclosure.
-        ...(input.demoBypassActive
-          ? [
-              DEMO_BYPASS_NOTICE +
-                ' Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem ' +
-                'produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
-            ]
-          : []),
+        ...(input.demoBypassActive ? [DEMO_BYPASS_NOTICE + teksty.limitationDemoBypass] : []),
       ],
       findings,
       prioritisationResult: null,
