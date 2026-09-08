@@ -2363,8 +2363,8 @@
     "prev": "Prev",
     "selectOrganization": "Select Organization",
     "organizations": "Organizations",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
+    "enabled": "enabled",
+    "disabled": "disabled",
     "adding": "Adding...",
     "exportJson": "Export JSON",
     "on": "On",
@@ -21535,7 +21535,14 @@
       },
       "payments": {
         "idRequired": "Enter a payment method id.",
-        "idPlaceholder": "Payment method id"
+        "idPlaceholder": "Payment method id",
+        "added": "Payment method added",
+        "defaultUpdated": "Default payment method updated",
+        "removed": "Payment method removed",
+        "addMethod": "Add method",
+        "empty": "No payment methods added yet.",
+        "cardInfo": "{{brand}} ending in {{last4}}",
+        "expiry": "Expires {{month}}/{{year}}"
       },
       "plan": {
         "title": "Assign plan & limits",
@@ -21632,7 +21639,74 @@
         "saveFailed": "Could not save the budget thresholds.",
         "saved": "Budget thresholds saved",
         "unavailable": "Budget thresholds are unavailable right now — the settings store is not responding. Nothing was saved, and we do not show values that do not exist.",
-        "empty": "No budget threshold has been set yet."
+        "empty": "No budget threshold has been set yet.",
+        "title": "Spend alerts",
+        "save": "Save alerts"
+      },
+      "errors": {
+        "loadSummary": "Failed to load billing summary",
+        "planReadback": "Plan request completed, but provider readback did not match the target.",
+        "assignPlan": "Failed to assign plan",
+        "paymentReadback": "Payment request completed, but provider readback did not confirm it.",
+        "addPayment": "Failed to add payment method",
+        "defaultReadback": "Default change was not confirmed by provider readback.",
+        "updateDefault": "Failed to update default payment method",
+        "removeReadback": "Removal request completed, but provider readback still contains the method.",
+        "removePayment": "Failed to remove payment method",
+        "taxReadback": "Tax settings request completed, but durable readback was unavailable.",
+        "updateTax": "Failed to update billing tax settings"
+      },
+      "tax": {
+        "updated": "Billing tax settings updated",
+        "title": "Tax and invoicing",
+        "legalName": "Legal company name",
+        "taxId": "Tax ID",
+        "save": "Save tax settings"
+      },
+      "columns": {
+        "invoice": "Invoice",
+        "status": "Status",
+        "amountDue": "Amount due",
+        "amountPaid": "Amount paid",
+        "dueDate": "Due date",
+        "card": "Card",
+        "default": "Default"
+      },
+      "status": {
+        "paid": "Paid",
+        "open": "Open",
+        "draft": "Draft",
+        "void": "Void",
+        "uncollectible": "Uncollectible"
+      },
+      "actions": {
+        "makeDefault": "Make default",
+        "remove": "Remove"
+      },
+      "summary": {
+        "plan": "Plan",
+        "unknown": "Unknown",
+        "limitsUsage": "Limits & usage",
+        "tokenBalance": "Token balance",
+        "spendPosture": "Spend posture",
+        "overagePosture": "Usage and overage posture",
+        "tokenOverage": "Token overage rate",
+        "storageOverage": "Storage overage rate",
+        "usageRows": "Tracked usage rows",
+        "monthlyCap": "Monthly cost cap",
+        "emailAlerts": "Email alerts"
+      },
+      "invoices": {
+        "empty": "No invoices yet for this workspace.",
+        "unavailable": "Invoices are temporarily unavailable."
+      },
+      "selfServiceOff": {
+        "title": "Self-service checkout is currently disabled.",
+        "body": "Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales."
+      },
+      "header": {
+        "title": "Billing, FinOps, and commercial controls",
+        "subtitle": "Subscriptions, payment methods, invoices, budgets, tax settings, and usage posture as first-class tenant admin capabilities."
       }
     },
     "interviewAssignmentsPanel": {

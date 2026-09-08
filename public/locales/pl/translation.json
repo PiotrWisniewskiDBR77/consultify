@@ -778,8 +778,8 @@
     "prev": "Wstecz",
     "selectOrganization": "Wybierz organizację",
     "organizations": "Organizacje",
-    "enabled": "Włączone",
-    "disabled": "Wyłączone",
+    "enabled": "włączone",
+    "disabled": "wyłączone",
     "adding": "Dodawanie...",
     "exportJson": "Eksportuj JSON",
     "on": "Włączone",
@@ -22991,7 +22991,14 @@
       },
       "payments": {
         "idRequired": "Podaj identyfikator metody płatności.",
-        "idPlaceholder": "Identyfikator metody płatności"
+        "idPlaceholder": "Identyfikator metody płatności",
+        "added": "Dodano metodę płatności",
+        "defaultUpdated": "Zmieniono domyślną metodę płatności",
+        "removed": "Usunięto metodę płatności",
+        "addMethod": "Dodaj metodę",
+        "empty": "Nie dodano jeszcze żadnej metody płatności.",
+        "cardInfo": "{{brand}} kończąca się na {{last4}}",
+        "expiry": "Ważna do {{month}}/{{year}}"
       },
       "plan": {
         "title": "Przydziel plan i limity",
@@ -23088,7 +23095,74 @@
         "saveFailed": "Nie udało się zapisać progów budżetowych.",
         "saved": "Progi budżetowe zapisane",
         "unavailable": "Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.",
-        "empty": "Nie ustawiono jeszcze żadnego progu budżetowego."
+        "empty": "Nie ustawiono jeszcze żadnego progu budżetowego.",
+        "title": "Alerty wydatków",
+        "save": "Zapisz alerty"
+      },
+      "errors": {
+        "loadSummary": "Nie udało się wczytać podsumowania rozliczeń",
+        "planReadback": "Żądanie planu wykonane, ale odczyt zwrotny u dostawcy nie zgadza się z celem.",
+        "assignPlan": "Nie udało się przypisać planu",
+        "paymentReadback": "Żądanie płatności wykonane, ale odczyt zwrotny u dostawcy go nie potwierdził.",
+        "addPayment": "Nie udało się dodać metody płatności",
+        "defaultReadback": "Zmiana domyślnej metody nie została potwierdzona odczytem zwrotnym u dostawcy.",
+        "updateDefault": "Nie udało się zmienić domyślnej metody płatności",
+        "removeReadback": "Żądanie usunięcia wykonane, ale odczyt zwrotny u dostawcy nadal zawiera tę metodę.",
+        "removePayment": "Nie udało się usunąć metody płatności",
+        "taxReadback": "Żądanie ustawień podatkowych wykonane, ale trwały odczyt zwrotny był niedostępny.",
+        "updateTax": "Nie udało się zapisać ustawień podatkowych"
+      },
+      "tax": {
+        "updated": "Zapisano ustawienia podatkowe",
+        "title": "Podatki i fakturowanie",
+        "legalName": "Nazwa prawna firmy",
+        "taxId": "NIP / Tax ID",
+        "save": "Zapisz ustawienia podatkowe"
+      },
+      "columns": {
+        "invoice": "Faktura",
+        "status": "Status",
+        "amountDue": "Do zapłaty",
+        "amountPaid": "Zapłacono",
+        "dueDate": "Termin",
+        "card": "Karta",
+        "default": "Domyślna"
+      },
+      "status": {
+        "paid": "Opłacona",
+        "open": "Otwarta",
+        "draft": "Szkic",
+        "void": "Anulowana",
+        "uncollectible": "Nieściągalna"
+      },
+      "actions": {
+        "makeDefault": "Ustaw jako domyślną",
+        "remove": "Usuń"
+      },
+      "summary": {
+        "plan": "Plan",
+        "unknown": "Nieznany",
+        "limitsUsage": "Limity i zużycie",
+        "tokenBalance": "Saldo tokenów",
+        "spendPosture": "Postawa wydatkowa",
+        "overagePosture": "Zużycie i przekroczenia",
+        "tokenOverage": "Stawka za przekroczenie tokenów",
+        "storageOverage": "Stawka za przekroczenie miejsca",
+        "usageRows": "Zapisanych wierszy zużycia",
+        "monthlyCap": "Miesięczny limit kosztów",
+        "emailAlerts": "Alerty e-mail"
+      },
+      "invoices": {
+        "empty": "Brak faktur w tej przestrzeni.",
+        "unavailable": "Faktury są chwilowo niedostępne."
+      },
+      "selfServiceOff": {
+        "title": "Samodzielny zakup jest teraz wyłączony.",
+        "body": "Korzystaj z 7-dniowego okresu próbnego. Aby bezpiecznie włączyć plan enterprise, skontaktuj się z działem sprzedaży."
+      },
+      "header": {
+        "title": "Rozliczenia, FinOps i sterowanie komercyjne",
+        "subtitle": "Subskrypcje, metody płatności, faktury, budżety, ustawienia podatkowe i zużycie — pełnoprawne narzędzia administratora organizacji."
       }
     },
     "interviewAssignmentsPanel": {
