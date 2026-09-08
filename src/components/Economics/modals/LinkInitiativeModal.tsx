@@ -110,7 +110,7 @@ export const LinkInitiativeModal: React.FC<LinkInitiativeModalProps> = ({
           >
             {LINKAGE_TYPES.map((lt) => (
               <option key={lt} value={lt}>
-                {t(`finance.link.typeValue.${lt}`, 'Inne powiązanie finansowe')}
+                {t(`finance.link.typeValue.${lt}`, 'Other financial link')}
               </option>
             ))}
           </select>

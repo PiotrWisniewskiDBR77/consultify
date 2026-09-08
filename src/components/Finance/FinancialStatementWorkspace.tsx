@@ -350,7 +350,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   };
   const statusLabel = (status: unknown) => {
     const normalized = String(status || 'pending').toLowerCase();
-    return t(`finance.statusValue.${normalized}`, 'Oczekuje');
+    return t(`finance.statusValue.${normalized}`, 'Pending');
   };
   // NAPRAWIONE (sweep 148-finanse-parametry, rodzina „surowa wartość"):
   // panel „Quality runs" renderował `run.stage`/`run.result_status` wprost
