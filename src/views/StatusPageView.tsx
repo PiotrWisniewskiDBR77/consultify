@@ -26,6 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // Types
 interface ServiceStatus {
@@ -336,7 +337,7 @@ export const StatusPageView: React.FC = () => {
                       <p className="text-sm text-c-text-secondary">{item.description}</p>
                     </div>
                     <div className="text-sm text-c-text-muted">
-                      {new Date(item.scheduledStart).toLocaleDateString()}
+                      {formatListDate(item.scheduledStart)}
                     </div>
                   </div>
                 </div>

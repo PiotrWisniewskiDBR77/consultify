@@ -1,6 +1,7 @@
 import { AlertTriangle, Coins, CreditCard, Sparkles, TrendingUp, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface LowBalanceModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
                 </h2>
                 <p className="text-white/80 text-sm">
                   {t('billing.currentBalance', 'Current balance')}:{' '}
-                  {currentBalance.toLocaleString()} tokens
+                  {formatListNumber(currentBalance)} tokens
                 </p>
               </div>
             </div>

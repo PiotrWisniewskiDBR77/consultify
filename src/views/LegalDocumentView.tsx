@@ -27,6 +27,7 @@ import { Link, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { LoadingState } from '@/components/ui/primitives';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface LegalDocument {
   id: string;
@@ -402,11 +403,7 @@ export const LegalDocumentView: React.FC = () => {
                   <div>
                     <p className="text-xs text-c-text-muted">Effective Date</p>
                     <p className="font-medium text-c-text-secondary">
-                      {new Date(document.effective_from).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {formatListDate(document.effective_from)}
                     </p>
                   </div>
                 </div>

@@ -7,6 +7,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // Types
 export interface CollaboratorPresence {
@@ -404,7 +405,7 @@ export const ActivityFeed: React.FC<{
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMs / 3600000);
     if (diffHours < 24) return `${diffHours}h ago`;
-    return new Date(date).toLocaleDateString();
+    return formatListDate(date);
   };
 
   if (activities.length === 0) {

@@ -31104,7 +31104,9 @@
       "original": "Original"
     },
     "maxMode": {
-      "recommendedFor": "Recommended for: strategic planning, complex analysis, critical decisions"
+      "recommendedFor": "Recommended for: strategic planning, complex analysis, critical decisions",
+      "tokens": "tokens",
+      "estimatedCost": "Estimated cost:"
     }
   },
   "comingSoon": "Coming soon",

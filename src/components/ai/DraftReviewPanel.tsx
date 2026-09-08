@@ -21,6 +21,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIDraft, useDraftApproval } from '../../hooks/useDraftApproval';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface DraftReviewPanelProps {
   projectId?: string;
@@ -245,7 +246,7 @@ export function DraftReviewPanel({
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {draft.model_used && <span>Model: {draft.model_used}</span>}
             <span className="mx-2">•</span>
-            <span>{new Date(draft.created_at).toLocaleString('pl-PL')}</span>
+            <span>{formatListDateTime(draft.created_at)}</span>
           </div>
 
           <div className="flex items-center gap-2">

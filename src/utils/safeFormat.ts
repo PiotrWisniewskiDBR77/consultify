@@ -1,3 +1,5 @@
+import { formatListDateTime } from '@/utils/listDateFormat';
+
 export const EMPTY_VALUE = '—';
 
 export function safeNumber(value: unknown, fallback = 0): number {
@@ -58,7 +60,7 @@ export function safeDate(value: unknown, fallback = EMPTY_VALUE): string {
   if (!value) return fallback;
   const date = value instanceof Date ? value : new Date(String(value));
   if (Number.isNaN(date.getTime())) return fallback;
-  return date.toLocaleString();
+  return formatListDateTime(date);
 }
 
 export function safeMoney(

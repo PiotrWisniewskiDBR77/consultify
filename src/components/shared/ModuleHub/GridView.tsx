@@ -27,6 +27,7 @@ import {
   type StandardGridCard as StandardGridCardData,
 } from '@/components/standard';
 import type { StatusTone } from '@/components/ui/primitives/chips/StatusChip';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export interface GridItem {
   id: string;
@@ -124,7 +125,7 @@ const formatRelativeTime = (date: Date | string, t: TFunction) => {
   if (hours < 1) return t('sharedComponents.gridView.justNow');
   if (hours < 24) return t('sharedComponents.gridView.hoursAgo', { count: hours });
   if (days < 7) return t('sharedComponents.gridView.daysAgo', { count: days });
-  return d.toLocaleDateString();
+  return formatListDate(d);
 };
 
 export const GridView: React.FC<GridViewProps> = ({

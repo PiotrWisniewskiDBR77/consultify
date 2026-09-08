@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface ROIPaybackChartProps {
   investmentAmount?: number;
@@ -38,7 +39,7 @@ export const ROIPaybackChart: React.FC<ROIPaybackChartProps> = ({
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-primary-600">
-            ${returnAmount.toLocaleString()}
+            ${formatListNumber(returnAmount)}
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Return</div>
         </div>

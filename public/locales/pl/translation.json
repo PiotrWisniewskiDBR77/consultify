@@ -33240,7 +33240,9 @@
       "original": "Oryginał"
     },
     "maxMode": {
-      "recommendedFor": "Zalecane dla: planowania strategicznego, złożonych analiz, decyzji krytycznych"
+      "recommendedFor": "Zalecane dla: planowania strategicznego, złożonych analiz, decyzji krytycznych",
+      "tokens": "tokenów",
+      "estimatedCost": "Szacowany koszt:"
     }
   },
   "comingSoon": "Już wkrótce",

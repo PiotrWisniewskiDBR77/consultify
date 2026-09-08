@@ -22,6 +22,7 @@ import {
   dynamicSwotPack,
   getDynamicSwotPackForCurrentFlags,
 } from '@/toolPacks/packs/dynamicSwot.pack';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ==================== TYPES ====================
 
@@ -3780,7 +3781,7 @@ export const useToolStore = create<ToolStoreState>()(
         const session: ToolSession = {
           id: generateId(),
           toolType,
-          name: `${toolType} - ${new Date().toLocaleDateString()}`,
+          name: `${toolType} - ${formatListDate(new Date())}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           currentStep: 1,
@@ -4243,7 +4244,7 @@ export const useToolStore = create<ToolStoreState>()(
         const session: ToolSession = {
           id: payload.id,
           toolType: payload.toolType,
-          name: payload.name || `${payload.toolType} - ${new Date().toLocaleDateString()}`,
+          name: payload.name || `${payload.toolType} - ${formatListDate(new Date())}`,
           createdAt: payload.createdAt || new Date().toISOString(),
           updatedAt: payload.updatedAt || new Date().toISOString(),
           currentStep: normalizedCurrentStep,
