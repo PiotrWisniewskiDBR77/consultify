@@ -1,0 +1,26 @@
+{
+ "ekran": "08-budzet-otwarty",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+ "obcychSlowUI": 6,
+ "obcychLiniiUI": 2,
+ "ui": [
+  {
+   "linia": "Nie udało się sprawdzić tego rekordu w nowym systemie.",
+   "trafienia": [
+    "Nie",
+    "udało",
+    "się",
+    "sprawdzić"
+   ]
+  },
+  {
+   "linia": "Spróbuj ponownie",
+   "trafienia": [
+    "Spróbuj",
+    "ponownie"
+   ]
+  }
+ ],
+ "dane": []
+}

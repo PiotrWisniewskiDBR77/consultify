@@ -1,0 +1,16 @@
+{
+ "ekran": "09b-analiza-kreator",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3215/finance?tab=analysis&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "CD PROJEKT Group analysis",
+   "trafienia": [
+    "analysis"
+   ]
+  }
+ ]
+}

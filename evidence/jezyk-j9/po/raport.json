@@ -1,0 +1,617 @@
+[
+ {
+  "ekran": "01-sprawozdania-lista",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa CD PROJEKT",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "02-sprawozdania-podglad",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa CD PROJEKT",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa CD PROJEKT",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "03-sprawozdania-kebab",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa CD PROJEKT",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "04-modele-lista",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "05-modele-podglad",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "06-budzet-lista",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "DBR77 Scale-Up — Budżet programu 2026-2028",
+    "trafienia": [
+     "Budżet"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "07-budzet-formularz",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "DBR77 Scale-Up — Budżet programu 2026-2028",
+    "trafienia": [
+     "Budżet"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "08-budzet-otwarty",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "09-analiza-lista",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=analysis&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "CD PROJEKT Group — analiza finansowa 2024–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Tesla, Inc. — analiza finansowa 2023–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Tesco PLC — analiza finansowa 2024–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — analiza finansowa 2023–2025",
+    "trafienia": [
+     "Kapitałowa",
+     "analiza"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "09b-analiza-kreator",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=analysis&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "CD PROJEKT Group — analiza finansowa 2024–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Tesla, Inc. — analiza finansowa 2023–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Tesco PLC — analiza finansowa 2024–2025",
+    "trafienia": [
+     "analiza"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — analiza finansowa 2023–2025",
+    "trafienia": [
+     "Kapitałowa",
+     "analiza"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "09c-model-kreator",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa CD PROJEKT - FY2024 - PLN",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Entity: Grupa Kapitałowa CD PROJEKT",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "10-wycena-lista",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+    "trafienia": [
+     "wycena"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "11-wycena-formularz",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+    "trafienia": [
+     "wycena"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull DCF + multiples",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "12-wycena-otwarta",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+    "trafienia": [
+     "wycena"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "13-roi-inwestycje",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=investment&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+    "trafienia": [
+     "wycena"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "14-panele-wartosci",
+  "jezyk": "en",
+  "url": "http://127.0.0.1:3215/finance?tab=models&financeValuePanels=1&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "DBR77 Sp. z o.o. — wycena Q3 2026",
+    "trafienia": [
+     "wycena"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bull",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Bear",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   },
+   {
+    "linia": "Grupa Kapitałowa Apator — Base",
+    "trafienia": [
+     "Kapitałowa"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "01-sprawozdania-lista",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "02-sprawozdania-podglad",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "03-sprawozdania-kebab",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=statements&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "04-modele-lista",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "05-modele-podglad",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "06-budzet-lista",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "M16-SEED-FY25 Operating Budget",
+    "trafienia": [
+     "Budget"
+    ]
+   },
+   {
+    "linia": "DBR77 Budget 2026",
+    "trafienia": [
+     "Budget"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "07-budzet-formularz",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "M16-SEED-FY25 Operating Budget",
+    "trafienia": [
+     "Budget"
+    ]
+   },
+   {
+    "linia": "DBR77 Budget 2026",
+    "trafienia": [
+     "Budget"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "08-budzet-otwarty",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=prediction&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "09-analiza-lista",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=analysis&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "CD PROJEKT Group analysis",
+    "trafienia": [
+     "analysis"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "09b-analiza-kreator",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=analysis&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": [
+   {
+    "linia": "CD PROJEKT Group analysis",
+    "trafienia": [
+     "analysis"
+    ]
+   }
+  ]
+ },
+ {
+  "ekran": "09c-model-kreator",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "10-wycena-lista",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "11-wycena-formularz",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "12-wycena-otwarta",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=valuation&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "13-roi-inwestycje",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=investment&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ },
+ {
+  "ekran": "14-panele-wartosci",
+  "jezyk": "pl",
+  "url": "http://127.0.0.1:3215/finance?tab=models&financeValuePanels=1&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+  "obcychSlowUI": 0,
+  "obcychLiniiUI": 0,
+  "ui": [],
+  "dane": []
+ }
+]

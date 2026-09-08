@@ -1,0 +1,23 @@
+{
+ "ekran": "05-modele-podglad",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3215/finance?tab=models&ff_valueOffice=1&ff_investAppraisal=1&ff_valuationVisuals=1&ff_varianceBridge=1&ff_driverPlanner=1&ff_modelVersioning=1&ff_m16ValuationSuite=1&ff_m16PlanningSuite=1&ff_m16AdvancedSuite=1&ff_m16ValueSuite=1",
+ "obcychSlowUI": 3,
+ "obcychLiniiUI": 2,
+ "ui": [
+  {
+   "linia": "Cash Flow",
+   "trafienia": [
+    "Cash",
+    "Flow"
+   ]
+  },
+  {
+   "linia": "Cost of goods sold\t-638\t-673\t-710",
+   "trafienia": [
+    "of"
+   ]
+  }
+ ],
+ "dane": []
+}
