@@ -1,0 +1,93 @@
+########## POMIAR API paczki D4 — 2026-09-08T09:31:16Z, API 4184 na kopii consultify_kopia_d4 ##########
+Konto: OWNER james.whitfield@northwind.example. Wszystko czytane z ZYWEGO API, nie z kodu.
+
+=== 1. GET /api/initiatives/runtime-v1/execution-cases (LANCUCH KANONICZNY) ===
+{"cases":[]}
+
+=== 2. POST .../planning/initiatives/<MES Rollout Line 3>/register — PROBA REJESTRACJI INICJATYWY IN_EXECUTION ===
+{"error":{"code":"INITIATIVE_NOT_PLANNABLE","rule":"INITIATIVE_NOT_PLANNABLE"},"code":"INITIATIVE_NOT_PLANNABLE","rule":"INITIATIVE_NOT_PLANNABLE"}
+  ^ registerModuleInitiativeForPlanning.ts:28-34 — register przyjmuje wylacznie APPROVED/PENDING_APPROVAL.
+
+=== 3. GET .../planning/plannable-initiatives — kto W OGOLE moze wejsc w lancuch ===
+[
+ {
+  "name": "Energy Monitoring and ISO 50001",
+  "status": "APPROVED"
+ },
+ {
+  "name": "Scrap Reduction Programme",
+  "status": "APPROVED"
+ },
+ {
+  "name": "Shift Handover Digitisation",
+  "status": "APPROVED"
+ },
+ {
+  "name": "Supplier Quality Gate",
+  "status": "APPROVED"
+ },
+ {
+  "name": "Digital Work Instructions",
+  "status": "PENDING_APPROVAL"
+ }
+]
+
+=== 4. GET /api/execution-control/capacity/resource-plan?weeks=8 (zakladka Zasoby) ===
+summary: {"peopleCount": 9, "demandHours": 360, "supplyHours": 2704, "gapHours": 2344, "utilizationPercent": 13, "overloadedCount": 2, "peopleWithoutProfileSupply": 0, "backlogHoursTotal": 73, "backlogPeople": 5}
+osoby (imie / stanowisko / etat / zrodlo podazy / zaleglosc h):
+   Laura Novak | Controls Engineer | 36 | PROFIL | 0
+   Emily Carter | Production Planner | 37 | PROFIL | 15
+   Priya Sharma | HR Business Partner | 32 | PROFIL | 28
+   Robert Chen | Head of Quality | 38 | PROFIL | 10
+   Daniel Osei | Automation Engineer | 40 | PROFIL | 0
+   Sarah Mitchell | Plant Manager | 40 | PROFIL | 12
+   Michael Grant | Data Analyst | 35 | PROFIL | 0
+   Thomas Baker | Finance Controller | 40 | PROFIL | 8
+   James Whitfield | Operations Director | 40 | PROFIL | 0
+wiersze osobo-tydzien z popytem > 0: 23
+przeciazenia (>105%):
+   Laura Novak 2026-09-07 48 h / 36 h = 133 %
+   Daniel Osei 2026-09-21 59 h / 40 h = 148 %
+
+=== 5. GET /api/execution-control/delay-signals (zakladka Sygnaly, detekcja NA ZYWO) ===
+count: 13
+   CRITICAL  73 d  Install shop-floor terminals on Line 3
+   CRITICAL  69 d  Commission vibration sensors on cells 1 and 2
+   CRITICAL  59 d  Build the failure-mode catalogue for spindle bearings
+   CRITICAL  38 d  Populate the skills matrix for all production roles
+   CRITICAL  24 d  Agree the shuttle safety case with the works council
+   CRITICAL  17 d  Agree the MES downtime reason-code taxonomy
+   CRITICAL  13 d  Close the pilot aisle housekeeping actions
+   CRITICAL  10 d  Commission the shuttle system in the pilot aisle
+   CRITICAL  10 d  Cost the spare-parts holding reduction
+   CRITICAL   7 d  Agree the cross-training rota with the shift leads
+   WARNING    6 d  Retrain the goods-out team on the new pick path
+   WARNING    4 d  Agree the maintenance work-order trigger with Planning
+   WARNING    3 d  Identify single points of failure per line
+
+=== 6. GET /api/raid (zakladka Ryzyka) ===
+pozycji: 7
+   RISK        HIGH    x HIGH      riskScore(3x4)= 9  aggregateVersion= 1   Paused upskilling leaves key roles single-deep
+   ISSUE       HIGH    x CRITICAL  riskScore(3x4)= 12  aggregateVersion= 1   Works council has not signed the shuttle safety 
+   ASSUMPTION  MEDIUM  x HIGH      riskScore(3x4)= 6  aggregateVersion= 1   Spare-parts holding can be cut by fifteen per ce
+   RISK        MEDIUM  x MEDIUM    riskScore(3x4)= 4  aggregateVersion= 1   False positives erode operator trust in predicti
+   DEPENDENCY  MEDIUM  x HIGH      riskScore(3x4)= 6  aggregateVersion= 1   SCADA bridge depends on the vendor firmware rele
+   ISSUE       HIGH    x HIGH      riskScore(3x4)= 9  aggregateVersion= 1   Downtime reason codes are not agreed between Qua
+   RISK        HIGH    x CRITICAL  riskScore(3x4)= 12  aggregateVersion= 1   Line 3 cutover slips past the summer shutdown wi
+
+=== 7. GET /api/execution-reports/definitions oraz /runs (zakladka Raporty) ===
+{"definitions":[]}
+{"items":[]}
+  ^ PUSTE mimo 12 globalnych definicji w report_definitions — STOP A (kolumna org-id typu UUID).
+
+=== 8. GET /api/decisions (zakladka Decyzje) ===
+decyzji: 9
+   ESCALATED  None | Decide on the third-party training platform proposal
+   APPROVED   None | Pause the skills passport programme until the 2027 budg
+   APPROVED   None | Continue the warehouse shuttle pilot into a second aisl
+   PENDING    None | Approve the spare-parts holding reduction target
+   ESCALATED  None | Set the predictive alert threshold policy
+   APPROVED   None | Extend predictive maintenance to cells 3, 4 and 5
+   PENDING    None | Accept the vendor firmware release as a hard dependency
+   ESCALATED  None | Choose the MES downtime reason-code taxonomy
+   PENDING    None | Approve the Line 3 cutover date of 26 March 2027

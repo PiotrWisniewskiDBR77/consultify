@@ -1,0 +1,66 @@
+DŁUG J7 — POLSKIE NAPISY INTERFEJSU na ekranach Realizacji (dane są po angielsku).
+Pomiar: innerText 8 zrzutów, konto OWNER (james.whitfield@northwind.example),
+i18nextLng='en', users.language='en', users.locale='en'.
+Każdy wiersz to LINIA interfejsu z polskim napisem albo z polskim formatem daty;
+w nawiasie kwadratowym zrzuty, na których wystąpiła.
+ŻADNA nie pochodzi z danych seeda D4 — `--verify` ma twardą asercję
+„pola tekstowe realizacji z polskimi znakami = 0" i przechodzi.
+
+TRZY RODZINY:
+  1. Etykiety słownikowe RAID: „Ryzyko", „Problem", „Założenie", „Zależność"
+     (`src/components/Execution/ExecutionControlSurface.tsx`, mapowanie typów).
+  2. Cała belka podsumowania zakładki Zasoby i kolumna tygodnia („od 07.09.2026")
+     — zdanie po polsku wprost w `ExecutionResourcesSurface.tsx`.
+  3. Format daty pl-PL („14 sie 2026", „02 paź 2026") na Pracy, Decyzjach, RAID
+     i Sygnałach oraz polskie nagłówki tabeli Raportów (RAPORT/POZIOM/OKRES/
+     STAN DANYCH NA/AUTOR) i pstryczek Kokpitu („Ryzyka", „Rozstrzygnięcia").
+
+14 sie 2026   [02-praca-tabela-light, 04-decyzje-lista-light]
+21 sie 2026   [02-praca-tabela-light, 04-decyzje-lista-light]
+28 sie 2026   [02-praca-tabela-light, 04-decyzje-lista-light, 05-ryzyka-raid-light]
+03 wrz 2026   [02-praca-tabela-light]
+04 wrz 2026   [02-praca-tabela-light, 04-decyzje-lista-light, 05-ryzyka-raid-light]
+11 wrz 2026   [02-praca-tabela-light]
+26 cze 2026   [02-praca-tabela-light]
+30 cze 2026   [02-praca-tabela-light]
+31 lip 2026   [02-praca-tabela-light, 04-decyzje-lista-light]
+31 sie 2026   [02-praca-tabela-light]
+01 wrz 2026   [02-praca-tabela-light]
+18 wrz 2026   [02-praca-tabela-light]
+25 wrz 2026   [02-praca-tabela-light]
+02 paź 2026   [02-praca-tabela-light]
+09 paź 2026   [02-praca-tabela-light, 04-decyzje-lista-light]
+29 sty 2027   [02-praca-tabela-light]
+26 mar 2027   [02-praca-tabela-light]
+10 lip 2026   [02-praca-tabela-light]
+16 paź 2026   [02-praca-tabela-light, 05-ryzyka-raid-light]
+23 paź 2026   [02-praca-tabela-light]
+30 paź 2026   [02-praca-tabela-light, 05-ryzyka-raid-light]
+27 lis 2026   [02-praca-tabela-light, 05-ryzyka-raid-light]
+25 sie 2026   [02-praca-tabela-light]
+06 lis 2026   [02-praca-tabela-light, 04-decyzje-lista-light]
+Stan na 8.09.2026 · osób 9 · popyt 360 h · podaż 2704 h · obłożenie 13 % · przeciążonych tygodni 2 · zaległość 73 h u 5 os.   [03-zasoby-obciazenie-light]
+od 07.09.2026   [03-zasoby-obciazenie-light]
+od 14.09.2026   [03-zasoby-obciazenie-light]
+od 21.09.2026   [03-zasoby-obciazenie-light]
+od 28.09.2026   [03-zasoby-obciazenie-light]
+od 05.10.2026   [03-zasoby-obciazenie-light]
+od 12.10.2026   [03-zasoby-obciazenie-light]
+od 19.10.2026   [03-zasoby-obciazenie-light]
+od 26.10.2026   [03-zasoby-obciazenie-light]
+04 gru 2026   [04-decyzje-lista-light]
+02 wrz 2026   [04-decyzje-lista-light]
+Ryzyko   [05-ryzyka-raid-light]
+Problem   [05-ryzyka-raid-light]
+Założenie   [05-ryzyka-raid-light]
+18 gru 2026   [05-ryzyka-raid-light]
+Zależność   [05-ryzyka-raid-light]
+13 lis 2026   [05-ryzyka-raid-light]
+08 wrz 2026   [06-sygnaly-light]
+Ryzyka   [07-kokpit-light]
+Rozstrzygnięcia   [07-kokpit-light]
+RAPORT   [08-raporty-light]
+POZIOM   [08-raporty-light]
+OKRES   [08-raporty-light]
+STAN DANYCH NA   [08-raporty-light]
+AUTOR   [08-raporty-light]
