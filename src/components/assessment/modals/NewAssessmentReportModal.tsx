@@ -167,7 +167,7 @@ export function NewAssessmentReportModal(props: {
                   dark:bg-navy-800 already passes (6.48:1), left as-is. */}
               {lockTemplate ? (
                 <span className="shrink-0 h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-800 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  {t(`${NS}.fromLibrary`, 'Z Biblioteki')}
+                  {t(`${NS}.fromLibrary`, 'From Library')}
                 </span>
               ) : (
                 <button

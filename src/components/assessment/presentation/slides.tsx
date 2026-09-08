@@ -63,11 +63,11 @@ export const TitleSlide: React.FC<{ model: PresentationDeckModel; locale: string
           value={`${model.methodPackId} v${model.methodPackVersion}`}
         />
         <StatChip
-          label={t('assessment.presentation.frozenAt', 'Data zamrożenia')}
+          label={t('assessment.presentation.frozenAt', 'Frozen at')}
           value={formatDate(model.frozenAt, locale)}
         />
         <StatChip
-          label={t('assessment.presentation.outputVersion', 'Wersja Outputu')}
+          label={t('assessment.presentation.outputVersion', 'Output version')}
           value={`v${model.outputVersion}`}
         />
       </div>

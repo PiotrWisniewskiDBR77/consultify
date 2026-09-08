@@ -530,7 +530,7 @@ const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) =
   return (
     <div className="mt-4 border-t border-c-border-subtle pt-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-        {t('assessment.report.download.heading', 'Pliki do wysłania klientowi')}
+        {t('assessment.report.download.heading', 'Files to send to the client')}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {PLIKI_DO_POBRANIA.map((pozycja) => (
@@ -544,14 +544,14 @@ const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) =
           >
             <Download size={14} aria-hidden="true" />
             {trwa === pozycja.format
-              ? t('assessment.report.download.inProgress', 'Przygotowuję plik…')
+              ? t('assessment.report.download.inProgress', 'Preparing the file…')
               : t(`assessment.report.download.${pozycja.klucz}`, pozycja.domyslna)}
           </button>
         ))}
       </div>
       {blad ? (
         <p className="mt-2 text-xs text-c-danger" role="alert">
-          {t('assessment.report.download.error', 'Nie udało się pobrać pliku — kod: {{code}}', {
+          {t('assessment.report.download.error', 'The file could not be downloaded — code: {{code}}', {
             code: blad,
           })}
         </p>
@@ -788,10 +788,10 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       ? 'neutral'
       : 'success';
   const lifecycleLabel = zZapisuSesji
-    ? t('assessment.report.lifecycleSessionRecord', 'Zapis sesji oceny — jeszcze nie zamrożony')
+    ? t('assessment.report.lifecycleSessionRecord', 'Assessment session record — not frozen yet')
     : superseded
-      ? t('assessment.report.lifecycleSuperseded', 'Zamrożony — zastąpiony nowszą rewizją')
-      : t('assessment.report.lifecycleFrozen', 'Zamrożony (niezmienny)');
+      ? t('assessment.report.lifecycleSuperseded', 'Frozen — superseded by a newer revision')
+      : t('assessment.report.lifecycleFrozen', 'Frozen (immutable)');
 
   // ── Formuła właściciela, punkt 2: „siedem osi" ────────────────────────────
   // Rozdziały osi powstają z metodyki (wszystkie 7, także te NIEobjęte tą
@@ -861,7 +861,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <p>
             {t(
               'assessment.report.demoBypassBanner',
-              'Ten Output pochodzi z sesji utworzonej przez tryb demo (ominięcie bramki gotowości pakietu). To NIE jest wynik produkcyjny — nie może być przedstawiony jako zatwierdzony wynik pilota/produkcji.'
+              'This Output comes from a session created in demo mode (the pack readiness gate was bypassed). This is NOT a production result — it must not be presented as an approved pilot or production outcome.'
             )}
           </p>
         </div>
@@ -889,7 +889,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {t('assessment.report.title', 'Raport oceny dojrzałości')}
+              {t('assessment.report.title', 'Maturity assessment report')}
             </p>
             <h1 className="mt-1 text-lg font-semibold text-c-text">
               {output.methodPackId.toUpperCase()} · {output.methodPackVersion}
@@ -907,7 +907,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
           <Property
             label={t('assessment.report.project', 'Projekt')}
-            value={session?.projectId ?? t('assessment.report.noProject', 'Brak przypisanego projektu')}
+            value={session?.projectId ?? t('assessment.report.noProject', 'No project assigned')}
             mono={!!session?.projectId}
           />
           <Property
@@ -920,11 +920,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             value={zZapisuSesji ? '—' : `v${output.outputVersion}`}
           />
           <Property
-            label={t('assessment.report.frozenAt', 'Data zamrożenia')}
+            label={t('assessment.report.frozenAt', 'Frozen at')}
             value={formatDateTime(output.frozenAt)}
           />
           <Property
-            label={t('assessment.report.approvedBy', 'Zatwierdził')}
+            label={t('assessment.report.approvedBy', 'Approved by')}
             value={
               latestApproval ? (
                 <span>
@@ -934,13 +934,13 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                 </span>
               ) : (
                 <span className="italic text-c-text-muted">
-                  {t('assessment.report.noApproval', 'Brak zarejestrowanego zatwierdzenia')}
+                  {t('assessment.report.noApproval', 'No approval recorded')}
                 </span>
               )
             }
           />
           <Property
-            label={t('assessment.report.module', 'Moduł')}
+            label={t('assessment.report.module', 'Module')}
             value={output.module === 'assessment' ? 'Ocena' : output.module}
           />
         </dl>
@@ -951,7 +951,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             <span>
               {t(
                 'assessment.report.supersededNotice',
-                'Ten Output został zastąpiony nowszą rewizją{{suffix}}. Poniższa treść pozostaje niezmiennym zapisem TEJ rewizji — nie jest aktualizowana.',
+                'This Output has been superseded by a newer revision{{suffix}}. The content below stays the immutable record of THIS revision — it is not updated.',
                 { suffix: supersededByOutputId ? ` (${supersededByOutputId})` : '' }
               )}
             </span>
@@ -970,14 +970,14 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="wstep"
         number={1}
-        title={t('assessment.report.chapter1.title', 'Jak prowadzono badanie')}
+        title={t('assessment.report.chapter1.title', 'How the assessment was run')}
         icon={ClipboardList}
         lede={t(
           'assessment.report.chapter1.lede',
-          'Zakres, tryb i granice wiarygodności tej oceny — zanim padnie pierwsza liczba.'
+          'Scope, mode and the credibility limits of this assessment — before the first number.'
         )}
       >
-        <SectionCard id="wstep-przebieg" title={t('assessment.report.chapter1.courseTitle', 'Przebieg oceny')}>
+        <SectionCard id="wstep-przebieg" title={t('assessment.report.chapter1.courseTitle', 'How the assessment progressed')}>
           <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
             <p>
               Ocenę przeprowadzono metodyką <strong className="text-c-text">{output.methodPackId.toUpperCase()}</strong>{' '}

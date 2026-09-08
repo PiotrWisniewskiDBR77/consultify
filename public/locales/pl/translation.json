@@ -8185,7 +8185,8 @@
         "pdf": "Pobierz prezentację (PDF)",
         "inProgress": "Przygotowuję plik…",
         "error": "Nie udało się pobrać pliku — kod: {{code}}"
-      }
+      },
+      "lifecycleSessionRecord": "Zapis sesji oceny — jeszcze nie zamrożony"
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",
@@ -9080,6 +9081,10 @@
         "interpretation_reviewed": "interpretacja przejrzana",
         "score_proposed": "ocena zaproponowana",
         "score_reviewed": "ocena przejrzana"
+      },
+      "source": {
+        "assessment": "Ocena: {{name}}",
+        "assessmentFallback": "Ocena"
       }
     },
     "reportsManagePanel": {
