@@ -87,7 +87,17 @@ describe('00-wspolne — guard hosta (odmowa produkcji/demo/staging i błędnego
     expect(() => sprawdzCel(url, 'centerbeam')).toThrow(/PRODUKCJĘ/);
   });
 
-  it('ODMAWIA demo/staging (trolley/thomas) — paczka D1 działa wyłącznie na kopii lokalnej', () => {
+  it('przepuszcza kopię innej paczki (consultify_kopia_d3) — wzorzec obejmuje D1-D6, nie tylko D1', () => {
+    const url = 'postgresql://postgres:postgres@127.0.0.1:54418/consultify_kopia_d3';
+    expect(sprawdzCel(url, '54418')).toBe('127.0.0.1:54418/consultify_kopia_d3');
+  });
+
+  it('ODMAWIA nazwy bazy bez numeru paczki (consultify_kopia_dX) — wzorzec jest wąski, nie „zaczyna się od"', () => {
+    const url = 'postgresql://postgres:postgres@127.0.0.1:54418/consultify_kopia_dX';
+    expect(() => sprawdzCel(url, '54418')).toThrow(/consultify_kopia_d<numer>/);
+  });
+
+  it('ODMAWIA demo/staging (trolley/thomas) — paczki D1-D6 działają wyłącznie na kopii lokalnej', () => {
     expect(() => sprawdzCel('postgresql://u:p@trolley.proxy.rlwy.net:5432/railway', 'trolley')).toThrow(/demo\/staging/);
     expect(() => sprawdzCel('postgresql://u:p@thomas.proxy.rlwy.net:5432/railway', 'thomas')).toThrow(/demo\/staging/);
   });

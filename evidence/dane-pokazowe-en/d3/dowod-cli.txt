@@ -1,0 +1,178 @@
+########## DOWOD CLI paczki D3 (Inicjatywy) — 2026-09-08T08:12:59Z ##########
+baza:  127.0.0.1:54418/consultify_kopia_d3 (TEMPLATE consultify_staging_kopia + D1 01-rdzen --apply)
+stanowisko: API 4179 / Vite 3199 na tej samej kopii; login OWNER james.whitfield@northwind.example
+
+=== 1. RESET (czysty start dowodowego przebiegu) ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         reset (bez etapu API)
+[inicjatywy] reset: usunięto 13 inicjatyw (kaskadą interesariuszy i historii), 9 decyzji bramkowych, agregaty runtime-v1 i łańcuch A05 organizacji „northwind".
+
+=== 2. VERIFY po RESET — wszystko ma byc zerem ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         verify (bez etapu API)
+[verify-d3] OK   inicjatywy                                                       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   interesariusze RACI                                              oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   agregaty runtime-v1 (initiative)                                 oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   decyzje bramkowe GO                                              oczekiwane=0 rzeczywiste=0
+
+[verify-d3] PASS: wszystkie 4 asercji przeszły.
+
+=== 3. DRY-RUN na czystej bazie ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         dry-run (bez etapu API)
+
+--- PLAN ---
+łańcuch A05 (case + propozycja + recenzja): utworzy
+inicjatywa   predictive-maintenance-cnc         utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   mes-rollout-line-3                 utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   warehouse-automation-pilot         utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   skills-matrix-upskilling           utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   energy-monitoring-iso-50001        utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   supplier-quality-gate              utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   digital-work-instructions          utworzy       (status w bazie/etapie: PENDING_APPROVAL)
+inicjatywa   customer-portal-order-tracking     utworzy       (status w bazie/etapie: DRAFT)
+inicjatywa   scrap-reduction-programme          utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   shift-handover-digitisation        utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   cybersecurity-hardening-ot         utworzy       (status w bazie/etapie: PROPOSED)
+inicjatywa   sap-s4-migration-assessment        utworzy       (status w bazie/etapie: CLOSED)
+inicjatywa   sustainability-reporting-csrd      utworzy       (status w bazie/etapie: REJECTED)
+interesariusze RACI: 0 -> 47
+historia statusów:   0 w bazie · 33 pisze etap SQL (resztę dopisuje kanoniczne przejście)
+przekazania (readiness_allowed=TRUE): 0 -> 8
+rozkład docelowy:    PROPOSED=1 DRAFT=1 PENDING_APPROVAL=1 APPROVED=4 IN_EXECUTION=4 CLOSED=1 REJECTED=1 (on_hold=1)
+
+[inicjatywy] dry-run: 13 inicjatyw, 47 interesariuszy, 33 wpisów historii, 8 przekazań. 13 inicjatyw do zmiany. Nic nie zapisano.
+[inicjatywy] UWAGA: bez --api etap 2 (decyzje GO, agregaty, przejście do realizacji, plan, obciążenie) NIE wykona się.
+
+=== 4. APPLY #1 (etap SQL + etap API) ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         apply (+ etap API http://127.0.0.1:4179)
+
+--- PLAN ---
+łańcuch A05 (case + propozycja + recenzja): utworzy
+inicjatywa   predictive-maintenance-cnc         utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   mes-rollout-line-3                 utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   warehouse-automation-pilot         utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   skills-matrix-upskilling           utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   energy-monitoring-iso-50001        utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   supplier-quality-gate              utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   digital-work-instructions          utworzy       (status w bazie/etapie: PENDING_APPROVAL)
+inicjatywa   customer-portal-order-tracking     utworzy       (status w bazie/etapie: DRAFT)
+inicjatywa   scrap-reduction-programme          utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   shift-handover-digitisation        utworzy       (status w bazie/etapie: APPROVED)
+inicjatywa   cybersecurity-hardening-ot         utworzy       (status w bazie/etapie: PROPOSED)
+inicjatywa   sap-s4-migration-assessment        utworzy       (status w bazie/etapie: CLOSED)
+inicjatywa   sustainability-reporting-csrd      utworzy       (status w bazie/etapie: REJECTED)
+interesariusze RACI: 0 -> 47
+historia statusów:   0 w bazie · 33 pisze etap SQL (resztę dopisuje kanoniczne przejście)
+przekazania (readiness_allowed=TRUE): 0 -> 8
+rozkład docelowy:    PROPOSED=1 DRAFT=1 PENDING_APPROVAL=1 APPROVED=4 IN_EXECUTION=4 CLOSED=1 REJECTED=1 (on_hold=1)
+
+[inicjatywy/sql] utworzono=141 zmieniono=0 pominieto=0
+
+[inicjatywy/api] decyzje GO=9/9 · agregaty=4/4 · przejścia do realizacji=4/4
+[inicjatywy/api] plan:       opublikowany (4 inicjatywy w oknach)
+[inicjatywy/api] obciążenie: policzona z planu i podaży organizacji
+
+=== 5. VERIFY po APPLY #1 ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         verify (bez etapu API)
+[verify-d3] organizacja: Northwind Manufacturing Ltd. (northwind)
+[verify-d3] rozkład w bazie: APPROVED=4 CLOSED=1 DRAFT=1 IN_EXECUTION=4 PENDING_APPROVAL=1 PROPOSED=1 REJECTED=1
+[verify-d3] OK   inicjatywy                                                       oczekiwane=13 rzeczywiste=13
+[verify-d3] OK   różnych statusów DEC-424                                         oczekiwane=7 rzeczywiste=7
+[verify-d3] OK   statusy spoza słownika DEC-424                                   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy IN_EXECUTION                                          oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   STOP 2: IN_EXECUTION BEZ project_id (fail-closed realizacji)     oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez właściciela wykonania                           oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez dat planu                                       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy z flagą on_hold = TRUE                                oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy bez opisu albo z opisem krótszym niż 200 znaków       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy bez kategorii, priorytetu, autora albo zakresu        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy, gdzie name <> title (obie kolumny tą samą treścią)   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   interesariusze RACI                                              oczekiwane=47 rzeczywiste=47
+[verify-d3] OK   inicjatywy bez jednego „A" (accountable) w RACI                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   wpisy historii statusu (SQL + kanoniczne przejścia do realizacji) oczekiwane=37 rzeczywiste=37
+[verify-d3] OK   przekazania do realizacji (readiness_allowed = TRUE)             oczekiwane=8 rzeczywiste=8
+[verify-d3] OK   decyzje bramkowe GO (approved, GOVERNANCE_DECISION_MAKING)       oczekiwane=9 rzeczywiste=9
+[verify-d3] OK   agregaty runtime-v1 „initiative" (STOP 1: przez register, nie SQL-em) oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   agregaty runtime-v1 założone inicjatywom IN_EXECUTION (przykryłyby status na liście) oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   agregaty „initiative" NIE w stanie APPROVED_BACKLOG              oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   plany OPUBLIKOWANE (zakładka „Plan")                             oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy w oknach opublikowanego planu                         oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   analizy obciążenia (zakładka „Obciążenie")                       oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy z alokacją FTE ponad zapotrzebowanie                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   osoby prowadzące więcej niż jedną inicjatywę IN_EXECUTION        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   pola tekstowe inicjatyw z polskimi znakami (dane muszą być po angielsku) oczekiwane=0 rzeczywiste=0
+
+[verify-d3] PASS: wszystkie 25 asercji przeszły.
+
+=== 6. APPLY #2 — idempotencja MIERZONA: ma dac utworzono=0 zmieniono=0 ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         apply (+ etap API http://127.0.0.1:4179)
+
+--- PLAN ---
+łańcuch A05 (case + propozycja + recenzja): bez zmian
+inicjatywa   predictive-maintenance-cnc         bez zmian     (status w bazie/etapie: IN_EXECUTION)
+inicjatywa   mes-rollout-line-3                 bez zmian     (status w bazie/etapie: IN_EXECUTION)
+inicjatywa   warehouse-automation-pilot         bez zmian     (status w bazie/etapie: IN_EXECUTION)
+inicjatywa   skills-matrix-upskilling           bez zmian     (status w bazie/etapie: IN_EXECUTION)
+inicjatywa   energy-monitoring-iso-50001        bez zmian     (status w bazie/etapie: APPROVED)
+inicjatywa   supplier-quality-gate              bez zmian     (status w bazie/etapie: APPROVED)
+inicjatywa   digital-work-instructions          bez zmian     (status w bazie/etapie: PENDING_APPROVAL)
+inicjatywa   customer-portal-order-tracking     bez zmian     (status w bazie/etapie: DRAFT)
+inicjatywa   scrap-reduction-programme          bez zmian     (status w bazie/etapie: APPROVED)
+inicjatywa   shift-handover-digitisation        bez zmian     (status w bazie/etapie: APPROVED)
+inicjatywa   cybersecurity-hardening-ot         bez zmian     (status w bazie/etapie: PROPOSED)
+inicjatywa   sap-s4-migration-assessment        bez zmian     (status w bazie/etapie: CLOSED)
+inicjatywa   sustainability-reporting-csrd      bez zmian     (status w bazie/etapie: REJECTED)
+interesariusze RACI: 47 -> 47
+historia statusów:   37 w bazie · 33 pisze etap SQL (resztę dopisuje kanoniczne przejście)
+przekazania (readiness_allowed=TRUE): 8 -> 8
+rozkład docelowy:    PROPOSED=1 DRAFT=1 PENDING_APPROVAL=1 APPROVED=4 IN_EXECUTION=4 CLOSED=1 REJECTED=1 (on_hold=1)
+
+[inicjatywy/sql] utworzono=0 zmieniono=0 pominieto=141
+
+[inicjatywy/api] decyzje GO=9/9 · agregaty=4/4 · przejścia do realizacji=4/4
+[inicjatywy/api] plan:       bez zmian (plan już opublikowany)
+[inicjatywy/api] obciążenie: bez zmian (analiza już istnieje)
+
+=== 7. VERIFY po APPLY #2 ===
+[inicjatywy] cel:          127.0.0.1:54418/consultify_kopia_d3
+[inicjatywy] organizacja:  Northwind Manufacturing Ltd. (id northwind)
+[inicjatywy] tryb:         verify (bez etapu API)
+[verify-d3] organizacja: Northwind Manufacturing Ltd. (northwind)
+[verify-d3] rozkład w bazie: APPROVED=4 CLOSED=1 DRAFT=1 IN_EXECUTION=4 PENDING_APPROVAL=1 PROPOSED=1 REJECTED=1
+[verify-d3] OK   inicjatywy                                                       oczekiwane=13 rzeczywiste=13
+[verify-d3] OK   różnych statusów DEC-424                                         oczekiwane=7 rzeczywiste=7
+[verify-d3] OK   statusy spoza słownika DEC-424                                   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy IN_EXECUTION                                          oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   STOP 2: IN_EXECUTION BEZ project_id (fail-closed realizacji)     oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez właściciela wykonania                           oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   IN_EXECUTION bez dat planu                                       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy z flagą on_hold = TRUE                                oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy bez opisu albo z opisem krótszym niż 200 znaków       oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy bez kategorii, priorytetu, autora albo zakresu        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   inicjatywy, gdzie name <> title (obie kolumny tą samą treścią)   oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   interesariusze RACI                                              oczekiwane=47 rzeczywiste=47
+[verify-d3] OK   inicjatywy bez jednego „A" (accountable) w RACI                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   wpisy historii statusu (SQL + kanoniczne przejścia do realizacji) oczekiwane=37 rzeczywiste=37
+[verify-d3] OK   przekazania do realizacji (readiness_allowed = TRUE)             oczekiwane=8 rzeczywiste=8
+[verify-d3] OK   decyzje bramkowe GO (approved, GOVERNANCE_DECISION_MAKING)       oczekiwane=9 rzeczywiste=9
+[verify-d3] OK   agregaty runtime-v1 „initiative" (STOP 1: przez register, nie SQL-em) oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   agregaty runtime-v1 założone inicjatywom IN_EXECUTION (przykryłyby status na liście) oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   agregaty „initiative" NIE w stanie APPROVED_BACKLOG              oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   plany OPUBLIKOWANE (zakładka „Plan")                             oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy w oknach opublikowanego planu                         oczekiwane=4 rzeczywiste=4
+[verify-d3] OK   analizy obciążenia (zakładka „Obciążenie")                       oczekiwane=1 rzeczywiste=1
+[verify-d3] OK   inicjatywy z alokacją FTE ponad zapotrzebowanie                  oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   osoby prowadzące więcej niż jedną inicjatywę IN_EXECUTION        oczekiwane=0 rzeczywiste=0
+[verify-d3] OK   pola tekstowe inicjatyw z polskimi znakami (dane muszą być po angielsku) oczekiwane=0 rzeczywiste=0
+
+[verify-d3] PASS: wszystkie 25 asercji przeszły.

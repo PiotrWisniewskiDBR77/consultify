@@ -1,0 +1,52 @@
+Pomiar jezyka na renderowanym innerText — organizacja northwind (D3), 2026-09-08T08:12:35.023Z
+Regula: dane pokazowe MUSZA byc po angielsku. Diakrytyki spoza danych = etykiety interfejsu (PL) — zgloszone jako STOP.
+
+=== 01-lista-wszystkie-light (http://127.0.0.1:3199/initiatives) ===
+Lista inicjatyw, zakres All, 13 rekordow / 7 statusow
+znakow diakrytycznych PL: 59
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, historię
+
+=== 01b-lista-wszystkie-dol-light (http://127.0.0.1:3199/initiatives) ===
+Lista przewinieta na dol — wiersze Closed i Rejected
+znakow diakrytycznych PL: 59
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, historię
+
+=== 02-podglad-draft-light (http://127.0.0.1:3199/initiatives?open=80ad392b-6581-5b41-bed6-98efd296365d&mode=drawer) ===
+Podglad DRAFT — akcja „Submit for approval"
+znakow diakrytycznych PL: 61
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, Następna, Gotowość, Właściciel, Źródło
+
+=== 03-podglad-approved-light (http://127.0.0.1:3199/initiatives?open=29b45f98-35d5-564c-a88e-ef917c3be2fb&mode=drawer) ===
+Podglad APPROVED — przejscie do realizacji
+znakow diakrytycznych PL: 64
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, Następna, Gotowość, Właściciel, Źródło
+
+=== 03b-podglad-pending-light (http://127.0.0.1:3199/initiatives?open=80b23c87-6806-5ddb-8744-2326c4c50f36&mode=drawer) ===
+Podglad PENDING_APPROVAL — „Approve" odblokowany decyzja GO
+znakow diakrytycznych PL: 61
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, Następna, Gotowość, Właściciel, Źródło
+
+=== 03c-pelny-widok-approved-light (http://127.0.0.1:3199/initiatives?open=29b45f98-35d5-564c-a88e-ef917c3be2fb&mode=doc) ===
+Pelny widok APPROVED — przejscie do realizacji
+znakow diakrytycznych PL: 2
+slowa PL: Obciążenie
+
+=== 04-plan-light (http://127.0.0.1:3199/initiatives?tab=plan) ===
+Zakladka Plan — opublikowana karta planu z 4 inicjatywami
+znakow diakrytycznych PL: 2
+slowa PL: Obciążenie
+
+=== 05-obciazenie-light (http://127.0.0.1:3199/initiatives?tab=capacity) ===
+Zakladka Obciazenie — arkusz okres x rola
+znakow diakrytycznych PL: 2
+slowa PL: Obciążenie
+
+=== 01-lista-wszystkie-dark (http://127.0.0.1:3199/initiatives) ===
+Lista inicjatyw, zakres All, motyw ciemny
+znakow diakrytycznych PL: 59
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, historię
+
+=== 01b-lista-wszystkie-dol-dark (http://127.0.0.1:3199/initiatives) ===
+Lista przewinieta na dol, motyw ciemny
+znakow diakrytycznych PL: 59
+slowa PL: Obciążenie, NASTĘPNA, GOTOWOŚĆ, WŁAŚCICIEL, NASTĘPNE, DZIAŁANIE, właściciel, realizację, Pewność:, Uzupełnij, definicję, decyzję, portfelową, historię

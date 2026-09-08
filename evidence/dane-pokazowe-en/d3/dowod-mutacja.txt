@@ -1,0 +1,30 @@
+DOWOD MUTACYJNY paczki D3 — 2026-09-08T08:13:58Z
+Kazda mutacja to reprodukcja zepsutej reguly na PRODUKCYJNYCH danych seedu; testy musza byc RED.
+
+=== STAN WYJSCIOWY (ma byc zielono) ===
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+
+=== MUTACJA 1: statusEtapuSql zwraca status docelowy (znika STOP 1) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/03-inicjatywy.test.ts > 03-dane-inicjatyw — STOP 1: register odrzuca IN_EXECUTION > KAŻDA inicjatywa docelowo IN_EXECUTION wchodzi do bazy jako APPROVED (etap SQL)
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 43 passed (44)
+
+=== MUTACJA 2: inicjatywa IN_EXECUTION bez project_id (znika STOP 2) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/03-inicjatywy.test.ts > 03-dane-inicjatyw — STOP 2: fail-closed realizacji > KAŻDA inicjatywa IN_EXECUTION ma projekt, właściciela wykonania i obie daty planu
+ FAIL  server/tests/seed-demo-en/03-inicjatywy.test.ts > 03-dane-inicjatyw — STOP 2: fail-closed realizacji > MUTACJA — inicjatywa IN_EXECUTION bez projektu jest łapana, nie przepuszczana
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 42 passed (44)
+
+=== MUTACJA 3: do register ida takze IN_EXECUTION i PENDING_APPROVAL (agregat przykrywa status na liscie) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/tests/seed-demo-en/03-inicjatywy.test.ts > 03-dane-inicjatyw — STOP 1: register odrzuca IN_EXECUTION > do register idą WYŁĄCZNIE inicjatywy REALNIE w APPROVED — agregat przykrywa każdy inny status na liście
+ FAIL  server/tests/seed-demo-en/03-inicjatywy.test.ts > 03-dane-inicjatyw — STOP 1: register odrzuca IN_EXECUTION > MUTACJA — gdyby do rejestracji szły też IN_EXECUTION i PENDING_APPROVAL, pięć wierszy pokazałoby „Approved" zamiast prawdziwego statusu
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 42 passed (44)
+
+=== PO PRZYWROCENIU (znowu zielono) ===
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
