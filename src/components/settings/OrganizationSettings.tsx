@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
-import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime, formatListNumber } from '@/utils/listDateFormat';
 
 interface OrganizationSettingsProps {
   currentUser: User;

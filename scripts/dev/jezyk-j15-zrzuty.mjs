@@ -224,7 +224,21 @@ for (const lang of LANGS) {
   );
 }
 sql(`UPDATE users SET language='en' WHERE email='${KONTO}'`);
-fs.writeFileSync(`${OUT}/liczniki.json`, JSON.stringify(raport, null, 1));
+// PLIK LICZNIKOW PER JEZYK. Pierwsza wersja zapisywala jeden `liczniki.json`
+// na przebieg, wiec drugi przebieg (PL) KASOWAL liczniki pierwszego (EN) —
+// zrzuty zostawaly, a dowod liczbowy jednego jezyka znikal. Zmierzone 09.09.
+for (const lang of LANGS) {
+  fs.writeFileSync(
+    `${OUT}/liczniki-${lang}.json`,
+    JSON.stringify(raport.filter((r) => r.lang === lang), null, 1)
+  );
+}
+const scalone = fs.existsSync(`${OUT}/liczniki.json`)
+  ? JSON.parse(fs.readFileSync(`${OUT}/liczniki.json`, 'utf8')).filter(
+      (r) => !LANGS.includes(r.lang)
+    )
+  : [];
+fs.writeFileSync(`${OUT}/liczniki.json`, JSON.stringify([...scalone, ...raport], null, 1));
 console.log(
   JSON.stringify(
     raport.map((r) => ({

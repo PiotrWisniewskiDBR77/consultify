@@ -1,0 +1,1517 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-przeglad",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "02-profil",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "03-avatar",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "04-podpisy-mailowe",
+  "napisowUi": 34,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Create First Signature"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "05-godziny-pracy",
+  "napisowUi": 34,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "06-jezyk",
+  "napisowUi": 35,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "07-regionalne",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 5,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Day of Week",
+   "Preview of Your Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "08-bezpieczenstwo-przeglad",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "09-haslo",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "10-mfa",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "11-kody-zapasowe",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "12-sesje-aktywnosc",
+  "napisowUi": 40,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "13-historia-logowan",
+  "napisowUi": 39,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "14-panel-bezpieczenstwa",
+  "napisowUi": 38,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "15-powiadomienia",
+  "napisowUi": 51,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "16-powiadomienia-email",
+  "napisowUi": 40,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "17-powiadomienia-dostepnosc",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "18-integracje-aplikacje",
+  "napisowUi": 65,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "19-integracje-klucze-api",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "20-integracje-webhooki",
+  "napisowUi": 36,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "21-prywatnosc",
+  "napisowUi": 43,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Share Activity with AI"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "22-kontrola-danych",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "Explore the sample workspace"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "23-wyglad",
+  "napisowUi": 49,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "24-dostepnosc",
+  "napisowUi": 57,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "25-ai-zachowanie",
+  "napisowUi": 61,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 4,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "e.g., \"I prefer concise responses with bullet points. Focus on practical solutions.\""
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "26-ai-prywatnosc",
+  "napisowUi": 53,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "27-ai-zuzycie",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "28-historia-ustawien",
+  "napisowUi": 37,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "29-import-eksport",
+  "napisowUi": 47,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "30-pulpit",
+  "napisowUi": 45,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 3,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "31-wyszukiwarka",
+  "napisowUi": 54,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 6,
+  "angielskie": [
+   "Open user profile menu",
+   "Back to Dashboard",
+   "Open settings navigation",
+   "First Name",
+   "Last Name",
+   "Open Regional Settings"
+  ],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "01-przeglad",
+  "napisowUi": 54,
+  "polskichUi": 22,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Zmień zdjęcie",
+   "Nazwa wyświetlana",
+   "Dział",
+   "Imię",
+   "np. menedżer produktu, programista...",
+   "Dostępność i status",
+   "Wiadomość statusu",
+   "Otwórz ustawienia regionalne"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "02-profil",
+  "napisowUi": 54,
+  "polskichUi": 22,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Zmień zdjęcie",
+   "Nazwa wyświetlana",
+   "Dział",
+   "Imię",
+   "np. menedżer produktu, programista...",
+   "Dostępność i status",
+   "Wiadomość statusu",
+   "Otwórz ustawienia regionalne"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "03-avatar",
+  "napisowUi": 38,
+  "polskichUi": 15,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zmień zdjęcie",
+   "Wytyczne dotyczące zdjęcia"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "04-podpisy-mailowe",
+  "napisowUi": 36,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Dodaj podpis",
+   "Brak podpisów",
+   "Utwórz pierwszy podpis"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "05-godziny-pracy",
+  "napisowUi": 35,
+  "polskichUi": 14,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "06-jezyk",
+  "napisowUi": 35,
+  "polskichUi": 14,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Język",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "07-regionalne",
+  "napisowUi": 49,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Język",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Pierwszy dzień tygodnia",
+   "Poniedziałek",
+   "Podgląd ustawień"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "08-bezpieczenstwo-przeglad",
+  "napisowUi": 39,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Przegląd bezpieczeństwa",
+   "Omówienie bezpieczeństwa",
+   "Ostatnia aktywność",
+   "Zobacz pełną historię"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "09-haslo",
+  "napisowUi": 40,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Hasło",
+   "Uwierzytelnianie i dostęp",
+   "Uwierzytelnianie dwuskładnikowe",
+   "Odwołaj wszystkie inne",
+   "Dodaj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "10-mfa",
+  "napisowUi": 40,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Uwierzytelnianie dwuskładnikowe",
+   "Uwierzytelnianie i dostęp",
+   "Hasło",
+   "Odwołaj wszystkie inne",
+   "Dodaj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "11-kody-zapasowe",
+  "napisowUi": 40,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Uwierzytelnianie i dostęp",
+   "Hasło",
+   "Uwierzytelnianie dwuskładnikowe",
+   "Odwołaj wszystkie inne",
+   "Dodaj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "12-sesje-aktywnosc",
+  "napisowUi": 41,
+  "polskichUi": 19,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Sesje i aktywność",
+   "Uwierzytelnianie i dostęp",
+   "Hasło",
+   "Uwierzytelnianie dwuskładnikowe",
+   "Odwołaj wszystkie inne",
+   "Dodaj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "13-historia-logowan",
+  "napisowUi": 41,
+  "polskichUi": 19,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Historia logowań",
+   "Uwierzytelnianie i dostęp",
+   "Hasło",
+   "Uwierzytelnianie dwuskładnikowe",
+   "Odwołaj wszystkie inne",
+   "Dodaj"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "14-panel-bezpieczenstwa",
+  "napisowUi": 40,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Przegląd bezpieczeństwa",
+   "Uwierzytelnianie i dostęp",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Omówienie bezpieczeństwa",
+   "Ostatnia aktywność",
+   "Zobacz pełną historię"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "15-powiadomienia",
+  "napisowUi": 52,
+  "polskichUi": 25,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Przegląd",
+   "Pulpit i dźwięki",
+   "Dostępność",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Preferencje powiadomień",
+   "Przypisania zadań",
+   "Przypisania zadań — W aplikacji",
+   "Przypisania zadań — E-mail",
+   "Aktualizacje zadań",
+   "Aktualizacje zadań — W aplikacji",
+   "Aktualizacje zadań — E-mail",
+   "Włącz wszystko"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "16-powiadomienia-email",
+  "napisowUi": 42,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Przegląd",
+   "Pulpit i dźwięki",
+   "Dostępność",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Aktualizacje zadań"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "17-powiadomienia-dostepnosc",
+  "napisowUi": 46,
+  "polskichUi": 21,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Przegląd",
+   "Pulpit i dźwięki",
+   "Dostępność",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Dostępność i skupienie",
+   "Nie przeszkadzać",
+   "Własny czas zakończenia",
+   "Włącz godziny ciszy"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "18-integracje-aplikacje",
+  "napisowUi": 67,
+  "polskichUi": 20,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Połączone aplikacje",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Wszystkie",
+   "Wszystkie20",
+   "Zarządzanie zadaniami",
+   "Zarządzanie zadaniami8",
+   "Już wkrótce",
+   "Połącz"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "19-integracje-klucze-api",
+  "napisowUi": 39,
+  "polskichUi": 17,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Połączone aplikacje",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Dostęp do API",
+   "Utwórz klucz",
+   "Nie ma jeszcze kluczy API. Utwórz go, aby rozpocząć."
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "20-integracje-webhooki",
+  "napisowUi": 38,
+  "polskichUi": 16,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Połączone aplikacje",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Dodaj webhook",
+   "Nie skonfigurowano webhooków"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "21-prywatnosc",
+  "napisowUi": 44,
+  "polskichUi": 20,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Prywatność i widoczność",
+   "Pokazuj w katalogu zespołu",
+   "Widoczność aktywności",
+   "Widoczność profilu",
+   "Udostępniaj aktywność AI"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "22-kontrola-danych",
+  "napisowUi": 54,
+  "polskichUi": 23,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Zarządzanie zgodami",
+   "Analityka użycia",
+   "Udostępnianie danych stronom trzecim",
+   "6 miesięcy",
+   "Poproś o eksport",
+   "Usuń konto",
+   "Przykładowa przestrzeń robocza",
+   "Przeglądaj przykładową przestrzeń roboczą"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "23-wyglad",
+  "napisowUi": 50,
+  "polskichUi": 18,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Dostępność",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Motyw i wygląd",
+   "Różany",
+   "Gęstość interfejsu"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "24-dostepnosc",
+  "napisowUi": 58,
+  "polskichUi": 25,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Dostępność",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Krój fontu",
+   "Domyślnie",
+   "Luźniej",
+   "Podkreślaj linki",
+   "Widzenie kolorów",
+   "Styl wskaźnika fokusu",
+   "Domyślny",
+   "Pokazuj skróty klawiszowe",
+   "Wzmocniony wskaźnik fokusu",
+   "Duży"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "25-ai-zachowanie",
+  "napisowUi": 61,
+  "polskichUi": 27,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Autouzupełnianie",
+   "Pamięć",
+   "Dane i prywatność",
+   "Biblioteka promptów",
+   "Głos i TTS",
+   "Panel użycia",
+   "Bezpieczeństwo",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Zwięzły",
+   "np. „Wolę zwięzłe odpowiedzi z punktami. Skup się na praktycznych rozwiązaniach ”.",
+   "Szczegółowy",
+   "Formalność",
+   "Szczegółowość",
+   "Uwzględnij kontekst",
+   "Maksymalna długość kontekstu",
+   "Wskazówki"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "26-ai-prywatnosc",
+  "napisowUi": 53,
+  "polskichUi": 24,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Autouzupełnianie",
+   "Pamięć",
+   "Dane i prywatność",
+   "Biblioteka promptów",
+   "Głos i TTS",
+   "Panel użycia",
+   "Bezpieczeństwo",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Dane i prywatność AI",
+   "Zapisz zmiany",
+   "Prywatność i nadzór nad danymi",
+   "Zakres dostępu do danych",
+   "Zrezygnuj ze szkolenia modelów",
+   "Audyt i zgodność"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "27-ai-zuzycie",
+  "napisowUi": 45,
+  "polskichUi": 23,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Autouzupełnianie",
+   "Pamięć",
+   "Dane i prywatność",
+   "Biblioteka promptów",
+   "Głos i TTS",
+   "Panel użycia",
+   "Bezpieczeństwo",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Panel użycia AI",
+   "Przegląd użycia AI",
+   "Użycie według funkcji",
+   "Trend użycia",
+   "Metryki wydajności"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "28-historia-ustawien",
+  "napisowUi": 39,
+  "polskichUi": 14,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Historia ustawień"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "29-import-eksport",
+  "napisowUi": 48,
+  "polskichUi": 21,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Import/Eksport ustawień",
+   "Eksport i import ustawień",
+   "Eksport ustawień",
+   "Ustawienia bezpieczeństwa",
+   "Ustawienia prywatności",
+   "Skróty klawiszowe",
+   "Import ustawień",
+   "Wskazówki"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "30-pulpit",
+  "napisowUi": 45,
+  "polskichUi": 19,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Język",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Przywróć ustawienia domyślne",
+   "Widoczność widżetu",
+   "Omówienie wskaźników",
+   "Opcje wyświetlania",
+   "Pokaż wiadomość powitalną"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "31-wyszukiwarka",
+  "napisowUi": 55,
+  "polskichUi": 22,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Rozwiń",
+   "Wyloguj się",
+   "Otwórz menu",
+   "Otwórz menu profilu użytkownika",
+   "Sekcje ustawień",
+   "Awatar i zdjęcie",
+   "Bezpieczeństwo",
+   "Dane i prywatność",
+   "Płatności",
+   "Wygląd",
+   "Wróć do panelu",
+   "Otwórz nawigację ustawień",
+   "Zapisz zmiany",
+   "Zmień zdjęcie",
+   "Nazwa wyświetlana",
+   "Dział",
+   "Imię",
+   "np. menedżer produktu, programista...",
+   "Dostępność i status",
+   "Wiadomość statusu",
+   "Otwórz ustawienia regionalne"
+  ],
+  "angielskichUi": 0,
+  "angielskie": [],
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ }
+]

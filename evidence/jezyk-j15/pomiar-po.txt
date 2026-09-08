@@ -1,0 +1,118 @@
+POMIAR SPÓJNOŚCI JĘZYKOWEJ — 2026-09-08 23:19:44
+
+LEGENDA KATEGORII
+  K1    PL w plikach EN (klucze tłumaczeń)
+  K1def polski defaultValue w t() — widoczny w EN
+  K1defWID   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE
+  K2    EN w plikach PL (klucze tłumaczeń)
+  K3a   klucz jest w PL, brak w EN (razem)
+  K3aKLUCZ   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ
+  K3b   klucz jest w EN, brak w PL (fallback pokaże angielski)
+  K4pl  polski tekst na sztywno w JSX/TSX (poza t())
+  K4en  angielski tekst na sztywno w JSX/TSX (poza t())
+  K5pl  polskie zdania z serwera do UI
+  K5en  angielskie zdania z serwera do UI
+  K7    daty/liczby/waluty bez locale albo z locale na sztywno
+
+TABELA: MODUŁ × KATEGORIA
+(K1defWID ⊂ K1def, K3aKLUCZ ⊂ K3a — wiersze rozbicia nie wchodzą do kolumny RAZEM)
+| Moduł                |     K1 |  K1def | K1defWID |     K2 |    K3a | K3aKLUCZ |    K3b |   K4pl |   K4en |   K5pl |   K5en |     K7 | RAZEM |
+|----------------------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+| 15 Settings          |      1 |      6 |      0 |      0 |      0 |      0 |      0 |     14 |     32 |     32 |    196 |      6 |   287 |
+| RAZEM                |      2 |    360 |     68 |      4 |    697 |    177 |      3 |    459 |    982 |    256 |   1822 |    510 |  5095 |
+
+TOP 10 NAJGORSZYCH PLIKÓW
+    181  public/locales/pl/translation.json
+     95  src/views/partner/PartnerPortalView.tsx
+     86  server/src/routes/document-studio.routes.ts
+     61  server/src/routes/work-canvas.routes.ts
+     56  src/views/legal/TermsOfServiceView.tsx
+     53  src/components/assessment/report/AssessmentReportDocument.tsx
+     51  server/src/routes/table-platform.routes.ts
+     50  src/components/billing/SubscriptionAnalytics.tsx
+     48  server/src/routes/knowledge.routes.ts
+     46  server/src/routes/billing/billing.routes.ts
+
+PRZYKŁADY
+  [K1] PL w plikach EN (klucze tłumaczeń) — 2
+      public/locales/en/translation.json:pages.public.cards.tour.description
+        „Guided by Dr. Piotr Wiśniewski"  (diakrytyk:ś)
+      public/locales/en/translation.json:welcome.videoPerson
+        „Paweł Bochniarz"  (diakrytyk:ł)
+  [K1def] polski defaultValue w t() — widoczny w EN — 360
+      src/components/Admin/AdminMembersRolesPanel.tsx:887
+        „admin.membersRoles.loadErrorTitle = "Nie udało się wczytać listy członków tej organizacji.""  (diakrytyk:ł,pl:nie,pl:się)
+      src/components/Admin/AdminMembersRolesPanel.tsx:905
+        „admin.membersRoles.loadErrorRetry = "Spróbuj ponownie""  (diakrytyk:ó)
+      src/components/Admin/AdminSecurityPolicyPanel.tsx:79
+        „admin.security.policyPanel.mfa.errors.noEnrolledAccounts = "Nie można wymagać drugiego składnika: żadne konto w tej orga"  (diakrytyk:ż,pl:nie)
+  [K1defWID]   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE — 68
+      src/components/assessment/AssessmentHub.tsx:2547
+        „assessment.preview.aiPlanned = "Planowane — wymaga klucza dostawcy AI, którego nie ma w tym środowisku.""  (brak klucza w EN,diakrytyk:ó,pl:nie)
+      src/components/assessment/report/AssessmentReportDocument.tsx:791
+        „assessment.report.lifecycleSessionRecord = "Zapis sesji oceny — jeszcze nie zamrożony""  (brak klucza w EN,diakrytyk:ż,pl:nie)
+      src/components/billing/SubscriptionAnalytics.tsx:169
+        „billing.analytics.loadError = "Nie udało się załadować danych analitycznych""  (brak klucza w EN,diakrytyk:ł,pl:nie)
+  [K2] EN w plikach PL (klucze tłumaczeń) — 4
+      public/locales/pl/translation.json:documentStudio.panel.manifestCounts
+        „MUST: {{must}} · SHOULD: {{should}}"  (en:should)
+      public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder
+        „Szukaj task, decision, initiative..."  (en?:task,en?:initiative)
+      public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge
+        „AI-draft"  (en:draft)
+  [K3a] klucz jest w PL, brak w EN (razem) — 697
+      public/locales/pl/translation.json:superadmin.settlements.title
+        „Rozliczenia z partnerami"  (brak w en)
+      public/locales/pl/translation.json:superadmin.settlements.subtitle
+        „Przegląd historycznej ekonomii partnerów"  (brak w en)
+      public/locales/pl/translation.json:mels.moreActions
+        „Więcej działań"  (brak w en)
+  [K3aKLUCZ]   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ — 177
+      public/locales/pl/translation.json:assessment.hub.table.sourceReport
+        „Raport źródłowy"  (brak w en,brak defaultu w kodzie)
+      public/locales/pl/translation.json:assessment.hub.table.priority
+        „Priorytet"  (brak w en,brak defaultu w kodzie)
+      public/locales/pl/translation.json:assessment.hub.table.priorityLevel.critical
+        „Pilny"  (brak w en,brak defaultu w kodzie)
+  [K3b] klucz jest w EN, brak w PL (fallback pokaże angielski) — 3
+      public/locales/en/translation.json:landing.narrativeCta.points.0
+        „Anna explains fit, pricing, and security before you commit to a path."  (brak w pl)
+      public/locales/en/translation.json:landing.narrativeCta.points.1
+        „The demo shows the Consulting Intelligence Platform on seeded, read-only data."  (brak w pl)
+      public/locales/en/translation.json:landing.narrativeCta.points.2
+        „The trial starts your own guided consulting workflow, from context to execution."  (brak w pl)
+  [K4pl] polski tekst na sztywno w JSX/TSX (poza t()) — 459
+      src/components/CaseWorkspace/CaseDetailScreen.tsx:2178
+        „Sposób pokazania zlecenia"  (diakrytyk:ó)
+      src/components/CaseWorkspace/CaseDetailScreen.tsx:2427
+        „Typ zamknięcia"  (diakrytyk:ę)
+      src/components/CaseWorkspace/CaseDetailScreen.tsx:2452
+        „Dowód / opis pozostałego zakresu"  (diakrytyk:ó)
+  [K4en] angielski tekst na sztywno w JSX/TSX (poza t()) — 982
+      src/App.tsx:133
+        „This invitation URL is incomplete. Please request a new invitation link."  (en:this,en:please)
+      src/components/AIAnalyticsDashboard.tsx:305
+        „Cost Saved"  (en?:cost,en?:saved)
+      src/components/AIAnalyticsDashboard.tsx:497
+        „Failed"  (en:failed)
+  [K5pl] polskie zdania z serwera do UI — 256
+      server/src/routes/adminP32.routes.ts:2814
+        „Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian."  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai/agent-plan.routes.ts:593
+        „Brak dostępu do projektu"  (diakrytyk:ę,pl:brak)
+      server/src/routes/ai/agent-plan.routes.ts:625
+        „Nie udało się pobrać folderów"  (diakrytyk:ł,pl:nie,pl:się)
+  [K5en] angielskie zdania z serwera do UI — 1822
+      server/src/routes/access-control.routes.ts:51
+        „Access request already pending"  (en:pending)
+      server/src/routes/access-control.routes.ts:447
+        „This access code has been deactivated"  (en:this,en:has,en:been)
+      server/src/routes/access-control.routes.ts:450
+        „This access code has expired"  (en:this,en:has)
+  [K7] daty/liczby/waluty bez locale albo z locale na sztywno — 510
+      src/components/AISettings/AuditLogViewer.tsx:119
+        „new Intl.DateTimeFormat('en-US'"  (Intl z locale na sztywno)
+      src/components/Admin/AI/AccessLimitsTab.tsx:835
+        „toLocaleString()"  (toLocaleString() bez locale)
+      src/components/Admin/AI/AccessLimitsTab.tsx:965
+        „toLocaleString()"  (toLocaleString() bez locale)

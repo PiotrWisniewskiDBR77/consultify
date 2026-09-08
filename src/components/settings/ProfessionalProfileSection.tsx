@@ -703,6 +703,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   if (isEditing) {
     return (
       <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
