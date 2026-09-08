@@ -137,7 +137,7 @@ describe('AssessmentReportDocument', () => {
 
   it('separates units without accepted evidence into their own "nie wiem" category, not a fabricated zero score', () => {
     render(<AssessmentReportDocument data={buildData()} />);
-    const section = screen.getByText(/Brak wiedzy w organizacji/).closest('section') as HTMLElement;
+    const section = screen.getByText(/Knowledge missing in the organisation/).closest('section') as HTMLElement;
     expect(section).toBeTruthy();
     // Chip is titled with the raw unit id even when a friendly structural
     // label resolves (DRD pack lookup) — assert on the stable `title`.

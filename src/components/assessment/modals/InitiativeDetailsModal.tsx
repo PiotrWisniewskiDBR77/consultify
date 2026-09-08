@@ -228,9 +228,11 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       return (
         <div className="h-full flex flex-col items-center justify-center bg-c-surface p-8 text-center">
           <AlertCircle className="w-12 h-12 text-danger-400 mb-3" />
-          <p className="text-c-text-muted">{error || 'Nie znaleziono inicjatywy'}</p>
+          <p className="text-c-text-muted">
+            {error || t('assessment.initiativeDetails.notFound', 'Initiative not found')}
+          </p>
           <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
-            Zamknij
+            {t('assessment.initiativeDetails.close', 'Close')}
           </button>
         </div>
       );
@@ -239,9 +241,11 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
         <div className="bg-c-surface rounded-xl p-8 text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
-          <p className="text-c-text-muted">{error || 'Nie znaleziono inicjatywy'}</p>
+          <p className="text-c-text-muted">
+            {error || t('assessment.initiativeDetails.notFound', 'Initiative not found')}
+          </p>
           <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
-            Zamknij
+            {t('assessment.initiativeDetails.close', 'Close')}
           </button>
         </div>
       </div>
@@ -524,7 +528,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 className="flex items-center gap-1.5 px-4 py-2 bg-c-text text-c-surface hover:opacity-90 rounded-lg text-sm font-medium transition-colors"
               >
                 <MapPin size={16} />
-                Dodaj do Roadmap
+                {t('assessment.initiativeDetails.addToRoadmap', 'Add to the roadmap')}
               </button>
             )}
           </div>

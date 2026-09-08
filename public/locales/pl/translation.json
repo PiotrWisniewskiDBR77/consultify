@@ -7951,6 +7951,22 @@
         "noOrganization": "Brak kontekstu organizacji",
         "version": "Nieobsługiwana wersja kontraktu raportu",
         "generic": "Nie udało się wczytać raportu"
+      },
+      "notFrozen": {
+        "title": "Wynik nie został jeszcze zamrożony",
+        "description": "Ten raport renderuje wyłącznie zamrożony, niezmienny Output sesji assessmentu. Sesja jest wciąż w toku (draft/active/in_review) — raport pojawi się dokładnie w momencie zamrożenia wyniku, nie wcześniej."
+      },
+      "notFound": {
+        "title": "Nie znaleziono zamrożonego Outputu",
+        "description": "Ten identyfikator Outputu nie istnieje albo nie należy do tej organizacji."
+      },
+      "forbidden": {
+        "title": "Brak dostępu do tego wyniku",
+        "description": "To konto nie ma uprawnień do wyświetlenia tego Outputu."
+      },
+      "error": {
+        "title": "Nie udało się wczytać raportu",
+        "description": "Spróbuj ponownie za chwilę."
       }
     },
     "hub": {
@@ -8187,7 +8203,8 @@
         "accepted": "Zaakceptowano",
         "returned": "Odesłano"
       },
-      "acceptedBy": "Zaakceptowano {{date}} przez {{who}}"
+      "acceptedBy": "Zaakceptowano {{date}} przez {{who}}",
+      "noAcceptedOutput": "Ten assessment nie ma jeszcze zaakceptowanego outputu."
     },
     "presentation": {
       "methodPack": "Pakiet metodyczny",
@@ -8399,7 +8416,8 @@
         "withAccepted": "Z przyjętym dowodem",
         "withoutAccepted": "Bez przyjętego dowodu",
         "completeness": "Kompletność dowodowa",
-        "allCovered": "Każda oceniana jednostka ma przyjęty dowód."
+        "allCovered": "Każda oceniana jednostka ma przyjęty dowód.",
+        "title": "Brak wiedzy w organizacji („nie wiem” / brak dowodu)"
       },
       "evidence": {
         "title": "Dowody",
@@ -8829,9 +8847,21 @@
           "recommendations": "Rekomendacje: {{list}}",
           "snapshotNote": "Renderowane ze snapshotu Outputu v{{version}} — zmiana sesji po freeze nie zmieni tego raportu.",
           "noDrafts": "Brak draftów.",
-          "reopenNote": "frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded”."
+          "reopenNote": "frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded”.",
+          "noOutput": "Brak Outputu."
         },
-        "evidenceCollected": "Zebrano {{count}} dowód/-ody dla tej jednostki."
+        "evidenceCollected": "Zebrano {{count}} dowód/-ody dla tej jednostki.",
+        "demoLocalTitle": "Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)."
+      },
+      "editor": {
+        "generatingGuidance": "Generuję podpowiedź…",
+        "consultantGuidance": "Podpowiedź konsultanta",
+        "whyItMatters": "Dlaczego to ważne: ",
+        "howToScoreLevel": "Jak oceniać poziom: ",
+        "pitfalls": "Uważaj na: "
+      },
+      "ownerMatrix": {
+        "closeCellDetails": "Zamknij szczegóły komórki"
       }
     },
     "glossary": {
@@ -9701,7 +9731,10 @@
       "taskCount": "{{count}} zadań",
       "delete": "Usuń",
       "edit": "Edytuj",
-      "approve": "Zatwierdź"
+      "approve": "Zatwierdź",
+      "notFound": "Nie znaleziono inicjatywy",
+      "close": "Zamknij",
+      "addToRoadmap": "Dodaj do roadmapy"
     },
     "reportTemplates": {
       "dbr77": {
@@ -9725,7 +9758,8 @@
           "createInitiatives": "Utwórz inicjatywy z rekomendacji roadmapy",
           "dataGaps": "Uzupełnij luki w danych, by podnieść pewność",
           "gemba": "Zaplanuj kolejne przejścia gemba"
-        }
+        },
+        "newSkillsRequired": "Wymagane nowe kompetencje"
       },
       "common": {
         "keyFindings": "Kluczowe ustalenia",
@@ -9760,6 +9794,45 @@
         "legalNoticeA": "jest narzędziem opracowanym przez",
         "legalNoticeB": "we współpracy z"
       }
+    },
+    "presentationView": {
+      "noOutput": "Brak zamrożonego Outputu do zaprezentowania. Ten ekran nie pokazuje przykładowych liczb — wskaż konkretny Output.",
+      "loading": "Wczytywanie zamrożonego Outputu…",
+      "notFound": "Nie znaleziono Outputu o podanym identyfikatorze — mógł zostać usunięty lub identyfikator jest nieprawidłowy.",
+      "forbidden": "Brak dostępu do tego Outputu w bieżącej organizacji.",
+      "offline": "Brak połączenia z serwerem — nie udało się pobrać Outputu. Spróbuj ponownie po odzyskaniu połączenia.",
+      "unrecognizedShape": "Odpowiedź serwera nie ma oczekiwanego kształtu zamrożonego Outputu — prezentacja nie może wyświetlić niezweryfikowanych danych.",
+      "legacyPrefix": "Ta ocena pochodzi ",
+      "legacyStrong": "z zapisu sesji — jeszcze nie zamrożone",
+      "legacySuffix": ". Prezentacja pokazuje tę samą treść co raport (macierz DRD, rozdziały osi); pełna 9-slajdowa prezentacja pojawi się po zamrożeniu wyniku."
+    },
+    "versionHistory": {
+      "restored": "Wersja przywrócona!",
+      "restoredHint": "Dane zostały zaktualizowane",
+      "emptyTitle": "Brak zapisanych wersji",
+      "emptyHint": "Historia pojawi się po zapisaniu zmian"
+    },
+    "reportEditor": {
+      "notFound": "Nie znaleziono raportu",
+      "back": "Wróć",
+      "preview": "Podgląd raportu",
+      "newFindingPlaceholder": "Dodaj nowy wniosek...",
+      "newRecommendationPlaceholder": "Dodaj nową rekomendację...",
+      "add": "Dodaj"
+    },
+    "dbr77Map": {
+      "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk pracy.",
+      "addProcess": "Dodaj proces",
+      "addWorkstation": "Dodaj stanowisko"
+    },
+    "admaMap": {
+      "peerAverage": "Średnia (peers)",
+      "peerAverageSample": "Średnia (peers) — dane przykładowe"
+    },
+    "siriMap": {
+      "legalNoticeC": ". Wykorzystanie struktury SIRI w Consultify ma wyłącznie",
+      "educationalPurpose": "cel edukacyjny",
+      "legalNoticeD": "i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora."
     }
   },
   "initiatives": {

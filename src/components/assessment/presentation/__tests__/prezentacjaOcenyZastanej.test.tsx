@@ -72,7 +72,7 @@ describe('prezentacja oceny z magazynu zastanego', () => {
     // Macierz DRD — identyfikatory obszarów muszą być na ekranie.
     expect(screen.getAllByText('1A').length).toBeGreaterThan(0);
     // Baner uczciwości źródła — ta ocena nie jest zamrożona.
-    expect(screen.getByText(/z zapisu sesji — jeszcze nie\s*\n?\s*zamrożone/i)).toBeInTheDocument();
+    expect(screen.getByText(/from the session record — not frozen yet/i)).toBeInTheDocument();
   });
 
   it('stare id BEZ prefiksu też otwiera prezentację po 404 z jądra (fallback do magazynu zastanego)', async () => {

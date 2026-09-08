@@ -26,6 +26,7 @@ import {
   isAuthError,
 } from './reportApi';
 import type { AssessmentReportData } from './types';
+import { useTranslation } from 'react-i18next';
 
 export interface AssessmentReportViewProps {
   /** Frozen Output id, or `null` when the source session is known not to be
@@ -43,6 +44,7 @@ type LoadState =
   | { kind: 'loaded'; data: AssessmentReportData };
 
 export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outputId, className }) => {
+  const { t } = useTranslation();
   const [state, setState] = useState<LoadState>(outputId ? { kind: 'loading' } : { kind: 'not-frozen' });
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -105,8 +107,11 @@ export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outp
         <EmptyState
           variant="new"
           icon={Lock}
-          title="Wynik nie został jeszcze zamrożony"
-          description="Ten raport renderuje wyłącznie zamrożony, niezmienny Output sesji assessmentu. Sesja jest wciąż w toku (draft/active/in_review) — raport pojawi się dokładnie w momencie zamrożenia wyniku, nie wcześniej."
+          title={t('assessment.reportView.notFrozen.title', 'The result has not been frozen yet')}
+          description={t(
+            'assessment.reportView.notFrozen.description',
+            'This report renders only the frozen, immutable Output of an assessment session. The session is still in progress (draft/active/in_review) — the report appears exactly at the moment the result is frozen, not earlier.'
+          )}
           compact
         />
       ) : state.kind === 'loading' ? (
@@ -119,21 +124,27 @@ export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outp
         <EmptyState
           variant="error"
           icon={FileText}
-          title="Nie znaleziono zamrożonego Outputu"
-          description="Ten identyfikator Outputu nie istnieje albo nie należy do tej organizacji."
+          title={t('assessment.reportView.notFound.title', 'Frozen Output not found')}
+          description={t(
+            'assessment.reportView.notFound.description',
+            'This Output identifier does not exist or does not belong to this organisation.'
+          )}
         />
       ) : state.kind === 'forbidden' ? (
         <EmptyState
           variant="forbidden"
-          title="Brak dostępu do tego wyniku"
-          description="To konto nie ma uprawnień do wyświetlenia tego Outputu."
+          title={t('assessment.reportView.forbidden.title', 'No access to this result')}
+          description={t(
+            'assessment.reportView.forbidden.description',
+            'This account has no permission to view this Output.'
+          )}
         />
       ) : state.kind === 'error' ? (
         <EmptyState
           variant="error"
           icon={AlertTriangle}
-          title="Nie udało się wczytać raportu"
-          description="Spróbuj ponownie za chwilę."
+          title={t('assessment.reportView.error.title', 'The report could not be loaded')}
+          description={t('assessment.reportView.error.description', 'Try again in a moment.')}
           onRetry={() => setReloadToken((n) => n + 1)}
         />
       ) : (

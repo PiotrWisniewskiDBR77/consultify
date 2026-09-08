@@ -1454,7 +1454,14 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       </SectionCard>
 
       {/* ── 5. Odpowiedzi „nie wiem" / brak dowodu ───────────────────────── */}
-      <SectionCard id="unknowns" title="Brak wiedzy w organizacji („nie wiem” / brak dowodu)" icon={HelpCircle}>
+      <SectionCard
+        id="unknowns"
+        title={t(
+          'assessment.report.noKnowledge.title',
+          'Knowledge missing in the organisation (“don’t know” / no evidence)'
+        )}
+        icon={HelpCircle}
+      >
         <p className="mb-3 text-xs text-c-text-secondary">
           {t(
             'assessment.report.noKnowledge.body',

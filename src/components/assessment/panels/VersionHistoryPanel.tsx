@@ -21,6 +21,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { EmptyState } from '../../ui/composed/EmptyState';
 import { ErrorState, LoadingState } from '../../ui/primitives';
 import { localeListy } from '@/utils/listDateFormat';
+import { useTranslation } from 'react-i18next';
 
 interface Version {
   version: number;
@@ -46,6 +47,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   onClose,
   onRestored,
 }) => {
+  const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // State
@@ -229,10 +231,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                   <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
                 <p className="text-lg font-medium text-navy-900 dark:text-white">
-                  Wersja przywrócona!
+                  {t('assessment.versionHistory.restored', 'Version restored!')}
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Dane zostały zaktualizowane
+                  {t('assessment.versionHistory.restoredHint', 'The data has been updated')}
                 </p>
               </div>
             ) : loading ? (
@@ -242,8 +244,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             ) : versions.length === 0 ? (
               <EmptyState
                 icon={<FileText />}
-                title="Brak zapisanych wersji"
-                description="Historia pojawi się po zapisaniu zmian"
+                title={t('assessment.versionHistory.emptyTitle', 'No saved versions')}
+                description={t(
+                  'assessment.versionHistory.emptyHint',
+                  'History appears once changes are saved'
+                )}
               />
             ) : (
               <div className="relative">

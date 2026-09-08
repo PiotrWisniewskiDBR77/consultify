@@ -605,7 +605,10 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           </div>
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Ten assessment nie ma jeszcze zaakceptowanego outputu.
+            {t(
+              'assessment.qualityReview.noAcceptedOutput',
+              'This assessment has no accepted output yet.'
+            )}
           </p>
         )}
       </section>

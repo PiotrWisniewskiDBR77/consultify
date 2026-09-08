@@ -35,6 +35,7 @@ import {
 import { extractUnknownReasonBreakdown, isPlausibleRawOutput, toAssessmentOutput } from './outputAdapter';
 import { PresentationDeck } from './PresentationDeck';
 import type { RawAssessmentOutputRecord } from './rawOutputTypes';
+import { useTranslation } from 'react-i18next';
 
 export type PresentationFetchResult = { readonly output: RawAssessmentOutputRecord };
 
@@ -99,6 +100,7 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
   fetchOutput = defaultFetchOutput,
   fetchLegacyOutput = fetchOutputForReport,
 }) => {
+  const { t } = useTranslation();
   const [state, setState] = useState<ViewState>(() => (outputId ? { kind: 'loading' } : { kind: 'no-output' }));
 
   const stableNarrative = useMemo<PresentationNarrativeInput>(() => narrative ?? {}, [narrative]);
@@ -199,8 +201,10 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-text-muted" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Brak zamrożonego Outputu do zaprezentowania. Ten ekran nie pokazuje przykładowych liczb — wskaż
-            konkretny Output.
+            {t(
+              'assessment.presentationView.noOutput',
+              'No frozen Output to present. This screen shows no sample numbers — point it at a specific Output.'
+            )}
           </p>
         </StateScreen>
       );
@@ -208,7 +212,9 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
       return (
         <StateScreen>
           <Loader2 size={24} className="animate-spin text-c-text-muted" />
-          <p className="text-sm text-c-text-muted">Wczytywanie zamrożonego Outputu…</p>
+          <p className="text-sm text-c-text-muted">
+            {t('assessment.presentationView.loading', 'Loading the frozen Output…')}
+          </p>
         </StateScreen>
       );
     case 'not-found':
@@ -216,8 +222,10 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-danger" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Nie znaleziono Outputu o podanym identyfikatorze — mógł zostać usunięty lub identyfikator jest
-            nieprawidłowy.
+            {t(
+              'assessment.presentationView.notFound',
+              'No Output found for that identifier — it may have been deleted, or the identifier is wrong.'
+            )}
           </p>
         </StateScreen>
       );
@@ -226,7 +234,10 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-danger" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Brak dostępu do tego Outputu w bieżącej organizacji.
+            {t(
+              'assessment.presentationView.forbidden',
+              'No access to this Output in the current organisation.'
+            )}
           </p>
         </StateScreen>
       );
@@ -235,8 +246,10 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-warning" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Brak połączenia z serwerem — nie udało się pobrać Outputu. Spróbuj ponownie po odzyskaniu
-            połączenia.
+            {t(
+              'assessment.presentationView.offline',
+              'No connection to the server — the Output could not be fetched. Try again once the connection is back.'
+            )}
           </p>
         </StateScreen>
       );
@@ -245,8 +258,10 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-danger" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Odpowiedź serwera nie ma oczekiwanego kształtu zamrożonego Outputu — prezentacja nie może
-            wyświetlić niezweryfikowanych danych.
+            {t(
+              'assessment.presentationView.unrecognizedShape',
+              'The server response does not have the expected shape of a frozen Output — the deck will not display unverified data.'
+            )}
           </p>
         </StateScreen>
       );
@@ -266,9 +281,14 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
             <div className="flex items-start gap-2 rounded-xl border border-c-warning/40 bg-c-warning/10 px-4 py-3 text-sm text-c-text">
               <AlertTriangle size={16} className="mt-0.5 shrink-0 text-c-warning" />
               <p>
-                Ta ocena pochodzi <strong className="text-c-text">z zapisu sesji — jeszcze nie
-                zamrożone</strong>. Prezentacja pokazuje tę samą treść co raport (macierz DRD,
-                rozdziały osi); pełna 9-slajdowa prezentacja pojawi się po zamrożeniu wyniku.
+                {t('assessment.presentationView.legacyPrefix', 'This assessment comes ')}
+                <strong className="text-c-text">
+                  {t('assessment.presentationView.legacyStrong', 'from the session record — not frozen yet')}
+                </strong>
+                {t(
+                  'assessment.presentationView.legacySuffix',
+                  '. The deck shows the same content as the report (the DRD matrix, the axis chapters); the full 9-slide deck appears once the result is frozen.'
+                )}
               </p>
             </div>
           </div>

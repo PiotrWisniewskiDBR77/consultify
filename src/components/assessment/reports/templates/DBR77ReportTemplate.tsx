@@ -303,7 +303,7 @@ const WorkstationPage: React.FC<{
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <h4 className="font-bold text-amber-900 dark:text-amber-300">
-              Wymagane nowe kompetencje
+              {t('assessment.reportTemplates.dbr77.newSkillsRequired', 'New skills required')}
             </h4>
           </div>
           <div className="flex flex-wrap gap-2">

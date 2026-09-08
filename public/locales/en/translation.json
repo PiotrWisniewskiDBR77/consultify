@@ -8563,6 +8563,22 @@
         "noOrganization": "Organization context is missing",
         "version": "Unsupported report contract version",
         "generic": "Could not load the report"
+      },
+      "notFrozen": {
+        "title": "The result has not been frozen yet",
+        "description": "This report renders only the frozen, immutable Output of an assessment session. The session is still in progress (draft/active/in_review) — the report appears exactly at the moment the result is frozen, not earlier."
+      },
+      "notFound": {
+        "title": "Frozen Output not found",
+        "description": "This Output identifier does not exist or does not belong to this organisation."
+      },
+      "forbidden": {
+        "title": "No access to this result",
+        "description": "This account has no permission to view this Output."
+      },
+      "error": {
+        "title": "The report could not be loaded",
+        "description": "Try again in a moment."
       }
     },
     "hub": {
@@ -8799,7 +8815,8 @@
         "accepted": "Accepted",
         "returned": "Sent back"
       },
-      "acceptedBy": "Accepted {{date}} by {{who}}"
+      "acceptedBy": "Accepted {{date}} by {{who}}",
+      "noAcceptedOutput": "This assessment has no accepted output yet."
     },
     "presentation": {
       "methodPack": "Method pack",
@@ -9011,7 +9028,8 @@
         "withAccepted": "With accepted evidence",
         "withoutAccepted": "Without accepted evidence",
         "completeness": "Evidence completeness",
-        "allCovered": "Every assessed unit has accepted evidence."
+        "allCovered": "Every assessed unit has accepted evidence.",
+        "title": "Knowledge missing in the organisation (“don’t know” / no evidence)"
       },
       "evidence": {
         "title": "Evidence",
@@ -9441,9 +9459,21 @@
           "recommendations": "Recommendations: {{list}}",
           "snapshotNote": "Rendered from the snapshot of Output v{{version}} — changing the session after the freeze will not change this report.",
           "noDrafts": "No drafts.",
-          "reopenNote": "frozen → active creates a NEW session (a revision); this Output stays untouched and gets the “superseded” status after the next freeze."
+          "reopenNote": "frozen → active creates a NEW session (a revision); this Output stays untouched and gets the “superseded” status after the next freeze.",
+          "noOutput": "No Output."
         },
-        "evidenceCollected": "{{count}} piece(s) of evidence collected for this unit."
+        "evidenceCollected": "{{count}} piece(s) of evidence collected for this unit.",
+        "demoLocalTitle": "Legacy runtime — localStorage is the only store (flag drdHttpSourceOfTruthV1 = OFF)."
+      },
+      "editor": {
+        "generatingGuidance": "Generating guidance…",
+        "consultantGuidance": "Consultant guidance",
+        "whyItMatters": "Why it matters: ",
+        "howToScoreLevel": "How to score this level: ",
+        "pitfalls": "Watch out for: "
+      },
+      "ownerMatrix": {
+        "closeCellDetails": "Close cell details"
       }
     },
     "glossary": {
@@ -10297,7 +10327,10 @@
       "taskCount": "{{count}} tasks",
       "delete": "Delete",
       "edit": "Edit",
-      "approve": "Approve"
+      "approve": "Approve",
+      "notFound": "Initiative not found",
+      "close": "Close",
+      "addToRoadmap": "Add to the roadmap"
     },
     "reportTemplates": {
       "dbr77": {
@@ -10321,7 +10354,8 @@
           "createInitiatives": "Create initiatives from the roadmap recommendations",
           "dataGaps": "Address data gaps for higher confidence",
           "gemba": "Schedule follow-up gemba walks"
-        }
+        },
+        "newSkillsRequired": "New skills required"
       },
       "common": {
         "keyFindings": "Key findings",
@@ -10356,6 +10390,45 @@
         "legalNoticeA": "is a tool developed by the",
         "legalNoticeB": "in cooperation with"
       }
+    },
+    "presentationView": {
+      "noOutput": "No frozen Output to present. This screen shows no sample numbers — point it at a specific Output.",
+      "loading": "Loading the frozen Output…",
+      "notFound": "No Output found for that identifier — it may have been deleted, or the identifier is wrong.",
+      "forbidden": "No access to this Output in the current organisation.",
+      "offline": "No connection to the server — the Output could not be fetched. Try again once the connection is back.",
+      "unrecognizedShape": "The server response does not have the expected shape of a frozen Output — the deck will not display unverified data.",
+      "legacyPrefix": "This assessment comes ",
+      "legacyStrong": "from the session record — not frozen yet",
+      "legacySuffix": ". The deck shows the same content as the report (the DRD matrix, the axis chapters); the full 9-slide deck appears once the result is frozen."
+    },
+    "versionHistory": {
+      "restored": "Version restored!",
+      "restoredHint": "The data has been updated",
+      "emptyTitle": "No saved versions",
+      "emptyHint": "History appears once changes are saved"
+    },
+    "reportEditor": {
+      "notFound": "Report not found",
+      "back": "Back",
+      "preview": "Report preview",
+      "newFindingPlaceholder": "Add a new finding…",
+      "newRecommendationPlaceholder": "Add a new recommendation…",
+      "add": "Add"
+    },
+    "dbr77Map": {
+      "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential. It supports a full analysis of processes and workstations.",
+      "addProcess": "Add a process",
+      "addWorkstation": "Add a workstation"
+    },
+    "admaMap": {
+      "peerAverage": "Peer average",
+      "peerAverageSample": "Peer average — sample data"
+    },
+    "siriMap": {
+      "legalNoticeC": ". The SIRI structure is used in Consultify for an",
+      "educationalPurpose": "educational purpose",
+      "legalNoticeD": "only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor."
     }
   },
   "initiatives": {

@@ -44,7 +44,7 @@ function makeRaw(overrides: Partial<RawAssessmentOutputRecord> = {}): RawAssessm
 describe('AssessmentPresentationView', () => {
   it('renders the honest "no Output" state when outputId is null — never sample data', () => {
     render(<AssessmentPresentationView outputId={null} fetchOutput={async () => ({ output: makeRaw() })} />);
-    expect(screen.getByText(/Brak zamrożonego Outputu/i)).toBeInTheDocument();
+    expect(screen.getByText(/No frozen Output to present/i)).toBeInTheDocument();
     expect(screen.queryByTestId('presentation-deck')).not.toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('AssessmentPresentationView', () => {
         }}
       />
     );
-    await waitFor(() => expect(screen.getByText(/Nie znaleziono Outputu/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/No Output found for that identifier/i)).toBeInTheDocument());
   });
 
   it('renders a forbidden message on a 403', async () => {
@@ -76,7 +76,7 @@ describe('AssessmentPresentationView', () => {
         }}
       />
     );
-    await waitFor(() => expect(screen.getByText(/Brak dostępu/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/No access to this Output/i)).toBeInTheDocument());
   });
 
   it('renders an unrecognized-shape message instead of guessing when the payload does not look like an Output', async () => {
@@ -86,6 +86,6 @@ describe('AssessmentPresentationView', () => {
         fetchOutput={async () => ({ output: { unexpected: true } as unknown as RawAssessmentOutputRecord })}
       />
     );
-    await waitFor(() => expect(screen.getByText(/nie ma oczekiwanego kształtu/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/does not have the expected shape/i)).toBeInTheDocument());
   });
 });

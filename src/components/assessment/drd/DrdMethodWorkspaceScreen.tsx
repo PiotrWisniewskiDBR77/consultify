@@ -918,7 +918,13 @@ const FrozenOutputView: React.FC<{
           })}
           {session.revisionOfSessionId && <span className="ml-2 text-[11px] font-normal text-c-text-muted">(rewizja sesji {session.revisionOfSessionId.slice(0, 8)})</span>}
         </h1>
-        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
+        <DrdSourceIndicator
+          source="DEMO_LOCAL"
+          title={t(
+            'assessment.drd.legacy.demoLocalTitle',
+            'Legacy runtime — localStorage is the only store (flag drdHttpSourceOfTruthV1 = OFF).'
+          )}
+        />
         <span className="ml-auto flex items-center gap-2 text-[11px] text-c-text-secondary">
           Aktor:
           <select value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} className="rounded border border-c-border bg-c-surface px-1.5 py-0.5">
@@ -942,7 +948,9 @@ const FrozenOutputView: React.FC<{
           <h2 className="text-sm font-semibold text-c-text">AssessmentOutput (immutable, v{output?.version ?? '—'})</h2>
         </div>
         {!output ? (
-          <p className="text-xs text-c-text-muted">Brak Outputu.</p>
+          <p className="text-xs text-c-text-muted">
+            {t('assessment.drd.legacy.frozen.noOutput', 'No Output.')}
+          </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
             <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
