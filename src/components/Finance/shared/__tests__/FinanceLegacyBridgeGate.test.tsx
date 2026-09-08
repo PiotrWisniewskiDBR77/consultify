@@ -134,7 +134,7 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
     );
     expect(screen.getByTestId('classic-workspace')).toHaveTextContent('Model data');
     expect(screen.queryByTestId('canonical-workspace')).not.toBeInTheDocument();
-    expect(screen.getByText(/sprawdzony widok klasyczny/i)).toBeInTheDocument();
+    expect(screen.getByText(/proven classic view/i)).toBeInTheDocument();
   });
 
   it('★ NOT_MIGRATED: a legacy id the bridge cannot resolve renders an honest message, children NEVER called', async () => {
@@ -158,7 +158,7 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
     expect(childRenderSpy).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mounted-workspace')).not.toBeInTheDocument();
     expect(screen.getByTestId('finance-bridge-unresolved').textContent).toMatch(
-      /nie ma jeszcze odpowiednika|nie został jeszcze przeniesiony/
+      /has no counterpart in the new system|cannot be opened in the new module/
     );
 
     await userEvent.click(screen.getByRole('button', { name: /Back to list/i }));
