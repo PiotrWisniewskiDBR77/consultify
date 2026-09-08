@@ -1,0 +1,9 @@
+{
+  "nazwa": "07e-execution-raporty",
+  "opis": "Execution — Raporty statusu (2 raporty)",
+  "url": "http://127.0.0.1:3211/execution?tab=reports&view=table",
+  "czas": "2026-09-08T10:49:53.765Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 0,
+  "polskieSlowaUnikalne": []
+}

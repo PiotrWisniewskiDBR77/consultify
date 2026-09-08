@@ -1,0 +1,9 @@
+{
+  "nazwa": "16-partners-portal",
+  "opis": "Partner Portal — /partner (brak wiersza partner_users w D1-D6)",
+  "url": "http://127.0.0.1:3211/partner?tab=partner-home",
+  "czas": "2026-09-08T10:52:24.193Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 0,
+  "polskieSlowaUnikalne": []
+}

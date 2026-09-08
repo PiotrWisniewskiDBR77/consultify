@@ -1,0 +1,11 @@
+{
+  "nazwa": "06-initiatives-lista",
+  "opis": "Initiatives — lista, zakres All (13 rekordow, 7 statusow DEC-424)",
+  "url": "http://127.0.0.1:3211/initiatives?tab=list",
+  "czas": "2026-09-08T10:48:42.837Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 16,
+  "polskieSlowaUnikalne": [
+    "właściciel"
+  ]
+}

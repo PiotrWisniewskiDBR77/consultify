@@ -1,0 +1,11 @@
+{
+  "nazwa": "04-tools-lista",
+  "opis": "Tools — zakladka Sessions, 3 sesje Northwind",
+  "url": "http://127.0.0.1:3211/discovery-tools?tab=sessions",
+  "czas": "2026-09-08T10:57:16.816Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 1,
+  "polskieSlowaUnikalne": [
+    "Narzędzia"
+  ]
+}

@@ -29,7 +29,7 @@ export const TYTUL_INICJATYWY = {
   mes: 'MES Rollout Line 3',
   predictive: 'Predictive Maintenance for CNC Line',
   warehouse: 'Warehouse Automation Pilot',
-  skills: 'Skills Matrix & Upskilling',
+  skills: 'Skills Matrix and Upskilling',
   energy: 'Energy Monitoring and ISO 50001',
   scrap: 'Scrap Reduction Programme',
   supplier: 'Supplier Quality Gate',

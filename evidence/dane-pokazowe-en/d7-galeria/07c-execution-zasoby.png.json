@@ -1,0 +1,15 @@
+{
+  "nazwa": "07c-execution-zasoby",
+  "opis": "Execution — Zasoby/Obciazenie (9 osob)",
+  "url": "http://127.0.0.1:3211/execution?tab=resources&view=table",
+  "czas": "2026-09-08T10:49:29.301Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 9,
+  "polskieSlowaUnikalne": [
+    "osób",
+    "podaż",
+    "obłożenie",
+    "przeciążonych",
+    "zaległość"
+  ]
+}

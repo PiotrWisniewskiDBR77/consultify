@@ -1,0 +1,11 @@
+{
+  "nazwa": "07b-execution-praca",
+  "opis": "Execution — tabela Praca (36 zadan)",
+  "url": "http://127.0.0.1:3211/execution?tab=work&view=table",
+  "czas": "2026-09-08T10:49:16.390Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLiczba": 6,
+  "polskieSlowaUnikalne": [
+    "paź"
+  ]
+}
