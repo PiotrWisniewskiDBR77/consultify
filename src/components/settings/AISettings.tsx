@@ -1423,7 +1423,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               <div>
                 <div className="text-c-text font-medium text-sm">Auto-detect Intent</div>
                 <div className="text-xs text-c-text-muted">
-                  AI automatycznie wykryje czy potrzebujesz krótkiej czy szczegółowej odpowiedzi
+                  {t(
+                    'settings.ai.autoDetectIntentHint',
+                    'The AI detects on its own whether you need a short or a detailed answer'
+                  )}
                 </div>
               </div>
               <Toggle

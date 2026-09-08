@@ -17041,7 +17041,8 @@
       "tips": "Wskazówki",
       "toneSection": "Ton i komunikacja",
       "vectorDesc": "Zoptymalizowany pod kątem przepływów pracy konsultantów: analizy wywiadów, generowania raportów i rekomendacji strategicznych.",
-      "whatToRemember": "O czym pamiętać"
+      "whatToRemember": "O czym pamiętać",
+      "autoDetectIntentHint": "AI samo rozpozna, czy potrzebujesz krótkiej, czy szczegółowej odpowiedzi"
     },
     "aiUsage": {
       "title": "Przegląd użycia AI",
@@ -18908,6 +18909,85 @@
       "viewAll": "Zobacz wszystkie",
       "viewAvailability": "Zobacz dostępność",
       "viewFullHistory": "Zobacz pełną historię"
+    },
+    "pilot": {
+      "sectionUnavailableForRole": "Ta sekcja nie jest dostępna w Twojej roli podczas pilota. Skontaktuj się z administratorem, jeśli potrzebujesz dostępu."
+    },
+    "aiSecurity": {
+      "title": "Ustawienia bezpieczeństwa AI",
+      "subtitle": "Konfiguracja funkcji AI dla organizacji",
+      "featuresTitle": "Włączone funkcje",
+      "features": {
+        "chat": {
+          "label": "Czat AI",
+          "description": "Konwersacje z asystentem AI"
+        },
+        "reports": {
+          "label": "Generowanie raportów",
+          "description": "Raporty audytu tworzone przez AI"
+        },
+        "initiatives": {
+          "label": "Generowanie inicjatyw",
+          "description": "Inicjatywy podpowiadane przez AI"
+        },
+        "magicWand": {
+          "label": "Magic Wand",
+          "description": "Autouzupełnianie pól formularzy"
+        },
+        "taskAdvisor": {
+          "label": "Doradca zadań",
+          "description": "Rekomendacje zadań"
+        },
+        "webResearch": {
+          "label": "Wyszukiwanie w internecie",
+          "description": "Przeszukiwanie sieci"
+        }
+      },
+      "modelsTitle": "Dozwolone modele",
+      "modelsHint": "Odznacz modele, które chcesz wyłączyć dla użytkowników",
+      "limitsTitle": "Limity zapytań",
+      "limitAdd": "Dodaj limit",
+      "limitAddShort": "Dodaj",
+      "limitRuleName": "Nazwa reguły",
+      "limitValue": "Limit",
+      "limitsEmpty": "Brak skonfigurowanych limitów. Używane są domyślne limity systemowe.",
+      "limits": {
+        "perMinute": "Na minutę",
+        "perHour": "Na godzinę",
+        "perDay": "Na dzień",
+        "perMonth": "Na miesiąc"
+      },
+      "advancedTitle": "Ustawienia zaawansowane",
+      "maxTokens": "Maksymalna liczba tokenów na zapytanie",
+      "retentionDays": "Retencja danych (dni)",
+      "retentionHint": "Logi AI starsze niż ta liczba dni będą automatycznie usuwane",
+      "allowWebResearch": "Pozwól na wyszukiwanie w internecie",
+      "allowToolCalling": "Pozwól na wykonywanie akcji (MCP Tools)",
+      "save": "Zapisz ustawienia",
+      "saved": "Ustawienia zapisane"
+    },
+    "profileNudge": {
+      "doneTitle": "Gotowe!",
+      "doneBody": "Dzięki za uzupełnienie profilu. Teraz dopasujemy pytania do Twojego obszaru.",
+      "stepCounter": "Krok {{current}} z {{total}}",
+      "departmentTitle": "W jakim dziale pracujesz?",
+      "seniorityTitle": "Na jakim poziomie jest Twoje stanowisko?",
+      "tenureTitle": "Jak długo pracujesz w firmie?",
+      "expertiseTitle": "Jakie masz kompetencje?",
+      "departmentHint": "Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.",
+      "seniorityHint": "Dopasujemy pytania do perspektywy Twojego stanowiska.",
+      "tenureHint": "Twoje doświadczenie w firmie ma znaczenie dla kontekstu odpowiedzi.",
+      "expertiseHint": "Opcjonalne — wybierz kilka, które najlepiej Cię opisują.",
+      "later": "Uzupełnię później",
+      "save": "Zapisz",
+      "next": "Dalej",
+      "tenure": {
+        "under1": "Poniżej roku",
+        "1to3": "1–3 lata",
+        "3to5": "3–5 lat",
+        "5to10": "5–10 lat",
+        "over10": "Ponad 10 lat"
+      }
     }
   },
   "showcase": {

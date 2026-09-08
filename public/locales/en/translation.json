@@ -17395,7 +17395,8 @@
       "tips": "Pro Tips",
       "toneSection": "Tone & Communication",
       "vectorDesc": "Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations.",
-      "whatToRemember": "What to Remember"
+      "whatToRemember": "What to Remember",
+      "autoDetectIntentHint": "The AI detects on its own whether you need a short or a detailed answer"
     },
     "aiUsage": {
       "title": "AI Usage Overview",
@@ -19284,6 +19285,85 @@
       "testText": "Hello! This is a test of the voice settings.",
       "title": "Voice & TTS",
       "unsupported": "Text-to-speech is not supported in this browser"
+    },
+    "pilot": {
+      "sectionUnavailableForRole": "This section is not available for your role during the pilot. Contact an administrator if you need access."
+    },
+    "aiSecurity": {
+      "title": "AI Security Settings",
+      "subtitle": "AI feature configuration for the organization",
+      "featuresTitle": "Enabled features",
+      "features": {
+        "chat": {
+          "label": "AI Chat",
+          "description": "Conversations with the AI assistant"
+        },
+        "reports": {
+          "label": "Report generation",
+          "description": "AI-generated audit reports"
+        },
+        "initiatives": {
+          "label": "Initiative generation",
+          "description": "AI-suggested initiatives"
+        },
+        "magicWand": {
+          "label": "Magic Wand",
+          "description": "Form field auto-complete"
+        },
+        "taskAdvisor": {
+          "label": "Task Advisor",
+          "description": "Task recommendations"
+        },
+        "webResearch": {
+          "label": "Web Research",
+          "description": "Web search"
+        }
+      },
+      "modelsTitle": "Allowed models",
+      "modelsHint": "Clear the models you want to switch off for users",
+      "limitsTitle": "Rate limits",
+      "limitAdd": "Add limit",
+      "limitAddShort": "Add",
+      "limitRuleName": "Rule name",
+      "limitValue": "Limit",
+      "limitsEmpty": "No limits configured. System defaults apply.",
+      "limits": {
+        "perMinute": "Per minute",
+        "perHour": "Per hour",
+        "perDay": "Per day",
+        "perMonth": "Per month"
+      },
+      "advancedTitle": "Advanced settings",
+      "maxTokens": "Maximum tokens per request",
+      "retentionDays": "Data retention (days)",
+      "retentionHint": "AI logs older than this number of days are removed automatically",
+      "allowWebResearch": "Allow web search",
+      "allowToolCalling": "Allow action execution (MCP Tools)",
+      "save": "Save settings",
+      "saved": "Settings saved"
+    },
+    "profileNudge": {
+      "doneTitle": "All set!",
+      "doneBody": "Thanks for completing your profile. We will now match the questions to your area.",
+      "stepCounter": "Step {{current}} of {{total}}",
+      "departmentTitle": "Which department do you work in?",
+      "seniorityTitle": "What is your seniority level?",
+      "tenureTitle": "How long have you been with the company?",
+      "expertiseTitle": "What are your areas of expertise?",
+      "departmentHint": "This helps us pick the right questions for your area.",
+      "seniorityHint": "We will match the questions to the perspective of your role.",
+      "tenureHint": "Your time with the company shapes the context of your answers.",
+      "expertiseHint": "Optional — pick a few that describe you best.",
+      "later": "I will finish later",
+      "save": "Save",
+      "next": "Next",
+      "tenure": {
+        "under1": "Under a year",
+        "1to3": "1–3 years",
+        "3to5": "3–5 years",
+        "5to10": "5–10 years",
+        "over10": "Over 10 years"
+      }
     }
   },
   "showcase": {

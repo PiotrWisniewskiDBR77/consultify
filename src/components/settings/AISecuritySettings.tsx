@@ -20,6 +20,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
@@ -46,13 +47,54 @@ interface OrganizationSettings {
   custom_system_prompt: string | null;
 }
 
+/**
+ * Etykiety trzymamy PO ANGIELSKU (reguła programu spójności językowej §2.3:
+ * `defaultValue` widzi użytkownik EN przy braku klucza i przy pierwszym
+ * malowaniu ekranu). Polski żyje wyłącznie w `public/locales/pl/`.
+ */
 const AVAILABLE_FEATURES = [
-  { id: 'chat', label: 'AI Chat', description: 'Konwersacje z asystentem AI' },
-  { id: 'reports', label: 'Generowanie raportów', description: 'AI-generowane raporty audytu' },
-  { id: 'initiatives', label: 'Generowanie inicjatyw', description: 'AI-sugerowane inicjatywy' },
-  { id: 'magic_wand', label: 'Magic Wand', description: 'Autouzupełnianie pól formularzy' },
-  { id: 'task_advisor', label: 'Task Advisor', description: 'Rekomendacje zadań' },
-  { id: 'web_research', label: 'Web Research', description: 'Wyszukiwanie w internecie' },
+  {
+    id: 'chat',
+    labelKey: 'settings.aiSecurity.features.chat.label',
+    label: 'AI Chat',
+    descriptionKey: 'settings.aiSecurity.features.chat.description',
+    description: 'Conversations with the AI assistant',
+  },
+  {
+    id: 'reports',
+    labelKey: 'settings.aiSecurity.features.reports.label',
+    label: 'Report generation',
+    descriptionKey: 'settings.aiSecurity.features.reports.description',
+    description: 'AI-generated audit reports',
+  },
+  {
+    id: 'initiatives',
+    labelKey: 'settings.aiSecurity.features.initiatives.label',
+    label: 'Initiative generation',
+    descriptionKey: 'settings.aiSecurity.features.initiatives.description',
+    description: 'AI-suggested initiatives',
+  },
+  {
+    id: 'magic_wand',
+    labelKey: 'settings.aiSecurity.features.magicWand.label',
+    label: 'Magic Wand',
+    descriptionKey: 'settings.aiSecurity.features.magicWand.description',
+    description: 'Form field auto-complete',
+  },
+  {
+    id: 'task_advisor',
+    labelKey: 'settings.aiSecurity.features.taskAdvisor.label',
+    label: 'Task Advisor',
+    descriptionKey: 'settings.aiSecurity.features.taskAdvisor.description',
+    description: 'Task recommendations',
+  },
+  {
+    id: 'web_research',
+    labelKey: 'settings.aiSecurity.features.webResearch.label',
+    label: 'Web Research',
+    descriptionKey: 'settings.aiSecurity.features.webResearch.description',
+    description: 'Web search',
+  },
 ];
 
 const AVAILABLE_MODELS = [
@@ -65,13 +107,14 @@ const AVAILABLE_MODELS = [
 ];
 
 const LIMIT_TYPES = [
-  { id: 'per_minute', label: 'Na minutę' },
-  { id: 'per_hour', label: 'Na godzinę' },
-  { id: 'per_day', label: 'Na dzień' },
-  { id: 'per_month', label: 'Na miesiąc' },
+  { id: 'per_minute', labelKey: 'settings.aiSecurity.limits.perMinute', label: 'Per minute' },
+  { id: 'per_hour', labelKey: 'settings.aiSecurity.limits.perHour', label: 'Per hour' },
+  { id: 'per_day', labelKey: 'settings.aiSecurity.limits.perDay', label: 'Per day' },
+  { id: 'per_month', labelKey: 'settings.aiSecurity.limits.perMonth', label: 'Per month' },
 ];
 
 export function AISecuritySettings() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<OrganizationSettings | null>(null);
   const [rateLimits, setRateLimits] = useState<RateLimit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +170,7 @@ export function AISecuritySettings() {
         requireApprovalFor: settings.require_approval_for,
         customSystemPrompt: settings.custom_system_prompt,
       });
-      setSuccess('Ustawienia zapisane');
+      setSuccess(t('settings.aiSecurity.saved', 'Settings saved'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       setError(err.message);
@@ -182,8 +225,12 @@ export function AISecuritySettings() {
       <div className="flex items-center gap-3">
         <Shield className="w-8 h-8 text-indigo-600" />
         <div>
-          <h1 className="text-2xl font-bold text-c-text">Ustawienia bezpieczeństwa AI</h1>
-          <p className="text-sm text-c-text-muted">Konfiguracja funkcji AI dla organizacji</p>
+          <h1 className="text-2xl font-bold text-c-text">
+            {t('settings.aiSecurity.title', 'AI Security Settings')}
+          </h1>
+          <p className="text-sm text-c-text-muted">
+            {t('settings.aiSecurity.subtitle', 'AI feature configuration for the organization')}
+          </p>
         </div>
       </div>
 
@@ -207,7 +254,7 @@ export function AISecuritySettings() {
           <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-500" />
-              Włączone funkcje
+              {t('settings.aiSecurity.featuresTitle', 'Enabled features')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {AVAILABLE_FEATURES.map((feature) => (
@@ -226,8 +273,12 @@ export function AISecuritySettings() {
                     className="mt-1 rounded border-c-border-subtle"
                   />
                   <div>
-                    <p className="font-medium text-c-text">{feature.label}</p>
-                    <p className="text-sm text-c-text-muted">{feature.description}</p>
+                    <p className="font-medium text-c-text">
+                      {t(feature.labelKey, feature.label)}
+                    </p>
+                    <p className="text-sm text-c-text-muted">
+                      {t(feature.descriptionKey, feature.description)}
+                    </p>
                   </div>
                 </label>
               ))}
@@ -238,10 +289,13 @@ export function AISecuritySettings() {
           <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-c-accent" />
-              Dozwolone modele
+              {t('settings.aiSecurity.modelsTitle', 'Allowed models')}
             </h2>
             <p className="text-sm text-c-text-muted mb-4">
-              Odznacz modele, które chcesz wyłączyć dla użytkowników
+              {t(
+                'settings.aiSecurity.modelsHint',
+                'Clear the models you want to switch off for users'
+              )}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {AVAILABLE_MODELS.map((model) => (
@@ -283,11 +337,11 @@ export function AISecuritySettings() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-500" />
-                Limity zapytań
+                {t('settings.aiSecurity.limitsTitle', 'Rate limits')}
               </h2>
               <Button variant="outline" size="sm" onClick={() => setShowAddLimit(!showAddLimit)}>
                 <Plus className="w-4 h-4 mr-1" />
-                Dodaj limit
+                {t('settings.aiSecurity.limitAdd', 'Add limit')}
               </Button>
             </div>
 
@@ -296,7 +350,7 @@ export function AISecuritySettings() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <input
                     type="text"
-                    placeholder="Nazwa reguły"
+                    placeholder={t('settings.aiSecurity.limitRuleName', 'Rule name')}
                     value={newLimit.ruleName}
                     onChange={(e) => setNewLimit({ ...newLimit, ruleName: e.target.value })}
                     className="px-3 py-2 border rounded-lg bg-c-surface"
@@ -308,13 +362,13 @@ export function AISecuritySettings() {
                   >
                     {LIMIT_TYPES.map((lt) => (
                       <option key={lt.id} value={lt.id}>
-                        {lt.label}
+                        {t(lt.labelKey, lt.label)}
                       </option>
                     ))}
                   </select>
                   <input
                     type="number"
-                    placeholder="Limit"
+                    placeholder={t('settings.aiSecurity.limitValue', 'Limit')}
                     value={newLimit.limitValue}
                     onChange={(e) =>
                       setNewLimit({ ...newLimit, limitValue: parseInt(e.target.value) })
@@ -322,7 +376,7 @@ export function AISecuritySettings() {
                     className="px-3 py-2 border rounded-lg bg-c-surface"
                   />
                   <Button variant="primary" onClick={addRateLimit}>
-                    Dodaj
+                    {t('settings.aiSecurity.limitAddShort', 'Add')}
                   </Button>
                 </div>
               </div>
@@ -330,7 +384,10 @@ export function AISecuritySettings() {
 
             {rateLimits.length === 0 ? (
               <p className="text-c-text-muted text-sm">
-                Brak skonfigurowanych limitów. Używane są domyślne limity systemowe.
+                {t(
+                  'settings.aiSecurity.limitsEmpty',
+                  'No limits configured. System defaults apply.'
+                )}
               </p>
             ) : (
               <div className="space-y-2">
@@ -343,7 +400,10 @@ export function AISecuritySettings() {
                       <p className="font-medium text-c-text">{limit.rule_name}</p>
                       <p className="text-sm text-c-text-muted">
                         {limit.limit_value}{' '}
-                        {LIMIT_TYPES.find((t) => t.id === limit.limit_type)?.label}
+                        {(() => {
+                          const typ = LIMIT_TYPES.find((lt) => lt.id === limit.limit_type);
+                          return typ ? t(typ.labelKey, typ.label) : limit.limit_type;
+                        })()}
                         {limit.applies_to !== 'all' && ` (${limit.applies_to})`}
                       </p>
                     </div>
@@ -360,12 +420,12 @@ export function AISecuritySettings() {
           <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-c-text-muted" />
-              Ustawienia zaawansowane
+              {t('settings.aiSecurity.advancedTitle', 'Advanced settings')}
             </h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  Maksymalna liczba tokenów na zapytanie
+                  {t('settings.aiSecurity.maxTokens', 'Maximum tokens per request')}
                 </label>
                 <input
                   type="number"
@@ -381,7 +441,7 @@ export function AISecuritySettings() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-c-text-secondary mb-1">
-                  Retencja danych (dni)
+                  {t('settings.aiSecurity.retentionDays', 'Data retention (days)')}
                 </label>
                 <input
                   type="number"
@@ -396,7 +456,10 @@ export function AISecuritySettings() {
                 />
                 <p className="text-xs text-c-text-muted mt-1 flex items-center gap-1">
                   <Info className="w-3 h-3" />
-                  Logi AI starsze niż ta liczba dni będą automatycznie usuwane
+                  {t(
+                    'settings.aiSecurity.retentionHint',
+                    'AI logs older than this number of days are removed automatically'
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -413,7 +476,7 @@ export function AISecuritySettings() {
                     className="rounded border-c-border-subtle"
                   />
                   <span className="text-sm text-c-text-secondary">
-                    Pozwól na wyszukiwanie w internecie
+                    {t('settings.aiSecurity.allowWebResearch', 'Allow web search')}
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -429,7 +492,7 @@ export function AISecuritySettings() {
                     className="rounded border-c-border-subtle"
                   />
                   <span className="text-sm text-c-text-secondary">
-                    Pozwól na wykonywanie akcji (MCP Tools)
+                    {t('settings.aiSecurity.allowToolCalling', 'Allow action execution (MCP Tools)')}
                   </span>
                 </label>
               </div>
@@ -444,7 +507,7 @@ export function AISecuritySettings() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              Zapisz ustawienia
+              {t('settings.aiSecurity.save', 'Save settings')}
             </Button>
           </div>
         </>
