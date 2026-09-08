@@ -4,22 +4,24 @@
  * [ODMROZENIE 06_EXECUTION DEC-453] P16-R6 (D6/D7, właściciel 07.09: „ważne,
  * żeby działało — w testach zobaczymy i będziemy poprawiać").
  *
- * Test (k) z P16 §6: 0 migawek → cztery kafle jednego kliknięcia, po jednym
- * na definicję MVP z KATALOGU serwera (nie lista na sztywno) — klik
- * „Wygeneruj raport" otwiera dokładnie ten sam kreator co „Nowy raport",
- * z wybraną definicją i domyślnym okresem.
+ * 08.09 (uwaga właściciela, staging, 0 raportów): kafle jednego kliknięcia
+ * w PUSTYM STANIE TABELI („Wygeneruj pierwszy raport", cztery karty) złamały
+ * kanon — „ekrany listowe WYŁĄCZNIE StandardTable, tabela ZAWSZE". Kafle są
+ * USUNIĘTE z pustego stanu; ta sama treść/handler żyje teraz w CTA „Dodaj
+ * raport" w Menu 2 (`AddReportMenu`, rejestrowana przez
+ * `onRegisterFilterControl`) — testy (k1)/(k2), które broniły starych kafli
+ * w `tbody` tabeli, przeniosły się do
+ * `ExecutionReportsSurface.addReportMenu.test.tsx` (nowy plik, ta sama
+ * własność: katalog-driven, nie hardkod; klik = ten sam kreator/`wizardKey`).
  *
- * Test (l): przyciski deweloperskie („Nowa definicja"/„Kontrakt raportu
- * (zaawansowane)") rejestrowane do kebaba Menu 3 WYŁĄCZNIE gdy `isAdmin`
- * jest prawdziwe — MEMBER (isAdmin=false) nie dostaje kebaba wcale.
+ * Test (l), NIEZMIENIONY tą naprawą: przyciski deweloperskie („Nowa
+ * definicja"/„Kontrakt raportu (zaawansowane)") rejestrowane do kebaba
+ * Menu 3 WYŁĄCZNIE gdy `isAdmin` jest prawdziwe — MEMBER (isAdmin=false) nie
+ * dostaje kebaba wcale.
  *
- * MUTACJE, na które te testy reagują:
- *   (k1) kafle na sztywno (4 zahardkodowane klucze) zamiast z `catalog` →
- *        katalog testowy z 2 MVP renderowałby wtedy dalej 4 kafle (FAIL).
- *   (k2) klik kafla nie ustawia `wizardKey`/nie otwiera kreatora → selekt
- *        definicji w kreatorze zostaje pusty (FAIL).
- *   (l)  kebab renderowany niezależnie od `isAdmin` → `onRegisterMenu3Control`
- *        dostałby węzeł z tekstem „Nowa definicja" nawet dla MEMBER (FAIL).
+ * MUTACJE, na które ten test reaguje:
+ *   (l) kebab renderowany niezależnie od `isAdmin` → `onRegisterMenu3Control`
+ *       dostałby węzeł z tekstem „Nowa definicja" nawet dla MEMBER (FAIL).
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -131,7 +133,7 @@ describe('ExecutionReportsSurface — pusty stan z kaflami (D6) i kebab admin-on
     listExecutionCases.mockResolvedValue({ cases: [] });
   });
 
-  it('(k1) renderuje jeden kafel PER definicja MVP z katalogu — nie listę na sztywno', async () => {
+  it('(k) 0 migawek → pusty stan tabeli BEZ kafli/planszy (kanon: tabela zawsze)', async () => {
     render(
       <MemoryRouter>
         <ExecutionReportsSurface />
@@ -139,54 +141,15 @@ describe('ExecutionReportsSurface — pusty stan z kaflami (D6) i kebab admin-on
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('standard-table-empty-actions')).toBeInTheDocument();
+      expect(screen.getByTestId('standard-table-empty')).toBeInTheDocument();
     });
 
-    // Katalog testowy ma DWA mvp (mvp-owner-test, weekly-exec) — nie cztery
-    // realne klucze produkcyjne. Kafel istnieje dokładnie dla tych dwóch,
-    // ZERO dla 'wave2-test' (mvp: false) i zero dla kluczy spoza katalogu.
-    expect(screen.getByTestId('standard-table-empty-action-mvp-owner-test')).toBeInTheDocument();
-    expect(screen.getByTestId('standard-table-empty-action-weekly-exec')).toBeInTheDocument();
-    expect(screen.queryByTestId('standard-table-empty-action-wave2-test')).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('standard-table-empty-action-initiative-card')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('standard-table-empty-action-program-health')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('standard-table-empty-action-sponsor-onepager')
-    ).not.toBeInTheDocument();
-
-    // Treść kafla pochodzi z katalogu (nazwa/audytorium/opis), nie z tekstu
-    // zaszytego w komponencie.
-    expect(screen.getByText('Testowa karta właściciela')).toBeInTheDocument();
-    expect(screen.getByText('Zakres testowy A')).toBeInTheDocument();
-    expect(screen.getByText('Właściciel testowy')).toBeInTheDocument();
-  });
-
-  it('(k2) klik „Wygeneruj raport" na kaflu otwiera kreator z TĄ definicją wybraną', async () => {
-    render(
-      <MemoryRouter>
-        <ExecutionReportsSurface />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('standard-table-empty-action-weekly-exec')).toBeInTheDocument();
-    });
-
-    const tile = screen.getByTestId('standard-table-empty-action-weekly-exec');
-    const generateButton = tile.querySelector('button');
-    expect(generateButton).not.toBeNull();
-    fireEvent.click(generateButton!);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('execution-report-wizard')).toBeInTheDocument();
-    });
-
-    const select = screen.getByLabelText('Definicja raportu') as HTMLSelectElement;
-    expect(select.value).toBe('weekly-exec');
+    // Mutacja: przywrócenie `empty.actions` (kafle) w `ExecutionReportsSurface`
+    // ma przewrócić ten test.
+    expect(screen.queryByTestId('standard-table-empty-actions')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('standard-table-empty-action-mvp-owner-test')).not.toBeInTheDocument();
+    expect(screen.queryByText('Wygeneruj pierwszy raport')).not.toBeInTheDocument();
+    expect(screen.getByText('Brak raportów')).toBeInTheDocument();
   });
 
   it('(l) MEMBER (isAdmin=false) nie dostaje kebaba deweloperskiego w Menu 3', async () => {

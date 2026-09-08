@@ -15,6 +15,15 @@
  * Menu 2. To NIE jest powrót do 11 chipów sprzed R4b (kadencja/poziom/
  * audytorium zostają w dropdownie „Poziom") — stąd test niżej trzyma 4, nie
  * 3, ale nadal odrzuca powrót jakiegokolwiek z ośmiu usuniętych chipów.
+ *
+ * 08.09 (uwaga właściciela, staging, 0 raportów): CTA „Nowy raport" w TYM
+ * primary-CTA gospodarza (`onNewItem`, prawy skraj Menu 2) jest USUNIĘTE —
+ * dawało DWA CTA robiące to samo razem z kaflami pustego stanu tabeli. Ten
+ * sam wzorzec, którym Decyzje/RAID dają swoje jedyne CTA widoku
+ * (`ExecutionControlSurface.tsx`: `onNewItem` tam NIGDY nie jest ustawiany
+ * dla ich zakładki) — CTA „Dodaj raport" żyje teraz WYŁĄCZNIE w rejestrowanym
+ * węźle Menu 2 `ExecutionReportsSurface` (`AddReportMenu`, patrz
+ * `ExecutionReportsSurface.addReportMenu.test.tsx`).
  */
 import { readFileSync } from 'node:fs';
 
@@ -51,17 +60,34 @@ describe('Raporty — Menu 3 (4 chipy) i CTA w Menu 2, 1.12-R4b + P16-R6', () =>
     expect(reportsBlock).not.toContain("'recent'");
   });
 
-  it('CTA „Nowy raport" w Menu 2 otwiera kreator zdarzeniem (nie jest undefined)', () => {
+  it('[ODMROZENIE DEC-453, 08.09] `menuCta` NIE ma osobnej gałęzi dla `reports` — CTA żyje wyłącznie w Menu 2 `ExecutionReportsSurface`', () => {
     const start = executionHubSource.indexOf('const menuCta = useMemo');
-    const reportsBranchStart = executionHubSource.indexOf("activeTab === 'reports'", start);
-    const end = executionHubSource.indexOf('\n    }', reportsBranchStart);
-    const branch = executionHubSource.slice(reportsBranchStart, end);
+    const end = executionHubSource.indexOf('\n  }, [activeTab, handleCreateInitiative', start);
+    const menuCtaBlock = executionHubSource.slice(start, end);
 
-    // Mutacja: cofnięcie do `onNewItem: undefined` (stan sprzed 1.12-R4b,
-    // STOP z R4) ma przewrócić ten test.
-    expect(branch).not.toContain('onNewItem: undefined');
-    expect(branch).toContain("dispatch('execution:reports-new-report')");
-    expect(branch).toContain("t('executionReports.action.newReport'");
+    // Mutacja: przywrócenie gałęzi `activeTab === 'reports'` z
+    // `dispatch('execution:reports-new-report')` (stan sprzed 08.09) ma
+    // przewrócić ten test — dawałoby DWA CTA raportu naraz (to primary +
+    // „Dodaj raport" w `AddReportMenu`), dokładnie błąd gęstości, który
+    // zgłosił właściciel.
+    expect(menuCtaBlock).not.toContain("activeTab === 'reports'");
+    expect(menuCtaBlock).not.toContain("dispatch('execution:reports-new-report')");
+    expect(menuCtaBlock).not.toContain("t('executionReports.action.newReport'");
+
+    // `reports` spada teraz do domyślnej gałęzi na końcu `menuCta`
+    // (`onNewItem: undefined`) — ten sam kształt, którym Decyzje/RAID
+    // (`ExecutionControlSurface.tsx`) NIGDY nie dostają primary CTA.
+    expect(menuCtaBlock.trim().endsWith("return { onNewItem: undefined, newItemLabel: defaultLabel };")).toBe(
+      true
+    );
+  });
+
+  it('event `execution:reports-new-report` nie ma już żadnego nadawcy w ExecutionHub (usunięty razem z primary CTA)', () => {
+    // Mutacja: przywrócenie dowolnego `dispatch('execution:reports-new-report')`
+    // gdziekolwiek w pliku ma przewrócić ten test. (Historyczna wzmianka nazwy
+    // zdarzenia w komentarzu wyjaśniającym USUNIĘCIE jest OK — sprawdzamy
+    // wyłącznie żywy `dispatch(...)`, nie samą nazwę string-literału.)
+    expect(executionHubSource).not.toContain("dispatch('execution:reports-new-report')");
   });
 
   it('ExecutionReportsSurface dla reports rejestruje kontrolkę Menu 2 (`onRegisterFilterControl`)', () => {

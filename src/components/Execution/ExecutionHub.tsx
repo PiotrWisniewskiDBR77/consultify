@@ -5827,16 +5827,17 @@ Please return:
 
     const dispatch = (name: string) => () => window.dispatchEvent(new CustomEvent(name));
 
-    if (activeTab === 'reports') {
-      // 1.12-R4b: STOP z R4 domknięty — CTA żyje teraz w Menu 2 gospodarza
-      // (tu), nie we własnym nagłówku `ExecutionReportsSurface`. Otwiera
-      // kreator migawki zdarzeniem (ten sam wzorzec co Rollout niżej) —
-      // surface nasłuchuje w `useEffect` i ustawia `wizardOpen`.
-      return {
-        onNewItem: dispatch('execution:reports-new-report'),
-        newItemLabel: t('executionReports.action.newReport', 'Nowy raport'),
-      };
-    }
+    // Uwaga właściciela 08.09 (staging, 0 raportów): CTA raportu przeniosło
+    // się z tego prawego primary-CTA gospodarza (dawniej „Nowy raport",
+    // dispatch `execution:reports-new-report`) do CTA „Dodaj raport" WEWNĄTRZ
+    // Menu 2 `ExecutionReportsSurface` (`onRegisterFilterControl`,
+    // `AddReportMenu`) — dokładnie ten sam wzorzec, którym Decyzje/RAID dają
+    // swoje jedyne CTA widoku (`ExecutionControlSurface.tsx`: `onNewItem`
+    // tam NIGDY nie jest ustawiany dla ich zakładki, CTA żyje wyłącznie w
+    // rejestrowanym węźle Menu 2). Ta gałąź `reports` jest usunięta, żeby
+    // uniknąć DWÓCH CTA robiących to samo (hook gęstości,
+    // `scripts/check-gestosc.sh`) — `reports` spada teraz do domyślnej
+    // gałęzi niżej (`onNewItem: undefined`).
 
     if (activeTab === ('rollout' as ModuleTab)) {
       switch (rolloutSubview) {
