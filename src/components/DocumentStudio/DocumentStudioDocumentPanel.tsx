@@ -2621,7 +2621,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         expectedVersion: created.schema.updatedAt,
       });
       toast.success(
-        t('documentStudio.fileMenu.saveAsSuccess', 'Zduplikowano dokument: {{title}}', {
+        t('documentStudio.fileMenu.saveAsSuccess', 'Document duplicated: {{title}}', {
           title: saved.title,
         })
       );
@@ -3301,7 +3301,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         {reportViewAvailable ? (
           <div
             role="group"
-            aria-label={t('documentStudio.panel.viewModeGroup', 'Widok dokumentu')}
+            aria-label={t('documentStudio.panel.viewModeGroup', 'Document view')}
             className="mb-3 flex items-center gap-1 self-start rounded-lg border border-c-border-subtle bg-c-surface-raised p-0.5"
           >
             {(['report', 'editor'] as const).map((mode) => {
@@ -3320,7 +3320,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                   }`}
                 >
                   {mode === 'report'
-                    ? t('documentStudio.panel.viewReport', 'Raport')
+                    ? t('documentStudio.panel.viewReport', 'Report')
                     : t('documentStudio.panel.viewEditor', 'Edytor')}
                 </button>
               );
@@ -3350,7 +3350,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       registry={documentArtifactCommands}
       context={documentArtifactCommandContext}
       resolveLabel={(label) => label}
-      ariaLabel={t('documentStudio.panel.contextMenu', 'Menu kontekstowe dokumentu')}
+      ariaLabel={t('documentStudio.panel.contextMenu', 'Document context menu')}
       className="min-h-full"
     >
       {canvasContent}
@@ -3446,7 +3446,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       }
       leftRailTitle={
         artifactStudioMode
-          ? t('documentStudio.panel.structureTitle', 'Struktura dokumentu')
+          ? t('documentStudio.panel.structureTitle', 'Document structure')
           : t('documentStudio.panel.outlineTitle', 'Outline')
       }
       leftRailContent={
@@ -3455,7 +3455,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             <div
               className="grid grid-cols-5 gap-1 border-b border-c-border p-2"
               role="tablist"
-              aria-label={t('documentStudio.panel.documentPanelViews', 'Widoki panelu dokumentu')}
+              aria-label={t('documentStudio.panel.documentPanelViews', 'Document panel views')}
             >
               {[
                 {

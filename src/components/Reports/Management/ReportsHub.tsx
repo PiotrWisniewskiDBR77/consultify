@@ -249,13 +249,13 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('reports.tabs.reports', 'Raporty'),
+        label: t('reports.tabs.reports', 'Reports'),
         icon: <FileBarChart2 size={16} />,
         count: filteredReports.length,
       },
       {
         id: 'reports' as ModuleTab,
-        label: t('reports.tabs.templates', 'Szablony'),
+        label: t('reports.tabs.templates', 'Templates'),
         icon: <Wand2 size={16} />,
         count: templates.length,
       },
@@ -899,7 +899,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                         periodEnd: item.periodEnd,
                       },
                     });
-                    toast.success(t('reports.toast.chatOpened', 'Otwarto czat dla tego raportu'), {
+                    toast.success(t('reports.toast.chatOpened', 'Chat opened for this report'), {
                       duration: 1500,
                       icon: '💬',
                     });

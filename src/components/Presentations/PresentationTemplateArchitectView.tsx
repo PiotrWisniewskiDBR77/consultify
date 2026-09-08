@@ -787,7 +787,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 nie alarm. Zastąpione tym samym neutralnym wzorcem „(wymagane)".
               */}
               <span className="text-xs font-normal text-c-text-muted">
-                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+                ({t('documentStudio.intake.requiredMarker', 'required')})
               </span>
             </span>
             <textarea
@@ -1052,7 +1052,7 @@ export const PresentationTemplateArchitectView: React.FC<
 
             <section
               className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
-              aria-label="Historia wersji wzorca"
+              aria-label={t('presentations.presentationTemplateArchitectView.templateVersionHistory', 'Template version history')}
             >
               <div className="flex items-center justify-between gap-2">
                 <h4 className="text-xs font-semibold text-c-text">Historia wersji</h4>

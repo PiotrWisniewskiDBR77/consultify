@@ -452,8 +452,8 @@ const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) 
     <div>
       <input
         type="text"
-        placeholder="Szukaj w prezentacji…"
-        aria-label="Szukaj w prezentacji"
+        placeholder={t('presentations.builder.blockToolbar.searchThePresentation', 'Search the presentation…')}
+        aria-label={t('presentations.builder.blockToolbar.searchThePresentation2', 'Search the presentation')}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
@@ -786,7 +786,7 @@ const BlockInspector: React.FC<{
             >
               <option value="full">{t('presentations.builder.blockToolbar.full', 'Full')}</option>
               <option value="left">Lewa strona</option>
-              <option value="right">Prawa strona</option>
+              <option value="right">{t('presentations.builder.blockToolbar.rightSide', 'Right side')}</option>
               <option value="top">{t('presentations.builder.blockToolbar.top', 'Top')}</option>
               <option value="bottom">{t('presentations.builder.blockToolbar.bottom', 'Bottom')}</option>
               <option value="overlay">{t('presentations.builder.blockToolbar.overlay', 'Overlay')}</option>

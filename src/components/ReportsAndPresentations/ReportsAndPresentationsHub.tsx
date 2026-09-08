@@ -458,17 +458,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'document' as MaterialFormat,
         icon: FileText,
-        title: t('rap.materialsLauncher.document', 'Dokument'),
+        title: t('rap.materialsLauncher.document', 'Document'),
       },
       {
         id: 'presentation' as MaterialFormat,
         icon: Presentation,
-        title: t('rap.materialsLauncher.presentation', 'Prezentacja'),
+        title: t('rap.materialsLauncher.presentation', 'Presentation'),
       },
       {
         id: 'spreadsheet' as MaterialFormat,
         icon: FileSpreadsheet,
-        title: t('rap.materialsLauncher.spreadsheet', 'Arkusz Excel'),
+        title: t('rap.materialsLauncher.spreadsheet', 'Excel spreadsheet'),
       },
     ],
     [t]
@@ -551,7 +551,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'presentation' as TemplateFormat,
         icon: Presentation,
-        title: t('rap.templatesLauncher.presentation', 'Prezentacja'),
+        title: t('rap.templatesLauncher.presentation', 'Presentation'),
       },
       {
         id: 'spreadsheet' as TemplateFormat,
@@ -568,7 +568,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         id: 'blank' as TemplateStart,
         icon: PenLine,
         title: t('rap.templatesLauncher.blankTitle', 'Od czystego'),
-        desc: t('rap.templatesLauncher.blankDesc', 'Nowy szablon od zera w architekcie.'),
+        desc: t('rap.templatesLauncher.blankDesc', 'A brand-new template built from scratch in the architect.'),
       },
       {
         id: 'ai' as TemplateStart,
@@ -580,7 +580,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         id: 'from_existing' as TemplateStart,
         icon: LayoutTemplate,
         title: t('rap.templatesLauncher.existingTitle', 'Based on an existing one'),
-        desc: t('rap.templatesLauncher.existingDesc', 'Sklonuj zatwierdzony szablon i dostosuj.'),
+        desc: t('rap.templatesLauncher.existingDesc', 'Clone an approved template and adjust it.'),
       },
     ],
     [t]
@@ -922,11 +922,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             type="button"
             onClick={() => setTemplateProvenanceOpen(true)}
             className={`${chipBase} bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-            title={t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}
+            title={t('rap.templates.provenanceQueue', 'Provenance and rights')}
             data-testid="materials-provenance-btn"
           >
             <ShieldCheck size={16} />
-            <span>{t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}</span>
+            <span>{t('rap.templates.provenanceQueue', 'Provenance and rights')}</span>
           </button>
         ) : null}
         <Menu2PresetDropdown
@@ -987,7 +987,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             {(
               [
                 ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
-                ['table', Table2, t('rap.templates.viewTable', 'Tabela')],
+                ['table', Table2, t('rap.templates.viewTable', 'Table')],
               ] as const
             ).map(([id, Icon, label]) => (
               <button
@@ -1303,7 +1303,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         data-testid={testId}
       >
         <ArrowLeft size={14} />
-        {t('rap.templates.backToLibrary', 'Szablony')}
+        {t('rap.templates.backToLibrary', 'Templates')}
       </button>
     </div>
   );
@@ -1538,7 +1538,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       <CreateFormatModeLauncher<TemplateFormat, TemplateStart>
         isOpen={templateLauncherOpen}
         onClose={() => setTemplateLauncherOpen(false)}
-        title={t('rap.templatesLauncher.title', 'Nowy szablon')}
+        title={t('rap.templatesLauncher.title', 'New template')}
         stepOneHint={t('rap.templatesLauncher.subtitle', 'Pick a template type')}
         stepTwoTitle={() => t('rap.materialsLauncher.chooseMode', 'How would you like to start?')}
         stepTwoHint={() =>

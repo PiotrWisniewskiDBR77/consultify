@@ -40,28 +40,28 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'executive-summary',
     label: 'Executive Summary',
-    description: 'Podsumowanie dla zarządu z kluczowymi wnioskami',
+    description: t('reports.premium.aIAssistantPanel.anExecutiveSummaryWithThe', 'An executive summary with the key conclusions'),
     icon: FileText,
     sectionType: 'executiveSummary',
   },
   {
     id: 'gap-analysis',
     label: 'Analiza Luk',
-    description: 'Szczegółowa analiza luk w dojrzałości',
+    description: t('reports.premium.aIAssistantPanel.aDetailedAnalysisOfThe', 'A detailed analysis of the maturity gaps'),
     icon: Target,
     sectionType: 'gapAnalysis',
   },
   {
     id: 'recommendations',
     label: 'Rekomendacje',
-    description: 'Top 10 rekomendacji z priorytyzacją',
+    description: t('reports.premium.aIAssistantPanel.theTop10RecommendationsPrioritised', 'The top 10 recommendations, prioritised'),
     icon: Lightbulb,
     sectionType: 'recommendations',
   },
   {
     id: 'roadmap',
     label: 'Roadmapa Transformacji',
-    description: 'Plan wdrożenia w fazach',
+    description: t('reports.premium.aIAssistantPanel.aPhasedImplementationPlan', 'A phased implementation plan'),
     icon: Map,
     sectionType: 'roadmap',
   },
@@ -227,12 +227,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               <textarea
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Opisz, jaką treść chcesz wygenerować...
-
-Przykłady:
-• Napisz sekcję o kluczowych wyzwaniach w obszarze cyberbezpieczeństwa
-• Stwórz porównanie z benchmarkiem branżowym
-• Zaproponuj KPI dla planu transformacji"
+                placeholder={t(
+                  'reports.premium.aiAssistantPanel.customPromptPlaceholder',
+                  'Describe the content you want to generate...\n\nExamples:\n• Write a section on the key cyber-security challenges\n• Build a comparison against the industry benchmark\n• Propose KPIs for the transformation plan'
+                )}
                 className="w-full h-48 px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

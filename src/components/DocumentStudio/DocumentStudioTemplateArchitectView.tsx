@@ -738,7 +738,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 Zastąpione tym samym neutralnym wzorcem „(wymagane)".
               */}
               <span className="text-xs font-normal text-c-text-muted">
-                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+                ({t('documentStudio.intake.requiredMarker', 'required')})
               </span>
             </span>
             <textarea

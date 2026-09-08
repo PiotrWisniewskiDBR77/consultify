@@ -845,7 +845,7 @@ export const DocumentStudioView: React.FC = () => {
       title: t('documentStudio.blank.title', 'New document'),
       description: t(
         'documentStudio.blank.description',
-        'Pusty dokument roboczy do samodzielnej edycji.'
+        'A blank working document you edit yourself.'
       ),
       documentType: 'generic_document',
       language: 'pl',
@@ -1088,7 +1088,7 @@ export const DocumentStudioView: React.FC = () => {
           intakeGate === 'template-resolving' ? (
             <LoadingState
               variant="spinner"
-              label={t('documentStudio.view.templateResolving', 'Sprawdzam wybrany wzorzec…')}
+              label={t('documentStudio.view.templateResolving', 'Checking the selected template…')}
               className="flex-1"
             />
           ) : intakeGate === 'template-blocked' ? (
@@ -1103,7 +1103,7 @@ export const DocumentStudioView: React.FC = () => {
             // (a nie spinner bez końca ani nieme „Brak wczytanego dokumentu.").
             <BlankCreationState
               status={blankCreateFailed ? 'failed' : 'creating'}
-              creatingLabel={t('documentStudio.blank.creating', 'Tworzenie pustego dokumentu…')}
+              creatingLabel={t('documentStudio.blank.creating', 'Creating a blank document…')}
               failedMessage={
                 error ??
                 t(
@@ -1130,7 +1130,7 @@ export const DocumentStudioView: React.FC = () => {
                 title: t('documentStudio.tri.cleanTitle', 'Czysto'),
                 desc: t(
                   'documentStudio.tri.cleanDesc',
-                  'Pusty dokument w edytorze. Piszesz sam, bez AI.'
+                  'A blank document in the editor. You write it yourself, no AI.'
                 ),
               }}
               ai={{

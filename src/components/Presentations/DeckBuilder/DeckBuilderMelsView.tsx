@@ -308,27 +308,27 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
           case 'qa':
             return {
               ...descriptor,
-              label: 'QA i przegląd',
-              overflowSection: 'QA i przegląd',
+              label: t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionQa', 'QA and review'),
               onClick: () => setArtifactLeftMode('review'),
             };
           case 'history':
             return {
               ...descriptor,
-              label: 'Historia',
-              overflowSection: 'Historia',
+              label: t('presentations.builder.deckBuilderMelsView.history', 'History'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
             };
           case 'audit':
             return {
               ...descriptor,
-              label: 'Dziennik audytu',
-              overflowSection: 'Historia',
+              label: t('presentations.builder.deckBuilderMelsView.auditLog', 'Audit log'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionHistory', 'History'),
             };
           case 'analytics':
             return {
               ...descriptor,
-              label: 'Analityka udostępniania',
-              overflowSection: 'Udostępnianie',
+              label: t('presentations.builder.deckBuilderMelsView.sharingAnalytics', 'Sharing analytics'),
+              overflowSection: t('presentations.builder.deckBuilderMelsView.sectionSharing', 'Sharing'),
             };
           default:
             return descriptor;
@@ -371,7 +371,12 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         aria-label={t('presentations.builder.deckBuilderMelsView.presentationTools', 'Presentation tools')}
       >
         {(
-          [['structure', 'Slajdy'], ...(reviewPanel ? [['review', 'QA i przegląd']] : [])] as Array<
+          [
+            ['structure', t('presentations.builder.deckBuilderMelsView.slides', 'Slides')],
+            ...(reviewPanel
+              ? [['review', t('presentations.builder.deckBuilderMelsView.qaAndReview', 'QA and review')]]
+              : []),
+          ] as Array<
             [typeof artifactLeftMode, string]
           >
         ).map(([mode, label]) => (

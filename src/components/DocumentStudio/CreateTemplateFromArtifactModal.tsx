@@ -161,7 +161,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-c-text">
-              {t('documentStudio.createFromArtifact.nameLabel', 'Nazwa wzorca')}
+              {t('documentStudio.createFromArtifact.nameLabel', 'Template name')}
             </span>
             <input
               type="text"
@@ -236,7 +236,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
 
           <div>
             <span className="text-sm font-medium text-c-text">
-              {t('documentStudio.createFromArtifact.colorQuestion', 'Kolory tego dokumentu')}
+              {t('documentStudio.createFromArtifact.colorQuestion', 'The colours of this document')}
             </span>
             <div className="mt-1.5 space-y-1.5">
               <label className="flex items-start gap-2 text-sm">

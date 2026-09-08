@@ -242,7 +242,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'slideCount',
-        label: t('rap.columns.slides', 'Slajdy'),
+        label: t('rap.columns.slides', 'Slides'),
         width: '90px',
         align: 'right' as const,
         render: (row: Record<string, unknown>) => {
@@ -497,7 +497,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           rekord={
             previewItem ? (
               <StandardPreview
-                title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
+                title={previewItem.title || t('rap.columns.title', 'Presentation')}
                 onClose={() => setSelectedId(null)}
                 onOpenFull={() => openPresentation(previewItem)}
                 meta={previewMeta ? { pills: previewMeta } : undefined}
@@ -505,7 +505,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                   showWordCount: false,
                   text: [
                     `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
-                    `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
+                    `${t('rap.columns.slides', 'Slides')}: ${previewItem.slideCount ?? '—'}`,
                     `${t('common.updated', 'Updated')}: ${
                       previewItem.updatedAt
                         ? new Date(previewItem.updatedAt).toLocaleDateString(

@@ -751,7 +751,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
           }}
           emptyMessage={t('rap.empty.templates', 'No templates')}
-          newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}
+          newItemLabel={t('rap.actions.newTemplate', 'New template')}
         />
         {briefModal}
       </>
@@ -883,7 +883,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                   ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
                   : []),
                 ...(selectedItem.slideCount != null
-                  ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
+                  ? [`${t('rap.preview.slides', 'Slides')}: ${selectedItem.slideCount}`]
                   : []),
                 '',
                 selectedItem.description?.trim() || t('common.noDescription', 'No description'),
@@ -912,7 +912,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               selectedItem.replacedByArtifactId
                 ? [
                     {
-                      label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
+                      label: `${t('rap.preview.replacedBy', 'New template')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
                     },
                   ]
                 : []

@@ -468,7 +468,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             Zastąpione neutralnym słowem: czytelniejsze i zgodne z regułą.
           */}
           <span className="text-xs font-normal text-c-text-muted">
-            ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+            ({t('documentStudio.intake.requiredMarker', 'required')})
           </span>
         </span>
         <textarea

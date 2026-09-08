@@ -148,7 +148,7 @@ export const ReportTemplatesView: React.FC = () => {
         setTemplates((prev) => [response.data.template, ...prev]);
         setName('');
         setDescription('');
-        toast.success(t('reports.toast.templateCreated', 'Szablon utworzony'));
+        toast.success(t('reports.toast.templateCreated', 'Template created'));
       }
     } catch (error) {
       console.error('Failed to create template:', error);

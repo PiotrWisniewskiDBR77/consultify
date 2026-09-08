@@ -205,8 +205,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
             <thead>
               <tr>
                 <th className="text-left py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
-                  Oś
-                </th>
+                  {t('reports.premium.gapHeatmap.axis', 'Axis')}</th>
                 <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
                   Obecny
                 </th>

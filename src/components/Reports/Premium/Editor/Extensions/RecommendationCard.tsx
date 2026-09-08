@@ -47,7 +47,7 @@ const PRIORITY_STYLES = {
   medium: {
     badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     border: 'border-l-yellow-500',
-    label: 'Średni',
+    label: t('reports.premium.recommendationCard.medium', 'Medium'),
   },
   low: {
     badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -58,14 +58,14 @@ const PRIORITY_STYLES = {
 
 const IMPACT_LABELS = {
   high: { label: 'Wysoki', color: 'text-green-600' },
-  medium: { label: 'Średni', color: 'text-yellow-600' },
+  medium: { label: t('reports.premium.recommendationCard.medium2', 'Medium'), color: 'text-yellow-600' },
   low: { label: 'Niski', color: 'text-slate-500 dark:text-slate-400' },
 };
 
 const EFFORT_LABELS = {
-  high: { label: 'Duży', color: 'text-danger-500' },
-  medium: { label: 'Średni', color: 'text-yellow-600' },
-  low: { label: 'Mały', color: 'text-green-600' },
+  high: { label: t('reports.premium.recommendationCard.high', 'High'), color: 'text-danger-500' },
+  medium: { label: t('reports.premium.recommendationCard.medium3', 'Medium'), color: 'text-yellow-600' },
+  low: { label: t('reports.premium.recommendationCard.low', 'Low'), color: 'text-green-600' },
 };
 
 // React component

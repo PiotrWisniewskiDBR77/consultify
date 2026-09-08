@@ -15501,7 +15501,7 @@
       "customType": "Custom"
     },
     "toast": {
-      "chatOpened": "Chat opened",
+      "chatOpened": "Chat opened for this report",
       "chatOpenError": "Failed to open chat",
       "selectProjectFirst": "Select a project first",
       "reportGenerated": "Report generated successfully",
@@ -15867,7 +15867,10 @@
       "targetHeader": "Target",
       "gapHeader": "Gap",
       "priorityHeader": "Priority",
-      "justificationTitle": "Justification"
+      "justificationTitle": "Justification",
+      "gapOf3LevelsOr": "Gap of 3 levels or more",
+      "gapOf2Levels": "Gap of 2 levels",
+      "gapUnder1LevelOr": "Gap under 1 level, or target met"
     },
     "reportGeneratorWizard": {
       "reportTypeSectionLabel": "Report type",
@@ -16060,7 +16063,8 @@
         "noDataToShow": "No data to show",
         "smallGap01": "Small gap (0-1)",
         "medium12": "Medium (1-2)",
-        "largeGap2": "Large gap (2+)"
+        "largeGap2": "Large gap (2+)",
+        "axis": "Axis"
       },
       "maturityRadar": {
         "chartTitle": "Chart title",
@@ -16082,7 +16086,9 @@
         "low": "Low",
         "high": "High",
         "owner": "Owner",
-        "effort2": "Effort"
+        "effort2": "Effort",
+        "medium2": "Medium",
+        "medium3": "Medium"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S to save • \"/\" to insert a block"
@@ -16093,12 +16099,23 @@
         "yourPrompt": "Your prompt",
         "generating": "Generating...",
         "generateContent": "Generate content",
-        "theAiGeneratesContentIn": "The AI generates\n          content in the style of Big 4 consulting reports (McKinsey, BCG), using the Pyramid Principle."
+        "theAiGeneratesContentIn": "The AI generates\n          content in the style of Big 4 consulting reports (McKinsey, BCG), using the Pyramid Principle.",
+        "anExecutiveSummaryWithThe": "An executive summary with the key conclusions",
+        "aDetailedAnalysisOfThe": "A detailed analysis of the maturity gaps",
+        "theTop10RecommendationsPrioritised": "The top 10 recommendations, prioritised",
+        "aPhasedImplementationPlan": "A phased implementation plan"
       },
       "blockInsertMenu": {
         "searchBlocks": "Search blocks...",
         "noBlocksFound": "No blocks found",
-        "navigateEnterSelectEscClose": "↑↓ navigate • Enter select • Esc close"
+        "navigateEnterSelectEscClose": "↑↓ navigate • Enter select • Esc close",
+        "aRadarChartOfThe": "A radar chart of the maturity levels",
+        "aHeatmapShowingTheMaturity": "A heatmap showing the maturity gaps",
+        "cardsWithTheKeyMetrics": "Cards with the key metrics",
+        "aHighlightedInformationBlock": "A highlighted information block",
+        "aDataTable": "A data table",
+        "aRoadmapOrSchedule": "A roadmap or schedule",
+        "anAiGeneratedExecutiveSummary": "An AI-generated executive summary"
       },
       "editorToolbar": {
         "redoCtrlY": "Redo (Ctrl+Y)",
@@ -16112,6 +16129,13 @@
         "centre": "Centre",
         "alignRight": "Align right",
         "insertATable": "Insert a table"
+      },
+      "executiveSummary": {
+        "currentMaturity": "Current maturity",
+        "totalGap": "Total gap"
+      },
+      "aiAssistantPanel": {
+        "customPromptPlaceholder": "Describe the content you want to generate...\n\nExamples:\n• Write a section on the key cyber-security challenges\n• Build a comparison against the industry benchmark\n• Propose KPIs for the transformation plan"
       }
     },
     "reportCommentPanel": {
@@ -24614,7 +24638,10 @@
         "top": "Top",
         "bottom": "Bottom",
         "overlay": "Overlay",
-        "stretch": "Stretch"
+        "stretch": "Stretch",
+        "searchThePresentation": "Search the presentation…",
+        "searchThePresentation2": "Search the presentation",
+        "rightSide": "Right side"
       },
       "deckAuditLogModal": {
         "filterByAction": "Filter by action",
@@ -24639,7 +24666,15 @@
             "presentationQaAndApprovalWorkflow": "Presentation QA and approval workflow",
             "savedDraft": "Saved Draft"
           }
-        }
+        },
+        "qaAndReview": "QA and review",
+        "sharingAnalytics": "Sharing analytics",
+        "sectionQa": "QA and review",
+        "history": "History",
+        "sectionHistory": "History",
+        "auditLog": "Audit log",
+        "sectionSharing": "Sharing",
+        "slides": "Slides"
       },
       "deckGovernanceCardModal": {
         "quality": "Quality",
@@ -24665,7 +24700,8 @@
         "requestChanges": "Request changes",
         "sendThePresentationAgainOnce": "Send the presentation again once it is fixed.",
         "chooseAPerson": "Choose a person",
-        "sendForApproval": "Send for approval"
+        "sendForApproval": "Send for approval",
+        "presentationApproval": "Presentation approval"
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Embed this deck on external websites:"
@@ -25208,7 +25244,8 @@
       "defaultValue": "Default value",
       "restoreAsDraft": "Restore as draft",
       "typedFieldsArePersistedIn": "Typed fields are persisted in the template schema and become the\n                      deck-generation data requirements.",
-      "theCheckPassedTheDraft": "The check passed. The draft is ready to publish."
+      "theCheckPassedTheDraft": "The check passed. The draft is ready to publish.",
+      "templateVersionHistory": "Template version history"
     }
   },
   "finance": {
@@ -29320,7 +29357,7 @@
       "presentation": "Presentation",
       "spreadsheet": "Excel",
       "blankTitle": "From scratch",
-      "blankDesc": "New template from zero in the architect.",
+      "blankDesc": "A brand-new template built from scratch in the architect.",
       "aiTitle": "With AI",
       "aiDesc": "Describe the template — the architect plans the structure.",
       "existingTitle": "Based on an existing one",
@@ -29339,7 +29376,7 @@
     },
     "columns": {
       "name": "Name",
-      "title": "Title",
+      "title": "Presentation",
       "type": "Type",
       "category": "Category",
       "scope": "Scope",
@@ -29413,7 +29450,7 @@
     "preview": {
       "useTemplate": "Use this template",
       "openFull": "Open full",
-      "slides": "slides",
+      "slides": "Slides",
       "deprecated": "Deprecated",
       "scope": "Scope",
       "category": "Category",
@@ -29422,7 +29459,7 @@
       "validationState": "Validation",
       "reviewGates": "Review gates",
       "migrationHint": "Replacement",
-      "replacedBy": "New pattern",
+      "replacedBy": "New template",
       "updatedAt": "Last updated",
       "open": "Preview",
       "source": "Source"
@@ -29664,7 +29701,7 @@
     },
     "templates": {
       "legacySourceLine": "Older template registry — works unchanged",
-      "legacyHint": "Template from the older registry — generation works unchanged.",
+      "legacyHint": "Template from the older registry (report_builder_templates) — generation works unchanged.",
       "ctaFrozen": "Template creation lands in wave 2",
       "viewToggle": "Template library view",
       "allFormats": "All formats",
@@ -29675,7 +29712,10 @@
       "deprecatedUseBlocked": "A deprecated template cannot be used.",
       "useBlocked": "No canonical template record — there is nothing to use.",
       "galleryEmpty": "No template matches these filters.",
-      "statusUnknown": "Unknown"
+      "statusUnknown": "Unknown",
+      "provenanceQueue": "Provenance and rights",
+      "viewTable": "Table",
+      "backToLibrary": "Templates"
     },
     "bundleHistoryPanel": {
       "qualityIsFine": "Quality is fine",
@@ -33446,7 +33486,7 @@
       "optionalHint": "(optional)",
       "dataRefreshQuestion": "Which data should refresh every time (instead of staying as fixed text)?",
       "dataRefreshPlaceholder": "One item per line, e.g. quarterly revenue, risk list",
-      "colorQuestion": "This document's colors",
+      "colorQuestion": "The colours of this document",
       "colorTogether": "Save together with the content (this template always looks the same)",
       "colorSeparate": "Save separately — I'll pick colors each time I use it",
       "colorSeparateHint": "This template will save with no colors — you can pick one now to reuse elsewhere, or do it later in the Template Architect.",
@@ -33526,7 +33566,8 @@
       "requiredSourcePlaceholder": "Paste the content, a URL or the id of an existing attachment",
       "sourceAttachment": "Attachment id",
       "sourceText": "Text",
-      "sourceUrl": "URL"
+      "sourceUrl": "URL",
+      "requiredMarker": "required"
     },
     "outline": {
       "type": "Type",
@@ -34074,7 +34115,21 @@
     },
     "documentTipTapEditor": {
       "uploadOrChangeTheImage": "Upload or change the image",
-      "uploadChangeTheImage": "Upload / change the image"
+      "uploadChangeTheImage": "Upload / change the image",
+      "documentFormatting": "Document formatting",
+      "value": "Value",
+      "plainText": "Plain text",
+      "underlineCtrlCmdU": "Underline (Ctrl/Cmd+U)",
+      "strikethrough": "Strikethrough",
+      "highlight": "Highlight",
+      "highlightColour": "Highlight colour",
+      "addOrEditALink": "Add or edit a link (Ctrl/Cmd+K)",
+      "removeLink": "Remove link",
+      "removeLink2": "Remove link",
+      "find": "Find",
+      "findInTheDocument": "Find in the document",
+      "replace": "Replace",
+      "findAndReplace": "Find and replace"
     },
     "useManualPrompt": {
       "thisCannotBeUndoneOnce": "This cannot be undone once the session is closed.",

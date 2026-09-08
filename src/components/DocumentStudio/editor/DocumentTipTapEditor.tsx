@@ -395,7 +395,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
                 kind: 'bar',
                 title: title.trim(),
                 categories: points.map(([category]) => category),
-                series: [{ label: 'Wartość', values: points.map(([, value]) => Number(value)) }],
+                series: [{ label: t('documentStudio.documentTipTapEditor.value', 'Value'), values: points.map(([, value]) => Number(value)) }],
               }),
             },
           })
@@ -603,13 +603,13 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         <div
           className="mb-3 flex flex-wrap items-center gap-1 rounded-xl border border-c-border bg-c-surface p-1.5"
           role="toolbar"
-          aria-label="Formatowanie dokumentu"
+          aria-label={t('documentStudio.documentTipTapEditor.documentFormatting', 'Document formatting')}
           data-testid="document-formatting-toolbar"
         >
           {[
             {
               label: 'Tekst',
-              title: 'Zwykły tekst',
+              title: t('documentStudio.documentTipTapEditor.plainText', 'Plain text'),
               active: editor.isActive('paragraph'),
               run: () => runBodyBlockCommand(() => editor.chain().focus().setParagraph().run()),
             },
@@ -653,7 +653,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             },
             {
               label: 'U',
-              title: 'Podkreślenie (Ctrl/Cmd+U)',
+              title: t('documentStudio.documentTipTapEditor.underlineCtrlCmdU', 'Underline (Ctrl/Cmd+U)'),
               active: editor.isActive('underline'),
               run: () => {
                 userEditArmedRef.current = true;
@@ -662,7 +662,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             },
             {
               label: 'S',
-              title: 'Przekreślenie',
+              title: t('documentStudio.documentTipTapEditor.strikethrough', 'Strikethrough'),
               active: editor.isActive('strike'),
               run: () => {
                 userEditArmedRef.current = true;
@@ -670,8 +670,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               },
             },
             {
-              label: 'Zakreśl',
-              title: 'Kolor wyróżnienia',
+              label: t('documentStudio.documentTipTapEditor.highlight', 'Highlight'),
+              title: t('documentStudio.documentTipTapEditor.highlightColour', 'Highlight colour'),
               active: editor.isActive('highlight'),
               run: () => {
                 userEditArmedRef.current = true;
@@ -693,7 +693,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             })),
             {
               label: 'Link',
-              title: 'Dodaj lub edytuj link (Ctrl/Cmd+K)',
+              title: t('documentStudio.documentTipTapEditor.addOrEditALink', 'Add or edit a link (Ctrl/Cmd+K)'),
               active: editor.isActive('link'),
               run: () => {
                 void (async () => {
@@ -713,8 +713,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               },
             },
             {
-              label: 'Usuń link',
-              title: 'Usuń link',
+              label: t('documentStudio.documentTipTapEditor.removeLink', 'Remove link'),
+              title: t('documentStudio.documentTipTapEditor.removeLink2', 'Remove link'),
               active: false,
               run: () => {
                 userEditArmedRef.current = true;
@@ -742,8 +742,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               },
             })),
             {
-              label: 'Znajdź',
-              title: 'Znajdź w dokumencie',
+              label: t('documentStudio.documentTipTapEditor.find', 'Find'),
+              title: t('documentStudio.documentTipTapEditor.findInTheDocument', 'Find in the document'),
               active: false,
               run: () => {
                 void findInDocument();
@@ -751,8 +751,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               },
             },
             {
-              label: 'Zamień',
-              title: 'Znajdź i zamień',
+              label: t('documentStudio.documentTipTapEditor.replace', 'Replace'),
+              title: t('documentStudio.documentTipTapEditor.findAndReplace', 'Find and replace'),
               active: false,
               run: () => {
                 void replaceInDocument();

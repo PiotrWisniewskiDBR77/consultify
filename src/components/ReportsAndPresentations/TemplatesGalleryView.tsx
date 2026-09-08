@@ -194,7 +194,7 @@ const LegacyBadge: React.FC<{ t: TFunction }> = ({ t }) => (
   <span
     title={t(
       'rap.templates.legacyHint',
-      'Wzorzec ze starego rejestru (report_builder_templates) — generacja bez zmian.'
+      'Template from the older registry (report_builder_templates) — generation works unchanged.'
     )}
     className="shrink-0 rounded-token-xs border border-c-border bg-c-surface-raised px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted"
   >

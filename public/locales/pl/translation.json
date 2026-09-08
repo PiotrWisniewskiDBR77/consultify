@@ -2140,7 +2140,10 @@
         "top": "Góra",
         "bottom": "Dół",
         "overlay": "Nakładka",
-        "stretch": "Rozciągnij"
+        "stretch": "Rozciągnij",
+        "searchThePresentation": "Szukaj w prezentacji…",
+        "searchThePresentation2": "Szukaj w prezentacji",
+        "rightSide": "Prawa strona"
       },
       "deckAuditLogModal": {
         "filterByAction": "Filtruj według działania",
@@ -2165,7 +2168,15 @@
             "presentationQaAndApprovalWorkflow": "Kontrola jakości i obieg zatwierdzania prezentacji",
             "savedDraft": "Zapisana wersja robocza"
           }
-        }
+        },
+        "qaAndReview": "QA i przegląd",
+        "sharingAnalytics": "Analityka udostępniania",
+        "sectionQa": "QA i przegląd",
+        "history": "Historia",
+        "sectionHistory": "Historia",
+        "auditLog": "Dziennik audytu",
+        "sectionSharing": "Udostępnianie",
+        "slides": "Slajdy"
       },
       "deckGovernanceCardModal": {
         "quality": "Jakość",
@@ -2191,7 +2202,8 @@
         "requestChanges": "Poproś o zmiany",
         "sendThePresentationAgainOnce": "Po poprawkach wyślij prezentację ponownie.",
         "chooseAPerson": "Wybierz osobę",
-        "sendForApproval": "Wyślij do zatwierdzenia"
+        "sendForApproval": "Wyślij do zatwierdzenia",
+        "presentationApproval": "Zatwierdzenie prezentacji"
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Osadź tę prezentację na zewnętrznych stronach:"
@@ -2391,7 +2403,8 @@
       "defaultValue": "Wartość domyślna",
       "restoreAsDraft": "Przywróć jako wersję roboczą",
       "typedFieldsArePersistedIn": "Pola z typem są zapisywane w schemacie wzorca i stają się\n                      wymaganiami danych przy generowaniu prezentacji.",
-      "theCheckPassedTheDraft": "Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji."
+      "theCheckPassedTheDraft": "Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.",
+      "templateVersionHistory": "Historia wersji wzorca"
     },
     "minimalPreview": "Podgląd uproszczony — pełny edytor wkrótce",
     "previewPlaceholder": "Podgląd prezentacji pojawi się tutaj.",
@@ -15481,7 +15494,10 @@
       "targetHeader": "Docelowy",
       "gapHeader": "Luka",
       "priorityHeader": "Priorytet",
-      "justificationTitle": "Uzasadnienie"
+      "justificationTitle": "Uzasadnienie",
+      "gapOf3LevelsOr": "Luka ≥3 poziomów",
+      "gapOf2Levels": "Luka 2 poziomów",
+      "gapUnder1LevelOr": "Luka <1 lub cel osiągnięty"
     },
     "reportGeneratorWizard": {
       "reportTypeSectionLabel": "Typ raportu",
@@ -15674,7 +15690,8 @@
         "noDataToShow": "Brak danych do wyświetlenia",
         "smallGap01": "Mała luka (0-1)",
         "medium12": "Średnia (1-2)",
-        "largeGap2": "Duża luka (2+)"
+        "largeGap2": "Duża luka (2+)",
+        "axis": "Oś"
       },
       "maturityRadar": {
         "chartTitle": "Tytuł wykresu",
@@ -15696,7 +15713,9 @@
         "low": "Mały",
         "high": "Duży",
         "owner": "Właściciel",
-        "effort2": "Nakład"
+        "effort2": "Nakład",
+        "medium2": "Średni",
+        "medium3": "Średni"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S aby zapisać • \"/\" aby wstawić blok"
@@ -15707,12 +15726,23 @@
         "yourPrompt": "Twój prompt",
         "generating": "Generuję...",
         "generateContent": "Generuj treść",
-        "theAiGeneratesContentIn": "AI generuje\n          treści w stylu raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle."
+        "theAiGeneratesContentIn": "AI generuje\n          treści w stylu raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle.",
+        "anExecutiveSummaryWithThe": "Podsumowanie dla zarządu z kluczowymi wnioskami",
+        "aDetailedAnalysisOfThe": "Szczegółowa analiza luk w dojrzałości",
+        "theTop10RecommendationsPrioritised": "Top 10 rekomendacji z priorytyzacją",
+        "aPhasedImplementationPlan": "Plan wdrożenia w fazach"
       },
       "blockInsertMenu": {
         "searchBlocks": "Szukaj bloków...",
         "noBlocksFound": "Nie znaleziono bloków",
-        "navigateEnterSelectEscClose": "↑↓ nawiguj • Enter wybierz • Esc zamknij"
+        "navigateEnterSelectEscClose": "↑↓ nawiguj • Enter wybierz • Esc zamknij",
+        "aRadarChartOfThe": "Wykres radarowy z poziomami dojrzałości",
+        "aHeatmapShowingTheMaturity": "Heatmapa pokazująca luki w dojrzałości",
+        "cardsWithTheKeyMetrics": "Karty z kluczowymi wskaźnikami",
+        "aHighlightedInformationBlock": "Wyróżniony blok informacyjny",
+        "aDataTable": "Tabela z danymi",
+        "aRoadmapOrSchedule": "Roadmapa lub harmonogram",
+        "anAiGeneratedExecutiveSummary": "AI-generowane podsumowanie dla zarządu"
       },
       "editorToolbar": {
         "redoCtrlY": "Ponów (Ctrl+Y)",
@@ -15726,6 +15756,13 @@
         "centre": "Wyśrodkuj",
         "alignRight": "Wyrównaj do prawej",
         "insertATable": "Wstaw tabelę"
+      },
+      "executiveSummary": {
+        "currentMaturity": "Obecna dojrzałość",
+        "totalGap": "Całkowita luka"
+      },
+      "aiAssistantPanel": {
+        "customPromptPlaceholder": "Opisz, jaką treść chcesz wygenerować...\n\nPrzykłady:\n• Napisz sekcję o kluczowych wyzwaniach w obszarze cyberbezpieczeństwa\n• Stwórz porównanie z benchmarkiem branżowym\n• Zaproponuj KPI dla planu transformacji"
       }
     },
     "reportCommentPanel": {
@@ -35340,7 +35377,8 @@
       "submitPlan": "Zaplanuj dokument",
       "contextChip": "Kontekst: {{organizationName}}",
       "sectionBrief": "Treść i tytuł",
-      "blockedReason": "Aby zaplanować dokument, opisz go w co najmniej 10 znakach."
+      "blockedReason": "Aby zaplanować dokument, opisz go w co najmniej 10 znakach.",
+      "requiredMarker": "wymagane"
     },
     "outline": {
       "addSection": "+ Dodaj sekcję",
@@ -35841,7 +35879,21 @@
     },
     "documentTipTapEditor": {
       "uploadOrChangeTheImage": "Wgraj lub zmień obraz",
-      "uploadChangeTheImage": "Wgraj / zmień obraz"
+      "uploadChangeTheImage": "Wgraj / zmień obraz",
+      "documentFormatting": "Formatowanie dokumentu",
+      "value": "Wartość",
+      "plainText": "Zwykły tekst",
+      "underlineCtrlCmdU": "Podkreślenie (Ctrl/Cmd+U)",
+      "strikethrough": "Przekreślenie",
+      "highlight": "Zakreśl",
+      "highlightColour": "Kolor wyróżnienia",
+      "addOrEditALink": "Dodaj lub edytuj link (Ctrl/Cmd+K)",
+      "removeLink": "Usuń link",
+      "removeLink2": "Usuń link",
+      "find": "Znajdź",
+      "findInTheDocument": "Znajdź w dokumencie",
+      "replace": "Zamień",
+      "findAndReplace": "Znajdź i zamień"
     },
     "useManualPrompt": {
       "thisCannotBeUndoneOnce": "Tej operacji nie można cofnąć po zamknięciu sesji.",

@@ -1046,7 +1046,7 @@ export const DeckBuilder: React.FC = () => {
         order_index: idx,
         intent: 'key_messages',
         layout_id: 'content_full',
-        title: t('presentations.builder.defaultContent.newSlide', 'Nowy slajd'),
+        title: t('presentations.builder.defaultContent.newSlide', 'New slide'),
         blocks: [],
         source_refs: [],
         has_refreshable_data: false,
@@ -1608,7 +1608,7 @@ export const DeckBuilder: React.FC = () => {
           title={deck.title}
           onTitleChange={handleTitleChange}
           onBack={handleBackToPresentations}
-          moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
+          moduleLabel={t('presentations.builder.moduleLabel', 'Presentations')}
           backLabel={t('presentations.builder.back', 'Back to presentations')}
           topBarLabels={{
             internal: t('presentations.builder.topBar.internal', 'Internal'),
@@ -1894,10 +1894,10 @@ export const DeckBuilder: React.FC = () => {
               registry={presentationArtifactCommands}
               context={presentationArtifactCommandContext}
               resolveLabel={(label) => label}
-              ariaLabel={t('presentations.builder.contextMenu', 'Menu kontekstowe prezentacji')}
+              ariaLabel={t('presentations.builder.contextMenu', 'Presentation context menu')}
               surfaceAriaLabel={t(
                 'presentations.builder.contextSurface',
-                'Powierzchnia robocza prezentacji'
+                'Presentation workspace'
               )}
               className="min-h-full"
             >
