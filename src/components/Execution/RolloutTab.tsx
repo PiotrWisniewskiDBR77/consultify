@@ -1317,6 +1317,7 @@ const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 // Eksportowany WYŁĄCZNIE po to, by test mógł sprawdzić stan pusty i wykres
 // bez montowania całej zakładki Rollout (RolloutTab.kpiTrend.test.tsx).
 export const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, target }) => {
+  const { t } = useTranslation();
   if (points.length < 2) {
     /*
      * UCZCIWY STAN PUSTY, PO POLSKU I ROZRÓŻNIALNY.
@@ -1330,8 +1331,8 @@ export const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ p
       <div className="h-12 mb-3 rounded border border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center">
         <span className="text-[10px] text-slate-600 dark:text-slate-500">
           {points.length === 1
-            ? 'Jeden pomiar — trend od drugiego'
-            : 'Brak pomiarów — trend pojawi się po dwóch'}
+            ? t('execution.rollout.trend.one', 'One measurement — the trend starts at the second')
+            : t('execution.rollout.trend.none', 'No measurements — the trend appears after two')}
         </span>
       </div>
     );

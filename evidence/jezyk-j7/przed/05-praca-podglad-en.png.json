@@ -1,0 +1,959 @@
+{
+ "ekran": "05-praca-podglad",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=work&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 119,
+ "obcychLiniiUI": 115,
+ "ui": [
+  {
+   "linia": "05 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "11 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "21 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "07 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "15 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "19 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "29 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "14 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "16 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "19 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "26 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "01 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "16 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "22 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "25 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "27 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "29 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "30 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "31 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "01 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "01 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "02 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "02 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "03 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "03 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "05 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "05 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "07 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "07 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "10 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "11 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "11 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "12 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "12 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "14 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "14 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "16 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "17 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "19 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "21 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "21 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "24 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "27 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "29 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "29 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "04 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "07 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "09 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "14 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "19 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "12 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "17 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "13 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "18 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "14 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "19 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "15 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "20 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "18 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "20 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "20 gru 2026",
+   "trafienia": [
+    "gru"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "15 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "18 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "26 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "27 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "18 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "11 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "11 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "01 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "21 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "24 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "24 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "28 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "04 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "05 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "24 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "27 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "Zadanie",
+   "trafienia": [
+    "Zadanie"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "Sprawdź kompletność i następny krok.",
+   "trafienia": [
+    "Sprawdź",
+    "kompletność",
+    "następny"
+   ]
+  },
+  {
+   "linia": "SZCZEGÓŁY PRACY",
+   "trafienia": [
+    "SZCZEGÓŁY"
+   ]
+  },
+  {
+   "linia": "Termin\t05 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "Dowody\tBrak wymaganych dowodów",
+   "trafienia": [
+    "Brak",
+    "dowodów"
+   ]
+  },
+  {
+   "linia": "Brak powiązań",
+   "trafienia": [
+    "Brak",
+    "powiązań"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "Zakończenie audytu bezpieczeństwa",
+   "trafienia": [
+    "Zakończenie",
+    "bezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Złożenie dokumentacji zgodności",
+   "trafienia": [
+    "Złożenie",
+    "zgodności"
+   ]
+  },
+  {
+   "linia": "Naprawa krytycznego błędu produkcyjnego",
+   "trafienia": [
+    "błędu"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Audyt bezpieczeństwa — przegląd konwergencji OT/IT",
+   "trafienia": [
+    "bezpieczeństwa",
+    "przegląd"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Próba migracji danych — środowisko testowe ERP",
+   "trafienia": [
+    "Próba",
+    "danych",
+    "środowisko"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Zdefiniowanie procesu docelowego i kryteriów akceptacji",
+   "trafienia": [
+    "kryteriów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przegląd raportu budżetowego za Q4",
+   "trafienia": [
+    "Przegląd",
+    "budżetowego"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wdrożenie wersji v2.5",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przegląd pull requestów",
+   "trafienia": [
+    "Przegląd",
+    "requestów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Warsztat inicjujący z kluczowymi interesariuszami",
+   "trafienia": [
+    "inicjujący"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przygotowanie demo dla interesariuszy",
+   "trafienia": [
+    "dla"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Pilotaż RPA — automatyzacja przetwarzania faktur",
+   "trafienia": [
+    "Pilotaż"
+   ]
+  },
+  {
+   "linia": "Wdrożenie RPA",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Zarządzanie jakością 4.0 — MVP pulpitu SPC",
+   "trafienia": [
+    "Zarządzanie",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Spotkanie inicjujące i ustalenie zakresu",
+   "trafienia": [
+    "inicjujące"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Prezentacja na standupie zespołu",
+   "trafienia": [
+    "zespołu"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Sesja przeglądu architektury",
+   "trafienia": [
+    "przeglądu"
+   ]
+  },
+  {
+   "linia": "Zarządzanie wydajnością cyfrową",
+   "trafienia": [
+    "Zarządzanie",
+    "wydajnością",
+    "cyfrową"
+   ]
+  }
+ ]
+}

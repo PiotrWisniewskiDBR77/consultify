@@ -1712,7 +1712,7 @@ export const ExecutionReportsSurface = ({
               title={r.title}
               onClose={() => setSelectedId(null)}
               onOpenFull={() => setShowRunEditor(true)}
-              openLabel="Otwórz raport"
+              openLabel={t('executionReports.action.openReport', 'Open report')}
               meta={{
                 pills: [
                   {
@@ -1937,7 +1937,7 @@ export const ExecutionReportsSurface = ({
               </label>
               {advancedRunContract && (
                 <textarea
-                  aria-label="ReportRun draft JSON"
+                  aria-label={t('executionReports.runDraftJson', 'Report run draft JSON')}
                   value={draftJson}
                   onChange={(e) => setDraftJson(e.target.value)}
                   className="mt-2 min-h-36 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"

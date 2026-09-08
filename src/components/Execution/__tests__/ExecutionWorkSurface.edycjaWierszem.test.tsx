@@ -28,10 +28,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => {
-      if (typeof fallback === 'string') return fallback;
+    // J7b: mock podstawia teraz `{{zmienne}}` — komunikat błędu przejścia
+    // statusu jest zdaniem z interpolacją, a bez podstawienia asercja
+    // porównywałaby surowy wzorzec.
+    t: (k: string, fallback?: unknown, opcje?: Record<string, unknown>) => {
+      const podstaw = (wzorzec: string, dane: Record<string, unknown>) =>
+        wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(dane[name] ?? ''));
+      if (typeof fallback === 'string') return opcje ? podstaw(fallback, opcje) : fallback;
       if (fallback && typeof fallback === 'object' && 'defaultValue' in (fallback as any))
-        return String((fallback as any).defaultValue);
+        return podstaw(
+          String((fallback as any).defaultValue),
+          fallback as Record<string, unknown>
+        );
       return k;
     },
     i18n: { language: 'pl' },
@@ -273,7 +281,8 @@ describe('P16-R2 (b) — błąd serwera nie może być ciszą', () => {
 
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
     const komunikat = String(toastError.mock.calls[0][0]);
-    expect(komunikat).toContain('Nie można zmienić statusu');
+    // J7b: domyślny komunikat w kodzie jest angielski (patrz nota przy mocku).
+    expect(komunikat).toContain('The status cannot change from');
     expect(komunikat).not.toContain('Cannot transition');
     expect(toastSuccess).not.toHaveBeenCalled();
   });

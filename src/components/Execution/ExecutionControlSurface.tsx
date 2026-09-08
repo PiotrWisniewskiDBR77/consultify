@@ -2298,8 +2298,15 @@ export const ExecutionControlSurface = ({
       </div>
     );
   return (
-    <section aria-label="Decyzje i ryzyka" className="flex h-full min-h-0 flex-col p-4">
-      {state === 'LOADING' && <p role="status">Ładowanie rejestru decyzji i ryzyk…</p>}
+    <section
+      aria-label={t('execution.control.title', 'Decisions and risks')}
+      className="flex h-full min-h-0 flex-col p-4"
+    >
+      {state === 'LOADING' && (
+        <p role="status">
+          {t('execution.control.loading', 'Loading the decisions and risks register…')}
+        </p>
+      )}
       {/*
         1.12-R1 (C): GŁÓWNA treść zakładki — rejestr decyzji i pozycji RAID
         z realnych tabel. Stoi PRZED warsztatem `runtime-v1`, bo to jest to,
@@ -3248,7 +3255,9 @@ export const ExecutionControlSurface = ({
                         tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
                       },
                     ],
-                    recommendation: `Project ${row.signal.projectId ?? 'UNKNOWN'} · Reguła ${row.rule}`,
+                    recommendation: `${t('execution.signals.project', 'Project')} ${
+                      row.signal.projectId ?? 'UNKNOWN'
+                    } · ${t('execution.signals.field.ruleId', 'Detection rule')}: ${row.rule}`,
                   }}
                   details={{
                     label: t('execution.signals.singleTitle', 'Management signal'),
@@ -3283,7 +3292,7 @@ export const ExecutionControlSurface = ({
                       {
                         id: 'add-to-intervention',
                         variant: 'neutral',
-                        label: 'Dodaj do przygotowywanej interwencji',
+                        label: t('execution.signals.addToIntervention', 'Add to the prepared intervention'),
                         onClick: () => {
                           setShowInterventionForm(true);
                           setDraftSignalIds((current) =>
@@ -3550,7 +3559,7 @@ export const ExecutionControlSurface = ({
                   {t('execution.intervention.useJson', 'Use the JSON contract instead of the form')}
                 </label>
                 <textarea
-                  aria-label="Intervention draft JSON"
+                  aria-label={t('execution.intervention.draftJson', 'Intervention draft JSON')}
                   value={draftJson}
                   onChange={(e) => setDraftJson(e.target.value)}
                   disabled={!advancedJson}
@@ -3657,7 +3666,12 @@ export const ExecutionControlSurface = ({
                     }
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="">Wybierz dokładną opcję zmiany kolejności</option>
+                    <option value="">
+                      {t(
+                        'execution.plan.pickResequenceOption',
+                        'Pick the exact resequencing option'
+                      )}
+                    </option>
                     {capacityOptions.map((x) => (
                       <option key={x.comparisonId} value={x.comparisonId}>
                         {x.comparisonId} v{x.version} · {x.selectedOptionId} · Plan{' '}

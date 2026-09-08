@@ -1,22 +1,22 @@
 {
   "_meta": {
-    "data": "2026-09-08T10:29:25.236Z",
-    "root": "/private/tmp/wt-j7",
-    "sha": "0738c5eaff5803f1a8f7697095ddb7f9135eca09"
+    "data": "2026-09-08T12:24:41.838Z",
+    "root": "/private/tmp/wt-j7b",
+    "sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95"
   },
   "suma": {
-    "K1": 3,
-    "K1def": 1219,
+    "K1": 2,
+    "K1def": 1218,
     "K1defWID": 236,
     "K2": 12,
-    "K3a": 1856,
+    "K3a": 1818,
     "K3aKLUCZ": 429,
     "K3b": 7,
-    "K4pl": 1087,
-    "K4en": 1364,
+    "K4pl": 969,
+    "K4en": 1283,
     "K5pl": 258,
     "K5en": 1822,
-    "K7": 883
+    "K7": 849
   },
   "moduly": {
     "01 Chat": {
@@ -104,18 +104,18 @@
       "K7": 19
     },
     "07 Execution": {
-      "K1": 1,
-      "K1def": 1,
+      "K1": 0,
+      "K1def": 0,
       "K1defWID": 0,
       "K2": 1,
-      "K3a": 38,
+      "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 118,
-      "K4en": 86,
+      "K4pl": 0,
+      "K4en": 5,
       "K5pl": 0,
       "K5en": 63,
-      "K7": 35
+      "K7": 1
     },
     "08 Results": {
       "K1": 0,
@@ -260,12 +260,6 @@
   },
   "przyklady": {
     "K1": [
-      {
-        "modul": "07 Execution",
-        "gdzie": "public/locales/en/translation.json:execution.reports.intelligence.generator.contextOnlyWarning",
-        "tekst": "Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fie",
-        "dowod": "pl:brak"
-      },
       {
         "modul": "ZZ wspólne",
         "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
@@ -1783,7 +1777,6 @@
     "server/src/routes/settings.routes.ts": 43,
     "src/views/legal/PrivacyPolicyView.tsx": 42,
     "server/src/routes/presentations.routes.ts": 42,
-    "src/components/Execution/ReportDocumentView.tsx": 39,
     "server/src/controllers/InterviewController.ts": 39,
     "src/components/Presentations/DeckBuilder/BlockToolbar.tsx": 37,
     "server/src/routes/auth.routes.ts": 37,
@@ -1796,6 +1789,7 @@
     "src/views/superadmin/revenue/PartnerSettlementsView.tsx": 34,
     "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
     "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
-    "server/src/routes/ai/ai-settings.routes.ts": 32
+    "server/src/routes/ai/ai-settings.routes.ts": 32,
+    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31
   }
 }

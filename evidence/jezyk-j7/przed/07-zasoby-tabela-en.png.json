@@ -1,0 +1,579 @@
+{
+ "ekran": "07-zasoby-tabela",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=resources&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 72,
+ "obcychLiniiUI": 65,
+ "ui": [
+  {
+   "linia": "Stan na 8.09.2026 · osób 8 · popyt 0 h · podaż 2560 h · obłożenie 0 % · przeciążonych tygodni 0 · zaległość 833 h u 7 os.",
+   "trafienia": [
+    "Stan",
+    "osób",
+    "popyt",
+    "podaż",
+    "obłożenie",
+    "przeciążonych",
+    "tygodni",
+    "zaległość"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 07.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 14.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 21.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 28.09.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 05.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 12.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 19.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  },
+  {
+   "linia": "od 26.10.2026",
+   "trafienia": [
+    "od"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski · Platform SuperAdmin",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  }
+ ]
+}

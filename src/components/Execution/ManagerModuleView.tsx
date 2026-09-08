@@ -306,7 +306,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
           onClick={toggleAiTriage}
           disabled={loading || rows.length === 0}
           className={getMenu3AiButtonClass(workspaceMode === 'triage')}
-          title="AI Triage — cluster and prioritize problems"
+          title="{t('execution.manager.triageLead', 'AI Triage — cluster and prioritize problems')}"
         >
           <Layers size={12} />
           AI Triage
@@ -316,7 +316,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
           onClick={toggleActionPlan}
           disabled={loading || rows.length === 0}
           className={getMenu3AiButtonClass(workspaceMode === 'action-plan')}
-          title="Action Plan — operational moves and follow-up"
+          title="{t('execution.manager.actionPlanLead', 'Action Plan — operational moves and follow-up')}"
         >
           <Sparkles size={12} />
           Action Plan

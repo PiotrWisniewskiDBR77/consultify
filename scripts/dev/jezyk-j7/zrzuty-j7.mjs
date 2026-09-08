@@ -84,8 +84,17 @@ const EN_SLOWA = new Set([
   'decision','decisions','report','reports','level','period','author','status','task','tasks','people','demand',
   'supply','utilisation','utilization','backlog','week','weeks','overdue','blocked','signals','signal','none',
   'assumption','dependency','issue','of','as','no','yes','add','review','published','draft','done','pending',
-  'jan','feb','mar','apr','jun','jul','aug','sep','oct','nov','dec',
+  // Miesiące po angielsku BEZ 'jan' i 'mar': „Jan" to polskie imię (Jan Kowalski
+  // w danych pokazowych), a „mar" to polski skrót marca — oba dawały fałszywe
+  // trafienia w PL (zmierzone 08.09 na zrzucie 07-zasoby-tabela-pl).
+  'feb','apr','jun','jul','aug','sep','oct','nov','dec',
 ]);
+/**
+ * Słowa IDENTYCZNE w obu językach — nie są dowodem obcego języka w żadną
+ * stronę. „Status" po polsku to „status"; liczenie go jako angielszczyzny
+ * zawyżało wynik PL o jedno trafienie na każdym ekranie z tabelą.
+ */
+const NEUTRALNE = new Set(['status', 'kpi', 'raid', 'sla', 'ok', 'pmo', 'roi', 'ai']);
 
 function liniePodejrzane(text, lang) {
   const wynik = { ui: [], dane: [] };
@@ -98,12 +107,14 @@ function liniePodejrzane(text, lang) {
     if (lang === 'en') {
       for (const w of slowa) {
         const l = w.toLowerCase();
+        if (NEUTRALNE.has(l)) continue;
         if (DIAKRYTYKI.test(w) || PL_SLOWA.has(l)) trafienia.push(w);
       }
     } else {
       if (DIAKRYTYKI.test(czysty)) continue; // linia z polskimi znakami = polska
       for (const w of slowa) {
         const l = w.toLowerCase();
+        if (NEUTRALNE.has(l)) continue;
         if (EN_SLOWA.has(l)) trafienia.push(w);
       }
     }

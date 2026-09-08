@@ -159,7 +159,7 @@ const otworzPodglad = async () => {
   );
   const komorka = await screen.findAllByText(/Piotr Wiśniewski/);
   await uzytkownik.click(komorka[0]);
-  await screen.findByText('Zaległość');
+  await screen.findByText('Backlog');
   return uzytkownik;
 };
 
@@ -168,14 +168,14 @@ describe('Zasoby — podgląd osoby nazywa okno liczby zadań (DEC-453)', () => 
     await otworzPodglad();
 
     expect(screen.getAllByText('341 h').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Zadania')).not.toBeInTheDocument();
-    expect(screen.getByText('Zadania w tym tygodniu')).toBeInTheDocument();
+    expect(screen.queryByText('Tasks')).not.toBeInTheDocument();
+    expect(screen.getByText('Tasks this week')).toBeInTheDocument();
   });
 
   it('pokazuje, z ilu zadań zaległość jest policzona', async () => {
     await otworzPodglad();
 
-    expect(screen.getByText('Zadania zaległe')).toBeInTheDocument();
+    expect(screen.getByText('Overdue tasks')).toBeInTheDocument();
     expect(screen.getByText('102')).toBeInTheDocument();
   });
 });

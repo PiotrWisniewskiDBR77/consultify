@@ -298,7 +298,11 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     zamontuj('ryzyka');
     await waitFor(() => expect(screen.getByText('Ryzyko 0')).toBeInTheDocument());
     expect(wierszeZ('Ryzyko')).toHaveLength(16);
-    expect(screen.getAllByText('Ryzyko').length).toBeGreaterThan(0); // etykieta typu
+    // [ODMROZENIE 06_EXECUTION DEC-453] J7b: mock `t` zwraca DOMYŚLNY tekst
+    // z kodu, a ten jest od 08.09 ANGIELSKI (zasada §2.3 PLANU językowego —
+    // polski żyje wyłącznie w `public/locales/pl/`). Asercje sprawdzają ten
+    // sam kontrakt, tylko w języku, który realnie stoi w kodzie.
+    expect(screen.getAllByText('Risk').length).toBeGreaterThan(0); // etykieta typu
   });
 
   /*

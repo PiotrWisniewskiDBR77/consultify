@@ -1,0 +1,179 @@
+{
+ "faza": "po",
+ "sumy": {
+  "en": 0,
+  "pl": 0
+ },
+ "ekrany": [
+  {
+   "ekran": "01-kokpit",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "02-realizacje-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "03-realizacje-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "04-praca-tabela",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "05-praca-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "06-praca-nowe-zadanie",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "07-zasoby-tabela",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "08-zasoby-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "09-decyzje-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "10-decyzje-nowa",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "11-ryzyka-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "12-ryzyka-nowa-raid",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "13-ryzyka-kebab",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "14-sygnaly",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "15-raporty-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "16-raporty-dodaj-menu",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "17-kanban",
+   "jezyk": "en",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "01-kokpit",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "02-realizacje-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "03-realizacje-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "04-praca-tabela",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "05-praca-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "06-praca-nowe-zadanie",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "07-zasoby-tabela",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "08-zasoby-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "09-decyzje-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "10-decyzje-nowa",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "11-ryzyka-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "12-ryzyka-nowa-raid",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "13-ryzyka-kebab",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "14-sygnaly",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "15-raporty-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "16-raporty-dodaj-menu",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  },
+  {
+   "ekran": "17-kanban",
+   "jezyk": "pl",
+   "obcychSlowUI": 0
+  }
+ ]
+}

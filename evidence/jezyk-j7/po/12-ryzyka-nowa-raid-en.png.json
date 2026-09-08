@@ -1,0 +1,83 @@
+{
+ "ekran": "12-ryzyka-nowa-raid",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=control&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Poprawa realizacji korzyści programu",
+   "trafienia": [
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Krzysztof Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Paweł Mroczkowski",
+   "trafienia": [
+    "Paweł"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  }
+ ]
+}

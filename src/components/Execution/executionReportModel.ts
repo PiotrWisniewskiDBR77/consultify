@@ -431,7 +431,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, 'Postęp i harmonogram'),
+          title: sectionTitle(0, "Progress and schedule"),
           narrative: t('executionReports.narrative.ownerProgress', '{{initiatives}} initiatives are in progress. Open tasks: {{open}}, of which {{overdue}} overdue. On-time rate: {{onTime}}.',
             {
               initiatives: d.deliveryInitiatives.length,
@@ -449,7 +449,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(1, 'Kamienie milowe'),
+          title: sectionTitle(1, "Milestones"),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
         t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
@@ -458,7 +458,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'overdue',
-          title: sectionTitle(2, 'Zadania po terminie'),
+          title: sectionTitle(2, "Overdue tasks"),
           table: { columns: taskColumns, rows: d.overdueTasks.slice(0, 20).map(taskRow) },
         },
         noData('tasks')
@@ -466,7 +466,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'blockers',
-          title: sectionTitle(3, 'Blokady'),
+          title: sectionTitle(3, "Blockers"),
           table: { columns: taskColumns, rows: d.blockedTasks.slice(0, 20).map(taskRow) },
         },
         noData('tasks')
@@ -474,7 +474,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, 'Decyzje ode mnie'),
+          title: sectionTitle(4, "Decisions I owe"),
           table: { columns: decisionColumns, rows: d.openDecisions.slice(0, 20).map(decisionRow) },
         },
         noData('decisions')
@@ -485,7 +485,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, 'Podsumowanie postępu'),
+          title: sectionTitle(0, "Progress summary"),
           narrative: t('executionReports.narrative.weeklyProgress', 'Period {{start}} – {{end}}. Tasks completed: {{done}}. Open and overdue: {{overdue}}. Blocked: {{blocked}}. Decisions awaiting resolution: {{decisions}}.',
             {
               start: date(period.start),
@@ -502,7 +502,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'blockers',
-          title: sectionTitle(1, 'Blokady i eskalacje'),
+          title: sectionTitle(1, "Blockers and escalations"),
           table: { columns: taskColumns, rows: d.blockedTasks.slice(0, 20).map(taskRow) },
           bullets: d.escalatedDecisions
             .slice(0, 8)
@@ -518,7 +518,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'overdue',
-          title: sectionTitle(2, 'Pozycje po terminie'),
+          title: sectionTitle(2, "Overdue items"),
           table: { columns: taskColumns, rows: d.overdueTasks.slice(0, 25).map(taskRow) },
         },
         noData('tasks')
@@ -526,7 +526,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(3, 'Najbliższe kamienie'),
+          title: sectionTitle(3, "Next milestones"),
           table: { columns: milestoneColumns, rows: milestoneRows },
         },
         t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
@@ -535,7 +535,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, 'Potrzebne decyzje'),
+          title: sectionTitle(4, "Decisions needed"),
           table: {
             columns: decisionColumns,
             rows: d.overdueDecisions
@@ -578,7 +578,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'rag',
-          title: sectionTitle(0, 'RAG per inicjatywa'),
+          title: sectionTitle(0, "RAG per initiative"),
           table: { columns: healthColumns, rows: healthRows },
         },
         noData('initiatives')
@@ -586,7 +586,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'alerts',
-          title: sectionTitle(1, 'Alerty okresu'),
+          title: sectionTitle(1, "Priority alerts"),
           bullets: d.criticalSignals
             .slice(0, 12)
             .map((signal) =>
@@ -613,7 +613,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'confidence',
-          title: sectionTitle(2, 'Pewność dowiezienia'),
+          title: sectionTitle(2, "Delivery confidence"),
           narrative: t('executionReports.narrative.confidence', 'On time: {{onTime}}. Initiatives with a delay signal: {{withSignals}} of {{total}}. Open RAID items: {{risks}}, of which high-risk: {{highRisks}}.',
             {
               onTime:
@@ -636,7 +636,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'narrative',
-          title: sectionTitle(3, 'Narracja'),
+          title: sectionTitle(3, "Narrative"),
           narrative: t('executionReports.narrative.program', 'Period rating: {{rag}} — {{reason}} Biggest deviation: {{worst}}. Recommendation: unblock {{blocked}} tasks and close {{overdueDecisions}} overdue decisions before the next review.',
             {
               rag: ragLabel[rag],
@@ -645,7 +645,7 @@ export function buildExecutionReportSnapshot(args: {
                 ? `${text(d.criticalSignals[0]?.entityName)} (${Number(
                     d.criticalSignals[0]?.daysDeviation ?? 0
                   )} dni)`
-                : t('executionReports.value.none', 'brak'),
+                : t('executionReports.value.none', 'none'),
               blocked: d.blockedTasks.length,
               overdueDecisions: d.overdueDecisions.length,
             }
@@ -656,7 +656,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(4, 'Decyzje do podjęcia'),
+          title: sectionTitle(4, "Decisions to take"),
           table: {
             columns: decisionColumns,
             rows: d.escalatedDecisions.slice(0, 20).map(decisionRow),
@@ -676,7 +676,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'progress',
-          title: sectionTitle(0, 'Postęp'),
+          title: sectionTitle(0, "Overall progress"),
           narrative: t('executionReports.narrative.sponsorProgress', '{{initiatives}} initiatives in progress. Completed this period: {{done}} tasks. Overdue: {{overdue}}. Period rating: {{rag}}.',
             {
               initiatives: d.deliveryInitiatives.length,
@@ -691,7 +691,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'risks',
-          title: sectionTitle(1, 'TOP 3 ryzyka'),
+          title: sectionTitle(1, "Top 3 risks"),
           table: {
             columns: riskColumns,
             rows: d.openRisks.slice(0, 3).map((item) => ({
@@ -707,7 +707,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'milestones',
-          title: sectionTitle(2, 'Najbliższe kamienie'),
+          title: sectionTitle(2, "Next milestones"),
           table: { columns: milestoneColumns, rows: milestoneRows.slice(0, 5) },
         },
         t('executionReports.empty.milestones', 'No data — milestones don\'t exist yet as a separate object (Wave R3 package); showing initiative end dates instead.'
@@ -716,7 +716,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'decisions',
-          title: sectionTitle(3, 'Decyzje od sponsora'),
+          title: sectionTitle(3, "Decisions required from sponsor"),
           table: {
             columns: decisionColumns,
             rows: d.escalatedDecisions.slice(0, 6).map(decisionRow),
@@ -727,7 +727,7 @@ export function buildExecutionReportSnapshot(args: {
       emptyOr(
         {
           id: 'wins',
-          title: sectionTitle(4, 'Osiągnięcia okresu'),
+          title: sectionTitle(4, "Key achievements"),
           bullets: d.doneInPeriod.slice(0, 5).map((task) => text(task?.title)),
         },
         noData('tasks')

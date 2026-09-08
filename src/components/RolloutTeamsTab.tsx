@@ -1,4 +1,5 @@
 import { Briefcase, Mail, Plus, Trash2, UserPlus, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 
 import { FullSession } from '../types';
@@ -9,6 +10,7 @@ interface RolloutTeamsTabProps {
 }
 
 export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate }) => {
+  const { t } = useTranslation();
   // Default roles if none exist
   const defaultRoles = [
     {
@@ -67,7 +69,7 @@ export const RolloutTeamsTab: React.FC<RolloutTeamsTabProps> = ({ data, onUpdate
           Program Governance & Teams
         </h2>
         <p className="text-slate-500 dark:text-slate-400">
-          Define the organizational structure, roles, and workstreams.
+          {t('rollout.teams.lead', 'Define the organizational structure, roles, and workstreams.')}
         </p>
       </div>
 

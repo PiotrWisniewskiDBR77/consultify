@@ -1,0 +1,54 @@
+{
+ "ekran": "03-realizacje-podglad",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=list&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Poprawa realizacji korzyści programu",
+   "trafienia": [
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Inicjatywa powiązana z analizą ROI „Automatyzacja magazynu WIP\".",
+   "trafienia": [
+    "powiązana",
+    "analizą"
+   ]
+  }
+ ]
+}

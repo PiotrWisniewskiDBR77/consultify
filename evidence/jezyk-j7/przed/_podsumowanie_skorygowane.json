@@ -1,0 +1,213 @@
+{
+ "uwaga": "Liczby PRZED przeliczone TYM SAMYM (poprawionym) przyrzadem co PO. Poprawka dotyczy wylacznie falszywych trafien: „Status” (slowo identyczne w obu jezykach) oraz — po stronie wykrywania angielszczyzny w PL — „Jan” (imie w danych DBR77) i „mar” (skrot marca w obu jezykach). Detekcja polszczyzny w EN nie zmienila sie ani o jedno slowo.",
+ "sumy": {
+  "en": 653,
+  "pl": 1
+ },
+ "ekrany": [
+  {
+   "ekran": "01-kokpit",
+   "jezyk": "en",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1
+  },
+  {
+   "ekran": "01-kokpit",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "02-realizacje-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "02-realizacje-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "03-realizacje-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "03-realizacje-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "04-praca-tabela",
+   "jezyk": "en",
+   "obcychSlowUI": 108,
+   "obcychLiniiUI": 108
+  },
+  {
+   "ekran": "04-praca-tabela",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "05-praca-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 119,
+   "obcychLiniiUI": 115
+  },
+  {
+   "ekran": "05-praca-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "06-praca-nowe-zadanie",
+   "jezyk": "en",
+   "obcychSlowUI": 108,
+   "obcychLiniiUI": 108
+  },
+  {
+   "ekran": "06-praca-nowe-zadanie",
+   "jezyk": "pl",
+   "obcychSlowUI": 1,
+   "obcychLiniiUI": 1
+  },
+  {
+   "ekran": "07-zasoby-tabela",
+   "jezyk": "en",
+   "obcychSlowUI": 72,
+   "obcychLiniiUI": 65
+  },
+  {
+   "ekran": "07-zasoby-tabela",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "08-zasoby-podglad",
+   "jezyk": "en",
+   "obcychSlowUI": 97,
+   "obcychLiniiUI": 80
+  },
+  {
+   "ekran": "08-zasoby-podglad",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "09-decyzje-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 22,
+   "obcychLiniiUI": 22
+  },
+  {
+   "ekran": "09-decyzje-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "10-decyzje-nowa",
+   "jezyk": "en",
+   "obcychSlowUI": 22,
+   "obcychLiniiUI": 22
+  },
+  {
+   "ekran": "10-decyzje-nowa",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "11-ryzyka-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 8,
+   "obcychLiniiUI": 8
+  },
+  {
+   "ekran": "11-ryzyka-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "12-ryzyka-nowa-raid",
+   "jezyk": "en",
+   "obcychSlowUI": 12,
+   "obcychLiniiUI": 12
+  },
+  {
+   "ekran": "12-ryzyka-nowa-raid",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "13-ryzyka-kebab",
+   "jezyk": "en",
+   "obcychSlowUI": 8,
+   "obcychLiniiUI": 8
+  },
+  {
+   "ekran": "13-ryzyka-kebab",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "14-sygnaly",
+   "jezyk": "en",
+   "obcychSlowUI": 64,
+   "obcychLiniiUI": 64
+  },
+  {
+   "ekran": "14-sygnaly",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "15-raporty-lista",
+   "jezyk": "en",
+   "obcychSlowUI": 6,
+   "obcychLiniiUI": 5
+  },
+  {
+   "ekran": "15-raporty-lista",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "16-raporty-dodaj-menu",
+   "jezyk": "en",
+   "obcychSlowUI": 6,
+   "obcychLiniiUI": 5
+  },
+  {
+   "ekran": "16-raporty-dodaj-menu",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "17-kanban",
+   "jezyk": "en",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  },
+  {
+   "ekran": "17-kanban",
+   "jezyk": "pl",
+   "obcychSlowUI": 0,
+   "obcychLiniiUI": 0
+  }
+ ]
+}

@@ -33,12 +33,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => {
-      if (typeof fallback === 'string') return fallback;
+    // J7b: obsługa TRZECIEGO argumentu `t(klucz, 'domyślny {{x}}', { x })` —
+    // bez niej mock oddawał wzorzec z nietkniętym `{{x}}` i asercja na
+    // interpolowanym zdaniu nie mogła przejść.
+    t: (k: string, fallback?: unknown, opcje?: Record<string, unknown>) => {
+      const podstaw = (wzorzec: string, dane: Record<string, unknown>) =>
+        wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(dane[name] ?? ''));
+      if (typeof fallback === 'string') return opcje ? podstaw(fallback, opcje) : fallback;
       if (fallback && typeof fallback === 'object') {
         const opts = fallback as Record<string, unknown>;
         const wzorzec = typeof opts.defaultValue === 'string' ? opts.defaultValue : k;
-        return wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(opts[name] ?? ''));
+        return podstaw(wzorzec, opts);
       }
       return k;
     },
@@ -261,7 +266,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     renderSurface({ onRegisterFilterControl: registerFilterControl });
 
     await waitFor(() =>
-      expect(screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)).toBeInTheDocument()
+      expect(screen.getByText(/Resources could not be fetched from 1 deliveries/)).toBeInTheDocument()
     );
     const lastNode = registerFilterControl.mock.calls.at(-1)?.[0];
     const registered = render(<MemoryRouter>{lastNode as React.ReactNode}</MemoryRouter>);
@@ -284,7 +289,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     renderSurface();
 
     await waitFor(
-      () => expect(screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)).toBeInTheDocument(),
+      () => expect(screen.getByText(/Resources could not be fetched from 1 deliveries/)).toBeInTheDocument(),
       { timeout: 3000 }
     );
   });
@@ -322,7 +327,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     await waitFor(() =>
       expect(screen.getByTestId('execution-resources-case-unreachable')).toBeInTheDocument()
     );
-    expect(screen.getByText(/Ta realizacja nie odpowiada: Akceptacja ACO/)).toBeInTheDocument();
+    expect(screen.getByText(/This delivery is not responding: Akceptacja ACO/)).toBeInTheDocument();
   });
 
   it('CTA „Dodaj dostępność" zapisuje etat i przelicza plan', async () => {

@@ -12,10 +12,12 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
 import { type ArtifactType, getArtifactPath } from '../../utils/artifactLinks';
+import { formatListNumber, localeListy } from '../../utils/listDateFormat';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -25,6 +27,15 @@ import {
   type ReportDataContext,
   type ReportDef,
 } from './executionReports';
+
+/**
+ * J7b: tytuły i podpisy sekcji raportu były ANGIELSKIE WPROST (86 trafień K4en
+ * w module 07), więc konto polskie czytało „This week at a glance". Renderery
+ * są module-scope (poza komponentem), więc tłumaczenie idzie przez instancję
+ * `i18next`, tak samo jak w `src/utils/listDateFormat.ts`.
+ */
+const tr = (klucz: string, domyslny: string): string => i18n.t(klucz, domyslny) as string;
+
 
 /* ────────────────────────────────────────────────────────────────────────────
    Types
@@ -77,7 +88,8 @@ const formatDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  // J7b: locale z KONTA, nie przybite 'en-GB'.
+  return date.toLocaleDateString(localeListy(), { day: '2-digit', month: 'short' });
 };
 
 const daysPastDue = (value?: string | null) => {
@@ -636,8 +648,8 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="This week at a glance"
-        subtitle="Initiatives requiring immediate operational reaction."
+        title={tr("executionReports.doc.thisWeekAtAGlance", "This week at a glance")}
+        subtitle={tr("executionReports.doc.initiativesRequiringImmediateOperationalReaction", "Initiatives requiring immediate operational reaction.")}
         accent="cyan"
       >
         <DataTable
@@ -659,8 +671,8 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
       </Section>
 
       <Section
-        title="Next 7 days focus"
-        subtitle="Tasks and milestones that can silently slip this week."
+        title={tr("executionReports.doc.next7DaysFocus", "Next 7 days focus")}
+        subtitle={tr("executionReports.doc.tasksAndMilestonesThatCanSilentlySlipThis", "Tasks and milestones that can silently slip this week.")}
         accent="violet"
       >
         <DataTable
@@ -689,8 +701,8 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
       </Section>
 
       <Section
-        title="Decision queue"
-        subtitle="Decisions blocking tasks or shifting milestones."
+        title={tr("executionReports.doc.decisionQueue", "Decision queue")}
+        subtitle={tr("executionReports.doc.decisionsBlockingTasksOrShiftingMilestones", "Decisions blocking tasks or shifting milestones.")}
         accent="amber"
       >
         <DataTable
@@ -717,8 +729,8 @@ const weeklyRenderer: Renderer = (data, _report, nav) => {
       </Section>
 
       <Section
-        title="Execution hygiene gaps"
-        subtitle="Data weaknesses that degrade operational control."
+        title={tr("executionReports.doc.executionHygieneGaps", "Execution hygiene gaps")}
+        subtitle={tr("executionReports.doc.dataWeaknessesThatDegradeOperationalControl", "Data weaknesses that degrade operational control.")}
         accent="rose"
       >
         <DataTable
@@ -761,8 +773,8 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Portfolio control list"
-        subtitle="Initiatives for PMO review with real operational exceptions."
+        title={tr("executionReports.doc.portfolioControlList", "Portfolio control list")}
+        subtitle={tr("executionReports.doc.initiativesForPmoReviewWithRealOperationalExceptions", "Initiatives for PMO review with real operational exceptions.")}
         accent="violet"
       >
         <DataTable
@@ -781,8 +793,8 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
       </Section>
 
       <Section
-        title="Milestone & schedule exceptions"
-        subtitle="What is actually drifting on the timeline."
+        title={tr("executionReports.doc.milestoneScheduleExceptions", "Milestone & schedule exceptions")}
+        subtitle={tr("executionReports.doc.whatIsActuallyDriftingOnTheTimeline", "What is actually drifting on the timeline.")}
         accent="amber"
       >
         <DataTable
@@ -805,13 +817,13 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
                 formatDate(m.targetDate),
               ]),
           ]}
-          emptyText="No schedule exceptions."
+          emptyText={tr("executionReports.doc.empty.noScheduleExceptions", "No schedule exceptions.")}
         />
       </Section>
 
       <Section
-        title="Budget & staffing exceptions"
-        subtitle="Exceptions already touching budget or capacity."
+        title={tr("executionReports.doc.budgetStaffingExceptions", "Budget & staffing exceptions")}
+        subtitle={tr("executionReports.doc.exceptionsAlreadyTouchingBudgetOrCapacity", "Exceptions already touching budget or capacity.")}
         accent="rose"
       >
         <DataTable
@@ -836,13 +848,13 @@ const monthlyPmoRenderer: Renderer = (data, _report, nav) => {
                 a.suggestion,
               ]),
           ]}
-          emptyText="No budget or staffing exceptions."
+          emptyText={tr("executionReports.doc.empty.noBudgetOrStaffingExceptions", "No budget or staffing exceptions.")}
         />
       </Section>
 
       <Section
-        title="Governance exceptions"
-        subtitle="Items that should enter PMO review or steering."
+        title={tr("executionReports.doc.governanceExceptions", "Governance exceptions")}
+        subtitle={tr("executionReports.doc.itemsThatShouldEnterPmoReviewOrSteering", "Items that should enter PMO review or steering.")}
         accent="cyan"
       >
         <DataTable
@@ -885,8 +897,8 @@ const programHealthRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Program health register"
-        subtitle="One line per initiative: what erodes delivery confidence."
+        title={tr("executionReports.doc.programHealthRegister", "Program health register")}
+        subtitle={tr("executionReports.doc.oneLinePerInitiativeWhatErodesDeliveryConfidence", "One line per initiative: what erodes delivery confidence.")}
         accent="cyan"
       >
         <DataTable
@@ -904,8 +916,8 @@ const programHealthRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Risk & delay drivers"
-        subtitle="Strongest signals degrading program health."
+        title={tr("executionReports.doc.riskDelayDrivers", "Risk & delay drivers")}
+        subtitle={tr("executionReports.doc.strongestSignalsDegradingProgramHealth", "Strongest signals degrading program health.")}
         accent="rose"
       >
         <DataTable
@@ -926,13 +938,13 @@ const programHealthRenderer: Renderer = (data, report, nav) => {
                 <span className={severityText(d.severity)}>{d.severity ?? '—'}</span>,
               ]),
           ]}
-          emptyText="No risk or delay signals."
+          emptyText={tr("executionReports.doc.empty.noRiskOrDelaySignals", "No risk or delay signals.")}
         />
       </Section>
 
       <Section
-        title="What is turning red"
-        subtitle="Initiatives that need rescue now, not monitoring."
+        title={tr("executionReports.doc.whatIsTurningRed", "What is turning red")}
+        subtitle={tr("executionReports.doc.initiativesThatNeedRescueNowNotMonitoring", "Initiatives that need rescue now, not monitoring.")}
         accent="amber"
       >
         <DataTable
@@ -950,13 +962,13 @@ const programHealthRenderer: Renderer = (data, report, nav) => {
               </span>,
               formatDate(r.targetDate),
             ])}
-          emptyText="No initiatives in red/amber zone."
+          emptyText={tr("executionReports.doc.empty.noInitiativesInRedAmberZone", "No initiatives in red/amber zone.")}
         />
       </Section>
 
       <Section
-        title="Steering implications"
-        subtitle="Decisions the steering committee should take."
+        title={tr("executionReports.doc.steeringImplications", "Steering implications")}
+        subtitle={tr("executionReports.doc.decisionsTheSteeringCommitteeShouldTake", "Decisions the steering committee should take.")}
         accent="violet"
       >
         <ActionCards actions={report.aiRecommendedActions} />
@@ -972,8 +984,8 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Blocked initiatives recovery board"
-        subtitle="What is stuck, why, and what work sits behind it."
+        title={tr("executionReports.doc.blockedInitiativesRecoveryBoard", "Blocked initiatives recovery board")}
+        subtitle={tr("executionReports.doc.whatIsStuckWhyAndWhatWorkSits", "What is stuck, why, and what work sits behind it.")}
         accent="rose"
       >
         <DataTable
@@ -987,13 +999,13 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
             `${r.overdueTasks}/${r.openTasks}`,
             `${r.overdueDecisions}/${r.pendingDecisions}`,
           ])}
-          emptyText="No blocked initiatives."
+          emptyText={tr("executionReports.doc.empty.noBlockedInitiatives", "No blocked initiatives.")}
         />
       </Section>
 
       <Section
-        title="Tasks stalled behind blockers"
-        subtitle="Tasks that cannot move until the initiative is unblocked."
+        title={tr("executionReports.doc.tasksStalledBehindBlockers", "Tasks stalled behind blockers")}
+        subtitle={tr("executionReports.doc.tasksThatCannotMoveUntilTheInitiativeIs", "Tasks that cannot move until the initiative is unblocked.")}
         accent="amber"
       >
         <DataTable
@@ -1011,13 +1023,13 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
               t.assigneeName ?? '—',
               formatDate(t.dueDate),
             ])}
-          emptyText="No stalled tasks."
+          emptyText={tr("executionReports.doc.empty.noStalledTasks", "No stalled tasks.")}
         />
       </Section>
 
       <Section
-        title="Escalation path"
-        subtitle="Decisions and alerts that should be escalated."
+        title={tr("executionReports.doc.escalationPath", "Escalation path")}
+        subtitle={tr("executionReports.doc.decisionsAndAlertsThatShouldBeEscalated", "Decisions and alerts that should be escalated.")}
         accent="violet"
       >
         <DataTable
@@ -1041,11 +1053,11 @@ const blockersRecoveryRenderer: Renderer = (data, report, nav) => {
                 <span className={severityText(a.severity)}>{a.severity}</span>,
               ]),
           ]}
-          emptyText="No escalation items."
+          emptyText={tr("executionReports.doc.empty.noEscalationItems", "No escalation items.")}
         />
       </Section>
 
-      <Section title="Recovery options" subtitle="Actions to unblock delivery." accent="emerald">
+      <Section title={tr("executionReports.doc.recoveryOptions", "Recovery options")} subtitle={tr("executionReports.doc.actionsToUnblockDelivery", "Actions to unblock delivery.")} accent="emerald">
         <ActionCards actions={report.aiRecommendedActions} />
       </Section>
     </div>
@@ -1064,8 +1076,8 @@ const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Slippage register"
-        subtitle="Initiatives with real drift against the committed plan."
+        title={tr("executionReports.doc.slippageRegister", "Slippage register")}
+        subtitle={tr("executionReports.doc.initiativesWithRealDriftAgainstTheCommittedPlan", "Initiatives with real drift against the committed plan.")}
         accent="amber"
       >
         <DataTable
@@ -1082,13 +1094,13 @@ const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
               {r.timelineWarnings}
             </span>,
           ])}
-          emptyText="No slippage signals."
+          emptyText={tr("executionReports.doc.empty.noSlippageSignals", "No slippage signals.")}
         />
       </Section>
 
       <Section
-        title="Baseline vs forecast gaps"
-        subtitle="Missing dates or plan weaknesses that corrupt forecast."
+        title={tr("executionReports.doc.baselineVsForecastGaps", "Baseline vs forecast gaps")}
+        subtitle={tr("executionReports.doc.missingDatesOrPlanWeaknessesThatCorruptForecast", "Missing dates or plan weaknesses that corrupt forecast.")}
         accent="rose"
       >
         <DataTable
@@ -1123,8 +1135,8 @@ const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Next milestones at risk"
-        subtitle="Milestones to track day by day."
+        title={tr("executionReports.doc.nextMilestonesAtRisk", "Next milestones at risk")}
+        subtitle={tr("executionReports.doc.milestonesToTrackDayByDay", "Milestones to track day by day.")}
         accent="violet"
       >
         <DataTable
@@ -1138,13 +1150,13 @@ const milestoneSlippageRenderer: Renderer = (data, report, nav) => {
               data.timelineWarnings.find((w) => w.initiativeId === m.initiativeId)?.message ??
                 'Monitor',
             ])}
-          emptyText="No upcoming milestones."
+          emptyText={tr("executionReports.doc.empty.noUpcomingMilestones", "No upcoming milestones.")}
         />
       </Section>
 
       <Section
-        title="Recovery timeline"
-        subtitle="How to restore delivery predictability."
+        title={tr("executionReports.doc.recoveryTimeline", "Recovery timeline")}
+        subtitle={tr("executionReports.doc.howToRestoreDeliveryPredictability", "How to restore delivery predictability.")}
         accent="emerald"
       >
         <AiInsightStrip
@@ -1179,8 +1191,8 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Governed capacity alerts"
-        subtitle="People already overloaded per control tower."
+        title={tr("executionReports.doc.governedCapacityAlerts", "Governed capacity alerts")}
+        subtitle={tr("executionReports.doc.peopleAlreadyOverloadedPerControlTower", "People already overloaded per control tower.")}
         accent="rose"
       >
         <DataTable
@@ -1192,13 +1204,13 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
             <span className="text-danger-400 font-medium">{a.overloadHours}h</span>,
             a.suggestion,
           ])}
-          emptyText="No governed capacity alerts."
+          emptyText={tr("executionReports.doc.empty.noGovernedCapacityAlerts", "No governed capacity alerts.")}
         />
       </Section>
 
       <Section
-        title="Task load by assignee"
-        subtitle="Where the work actually sits."
+        title={tr("executionReports.doc.taskLoadByAssignee", "Task load by assignee")}
+        subtitle={tr("executionReports.doc.whereTheWorkActuallySits", "Where the work actually sits.")}
         accent="violet"
       >
         <DataTable
@@ -1223,8 +1235,8 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
       </Section>
 
       <Section
-        title="4-week horizon"
-        subtitle="Is capacity enough for the upcoming weeks."
+        title={tr("executionReports.doc.4WeekHorizon", "4-week horizon")}
+        subtitle={tr("executionReports.doc.isCapacityEnoughForTheUpcomingWeeks", "Is capacity enough for the upcoming weeks.")}
         accent="cyan"
       >
         <DataTable
@@ -1243,13 +1255,13 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
                 {w.availableHours}
               </span>,
             ])}
-          emptyText="No capacity timeline."
+          emptyText={tr("executionReports.doc.empty.noCapacityTimeline", "No capacity timeline.")}
         />
       </Section>
 
       <Section
-        title="Tasks to reassign"
-        subtitle="Highest-risk tasks sitting on overloaded people."
+        title={tr("executionReports.doc.tasksToReassign", "Tasks to reassign")}
+        subtitle={tr("executionReports.doc.highestRiskTasksSittingOnOverloadedPeople", "Highest-risk tasks sitting on overloaded people.")}
         accent="amber"
       >
         <DataTable
@@ -1267,7 +1279,7 @@ const capacityUtilizationRenderer: Renderer = (data, _report, nav) => {
               t.initiativeName ?? '—',
               formatDate(t.dueDate),
             ])}
-          emptyText="No tasks need reassignment."
+          emptyText={tr("executionReports.doc.empty.noTasksNeedReassignment", "No tasks need reassignment.")}
         />
       </Section>
     </div>
@@ -1280,8 +1292,8 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Overspend register"
-        subtitle="Initiatives showing dangerous variance."
+        title={tr("executionReports.doc.overspendRegister", "Overspend register")}
+        subtitle={tr("executionReports.doc.initiativesShowingDangerousVariance", "Initiatives showing dangerous variance.")}
         accent="rose"
       >
         <DataTable
@@ -1295,17 +1307,17 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
               s.initiativeName
             ),
             s.signalType,
-            s.plannedAmount.toLocaleString(),
-            s.actualAmount.toLocaleString(),
+            formatListNumber(s.plannedAmount),
+            formatListNumber(s.actualAmount),
             <span className="text-danger-400 font-medium">{Math.round(s.variancePercent)}%</span>,
           ])}
-          emptyText="No overspend signals."
+          emptyText={tr("executionReports.doc.empty.noOverspendSignals", "No overspend signals.")}
         />
       </Section>
 
       <Section
-        title="Execution impact of spend variance"
-        subtitle="Is variance already translating into delivery risk."
+        title={tr("executionReports.doc.executionImpactOfSpendVariance", "Execution impact of spend variance")}
+        subtitle={tr("executionReports.doc.isVarianceAlreadyTranslatingIntoDeliveryRisk", "Is variance already translating into delivery risk.")}
         accent="amber"
       >
         <DataTable
@@ -1321,13 +1333,13 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
             </span>,
             r.progress != null ? `${r.progress}%` : '—',
           ])}
-          emptyText="No execution impact visible."
+          emptyText={tr("executionReports.doc.empty.noExecutionImpactVisible", "No execution impact visible.")}
         />
       </Section>
 
       <Section
-        title="Work items inside overspending initiatives"
-        subtitle="What to inspect before a finance decision."
+        title={tr("executionReports.doc.workItemsInsideOverspendingInitiatives", "Work items inside overspending initiatives")}
+        subtitle={tr("executionReports.doc.whatToInspectBeforeAFinanceDecision", "What to inspect before a finance decision.")}
         accent="violet"
       >
         <DataTable
@@ -1345,13 +1357,13 @@ const budgetVarianceRenderer: Renderer = (data, report, nav) => {
               t.assigneeName ?? '—',
               formatDate(t.dueDate),
             ])}
-          emptyText="No work items linked to overspend."
+          emptyText={tr("executionReports.doc.empty.noWorkItemsLinkedToOverspend", "No work items linked to overspend.")}
         />
       </Section>
 
       <Section
-        title="Finance actions"
-        subtitle="What to do before variance becomes a sponsor-level problem."
+        title={tr("executionReports.doc.financeActions", "Finance actions")}
+        subtitle={tr("executionReports.doc.whatToDoBeforeVarianceBecomesASponsor", "What to do before variance becomes a sponsor-level problem.")}
         accent="emerald"
       >
         <ActionCards actions={report.aiRecommendedActions} />
@@ -1372,8 +1384,8 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Pending decisions queue"
-        subtitle="Full approvals queue still not resolved."
+        title={tr("executionReports.doc.pendingDecisionsQueue", "Pending decisions queue")}
+        subtitle={tr("executionReports.doc.fullApprovalsQueueStillNotResolved", "Full approvals queue still not resolved.")}
         accent="amber"
       >
         <DataTable
@@ -1397,11 +1409,11 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
             </span>,
             <span className={severityText(d.priority)}>{d.priority ?? '—'}</span>,
           ])}
-          emptyText="No pending decisions."
+          emptyText={tr("executionReports.doc.empty.noPendingDecisions", "No pending decisions.")}
         />
       </Section>
 
-      <Section title="Aging buckets" subtitle="How fast decision debt is growing." accent="rose">
+      <Section title={tr("executionReports.doc.agingBuckets", "Aging buckets")} subtitle={tr("executionReports.doc.howFastDecisionDebtIsGrowing", "How fast decision debt is growing.")} accent="rose">
         <DataTable
           headers={['Bucket', 'Count']}
           rows={Object.entries(buckets).map(([bucket, count]) => [
@@ -1414,8 +1426,8 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Initiatives waiting on decisions"
-        subtitle="Initiatives that cannot move without a decision."
+        title={tr("executionReports.doc.initiativesWaitingOnDecisions", "Initiatives waiting on decisions")}
+        subtitle={tr("executionReports.doc.initiativesThatCannotMoveWithoutADecision", "Initiatives that cannot move without a decision.")}
         accent="violet"
       >
         <DataTable
@@ -1430,13 +1442,13 @@ const decisionBacklogRenderer: Renderer = (data, report, nav) => {
             </span>,
             r.blocked ? <span className="text-danger-400">Yes</span> : 'No',
           ])}
-          emptyText="No initiatives waiting on decisions."
+          emptyText={tr("executionReports.doc.empty.noInitiativesWaitingOnDecisions", "No initiatives waiting on decisions.")}
         />
       </Section>
 
       <Section
-        title="Escalation candidates"
-        subtitle="What to escalate rather than continue monitoring."
+        title={tr("executionReports.doc.escalationCandidates", "Escalation candidates")}
+        subtitle={tr("executionReports.doc.whatToEscalateRatherThanContinueMonitoring", "What to escalate rather than continue monitoring.")}
         accent="cyan"
       >
         <ActionCards actions={report.aiRecommendedActions} />
@@ -1460,8 +1472,8 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Dependency conflict register"
-        subtitle="Explicit dependency conflicts from control tower."
+        title={tr("executionReports.doc.dependencyConflictRegister", "Dependency conflict register")}
+        subtitle={tr("executionReports.doc.explicitDependencyConflictsFromControlTower", "Explicit dependency conflicts from control tower.")}
         accent="rose"
       >
         <DataTable
@@ -1471,13 +1483,13 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
             <span className={severityText(w.severity)}>{w.severity}</span>,
             w.message,
           ])}
-          emptyText="No explicit dependency conflicts."
+          emptyText={tr("executionReports.doc.empty.noExplicitDependencyConflicts", "No explicit dependency conflicts.")}
         />
       </Section>
 
       <Section
-        title="Critical chains"
-        subtitle="Initiatives with the highest combination of decisions, tasks and warnings."
+        title={tr("executionReports.doc.criticalChains", "Critical chains")}
+        subtitle={tr("executionReports.doc.initiativesWithTheHighestCombinationOfDecisionsTasks", "Initiatives with the highest combination of decisions, tasks and warnings.")}
         accent="amber"
       >
         <DataTable
@@ -1496,8 +1508,8 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Broken links"
-        subtitle="Where one initiative's problem is already spreading."
+        title={tr("executionReports.doc.brokenLinks", "Broken links")}
+        subtitle={tr("executionReports.doc.whereOneInitiativeSProblemIsAlreadySpreading", "Where one initiative's problem is already spreading.")}
         accent="violet"
       >
         <DataTable
@@ -1515,8 +1527,8 @@ const crossDependencyRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Upstream / downstream impact"
-        subtitle="What will be hit next if nothing is done."
+        title={tr("executionReports.doc.upstreamDownstreamImpact", "Upstream / downstream impact")}
+        subtitle={tr("executionReports.doc.whatWillBeHitNextIfNothingIs", "What will be hit next if nothing is done.")}
         accent="cyan"
       >
         <AiInsightStrip
@@ -1533,8 +1545,8 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Confidence register"
-        subtitle="The most practical view: will we deliver and why not."
+        title={tr("executionReports.doc.confidenceRegister", "Confidence register")}
+        subtitle={tr("executionReports.doc.theMostPracticalViewWillWeDeliverAnd", "The most practical view: will we deliver and why not.")}
         accent="cyan"
       >
         <DataTable
@@ -1554,8 +1566,8 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
       </Section>
 
       <Section
-        title="Drivers of erosion"
-        subtitle="What is destroying confidence in practice."
+        title={tr("executionReports.doc.driversOfErosion", "Drivers of erosion")}
+        subtitle={tr("executionReports.doc.whatIsDestroyingConfidenceInPractice", "What is destroying confidence in practice.")}
         accent="rose"
       >
         <DataTable
@@ -1583,18 +1595,18 @@ const deliveryConfidenceRenderer: Renderer = (data, report, nav) => {
                 <span className={severityText(d.severity)}>{d.severity ?? '—'}</span>,
               ]),
           ]}
-          emptyText="No confidence erosion drivers."
+          emptyText={tr("executionReports.doc.empty.noConfidenceErosionDrivers", "No confidence erosion drivers.")}
         />
       </Section>
 
       <Section
-        title="Scenario outlook"
-        subtitle="What happens if current exceptions go without reaction."
+        title={tr("executionReports.doc.scenarioOutlook", "Scenario outlook")}
+        subtitle={tr("executionReports.doc.whatHappensIfCurrentExceptionsGoWithoutReaction", "What happens if current exceptions go without reaction.")}
         accent="amber"
       >
         <AiInsightStrip
           items={report.scenarioNotes ?? []}
-          emptyText="No scenario notes generated."
+          emptyText={tr("executionReports.doc.empty.noScenarioNotesGenerated", "No scenario notes generated.")}
         />
       </Section>
     </div>
@@ -1615,16 +1627,16 @@ const sponsorOnePagerRenderer: Renderer = (data, report, nav) => {
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       <Section
-        title="Sponsor summary"
-        subtitle="What the sponsor should understand in 60 seconds."
+        title={tr("executionReports.doc.sponsorSummary", "Sponsor summary")}
+        subtitle={tr("executionReports.doc.whatTheSponsorShouldUnderstandIn60Seconds", "What the sponsor should understand in 60 seconds.")}
         accent="violet"
       >
         <AiInsightStrip items={report.aiExecutiveReadout.slice(0, 3)} />
       </Section>
 
       <Section
-        title="Initiatives needing sponsor attention"
-        subtitle="Where the sponsor can actually help unblock delivery."
+        title={tr("executionReports.doc.initiativesNeedingSponsorAttention", "Initiatives needing sponsor attention")}
+        subtitle={tr("executionReports.doc.whereTheSponsorCanActuallyHelpUnblockDelivery", "Where the sponsor can actually help unblock delivery.")}
         accent="rose"
       >
         <DataTable
@@ -1637,13 +1649,13 @@ const sponsorOnePagerRenderer: Renderer = (data, report, nav) => {
             r.owner ?? '—',
             formatDate(r.targetDate),
           ])}
-          emptyText="No sponsor-level issues."
+          emptyText={tr("executionReports.doc.empty.noSponsorLevelIssues", "No sponsor-level issues.")}
         />
       </Section>
 
       <Section
-        title="Top achievements"
-        subtitle="Proof of progress worth showing the sponsor."
+        title={tr("executionReports.doc.topAchievements", "Top achievements")}
+        subtitle={tr("executionReports.doc.proofOfProgressWorthShowingTheSponsor", "Proof of progress worth showing the sponsor.")}
         accent="emerald"
       >
         <DataTable
@@ -1658,13 +1670,13 @@ const sponsorOnePagerRenderer: Renderer = (data, report, nav) => {
             r.owner ?? '—',
             formatDate(data.nextMilestones.find((m) => m.initiativeId === r.id)?.targetDate),
           ])}
-          emptyText="No notable achievements yet."
+          emptyText={tr("executionReports.doc.empty.noNotableAchievementsYet", "No notable achievements yet.")}
         />
       </Section>
 
       <Section
-        title="Sponsor asks"
-        subtitle="Decisions and support needed from the sponsor."
+        title={tr("executionReports.doc.sponsorAsks", "Sponsor asks")}
+        subtitle={tr("executionReports.doc.decisionsAndSupportNeededFromTheSponsor", "Decisions and support needed from the sponsor.")}
         accent="cyan"
       >
         <ActionCards actions={report.aiRecommendedActions} />
@@ -1897,7 +1909,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
           {renderer ? (
             renderer(data, safeReport, navigate)
           ) : (
-            <Section title="Report Template" subtitle="This report type is not configured yet.">
+            <Section title={tr("executionReports.doc.reportTemplate", "Report Template")} subtitle={tr("executionReports.doc.thisReportTypeIsNotConfiguredYet", "This report type is not configured yet.")}>
               <AiInsightStrip items={['No renderer found for this report type.']} />
             </Section>
           )}

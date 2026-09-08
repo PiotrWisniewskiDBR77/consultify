@@ -17,10 +17,12 @@ import {
   User,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { Api } from '../../services/api';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface AuditEntry {
   id: string;
@@ -62,6 +64,7 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId }) => {
+  const { t } = useTranslation();
   const { isDemo } = useDemoSession();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,7 +191,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    return formatListDate(date);
   };
 
   const uniqueDomains = Array.from(new Set(entries.map((e) => e.pmoDomainId)));
@@ -204,7 +207,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
             Audit Trail
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Complete history of all PMO actions with standards mapping
+            {t('pmo.audit.subtitle', 'Complete history of all PMO actions with standards mapping')}
           </p>
         </div>
         <button
@@ -239,10 +242,10 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
           onChange={(e) => setDateRange(e.target.value as 'today' | 'week' | 'month' | 'all')}
           className="px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          <option value="today">Today</option>
-          <option value="week">Last 7 days</option>
-          <option value="month">Last 30 days</option>
-          <option value="all">All time</option>
+          <option value="today">{t('pmo.audit.today', 'Today')}</option>
+          <option value="week">{t('pmo.audit.last7', 'Last 7 days')}</option>
+          <option value="month">{t('pmo.audit.last30', 'Last 30 days')}</option>
+          <option value="all">{t('pmo.audit.allTime', 'All time')}</option>
         </select>
 
         {/* Domain Filter */}
@@ -303,7 +306,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         {loading ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">
             <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-            Loading audit trail...
+            {t('pmo.audit.loading', 'Loading audit trail…')}
           </div>
         ) : filteredEntries.length === 0 ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">

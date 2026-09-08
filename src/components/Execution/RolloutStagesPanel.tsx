@@ -7,6 +7,7 @@
  * done). Behind the `rolloutStages` flag (default OFF). Fails soft.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
@@ -37,10 +38,10 @@ const STATUS_STYLE: Record<Stage['status'], string> = {
 };
 
 const STATUS_LABEL: Record<Stage['status'], string> = {
-  not_started: 'nie rozpoczęty',
-  active: 'aktywny',
-  gated: 'bramka',
-  done: 'zakończony',
+  not_started: 'not started',
+  active: 'active',
+  gated: 'gated',
+  done: 'done',
 };
 
 interface Props {
@@ -48,6 +49,7 @@ interface Props {
 }
 
 export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
+  const { t } = useTranslation();
   const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -110,8 +112,12 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
       data-testid="rollout-stages-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-c-text">Fale wdrożenia (rollout stages)</h3>
-        <span className="text-xs text-c-text-muted">{stages.length}/5 fal</span>
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('execution.rollout.stages.title', 'Rollout waves')}
+        </h3>
+        <span className="text-xs text-c-text-muted">
+          {t('execution.rollout.stages.count', '{{count}}/5 waves', { count: stages.length })}
+        </span>
       </div>
 
       {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
@@ -124,8 +130,8 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
           <EmptyState
             variant="error"
             compact
-            title="Nie udało się wczytać fal wdrożenia"
-            description="Sprawdź uprawnienia MANAGE_ROLLOUT."
+            title={t('execution.rollout.stages.loadFailed', 'Could not load the rollout waves')}
+            description={t('execution.rollout.permissionHint', 'Check the MANAGE_ROLLOUT permission.')}
             onRetry={() => void load()}
           />
         </div>
@@ -151,7 +157,7 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
                     <span
                       className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLE[stage.status]}`}
                     >
-                      {STATUS_LABEL[stage.status]}
+                      {t(`execution.rollout.stages.status.${stage.status}`, STATUS_LABEL[stage.status])}
                     </span>
                     {stage.status !== 'done' && (
                       <button
@@ -171,7 +177,7 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
                     onClick={() => void createWave(wave)}
                     className="mt-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised disabled:opacity-50"
                   >
-                    {busy === wave ? '…' : '+ utwórz'}
+                    {busy === wave ? '…' : `+ ${t('execution.rollout.stages.create', 'create')}`}
                   </button>
                 )}
               </div>

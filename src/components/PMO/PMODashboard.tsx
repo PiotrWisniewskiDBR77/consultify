@@ -1,7 +1,9 @@
 import { Activity, Briefcase, LayoutDashboard, Target } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 export const PMODashboard: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex items-center justify-between mb-8">
@@ -11,7 +13,7 @@ export const PMODashboard: React.FC = () => {
         </h1>
         <div className="flex gap-4">
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            New Initiative
+            {t('pmo.dashboard.newInitiative', 'New Initiative')}
           </button>
         </div>
       </div>

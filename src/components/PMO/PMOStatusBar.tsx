@@ -11,6 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { usePMOContext } from '../../hooks/usePMOContext';
 
@@ -19,6 +20,7 @@ import { usePMOContext } from '../../hooks/usePMOContext';
  * Shows at the top of the app when a project is selected
  */
 export const PMOStatusBar: React.FC = () => {
+  const { t } = useTranslation();
   const {
     currentPhase,
     phaseNumber,
@@ -40,7 +42,7 @@ export const PMOStatusBar: React.FC = () => {
       <div className="bg-c-surface border-b border-c-border-subtle text-c-text h-10 px-4 flex items-center">
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
           <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-navy-800/300 animate-pulse" />
-          <span className="text-xs">Loading PMO context...</span>
+          <span className="text-xs">{t('pmo.statusBar.loading', 'Loading PMO context…')}</span>
         </div>
       </div>
     );

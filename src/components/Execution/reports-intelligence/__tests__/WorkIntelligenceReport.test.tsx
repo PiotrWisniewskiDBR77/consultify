@@ -146,11 +146,11 @@ describe('Work Intelligence report', () => {
     expect(screen.getByRole('heading', { name: 'What is approaching' })).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'What is at stake' })).toBeInTheDocument();
-    expect(screen.getByText(/BRAK_API_BSC/)).toBeInTheDocument();
+    expect(screen.getByText(/NO_API_BSC/)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Why it is happening' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'How the system is changing' })).toBeInTheDocument();
-    expect(screen.getByText('UNKNOWN · BRAK_API_HISTORY')).toBeInTheDocument();
+    expect(screen.getByText('UNKNOWN · NO_API_HISTORY')).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'What management should do' })).toBeInTheDocument();
     expect(screen.getByText(/No recommendation is issued/)).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe('Work Intelligence report', () => {
     expect(
       await screen.findByText('No work records are available for the selected scope.')
     ).toBeInTheDocument();
-    expect(screen.getByText('UNKNOWN · BRAK_API_HISTORY')).toBeInTheDocument();
+    expect(screen.getByText('UNKNOWN · NO_API_HISTORY')).toBeInTheDocument();
   });
 
   it('opens the governed task tool from the exact register row', async () => {

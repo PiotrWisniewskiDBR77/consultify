@@ -1,0 +1,28 @@
+{
+ "ekran": "01-kokpit",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=summary&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table&kokpit=ryzyka",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  }
+ ]
+}

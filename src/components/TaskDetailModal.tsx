@@ -16,9 +16,11 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 import {
   DecisionImpact,
@@ -52,6 +54,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
     language = 'EN',
     initiative,
   }) => {
+    const { t } = useTranslation();
     const [task, setTask] = useState<Task>({ ...initialTask });
     const [activeTab, setActiveTab] = useState<
       'strategy' | 'execution' | 'evidence' | 'dependencies' | 'history'
@@ -332,7 +335,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       <Target size={16} className="text-c-info" /> Expected Strategic Outcome
                     </h3>
                     <p className="text-xs text-c-text-muted mb-2">
-                      What specifically will change in the business once this task is done?
+                      {t(
+                        'task.strategy.outcomeHint',
+                        'What specifically will change in the business once this task is done?'
+                      )}
                     </p>
                     <textarea
                       value={task.expectedOutcome || ''}
@@ -396,7 +402,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                               })
                             }
                             className="w-full bg-c-surface border border-c-border-subtle rounded px-2 py-1.5 text-xs text-c-text placeholder:text-c-text-muted"
-                            placeholder="If successful, we will..."
+                            placeholder={t('task.strategy.successPlaceholder', 'If successful, we will…')}
                           />
                         </div>
                       </div>
@@ -426,12 +432,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs font-bold text-c-info flex items-center gap-2">
-                        <Target size={14} /> Task Weight (Progress Impact)
+                        <Target size={14} /> {t('task.weight.title', 'Task Weight (Progress Impact)')}
                       </h3>
                       <span className="text-lg font-bold text-c-info">{task.weight || 1}x</span>
                     </div>
                     <p className="text-[10px] text-c-text-muted mb-3">
-                      Higher weight = more contribution to initiative progress when completed
+                      {t(
+                        'task.weight.hint',
+                        'Higher weight = more contribution to initiative progress when completed'
+                      )}
                     </p>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((w) => (
@@ -483,7 +492,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   {/* Evidence Requirements */}
                   <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle space-y-4">
                     <p className="text-xs text-c-text-muted">
-                      Select required evidence types to mark this task as "Verified Done".
+                      {t(
+                        'task.evidence.hint',
+                        'Select required evidence types to mark this task as "Verified Done".'
+                      )}
                     </p>
                     <div className="flex gap-4">
                       {['DOCUMENT', 'DATA', 'DEMO', 'APPROVAL'].map((type) => (
@@ -567,12 +579,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                             Signed by{' '}
                             {users.find((u) => u.id === task.signedOffBy)?.firstName || 'Unknown'}{' '}
                             {users.find((u) => u.id === task.signedOffBy)?.lastName || ''} on{' '}
-                            {new Date(task.signedOffAt).toLocaleDateString()}
+                            {formatListDate(task.signedOffAt)}
                           </p>
                         )}
                         {!task.signedOff && (
                           <p className="text-xs text-c-text-muted mt-1">
-                            I confirm all required evidence has been collected and criteria met.
+                            {t(
+                              'task.evidence.confirm',
+                              'I confirm all required evidence has been collected and criteria met.'
+                            )}
                           </p>
                         )}
                       </div>
@@ -617,8 +632,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       Dependency Management
                     </p>
                     <p className="text-xs text-c-text-secondary mt-1 max-w-xs mx-auto">
-                      This module will allow visual linking between tasks (Blocks / Blocked By).
-                      Coming in Phase 2.
+                      {t(
+                        'task.dependencies.comingSoon',
+                        'This module will allow visual linking between tasks (Blocks / Blocked By). Coming in Phase 2.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -657,7 +674,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                               </span>
                             </div>
                             <div className="mt-1 text-[10px] text-c-text-muted">
-                              {new Date(log.changedAt).toLocaleString()}
+                              {formatListDateTime(log.changedAt)}
                             </div>
                           </div>
                         </div>
@@ -674,7 +691,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           {/* Footer */}
           <div className="p-4 border-t border-c-border-subtle bg-c-surface-raised flex justify-between items-center shrink-0">
             <div className="text-[10px] text-c-text-muted">
-              {task.updatedAt ? `Last updated: ${new Date(task.updatedAt).toLocaleString()}` : ''}
+              {task.updatedAt ? `${t('task.lastUpdated', 'Last updated')}: ${formatListDateTime(task.updatedAt)}` : ''}
             </div>
             <div className="flex gap-3">
               <button

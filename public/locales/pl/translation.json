@@ -13075,7 +13075,10 @@
         "suggest": "AI — jak tym zarządzić?",
         "analyzing": "AI analizuje Twoje dane…"
       },
-      "v8Degraded": "Kokpit menedżera wymaga V8"
+      "v8Degraded": "Kokpit menedżera wymaga V8",
+      "noMatchingItems": "W tym obszarze nie ma teraz pasujących pozycji.",
+      "triageLead": "Triaż AI — grupowanie i priorytetyzacja problemów",
+      "actionPlanLead": "Plan działania — ruchy operacyjne i kroki następcze"
     },
     "managementTable": {
       "lane": "Tor",
@@ -13193,6 +13196,54 @@
       "deleteConfirm": {
         "body": "„{{title}}” zostanie trwale usunięty. Tej operacji nie można cofnąć.",
         "title": "Usunąć tę pozycję?"
+      },
+      "baseline": {
+        "empty": "Brak zapisanych baseline'ów — zapisz pierwszy.",
+        "loadFailed": "Nie udało się wczytać baseline'ów"
+      },
+      "benefits": {
+        "add": "Dodaj korzyść",
+        "empty": "Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).",
+        "loadFailed": "Nie udało się wczytać rejestru korzyści",
+        "title": "Rejestr korzyści (handoff M14→M15)"
+      },
+      "cutover": {
+        "create": "Utwórz runbook cutover",
+        "emptySteps": "Brak kroków — dodaj pierwszy.",
+        "loadFailed": "Nie udało się wczytać runbooka cutover",
+        "pickInitiative": "Wybierz inicjatywę, aby zobaczyć runbook cutover.",
+        "status": {
+          "planned": "zaplanowany",
+          "in_progress": "w toku",
+          "completed": "zakończony",
+          "aborted": "przerwany"
+        },
+        "stepStatus": {
+          "pending": "oczekuje",
+          "in_progress": "w toku",
+          "done": "gotowe",
+          "skipped": "pominięte",
+          "failed": "nieudane"
+        },
+        "stepCount": "{{count}} kroków"
+      },
+      "permissionHint": "Sprawdź uprawnienia MANAGE_ROLLOUT.",
+      "permissionHintShort": "Sprawdź uprawnienia.",
+      "stages": {
+        "count": "{{count}}/5 fal",
+        "loadFailed": "Nie udało się wczytać fal wdrożenia",
+        "title": "Fale wdrożenia",
+        "status": {
+          "not_started": "nie rozpoczęty",
+          "active": "aktywny",
+          "gated": "bramka",
+          "done": "zakończony"
+        },
+        "create": "utwórz"
+      },
+      "trend": {
+        "none": "Brak pomiarów — trend pojawi się po dwóch",
+        "one": "Jeden pomiar — trend od drugiego"
       }
     },
     "reporting": {
@@ -13359,7 +13410,8 @@
             "decisions": "Powiązane decyzje",
             "interventions": "Interwencje",
             "notVerified": "NOT_VERIFIED"
-          }
+          },
+          "scenariosPlaceholder": "WNIOSKOWANIE · baza: BRAK · optymistyczny: BRAK · pesymistyczny: BRAK · NO_API_FORECAST"
         },
         "generator": {
           "tab": "Zrób raport",
@@ -13380,7 +13432,7 @@
           "scope": "Autoryzowana referencja zakresu",
           "validation": "Walidacja",
           "missingFields": "brakuje",
-          "contextOnlyWarning": "Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (BRAK_API).",
+          "contextOnlyWarning": "Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (NO_API).",
           "draftIncomplete": "Stan szkicu po utworzeniu: NIEKOMPLETNY (dołączono 0 źródeł)",
           "sourcesWarning": "Ten ekran nie może dołączać dowodów źródłowych; robi to osobno nadzorowany workflow runtime. Pusty zestaw źródeł nie może zostać zwalidowany ani opublikowany.",
           "createDraft": "Utwórz nadzorowany szkic",
@@ -13693,7 +13745,10 @@
       "filters": {
         "hide": "Ukryj filtry",
         "show": "Pokaż filtry"
-      }
+      },
+      "aheadWeeks": "{{count}} tyg. przed planem",
+      "baseline": "Plan bazowy (baseline)",
+      "slipWeeks": "{{count}} tyg. poślizgu"
     },
     "warnings": {
       "title": "Najważniejsze ostrzeżenia",
@@ -14057,7 +14112,9 @@
         "addSignal": "Dodaj sygnał",
         "prepareIntervention": "Przygotuj interwencję"
       },
-      "loadFailed": "Nie udało się załadować rejestru sterowania."
+      "loadFailed": "Nie udało się załadować rejestru sterowania.",
+      "loading": "Ładowanie rejestru decyzji i ryzyk…",
+      "title": "Decyzje i ryzyka"
     },
     "work": {
       "columns": {
@@ -14484,7 +14541,9 @@
         "warning": "Ostrzeżenie"
       },
       "title": "Sygnały zarządcze",
-      "singleTitle": "Sygnał zarządczy"
+      "singleTitle": "Sygnał zarządczy",
+      "project": "Projekt",
+      "addToIntervention": "Dodaj do przygotowywanej interwencji"
     },
     "apply": {
       "field": {
@@ -14567,7 +14626,8 @@
         "partially_reversible": "Częściowo odwracalna",
         "irreversible": "Nieodwracalna",
         "unknown": "Odwracalność nieznana"
-      }
+      },
+      "draftJson": "Kontrakt JSON projektu interwencji"
     },
     "plan": {
       "closeChange": "Zamknij zmianę planu",
@@ -14579,7 +14639,11 @@
       "hashAfter": "po zmianie",
       "hashBefore": "Hash planu przed zmianą",
       "prepareChange": "Przygotuj zmianę planu",
-      "selectedComparison": "Wybrane porównanie obciążenia"
+      "selectedComparison": "Wybrane porównanie obciążenia",
+      "pickResequenceOption": "Wybierz dokładną opcję zmiany kolejności"
+    },
+    "workload": {
+      "noAllocations": "Brak przydziałów w tym okresie"
     }
   },
   "benefits": {
@@ -33233,7 +33297,42 @@
     },
     "memberTypeChair": "Przewodniczący",
     "memberTypeBoardMember": "Członek",
-    "memberTypeObserver": "Obserwator"
+    "memberTypeObserver": "Obserwator",
+    "charter": {
+      "initiativeName": "Nazwa inicjatywy",
+      "problemPlaceholder": "Jaki problem rozwiązuje ta inicjatywa?",
+      "hypothesisPlaceholder": "Jak ta inicjatywa rozwiąże problem?",
+      "deliverablesHint": "Jakie namacalne produkty powstaną w tej inicjatywie?",
+      "successHint": "Jak zmierzymy sukces?",
+      "inScopeHint": "Co wchodzi w zakres tej inicjatywy?",
+      "outScopeHint": "Co jest jawnie wyłączone?",
+      "risksHint": "Co może pójść nie tak?",
+      "addRisk": "Dodaj ryzyko",
+      "selectBusinessOwner": "Wybierz właściciela biznesowego",
+      "selectExecutionOwner": "Wybierz właściciela realizacji"
+    },
+    "audit": {
+      "subtitle": "Pełna historia wszystkich działań PMO z mapowaniem na standardy",
+      "today": "Dzisiaj",
+      "last7": "Ostatnie 7 dni",
+      "last30": "Ostatnie 30 dni",
+      "allTime": "Cały okres",
+      "loading": "Wczytywanie śladu audytowego…"
+    },
+    "dashboard": {
+      "newInitiative": "Nowa inicjatywa"
+    },
+    "health": {
+      "explain": "Wyjaśnij",
+      "updated": "Zaktualizowano",
+      "pending": "Oczekujące"
+    },
+    "statusBar": {
+      "loading": "Wczytywanie kontekstu PMO…"
+    },
+    "workstream": {
+      "empty": "Brak inicjatyw w tym strumieniu"
+    }
   },
   "branch": {
     "delete": "Usuń",
@@ -35546,11 +35645,38 @@
     }
   },
   "task": {
-    "status": "Status"
+    "status": "Status",
+    "lastUpdated": "Ostatnia zmiana",
+    "strategy": {
+      "outcomeHint": "Co konkretnie zmieni się w biznesie po wykonaniu tego zadania?",
+      "successPlaceholder": "Jeśli się uda, to…"
+    },
+    "weight": {
+      "title": "Waga zadania (wpływ na postęp)",
+      "hint": "Większa waga = większy wkład w postęp inicjatywy po zakończeniu"
+    },
+    "evidence": {
+      "hint": "Wybierz wymagane rodzaje dowodów, aby oznaczyć zadanie jako „Zweryfikowane”.",
+      "confirm": "Potwierdzam, że wszystkie wymagane dowody zostały zebrane, a kryteria spełnione."
+    },
+    "dependencies": {
+      "comingSoon": "Ten moduł pozwoli wizualnie łączyć zadania (Blokuje / Zablokowane przez). Wkrótce, w Fazie 2."
+    }
   },
   "team": {
     "velocity": {
       "target": "cel"
+    },
+    "perspectives": {
+      "emptyAxis": "Brak perspektyw dla tej osi.",
+      "emptyAxisHint": "Zaproś członków zespołu, aby dodali swój punkt widzenia.",
+      "emptyBody": "Zaproś członków zespołu i poproś ich o ocenę wybranych osi decyzyjnych. Różne punkty widzenia wzbogacą analizę.",
+      "emptyTitle": "Jeszcze nie ma perspektyw do porównania",
+      "summary": "{{count}} perspektyw na {{axes}} osiach",
+      "tensionHint": "To może wskazywać na ważny obszar do dyskusji zespołowej.",
+      "tensionTitle": "Wykryto znaczące różnice w perspektywach",
+      "title": "Perspektywy zespołu",
+      "withTension": "{{count}} z napięciami"
     }
   },
   "formBuilder": {
@@ -47455,7 +47581,142 @@
       "results": "Wyniki / KPI"
     },
     "technicalName": "Nazwa techniczna",
-    "writeFailed": "Nie zapisano zmiany raportu."
+    "writeFailed": "Nie zapisano zmiany raportu.",
+    "doc": {
+      "thisWeekAtAGlance": "Ten tydzień w skrócie",
+      "initiativesRequiringImmediateOperationalReaction": "Inicjatywy wymagające natychmiastowej reakcji operacyjnej.",
+      "next7DaysFocus": "Ognisko na najbliższe 7 dni",
+      "tasksAndMilestonesThatCanSilentlySlipThis": "Zadania i kamienie milowe, które mogą po cichu obsunąć się w tym tygodniu.",
+      "decisionQueue": "Kolejka decyzji",
+      "decisionsBlockingTasksOrShiftingMilestones": "Decyzje blokujące zadania albo przesuwające kamienie milowe.",
+      "executionHygieneGaps": "Luki higieny realizacji",
+      "dataWeaknessesThatDegradeOperationalControl": "Słabości danych, które psują kontrolę operacyjną.",
+      "portfolioControlList": "Lista kontrolna portfela",
+      "initiativesForPmoReviewWithRealOperationalExceptions": "Inicjatywy do przeglądu PMO z realnymi odchyleniami operacyjnymi.",
+      "milestoneScheduleExceptions": "Odchylenia kamieni milowych i harmonogramu",
+      "whatIsActuallyDriftingOnTheTimeline": "Co naprawdę obsuwa się na osi czasu.",
+      "budgetStaffingExceptions": "Odchylenia budżetu i obsady",
+      "exceptionsAlreadyTouchingBudgetOrCapacity": "Odchylenia, które już dotykają budżetu albo mocy przerobowej.",
+      "governanceExceptions": "Odchylenia ładu",
+      "itemsThatShouldEnterPmoReviewOrSteering": "Pozycje, które powinny trafić do przeglądu PMO albo komitetu sterującego.",
+      "programHealthRegister": "Rejestr kondycji programu",
+      "oneLinePerInitiativeWhatErodesDeliveryConfidence": "Jeden wiersz na inicjatywę: co odbiera pewność dostarczenia.",
+      "riskDelayDrivers": "Przyczyny ryzyk i opóźnień",
+      "strongestSignalsDegradingProgramHealth": "Najsilniejsze sygnały psujące kondycję programu.",
+      "whatIsTurningRed": "Co robi się czerwone",
+      "initiativesThatNeedRescueNowNotMonitoring": "Inicjatywy, które trzeba ratować teraz, a nie monitorować.",
+      "steeringImplications": "Wnioski dla komitetu sterującego",
+      "decisionsTheSteeringCommitteeShouldTake": "Decyzje, które powinien podjąć komitet sterujący.",
+      "blockedInitiativesRecoveryBoard": "Tablica ratunkowa zablokowanych inicjatyw",
+      "whatIsStuckWhyAndWhatWorkSits": "Co stoi, dlaczego i jaka praca czeka za tym.",
+      "tasksStalledBehindBlockers": "Zadania zatrzymane przez blokady",
+      "tasksThatCannotMoveUntilTheInitiativeIs": "Zadania, które nie ruszą, dopóki inicjatywa nie zostanie odblokowana.",
+      "escalationPath": "Ścieżka eskalacji",
+      "decisionsAndAlertsThatShouldBeEscalated": "Decyzje i ostrzeżenia, które należy eskalować.",
+      "recoveryOptions": "Warianty naprawy",
+      "actionsToUnblockDelivery": "Działania odblokowujące dostarczanie.",
+      "slippageRegister": "Rejestr obsunięć",
+      "initiativesWithRealDriftAgainstTheCommittedPlan": "Inicjatywy z realnym odchyleniem od zatwierdzonego planu.",
+      "baselineVsForecastGaps": "Różnice plan bazowy vs prognoza",
+      "missingDatesOrPlanWeaknessesThatCorruptForecast": "Brakujące daty albo słabości planu, które psują prognozę.",
+      "nextMilestonesAtRisk": "Najbliższe zagrożone kamienie milowe",
+      "milestonesToTrackDayByDay": "Kamienie milowe do pilnowania dzień po dniu.",
+      "recoveryTimeline": "Harmonogram naprawy",
+      "howToRestoreDeliveryPredictability": "Jak przywrócić przewidywalność dostarczania.",
+      "governedCapacityAlerts": "Zarządzane alerty obciążenia",
+      "peopleAlreadyOverloadedPerControlTower": "Osoby już przeciążone według wieży kontrolnej.",
+      "taskLoadByAssignee": "Obciążenie zadaniami wg osoby",
+      "whereTheWorkActuallySits": "Gdzie naprawdę leży praca.",
+      "4WeekHorizon": "Horyzont 4 tygodni",
+      "isCapacityEnoughForTheUpcomingWeeks": "Czy mocy wystarczy na najbliższe tygodnie.",
+      "tasksToReassign": "Zadania do przepisania",
+      "highestRiskTasksSittingOnOverloadedPeople": "Najbardziej ryzykowne zadania siedzące na przeciążonych osobach.",
+      "overspendRegister": "Rejestr przekroczeń kosztów",
+      "initiativesShowingDangerousVariance": "Inicjatywy z niebezpiecznym odchyleniem.",
+      "executionImpactOfSpendVariance": "Wpływ odchylenia kosztów na realizację",
+      "isVarianceAlreadyTranslatingIntoDeliveryRisk": "Czy odchylenie przekłada się już na ryzyko dostarczenia.",
+      "workItemsInsideOverspendingInitiatives": "Elementy pracy w inicjatywach przekraczających budżet",
+      "whatToInspectBeforeAFinanceDecision": "Co sprawdzić przed decyzją finansową.",
+      "financeActions": "Działania finansowe",
+      "whatToDoBeforeVarianceBecomesASponsor": "Co zrobić, zanim odchylenie stanie się problemem dla sponsora.",
+      "pendingDecisionsQueue": "Kolejka decyzji oczekujących",
+      "fullApprovalsQueueStillNotResolved": "Pełna kolejka zatwierdzeń wciąż nierozstrzygnięta.",
+      "agingBuckets": "Przedziały wiekowe",
+      "howFastDecisionDebtIsGrowing": "Jak szybko rośnie dług decyzyjny.",
+      "initiativesWaitingOnDecisions": "Inicjatywy czekające na decyzje",
+      "initiativesThatCannotMoveWithoutADecision": "Inicjatywy, które nie ruszą bez decyzji.",
+      "escalationCandidates": "Kandydaci do eskalacji",
+      "whatToEscalateRatherThanContinueMonitoring": "Co eskalować zamiast dalej monitorować.",
+      "dependencyConflictRegister": "Rejestr konfliktów zależności",
+      "explicitDependencyConflictsFromControlTower": "Jawne konflikty zależności z wieży kontrolnej.",
+      "criticalChains": "Łańcuchy krytyczne",
+      "initiativesWithTheHighestCombinationOfDecisionsTasks": "Inicjatywy z największym połączeniem decyzji, zadań i ostrzeżeń.",
+      "brokenLinks": "Zerwane powiązania",
+      "whereOneInitiativeSProblemIsAlreadySpreading": "Gdzie problem jednej inicjatywy już się rozlewa.",
+      "upstreamDownstreamImpact": "Wpływ w górę i w dół łańcucha",
+      "whatWillBeHitNextIfNothingIs": "Co oberwie następne, jeśli nic się nie zrobi.",
+      "confidenceRegister": "Rejestr pewności",
+      "theMostPracticalViewWillWeDeliverAnd": "Najbardziej praktyczny widok: czy dowieziemy i dlaczego nie.",
+      "driversOfErosion": "Przyczyny erozji",
+      "whatIsDestroyingConfidenceInPractice": "Co w praktyce niszczy pewność.",
+      "scenarioOutlook": "Perspektywa scenariuszy",
+      "whatHappensIfCurrentExceptionsGoWithoutReaction": "Co się stanie, jeśli obecne odchylenia zostaną bez reakcji.",
+      "sponsorSummary": "Podsumowanie dla sponsora",
+      "whatTheSponsorShouldUnderstandIn60Seconds": "Co sponsor ma zrozumieć w 60 sekund.",
+      "initiativesNeedingSponsorAttention": "Inicjatywy wymagające uwagi sponsora",
+      "whereTheSponsorCanActuallyHelpUnblockDelivery": "Gdzie sponsor naprawdę może pomóc odblokować dostarczanie.",
+      "topAchievements": "Największe osiągnięcia",
+      "proofOfProgressWorthShowingTheSponsor": "Dowody postępu warte pokazania sponsorowi.",
+      "sponsorAsks": "Prośby do sponsora",
+      "decisionsAndSupportNeededFromTheSponsor": "Decyzje i wsparcie potrzebne od sponsora.",
+      "reportTemplate": "Szablon raportu",
+      "thisReportTypeIsNotConfiguredYet": "Ten typ raportu nie jest jeszcze skonfigurowany.",
+      "empty": {
+        "noScheduleExceptions": "Brak odchyleń harmonogramu.",
+        "noBudgetOrStaffingExceptions": "Brak odchyleń budżetu ani obsady.",
+        "noRiskOrDelaySignals": "Brak sygnałów ryzyka i opóźnień.",
+        "noInitiativesInRedAmberZone": "Brak inicjatyw w strefie czerwonej i bursztynowej.",
+        "noBlockedInitiatives": "Brak zablokowanych inicjatyw.",
+        "noStalledTasks": "Brak zatrzymanych zadań.",
+        "noEscalationItems": "Brak pozycji do eskalacji.",
+        "noSlippageSignals": "Brak sygnałów obsunięcia.",
+        "noUpcomingMilestones": "Brak nadchodzących kamieni milowych.",
+        "noGovernedCapacityAlerts": "Brak zarządzanych alertów obciążenia.",
+        "noCapacityTimeline": "Brak osi czasu obciążenia.",
+        "noTasksNeedReassignment": "Żadne zadanie nie wymaga przepisania.",
+        "noOverspendSignals": "Brak sygnałów przekroczenia kosztów.",
+        "noExecutionImpactVisible": "Brak widocznego wpływu na realizację.",
+        "noWorkItemsLinkedToOverspend": "Brak elementów pracy powiązanych z przekroczeniem kosztów.",
+        "noPendingDecisions": "Brak decyzji oczekujących.",
+        "noInitiativesWaitingOnDecisions": "Brak inicjatyw czekających na decyzje.",
+        "noExplicitDependencyConflicts": "Brak jawnych konfliktów zależności.",
+        "noConfidenceErosionDrivers": "Brak przyczyn erozji pewności.",
+        "noScenarioNotesGenerated": "Nie wygenerowano notatek scenariuszowych.",
+        "noSponsorLevelIssues": "Brak spraw na poziomie sponsora.",
+        "noNotableAchievementsYet": "Brak istotnych osiągnięć."
+      },
+      "actions": "Akcje",
+      "aiUnavailable": "Analiza AI nie jest dostępna dla zamrożonej migawki raportu.",
+      "createdAt": "Utworzono",
+      "downloadDocx": "Pobierz DOCX",
+      "downloadFailed": "Nie udało się pobrać pliku.",
+      "downloadPdf": "Pobierz PDF",
+      "history": "Historia",
+      "noComments": "Migawka raportu nie ma wątku komentarzy.",
+      "noRelations": "Migawka nie deklaruje osobnych powiązań.",
+      "noSources": "Brak zapisanych źródeł i założeń.",
+      "panelAria": "Szczegóły raportu realizacji",
+      "properties": "Właściwości",
+      "property": "Właściwość",
+      "publish": "Opublikuj",
+      "publishFailed": "Nie udało się opublikować raportu.",
+      "publishInActions": "Publikacja jest dostępna w sekcji Akcje.",
+      "publishedAt": "opublikowano",
+      "readOnlyReason": "raport jest zamrożoną migawką; AI nie może uzupełniać jego treści",
+      "sourcesAssumptions": "Źródła i założenia",
+      "value": "Wartość"
+    },
+    "runDraftJson": "Kontrakt JSON szkicu raportu"
   },
   "enums": {
     "unknown": "Nieznane",
@@ -47538,5 +47799,26 @@
       "PREPARE_CLOSURE": "Przygotuj zamknięcie",
       "REVIEW_HISTORY": "Przejrzyj historię"
     }
+  },
+  "projectIntelligence": {
+    "started": "Rozpoczęto",
+    "useSelector": "Użyj selektora projektu w nagłówku",
+    "pmoAlignment": "Wszystkie zebrane wnioski są zgodne ze standardami ISO 21500, PMBOK 7 i PRINCE2 — dla pełnej zgodności PMO i audytowalności.",
+    "knowledgeEmpty": "Zacznij rozmowę z AI, aby zebrać wiedzę o projekcie. Wnioski pojawią się tutaj w miarę ich wykrywania.",
+    "sessionsEmpty": "Twoje sesje wywiadu z AI pojawią się tutaj. Zacznij rozmowę, aby utworzyć pierwszą."
+  },
+  "rollout": {
+    "strategy": {
+      "lead": "Określ granice i filary strategiczne transformacji.",
+      "themes": "Główne motywy napędzające tę transformację."
+    },
+    "teams": {
+      "lead": "Określ strukturę organizacyjną, role i strumienie pracy."
+    }
+  },
+  "fullPilot": {
+    "inDevelopment": "Ta funkcja jest w budowie.",
+    "scopeInPlaceholder": "Wypisz pozycje objęte pilotażem…",
+    "noGoBody": "Pilotaż nieudany. Przemyśl strategię ponownie."
   }
 }

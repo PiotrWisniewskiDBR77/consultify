@@ -107,7 +107,7 @@ describe('Unified Execution report generator', () => {
       await screen.findByRole('button', { name: /contentHash:sha256-abc/ })
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /edit|refresh|overwrite/i })).toBeNull();
-    expect(screen.getByText(/XLSX: BRAK_API/)).toBeInTheDocument();
+    expect(screen.getByText(/XLSX: NO_API/)).toBeInTheDocument();
   });
 
   it('renders honest load and validation states', async () => {

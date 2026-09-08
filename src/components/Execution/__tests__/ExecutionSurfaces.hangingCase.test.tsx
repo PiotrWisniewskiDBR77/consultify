@@ -27,12 +27,16 @@ vi.mock('react-i18next', () => ({
     // ORAZ `t(key, { defaultValue, ...zmienne })` z interpolacją `{{...}}`.
     // Bez drugiej gałęzi atrapa zwracała goły klucz i test „mierzył" własne
     // ubóstwo zamiast produktu (2026-09-05).
-    t: (k: string, fallback?: unknown) => {
-      if (typeof fallback === 'string') return fallback;
+    // J7b: dochodzi TRZECI argument `t(klucz, 'domyślny {{x}}', { x })` —
+    // bez niego atrapa oddawała wzorzec z nietkniętym `{{x}}`.
+    t: (k: string, fallback?: unknown, opcje?: Record<string, unknown>) => {
+      const podstaw = (wzorzec: string, dane: Record<string, unknown>) =>
+        wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(dane[name] ?? ''));
+      if (typeof fallback === 'string') return opcje ? podstaw(fallback, opcje) : fallback;
       if (fallback && typeof fallback === 'object') {
         const opts = fallback as Record<string, unknown>;
         const wzorzec = typeof opts.defaultValue === 'string' ? opts.defaultValue : k;
-        return wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(opts[name] ?? ''));
+        return podstaw(wzorzec, opts);
       }
       return k;
     },
@@ -181,7 +185,7 @@ describe('Praca (ExecutionWorkSurface)', () => {
     // Informacja ZOSTAJE, tylko w innym pasku — nad tabelą.
     await waitFor(() =>
       expect(screen.getByTestId('execution-work-degraded-banner')).toHaveTextContent(
-        /Niepełne dane: 1 realizacja bez odpowiedzi/
+        /Incomplete data: 1 realizacja not responding/
       )
     );
 
@@ -197,7 +201,7 @@ describe('Praca (ExecutionWorkSurface)', () => {
      * niezależnie od tego, gdzie baner naprawdę jest — przyrząd kłamałby.
      */
     expect(within(registered.container).queryByTestId('execution-work-degraded-banner')).toBeNull();
-    expect(within(registered.container).queryByText(/Niepełne dane/)).toBeNull();
+    expect(within(registered.container).queryByText(/Incomplete data/)).toBeNull();
   });
 
   it('nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE', async () => {
@@ -266,7 +270,7 @@ describe('Zasoby (ExecutionResourcesSurface)', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)
+        screen.getByText(/Resources could not be fetched from 1 deliveries/)
       ).toBeInTheDocument()
     );
     expect(screen.queryByText(/Nie udało się załadować rejestru zasobów/)).not.toBeInTheDocument();
@@ -310,13 +314,13 @@ describe('Praca — etykiety realnych danych', () => {
 
   it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () => {
     render(<ExecutionWorkSurface activePreset="all" />);
-    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('In progress')).toBeInTheDocument());
     expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
   });
 
   it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async () => {
     render(<ExecutionWorkSurface activePreset="all" />);
-    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('In progress')).toBeInTheDocument());
     expect(document.body.textContent).not.toContain('UNKNOWN');
     expect(document.body.textContent).toContain('SLA brak');
   });
@@ -336,7 +340,7 @@ describe('Praca — etykiety realnych danych', () => {
    */
   it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko', async () => {
     render(<ExecutionWorkSurface activePreset="all" />);
-    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('In progress')).toBeInTheDocument());
     expect(document.body.textContent).not.toContain('d2b6a316-08c5-47cf-9bf7-4ba50311d5a2');
     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
     expect(screen.getAllByText('Nieznany użytkownik').length).toBeGreaterThan(0);

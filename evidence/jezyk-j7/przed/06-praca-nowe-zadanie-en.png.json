@@ -1,0 +1,930 @@
+{
+ "ekran": "06-praca-nowe-zadanie",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=work&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 108,
+ "obcychLiniiUI": 108,
+ "ui": [
+  {
+   "linia": "05 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "11 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "21 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "07 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "15 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "19 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "29 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "12 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "14 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "16 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "19 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "26 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "01 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "16 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "22 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "25 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "27 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "29 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "30 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "31 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "01 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "01 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "02 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "02 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "03 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "03 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "05 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "05 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "07 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "07 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "10 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "11 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "11 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "12 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "12 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "14 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "14 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "16 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "17 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "19 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "21 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "21 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "24 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "27 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "29 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "29 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "04 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "07 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "09 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "14 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "19 maj 2026",
+   "trafienia": [
+    "maj"
+   ]
+  },
+  {
+   "linia": "12 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "17 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "13 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "18 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "14 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "19 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "15 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "20 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "31 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "Oczekuje na decyzję",
+   "trafienia": [
+    "decyzję"
+   ]
+  },
+  {
+   "linia": "18 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "20 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "20 gru 2026",
+   "trafienia": [
+    "gru"
+   ]
+  },
+  {
+   "linia": "Wykonane",
+   "trafienia": [
+    "Wykonane"
+   ]
+  },
+  {
+   "linia": "15 paź 2026",
+   "trafienia": [
+    "paź"
+   ]
+  },
+  {
+   "linia": "18 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "09 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "26 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "27 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "18 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "10 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "11 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "11 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "01 sie 2026",
+   "trafienia": [
+    "sie"
+   ]
+  },
+  {
+   "linia": "21 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "24 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "24 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "28 lut 2026",
+   "trafienia": [
+    "lut"
+   ]
+  },
+  {
+   "linia": "04 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "05 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "24 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "27 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Poprawa realizacji korzyści programu",
+   "trafienia": [
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "Wejście na rynek DACH — mapa decyzji",
+   "trafienia": [
+    "Wejście"
+   ]
+  },
+  {
+   "linia": "Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse",
+   "trafienia": [
+    "uchwycić"
+   ]
+  },
+  {
+   "linia": "Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia",
+   "trafienia": [
+    "słabości",
+    "odsłonięte",
+    "przez",
+    "zagrożenia"
+   ]
+  },
+  {
+   "linia": "Konwersja: usuń słabości, aby odblokować szanse",
+   "trafienia": [
+    "usuń",
+    "słabości",
+    "odblokować"
+   ]
+  },
+  {
+   "linia": "Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami",
+   "trafienia": [
+    "tarczę",
+    "zagrożeniami"
+   ]
+  },
+  {
+   "linia": "Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami",
+   "trafienia": [
+    "tarczę",
+    "zagrożeniami"
+   ]
+  },
+  {
+   "linia": "Konwersja: usuń słabości, aby odblokować szanse",
+   "trafienia": [
+    "usuń",
+    "słabości",
+    "odblokować"
+   ]
+  },
+  {
+   "linia": "Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami",
+   "trafienia": [
+    "tarczę",
+    "zagrożeniami"
+   ]
+  },
+  {
+   "linia": "Konwersja: usuń słabości, aby odblokować szanse",
+   "trafienia": [
+    "usuń",
+    "słabości",
+    "odblokować"
+   ]
+  },
+  {
+   "linia": "Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia",
+   "trafienia": [
+    "słabości",
+    "odsłonięte",
+    "przez",
+    "zagrożenia"
+   ]
+  },
+  {
+   "linia": "Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse",
+   "trafienia": [
+    "uchwycić"
+   ]
+  },
+  {
+   "linia": "MCG-2026: Widoczność i Cyfrowa Dyspozytornia",
+   "trafienia": [
+    "Widoczność"
+   ]
+  },
+  {
+   "linia": "MCG-2026: Usługi Dodane o Wyższej Marży",
+   "trafienia": [
+    "Usługi",
+    "Wyższej",
+    "Marży"
+   ]
+  },
+  {
+   "linia": "MCG-2026: Talent i Retencja Kierowców",
+   "trafienia": [
+    "Kierowców"
+   ]
+  },
+  {
+   "linia": "MCG-2026: Widoczność i Cyfrowa Dyspozytornia",
+   "trafienia": [
+    "Widoczność"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "DBR77 Industrial Intelligence Scale-Up (plan v2): Kapitał i Finansowanie",
+   "trafienia": [
+    "Kapitał"
+   ]
+  },
+  {
+   "linia": "Program kompetencji AI×przemysł — onboarding i ścieżki rozwoju",
+   "trafienia": [
+    "przemysł",
+    "ścieżki"
+   ]
+  },
+  {
+   "linia": "Przeprojektowanie struktury organizacyjnej na model produkt+usługa",
+   "trafienia": [
+    "usługa"
+   ]
+  },
+  {
+   "linia": "Wdrożenie systemu delivery metrics z progami alertów",
+   "trafienia": [
+    "Wdrożenie",
+    "alertów"
+   ]
+  },
+  {
+   "linia": "Program certyfikacji partnerów - pilot z 3 partnerami",
+   "trafienia": [
+    "partnerów"
+   ]
+  },
+  {
+   "linia": "Lejek MQL→SQL z lead scoringiem i atrybucją",
+   "trafienia": [
+    "atrybucją"
+   ]
+  },
+  {
+   "linia": "Uruchomienie silnika treści (The Plant + newsletter)",
+   "trafienia": [
+    "treści"
+   ]
+  },
+  {
+   "linia": "Newsletter Industrial Intelligence — lejek zorientowany na wartość",
+   "trafienia": [
+    "wartość"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu (PdM) dla 3 maszyn krytycznych",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Optymalizacja OEE linii montażowej DBR77 przez PdM",
+   "trafienia": [
+    "montażowej",
+    "przez"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu (PdM) dla 3 maszyn krytycznych w DBR77",
+   "trafienia": [
+    "Wdrożenie",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Wdrożenie predykcyjnego utrzymania ruchu (PdM) w DBR77",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Wdrożenie Predyktywnego Utrzymania Ruchu (PdM)",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "wdrożenie predykcyjnego utrzymania ruchu w zakładzie",
+   "trafienia": [
+    "wdrożenie",
+    "zakładzie"
+   ]
+  },
+  {
+   "linia": "wdrożenie predykcyjnego utrzymania ruchu (PdM) w zakładzie produkcyjnym",
+   "trafienia": [
+    "wdrożenie",
+    "zakładzie"
+   ]
+  }
+ ]
+}

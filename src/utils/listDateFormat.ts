@@ -54,6 +54,21 @@ export function localeListy(): string {
   return 'en-GB';
 }
 
+/**
+ * LICZBA w komórce listy/podglądu — locale z KONTA, nigdy domyślne z przeglądarki.
+ *
+ * Powód (J7b, moduł 07 Realizacja): wywołanie lokalizujące liczbę BEZ
+ * argumentu bierze separator tysięcy z przeglądarki, więc konto polskie i
+ * angielskie na TEJ SAMEJ maszynie dostawały ten sam zapis, a dwie różne
+ * maszyny — dwa różne. Ta funkcja jest do liczb tym, czym `formatListDate`
+ * do dat: jedno wejście, jawne locale, brak nazwany myślnikiem.
+ */
+export function formatListNumber(value: unknown, fallback = PUSTA_DATA): string {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (value == null || value === '' || !Number.isFinite(n)) return fallback;
+  return n.toLocaleString(localeListy());
+}
+
 function naDate(value: unknown): Date | null {
   if (value == null || value === '') return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
