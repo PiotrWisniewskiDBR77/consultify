@@ -9,7 +9,8 @@
  */
 import { AlertCircle, Check, CircleSlash, FileQuestion, HelpCircle, Minus } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import type { MethodAnswerState, ResolutionAction, ResolutionCardData } from './types';
 import { ANSWER_STATE_TONE, ANSWER_TONE_BUTTON_SELECTED } from './answerStateColors';

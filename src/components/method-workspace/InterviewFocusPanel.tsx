@@ -9,7 +9,8 @@
  * path per channel (A5 spec, cross-cutting requirement).
  */
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';

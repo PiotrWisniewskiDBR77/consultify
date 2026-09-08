@@ -35,7 +35,8 @@ import {
 } from '@/config/swot/swotTensionEngine';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import type { SWOTItem } from '@/store/useToolStore';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { toEvidenceKind } from '@/toolOutputs/buildSwotOutput';
 import type { EvidenceKind } from '@/toolOutputs/types';

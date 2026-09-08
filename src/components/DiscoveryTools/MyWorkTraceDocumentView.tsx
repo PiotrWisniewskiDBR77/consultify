@@ -18,7 +18,8 @@
  * danych (`answers.origin/source/summary`), bez atrap.
  */
 import { ArrowLeft, ExternalLink, Lightbulb, NotebookPen, Route } from 'lucide-react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
