@@ -76,7 +76,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
             )}
             <AlertTriangle size={16} className="text-c-warning flex-shrink-0" />
             <span className="font-medium text-c-warning text-sm">
-              {t('presentations.result.qualityBadge', 'Jakość: {{count}} ostrzeżeń', {
+              {t('presentations.result.qualityBadge', 'Quality: {{count}} warnings', {
                 count: warningCount,
               })}
             </span>

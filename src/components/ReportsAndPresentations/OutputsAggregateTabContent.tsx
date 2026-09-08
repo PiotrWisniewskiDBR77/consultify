@@ -416,7 +416,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     () => [
       {
         id: 'title',
-        label: t('rap.columns.title', 'Tytuł'),
+        label: t('rap.columns.title', 'Title'),
         // Rodzina „ucinany tekst" (2026-08-31, rozszerzone 2026-09-06 —
         // KOSMETYKA z RAPORT_A3/B3): 190px ucinało realne tytuły dokumentów
         // ("Notatka z przejścia…") już po ~17 znakach na 1440px. Podniesione
@@ -521,7 +521,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       },
       {
         id: 'owner',
-        label: t('rap.columns.owner', 'Właściciel'),
+        label: t('rap.columns.owner', 'Owner'),
         width: '130px',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
@@ -653,7 +653,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       const primary: StandardRowMenu['primary'] = [
         {
           id: 'open',
-          label: t('rap.actions.open', 'Otwórz'),
+          label: t('rap.actions.open', 'Open'),
           icon: ExternalLink,
           onClick: () => openRow(row),
         },
@@ -679,7 +679,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       if (row.kind === 'document' || row.kind === 'sheet') {
         primary.push({
           id: 'duplicate_as_template',
-          label: t('rap.actions.duplicateAsTemplate', 'Duplikuj / Użyj jako szablonu'),
+          label: t('rap.actions.duplicateAsTemplate', 'Duplicate / use as a template'),
           icon: Copy,
           onClick: async () => {
             const toastId = toast.loading(t('reports.creatingACopy'));
@@ -999,7 +999,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
-        emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
+        emptyMessage={t('rap.empty.outputs', 'No outputs')}
         newItemLabel={t('rap.actions.newFromTemplate', 'Nowy z szablonu')}
       />
     );
@@ -1236,7 +1236,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             onFilterChange={onFilterChange}
             empty={{
               icon: FileText,
-              title: t('rap.empty.outputs', 'Brak outputów'),
+              title: t('rap.empty.outputs', 'No outputs'),
             }}
             rowMenu={(row) => buildRowMenu(row as unknown as AggregateRow)}
             selection={{ selectedIds: selectedOutputIds, onChange: setSelectedOutputIds }}

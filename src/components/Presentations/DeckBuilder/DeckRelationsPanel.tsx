@@ -79,12 +79,12 @@ export const DeckRelationsPanel: React.FC<DeckRelationsPanelProps> = ({ cards })
       <div className="mb-3">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold text-c-text">
           <Link2 className="h-4 w-4 text-c-text-secondary" />
-          {t('presentations.relations.title', 'Powiązania')}
+          {t('presentations.relations.title', 'Related items')}
         </h3>
         <p className="text-xs text-c-text-secondary">
           {t(
             'presentations.relations.subtitle',
-            'Wszystkie źródła powiązane z tą prezentacją — kliknij, aby przejść do artefaktu.'
+            'Every source linked to this presentation — click to jump to the artifact.'
           )}
         </p>
       </div>
@@ -94,7 +94,7 @@ export const DeckRelationsPanel: React.FC<DeckRelationsPanelProps> = ({ cards })
           <p className="text-xs text-c-text-secondary">
             {t(
               'presentations.relations.empty',
-              'Brak powiązanych źródeł. Bloki wygenerowane z inicjatyw, analiz i narzędzi pojawią się tutaj.'
+              'No linked sources. Blocks generated from initiatives, analyses and tools will appear here.'
             )}
           </p>
         </div>
@@ -108,7 +108,7 @@ export const DeckRelationsPanel: React.FC<DeckRelationsPanelProps> = ({ cards })
                   type="button"
                   onClick={() => navigateToSourceRef(navigate, ref)}
                   className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-left transition-colors hover:bg-c-surface-raised focus:outline-none focus:ring-2 focus:ring-c-focus"
-                  title={t('presentations.relations.jumpTo', 'Przejdź do artefaktu')}
+                  title={t('presentations.relations.jumpTo', 'Go to the artifact')}
                 >
                   <Icon size={14} className="mt-0.5 shrink-0 text-c-info" />
                   <span className="min-w-0 flex-1">

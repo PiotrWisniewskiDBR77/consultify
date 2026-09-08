@@ -295,7 +295,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           className={`w-fit ${MENU_3_ACTION_NEUTRAL}`}
         >
           <ArrowLeft size={14} aria-hidden />
-          {t('documentStudio.intake.backToModes', 'Wybór trybu')}
+          {t('documentStudio.intake.backToModes', 'Choose a mode')}
         </button>
       ) : null}
 
@@ -636,7 +636,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           {!loading && description.trim().length < 10
             ? t(
                 'documentStudio.intake.blockedReason',
-                'Aby zaplanować dokument, opisz go w co najmniej 10 znakach.'
+                'To plan a document, describe it in at least 10 characters.'
               )
             : ''}
         </span>

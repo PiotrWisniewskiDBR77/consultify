@@ -111,7 +111,7 @@ export const ReportTemplatesView: React.FC = () => {
         setTemplates(response.data?.templates || []);
       } catch (error) {
         console.error('Failed to load templates:', error);
-        toast.error(t('reports.toast.loadTemplatesError', 'Nie udało się załadować szablonów'));
+        toast.error(t('reports.toast.loadTemplatesError', 'Could not load the templates'));
       } finally {
         setLoading(false);
       }
@@ -132,7 +132,7 @@ export const ReportTemplatesView: React.FC = () => {
 
   const handleCreateTemplate = async () => {
     if (!name.trim()) {
-      toast.error(t('reports.toast.templateNameRequired', 'Nazwa szablonu jest wymagana'));
+      toast.error(t('reports.toast.templateNameRequired', 'A template name is required'));
       return;
     }
 
@@ -151,7 +151,7 @@ export const ReportTemplatesView: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to create template:', error);
-      toast.error(t('reports.toast.templateCreateError', 'Nie udało się utworzyć szablonu'));
+      toast.error(t('reports.toast.templateCreateError', 'Could not create the template'));
     }
   };
 

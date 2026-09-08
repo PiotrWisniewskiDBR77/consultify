@@ -147,7 +147,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
 
   const handleGenerate = useCallback(async () => {
     if (scope === 'PROJECT' && !selectedProjectId) {
-      toast.error(t('reports.toast.selectProject', 'Wybierz projekt'));
+      toast.error(t('reports.toast.selectProject', 'Select a project'));
       return;
     }
 
@@ -167,7 +167,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
     } catch (error: any) {
       console.error('Report generation failed:', error);
       toast.error(
-        error.message || t('reports.toast.generateFailed', 'Nie udało się wygenerować raportu')
+        error.message || t('reports.toast.generateFailed', 'Could not generate the report')
       );
     } finally {
       setGenerating(false);

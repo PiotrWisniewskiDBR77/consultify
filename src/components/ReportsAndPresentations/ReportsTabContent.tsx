@@ -100,7 +100,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     () => [
       {
         id: 'title',
-        label: t('rap.columns.title', 'Tytuł'),
+        label: t('rap.columns.title', 'Title'),
         width: '280px',
         render: (row: ReportItem) => {
           const meta = REPORT_TYPE_META[row.reportType] || REPORT_TYPE_META.custom;
@@ -181,7 +181,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
       {
         id: 'owner',
-        label: t('rap.columns.owner', 'Właściciel'),
+        label: t('rap.columns.owner', 'Owner'),
         width: '160px',
       },
       {
@@ -268,7 +268,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     primary: [
       {
         id: 'open',
-        label: t('rap.actions.open', 'Otwórz'),
+        label: t('rap.actions.open', 'Open'),
         icon: ExternalLink,
         onClick: () => openReport(row),
       },
@@ -293,7 +293,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
       {
         id: 'share',
-        label: t('rap.actions.share', 'Udostępnij'),
+        label: t('rap.actions.share', 'Share'),
         icon: Share2,
         onClick: () => {
           const sharePath = appendArtifactOpenAction(
@@ -358,7 +358,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               {
                 id: 'start-review',
                 variant: 'positive',
-                label: t('rap.actions.startReview', 'Rozpocznij przegląd'),
+                label: t('rap.actions.startReview', 'Start review'),
                 icon: FileText,
                 disabled: reviewDisabled,
                 onClick: () => {
@@ -494,8 +494,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
-        emptyMessage={t('rap.empty.reports', 'Brak raportów')}
-        newItemLabel={t('rap.actions.newReport', 'Nowy raport')}
+        emptyMessage={t('rap.empty.reports', 'No reports')}
+        newItemLabel={t('rap.actions.newReport', 'New report')}
         onNewItem={onNewItem}
       />
     );
@@ -523,8 +523,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
           empty={{
             icon: FileText,
             title: t('rap.empty.reportsTitle', 'Canonical management reports'),
-            description: t('rap.empty.reports', 'Brak raportów'),
-            actionLabel: t('rap.actions.newReport', 'Nowy raport'),
+            description: t('rap.empty.reports', 'No reports'),
+            actionLabel: t('rap.actions.newReport', 'New report'),
             onAction: onNewItem,
           }}
           rowMenu={(row) => buildRowMenu(row as unknown as ReportItem)}
@@ -567,7 +567,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             details={{
               showWordCount: false,
               text: [
-                `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
+                `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
                 `${t('rap.columns.exports', 'Eksporty')}: ${
                   previewItem.exportFormats?.length
                     ? previewItem.exportFormats.join(', ').toUpperCase()

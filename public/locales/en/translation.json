@@ -2468,7 +2468,8 @@
     "verifying": "Verifying…",
     "copyLink": "Copy link",
     "publish": "Publish",
-    "loadingSlow": "This is taking longer than usual…"
+    "loadingSlow": "This is taking longer than usual…",
+    "saveError": "Save failed"
   },
   "superadmin": {
     "confirm": {
@@ -24128,6 +24129,11 @@
         "image": "Image",
         "newSlide": "New slide",
         "untitledArtifact": "Untitled artifact"
+      },
+      "autosaveOffline": "No connection to the server — changes are visible on screen but are NOT saved.",
+      "contextTools": "Presentation tools",
+      "blocks": {
+        "headingDefaultText": "Heading"
       }
     },
     "governance": {
@@ -24332,9 +24338,17 @@
         "risk_management": "Risk management",
         "next_steps": "Next steps",
         "appendix": "Appendix"
-      }
+      },
+      "imageStylePlaceholder": "E.g. a gradient of fuchsia, pink and royal blue, subtle studio lighting",
+      "imageStyleHint": "These words will be appended to every AI image prompt in this theme."
     },
-    "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}"
+    "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}",
+    "qualitySignal": {
+      "badge": "Quality: {{count}} warnings"
+    },
+    "result": {
+      "qualityBadge": "Quality: {{count}} warnings"
+    }
   },
   "finance": {
     "comments": {
@@ -28548,7 +28562,9 @@
       "reviewGates": "Review gates",
       "migrationHint": "Replacement",
       "replacedBy": "New pattern",
-      "updatedAt": "Last updated"
+      "updatedAt": "Last updated",
+      "open": "Preview",
+      "source": "Source"
     },
     "toast": {
       "exported": "Exported successfully",
@@ -28782,13 +28798,23 @@
       "confirmArchiveDecksDesc": "You will archive {{count}} presentation(s). This is reversible."
     },
     "templateBuilder": {
-      "saved": "Template saved"
+      "saved": "Template saved",
+      "savedBuildNow": "Template saved — pick \"Build workbook\""
     },
     "templates": {
       "legacySourceLine": "Older template registry — works unchanged",
       "legacyHint": "Template from the older registry — generation works unchanged.",
       "ctaFrozen": "Template creation lands in wave 2",
-      "viewToggle": "Template library view"
+      "viewToggle": "Template library view",
+      "allFormats": "All formats",
+      "allScopes": "All sources",
+      "scopeUnknown": "Unknown",
+      "orphanedHint": "No canonical template record — it cannot be used for generation.",
+      "orphanedBadge": "No source",
+      "deprecatedUseBlocked": "A deprecated template cannot be used.",
+      "useBlocked": "No canonical template record — there is nothing to use.",
+      "galleryEmpty": "No template matches these filters.",
+      "statusUnknown": "Unknown"
     }
   },
   "rbHub": {
@@ -32504,7 +32530,9 @@
       "submitTemplate": "Generate from template",
       "submitPlan": "Plan document",
       "contextChip": "Context: {{organizationName}}",
-      "sectionBrief": "Brief"
+      "sectionBrief": "Brief",
+      "backToModes": "Choose a mode",
+      "blockedReason": "To plan a document, describe it in at least 10 characters."
     },
     "outline": {
       "type": "Type",
@@ -32513,7 +32541,8 @@
       "style": "Style",
       "back": "Back",
       "generating": "Generating…",
-      "generate": "Generate document"
+      "generate": "Generate document",
+      "saveFailed": "Could not save the outline."
     },
     "templateArchitect": {
       "heading": "Document Template Architect",
@@ -32600,7 +32629,12 @@
       "backToMaterials": "Back to Materials",
       "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu.",
       "artifactNotFoundTitle": "No document here",
-      "templateResolveTitle": "This template cannot be used"
+      "templateResolveTitle": "This template cannot be used",
+      "goToProvenance": "Go to Provenance and rights",
+      "backToLibrary": "Back to the template library",
+      "artifactNotFound": "This document was not found. It may have been deleted, or the link points to a different document type.",
+      "artifactLoadFailedGeneric": "Could not load the document. Please try again in a moment.",
+      "noDocumentActionable": "Could not open the document. Try again or go back to Materials."
     },
     "breadcrumb": {
       "new": "New document",
@@ -32622,7 +32656,8 @@
       "fabrication": {
         "verified": "Verified — no unsupported numbers",
         "degraded": "Degraded ({{count}} unmarked numbers)",
-        "hint": "Verify these numbers against sources or mark them as an assumption \"(assumption)\" before partner/client delivery."
+        "hint": "Verify these numbers against sources or mark them as an assumption \"(assumption)\" before partner/client delivery.",
+        "notDetected": "No unmarked precise figures detected — grounding has not been verified"
       }
     },
     "panel": {
@@ -32857,7 +32892,10 @@
       "exportPending": "{{format}} export is pending finalization. Markdown is available now.",
       "viewModeGroup": "Document view",
       "viewReport": "Report",
-      "viewEditor": "Editor"
+      "viewEditor": "Editor",
+      "chipQaReview": "QA and review",
+      "toolQaReview": "QA and review",
+      "contextTools": "Document tools"
     },
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
@@ -32914,6 +32952,22 @@
     "report": {
       "empty": "This report has no content yet.",
       "sectionEmpty": "This section is empty."
+    },
+    "aiEntry": {
+      "startingReply": "I am planning and writing the document — it will appear next to this in a moment.",
+      "placeholderTitle": "Your document will appear here",
+      "placeholderHint": "Describe the document you need in the panel next to this — Teresa will plan the structure and write the first draft in front of you."
+    },
+    "blank": {
+      "title": "New document",
+      "failed": "Could not create a blank document.",
+      "retry": "Try again"
+    },
+    "tri": {
+      "heading": "How would you like to start the document?",
+      "subheading": "Pick a mode — all three are equal.",
+      "aiDesc": "Describe the document — Studio will plan the structure and the first draft.",
+      "templateDesc": "Start from an approved template and adjust the content."
     }
   },
   "priority": {

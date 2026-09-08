@@ -114,7 +114,7 @@ export function templateScopeLabel(
   if (scope === 'personal') return t('reports.personal');
   if (scope === 'system' || scope === 'application') return t('reports.application');
   if (scope === 'organization') return t('reports.organization');
-  return t('rap.templates.scopeUnknown', 'Nieznany');
+  return t('rap.templates.scopeUnknown', 'Unknown');
 }
 
 const TYPE_ICON: Record<TemplateType, LucideIcon> = {
@@ -181,12 +181,12 @@ const OrphanedBadge: React.FC<{ t: TFunction }> = ({ t }) => (
     data-testid="template-gallery-orphaned-badge"
     title={t(
       'rap.templates.orphanedHint',
-      'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+      'No canonical template record — it cannot be used for generation.'
     )}
     className="inline-flex shrink-0 items-center gap-1 rounded-token-xs border border-c-warning/40 bg-c-warning/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-warning"
   >
     <AlertTriangle size={10} />
-    {t('rap.templates.orphanedBadge', 'Brak źródła')}
+    {t('rap.templates.orphanedBadge', 'No source')}
   </span>
 );
 
@@ -265,14 +265,14 @@ const TemplateTile: React.FC<{
               data-testid={`template-gallery-use-disabled-${item.id}`}
               className={cn(MENU_3_ACTION_NEUTRAL, 'cursor-not-allowed opacity-70')}
             >
-              {t('rap.actions.useTemplate', 'Użyj wzorca')}
+              {t('rap.actions.useTemplate', 'Use template')}
             </button>
             <p className="mt-2 text-[11px] leading-4 text-c-text-muted">
               {isDeprecated
-                ? t('rap.templates.deprecatedUseBlocked', 'Wycofany wzorzec nie może być użyty.')
+                ? t('rap.templates.deprecatedUseBlocked', 'A deprecated template cannot be used.')
                 : t(
                     'rap.templates.useBlocked',
-                    'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+                    'No canonical template record — there is nothing to use.'
                   )}
             </p>
           </div>
@@ -285,11 +285,11 @@ const TemplateTile: React.FC<{
               onClick={() => onUse(item)}
             >
               <Check size={16} />
-              {t('rap.actions.useTemplate', 'Użyj wzorca')}
+              {t('rap.actions.useTemplate', 'Use template')}
             </button>
             <button type="button" className={MENU_3_ACTION_NEUTRAL} onClick={() => onPreview(item)}>
               <Eye size={12} />
-              {t('rap.preview.open', 'Podgląd')}
+              {t('rap.preview.open', 'Preview')}
             </button>
           </>
         )}
@@ -362,7 +362,7 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
     <div>
       {templates.length === 0 ? (
         <div className="rounded-token-lg border border-dashed border-c-border p-10 text-center text-sm text-c-text-muted">
-          {t('rap.templates.galleryEmpty', 'Żaden wzorzec nie pasuje do tych filtrów.')}
+          {t('rap.templates.galleryEmpty', 'No template matches these filters.')}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">

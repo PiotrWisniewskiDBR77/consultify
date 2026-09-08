@@ -64,7 +64,7 @@ function FabricationBadge({
         <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
         {t(
           'documentStudio.qa.fabrication.notDetected',
-          'Nie wykryto nieoznaczonych precyzyjnych liczb — ugruntowanie nie zostało zweryfikowane'
+          'No unmarked precise figures detected — grounding has not been verified'
         )}
       </div>
     );

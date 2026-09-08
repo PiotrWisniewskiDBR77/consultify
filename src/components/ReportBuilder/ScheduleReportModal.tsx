@@ -83,7 +83,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
 
   const handleSubmit = useCallback(async () => {
     if (!scheduleName.trim()) {
-      toast.error(t('scheduleModal.nameRequired', 'Podaj nazwę harmonogramu'));
+      toast.error(t('scheduleModal.nameRequired', 'Enter a schedule name'));
       return;
     }
 
@@ -93,7 +93,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
 
     if (deliveryMethods.length === 0) {
       toast.error(
-        t('scheduleModal.deliveryRequired', 'Wybierz co najmniej jedną metodę dostarczania')
+        t('scheduleModal.deliveryRequired', 'Pick at least one delivery method')
       );
       return;
     }
@@ -120,7 +120,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
       onClose();
     } catch (err) {
       console.error('[ScheduleReportModal] Error creating schedule:', err);
-      toast.error(t('scheduleModal.createError', 'Nie udało się utworzyć harmonogramu'));
+      toast.error(t('scheduleModal.createError', 'Could not create the schedule'));
     } finally {
       setIsSubmitting(false);
     }
@@ -191,7 +191,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-c-text mb-1.5">
               <Calendar size={14} className="inline mr-1.5 -mt-0.5" />
-              {t('scheduleModal.frequencyLabel', 'Częstotliwość')}
+              {t('scheduleModal.frequencyLabel', 'Frequency')}
             </label>
             <div className="grid grid-cols-2 gap-2">
               {FREQUENCY_OPTIONS.map((opt) => (
@@ -214,7 +214,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {needsDayOfWeek && (
             <div>
               <label className="block text-sm font-medium text-c-text mb-1.5">
-                {t('scheduleModal.dayOfWeekLabel', 'Dzień tygodnia')}
+                {t('scheduleModal.dayOfWeekLabel', 'Day of the week')}
               </label>
               <select
                 value={dayOfWeek}
@@ -234,7 +234,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {needsDayOfMonth && (
             <div>
               <label className="block text-sm font-medium text-c-text mb-1.5">
-                {t('scheduleModal.dayOfMonthLabel', 'Dzień miesiąca')}
+                {t('scheduleModal.dayOfMonthLabel', 'Day of the month')}
               </label>
               <select
                 value={dayOfMonth}
@@ -305,7 +305,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
             disabled={isSubmitting}
             className="px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-c-text transition-colors"
           >
-            {t('common.cancel', 'Anuluj')}
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -320,7 +320,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
             ) : (
               <>
                 <Check size={14} />
-                {t('scheduleModal.createBtn', 'Utwórz harmonogram')}
+                {t('scheduleModal.createBtn', 'Create schedule')}
               </>
             )}
           </button>

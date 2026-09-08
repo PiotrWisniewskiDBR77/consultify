@@ -127,7 +127,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     () => [
       {
         id: 'title',
-        label: t('rap.columns.title', 'Tytuł'),
+        label: t('rap.columns.title', 'Title'),
         width: '300px',
         render: (row: Record<string, unknown>) => {
           const item = row as unknown as PresentationItem;
@@ -143,7 +143,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'sourceType',
-        label: t('rap.columns.source', 'Źródło'),
+        label: t('rap.columns.source', 'Source'),
         width: '130px',
         filterable: true,
         filterOptions: [
@@ -164,7 +164,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'owner',
-        label: t('rap.columns.owner', 'Właściciel'),
+        label: t('rap.columns.owner', 'Owner'),
         width: '160px',
         render: (row: Record<string, unknown>) => {
           const item = row as unknown as PresentationItem;
@@ -299,7 +299,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     primary: [
       {
         id: 'open',
-        label: t('rap.actions.open', 'Otwórz'),
+        label: t('rap.actions.open', 'Open'),
         icon: ExternalLink,
         onClick: () => openPresentation(row),
       },
@@ -323,7 +323,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'share',
-        label: t('rap.actions.share', 'Udostępnij'),
+        label: t('rap.actions.share', 'Share'),
         onClick: () => openShare(row),
       },
     ],
@@ -423,8 +423,8 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
-        emptyMessage={t('rap.empty.presentations', 'Brak prezentacji')}
-        newItemLabel={t('rap.actions.newPresentation', 'Nowa prezentacja')}
+        emptyMessage={t('rap.empty.presentations', 'No presentations')}
+        newItemLabel={t('rap.actions.newPresentation', 'New presentation')}
       />
     );
   }
@@ -487,7 +487,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
             activeFilters={activeFilters}
             onFilterChange={onFilterChange}
             empty={{
-              title: t('rap.empty.presentations', 'Brak prezentacji'),
+              title: t('rap.empty.presentations', 'No presentations'),
             }}
             rowMenu={(row) => getRowMenu(row as unknown as PresentationItem)}
           />
@@ -504,7 +504,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 details={{
                   showWordCount: false,
                   text: [
-                    `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
+                    `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
                     `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
                     `${t('common.updated', 'Updated')}: ${
                       previewItem.updatedAt
@@ -536,7 +536,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                   previewItem.sourceId
                     ? [
                         {
-                          label: `${t('rap.columns.source', 'Źródło')}: ${
+                          label: `${t('rap.columns.source', 'Source')}: ${
                             resolvePreviewSourceName(previewItem) ?? '—'
                           }`,
                         },
@@ -565,7 +565,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                     {
                       id: 'share',
                       variant: 'neutral',
-                      label: t('rap.actions.share', 'Udostępnij'),
+                      label: t('rap.actions.share', 'Share'),
                       onClick: () => openShare(previewItem),
                     },
                   ],

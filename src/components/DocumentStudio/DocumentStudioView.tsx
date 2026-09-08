@@ -142,7 +142,7 @@ const TemplateResolveBlockedCard: React.FC<{
           <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
         </div>
         <h2 className="mb-2 text-base font-semibold text-c-text">
-          {t('documentStudio.view.templateResolveTitle', 'Nie da się użyć tego wzorca')}
+          {t('documentStudio.view.templateResolveTitle', 'This template cannot be used')}
         </h2>
         <p className="text-sm leading-relaxed text-c-text-secondary">{message}</p>
         <div className="mt-6 flex flex-col items-center gap-2">
@@ -153,7 +153,7 @@ const TemplateResolveBlockedCard: React.FC<{
               onClick={() => navigate(resolveTemplateProvenancePath())}
               className="rounded-lg border border-c-border-strong bg-c-text px-4 py-2 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              {t('documentStudio.view.goToProvenance', 'Przejdź do Pochodzenie i prawa')}
+              {t('documentStudio.view.goToProvenance', 'Go to Provenance and rights')}
             </button>
           ) : null}
           <button
@@ -161,7 +161,7 @@ const TemplateResolveBlockedCard: React.FC<{
             onClick={onBack}
             className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
+            {t('documentStudio.view.backToLibrary', 'Back to the template library')}
           </button>
         </div>
       </div>
@@ -431,12 +431,12 @@ export const DocumentStudioView: React.FC = () => {
     if (artifactLoadErrorCode === 'not_found') {
       return t(
         'documentStudio.view.artifactNotFound',
-        'Nie znaleziono tego dokumentu. Mógł zostać usunięty albo link prowadzi do innego typu dokumentu.'
+        'This document was not found. It may have been deleted, or the link points to a different document type.'
       );
     }
     return t(
       'documentStudio.view.artifactLoadFailedGeneric',
-      'Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.'
+      'Could not load the document. Please try again in a moment.'
     );
   }, [artifactLoadFailed, artifactLoadErrorCode, t]);
 
@@ -616,7 +616,7 @@ export const DocumentStudioView: React.FC = () => {
         setStreamFallbackNotice(
           t(
             'documentStudio.generating.streamFallbackNotice',
-            'Połączenie na żywo zerwane — dokańczam w tle…'
+            'Live connection lost — finishing in the background…'
           )
         );
         try {
@@ -828,7 +828,7 @@ export const DocumentStudioView: React.FC = () => {
   const handleCreateEmptyDoc = useCallback(async (): Promise<void> => {
     const emptyOutline: DocumentOutline = {
       documentType: 'generic_document',
-      title: t('documentStudio.blank.title', 'Nowy dokument'),
+      title: t('documentStudio.blank.title', 'New document'),
       sections: [
         {
           title: t('documentStudio.blank.section', 'Sekcja 1'),
@@ -842,7 +842,7 @@ export const DocumentStudioView: React.FC = () => {
       recommendedLanguageStyle: 'formal',
     };
     const emptyIntake: DocumentIntake = {
-      title: t('documentStudio.blank.title', 'Nowy dokument'),
+      title: t('documentStudio.blank.title', 'New document'),
       description: t(
         'documentStudio.blank.description',
         'Pusty dokument roboczy do samodzielnej edycji.'
@@ -870,7 +870,7 @@ export const DocumentStudioView: React.FC = () => {
       setError(
         err instanceof Error && err.message
           ? err.message
-          : t('documentStudio.blank.failed', 'Nie udało się utworzyć pustego dokumentu.')
+          : t('documentStudio.blank.failed', 'Could not create a blank document.')
       );
     } finally {
       setGenerating(false);
@@ -910,7 +910,7 @@ export const DocumentStudioView: React.FC = () => {
       !(await requestConfirm(
         t(
           'documentStudio.view.startOverConfirm',
-          'Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.'
+          'Close this document and start a new one? The current document is saved — you can come back to it via "Open" in the File menu.'
         )
       ))
     ) {
@@ -1032,7 +1032,7 @@ export const DocumentStudioView: React.FC = () => {
           // tanią afordancją bezpośrednio w studiu (ten sam cel co istniejący
           // "Wróć do Materiałów" w stanie błędu ładowania, patrz niżej).
           onBack={() => navigate('/presentations?tab=documents')}
-          backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+          backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
           presenceSlot={
             <span className="hidden text-[11px] text-c-text-muted lg:inline">
               {t('documentStudio.view.presenceNote', 'Modes 1, 2, 3 · Word/PDF artifact runtime')}
@@ -1067,7 +1067,7 @@ export const DocumentStudioView: React.FC = () => {
                 <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
               </div>
               <h2 className="mb-2 text-base font-semibold text-c-text">
-                {t('documentStudio.view.artifactNotFoundTitle', 'Nie ma tu dokumentu')}
+                {t('documentStudio.view.artifactNotFoundTitle', 'No document here')}
               </h2>
               <p className="text-sm leading-relaxed text-c-text-secondary">{artifactLoadMessage}</p>
               <button
@@ -1075,7 +1075,7 @@ export const DocumentStudioView: React.FC = () => {
                 onClick={() => navigate('/presentations?tab=documents')}
                 className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+                {t('documentStudio.view.backToMaterials', 'Back to Materials')}
               </button>
             </div>
           </div>
@@ -1108,23 +1108,23 @@ export const DocumentStudioView: React.FC = () => {
                 error ??
                 t(
                   'documentStudio.blank.failed',
-                  'Nie udało się utworzyć pustego dokumentu. Spróbuj ponownie albo wróć do Materiałów.'
+                  'Could not create a blank document.'
                 )
               }
               onRetry={() => void handleCreateEmptyDoc()}
-              retryLabel={t('documentStudio.blank.retry', 'Spróbuj ponownie')}
+              retryLabel={t('documentStudio.blank.retry', 'Try again')}
               onBack={() => navigate('/presentations?tab=documents')}
-              backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+              backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
               testId="document-studio-blank"
             />
           ) : intakeGate === 'mode-chooser' ? (
             <TriModeChooser
               busy={generating}
               showTemplate={approvedTemplates.length > 0}
-              heading={t('documentStudio.tri.heading', 'Jak chcesz zacząć dokument?')}
+              heading={t('documentStudio.tri.heading', 'How would you like to start the document?')}
               subheading={t(
                 'documentStudio.tri.subheading',
-                'Wybierz tryb — wszystkie trzy są równorzędne.'
+                'Pick a mode — all three are equal.'
               )}
               clean={{
                 title: t('documentStudio.tri.cleanTitle', 'Czysto'),
@@ -1137,14 +1137,14 @@ export const DocumentStudioView: React.FC = () => {
                 title: t('documentStudio.tri.aiTitle', 'Z AI'),
                 desc: t(
                   'documentStudio.tri.aiDesc',
-                  'Opisz dokument — Studio zaplanuje strukturę i pierwszą wersję.'
+                  'Describe the document — Studio will plan the structure and the first draft.'
                 ),
               }}
               template={{
                 title: t('documentStudio.tri.templateTitle', 'Z szablonu'),
                 desc: t(
                   'documentStudio.tri.templateDesc',
-                  'Zacznij od zatwierdzonego szablonu i dostosuj treść.'
+                  'Start from an approved template and adjust the content.'
                 ),
               }}
               onClean={handleCreateEmptyDoc}
@@ -1221,7 +1221,7 @@ export const DocumentStudioView: React.FC = () => {
                 {error ??
                   t(
                     'documentStudio.view.noDocumentActionable',
-                    'Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów.'
+                    'Could not open the document. Try again or go back to Materials.'
                   )}
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
@@ -1234,14 +1234,14 @@ export const DocumentStudioView: React.FC = () => {
                   }}
                   className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  {t('documentStudio.blank.retry', 'Spróbuj ponownie')}
+                  {t('documentStudio.blank.retry', 'Try again')}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/presentations?tab=documents')}
                   className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+                  {t('documentStudio.view.backToMaterials', 'Back to Materials')}
                 </button>
               </div>
             </div>

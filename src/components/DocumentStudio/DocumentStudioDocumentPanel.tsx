@@ -2208,7 +2208,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     async (nextTitle: string): Promise<void> => {
       const trimmed = nextTitle.trim();
       if (!trimmed) {
-        toast.error(t('documentStudio.panel.titleSaveEmpty', 'Tytuł nie może być pusty.'));
+        toast.error(t('documentStudio.panel.titleSaveEmpty', 'The title cannot be empty.'));
         return;
       }
       if (trimmed === schema.title) return;
@@ -2219,7 +2219,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         toast.error(
           t(
             'documentStudio.panel.titleSaveFailed',
-            'Nie udało się zapisać tytułu. Spróbuj ponownie.'
+            'Could not save the title. Please try again.'
           )
         );
         return;
@@ -2231,7 +2231,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           title: trimmed,
         });
         onSchemaUpdated(saved);
-        toast.success(t('documentStudio.panel.titleSaved', 'Tytuł zapisany'));
+        toast.success(t('documentStudio.panel.titleSaved', 'Title saved'));
       } catch (err) {
         if (err instanceof DocumentManualSaveConflictError) {
           // Same reconciliation as the editor's autosave conflict path:
@@ -2246,7 +2246,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           toast.error(
             t(
               'documentStudio.panel.titleSaveConflict',
-              'Dokument zmienił się w międzyczasie — spróbuj ponownie.'
+              'The document changed in the meantime — please try again.'
             )
           );
           return;
@@ -2260,7 +2260,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const persistSectionStructure = useCallback(
     async (nextSections: DocumentSection[]): Promise<void> => {
       if (!schema.updatedAt) {
-        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        toast.error(t('documentStudio.outline.saveFailed', 'Could not save the outline.'));
         return;
       }
       const normalized = nextSections.map((section, orderIndex) => ({ ...section, orderIndex }));
@@ -2282,7 +2282,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             /* best-effort reconciliation */
           }
         }
-        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        toast.error(t('documentStudio.outline.saveFailed', 'Could not save the outline.'));
       }
     },
     [artifactId, onSchemaUpdated, schema.updatedAt, t]
@@ -2612,7 +2612,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         // overwrite. The new (empty-content) artifact still exists and is
         // reachable from "Otwórz", so nothing is lost — just not cloned.
         throw new Error(
-          t('documentStudio.fileMenu.saveAsFailed', 'Nie udało się zduplikować dokumentu')
+          t('documentStudio.fileMenu.saveAsFailed', 'Could not duplicate the document')
         );
       }
       const saved = await saveDocumentStudioManualContent(created.artifactId, {
@@ -2676,7 +2676,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'qa',
         label: qaBlock
           ? t('documentStudio.panel.chipQaBlocked', 'QA blocked')
-          : t('documentStudio.panel.chipQaReview', 'QA i przegląd'),
+          : t('documentStudio.panel.chipQaReview', 'QA and review'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : 'success',
         onClick: handleOpenQa,
@@ -3034,7 +3034,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onCreated={(template) => {
             setShowSaveAsTemplateModal(false);
             toast.success(
-              t('documentStudio.createFromArtifact.success', 'Utworzono szkic wzorca: {{name}}', {
+              t('documentStudio.createFromArtifact.success', 'Template draft created: {{name}}', {
                 name: template.name,
               })
             );
@@ -3378,7 +3378,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       // ONE thing in this corner that looks like "back", and it behaves like
       // "back".
       onBack={() => navigate('/presentations?tab=documents')}
-      backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+      backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
       // U3 — "Plik" is the FIRST action in the row (Word convention: File is
       // always leftmost), ahead of Historia/QA/Nadzór and ahead of the
       // highlighted "Udostępnij" primary chip. `topBarLeadingActionSlot`
@@ -3410,10 +3410,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               {autosaveStatus === 'saving'
                 ? t('common.saving', 'Zapisywanie…')
                 : autosaveStatus === 'error'
-                  ? t('common.saveError', 'Błąd zapisu')
+                  ? t('common.saveError', 'Save failed')
                   : autosaveStatus === 'conflict'
                     ? t('common.conflict', 'Konflikt')
-                    : t('common.saved', 'Zapisano')}
+                    : t('common.saved', 'Saved')}
             </span>
             <span className="rounded-md border border-c-border px-2 py-1 whitespace-nowrap">
               {confidentialityLabel(i18n.language, schema.confidentiality)}
@@ -3464,7 +3464,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'sources',
-                  label: t('documentStudio.panel.toolSources', 'Źródła'),
+                  label: t('documentStudio.panel.toolSources', 'Sources'),
                   icon: FileText,
                 },
                 {
@@ -3474,7 +3474,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'qa',
-                  label: t('documentStudio.panel.toolQaReview', 'QA i przegląd'),
+                  label: t('documentStudio.panel.toolQaReview', 'QA and review'),
                   icon: ShieldCheck,
                 },
                 {
@@ -3542,7 +3542,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             context={documentArtifactCommandContext}
             resolveLabel={(label) => label}
             maxVisible={8}
-            ariaLabel={t('documentStudio.panel.contextTools', 'Narzędzia dokumentu')}
+            ariaLabel={t('documentStudio.panel.contextTools', 'Document tools')}
           />
         ) : undefined
       }

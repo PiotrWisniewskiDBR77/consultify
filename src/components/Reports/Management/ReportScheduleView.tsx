@@ -56,7 +56,7 @@ export const ReportScheduleView: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to load schedules:', error);
-        toast.error(t('reports.toast.loadSchedulesError', 'Nie udało się załadować harmonogramów'));
+        toast.error(t('reports.toast.loadSchedulesError', 'Could not load the schedules'));
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ export const ReportScheduleView: React.FC = () => {
 
   const handleCreateSchedule = async () => {
     if (scope === 'PROJECT' && !projectId) {
-      toast.error(t('reports.toast.selectProjectForSchedule', 'Wybierz projekt dla harmonogramu'));
+      toast.error(t('reports.toast.selectProjectForSchedule', 'Select a project for the schedule'));
       return;
     }
     try {
@@ -90,7 +90,7 @@ export const ReportScheduleView: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      toast.error(t('reports.toast.scheduleCreateError', 'Nie udało się utworzyć harmonogramu'));
+      toast.error(t('reports.toast.scheduleCreateError', 'Could not create the schedule'));
     }
   };
 
@@ -98,10 +98,10 @@ export const ReportScheduleView: React.FC = () => {
     try {
       await Api.delete(`/api/management-reports/schedules/${scheduleId}`);
       setSchedules((prev) => prev.filter((schedule) => schedule.id !== scheduleId));
-      toast.success(t('reports.toast.scheduleRemoved', 'Harmonogram usunięty'));
+      toast.success(t('reports.toast.scheduleRemoved', 'Schedule removed'));
     } catch (error) {
       console.error('Failed to remove schedule:', error);
-      toast.error(t('reports.toast.scheduleRemoveError', 'Nie udało się usunąć harmonogramu'));
+      toast.error(t('reports.toast.scheduleRemoveError', 'Could not remove the schedule'));
     }
   };
 

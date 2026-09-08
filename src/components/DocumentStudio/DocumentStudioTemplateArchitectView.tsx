@@ -1016,12 +1016,12 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                   </div>
                   <div className="mt-3">
                     <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                      {t('documentStudio.templateArchitect.colorPatternLabel', 'Wzorzec kolorów')}
+                      {t('documentStudio.templateArchitect.colorPatternLabel', 'Colour pattern')}
                     </span>
                     <p className="mb-2 text-[11px] text-c-text-secondary">
                       {t(
                         'documentStudio.templateArchitect.colorPatternHint',
-                        'Niezależny od struktury sekcji — możesz zapisać sam kolor, samą strukturę, albo oba naraz.'
+                        'Independent of the section structure — you can save just the colours, just the structure, or both.'
                       )}
                     </p>
                     <ColorPatternPicker

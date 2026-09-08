@@ -102,7 +102,7 @@ export const DocumentStudioReportView: React.FC<DocumentStudioReportViewProps> =
 
       {sections.length === 0 ? (
         <p className="text-sm italic text-c-text-muted">
-          {t('documentStudio.report.empty', 'Ten raport nie ma jeszcze treści.')}
+          {t('documentStudio.report.empty', 'This report has no content yet.')}
         </p>
       ) : (
         sections.map((section) => {
@@ -122,7 +122,7 @@ export const DocumentStudioReportView: React.FC<DocumentStudioReportViewProps> =
               {intro ? <p className="mb-2 text-[11px] text-c-text-muted">{intro}</p> : null}
               {(section.blocks || []).length === 0 ? (
                 <p className="text-sm italic text-c-text-muted">
-                  {t('documentStudio.report.sectionEmpty', 'Ta sekcja jest pusta.')}
+                  {t('documentStudio.report.sectionEmpty', 'This section is empty.')}
                 </p>
               ) : (
                 section.blocks.map((block) => (

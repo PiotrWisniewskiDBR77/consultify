@@ -109,7 +109,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
       setError(
         err instanceof Error
           ? err.message
-          : t('documentStudio.createFromArtifact.error', 'Nie udało się utworzyć wzorca')
+          : t('documentStudio.createFromArtifact.error', 'Could not create the template')
       );
     } finally {
       setSubmitting(false);
@@ -121,7 +121,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
       className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={t('documentStudio.createFromArtifact.title', 'Zrób z tego wzorzec')}
+      aria-label={t('documentStudio.createFromArtifact.title', 'Turn this into a template')}
     >
       <div className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
         <div className="flex items-center justify-between gap-3 border-b border-c-border-subtle px-5 py-4">
@@ -129,12 +129,12 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
             <Wand2 className="h-4 w-4 text-c-text-secondary" aria-hidden />
             <div>
               <div className="text-sm font-semibold text-c-text">
-                {t('documentStudio.createFromArtifact.title', 'Zrób z tego wzorzec')}
+                {t('documentStudio.createFromArtifact.title', 'Turn this into a template')}
               </div>
               <div className="text-xs text-c-text-secondary">
                 {t(
                   'documentStudio.createFromArtifact.subtitle',
-                  'Strukturę wyciągamy automatycznie. Zostały tylko rzeczy, których nie da się wydedukować z dokumentu.'
+                  'We extract the structure automatically. Only the things we cannot infer from the document are left for you.'
                 )}
               </div>
             </div>
@@ -142,7 +142,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('documentStudio.createFromArtifact.close', 'Zamknij')}
+            aria-label={t('documentStudio.createFromArtifact.close', 'Close')}
             className="rounded-md p-1.5 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <X className="h-4 w-4" />
@@ -176,13 +176,13 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
               <span className="text-sm font-medium text-c-text">
                 {t(
                   'documentStudio.createFromArtifact.sectionsQuestion',
-                  'Czy każda sekcja ma zawsze występować w kolejnych dokumentach?'
+                  'Should every section always appear in future documents?'
                 )}
               </span>
               <p className="mt-0.5 text-xs text-c-text-secondary">
                 {t(
                   'documentStudio.createFromArtifact.sectionsHint',
-                  'Odznacz sekcje, które pojawiły się tylko w tym dokumencie — reszta zostanie oznaczona jako obowiązkowa.'
+                  'Untick the sections that appeared only in this document — the rest will be marked as required.'
                 )}
               </p>
               <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-lg border border-c-border-subtle bg-c-surface-raised p-2">
@@ -216,7 +216,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
             <span className="font-medium text-c-text">
               {t(
                 'documentStudio.createFromArtifact.dataRefreshQuestion',
-                'Które dane mają się za każdym razem odświeżać (nie zostać jako stały tekst)?'
+                'Which data should refresh every time instead of staying as fixed text?'
               )}{' '}
               <span className="text-xs font-normal text-c-text-muted">
                 {t('documentStudio.createFromArtifact.optionalHint', '(opcjonalnie)')}
@@ -228,7 +228,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
               rows={2}
               placeholder={t(
                 'documentStudio.createFromArtifact.dataRefreshPlaceholder',
-                'Jedna pozycja na linię, np. przychód kwartalny, lista ryzyk'
+                'One item per line, e.g. quarterly revenue, list of risks'
               )}
               className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
@@ -250,7 +250,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                 <span>
                   {t(
                     'documentStudio.createFromArtifact.colorTogether',
-                    'Zapisz razem z treścią (ten wzorzec zawsze wygląda tak samo)'
+                    'Save together with the content (this template always looks the same)'
                   )}
                 </span>
               </label>
@@ -265,7 +265,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                 <span>
                   {t(
                     'documentStudio.createFromArtifact.colorSeparate',
-                    'Zapisz osobno — kolory wybieram przy każdym użyciu'
+                    'Save separately — I pick the colours each time I use it'
                   )}
                 </span>
               </label>
@@ -275,7 +275,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                 <p className="mb-2 text-[11px] text-c-text-secondary">
                   {t(
                     'documentStudio.createFromArtifact.colorSeparateHint',
-                    'Ten wzorzec zapisze się bez kolorów — możesz od razu wybrać jeden do wykorzystania gdzie indziej, albo zrobić to później w Architekcie szablonów.'
+                    'This template will be saved without colours — you can pick one to reuse elsewhere right away, or do it later in the Template Architect.'
                   )}
                 </p>
                 <ColorPatternPicker
@@ -292,7 +292,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
             <span className="font-medium text-c-text">
               {t(
                 'documentStudio.createFromArtifact.sensitiveQuestion',
-                'Czy coś w tym dokumencie jest specyficzne tylko dla tego klienta i trzeba to usunąć przed użyciem przez innych?'
+                'Is anything in this document specific to this client only and has to be removed before others use it?'
               )}{' '}
               <span className="text-xs font-normal text-c-text-muted">
                 {t('documentStudio.createFromArtifact.optionalHint', '(opcjonalnie)')}
@@ -304,7 +304,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
               rows={2}
               placeholder={t(
                 'documentStudio.createFromArtifact.sensitivePlaceholder',
-                'Np. nazwa klienta w sekcji X, konkretna liczba w akapicie Y'
+                'E.g. the client name in section X, a specific figure in paragraph Y'
               )}
               className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
@@ -313,7 +313,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
 
         <div className="flex items-center justify-end gap-2 border-t border-c-border-subtle px-5 py-3">
           <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
-            {t('documentStudio.createFromArtifact.cancel', 'Anuluj')}
+            {t('documentStudio.createFromArtifact.cancel', 'Cancel')}
           </Button>
           <Button
             type="button"
@@ -324,10 +324,10 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
             {submitting ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {t('documentStudio.createFromArtifact.submitBusy', 'Tworzę…')}
+                {t('documentStudio.createFromArtifact.submitBusy', 'Creating…')}
               </span>
             ) : (
-              t('documentStudio.createFromArtifact.submit', 'Utwórz wzorzec')
+              t('documentStudio.createFromArtifact.submit', 'Create template')
             )}
           </Button>
         </div>

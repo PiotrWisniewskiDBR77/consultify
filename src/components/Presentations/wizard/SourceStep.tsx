@@ -210,7 +210,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                 }}
                 className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-navy-600"
               />
-              {t('presentations.sources.showDrafts', 'Pokaż robocze')}
+              {t('presentations.sources.showDrafts', 'Show drafts')}
             </label>
           </div>
         </div>

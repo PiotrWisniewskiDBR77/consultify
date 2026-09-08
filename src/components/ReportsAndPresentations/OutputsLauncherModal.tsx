@@ -478,7 +478,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-navy-600">
                     {t(
                       'rap.outputs.launcher.phaseEstimateNote',
-                      'Szacowany przebieg — generacja trwa zwykle 1–2 min, pobieranie ruszy po zakończeniu.'
+                      'Estimated run — generation usually takes 1–2 min, the download starts once it finishes.'
                     )}
                   </p>
                 </div>

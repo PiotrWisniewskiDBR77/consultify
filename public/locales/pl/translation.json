@@ -883,7 +883,8 @@
     "verifying": "Weryfikowanie…",
     "copyLink": "Kopiuj link",
     "publish": "Opublikuj",
-    "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…"
+    "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…",
+    "saveError": "Błąd zapisu"
   },
   "superadmin": {
     "confirm": {
@@ -1701,7 +1702,9 @@
         "risk_management": "Zarządzanie ryzykiem",
         "next_steps": "Kolejne kroki",
         "appendix": "Załącznik"
-      }
+      },
+      "imageStylePlaceholder": "Np. gradient fuksji, różu i królewskiego błękitu, subtelne światło studyjne",
+      "imageStyleHint": "Te słowa zostaną dopisane do każdego polecenia generowania obrazu AI w tym motywie."
     },
     "brandKit": {
       "title": "Kit marki",
@@ -1897,7 +1900,8 @@
         "callout": "Wyróżnienie",
         "timeline": "Oś czasu",
         "artifactEmbed": "Artefakt",
-        "divider": "Separator"
+        "divider": "Separator",
+        "headingDefaultText": "Nagłówek"
       },
       "editCard": {
         "title": "Edytuj tę kartę",
@@ -2089,7 +2093,8 @@
         "image": "Obraz",
         "newSlide": "Nowy slajd",
         "untitledArtifact": "Artefakt bez nazwy"
-      }
+      },
+      "autosaveOffline": "Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane."
     },
     "agent": {
       "title": "Agent AI",
@@ -34939,7 +34944,8 @@
       "submitTemplate": "Generuj z szablonu",
       "submitPlan": "Zaplanuj dokument",
       "contextChip": "Kontekst: {{organizationName}}",
-      "sectionBrief": "Treść i tytuł"
+      "sectionBrief": "Treść i tytuł",
+      "blockedReason": "Aby zaplanować dokument, opisz go w co najmniej 10 znakach."
     },
     "outline": {
       "addSection": "+ Dodaj sekcję",
@@ -35066,7 +35072,8 @@
       "startOverConfirm": "Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.",
       "artifactNotFoundTitle": "Nie ma tu dokumentu",
       "templateResolveTitle": "Nie da się użyć tego wzorca",
-      "noDocumentActionable": "Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów."
+      "noDocumentActionable": "Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów.",
+      "goToProvenance": "Przejdź do Pochodzenie i prawa"
     },
     "breadcrumb": {
       "new": "Nowy dokument",

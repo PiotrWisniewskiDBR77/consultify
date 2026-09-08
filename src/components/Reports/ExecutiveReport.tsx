@@ -55,7 +55,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
 
   const generateReport = useCallback(async () => {
     if (!activeProjectId) {
-      toast.error(t('reports.toast.selectProjectFirst', 'Najpierw wybierz projekt'));
+      toast.error(t('reports.toast.selectProjectFirst', 'Select a project first'));
       return;
     }
 
@@ -91,10 +91,10 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       };
 
       setReport(reportData);
-      toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie'));
+      toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
     } catch (error) {
       console.error('Failed to generate report:', error);
-      toast.error(t('reports.toast.generateError', 'Nie udało się wygenerować raportu'));
+      toast.error(t('reports.toast.generateError', 'Could not generate the report'));
     } finally {
       setLoading(false);
     }

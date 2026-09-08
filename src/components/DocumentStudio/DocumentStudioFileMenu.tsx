@@ -133,24 +133,24 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
         return {
           label: t(
             'documentStudio.fileMenu.saveStatusConflict',
-            'Konflikt zapisu — pobrano najnowszą wersję'
+            'Save conflict — the latest version has been fetched'
           ),
           icon: <Save className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />,
         };
       case 'error':
         return {
-          label: t('documentStudio.fileMenu.saveStatusError', 'Błąd zapisu — spróbuj ponownie'),
+          label: t('documentStudio.fileMenu.saveStatusError', 'Save failed — please try again'),
           icon: <Save className="h-3.5 w-3.5 shrink-0 text-c-danger" aria-hidden />,
         };
       case 'idle':
       case 'saved':
         return {
-          label: t('documentStudio.fileMenu.saveStatusSaved', 'Zapisano automatycznie'),
+          label: t('documentStudio.fileMenu.saveStatusSaved', 'Saved automatically'),
           icon: <Check className="h-3.5 w-3.5 shrink-0 text-c-success" aria-hidden />,
         };
       default:
         return {
-          label: t('documentStudio.fileMenu.saveStatusDisabled', 'Brak dokumentu do zapisania'),
+          label: t('documentStudio.fileMenu.saveStatusDisabled', 'No document to save'),
           icon: <Save className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />,
         };
     }
@@ -210,7 +210,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
               >
                 <FolderOpen className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
                 <span className="flex-1 truncate">
-                  {t('documentStudio.fileMenu.open', 'Otwórz')}
+                  {t('documentStudio.fileMenu.open', 'Open')}
                 </span>
               </button>
               <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
@@ -227,7 +227,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
               >
                 {saveStatusMeta.icon}
                 <span className="flex-1 truncate">
-                  {t('documentStudio.fileMenu.save', 'Zapisz')}
+                  {t('documentStudio.fileMenu.save', 'Save')}
                 </span>
                 <span className="shrink-0 truncate text-[11px] text-c-text-muted">
                   {saveStatusMeta.label}
@@ -251,8 +251,8 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
                 )}
                 <span className="flex-1 truncate">
                   {saveAsBusy
-                    ? t('documentStudio.fileMenu.saveAsBusy', 'Duplikuję…')
-                    : t('documentStudio.fileMenu.saveAs', 'Zapisz jako')}
+                    ? t('documentStudio.fileMenu.saveAsBusy', 'Duplicating…')
+                    : t('documentStudio.fileMenu.saveAs', 'Save as')}
                 </span>
               </button>
               {onSaveAsTemplate ? (
@@ -267,7 +267,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
                   >
                     <Wand2 className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
                     <span className="flex-1 truncate">
-                      {t('documentStudio.fileMenu.saveAsTemplate', 'Zrób z tego wzorzec')}
+                      {t('documentStudio.fileMenu.saveAsTemplate', 'Turn this into a template')}
                     </span>
                   </button>
                 </>

@@ -187,7 +187,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       setSchedules(schedulesRes.data?.schedules || []);
     } catch (err) {
       console.error('[ReportsHub] Failed to load:', err);
-      const msg = t('reports.toast.loadError', 'Nie udało się załadować danych');
+      const msg = t('reports.toast.loadError', 'Could not load the data');
       toast.error(msg);
       setLoadError(msg);
     } finally {
@@ -394,14 +394,14 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       actions.push(
         {
           id: 'open_preview',
-          label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+          label: t('rap.actions.openPreview', 'Open preview'),
           icon: ChevronRight,
           divider: true,
           onClick: () => setSelectedId(row.id),
         },
         {
           id: 'edit',
-          label: t('common.edit', 'Edytuj'),
+          label: t('common.edit', 'Edit'),
           icon: Pencil,
           onClick: () => handleViewReport(row.id),
         },
@@ -411,7 +411,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           label: t('rap.actions.archive', 'Archiwizuj'),
           icon: Archive,
           disabled: true,
-          description: t('common.comingSoon', 'Wkrótce'),
+          description: t('common.comingSoon', 'Coming soon'),
           onClick: () => {},
         }
       );
@@ -584,7 +584,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         }
       }
     } catch (error) {
-      toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
+      toast.error(t('reports.toast.loadReportError', 'Could not load the report'));
     }
   }, [navigate, reportIdParam, setActiveDocumentId, setOpenDocuments, t]);
 
@@ -593,10 +593,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       const response = await Api.get(`/api/management-reports/${reportId}/pdf`);
       if (response.data?.pdfUrl) {
         window.open(response.data.pdfUrl, '_blank');
-        toast.success(t('reports.toast.pdfStarted', 'Pobieranie PDF rozpoczęte'));
+        toast.success(t('reports.toast.pdfStarted', 'PDF download started'));
       }
     } catch (error) {
-      toast.error(t('reports.toast.pdfError', 'Nie udało się pobrać PDF'));
+      toast.error(t('reports.toast.pdfError', 'Could not download the PDF'));
     }
   }, []);
 
@@ -607,10 +607,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       });
       if (response.data?.shareUrl) {
         navigator.clipboard.writeText(window.location.origin + response.data.shareUrl);
-        toast.success(t('reports.toast.shareLinkCopied', 'Link do udostępniania skopiowany'));
+        toast.success(t('reports.toast.shareLinkCopied', 'Share link copied'));
       }
     } catch (error) {
-      toast.error(t('reports.toast.shareLinkError', 'Nie udało się utworzyć linku'));
+      toast.error(t('reports.toast.shareLinkError', 'Could not create the link'));
     }
   }, []);
 
@@ -710,7 +710,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
     setOpenDocuments((prev) => [...prev, doc]);
     setActiveDocumentId(report.id);
-    toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie!'));
+    toast.success(t('reports.toast.reportGenerated', 'Report generated successfully'));
   }, []);
 
   // Render report preview
@@ -904,7 +904,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                     });
                   } catch (err) {
                     console.error('[ReportsHub] Failed to open chat:', err);
-                    toast.error(t('reports.toast.chatOpenError', 'Nie udało się otworzyć czatu'));
+                    toast.error(t('reports.toast.chatOpenError', 'Could not open the chat'));
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 h-9 rounded-full border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
@@ -1040,7 +1040,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewReport}
-        newItemLabel={t('reports.actions.newReport', 'Nowy raport')}
+        newItemLabel={t('reports.actions.newReport', 'New report')}
         viewModes={['table']}
       >
         {renderContent()}

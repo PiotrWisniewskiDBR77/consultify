@@ -325,7 +325,7 @@ const DiagramsPanel: React.FC<{
   const diagrams = [
     { label: t('presentations.builder.toolbar.diagramItems.processSteps', 'Kroki procesu'), kind: 'process_steps' },
     { label: t('presentations.builder.toolbar.diagramItems.funnel', 'Lejek'), kind: 'funnel' },
-    { label: t('presentations.builder.toolbar.diagramItems.timeline', 'Oś czasu'), kind: 'timeline_horizontal' },
+    { label: t('presentations.builder.toolbar.diagramItems.timeline', 'Timeline'), kind: 'timeline_horizontal' },
     { label: t('presentations.builder.toolbar.diagramItems.matrix2x2', 'Macierz 2x2'), kind: 'matrix_2x2' },
     { label: t('presentations.builder.toolbar.diagramItems.swot', 'SWOT'), kind: 'swot' },
     { label: t('presentations.builder.toolbar.diagramItems.pyramid', 'Piramida'), kind: 'pyramid' },
@@ -333,7 +333,7 @@ const DiagramsPanel: React.FC<{
     { label: t('presentations.builder.toolbar.diagramItems.venn3', 'Venn (3)'), kind: 'venn_3' },
     { label: t('presentations.builder.toolbar.diagramItems.cycle', 'Cykl'), kind: 'cycle' },
     {
-      label: t('presentations.builder.toolbar.diagramItems.roadmap', 'Teraz/Dalej/Później'),
+      label: t('presentations.builder.toolbar.diagramItems.roadmap', 'Now/Next/Later'),
       kind: 'roadmap_now_next_later',
     },
     { label: t('presentations.builder.toolbar.diagramItems.hierarchy', 'Hierarchia'), kind: 'org_hierarchy' },
@@ -361,9 +361,9 @@ const ChartsPanel: React.FC<{
 }> = ({ onInsertBlock }) => {
   const { t } = useTranslation();
   const charts = [
-    { label: t('presentations.builder.toolbar.chartItems.bar', 'Wykres słupkowy'), chartType: 'bar' },
+    { label: t('presentations.builder.toolbar.chartItems.bar', 'Bar chart'), chartType: 'bar' },
     { label: t('presentations.builder.toolbar.chartItems.line', 'Wykres liniowy'), chartType: 'line' },
-    { label: t('presentations.builder.toolbar.chartItems.pie', 'Wykres kołowy'), chartType: 'pie' },
+    { label: t('presentations.builder.toolbar.chartItems.pie', 'Pie chart'), chartType: 'pie' },
     { label: t('presentations.builder.blocks.kpiWidget', 'Widget KPI'), type: 'kpi_widget' },
     { label: t('presentations.builder.blocks.metricStrip', 'Pasek metryk'), type: 'metric_strip' },
   ];

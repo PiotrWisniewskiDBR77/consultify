@@ -239,7 +239,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 data-testid="template-legacy-badge"
                 title={t(
                   'rap.templates.legacyHint',
-                  'Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.'
+                  'Template from the older template registry — generation works unchanged.'
                 )}
                 className="shrink-0 rounded border border-c-border px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-c-text-muted"
               >
@@ -253,12 +253,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 data-testid="template-orphaned-badge"
                 title={t(
                   'rap.templates.orphanedHint',
-                  'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                  'No canonical template record — it cannot be used for generation.'
                 )}
                 className="inline-flex shrink-0 items-center gap-1 rounded border border-c-border bg-c-surface-raised px-1.5 py-px text-[10px] font-medium text-c-text-muted"
               >
                 <AlertTriangle size={10} />
-                {t('rap.templates.orphanedBadge', 'Brak źródła')}
+                {t('rap.templates.orphanedBadge', 'No source')}
               </span>
             ) : null}
           </div>
@@ -371,7 +371,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           { value: 'personal', label: t('reports.personal') },
           { value: 'system', label: t('reports.application') },
           { value: 'organization', label: t('reports.organization') },
-          { value: 'unknown', label: t('rap.templates.scopeUnknown', 'Nieznany') },
+          { value: 'unknown', label: t('rap.templates.scopeUnknown', 'Unknown') },
         ],
         render: (row: TemplateItem) => (
           <span className="text-sm text-c-text-secondary">{scopeLabel(row.scope)}</span>
@@ -401,7 +401,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           },
           {
             value: 'unknown',
-            label: t('rap.templates.statusUnknown', 'Nieznany'),
+            label: t('rap.templates.statusUnknown', 'Unknown'),
             color: 'bg-slate-500',
           },
         ],
@@ -457,16 +457,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         const isDeprecated = String(row.status).toLowerCase() === 'deprecated';
         return {
           id: 'use',
-          label: t('rap.actions.useTemplate', 'Użyj wzorca'),
+          label: t('rap.actions.useTemplate', 'Use template'),
           icon: Play,
           disabled: !usePath || isDeprecated,
           note: isDeprecated
-            ? t('rap.templates.deprecatedUseBlocked', 'Wycofany wzorzec nie może być użyty.')
+            ? t('rap.templates.deprecatedUseBlocked', 'A deprecated template cannot be used.')
             : usePath
               ? undefined
               : t(
                   'rap.templates.useBlocked',
-                  'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+                  'No canonical template record — there is nothing to use.'
                 ),
           onClick: usePath && !isDeprecated ? () => handleUseTemplate(row) : undefined,
         };
@@ -555,7 +555,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               {
                 id: 'use',
                 variant: 'neutral',
-                label: t('rap.actions.useTemplate', 'Użyj wzorca'),
+                label: t('rap.actions.useTemplate', 'Use template'),
                 icon: Play,
                 shortcut: 'O',
                 // Sierota → akcja wyłączona (bez cichego fallbacku).
@@ -678,12 +678,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       <div className="flex flex-col items-center justify-center h-full p-8 max-w-2xl mx-auto">
         <BookTemplate size={40} className="text-c-text-muted mb-4" />
         <h3 className="text-lg font-semibold text-c-text mb-1">
-          {t('rap.empty.templatesOnboarding', 'Biblioteka wzorców')}
+          {t('rap.empty.templatesOnboarding', 'Template library')}
         </h3>
         <p className="text-sm text-c-text-muted text-center mb-6">
           {t(
             'rap.empty.templatesOnboardingDesc',
-            'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
+            'Templates define the structure and standard of reports and presentations. Start from one of the canonical families or create your own template.'
           )}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
@@ -750,7 +750,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             if (actionId === 'edit')
               navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
           }}
-          emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
+          emptyMessage={t('rap.empty.templates', 'No templates')}
           newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}
         />
         {briefModal}
@@ -785,10 +785,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       selection={{ selectedIds, onChange: setSelectedIds }}
       empty={{
         icon: BookTemplate,
-        title: t('rap.empty.templates', 'Brak wzorców'),
+        title: t('rap.empty.templates', 'No templates'),
         description: t(
           'rap.empty.templatesOnboardingDesc',
-          'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
+          'Templates define the structure and standard of reports and presentations. Start from one of the canonical families or create your own template.'
         ),
       }}
       rowMenu={(row) => buildRowMenu(row as unknown as TemplateItem)}
@@ -813,7 +813,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             title={selectedItem.title}
             onClose={() => setSelectedId(null)}
             onOpenFull={() => handleUseTemplate(selectedItem)}
-            openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
+            openLabel={t('rap.actions.useTemplate', 'Use template')}
             meta={{
               pills: [
                 ...(typeMeta
@@ -858,9 +858,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 // rekord leży w bazie.
                 ...(selectedItem.source === 'legacy' || selectedItem.legacy
                   ? [
-                      `${t('rap.preview.source', 'Źródło')}: ${t(
+                      `${t('rap.preview.source', 'Source')}: ${t(
                         'rap.templates.legacySourceLine',
-                        'Starszy rejestr wzorców — działa bez zmian'
+                        'Older template registry — works unchanged'
                       )}`,
                     ]
                   : []),
@@ -868,7 +868,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                   ? [
                       t(
                         'rap.templates.orphanedHint',
-                        'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                        'No canonical template record — it cannot be used for generation.'
                       ),
                     ]
                   : []),
