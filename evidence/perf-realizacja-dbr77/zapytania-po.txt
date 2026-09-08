@@ -1,0 +1,3 @@
+   9  [ 9 9 9 ]  /api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/allocations
+  10  [ 10 10 10 ]  /api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work
+   4  [ 4 4 5 ]  /api/initiatives/runtime-v1/report-definitions

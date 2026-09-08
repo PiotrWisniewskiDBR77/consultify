@@ -1,4 +1,5 @@
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { memoizeInRequest } from '../utils/RequestStore.js';
 import {
   type ApplicationRoleValue,
   defaultProjectRoleForApplicationRole,
@@ -623,7 +624,25 @@ export async function ensureProjectRoleTemplateSchema(): Promise<void> {
   roleSchemaReady = true;
 }
 
-export async function seedFactoryRoleTemplates(
+/**
+ * WYDAJNOSC [ODMROZENIE 06_EXECUTION DEC-453]: ten seed biegnie ze sciezki
+ * ODCZYTU (`readTemplateCapabilities` -> kazde sprawdzenie uprawnienia), wiec
+ * zwykly GET wykonywal wielowierszowy UPSERT tyle razy, ile razy pytano o
+ * uprawnienia — na `/allocations` osiem razy pod rzad, zawsze te same wiersze.
+ *
+ * Robimy go RAZ NA ZADANIE dla danej organizacji. Nie „raz na proces”:
+ * gdyby ktos usunal szablon fabryczny, dotad odtwarzal go nastepny odczyt, a
+ * przy pamieci na caly proces wrocilby dopiero po restarcie. Pamiec zamknieta
+ * w jednym zadaniu zachowuje to odtwarzanie od nastepnego zadania — zmienia sie
+ * liczba zapisow w obrebie zadania, nie zachowanie miedzy zadaniami.
+ */
+export function seedFactoryRoleTemplates(organizationId: string | null = null): Promise<void> {
+  return memoizeInRequest(JSON.stringify(['seedFactoryRoleTemplates', organizationId]), () =>
+    seedFactoryRoleTemplatesNiepamietane(organizationId)
+  );
+}
+
+async function seedFactoryRoleTemplatesNiepamietane(
   organizationId: string | null = null
 ): Promise<void> {
   await ensureProjectRoleTemplateSchema();
@@ -802,7 +821,64 @@ const OWNER_ONLY_CAPABILITIES = new Set<string>(['admin.project_roles.manage']);
  */
 const ADMIN_UNRESTRICTED_SENTINEL = 'admin.*.except-owner-only';
 
-export async function resolveEffectiveAccess(params: {
+/**
+ * WYDAJNOSC [ODMROZENIE 06_EXECUTION DEC-453] — pomiar 2026-09-08 na kopii
+ * danych DBR77 (104 inicjatywy / 197 zadan):
+ *
+ *   GET /api/initiatives/runtime-v1/execution-cases/<id>/allocations
+ *   = 48 zapytan SQL, mimo ze handler czyta jedna liste.
+ *
+ * Przyczyna: ta funkcja jest wolana ~8x w JEDNYM zadaniu (raz na projekt w
+ * `authorizeProjects`, raz na agregat w `filterVisibleAggregates`, plus
+ * middleware'y), a kazde wywolanie to ~4-5 round-tripow do bazy
+ * (organization_members + project_members + seed szablonow + szablon roli).
+ * Log Postgresa pokazywal to samo `SELECT status FROM organization_members`
+ * osiem razy pod rzad w obrebie jednego zadania.
+ *
+ * Naprawa: policz raz na zadanie HTTP. To NIE jest cache miedzy zadaniami —
+ * pamiec zyje tyle co `AsyncLocalStorage` jednego zadania i ginie razem z nim,
+ * wiec zmiana uprawnien jest widoczna od nastepnego zadania, dokladnie jak
+ * dotychczas. W obrebie jednego zadania te same argumenty i tak zwracaly ten
+ * sam wynik — zmienia sie liczba round-tripow, nie odpowiedz.
+ *
+ * Klucz obejmuje KAZDY argument wplywajacy na wynik (lacznie z
+ * `isImpersonating` i `applicationRole`, ktore steruja galezia SUPERADMIN) —
+ * pominiecie ktoregokolwiek oddaloby odpowiedz policzona dla innego principala.
+ */
+export function resolveEffectiveAccess(params: {
+  userId: string;
+  organizationId: string;
+  applicationRole?: string | null;
+  projectId?: string | null;
+  isImpersonating?: boolean;
+}): Promise<AccessContext> {
+  const klucz = JSON.stringify([
+    'effectiveAccess',
+    params.userId,
+    params.organizationId,
+    params.applicationRole ?? null,
+    params.projectId ?? null,
+    params.isImpersonating === true,
+  ]);
+  return memoizeInRequest(klucz, () => resolveEffectiveAccessNiepamietane(params)).then(kopia);
+}
+
+/**
+ * Swieza kopia przy KAZDYM odczycie z pamieci. Bez tego dwaj konsumenci w tym
+ * samym zadaniu dostaliby ten sam obiekt i mutacja u jednego (np. `push` do
+ * `capabilities`) byla by widoczna u drugiego — czego wariant bez pamieci nigdy
+ * nie robil.
+ */
+function kopia(ctx: AccessContext): AccessContext {
+  return {
+    ...ctx,
+    capabilities: [...ctx.capabilities],
+    scope: [...ctx.scope],
+    warnings: [...ctx.warnings],
+  };
+}
+
+async function resolveEffectiveAccessNiepamietane(params: {
   userId: string;
   organizationId: string;
   applicationRole?: string | null;

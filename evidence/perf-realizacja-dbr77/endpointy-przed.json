@@ -1,0 +1,336 @@
+{
+  "api": "http://127.0.0.1:4174",
+  "kiedy": "2026-09-08T06:06:35.607Z",
+  "wyniki": [
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases",
+      "status": 200,
+      "msMediana": 26,
+      "msWszystkie": [
+        26,
+        27,
+        26
+      ],
+      "sqlZapytan": 52
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/management-signals",
+      "status": 200,
+      "msMediana": 29,
+      "msWszystkie": [
+        35,
+        28,
+        29
+      ],
+      "sqlZapytan": 52
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/interventions",
+      "status": 200,
+      "msMediana": 19,
+      "msWszystkie": [
+        14,
+        19,
+        19
+      ],
+      "sqlZapytan": 44
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/capacity-options",
+      "status": 200,
+      "msMediana": 22,
+      "msWszystkie": [
+        26,
+        20,
+        22
+      ],
+      "sqlZapytan": 44
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/report-definitions",
+      "status": 200,
+      "msMediana": 19,
+      "msWszystkie": [
+        20,
+        19,
+        19
+      ],
+      "sqlZapytan": 44
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/report-runs",
+      "status": 200,
+      "msMediana": 21,
+      "msWszystkie": [
+        30,
+        21,
+        18
+      ],
+      "sqlZapytan": 44
+    },
+    {
+      "endpoint": "/api/v8/execution-control/manager/lanes/action-queue/problems",
+      "status": 200,
+      "msMediana": 19,
+      "msWszystkie": [
+        22,
+        19,
+        10
+      ],
+      "sqlZapytan": 18
+    },
+    {
+      "endpoint": "/api/v8/execution-control/manager/lanes/blockers/problems",
+      "status": 200,
+      "msMediana": 11,
+      "msWszystkie": [
+        12,
+        9,
+        11
+      ],
+      "sqlZapytan": 18
+    },
+    {
+      "endpoint": "/api/v8/execution-control/manager/lanes/people-change/problems",
+      "status": 200,
+      "msMediana": 15,
+      "msWszystkie": [
+        19,
+        15,
+        14
+      ],
+      "sqlZapytan": 18
+    },
+    {
+      "endpoint": "/api/v8/execution-control/manager/lanes/risk/problems",
+      "status": 200,
+      "msMediana": 13,
+      "msWszystkie": [
+        14,
+        13,
+        13
+      ],
+      "sqlZapytan": 18
+    },
+    {
+      "endpoint": "/api/v8/execution-control/manager/lanes/decisions/problems",
+      "status": 200,
+      "msMediana": 13,
+      "msWszystkie": [
+        13,
+        12,
+        16
+      ],
+      "sqlZapytan": 18
+    },
+    {
+      "endpoint": "/api/v8/execution-control/capacity/leveling-alerts",
+      "status": 200,
+      "msMediana": 10,
+      "msWszystkie": [
+        13,
+        10,
+        9
+      ],
+      "sqlZapytan": 12
+    },
+    {
+      "endpoint": "/api/v8/execution-control/capacity/timeline",
+      "status": 200,
+      "msMediana": 35,
+      "msWszystkie": [
+        20,
+        35,
+        35
+      ],
+      "sqlZapytan": 58
+    },
+    {
+      "endpoint": "/api/v8/execution-control/timeline-warnings",
+      "status": 200,
+      "msMediana": 6,
+      "msWszystkie": [
+        8,
+        6,
+        6
+      ],
+      "sqlZapytan": null
+    },
+    {
+      "endpoint": "/api/v8/execution-control/budget/overspend-signals",
+      "status": 200,
+      "msMediana": 52,
+      "msWszystkie": [
+        55,
+        52,
+        50
+      ],
+      "sqlZapytan": 128
+    },
+    {
+      "endpoint": "/api/execution-control/capacity/resource-plan",
+      "status": 200,
+      "msMediana": 12,
+      "msWszystkie": [
+        22,
+        11,
+        12
+      ],
+      "sqlZapytan": 14
+    },
+    {
+      "endpoint": "/api/tasks",
+      "status": 200,
+      "msMediana": 17,
+      "msWszystkie": [
+        14,
+        17,
+        17
+      ],
+      "sqlZapytan": null
+    },
+    {
+      "endpoint": "/api/raid",
+      "status": 200,
+      "msMediana": 5,
+      "msWszystkie": [
+        5,
+        5,
+        5
+      ],
+      "sqlZapytan": null
+    },
+    {
+      "endpoint": "/api/report-builder/definitions",
+      "status": 200,
+      "msMediana": 6,
+      "msWszystkie": [
+        6,
+        8,
+        6
+      ],
+      "sqlZapytan": null
+    },
+    {
+      "endpoint": "/api/action-cards",
+      "status": 200,
+      "msMediana": 5,
+      "msWszystkie": [
+        5,
+        4,
+        8
+      ],
+      "sqlZapytan": null
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work",
+      "status": 200,
+      "msMediana": 26,
+      "msWszystkie": [
+        26,
+        29,
+        24
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/allocations",
+      "status": 200,
+      "msMediana": 24,
+      "msWszystkie": [
+        21,
+        28,
+        24
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/work",
+      "status": 200,
+      "msMediana": 24,
+      "msWszystkie": [
+        24,
+        24,
+        28
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/allocations",
+      "status": 200,
+      "msMediana": 25,
+      "msWszystkie": [
+        24,
+        26,
+        25
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-traceability/work",
+      "status": 200,
+      "msMediana": 25,
+      "msWszystkie": [
+        25,
+        25,
+        26
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-traceability/allocations",
+      "status": 200,
+      "msMediana": 24,
+      "msWszystkie": [
+        31,
+        19,
+        24
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/work",
+      "status": 200,
+      "msMediana": 26,
+      "msWszystkie": [
+        25,
+        26,
+        26
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/allocations",
+      "status": 200,
+      "msMediana": 25,
+      "msWszystkie": [
+        25,
+        26,
+        24
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/work",
+      "status": 200,
+      "msMediana": 27,
+      "msWszystkie": [
+        27,
+        30,
+        17
+      ],
+      "sqlZapytan": 48
+    },
+    {
+      "endpoint": "/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/allocations",
+      "status": 200,
+      "msMediana": 29,
+      "msWszystkie": [
+        24,
+        34,
+        29
+      ],
+      "sqlZapytan": 48
+    }
+  ]
+}

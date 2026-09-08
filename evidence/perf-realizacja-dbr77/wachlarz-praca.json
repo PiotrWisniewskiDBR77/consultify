@@ -1,0 +1,459 @@
+{
+  "base": "http://127.0.0.1:3194",
+  "rola": "admin",
+  "kiedy": "2026-09-08T06:38:06.169Z",
+  "wyniki": [
+    {
+      "id": "praca",
+      "nazwa": "Praca",
+      "rola": "admin",
+      "powtorzen": 1,
+      "msTrescMediana": 4549,
+      "msPelnyMediana": 3820,
+      "msTrescWszystkie": [
+        4549
+      ],
+      "liczbaWywolanMediana": 100,
+      "wierszyWTabeli": 115,
+      "timeouty": 0,
+      "bledy": [
+        "FAILED POST /api/analytics/web-vitals :: net::ERR_ABORTED",
+        "FAILED GET /api/health :: net::ERR_ABORTED"
+      ],
+      "topWzorce": [
+        {
+          "wzor": "/api/organizations/:id/members",
+          "n": 6,
+          "msSuma": 6944,
+          "msMax": 1471
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases",
+          "n": 5,
+          "msSuma": 3173,
+          "msMax": 1446
+        },
+        {
+          "wzor": "/api/tasks",
+          "n": 4,
+          "msSuma": 5072,
+          "msMax": 1433
+        },
+        {
+          "wzor": "/api/v10/teresa/voice-event",
+          "n": 3,
+          "msSuma": 376,
+          "msMax": 259
+        },
+        {
+          "wzor": "/api/organizations/current",
+          "n": 3,
+          "msSuma": 368,
+          "msMax": 145
+        },
+        {
+          "wzor": "/api/report-builder/definitions",
+          "n": 2,
+          "msSuma": 2040,
+          "msMax": 1171
+        },
+        {
+          "wzor": "/api/execution-control/capacity/resource-plan",
+          "n": 2,
+          "msSuma": 1854,
+          "msMax": 1191
+        },
+        {
+          "wzor": "/api/raid",
+          "n": 2,
+          "msSuma": 1709,
+          "msMax": 1149
+        },
+        {
+          "wzor": "/api/action-cards",
+          "n": 2,
+          "msSuma": 1183,
+          "msMax": 1077
+        },
+        {
+          "wzor": "/api/feature-flags/runtime",
+          "n": 2,
+          "msSuma": 541,
+          "msMax": 465
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-traceability/work",
+          "n": 2,
+          "msSuma": 511,
+          "msMax": 313
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/work",
+          "n": 2,
+          "msSuma": 482,
+          "msMax": 313
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/work",
+          "n": 2,
+          "msSuma": 479,
+          "msMax": 313
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/work",
+          "n": 2,
+          "msSuma": 424,
+          "msMax": 313
+        },
+        {
+          "wzor": "/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work",
+          "n": 2,
+          "msSuma": 405,
+          "msMax": 312
+        },
+        {
+          "wzor": "/api/health",
+          "n": 2,
+          "msSuma": 291,
+          "msMax": 146
+        },
+        {
+          "wzor": "/api/my-work/personal-tasks",
+          "n": 2,
+          "msSuma": 291,
+          "msMax": 146
+        },
+        {
+          "wzor": "/api/v8/execution-control/capacity/timeline",
+          "n": 1,
+          "msSuma": 1415,
+          "msMax": 1415
+        },
+        {
+          "wzor": "/api/v8/execution-control/budget/overspend-signals",
+          "n": 1,
+          "msSuma": 1337,
+          "msMax": 1337
+        },
+        {
+          "wzor": "/api/tasks/workflow-config",
+          "n": 1,
+          "msSuma": 997,
+          "msMax": 997
+        },
+        {
+          "wzor": "/api/decisions",
+          "n": 1,
+          "msSuma": 938,
+          "msMax": 938
+        },
+        {
+          "wzor": "/api/v8/execution-control/capacity/leveling-alerts",
+          "n": 1,
+          "msSuma": 868,
+          "msMax": 868
+        },
+        {
+          "wzor": "/api/v10/teresa/voice-config",
+          "n": 1,
+          "msSuma": 544,
+          "msMax": 544
+        },
+        {
+          "wzor": "/api/v8/execution-control/timeline-warnings",
+          "n": 1,
+          "msSuma": 487,
+          "msMax": 487
+        },
+        {
+          "wzor": "/api/organization-context",
+          "n": 1,
+          "msSuma": 469,
+          "msMax": 469
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/people-change/problems",
+          "n": 1,
+          "msSuma": 361,
+          "msMax": 361
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/risk/problems",
+          "n": 1,
+          "msSuma": 326,
+          "msMax": 326
+        },
+        {
+          "wzor": "/api/ai-settings/user",
+          "n": 1,
+          "msSuma": 323,
+          "msMax": 323
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/workload/problems",
+          "n": 1,
+          "msSuma": 297,
+          "msMax": 297
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/blockers/problems",
+          "n": 1,
+          "msSuma": 278,
+          "msMax": 278
+        },
+        {
+          "wzor": "/api/initiatives",
+          "n": 1,
+          "msSuma": 272,
+          "msMax": 272
+        },
+        {
+          "wzor": "/api/notifications",
+          "n": 1,
+          "msSuma": 258,
+          "msMax": 258
+        },
+        {
+          "wzor": "/api/notifications/unread-count",
+          "n": 1,
+          "msSuma": 258,
+          "msMax": 258
+        },
+        {
+          "wzor": "/api/v8/execution-control/delay-signals",
+          "n": 1,
+          "msSuma": 235,
+          "msMax": 235
+        },
+        {
+          "wzor": "/src/services/api/organizationContextWorker.api.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/src/services/api/settings.api.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/src/services/api/v8/assessment.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/src/services/api/v8/my-work.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/src/types/api/requests.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/src/types/api/responses.ts",
+          "n": 1,
+          "msSuma": 184,
+          "msMax": 184
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/decisions/problems",
+          "n": 1,
+          "msSuma": 178,
+          "msMax": 178
+        },
+        {
+          "wzor": "/api/v8/execution-control/manager/lanes/action-queue/problems",
+          "n": 1,
+          "msSuma": 178,
+          "msMax": 178
+        },
+        {
+          "wzor": "/src/services/api/organizations.api.ts",
+          "n": 1,
+          "msSuma": 151,
+          "msMax": 151
+        },
+        {
+          "wzor": "/api/demo/status",
+          "n": 1,
+          "msSuma": 146,
+          "msMax": 146
+        },
+        {
+          "wzor": "/api/llm/providers/health",
+          "n": 1,
+          "msSuma": 145,
+          "msMax": 145
+        },
+        {
+          "wzor": "/api/mfa/status",
+          "n": 1,
+          "msSuma": 145,
+          "msMax": 145
+        },
+        {
+          "wzor": "/api/v8/execution-control/risk-signals",
+          "n": 1,
+          "msSuma": 118,
+          "msMax": 118
+        },
+        {
+          "wzor": "/api/auth/me",
+          "n": 1,
+          "msSuma": 98,
+          "msMax": 98
+        },
+        {
+          "wzor": "/src/services/api/baseClient.ts",
+          "n": 1,
+          "msSuma": 59,
+          "msMax": 59
+        },
+        {
+          "wzor": "/src/services/api/v8/client.ts",
+          "n": 1,
+          "msSuma": 59,
+          "msMax": 59
+        },
+        {
+          "wzor": "/src/services/api/tablePlatform.api.ts",
+          "n": 1,
+          "msSuma": 40,
+          "msMax": 40
+        },
+        {
+          "wzor": "/src/services/api/artifactRuns.ts",
+          "n": 1,
+          "msSuma": 40,
+          "msMax": 40
+        },
+        {
+          "wzor": "/src/services/api/v8Execution.ts",
+          "n": 1,
+          "msSuma": 39,
+          "msMax": 39
+        },
+        {
+          "wzor": "/src/services/api/v8/index.ts",
+          "n": 1,
+          "msSuma": 38,
+          "msMax": 38
+        },
+        {
+          "wzor": "/api/v8/admin/flags",
+          "n": 1,
+          "msSuma": 27,
+          "msMax": 27
+        },
+        {
+          "wzor": "/src/services/api/workCanvas.ts",
+          "n": 1,
+          "msSuma": 23,
+          "msMax": 23
+        },
+        {
+          "wzor": "/api/settings/preferences/accessibility",
+          "n": 1,
+          "msSuma": 20,
+          "msMax": 20
+        },
+        {
+          "wzor": "/src/services/api/v8/execution-control.ts",
+          "n": 1,
+          "msSuma": 18,
+          "msMax": 18
+        },
+        {
+          "wzor": "/src/services/api/v8/admin.ts",
+          "n": 1,
+          "msSuma": 17,
+          "msMax": 17
+        },
+        {
+          "wzor": "/src/services/api/v8/ai-core.ts",
+          "n": 1,
+          "msSuma": 17,
+          "msMax": 17
+        },
+        {
+          "wzor": "/src/services/api/v8/chat.ts",
+          "n": 1,
+          "msSuma": 17,
+          "msMax": 17
+        },
+        {
+          "wzor": "/src/services/api/v8/finance.ts",
+          "n": 1,
+          "msSuma": 17,
+          "msMax": 17
+        },
+        {
+          "wzor": "/api/csrf-token",
+          "n": 1,
+          "msSuma": 14,
+          "msMax": 14
+        },
+        {
+          "wzor": "/src/services/api/v8/interview.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/kb.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/multiplayer.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/partner.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/planning.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/prompt-os.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/results.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/retrieval.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        },
+        {
+          "wzor": "/src/services/api/v8/sync.ts",
+          "n": 1,
+          "msSuma": 13,
+          "msMax": 13
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+POMIAR WYDAJNOSCI — MODUL REALIZACJA (06_EXECUTION) NA KOPII DANYCH DBR77
+[ODMROZENIE 06_EXECUTION DEC-453]   2026-09-08
+
+Stanowisko: /private/tmp/wt-perf, galaz mvp/perf-realizacja-dbr77, baza 4de4a6c9e8
+Baza pomiarowa: consultify_kopia_perf (kopia consultify_kopia_final przez pg_dump —
+  TEMPLATE odmowil, bo zrodlo mialo 14 aktywnych polaczen innych robotnikow)
+Dane organizacji DBR77: 104 inicjatywy, 197 zadan, 5 execution-cases
+
+
+=============================================================================
+1. GLOWNA PRZYCZYNA — ZMIERZONA, NIE ZGADNIETA
+=============================================================================
+
+Licznik wpiety bezposrednio na wejscie `verifyToken` dla JEDNEGO zadania
+GET /api/initiatives/runtime-v1/execution-cases/<id>/allocations:
+
+    [POMIAR] verifyToken #1 :: .../allocations
+    [POMIAR] verifyToken #2 :: .../allocations
+    ...
+    [POMIAR] verifyToken #8 :: .../allocations
+
+OSIEM pelnych weryfikacji tokenu na JEDNO zadanie. Zrodlo: Gateway.ts zaklada
+verifyToken przed routerem (linia 697 dla /api/initiatives), a router i jego
+pod-routery zakladaja go ponownie (routes/pmo/initiatives.routes.ts:147).
+
+Rozklad zapytan tego samego zadania z logu Postgresa (tylko `execute`):
+
+    PRZED                                      PO
+     8x SELECT status FROM organization_members  1x
+     8x SELECT id, is_active FROM user_sessions  1x
+     4x SELECT status AS user_status FROM users  1x
+     2x organization_members (inne miejsce)      2x
+     2x ie_aggregate_state (FAKTYCZNA PRACA)     2x
+     ...
+    razem 28                                    razem 15
+
+
+=============================================================================
+2. LICZBA ZAPYTAN SQL NA ZADANIE — POMIAR KONTROLOWANY (przed -> po)
+=============================================================================
+
+Metoda: swiezy restart API przy wlaczonym log_min_duration_statement=0,
+rozgrzewka 3x kazda sciezka, potem 3 pomiary, liczone tylko `execute`.
+Ten sam kod, ta sama baza, ta sama sesja — roznica to WYLACZNIE naprawa
+(wylaczana i wlaczana z powrotem miedzy przebiegami).
+
+  endpoint                                        PRZED        PO      zmiana
+  ---------------------------------------------------------------------------
+  execution-cases/<id>/allocations             26 [26,26,26]  9 [9,9,9]   -65%
+  execution-cases/<id>/work                    27 [27,27,27] 10 [10,10,10] -63%
+  runtime-v1/report-definitions                21 [21,21,21]  4 [4,4,5]   -81%
+
+Powtarzalnosc idealna (te same liczby w kazdej probie) — to nie jest szum.
+
+Wpisow "High DB query count" (prog: >10 zapytan) w logu API:
+    przed: 615 wpisow, rekordy 44-128 zapytan na zadanie
+    po:    0 wpisow
+
+
+=============================================================================
+3. CZEGO NIE UDALO SIE UDOWODNIC CZASEM SCIENNYM — I DLACZEGO
+=============================================================================
+
+Czas do pelnego renderu ekranu na tej maszynie NIE jest miara kodu:
+
+    load average w trakcie pomiarow: 31.73
+    (flutter_tester x4, skan.py, Teams, fseventsd — praca innych robotnikow)
+
+Ten sam ekran, ten sam kod, trzy przebiegi pod rzad: [2386, 3455, 3781] ms.
+Rozrzut miedzy przebiegami jest wiekszy niz mierzony efekt naprawy, wiec
+tabela czasow byla by kłamstwem w obie strony. Zmierzone czasy zapisane sa
+w po-admin-mediana.json i po-admin-koncowy.json jako materiał, NIE jako dowod.
+
+Zgloszenie wlasciciela (Kokpit ~10 s, Praca 10-12 s, MEMBER 10-20 s, "Failed to
+fetch" pod obciazeniem) powstalo na TEJ SAMEJ obciazonej maszynie. Nie znaczy
+to, ze problem byl zmyslony — znaczy, ze dlug w kodzie (8 weryfikacji tokenu i
+~75 wywolan API na wejscie na ekran) pod obciazeniem boli wielokrotnie mocniej
+niz na wolnej maszynie.
+
+
+=============================================================================
+4. BRAK ZMIANY SEMANTYKI — DOWOD
+=============================================================================
+
+64 odpowiedzi API (ADMIN i MEMBER; wszystkie zakladki Realizacji + wachlarz
+per execution-case) zrzucone przed i po naprawach i porownane po normalizacji
+pol czasowych:
+
+    ZGODNE: 62/64 bajt w bajt
+
+Dwie roznice to WYLACZNIE pola liczace dni — `daysOverdue` 162 -> 163,
+`days_stale`, i teksty `rootCause` je cytujace — bo miedzy pomiarami minela
+doba. Zaden wiersz, zadna liczba w Zasobach ani zaden status sie nie zmienil.
+
+Pliki: odpowiedzi-przed.json, odpowiedzi-po2.json
+
+
+=============================================================================
+5. PRZYRZADY ODRZUCONE PO DRODZE (zeby nikt nie probowal ich znowu)
+=============================================================================
+
+a) `dbQueryCount` z performanceMetrics.middleware.ts — loguje sie DOPIERO
+   powyzej 10 zapytan. Po naprawie "brak wpisu w logu" nie odroznia "jest 8
+   zapytan" od "metryka przestala dzialac".
+
+b) `pg_stat_database.xact_commit` — rozrzut pojedynczych prob ([17,2,14,2,20])
+   okazal sie WIEKSZY niz mierzona roznica; przyrzad nie wykrywa efektu.
+
+c) Szeroka lista endpointow czytana z `docker logs` — przy wiekszym ruchu log
+   gubil wiersze i oddawal ciche ZERA dla zadan, ktore odpowiadaly 200. Stad
+   bezpiecznik w scripts/dev/perf-zapytania-jeden.sh: same zera = blad, nie sukces.
+
+d) Pomiar bez ROZGRZEWKI — pierwsze zadanie po restarcie API placi za koszty
+   jednorazowe (DDL ensureProjectRoleTemplateSchema, odczyt information_schema,
+   seed szablonow rol). Ten sam endpoint pokazywal 15 albo 5 zaleznie WYLACZNIE
+   od miejsca w kolejce pomiaru. Bez rozgrzewki "poprawa" i "regresja" sa
+   artefaktem kolejnosci.
+
+e) Liczenie wierszy `statement:` w logu Postgresa — log zapisuje `parse`, `bind`
+   i `execute` OSOBNO, wiec wynik byl zawyzony ~3x (pozorne "8x to samo
+   zapytanie" to bylo 2-3 realne wywolania).
+
+f) React StrictMode podwaja efekty w dev — czesc duplikatow wywolan API na
+   zrzutach z przegladarki to artefakt trybu deweloperskiego, nie defekt.
+
+g) Filtr `url.includes('/api/')` w harnessie przegladarkowym lapal takze pliki
+   zrodlowe Vite (`/src/services/api/*.ts`) — okolo 25 ze 100 "wywolan" na
+   ekranie Praca to nie byl ruch sieciowy do API.
+
+
+=============================================================================
+6. CO ZOSTAJE OTWARTE (STOP — wymaga decyzji)
+=============================================================================
+
+Wejscie na jedna zakladke Realizacji to wciaz ~75 realnych wywolan API, w tym
+duplikaty tego samego GET-a z roznych komponentow:
+
+    /api/organizations/:id/members                6x
+    /api/initiatives/runtime-v1/execution-cases   5x
+    /api/tasks                                    4x
+    /api/organizations/current                    3x
+
+Deduplikacja in-flight JUZ ISTNIEJE w src/services/api/baseClient.ts (linia 60,
+"FIX-1 429 self-storm") i dziala poprawnie — ale tylko dla wywolan NAKLADAJACYCH
+SIE w czasie. Te duplikaty sa rozlozone w czasie (kazdy komponent montuje sie
+wlasnym `useEffect`), wiec pierwszy konczy sie zanim rusza drugi.
+
+Rozszerzenie dedupu o okno czasowe (np. 1 s) naprawiloby wszystkie naraz JEDNA
+zmiana, ale oddawaloby tez odpowiedz sprzed zapisu w scenariuszu
+"zapisz zadanie -> odswiez liste" — to realne ryzyko regresji funkcjonalnej
+w calej aplikacji, nie tylko w Realizacji. Nie robie tego bez decyzji.
+
+Zrodlo najwiekszego pojedynczego duplikatu: src/hooks/useOrganizationMemberNames.ts
+(linia 88) — kazdy komponent uzywajacy tego haka pobiera pelna liste czlonkow
+organizacji osobno.
+
+Osobno, poza sciezka Realizacji: /api/v8/execution-control/budget/overspend-signals
+to 64 zapytania SQL na zadanie (najciezszy zmierzony endpoint) — nie tknalem go,
+bo lezy poza zakresem tego zlecenia.

@@ -2,6 +2,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import { memoizeInRequest } from '../utils/RequestStore.js';
 
 type HighRiskCategory = 'invite' | 'upload' | 'export' | 'public_share' | 'ai_memory' | 'autopilot';
 
@@ -145,10 +146,18 @@ async function resolveAccessScope(req: Request): Promise<AccessScope> {
 
   const userId = getUserId(req);
   if (userId) {
-    const user = await dbGet<UserRow>(
-      `SELECT status AS user_status FROM users WHERE id = ? LIMIT 1`,
-      [userId],
-      { fallback: false }
+    // WYDAJNOSC [ODMROZENIE 06_EXECUTION DEC-453]: to samo pytanie o status
+    // uzytkownika zadawal rowniez `trialEntryGuard`, lacznie 4x na jedno zadanie.
+    // Klucz jest INNY niz w tamtym guardzie, bo tutaj zapytanie ma `fallback: false`
+    // (inne zachowanie przy bledzie bazy) — wspolny klucz zlalby dwa rozne kontrakty.
+    const user = await memoizeInRequest(
+      JSON.stringify(['users.status.noFallback', userId]),
+      () =>
+        dbGet<UserRow>(
+          `SELECT status AS user_status FROM users WHERE id = ? LIMIT 1`,
+          [userId],
+          { fallback: false }
+        )
     );
     if (
       String(user?.user_status || '')
