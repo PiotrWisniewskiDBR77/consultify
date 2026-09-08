@@ -18388,10 +18388,6 @@
         "title": "Dane i prywatność AI",
         "subtitle": "Kontroluj dostęp do danych, retencję i ustawienia zgodności"
       },
-      "prompt-library": {
-        "title": "Biblioteka promptów",
-        "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
-      },
       "ai-prompt-library": {
         "title": "Biblioteka promptów",
         "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
@@ -18449,18 +18445,6 @@
         "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
       },
       "notifications-availability": {
-        "title": "Dostępność",
-        "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
-      },
-      "email-digest": {
-        "title": "E-mail i podsumowania",
-        "subtitle": "Wybierz, które e-maile chcesz otrzymywać i jak mają być podsumowywane"
-      },
-      "desktop-sounds": {
-        "title": "Pulpit i dźwięki",
-        "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
-      },
-      "availability": {
         "title": "Dostępność",
         "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
       },

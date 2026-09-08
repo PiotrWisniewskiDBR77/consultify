@@ -29932,13 +29932,21 @@
     "feature": {
       "categories": {
         "missing": "Missing feature",
-        "improvement": "Improvement"
+        "improvement": "Improvement",
+        "usability": "UX"
       },
       "impactLevels": {
         "low": "Nice to have",
         "medium": "Important",
         "high": "Critical"
-      }
+      },
+      "category": "Category",
+      "name": "Feature Name",
+      "namePlaceholder": "e.g., Dark mode, Export to PDF",
+      "description": "Description",
+      "descPlaceholder": "Describe the feature and how it would help you...",
+      "impact": "Business Impact",
+      "submit": "Submit Feature Request"
     },
     "floatingButton": {
       "ariaLabel": "Report a bug (Shift+Ctrl+B)",
@@ -29953,16 +29961,73 @@
       "medium": "Medium",
       "low": "Low",
       "high": "High",
-      "critical": "Critical"
+      "critical": "Critical",
+      "label": "Severity"
     },
     "success": {
       "reference": "Report number",
-      "referenceHint": "We'll notify you here when the status changes."
+      "referenceHint": "We'll notify you here when the status changes.",
+      "title": "Thank You!",
+      "bugReported": "Bug reported! We'll investigate ASAP.",
+      "ideaSubmitted": "Great idea! Added to our backlog.",
+      "pulse": "Thanks for your feedback! 🎉",
+      "feature": "Feature request submitted!",
+      "featureWithAI": "Feature request submitted! AI found similar requests."
     },
     "anonymous": "Anonymously",
     "sortBy": "Sort by",
     "sortRecent": "Most recent",
-    "sortSeverity": "Weight (severity)"
+    "sortSeverity": "Weight (severity)",
+    "screenshot": "Screenshot",
+    "downloadScreenshot": "Download",
+    "loadingScreenshot": "Loading screenshot...",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "quickPulse": "Quick feedback",
+    "tabs": {
+      "report": "Report",
+      "feature": "Feature"
+    },
+    "report": {
+      "intro": "Help us improve by reporting issues or sharing ideas."
+    },
+    "type": {
+      "bug": "Bug",
+      "idea": "Idea"
+    },
+    "label": {
+      "title": "Title",
+      "bug": "Problem description",
+      "idea": "Idea description",
+      "steps": "Steps to reproduce",
+      "expected": "Expected",
+      "actual": "Actual",
+      "impact": "Impact"
+    },
+    "placeholder": {
+      "title": "Short, specific summary",
+      "bug": "Describe what happened and steps to reproduce...",
+      "idea": "Share your idea for improvement...",
+      "steps": "1) …\\n2) …\\n3) …",
+      "impact": "Who is affected / how bad is it?"
+    },
+    "error": {
+      "submit": "Failed to submit feedback"
+    },
+    "ai": {
+      "improve": "Improve with AI",
+      "questions": "AI has questions",
+      "clarify": "To make this actionable, please clarify",
+      "maybeNotBug": "AI suggests this might not be a bug. Please double-check.",
+      "failed": "AI assist failed. Please try again.",
+      "insights": "AI Insights",
+      "loading": "Loading AI insights..."
+    },
+    "pulse": {
+      "tellUs": "Tell us what went wrong",
+      "context": "Feedback for:",
+      "commentPlaceholder": "What can we improve?"
+    }
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -36278,6 +36343,73 @@
     "events": {
       "exportSuccess": "Export started",
       "search": "Search"
+    },
+    "hero": {
+      "badge": "Enterprise Security",
+      "titlePre": "Security guaranteed by",
+      "titleHighlight": "architecture,",
+      "titlePost": "not marketing claims.",
+      "subtitle": "Consultify and DBR77 Vector deliver enterprise-grade AI through technical solutions — from encryption and data sovereignty to dedicated deployment models and ISO 27001 alignment."
+    },
+    "infra": {
+      "title": "Security Infrastructure"
+    },
+    "pillars": {
+      "badge": "AI Security Architecture",
+      "title": "Six Pillars of Industrial AI Security",
+      "subtitle": "Every aspect of DBR77 Vector — from training data to deployment to inference — is designed for environments where data sovereignty and auditability are non-negotiable."
+    },
+    "deployment": {
+      "title": "Choose Your Deployment Model",
+      "subtitle": "Same Vector intelligence, same domain depth. The difference is where it runs and who manages the infrastructure."
+    },
+    "sovereignty": {
+      "title": "Data Sovereignty & Residency",
+      "regionTitle": "Your Region, Your Rules",
+      "dataTitle": "Zero Client Data Training",
+      "p1": "Choose your data residency: EU, US, or APAC",
+      "p2": "On-premise deployment: data never leaves your network",
+      "p3": "Private API: dedicated compute in your chosen region",
+      "p4": "Full GDPR compliance with Data Processing Agreements",
+      "d1": "No client production data used for model training or fine-tuning",
+      "d2": "Queries and outputs are not stored beyond the inference session",
+      "d3": "Complete separation between inference and training pipelines",
+      "d4": "Transparent methodology available for security review"
+    },
+    "techControls": {
+      "title": "Encryption & Technical Controls"
+    },
+    "compliance": {
+      "title": "Compliance & Standards",
+      "subtitle": "Designed to pass enterprise procurement, legal, and IT security reviews."
+    },
+    "comparison": {
+      "title": "DBR77 Vector vs. Public LLMs",
+      "subtitle": "Security side by side — how Vector compares on the dimensions that matter most.",
+      "dimensionHeader": "Dimension",
+      "vectorHeader": "DBR77 Vector",
+      "llmHeader": "Public LLM"
+    },
+    "pipeline": {
+      "title": "Auditable from Code to Inference",
+      "subtitle": "Every step in the deployment pipeline is versioned, automated, and traceable. No manual steps. No untracked changes."
+    },
+    "disclosure": {
+      "title": "Responsible Disclosure",
+      "intro": "We take security vulnerabilities seriously. If you discover a security issue, please report it to us responsibly. We commit to:",
+      "items": [
+        "Acknowledge receipt within 24 hours",
+        "Provide regular updates on our investigation",
+        "Credit researchers who follow responsible disclosure",
+        "Not pursue legal action against good-faith researchers"
+      ],
+      "report": "Report security issues to:"
+    },
+    "cta": {
+      "title": "Ready for an enterprise security review?",
+      "subtitle": "For deployment-specific security detail, legal review, or architecture walkthrough — contact us before procurement or rollout.",
+      "review": "Book a Security Review",
+      "walkthrough": "Schedule Architecture Walkthrough"
     }
   },
   "dashboard": {
