@@ -1,0 +1,21 @@
+{
+ "ekran": "inicjatywy",
+ "sciezka": "/initiatives",
+ "probkaMs": 3000,
+ "scenariusz": "swieza",
+ "faktycznyMs": 3063,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "polskichSlowUI": 2,
+ "polskichLiniiUI": 1,
+ "ui": [
+  {
+   "linia": "Ładowanie narzędzi…",
+   "trafienia": [
+    "Ładowanie",
+    "narzędzi"
+   ]
+  }
+ ],
+ "daneLinii": 0
+}

@@ -1,0 +1,350 @@
+{
+ "ekran": "inicjatywy",
+ "sciezka": "/initiatives",
+ "probkaMs": "pelne",
+ "scenariusz": "wolne-locale",
+ "faktycznyMs": 6420,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "polskichSlowUI": 295,
+ "polskichLiniiUI": 64,
+ "ui": [
+  {
+   "linia": "Przebudowa praw decyzyjnych dla wyjątków operacyjnych: kto decyduje, kiedy eskalujemy i jaki jest audyt decyzji.",
+   "trafienia": [
+    "dla",
+    "wyjątków",
+    "jest"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "Dane partii są rozproszone pomiędzy systemami i arkuszami.",
+   "trafienia": [
+    "są",
+    "pomiędzy"
+   ]
+  },
+  {
+   "linia": "Identyfikacja źródła niezgodności w czasie krótszym niż 10 minut.",
+   "trafienia": [
+    "źródła",
+    "niezgodności",
+    "krótszym",
+    "niż"
+   ]
+  },
+  {
+   "linia": "Akademia liderów transformacji",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "Zespoły wdrożeniowe nie mają wspólnego standardu prowadzenia zmian.",
+   "trafienia": [
+    "Zespoły",
+    "wdrożeniowe",
+    "nie",
+    "mają",
+    "wspólnego"
+   ]
+  },
+  {
+   "linia": "Przygotowanie 24 liderów do samodzielnego prowadzenia inicjatyw.",
+   "trafienia": [
+    "liderów"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle"
+   ]
+  },
+  {
+   "linia": "Sprzedaż i produkcja pracują na różnych prognozach.",
+   "trafienia": [
+    "Sprzedaż",
+    "pracują",
+    "różnych"
+   ]
+  },
+  {
+   "linia": "Osiągnięcie dokładności prognozy 85% i wspólnego planu miesięcznego.",
+   "trafienia": [
+    "Osiągnięcie",
+    "dokładności",
+    "wspólnego",
+    "miesięcznego"
+   ]
+  },
+  {
+   "linia": "Zmiany planu są przekazywane ręcznie i powodują przestoje.",
+   "trafienia": [
+    "są",
+    "ręcznie",
+    "powodują"
+   ]
+  },
+  {
+   "linia": "Wzrost terminowości realizacji zleceń do 94%.",
+   "trafienia": [
+    "terminowości",
+    "zleceń"
+   ]
+  },
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Mikroprzestoje i brak standardu reakcji obniżają OEE.",
+   "trafienia": [
+    "brak",
+    "obniżają"
+   ]
+  },
+  {
+   "linia": "Awarie krytycznych maszyn są diagnozowane dopiero po zatrzymaniu.",
+   "trafienia": [
+    "są"
+   ]
+  },
+  {
+   "linia": "Redukcja nieplanowanych przestojów o 25%.",
+   "trafienia": [
+    "przestojów"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Nadmierny zapas wiąże kapitał, a braki zatrzymują produkcję.",
+   "trafienia": [
+    "wiąże",
+    "kapitał",
+    "zatrzymują",
+    "produkcję"
+   ]
+  },
+  {
+   "linia": "Redukcja zapasu o 18% bez pogorszenia dostępności.",
+   "trafienia": [
+    "dostępności"
+   ]
+  },
+  {
+   "linia": "Redukcja zużycia energii w zakładzie",
+   "trafienia": [
+    "zużycia",
+    "zakładzie"
+   ]
+  },
+  {
+   "linia": "Wysokie koszty energii i brak bieżącej widoczności strat.",
+   "trafienia": [
+    "brak",
+    "bieżącej",
+    "widoczności"
+   ]
+  },
+  {
+   "linia": "Obniżenie zużycia energii o 12% w ciągu 9 miesięcy.",
+   "trafienia": [
+    "Obniżenie",
+    "zużycia",
+    "ciągu",
+    "miesięcy"
+   ]
+  },
+  {
+   "linia": "Automatyzacja kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Kontrola manualna ogranicza przepustowość i wykrywa wady z opóźnieniem.",
+   "trafienia": [
+    "przepustowość",
+    "opóźnieniem"
+   ]
+  },
+  {
+   "linia": "Skrócenie czasu kontroli o 40% i redukcja reklamacji o 20%.",
+   "trafienia": [
+    "Skrócenie"
+   ]
+  },
+  {
+   "linia": "Realizacja korzyści pozostaje poniżej celu i wymaga skoordynowanego planu naprawczego.",
+   "trafienia": [
+    "Realizacja",
+    "korzyści",
+    "poniżej"
+   ]
+  },
+  {
+   "linia": "Osiągnąć i utrzymać 90% zweryfikowanej realizacji korzyści.",
+   "trafienia": [
+    "Osiągnąć",
+    "utrzymać",
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "Mamy 10 pomysłów na AI i budżet na 3. Zestawiamy je w jednej tabeli: koszt, oszczędność, czas wdrożenia, ryzyko i właściciel — żeby wybór był rozmową o liczbach, nie o sympatiach.",
+   "trafienia": [
+    "pomysłów",
+    "budżet",
+    "oszczędność",
+    "wdrożenia",
+    "właściciel",
+    "żeby",
+    "wybór",
+    "był",
+    "rozmową",
+    "nie"
+   ]
+  },
+  {
+   "linia": "Meridian ColdChain Group potrzebuje wejścia na niemiecki rynek chłodniczy (segment rośnie 6.4% rocznie) poprzez utworzenie nowego hubu w regionie Lipsk/Drezno. Budżet 1.3M EUR, cel 8M EUR nowego przychodu w 24 miesiące.",
+   "trafienia": [
+    "wejścia",
+    "chłodniczy",
+    "rośnie",
+    "Budżet",
+    "miesiące"
+   ]
+  },
+  {
+   "linia": "Meridian ColdChain Group potrzebuje podniesienia marży per-paletę o 340 bps poprzez wprowadzenie usług o wyższej wartości dodanej: cross-dock, co-packing i kontrola jakości dla sieci detalicznych. Budżet: 2.1M EUR.",
+   "trafienia": [
+    "marży",
+    "paletę",
+    "usług",
+    "wyższej",
+    "wartości",
+    "jakości",
+    "dla",
+    "Budżet"
+   ]
+  },
+  {
+   "linia": "Wysoka rotacja kierowców (34% rocznie) w Meridian ColdChain Group generuje koszty rekrutacji, szkoleń i zakłóceń operacyjnych. Program ma obniżyć rotację do 20% przez premie retencyjne, akademię szkoleniową i elastyczne grafiki (pilotaż 4-dniowego tygodnia pracy). Budżet: 1.4M EUR/rok.",
+   "trafienia": [
+    "kierowców",
+    "szkoleń",
+    "zakłóceń",
+    "obniżyć",
+    "rotację",
+    "przez",
+    "akademię",
+    "szkoleniową",
+    "pilotaż",
+    "Budżet"
+   ]
+  },
+  {
+   "linia": "Flota 214 pojazdów ze średnim wiekiem 8.4 roku generuje wysokie emisje CO2 i koszty paliwa. Wymiana 60 najstarszych jednostek na Euro7/LNG/EV-hybrid z optymalizacją tras ma zredukować emisje o 32% i koszty paliwa o 18% przy budżecie 5.6M EUR capex.",
+   "trafienia": [
+    "pojazdów",
+    "średnim",
+    "optymalizacją",
+    "zredukować",
+    "budżecie"
+   ]
+  },
+  {
+   "linia": "Ryzyko utraty kluczowego klienta Nordic Fresh Retail z powodu braku real-time visibility w łańcuchu dostaw. Obecny system nie zapewnia pełnej integracji TMS z telematyką floty 214 pojazdów ani compliance z HACCP w czasie rzeczywistym.",
+   "trafienia": [
+    "łańcuchu",
+    "nie",
+    "pełnej",
+    "telematyką",
+    "pojazdów"
+   ]
+  },
+  {
+   "linia": "Obecna dyspozytornia oparta na telefonie i Excelu nie zapewnia odpowiedniej widoczności operacyjnej i satysfakcji klientów. Brak automatyzacji, telemetrii IoT i portalu self-service ogranicza efektywność operacyjną i doświadczenie klientów.",
+   "trafienia": [
+    "nie",
+    "widoczności",
+    "klientów",
+    "Brak",
+    "efektywność",
+    "operacyjną",
+    "doświadczenie"
+   ]
+  },
+  {
+   "linia": "Potrzeba optymalizacji kosztów utrzymania ruchu i minimalizacji nieplanowanych przestojów poprzez przejście z reaktywnego na predykcyjne utrzymanie ruchu dla kluczowych maszyn produkcyjnych",
+   "trafienia": [
+    "kosztów",
+    "przestojów",
+    "przejście",
+    "dla"
+   ]
+  },
+  {
+   "linia": "Potrzeba optymalizacji kosztów utrzymania ruchu i zwiększenia dostępności krytycznych maszyn poprzez przejście z utrzymania reaktywnego/planowego na predykcyjne z wykorzystaniem IoT i ML",
+   "trafienia": [
+    "kosztów",
+    "zwiększenia",
+    "dostępności",
+    "przejście"
+   ]
+  },
+  {
+   "linia": "Potrzeba optymalizacji utrzymania ruchu poprzez przejście z reaktywnego na predykcyjne podejście dla kluczowych maszyn produkcyjnych, co pozwoli zredukować nieplanowane przestoje i koszty eksploatacji",
+   "trafienia": [
+    "przejście",
+    "podejście",
+    "dla",
+    "zredukować"
+   ]
+  },
+  {
+   "linia": "Konieczność przejścia z reaktywnego na predykcyjne utrzymanie ruchu dla zwiększenia OEE i redukcji kosztów przestojów w kluczowych maszynach produkcyjnych",
+   "trafienia": [
+    "Konieczność",
+    "przejścia",
+    "dla",
+    "zwiększenia",
+    "kosztów",
+    "przestojów"
+   ]
+  },
+  {
+   "linia": "Ekspansja na rynek DACH po osiągnięciu GA produktu. Wymaga lokalizacji, compliance (BDSG/ISO) i silnika popytu w Niemczech przed wejściem. Cel: 5 klientów DACH, €300K ARR w roku 3.",
+   "trafienia": [
+    "osiągnięciu",
+    "wejściem",
+    "klientów"
+   ]
+  }
+ ],
+ "daneLinii": 85
+}

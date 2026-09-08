@@ -1,0 +1,13 @@
+{
+ "ekran": "realizacja",
+ "sciezka": "/execution",
+ "probkaMs": 300,
+ "scenariusz": "swieza",
+ "faktycznyMs": 718,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 0
+}
