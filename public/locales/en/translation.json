@@ -34007,7 +34007,9 @@
         "collapse": "Collapse (link stays active)"
       },
       "source": {
-        "note": "Source: note"
+        "note": "Source: note",
+        "backToNote": "Back to source note",
+        "backToNoteTitled": "Back to note “{{title}}”"
       },
       "newCanvas": "New Canvas",
       "newMenu": {
@@ -34052,7 +34054,9 @@
         "saving": "Saving",
         "failed": "Save failed",
         "unsaved": "Unsaved changes",
-        "saved": "Saved"
+        "saved": "Saved",
+        "at": "at",
+        "conflict": "Changed elsewhere — not saved"
       },
       "capability": {
         "real": "Real",
@@ -34149,6 +34153,23 @@
         "analysisNote": "Deterministic Canvas analysis. No code execution.",
         "readyPrefix": "Dataset ready:",
         "showAnalyses": "Show analyses"
+      },
+      "import": {
+        "uploadMarkdown": "Upload Markdown (.md)",
+        "confirmReplace": "Replace the current document content with \"{{filename}}\"?",
+        "success": "Imported {{filename}}.",
+        "invalidFile": "Choose a .md (Markdown) file."
+      },
+      "workspaceDestinations": {
+        "label": "Create in workspace",
+        "title": "Create a workspace item from this canvas"
+      },
+      "conflict": {
+        "title": "This document changed elsewhere",
+        "detected": "This document changed elsewhere. Your changes have not been saved yet.",
+        "body": "Someone else saved this document while you were editing. Nothing was overwritten — choose how to continue.",
+        "keepMine": "Save my version as a new one",
+        "loadTheirs": "Discard my version, load theirs"
       }
     },
     "aiStream": {
@@ -38659,7 +38680,8 @@
       "conflictEmpty": "No text",
       "backToList": "All notes",
       "graphExpand": "Full screen",
-      "graphCollapse": "Exit full screen"
+      "graphCollapse": "Exit full screen",
+      "insertBlock": "Insert block"
     },
     "mentionMenu": {
       "ariaLabel": "Mention an entity",
@@ -38789,7 +38811,50 @@
       "teresaConvertTask": "Turn into a task",
       "teresaEmpty": "This note has no conversation thread of its own yet — open a conversation to start one.",
       "versionHistoryHint": "Open version history in the Actions section to see earlier saves.",
-      "versionHistoryOpenHint": "Version history is open below the document — see the Actions section."
+      "versionHistoryOpenHint": "Version history is open below the document — see the Actions section.",
+      "label": "Document details and context",
+      "views": "Document panel views",
+      "documentRecord": "Document record",
+      "documentRecordDescription": "Owner, governance and review information for this note.",
+      "saveStatus": "Save status",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "offlineQueued": "Offline — changes queued",
+      "conflict": "Changed elsewhere — your changes stay local",
+      "saveFailed": "Save failed — your changes stay local",
+      "noPendingChanges": "No pending changes",
+      "loadTheirs": "Load their version",
+      "keepMine": "Keep my version",
+      "owner": "Owner",
+      "ownerUnavailable": "Owner identity unavailable",
+      "ownerMissing": "No owner assigned",
+      "visibility": "Visibility",
+      "private": "Private",
+      "project": "Project",
+      "verification": "Verification",
+      "unverified": "Unverified",
+      "verified": "Verified",
+      "disputed": "Disputed",
+      "review": "Review",
+      "reviewCadence": "Review cadence",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "neverCadence": "Never",
+      "tagsAndStatus": "Tags and status",
+      "modified": "Modified",
+      "wordCount": "Word count",
+      "lastReviewed": "Last reviewed",
+      "never": "Never",
+      "markReviewed": "Mark as reviewed",
+      "sourceAndNextAction": "Source and next step",
+      "source": "Source",
+      "sourceNotRecorded": "Not recorded",
+      "nextAction": "Next step",
+      "verifyDocument": "Verify the document content",
+      "reviewStaleDocument": "Review this stale document",
+      "keepCurrent": "Keep as is until the next review",
+      "technicalLineage": "Technical lineage"
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
@@ -38803,7 +38868,9 @@
       "askAi": "Ask AI",
       "deleteNote": "Delete note",
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt",
-      "convertTo": "Convert to"
+      "convertTo": "Convert to",
+      "versionHistory": "Version history",
+      "connectionGraph": "Connection graph"
     },
     "presenceStack": {
       "viewingNow": "{{count}} viewing now"
