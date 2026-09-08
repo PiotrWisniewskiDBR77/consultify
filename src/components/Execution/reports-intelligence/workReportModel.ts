@@ -173,7 +173,7 @@ export function buildWorkReportModel(
       ),
       {
         id: 'decisionLatency',
-        value: { kind: 'UNKNOWN', reason: 'BRAK_API_HISTORY' },
+        value: { kind: 'UNKNOWN', reason: 'NO_API_HISTORY' },
         drilldown: [],
         severity: 'unknown',
       },

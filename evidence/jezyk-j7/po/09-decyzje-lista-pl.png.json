@@ -1,0 +1,35 @@
+{
+ "ekran": "09-decyzje-lista",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3209/execution?tab=control&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Go/No-Go — Data Platform MVP",
+   "trafienia": [
+    "No"
+   ]
+  },
+  {
+   "linia": "Adopt multi-provider LLM strategy to reduce vendor risk",
+   "trafienia": [
+    "risk"
+   ]
+  },
+  {
+   "linia": "Select AI model provider for production workloads",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Launch public beta — go/no-go decision",
+   "trafienia": [
+    "no",
+    "decision"
+   ]
+  }
+ ]
+}

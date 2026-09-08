@@ -34,6 +34,7 @@ import {
   type V8LaneAnalysisResponse,
 } from '../../../services/api/v8/execution-control';
 import type { ManagerProblemRow } from './types';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 export type ManagementWorkspaceMode =
   | 'recommend'
@@ -545,7 +546,7 @@ const ActionPlanView: React.FC<{
         </SummaryCallout>
         <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
           Confidence: {analysis.confidence} | Refreshed:{' '}
-          {new Date(analysis.lastRefreshed).toLocaleString()}
+          {formatListDateTime(analysis.lastRefreshed)}
         </p>
       </CollapsibleSection>
 
@@ -682,7 +683,7 @@ const FocusWorkspaceView: React.FC<{
       <CollapsibleSection title="Focus List" defaultOpen>
         <FocusList
           rows={focusRows}
-          emptyText="No matching items in this focus area right now."
+          emptyText="{t('execution.manager.noMatchingItems', 'No matching items in this focus area right now.')}"
           onSelectProblem={onSelectProblem}
         />
       </CollapsibleSection>

@@ -290,7 +290,7 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
             ·{' '}
             {t(
               'execution.reports.intelligence.generator.contextOnlyWarning',
-              'Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).'
+              'Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (NO_API).'
             )}
           </p>
           {/* F7: a draft created from this screen always carries an empty
@@ -363,7 +363,7 @@ export function UnifiedExecutionReportGenerator(): React.ReactElement {
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.generator.export', 'Export')}
           </h2>
-          <p>PDF: management-reports pipeline · XLSX: BRAK_API · runtime-v1 package: JSON</p>
+          <p>PDF: management-reports pipeline · XLSX: NO_API · runtime-v1 package: JSON</p>
         </section>
       </div>
     </main>

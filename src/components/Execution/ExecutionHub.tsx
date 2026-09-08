@@ -95,6 +95,7 @@ import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilo
 import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 import { useAppStore } from '../../store/useAppStore';
+import { formatListDate } from '@/utils/listDateFormat';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
@@ -639,8 +640,8 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // dopuszcza najwyżej TRZY chipy, a filtr w Menu 2 działa dodatkowo w
     // każdym z trzech widoków, nie tylko w jednym.
     control: [
-      ['decyzje', t('execution.menu3.governance.decisions', 'Decyzje')],
-      ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
+      ['decyzje', t('execution.menu3.governance.decisions', 'Decisions')],
+      ['ryzyka', t('execution.menu3.governance.risks', 'Risks')],
       ['sygnaly', t('execution.menu3.governance.signals', 'Signals')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R4b (zlecenie 12r4b): 11 chipów → 3. Zrzut R4
@@ -665,7 +666,7 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są
     // teraz JEDNA tabela pełnej szerokości, przełączana tym przyciskiem-chipem.
     summary: [
-      ['ryzyka', t('execution.menu3.summary.risks', 'Ryzyka')],
+      ['ryzyka', t('execution.menu3.summary.risks', 'Risks')],
       ['rozstrzygniecia', t('execution.menu3.summary.decisions', 'Decisions')],
     ].map(([id, label]) => ({ id, label })),
   };
@@ -2410,7 +2411,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
          * wartość pojawi się bez zmiany w tym pliku.
          */
         id: 'level',
-        label: t('execution.table.level', 'Poziom'),
+        label: t('execution.table.level', 'Level'),
         width: '90px',
         render: (row) => (
           <span className="text-sm tabular-nums text-c-text-secondary">
@@ -2484,13 +2485,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
          * to ta sama zasada, co szary RAG obok.
          */
         id: 'plan',
-        label: t('execution.table.plan', 'Start / koniec planu'),
+        label: t('execution.table.plan', 'Planned start / end'),
         width: '190px',
         render: (row) => {
           const start = row.plannedStartDate
-            ? new Date(row.plannedStartDate).toLocaleDateString()
+            ? formatListDate(row.plannedStartDate)
             : null;
-          const end = row.plannedEndDate ? new Date(row.plannedEndDate).toLocaleDateString() : null;
+          const end = row.plannedEndDate ? formatListDate(row.plannedEndDate) : null;
           if (!start && !end)
             return (
               <span className="text-xs text-c-text-muted">
@@ -2537,13 +2538,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 —
               </span>
             );
-          const bazowa = baseline ? new Date(baseline).toLocaleDateString() : '—';
+          const bazowa = baseline ? formatListDate(baseline) : '—';
           const aktualna = (row as any)?.plannedEndDate
-            ? new Date((row as any).plannedEndDate as string).toLocaleDateString()
+            ? formatListDate((row as any).plannedEndDate as string)
             : '—';
-          const opis = `${t('execution.table.deviationBaseline', 'Plan bazowy')}: ${bazowa} · ${t(
+          const opis = `${t('execution.table.deviationBaseline', 'Baseline plan')}: ${bazowa} · ${t(
             'execution.table.deviationCurrent',
-            'plan aktualny'
+            'current plan'
           )}: ${aktualna}`;
           if (dni > 0)
             return (
@@ -3636,7 +3637,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </div>
           </div>
           <div className="text-right text-xs text-c-text-muted shrink-0">
-            <div>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</div>
+            <div>{task.dueDate ? formatListDate(task.dueDate) : '—'}</div>
             {overdue ? (
               <div className="text-danger-400">{t('execution.badges.overdue')}</div>
             ) : null}
@@ -3824,7 +3825,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <div className="flex items-center justify-between mt-2 text-[11px] text-c-text-muted">
             <span>{d.ownerName || '—'}</span>
             <span className={overdue ? 'text-danger-400' : undefined}>
-              {dueStr ? new Date(dueStr).toLocaleDateString() : '—'}
+              {dueStr ? formatListDate(dueStr) : '—'}
             </span>
           </div>
         </button>
@@ -5481,7 +5482,7 @@ Please return:
                       trailing: (
                         <span className="text-[11px] font-semibold text-c-text-secondary">
                           {selectedRow.plannedEndDate
-                            ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                            ? formatListDate(selectedRow.plannedEndDate)
                             : '—'}
                         </span>
                       ),
@@ -5496,7 +5497,7 @@ Please return:
                         `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
                         `${t('execution.table.deadline', 'Due')}: ${
                           selectedRow.plannedEndDate
-                            ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                            ? formatListDate(selectedRow.plannedEndDate)
                             : '—'
                         }`,
                         `${t('execution.table.tasks', 'Tasks')}: ${
@@ -5764,14 +5765,14 @@ Please return:
                         },
                         {
                           id: 'due',
-                          label: t('execution.governance.columns.due', 'Termin'),
+                          label: t('execution.governance.columns.due', 'Due'),
                           value: selectedSummaryRisk.dueDate
-                            ? new Date(selectedSummaryRisk.dueDate).toLocaleDateString()
+                            ? formatListDate(selectedSummaryRisk.dueDate)
                             : '—',
                         },
                         {
                           id: 'mitigation',
-                          label: t('execution.summary.mitigationPlan', 'Plan mitygacji'),
+                          label: t('execution.summary.mitigationPlan', 'Mitigation plan'),
                           value: selectedSummaryRisk.mitigationPlan || '—',
                         },
                       ],

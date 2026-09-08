@@ -47,6 +47,7 @@ import {
   transitionIntervention,
 } from '@/services/initiatives-execution/runtimeApi';
 import { useAppStore } from '@/store/useAppStore';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 
 import { MENU_2_FILTERS_ROW } from '@/components/shared/ModuleMenu3';
 
@@ -100,36 +101,36 @@ import {
   zrodloEskalacji,
 } from './raidGovernance';
 
-const interventionFieldLabels: Record<string, string> = {
-  interventionId: 'Identyfikator interwencji',
-  ownerId: 'Właściciel',
-  authorityId: 'Niezależny zatwierdzający',
-  slaAt: 'Termin decyzji',
-  hypotheses: 'Hipotezy',
-  evidenceRefs: 'Dowody',
-  counterEvidenceRefs: 'Kontrdowody',
-  unknowns: 'Niewiadome',
-  blastRadiusRefs: 'Wpływ na powiązane obiekty',
-  doNothingLabel: 'Opcja bez działania',
-  doNothingImpacts: 'Skutki braku działania',
-  actionOptionId: 'Identyfikator wariantu',
-  actionLabel: 'Nazwa działania',
-  actionImpacts: 'Skutki działania',
-  actionConfidence: 'Pewność',
-  actionReversibility: 'Odwracalność',
-};
+const interventionFieldLabels = (t: (key: string, fallback: string) => string): Record<string, string> => ({
+  interventionId: t('execution.intervention.field.id', 'Intervention identifier'),
+  ownerId: t('execution.intervention.field.owner', 'Owner'),
+  authorityId: t('execution.intervention.field.authority', 'Independent approver'),
+  slaAt: t('execution.intervention.field.sla', 'Decision deadline'),
+  hypotheses: t('execution.intervention.field.hypotheses', 'Hypotheses'),
+  evidenceRefs: t('execution.intervention.field.evidence', 'Evidence'),
+  counterEvidenceRefs: t('execution.intervention.field.counterEvidence', 'Counter-evidence'),
+  unknowns: t('execution.intervention.field.unknowns', 'Unknowns'),
+  blastRadiusRefs: t('execution.intervention.field.blastRadius', 'Impact on linked objects'),
+  doNothingLabel: t('execution.intervention.field.doNothing', 'Do-nothing option'),
+  doNothingImpacts: t('execution.intervention.field.doNothingImpacts', 'Do-nothing consequences'),
+  actionOptionId: t('execution.intervention.field.optionId', 'Option identifier'),
+  actionLabel: t('execution.intervention.field.actionLabel', 'Action name'),
+  actionImpacts: t('execution.intervention.field.actionImpacts', 'Action consequences'),
+  actionConfidence: t('execution.intervention.field.confidence', 'Confidence'),
+  actionReversibility: t('execution.intervention.field.reversibility', 'Reversibility'),
+});
 
-const applyFieldLabels: Record<string, string> = {
-  receiptId: 'Potwierdzenie komendy',
-  aggregateType: 'Typ obiektu',
-  aggregateId: 'Obiekt docelowy',
-  version: 'Wersja',
-  state: 'Oczekiwany stan',
-  verifyBy: 'Termin weryfikacji',
-  expectedEffect: 'Oczekiwany efekt',
-  measurementRef: 'Źródło pomiaru',
-  measurementVersion: 'Wersja pomiaru',
-};
+const applyFieldLabels = (t: (key: string, fallback: string) => string): Record<string, string> => ({
+  receiptId: t('execution.apply.field.receiptId', 'Command receipt'),
+  aggregateType: t('execution.apply.field.aggregateType', 'Object type'),
+  aggregateId: t('execution.apply.field.aggregateId', 'Target object'),
+  version: t('execution.apply.field.version', 'Version'),
+  state: t('execution.apply.field.state', 'Expected state'),
+  verifyBy: t('execution.apply.field.verifyBy', 'Verification deadline'),
+  expectedEffect: t('execution.apply.field.expectedEffect', 'Expected effect'),
+  measurementRef: t('execution.apply.field.measurementRef', 'Measurement source'),
+  measurementVersion: t('execution.apply.field.measurementVersion', 'Measurement version'),
+});
 interface SignalRow extends TableRow {
   id: string;
   title: string;
@@ -216,18 +217,9 @@ const versionedRefs = (value: string) =>
     const [ref, version] = entry.split('@');
     return { ref, version: Number(version) };
   });
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return 'UNKNOWN';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'UNKNOWN';
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed);
-};
+/** J7b: data przez SSOT list — było `Intl.DateTimeFormat('pl-PL')`. */
+const formatDateTime = (value: string | null | undefined) =>
+  formatListDateTime(value, 'UNKNOWN');
 /**
  * Nazwisko osoby — z KATALOGU OSÓB (`executionLocalReviewData.ts`), nie z zamiany
  * myślnika na spację. `\b\w` nie podnosi liter spoza ASCII i żadna zamiana znaków
@@ -275,70 +267,98 @@ const selectedOptionLabel = (intervention: any): string | null => {
   const option = intervention.options?.find((o: any) => o.optionId === id);
   return option?.label || String(id);
 };
-const interventionStatusLabel = (value: string) =>
-  ({
-    DRAFT: 'Szkic',
-    PENDING_DECISION: 'Oczekuje na decyzję',
-    APPROVED: 'Zatwierdzona',
-    APPLIED: 'Zastosowana',
-    ESCALATED: 'Eskalowana',
-    CLOSED: 'Zamknięta',
-  })[value] ?? value;
-const signalRuleLabel = (value: string) =>
-  ({ STALE_MILESTONE: 'Nieaktualny kamień milowy', CAPACITY_CONFLICT: 'Konflikt obciążenia' })[
-    value
-  ] ?? value;
-const severityLabel = (value: string) =>
-  ({ WARNING: 'Ostrzeżenie', CRITICAL: 'Krytyczna' })[value] ?? value;
-const verificationOutcomeLabel = (value: string) =>
-  ({
-    EFFECTIVE: 'Skuteczna',
-    PARTIAL: 'Częściowo skuteczna',
-    INEFFECTIVE: 'Nieskuteczna',
-    NOT_VERIFIED: 'Niezweryfikowana',
-  })[value] ?? value;
+const slownikEN = (
+  value: string,
+  prefiks: string,
+  mapa: Record<string, string>,
+  t: (key: string, fallback: string) => string
+) => {
+  const klucz = String(value ?? '');
+  if (mapa[klucz]) return t(`${prefiks}.${klucz.toLowerCase()}`, mapa[klucz]);
+  return klucz;
+};
+const interventionStatusLabel = (value: string, t: (key: string, fallback: string) => string) =>
+  slownikEN(
+    value,
+    'execution.intervention.status',
+    {
+      DRAFT: 'Draft',
+      PENDING_DECISION: 'Awaiting decision',
+      APPROVED: 'Approved',
+      APPLIED: 'Applied',
+      ESCALATED: 'Escalated',
+      CLOSED: 'Closed',
+    },
+    t
+  );
+const signalRuleLabel = (value: string, t: (key: string, fallback: string) => string) =>
+  slownikEN(
+    value,
+    'execution.signals.rule',
+    { STALE_MILESTONE: 'Stale milestone', CAPACITY_CONFLICT: 'Capacity conflict' },
+    t
+  );
+const severityLabel = (value: string, t: (key: string, fallback: string) => string) =>
+  slownikEN(value, 'execution.signals.severity', { WARNING: 'Warning', CRITICAL: 'Critical' }, t);
+const verificationOutcomeLabel = (value: string, t: (key: string, fallback: string) => string) =>
+  slownikEN(
+    value,
+    'execution.intervention.outcome',
+    {
+      EFFECTIVE: 'Effective',
+      PARTIAL: 'Partially effective',
+      INEFFECTIVE: 'Ineffective',
+      NOT_VERIFIED: 'Not verified',
+    },
+    t
+  );
 /**
  * Rodzaj opcji interwencji (kontrakt `InterventionOption.kind`) — po polsku.
  * Zwraca `null`, gdy pola nie ma: przedrostek jest wtedy POMIJANY, zamiast
  * wyciekać jako `undefined` albo surowy kod na ekran (defekt 2026-09-02).
  */
-const optionKindLabel = (value: unknown): string | null =>
+const optionKindLabel = (
+  value: unknown,
+  t: (key: string, fallback: string) => string
+): string | null =>
   typeof value === 'string' && value.trim()
-    ? (({ DO_NOTHING: 'Bez zmian', ACTION: 'Działanie' } as Record<string, string>)[value] ?? value)
+    ? slownikEN(value, 'execution.intervention.optionKind', {
+        DO_NOTHING: 'No change',
+        ACTION: 'Action',
+      }, t)
     : null;
 /** Pewność opcji — nazwana wprost, brak nazywany „Nieznana", nie `undefined`. */
-const confidenceLabel = (value: unknown): string =>
+const confidenceLabel = (value: unknown, t: (key: string, fallback: string) => string): string =>
   typeof value === 'string' && value.trim()
-    ? ((
-        {
-          HIGH: 'Wysoka pewność',
-          MEDIUM: 'Średnia pewność',
-          LOW: 'Niska pewność',
-          UNKNOWN: 'Pewność nieznana',
-        } as Record<string, string>
-      )[value] ?? value)
-    : 'Pewność nieznana';
+    ? slownikEN(value, 'execution.intervention.confidence', {
+        HIGH: 'High confidence',
+        MEDIUM: 'Medium confidence',
+        LOW: 'Low confidence',
+        UNKNOWN: 'Confidence unknown',
+      }, t)
+    : t('execution.intervention.confidence.unknown', 'Confidence unknown');
 /** Odwracalność opcji — słownik kontraktu, brak nazywany wprost. */
-const reversibilityLabel = (value: unknown): string =>
+const reversibilityLabel = (
+  value: unknown,
+  t: (key: string, fallback: string) => string
+): string =>
   typeof value === 'string' && value.trim()
-    ? ((
-        {
-          REVERSIBLE: 'Odwracalna',
-          PARTIALLY_REVERSIBLE: 'Częściowo odwracalna',
-          IRREVERSIBLE: 'Nieodwracalna',
-          UNKNOWN: 'Odwracalność nieznana',
-        } as Record<string, string>
-      )[value] ?? value)
-    : 'Odwracalność nieznana';
-const signalFieldLabels: Record<string, string> = {
-  sourceId: 'Źródło sygnału',
-  sourceVersionKey: 'Rodzaj wersji źródła',
-  sourceVersion: 'Wersja źródła',
-  snapshotRef: 'Dowód / migawka źródła',
-  ruleId: 'Reguła wykrycia',
-  severity: 'Ważność',
-  occurredAt: 'Czas wystąpienia',
-};
+    ? slownikEN(value, 'execution.intervention.reversibility', {
+        REVERSIBLE: 'Reversible',
+        PARTIALLY_REVERSIBLE: 'Partially reversible',
+        IRREVERSIBLE: 'Irreversible',
+        UNKNOWN: 'Reversibility unknown',
+      }, t)
+    : t('execution.intervention.reversibility.unknown', 'Reversibility unknown');
+const signalFieldLabels = (t: (key: string, fallback: string) => string): Record<string, string> => ({
+  sourceId: t('execution.signals.field.sourceId', 'Signal source'),
+  sourceVersionKey: t('execution.signals.field.sourceVersionKey', 'Source version kind'),
+  sourceVersion: t('execution.signals.field.sourceVersion', 'Source version'),
+  snapshotRef: t('execution.signals.field.snapshotRef', 'Source evidence / snapshot'),
+  ruleId: t('execution.signals.field.ruleId', 'Detection rule'),
+  severity: t('execution.signals.field.severity', 'Severity'),
+  occurredAt: t('execution.signals.field.occurredAt', 'Occurred at'),
+});
 /**
  * 1.12-R1 (C): zakładka „Sterowanie" staje się „Decyzje i ryzyka".
  *
@@ -502,14 +522,24 @@ const escalationStepLabel = (
     ? t('execution.decisions.escalation.none', 'None')
     : `${step}/${ESCALATION_STEP_MAX} · ${escalationAddressee(step, t)}`;
 
-const raidTypeLabel = (value: unknown): string =>
-  ({
-    RISK: 'Ryzyko',
-    ISSUE: 'Problem',
-    DEPENDENCY: 'Zależność',
-    ASSUMPTION: 'Założenie',
-    ACTION: 'Działanie',
-  })[String(value ?? '').toUpperCase()] ?? String(value ?? '—');
+/**
+ * TYP POZYCJI RAID — J7b. Do 08.09 słownik był polski wprost, więc kolumna
+ * „TYPE" na koncie EN pisała „Ryzyko / Problem / Zależność" (zrzut PRZED
+ * `evidence/jezyk-j7/przed/11-ryzyka-lista-en.png`) — to jest dokładnie dług
+ * J7 wypisany w D4 (`evidence/dane-pokazowe-en/d4/dlug-j7-polskie-napisy-ui.txt`).
+ */
+const raidTypeLabel = (value: unknown, t: (key: string, fallback: string) => string): string => {
+  const angielskie: Record<string, string> = {
+    RISK: 'Risk',
+    ISSUE: 'Issue',
+    DEPENDENCY: 'Dependency',
+    ASSUMPTION: 'Assumption',
+    ACTION: 'Action',
+  };
+  const klucz = String(value ?? '').toUpperCase();
+  if (angielskie[klucz]) return t(`execution.raid.type.${klucz.toLowerCase()}`, angielskie[klucz]);
+  return String(value ?? '—');
+};
 
 /**
  * STATUS DECYZJI (P16/R3, DEC-453) — pięć stanów rejestru z §4.3 audytu rynku:
@@ -611,16 +641,8 @@ const raidStatusPl = (value: unknown, t: (key: string, fallback: string) => stri
   return slownik[key] ?? String(value ?? '—');
 };
 
-const formatDay = (value: string | null | undefined) => {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '—';
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(parsed);
-};
+/** J7b: data przez SSOT list — było `Intl.DateTimeFormat('pl-PL')`. */
+const formatDay = (value: string | null | undefined) => formatListDate(value);
 
 /**
  * DWA ZESTAWY KOLUMN, nie jeden (P16/R3, DEC-453 + AUDYT_RYNKU_PMO §4.3).
@@ -1213,7 +1235,7 @@ export const ExecutionControlSurface = ({
         raidInitiativeId: item.initiativeId ?? null,
         title: item.title ?? t('execution.raid.untitled', 'Untitled RAID item'),
         kind: 'RAID' as const,
-        kindLabel: raidTypeLabel(item.type),
+        kindLabel: raidTypeLabel(item.type, t),
         rawRaidType: String(item.type ?? '').toUpperCase(),
         owner: raidOwnerLabel(item, resolveMemberName, isPolish),
         ownerId: item.ownerId ?? null,
@@ -1383,7 +1405,7 @@ export const ExecutionControlSurface = ({
         interventionItems.map((x) => ({
           id: x.interventionId,
           title: interventionBusinessTitle(x),
-          status: interventionStatusLabel(x.status),
+          status: interventionStatusLabel(x.status, t),
           rawStatus: x.status,
           owner: actorBusinessLabel(x.ownerName || x.ownerId, 'Nieprzypisany', t),
           authority: actorBusinessLabel(x.authorityName || x.authorityId, 'Nieustalony', t),
@@ -1397,9 +1419,9 @@ export const ExecutionControlSurface = ({
         signalItems.map((x) => ({
           id: x.signalId,
           title: x.signalId,
-          rule: signalRuleLabel(x.ruleId),
+          rule: signalRuleLabel(x.ruleId, t),
           source: `${x.sourceType}:${x.sourceId}`,
-          severity: severityLabel(x.severity),
+          severity: severityLabel(x.severity, t),
           rawSeverity: x.severity,
           occurrences: x.occurrences?.length ?? 0,
           updatedAt: x.updatedAt,
@@ -1418,7 +1440,7 @@ export const ExecutionControlSurface = ({
         executionReviewInterventions.map((x) => ({
           id: x.interventionId,
           title: interventionBusinessTitle(x),
-          status: interventionStatusLabel(x.status),
+          status: interventionStatusLabel(x.status, t),
           rawStatus: x.status,
           owner: actorBusinessLabel(x.ownerId, 'Nieprzypisany', t),
           authority: actorBusinessLabel(x.authorityId, 'Nieustalony', t),
@@ -1432,9 +1454,9 @@ export const ExecutionControlSurface = ({
         executionReviewSignals.map((x) => ({
           id: x.signalId,
           title: x.signalId,
-          rule: signalRuleLabel(x.ruleId),
+          rule: signalRuleLabel(x.ruleId, t),
           source: `${x.sourceId} · v${x.sourceVersion}`,
-          severity: severityLabel(x.severity),
+          severity: severityLabel(x.severity, t),
           rawSeverity: x.severity,
           occurrences: x.occurrences.length,
           updatedAt: formatDateTime(x.updatedAt),
@@ -1612,7 +1634,7 @@ export const ExecutionControlSurface = ({
         decisionErrorMessage(
           error,
           'execution.decisions.errors.createFailed',
-          'Nie udało się zapisać decyzji.'
+          t('execution.decisions.saveFailed', 'The decision could not be saved.')
         )
       );
     } finally {
@@ -1815,7 +1837,7 @@ export const ExecutionControlSurface = ({
         decisionErrorMessage(
           error,
           'execution.decisions.errors.saveFailed',
-          'Nie udało się zapisać rozstrzygnięcia.'
+          t('execution.decisions.resolveFailed', 'The resolution could not be saved.')
         )
       );
     } finally {
@@ -1868,7 +1890,7 @@ export const ExecutionControlSurface = ({
         decisionErrorMessage(
           error,
           'execution.signals.errors.interventionFailed',
-          'Nie udało się utworzyć wniosku o przesunięcie.'
+          t('execution.decisions.deferFailed', 'The reschedule request could not be created.')
         )
       );
     } finally {
@@ -2269,15 +2291,22 @@ export const ExecutionControlSurface = ({
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
-        <p>Nie udało się załadować rejestru sterowania.</p>
+        <p>{t('execution.control.loadFailed', 'Could not load the control register.')}</p>
         <button type="button" className="btn-secondary mt-3" onClick={() => void load()}>
-          Spróbuj ponownie
+          {t('common.retry', 'Try again')}
         </button>
       </div>
     );
   return (
-    <section aria-label="Decyzje i ryzyka" className="flex h-full min-h-0 flex-col p-4">
-      {state === 'LOADING' && <p role="status">Ładowanie rejestru decyzji i ryzyk…</p>}
+    <section
+      aria-label={t('execution.control.title', 'Decisions and risks')}
+      className="flex h-full min-h-0 flex-col p-4"
+    >
+      {state === 'LOADING' && (
+        <p role="status">
+          {t('execution.control.loading', 'Loading the decisions and risks register…')}
+        </p>
+      )}
       {/*
         1.12-R1 (C): GŁÓWNA treść zakładki — rejestr decyzji i pozycji RAID
         z realnych tabel. Stoi PRZED warsztatem `runtime-v1`, bo to jest to,
@@ -2440,7 +2469,7 @@ export const ExecutionControlSurface = ({
               >
                 {RAID_TYPY.map((typ) => (
                   <option key={typ} value={typ}>
-                    {raidTypeLabel(typ)}
+                    {raidTypeLabel(typ, t)}
                   </option>
                 ))}
               </select>
@@ -3085,18 +3114,20 @@ export const ExecutionControlSurface = ({
           aria-label="Intervention Signal Workbench"
           className="mt-4 flex min-h-0 flex-1 flex-col"
         >
-          <h3 className="font-semibold">Sygnały zarządcze</h3>
+          <h3 className="font-semibold">
+            {t('execution.signals.title', 'Management signals')}
+          </h3>
           {showSignalForm && (
             <div className="mt-3 rounded-lg border border-c-border p-4">
               <div className="mb-3 flex items-center justify-between">
-                <strong>Nowy sygnał</strong>
+                <strong>{t('execution.signals.new', 'New signal')}</strong>
                 <button className="btn-secondary" onClick={() => setShowSignalForm(false)}>
-                  Zamknij
+                  {t('common.close', 'Close')}
                 </button>
               </div>
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <label className="text-xs">
-                  Rodzaj sygnału
+                  {t('execution.signals.kindLabel', 'Signal kind')}
                   <select
                     aria-label="Management signal kind"
                     value={signalForm.kind}
@@ -3114,15 +3145,19 @@ export const ExecutionControlSurface = ({
                     }}
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="STALE_MILESTONE">Nieaktualny kamień milowy</option>
-                    <option value="CAPACITY_CONFLICT">Konflikt obciążenia</option>
+                    <option value="STALE_MILESTONE">
+                      {t('execution.signals.rule.stale_milestone', 'Stale milestone')}
+                    </option>
+                    <option value="CAPACITY_CONFLICT">
+                      {t('execution.signals.rule.capacity_conflict', 'Capacity conflict')}
+                    </option>
                   </select>
                 </label>
                 {Object.keys(signalForm)
                   .filter((key) => key !== 'kind')
                   .map((key) => (
                     <label key={key} className="text-xs">
-                      {signalFieldLabels[key] ?? key}
+                      {signalFieldLabels(t)[key] ?? key}
                       {key === 'severity' ? (
                         <select
                           aria-label={`Management signal ${key}`}
@@ -3135,8 +3170,12 @@ export const ExecutionControlSurface = ({
                           }
                           className="block w-full rounded border border-c-border bg-c-surface p-2"
                         >
-                          <option value="WARNING">Ostrzeżenie</option>
-                          <option value="CRITICAL">Krytyczna</option>
+                          <option value="WARNING">
+                            {t('execution.signals.severity.warning', 'Warning')}
+                          </option>
+                          <option value="CRITICAL">
+                            {t('execution.signals.severity.critical', 'Critical')}
+                          </option>
                         </select>
                       ) : (
                         <input
@@ -3163,7 +3202,7 @@ export const ExecutionControlSurface = ({
                 className="btn-secondary mt-3"
                 onClick={() => void ingestSignal()}
               >
-                Zapisz sygnał
+                {t('execution.signals.save', 'Save signal')}
               </button>
             </div>
           )}
@@ -3208,7 +3247,7 @@ export const ExecutionControlSurface = ({
                     );
                     setSelectedSignalId(null);
                   }}
-                  openLabel="Otwórz przygotowanie"
+                  openLabel={t('execution.signals.openPrep', 'Open preparation')}
                   meta={{
                     pills: [
                       {
@@ -3216,15 +3255,21 @@ export const ExecutionControlSurface = ({
                         tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
                       },
                     ],
-                    recommendation: `Project ${row.signal.projectId ?? 'UNKNOWN'} · Reguła ${row.rule}`,
+                    recommendation: `${t('execution.signals.project', 'Project')} ${
+                      row.signal.projectId ?? 'UNKNOWN'
+                    } · ${t('execution.signals.field.ruleId', 'Detection rule')}: ${row.rule}`,
                   }}
                   details={{
-                    label: 'Sygnał zarządczy',
+                    label: t('execution.signals.singleTitle', 'Management signal'),
                     text: `${row.signal.sourceType}:${row.signal.sourceId}`,
                     properties: [
                       { id: 'project', label: 'Projekt', value: row.signal.projectId ?? 'UNKNOWN' },
                       { id: 'fingerprint', label: 'Fingerprint', value: row.signal.fingerprint },
-                      { id: 'occurrences', label: 'Wystąpienia', value: String(row.occurrences) },
+                      {
+                        id: 'occurrences',
+                        label: t('execution.signals.occurrences', 'Occurrences'),
+                        value: String(row.occurrences),
+                      },
                       { id: 'updated', label: 'Aktualizacja', value: row.updatedAt },
                     ],
                   }}
@@ -3238,13 +3283,16 @@ export const ExecutionControlSurface = ({
                       value: occurrence.occurredAt,
                     })),
                   ]}
-                  relationsEmptyLabel="Brak wersjonowanych źródeł"
+                  relationsEmptyLabel={t(
+                    'execution.signals.noSources',
+                    'No versioned sources'
+                  )}
                   actions={{
                     informational: [
                       {
                         id: 'add-to-intervention',
                         variant: 'neutral',
-                        label: 'Dodaj do przygotowywanej interwencji',
+                        label: t('execution.signals.addToIntervention', 'Add to the prepared intervention'),
                         onClick: () => {
                           setShowInterventionForm(true);
                           setDraftSignalIds((current) =>
@@ -3330,7 +3378,7 @@ export const ExecutionControlSurface = ({
                 setShowInterventionForm(true);
                 setInterventionComposerOpen(true);
               }}
-              openLabel="Otwórz interwencję"
+              openLabel={t('execution.intervention.open', 'Open intervention')}
               meta={{
                 pills: [
                   { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
@@ -3343,8 +3391,16 @@ export const ExecutionControlSurface = ({
                 label: 'Uzasadnienie i skutek',
                 text: r.source.hypotheses?.join(', ') || 'UNKNOWN',
                 properties: [
-                  { id: 'owner', label: 'Właściciel', value: r.owner || 'UNASSIGNED' },
-                  { id: 'authority', label: 'Zatwierdzający', value: r.authority || 'UNKNOWN' },
+                  {
+                    id: 'owner',
+                    label: t('execution.intervention.field.owner', 'Owner'),
+                    value: r.owner || 'UNASSIGNED',
+                  },
+                  {
+                    id: 'authority',
+                    label: t('execution.intervention.approver', 'Approver'),
+                    value: r.authority || 'UNKNOWN',
+                  },
                   { id: 'sla', label: 'Termin weryfikacji', value: r.slaAt || 'UNKNOWN' },
                   {
                     id: 'unknowns',
@@ -3368,13 +3424,16 @@ export const ExecutionControlSurface = ({
                    * Rodzaj opcji pokazujemy PO POLSKU, nie surowym kodem, a gdy
                    * go nie ma — nie pokazujemy przedrostka w ogóle.
                    */
-                  label: optionKindLabel(option.kind)
-                    ? `${optionKindLabel(option.kind)}: ${option.label}`
+                  label: optionKindLabel(option.kind, t)
+                    ? `${optionKindLabel(option.kind, t)}: ${option.label}`
                     : option.label,
-                  value: `${confidenceLabel(option.confidence)} · ${reversibilityLabel(option.reversibility)}`,
+                  value: `${confidenceLabel(option.confidence, t)} · ${reversibilityLabel(option.reversibility, t)}`,
                 })),
               ]}
-              relationsEmptyLabel="Brak powiązanych sygnałów"
+              relationsEmptyLabel={t(
+                'execution.intervention.noSignals',
+                'No linked signals'
+              )}
             />
           )}
         >
@@ -3392,7 +3451,7 @@ export const ExecutionControlSurface = ({
               primary: [
                 {
                   id: 'open-intervention',
-                  label: 'Otwórz interwencję',
+                  label: t('execution.intervention.open', 'Open intervention'),
                   onClick: () => {
                     setSelectedId(r.id);
                     setShowInterventionForm(true);
@@ -3404,9 +3463,12 @@ export const ExecutionControlSurface = ({
             })}
             persistKey="execution.control.v1"
             empty={{
-              title: 'Brak spraw interwencyjnych',
+              title: t('execution.intervention.emptyTitle', 'No intervention cases'),
               description:
-                'Dodaj wersjonowany sygnał, aby przygotować pierwszą sprawę interwencyjną.',
+                t(
+                  'execution.intervention.emptyBody',
+                  'Add a versioned signal to prepare the first intervention case.'
+                ),
             }}
           />
         </TableWithPreviewLayout>
@@ -3417,14 +3479,19 @@ export const ExecutionControlSurface = ({
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold">Projekt interwencji</h3>
+            <h3 className="font-semibold">
+              {t('execution.intervention.composer', 'Intervention draft')}
+            </h3>
             <button className="btn-secondary" onClick={() => setInterventionComposerOpen(false)}>
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           {(!selected || selected.source.status === 'DRAFT') && (
             <>
-              <p className="text-xs text-c-text-muted">Wybrane sygnały: {draftSignalIds.length}</p>
+              <p className="text-xs text-c-text-muted">
+                {t('execution.intervention.selectedSignals', 'Selected signals')}:{' '}
+                {draftSignalIds.length}
+              </p>
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {Object.keys(guided).map((key) => {
                   const long = [
@@ -3438,7 +3505,7 @@ export const ExecutionControlSurface = ({
                   ].includes(key);
                   return (
                     <label key={key} className="text-xs">
-                      {interventionFieldLabels[key] ?? key}
+                      {interventionFieldLabels(t)[key] ?? key}
                       {key === 'actionConfidence' || key === 'actionReversibility' ? (
                         <select
                           aria-label={`Intervention draft ${key}`}
@@ -3480,17 +3547,19 @@ export const ExecutionControlSurface = ({
                 })}
               </div>
               <details className="mt-3">
-                <summary className="cursor-pointer text-sm">Zaawansowany kontrakt JSON</summary>
+                <summary className="cursor-pointer text-sm">
+                  {t('executionReports.advancedJson', 'Advanced JSON contract')}
+                </summary>
                 <label className="mt-2 flex items-center gap-2 text-xs">
                   <input
                     type="checkbox"
                     checked={advancedJson}
                     onChange={(event) => setAdvancedJson(event.target.checked)}
                   />
-                  Użyj kontraktu JSON zamiast formularza
+                  {t('execution.intervention.useJson', 'Use the JSON contract instead of the form')}
                 </label>
                 <textarea
-                  aria-label="Intervention draft JSON"
+                  aria-label={t('execution.intervention.draftJson', 'Intervention draft JSON')}
                   value={draftJson}
                   onChange={(e) => setDraftJson(e.target.value)}
                   disabled={!advancedJson}
@@ -3498,16 +3567,18 @@ export const ExecutionControlSurface = ({
                 />
               </details>
               <button className="btn-primary mt-3" onClick={() => void draft()}>
-                Zapisz lub połącz sprawę interwencyjną
+                {t('execution.intervention.saveOrLink', 'Save or link the intervention case')}
               </button>
             </>
           )}
           {(!selected || ['DRAFT', 'PENDING_DECISION'].includes(selected.source.status)) && (
             <section className="mt-4 rounded border border-c-border p-3">
-              <h4 className="font-medium">Niezależna decyzja</h4>
+              <h4 className="font-medium">
+                {t('execution.intervention.independentDecision', 'Independent decision')}
+              </h4>
               <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr_2fr_auto]">
                 <button className="btn-secondary" onClick={() => void transition('REQUEST')}>
-                  Poproś o decyzję
+                  {t('execution.intervention.requestDecision', 'Request a decision')}
                 </button>
                 <input
                   aria-label="Intervention selected option"
@@ -3520,17 +3591,19 @@ export const ExecutionControlSurface = ({
                   onChange={(e) => setRationale(e.target.value)}
                 />
                 <button className="btn-secondary" onClick={() => void transition('DECIDE')}>
-                  Zatwierdź wariant
+                  {t('execution.intervention.approveOption', 'Approve option')}
                 </button>
               </div>
             </section>
           )}
           <section className="mt-4 rounded border border-c-border p-3">
-            <h4 className="font-medium">Zastosowanie zatwierdzonej komendy</h4>
+            <h4 className="font-medium">
+              {t('execution.intervention.applyCommand', 'Applying the approved command')}
+            </h4>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {Object.keys(apply).map((k) => (
                 <label key={k} className="text-xs">
-                  {applyFieldLabels[k] ?? k}
+                  {applyFieldLabels(t)[k] ?? k}
                   <input
                     aria-label={`Intervention ${k}`}
                     type={k === 'verifyBy' ? 'datetime-local' : 'text'}
@@ -3543,10 +3616,14 @@ export const ExecutionControlSurface = ({
             </div>
             <div className="mt-4 flex items-center justify-between gap-3 rounded border border-c-border p-3">
               <div>
-                <h4 className="font-medium">Zarządzana zmiana planu</h4>
+                <h4 className="font-medium">
+                  {t('execution.plan.governedChange', 'Governed plan change')}
+                </h4>
                 <p className="text-xs text-c-text-muted">
-                  Zmiana kolejności przechodzi przez kontrolowaną zmianę planu i niezależne
-                  zatwierdzenie.
+                  {t(
+                    'execution.plan.governedChangeLead',
+                    'Resequencing goes through a governed plan change and independent approval.'
+                  )}
                 </p>
               </div>
               <button
@@ -3554,7 +3631,9 @@ export const ExecutionControlSurface = ({
                 className="btn-secondary"
                 onClick={() => setGovernedPlanOpen((open) => !open)}
               >
-                {governedPlanOpen ? 'Zamknij zmianę planu' : 'Przygotuj zmianę planu'}
+                {governedPlanOpen
+                  ? t('execution.plan.closeChange', 'Close plan change')
+                  : t('execution.plan.prepareChange', 'Prepare plan change')}
               </button>
             </div>
             {governedPlanOpen && (
@@ -3562,14 +3641,17 @@ export const ExecutionControlSurface = ({
                 aria-label="Governed Plan resequence"
                 className="mt-3 rounded border border-c-border p-3"
               >
-                <h4 className="font-medium">Zarządzana zmiana kolejności</h4>
+                <h4 className="font-medium">
+                  {t('execution.plan.governedResequence', 'Governed resequencing')}
+                </h4>
                 <p className="text-xs text-c-text-muted">
-                  Wybrana opcja zmiany kolejności tworzy jedną kontrolowaną zmianę bazowego planu.
-                  Przegląd i publikacja odbywają się w Mojej pracy, a zastosowanie wymaga dokładnego
-                  potwierdzenia komendy.
+                  {t(
+                    'execution.plan.governedResequenceLead',
+                    'The selected resequencing option creates one governed change to the baseline plan. Review and publication happen in My Work, and applying it requires an exact command confirmation.'
+                  )}
                 </p>
                 <label className="block text-xs">
-                  Wybrane porównanie obciążenia
+                  {t('execution.plan.selectedComparison', 'Selected capacity comparison')}
                   <select
                     aria-label="Governed comparison"
                     value={governed.comparisonId}
@@ -3584,7 +3666,12 @@ export const ExecutionControlSurface = ({
                     }
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="">Wybierz dokładną opcję zmiany kolejności</option>
+                    <option value="">
+                      {t(
+                        'execution.plan.pickResequenceOption',
+                        'Pick the exact resequencing option'
+                      )}
+                    </option>
                     {capacityOptions.map((x) => (
                       <option key={x.comparisonId} value={x.comparisonId}>
                         {x.comparisonId} v{x.version} · {x.selectedOptionId} · Plan{' '}
@@ -3622,16 +3709,18 @@ export const ExecutionControlSurface = ({
                   className="btn-secondary mt-2"
                   onClick={() => void createGovernedPlanChange()}
                 >
-                  Utwórz zarządzaną zmianę planu
+                  {t('execution.plan.createChange', 'Create governed plan change')}
                 </button>
               </section>
             )}
             <button className="btn-primary mt-3" onClick={() => void transition('APPLY')}>
-              Zastosuj potwierdzoną komendę
+              {t('execution.intervention.applyConfirmed', 'Apply the confirmed command')}
             </button>
           </section>
           <section className="mt-4 rounded border border-c-border p-3">
-            <h4 className="font-medium">Weryfikacja efektu</h4>
+            <h4 className="font-medium">
+              {t('execution.intervention.verifyEffect', 'Effect verification')}
+            </h4>
             <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[220px_1fr_auto]">
               <select
                 aria-label="Intervention verification outcome"
@@ -3641,7 +3730,7 @@ export const ExecutionControlSurface = ({
               >
                 {['EFFECTIVE', 'PARTIAL', 'INEFFECTIVE', 'NOT_VERIFIED'].map((x) => (
                   <option key={x} value={x}>
-                    {verificationOutcomeLabel(x)}
+                    {verificationOutcomeLabel(x, t)}
                   </option>
                 ))}
               </select>
@@ -3652,31 +3741,38 @@ export const ExecutionControlSurface = ({
                 className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
               />
               <button className="btn-secondary" onClick={() => void transition('VERIFY')}>
-                Zweryfikuj interwencję
+                {t('execution.intervention.verify', 'Verify intervention')}
               </button>
             </div>
           </section>
-          {write === 'FAILED' && <p role="alert">Nie zastosowano zmiany.</p>}
+          {write === 'FAILED' && (
+            <p role="alert">{t('execution.intervention.notApplied', 'The change was not applied.')}</p>
+          )}
           {receipt && (
             <div role="status" className="rounded border border-c-success/40 p-3">
-              <strong>{interventionStatusLabel(receipt.status)}</strong>
+              <strong>{interventionStatusLabel(receipt.status, t)}</strong>
               {receipt.targetCommand && (
                 <p>
-                  Potwierdzenie komendy docelowej {receipt.targetCommand.clientRequestId} ·{' '}
+                  {t('execution.intervention.targetReceipt', 'Target command receipt')}{' '}
+                  {receipt.targetCommand.clientRequestId} ·{' '}
                   {receipt.targetCommand.aggregateType}/{receipt.targetCommand.aggregateId} v
                   {receipt.targetCommand.aggregateVersion}
                 </p>
               )}
               {receipt.oldHash && (
                 <p>
-                  Hash planu przed zmianą {receipt.oldHash} → po zmianie {receipt.newHash}
+                  {t('execution.plan.hashBefore', 'Plan hash before')} {receipt.oldHash} →{' '}
+                  {t('execution.plan.hashAfter', 'after')} {receipt.newHash}
                 </p>
               )}
               {receipt.verification && (
                 <p>
                   {receipt.verification.outcome === 'EFFECTIVE'
-                    ? 'Skuteczna · zamknięta'
-                    : `${verificationOutcomeLabel(receipt.verification.outcome)} · eskalowana`}
+                    ? t('execution.intervention.effectiveClosed', 'Effective · closed')
+                    : `${verificationOutcomeLabel(receipt.verification.outcome, t)} · ${t(
+                        'execution.intervention.escalated',
+                        'escalated'
+                      )}`}
                 </p>
               )}
             </div>

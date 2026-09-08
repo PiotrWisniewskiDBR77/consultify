@@ -213,8 +213,10 @@ export function ControlLoopReport(): React.ReactElement {
             {t('execution.reports.intelligence.control.scenarios', 'Forward scenarios')}
           </h2>
           <p>
-            INFERENCE · base: UNKNOWN · optimistic: UNKNOWN · pessimistic: UNKNOWN ·
-            BRAK_API_FORECAST
+            {t(
+              'execution.reports.intelligence.control.scenariosPlaceholder',
+              'INFERENCE · base: UNKNOWN · optimistic: UNKNOWN · pessimistic: UNKNOWN · NO_API_FORECAST'
+            )}
           </p>
         </section>
         <section>

@@ -7,6 +7,7 @@ import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { capacityUnitLabel } from '@/labels/capacityUnitLabels';
+import { formatListDate, PUSTA_DATA } from '@/utils/listDateFormat';
 import {
   przeniesZadanieNaTermin,
   readExecutionResourcePlan,
@@ -60,18 +61,30 @@ import {
 // podczas gdy „Bez stanowiska" pytało o kompletność słownika kadrowego
 // (0/31 trafień na pomiarze 07.09 — chip, który nigdy niczego nie pokazał).
 const resourcePresets = ['osoby', 'przeciazeni', 'z-zalegloscia'] as const;
-const allocationStatusLabel = (value?: string) =>
-  ({
-    PROPOSED: 'Propozycja',
-    REQUESTED: 'Oczekuje na akceptację',
-    ASSIGNEE_ACCEPTED: 'Zaakceptowane przez wykonawcę',
-    CONFIRMED: 'Potwierdzone',
-    CONDITIONALLY_CONFIRMED: 'Potwierdzone warunkowo',
-    DECLINED: 'Odrzucone',
-    ENDED: 'Zakończone',
-  })[value ?? ''] ??
-  value?.toLowerCase().replaceAll('_', ' ') ??
-  'Brak danych';
+/**
+ * J7b: status przydziału przez `t()` z ANGIELSKIM domyślnym (§2.3 PLANU
+ * językowego). Do 08.09 słownik był polski i wprost, więc konto EN czytało
+ * „Oczekuje na akceptację" w podglądzie przydziału.
+ */
+const allocationStatusLabel = (
+  value: string | undefined,
+  t: (key: string, fallback: string) => string
+) => {
+  const angielskie: Record<string, string> = {
+    PROPOSED: 'Proposed',
+    REQUESTED: 'Awaiting acceptance',
+    ASSIGNEE_ACCEPTED: 'Accepted by assignee',
+    CONFIRMED: 'Confirmed',
+    CONDITIONALLY_CONFIRMED: 'Conditionally confirmed',
+    DECLINED: 'Declined',
+    ENDED: 'Ended',
+  };
+  const klucz = String(value ?? '');
+  if (!klucz) return t('common.noData', 'No data');
+  if (angielskie[klucz])
+    return t(`execution.resources.allocationStatus.${klucz.toLowerCase()}`, angielskie[klucz]);
+  return klucz.toLowerCase().replaceAll('_', ' ');
+};
 /**
  * ★ Odbiór grafiki 174-domkniecie (2026-09-01) — „Katarzyna WóJcik".
  *
@@ -101,20 +114,33 @@ const businessLabel = (value: string | null | undefined, fallback: string) =>
  * wyłącznie TREŚĆ KOMÓRKI. (i18n-reszta 20260903: nagłówki kolumn NIŻEJ
  * przeszły na `t()` — to była inna, dodatkowa dziura, patrz `columns`.)
  */
-const ETYKIETY_PL: Record<string, string> = {
-  UNKNOWN: 'Nieznane',
-  KNOWN: 'Znane',
-  PARTIAL: 'Częściowe',
-  NONE: 'Brak',
-  CURRENT: 'Aktualne',
-  STALE: 'Nieaktualne',
-  NOT_ASSESSED: 'Nie oceniono',
-  CAPACITY_CONFLICT: 'Konflikt mocy przerobowej',
-  SKILL_CONFLICT: 'Konflikt kompetencji',
-  CALENDAR_CONFLICT: 'Konflikt kalendarza',
+const ETYKIETY_ENUM: Record<string, string> = {
+  UNKNOWN: 'Unknown',
+  KNOWN: 'Known',
+  PARTIAL: 'Partial',
+  NONE: 'None',
+  CURRENT: 'Current',
+  STALE: 'Stale',
+  NOT_ASSESSED: 'Not assessed',
+  CAPACITY_CONFLICT: 'Capacity conflict',
+  SKILL_CONFLICT: 'Skill conflict',
+  CALENDAR_CONFLICT: 'Calendar conflict',
 };
-const pl = (value: string | null | undefined, fallback = 'Nieznane') =>
-  value ? (ETYKIETY_PL[value] ?? value) : fallback;
+/**
+ * J7b: treść komórki z enumu — przez `t()`, domyślne po angielsku. Do 08.09
+ * ten słownik nazywał się `ETYKIETY_PL` i pisał polskie słowa wprost, więc
+ * konto EN widziało „Nieznane"/„Konflikt kalendarza" w kolumnach.
+ */
+const etykietaEnum = (
+  value: string | null | undefined,
+  t: (key: string, fallback: string) => string,
+  fallback?: string
+) => {
+  if (!value) return fallback ?? t('execution.resources.enum.unknown', 'Unknown');
+  const angielskie = ETYKIETY_ENUM[value];
+  if (!angielskie) return value;
+  return t(`execution.resources.enum.${value.toLowerCase()}`, angielskie);
+};
 export const ExecutionResourcesSurface = ({
   activePreset,
   onCountsChange,
@@ -135,7 +161,8 @@ export const ExecutionResourcesSurface = ({
   /** Prawy slot Menu 3 — kebab z rzadkimi akcjami (ten sam co w Raportach). */
   onRegisterMenu3Control?: (node: React.ReactNode) => void;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
   const [cases, setCases] = useState<any[]>([]),
     [caseId, setCaseId] = useState(''),
     [caseVersion, setCaseVersion] = useState(1),
@@ -436,14 +463,20 @@ export const ExecutionResourcesSurface = ({
       planRows.map((row: ResourcePlanRow) => ({
         ...row,
         id: `${row.userId}|${row.weekStart}`,
-        title: businessLabel(row.name, 'Nieprzypisany zasób'),
+        title: businessLabel(row.name, t('execution.resources.unassigned', 'Unassigned resource')),
         description: row.role
           ? businessLabel(row.role, '')
-          : `Tydzień od ${tydzien(row.weekStart)}`,
+          : t('execution.resources.weekFrom', 'Week from {{date}}', {
+              date: formatListDate(row.weekStart),
+            }),
         resourceLabel: row.role
-          ? `${businessLabel(row.name, 'Nieprzypisany zasób')} · ${businessLabel(row.role, '')}`
-          : businessLabel(row.name, 'Nieprzypisany zasób'),
-        weekLabel: `od ${tydzien(row.weekStart)}`,
+          ? `${businessLabel(row.name, t('execution.resources.unassigned', 'Unassigned resource'))} · ${businessLabel(row.role, '')}`
+          : businessLabel(row.name, t('execution.resources.unassigned', 'Unassigned resource')),
+        // J7b: „od 07.09.2026" po polsku na koncie EN (dług J7 z D4). Data
+        // idzie teraz przez SSOT list, a przyimek przez `t()`.
+        weekLabel: t('execution.resources.weekFromShort', 'from {{date}}', {
+          date: formatListDate(row.weekStart),
+        }),
         demandLabel: godziny(row.demandHours),
         supplyLabel: godziny(row.supplyHours),
         utilizationLabel: `${row.utilizationPercent} %`,
@@ -455,7 +488,7 @@ export const ExecutionResourcesSurface = ({
         // czyta się jako „ta osoba nie ma zaległości w TYM tygodniu".
         backlogLabel: row.backlogHours > 0 ? godziny(row.backlogHours) : '—',
       })),
-    [planRows]
+    [planRows, t]
   );
   /*
    * [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§3 pkt 3, §4 D7). Zmierzony
@@ -546,7 +579,7 @@ export const ExecutionResourcesSurface = ({
         setBacklogError(
           error instanceof Error && error.message
             ? error.message
-            : 'Zapis nie przeszedł. Spróbuj ponownie.'
+            : t('execution.resources.saveFailed', 'The change was not saved. Try again.')
         );
       } finally {
         setBacklogBusyTaskId('');
@@ -704,14 +737,20 @@ export const ExecutionResourcesSurface = ({
         data-testid="execution-resources-case-unreachable"
         className="m-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
       >
-        <p className="font-medium text-c-text-primary">{`Ta realizacja nie odpowiada: ${nazwa}`}</p>
+        <p className="font-medium text-c-text-primary">
+          {t('execution.resources.caseUnreachable', 'This delivery is not responding: {{name}}', {
+            name: nazwa,
+          })}
+        </p>
         <p className="mt-1 text-c-text-secondary">
-          Przerwaliśmy oczekiwanie po 12 sekundach. Pozostałe realizacje działają — wróć do
-          wszystkich albo spróbuj ponownie.
+          {t(
+            'execution.resources.caseUnreachableHint',
+            'We stopped waiting after 12 seconds. The other deliveries are working — go back to all of them or try again.'
+          )}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className="btn-secondary" onClick={() => void load(caseId)}>
-            Spróbuj ponownie
+            {t('common.retry', 'Try again')}
           </button>
           <button
             type="button"
@@ -723,7 +762,7 @@ export const ExecutionResourcesSurface = ({
               void loadCases();
             }}
           >
-            Wszystkie realizacje
+            {t('execution.resources.allCases', 'All deliveries')}
           </button>
         </div>
       </div>
@@ -734,13 +773,13 @@ export const ExecutionResourcesSurface = ({
   if (state === 'ERROR' && planState === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
-        <p>Nie udało się załadować rejestru zasobów.</p>
+        <p>{t('execution.resources.loadFailed', 'Could not load the resource register.')}</p>
         <button
           type="button"
           className="btn-secondary mt-3"
           onClick={() => (caseId ? void load(caseId) : void loadCases())}
         >
-          Spróbuj ponownie
+          {t('common.retry', 'Try again')}
         </button>
       </div>
     );
@@ -760,10 +799,14 @@ export const ExecutionResourcesSurface = ({
         <div data-testid="execution-resources-loading" className="flex min-h-0 flex-1 flex-col gap-3">
           {loadingPhase === 'slow' && (
             <p role="status" className="text-sm text-c-text-muted">
-              Wczytywanie trwa dłużej niż zwykle…
+              {t('common.loadingSlow', 'This is taking longer than usual…')}
             </p>
           )}
-          <SkeletonState variant="table" rows={6} label="Liczę obłożenie zasobów" />
+          <SkeletonState
+            variant="table"
+            rows={6}
+            label={t('execution.resources.loading', 'Computing resource utilisation')}
+          />
         </div>
       )}
       {planState === 'ERROR' && (
@@ -772,9 +815,12 @@ export const ExecutionResourcesSurface = ({
           data-testid="execution-resources-plan-error"
           className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
         >
-          Nie udało się policzyć obłożenia (popyt vs podaż).{' '}
+          {t(
+            'execution.resources.planFailed',
+            'Utilisation (demand vs supply) could not be computed.'
+          )}{' '}
           <button type="button" className="underline" onClick={() => void loadPlan()}>
-            Spróbuj ponownie
+            {t('common.retry', 'Try again')}
           </button>
         </p>
       )}
@@ -783,7 +829,11 @@ export const ExecutionResourcesSurface = ({
           role="status"
           className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
         >
-          {`Nie udało się pobrać zasobów z ${unreachableCaseIds.length} realizacji — poniżej zasoby z pozostałych.`}
+          {t(
+            'execution.resources.partialFetch',
+            'Resources could not be fetched from {{count}} deliveries — the rest are shown below.',
+            { count: unreachableCaseIds.length }
+          )}
         </p>
       )}
       {/* Pasek „stan na" renderuje sie TYLKO z kompletna koperta. Bez tego
@@ -793,7 +843,16 @@ export const ExecutionResourcesSurface = ({
           zmierzone 2026-09-06 na atrapie bez zamockowanego API. */}
       {planState === 'READY' && plan?.summary && (
         <p className="mb-3 text-sm text-c-text-secondary" data-testid="execution-resources-summary">
-          {`Stan na ${new Date(plan.asOf).toLocaleDateString('pl-PL')} · osób ${plan.summary.peopleCount} · popyt ${godziny(plan.summary.demandHours)} · podaż ${godziny(plan.summary.supplyHours)} · `}
+          {t(
+            'execution.resources.summary.head',
+            'As of {{date}} · people {{people}} · demand {{demand}} · supply {{supply}} · ',
+            {
+              date: formatListDate(plan.asOf),
+              people: plan.summary.peopleCount,
+              demand: godziny(plan.summary.demandHours),
+              supply: godziny(plan.summary.supplyHours),
+            }
+          )}
           {/*
            * [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§4 D7, §5 R0 pkt 4):
            * słowo „obłożenie" tutaj to ŚREDNIA z całego okna (popyt/podaż
@@ -810,29 +869,52 @@ export const ExecutionResourcesSurface = ({
               count: plan.weeks.length,
             })}
           >
-            {`obłożenie ${plan.summary.utilizationPercent === null ? 'brak danych' : `${plan.summary.utilizationPercent} %`}`}
+            {t('execution.resources.summary.utilization', 'utilisation {{value}}', {
+              value:
+                plan.summary.utilizationPercent === null
+                  ? t('common.noData', 'No data')
+                  : `${plan.summary.utilizationPercent} %`,
+            })}
           </span>
-          {` · przeciążonych tygodni ${plan.summary.overloadedCount}`}
+          {t('execution.resources.summary.overloaded', ' · overloaded weeks {{count}}', {
+            count: plan.summary.overloadedCount,
+          })}
           {/*
            * [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1): zaległość w
            * pasku jako WŁASNA para liczb (godziny + ilu osób), a nie doliczona
            * do popytu. To ta sama liczba, którą widać w kolumnie „Zaległość"
            * — pasek sumuje ją po osobach, tabela pokazuje per osoba.
            */}
-          {` · zaległość ${godziny(plan.summary.backlogHoursTotal ?? 0)} u ${plan.summary.backlogPeople ?? 0} os.`}
+          {t(
+            'execution.resources.summary.backlog',
+            ' · backlog {{hours}} across {{people}} people',
+            {
+              hours: godziny(plan.summary.backlogHoursTotal ?? 0),
+              people: plan.summary.backlogPeople ?? 0,
+            }
+          )}
         </p>
       )}
       {backlogPanel && (
         <section
-          aria-label="Zaległość osoby"
+          aria-label={t('execution.resources.backlogPanel', 'Person backlog')}
           data-testid="execution-resources-backlog-panel"
           className="mb-3 rounded-xl border border-c-border p-4"
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-c-text-primary">{`Zaległość · ${backlogPanel.name}`}</h3>
+              <h3 className="font-semibold text-c-text-primary">
+                {t('execution.resources.backlogPanel', 'Person backlog')} · {backlogPanel.name}
+              </h3>
               <p className="mt-1 text-xs text-c-text-muted">
-                {`Termin minął, praca otwarta: ${godziny(backlogOsoba?.backlogHours ?? 0)} w ${backlogOsoba?.backlogTasks?.length ?? 0} zadaniach. Ta liczba NIE wchodzi do popytu żadnego tygodnia — rozlicz ją tutaj.`}
+                {t(
+                  'execution.resources.backlogPanelLead',
+                  'Past due, still open: {{hours}} across {{count}} tasks. This number is NOT part of any week\u2019s demand — settle it here.',
+                  {
+                    hours: godziny(backlogOsoba?.backlogHours ?? 0),
+                    count: backlogOsoba?.backlogTasks?.length ?? 0,
+                  }
+                )}
               </p>
             </div>
             <button
@@ -846,7 +928,7 @@ export const ExecutionResourcesSurface = ({
                 setBacklogScope(null);
               }}
             >
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           {backlogError && (
@@ -860,7 +942,7 @@ export const ExecutionResourcesSurface = ({
           )}
           {(backlogOsoba?.backlogTasks ?? []).length === 0 ? (
             <p className="mt-3 text-sm text-c-text-muted">
-              Brak zadań zaległych — nie ma czego rozliczać.
+              {t('execution.resources.backlogEmpty', 'No overdue tasks — nothing to settle.')}
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-c-border-subtle">
@@ -872,7 +954,15 @@ export const ExecutionResourcesSurface = ({
                         {task.title}
                       </p>
                       <p className="mt-0.5 text-xs text-c-text-muted">
-                        {`Termin ${task.dueDate ? tydzien(task.dueDate) : 'brak'} · ${task.daysOverdue} dni po terminie · ${godziny(task.remainingHours)} do zrobienia`}
+                        {t(
+                          'execution.resources.backlogTaskMeta',
+                          'Due {{due}} · {{days}} days overdue · {{hours}} remaining',
+                          {
+                            due: task.dueDate ? formatListDate(task.dueDate) : PUSTA_DATA,
+                            days: task.daysOverdue,
+                            hours: godziny(task.remainingHours),
+                          }
+                        )}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -887,7 +977,7 @@ export const ExecutionResourcesSurface = ({
                           setBacklogMove({ taskId: task.taskId, date: domyslnyTydzien() });
                         }}
                       >
-                        Przenieś na tydzień
+                        {t('execution.resources.backlogMove', 'Move to week')}
                       </button>
                       <button
                         type="button"
@@ -900,7 +990,7 @@ export const ExecutionResourcesSurface = ({
                           )
                         }
                       >
-                        Uznaj za zamknięte
+                        {t('execution.resources.backlogClose', 'Mark as closed')}
                       </button>
                       <button
                         type="button"
@@ -916,14 +1006,16 @@ export const ExecutionResourcesSurface = ({
                           });
                         }}
                       >
-                        Zmniejsz zakres
+                        {t('execution.resources.backlogScope', 'Reduce scope')}
                       </button>
                     </div>
                   </div>
                   {backlogMove?.taskId === task.taskId && (
                     <div className="mt-2 flex flex-wrap items-end gap-2">
                       <label className="text-sm">
-                        <span className="block text-xs text-c-text-muted">Nowy termin</span>
+                        <span className="block text-xs text-c-text-muted">
+                          {t('execution.resources.newDue', 'New due date')}
+                        </span>
                         <input
                           type="date"
                           data-testid="execution-resources-backlog-move-date"
@@ -943,7 +1035,7 @@ export const ExecutionResourcesSurface = ({
                           )
                         }
                       >
-                        Przenieś
+                        {t('execution.resources.move', 'Move')}
                       </button>
                     </div>
                   )}
@@ -951,7 +1043,7 @@ export const ExecutionResourcesSurface = ({
                     <div className="mt-2 flex flex-wrap items-end gap-2">
                       <label className="text-sm">
                         <span className="block text-xs text-c-text-muted">
-                          Pracochłonność (h)
+                          {t('execution.resources.effortHours', 'Effort (h)')}
                         </span>
                         <input
                           type="number"
@@ -976,7 +1068,7 @@ export const ExecutionResourcesSurface = ({
                           )
                         }
                       >
-                        Zapisz zakres
+                        {t('execution.resources.saveScope', 'Save scope')}
                       </button>
                     </div>
                   )}
@@ -988,7 +1080,10 @@ export const ExecutionResourcesSurface = ({
       )}
       {planState === 'READY' && planRows.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
-          Brak osób z pracą w najbliższych 8 tygodniach — nie ma czego obciążać.
+          {t(
+            'execution.resources.emptyPlan',
+            'Nobody has work in the next 8 weeks — there is nothing to load.'
+          )}
         </div>
       ) : planRows.length > 0 ? (
         /*
@@ -1011,7 +1106,7 @@ export const ExecutionResourcesSurface = ({
                 embedded
                 title={row.title}
                 onClose={() => setSelectedPlanRowId(null)}
-                openLabel="Ustaw dostępność"
+                openLabel={t('execution.resources.setAvailability', 'Set availability')}
                 onOpenFull={() =>
                   setCapacityDialog({
                     userId: row.userId,
@@ -1029,25 +1124,34 @@ export const ExecutionResourcesSurface = ({
                 meta={{
                   pills: [
                     {
-                      label: `Obłożenie ${row.utilizationPercent} %`,
+                      label: t('execution.resources.utilizationPill', 'Utilisation {{value}} %', {
+                        value: row.utilizationPercent,
+                      }),
                       tone: row.utilizationPercent > 105 ? 'warn' : 'success',
                     },
                     {
                       label:
                         row.supplySource === 'PROFIL'
-                          ? 'Podaż z profilu osoby'
-                          : 'Podaż domyślna (40 h)',
+                          ? t('execution.resources.supplyProfile', 'Supply from person profile')
+                          : t('execution.resources.supplyDefault', 'Default supply (40 h)'),
                       tone: 'neutral',
                     },
                   ],
                   trailing: <span className="text-xs">{row.weekLabel}</span>,
                   recommendation:
                     row.gapHours < 0
-                      ? `Brakuje ${godziny(Math.abs(row.gapHours))} — przesuń zadania albo dołóż osobę.`
-                      : 'Obłożenie mieści się w dostępnych godzinach.',
+                      ? t(
+                          'execution.resources.gapHint',
+                          'Short by {{hours}} — move tasks or add a person.',
+                          { hours: godziny(Math.abs(row.gapHours)) }
+                        )
+                      : t(
+                          'execution.resources.gapOk',
+                          'Utilisation fits within the available hours.'
+                        ),
                 }}
                 details={{
-                  label: 'Obłożenie w tym tygodniu',
+                  label: t('execution.resources.weekUtilization', 'Utilisation this week'),
                   /*
                    * P16-R1: popyt tygodnia to WYŁĄCZNIE praca zaplanowana na
                    * ten tydzień (udział zadania między startem a terminem).
@@ -1056,15 +1160,35 @@ export const ExecutionResourcesSurface = ({
                   text:
                     (planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0) >
                     0
-                      ? `Popyt tygodnia liczony bez zaległości. Zaległość ${godziny(planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0)} — rozlicz ją osobno.`
-                      : 'Popyt tygodnia to praca zaplanowana na ten tydzień. Ta osoba nie ma zaległości.',
+                      ? t(
+                          'execution.resources.weekDemandWithBacklog',
+                          'Weekly demand excludes the backlog. Backlog {{hours}} — settle it separately.',
+                          {
+                            hours: godziny(
+                              planPeople.find((person) => person.userId === row.userId)
+                                ?.backlogHours ?? 0
+                            ),
+                          }
+                        )
+                      : t(
+                          'execution.resources.weekDemandNoBacklog',
+                          'Weekly demand is the work planned for this week. This person has no backlog.'
+                        ),
                   properties: [
-                    { id: 'demand', label: 'Popyt', value: row.demandLabel },
-                    { id: 'supply', label: 'Podaż', value: row.supplyLabel },
-                    { id: 'gap', label: 'Luka', value: row.gapLabel },
+                    {
+                      id: 'demand',
+                      label: t('execution.resources.demand', 'Demand'),
+                      value: row.demandLabel,
+                    },
+                    {
+                      id: 'supply',
+                      label: t('execution.resources.supply', 'Supply'),
+                      value: row.supplyLabel,
+                    },
+                    { id: 'gap', label: t('execution.resources.gap', 'Gap'), value: row.gapLabel },
                     {
                       id: 'backlog',
-                      label: 'Zaległość',
+                      label: t('execution.resources.backlog', 'Backlog'),
                       value: godziny(
                         planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0
                       ),
@@ -1085,12 +1209,12 @@ export const ExecutionResourcesSurface = ({
                      */
                     {
                       id: 'tasks',
-                      label: 'Zadania w tym tygodniu',
+                      label: t('execution.resources.tasksThisWeek', 'Tasks this week'),
                       value: String(row.taskCount),
                     },
                     {
                       id: 'backlogTasks',
-                      label: 'Zadania zaległe',
+                      label: t('execution.resources.backlogTasks', 'Overdue tasks'),
                       value: String(
                         planPeople.find((person) => person.userId === row.userId)?.backlogTasks
                           ?.length ?? 0
@@ -1098,17 +1222,22 @@ export const ExecutionResourcesSurface = ({
                     },
                     {
                       id: 'allocations',
-                      label: 'Przydziały kanoniczne',
+                      label: t('execution.resources.canonicalAllocations', 'Canonical allocations'),
                       value: String(przydzialyOsoby(row.userId).length),
                     },
                   ],
                   onCopy: () => void navigator.clipboard?.writeText(row.id),
                 }}
                 relations={przydzialyOsoby(row.userId).map((item) => ({
-                  label: item.taskTitle || `Przydział ${String(item.allocationId).slice(-8)}`,
+                  label:
+                    item.taskTitle ||
+                    `${t('execution.resources.allocation', 'Allocation')} ${String(item.allocationId).slice(-8)}`,
                   onClick: () => void openWorkspace(item),
                 }))}
-                relationsEmptyLabel="Brak kanonicznych przydziałów dla tej osoby"
+                relationsEmptyLabel={t(
+                  'execution.resources.noAllocations',
+                  'No canonical allocations for this person'
+                )}
                 actions={{
                   informational: [
                     // P16-R1: wejście do rozliczenia zaległości także z
@@ -1118,7 +1247,7 @@ export const ExecutionResourcesSurface = ({
                       ? [
                           {
                             id: 'backlog',
-                            label: 'Rozlicz zaległość',
+                            label: t('execution.resources.settleBacklog', 'Settle backlog'),
                             variant: 'positive' as const,
                             icon: ArrowRight,
                             shortcut: 'Z',
@@ -1133,7 +1262,7 @@ export const ExecutionResourcesSurface = ({
                       : []),
                     {
                       id: 'capacity',
-                      label: 'Ustaw dostępność',
+                      label: t('execution.resources.setAvailability', 'Set availability'),
                       variant: 'positive',
                       icon: Eye,
                       shortcut: 'D',
@@ -1166,7 +1295,7 @@ export const ExecutionResourcesSurface = ({
                 primary: [
                   {
                     id: 'capacity',
-                    label: 'Ustaw dostępność',
+                    label: t('execution.resources.setAvailability', 'Set availability'),
                     icon: ArrowRight,
                     onClick: () => {
                       const item = tableItems.find((candidate) => candidate.id === row.id);
@@ -1188,11 +1317,17 @@ export const ExecutionResourcesSurface = ({
                 ],
                 universalHandlers: {
                   preview: () => setSelectedPlanRowId(String(row.id)),
-                  archiveNote: 'Obłożenie jest wyliczane z zadań — nie da się go zarchiwizować.',
+                  archiveNote: t(
+                    'execution.resources.archiveNote',
+                    'Utilisation is computed from tasks — it cannot be archived.'
+                  ),
                 },
                 destructive: {
-                  label: 'Usuń',
-                  note: 'Wiersz obłożenia jest wyliczany, nie przechowywany.',
+                  label: t('common.delete', 'Delete'),
+                  note: t(
+                    'execution.resources.deleteNote',
+                    'A utilisation row is computed, not stored.'
+                  ),
                 },
               })}
               persistKey="execution.resources.capacity-plan.v1"
@@ -1202,12 +1337,15 @@ export const ExecutionResourcesSurface = ({
       ) : null}
       {capacityDialog && (
         <section
-          aria-label="Dostępność osoby"
+          aria-label={t('execution.resources.availabilityDialog', 'Person availability')}
           data-testid="execution-resources-capacity-dialog"
           className="mt-4 rounded-xl border border-c-border p-4"
         >
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">{`Dostępność · ${capacityDialog.name}`}</h3>
+            <h3 className="font-semibold">
+              {t('execution.resources.availabilityDialog', 'Person availability')} ·{' '}
+              {capacityDialog.name}
+            </h3>
             <button
               type="button"
               className="btn-secondary"
@@ -1216,15 +1354,20 @@ export const ExecutionResourcesSurface = ({
                 setCapacityError('');
               }}
             >
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           <p className="mt-1 text-xs text-c-text-muted">
-            Etat tygodniowy i dostępność w procentach. Podaż = godziny × dostępność.
+            {t(
+              'execution.resources.availabilityLead',
+              'Weekly hours and availability in percent. Supply = hours \u00d7 availability.'
+            )}
           </p>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="text-sm">
-              <span className="block text-xs text-c-text-muted">Godziny tygodniowo</span>
+              <span className="block text-xs text-c-text-muted">
+                {t('execution.resources.weeklyHours', 'Hours per week')}
+              </span>
               <input
                 type="number"
                 min={0}
@@ -1235,7 +1378,9 @@ export const ExecutionResourcesSurface = ({
               />
             </label>
             <label className="text-sm">
-              <span className="block text-xs text-c-text-muted">Dostępność %</span>
+              <span className="block text-xs text-c-text-muted">
+                {t('execution.resources.availabilityPercent', 'Availability %')}
+              </span>
               <input
                 type="number"
                 min={0}
@@ -1284,29 +1429,35 @@ export const ExecutionResourcesSurface = ({
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold">Przydział {selected.allocationId}</h3>
+              <h3 className="font-semibold">
+                {t('execution.resources.allocation', 'Allocation')} {selected.allocationId}
+              </h3>
               <p className="text-xs text-c-text-muted">
-                {allocationStatusLabel(selected.status)} ·{' '}
+                {allocationStatusLabel(selected.status, t)} ·{' '}
                 {businessLabel(
                   selected.assigneeName ||
                     selected.personName ||
                     selected.roleName ||
                     selected.assigneeId,
-                  'Nieprzypisany zasób'
+                  t('execution.resources.unassigned', 'Unassigned resource')
                 )}
               </p>
             </div>
             <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>
-              Zamknij workspace
+              {t('execution.work.closeWorkspace', 'Close workspace')}
             </button>
           </div>
-          <p className="mt-3 text-sm">Zadanie {selected.taskTitle || selected.taskId}</p>
+          <p className="mt-3 text-sm">
+            {t('execution.work.kind.task', 'Task')} {selected.taskTitle || selected.taskId}
+          </p>
           <p className="text-sm">
-            Dane {pl(selected.demand?.knowledgeState)} · okres{' '}
+            {t('execution.resources.dataState', 'Data')}{' '}
+            {etykietaEnum(selected.demand?.knowledgeState, t)} ·{' '}
+            {t('execution.resources.period', 'period')}{' '}
             {selected.timeBasis?.window ||
               (selected.timeBasis?.windowUnit
-                ? capacityUnitLabel(selected.timeBasis.windowUnit, true)
-                : ETYKIETY_PL.UNKNOWN)}
+                ? capacityUnitLabel(selected.timeBasis.windowUnit, isPolish)
+                : etykietaEnum('UNKNOWN', t))}
           </p>
         </section>
       )}
@@ -1317,17 +1468,24 @@ export const ExecutionResourcesSurface = ({
         >
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold">Propozycja przydziału</h3>
+              <h3 className="font-semibold">
+                {t('execution.resources.proposal', 'Allocation proposal')}
+              </h3>
               <p className="text-xs text-c-text-muted">
-                Najpierw symulacja, potem zatwierdzany przydział.
+                {t(
+                  'execution.resources.proposalLead',
+                  'Simulate first, then confirm the allocation.'
+                )}
               </p>
             </div>
             <button className="btn-secondary" onClick={() => setShowProposal(false)}>
-              Zamknij
+              {t('common.close', 'Close')}
             </button>
           </div>
           <details>
-            <summary className="cursor-pointer text-sm font-medium">Dane zaawansowane</summary>
+            <summary className="cursor-pointer text-sm font-medium">
+              {t('execution.resources.advancedData', 'Advanced data')}
+            </summary>
             <textarea
               aria-label="Operational Allocation proposal JSON"
               className="min-h-40 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
@@ -1337,10 +1495,10 @@ export const ExecutionResourcesSurface = ({
           </details>
           <div className="flex flex-wrap gap-2">
             <button className="btn-secondary" onClick={() => void simulate()}>
-              Symuluj
+              {t('execution.resources.simulate', 'Simulate')}
             </button>
             <button className="btn-secondary" onClick={() => void propose()}>
-              Zapisz propozycję
+              {t('execution.resources.saveProposal', 'Save proposal')}
             </button>
           </div>
           {assessment && (
@@ -1371,12 +1529,15 @@ export const ExecutionResourcesSurface = ({
               <button key={a} className="btn-secondary" onClick={() => void transition(a)}>
                 {
                   {
-                    REQUEST: 'Przekaż do akceptacji',
-                    ASSIGNEE_ACCEPT: 'Akceptuj przydział',
-                    ASSIGNEE_DECLINE: 'Odrzuć przydział',
-                    RM_CONFIRM: 'Potwierdź',
-                    RM_CONDITIONAL: 'Potwierdź warunkowo',
-                    RM_DECLINE: 'Odrzuć',
+                    REQUEST: t('execution.resources.action.request', 'Send for acceptance'),
+                    ASSIGNEE_ACCEPT: t('execution.resources.action.accept', 'Accept allocation'),
+                    ASSIGNEE_DECLINE: t('execution.resources.action.decline', 'Decline allocation'),
+                    RM_CONFIRM: t('execution.resources.action.confirm', 'Confirm'),
+                    RM_CONDITIONAL: t(
+                      'execution.resources.action.confirmConditional',
+                      'Confirm conditionally'
+                    ),
+                    RM_DECLINE: t('execution.resources.action.rmDecline', 'Decline'),
                   }[a]
                 }
               </button>

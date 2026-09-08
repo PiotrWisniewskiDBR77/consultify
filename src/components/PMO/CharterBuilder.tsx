@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { Api } from '../../services/api';
@@ -74,6 +75,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
   onCancel,
   readOnly = false,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<CharterData>({
     ...initialData,
     deliverables: initialData.deliverables || [],
@@ -214,7 +216,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
           <div className="space-y-4 max-w-2xl">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Initiative Name *
+                {t('pmo.charter.initiativeName', 'Initiative Name')} *
               </label>
               <input
                 type="text"
@@ -247,7 +249,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 onChange={(e) => updateField('problemStatement', e.target.value)}
                 rows={4}
                 disabled={readOnly}
-                placeholder="What problem does this initiative solve?"
+                placeholder={t('pmo.charter.problemPlaceholder', 'What problem does this initiative solve?')}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
               />
             </div>
@@ -261,7 +263,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 onChange={(e) => updateField('hypothesis', e.target.value)}
                 rows={3}
                 disabled={readOnly}
-                placeholder="How will this initiative solve the problem?"
+                placeholder={t('pmo.charter.hypothesisPlaceholder', 'How will this initiative solve the problem?')}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
               />
             </div>
@@ -275,7 +277,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
               <div>
                 <h3 className="font-medium text-navy-900 dark:text-white">Deliverables</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  What tangible outputs will this initiative produce?
+                  {t('pmo.charter.deliverablesHint', 'What tangible outputs will this initiative produce?')}
                 </p>
               </div>
               {!readOnly && (
@@ -325,7 +327,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
               <div>
                 <h3 className="font-medium text-navy-900 dark:text-white">Success Criteria</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  How will success be measured?
+                  {t('pmo.charter.successHint', 'How will success be measured?')}
                 </p>
               </div>
               {!readOnly && (
@@ -379,7 +381,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                     In Scope
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    What is included in this initiative?
+                    {t('pmo.charter.inScopeHint', 'What is included in this initiative?')}
                   </p>
                 </div>
                 {!readOnly && (
@@ -422,7 +424,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 <div>
                   <h3 className="font-medium text-danger-700 dark:text-danger-400">Out of Scope</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    What is explicitly excluded?
+                    {t('pmo.charter.outScopeHint', 'What is explicitly excluded?')}
                   </p>
                 </div>
                 {!readOnly && (
@@ -467,7 +469,9 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-medium text-navy-900 dark:text-white">Key Risks</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">What could go wrong?</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('pmo.charter.risksHint', 'What could go wrong?')}
+                </p>
               </div>
               {!readOnly && (
                 <button
@@ -475,7 +479,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                   className="flex items-center gap-1 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg"
                 >
                   <Plus size={14} />
-                  Add Risk
+                  {t('pmo.charter.addRisk', 'Add Risk')}
                 </button>
               )}
             </div>
@@ -626,7 +630,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 disabled={readOnly}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
               >
-                <option value="">Select Business Owner</option>
+                <option value="">{t('pmo.charter.selectBusinessOwner', 'Select Business Owner')}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.firstName} {user.lastName}
@@ -648,7 +652,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 disabled={readOnly}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white disabled:opacity-60"
               >
-                <option value="">Select Execution Owner</option>
+                <option value="">{t('pmo.charter.selectExecutionOwner', 'Select Execution Owner')}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.firstName} {user.lastName}

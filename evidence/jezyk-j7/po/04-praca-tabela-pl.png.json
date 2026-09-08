@@ -1,0 +1,106 @@
+{
+ "ekran": "04-praca-tabela",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3209/execution?tab=work&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Cost estimation for prod environment",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Schema design for raw layer",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "VM sizing for prod environment",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Data governance policy draft",
+   "trafienia": [
+    "draft"
+   ]
+  },
+  {
+   "linia": "CI/CD for Azure Functions",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Access control policies for Lakehouse",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Vulnerability scan report — phase 2",
+   "trafienia": [
+    "report"
+   ]
+  },
+  {
+   "linia": "Create data quality checks",
+   "trafienia": [
+    "Create"
+   ]
+  },
+  {
+   "linia": "Security training for team",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "UX research report",
+   "trafienia": [
+    "report"
+   ]
+  },
+  {
+   "linia": "GraphQL layer for mobile",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "UAT for invoice bot",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Commission controls for Line 4",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "[PRODUCTION] BUG: Edit Provider",
+   "trafienia": [
+    "Edit"
+   ]
+  },
+  {
+   "linia": "[PRODUCTION] BUG: EDIT USER - DrDioniz@gmail.com",
+   "trafienia": [
+    "EDIT"
+   ]
+  },
+  {
+   "linia": "AI/Industry: Supply chain — 5 SKU do forecastu",
+   "trafienia": [
+    "Supply"
+   ]
+  }
+ ]
+}

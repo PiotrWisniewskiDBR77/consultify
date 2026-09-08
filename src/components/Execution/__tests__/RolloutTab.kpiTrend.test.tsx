@@ -34,13 +34,17 @@ const { KpiSparkline } = (await import('../RolloutTab')) as unknown as {
 describe('KpiSparkline', () => {
   it('bez pomiarów mówi po polsku, że trend pojawi się po dwóch', () => {
     render(<KpiSparkline points={[]} target={90} />);
-    expect(screen.getByText('Brak pomiarów — trend pojawi się po dwóch')).toBeInTheDocument();
+    expect(
+      screen.getByText('No measurements — the trend appears after two')
+    ).toBeInTheDocument();
     expect(screen.queryByText(/No history yet/)).not.toBeInTheDocument();
   });
 
   it('przy JEDNYM pomiarze nie kłamie, że historii nie ma', () => {
     render(<KpiSparkline points={[62]} target={90} />);
-    expect(screen.getByText('Jeden pomiar — trend od drugiego')).toBeInTheDocument();
+    expect(
+      screen.getByText('One measurement — the trend starts at the second')
+    ).toBeInTheDocument();
   });
 
   it('przy dwóch pomiarach rysuje słupki, nie komunikat', () => {

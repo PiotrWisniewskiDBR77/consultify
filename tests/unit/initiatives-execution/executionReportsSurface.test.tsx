@@ -177,18 +177,18 @@ describe('ExecutionReportsSurface', () => {
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({ items: [run] });
     render(<Harness />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się załadować');
-    fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect((await screen.findAllByText(/Weekly execution/)).length).toBeGreaterThan(0);
     expect(listReportRuns).toHaveBeenCalledTimes(2);
   });
 
   it('opens canonical run by keyboard and publishes only approved frozen snapshot', async () => {
     render(<Harness />);
-    const row = (await screen.findByText(/Weekly execution · 08 sie 2026/)).closest('tr')!;
+    const row = (await screen.findByText(/Weekly execution · 08\/08\/2026/)).closest('tr')!;
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(screen.getByText(/Realizacja · case 1 · v3/)).toBeInTheDocument();
+    expect(screen.getByText(/Delivery · case 1 · v3/)).toBeInTheDocument();
     // CTA „Nowy raport" — teraz w Menu 2 gospodarza, otwiera kreator zdarzeniem.
     // Mutacja: usunięcie nasłuchu `execution:reports-new-report` w
     // `ExecutionReportsSurface` ma przewrócić tę asercję (kreator nigdy się
@@ -233,7 +233,7 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('Report Definition publish rationale'), {
       target: { value: 'Independent contract approval' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Opublikuj definicję' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish definition' }));
     await waitFor(() =>
       expect(transitionReportDefinition).toHaveBeenCalledWith(
         'weekly',
@@ -253,8 +253,8 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('ReportRun published Definition version'), {
       target: { value: 'weekly@2' },
     });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Zaawansowany kontrakt JSON' }));
-    fireEvent.change(screen.getByLabelText('ReportRun draft JSON'), {
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Advanced JSON contract' }));
+    fireEvent.change(screen.getByLabelText('Report run draft JSON'), {
       target: {
         value: JSON.stringify({
           reportRunId: 'run-2',
@@ -262,7 +262,7 @@ describe('ExecutionReportsSurface', () => {
         }),
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Utwórz lub odśwież raport' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create or refresh report' }));
     await waitFor(() =>
       expect(createReportRun).toHaveBeenCalledWith(
         'run-2',
@@ -274,14 +274,14 @@ describe('ExecutionReportsSurface', () => {
     render(<Harness />);
     openReportsKebab();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Nowa definicja' }));
-    expect(screen.getByRole('button', { name: 'Utwórz definicję' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create definition' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Report Definition ID'), {
       target: { value: 'project-report' },
     });
     fireEvent.change(screen.getByLabelText('Report Definition project IDs'), {
       target: { value: 'project-1\nproject-2' },
     });
-    fireEvent.click(screen.getByLabelText('Zaawansowany kontrakt definicji'));
+    fireEvent.click(screen.getByLabelText('Advanced definition contract'));
     fireEvent.change(screen.getByLabelText('Report Definition contract JSON'), {
       target: {
         value: JSON.stringify({
@@ -302,7 +302,7 @@ describe('ExecutionReportsSurface', () => {
         }),
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Utwórz definicję' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create definition' }));
     await waitFor(() =>
       expect(createReportDefinition).toHaveBeenCalledWith(
         'project-report',
@@ -317,7 +317,7 @@ describe('ExecutionReportsSurface', () => {
   });
   it('creates a canonical follow-up Task and automatically links its exact receipt', async () => {
     render(<Harness />);
-    fireEvent.click((await screen.findByText(/Weekly execution · 08 sie 2026/)).closest('tr')!);
+    fireEvent.click((await screen.findByText(/Weekly execution · 08\/08\/2026/)).closest('tr')!);
     // Pola zadania następczego żyją w edytorze pełnego kontraktu ReportRun
     // (`showRunEditor`) — otwiera go „Kontrakt raportu (zaawansowane)" z
     // kebaba Menu 3 (P16-R6, admin-only), nie CTA „Nowy raport" (to tylko
@@ -338,7 +338,7 @@ describe('ExecutionReportsSurface', () => {
       fireEvent.change(screen.getByLabelText(`Report follow-up ${label}`), {
         target: { value },
       });
-    fireEvent.click(screen.getByRole('button', { name: 'Utwórz i powiąż zadanie następcze' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create and link a follow-up task' }));
     await waitFor(() =>
       expect(createExecutionTask).toHaveBeenCalledWith(
         'case-1',
@@ -359,7 +359,7 @@ describe('ExecutionReportsSurface', () => {
         taskReceiptClientRequestId: expect.any(String),
       })
     );
-    expect(await screen.findByText(/Zadanie następcze task-follow-1 v1/)).toBeInTheDocument();
+    expect(await screen.findByText(/Follow-up task task-follow-1 v1/)).toBeInTheDocument();
   });
 
   it('Menu 3: „Opublikowane" zawęża do PUBLISHED — kontrakt APPROVED znika', async () => {
@@ -368,8 +368,8 @@ describe('ExecutionReportsSurface', () => {
     // — nie pojawia się w tym zawężonym presecie. Potwierdza to, że preset
     // realnie filtruje (nie jest dekoracją z licznikiem, ten sam błąd co
     // 1.12-R1).
-    await screen.findByText('Brak raportów');
-    expect(screen.queryByText(/Weekly execution · 08 sie 2026/)).not.toBeInTheDocument();
+    await screen.findByText('No reports');
+    expect(screen.queryByText(/Weekly execution · 08\/08\/2026/)).not.toBeInTheDocument();
   });
 
   // P16-R6 (D7, „policz uczciwie" — P16 §5 R6 pkt 3): przed tą naprawą
@@ -382,12 +382,12 @@ describe('ExecutionReportsSurface', () => {
     // Zastany kontrakt runtime-v1 (`run`, status APPROVED) NIE jest w białym
     // wykazie DRAFT/FROZEN/VALIDATED/FAILED, ale JEST nieopublikowany — musi
     // się pojawić w „Do przeglądu", inaczej zniknąłby z obu kubełków.
-    expect(await screen.findByText(/Weekly execution · 08 sie 2026/)).toBeInTheDocument();
+    expect(await screen.findByText(/Weekly execution · 08\/08\/2026/)).toBeInTheDocument();
   });
 
   it('dropdown „Poziom" (Menu 2) jest zarejestrowany i domyślnie na „Wszystkie"', async () => {
     render(<Harness />);
     const dropdown = await screen.findByTestId('execution-reports-level-dropdown');
-    expect(dropdown).toHaveTextContent('Poziom');
+    expect(dropdown).toHaveTextContent('Level');
   });
 });

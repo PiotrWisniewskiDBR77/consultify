@@ -1,0 +1,403 @@
+{
+ "ekran": "10-decyzje-nowa",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=control&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 22,
+ "obcychLiniiUI": 22,
+ "ui": [
+  {
+   "linia": "11 wrz 2026",
+   "trafienia": [
+    "wrz"
+   ]
+  },
+  {
+   "linia": "01 gru 2026",
+   "trafienia": [
+    "gru"
+   ]
+  },
+  {
+   "linia": "17 lip 2026",
+   "trafienia": [
+    "lip"
+   ]
+  },
+  {
+   "linia": "08 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "07 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "11 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "12 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "06 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "04 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "14 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "01 kwi 2026",
+   "trafienia": [
+    "kwi"
+   ]
+  },
+  {
+   "linia": "30 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "25 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "17 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "15 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "21 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "23 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "System wizyjny kontroli jakości",
+   "trafienia": [
+    "jakości"
+   ]
+  },
+  {
+   "linia": "Poprawa realizacji korzyści programu",
+   "trafienia": [
+    "korzyści"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Krzysztof Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Paweł Mroczkowski",
+   "trafienia": [
+    "Paweł"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przesunięcie terminu: Sesja przeglądu architektury (+203 dni)",
+   "trafienia": [
+    "Przesunięcie",
+    "przeglądu"
+   ]
+  },
+  {
+   "linia": "Przejscie CTO 08.09 - decyzja testowa",
+   "trafienia": [
+    "decyzja"
+   ]
+  },
+  {
+   "linia": "Dlaczego tracimy klientów po 3 miesiącach — warsztat",
+   "trafienia": [
+    "klientów",
+    "miesiącach"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Uzyskanie niemieckich licencji transportowych - czy zatrudnić lokalnego doradcę prawnego czy prowadzić proces przez centralę w Poznaniu",
+   "trafienia": [
+    "zatrudnić",
+    "doradcę",
+    "prowadzić",
+    "przez",
+    "centralę"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Czy oferta VAS dla Nordic Fresh Retail jako element renegocjacji kontraktu (APPROVAL)",
+   "trafienia": [
+    "dla"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Model cenowy usług dodanych - per-paleta vs abonament miesięczny",
+   "trafienia": [
+    "usług",
+    "miesięczny"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Partnerstwo ze szkołą zawodową - model exclusive czy multi-partner",
+   "trafienia": [
+    "szkołą",
+    "zawodową"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Pilotaż 4-dniowego tygodnia - tylko hub Poznań czy wszystkie trzy huby",
+   "trafienia": [
+    "Pilotaż",
+    "Poznań",
+    "wszystkie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Kolejność wymiany floty - najstarsze pojazdy najpierw vs najwyższa emisja najpierw",
+   "trafienia": [
+    "Kolejność",
+    "najwyższa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wybór technologii napędu - Euro7 diesel vs LNG vs EV-hybrid (GO_NO_GO)",
+   "trafienia": [
+    "Wybór",
+    "napędu"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Czy udostępnić dane real-time klientowi Nordic Fresh Retail jako portal API (APPROVAL)",
+   "trafienia": [
+    "udostępnić"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "MCG-2026: Pilotaż 30-pojazdowy najpierw czy od razu cała flota 214 pojazdów",
+   "trafienia": [
+    "Pilotaż",
+    "od",
+    "cała",
+    "pojazdów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wybór dostawcy TMS - SAP TM vs Samsara vs dedykowany dostawca lokalny (GO_NO_GO)",
+   "trafienia": [
+    "Wybór"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "MCG-2026 DACH: Strategia wejścia — organic entry vs przejęcie lokalnego gracza",
+   "trafienia": [
+    "wejścia",
+    "przejęcie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Tempo ekspansji MCG-2026 DACH: pełny hub od razu vs faza pilotażowa 12 miesięcy",
+   "trafienia": [
+    "pełny",
+    "od",
+    "pilotażowa",
+    "miesięcy"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  }
+ ]
+}

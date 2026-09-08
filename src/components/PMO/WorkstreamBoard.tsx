@@ -423,6 +423,7 @@ interface WorkstreamInitiativesProps {
 }
 
 const WorkstreamInitiatives: React.FC<WorkstreamInitiativesProps> = ({ workstreamId }) => {
+  const { t } = useTranslation();
   const [progress, setProgress] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -448,7 +449,7 @@ const WorkstreamInitiatives: React.FC<WorkstreamInitiativesProps> = ({ workstrea
   if (!progress?.initiatives?.items?.length) {
     return (
       <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-        No initiatives in this workstream
+        {t('pmo.workstream.empty', 'No initiatives in this workstream')}
       </div>
     );
   }

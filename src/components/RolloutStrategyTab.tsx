@@ -1,4 +1,5 @@
 import { Check, Layout, Lock, Plus, Trash2, Unlock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 
 import { FullInitiative, FullSession } from '../types';
@@ -14,6 +15,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
   onUpdate,
   isAdmin,
 }) => {
+  const { t } = useTranslation();
   // Local state for editing to avoid constant parent updates, sync on blur/action
   const [scope, setScope] = useState(
     data?.scope || {
@@ -60,7 +62,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
             Program Strategy & Scope
           </h2>
           <p className="text-slate-500 dark:text-slate-400">
-            Define the boundaries and strategic pillars of the transformation.
+            {t('rollout.strategy.lead', 'Define the boundaries and strategic pillars of the transformation.')}
           </p>
         </div>
         {isAdmin && (
@@ -207,7 +209,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
       <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
         <h3 className="font-bold text-lg mb-4 text-slate-300">Strategic Pillars</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          Core themes driving this transformation.
+          {t('rollout.strategy.themes', 'Core themes driving this transformation.')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Mock pillars for UI */}

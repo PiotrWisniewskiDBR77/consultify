@@ -2467,7 +2467,8 @@
     "sampleData": "SAMPLE DATA",
     "verifying": "Verifying…",
     "copyLink": "Copy link",
-    "publish": "Publish"
+    "publish": "Publish",
+    "loadingSlow": "This is taking longer than usual…"
   },
   "superadmin": {
     "confirm": {
@@ -13455,7 +13456,10 @@
         "deferred": "Deferred",
         "cancelled": "Cancelled"
       },
-      "untitled": "Untitled decision"
+      "untitled": "Untitled decision",
+      "deferFailed": "The reschedule request could not be created.",
+      "resolveFailed": "The resolution could not be saved.",
+      "saveFailed": "The decision could not be saved."
     },
     "heatmap": "Workload Heatmap",
     "hub": {
@@ -13634,7 +13638,10 @@
         "suggest": "AI — How to manage this?",
         "analyzing": "AI is analyzing your data…"
       },
-      "v8Degraded": "Manager cockpit requires V8"
+      "v8Degraded": "Manager cockpit requires V8",
+      "noMatchingItems": "No matching items in this focus area right now.",
+      "triageLead": "AI Triage — cluster and prioritize problems",
+      "actionPlanLead": "Action Plan — operational moves and follow-up"
     },
     "managementTable": {
       "lane": "Lane",
@@ -13670,8 +13677,20 @@
         "current": "Current",
         "target": "Target",
         "col": {
-          "name": "Name"
-        }
+          "name": "Name",
+          "progress": "Progress",
+          "trend": "Trend"
+        },
+        "derived": {
+          "active": "Active initiatives",
+          "avgProgress": "Average progress %",
+          "gateReady": "Gate ready",
+          "onTrackPct": "% of initiatives on track",
+          "overdue": "Overdue initiatives"
+        },
+        "derivedNote": "Derived from your initiatives — portfolio delivery health. Add a KPI to track your own measures.",
+        "editTitle": "Edit KPI",
+        "unit": "Unit"
       },
       "risks": {
         "title": "Risk Register",
@@ -13682,13 +13701,16 @@
           "title": "Title",
           "probability": "Probability",
           "impact": "Impact",
-          "status": "Status"
+          "status": "Status",
+          "mitigation": "Mitigation"
         },
         "status": {
           "closed": "Closed",
           "mitigated": "Mitigated",
           "open": "Open"
-        }
+        },
+        "derivedNote": "Derived from your initiatives — blocked, at-risk and overdue items. Add a risk to keep your own register.",
+        "editTitle": "Edit risk"
       },
       "change": {
         "title": "Change Log",
@@ -13698,14 +13720,16 @@
         "col": {
           "title": "Title",
           "type": "Type",
-          "status": "Status"
+          "status": "Status",
+          "impact": "Impact"
         },
         "status": {
           "approved": "Approved",
           "implemented": "Implemented",
           "proposed": "Proposed",
           "rejected": "Rejected"
-        }
+        },
+        "editTitle": "Edit change"
       },
       "closure": {
         "title": "Closure Checklist",
@@ -13714,22 +13738,75 @@
         "empty": "No closure items yet.",
         "col": {
           "status": "Status",
-          "done": "Done"
+          "done": "Done",
+          "category": "Category",
+          "title": "Title"
         },
         "status": {
-          "done": "Done"
+          "done": "Done",
+          "open": "Open"
         },
         "resultsHandoff": {
           "title": "Results hand-off — preview only",
           "body": "Closure outcomes (value delivered, ROI, KPI deltas) are not yet synced to the Results module. This hand-off is a preview for this release; automatic sync to Results will be enabled in an upcoming phase."
         },
-        "derivedNote": "Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist."
+        "derivedNote": "Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist.",
+        "editTitle": "Edit closure item"
       },
       "addClosureItem": "Add Item",
       "addKpi": "Add KPI",
       "addRisk": "Add Risk",
       "deleteConfirm": {
-        "body": "\"{{title}}\" will be permanently removed. This cannot be undone."
+        "body": "\"{{title}}\" will be permanently removed. This cannot be undone.",
+        "title": "Delete this item?"
+      },
+      "baseline": {
+        "empty": "No baselines saved — save the first one.",
+        "loadFailed": "Could not load the baselines"
+      },
+      "benefits": {
+        "add": "Add benefit",
+        "empty": "No benefits registered — add the first one (handoff to Results/M15).",
+        "loadFailed": "Could not load the benefits register",
+        "title": "Benefits register (handoff M14→M15)"
+      },
+      "cutover": {
+        "create": "Create cutover runbook",
+        "emptySteps": "No steps — add the first one.",
+        "loadFailed": "Could not load the cutover runbook",
+        "pickInitiative": "Pick an initiative to see the cutover runbook.",
+        "status": {
+          "planned": "planned",
+          "in_progress": "in progress",
+          "completed": "completed",
+          "aborted": "aborted"
+        },
+        "stepStatus": {
+          "pending": "pending",
+          "in_progress": "in progress",
+          "done": "done",
+          "skipped": "skipped",
+          "failed": "failed"
+        },
+        "stepCount": "{{count}} steps"
+      },
+      "permissionHint": "Check the MANAGE_ROLLOUT permission.",
+      "permissionHintShort": "Check your permissions.",
+      "stages": {
+        "count": "{{count}}/5 waves",
+        "loadFailed": "Could not load the rollout waves",
+        "title": "Rollout waves",
+        "status": {
+          "not_started": "not started",
+          "active": "active",
+          "gated": "gated",
+          "done": "done"
+        },
+        "create": "create"
+      },
+      "trend": {
+        "none": "No measurements — the trend appears after two",
+        "one": "One measurement — the trend starts at the second"
       }
     },
     "reporting": {
@@ -13896,7 +13973,8 @@
             "decisions": "Linked decisions",
             "interventions": "Interventions",
             "notVerified": "NOT_VERIFIED"
-          }
+          },
+          "scenariosPlaceholder": "INFERENCE · base: UNKNOWN · optimistic: UNKNOWN · pessimistic: UNKNOWN · NO_API_FORECAST"
         },
         "generator": {
           "tab": "Create report",
@@ -13917,7 +13995,7 @@
           "scope": "Authorized scope reference",
           "validation": "Validation",
           "missingFields": "missing",
-          "contextOnlyWarning": "Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (BRAK_API).",
+          "contextOnlyWarning": "Reporting week, forecast horizon and section selection are preflight context only because runtime-v1 has no contract fields for them (NO_API).",
           "draftIncomplete": "Draft state after creation: INCOMPLETE (0 sources attached)",
           "sourcesWarning": "This screen cannot attach source evidence; the governed runtime workflow does that separately. An empty source set cannot validate or publish.",
           "createDraft": "Create governed draft",
@@ -14161,7 +14239,8 @@
         "signals": "Signals"
       },
       "summary": {
-        "decisions": "Decisions"
+        "decisions": "Decisions",
+        "risks": "Risks"
       }
     },
     "scope": {
@@ -14227,7 +14306,10 @@
       "filters": {
         "hide": "Hide filters",
         "show": "Show filters"
-      }
+      },
+      "aheadWeeks": "{{count}} weeks ahead of plan",
+      "baseline": "Baseline plan",
+      "slipWeeks": "{{count}} weeks of slip"
     },
     "warnings": {
       "title": "Top Warnings",
@@ -14362,7 +14444,8 @@
       "noCommonStatus": "No common status action for the selection"
     },
     "controlTower": {
-      "failed": "Control tower signals unavailable"
+      "failed": "Control tower signals unavailable",
+      "failedDesc": "Schedule warnings and capacity signals could not be loaded. The view works without the risk and delay overlays."
     },
     "executiveHealth": {
       "failed": "Executive health signals unavailable",
@@ -14563,7 +14646,10 @@
       "actions": {
         "addSignal": "Add signal",
         "prepareIntervention": "Prepare intervention"
-      }
+      },
+      "loadFailed": "Could not load the control register.",
+      "loading": "Loading the decisions and risks register…",
+      "title": "Decisions and risks"
     },
     "work": {
       "columns": {
@@ -14588,7 +14674,21 @@
         "blocked": "Blocked",
         "on_hold": "On hold",
         "done": "Done",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "draft": "Draft",
+        "pending": "Awaiting decision",
+        "open": "Open",
+        "completed": "Completed",
+        "canceled": "Cancelled",
+        "approved": "Approved",
+        "conditionally_approved": "Conditionally approved",
+        "rejected": "Rejected",
+        "returned": "Returned",
+        "ready": "Ready",
+        "at_risk": "At risk",
+        "achieved": "Achieved",
+        "unknown": "No data",
+        "in_review": "In review"
       },
       "edit": {
         "hint": "Double-click to edit",
@@ -14617,6 +14717,66 @@
       },
       "menu": {
         "openTask": "Open task"
+      },
+      "archiveNote": "Work items follow the Execution Case retention policy.",
+      "baselineVersion": "accepted baseline",
+      "caseVersion": "Delivery",
+      "closeWorkspace": "Close workspace",
+      "createDecision": "Create decision",
+      "days": "days",
+      "decisionEditor": "Decision editor",
+      "deleteNote": "A canonical work item cannot be deleted.",
+      "documentLead": "Canonical task or decision document with its controls, evidence and dependencies.",
+      "editorLead": "Fill in the business data; technical identifiers are assigned by the system.",
+      "emptyRegister": "No canonical tasks or decisions in the available deliveries.",
+      "field": {
+        "assignee": "Assignee",
+        "authority": "Decision maker",
+        "blockers": "Blocking decisions",
+        "case": "Delivery",
+        "conditions": "Decision conditions",
+        "dependencies": "Dependencies",
+        "description": "Description and expected outcome",
+        "due": "Due date",
+        "evidence": "Evidence / attachments",
+        "evidenceShort": "Evidence",
+        "initiative": "Initiative",
+        "milestones": "Linked milestones",
+        "owner": "Owner",
+        "rationale": "Rationale",
+        "sla": "Response deadline (SLA)",
+        "title": "Title"
+      },
+      "forecast": "forecast",
+      "item": "Work item",
+      "linkedCase": "Linked delivery",
+      "linkedInitiative": "Linked initiative",
+      "loadFailed": "Could not load the canonical work register.",
+      "loading": "Loading the canonical work register",
+      "markDone": "Mark as done",
+      "milestones": "Milestones",
+      "noDue": "No due date",
+      "noEvidence": "No evidence required",
+      "noInitiative": "Without initiative",
+      "noMilestones": "No canonical milestones.",
+      "noRelations": "No relations",
+      "openDecision": "Open decision",
+      "openTask": "Open task",
+      "preview": {
+        "details": "Work details",
+        "nextStep": "Check completeness and the next step.",
+        "noDescription": "No additional description.",
+        "open": "Open work item"
+      },
+      "readiness": "readiness",
+      "requestDecision": "Send for decision",
+      "resolveDecision": "Resolve decision",
+      "taskEditor": "Task editor",
+      "unassigned": "Unassigned",
+      "variance": "Variance",
+      "kind": {
+        "task": "Task",
+        "decision": "Decision"
       }
     },
     "resources": {
@@ -14646,10 +14806,98 @@
         "saveAvailability": "Save"
       },
       "summary": {
-        "utilizationTooltip": "Average of {{count}} weeks"
+        "utilizationTooltip": "Average of {{count}} weeks",
+        "backlog": " · backlog {{hours}} across {{people}} people",
+        "head": "As of {{date}} · people {{people}} · demand {{demand}} · supply {{supply}} · ",
+        "overloaded": " · overloaded weeks {{count}}",
+        "utilization": "utilisation {{value}}"
       },
       "errors": {
         "saveAvailability": "Could not save availability. Try again."
+      },
+      "action": {
+        "accept": "Accept allocation",
+        "confirm": "Confirm",
+        "confirmConditional": "Confirm conditionally",
+        "decline": "Decline allocation",
+        "request": "Send for acceptance",
+        "rmDecline": "Decline"
+      },
+      "advancedData": "Advanced data",
+      "allCases": "All deliveries",
+      "allocation": "Allocation",
+      "archiveNote": "Utilisation is computed from tasks — it cannot be archived.",
+      "availabilityDialog": "Person availability",
+      "availabilityLead": "Weekly hours and availability in percent. Supply = hours × availability.",
+      "availabilityPercent": "Availability %",
+      "backlog": "Backlog",
+      "backlogClose": "Mark as closed",
+      "backlogEmpty": "No overdue tasks — nothing to settle.",
+      "backlogMove": "Move to week",
+      "backlogPanel": "Person backlog",
+      "backlogPanelLead": "Past due, still open: {{hours}} across {{count}} tasks. This number is NOT part of any week’s demand — settle it here.",
+      "backlogScope": "Reduce scope",
+      "backlogTaskMeta": "Due {{due}} · {{days}} days overdue · {{hours}} remaining",
+      "backlogTasks": "Overdue tasks",
+      "canonicalAllocations": "Canonical allocations",
+      "caseUnreachable": "This delivery is not responding: {{name}}",
+      "caseUnreachableHint": "We stopped waiting after 12 seconds. The other deliveries are working — go back to all of them or try again.",
+      "dataState": "Data",
+      "deleteNote": "A utilisation row is computed, not stored.",
+      "demand": "Demand",
+      "effortHours": "Effort (h)",
+      "emptyPlan": "Nobody has work in the next 8 weeks — there is nothing to load.",
+      "gap": "Gap",
+      "gapHint": "Short by {{hours}} — move tasks or add a person.",
+      "gapOk": "Utilisation fits within the available hours.",
+      "loadFailed": "Could not load the resource register.",
+      "loading": "Computing resource utilisation",
+      "move": "Move",
+      "newDue": "New due date",
+      "noAllocations": "No canonical allocations for this person",
+      "partialFetch": "Resources could not be fetched from {{count}} deliveries — the rest are shown below.",
+      "period": "period",
+      "planFailed": "Utilisation (demand vs supply) could not be computed.",
+      "proposal": "Allocation proposal",
+      "proposalLead": "Simulate first, then confirm the allocation.",
+      "saveFailed": "The change was not saved. Try again.",
+      "saveProposal": "Save proposal",
+      "saveScope": "Save scope",
+      "setAvailability": "Set availability",
+      "settleBacklog": "Settle backlog",
+      "simulate": "Simulate",
+      "supply": "Supply",
+      "supplyDefault": "Default supply (40 h)",
+      "supplyProfile": "Supply from person profile",
+      "tasksThisWeek": "Tasks this week",
+      "unassigned": "Unassigned resource",
+      "utilizationPill": "Utilisation {{value}} %",
+      "weekDemandNoBacklog": "Weekly demand is the work planned for this week. This person has no backlog.",
+      "weekDemandWithBacklog": "Weekly demand excludes the backlog. Backlog {{hours}} — settle it separately.",
+      "weekFrom": "Week from {{date}}",
+      "weekFromShort": "from {{date}}",
+      "weekUtilization": "Utilisation this week",
+      "weeklyHours": "Hours per week",
+      "enum": {
+        "unknown": "Unknown",
+        "known": "Known",
+        "partial": "Partial",
+        "none": "None",
+        "current": "Current",
+        "stale": "Stale",
+        "not_assessed": "Not assessed",
+        "capacity_conflict": "Capacity conflict",
+        "skill_conflict": "Skill conflict",
+        "calendar_conflict": "Calendar conflict"
+      },
+      "allocationStatus": {
+        "proposed": "Proposed",
+        "requested": "Awaiting acceptance",
+        "assignee_accepted": "Accepted by assignee",
+        "confirmed": "Confirmed",
+        "conditionally_confirmed": "Conditionally confirmed",
+        "declined": "Declined",
+        "ended": "Ended"
       }
     },
     "governance": {
@@ -14746,6 +14994,13 @@
       },
       "errors": {
         "saveFailed": "The RAID item could not be saved."
+      },
+      "type": {
+        "risk": "Risk",
+        "issue": "Issue",
+        "dependency": "Dependency",
+        "assumption": "Assumption",
+        "action": "Action"
       }
     },
     "signals": {
@@ -14796,7 +15051,153 @@
       },
       "errors": {
         "interventionFailed": "The re-baseline request could not be created."
+      },
+      "field": {
+        "occurredAt": "Occurred at",
+        "ruleId": "Detection rule",
+        "severity": "Severity",
+        "snapshotRef": "Source evidence / snapshot",
+        "sourceId": "Signal source",
+        "sourceVersion": "Source version",
+        "sourceVersionKey": "Source version kind"
+      },
+      "kindLabel": "Signal kind",
+      "new": "New signal",
+      "noSources": "No versioned sources",
+      "occurrences": "Occurrences",
+      "openPrep": "Open preparation",
+      "rule": {
+        "capacity_conflict": "Capacity conflict",
+        "stale_milestone": "Stale milestone"
+      },
+      "save": "Save signal",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning"
+      },
+      "title": "Management signals",
+      "singleTitle": "Management signal",
+      "project": "Project",
+      "addToIntervention": "Add to the prepared intervention"
+    },
+    "apply": {
+      "field": {
+        "aggregateId": "Target object",
+        "aggregateType": "Object type",
+        "expectedEffect": "Expected effect",
+        "measurementRef": "Measurement source",
+        "measurementVersion": "Measurement version",
+        "receiptId": "Command receipt",
+        "state": "Expected state",
+        "verifyBy": "Verification deadline",
+        "version": "Version"
       }
+    },
+    "intervention": {
+      "applyCommand": "Applying the approved command",
+      "applyConfirmed": "Apply the confirmed command",
+      "approveOption": "Approve option",
+      "approver": "Approver",
+      "composer": "Intervention draft",
+      "effectiveClosed": "Effective · closed",
+      "emptyBody": "Add a versioned signal to prepare the first intervention case.",
+      "emptyTitle": "No intervention cases",
+      "escalated": "escalated",
+      "field": {
+        "actionImpacts": "Action consequences",
+        "actionLabel": "Action name",
+        "authority": "Independent approver",
+        "blastRadius": "Impact on linked objects",
+        "confidence": "Confidence",
+        "counterEvidence": "Counter-evidence",
+        "doNothing": "Do-nothing option",
+        "doNothingImpacts": "Do-nothing consequences",
+        "evidence": "Evidence",
+        "hypotheses": "Hypotheses",
+        "id": "Intervention identifier",
+        "optionId": "Option identifier",
+        "owner": "Owner",
+        "reversibility": "Reversibility",
+        "sla": "Decision deadline",
+        "unknowns": "Unknowns"
+      },
+      "independentDecision": "Independent decision",
+      "noSignals": "No linked signals",
+      "notApplied": "The change was not applied.",
+      "open": "Open intervention",
+      "requestDecision": "Request a decision",
+      "saveOrLink": "Save or link the intervention case",
+      "selectedSignals": "Selected signals",
+      "targetReceipt": "Target command receipt",
+      "useJson": "Use the JSON contract instead of the form",
+      "verify": "Verify intervention",
+      "verifyEffect": "Effect verification",
+      "status": {
+        "draft": "Draft",
+        "pending_decision": "Awaiting decision",
+        "approved": "Approved",
+        "applied": "Applied",
+        "escalated": "Escalated",
+        "closed": "Closed"
+      },
+      "outcome": {
+        "effective": "Effective",
+        "partial": "Partially effective",
+        "ineffective": "Ineffective",
+        "not_verified": "Not verified"
+      },
+      "optionKind": {
+        "do_nothing": "No change",
+        "action": "Action"
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence",
+        "unknown": "Confidence unknown"
+      },
+      "reversibility": {
+        "reversible": "Reversible",
+        "partially_reversible": "Partially reversible",
+        "irreversible": "Irreversible",
+        "unknown": "Reversibility unknown"
+      },
+      "draftJson": "Intervention draft JSON"
+    },
+    "plan": {
+      "closeChange": "Close plan change",
+      "createChange": "Create governed plan change",
+      "governedChange": "Governed plan change",
+      "governedChangeLead": "Resequencing goes through a governed plan change and independent approval.",
+      "governedResequence": "Governed resequencing",
+      "governedResequenceLead": "The selected resequencing option creates one governed change to the baseline plan. Review and publication happen in My Work, and applying it requires an exact command confirmation.",
+      "hashAfter": "after",
+      "hashBefore": "Plan hash before",
+      "prepareChange": "Prepare plan change",
+      "selectedComparison": "Selected capacity comparison",
+      "pickResequenceOption": "Pick the exact resequencing option"
+    },
+    "realization": {
+      "amount": "Realised value",
+      "amountPlaceholder": "Realised value",
+      "costDelta": "Δ cost",
+      "helper": "A manually recorded value goes to Results (ROI). It is never derived from task completion.",
+      "invalidAmount": "Enter a valid amount",
+      "notes": "Note",
+      "notesPlaceholder": "Note (optional)",
+      "period": "Period",
+      "record": "Record realisation",
+      "recordFailed": "The realisation could not be saved",
+      "recorded": "Realisation recorded",
+      "revenueDelta": "Δ revenue",
+      "save": "Save",
+      "saving": "Saving…",
+      "savings": "Savings",
+      "title": "Record realised value",
+      "valueType": "Value type"
+    },
+    "workload": {
+      "noAllocations": "No allocations this period"
     }
   },
   "benefits": {
@@ -30558,7 +30959,42 @@
     },
     "memberTypeChair": "Chair",
     "memberTypeBoardMember": "Board member",
-    "memberTypeObserver": "Observer"
+    "memberTypeObserver": "Observer",
+    "charter": {
+      "initiativeName": "Initiative Name",
+      "problemPlaceholder": "What problem does this initiative solve?",
+      "hypothesisPlaceholder": "How will this initiative solve the problem?",
+      "deliverablesHint": "What tangible outputs will this initiative produce?",
+      "successHint": "How will success be measured?",
+      "inScopeHint": "What is included in this initiative?",
+      "outScopeHint": "What is explicitly excluded?",
+      "risksHint": "What could go wrong?",
+      "addRisk": "Add Risk",
+      "selectBusinessOwner": "Select Business Owner",
+      "selectExecutionOwner": "Select Execution Owner"
+    },
+    "audit": {
+      "subtitle": "Complete history of all PMO actions with standards mapping",
+      "today": "Today",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "allTime": "All time",
+      "loading": "Loading audit trail…"
+    },
+    "dashboard": {
+      "newInitiative": "New Initiative"
+    },
+    "health": {
+      "explain": "Explain This",
+      "updated": "Updated",
+      "pending": "Pending"
+    },
+    "statusBar": {
+      "loading": "Loading PMO context…"
+    },
+    "workstream": {
+      "empty": "No initiatives in this workstream"
+    }
   },
   "branch": {
     "delete": "Delete",
@@ -32695,11 +33131,38 @@
     }
   },
   "task": {
-    "status": "Status"
+    "status": "Status",
+    "lastUpdated": "Last updated",
+    "strategy": {
+      "outcomeHint": "What specifically will change in the business once this task is done?",
+      "successPlaceholder": "If successful, we will…"
+    },
+    "weight": {
+      "title": "Task Weight (Progress Impact)",
+      "hint": "Higher weight = more contribution to initiative progress when completed"
+    },
+    "evidence": {
+      "hint": "Select required evidence types to mark this task as \"Verified Done\".",
+      "confirm": "I confirm all required evidence has been collected and criteria met."
+    },
+    "dependencies": {
+      "comingSoon": "This module will allow visual linking between tasks (Blocks / Blocked By). Coming in Phase 2."
+    }
   },
   "team": {
     "velocity": {
       "target": "target"
+    },
+    "perspectives": {
+      "emptyAxis": "No perspectives for this axis.",
+      "emptyAxisHint": "Invite team members so they can add their point of view.",
+      "emptyBody": "Invite team members and ask them to rate the selected decision axes. Different points of view make the analysis richer.",
+      "emptyTitle": "No perspectives to compare yet",
+      "summary": "{{count}} perspectives across {{axes}} axes",
+      "tensionHint": "This may point to an important topic for a team discussion.",
+      "tensionTitle": "Significant differences detected across perspectives",
+      "title": "Team perspectives",
+      "withTension": "{{count}} with tension"
     }
   },
   "formBuilder": {
@@ -44028,7 +44491,13 @@
     },
     "status": {
       "draft": "Draft",
-      "published": "Published"
+      "published": "Published",
+      "validated": "Validated",
+      "frozen": "Frozen",
+      "approved": "Approved",
+      "returned": "Returned",
+      "failed": "Failed",
+      "superseded": "Superseded"
     },
     "state": {
       "active": "Active"
@@ -44054,14 +44523,36 @@
       "downloadDocx": "Download DOCX",
       "downloadPdf": "Download PDF",
       "publish": "Publish",
-      "newDefinition": "New definition"
+      "newDefinition": "New definition",
+      "approve": "Approve independently",
+      "createDefinition": "Create definition",
+      "createFollowUp": "Create and link a follow-up task",
+      "createOrRefresh": "Create or refresh report",
+      "createVersion": "Create next version",
+      "freeze": "Freeze snapshot",
+      "publishDefinition": "Publish definition",
+      "refreshDraft": "Refresh as a new draft",
+      "return": "Return report",
+      "saveDraft": "Save draft",
+      "validateDefinition": "Validate definition",
+      "validateSources": "Validate sources"
     },
     "field": {
       "asOf": "Data as of",
       "period": "Period",
       "status": "Status",
       "author": "Author",
-      "rag": "RAG rating"
+      "rag": "RAG rating",
+      "approver": "Approver",
+      "hash": "Snapshot hash",
+      "owner": "Owner",
+      "parent": "Parent",
+      "periodEnd": "Period end",
+      "periodStart": "Period start",
+      "runId": "Report identifier",
+      "scope": "Project scope",
+      "scopeShort": "Scope",
+      "sources": "Sources"
     },
     "col": {
       "task": "Task",
@@ -44382,7 +44873,226 @@
     "tab": {
       "runs": "Reports",
       "definitions": "Definitions"
-    }
+    },
+    "advancedContract": "Advanced definition contract",
+    "advancedJson": "Advanced JSON contract",
+    "allowedProjects": "Allowed projects (one identifier per line)",
+    "approvalRationale": "Independent approval rationale",
+    "audienceLines": "Audience — one group per line",
+    "columns": {
+      "asOf": "Data as of",
+      "audience": "Audience",
+      "author": "Author",
+      "cadence": "Cadence",
+      "definition": "Report definition",
+      "level": "Level",
+      "period": "Period",
+      "status": "Status",
+      "title": "Report"
+    },
+    "contract": "Report contract",
+    "contractSources": "Sources, formulas and access contract",
+    "definitionEditor": "Report definition editor",
+    "definitionField": {
+      "approver": "Independent approver",
+      "audience": "Audience (one per line)",
+      "cadence": "Cadence",
+      "owner": "Definition owner",
+      "purpose": "Report purpose"
+    },
+    "definitionReady": "Ready to use",
+    "definitionUnfinished": "Finish validation and approval",
+    "distribution": "Distribution",
+    "distributionField": {
+      "distributedAt": "Distribution date",
+      "receiptId": "Distribution identifier"
+    },
+    "errors": {
+      "generate": "The snapshot could not be generated.",
+      "openDocument": "The report document could not be opened."
+    },
+    "fallbackName": "Report",
+    "finishPreparation": "Finish preparing the report",
+    "followUp": {
+      "assignee": "Assignee",
+      "case": "Delivery",
+      "description": "Description",
+      "due": "Due date",
+      "evidence": "Evidence",
+      "owner": "Owner",
+      "sla": "SLA",
+      "taskId": "Task identifier",
+      "title": "Title"
+    },
+    "followUpTask": "Follow-up task",
+    "frozenPackage": "The frozen package stays in the canonical report and is reproducible.",
+    "includeGeneralBacklog": "Explicitly include the general backlog",
+    "loadFailed": "Could not load the canonical report register.",
+    "loading": "Loading reports…",
+    "noDefinitionSources": "No definition sources",
+    "noSources": "No sources",
+    "notFrozen": "Not frozen yet",
+    "openDefinition": "Open definition",
+    "periodAsOf": "{{period}} · data as of {{asOf}}",
+    "pickCase": "Pick a delivery",
+    "pickPublishedDefinition": "Pick a published definition",
+    "publishedDefinition": "Published report definition",
+    "receipt": "receipt",
+    "reportScope": "Report scope",
+    "reviewOrRefresh": "Review or refresh the report",
+    "runEditor": "Report generator",
+    "scopeLines": "Scope — one reference per line",
+    "scopeRejected": "The scope is empty, stale or not allowed. The definition was not changed.",
+    "scopeRequired": "An explicit project scope is required. Defaulting to the whole organisation is not allowed.",
+    "showContract": "Show the sources, formulas and access contract (advanced mode)",
+    "sourceType": {
+      "other": "Source",
+      "execution_case": "Delivery",
+      "execution_task": "Task",
+      "execution_decision": "Decision",
+      "execution_milestone": "Milestone",
+      "operational_allocation": "Resource allocation",
+      "intervention_case": "Intervention",
+      "finance": "Finance",
+      "results": "Results / KPI"
+    },
+    "technicalName": "Technical name",
+    "writeFailed": "The report change was not saved.",
+    "doc": {
+      "thisWeekAtAGlance": "This week at a glance",
+      "initiativesRequiringImmediateOperationalReaction": "Initiatives requiring immediate operational reaction.",
+      "next7DaysFocus": "Next 7 days focus",
+      "tasksAndMilestonesThatCanSilentlySlipThis": "Tasks and milestones that can silently slip this week.",
+      "decisionQueue": "Decision queue",
+      "decisionsBlockingTasksOrShiftingMilestones": "Decisions blocking tasks or shifting milestones.",
+      "executionHygieneGaps": "Execution hygiene gaps",
+      "dataWeaknessesThatDegradeOperationalControl": "Data weaknesses that degrade operational control.",
+      "portfolioControlList": "Portfolio control list",
+      "initiativesForPmoReviewWithRealOperationalExceptions": "Initiatives for PMO review with real operational exceptions.",
+      "milestoneScheduleExceptions": "Milestone & schedule exceptions",
+      "whatIsActuallyDriftingOnTheTimeline": "What is actually drifting on the timeline.",
+      "budgetStaffingExceptions": "Budget & staffing exceptions",
+      "exceptionsAlreadyTouchingBudgetOrCapacity": "Exceptions already touching budget or capacity.",
+      "governanceExceptions": "Governance exceptions",
+      "itemsThatShouldEnterPmoReviewOrSteering": "Items that should enter PMO review or steering.",
+      "programHealthRegister": "Program health register",
+      "oneLinePerInitiativeWhatErodesDeliveryConfidence": "One line per initiative: what erodes delivery confidence.",
+      "riskDelayDrivers": "Risk & delay drivers",
+      "strongestSignalsDegradingProgramHealth": "Strongest signals degrading program health.",
+      "whatIsTurningRed": "What is turning red",
+      "initiativesThatNeedRescueNowNotMonitoring": "Initiatives that need rescue now, not monitoring.",
+      "steeringImplications": "Steering implications",
+      "decisionsTheSteeringCommitteeShouldTake": "Decisions the steering committee should take.",
+      "blockedInitiativesRecoveryBoard": "Blocked initiatives recovery board",
+      "whatIsStuckWhyAndWhatWorkSits": "What is stuck, why, and what work sits behind it.",
+      "tasksStalledBehindBlockers": "Tasks stalled behind blockers",
+      "tasksThatCannotMoveUntilTheInitiativeIs": "Tasks that cannot move until the initiative is unblocked.",
+      "escalationPath": "Escalation path",
+      "decisionsAndAlertsThatShouldBeEscalated": "Decisions and alerts that should be escalated.",
+      "recoveryOptions": "Recovery options",
+      "actionsToUnblockDelivery": "Actions to unblock delivery.",
+      "slippageRegister": "Slippage register",
+      "initiativesWithRealDriftAgainstTheCommittedPlan": "Initiatives with real drift against the committed plan.",
+      "baselineVsForecastGaps": "Baseline vs forecast gaps",
+      "missingDatesOrPlanWeaknessesThatCorruptForecast": "Missing dates or plan weaknesses that corrupt forecast.",
+      "nextMilestonesAtRisk": "Next milestones at risk",
+      "milestonesToTrackDayByDay": "Milestones to track day by day.",
+      "recoveryTimeline": "Recovery timeline",
+      "howToRestoreDeliveryPredictability": "How to restore delivery predictability.",
+      "governedCapacityAlerts": "Governed capacity alerts",
+      "peopleAlreadyOverloadedPerControlTower": "People already overloaded per control tower.",
+      "taskLoadByAssignee": "Task load by assignee",
+      "whereTheWorkActuallySits": "Where the work actually sits.",
+      "4WeekHorizon": "4-week horizon",
+      "isCapacityEnoughForTheUpcomingWeeks": "Is capacity enough for the upcoming weeks.",
+      "tasksToReassign": "Tasks to reassign",
+      "highestRiskTasksSittingOnOverloadedPeople": "Highest-risk tasks sitting on overloaded people.",
+      "overspendRegister": "Overspend register",
+      "initiativesShowingDangerousVariance": "Initiatives showing dangerous variance.",
+      "executionImpactOfSpendVariance": "Execution impact of spend variance",
+      "isVarianceAlreadyTranslatingIntoDeliveryRisk": "Is variance already translating into delivery risk.",
+      "workItemsInsideOverspendingInitiatives": "Work items inside overspending initiatives",
+      "whatToInspectBeforeAFinanceDecision": "What to inspect before a finance decision.",
+      "financeActions": "Finance actions",
+      "whatToDoBeforeVarianceBecomesASponsor": "What to do before variance becomes a sponsor-level problem.",
+      "pendingDecisionsQueue": "Pending decisions queue",
+      "fullApprovalsQueueStillNotResolved": "Full approvals queue still not resolved.",
+      "agingBuckets": "Aging buckets",
+      "howFastDecisionDebtIsGrowing": "How fast decision debt is growing.",
+      "initiativesWaitingOnDecisions": "Initiatives waiting on decisions",
+      "initiativesThatCannotMoveWithoutADecision": "Initiatives that cannot move without a decision.",
+      "escalationCandidates": "Escalation candidates",
+      "whatToEscalateRatherThanContinueMonitoring": "What to escalate rather than continue monitoring.",
+      "dependencyConflictRegister": "Dependency conflict register",
+      "explicitDependencyConflictsFromControlTower": "Explicit dependency conflicts from control tower.",
+      "criticalChains": "Critical chains",
+      "initiativesWithTheHighestCombinationOfDecisionsTasks": "Initiatives with the highest combination of decisions, tasks and warnings.",
+      "brokenLinks": "Broken links",
+      "whereOneInitiativeSProblemIsAlreadySpreading": "Where one initiative's problem is already spreading.",
+      "upstreamDownstreamImpact": "Upstream / downstream impact",
+      "whatWillBeHitNextIfNothingIs": "What will be hit next if nothing is done.",
+      "confidenceRegister": "Confidence register",
+      "theMostPracticalViewWillWeDeliverAnd": "The most practical view: will we deliver and why not.",
+      "driversOfErosion": "Drivers of erosion",
+      "whatIsDestroyingConfidenceInPractice": "What is destroying confidence in practice.",
+      "scenarioOutlook": "Scenario outlook",
+      "whatHappensIfCurrentExceptionsGoWithoutReaction": "What happens if current exceptions go without reaction.",
+      "sponsorSummary": "Sponsor summary",
+      "whatTheSponsorShouldUnderstandIn60Seconds": "What the sponsor should understand in 60 seconds.",
+      "initiativesNeedingSponsorAttention": "Initiatives needing sponsor attention",
+      "whereTheSponsorCanActuallyHelpUnblockDelivery": "Where the sponsor can actually help unblock delivery.",
+      "topAchievements": "Top achievements",
+      "proofOfProgressWorthShowingTheSponsor": "Proof of progress worth showing the sponsor.",
+      "sponsorAsks": "Sponsor asks",
+      "decisionsAndSupportNeededFromTheSponsor": "Decisions and support needed from the sponsor.",
+      "reportTemplate": "Report Template",
+      "thisReportTypeIsNotConfiguredYet": "This report type is not configured yet.",
+      "empty": {
+        "noScheduleExceptions": "No schedule exceptions.",
+        "noBudgetOrStaffingExceptions": "No budget or staffing exceptions.",
+        "noRiskOrDelaySignals": "No risk or delay signals.",
+        "noInitiativesInRedAmberZone": "No initiatives in red/amber zone.",
+        "noBlockedInitiatives": "No blocked initiatives.",
+        "noStalledTasks": "No stalled tasks.",
+        "noEscalationItems": "No escalation items.",
+        "noSlippageSignals": "No slippage signals.",
+        "noUpcomingMilestones": "No upcoming milestones.",
+        "noGovernedCapacityAlerts": "No governed capacity alerts.",
+        "noCapacityTimeline": "No capacity timeline.",
+        "noTasksNeedReassignment": "No tasks need reassignment.",
+        "noOverspendSignals": "No overspend signals.",
+        "noExecutionImpactVisible": "No execution impact visible.",
+        "noWorkItemsLinkedToOverspend": "No work items linked to overspend.",
+        "noPendingDecisions": "No pending decisions.",
+        "noInitiativesWaitingOnDecisions": "No initiatives waiting on decisions.",
+        "noExplicitDependencyConflicts": "No explicit dependency conflicts.",
+        "noConfidenceErosionDrivers": "No confidence erosion drivers.",
+        "noScenarioNotesGenerated": "No scenario notes generated.",
+        "noSponsorLevelIssues": "No sponsor-level issues.",
+        "noNotableAchievementsYet": "No notable achievements yet."
+      },
+      "actions": "Actions",
+      "aiUnavailable": "AI analysis is not available for a frozen report snapshot.",
+      "createdAt": "Created",
+      "downloadDocx": "Download DOCX",
+      "downloadFailed": "The file could not be downloaded.",
+      "downloadPdf": "Download PDF",
+      "history": "History",
+      "noComments": "A report snapshot has no comment thread.",
+      "noRelations": "The snapshot declares no separate relations.",
+      "noSources": "No sources or assumptions recorded.",
+      "panelAria": "Execution report details",
+      "properties": "Properties",
+      "property": "Property",
+      "publish": "Publish",
+      "publishFailed": "The report could not be published.",
+      "publishInActions": "Publishing is available in the Actions section.",
+      "publishedAt": "published",
+      "readOnlyReason": "the report is a frozen snapshot; AI cannot add to its content",
+      "sourcesAssumptions": "Sources and assumptions",
+      "value": "Value"
+    },
+    "runDraftJson": "Report run draft JSON"
   },
   "enums": {
     "unknown": "Unknown",
@@ -44465,5 +45175,26 @@
       "PREPARE_CLOSURE": "Prepare the closure",
       "REVIEW_HISTORY": "Review the history"
     }
+  },
+  "projectIntelligence": {
+    "started": "Started",
+    "useSelector": "Use the project selector in the header",
+    "pmoAlignment": "All captured insights are aligned with ISO 21500, PMBOK 7 and PRINCE2 standards for full PMO compliance and auditability.",
+    "knowledgeEmpty": "Start a conversation with the AI to capture project knowledge. Insights will appear here as they are detected.",
+    "sessionsEmpty": "Your AI interview sessions will appear here. Start a conversation to create your first session."
+  },
+  "rollout": {
+    "strategy": {
+      "lead": "Define the boundaries and strategic pillars of the transformation.",
+      "themes": "Core themes driving this transformation."
+    },
+    "teams": {
+      "lead": "Define the organizational structure, roles, and workstreams."
+    }
+  },
+  "fullPilot": {
+    "inDevelopment": "This feature is in development.",
+    "scopeInPlaceholder": "List items included in the pilot…",
+    "noGoBody": "Pilot failed. Re-evaluate strategy."
   }
 }

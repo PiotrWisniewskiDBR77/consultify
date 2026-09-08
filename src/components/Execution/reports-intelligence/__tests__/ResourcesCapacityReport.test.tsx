@@ -36,7 +36,7 @@ describe('Resources Capacity report', () => {
   // F11: allocations here carry no per-task field at all, so this cannot
   // prove "even without a task" coverage — it only proves a single allocation
   // record renders correctly. Full population coverage for people with zero
-  // allocations in the base week remains BRAK_API (see EXE-RESOURCES-REPORT-01
+  // allocations in the base week remains NO_API (see EXE-RESOURCES-REPORT-01
   // in the Day 11 report) and is not something this data model can assert.
   it('renders a person and role sourced from a single allocation record', async () => {
     api.listExecutionCases.mockResolvedValue({

@@ -81,7 +81,7 @@ const SEVERITY_BADGE_CLASS: Record<string, string> = {
 
 // Odbiór grafiki 07-realizacja (2026-08-30, kontynuacja "Polish pass" powyżej):
 // epistemiczne etykiety (FACT/RECOMMENDATION/CALCULATED), severity badge
-// (RED/AMBER/NEUTRAL) i kody przyczyn (BRAK_API_*) renderowały się jako
+// (RED/AMBER/NEUTRAL) i kody przyczyn (NO_API_*) renderowały się jako
 // surowe stałe wprost w JSX — nigdy nie przeszły przez t(), mimo że reszta
 // sekcji już jest po polsku. Klucze fallback poniżej idą tym samym wzorcem
 // t(key, fallback) co reszta pliku.
@@ -92,11 +92,11 @@ const SEVERITY_LABEL_KEY: Record<string, [string, string]> = {
   unknown: ['execution.reports.intelligence.severity.unknown', 'Unknown'],
 };
 const REASON_LABEL_KEY: Record<string, [string, string]> = {
-  BRAK_API_HISTORY: [
+  NO_API_HISTORY: [
     'execution.reports.intelligence.reasons.noApiHistory',
     'No history API available',
   ],
-  BRAK_API_BSC: [
+  NO_API_BSC: [
     'execution.reports.intelligence.reasons.noApiBsc',
     'No objective-mapping API available',
   ],
@@ -436,7 +436,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           </h2>
           <p className="text-sm text-c-text-secondary">
             {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.BRAK_API_BSC)} ·{' '}
+            {trPair(t, REASON_LABEL_KEY.NO_API_BSC)} ·{' '}
             {t(
               'execution.reports.intelligence.operationalOnly',
               'Objective mappings are unavailable; this remains an operational report, not a strategy report.'
@@ -461,7 +461,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           </h2>
           <p className="text-sm text-c-text-secondary">
             {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
-            {trPair(t, REASON_LABEL_KEY.BRAK_API_HISTORY)}
+            {trPair(t, REASON_LABEL_KEY.NO_API_HISTORY)}
           </p>
         </section>
         <section data-section-order={sections[7]} className={SECTION_SHELL_CLASS}>

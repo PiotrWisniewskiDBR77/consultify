@@ -116,6 +116,6 @@ describe('Management Control Loop report', () => {
     api.listInterventions.mockResolvedValueOnce({ interventions: [] });
     render(<ControlLoopReport />);
     expect(await screen.findByText('No control records')).toBeInTheDocument();
-    expect(screen.getByText(/BRAK_API_FORECAST/)).toBeInTheDocument();
+    expect(screen.getByText(/NO_API_FORECAST/)).toBeInTheDocument();
   });
 });

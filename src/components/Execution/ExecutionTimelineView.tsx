@@ -31,6 +31,7 @@ import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
 import { getLocalizedStatusLabel } from '../../services/initiativeLifecycle';
 import { FullInitiative, InitiativeStatus } from '../../types';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -216,7 +217,7 @@ const getMonthsFromWeeks = (
         months[months.length - 1].span = idx - months[months.length - 1].startIdx;
       }
       months.push({
-        month: week.date.toLocaleDateString('en-US', { month: 'short' }),
+        month: week.date.toLocaleDateString(localeListy(), { month: 'short' }),
         year: y,
         startIdx: idx,
         span: 1,
@@ -463,7 +464,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   // cheapest fix that needs zero visual redesign.
   const rangeStart = initiative.startDate || initiative.plannedStartDate;
   const rangeEnd = initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
-  const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('pl-PL') : '?');
+  const fmtDate = (d?: string) => (d ? formatListDate(d, '?') : '?');
   const barTooltipLines = [
     `${initiative.name} (${progress}%)`,
     `${fmtDate(rangeStart)} → ${fmtDate(rangeEnd)}`,
@@ -512,11 +513,15 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
             width: `${baselineWidthPercent}%`,
             minWidth: '40px',
           }}
-          title={`Plan bazowy (baseline)${
+          title={`${t('execution.timeline.baseline', 'Baseline plan')}${
             baselineSlipWeeks > 0
-              ? `— ${baselineSlipWeeks} tyg. poślizgu`
+              ? ` — ${t('execution.timeline.slipWeeks', '{{count}} weeks of slip', {
+                  count: baselineSlipWeeks,
+                })}`
               : baselineSlipWeeks < 0
-                ? `— ${-baselineSlipWeeks} tyg. przed planem`
+                ? ` — ${t('execution.timeline.aheadWeeks', '{{count}} weeks ahead of plan', {
+                    count: -baselineSlipWeeks,
+                  })}`
                 : ''
           }`}
           data-testid="gantt-baseline"
@@ -1378,7 +1383,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               >
                 <div className="text-xs font-medium text-c-text-muted">{week.label}</div>
                 <div className="text-[10px] text-c-text-muted">
-                  {week.date.toLocaleDateString('en-US', { day: 'numeric' })}
+                  {week.date.toLocaleDateString(localeListy(), { day: 'numeric' })}
                 </div>
               </div>
             ))}

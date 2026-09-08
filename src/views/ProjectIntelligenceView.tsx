@@ -39,6 +39,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { LoadingState } from '@/components/ui/primitives';
@@ -58,6 +59,7 @@ import { InterviewProgress } from '../components/Intelligence/InterviewProgress'
 import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 import { Project } from '../types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // Types
 interface ProjectInsight {
@@ -132,6 +134,7 @@ const parseDetectionJson = (raw: string): unknown[] => {
 };
 
 export const ProjectIntelligenceView: React.FC = () => {
+  const { t } = useTranslation();
   const { currentProjectId, isChatCollapsed, toggleChatCollapse, activeChatMessages } =
     useAppStore();
   const { isDemo } = useDemoSession();
@@ -398,7 +401,9 @@ export const ProjectIntelligenceView: React.FC = () => {
           </p>
           <div className="flex items-center gap-2 text-sm text-c-text-secondary">
             <Info size={14} />
-            <span>Use the project selector in the header</span>
+            <span>
+              {t('projectIntelligence.useSelector', 'Use the project selector in the header')}
+            </span>
           </div>
         </div>
       </SplitLayout>
@@ -541,6 +546,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
   projectId,
   onInsightCreated,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       {/* Instructions Card */}
@@ -607,9 +613,10 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
         <Info size={18} className="text-c-text-secondary shrink-0 mt-0.5" />
         <div>
           <p className="text-sm text-c-text-secondary">
-            All captured insights are aligned with <strong>ISO 21500</strong>,{' '}
-            <strong>PMBOK 7</strong>, and <strong>PRINCE2</strong> standards for full PMO compliance
-            and auditability.
+            {t(
+              'projectIntelligence.pmoAlignment',
+              'All captured insights are aligned with ISO 21500, PMBOK 7 and PRINCE2 standards for full PMO compliance and auditability.'
+            )}
           </p>
         </div>
       </div>
@@ -639,6 +646,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   selectedInsight,
   onSelectInsight,
 }) => {
+  const { t } = useTranslation();
   if (insights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -647,8 +655,10 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
         </div>
         <p className="text-lg font-medium text-c-text-secondary mb-1">No insights captured yet</p>
         <p className="text-sm text-c-text-muted max-w-md">
-          Start a conversation with the AI to capture project knowledge. Insights will appear here
-          as they are detected.
+          {t(
+            'projectIntelligence.knowledgeEmpty',
+            'Start a conversation with the AI to capture project knowledge. Insights will appear here as they are detected.'
+          )}
         </p>
       </div>
     );
@@ -831,6 +841,7 @@ interface SessionsTabContentProps {
 }
 
 const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSessionSelect }) => {
+  const { t } = useTranslation();
   if (sessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -839,8 +850,10 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
         </div>
         <p className="text-lg font-medium text-c-text-secondary mb-1">No interview sessions yet</p>
         <p className="text-sm text-c-text-muted max-w-md">
-          Your AI interview sessions will appear here. Start a conversation to create your first
-          session.
+          {t(
+            'projectIntelligence.sessionsEmpty',
+            'Your AI interview sessions will appear here. Start a conversation to create your first session.'
+          )}
         </p>
       </div>
     );
@@ -858,7 +871,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
             <div>
               <h4 className="font-semibold text-navy-900 dark:text-white">{session.topic}</h4>
               <p className="text-sm text-c-text-muted mt-1">
-                Started {new Date(session.started_at).toLocaleDateString()}
+                {t('projectIntelligence.started', 'Started')} {formatListDate(session.started_at)}
               </p>
             </div>
             <span

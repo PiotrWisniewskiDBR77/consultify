@@ -8,9 +8,11 @@
  * requires a projectId (400 otherwise), surfaced as a "wymaga projektu" note.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface Baseline {
   id: string;
@@ -31,14 +33,15 @@ function baselineDate(b: Baseline): string {
   if (!raw) return '—';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return String(raw);
-  return d.toLocaleString();
+  return formatListDateTime(d);
 }
 
 function shortStamp(): string {
-  return new Date().toLocaleString();
+  return formatListDateTime(new Date());
 }
 
 export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
+  const { t } = useTranslation();
   const [baselines, setBaselines] = useState<Baseline[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,7 +82,7 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
           source: 'cockpit',
         }),
         label: 'Baseline ' + shortStamp(),
-        reason: 'Ręczny zapis z kokpitu',
+        reason: 'Manual save from the cockpit',
       });
       await load();
     } catch (err) {
@@ -129,8 +132,8 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
           <EmptyState
             variant="error"
             compact
-            title="Nie udało się wczytać baseline'ów"
-            description="Sprawdź uprawnienia."
+            title={t('execution.rollout.baseline.loadFailed', 'Could not load the baselines')}
+            description={t('execution.rollout.permissionHintShort', 'Check your permissions.')}
             onRetry={() => void load()}
           />
         </div>
@@ -140,7 +143,7 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
         <>
           {baselines.length === 0 ? (
             <p className="text-sm text-c-text-muted">
-              Brak zapisanych baseline'ów — zapisz pierwszy.
+              {t('execution.rollout.baseline.empty', 'No baselines saved — save the first one.')}
             </p>
           ) : (
             <ul className="flex flex-col gap-2" data-testid="baseline-list">

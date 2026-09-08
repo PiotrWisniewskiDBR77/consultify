@@ -11,6 +11,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 /**
  * MultiPerspectiveView — Phase F: Team Expansion
@@ -141,7 +143,7 @@ const PerspectiveCard: React.FC<{
 
       {/* Timestamp */}
       <div className="mt-2 text-xs text-slate-600 dark:text-slate-500">
-        {new Date(perspective.createdAt).toLocaleDateString('pl-PL')}
+        {formatListDate(perspective.createdAt)}
       </div>
     </div>
   );
@@ -151,6 +153,7 @@ const AxisView: React.FC<{
   axis: PerspectiveAxis;
   initialExpanded?: boolean;
 }> = ({ axis, initialExpanded = true }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const tension = detectTension(axis.perspectives);
 
@@ -188,8 +191,13 @@ const AxisView: React.FC<{
           {axis.perspectives.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <Users size={32} className="mx-auto mb-2 opacity-50" />
-              <p>Brak perspektyw dla tej osi.</p>
-              <p className="text-sm">Zaproś członków zespołu, aby dodali swój punkt widzenia.</p>
+              <p>{t('team.perspectives.emptyAxis', 'No perspectives for this axis.')}</p>
+              <p className="text-sm">
+                {t(
+                  'team.perspectives.emptyAxisHint',
+                  'Invite team members so they can add their point of view.'
+                )}
+              </p>
             </div>
           ) : (
             <>
@@ -200,10 +208,16 @@ const AxisView: React.FC<{
                     <Scale size={16} className="text-danger-600 dark:text-danger-400 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
-                        Wykryto znaczące różnice w perspektywach
+                        {t(
+                          'team.perspectives.tensionTitle',
+                          'Significant differences detected across perspectives'
+                        )}
                       </p>
                       <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
-                        To może wskazywać na ważny obszar do dyskusji zespołowej.
+                        {t(
+                          'team.perspectives.tensionHint',
+                          'This may point to an important topic for a team discussion.'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -228,16 +242,19 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
   onRequestPerspective,
   className = '',
 }) => {
+  const { t } = useTranslation();
   if (axes.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>
         <MessageSquare size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-          Jeszcze nie ma perspektyw do porównania
+          {t('team.perspectives.emptyTitle', 'No perspectives to compare yet')}
         </h3>
         <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Zaproś członków zespołu i poproś ich o ocenę wybranych osi decyzyjnych. Różne punkty
-          widzenia wzbogacą analizę.
+          {t(
+            'team.perspectives.emptyBody',
+            'Invite team members and ask them to rate the selected decision axes. Different points of view make the analysis richer.'
+          )}
         </p>
       </div>
     );
@@ -254,13 +271,19 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Users size={20} className="text-primary-500" />
-            Perspektywy zespołu
+            {t('team.perspectives.title', 'Team perspectives')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {totalPerspectives} perspektyw na {axes.length} osiach
+            {t('team.perspectives.summary', '{{count}} perspectives across {{axes}} axes', {
+              count: totalPerspectives,
+              axes: axes.length,
+            })}
             {highTensionAxes > 0 && (
               <span className="text-amber-600 dark:text-amber-400 ml-2">
-                • {highTensionAxes} z napięciami
+                •{' '}
+                {t('team.perspectives.withTension', '{{count}} with tension', {
+                  count: highTensionAxes,
+                })}
               </span>
             )}
           </p>

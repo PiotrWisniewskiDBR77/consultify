@@ -1,0 +1,41 @@
+{
+ "ekran": "15-raporty-lista",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=reports&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 6,
+ "obcychLiniiUI": 5,
+ "ui": [
+  {
+   "linia": "RAPORT",
+   "trafienia": [
+    "RAPORT"
+   ]
+  },
+  {
+   "linia": "POZIOM",
+   "trafienia": [
+    "POZIOM"
+   ]
+  },
+  {
+   "linia": "OKRES",
+   "trafienia": [
+    "OKRES"
+   ]
+  },
+  {
+   "linia": "STAN DANYCH NA",
+   "trafienia": [
+    "STAN",
+    "DANYCH"
+   ]
+  },
+  {
+   "linia": "AUTOR",
+   "trafienia": [
+    "AUTOR"
+   ]
+  }
+ ],
+ "dane": []
+}

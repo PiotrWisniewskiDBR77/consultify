@@ -1,0 +1,114 @@
+{
+ "ekran": "10-decyzje-nowa",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3209/execution?tab=control&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 13,
+ "obcychLiniiUI": 13,
+ "ui": [
+  {
+   "linia": "Jan Kowalski",
+   "trafienia": [
+    "Jan"
+   ]
+  },
+  {
+   "linia": "STATUS",
+   "trafienia": [
+    "STATUS"
+   ]
+  },
+  {
+   "linia": "30 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "25 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "17 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "15 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "21 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "23 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "28 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "20 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  },
+  {
+   "linia": "26 mar 2026",
+   "trafienia": [
+    "mar"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Go/No-Go — Data Platform MVP",
+   "trafienia": [
+    "No"
+   ]
+  },
+  {
+   "linia": "Adopt multi-provider LLM strategy to reduce vendor risk",
+   "trafienia": [
+    "risk"
+   ]
+  },
+  {
+   "linia": "Select AI model provider for production workloads",
+   "trafienia": [
+    "for"
+   ]
+  },
+  {
+   "linia": "Launch public beta — go/no-go decision",
+   "trafienia": [
+    "no",
+    "decision"
+   ]
+  }
+ ]
+}

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
 import { ProjectRole, RACIMatrix as RACIMatrixType, RACIType } from '../../types';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface RACIMatrixProps {
   projectId: string;
@@ -243,7 +244,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
       {/* Footer */}
       <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/30 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
         <Info className="w-3.5 h-3.5" />
-        {t('pmo.raciGenerated', 'Generated at')}: {new Date(matrix.generatedAt).toLocaleString()}
+        {t('pmo.raciGenerated', 'Generated at')}: {formatListDateTime(matrix.generatedAt)}
       </div>
     </div>
   );

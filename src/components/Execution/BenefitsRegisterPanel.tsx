@@ -9,6 +9,7 @@
  * are flagged with a badge. Fails soft.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
@@ -46,6 +47,7 @@ interface Props {
 }
 
 export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
+  const { t } = useTranslation();
   const [benefits, setBenefits] = useState<Benefit[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -99,7 +101,9 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
       data-testid="benefits-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-c-text">Rejestr korzyści (handoff M14→M15)</h3>
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('execution.rollout.benefits.title', 'Benefits register (handoff M14→M15)')}
+        </h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-c-text-muted">{benefits.length}</span>
           <button
@@ -109,7 +113,7 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
             onClick={() => void addBenefit()}
             className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
           >
-            {busy ? '…' : '+ Dodaj benefit'}
+            {busy ? '…' : `+ ${t('execution.rollout.benefits.add', 'Add benefit')}`}
           </button>
         </div>
       </div>
@@ -125,8 +129,8 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
           <EmptyState
             variant="error"
             compact
-            title="Nie udało się wczytać rejestru korzyści"
-            description="Sprawdź uprawnienia MANAGE_ROLLOUT."
+            title={t('execution.rollout.benefits.loadFailed', 'Could not load the benefits register')}
+            description={t('execution.rollout.permissionHint', 'Check the MANAGE_ROLLOUT permission.')}
             onRetry={() => void load()}
           />
         </div>
@@ -136,7 +140,10 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
         <>
           {benefits.length === 0 ? (
             <p className="text-sm text-c-text-muted" data-testid="benefits-list">
-              Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).
+              {t(
+                'execution.rollout.benefits.empty',
+                'No benefits registered — add the first one (handoff to Results/M15).'
+              )}
             </p>
           ) : (
             <ul className="flex flex-col gap-2" data-testid="benefits-list">

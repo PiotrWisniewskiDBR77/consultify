@@ -1,0 +1,77 @@
+{
+ "ekran": "11-ryzyka-lista",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=control&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 8,
+ "obcychLiniiUI": 8,
+ "ui": [
+  {
+   "linia": "Ryzyko",
+   "trafienia": [
+    "Ryzyko"
+   ]
+  },
+  {
+   "linia": "Zależność",
+   "trafienia": [
+    "Zależność"
+   ]
+  },
+  {
+   "linia": "Problem",
+   "trafienia": [
+    "Problem"
+   ]
+  },
+  {
+   "linia": "Problem",
+   "trafienia": [
+    "Problem"
+   ]
+  },
+  {
+   "linia": "Ryzyko",
+   "trafienia": [
+    "Ryzyko"
+   ]
+  },
+  {
+   "linia": "Ryzyko",
+   "trafienia": [
+    "Ryzyko"
+   ]
+  },
+  {
+   "linia": "Ryzyko",
+   "trafienia": [
+    "Ryzyko"
+   ]
+  },
+  {
+   "linia": "Ryzyko",
+   "trafienia": [
+    "Ryzyko"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Katarzyna Wójcik",
+   "trafienia": [
+    "Wójcik"
+   ]
+  },
+  {
+   "linia": "Jan Zieliński",
+   "trafienia": [
+    "Zieliński"
+   ]
+  }
+ ]
+}

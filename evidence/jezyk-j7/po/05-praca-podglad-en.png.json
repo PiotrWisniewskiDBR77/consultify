@@ -1,0 +1,264 @@
+{
+ "ekran": "05-praca-podglad",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3209/execution?tab=work&ff_summaryOneLook=1&ff_execReportsIntel=1&view=table",
+ "obcychSlowUI": 0,
+ "obcychLiniiUI": 0,
+ "ui": [],
+ "dane": [
+  {
+   "linia": "Program poprawy OEE linii montażowej",
+   "trafienia": [
+    "montażowej"
+   ]
+  },
+  {
+   "linia": "Optymalizacja zapasów komponentów",
+   "trafienia": [
+    "zapasów",
+    "komponentów"
+   ]
+  },
+  {
+   "linia": "Pełna identyfikowalność partii",
+   "trafienia": [
+    "Pełna",
+    "identyfikowalność"
+   ]
+  },
+  {
+   "linia": "S&OP oparty na jednym źródle danych",
+   "trafienia": [
+    "źródle",
+    "danych"
+   ]
+  },
+  {
+   "linia": "Zakończenie audytu bezpieczeństwa",
+   "trafienia": [
+    "Zakończenie",
+    "bezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Złożenie dokumentacji zgodności",
+   "trafienia": [
+    "Złożenie",
+    "zgodności"
+   ]
+  },
+  {
+   "linia": "Naprawa krytycznego błędu produkcyjnego",
+   "trafienia": [
+    "błędu"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Audyt bezpieczeństwa — przegląd konwergencji OT/IT",
+   "trafienia": [
+    "bezpieczeństwa",
+    "przegląd"
+   ]
+  },
+  {
+   "linia": "Program wzmocnienia cyberbezpieczeństwa",
+   "trafienia": [
+    "cyberbezpieczeństwa"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Próba migracji danych — środowisko testowe ERP",
+   "trafienia": [
+    "Próba",
+    "danych",
+    "środowisko"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Zdefiniowanie procesu docelowego i kryteriów akceptacji",
+   "trafienia": [
+    "kryteriów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przegląd raportu budżetowego za Q4",
+   "trafienia": [
+    "Przegląd",
+    "budżetowego"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Wdrożenie wersji v2.5",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przegląd pull requestów",
+   "trafienia": [
+    "Przegląd",
+    "requestów"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Warsztat inicjujący z kluczowymi interesariuszami",
+   "trafienia": [
+    "inicjujący"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Przygotowanie demo dla interesariuszy",
+   "trafienia": [
+    "dla"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Pilotaż RPA — automatyzacja przetwarzania faktur",
+   "trafienia": [
+    "Pilotaż"
+   ]
+  },
+  {
+   "linia": "Wdrożenie RPA",
+   "trafienia": [
+    "Wdrożenie"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Zarządzanie jakością 4.0 — MVP pulpitu SPC",
+   "trafienia": [
+    "Zarządzanie",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "System zarządzania jakością 4.0",
+   "trafienia": [
+    "zarządzania",
+    "jakością"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Spotkanie inicjujące i ustalenie zakresu",
+   "trafienia": [
+    "inicjujące"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Prezentacja na standupie zespołu",
+   "trafienia": [
+    "zespołu"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Piotr Wiśniewski",
+   "trafienia": [
+    "Wiśniewski"
+   ]
+  },
+  {
+   "linia": "Sesja przeglądu architektury",
+   "trafienia": [
+    "przeglądu"
+   ]
+  },
+  {
+   "linia": "Zarządzanie wydajnością cyfrową",
+   "trafienia": [
+    "Zarządzanie",
+    "wydajnością",
+    "cyfrową"
+   ]
+  }
+ ]
+}

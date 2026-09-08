@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FullInitiative, FullSession, Language } from '../types';
 
@@ -32,6 +33,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
   onNextStep,
   language,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<PilotTab>('scope');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -63,7 +65,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
               className="w-full h-40 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm"
               value={editData.scopeIn?.join('\n') || ''}
               onChange={(e) => setEditData({ ...editData, scopeIn: e.target.value.split('\n') })}
-              placeholder="List items included in the pilot..."
+              placeholder={t('fullPilot.scopeInPlaceholder', 'List items included in the pilot…')}
             />
           ) : (
             <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300">
@@ -252,7 +254,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                 NO-GO: Pivot
               </h3>
               <p className="text-danger-600/70 dark:text-danger-400/70 mt-2">
-                Pilot failed. Re-evaluate strategy.
+                {t('fullPilot.noGoBody', 'Pilot failed. Re-evaluate strategy.')}
               </p>
             </div>
           </div>

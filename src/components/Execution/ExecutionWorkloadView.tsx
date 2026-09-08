@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { FullInitiative, InitiativeStatus } from '../../types';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface ExecutionWorkloadViewProps {
   initiatives: FullInitiative[];
@@ -252,6 +253,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
   onClose,
   onInitiativeClick,
 }) => {
+  const { t } = useTranslation();
   const totalPercentage = allocations.reduce((sum, a) => sum + a.percentage, 0);
   const textColor = getHeatmapTextColor(totalPercentage);
 
@@ -277,7 +279,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
         </div>
 
         {allocations.length === 0 ? (
-          <p className="text-center text-slate-500 py-4">No allocations this period</p>
+          <p className="text-center text-slate-500 py-4">{t('execution.workload.noAllocations', 'No allocations this period')}</p>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {allocations.map((allocation, idx) => (
@@ -611,7 +613,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                   )}
                   {viewMode === 'weekly' && (
                     <div className="text-[10px] text-slate-500">
-                      {period.startDate.toLocaleDateString('en-US', {
+                      {period.startDate.toLocaleDateString(localeListy(), {
                         month: 'short',
                         day: 'numeric',
                       })}

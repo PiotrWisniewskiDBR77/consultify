@@ -882,7 +882,8 @@
     "sampleData": "PRZYKŁADOWE DANE",
     "verifying": "Weryfikowanie…",
     "copyLink": "Kopiuj link",
-    "publish": "Opublikuj"
+    "publish": "Opublikuj",
+    "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…"
   },
   "superadmin": {
     "confirm": {
@@ -12892,7 +12893,10 @@
         "deferred": "Odroczona",
         "cancelled": "Anulowana"
       },
-      "untitled": "Decyzja bez tytułu"
+      "untitled": "Decyzja bez tytułu",
+      "deferFailed": "Nie udało się utworzyć wniosku o przesunięcie.",
+      "resolveFailed": "Nie udało się zapisać rozstrzygnięcia.",
+      "saveFailed": "Nie udało się zapisać decyzji."
     },
     "heatmap": "Mapa obciążenia",
     "hub": {
@@ -13071,7 +13075,10 @@
         "suggest": "AI — jak tym zarządzić?",
         "analyzing": "AI analizuje Twoje dane…"
       },
-      "v8Degraded": "Kokpit menedżera wymaga V8"
+      "v8Degraded": "Kokpit menedżera wymaga V8",
+      "noMatchingItems": "W tym obszarze nie ma teraz pasujących pozycji.",
+      "triageLead": "Triaż AI — grupowanie i priorytetyzacja problemów",
+      "actionPlanLead": "Plan działania — ruchy operacyjne i kroki następcze"
     },
     "managementTable": {
       "lane": "Tor",
@@ -13189,6 +13196,54 @@
       "deleteConfirm": {
         "body": "„{{title}}” zostanie trwale usunięty. Tej operacji nie można cofnąć.",
         "title": "Usunąć tę pozycję?"
+      },
+      "baseline": {
+        "empty": "Brak zapisanych baseline'ów — zapisz pierwszy.",
+        "loadFailed": "Nie udało się wczytać baseline'ów"
+      },
+      "benefits": {
+        "add": "Dodaj korzyść",
+        "empty": "Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).",
+        "loadFailed": "Nie udało się wczytać rejestru korzyści",
+        "title": "Rejestr korzyści (handoff M14→M15)"
+      },
+      "cutover": {
+        "create": "Utwórz runbook cutover",
+        "emptySteps": "Brak kroków — dodaj pierwszy.",
+        "loadFailed": "Nie udało się wczytać runbooka cutover",
+        "pickInitiative": "Wybierz inicjatywę, aby zobaczyć runbook cutover.",
+        "status": {
+          "planned": "zaplanowany",
+          "in_progress": "w toku",
+          "completed": "zakończony",
+          "aborted": "przerwany"
+        },
+        "stepStatus": {
+          "pending": "oczekuje",
+          "in_progress": "w toku",
+          "done": "gotowe",
+          "skipped": "pominięte",
+          "failed": "nieudane"
+        },
+        "stepCount": "{{count}} kroków"
+      },
+      "permissionHint": "Sprawdź uprawnienia MANAGE_ROLLOUT.",
+      "permissionHintShort": "Sprawdź uprawnienia.",
+      "stages": {
+        "count": "{{count}}/5 fal",
+        "loadFailed": "Nie udało się wczytać fal wdrożenia",
+        "title": "Fale wdrożenia",
+        "status": {
+          "not_started": "nie rozpoczęty",
+          "active": "aktywny",
+          "gated": "bramka",
+          "done": "zakończony"
+        },
+        "create": "utwórz"
+      },
+      "trend": {
+        "none": "Brak pomiarów — trend pojawi się po dwóch",
+        "one": "Jeden pomiar — trend od drugiego"
       }
     },
     "reporting": {
@@ -13355,7 +13410,8 @@
             "decisions": "Powiązane decyzje",
             "interventions": "Interwencje",
             "notVerified": "NOT_VERIFIED"
-          }
+          },
+          "scenariosPlaceholder": "WNIOSKOWANIE · baza: BRAK · optymistyczny: BRAK · pesymistyczny: BRAK · NO_API_FORECAST"
         },
         "generator": {
           "tab": "Zrób raport",
@@ -13376,7 +13432,7 @@
           "scope": "Autoryzowana referencja zakresu",
           "validation": "Walidacja",
           "missingFields": "brakuje",
-          "contextOnlyWarning": "Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (BRAK_API).",
+          "contextOnlyWarning": "Tydzień raportowy, horyzont prognozy i wybór sekcji są tylko kontekstem preflight, ponieważ runtime-v1 nie ma dla nich pól kontraktowych (NO_API).",
           "draftIncomplete": "Stan szkicu po utworzeniu: NIEKOMPLETNY (dołączono 0 źródeł)",
           "sourcesWarning": "Ten ekran nie może dołączać dowodów źródłowych; robi to osobno nadzorowany workflow runtime. Pusty zestaw źródeł nie może zostać zwalidowany ani opublikowany.",
           "createDraft": "Utwórz nadzorowany szkic",
@@ -13622,7 +13678,8 @@
         "signals": "Sygnały"
       },
       "summary": {
-        "decisions": "Rozstrzygnięcia"
+        "decisions": "Rozstrzygnięcia",
+        "risks": "Ryzyka"
       }
     },
     "scope": {
@@ -13688,7 +13745,10 @@
       "filters": {
         "hide": "Ukryj filtry",
         "show": "Pokaż filtry"
-      }
+      },
+      "aheadWeeks": "{{count}} tyg. przed planem",
+      "baseline": "Plan bazowy (baseline)",
+      "slipWeeks": "{{count}} tyg. poślizgu"
     },
     "warnings": {
       "title": "Najważniejsze ostrzeżenia",
@@ -14051,7 +14111,10 @@
       "actions": {
         "addSignal": "Dodaj sygnał",
         "prepareIntervention": "Przygotuj interwencję"
-      }
+      },
+      "loadFailed": "Nie udało się załadować rejestru sterowania.",
+      "loading": "Ładowanie rejestru decyzji i ryzyk…",
+      "title": "Decyzje i ryzyka"
     },
     "work": {
       "columns": {
@@ -14069,14 +14132,28 @@
       "degraded": "Niepełne dane: {{count}} {{unit}} bez odpowiedzi",
       "withoutInitiative": "Bez inicjatywy",
       "status": {
-        "backlog": "Backlog",
+        "backlog": "Do zaplanowania",
         "todo": "Do zrobienia",
         "in_progress": "W toku",
         "review": "W przeglądzie",
         "blocked": "Zablokowane",
         "on_hold": "Wstrzymane",
         "done": "Wykonane",
-        "cancelled": "Anulowane"
+        "cancelled": "Anulowane",
+        "draft": "Szkic",
+        "pending": "Oczekuje na decyzję",
+        "open": "Otwarte",
+        "completed": "Wykonane",
+        "canceled": "Anulowane",
+        "approved": "Zatwierdzone",
+        "conditionally_approved": "Zatwierdzone warunkowo",
+        "rejected": "Odrzucone",
+        "returned": "Zwrócone",
+        "ready": "Gotowy",
+        "at_risk": "Zagrożony",
+        "achieved": "Osiągnięty",
+        "unknown": "Brak danych",
+        "in_review": "W przeglądzie"
       },
       "edit": {
         "hint": "Zmień podwójnym kliknięciem",
@@ -14105,6 +14182,66 @@
       },
       "menu": {
         "openTask": "Otwórz zadanie"
+      },
+      "archiveNote": "Elementy pracy podlegają retencji Execution Case.",
+      "baselineVersion": "zaakceptowana wersja bazowa",
+      "caseVersion": "Realizacja",
+      "closeWorkspace": "Zamknij workspace",
+      "createDecision": "Utwórz decyzję",
+      "days": "dni",
+      "decisionEditor": "Edytor decyzji",
+      "deleteNote": "Kanoniczny element pracy nie może zostać usunięty.",
+      "documentLead": "Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.",
+      "editorLead": "Uzupełnij dane biznesowe; identyfikatory techniczne są nadawane przez system.",
+      "emptyRegister": "Brak kanonicznych zadań i decyzji w dostępnych realizacjach.",
+      "field": {
+        "assignee": "Osoba realizująca",
+        "authority": "Osoba decyzyjna",
+        "blockers": "Blokujące decyzje",
+        "case": "Realizacja",
+        "conditions": "Warunki decyzji",
+        "dependencies": "Zależności",
+        "description": "Opis i oczekiwany rezultat",
+        "due": "Termin",
+        "evidence": "Dowody / załączniki",
+        "evidenceShort": "Dowody",
+        "initiative": "Inicjatywa",
+        "milestones": "Powiązane kamienie milowe",
+        "owner": "Odpowiedzialny",
+        "rationale": "Uzasadnienie",
+        "sla": "Termin reakcji (SLA)",
+        "title": "Tytuł"
+      },
+      "forecast": "prognoza",
+      "item": "Element pracy",
+      "linkedCase": "Powiązana realizacja",
+      "linkedInitiative": "Powiązana inicjatywa",
+      "loadFailed": "Nie udało się załadować kanonicznego rejestru pracy.",
+      "loading": "Wczytuję kanoniczny rejestr pracy",
+      "markDone": "Oznacz jako wykonane",
+      "milestones": "Kamienie milowe",
+      "noDue": "Brak terminu",
+      "noEvidence": "Brak wymaganych dowodów",
+      "noInitiative": "Bez inicjatywy",
+      "noMilestones": "Brak kanonicznych kamieni milowych.",
+      "noRelations": "Brak powiązań",
+      "openDecision": "Otwórz decyzję",
+      "openTask": "Otwórz zadanie",
+      "preview": {
+        "details": "Szczegóły pracy",
+        "nextStep": "Sprawdź kompletność i następny krok.",
+        "noDescription": "Brak dodatkowego opisu.",
+        "open": "Otwórz element pracy"
+      },
+      "readiness": "gotowość",
+      "requestDecision": "Przekaż do decyzji",
+      "resolveDecision": "Rozstrzygnij decyzję",
+      "taskEditor": "Edytor zadania",
+      "unassigned": "Nieprzypisany",
+      "variance": "Odchylenie",
+      "kind": {
+        "task": "Zadanie",
+        "decision": "Decyzja"
       }
     },
     "resources": {
@@ -14134,10 +14271,98 @@
         "saveAvailability": "Zapisz"
       },
       "summary": {
-        "utilizationTooltip": "Średnia z {{count}} tygodni"
+        "utilizationTooltip": "Średnia z {{count}} tygodni",
+        "backlog": " · zaległość {{hours}} u {{people}} os.",
+        "head": "Stan na {{date}} · osób {{people}} · popyt {{demand}} · podaż {{supply}} · ",
+        "overloaded": " · przeciążonych tygodni {{count}}",
+        "utilization": "obłożenie {{value}}"
       },
       "errors": {
         "saveAvailability": "Nie udało się zapisać dostępności. Spróbuj ponownie."
+      },
+      "action": {
+        "accept": "Akceptuj przydział",
+        "confirm": "Potwierdź",
+        "confirmConditional": "Potwierdź warunkowo",
+        "decline": "Odrzuć przydział",
+        "request": "Przekaż do akceptacji",
+        "rmDecline": "Odrzuć"
+      },
+      "advancedData": "Dane zaawansowane",
+      "allCases": "Wszystkie realizacje",
+      "allocation": "Przydział",
+      "archiveNote": "Obłożenie jest wyliczane z zadań — nie da się go zarchiwizować.",
+      "availabilityDialog": "Dostępność osoby",
+      "availabilityLead": "Etat tygodniowy i dostępność w procentach. Podaż = godziny × dostępność.",
+      "availabilityPercent": "Dostępność %",
+      "backlog": "Zaległość",
+      "backlogClose": "Uznaj za zamknięte",
+      "backlogEmpty": "Brak zadań zaległych — nie ma czego rozliczać.",
+      "backlogMove": "Przenieś na tydzień",
+      "backlogPanel": "Zaległość osoby",
+      "backlogPanelLead": "Termin minął, praca otwarta: {{hours}} w {{count}} zadaniach. Ta liczba NIE wchodzi do popytu żadnego tygodnia — rozlicz ją tutaj.",
+      "backlogScope": "Zmniejsz zakres",
+      "backlogTaskMeta": "Termin {{due}} · {{days}} dni po terminie · {{hours}} do zrobienia",
+      "backlogTasks": "Zadania zaległe",
+      "canonicalAllocations": "Przydziały kanoniczne",
+      "caseUnreachable": "Ta realizacja nie odpowiada: {{name}}",
+      "caseUnreachableHint": "Przerwaliśmy oczekiwanie po 12 sekundach. Pozostałe realizacje działają — wróć do wszystkich albo spróbuj ponownie.",
+      "dataState": "Dane",
+      "deleteNote": "Wiersz obłożenia jest wyliczany, nie przechowywany.",
+      "demand": "Popyt",
+      "effortHours": "Pracochłonność (h)",
+      "emptyPlan": "Brak osób z pracą w najbliższych 8 tygodniach — nie ma czego obciążać.",
+      "gap": "Luka",
+      "gapHint": "Brakuje {{hours}} — przesuń zadania albo dołóż osobę.",
+      "gapOk": "Obłożenie mieści się w dostępnych godzinach.",
+      "loadFailed": "Nie udało się załadować rejestru zasobów.",
+      "loading": "Liczę obłożenie zasobów",
+      "move": "Przenieś",
+      "newDue": "Nowy termin",
+      "noAllocations": "Brak kanonicznych przydziałów dla tej osoby",
+      "partialFetch": "Nie udało się pobrać zasobów z {{count}} realizacji — poniżej zasoby z pozostałych.",
+      "period": "okres",
+      "planFailed": "Nie udało się policzyć obłożenia (popyt vs podaż).",
+      "proposal": "Propozycja przydziału",
+      "proposalLead": "Najpierw symulacja, potem zatwierdzany przydział.",
+      "saveFailed": "Zapis nie przeszedł. Spróbuj ponownie.",
+      "saveProposal": "Zapisz propozycję",
+      "saveScope": "Zapisz zakres",
+      "setAvailability": "Ustaw dostępność",
+      "settleBacklog": "Rozlicz zaległość",
+      "simulate": "Symuluj",
+      "supply": "Podaż",
+      "supplyDefault": "Podaż domyślna (40 h)",
+      "supplyProfile": "Podaż z profilu osoby",
+      "tasksThisWeek": "Zadania w tym tygodniu",
+      "unassigned": "Nieprzypisany zasób",
+      "utilizationPill": "Obłożenie {{value}} %",
+      "weekDemandNoBacklog": "Popyt tygodnia to praca zaplanowana na ten tydzień. Ta osoba nie ma zaległości.",
+      "weekDemandWithBacklog": "Popyt tygodnia liczony bez zaległości. Zaległość {{hours}} — rozlicz ją osobno.",
+      "weekFrom": "Tydzień od {{date}}",
+      "weekFromShort": "od {{date}}",
+      "weekUtilization": "Obłożenie w tym tygodniu",
+      "weeklyHours": "Godziny tygodniowo",
+      "enum": {
+        "unknown": "Nieznane",
+        "known": "Znane",
+        "partial": "Częściowe",
+        "none": "Brak",
+        "current": "Aktualne",
+        "stale": "Nieaktualne",
+        "not_assessed": "Nie oceniono",
+        "capacity_conflict": "Konflikt mocy przerobowej",
+        "skill_conflict": "Konflikt kompetencji",
+        "calendar_conflict": "Konflikt kalendarza"
+      },
+      "allocationStatus": {
+        "proposed": "Propozycja",
+        "requested": "Oczekuje na akceptację",
+        "assignee_accepted": "Zaakceptowane przez wykonawcę",
+        "confirmed": "Potwierdzone",
+        "conditionally_confirmed": "Potwierdzone warunkowo",
+        "declined": "Odrzucone",
+        "ended": "Zakończone"
       }
     },
     "governance": {
@@ -14234,6 +14459,13 @@
       },
       "errors": {
         "saveFailed": "Nie udało się zapisać pozycji RAID."
+      },
+      "type": {
+        "risk": "Ryzyko",
+        "issue": "Problem",
+        "dependency": "Zależność",
+        "assumption": "Założenie",
+        "action": "Działanie"
       }
     },
     "signals": {
@@ -14284,7 +14516,134 @@
       },
       "errors": {
         "interventionFailed": "Nie udało się utworzyć wniosku o przesunięcie."
+      },
+      "field": {
+        "occurredAt": "Czas wystąpienia",
+        "ruleId": "Reguła wykrycia",
+        "severity": "Ważność",
+        "snapshotRef": "Dowód / migawka źródła",
+        "sourceId": "Źródło sygnału",
+        "sourceVersion": "Wersja źródła",
+        "sourceVersionKey": "Rodzaj wersji źródła"
+      },
+      "kindLabel": "Rodzaj sygnału",
+      "new": "Nowy sygnał",
+      "noSources": "Brak wersjonowanych źródeł",
+      "occurrences": "Wystąpienia",
+      "openPrep": "Otwórz przygotowanie",
+      "rule": {
+        "capacity_conflict": "Konflikt obciążenia",
+        "stale_milestone": "Nieaktualny kamień milowy"
+      },
+      "save": "Zapisz sygnał",
+      "severity": {
+        "critical": "Krytyczna",
+        "warning": "Ostrzeżenie"
+      },
+      "title": "Sygnały zarządcze",
+      "singleTitle": "Sygnał zarządczy",
+      "project": "Projekt",
+      "addToIntervention": "Dodaj do przygotowywanej interwencji"
+    },
+    "apply": {
+      "field": {
+        "aggregateId": "Obiekt docelowy",
+        "aggregateType": "Typ obiektu",
+        "expectedEffect": "Oczekiwany efekt",
+        "measurementRef": "Źródło pomiaru",
+        "measurementVersion": "Wersja pomiaru",
+        "receiptId": "Potwierdzenie komendy",
+        "state": "Oczekiwany stan",
+        "verifyBy": "Termin weryfikacji",
+        "version": "Wersja"
       }
+    },
+    "intervention": {
+      "applyCommand": "Zastosowanie zatwierdzonej komendy",
+      "applyConfirmed": "Zastosuj potwierdzoną komendę",
+      "approveOption": "Zatwierdź wariant",
+      "approver": "Zatwierdzający",
+      "composer": "Projekt interwencji",
+      "effectiveClosed": "Skuteczna · zamknięta",
+      "emptyBody": "Dodaj wersjonowany sygnał, aby przygotować pierwszą sprawę interwencyjną.",
+      "emptyTitle": "Brak spraw interwencyjnych",
+      "escalated": "eskalowana",
+      "field": {
+        "actionImpacts": "Skutki działania",
+        "actionLabel": "Nazwa działania",
+        "authority": "Niezależny zatwierdzający",
+        "blastRadius": "Wpływ na powiązane obiekty",
+        "confidence": "Pewność",
+        "counterEvidence": "Kontrdowody",
+        "doNothing": "Opcja bez działania",
+        "doNothingImpacts": "Skutki braku działania",
+        "evidence": "Dowody",
+        "hypotheses": "Hipotezy",
+        "id": "Identyfikator interwencji",
+        "optionId": "Identyfikator wariantu",
+        "owner": "Właściciel",
+        "reversibility": "Odwracalność",
+        "sla": "Termin decyzji",
+        "unknowns": "Niewiadome"
+      },
+      "independentDecision": "Niezależna decyzja",
+      "noSignals": "Brak powiązanych sygnałów",
+      "notApplied": "Nie zastosowano zmiany.",
+      "open": "Otwórz interwencję",
+      "requestDecision": "Poproś o decyzję",
+      "saveOrLink": "Zapisz lub połącz sprawę interwencyjną",
+      "selectedSignals": "Wybrane sygnały",
+      "targetReceipt": "Potwierdzenie komendy docelowej",
+      "useJson": "Użyj kontraktu JSON zamiast formularza",
+      "verify": "Zweryfikuj interwencję",
+      "verifyEffect": "Weryfikacja efektu",
+      "status": {
+        "draft": "Szkic",
+        "pending_decision": "Oczekuje na decyzję",
+        "approved": "Zatwierdzona",
+        "applied": "Zastosowana",
+        "escalated": "Eskalowana",
+        "closed": "Zamknięta"
+      },
+      "outcome": {
+        "effective": "Skuteczna",
+        "partial": "Częściowo skuteczna",
+        "ineffective": "Nieskuteczna",
+        "not_verified": "Niezweryfikowana"
+      },
+      "optionKind": {
+        "do_nothing": "Bez zmian",
+        "action": "Działanie"
+      },
+      "confidence": {
+        "high": "Wysoka pewność",
+        "medium": "Średnia pewność",
+        "low": "Niska pewność",
+        "unknown": "Pewność nieznana"
+      },
+      "reversibility": {
+        "reversible": "Odwracalna",
+        "partially_reversible": "Częściowo odwracalna",
+        "irreversible": "Nieodwracalna",
+        "unknown": "Odwracalność nieznana"
+      },
+      "draftJson": "Kontrakt JSON projektu interwencji"
+    },
+    "plan": {
+      "closeChange": "Zamknij zmianę planu",
+      "createChange": "Utwórz zarządzaną zmianę planu",
+      "governedChange": "Zarządzana zmiana planu",
+      "governedChangeLead": "Zmiana kolejności przechodzi przez kontrolowaną zmianę planu i niezależne zatwierdzenie.",
+      "governedResequence": "Zarządzana zmiana kolejności",
+      "governedResequenceLead": "Wybrana opcja zmiany kolejności tworzy jedną kontrolowaną zmianę bazowego planu. Przegląd i publikacja odbywają się w Mojej pracy, a zastosowanie wymaga dokładnego potwierdzenia komendy.",
+      "hashAfter": "po zmianie",
+      "hashBefore": "Hash planu przed zmianą",
+      "prepareChange": "Przygotuj zmianę planu",
+      "selectedComparison": "Wybrane porównanie obciążenia",
+      "pickResequenceOption": "Wybierz dokładną opcję zmiany kolejności"
+    },
+    "workload": {
+      "noAllocations": "Brak przydziałów w tym okresie"
     }
   },
   "benefits": {
@@ -32938,7 +33297,42 @@
     },
     "memberTypeChair": "Przewodniczący",
     "memberTypeBoardMember": "Członek",
-    "memberTypeObserver": "Obserwator"
+    "memberTypeObserver": "Obserwator",
+    "charter": {
+      "initiativeName": "Nazwa inicjatywy",
+      "problemPlaceholder": "Jaki problem rozwiązuje ta inicjatywa?",
+      "hypothesisPlaceholder": "Jak ta inicjatywa rozwiąże problem?",
+      "deliverablesHint": "Jakie namacalne produkty powstaną w tej inicjatywie?",
+      "successHint": "Jak zmierzymy sukces?",
+      "inScopeHint": "Co wchodzi w zakres tej inicjatywy?",
+      "outScopeHint": "Co jest jawnie wyłączone?",
+      "risksHint": "Co może pójść nie tak?",
+      "addRisk": "Dodaj ryzyko",
+      "selectBusinessOwner": "Wybierz właściciela biznesowego",
+      "selectExecutionOwner": "Wybierz właściciela realizacji"
+    },
+    "audit": {
+      "subtitle": "Pełna historia wszystkich działań PMO z mapowaniem na standardy",
+      "today": "Dzisiaj",
+      "last7": "Ostatnie 7 dni",
+      "last30": "Ostatnie 30 dni",
+      "allTime": "Cały okres",
+      "loading": "Wczytywanie śladu audytowego…"
+    },
+    "dashboard": {
+      "newInitiative": "Nowa inicjatywa"
+    },
+    "health": {
+      "explain": "Wyjaśnij",
+      "updated": "Zaktualizowano",
+      "pending": "Oczekujące"
+    },
+    "statusBar": {
+      "loading": "Wczytywanie kontekstu PMO…"
+    },
+    "workstream": {
+      "empty": "Brak inicjatyw w tym strumieniu"
+    }
   },
   "branch": {
     "delete": "Usuń",
@@ -35251,11 +35645,38 @@
     }
   },
   "task": {
-    "status": "Status"
+    "status": "Status",
+    "lastUpdated": "Ostatnia zmiana",
+    "strategy": {
+      "outcomeHint": "Co konkretnie zmieni się w biznesie po wykonaniu tego zadania?",
+      "successPlaceholder": "Jeśli się uda, to…"
+    },
+    "weight": {
+      "title": "Waga zadania (wpływ na postęp)",
+      "hint": "Większa waga = większy wkład w postęp inicjatywy po zakończeniu"
+    },
+    "evidence": {
+      "hint": "Wybierz wymagane rodzaje dowodów, aby oznaczyć zadanie jako „Zweryfikowane”.",
+      "confirm": "Potwierdzam, że wszystkie wymagane dowody zostały zebrane, a kryteria spełnione."
+    },
+    "dependencies": {
+      "comingSoon": "Ten moduł pozwoli wizualnie łączyć zadania (Blokuje / Zablokowane przez). Wkrótce, w Fazie 2."
+    }
   },
   "team": {
     "velocity": {
       "target": "cel"
+    },
+    "perspectives": {
+      "emptyAxis": "Brak perspektyw dla tej osi.",
+      "emptyAxisHint": "Zaproś członków zespołu, aby dodali swój punkt widzenia.",
+      "emptyBody": "Zaproś członków zespołu i poproś ich o ocenę wybranych osi decyzyjnych. Różne punkty widzenia wzbogacą analizę.",
+      "emptyTitle": "Jeszcze nie ma perspektyw do porównania",
+      "summary": "{{count}} perspektyw na {{axes}} osiach",
+      "tensionHint": "To może wskazywać na ważny obszar do dyskusji zespołowej.",
+      "tensionTitle": "Wykryto znaczące różnice w perspektywach",
+      "title": "Perspektywy zespołu",
+      "withTension": "{{count}} z napięciami"
     }
   },
   "formBuilder": {
@@ -46694,7 +47115,13 @@
     },
     "status": {
       "draft": "Szkic",
-      "published": "Opublikowany"
+      "published": "Opublikowany",
+      "validated": "Zweryfikowany",
+      "frozen": "Zamrożony",
+      "approved": "Zatwierdzony",
+      "returned": "Zwrócony",
+      "failed": "Błąd",
+      "superseded": "Zastąpiony"
     },
     "state": {
       "active": "Aktywna"
@@ -46720,14 +47147,36 @@
       "downloadDocx": "Pobierz DOCX",
       "downloadPdf": "Pobierz PDF",
       "publish": "Opublikuj",
-      "newDefinition": "Nowa definicja"
+      "newDefinition": "Nowa definicja",
+      "approve": "Zatwierdź niezależnie",
+      "createDefinition": "Utwórz definicję",
+      "createFollowUp": "Utwórz i powiąż zadanie następcze",
+      "createOrRefresh": "Utwórz lub odśwież raport",
+      "createVersion": "Utwórz kolejną wersję",
+      "freeze": "Zamroź migawkę",
+      "publishDefinition": "Opublikuj definicję",
+      "refreshDraft": "Odśwież jako nowy szkic",
+      "return": "Zwróć raport",
+      "saveDraft": "Zapisz szkic",
+      "validateDefinition": "Zweryfikuj definicję",
+      "validateSources": "Zweryfikuj źródła"
     },
     "field": {
       "asOf": "Stan danych na",
       "period": "Okres",
       "status": "Status",
       "author": "Autor",
-      "rag": "Ocena RAG"
+      "rag": "Ocena RAG",
+      "approver": "Zatwierdzający",
+      "hash": "Hash migawki",
+      "owner": "Właściciel",
+      "parent": "Rodzic",
+      "periodEnd": "Koniec okresu",
+      "periodStart": "Początek okresu",
+      "runId": "Identyfikator raportu",
+      "scope": "Zakres projektów",
+      "scopeShort": "Zakres",
+      "sources": "Źródła"
     },
     "col": {
       "task": "Zadanie",
@@ -47048,7 +47497,226 @@
     "tab": {
       "runs": "Raporty",
       "definitions": "Definicje"
-    }
+    },
+    "advancedContract": "Zaawansowany kontrakt definicji",
+    "advancedJson": "Zaawansowany kontrakt JSON",
+    "allowedProjects": "Dozwolone projekty (jeden identyfikator w wierszu)",
+    "approvalRationale": "Uzasadnienie niezależnego zatwierdzenia",
+    "audienceLines": "Odbiorcy — jedna grupa w wierszu",
+    "columns": {
+      "asOf": "Stan danych na",
+      "audience": "Odbiorcy",
+      "author": "Autor",
+      "cadence": "Częstotliwość",
+      "definition": "Definicja raportu",
+      "level": "Poziom",
+      "period": "Okres",
+      "status": "Status",
+      "title": "Raport"
+    },
+    "contract": "Kontrakt raportu",
+    "contractSources": "Kontrakt źródeł, formuł i dostępu",
+    "definitionEditor": "Edytor definicji raportu",
+    "definitionField": {
+      "approver": "Niezależny zatwierdzający",
+      "audience": "Odbiorcy (jeden w wierszu)",
+      "cadence": "Częstotliwość",
+      "owner": "Właściciel definicji",
+      "purpose": "Cel raportu"
+    },
+    "definitionReady": "Gotowa do użycia",
+    "definitionUnfinished": "Dokończ walidację i zatwierdzenie",
+    "distribution": "Dystrybucja",
+    "distributionField": {
+      "distributedAt": "Data dystrybucji",
+      "receiptId": "Identyfikator dystrybucji"
+    },
+    "errors": {
+      "generate": "Nie udało się wygenerować migawki.",
+      "openDocument": "Nie udało się otworzyć dokumentu raportu."
+    },
+    "fallbackName": "Raport",
+    "finishPreparation": "Dokończ przygotowanie raportu",
+    "followUp": {
+      "assignee": "Wykonawca",
+      "case": "Realizacja",
+      "description": "Opis",
+      "due": "Termin",
+      "evidence": "Dowody",
+      "owner": "Właściciel",
+      "sla": "SLA",
+      "taskId": "Identyfikator zadania",
+      "title": "Tytuł"
+    },
+    "followUpTask": "Zadanie następcze",
+    "frozenPackage": "Zamrożony pakiet pozostaje w kanonicznym raporcie i jest odtwarzalny.",
+    "includeGeneralBacklog": "Uwzględnij jawnie backlog ogólny",
+    "loadFailed": "Nie udało się załadować kanonicznego rejestru raportów.",
+    "loading": "Ładowanie raportów…",
+    "noDefinitionSources": "Brak źródeł definicji",
+    "noSources": "Brak źródeł",
+    "notFrozen": "Jeszcze nie zamrożono",
+    "openDefinition": "Otwórz definicję",
+    "periodAsOf": "{{period}} · stan danych na {{asOf}}",
+    "pickCase": "Wybierz realizację",
+    "pickPublishedDefinition": "Wybierz opublikowaną definicję",
+    "publishedDefinition": "Opublikowana definicja raportu",
+    "receipt": "potwierdzenie",
+    "reportScope": "Zakres raportu",
+    "reviewOrRefresh": "Przejrzyj lub odśwież raport",
+    "runEditor": "Generator raportu",
+    "scopeLines": "Zakres — jedna referencja w wierszu",
+    "scopeRejected": "Zakres jest pusty, nieaktualny albo niedozwolony. Definicja nie została zmieniona.",
+    "scopeRequired": "Wymagany jest jawny zakres projektów. Domyślny zakres całej organizacji jest niedozwolony.",
+    "showContract": "Pokaż kontrakt źródeł, formuł i dostępu (tryb zaawansowany)",
+    "sourceType": {
+      "other": "Źródło",
+      "execution_case": "Realizacja",
+      "execution_task": "Zadanie",
+      "execution_decision": "Decyzja",
+      "execution_milestone": "Kamień milowy",
+      "operational_allocation": "Przydział zasobu",
+      "intervention_case": "Interwencja",
+      "finance": "Finanse",
+      "results": "Wyniki / KPI"
+    },
+    "technicalName": "Nazwa techniczna",
+    "writeFailed": "Nie zapisano zmiany raportu.",
+    "doc": {
+      "thisWeekAtAGlance": "Ten tydzień w skrócie",
+      "initiativesRequiringImmediateOperationalReaction": "Inicjatywy wymagające natychmiastowej reakcji operacyjnej.",
+      "next7DaysFocus": "Ognisko na najbliższe 7 dni",
+      "tasksAndMilestonesThatCanSilentlySlipThis": "Zadania i kamienie milowe, które mogą po cichu obsunąć się w tym tygodniu.",
+      "decisionQueue": "Kolejka decyzji",
+      "decisionsBlockingTasksOrShiftingMilestones": "Decyzje blokujące zadania albo przesuwające kamienie milowe.",
+      "executionHygieneGaps": "Luki higieny realizacji",
+      "dataWeaknessesThatDegradeOperationalControl": "Słabości danych, które psują kontrolę operacyjną.",
+      "portfolioControlList": "Lista kontrolna portfela",
+      "initiativesForPmoReviewWithRealOperationalExceptions": "Inicjatywy do przeglądu PMO z realnymi odchyleniami operacyjnymi.",
+      "milestoneScheduleExceptions": "Odchylenia kamieni milowych i harmonogramu",
+      "whatIsActuallyDriftingOnTheTimeline": "Co naprawdę obsuwa się na osi czasu.",
+      "budgetStaffingExceptions": "Odchylenia budżetu i obsady",
+      "exceptionsAlreadyTouchingBudgetOrCapacity": "Odchylenia, które już dotykają budżetu albo mocy przerobowej.",
+      "governanceExceptions": "Odchylenia ładu",
+      "itemsThatShouldEnterPmoReviewOrSteering": "Pozycje, które powinny trafić do przeglądu PMO albo komitetu sterującego.",
+      "programHealthRegister": "Rejestr kondycji programu",
+      "oneLinePerInitiativeWhatErodesDeliveryConfidence": "Jeden wiersz na inicjatywę: co odbiera pewność dostarczenia.",
+      "riskDelayDrivers": "Przyczyny ryzyk i opóźnień",
+      "strongestSignalsDegradingProgramHealth": "Najsilniejsze sygnały psujące kondycję programu.",
+      "whatIsTurningRed": "Co robi się czerwone",
+      "initiativesThatNeedRescueNowNotMonitoring": "Inicjatywy, które trzeba ratować teraz, a nie monitorować.",
+      "steeringImplications": "Wnioski dla komitetu sterującego",
+      "decisionsTheSteeringCommitteeShouldTake": "Decyzje, które powinien podjąć komitet sterujący.",
+      "blockedInitiativesRecoveryBoard": "Tablica ratunkowa zablokowanych inicjatyw",
+      "whatIsStuckWhyAndWhatWorkSits": "Co stoi, dlaczego i jaka praca czeka za tym.",
+      "tasksStalledBehindBlockers": "Zadania zatrzymane przez blokady",
+      "tasksThatCannotMoveUntilTheInitiativeIs": "Zadania, które nie ruszą, dopóki inicjatywa nie zostanie odblokowana.",
+      "escalationPath": "Ścieżka eskalacji",
+      "decisionsAndAlertsThatShouldBeEscalated": "Decyzje i ostrzeżenia, które należy eskalować.",
+      "recoveryOptions": "Warianty naprawy",
+      "actionsToUnblockDelivery": "Działania odblokowujące dostarczanie.",
+      "slippageRegister": "Rejestr obsunięć",
+      "initiativesWithRealDriftAgainstTheCommittedPlan": "Inicjatywy z realnym odchyleniem od zatwierdzonego planu.",
+      "baselineVsForecastGaps": "Różnice plan bazowy vs prognoza",
+      "missingDatesOrPlanWeaknessesThatCorruptForecast": "Brakujące daty albo słabości planu, które psują prognozę.",
+      "nextMilestonesAtRisk": "Najbliższe zagrożone kamienie milowe",
+      "milestonesToTrackDayByDay": "Kamienie milowe do pilnowania dzień po dniu.",
+      "recoveryTimeline": "Harmonogram naprawy",
+      "howToRestoreDeliveryPredictability": "Jak przywrócić przewidywalność dostarczania.",
+      "governedCapacityAlerts": "Zarządzane alerty obciążenia",
+      "peopleAlreadyOverloadedPerControlTower": "Osoby już przeciążone według wieży kontrolnej.",
+      "taskLoadByAssignee": "Obciążenie zadaniami wg osoby",
+      "whereTheWorkActuallySits": "Gdzie naprawdę leży praca.",
+      "4WeekHorizon": "Horyzont 4 tygodni",
+      "isCapacityEnoughForTheUpcomingWeeks": "Czy mocy wystarczy na najbliższe tygodnie.",
+      "tasksToReassign": "Zadania do przepisania",
+      "highestRiskTasksSittingOnOverloadedPeople": "Najbardziej ryzykowne zadania siedzące na przeciążonych osobach.",
+      "overspendRegister": "Rejestr przekroczeń kosztów",
+      "initiativesShowingDangerousVariance": "Inicjatywy z niebezpiecznym odchyleniem.",
+      "executionImpactOfSpendVariance": "Wpływ odchylenia kosztów na realizację",
+      "isVarianceAlreadyTranslatingIntoDeliveryRisk": "Czy odchylenie przekłada się już na ryzyko dostarczenia.",
+      "workItemsInsideOverspendingInitiatives": "Elementy pracy w inicjatywach przekraczających budżet",
+      "whatToInspectBeforeAFinanceDecision": "Co sprawdzić przed decyzją finansową.",
+      "financeActions": "Działania finansowe",
+      "whatToDoBeforeVarianceBecomesASponsor": "Co zrobić, zanim odchylenie stanie się problemem dla sponsora.",
+      "pendingDecisionsQueue": "Kolejka decyzji oczekujących",
+      "fullApprovalsQueueStillNotResolved": "Pełna kolejka zatwierdzeń wciąż nierozstrzygnięta.",
+      "agingBuckets": "Przedziały wiekowe",
+      "howFastDecisionDebtIsGrowing": "Jak szybko rośnie dług decyzyjny.",
+      "initiativesWaitingOnDecisions": "Inicjatywy czekające na decyzje",
+      "initiativesThatCannotMoveWithoutADecision": "Inicjatywy, które nie ruszą bez decyzji.",
+      "escalationCandidates": "Kandydaci do eskalacji",
+      "whatToEscalateRatherThanContinueMonitoring": "Co eskalować zamiast dalej monitorować.",
+      "dependencyConflictRegister": "Rejestr konfliktów zależności",
+      "explicitDependencyConflictsFromControlTower": "Jawne konflikty zależności z wieży kontrolnej.",
+      "criticalChains": "Łańcuchy krytyczne",
+      "initiativesWithTheHighestCombinationOfDecisionsTasks": "Inicjatywy z największym połączeniem decyzji, zadań i ostrzeżeń.",
+      "brokenLinks": "Zerwane powiązania",
+      "whereOneInitiativeSProblemIsAlreadySpreading": "Gdzie problem jednej inicjatywy już się rozlewa.",
+      "upstreamDownstreamImpact": "Wpływ w górę i w dół łańcucha",
+      "whatWillBeHitNextIfNothingIs": "Co oberwie następne, jeśli nic się nie zrobi.",
+      "confidenceRegister": "Rejestr pewności",
+      "theMostPracticalViewWillWeDeliverAnd": "Najbardziej praktyczny widok: czy dowieziemy i dlaczego nie.",
+      "driversOfErosion": "Przyczyny erozji",
+      "whatIsDestroyingConfidenceInPractice": "Co w praktyce niszczy pewność.",
+      "scenarioOutlook": "Perspektywa scenariuszy",
+      "whatHappensIfCurrentExceptionsGoWithoutReaction": "Co się stanie, jeśli obecne odchylenia zostaną bez reakcji.",
+      "sponsorSummary": "Podsumowanie dla sponsora",
+      "whatTheSponsorShouldUnderstandIn60Seconds": "Co sponsor ma zrozumieć w 60 sekund.",
+      "initiativesNeedingSponsorAttention": "Inicjatywy wymagające uwagi sponsora",
+      "whereTheSponsorCanActuallyHelpUnblockDelivery": "Gdzie sponsor naprawdę może pomóc odblokować dostarczanie.",
+      "topAchievements": "Największe osiągnięcia",
+      "proofOfProgressWorthShowingTheSponsor": "Dowody postępu warte pokazania sponsorowi.",
+      "sponsorAsks": "Prośby do sponsora",
+      "decisionsAndSupportNeededFromTheSponsor": "Decyzje i wsparcie potrzebne od sponsora.",
+      "reportTemplate": "Szablon raportu",
+      "thisReportTypeIsNotConfiguredYet": "Ten typ raportu nie jest jeszcze skonfigurowany.",
+      "empty": {
+        "noScheduleExceptions": "Brak odchyleń harmonogramu.",
+        "noBudgetOrStaffingExceptions": "Brak odchyleń budżetu ani obsady.",
+        "noRiskOrDelaySignals": "Brak sygnałów ryzyka i opóźnień.",
+        "noInitiativesInRedAmberZone": "Brak inicjatyw w strefie czerwonej i bursztynowej.",
+        "noBlockedInitiatives": "Brak zablokowanych inicjatyw.",
+        "noStalledTasks": "Brak zatrzymanych zadań.",
+        "noEscalationItems": "Brak pozycji do eskalacji.",
+        "noSlippageSignals": "Brak sygnałów obsunięcia.",
+        "noUpcomingMilestones": "Brak nadchodzących kamieni milowych.",
+        "noGovernedCapacityAlerts": "Brak zarządzanych alertów obciążenia.",
+        "noCapacityTimeline": "Brak osi czasu obciążenia.",
+        "noTasksNeedReassignment": "Żadne zadanie nie wymaga przepisania.",
+        "noOverspendSignals": "Brak sygnałów przekroczenia kosztów.",
+        "noExecutionImpactVisible": "Brak widocznego wpływu na realizację.",
+        "noWorkItemsLinkedToOverspend": "Brak elementów pracy powiązanych z przekroczeniem kosztów.",
+        "noPendingDecisions": "Brak decyzji oczekujących.",
+        "noInitiativesWaitingOnDecisions": "Brak inicjatyw czekających na decyzje.",
+        "noExplicitDependencyConflicts": "Brak jawnych konfliktów zależności.",
+        "noConfidenceErosionDrivers": "Brak przyczyn erozji pewności.",
+        "noScenarioNotesGenerated": "Nie wygenerowano notatek scenariuszowych.",
+        "noSponsorLevelIssues": "Brak spraw na poziomie sponsora.",
+        "noNotableAchievementsYet": "Brak istotnych osiągnięć."
+      },
+      "actions": "Akcje",
+      "aiUnavailable": "Analiza AI nie jest dostępna dla zamrożonej migawki raportu.",
+      "createdAt": "Utworzono",
+      "downloadDocx": "Pobierz DOCX",
+      "downloadFailed": "Nie udało się pobrać pliku.",
+      "downloadPdf": "Pobierz PDF",
+      "history": "Historia",
+      "noComments": "Migawka raportu nie ma wątku komentarzy.",
+      "noRelations": "Migawka nie deklaruje osobnych powiązań.",
+      "noSources": "Brak zapisanych źródeł i założeń.",
+      "panelAria": "Szczegóły raportu realizacji",
+      "properties": "Właściwości",
+      "property": "Właściwość",
+      "publish": "Opublikuj",
+      "publishFailed": "Nie udało się opublikować raportu.",
+      "publishInActions": "Publikacja jest dostępna w sekcji Akcje.",
+      "publishedAt": "opublikowano",
+      "readOnlyReason": "raport jest zamrożoną migawką; AI nie może uzupełniać jego treści",
+      "sourcesAssumptions": "Źródła i założenia",
+      "value": "Wartość"
+    },
+    "runDraftJson": "Kontrakt JSON szkicu raportu"
   },
   "enums": {
     "unknown": "Nieznane",
@@ -47131,5 +47799,26 @@
       "PREPARE_CLOSURE": "Przygotuj zamknięcie",
       "REVIEW_HISTORY": "Przejrzyj historię"
     }
+  },
+  "projectIntelligence": {
+    "started": "Rozpoczęto",
+    "useSelector": "Użyj selektora projektu w nagłówku",
+    "pmoAlignment": "Wszystkie zebrane wnioski są zgodne ze standardami ISO 21500, PMBOK 7 i PRINCE2 — dla pełnej zgodności PMO i audytowalności.",
+    "knowledgeEmpty": "Zacznij rozmowę z AI, aby zebrać wiedzę o projekcie. Wnioski pojawią się tutaj w miarę ich wykrywania.",
+    "sessionsEmpty": "Twoje sesje wywiadu z AI pojawią się tutaj. Zacznij rozmowę, aby utworzyć pierwszą."
+  },
+  "rollout": {
+    "strategy": {
+      "lead": "Określ granice i filary strategiczne transformacji.",
+      "themes": "Główne motywy napędzające tę transformację."
+    },
+    "teams": {
+      "lead": "Określ strukturę organizacyjną, role i strumienie pracy."
+    }
+  },
+  "fullPilot": {
+    "inDevelopment": "Ta funkcja jest w budowie.",
+    "scopeInPlaceholder": "Wypisz pozycje objęte pilotażem…",
+    "noGoBody": "Pilotaż nieudany. Przemyśl strategię ponownie."
   }
 }

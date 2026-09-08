@@ -8,8 +8,10 @@ import {
   Target,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../../store/useAppStore';
+import { localeListy } from '@/utils/listDateFormat';
 
 /**
  * Step A: PMO Health Section
@@ -47,6 +49,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
   projectId,
   onExplainClick,
 }) => {
+  const { t } = useTranslation();
   const [snapshot, setSnapshot] = useState<PMOHealthSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +124,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
             title="Ask AI to explain current PMO status"
           >
             <HelpCircle size={12} />
-            Explain This
+            {t('pmo.health.explain', 'Explain This')}
           </button>
         )}
       </div>
@@ -197,7 +200,9 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
           >
             {snapshot.decisions.pendingCount}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Pending</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {t('pmo.health.pending', 'Pending')}
+          </div>
         </div>
 
         <div
@@ -252,7 +257,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
       {/* Timestamp */}
       <div className="mt-3 pt-2 border-t border-slate-200 dark:border-navy-700">
         <span className="text-[10px] text-slate-600 dark:text-slate-500">
-          Updated: {new Date(snapshot.updatedAt).toLocaleTimeString()}
+          {t('pmo.health.updated', 'Updated')}: {new Date(snapshot.updatedAt).toLocaleTimeString(localeListy())}
         </span>
       </div>
     </div>
