@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CommissionStatement, PARTNER_PMO_MAPPING, PartnerDeal } from '../../views/partner/types';
 import { PMODomainBadge } from './EcosystemAnalytics';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface CommissionIntelligenceProps {
   deals: PartnerDeal[];
@@ -92,7 +93,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
         description: t(
           'partner.commissionIntel.insights.pipeline.description',
           '{{amount}} in potential commission from {{count}} active deals.',
-          { amount: `$${pipelineValue.toLocaleString()}`, count: inProgressDeals.length }
+          { amount: `$${formatListNumber(pipelineValue, '0')}`, count: inProgressDeals.length }
         ),
         action: 'view-pipeline',
         actionLabel: t('partner.commissionIntel.actions.reviewDeals', 'Review deals'),
@@ -129,7 +130,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
         description: t(
           'partner.commissionIntel.insights.pendingPayouts.description',
           '{{amount}} in commission statements awaiting payment.',
-          { amount: `$${pendingAmount.toLocaleString()}` }
+          { amount: `$${formatListNumber(pendingAmount, '0')}` }
         ),
         action: 'view-statements',
         actionLabel: t('partner.commissionIntel.actions.viewStatements', 'View statements'),
@@ -215,19 +216,19 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ProjectionCard
             label={t('partner.commissionIntel.projection.earned', 'Earned')}
-            value={`$${projections.earned.toLocaleString()}`}
+            value={`$${formatListNumber(projections.earned, '0')}`}
             status="completed"
             subtitle={t('partner.commissionIntel.projection.earnedSubtitle', 'Closed won deals')}
           />
           <ProjectionCard
             label={t('partner.commissionIntel.projection.pipeline', 'Pipeline')}
-            value={`$${projections.pipeline.toLocaleString()}`}
+            value={`$${formatListNumber(projections.pipeline, '0')}`}
             status="pending"
             subtitle={t('partner.commissionIntel.projection.pipelineSubtitle', 'Active opportunities')}
           />
           <ProjectionCard
             label={t('partner.commissionIntel.projection.projected', 'Projected')}
-            value={`$${projections.projected.toLocaleString()}`}
+            value={`$${formatListNumber(projections.projected, '0')}`}
             status="projected"
             subtitle={t(
               'partner.commissionIntel.projection.projectedSubtitle',
@@ -237,7 +238,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
           />
           <ProjectionCard
             label={t('partner.commissionIntel.projection.quarterTotal', 'Q1 total')}
-            value={`$${projections.quarterlyTotal.toLocaleString()}`}
+            value={`$${formatListNumber(projections.quarterlyTotal, '0')}`}
             status="total"
             subtitle={t(
               'partner.commissionIntel.projection.quarterTotalSubtitle',
@@ -418,7 +419,7 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
           <div className="font-semibold text-navy-900 dark:text-white">{deal.clientName}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {t('partner.commissionIntel.dealValue', '{{amount}} deal value', {
-              amount: `$${deal.dealValue.toLocaleString()}`,
+              amount: `$${formatListNumber(deal.dealValue, '0')}`,
             })}
           </div>
         </div>
@@ -426,7 +427,7 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
       <div className="flex items-center gap-3">
         <div className="text-right">
           <div className="font-semibold text-emerald-600 dark:text-emerald-400">
-            ${deal.commissionAmount.toLocaleString()}
+            ${formatListNumber(deal.commissionAmount, '0')}
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
             {t('partner.commissionIntel.commissionRate', '{{percent}}% rate', {

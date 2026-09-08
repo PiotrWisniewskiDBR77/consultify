@@ -10,6 +10,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { localeListy } from '@/utils/listDateFormat';
 import {
   V8PartnerApi,
   type V8PartnerAttribution,
@@ -120,14 +121,14 @@ const stateClass: Record<SurfaceState, string> = {
 
 function money(value: number | undefined, currency: string): string {
   try {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: currency || 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number(value) || 0);
   } catch {
-    return `${new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency || 'EUR'}`;
+    return `${new Intl.NumberFormat(localeListy(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)} ${currency || 'EUR'}`;
   }
 }
 

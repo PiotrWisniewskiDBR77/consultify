@@ -18,7 +18,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { AcademyModule, PartnerCertification } from '../../views/partner/types';
 

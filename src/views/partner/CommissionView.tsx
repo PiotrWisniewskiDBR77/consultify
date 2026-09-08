@@ -20,6 +20,7 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import { type CommissionStatement, PARTNER_PMO_MAPPING } from './types';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 function formatStatementPeriod(start?: string, end?: string): string {
   const startLabel = typeof start === 'string' ? start.slice(0, 10) : '';
@@ -220,7 +221,7 @@ export const CommissionView: React.FC = () => {
                 {t('partner.commission.paidStatements', 'Paid statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.paidAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.paidAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('partner.commission.settledCount', '{{count}} settled statements', {
@@ -234,7 +235,7 @@ export const CommissionView: React.FC = () => {
                 {t('partner.commission.approvedStatements', 'Approved statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.approvedAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.approvedAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('partner.commission.awaitingPayoutCount', '{{count}} awaiting payout', {
@@ -248,7 +249,7 @@ export const CommissionView: React.FC = () => {
                 {t('partner.commission.pendingStatements', 'Pending statements')}
               </div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                ${statementSummary.pendingAmount.toLocaleString()}
+                ${formatListNumber(statementSummary.pendingAmount, '0')}
               </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('partner.commission.underReviewCount', '{{count}} still under review', {
@@ -333,7 +334,7 @@ export const CommissionView: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="font-semibold text-slate-900 dark:text-white">
-                      ${statement.totalAmount.toLocaleString()}
+                      ${formatListNumber(statement.totalAmount, '0')}
                     </div>
                     <div
                       className={`text-xs ${

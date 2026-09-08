@@ -43,6 +43,7 @@ import {
   type V8PartnerProgramStatus,
 } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface EarningsSummary {
   totalEarned: number;
@@ -250,14 +251,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       const code = currency || activeCurrency || 'EUR';
       const value = amount ?? 0;
       try {
-        return new Intl.NumberFormat('pl-PL', {
+        return new Intl.NumberFormat(localeListy(), {
           style: 'currency',
           currency: code,
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }).format(value);
       } catch {
-        return `${new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${code}`;
+        return `${new Intl.NumberFormat(localeListy(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${code}`;
       }
     },
     [activeCurrency]

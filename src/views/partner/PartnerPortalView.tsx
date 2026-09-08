@@ -74,6 +74,7 @@ import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 import { PartnerOnboardingOrientation, PartnerStartRouter } from './PartnerStartRouter';
+import { formatListDate, formatListNumber, formatListTime, localeListy } from '@/utils/listDateFormat';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -343,7 +344,7 @@ const DashboardSection: React.FC = () => {
         },
         {
           label: t('partner.dashboard.monthlyRevenue', 'Monthly Revenue'),
-          value: `€${(s.monthlyRevenue || 0).toLocaleString()}`,
+          value: `€${formatListNumber(s.monthlyRevenue || 0, '0')}`,
           change: `${(s.revenueChange ?? 0) > 0 ? '+' : ''}${s.revenueChange ?? 0}%`,
           changeType: (s.revenueChange ?? 0) >= 0 ? ('positive' as const) : ('negative' as const),
           icon: TrendingUp,
@@ -720,7 +721,7 @@ const normalizeMetricsPayload = (payload: any): MetricsData | null => {
 const MetricsSection: React.FC = () => {
   const { t } = useTranslation();
   const formatEuro = useCallback((value: number) => {
-    return new Intl.NumberFormat('pl-PL', {
+    return new Intl.NumberFormat(localeListy(), {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 2,
@@ -1014,7 +1015,7 @@ const MetricsSection: React.FC = () => {
                   key={index}
                   className="flex-1 rounded-t bg-c-text-secondary transition-all duration-300 hover:bg-c-text"
                   style={{ height: `${height}%` }}
-                  title={`€${value.toLocaleString()}`}
+                  title={`€${formatListNumber(value, '0')}`}
                 />
               );
             })}
@@ -1427,7 +1428,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 {project.targetEndDate && (
                   <p className="text-xs text-c-text-muted mt-3">
                     {t('partner.clients.targetDate', 'Termin')}:{' '}
-                    {new Date(project.targetEndDate).toLocaleDateString()}
+                    {formatListDate(project.targetEndDate)}
                   </p>
                 )}
               </div>
@@ -2087,7 +2088,7 @@ const CertificationSection: React.FC<{
                   </h3>
                   <p className="text-sm text-c-text-muted">
                     {examDeadlineAt
-                      ? `${t('partner.certification.deadline', 'Termin')}: ${new Date(examDeadlineAt).toLocaleTimeString()}`
+                      ? `${t('partner.certification.deadline', 'Deadline')}: ${formatListTime(examDeadlineAt)}`
                       : t('common.loading', 'Loading…')}
                   </p>
                 </div>
@@ -2222,12 +2223,12 @@ const CertificationSection: React.FC<{
                   <h4 className="font-medium text-c-text">{cert.name}</h4>
                   <p className="text-sm text-c-text-secondary">
                     {t('partner.certification.issued', 'Issued')}:{' '}
-                    {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
+                    {formatListDate(cert.completedAt)}
                   </p>
                   {cert.validUntil && (
                     <p className="text-xs text-c-text-muted mt-1">
                       {t('partner.certification.validUntil', 'Valid until')}:{' '}
-                      {new Date(cert.validUntil).toLocaleDateString()}
+                      {formatListDate(cert.validUntil)}
                     </p>
                   )}
                 </div>

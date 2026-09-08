@@ -49,11 +49,13 @@ import {
   Wifi,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation, type TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import SubscriberDashboardLayout from '../../components/Subscriber/SubscriberDashboardLayout';
 import SubscriberDispatchTable from '../../components/Subscriber/SubscriberDispatchTable';
 import SubscriberHealthBadge from '../../components/Subscriber/SubscriberHealthBadge';
+import { formatListNumber, formatListTime } from '@/utils/listDateFormat';
 import {
   ClientSubscriberSnapshot,
   extractTokenFromHash,
@@ -192,7 +194,7 @@ function formatRelative(t: TFunction, locale: string, iso: string | null): strin
 function formatClock(date: Date | null): string {
   if (!date) return '—';
   try {
-    return date.toLocaleTimeString();
+    return formatListTime(date);
   } catch {
     return date.toISOString();
   }
@@ -689,7 +691,7 @@ const DeliveryStat: React.FC<DeliveryStatProps> = ({ label, value, tone }) => {
         {label}
       </div>
       <div className={`tabular-nums text-base font-semibold ${STAT_TONE[tone]}`}>
-        {Number.isFinite(value) ? value.toLocaleString() : '—'}
+        {formatListNumber(value)}
       </div>
     </div>
   );

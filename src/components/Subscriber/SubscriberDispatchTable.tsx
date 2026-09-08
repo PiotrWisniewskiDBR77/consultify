@@ -22,6 +22,7 @@
 
 import { CheckCircle, FlaskConical, Info, MinusCircle, XCircle } from 'lucide-react';
 import React from 'react';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 import type {
   ClientSubscriberSnapshot,
@@ -72,7 +73,7 @@ function formatTime(iso: string): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
   try {
-    return new Date(ts).toLocaleString();
+    return formatListDateTime(ts);
   } catch {
     return new Date(ts).toISOString();
   }

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 import {
   PartnerEcosystemMetrics,
@@ -209,7 +210,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
         <MetricCard
           icon={<DollarSign size={20} />}
           label={t('partner.ecosystem.totalCommission', 'Total commission')}
-          value={`$${metrics.totalCommissionEarned.toLocaleString()}`}
+          value={`$${formatListNumber(metrics.totalCommissionEarned, '0')}`}
           subtitle={t('partner.ecosystem.dealsWon', '{{count}} deals won', {
             count: metrics.totalDealsWon,
           })}
