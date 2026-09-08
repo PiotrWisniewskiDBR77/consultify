@@ -1,0 +1,59 @@
+Output format is aligned.
+=== A. INICJATYWY: smieci i braki ===
+                     rodzaj                      | count 
+-------------------------------------------------+-------
+ inicjatywy razem                                |   104
+ nazwa testowa (test/e2e/sample/demo/acceptance) |    12
+ IN_EXECUTION bez project_id                     |     5
+ IN_EXECUTION bez dat planu                      |     5
+ IN_EXECUTION bez wlasciciela wykonania          |     5
+ IN_EXECUTION bez zadnego zadania                |     6
+ tytul po angielsku (heurystyka)                 |    51
+(7 rows)
+
+
+=== B. ZADANIA ===
+                     rodzaj                      | count 
+-------------------------------------------------+-------
+ zadania razem                                   |   197
+ bez assignee                                    |    35
+ bez assignee ale z owner_id (UI pokazuje osobe) |    34
+ bez terminu                                     |    68
+ bez inicjatywy                                  |    92
+ otwarte i po terminie                           |   104
+ opis po angielsku (heurystyka)                  |    71
+ tytul po angielsku (heurystyka)                 |   114
+ nazwa testowa                                   |     5
+(9 rows)
+
+
+=== C. UZYTKOWNICY ===
+                     rodzaj                     | count 
+------------------------------------------------+-------
+ uzytkownicy org                                |    17
+ bez job_title                                  |    13
+ job_title = rola systemowa/platformowa         |     2
+ bez weekly_capacity_hours (podaz domyslna 40h) |    17
+ konto testowe (email .local/test/e2e)          |     2
+(5 rows)
+
+
+=== D. AGREGATY RUNTIME (realizacje) ===
+                            rodzaj                             | count 
+---------------------------------------------------------------+-------
+ execution_case razem                                          |     6
+ execution_case seedowy demo-story/acceptance/aco              |     6
+ initiative-agregat bez projectId (niewidoczny fail-closed)    |     1
+ initiative-agregat z initiativeId = wlasne id (samowskazanie) |    16
+(4 rows)
+
+
+=== E. RAID / DECYZJE ===
+         rodzaj          | count 
+-------------------------+-------
+ raid razem              |     7
+ raid bez terminu        |     7
+ raid bez inicjatywy     |     0
+ raid tytul po angielsku |     7
+(4 rows)
+

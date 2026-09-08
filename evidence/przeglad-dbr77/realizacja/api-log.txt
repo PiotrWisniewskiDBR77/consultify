@@ -1,0 +1,51 @@
+# POMIAR API — kopia bazy stagingu (DBR77), 2026-09-08 06:39
+# Konto: piotr.wisniewski@dbr77.com (ADMIN, org a3e05d4a-...)
+
+## PRZED naprawa (kod f2f9608d04) — zmierzone curl -m 45
+GET /api/initiatives/runtime-v1/execution-cases                                      http=200 t=0.168
+GET .../execution-cases/demo-story-20260826-execution-oee/work                       http=200 t=0.030
+GET .../execution-cases/demo-story-20260826-execution-inventory/work                 http=200 t=0.040
+GET .../execution-cases/demo-story-20260826-execution-traceability/work              http=200 t=0.045
+GET .../execution-cases/demo-story-20260826-execution-salesops/work                  http=200 t=0.031
+GET .../execution-cases/a3e05d4a-...--acceptance--execution-case/work                http=000 t=45.002   <-- BRAK ODPOWIEDZI (petla bez konca)
+GET .../execution-cases/aco-execution-case-1786420688957/work                        http=200 t=0.086
+# Proces API po 25 porzuconych wywolaniach: CPU ~30%, RSS 987 -> 1029 MB w 75 s (rosnie bez konca)
+
+## PO naprawie (HEAD 307f6960e3)
+GET .../execution-cases/demo-story-20260826-execution-oee/work                           http=200 t=0.030870
+GET .../execution-cases/demo-story-20260826-execution-inventory/work                     http=200 t=0.018887
+GET .../execution-cases/demo-story-20260826-execution-traceability/work                  http=200 t=0.017145
+GET .../execution-cases/demo-story-20260826-execution-salesops/work                      http=200 t=0.017006
+GET .../execution-cases/a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--execution-case/work http=404 t=0.013532
+GET .../execution-cases/aco-execution-case-1786420688957/work                            http=200 t=0.023469
+
+## Kluczowe endpointy ekranow (PO)
+GET /api/health                                                  http=200 t=0.002333
+GET /api/initiatives                                             http=200 t=0.047007
+GET /api/initiatives/runtime-v1/execution-cases                  http=200 t=0.014959
+GET /api/tasks                                                   http=200 t=0.011855
+GET /api/v8/execution-control/capacity/timeline                  http=200 t=0.023169
+GET /api/execution-reports/runs                                  http=200 t=0.003553
+GET /api/execution-reports/definitions                           http=200 t=0.004261
+
+## Z api.log: wpisy >=400 oraz High DB query count
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases","dbQueryCount":52,"dbQueryTime":66}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/work","dbQueryCount":48,"dbQueryTime":60}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/work","dbQueryCount":48,"dbQueryTime":54}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/work","dbQueryCount":48,"dbQueryTime":53}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/work","dbQueryCount":48,"dbQueryTime":51}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work","dbQueryCount":48,"dbQueryTime":52}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-traceability/work","dbQueryCount":48,"dbQueryTime":54}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/work","dbQueryCount":48,"dbQueryTime":60}
+2026-09-08 06:26:43:2643 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/work","dbQueryCount":48,"dbQueryTime":52}
+2026-09-08 06:27:17:2717 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/tasks","dbQueryCount":14,"dbQueryTime":56}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-oee/work","dbQueryCount":56,"dbQueryTime":50}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-inventory/work","dbQueryCount":48,"dbQueryTime":61}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-traceability/work","dbQueryCount":48,"dbQueryTime":37}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/demo-story-20260826-execution-salesops/work","dbQueryCount":48,"dbQueryTime":31}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/initiatives/runtime-v1/execution-cases/a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--execution-case/work","statusCode":404,"responseTime":12,"dbQueryCount":44,"dbQueryTime":23,"memoryDelta":{"heapUsed":955840,"external":27955,"rss":0},"userId":"audyt-dbr77-robotnik-0908","organizationId":"a3e05d4a-5397-419d-b486-8e44366c0063","route":"/api/initiatives/runtime-v1/execution-cases/:executionCaseId/work","isSlow":false,"isError":true}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--execution-case/work","dbQueryCount":44,"dbQueryTime":23}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases/aco-execution-case-1786420688957/work","dbQueryCount":48,"dbQueryTime":41}
+2026-09-08 06:39:45:3945 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives","dbQueryCount":46,"dbQueryTime":70}
+2026-09-08 06:39:46:3946 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/initiatives/runtime-v1/execution-cases","dbQueryCount":52,"dbQueryTime":26}
+2026-09-08 06:39:46:3946 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/v8/execution-control/capacity/timeline","dbQueryCount":62,"dbQueryTime":46}
