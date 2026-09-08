@@ -779,6 +779,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     null
   );
   /**
+   * Raporty — „Dodaj raport" (DEC-453, odbiór 08.09.2026): dawniej
+   * `btn-secondary` w slocie filtrów (`reportsFilterControl`, `AddReportMenu`),
+   * jedyny CTA modułu wystylizowany inaczej niż Praca/Zasoby/Decyzje i
+   * ryzyka obok. Ten sam kanał, wariant z rozwijanym menu
+   * (`ExecutionSurfacePrimaryCta.menu`) — cztery raporty startowe + „Własny
+   * raport…", teraz ciemny wypełniony jak reszta zakładek.
+   */
+  const [reportsPrimaryCta, setReportsPrimaryCta] = useState<ExecutionSurfacePrimaryCta | null>(
+    null
+  );
+  /**
    * Prawy slot Menu 3 (kebab `RowActionsMenu`) dla Pracy i Zasobów — RZADKIE
    * akcje tworzenia, które nie mogą być drugim CTA: „Nowy kamień milowy"
    * (Praca) i „Propose allocation" (Zasoby), obie widoczne tylko przy
@@ -5596,6 +5607,7 @@ Please return:
           activePreset={canonicalMenu3Preset.reports}
           onCountsChange={menu3CountHandlers.reports}
           onRegisterFilterControl={setReportsFilterControl}
+          onRegisterPrimaryCta={setReportsPrimaryCta}
           onRegisterMenu3Control={setReportsMenu3Control}
           isAdmin={isAdminOwnerOrSuperAdminRole(currentUser?.role)}
         />
@@ -5827,14 +5839,14 @@ Please return:
 
     const dispatch = (name: string) => () => window.dispatchEvent(new CustomEvent(name));
 
-    // Uwaga właściciela 08.09 (staging, 0 raportów): CTA raportu przeniosło
-    // się z tego prawego primary-CTA gospodarza (dawniej „Nowy raport",
-    // dispatch `execution:reports-new-report`) do CTA „Dodaj raport" WEWNĄTRZ
-    // Menu 2 `ExecutionReportsSurface` (`onRegisterFilterControl`,
-    // `AddReportMenu`) — dokładnie ten sam wzorzec, którym Decyzje/RAID dają
-    // swoje jedyne CTA widoku (`ExecutionControlSurface.tsx`: `onNewItem`
-    // tam NIGDY nie jest ustawiany dla ich zakładki, CTA żyje wyłącznie w
-    // rejestrowanym węźle Menu 2). Ta gałąź `reports` jest usunięta, żeby
+    // Uwaga właściciela 08.09 (staging, 0 raportów; odbiór spójności tego
+    // samego dnia): CTA raportu NIE jedzie przez to `onNewItem` gospodarza —
+    // żyje w rejestrowanym primary CTA `ExecutionReportsSurface`
+    // (`onRegisterPrimaryCta`, wariant z rozwijanym menu — cztery raporty
+    // startowe + „Własny raport…", dawniej `AddReportMenu`/`btn-secondary`
+    // w slocie filtrów). Dokładnie ten sam wzorzec, którym Praca/Zasoby/
+    // Decyzje i ryzyka dają swoje jedyne CTA widoku — `onNewItem` tam NIGDY
+    // nie jest ustawiany. Ta gałąź `reports` zostaje więc usunięta, żeby
     // uniknąć DWÓCH CTA robiących to samo (hook gęstości,
     // `scripts/check-gestosc.sh`) — `reports` spada teraz do domyślnej
     // gałęzi niżej (`onNewItem: undefined`).
@@ -5898,10 +5910,12 @@ Please return:
         onClearFilters={handleClearFilters}
         /*
          * ── JEDEN primary CTA per zakładka (porządek pasków 08.09.2026) ────
-         * Powierzchnie Praca/Zasoby/Decyzje i ryzyka rejestrują swoje CTA
-         * przez `onRegisterPrimaryCta`; Raporty i Rollout korzystają dalej
-         * z `onNewItem` (zdarzenia CustomEvent). `primaryCta` ma w
-         * `ModuleNavBar` pierwszeństwo nad `onNewItem`, a te dwa zbiory
+         * Powierzchnie Praca/Zasoby/Decyzje i ryzyka/Raporty rejestrują swoje
+         * CTA przez `onRegisterPrimaryCta` (Raporty: wariant z rozwijanym
+         * menu, `ExecutionSurfacePrimaryCta.menu` — DEC-453, odbiór 08.09,
+         * ten sam ciemny wypełniony wygląd co reszta zakładek). Rollout
+         * korzysta dalej z `onNewItem` (zdarzenia CustomEvent). `primaryCta`
+         * ma w `ModuleNavBar` pierwszeństwo nad `onNewItem`, a te dwa zbiory
          * zakładek są rozłączne — nigdy nie ma dwóch CTA naraz.
          */
         primaryCta={
@@ -5911,7 +5925,9 @@ Please return:
               ? (resourcesPrimaryCta ?? undefined)
               : activeTab === ('control' as ModuleTab)
                 ? (controlPrimaryCta ?? undefined)
-                : undefined
+                : activeTab === 'reports'
+                  ? (reportsPrimaryCta ?? undefined)
+                  : undefined
         }
         onNewItem={menuCta.onNewItem}
         newItemLabel={menuCta.newItemLabel}

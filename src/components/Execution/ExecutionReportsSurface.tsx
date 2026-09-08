@@ -1,7 +1,7 @@
-import { ChevronDown } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MENU_2_FILTERS_ROW } from '@/components/shared/ModuleMenu3';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
@@ -38,7 +38,11 @@ import {
   fetchExecutionReportInputs,
 } from './executionReportModel';
 
-import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  countExecutionPresets,
+  type ExecutionMenu3Contract,
+  type ExecutionSurfacePrimaryCta,
+} from './canonicalMenu3';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -184,120 +188,25 @@ const definitionBusinessLabels: Record<string, string> = {
  * (`docs/ui-standards/TRIADA_KANON.md`) każe: tabela zawsze, CTA w Menu 2 —
  * dokładnie ten wzorzec, którym Decyzje/RAID dają swoje jedyne CTA widoku
  * (`ExecutionControlSurface.tsx`, blok `onRegisterFilterControl` przy
- * „Nowa decyzja"/„Nowa pozycja RAID"). `AddReportMenu` zastępuje kafle
- * pustego stanu — jest to TEN SAM wybór (cztery raporty startowe + „Własny
- * raport…"), tylko jako rozwijane menu przy CTA zamiast planszy w tabeli.
- * Stan otwarcia żyje WEWNĄTRZ tego komponentu (nie w gospodarzu) — inaczej
- * każde kliknięcie CTA przerejestrowywałoby węzeł Menu 2 u gospodarza
- * (`onRegisterFilterControl`) i wymagałoby dodania `open` do zależności tego
- * efektu, z ryzykiem pętli opisanym przy R4/R5 w `ExecutionControlSurface.tsx`.
+ * „Nowa decyzja"/„Nowa pozycja RAID"). Cztery raporty startowe + „Własny
+ * raport…" żyją teraz jako pozycje `menu` primary CTA „Dodaj raport"
+ * (`onRegisterPrimaryCta`, `StandardModuleBar`/`PrimaryCtaMenuButton`) —
+ * TA SAMA treść co dawne kafle pustego stanu, ten sam wybór.
+ *
+ * ODBIÓR SPÓJNOŚCI 08.09 (DEC-453, wieczór): dawniej ten CTA żył jako
+ * lokalny `AddReportMenu` (`btn-secondary`, jasny obrys) WEWNĄTRZ węzła
+ * `onRegisterFilterControl` — jedyny CTA modułu wystylizowany inaczej niż
+ * Praca/Zasoby/Decyzje i ryzyka (ciemny primary przez `onRegisterPrimaryCta`
+ * obok). `AddReportMenu` USUNIĘTY — `StandardModuleBar` renderuje teraz
+ * identyczny dropdown (wygląd `MENU_1_PRIMARY_CTA`) dla KAŻDEGO
+ * `primaryCta.menu`, więc Raporty dostają dokładnie ten sam komponent CTA
+ * co reszta zakładek, tylko z wariantem `menu` zamiast zwykłego `onClick`.
  */
-interface AddReportMenuItem {
-  id: string;
-  title: string;
-  description?: string;
-  meta?: string;
-  onSelect: () => void;
-}
-
-const AddReportMenu: React.FC<{
-  label: string;
-  ariaLabel: string;
-  customLabel: string;
-  items: AddReportMenuItem[];
-  onCustom: () => void;
-  'data-testid'?: string;
-}> = ({ label, ariaLabel, customLabel, items, onCustom, 'data-testid': testId }) => {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('mousedown', onClickOutside);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [open]);
-
-  return (
-    <div ref={containerRef} className="relative" data-testid={testId}>
-      <button
-        type="button"
-        className="btn-secondary"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
-        data-testid={testId ? `${testId}-trigger` : undefined}
-      >
-        {label}
-        <ChevronDown
-          size={14}
-          className={`shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-          aria-hidden="true"
-        />
-      </button>
-      {open && (
-        <div
-          role="menu"
-          aria-label={ariaLabel}
-          className="absolute right-0 top-full z-overlay mt-1 w-72 overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface-raised py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
-          data-testid={testId ? `${testId}-panel` : undefined}
-        >
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                item.onSelect();
-                setOpen(false);
-              }}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left transition-colors duration-150 hover:bg-c-surface"
-              data-testid={testId ? `${testId}-item-${item.id}` : undefined}
-            >
-              <span className="text-sm font-medium text-c-text">{item.title}</span>
-              {item.description && (
-                <span className="text-xs text-c-text-muted">{item.description}</span>
-              )}
-              {item.meta && (
-                <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
-                  {item.meta}
-                </span>
-              )}
-            </button>
-          ))}
-          <div className="my-1 h-px bg-c-border-subtle" role="separator" />
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onCustom();
-              setOpen(false);
-            }}
-            className="flex w-full items-center px-3 py-2 text-left text-sm text-c-text-secondary transition-colors duration-150 hover:bg-c-surface"
-            data-testid={testId ? `${testId}-custom` : undefined}
-          >
-            {customLabel}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
 export const ExecutionReportsSurface = ({
   activePreset,
   onCountsChange,
   onRegisterFilterControl,
+  onRegisterPrimaryCta,
   onRegisterMenu3Control,
   isAdmin = false,
 }: ExecutionMenu3Contract & {
@@ -310,6 +219,17 @@ export const ExecutionReportsSurface = ({
    * tabelą, i CTA „Nowy raport" wraz z filtrami przenoszą się tutaj.
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
+  /**
+   * Rejestruje JEDEN primary CTA zakładki „Raporty" — „Dodaj raport" — do
+   * prawego skraju Menu 2 gospodarza (`StandardModuleBar.primaryCta`), TEN
+   * SAM kanał i wygląd co Praca/Zasoby/Decyzje i ryzyka
+   * (`onRegisterPrimaryCta`). Używa wariantu `menu` (`ExecutionSurfacePrimaryCta.menu`)
+   * — cztery raporty startowe z katalogu + „Własny raport…", dawniej lokalny
+   * `AddReportMenu` (`btn-secondary`) w slocie filtrów. Widoczny WYŁĄCZNIE
+   * w widoku „Raporty" (`registerMode === 'RUNS'`) — w „Definicje" dodawanie
+   * migawki nie ma kontekstu, więc rejestrujemy `null`.
+   */
+  onRegisterPrimaryCta?: (cta: ExecutionSurfacePrimaryCta | null) => void;
   /**
    * P16-R6 (D6): rejestruje kebab z akcjami deweloperskimi („Nowa definicja",
    * „Kontrakt raportu (zaawansowane)") do prawego slotu Menu 3
@@ -567,14 +487,14 @@ export const ExecutionReportsSurface = ({
   }, []);
 
   /**
-   * Uwaga właściciela 08.09: CTA „Dodaj raport" żyje teraz w Menu 2 tej
-   * powierzchni (`onRegisterFilterControl` niżej, `AddReportMenu`), nie w
+   * Uwaga właściciela 08.09: CTA „Dodaj raport" żyje teraz w primary CTA tej
+   * powierzchni (`onRegisterPrimaryCta` niżej, wariant `menu`), nie w
    * primary CTA gospodarza (`ExecutionHub`'s `menuCta.onNewItem`) — ten sam
-   * wzorzec, którym Decyzje/RAID dają swoje jedyne CTA widoku
+   * kanał, którym Decyzje/RAID dają swoje jedyne CTA widoku
    * (`ExecutionControlSurface.tsx`), więc `menuCta` już nie ma gałęzi
    * `reports` i zdarzenie `execution:reports-new-report` nie ma już żadnego
    * nadawcy (usunięte razem z tym nasłuchem — potwierdzone grepem po całym
-   * `src/`). „Własny raport…" w `AddReportMenu` woła `openGenericWizard`
+   * `src/`). „Własny raport…" w `menu.onCustom` woła `openGenericWizard`
    * bezpośrednio, bez pośredniczącego zdarzenia.
    */
   const openGenericWizard = useCallback(() => {
@@ -678,13 +598,13 @@ export const ExecutionReportsSurface = ({
    * (rozwijane menu przy CTA zamiast plansza w tabeli), wybór woła DOKŁADNIE
    * ten sam handler (`openWizardForDefinition`).
    */
-  const addReportMenuItems = useMemo<AddReportMenuItem[]>(
+  const addReportMenuItems = useMemo<NonNullable<ExecutionSurfacePrimaryCta['menu']>['items']>(
     () =>
       catalog
         .filter((item) => item.mvp)
         .map((item) => ({
           id: item.key,
-          title: definitionName(item.key, item.name),
+          label: definitionName(item.key, item.name),
           description: t(`executionReports.definitions.${item.key}.scope`, item.scope || '—'),
           meta: t(`executionReports.definitions.${item.key}.audience`, item.audience || '—'),
           onSelect: () => openWizardForDefinition(item.key),
@@ -1016,7 +936,7 @@ export const ExecutionReportsSurface = ({
   useEffect(() => {
     if (!onRegisterFilterControl) return;
     onRegisterFilterControl(
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={MENU_2_FILTERS_ROW}>
         <Menu2PresetDropdown
           compact
           label={t('common.level', 'Poziom')}
@@ -1055,41 +975,45 @@ export const ExecutionReportsSurface = ({
             {t('executionReports.tab.definitions', 'Definicje')}
           </button>
         </div>
-        {/*
-          Uwaga właściciela 08.09: CTA „Dodaj raport" — ten sam wzorzec co
-          „Nowa decyzja"/„Nowa pozycja RAID" w `ExecutionControlSurface.tsx`
-          (JEDNO CTA właściwe widokowi, w tym samym rejestrowanym węźle Menu 2,
-          po prawej obok chipów/przełącznika). Widoczne tylko w widoku
-          „Raporty" — w „Definicje" dodawanie migawki nie ma kontekstu (tak
-          samo jak „Nowa decyzja" pokazuje się tylko w widoku Decyzje).
-          Uprawnienia: `POST /api/execution-reports/runs` (serwer) wymaga
-          wyłącznie `isAuthenticated` — bez `requireOrgRole` — więc CTA jest
-          widoczne dla KAŻDEJ roli (w tym MEMBER), tak jak dotychczasowe
-          „Nowy raport"; nie ma czego ukrywać per rola.
-        */}
-        {registerMode === 'RUNS' && (
-          <AddReportMenu
-            label={t('executionReports.menu2.addReport', 'Dodaj raport')}
-            ariaLabel={t('executionReports.menu2.addReport', 'Dodaj raport')}
-            customLabel={t('executionReports.menu2.addReportCustom', 'Własny raport…')}
-            items={addReportMenuItems}
-            onCustom={openGenericWizard}
-            data-testid="execution-reports-add-report-menu"
-          />
-        )}
       </div>
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    onRegisterFilterControl,
-    registerMode,
-    levelFilter,
-    levelLabel,
-    addReportMenuItems,
-    openGenericWizard,
-    t,
-  ]);
+  }, [onRegisterFilterControl, registerMode, levelFilter, levelLabel, t]);
+
+  /**
+   * Primary CTA „Dodaj raport" — TEN SAM kanał i wygląd (ciemny wypełniony)
+   * co Praca/Zasoby/Decyzje i ryzyka (`onRegisterPrimaryCta`), wariant
+   * `menu`: cztery raporty startowe z katalogu + „Własny raport…" (dawniej
+   * lokalny `AddReportMenu`/`btn-secondary` WEWNĄTRZ slotu filtrów —
+   * DEC-453, odbiór spójności 08.09.2026). Widoczne WYŁĄCZNIE w widoku
+   * „Raporty" — w „Definicje" dodawanie migawki nie ma kontekstu (tak samo
+   * jak „Nowa decyzja" w `ExecutionControlSurface.tsx` pokazuje się tylko
+   * w widoku Decyzje). Uprawnienia: `POST /api/execution-reports/runs`
+   * (serwer) wymaga wyłącznie `isAuthenticated` — bez `requireOrgRole` —
+   * więc CTA jest widoczne dla KAŻDEJ roli (w tym MEMBER), tak jak
+   * dotychczasowe „Nowy raport"; nie ma czego ukrywać per rola.
+   */
+  useEffect(() => {
+    if (!onRegisterPrimaryCta) return;
+    if (registerMode !== 'RUNS') {
+      onRegisterPrimaryCta(null);
+      return;
+    }
+    onRegisterPrimaryCta({
+      label: t('executionReports.menu2.addReport', 'Dodaj raport'),
+      testId: 'execution-reports-add-report-menu',
+      onClick: () => undefined,
+      menu: {
+        ariaLabel: t('executionReports.menu2.addReport', 'Dodaj raport'),
+        items: addReportMenuItems,
+        customLabel: t('executionReports.menu2.addReportCustom', 'Własny raport…'),
+        onCustom: openGenericWizard,
+      },
+    });
+    return () => onRegisterPrimaryCta(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterPrimaryCta, registerMode, addReportMenuItems, openGenericWizard, t]);
 
   // P16-R6 (D6): kebab Menu 3 z akcjami deweloperskimi — WYŁĄCZNIE ADMIN/OWNER.
   // Reużywa `RowActionsMenu` (ten sam kebab co wiersze tabel), zamiast
@@ -1814,10 +1738,11 @@ export const ExecutionReportsSurface = ({
             empty={{
               // Uwaga właściciela 08.09: tabela ZAWSZE, bez planszy/kafli —
               // jedno zdanie w standardowym pustym stanie `StandardTable`;
-              // generowanie raportu startowego idzie przez CTA „Dodaj
-              // raport" w Menu 2 (`AddReportMenu` niżej), nie przez akcje
-              // w pustym stanie (`empty.actions` — kanon dopuszcza, ale ten
-              // ekran świadomie z nich nie korzysta, żeby nie duplikować CTA).
+              // generowanie raportu startowego idzie przez primary CTA
+              // „Dodaj raport" (`onRegisterPrimaryCta`, wariant `menu`), nie
+              // przez akcje w pustym stanie (`empty.actions` — kanon
+              // dopuszcza, ale ten ekran świadomie z nich nie korzysta, żeby
+              // nie duplikować CTA).
               title: t('executionReports.empty.runs.title', 'Brak raportów'),
               description: t(
                 'executionReports.empty.runs.body',

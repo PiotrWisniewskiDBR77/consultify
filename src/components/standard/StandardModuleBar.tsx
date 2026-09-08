@@ -20,8 +20,8 @@
  * Moduły używają WYŁĄCZNIE tej fasady — deklaratywnie, bez własnego chrome.
  */
 
-import { ChevronRight, PanelRightOpen, type LucideIcon } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { ChevronDown, ChevronRight, PanelRightOpen, type LucideIcon } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -178,6 +178,33 @@ export interface StandardPrimaryCta {
    */
   disabled?: boolean;
   disabledReason?: string;
+  /**
+   * Wariant z rozwijanym menu (kanon: JEDEN komponent CTA, kilka wariantów —
+   * `docs/ui-standards/TRIADA_KANON.md` §A2/§C4). Gdy podane, `onClick`
+   * PRZEŁĄCZA widoczność menu zamiast wykonywać akcję wprost — przycisk
+   * zachowuje IDENTYCZNY wygląd (`MENU_1_PRIMARY_CTA`, ciemne wypełnienie /
+   * jasny inwers w dark) jak zwykły primary CTA, dokłada tylko strzałkę
+   * (`ChevronDown`) i panel `role="menu"`. Pozycje wołają własne `onSelect`.
+   *
+   * Wprowadzone dla Raportów (Realizacja): „Dodaj raport" był dotąd
+   * `btn-secondary` (jasny obrys) w slocie filtrów Menu 2, jedyny CTA modułu
+   * inaczej wystylizowany niż Praca/Zasoby/Decyzje i ryzyka — DEC-453,
+   * odbiór 08.09.2026.
+   */
+  menu?: {
+    ariaLabel?: string;
+    items: StandardPrimaryCtaMenuItem[];
+    customLabel?: string;
+    onCustom?: () => void;
+  };
+}
+
+export interface StandardPrimaryCtaMenuItem {
+  id: string;
+  label: string;
+  description?: string;
+  meta?: string;
+  onSelect: () => void;
 }
 
 export interface StandardModuleBarProps {
@@ -288,6 +315,113 @@ export interface StandardModuleBarProps {
    */
   children?: React.ReactNode;
 }
+
+/**
+ * PrimaryCtaMenuButton — wariant `primaryCta` z rozwijanym menu (`cta.menu`).
+ * SAM WYGLĄD (`MENU_1_PRIMARY_CTA`/`MENU_1_PRIMARY_CTA_LOCKED`) co zwykły
+ * primary CTA — jeden komponent akcji, kilka wariantów (kanon TRIADA).
+ * Wzorzec zdarzeń przejęty 1:1 z dawnego `AddReportMenu`
+ * (`ExecutionReportsSurface.tsx`, DEC-453): klik-poza-obszarem i Escape
+ * zamykają panel.
+ */
+export const PrimaryCtaMenuButton: React.FC<{ cta: StandardPrimaryCta }> = ({ cta }) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [open]);
+
+  const menu = cta.menu;
+  if (!menu) return null;
+
+  return (
+    <div ref={containerRef} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={cta.disabled}
+        aria-disabled={cta.disabled || undefined}
+        title={cta.locked ? cta.lockedReason : cta.disabled ? cta.disabledReason : undefined}
+        data-testid={cta.testId}
+        onClick={cta.disabled ? undefined : () => setOpen((prev) => !prev)}
+        className={cta.locked || cta.disabled ? MENU_1_PRIMARY_CTA_LOCKED : MENU_1_PRIMARY_CTA}
+      >
+        {cta.icon ? <cta.icon size={16} /> : null}
+        <span>{cta.label}</span>
+        <ChevronDown
+          size={14}
+          className={`shrink-0 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label={menu.ariaLabel ?? cta.label}
+          className="absolute right-0 top-full z-overlay mt-1 w-72 overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface-raised py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
+          data-testid={cta.testId ? `${cta.testId}-panel` : undefined}
+        >
+          {menu.items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                item.onSelect();
+                setOpen(false);
+              }}
+              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left transition-colors duration-150 hover:bg-c-surface"
+              data-testid={cta.testId ? `${cta.testId}-item-${item.id}` : undefined}
+            >
+              <span className="text-sm font-medium text-c-text">{item.label}</span>
+              {item.description && (
+                <span className="text-xs text-c-text-muted">{item.description}</span>
+              )}
+              {item.meta && (
+                <span className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                  {item.meta}
+                </span>
+              )}
+            </button>
+          ))}
+          {menu.onCustom ? (
+            <>
+              <div className="my-1 h-px bg-c-border-subtle" role="separator" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  menu.onCustom?.();
+                  setOpen(false);
+                }}
+                className="flex w-full items-center px-3 py-2 text-left text-sm text-c-text-secondary transition-colors duration-150 hover:bg-c-surface"
+                data-testid={cta.testId ? `${cta.testId}-custom` : undefined}
+              >
+                {menu.customLabel}
+              </button>
+            </>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   breadcrumbs,
@@ -479,6 +613,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
       : undefined;
 
   const primaryCtaNode = primaryCta ? (
+    primaryCta.menu ? (
+      <PrimaryCtaMenuButton cta={primaryCta} />
+    ) : (
     <>
       <button
         type="button"
@@ -509,6 +646,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
         </span>
       ) : null}
     </>
+    )
   ) : undefined;
 
   const barContent = (

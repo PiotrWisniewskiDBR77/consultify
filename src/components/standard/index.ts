@@ -54,6 +54,7 @@ export {
   type StandardModuleBarProps,
   type StandardModuleTab,
   type StandardPrimaryCta,
+  type StandardPrimaryCtaMenuItem,
 } from './StandardModuleBar';
 export {
   type MetaPill,
