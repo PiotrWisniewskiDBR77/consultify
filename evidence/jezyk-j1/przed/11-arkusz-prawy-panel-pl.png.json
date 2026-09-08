@@ -1,0 +1,83 @@
+{
+ "ekran": "11-arkusz-prawy-panel",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/excele",
+ "obcychSlowUI": 16,
+ "obcychLiniiUI": 10,
+ "ui": [
+  {
+   "linia": "Skip to main content",
+   "trafienia": [
+    "content"
+   ]
+  },
+  {
+   "linia": "Sheets",
+   "trafienia": [
+    "Sheets"
+   ]
+  },
+  {
+   "linia": "New sheet",
+   "trafienia": [
+    "New",
+    "sheet"
+   ]
+  },
+  {
+   "linia": "How do you want to start the spreadsheet?",
+   "trafienia": [
+    "the"
+   ]
+  },
+  {
+   "linia": "Choose a mode — all three are equally valid.",
+   "trafienia": [
+    "all"
+   ]
+  },
+  {
+   "linia": "Empty grid (1 sheet). You fill it in yourself, no AI.",
+   "trafienia": [
+    "Empty",
+    "sheet",
+    "no"
+   ]
+  },
+  {
+   "linia": "With AI",
+   "trafienia": [
+    "With"
+   ]
+  },
+  {
+   "linia": "Describe the sheet — AI will build a multi-sheet workbook with formulas.",
+   "trafienia": [
+    "the",
+    "sheet",
+    "workbook",
+    "with"
+   ]
+  },
+  {
+   "linia": "From a template",
+   "trafienia": [
+    "From"
+   ]
+  },
+  {
+   "linia": "Start from a ready-made spreadsheet template.",
+   "trafienia": [
+    "from"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Feedback",
+   "trafienia": [
+    "Feedback"
+   ]
+  }
+ ]
+}

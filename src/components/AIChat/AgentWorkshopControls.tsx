@@ -24,6 +24,8 @@
  */
 import { CalendarClock, CheckCircle2, OctagonX, Play, X } from 'lucide-react';
 import React, { useState } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
@@ -47,26 +49,41 @@ export function stepDisplayName(step: AgentPlanStep): string {
   return readablePhaseName(step.toolInput) ?? toolLabel(step.toolName) ?? step.toolName;
 }
 
-const PLAN_STATUS_LABEL: Record<AgentPlan['status'], string> = {
-  planning: 'Schemat w edycji',
-  scheduled: 'Zaplanowany',
-  awaiting_approval: 'Czeka na zgodę',
-  executing: 'W trakcie wykonania',
-  paused: 'Wstrzymany',
-  completed: 'Zakończony',
-  completed_with_errors: 'Zakończony z błędami',
-  failed: 'Nieudany',
-  cancelled: 'Zatrzymany',
-};
+/**
+ * J1 (2026-09-08): slowniki statusow trzymaja ANGIELSKI default, polski zyje
+ * w public/locales/pl (zasada §2.3 PLANU jezykowego). Sa funkcjami, a nie
+ * stalymi modulu, bo stala policzylaby sie RAZ, przy imporcie — czyli w jezyku,
+ * ktory akurat byl aktywny przy starcie aplikacji, i nie zmienialaby sie po
+ * przelaczeniu jezyka.
+ */
+const planStatusLabel = (status: AgentPlan['status'], t: TFunction): string =>
+  ({
+    planning: t('agentWorkshop.planStatus.planning', 'Diagram in edit'),
+    scheduled: t('agentWorkshop.planStatus.scheduled', 'Scheduled'),
+    awaiting_approval: t('agentWorkshop.planStatus.awaitingApproval', 'Awaiting approval'),
+    executing: t('agentWorkshop.planStatus.executing', 'Running'),
+    paused: t('agentWorkshop.planStatus.paused', 'Paused'),
+    completed: t('agentWorkshop.planStatus.completed', 'Completed'),
+    completed_with_errors: t('agentWorkshop.planStatus.completedWithErrors', 'Completed with errors'),
+    failed: t('agentWorkshop.planStatus.failed', 'Failed'),
+    cancelled: t('agentWorkshop.planStatus.cancelled', 'Stopped'),
+  })[status];
 
-const STEP_STATUS_CHIP: Record<AgentPlanStep['status'], { raw: string; label: string }> = {
-  pending: { raw: 'not_started', label: 'Oczekuje' },
-  awaiting_approval: { raw: 'awaiting_approval', label: 'Czeka na zgodę' },
-  running: { raw: 'executing', label: 'W toku' },
-  completed: { raw: 'completed', label: 'Gotowe' },
-  failed: { raw: 'failed', label: 'Błąd' },
-  skipped: { raw: 'archived', label: 'Pominięty' },
-};
+const stepStatusChip = (
+  status: AgentPlanStep['status'],
+  t: TFunction
+): { raw: string; label: string } =>
+  ({
+    pending: { raw: 'not_started', label: t('agentWorkshop.stepStatus.pending', 'Pending') },
+    awaiting_approval: {
+      raw: 'awaiting_approval',
+      label: t('agentWorkshop.planStatus.awaitingApproval', 'Awaiting approval'),
+    },
+    running: { raw: 'executing', label: t('agentWorkshop.stepStatus.running', 'In progress') },
+    completed: { raw: 'completed', label: t('agentWorkshop.stepStatus.completed', 'Done') },
+    failed: { raw: 'failed', label: t('agentWorkshop.stepStatus.failed', 'Error') },
+    skipped: { raw: 'archived', label: t('agentWorkshop.stepStatus.skipped', 'Skipped') },
+  })[status];
 
 export interface AgentWorkshopControlsProps {
   plan: AgentPlan;
@@ -108,6 +125,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
   errorMessage,
   width = 'var(--ntype-right-panel-width)',
 }) => {
+  const { t } = useTranslation();
   const awaitingSteps = plan.steps.filter((s) => s.status === 'awaiting_approval');
   const progressPct =
     plan.totalSteps > 0 ? Math.round((plan.completedSteps / plan.totalSteps) * 100) : 0;
@@ -119,7 +137,11 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
       // axe `landmark-unique`: dwa panele agenta na jednym ekranie mialy
       // IDENTYCZNA nazwe landmarku, wiec czytnik ekranu nie odroznial, ktorym
       // planem steruje. Nazwa niesie teraz tytul planu (jest tu pod reka).
-      ariaLabel={plan.title ? `Sterowanie agentem — ${plan.title}` : 'Sterowanie agentem'}
+      ariaLabel={
+        plan.title
+          ? t('agentWorkshop.controls.ariaWithTitle', 'Agent controls — {{title}}', { title: plan.title })
+          : t('agentWorkshop.controls.aria', 'Agent controls')
+      }
       width={width}
       className="border-l-0 border-r border-c-border-subtle"
       statusBar={
@@ -127,13 +149,17 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
           <div className="truncate text-sm font-semibold text-c-text" title={plan.title}>
             {plan.title}
           </div>
-          <EntityStatusChip status={plan.status} label={PLAN_STATUS_LABEL[plan.status]} size="sm" />
+          <EntityStatusChip
+            status={plan.status}
+            label={planStatusLabel(plan.status, t)}
+            size="sm"
+          />
         </div>
       }
       sections={[
         {
           id: 'sterowanie',
-          label: 'Sterowanie',
+          label: t('agentWorkshop.section.controls', 'Controls'),
           children: (
             <div className="space-y-2">
               {canRun ? (
@@ -147,7 +173,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                 <PreviewActionButton
                   variant="primary"
                   icon={Play}
-                  label="Uruchom proces"
+                  label={t('agentWorkshop.action.run', 'Run the process')}
                   onClick={onRun}
                   disabled={busy || (draftBlockCount ?? 0) === 0}
                 />
@@ -157,7 +183,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                   <PreviewActionButton
                     variant="neutral"
                     icon={CalendarClock}
-                    label="Zaplanuj na termin"
+                    label={t('agentWorkshop.action.schedule', 'Schedule for a date')}
                     onClick={() => setShowSchedulePicker((v) => !v)}
                     disabled={busy || (draftBlockCount ?? 0) === 0}
                   />
@@ -167,7 +193,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                         type="datetime-local"
                         value={scheduleValue}
                         onChange={(e) => setScheduleValue(e.target.value)}
-                        aria-label="Data i godzina uruchomienia"
+                        aria-label={t('agentWorkshop.schedule.ariaLabel', 'Run date and time')}
                         className="h-9 flex-1 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       />
                       <button
@@ -180,7 +206,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                         disabled={busy || !scheduleValue}
                         className="h-9 shrink-0 rounded-lg bg-c-surface-raised px-3 text-xs font-medium text-c-text hover:bg-c-surface-raised/70 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
-                        Zapisz
+                        {t('common.save', 'Save')}
                       </button>
                     </div>
                   ) : null}
@@ -190,7 +216,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                 <PreviewActionButton
                   variant="destructive"
                   icon={OctagonX}
-                  label="Zatrzymaj"
+                  label={t('agentWorkshop.action.stop', 'Stop')}
                   onClick={onCancel}
                   disabled={busy}
                 />
@@ -199,15 +225,17 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                 <PreviewActionButton
                   variant="neutral"
                   icon={X}
-                  label="Zamknij"
+                  label={t('common.close', 'Close')}
                   onClick={onClose}
                   disabled={busy}
                 />
               ) : null}
               {plan.status === 'planning' ? (
                 <p className="text-[11px] text-c-text-muted">
-                  Schemat jest edytowalny. „Uruchom proces" zapisuje go w backendzie i startuje
-                  wykonanie.
+                  {t(
+                    'agentWorkshop.controls.planningHint',
+                    'The diagram is editable. “Run the process” saves it on the server and starts the run.'
+                  )}
                 </p>
               ) : null}
               {errorMessage ? (
@@ -220,11 +248,11 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
         },
         {
           id: 'postep',
-          label: 'Postęp',
+          label: t('agentWorkshop.section.progress', 'Progress'),
           children: (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-c-text-muted">{PLAN_STATUS_LABEL[plan.status]}</span>
+                <span className="text-c-text-muted">{planStatusLabel(plan.status, t)}</span>
                 <span className="tabular-nums text-c-text-muted">
                   {plan.completedSteps}/{plan.totalSteps} · {progressPct}%
                 </span>
@@ -246,7 +274,10 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                   className="rounded-lg border border-c-info bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] px-3 py-2.5"
                 >
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-c-info">
-                    Teraz — krok {currentStep.stepIndex + 1} z {plan.totalSteps}
+                    {t('agentWorkshop.progress.now', 'Now — step {{index}} of {{total}}', {
+                      index: currentStep.stepIndex + 1,
+                      total: plan.totalSteps,
+                    })}
                   </div>
                   <div className="mt-1 truncate text-sm font-semibold text-c-text">
                     {stepDisplayName(currentStep)}
@@ -258,8 +289,8 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
               ) : (
                 <p className="text-xs italic text-c-text-muted">
                   {plan.status === 'planning'
-                    ? 'Proces jeszcze nie wystartował.'
-                    : 'Brak kroku w toku.'}
+                    ? t('agentWorkshop.progress.notStarted', 'The process has not started yet.')
+                    : t('agentWorkshop.progress.noCurrentStep', 'No step is running.')}
                 </p>
               )}
             </div>
@@ -267,10 +298,10 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
         },
         {
           id: 'zgody',
-          label: 'Zgody',
+          label: t('agentWorkshop.section.approvals', 'Approvals'),
           badge: awaitingSteps.length,
           isEmpty: awaitingSteps.length === 0,
-          emptyLabel: 'Żaden krok nie czeka na zgodę.',
+          emptyLabel: t('agentWorkshop.approvals.empty', 'No step is waiting for approval.'),
           defaultOpen: awaitingSteps.length > 0,
           children: (
             <div className="space-y-2">
@@ -280,12 +311,13 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
                     {stepDisplayName(step)}
                   </div>
                   <div className="mb-2 text-[11px] text-c-text-muted">
-                    Krok {step.stepIndex + 1} · {toolLabel(step.toolName)}
+                    {t('agentWorkshop.approvals.step', 'Step {{index}}', { index: step.stepIndex + 1 })} ·{' '}
+                    {toolLabel(step.toolName)}
                   </div>
                   <PreviewActionButton
                     variant="positive"
                     icon={CheckCircle2}
-                    label="Zatwierdź krok"
+                    label={t('agentWorkshop.action.approveStep', 'Approve step')}
                     onClick={() => onApprove(step)}
                     disabled={busy}
                   />
@@ -296,15 +328,15 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
         },
         {
           id: 'przebieg',
-          label: 'Przebieg',
+          label: t('agentWorkshop.section.log', 'Run log'),
           badge: plan.steps.length,
           defaultOpen: plan.status !== 'planning',
           isEmpty: plan.steps.length === 0,
-          emptyLabel: 'Brak kroków — schemat jest pusty.',
+          emptyLabel: t('agentWorkshop.log.empty', 'No steps — the diagram is empty.'),
           children: (
             <ol className="space-y-2" data-testid="agent-controls-log">
               {plan.steps.map((step) => {
-                const chip = STEP_STATUS_CHIP[step.status];
+                const chip = stepStatusChip(step.status, t);
                 return (
                   <li key={step.id} className="flex items-start gap-2">
                     <span className="mt-0.5 w-4 shrink-0 text-center text-[11px] tabular-nums text-c-text-muted">
@@ -332,10 +364,10 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
         },
         {
           id: 'raport',
-          label: 'Raport',
+          label: t('agentWorkshop.section.report', 'Report'),
           defaultOpen: Boolean(plan.resultSummary || plan.errorMessage),
           isEmpty: !plan.resultSummary && !plan.errorMessage,
-          emptyLabel: 'Raport pojawi się po zakończeniu.',
+          emptyLabel: t('agentWorkshop.report.empty', 'The report appears once the run finishes.'),
           children: (
             <div className="space-y-1 text-xs text-c-text">
               {plan.resultSummary ? <p>{plan.resultSummary}</p> : null}

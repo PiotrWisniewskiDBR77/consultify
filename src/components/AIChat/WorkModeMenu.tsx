@@ -192,7 +192,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
             ? 'text-c-text-secondary bg-c-surface-raised dark:bg-c-surface-raised'
             : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
         } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-        title={t('aiChat.workMode.title', 'Jak Teresa ma teraz pracować')}
+        title={t('aiChat.workMode.title', 'How Teresa should work now')}
       >
         {active?.icon ? <active.icon size={18} /> : <SlidersHorizontal size={18} />}
         <span className="text-xs font-medium max-w-[120px] truncate">{activeLabel}</span>
@@ -210,7 +210,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
           "
         >
           <div className="px-3.5 pt-1.5 pb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            {t('aiChat.workMode.title', 'Jak Teresa ma teraz pracować')}
+            {t('aiChat.workMode.title', 'How Teresa should work now')}
           </div>
 
           {PRESETS.map((preset) => {

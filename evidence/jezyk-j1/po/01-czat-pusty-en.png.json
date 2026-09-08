@@ -1,0 +1,52 @@
+{
+ "ekran": "01-czat-pusty",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3217/chat",
+ "jezykPowloki": "pl",
+ "zgodnyJezyk": false,
+ "obcychSlowUI": 10,
+ "obcychLiniiUI": 6,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Przejdź do pola wiadomości",
+   "trafienia": [
+    "Przejdź",
+    "wiadomości"
+   ]
+  },
+  {
+   "linia": "Rozmawiaj głosem",
+   "trafienia": [
+    "głosem"
+   ]
+  },
+  {
+   "linia": "Szybkie oszczędności",
+   "trafienia": [
+    "oszczędności"
+   ]
+  },
+  {
+   "linia": "Pomysł na produkt",
+   "trafienia": [
+    "Pomysł"
+   ]
+  },
+  {
+   "linia": "Przegląd planów",
+   "trafienia": [
+    "Przegląd",
+    "planów"
+   ]
+  }
+ ],
+ "dane": []
+}

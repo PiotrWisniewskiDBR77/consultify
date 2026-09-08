@@ -603,7 +603,7 @@ export function V8ArtifactRunControl({
                 {formatPlanLabel(currentPlan, t)}
               </div>
               <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                {t('v8.artifactRun.executionRun', 'Przebieg tworzenia materiału')}
+                {t('v8.artifactRun.executionRun', 'Material creation run')}
               </div>
               {currentRun.proposalId && (
                 <div className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-300">
@@ -625,12 +625,12 @@ export function V8ArtifactRunControl({
               )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-danger-600 dark:text-danger-300">
-                  {t('v8.artifactRun.runFailed', 'Nie udało się utworzyć materiału. Spróbuj ponownie.')}
+                  {t('v8.artifactRun.runFailed', 'Failed to create the material. Try again.')}
                 </div>
               )}
               {currentRun.failurePackage && (
                 <div className="mt-1 text-[11px] text-danger-700 dark:text-danger-200">
-                  {t('v8.artifactRun.failureStage', 'Niepowodzenie na etapie tworzenia materiału')}
+                  {t('v8.artifactRun.failureStage', 'Failure at the material creation stage')}
                 </div>
               )}
 
@@ -670,7 +670,7 @@ export function V8ArtifactRunControl({
                             </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
                               {check.status === 'passed'
-                                ? t('v8.artifactRun.preflightCheckPassed', 'Kontrola zakończona pomyślnie')
+                                ? t('v8.artifactRun.preflightCheckPassed', 'Check passed')
                                 : check.status === 'pending'
                                   ? t('v8.artifactRun.preflightCheckPending', 'Kontrola oczekuje na wykonanie')
                                   : t('v8.artifactRun.preflightCheckFailed', 'Kontrola wymaga poprawy')}

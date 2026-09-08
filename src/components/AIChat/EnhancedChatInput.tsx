@@ -985,7 +985,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           toast.error(
             t(
               'aiChat.conversation.addToProjectRequiresConversation',
-              'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+              'Send your first message before adding the conversation to a project.'
             )
           );
           onToolSelect?.(tool);

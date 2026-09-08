@@ -1,0 +1,74 @@
+{
+ "ekran": "12-prezentacje",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/prezentacje",
+ "obcychSlowUI": 19,
+ "obcychLiniiUI": 9,
+ "ui": [
+  {
+   "linia": "Reusable investor pitch for AI-native ventures. It must move from customer pain and product insight through market logic, business model, evidence, defensibility, go-to-market, financial case, risks, team, funding ask and explicit milestones. Each slide should communicate one thesis and distinguish verified facts from management hypotheses.",
+   "trafienia": [
+    "for",
+    "move",
+    "from",
+    "and"
+   ]
+  },
+  {
+   "linia": "Evidence-governed assessment readout linking maturity scores and confidence to gaps, root causes, recommendations and a sequenced transformation roadmap.",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Decision-led steering deck with reconciled performance, value, milestones, dependencies, residual risk and explicit committee asks.",
+   "trafienia": [
+    "with",
+    "and"
+   ]
+  },
+  {
+   "linia": "Investor-grade valuation decision pack with reconciled financials, methodology, scenario sensitivity, comparable evidence, risk and explicit transaction next steps.",
+   "trafienia": [
+    "with",
+    "and"
+   ]
+  },
+  {
+   "linia": "Board decision deck requiring verified value, delivery, risk, options, recommendation, accountable owner and decision deadline.",
+   "trafienia": [
+    "and"
+   ]
+  },
+  {
+   "linia": "Board-ready investment decision template for automation programs. Must support an executive recommendation, investment economics, scenario comparison, phased roadmap, risk heatmap, governance and a clear decision ask. Use sources only in speaker notes and metadata, never as visible canvas labels.",
+   "trafienia": [
+    "for",
+    "and",
+    "sources",
+    "as"
+   ]
+  },
+  {
+   "linia": "Tool Workshop Summary",
+   "trafienia": [
+    "Tool"
+   ]
+  },
+  {
+   "linia": "Summary of consulting tool session results, insights, and recommended actions.",
+   "trafienia": [
+    "of",
+    "tool",
+    "and"
+   ]
+  },
+  {
+   "linia": "Operational update on execution progress, delays, budget status, and team delivery.",
+   "trafienia": [
+    "and"
+   ]
+  }
+ ],
+ "dane": []
+}

@@ -38,6 +38,7 @@ import {
 
 import { AI_EDITOR_LEVELS_META, getLevelMeta, translateLevelMeta } from './levelMeta';
 import { ProposalDiffCard } from './ProposalDiffCard';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 export interface TabeleAiEditorPanelProps {
   tableId: string;
@@ -213,8 +214,8 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
           <span className="text-[11px] text-c-text-secondary" data-testid="ai-editor-budget">
             {t('kimi.tabeleShell.aiEditor.budgetLabel', {
               defaultValue: '{{used}} / {{total}} tokens',
-              used: budget.tokensUsedToday.toLocaleString(),
-              total: budget.budget.toLocaleString(),
+              used: formatListNumber(budget.tokensUsedToday),
+              total: formatListNumber(budget.budget),
             })}
           </span>
         )}

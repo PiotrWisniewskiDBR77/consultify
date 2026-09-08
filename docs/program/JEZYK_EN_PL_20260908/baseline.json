@@ -1,37 +1,39 @@
 {
   "_meta": {
-    "data": "2026-09-08T12:24:41.838Z",
-    "root": "/private/tmp/wt-j7b",
-    "sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95"
+    "data": "2026-09-08T20:25:26.746Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/j1-czat",
+    "sha": "e1033f9cb8b41b6f965838f19bbd4df049854574",
+    "poprzedni_sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95",
+    "paczka": "J1 — modul 01 Chat"
   },
   "suma": {
     "K1": 2,
-    "K1def": 1218,
-    "K1defWID": 236,
+    "K1def": 1046,
+    "K1defWID": 173,
     "K2": 12,
-    "K3a": 1818,
+    "K3a": 1756,
     "K3aKLUCZ": 429,
     "K3b": 7,
-    "K4pl": 969,
-    "K4en": 1283,
-    "K5pl": 258,
+    "K4pl": 901,
+    "K4en": 1251,
+    "K5pl": 256,
     "K5en": 1822,
-    "K7": 849
+    "K7": 822
   },
   "moduly": {
     "01 Chat": {
       "K1": 0,
-      "K1def": 172,
-      "K1defWID": 63,
+      "K1def": 0,
+      "K1defWID": 0,
       "K2": 0,
-      "K3a": 20,
+      "K3a": 0,
       "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 68,
-      "K4en": 34,
+      "K4pl": 0,
+      "K4en": 2,
       "K5pl": 0,
       "K5en": 27,
-      "K7": 27
+      "K7": 0
     },
     "02 My Work": {
       "K1": 0,
@@ -150,7 +152,7 @@
       "K1def": 231,
       "K1defWID": 42,
       "K2": 1,
-      "K3a": 634,
+      "K3a": 596,
       "K3aKLUCZ": 215,
       "K3b": 4,
       "K4pl": 165,
@@ -248,12 +250,12 @@
       "K1def": 77,
       "K1defWID": 7,
       "K2": 2,
-      "K3a": 284,
+      "K3a": 280,
       "K3aKLUCZ": 103,
       "K3b": 3,
       "K4pl": 72,
       "K4en": 233,
-      "K5pl": 21,
+      "K5pl": 19,
       "K5en": 523,
       "K7": 141
     }
@@ -275,305 +277,305 @@
     ],
     "K1def": [
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:209",
-        "tekst": "aiActions.approve = \"Zatwierdź\"",
-        "dowod": "diakrytyk:ź"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:887",
+        "tekst": "admin.membersRoles.loadErrorTitle = \"Nie udało się wczytać listy członków tej organizacji.\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:217",
-        "tekst": "aiActions.dismiss = \"Odrzuć\"",
-        "dowod": "diakrytyk:ć"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:905",
+        "tekst": "admin.membersRoles.loadErrorRetry = \"Spróbuj ponownie\"",
+        "dowod": "diakrytyk:ó"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:260",
-        "tekst": "aiActions.mediumRisk = \"Średnie ryzyko\"",
-        "dowod": "diakrytyk:Ś"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminSecurityPolicyPanel.tsx:79",
+        "tekst": "admin.security.policyPanel.mfa.errors.noEnrolledAccounts = \"Nie można wymagać drugiego składnika: żadne konto w tej orga",
+        "dowod": "diakrytyk:ż,pl:nie"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:347",
-        "tekst": "aiActions.approve = \"Zatwierdź\"",
-        "dowod": "diakrytyk:ź"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/BudgetWorkspace.tsx:701",
+        "tekst": "finance.budget.valuate = \"Wycen budżet\"",
+        "dowod": "diakrytyk:ż"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:364",
-        "tekst": "aiActions.edit = \"Edytuj\"",
-        "dowod": "pl:edytuj"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:381",
-        "tekst": "aiActions.dismiss = \"Odrzuć\"",
-        "dowod": "diakrytyk:ć"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:437",
-        "tekst": "aiActions.dismissAll = \"Odrzuć wszystkie\"",
-        "dowod": "diakrytyk:ć,pl:wszystkie"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:463",
-        "tekst": "aiActions.showMore = \"Pokaż więcej\"",
-        "dowod": "diakrytyk:ż,pl:pokaż,pl:więcej"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIActionCard.tsx:472",
-        "tekst": "aiActions.showLess = \"Pokaż mniej\"",
-        "dowod": "diakrytyk:ż,pl:pokaż"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:171",
-        "tekst": "aiActions.navigateTo = \"Przejdź do\"",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:201",
-        "tekst": "aiActions.approve = \"Zatwierdź\"",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:208",
-        "tekst": "aiActions.dismiss = \"Odrzuć\"",
-        "dowod": "diakrytyk:ć"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:267",
-        "tekst": "aiActions.mediumRisk = \"Średnie ryzyko\"",
-        "dowod": "diakrytyk:Ś"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:307",
-        "tekst": "aiActions.approve = \"Zatwierdź\"",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:316",
-        "tekst": "aiActions.edit = \"Edytuj\"",
-        "dowod": "pl:edytuj"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:325",
-        "tekst": "aiActions.dismiss = \"Odrzuć\"",
-        "dowod": "diakrytyk:ć"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/AIActionCard.tsx:351",
-        "tekst": "aiActions.failed = \"Błąd wykonania\"",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:556",
+        "tekst": "valuation.advisory.candidateAlreadyExists = \"To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative\"",
         "dowod": "diakrytyk:ł"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/InlineActionsList.tsx:117",
-        "tekst": "common.showLess = \"Pokaż mniej\"",
-        "dowod": "diakrytyk:ż,pl:pokaż"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:703",
+        "tekst": "valuation.archiveOnly.body = \"Ten rekord nie ma jeszcze odpowiednika w nowym modelu finansowym, więc wyniki i założenia ",
+        "dowod": "diakrytyk:ę,pl:nie,pl:jest"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Actions/InlineActionsList.tsx:122",
-        "tekst": "aiActions.showMore = \"Pokaż więcej\"",
-        "dowod": "diakrytyk:ż,pl:pokaż,pl:więcej"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:876",
+        "tekst": "valuation.assumptions.exitMultiple = \"Mnożnik wyjścia\"",
+        "dowod": "diakrytyk:ż"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:610",
-        "tekst": "agentPlan.canvas.emptyHint = \"Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.\"",
-        "dowod": "diakrytyk:ą"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:973",
+        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
+        "dowod": "diakrytyk:ź,pl:wymagane"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:717",
-        "tekst": "agentPlan.canvas.vaultLevelUnset = \"— poziom nie wybrany —\"",
-        "dowod": "pl:nie"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:974",
+        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
+        "dowod": "diakrytyk:ź,pl:wymagane"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:737",
-        "tekst": "agentPlan.canvas.noteHint = \"Notatka na schemacie — agent jej nie wykonuje.\"",
-        "dowod": "pl:nie"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1351",
+        "tekst": "valuation.advisory.convert = \"Wyślij jako kandydata na Initiative\"",
+        "dowod": "diakrytyk:ś"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:776",
-        "tekst": "agentPlan.canvas.vaultLevelPlaceholder = \"— wybierz sejf —\"",
-        "dowod": "pl:wybierz"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1781",
+        "tekst": "valuation.advisory.candidateModalTitle = \"Wyślij jako kandydata na Initiative\"",
+        "dowod": "diakrytyk:ś"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:864",
-        "tekst": "agentPlan.canvas.blockTool = \"Narzędzie\"",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1786",
+        "tekst": "valuation.advisory.candidateModalConfirm = \"Wyślij\"",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1787",
+        "tekst": "valuation.advisory.candidateModalCancel = \"Anuluj\"",
+        "dowod": "pl:anuluj"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1788",
+        "tekst": "valuation.advisory.candidateModalClose = \"Zamknij\"",
+        "dowod": "pl:zamknij"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1789",
+        "tekst": "valuation.advisory.candidateChecking = \"Sprawdzanie kwalifikowalności…\"",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:179",
+        "tekst": "discoveryTools.swot.strengths = \"Siły\"",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:180",
+        "tekst": "discoveryTools.swot.weaknesses = \"Słabości\"",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:182",
+        "tekst": "discoveryTools.swot.threats = \"Zagrożenia\"",
+        "dowod": "diakrytyk:ż"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:210",
+        "tekst": "discoveryTools.swot.tensionsCount = \"{{count}} napięć łączy ćwiartki\"",
         "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:890",
-        "tekst": "agentPlan.canvas.moveUp = \"Przesuń w górę\"",
-        "dowod": "diakrytyk:ń"
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:244",
+        "tekst": "discoveryTools.report.rendererInfo = \"Renderer {{version}} · źródła: {{count}}\"",
+        "dowod": "diakrytyk:ź"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:112",
+        "tekst": "documentStudio.createFromArtifact.error = \"Nie udało się utworzyć wzorca\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:124",
+        "tekst": "documentStudio.createFromArtifact.title = \"Zrób z tego wzorzec\"",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:132",
+        "tekst": "documentStudio.createFromArtifact.title = \"Zrób z tego wzorzec\"",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:135",
+        "tekst": "documentStudio.createFromArtifact.subtitle = \"Strukturę wyciągamy automatycznie. Zostały tylko rzeczy, których nie da si",
+        "dowod": "diakrytyk:ę,pl:tylko,pl:nie"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:145",
+        "tekst": "documentStudio.createFromArtifact.close = \"Zamknij\"",
+        "dowod": "pl:zamknij"
       }
     ],
     "K1defWID": [
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:610",
-        "tekst": "agentPlan.canvas.emptyHint = \"Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ą"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:717",
-        "tekst": "agentPlan.canvas.vaultLevelUnset = \"— poziom nie wybrany —\"",
-        "dowod": "brak klucza w EN,pl:nie"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:737",
-        "tekst": "agentPlan.canvas.noteHint = \"Notatka na schemacie — agent jej nie wykonuje.\"",
-        "dowod": "brak klucza w EN,pl:nie"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:864",
-        "tekst": "agentPlan.canvas.blockTool = \"Narzędzie\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:890",
-        "tekst": "agentPlan.canvas.moveUp = \"Przesuń w górę\"",
-        "dowod": "brak klucza w EN,diakrytyk:ń"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:899",
-        "tekst": "agentPlan.canvas.moveDown = \"Przesuń w dół\"",
-        "dowod": "brak klucza w EN,diakrytyk:ń"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentPlanCanvas.tsx:908",
-        "tekst": "agentPlan.canvas.removeBlock = \"Usuń klocek\"",
-        "dowod": "brak klucza w EN,diakrytyk:ń,pl:usuń"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopPalette.tsx:131",
-        "tekst": "agentPlan.catalog.soonBadge = \"Wkrótce\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:134",
-        "tekst": "excele.rightPanel.openWorkspace = \"Otwórz w arkuszu\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó,pl:otwórz"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:141",
-        "tekst": "excele.rightPanel.allFiles = \"Wszystkie pliki\"",
-        "dowod": "brak klucza w EN,pl:wszystkie"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:157",
-        "tekst": "excele.rightPanel.checkpoint = \"Utwórz punkt kontrolny\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó,pl:utwórz"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:165",
-        "tekst": "excele.rightPanel.revokeShare = \"Cofnij udostępnienie\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:173",
-        "tekst": "excele.rightPanel.share = \"Udostępnij (kopiuj link)\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:190",
-        "tekst": "excele.rightPanel.properties = \"Właściwości\"",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:556",
+        "tekst": "valuation.advisory.candidateAlreadyExists = \"To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative\"",
         "dowod": "brak klucza w EN,diakrytyk:ł"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:192",
-        "tekst": "excele.rightPanel.propertiesEmpty = \"Właściwości pojawią się po wygenerowaniu arkusza\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł,pl:się"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:973",
+        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
+        "dowod": "brak klucza w EN,diakrytyk:ź,pl:wymagane"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:208",
-        "tekst": "excele.rightPanel.quality = \"Jakość\"",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1781",
+        "tekst": "valuation.advisory.candidateModalTitle = \"Wyślij jako kandydata na Initiative\"",
         "dowod": "brak klucza w EN,diakrytyk:ś"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:230",
-        "tekst": "excele.rightPanel.relations = \"Powiązania\"",
-        "dowod": "brak klucza w EN,diakrytyk:ą"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1786",
+        "tekst": "valuation.advisory.candidateModalConfirm = \"Wyślij\"",
+        "dowod": "brak klucza w EN,diakrytyk:ś"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:232",
-        "tekst": "excele.rightPanel.relationsEmpty = \"Brak powiązanych obiektów\"",
-        "dowod": "brak klucza w EN,diakrytyk:ą,pl:brak"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1787",
+        "tekst": "valuation.advisory.candidateModalCancel = \"Anuluj\"",
+        "dowod": "brak klucza w EN,pl:anuluj"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:239",
-        "tekst": "excele.rightPanel.sourceTable = \"Tabela źródłowa\"",
-        "dowod": "brak klucza w EN,diakrytyk:ź"
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1788",
+        "tekst": "valuation.advisory.candidateModalClose = \"Zamknij\"",
+        "dowod": "brak klucza w EN,pl:zamknij"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:248",
-        "tekst": "excele.rightPanel.commentsEmpty = \"Komentarze będą dostępne wkrótce\"",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1789",
+        "tekst": "valuation.advisory.candidateChecking = \"Sprawdzanie kwalifikowalności…\"",
+        "dowod": "brak klucza w EN,diakrytyk:ś"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:108",
+        "tekst": "documentStudio.aiEntry.startingReply = \"Zaczynam planować i pisać dokument — pojawi się obok w kilka chwil.\"",
+        "dowod": "brak klucza w EN,diakrytyk:ć,pl:się"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:132",
+        "tekst": "documentStudio.aiEntry.placeholderTitle = \"Twój dokument pojawi się tutaj\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó,pl:się"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:135",
+        "tekst": "documentStudio.aiEntry.placeholderHint = \"Opisz w oknie obok, jaki dokument potrzebujesz — Teresa zaplanuje strukturę i ",
         "dowod": "brak klucza w EN,diakrytyk:ę"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:257",
-        "tekst": "excele.rightPanel.historyFailed = \"Generowanie nie powiodło się\"",
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:146",
+        "tekst": "documentStudio.intake.backToModes = \"Wybór trybu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:2263",
+        "tekst": "documentStudio.outline.saveFailed = \"Nie udało się zapisać struktury.\"",
         "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:258",
-        "tekst": "excele.rightPanel.historyEmpty = \"Historia pojawi się po wygenerowaniu\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę,pl:się"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:2679",
+        "tekst": "documentStudio.panel.chipQaReview = \"QA i przegląd\"",
+        "dowod": "brak klucza w EN,diakrytyk:ą"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:303",
-        "tekst": "excele.rightPanel.structureHint = \"Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim.\"",
-        "dowod": "brak klucza w EN,pl:nie"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3413",
+        "tekst": "common.saveError = \"Błąd zapisu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:310",
-        "tekst": "excele.rightPanel.structureEmpty = \"Ten skoroszyt nie ma jeszcze arkuszy — struktura pojawi się po wygenerowaniu.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę,pl:nie"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3477",
+        "tekst": "documentStudio.panel.toolQaReview = \"QA i przegląd\"",
+        "dowod": "brak klucza w EN,diakrytyk:ą"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx:342",
-        "tekst": "excele.rightPanel.ariaLabel = \"Szczegóły arkusza\"",
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3545",
+        "tekst": "documentStudio.panel.contextTools = \"Narzędzia dokumentu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioIntakeForm.tsx:637",
+        "tekst": "documentStudio.intake.blockedReason = \"Aby zaplanować dokument, opisz go w co najmniej 10 znakach.\"",
+        "dowod": "brak klucza w EN,diakrytyk:ć,pl:aby"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioQaPanel.tsx:65",
+        "tekst": "documentStudio.qa.fabrication.notDetected = \"Nie wykryto nieoznaczonych precyzyjnych liczb — ugruntowanie nie zostało zw",
+        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:156",
+        "tekst": "documentStudio.view.goToProvenance = \"Przejdź do Pochodzenie i prawa\"",
+        "dowod": "brak klucza w EN,diakrytyk:ź"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:164",
+        "tekst": "documentStudio.view.backToLibrary = \"Wróć do Biblioteki wzorców\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:432",
+        "tekst": "documentStudio.view.artifactNotFound = \"Nie znaleziono tego dokumentu. Mógł zostać usunięty albo link prowadzi do innego",
+        "dowod": "brak klucza w EN,diakrytyk:ó,pl:nie"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:437",
+        "tekst": "documentStudio.view.artifactLoadFailedGeneric = \"Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:831",
+        "tekst": "documentStudio.blank.title = \"Nowy dokument\"",
+        "dowod": "brak klucza w EN,pl?:nowy,pl?:dokument"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:873",
+        "tekst": "documentStudio.blank.failed = \"Nie udało się utworzyć pustego dokumentu.\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:1115",
+        "tekst": "documentStudio.blank.retry = \"Spróbuj ponownie\"",
         "dowod": "brak klucza w EN,diakrytyk:ó"
       }
     ],
@@ -1001,154 +1003,154 @@
     ],
     "K4pl": [
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopControls.tsx:202",
-        "tekst": "Zamknij",
-        "dowod": "pl:zamknij"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:878",
+        "tekst": ") : loadError ? (\n            /* M15-H03 — stan błędu/degraded zamiast fałszywej pustki. */",
+        "dowod": "diakrytyk:ł"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopControls.tsx:288",
-        "tekst": "Zatwierdź krok",
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/AuditHistoryView.tsx:198",
+        "tekst": "Brak zapisanych akcji.",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/method/AuditReportDocumentView.tsx:409",
+        "tekst": "Brak pozycji.",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/method/AuditReportDocumentView.tsx:481",
+        "tekst": "Brak pozycji.",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/method/workspace/AuditActionCards.tsx:8",
+        "tekst": "Karty działania — Audyty",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:695",
+        "tekst": "Wskaźnik",
         "dowod": "diakrytyk:ź"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopControls.tsx:182",
-        "tekst": "Zapisz",
-        "dowod": "pl:zapisz"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopControls.tsx:208",
-        "tekst": "Schemat jest edytowalny. „Uruchom proces\" zapisuje go w backendzie i startuje\n                  wykonanie.",
-        "dowod": "pl:jest"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopPalette.tsx:176",
-        "tekst": "Paleta klocków agenta",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AgentWorkshopPalette.tsx:236",
-        "tekst": "Paleta klocków",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1568",
-        "tekst": "Nazwa źródła",
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:698",
+        "tekst": "Wskaźnik branżowy",
         "dowod": "diakrytyk:ź"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1572",
-        "tekst": "Odnośnik do źródła",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1575",
-        "tekst": "URL lub identyfikator (opcjonalnie)",
-        "dowod": "pl:lub"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1786",
-        "tekst": "Źródła i założenia",
-        "dowod": "diakrytyk:Ź"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1796",
-        "tekst": "Kontrola jakości",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1877",
-        "tekst": "Zamknij wyszukiwanie",
-        "dowod": "pl:zamknij"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1900",
-        "tekst": "Wartość lub formuła",
-        "dowod": "diakrytyk:ś,pl:lub"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1925",
-        "tekst": "Zamień na",
-        "dowod": "diakrytyk:ń"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1928",
-        "tekst": "Nowa wartość",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2052",
-        "tekst": "Szczegóły skoroszytu",
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2178",
+        "tekst": "Sposób pokazania zlecenia",
         "dowod": "diakrytyk:ó"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2188",
-        "tekst": "Narzędzia arkusza",
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2427",
+        "tekst": "Typ zamknięcia",
         "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2208",
-        "tekst": "Powiększenie arkusza",
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2452",
+        "tekst": "Dowód / opis pozostałego zakresu",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2015",
+        "tekst": "Zlecenie LIGHT nie zostało uruchomione.",
+        "dowod": "diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2028",
+        "tekst": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie\n              zostaną poprawione. ",
+        "dowod": "diakrytyk:ą,pl:jest,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2072",
+        "tekst": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest\n            widoczna — poproś wła",
+        "dowod": "diakrytyk:ń,pl:nie,pl:jest"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2375",
+        "tekst": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
+        "dowod": "diakrytyk:ę,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1004",
+        "tekst": "Więcej",
+        "dowod": "diakrytyk:ę,pl:więcej"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1005",
+        "tekst": "Więcej widoków listy zleceń",
+        "dowod": "diakrytyk:ę,pl:więcej"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:342",
+        "tekst": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przy",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:527",
+        "tekst": "Przybliż plan",
+        "dowod": "diakrytyk:ż"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:551",
+        "tekst": "Ustaw powiększenie na sto procent",
         "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2228",
-        "tekst": "Powiększ arkusz",
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:331",
+        "tekst": "Ten plan nie ma jeszcze żadnych kroków.",
+        "dowod": "diakrytyk:ż,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:503",
+        "tekst": "Przeciągnij, aby przesunąć. Kółko przybliża.",
+        "dowod": "diakrytyk:ą,pl:aby"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:504",
+        "tekst": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.",
+        "dowod": "diakrytyk:ą,pl:aby"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:940",
+        "tekst": "Po czym następuje",
         "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2280",
-        "tekst": "Zamknij",
-        "dowod": "pl:zamknij"
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:408",
+        "tekst": "Do czego dążymy",
+        "dowod": "diakrytyk:ą"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2352",
-        "tekst": "Szukaj po nazwie lub e-mailu",
-        "dowod": "pl:lub"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2445",
-        "tekst": "Wymagane przy zmianie na mniej restrykcyjną",
-        "dowod": "diakrytyk:ą,pl:wymagane"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2485",
-        "tekst": "Zamknij",
-        "dowod": "pl:zamknij"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1376",
-        "tekst": "Dodaj arkusz",
-        "dowod": "pl:dodaj"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1446",
-        "tekst": "Zmień nazwę",
-        "dowod": "diakrytyk:ń"
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:476",
+        "tekst": "Odrzuć zmiany",
+        "dowod": "diakrytyk:ć"
       }
     ],
     "K4en": [
@@ -1172,74 +1174,8 @@
       },
       {
         "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/AIOSHub.tsx:116",
-        "tekst": "Test each card below and classify findings as PASS, PASS_WITH_LIMITATIONS or\n                BLOCKED.",
-        "dowod": "en:and,en:with"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:153",
-        "tekst": "Review execution proposals, approve separately from execution, and inspect AIRun audit\n          trails.",
-        "dowod": "en:from,en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:169",
-        "tekst": "Proposals and Executions",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:172",
-        "tekst": "No mutation is executed until it has an approved AIRun.",
-        "dowod": "en:has"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:186",
-        "tekst": "Loading AI actions...",
-        "dowod": "en:loading"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:296",
-        "tekst": "Select an action to inspect who, what, when and why.",
-        "dowod": "en:what,en:when,en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ActionCenter.tsx:308",
-        "tekst": "Decision and Output",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactViewer.tsx:60",
-        "tekst": "Loading diagram...",
-        "dowod": "en:loading"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactViewer.tsx:76",
-        "tekst": "Loading diagram engine...",
-        "dowod": "en:loading"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:52",
+        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
         "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/CanvasArtifactBlockRenderer.tsx:379",
-        "tekst": "Evidence degraded: no sources are attached to this research block yet.",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/CanvasArtifactBlockRenderer.tsx:639",
-        "tekst": "No chart metrics are available. Showing the Markdown projection instead.",
         "dowod": "en:the"
       },
       {
@@ -1249,58 +1185,124 @@
         "dowod": "en:when"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/MessageRenderer.tsx:986",
-        "tekst": "My understanding of your task",
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIFeedbackButton.tsx:115",
+        "tekst": "Tell us more about your experience... (optional)",
+        "dowod": "en:about,en:your"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInsightFeed.tsx:113",
+        "tekst": "No critical alerts at this time.",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInterviewModal.tsx:163",
+        "tekst": "Type your answer...",
         "dowod": "en:your"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/MessageRenderer.tsx:1146",
-        "tekst": "If this is not correct, adjust the task and re-run confirm.",
-        "dowod": "en:this,en:the,en:and"
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:229",
+        "tekst": "Search settings...",
+        "dowod": "en?:search,en?:settings"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/MessageRenderer.tsx:1461",
-        "tekst": "This is recorded in the audit trail.",
-        "dowod": "en:this,en:the"
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
+        "tekst": "Contact your administrator to enable AI models",
+        "dowod": "en:your"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ProjectTeamCard.tsx:185",
-        "tekst": "Project owner user ID",
-        "dowod": "en?:owner,en?:user"
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
+        "tekst": "How should AI interact with you?",
+        "dowod": "en:should,en:with,en:you"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ProjectTeamCard.tsx:188",
-        "tekst": "Project owner user ID",
-        "dowod": "en?:owner,en?:user"
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIUsageIndicator.tsx:148",
+        "tekst": "Last 7 days",
+        "dowod": "en?:last,en?:days"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ProjectTeamCard.tsx:192",
-        "tekst": "Project owner name",
-        "dowod": "en?:owner,en?:name"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AI/CustomComplianceTemplateEditor.tsx:688",
+        "tekst": "Describe the purpose and scope of this compliance framework...",
+        "dowod": "en:the,en:and,en:this"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ProjectTeamCard.tsx:195",
-        "tekst": "Project owner name",
-        "dowod": "en?:owner,en?:name"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AI/CustomComplianceTemplateEditor.tsx:584",
+        "tekst": "Choose a base template to start from, or create a blank template:",
+        "dowod": "en:from"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ResearchSessionsDock.tsx:311",
-        "tekst": "Scope and constraints",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:672",
+        "tekst": "Legal company name",
+        "dowod": "en?:company,en?:name"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:660",
+        "tekst": "Tax and invoicing",
         "dowod": "en:and"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ResearchSessionsDock.tsx:276",
-        "tekst": "Reproducible Deep Research with lifecycle, evidence graph, citations and final report\n            artifacts.",
-        "dowod": "en:with,en:and"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:690",
+        "tekst": "Save tax settings",
+        "dowod": "en?:save,en?:settings"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:741",
+        "tekst": "Usage and overage posture",
+        "dowod": "en:and"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:759",
+        "tekst": "Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.",
+        "dowod": "en:your,en:please"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:766",
+        "tekst": "Billing, FinOps, and commercial controls",
+        "dowod": "en:and"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:769",
+        "tekst": "P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and usage\n          posture as first-cl",
+        "dowod": "en:now,en:and"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
+        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
+        "tekst": "Overrides inside this group",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
+        "tekst": "Overridden away from the shipped default",
+        "dowod": "en:from,en:the"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/method/tabs/AuditCriteriaBrowser.tsx:118",
+        "tekst": "applyColumnFilters(searched as unknown as Array",
+        "dowod": "en:unknown"
       }
     ],
     "K5pl": [
@@ -1348,13 +1350,13 @@
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:6919",
+        "gdzie": "server/src/routes/ai.routes.ts:6930",
         "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:9305",
+        "gdzie": "server/src/routes/ai.routes.ts:9316",
         "tekst": "Nie udało się utworzyć powiadomienia AI",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
@@ -1363,18 +1365,6 @@
         "gdzie": "server/src/routes/ai.routes.ts:1189",
         "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
         "dowod": "diakrytyk:ń"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:4828",
-        "tekst": "Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:4903",
-        "tekst": "Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...",
-        "dowod": "diakrytyk:ę"
       },
       {
         "modul": "02 My Work",
@@ -1452,6 +1442,18 @@
         "modul": "05 Assessment",
         "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
         "tekst": "Nie udało się wygenerować wniosków",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
+        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
+        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       }
     ],
@@ -1609,154 +1611,154 @@
     ],
     "K7": [
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:286",
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:119",
+        "tekst": "new Intl.DateTimeFormat('en-US'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AI/AccessLimitsTab.tsx:835",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/renderers/PMODocumentRenderer.tsx:338",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/CanvasEditor/CanvasVersionHistory.tsx:28",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/CanvasEditor/CanvasVersionHistory.tsx:111",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/AI/AccessLimitsTab.tsx:965",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ExecutionProposalMessage.tsx:558",
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/AuditHistoryView.tsx:91",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/AuditHistoryView.tsx:222",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "11 Audits",
+        "gdzie": "src/components/Audit/method/AuditsMethodHub.tsx:530",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/BudgetWorkspace.tsx:484",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:415",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "08 Results",
+        "gdzie": "src/components/Benefits/LessonsLearnedPanel.tsx:159",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/RezultatyView.tsx:644",
+        "tekst": "new Intl.NumberFormat('pl-PL'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/ui.tsx:108",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/ui.tsx:115",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/Decisions/DecisionCard.tsx:171",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/Discovery/DiscoveryFooterActions.tsx:73",
         "tekst": "toLocaleTimeString()",
         "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ExecutionProposalMessage.tsx:438",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/InputCharCounter.tsx:102",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/InputCharCounter.tsx:102",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/InputSoftLimitToast.tsx:90",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/InputSoftLimitToast.tsx:90",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/MiniBarChart.tsx:83",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:103",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:1746",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx:2504",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/WorkbookBoardSummary.tsx:15",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/WorkbookVersionHistoryModal.tsx:163",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/tabeleShell/aiEditor/TabeleAiEditorPanel.tsx:216",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/tabeleShell/aiEditor/TabeleAiEditorPanel.tsx:217",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/tabeleShell/qa/QaHealthBar.tsx:123",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateGovernanceDrawer.tsx:50",
+        "modul": "04 Tools",
+        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:2311",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/MoveToProjectModal.tsx:360",
+        "modul": "04 Tools",
+        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:4746",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ProjectMembersModal.tsx:522",
+        "modul": "04 Tools",
+        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:3490",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/Discovery/InsightDetailView.tsx:428",
+        "tekst": "toLocaleDateString('en-GB'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/ToolDocumentView.tsx:484",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/WorkCanvasDocumentPanel.tsx:5186",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/CommentThreadItem.tsx:30",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/WorkCanvasDocumentPanel.tsx:3300",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:781",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/signalsFeed/ChatSignalsFeed.tsx:134",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:1267",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:1284",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioQaPanel.tsx:268",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx:913",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
       }
     ]
   },
@@ -1765,7 +1767,6 @@
     "src/views/partner/PartnerPortalView.tsx": 95,
     "server/src/routes/document-studio.routes.ts": 86,
     "server/src/routes/work-canvas.routes.ts": 61,
-    "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx": 60,
     "src/views/legal/TermsOfServiceView.tsx": 56,
     "src/components/MyWork/panel/IdeaElementInspector.tsx": 53,
     "src/components/assessment/report/AssessmentReportDocument.tsx": 53,
@@ -1782,7 +1783,6 @@
     "server/src/routes/auth.routes.ts": 37,
     "server/src/routes/assessment-reports.routes.ts": 36,
     "server/src/routes/workbook.routes.ts": 36,
-    "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx": 35,
     "src/components/DocumentStudio/DocumentStudioView.tsx": 35,
     "server/src/routes/v8/finance.routes.ts": 35,
     "src/views/partner/sections/EarningsSection.tsx": 34,
@@ -1790,6 +1790,8 @@
     "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
     "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
     "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
+    "server/src/controllers/InitiativeController.ts": 30,
+    "src/components/assessment/drd/DrdHttpMethodWorkspaceScreen.tsx": 29
   }
 }

@@ -57,7 +57,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   // Map of group keys to config with i18n labels and icons
   const groupConfig: Record<string, GroupConfig> = {
     pinned: {
-      label: t('aiChat.groups.pinned', 'Przypięte'),
+      label: t('aiChat.groups.pinned', 'Pinned'),
       icon: Pin,
       iconColor: 'text-amber-500',
     },
@@ -67,10 +67,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       iconColor: 'text-green-500',
     },
     thisWeek: {
-      label: t('aiChat.groups.thisWeek', 'Ten tydzień'),
+      label: t('aiChat.groups.thisWeek', 'This week'),
     },
     thisMonth: {
-      label: t('aiChat.groups.thisMonth', 'Ten miesiąc'),
+      label: t('aiChat.groups.thisMonth', 'This month'),
     },
     older: {
       label: t('aiChat.groups.older', 'Starsze'),

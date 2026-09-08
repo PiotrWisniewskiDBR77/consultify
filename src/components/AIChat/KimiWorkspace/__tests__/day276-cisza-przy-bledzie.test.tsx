@@ -73,6 +73,6 @@ describe('Day 276 — odrzucony zapis komórki jest widoczny', () => {
         expect.stringContaining('Przywróciliśmy poprzednią wartość')
       )
     );
-    expect(screen.getByText('Błąd zapisu')).toBeInTheDocument();
+    expect(screen.getByText('Save failed')).toBeInTheDocument();
   });
 });

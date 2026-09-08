@@ -1,0 +1,47 @@
+{
+ "ekran": "14-sesje-badawcze",
+ "jezyk": "en",
+ "url": "http://127.0.0.1:3217/ai-os/research",
+ "obcychSlowUI": 12,
+ "obcychLiniiUI": 5,
+ "ui": [
+  {
+   "linia": "Przejdź do głównej treści",
+   "trafienia": [
+    "Przejdź",
+    "głównej",
+    "treści"
+   ]
+  },
+  {
+   "linia": "Nie ma takiej strony",
+   "trafienia": [
+    "Nie"
+   ]
+  },
+  {
+   "linia": "Nie ma takiej strony",
+   "trafienia": [
+    "Nie"
+   ]
+  },
+  {
+   "linia": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",
+   "trafienia": [
+    "który",
+    "trafiłeś",
+    "aś",
+    "nie",
+    "albo",
+    "został"
+   ]
+  },
+  {
+   "linia": "Wróć do Czatu",
+   "trafienia": [
+    "Wróć"
+   ]
+  }
+ ],
+ "dane": []
+}

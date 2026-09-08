@@ -23,6 +23,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ArtifactBottomBar, ArtifactMenu3 } from '@/components/shared/ArtifactStudio';
@@ -36,6 +38,7 @@ import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleSh
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { formatListDateTime, formatListNumber } from '@/utils/listDateFormat';
 
 import {
   EditableSpreadsheetGrid,
@@ -74,19 +77,20 @@ interface ReviewUser {
   last_name?: string;
 }
 
-const reviewUserName = (user: ReviewUser): string =>
+const reviewUserName = (user: ReviewUser, t: TFunction): string =>
   user.name ||
   [user.first_name, user.last_name].filter(Boolean).join(' ') ||
   user.email ||
-  'Użytkownik';
+  t('excele.studio.reviewer.unnamed', 'User');
 
 const cloneSheets = (sheets: StudioSheet[]): StudioSheet[] => structuredClone(sheets);
 
-const nextSheetName = (sheets: StudioSheet[]): string => {
+const nextSheetName = (sheets: StudioSheet[], t: TFunction): string => {
   const used = new Set(sheets.map((sheet) => sheet.name));
+  const nazwa = (index: number) => t('excele.studio.sheetDefaultName', 'Sheet {{index}}', { index });
   let index = sheets.length + 1;
-  while (used.has(`Arkusz ${index}`)) index += 1;
-  return `Arkusz ${index}`;
+  while (used.has(nazwa(index))) index += 1;
+  return nazwa(index);
 };
 
 const createClientSheet = (id: string, name: string): StudioSheet => ({
@@ -100,9 +104,9 @@ const createClientSheet = (id: string, name: string): StudioSheet => ({
 });
 
 const formatSelectionStat = (value: number): string =>
-  value.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+  formatListNumber(Number(value.toFixed(2)), '—');
 
-const sourceLabel = (value: unknown): string => {
+const sourceLabel = (value: unknown, t: TFunction): string => {
   if (typeof value === 'string') return value;
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
@@ -113,7 +117,7 @@ const sourceLabel = (value: unknown): string => {
   try {
     return JSON.stringify(value);
   } catch {
-    return 'Nieznane źródło';
+    return t('excele.studio.sources.unknown', 'Unknown source');
   }
 };
 
@@ -142,6 +146,49 @@ const parseA1Cell = (address: string): { rowIndex: number; colIndex: number } | 
 };
 
 /**
+ * ETYKIETY PASKA NARZĘDZI (Menu 3) — J1, 2026-09-08.
+ *
+ * `spreadsheetArtifactCommands.ts` trzyma w polu o nazwie `labelKey` NIE klucz,
+ * tylko POLSKI napis, a Studio przepuszczało go dalej wprost
+ * (`resolveLabel={(label) => label}`). Efekt: cały pasek narzędzi arkusza —
+ * Waluta · Procent · Pogrubienie · Wstaw/Usuń wiersz i kolumnę — mówił po polsku
+ * do konta angielskiego. Skaner językowy tego NIE widział: to nie jest ani
+ * `t()`, ani tekst w JSX, tylko pole obiektu w innym pliku.
+ *
+ * Tłumaczymy po `commandId` (stabilny identyfikator), a nie po napisie —
+ * mapowanie po tekście rozjechałoby się przy pierwszej zmianie kopii.
+ * Rejestr zostaje nietknięty, więc jego testy kontraktowe dalej stoją.
+ */
+const ETYKIETY_KOMEND: Record<string, { klucz: string; en: string }> = {
+  'xlsx.history.undo': { klucz: 'excele.cmd.xlsx_history_undo', en: 'Undo' },
+  'xlsx.history.redo': { klucz: 'excele.cmd.xlsx_history_redo', en: 'Redo' },
+  'xlsx.format.currency': { klucz: 'excele.cmd.xlsx_format_currency', en: 'Currency' },
+  'xlsx.format.percent': { klucz: 'excele.cmd.xlsx_format_percent', en: 'Percent' },
+  'xlsx.format.bold': { klucz: 'excele.cmd.xlsx_format_bold', en: 'Bold' },
+  'xlsx.format.number': { klucz: 'excele.cmd.xlsx_format_number', en: 'Number' },
+  'xlsx.format.general': { klucz: 'excele.cmd.xlsx_format_general', en: 'General format' },
+  'xlsx.format.italic': { klucz: 'excele.cmd.xlsx_format_italic', en: 'Italic' },
+  'xlsx.format.wrap': { klucz: 'excele.cmd.xlsx_format_wrap', en: 'Wrap text' },
+  'xlsx.format.alignLeft': { klucz: 'excele.cmd.xlsx_format_alignLeft', en: 'Align left' },
+  'xlsx.format.alignCenter': { klucz: 'excele.cmd.xlsx_format_alignCenter', en: 'Align centre' },
+  'xlsx.format.alignRight': { klucz: 'excele.cmd.xlsx_format_alignRight', en: 'Align right' },
+  'xlsx.row.insertAbove': { klucz: 'excele.cmd.xlsx_row_insertAbove', en: 'Insert row' },
+  'xlsx.row.insertBelow': { klucz: 'excele.cmd.xlsx_row_insertBelow', en: 'Insert row below' },
+  'xlsx.row.delete': { klucz: 'excele.cmd.xlsx_row_delete', en: 'Delete row' },
+  'xlsx.column.insertLeft': { klucz: 'excele.cmd.xlsx_column_insertLeft', en: 'Insert column' },
+  'xlsx.column.insertRight': { klucz: 'excele.cmd.xlsx_column_insertRight', en: 'Insert column to the right' },
+  'xlsx.column.delete': { klucz: 'excele.cmd.xlsx_column_delete', en: 'Delete column' },
+  'xlsx.cell.edit': { klucz: 'excele.cmd.xlsx_cell_edit', en: 'Edit cell' },
+  'xlsx.selection.clear': { klucz: 'excele.cmd.xlsx_selection_clear', en: 'Clear contents' },
+  'xlsx.find.open': { klucz: 'excele.cmd.xlsx_find_open', en: 'Find' },
+  'xlsx.replace.open': { klucz: 'excele.cmd.xlsx_replace_open', en: 'Find and replace' },
+  'xlsx.view.freezePanes': { klucz: 'excele.cmd.xlsx_view_freezePanes', en: 'Freeze the first row and column' },
+  'xlsx.clipboard.copy': { klucz: 'excele.cmd.xlsx_clipboard_copy', en: 'Copy' },
+  'xlsx.clipboard.cut': { klucz: 'excele.cmd.xlsx_clipboard_cut', en: 'Cut' },
+  'xlsx.clipboard.paste': { klucz: 'excele.cmd.xlsx_clipboard_paste', en: 'Paste' },
+};
+
+/**
  * Flagged adapter for an already-open workbook. It intentionally exposes only
  * capabilities backed by the current runtime: sheet switching, cell/formula
  * editing, persistence, export and the global Teresa handoff. Planned Office
@@ -153,6 +200,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   onDownload,
   onCopyLink,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const openChatWithContext = useOpenChatWithContext();
   const currentUser = useAppStore((state) => state.currentUser);
@@ -275,11 +323,15 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           })
         : [];
     return [
-      ...refs.map((item, index) => ({ id: `evidence-${index}`, group: 'Dowód', item })),
+      ...refs.map((item, index) => ({
+        id: `evidence-${index}`,
+        group: t('excele.studio.sources.groupEvidence', 'Evidence'),
+        item,
+      })),
       ...packItems.map(({ key, item }, index) => ({ id: `source-${index}`, group: key, item })),
       ...sourceBindings.map((binding) => ({
         id: `binding-${binding.id}`,
-        group: 'Powiązanie zakresu',
+        group: t('excele.studio.sources.groupBinding', 'Range binding'),
         item: binding,
         bindingId: binding.id,
       })),
@@ -476,7 +528,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         setWorkbookTitle(previousTitle);
         setSaveState('error');
         setSheetCommandError(
-          'Nie udało się zmienić nazwy skoroszytu. Odśwież dane i spróbuj ponownie.'
+          t(
+            'excele.studio.error.rename',
+            'Failed to rename the workbook. Refresh the data and try again.'
+          )
         );
       }
     },
@@ -766,7 +821,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       setSheets(nextSheets);
       setOpenSheetMenuId(null);
     } catch {
-      setSheetCommandError('Nie udało się zmienić struktury arkuszy. Spróbuj ponownie.');
+      setSheetCommandError(t('excele.studio.error.sheetStructure', 'Failed to change the sheet structure. Please try again.'));
     }
   };
 
@@ -776,7 +831,13 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   };
 
   const restoreRevision = async (sourceVersion: number): Promise<void> => {
-    if (!globalThis.confirm(`Przywrócić wersję ${sourceVersion} jako nową wersję skoroszytu?`)) {
+    if (
+      !globalThis.confirm(
+        t('excele.studio.confirm.restore', 'Restore version {{version}} as a new workbook version?', {
+          version: sourceVersion,
+        })
+      )
+    ) {
       return;
     }
     setRevisionState('restoring');
@@ -816,7 +877,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       setSheets(authoritativeSheets);
       setSearchIndex(0);
     } catch {
-      setSearchError('Nie udało się wykonać zamiany. Żadna komórka nie została zmieniona.');
+      setSearchError(t('excele.studio.error.replace', 'The replacement failed. No cell was changed.'));
     }
   };
 
@@ -845,7 +906,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       setSheets(authoritativeSheets);
       setSelection(null);
     } catch {
-      setSheetCommandError('Nie udało się zmienić struktury arkusza. Spróbuj ponownie.');
+      setSheetCommandError(t('excele.studio.error.singleSheetStructure', 'Failed to change the sheet structure. Please try again.'));
     }
   };
 
@@ -921,7 +982,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       sheetRedoRef.current = [];
       setSheets(authoritativeSheets);
     } catch {
-      setSheetCommandError('Nie udało się sformatować zaznaczenia. Spróbuj ponownie.');
+      setSheetCommandError(t('excele.studio.error.format', 'Failed to format the selection. Please try again.'));
     }
   };
 
@@ -958,7 +1019,12 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     const hasContent = rows.some((row) =>
       Object.values(row.cells ?? {}).some((cell) => cell?.value != null || Boolean(cell?.formula))
     );
-    if (hasContent && !globalThis.confirm(`Usunąć ${axis.count} zaznaczonych wierszy z danymi?`))
+    if (
+      hasContent &&
+      !globalThis.confirm(
+        t('excele.studio.confirm.deleteRows', 'Delete {{count}} selected rows with data?', { count: axis.count })
+      )
+    )
       return;
     await runAxisCommand('xlsx.row.delete', {
       type: 'deleteRows',
@@ -982,7 +1048,11 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     );
     if (
       hasContent &&
-      !globalThis.confirm(`Usunąć ${axis.columnCount} zaznaczonych kolumn z danymi?`)
+      !globalThis.confirm(
+        t('excele.studio.confirm.deleteColumns', 'Delete {{count}} selected columns with data?', {
+          count: axis.columnCount,
+        })
+      )
     )
       return;
     await runAxisCommand('xlsx.column.delete', {
@@ -995,7 +1065,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
 
   const addSheet = async (): Promise<void> => {
     const id = crypto.randomUUID();
-    const name = nextSheetName(sheets);
+    const name = nextSheetName(sheets, t);
     const next = [...cloneSheets(sheets), createClientSheet(id, name)];
     await runSheetCommand('xlsx.sheet.add', [{ type: 'addSheet', name, sheetId: id }], next);
   };
@@ -1037,7 +1107,14 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     const hasContent = (sheet.rows ?? []).some((row) =>
       Object.values(row.cells ?? {}).some((cell) => cell?.value != null || Boolean(cell?.formula))
     );
-    if (hasContent && !globalThis.confirm(`Usunąć arkusz „${sheet.name || 'Arkusz'}” z danymi?`))
+    if (
+      hasContent &&
+      !globalThis.confirm(
+        t('excele.studio.confirm.deleteSheet', 'Delete the sheet “{{name}}” with its data?', {
+          name: sheet.name || t('excele.studio.sheetFallback', 'Sheet'),
+        })
+      )
+    )
       return;
     const next = cloneSheets(sheets).filter((candidate) => candidate.id !== sheet.id);
     const nextActive =
@@ -1104,7 +1181,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       setSheets(snapshot.sheets);
     } catch {
       sheetUndoRef.current.push(snapshot);
-      setSheetCommandError('Nie udało się cofnąć zmiany arkuszy.');
+      setSheetCommandError(t('excele.studio.error.undo', 'Failed to undo the sheet change.'));
     }
   };
 
@@ -1126,7 +1203,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       setSheets(snapshot.sheets);
     } catch {
       sheetRedoRef.current.push(snapshot);
-      setSheetCommandError('Nie udało się ponowić zmiany arkuszy.');
+      setSheetCommandError(t('excele.studio.error.redo', 'Failed to redo the sheet change.'));
     }
   };
 
@@ -1136,10 +1213,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         id: 'classification',
         label:
           classification === 'public'
-            ? 'Publiczny'
+            ? t('excele.studio.classification.public', 'Public')
             : classification === 'confidential'
-              ? 'Poufny'
-              : 'Wewnętrzny',
+              ? t('excele.studio.classification.confidential', 'Confidential')
+              : t('excele.studio.classification.internal', 'Internal'),
         group: 'secondary',
         onClick: () => {
           setGovernanceState('idle');
@@ -1150,12 +1227,12 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         id: 'lifecycle',
         label:
           lifecycleStatus === 'in_review'
-            ? 'Do przeglądu'
+            ? t('excele.studio.lifecycle.inReview', 'In review')
             : lifecycleStatus === 'approved'
-              ? 'Zatwierdzony'
+              ? t('excele.studio.lifecycle.approved', 'Approved')
               : lifecycleStatus === 'final'
-                ? 'Finalny'
-                : 'Szkic',
+                ? t('excele.studio.lifecycle.final', 'Final')
+                : t('excele.studio.lifecycle.draft', 'Draft'),
         group: 'secondary',
         dotTone: lifecycleStatus === 'final' ? 'success' : 'neutral',
         onClick: () => {
@@ -1165,7 +1242,9 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       },
       {
         id: 'share',
-        label: shareActive ? 'Zarządzaj udostępnieniem' : 'Udostępnij',
+        label: shareActive
+          ? t('excele.studio.share.manage', 'Manage sharing')
+          : t('excele.studio.share.share', 'Share'),
         icon: Link2,
         group: 'secondary',
         dotTone: shareActive ? 'success' : null,
@@ -1176,18 +1255,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       },
       {
         id: 'copy-link',
-        label: 'Kopiuj link wewnętrzny',
+        label: t('excele.studio.copyInternalLink', 'Copy internal link'),
         icon: Copy,
         group: 'overflow',
         onClick: onCopyLink,
       },
       {
         id: 'export',
-        label: 'Eksportuj XLSX',
+        label: t('excele.studio.exportXlsx', 'Export XLSX'),
         tooltip:
           approvalState?.currentForVersion || preview.workbookApprovalCurrent
-            ? 'Eksport finalny z aktualnie zatwierdzonej wersji'
-            : 'Eksport roboczy; finalny wymaga aktualnego zatwierdzenia',
+            ? t('excele.studio.exportTooltipFinal', 'Final export from the currently approved version')
+            : t('excele.studio.exportTooltipDraft', 'Draft export; a final one needs a current approval'),
         icon: Download,
         kind: 'primary',
         group: 'primary',
@@ -1319,47 +1398,52 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     return [
       {
         id: 'xlsx.clipboard.copy',
-        label: 'Kopiuj',
+        label: t('excele.studio.menu.copy', 'Copy'),
         shortcut: '⌘C',
         onSelect: () => void gridRef.current?.copySelection(),
       },
       {
         id: 'xlsx.clipboard.cut',
-        label: 'Wytnij',
+        label: t('excele.studio.menu.cut', 'Cut'),
         shortcut: '⌘X',
         onSelect: () => void gridRef.current?.cutSelection(),
       },
       {
         id: 'xlsx.clipboard.paste',
-        label: 'Wklej',
+        label: t('excele.studio.menu.paste', 'Paste'),
         shortcut: '⌘V',
         onSelect: () => void gridRef.current?.pasteSelection(),
       },
       {
         id: 'xlsx.cell.clear',
-        label: selected.kind === 'range' ? 'Wyczyść zakres' : 'Wyczyść zawartość',
+        label:
+          selected.kind === 'range'
+            ? t('excele.studio.menu.clearRange', 'Clear range')
+            : t('excele.studio.menu.clearContents', 'Clear contents'),
         separatorBefore: true,
         onSelect: () => gridRef.current?.clearSelectedCell(),
       },
       {
         id: 'xlsx.comment.add',
-        label: 'Dodaj komentarz',
+        label: t('excele.studio.menu.addComment', 'Add comment'),
         separatorBefore: true,
         onSelect: () => {
           setLeftMode('comments');
-          setCommentDraft(`Komentarz do ${selected.address}: `);
+          setCommentDraft(
+            `${t('excele.studio.comments.onCell', 'Comment on {{address}}', { address: selected.address })}: `
+          );
         },
       },
       {
         id: 'xlsx.source.open',
-        label: 'Pokaż źródło',
+        label: t('excele.studio.menu.showSource', 'Show source'),
         disabled: sourceItems.length === 0,
-        disabledReason: 'Skoroszyt nie ma zapisanych źródeł',
+        disabledReason: t('excele.studio.menu.noSources', 'This workbook has no saved sources'),
         onSelect: () => setLeftMode('sources'),
       },
       {
         id: 'xlsx.ai.completeSection',
-        label: 'Uzupełnij tę sekcję',
+        label: t('excele.studio.completeSection', 'Complete this section'),
         separatorBefore: true,
         onSelect: () => openTeresa(selected),
       },
@@ -1373,7 +1457,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         onClick={() => void addSheet()}
         className="mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-c-border text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
       >
-        <Plus size={15} aria-hidden="true" /> Dodaj arkusz
+        <Plus size={15} aria-hidden="true" /> {t('excele.studio.addSheet', 'Add sheet')}
       </button>
       {sheetCommandError ? (
         <p role="alert" className="mb-2 px-2 text-xs text-c-danger">
@@ -1388,7 +1472,9 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
               {renamingSheetId === sheetId ? (
                 <input
                   ref={renameInputRef}
-                  aria-label={`Nowa nazwa arkusza ${sheet.name || index + 1}`}
+                  aria-label={t('excele.studio.renameSheetLabel', 'New name for sheet {{name}}', {
+                    name: sheet.name || index + 1,
+                  })}
                   value={renameDraft}
                   onChange={(event) => setRenameDraft(event.target.value)}
                   onBlur={() => void commitRename(sheet)}
@@ -1412,13 +1498,15 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                       : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
                   } ${sheet.hidden ? 'opacity-55' : ''}`}
                 >
-                  {sheet.name || `Arkusz ${index + 1}`}
-                  {sheet.hidden ? ' · ukryty' : ''}
+                  {sheet.name || t('excele.studio.sheetDefaultName', 'Sheet {{index}}', { index: index + 1 })}
+                  {sheet.hidden ? ` · ${t('excele.studio.sheetHiddenSuffix', 'hidden')}` : ''}
                 </button>
               )}
               <button
                 type="button"
-                aria-label={`Akcje arkusza ${sheet.name || index + 1}`}
+                aria-label={t('excele.studio.sheetActionsLabel', 'Sheet actions: {{name}}', {
+                  name: sheet.name || index + 1,
+                })}
                 aria-expanded={openSheetMenuId === sheetId}
                 onClick={() =>
                   setOpenSheetMenuId((current) => (current === sheetId ? null : sheetId))
@@ -1443,7 +1531,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     }}
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-c-surface"
                   >
-                    <Pencil size={14} /> Zmień nazwę
+                    <Pencil size={14} /> {t('excele.studio.sheetMenu.rename', 'Rename')}
                   </button>
                   <button
                     role="menuitem"
@@ -1451,7 +1539,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void duplicateSheet(sheet, index)}
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-c-surface"
                   >
-                    <Copy size={14} /> Duplikuj
+                    <Copy size={14} /> {t('excele.studio.sheetMenu.duplicate', 'Duplicate')}
                   </button>
                   <button
                     role="menuitem"
@@ -1460,7 +1548,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void moveSheet(sheet, index, -1)}
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-c-surface disabled:opacity-40"
                   >
-                    <ArrowUp size={14} /> Przenieś wyżej
+                    <ArrowUp size={14} /> {t('excele.studio.sheetMenu.moveUp', 'Move up')}
                   </button>
                   <button
                     role="menuitem"
@@ -1469,7 +1557,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void moveSheet(sheet, index, 1)}
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-c-surface disabled:opacity-40"
                   >
-                    <ArrowDown size={14} /> Przenieś niżej
+                    <ArrowDown size={14} /> {t('excele.studio.sheetMenu.moveDown', 'Move down')}
                   </button>
                   <button
                     role="menuitem"
@@ -1478,7 +1566,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-c-surface"
                   >
                     {sheet.hidden ? <Eye size={14} /> : <EyeOff size={14} />}{' '}
-                    {sheet.hidden ? 'Pokaż' : 'Ukryj'}
+                    {sheet.hidden ? t('excele.studio.sheetMenu.show', 'Show') : t('excele.studio.sheetMenu.hide', 'Hide')}
                   </button>
                   <button
                     role="menuitem"
@@ -1487,7 +1575,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void deleteSheet(sheet, index)}
                     className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm text-c-danger hover:bg-c-danger/10 disabled:opacity-40"
                   >
-                    <Trash2 size={14} /> Usuń
+                    <Trash2 size={14} /> {t('excele.studio.sheetMenu.delete', 'Delete')}
                   </button>
                 </div>
               ) : null}
@@ -1502,29 +1590,38 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     <div className="flex min-h-0 flex-1 flex-col gap-2" data-testid="spreadsheet-comments-panel">
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
         {commentState === 'loading' ? (
-          <p className="px-2 text-sm text-c-text-muted">Wczytywanie komentarzy…</p>
+          <p className="px-2 text-sm text-c-text-muted">{t('excele.studio.comments.loading', 'Loading comments…')}</p>
         ) : comments.length ? (
           comments.map((comment) => (
             <article key={comment.id} className="rounded-lg border border-c-border p-3 text-sm">
               <p className="text-c-text">{comment.body}</p>
               <div className="mt-2 flex items-center justify-between gap-2 text-xs text-c-text-muted">
-                <span>{comment.range_ref || (comment.sheet_id ? 'Arkusz' : 'Skoroszyt')}</span>
+                <span>
+                  {comment.range_ref ||
+                    (comment.sheet_id
+                      ? t('excele.studio.sheetFallback', 'Sheet')
+                      : t('excele.studio.workbookFallback', 'Workbook'))}
+                </span>
                 <button
                   type="button"
                   onClick={() => void resolveComment(comment.id)}
                   className="rounded px-2 py-1 hover:bg-c-surface-raised hover:text-c-text"
                 >
-                  Rozwiąż
+                  {t('excele.studio.comments.resolve', 'Resolve')}
                 </button>
               </div>
             </article>
           ))
         ) : (
-          <p className="px-2 text-sm text-c-text-muted">Brak otwartych komentarzy.</p>
+          <p className="px-2 text-sm text-c-text-muted">{t('excele.studio.comments.empty', 'No open comments.')}</p>
         )}
       </div>
       <label className="text-xs font-medium text-c-text-secondary" htmlFor="workbook-comment">
-        {selection?.address ? `Komentarz do ${selection.address}` : 'Komentarz do skoroszytu'}
+        {selection?.address
+          ? t('excele.studio.comments.onCell', 'Comment on {{address}}', {
+              address: selection.address,
+            })
+          : t('excele.studio.comments.onWorkbook', 'Comment on the workbook')}
       </label>
       <textarea
         id="workbook-comment"
@@ -1539,11 +1636,13 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         onClick={() => void addComment()}
         className="min-h-10 rounded-lg bg-c-text px-3 text-sm font-medium text-c-surface disabled:opacity-50"
       >
-        {commentState === 'saving' ? 'Zapisywanie…' : 'Dodaj komentarz'}
+        {commentState === 'saving'
+          ? t('excele.studio.saving', 'Saving…')
+          : t('excele.studio.menu.addComment', 'Add comment')}
       </button>
       {commentState === 'error' ? (
         <p role="alert" className="text-xs text-c-danger">
-          Nie udało się zapisać komentarza. Treść pozostała w polu.
+          {t('excele.studio.comments.saveFailed', 'Failed to save the comment. The text is still in the field.')}
         </p>
       ) : null}
     </div>
@@ -1552,27 +1651,32 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   const sourcesPanel = (
     <div className="min-h-0 flex-1 overflow-y-auto" data-testid="spreadsheet-sources-panel">
       <div className="mb-3 rounded-lg border border-c-border bg-c-surface p-3">
-        <h2 className="text-sm font-semibold text-c-text">Źródła i założenia</h2>
+        <h2 className="text-sm font-semibold text-c-text">
+          {t('excele.studio.sources.title', 'Sources and assumptions')}
+        </h2>
         <p className="mt-1 text-xs text-c-text-muted">
-          Pochodzenie danych zapisane razem z tym skoroszytem. Brak wpisu oznacza UNKNOWN.
+          {t(
+            'excele.studio.sources.subtitle',
+            'Data provenance stored with this workbook. No entry means UNKNOWN.'
+          )}
         </p>
       </div>
       <div className="mb-3 space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
         <label htmlFor="workbook-source-label" className="block text-xs font-medium text-c-text">
-          Powiąż źródło z zaznaczeniem
+          {t('excele.studio.sources.bindLabel', 'Bind a source to the selection')}
         </label>
         <input
           id="workbook-source-label"
           value={sourceLabelDraft}
           onChange={(event) => setSourceLabelDraft(event.target.value)}
-          placeholder="Nazwa źródła"
+          placeholder={t('excele.studio.sources.namePlaceholder', 'Source name')}
           className="min-h-10 w-full rounded-md border border-c-border bg-c-surface-raised px-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
         />
         <input
-          aria-label="Odnośnik do źródła"
+          aria-label={t('excele.studio.sources.refLabel', 'Source reference')}
           value={sourceRefDraft}
           onChange={(event) => setSourceRefDraft(event.target.value)}
-          placeholder="URL lub identyfikator (opcjonalnie)"
+          placeholder={t('excele.studio.sources.refPlaceholder', 'URL or identifier (optional)')}
           className="min-h-10 w-full rounded-md border border-c-border bg-c-surface-raised px-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
         />
         <button
@@ -1586,21 +1690,25 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           }
           className="min-h-10 w-full rounded-md bg-c-text px-3 text-sm font-medium text-c-surface disabled:opacity-50"
         >
-          {sourceState === 'saving' ? 'Zapisywanie…' : 'Powiąż z zaznaczeniem'}
+          {sourceState === 'saving'
+            ? t('excele.studio.saving', 'Saving…')
+            : t('excele.studio.sources.bindAction', 'Bind to selection')}
         </button>
         {!selection?.address ? (
-          <p className="text-xs text-c-text-muted">Najpierw zaznacz komórkę lub zakres.</p>
+          <p className="text-xs text-c-text-muted">
+            {t('excele.studio.sources.selectFirst', 'Select a cell or a range first.')}
+          </p>
         ) : null}
         {sourceState === 'error' ? (
           <p role="alert" className="text-xs text-c-danger">
-            Nie udało się zapisać powiązania. Spróbuj ponownie.
+            {t('excele.studio.sources.bindFailed', 'Failed to save the binding. Please try again.')}
           </p>
         ) : null}
       </div>
       {sourceItems.length ? (
         <div className="space-y-2">
           {sourceItems.map((source) => {
-            const label = sourceLabel(source.item);
+            const label = sourceLabel(source.item, t);
             const anchor = sourceAnchor(source.item);
             return (
               <article key={source.id} className="rounded-lg border border-c-border p-3">
@@ -1611,7 +1719,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   <button
                     type="button"
                     className="mt-1 block w-full rounded text-left text-sm text-c-text hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    aria-label={`Przejdź do źródła ${label}`}
+                    aria-label={t('excele.studio.sources.goTo', 'Go to source {{label}}', { label })}
                     onClick={() => jumpToWorkbookAnchor(anchor.sheet, anchor.cell)}
                   >
                     <span className="block break-words">{label}</span>
@@ -1628,7 +1736,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void unbindSource(String(source.bindingId))}
                     className="mt-2 min-h-10 text-xs font-medium text-c-danger hover:underline"
                   >
-                    Usuń powiązanie
+                    {t('excele.studio.sources.unbind', 'Remove binding')}
                   </button>
                 ) : null}
               </article>
@@ -1637,7 +1745,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         </div>
       ) : (
         <div className="rounded-lg border border-c-warning/40 bg-c-warning/10 p-3 text-sm text-c-text-secondary">
-          UNKNOWN — do skoroszytu nie przypisano źródeł ani referencji dowodowych.
+          {t(
+            'excele.studio.sources.unknownEmpty',
+            'UNKNOWN — no sources or evidence references are attached to this workbook.'
+          )}
         </div>
       )}
     </div>
@@ -1646,9 +1757,9 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   const qaPanel = (
     <div className="min-h-0 flex-1 overflow-y-auto" data-testid="spreadsheet-qa-panel">
       <div className="mb-3 rounded-lg border border-c-border bg-c-surface p-3">
-        <h2 className="text-sm font-semibold text-c-text">Kontrola jakości</h2>
+        <h2 className="text-sm font-semibold text-c-text">{t('excele.studio.qa.title', 'Quality control')}</h2>
         <p className="mt-1 text-xs text-c-text-muted">
-          Konkretne problemy z możliwością przejścia do arkusza lub komórki.
+          {t('excele.studio.qa.subtitle', 'Concrete issues with a jump to the sheet or the cell.')}
         </p>
       </div>
       {qaIssues.length ? (
@@ -1670,7 +1781,8 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 </span>
                 <p className="mt-1 text-sm text-c-text">{issue.message}</p>
                 <p className="mt-1 text-xs text-c-text-muted">
-                  {[issue.sheet, issue.cell].filter(Boolean).join(' · ') || 'Cały skoroszyt'}
+                  {[issue.sheet, issue.cell].filter(Boolean).join(' · ') ||
+                    t('excele.studio.wholeWorkbook', 'Whole workbook')}
                   {issue.fix ? ` — ${issue.fix}` : ''}
                 </p>
               </button>
@@ -1680,8 +1792,8 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       ) : (
         <div className="rounded-lg border border-c-border p-3 text-sm text-c-text-secondary">
           {preview.qualityReport
-            ? 'Brak otwartych problemów QA.'
-            : 'Raport QA nie jest dostępny dla tej wersji.'}
+            ? t('excele.studio.qa.empty', 'No open QA issues.')
+            : t('excele.studio.qa.unavailable', 'The QA report is not available for this version.')}
         </div>
       )}
     </div>
@@ -1689,17 +1801,17 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
 
   const revisionLabel = (commandId: string): string => {
     const labels: Record<string, string> = {
-      'xlsx.cell.edit': 'Edycja komórki',
-      'xlsx.range.edit': 'Edycja zakresu',
-      'xlsx.range.clear': 'Wyczyszczenie zakresu',
-      'xlsx.replace.all': 'Znajdź i zamień',
-      'xlsx.history.undo': 'Cofnięcie zmiany',
-      'xlsx.versions.restore': 'Przywrócenie wersji',
-      'xlsx.sheet.add': 'Dodanie arkusza',
-      'xlsx.sheet.rename': 'Zmiana nazwy arkusza',
-      'xlsx.sheet.delete': 'Usunięcie arkusza',
-      'xlsx.sheet.duplicate': 'Duplikacja arkusza',
-      'xlsx.sheet.reorder': 'Zmiana kolejności arkuszy',
+      'xlsx.cell.edit': t('excele.studio.revision.cellEdit', 'Cell edit'),
+      'xlsx.range.edit': t('excele.studio.revision.rangeEdit', 'Range edit'),
+      'xlsx.range.clear': t('excele.studio.revision.rangeClear', 'Range cleared'),
+      'xlsx.replace.all': t('excele.studio.revision.replaceAll', 'Find and replace'),
+      'xlsx.history.undo': t('excele.studio.revision.undo', 'Change undone'),
+      'xlsx.versions.restore': t('excele.studio.revision.restore', 'Version restored'),
+      'xlsx.sheet.add': t('excele.studio.revision.sheetAdd', 'Sheet added'),
+      'xlsx.sheet.rename': t('excele.studio.revision.sheetRename', 'Sheet renamed'),
+      'xlsx.sheet.delete': t('excele.studio.revision.sheetDelete', 'Sheet deleted'),
+      'xlsx.sheet.duplicate': t('excele.studio.revision.sheetDuplicate', 'Sheet duplicated'),
+      'xlsx.sheet.reorder': t('excele.studio.revision.sheetReorder', 'Sheets reordered'),
     };
     return labels[commandId] ?? commandId.replace(/^xlsx\./, '').replaceAll('.', ' · ');
   };
@@ -1708,8 +1820,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     <div className="min-h-0 flex-1 overflow-auto p-2" data-testid="spreadsheet-versions-panel">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-c-text">Historia wersji</h3>
-          <p className="text-xs text-c-text-muted">Bieżąca wersja: {version}</p>
+          <h3 className="text-sm font-semibold text-c-text">{t('excele.studio.versions.title', 'Version history')}</h3>
+          <p className="text-xs text-c-text-muted">
+            {t('excele.studio.versions.current', 'Current version: {{version}}', { version })}
+          </p>
         </div>
         <button
           type="button"
@@ -1717,17 +1831,20 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           onClick={() => void loadRevisions()}
           className="min-h-10 rounded-lg border border-c-border px-3 text-xs text-c-text-secondary hover:bg-c-surface disabled:opacity-40"
         >
-          Odśwież
+          {t('excele.studio.refresh', 'Refresh')}
         </button>
       </div>
       {revisionState === 'loading' ? (
-        <p className="text-sm text-c-text-secondary">Wczytywanie historii…</p>
+        <p className="text-sm text-c-text-secondary">{t('excele.studio.versions.loading', 'Loading history…')}</p>
       ) : revisionState === 'error' ? (
         <div
           role="alert"
           className="rounded-lg border border-c-danger/40 p-3 text-sm text-c-danger"
         >
-          Nie udało się wczytać lub przywrócić wersji. Odśwież historię i spróbuj ponownie.
+          {t(
+            'excele.studio.versions.error',
+            'Failed to load or restore the version. Refresh the history and try again.'
+          )}
         </div>
       ) : revisions.length ? (
         <ol className="space-y-2">
@@ -1736,14 +1853,14 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-c-text">
-                    Wersja {revision.version}
-                    {revision.version === version ? ' · bieżąca' : ''}
+                    {t('excele.studio.versions.item', 'Version {{version}}', { version: revision.version })}
+                    {revision.version === version ? ` · ${t('excele.studio.versions.currentSuffix', 'current')}` : ''}
                   </p>
                   <p className="mt-1 text-xs text-c-text-secondary">
                     {revisionLabel(revision.command_id)}
                   </p>
                   <p className="mt-1 text-xs text-c-text-muted">
-                    {revision.created_by} · {new Date(revision.created_at).toLocaleString('pl-PL')}
+                    {revision.created_by} · {formatListDateTime(revision.created_at)}
                   </p>
                 </div>
                 {revision.version !== version ? (
@@ -1753,7 +1870,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     onClick={() => void restoreRevision(revision.version)}
                     className="min-h-10 shrink-0 rounded-lg border border-c-border px-3 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-40"
                   >
-                    Przywróć
+                    {t('excele.studio.versions.restore', 'Restore')}
                   </button>
                 ) : null}
               </div>
@@ -1762,7 +1879,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         </ol>
       ) : (
         <div className="rounded-lg border border-c-border p-3 text-sm text-c-text-secondary">
-          Brak zapisanych rewizji skoroszytu.
+          {t('excele.studio.versions.empty', 'No saved workbook revisions.')}
         </div>
       )}
     </div>
@@ -1778,12 +1895,12 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           onClick={() => setLeftMode('sheets')}
           className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-md text-xs font-medium ${leftMode === 'sheets' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}
         >
-          <Files size={14} aria-hidden="true" /> Arkusze
+          <Files size={14} aria-hidden="true" /> {t('excele.studio.tab.sheets', 'Sheets')}
         </button>
         <button
           type="button"
           role="tab"
-          aria-label="Źródła i założenia"
+          aria-label={t('excele.studio.sources.title', 'Sources and assumptions')}
           aria-selected={leftMode === 'sources'}
           onClick={() => setLeftMode('sources')}
           className={`inline-flex min-h-10 items-center justify-center rounded-md text-xs font-medium ${leftMode === 'sources' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}
@@ -1793,7 +1910,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         <button
           type="button"
           role="tab"
-          aria-label="Kontrola jakości"
+          aria-label={t('excele.studio.qa.title', 'Quality control')}
           aria-selected={leftMode === 'qa'}
           onClick={() => setLeftMode('qa')}
           className={`inline-flex min-h-10 items-center justify-center rounded-md text-xs font-medium ${leftMode === 'qa' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}
@@ -1807,12 +1924,12 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           onClick={() => setLeftMode('comments')}
           className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-md text-xs font-medium ${leftMode === 'comments' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}
         >
-          <MessageSquare size={14} aria-hidden="true" /> Komentarze
+          <MessageSquare size={14} aria-hidden="true" /> {t('excele.studio.tab.comments', 'Comments')}
         </button>
         <button
           type="button"
           role="tab"
-          aria-label="Historia wersji"
+          aria-label={t('excele.studio.versions.title', 'Version history')}
           aria-selected={leftMode === 'versions'}
           onClick={() => setLeftMode('versions')}
           className={`inline-flex min-h-10 items-center justify-center rounded-md text-xs font-medium ${leftMode === 'versions' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}
@@ -1855,7 +1972,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-c-danger" aria-hidden="true" />
           <span>
             {sheetCommandError ??
-              'Nie udało się zapisać zmiany na serwerze. Wartość widoczna w siatce NIE jest zapisana — odśwież arkusz i wpisz ją ponownie.'}
+              t(
+                'excele.studio.saveErrorBanner',
+                'Failed to save the change on the server. The value shown in the grid is NOT saved — refresh the sheet and enter it again.'
+              )}
           </span>
         </div>
       ) : null}
@@ -1863,18 +1983,22 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         <section
           role="search"
           aria-label={
-            searchMode === 'replace' ? 'Znajdź i zamień w skoroszycie' : 'Znajdź w skoroszycie'
+            searchMode === 'replace'
+              ? t('excele.studio.search.replaceRegion', 'Find and replace in the workbook')
+              : t('excele.studio.search.findRegion', 'Find in the workbook')
           }
           className="sticky right-0 top-0 z-30 mb-3 ml-auto w-full max-w-xl rounded-xl border border-c-border bg-c-surface-raised p-3 shadow-xl"
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Search size={16} aria-hidden="true" />
-              {searchMode === 'replace' ? 'Znajdź i zamień' : 'Znajdź'}
+              {searchMode === 'replace'
+                ? t('excele.studio.revision.replaceAll', 'Find and replace')
+                : t('excele.studio.search.find', 'Find')}
             </h2>
             <button
               type="button"
-              aria-label="Zamknij wyszukiwanie"
+              aria-label={t('excele.studio.search.close', 'Close search')}
               onClick={() => setSearchMode(null)}
               className="inline-flex size-10 items-center justify-center rounded-lg text-c-text-muted hover:bg-c-surface hover:text-c-text"
             >
@@ -1884,7 +2008,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <input
               ref={searchInputRef}
-              aria-label="Szukany tekst"
+              aria-label={t('excele.studio.search.queryLabel', 'Search text')}
               value={searchQuery}
               onChange={(event) => {
                 setSearchQuery(event.target.value);
@@ -1897,7 +2021,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   focusSearchMatch(event.shiftKey ? searchIndex - 1 : searchIndex + 1);
                 }
               }}
-              placeholder="Wartość lub formuła"
+              placeholder={t('excele.studio.search.queryPlaceholder', 'Value or formula')}
               className="min-h-10 min-w-0 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
             />
             <div className="flex items-center gap-1">
@@ -1907,7 +2031,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 onClick={() => focusSearchMatch(searchIndex - 1)}
                 className="inline-flex min-h-10 items-center rounded-lg border border-c-border px-3 text-xs text-c-text-secondary hover:bg-c-surface disabled:opacity-40"
               >
-                Poprzedni
+                {t('excele.studio.search.previous', 'Previous')}
               </button>
               <button
                 type="button"
@@ -1915,17 +2039,17 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 onClick={() => focusSearchMatch(searchIndex + 1)}
                 className="inline-flex min-h-10 items-center rounded-lg border border-c-border px-3 text-xs text-c-text-secondary hover:bg-c-surface disabled:opacity-40"
               >
-                Następny
+                {t('excele.studio.search.next', 'Next')}
               </button>
             </div>
           </div>
           {searchMode === 'replace' ? (
             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <input
-                aria-label="Zamień na"
+                aria-label={t('excele.studio.search.replaceLabel', 'Replace with')}
                 value={replacementText}
                 onChange={(event) => setReplacementText(event.target.value)}
-                placeholder="Nowa wartość"
+                placeholder={t('excele.studio.search.replacePlaceholder', 'New value')}
                 className="min-h-10 min-w-0 flex-1 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
               />
               <button
@@ -1934,19 +2058,21 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 onClick={() => void replaceAllMatches()}
                 className="min-h-10 rounded-lg bg-c-text px-4 text-sm font-medium text-c-surface disabled:opacity-40"
               >
-                Zamień wszystko ({searchMatches.length})
+                {t('excele.studio.search.replaceAll', 'Replace all ({{count}})', { count: searchMatches.length })}
               </button>
             </div>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-c-text-secondary">
             <select
-              aria-label="Zakres wyszukiwania"
+              aria-label={t('excele.studio.search.scopeLabel', 'Search scope')}
               value={searchScope}
               onChange={(event) => setSearchScope(event.target.value as 'sheet' | 'workbook')}
               className="min-h-9 rounded-lg border border-c-border bg-c-surface px-2"
             >
-              <option value="sheet">Bieżący arkusz</option>
-              <option value="workbook">Cały skoroszyt</option>
+              <option value="sheet">{t('excele.studio.search.scopeSheet', 'Current sheet')}</option>
+              <option value="workbook">
+                {t('excele.studio.wholeWorkbook', 'Whole workbook')}
+              </option>
             </select>
             <label className="inline-flex min-h-9 items-center gap-2">
               <input
@@ -1954,7 +2080,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 checked={matchCase}
                 onChange={(event) => setMatchCase(event.target.checked)}
               />
-              Wielkość liter
+              {t('excele.studio.search.matchCase', 'Match case')}
             </label>
             <label className="inline-flex min-h-9 items-center gap-2">
               <input
@@ -1962,14 +2088,17 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 checked={wholeCell}
                 onChange={(event) => setWholeCell(event.target.checked)}
               />
-              Cała komórka
+              {t('excele.studio.search.wholeCell', 'Whole cell')}
             </label>
             <span aria-live="polite">
               {searchQuery
                 ? searchMatches.length
-                  ? `${searchIndex + 1} z ${searchMatches.length}`
-                  : 'Brak wyników'
-                : 'Wpisz szukany tekst'}
+                  ? t('excele.studio.search.position', '{{index}} of {{total}}', {
+                      index: searchIndex + 1,
+                      total: searchMatches.length,
+                    })
+                  : t('excele.studio.search.noResults', 'No results')
+                : t('excele.studio.search.hint', 'Type the text to find')}
             </span>
           </div>
           {searchError ? (
@@ -2005,7 +2134,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         </div>
       ) : (
         <div className="flex h-full items-center justify-center text-sm text-c-text-secondary">
-          Nie udało się wczytać komórek skoroszytu.
+          {t('excele.studio.gridLoadFailed', 'Failed to load the workbook cells.')}
         </div>
       )}
     </div>
@@ -2049,11 +2178,11 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   const rightPanel = (
     <ArtifactRightPanel
       width="100%"
-      ariaLabel="Szczegóły skoroszytu"
+      ariaLabel={t('excele.studio.rightPanel.aria', 'Workbook details')}
       sections={[
         {
           id: 'actions',
-          label: 'Akcje',
+          label: t('excele.studio.rightPanel.actions', 'Actions'),
           icon: ShieldCheck,
           defaultOpen: true,
           children: (
@@ -2064,14 +2193,24 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
              * które w Menu 1 są schowane pod wielokropkiem albo w stopce.
              */
             <div className="space-y-2">
-              {panelAction('copy', 'Kopiuj link wewnętrzny', Copy, onCopyLink)}
-              {panelAction('ai-complete-section', 'Uzupełnij tę sekcję', Sparkles, () => openTeresa())}
+              {panelAction(
+                'copy',
+                t('excele.studio.copyInternalLink', 'Copy internal link'),
+                Copy,
+                onCopyLink
+              )}
+              {panelAction(
+                'ai-complete-section',
+                t('excele.studio.completeSection', 'Complete this section'),
+                Sparkles,
+                () => openTeresa()
+              )}
             </div>
           ),
         },
         {
           id: 'properties',
-          label: 'Właściwości',
+          label: t('excele.studio.rightPanel.properties', 'Properties'),
           icon: Files,
           defaultOpen: true,
           children: (
@@ -2082,28 +2221,31 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             // SIBLING after the </dl>, not inside it.
             <>
               <dl className="divide-y divide-c-border-subtle">
-                {detailRow('Nazwa pliku', preview.fileName ?? `${workbookTitle}.xlsx`)}
-                {detailRow('Format', 'XLSX')}
-                {detailRow('Arkusze', sheetNames.length)}
                 {detailRow(
-                  'Klasyfikacja',
+                  t('excele.studio.detail.fileName', 'File name'),
+                  preview.fileName ?? `${workbookTitle}.xlsx`
+                )}
+                {detailRow(t('excele.studio.detail.format', 'Format'), 'XLSX')}
+                {detailRow(t('excele.studio.tab.sheets', 'Sheets'), sheetNames.length)}
+                {detailRow(
+                  t('excele.studio.detail.classification', 'Classification'),
                   classification === 'public'
-                    ? 'Publiczny'
+                    ? t('excele.studio.classification.public', 'Public')
                     : classification === 'confidential'
-                      ? 'Poufny'
-                      : 'Wewnętrzny'
+                      ? t('excele.studio.classification.confidential', 'Confidential')
+                      : t('excele.studio.classification.internal', 'Internal')
                 )}
                 {detailRow(
-                  'Status',
+                  t('excele.studio.detail.status', 'Status'),
                   lifecycleStatus === 'in_review'
-                    ? 'Do przeglądu'
+                    ? t('excele.studio.lifecycle.inReview', 'In review')
                     : lifecycleStatus === 'approved'
-                      ? 'Zatwierdzony'
+                      ? t('excele.studio.lifecycle.approved', 'Approved')
                       : lifecycleStatus === 'final'
-                        ? 'Finalny'
-                        : 'Szkic'
+                        ? t('excele.studio.lifecycle.final', 'Final')
+                        : t('excele.studio.lifecycle.draft', 'Draft')
                 )}
-                {detailRow('Wersja', version)}
+                {detailRow(t('excele.studio.detail.version', 'Version'), version)}
               </dl>
               {preview.summary ? (
                 <div className="pt-2 text-xs leading-relaxed text-c-text-secondary">
@@ -2115,18 +2257,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         },
         {
           id: 'evidence',
-          label: 'Źródła i założenia',
+          label: t('excele.studio.sources.title', 'Sources and assumptions'),
           icon: SearchCheck,
           defaultOpen: false,
           badge: sourceItems.length,
           isEmpty: sourceItems.length === 0,
-          emptyLabel: 'Ten skoroszyt nie ma jeszcze podpiętych źródeł.',
+          emptyLabel: t('excele.studio.rightPanel.sourcesEmpty', 'This workbook has no sources attached yet.'),
           children: (
             <ul className="space-y-1">
               {sourceItems.map((entry) => (
                 <li key={entry.id} className="truncate text-xs text-c-text-secondary">
                   <span className="text-c-text-muted">{entry.group}: </span>
-                  {sourceLabel(entry.item)}
+                  {sourceLabel(entry.item, t)}
                 </li>
               ))}
             </ul>
@@ -2140,33 +2282,33 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     <>
       <ExecutiveModuleShell
         moduleKey="spreadsheet-studio"
-        moduleLabel="Arkusze"
+        moduleLabel={t('excele.studio.tab.sheets', 'Sheets')}
         title={workbookTitle}
         onTitleChange={(nextTitle) => void renameWorkbook(nextTitle)}
         onBack={() => navigate('/presentations?tab=sheets')}
-        backLabel="Wróć do Materiałów"
+        backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
         topBarChips={chips}
         topBarTitleTrailingSlot={
           <span className="text-xs text-c-text-muted" data-testid="spreadsheet-save-summary">
             {saveState === 'saving'
-              ? 'Zapisywanie…'
+              ? t('excele.studio.saving', 'Saving…')
               : saveState === 'error'
-                ? 'Błąd zapisu'
-                : 'Zapisano'}
+                ? t('kimi.excele.saveFailed', 'Save failed')
+                : t('kimi.excele.saved', 'Saved')}
           </span>
         }
         artifactStudioMode
         artifactMinCanvasWidth={650}
         leftRailTitle={
           leftMode === 'sheets'
-            ? 'Arkusze'
+            ? t('excele.studio.tab.sheets', 'Sheets')
             : leftMode === 'sources'
-              ? 'Źródła i założenia'
+              ? t('excele.studio.sources.title', 'Sources and assumptions')
               : leftMode === 'qa'
-                ? 'Kontrola jakości'
+                ? t('excele.studio.qa.title', 'Quality control')
                 : leftMode === 'comments'
-                  ? 'Komentarze'
-                  : 'Historia wersji'
+                  ? t('excele.studio.tab.comments', 'Comments')
+                  : t('excele.studio.versions.title', 'Version history')
         }
         leftRailContent={leftRail}
         // Stary pas ikon jest w trybie warsztatu wygaszany przez samą powłokę;
@@ -2177,7 +2319,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           <ArtifactMenu3
             registry={registry}
             context={commandContext}
-            resolveLabel={(label) => label}
+            resolveLabel={(label, command) => {
+              const wpis = ETYKIETY_KOMEND[command.commandId];
+              return wpis ? t(wpis.klucz, wpis.en) : label;
+            }}
             // 9 miejsc = Cofnij · Ponów · Waluta · Procent · Pogrubienie ·
             // Wstaw/Usuń wiersz · Wstaw/Usuń kolumnę. Domyślne 7 wypychało
             // wstawianie kolumn pod „Więcej" — to była pierwsza przyczyna
@@ -2185,7 +2330,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             // (siedzi nad kolumnami powłoki), więc dziewięć pigułek mieści się
             // bez ucinania.
             maxVisible={9}
-            ariaLabel="Narzędzia arkusza"
+            ariaLabel={t('excele.studio.toolbarAria', 'Sheet tools')}
           />
         }
         canvas={canvas}
@@ -2193,22 +2338,25 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           <ArtifactBottomBar
             leading={
               selection?.address ??
-              `${sheetNames[activeSheet] ?? 'Arkusz'} · ${activeSheet + 1}/${sheetNames.length}`
+              `${sheetNames[activeSheet] ?? t('excele.studio.sheetFallback', 'Sheet')} · ${
+                activeSheet + 1
+              }/${sheetNames.length}`
             }
             center={
               selectionStats ? (
-                <span aria-label="Statystyki zaznaczenia">
-                  Suma: {formatSelectionStat(selectionStats.sum)} · Średnia:{' '}
-                  {formatSelectionStat(selectionStats.average)} · Licznik: {selectionStats.count}
+                <span aria-label={t('excele.studio.stats.aria', 'Selection statistics')}>
+                  {t('excele.studio.stats.sum', 'Sum')}: {formatSelectionStat(selectionStats.sum)} ·{' '}
+                  {t('excele.studio.stats.average', 'Average')}: {formatSelectionStat(selectionStats.average)} ·{' '}
+                  {t('excele.studio.stats.count', 'Count')}: {selectionStats.count}
                 </span>
               ) : null
             }
             trailing={
               <>
-                <div className="flex items-center" aria-label="Powiększenie arkusza">
+                <div className="flex items-center" aria-label={t('excele.studio.zoom.aria', 'Sheet zoom')}>
                   <button
                     type="button"
-                    aria-label="Pomniejsz arkusz"
+                    aria-label={t('excele.studio.zoom.out', 'Zoom out')}
                     disabled={zoomPercent <= 50}
                     onClick={() => setZoomPercent((value) => Math.max(50, value - 10))}
                     className="inline-flex size-8 items-center justify-center rounded-md text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40"
@@ -2217,7 +2365,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   </button>
                   <button
                     type="button"
-                    aria-label="Dopasuj arkusz"
+                    aria-label={t('excele.studio.zoom.fit', 'Fit sheet')}
                     onClick={() => setZoomPercent(100)}
                     className="min-h-8 min-w-12 rounded-md px-1 text-c-text-secondary hover:bg-c-surface-raised"
                   >
@@ -2225,7 +2373,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   </button>
                   <button
                     type="button"
-                    aria-label="Powiększ arkusz"
+                    aria-label={t('excele.studio.zoom.in', 'Zoom in')}
                     disabled={zoomPercent >= 200}
                     onClick={() => setZoomPercent((value) => Math.min(200, value + 10))}
                     className="inline-flex size-8 items-center justify-center rounded-md text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40"
@@ -2239,7 +2387,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                 >
                   <Sparkles size={14} aria-hidden="true" />
-                  <span>Uzupełnij tę sekcję</span>
+                  <span>{t('excele.studio.completeSection', 'Complete this section')}</span>
                 </button>
               </>
             }
@@ -2266,18 +2414,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
               <div>
                 <h2 id="workbook-governance-title" className="text-base font-semibold text-c-text">
                   {governanceDialog === 'classification'
-                    ? 'Klasyfikacja skoroszytu'
-                    : 'Status skoroszytu'}
+                    ? t('excele.studio.governance.classificationTitle', 'Workbook classification')
+                    : t('excele.studio.governance.statusTitle', 'Workbook status')}
                 </h2>
                 <p className="mt-1 text-sm text-c-text-secondary">
                   {governanceDialog === 'classification'
-                    ? 'Publiczny link jest dostępny wyłącznie dla materiałów publicznych.'
-                    : 'Zatwierdzenie i status finalny wymagają aktualnej akceptacji.'}
+                    ? t('excele.studio.governance.classificationHint', 'A public link is available only for public materials.')
+                    : t('excele.studio.governance.statusHint', 'Approval and the final status require a current sign-off.')}
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Zamknij"
+                aria-label={t('common.close', 'Close')}
                 disabled={governanceState === 'saving'}
                 onClick={() => setGovernanceDialog(null)}
                 className="inline-flex size-10 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
@@ -2288,13 +2436,13 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             <div className="mt-5 grid gap-2">
               {(governanceDialog === 'classification'
                 ? [
-                    ['public', 'Publiczny'],
-                    ['internal', 'Wewnętrzny'],
-                    ['confidential', 'Poufny'],
+                    ['public', t('excele.studio.classification.public', 'Public')],
+                    ['internal', t('excele.studio.classification.internal', 'Internal')],
+                    ['confidential', t('excele.studio.classification.confidential', 'Confidential')],
                   ]
                 : [
-                    ['draft', 'Szkic'],
-                    ['final', 'Finalny'],
+                    ['draft', t('excele.studio.lifecycle.draft', 'Draft')],
+                    ['final', t('excele.studio.lifecycle.final', 'Final')],
                   ]
               ).map(([value, label]) => {
                 const requiresApproval =
@@ -2306,7 +2454,11 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     key={value}
                     type="button"
                     disabled={governanceState === 'saving' || requiresApproval}
-                    title={requiresApproval ? 'Najpierw uzyskaj aktualne zatwierdzenie' : undefined}
+                    title={
+                      requiresApproval
+                        ? t('excele.studio.governance.needsApproval', 'Get a current approval first')
+                        : undefined
+                    }
                     onClick={() =>
                       void updateGovernance(
                         governanceDialog,
@@ -2318,7 +2470,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                     <span>{label}</span>
                     {(governanceDialog === 'classification' ? classification : lifecycleStatus) ===
                     value ? (
-                      <span className="text-xs text-c-focus-solid">Aktualny</span>
+                      <span className="text-xs text-c-focus-solid">{t('excele.studio.governance.currentValue', 'Current')}</span>
                     ) : null}
                   </button>
                 );
@@ -2327,29 +2479,29 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             {governanceDialog === 'lifecycleStatus' ? (
               <div className="mt-4 space-y-3 border-t border-c-border pt-4">
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-c-text-secondary">Obieg zatwierdzania</span>
+                  <span className="text-c-text-secondary">{t('excele.studio.governance.flow', 'Approval flow')}</span>
                   <span className="rounded-md bg-c-surface-raised px-2 py-1 text-xs text-c-text">
                     {approvalState?.state === 'review'
-                      ? 'W przeglądzie'
+                      ? t('excele.studio.approval.inReview', 'Under review')
                       : approvalState?.state === 'approved' && approvalState.currentForVersion
-                        ? 'Aktualne zatwierdzenie'
+                        ? t('excele.studio.approval.current', 'Current approval')
                         : approvalState?.state === 'approved'
-                          ? 'Zatwierdzenie nieaktualne'
+                          ? t('excele.studio.approval.stale', 'Approval out of date')
                           : approvalState?.state === 'rejected'
-                            ? 'Zwrócony do poprawy'
-                            : 'Nieprzekazany'}
+                            ? t('excele.studio.approval.rejected', 'Sent back for changes')
+                            : t('excele.studio.approval.notSubmitted', 'Not submitted')}
                   </span>
                 </div>
 
                 {lifecycleStatus === 'draft' || approvalState?.state === 'rejected' ? (
                   <div className="space-y-2">
                     <label className="block text-sm text-c-text-secondary">
-                      Wybierz recenzenta
+                      {t('excele.studio.review.chooseReviewer', 'Choose a reviewer')}
                       <input
                         type="search"
                         value={reviewerSearch}
                         onChange={(event) => setReviewerSearch(event.target.value)}
-                        placeholder="Szukaj po nazwie lub e-mailu"
+                        placeholder={t('excele.studio.review.searchPlaceholder', 'Search by name or e-mail')}
                         className="mt-2 h-10 w-full rounded-lg border border-c-border bg-c-surface-raised px-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
                       />
                     </label>
@@ -2358,7 +2510,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                         .filter((user) => {
                           const query = reviewerSearch.trim().toLocaleLowerCase('pl');
                           if (!query) return true;
-                          return `${reviewUserName(user)} ${user.email || ''}`
+                          return `${reviewUserName(user, t)} ${user.email || ''}`
                             .toLocaleLowerCase('pl')
                             .includes(query);
                         })
@@ -2376,7 +2528,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                           >
                             <span className="min-w-0">
                               <span className="block truncate text-c-text">
-                                {reviewUserName(user)}
+                                {reviewUserName(user, t)}
                               </span>
                               {user.email ? (
                                 <span className="block truncate text-xs">{user.email}</span>
@@ -2389,7 +2541,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                         ))}
                       {!reviewUsers.length ? (
                         <p className="rounded-lg border border-c-border p-3 text-sm text-c-text-secondary">
-                          Brak dostępnego recenzenta innego niż autor.
+                          {t('excele.studio.review.noReviewer', 'No reviewer other than the author is available.')}
                         </p>
                       ) : null}
                     </div>
@@ -2400,7 +2552,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                       className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-surface disabled:opacity-45"
                     >
                       <Send size={16} aria-hidden="true" />
-                      Przekaż do przeglądu
+                      {t('excele.studio.review.submit', 'Submit for review')}
                     </button>
                   </div>
                 ) : null}
@@ -2414,10 +2566,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                       className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-c-success px-4 text-sm font-medium text-white disabled:opacity-45"
                     >
                       <Check size={16} aria-hidden="true" />
-                      Zatwierdź
+                      {t('excele.studio.review.approve', 'Approve')}
                     </button>
                     <label className="block text-sm text-c-text-secondary">
-                      Powód zwrotu do poprawy
+                      {t('excele.studio.review.rejectReason', 'Reason for sending back')}
                       <textarea
                         value={rejectionReason}
                         onChange={(event) => setRejectionReason(event.target.value)}
@@ -2430,7 +2582,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                       onClick={() => void decideReview('reject')}
                       className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-c-danger px-4 text-sm font-medium text-c-danger disabled:opacity-45"
                     >
-                      Zwróć do poprawy
+                      {t('excele.studio.review.reject', 'Send back for changes')}
                     </button>
                   </div>
                 ) : null}
@@ -2438,18 +2590,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             ) : null}
             {governanceDialog === 'classification' ? (
               <label className="mt-4 block text-sm text-c-text-secondary">
-                Uzasadnienie obniżenia klasyfikacji
+                {t('excele.studio.governance.downgradeReason', 'Justification for lowering the classification')}
                 <textarea
                   value={governanceReason}
                   onChange={(event) => setGovernanceReason(event.target.value)}
-                  placeholder="Wymagane przy zmianie na mniej restrykcyjną"
+                  placeholder={t('excele.studio.governance.downgradePlaceholder', 'Required when moving to a less restrictive level')}
                   className="mt-2 min-h-20 w-full resize-y rounded-lg border border-c-border bg-c-surface-raised p-3 text-sm text-c-text outline-none focus:border-c-focus-solid"
                 />
               </label>
             ) : null}
             {governanceState === 'error' ? (
               <p role="alert" className="mt-3 text-sm text-c-danger">
-                Zmiana została odrzucona przez politykę lub wystąpił konflikt wersji.
+                {t('excele.studio.governance.error', 'The change was rejected by policy, or a version conflict occurred.')}
               </p>
             ) : null}
           </section>
@@ -2473,16 +2625,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="workbook-share-title" className="text-base font-semibold text-c-text">
-                  Udostępnianie skoroszytu
+                  {t('excele.studio.share.title', 'Workbook sharing')}
                 </h2>
                 <p className="mt-1 text-sm text-c-text-secondary">
-                  Publiczny link działa wyłącznie dla klasyfikacji Publiczny. Ponowne utworzenie
-                  rotuje token i natychmiast unieważnia poprzedni.
+                  {t(
+                    'excele.studio.share.hint',
+                    'A public link works only for the Public classification. Creating it again rotates the token and immediately invalidates the previous one.'
+                  )}
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Zamknij"
+                aria-label={t('common.close', 'Close')}
                 disabled={shareState === 'saving'}
                 onClick={() => setShareDialogOpen(false)}
                 className="inline-flex size-10 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-45"
@@ -2492,16 +2646,18 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             </div>
             <div className="mt-5 rounded-lg border border-c-border bg-c-surface-raised p-3 text-sm">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-c-text-secondary">Status</span>
+                <span className="text-c-text-secondary">
+                  {t('excele.studio.detail.status', 'Status')}
+                </span>
                 <span className="font-medium text-c-text">
-                  {shareActive ? 'Aktywny' : 'Brak aktywnego linku'}
+                  {shareActive ? t('excele.studio.share.active', 'Active') : t('excele.studio.share.inactive', 'No active link')}
                 </span>
               </div>
               {shareExpiresAt ? (
                 <div className="mt-2 flex items-center justify-between gap-3">
-                  <span className="text-c-text-secondary">Wygasa</span>
+                  <span className="text-c-text-secondary">{t('excele.studio.share.expires', 'Expires')}</span>
                   <span className="text-c-text">
-                    {new Date(shareExpiresAt).toLocaleString('pl-PL')}
+                    {formatListDateTime(shareExpiresAt)}
                   </span>
                 </div>
               ) : null}
@@ -2513,7 +2669,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-c-border px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised"
               >
                 <Copy size={16} aria-hidden="true" />
-                Kopiuj nowy link
+                {t('excele.studio.share.copyNew', 'Copy the new link')}
               </button>
             ) : null}
             <div className="mt-4 grid gap-2">
@@ -2521,13 +2677,17 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 type="button"
                 disabled={classification !== 'public' || shareState === 'saving'}
                 title={
-                  classification !== 'public' ? 'Najpierw ustaw klasyfikację Publiczny' : undefined
+                  classification !== 'public'
+                    ? t('excele.studio.share.needsPublic', 'Set the Public classification first')
+                    : undefined
                 }
                 onClick={() => void mintOrRotateShare()}
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-surface disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <Link2 size={16} aria-hidden="true" />
-                {shareActive ? 'Rotuj link i skopiuj' : 'Utwórz link na 7 dni'}
+                {shareActive
+                  ? t('excele.studio.share.rotate', 'Rotate the link and copy')
+                  : t('excele.studio.share.create', 'Create a 7-day link')}
               </button>
               {shareActive ? (
                 <button
@@ -2536,13 +2696,16 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   onClick={() => void revokeShare()}
                   className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-c-danger px-4 text-sm font-medium text-c-danger disabled:opacity-45"
                 >
-                  Cofnij udostępnienie
+                  {t('excele.rightPanel.revokeShare', 'Revoke sharing')}
                 </button>
               ) : null}
             </div>
             {shareState === 'error' ? (
               <p role="alert" className="mt-3 text-sm text-c-danger">
-                Operacja została odrzucona. Sprawdź klasyfikację, uprawnienia i aktualny stan.
+                {t(
+                  'excele.studio.share.error',
+                  'The operation was rejected. Check the classification, permissions and current state.'
+                )}
               </p>
             ) : null}
           </section>
@@ -2554,7 +2717,9 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           y={contextMenu.y}
           items={contextMenuItems}
           onClose={() => setContextMenu(null)}
-          ariaLabel={`Akcje zaznaczenia ${contextMenu.selection.address}`}
+          ariaLabel={t('excele.studio.contextMenuAria', 'Selection actions: {{address}}', {
+            address: contextMenu.selection.address,
+          })}
           header={
             <span className="text-xs font-medium text-c-text-secondary">
               {contextMenu.selection.address}

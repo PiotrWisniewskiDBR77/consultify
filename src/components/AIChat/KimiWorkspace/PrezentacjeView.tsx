@@ -364,7 +364,7 @@ export const PrezentacjeView: React.FC = () => {
         setReopenError(
           t(
             'prezentacje.reopenFailedBlocking',
-            'Nie udało się otworzyć prezentacji. Jej treść jest niedostępna lub uszkodzona.'
+            'Failed to open the presentation. Its content is unavailable or damaged.'
           )
         );
       });
@@ -543,7 +543,7 @@ export const PrezentacjeView: React.FC = () => {
     setCreatingBlank(true);
     setBlankCreateFailed(false);
     try {
-      const title = t('prezentacje.blank.title', 'Nowa prezentacja');
+      const title = t('prezentacje.blank.title', 'New presentation');
       const res = await Api.post('/presentations/decks', {
         title,
         theme: 'modern',
@@ -563,7 +563,7 @@ export const PrezentacjeView: React.FC = () => {
       if (deckId) {
         openInDeckBuilder(deckId);
       } else {
-        toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+        toast.error(t('prezentacje.blankFailed', 'Failed to create a blank presentation.'));
         setBlankCreateFailed(true);
       }
     } catch {
@@ -571,7 +571,7 @@ export const PrezentacjeView: React.FC = () => {
       // ExceleView's equivalent comment) — this catch is deterministic, not a
       // hang. The bug was that nothing downstream gave the failure a
       // permanent, visible state; see `blankCreateFailed` above.
-      toast.error(t('prezentacje.blankFailed', 'Nie udało się utworzyć pustej prezentacji.'));
+      toast.error(t('prezentacje.blankFailed', 'Failed to create a blank presentation.'));
       setBlankCreateFailed(true);
     } finally {
       setCreatingBlank(false);
@@ -762,12 +762,12 @@ export const PrezentacjeView: React.FC = () => {
         creatingLabel={t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
         failedMessage={t(
           'prezentacje.blankFailedPermanent',
-          'Nie udało się utworzyć pustej prezentacji. Spróbuj ponownie albo wróć do Materiałów.'
+          'Failed to create a blank presentation. Try again or go back to Materials.'
         )}
         onRetry={() => void handleCreateEmptyDeck()}
-        retryLabel={t('prezentacje.blank.retry', 'Spróbuj ponownie')}
+        retryLabel={t('prezentacje.blank.retry', 'Try again')}
         onBack={() => navigate('/presentations?tab=presentations')}
-        backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+        backLabel={t('documentStudio.view.backToMaterials', 'Back to Materials')}
         testId="prezentacje-blank"
       />
     );
@@ -809,7 +809,7 @@ export const PrezentacjeView: React.FC = () => {
               onClick={() => navigate(resolveTemplateProvenancePath())}
               className="rounded-md border border-c-border bg-c-text px-3 py-1.5 text-sm text-c-surface hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              {t('prezentacje.template.goToProvenance', 'Przejdź do Pochodzenie i prawa')}
+              {t('prezentacje.template.goToProvenance', 'Go to Provenance and rights')}
             </button>
           ) : null}
           <button
@@ -817,7 +817,7 @@ export const PrezentacjeView: React.FC = () => {
             onClick={handleAllFiles}
             className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
+            {t('prezentacje.template.backToLibrary', 'Back to Library')}
           </button>
         </div>
       </div>
@@ -837,7 +837,7 @@ export const PrezentacjeView: React.FC = () => {
           onClick={handleAllFiles}
           className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          {t('prezentacje.reopenBackToLibrary', 'Wróć do prezentacji')}
+          {t('prezentacje.reopenBackToLibrary', 'Back to presentations')}
         </button>
       </div>
     );
@@ -862,10 +862,10 @@ export const PrezentacjeView: React.FC = () => {
       <TriModeChooser
         busy={creatingBlank}
         showTemplate
-        heading={t('prezentacje.tri.heading', 'Jak chcesz zacząć prezentację?')}
+        heading={t('prezentacje.tri.heading', 'How do you want to start the presentation?')}
         subheading={t(
           'prezentacje.tri.subheading',
-          'Wybierz tryb — wszystkie trzy są równorzędne.'
+          'Choose a mode — all three are equally valid.'
         )}
         clean={{
           title: t('prezentacje.tri.cleanTitle', 'Czysto'),
@@ -876,7 +876,7 @@ export const PrezentacjeView: React.FC = () => {
         }}
         ai={{
           title: t('prezentacje.tri.aiTitle', 'Z AI'),
-          desc: t('prezentacje.tri.aiDesc', 'Opisz deck — AI zbuduje slajdy i treść.'),
+          desc: t('prezentacje.tri.aiDesc', 'Describe the deck — AI will build the slides and the content.'),
         }}
         template={{
           title: t('prezentacje.tri.templateTitle', 'Z szablonu'),

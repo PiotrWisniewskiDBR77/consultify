@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface VersionRow {
   id: string;
@@ -122,8 +123,8 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
             type="button"
             onClick={onClose}
             className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            aria-label={t('common.close', 'Zamknij')}
-            title={t('common.close', 'Zamknij')}
+            aria-label={t('common.close', 'Close')}
+            title={t('common.close', 'Close')}
           >
             <X size={16} aria-hidden />
           </button>
@@ -131,19 +132,19 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
 
         {loadState === 'loading' && (
           <p className="text-xs text-c-text-muted">
-            {t('excele.versionHistory.loading', 'Ładowanie...')}
+            {t('excele.versionHistory.loading', 'Loading...')}
           </p>
         )}
         {loadState === 'error' && (
           <p className="text-xs text-c-danger">
-            {t('excele.versionHistory.loadFailed', 'Nie udało się wczytać historii wersji.')}
+            {t('excele.versionHistory.loadFailed', 'Failed to load version history.')}
           </p>
         )}
         {loadState === 'ready' && versions.length === 0 && (
           <p className="text-xs text-c-text-muted">
             {t(
               'excele.versionHistory.empty',
-              'Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.'
+              'No history saved yet — edit a cell to create the first version.'
             )}
           </p>
         )}
@@ -160,7 +161,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                     {t('excele.versionHistory.version', 'Wersja')} {v.version}
                   </div>
                   <div className="truncate text-c-text-muted">
-                    {new Date(v.created_at).toLocaleString('pl-PL')} &middot; {v.sheet_count}{' '}
+                    {formatListDateTime(v.created_at)} &middot; {v.sheet_count}{' '}
                     {t('excele.versionHistory.sheets', 'arkusz(e)')}
                   </div>
                 </div>
@@ -170,7 +171,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                   disabled={restoreState.status === 'restoring'}
                   className="shrink-0 rounded-md border border-c-border-subtle px-2 py-1 text-xs font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
                 >
-                  {t('excele.versionHistory.restore', 'Przywróć')}
+                  {t('excele.versionHistory.restore', 'Restore')}
                 </button>
               </li>
             ))}
@@ -182,7 +183,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
             <p className="mb-2 text-c-text">
               {t(
                 'excele.versionHistory.confirmMessage',
-                'Przywrócić wersję {{version}}? Bieżący stan zostanie zachowany w historii jako nowa wersja.',
+                'Restore version {{version}}? The current state will be kept in history as a new version.',
                 { version: restoreState.version }
               )}
             </p>
@@ -192,7 +193,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                 onClick={cancelRestore}
                 className="rounded-md px-2 py-1 text-c-text-muted hover:text-c-text"
               >
-                {t('common.cancel', 'Anuluj')}
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -200,7 +201,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                 className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
                 data-testid="workbook-restore-confirm"
               >
-                {t('excele.versionHistory.confirmAction', 'Przywróć')}
+                {t('excele.versionHistory.confirmAction', 'Restore')}
               </button>
             </div>
           </div>
@@ -219,7 +220,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
           >
             {t(
               'excele.versionHistory.conflict',
-              'Konflikt wersji: skoroszyt zmienił się w międzyczasie (bieżąca wersja: {{version}}). Odśwież i spróbuj ponownie.',
+              'Version conflict: the workbook changed in the meantime (current version: {{version}}). Refresh and try again.',
               { version: restoreState.serverVersion }
             )}
             <div className="mt-2 flex justify-end">
@@ -231,7 +232,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
                 }}
                 className="rounded-md border border-c-border-subtle px-2 py-1 font-medium text-c-text hover:bg-c-surface-raised"
               >
-                {t('excele.versionHistory.refresh', 'Odśwież')}
+                {t('excele.versionHistory.refresh', 'Refresh')}
               </button>
             </div>
           </div>

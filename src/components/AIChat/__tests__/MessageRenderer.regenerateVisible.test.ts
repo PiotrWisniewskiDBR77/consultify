@@ -40,10 +40,13 @@ describe('MessageRenderer — Ponów odpowiedź zawsze widoczny (MVP 1.1-E)', ()
     expect(surrounding).not.toContain('showCompactActions');
   });
 
-  it('carries a Polish "Ponów odpowiedź" label wired through i18n (pl+en present)', () => {
+  // J1 (2026-09-08): default w kodzie jest ANGIELSKI (zasada §2.3 PLANU jezykowego)
+  // — polski "Ponow odpowiedz" zyje wylacznie w public/locales/pl. Test pilnuje
+  // obu stron: angielskiego defaultu w zrodle i polskiego tlumaczenia w slowniku.
+  it('carries an English default wired through i18n, with the Polish label in pl (pl+en present)', () => {
     const startIdx = source.indexOf('data-testid="message-action-regenerate"');
     const surrounding = source.slice(Math.max(0, startIdx - 400), startIdx + 400);
-    expect(surrounding).toContain("t('chat.actions.regenerate', 'Ponów odpowiedź')");
+    expect(surrounding).toContain("t('chat.actions.regenerate', 'Regenerate response')");
 
     const plPath = path.resolve(__dirname, '../../../../public/locales/pl/translation.json');
     const enPath = path.resolve(__dirname, '../../../../public/locales/en/translation.json');

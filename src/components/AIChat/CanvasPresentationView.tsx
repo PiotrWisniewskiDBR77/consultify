@@ -127,7 +127,7 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
           {phase === 'generating' && (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
-              {t('canvas.presentation.generating', 'Generuję…')}
+              {t('canvas.presentation.generating', 'Generating…')}
             </span>
           )}
         </div>
@@ -139,14 +139,14 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
               className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              {t('canvas.presentation.openInBuilder', 'Otwórz w Deck Builder')}
+              {t('canvas.presentation.openInBuilder', 'Open in Deck Builder')}
             </button>
           )}
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              aria-label={t('common.close', 'Zamknij')}
+              aria-label={t('common.close', 'Close')}
               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -162,7 +162,7 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
             <p>
               {t(
                 'canvas.presentation.empty',
-                'Brak prezentacji. Poproś Teresę: „zrób z tego prezentację”.'
+                'No presentations yet.'
               )}
             </p>
           </div>
@@ -175,9 +175,9 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
               {phase === 'generating'
                 ? t(
                     'canvas.presentation.generatingBody',
-                    'Teresa generuje slajdy — pojawią się tutaj automatycznie.'
+                    'Teresa is generating slides — they will appear here automatically.'
                   )
-                : t('canvas.presentation.loading', 'Wczytuję prezentację…')}
+                : t('canvas.presentation.loading', 'Loading…')}
             </p>
           </div>
         )}
@@ -185,7 +185,7 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
         {phase === 'failed' && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-sm">
             <p className="text-destructive">
-              {error || t('canvas.presentation.failed', 'Generacja prezentacji nie powiodła się.')}
+              {error || t('canvas.presentation.failed', 'Failed')}
             </p>
             <button
               type="button"
@@ -193,7 +193,7 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              {t('common.retry', 'Spróbuj ponownie')}
+              {t('common.retry', 'Try again')}
             </button>
           </div>
         )}

@@ -1,0 +1,85 @@
+{
+ "ekran": "09-panel-artefaktow",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/chat/a196ee85-b59b-406e-9084-2640fb048022",
+ "jezykPowloki": "en",
+ "zgodnyJezyk": false,
+ "obcychSlowUI": 16,
+ "obcychLiniiUI": 10,
+ "ui": [
+  {
+   "linia": "Skip to main content",
+   "trafienia": [
+    "content"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "create",
+   "trafienia": [
+    "create"
+   ]
+  },
+  {
+   "linia": "Open target",
+   "trafienia": [
+    "Open"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "Open as document",
+   "trafienia": [
+    "Open",
+    "as"
+   ]
+  },
+  {
+   "linia": "7 sources",
+   "trafienia": [
+    "sources"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Feedback",
+   "trafienia": [
+    "Feedback"
+   ]
+  }
+ ]
+}

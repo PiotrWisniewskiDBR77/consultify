@@ -217,13 +217,13 @@ export const ExceleView: React.FC = () => {
         setReopenError(
           t(
             'kimi.excele.reopenNotFound',
-            'Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.'
+            "This spreadsheet's content could not be found — the source data was deleted or has expired."
           )
         );
         toast.error(
           t(
             'kimi.excele.reopenNotFoundToast',
-            'Nie udało się otworzyć arkusza — treść nie została znaleziona.'
+            'Could not open the spreadsheet — content was not found.'
           )
         );
         return;
@@ -522,17 +522,17 @@ export const ExceleView: React.FC = () => {
       <TriModeChooser
         busy={creatingBlank}
         showTemplate
-        heading={t('kimi.excele.triChooser.heading', 'Jak chcesz zacząć arkusz?')}
-        subheading={t('kimi.excele.triChooser.subheading', 'Wybierz tryb — wszystkie trzy są równorzędne.')}
+        heading={t('kimi.excele.triChooser.heading', 'How do you want to start the spreadsheet?')}
+        subheading={t('kimi.excele.triChooser.subheading', 'Choose a mode — all three are equally valid.')}
         clean={{
           title: t('kimi.excele.triChooser.clean.title', 'Czysto'),
-          desc: t('kimi.excele.triChooser.clean.desc', 'Pusta siatka (1 arkusz). Wypełniasz sam, bez AI.'),
+          desc: t('kimi.excele.triChooser.clean.desc', 'Empty grid (1 sheet). You fill it in yourself, no AI.'),
         }}
         ai={{
           title: t('kimi.excele.triChooser.ai.title', 'Z AI'),
           desc: t(
             'excele.triChooser.ai.desc',
-            'Opisz arkusz — AI zbuduje wielo-arkuszowy skoroszyt z formułami.'
+            'Describe the sheet — AI will build a multi-sheet workbook with formulas.'
           ),
         }}
         template={{

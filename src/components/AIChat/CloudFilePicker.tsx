@@ -116,8 +116,8 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         console.error('[CloudFilePicker] Failed to load files:', error);
         toast.error(
           isNotImplemented
-            ? t('aiChat.cloudPicker.notAvailable', 'Integracje chmurowe nie są dostępne')
-            : t('aiChat.cloudPicker.loadError', 'Nie udało się załadować plików')
+            ? t('aiChat.cloudPicker.notAvailable', 'Cloud integrations are not available')
+            : t('aiChat.cloudPicker.loadError', 'Failed to load files')
         );
         setFiles([]);
       } finally {
@@ -240,7 +240,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             <EmptyState
               className="h-full justify-center"
               icon={<Folder />}
-              title={t('aiChat.cloudPicker.noFiles', 'Brak plików')}
+              title={t('aiChat.cloudPicker.noFiles', 'No files')}
               description=""
             />
           ) : (
@@ -291,7 +291,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             {selectedFile ? (
               <span className="text-c-text-secondary dark:text-c-text-secondary">{selectedFile.name}</span>
             ) : (
-              t('aiChat.cloudPicker.selectFile', 'Wybierz plik')
+              t('aiChat.cloudPicker.selectFile', 'Select file')
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -299,14 +299,14 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg transition-colors"
             >
-              {t('common.cancel', 'Anuluj')}
+              {t('common.cancel', 'Cancel')}
             </button>
             <button
               onClick={handleSelect}
               disabled={!selectedFile || selectedFile.isFolder}
               className="px-4 py-2 text-sm font-medium text-c-bg bg-c-text hover:bg-c-text-secondary disabled:bg-slate-300 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
-              {t('common.select', 'Wybierz')}
+              {t('common.select', 'Select')}
             </button>
           </div>
         </div>

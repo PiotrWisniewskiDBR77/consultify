@@ -104,19 +104,19 @@ function renderRealMessage(metadata: Record<string, unknown>) {
 describe('FIX-206 pkt 4 — slot kroków narzędzi', () => {
   it('REALNY MessageRenderer: kroki narzędzi bez panelu Deep Research', () => {
     const { unmount } = renderRealMessage({ toolSteps: [step] });
-    expect(screen.getByLabelText('Kroki narzędzi Teresy')).toBeTruthy();
+    expect(screen.getByLabelText("Teresa's tool steps")).toBeTruthy();
     expect(screen.queryByText(/Searching sources/i)).toBeNull();
     unmount();
 
     renderRealMessage({ researchProgress: { stage: 'searching', topic: 'AI' } });
     expect(screen.getByText(/Searching sources/i)).toBeTruthy();
-    expect(screen.queryByLabelText('Kroki narzędzi Teresy')).toBeNull();
+    expect(screen.queryByLabelText("Teresa's tool steps")).toBeNull();
   });
 
   it('tool_step renderuje listę kroków i NIE otwiera panelu Deep Research', () => {
     render(<MessageSlots metadata={{ toolSteps: [step] }} />);
 
-    expect(screen.getByLabelText('Kroki narzędzi Teresy')).toBeTruthy();
+    expect(screen.getByLabelText("Teresa's tool steps")).toBeTruthy();
     expect(screen.getByText('get_initiative_status')).toBeTruthy();
     expect(screen.queryByText(/Searching sources/i)).toBeNull();
     expect(screen.queryByText(/Research/i)).toBeNull();

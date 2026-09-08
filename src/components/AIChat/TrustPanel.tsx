@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface TrustPanelProps {
   bundle?: unknown;
@@ -55,6 +56,7 @@ export const TrustPanel: React.FC<TrustPanelProps> = ({
   isRtl = false,
   showOperatorDetail = false,
 }) => {
+  const { t } = useTranslation();
   const data = asRecord(bundle);
   if (!data) return null;
 
@@ -76,7 +78,7 @@ export const TrustPanel: React.FC<TrustPanelProps> = ({
       data-testid="trust-panel"
     >
       <summary className="cursor-pointer select-none font-medium">
-        Why this answer? Trust details
+        {t('chat.trustPanel.summary', 'Why this answer? Trust details')}
       </summary>
       <div className="mt-3 grid gap-2">
         <div className="flex flex-wrap gap-2">

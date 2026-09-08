@@ -39,6 +39,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useProposalLifecycle } from '../../store/useProposalLifecycleStore';
 import { ChatMessage, V8LifecycleState } from '../../types';
 import { TrustPanel } from './TrustPanel';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // ============================================================================
 // Types
@@ -435,7 +436,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
               {meta.expiresAt && (
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">
                   {t('chatProposal.expiresAt', 'Expires {{when}}', {
-                    when: new Date(meta.expiresAt).toLocaleString(),
+                    when: formatListDateTime(meta.expiresAt),
                   } as any)}
                 </span>
               )}
@@ -553,9 +554,9 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
 
           {/* Timestamp row — subtle, kept consistent with regular bubbles */}
           <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 pl-1">
-            {new Date(
+            {formatListDateTime(
               (msg.timestamp as string | Date) || (msg as any).createdAt || Date.now()
-            ).toLocaleTimeString()}
+            )}
           </div>
         </div>
       </div>

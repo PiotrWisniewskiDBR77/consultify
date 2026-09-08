@@ -38,6 +38,37 @@ const apiMocks = vi.hoisted(() => ({
   revokeWorkbookShare: vi.fn(),
 }));
 
+/**
+ * ATRAPA i18n WIERNA PRODUKCJI (J1, 2026-09-08).
+ *
+ * Bez niej `useTranslation()` w teście oddaje `t`, które zwraca defaultValue
+ * DOSŁOWNIE — z nietkniętym `{{name}}` w środku. Produkt interpoluje (i18next
+ * robi to także dla defaultValue), więc test bez atrapy sprawdzałby napis,
+ * którego użytkownik nigdy nie zobaczy, i kazałby asertować „Sheet actions:
+ * {{name}}". Atrapa odtwarza dokładnie dwie rzeczy, na których stoją te
+ * asercje: default zamiast klucza + podstawienie zmiennych.
+ */
+vi.mock('react-i18next', async () => {
+  const actual = await vi.importActual<typeof import('react-i18next')>('react-i18next');
+  const podstaw = (tekst: string, vars?: Record<string, unknown>): string =>
+    vars
+      ? tekst.replace(/\{\{(\w+)\}\}/g, (_m, k: string) =>
+          vars[k] === undefined ? `{{${k}}}` : String(vars[k])
+        )
+      : tekst;
+  const t = (klucz: string, drugi?: unknown, trzeci?: unknown): string => {
+    const tekst = typeof drugi === 'string' ? drugi : klucz;
+    const vars = (typeof drugi === 'object' && drugi !== null ? drugi : trzeci) as
+      | Record<string, unknown>
+      | undefined;
+    return podstaw(tekst, vars);
+  };
+  return {
+    ...actual,
+    useTranslation: () => ({ t, i18n: { language: 'en', changeLanguage: vi.fn() } }),
+  };
+});
+
 vi.mock('@/services/api', () => ({ Api: apiMocks }));
 
 vi.mock('@/hooks/useOpenChatWithContext', () => ({
@@ -288,7 +319,7 @@ describe('SpreadsheetArtifactStudio', () => {
     expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
     expect(screen.queryByText(/Task completed/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Replay|Remix/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Eksportuj XLSX' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export XLSX' })).toBeInTheDocument();
   });
 
   it('gives the workbook a right panel and moves file metadata into it', () => {
@@ -308,11 +339,11 @@ describe('SpreadsheetArtifactStudio', () => {
     );
 
     const panel = screen.getByTestId('artifact-studio-right-panel');
-    expect(within(panel).getByText('Nazwa pliku')).toBeInTheDocument();
+    expect(within(panel).getByText('File name')).toBeInTheDocument();
     expect(within(panel).getByText('Format')).toBeInTheDocument();
-    expect(within(panel).getByText('Arkusze')).toBeInTheDocument();
+    expect(within(panel).getByText('Sheets')).toBeInTheDocument();
     // Eksport i udostępnianie zostają w pasku tytułu — panel ich NIE dubluje.
-    expect(within(panel).queryByRole('button', { name: 'Eksportuj XLSX' })).toBeNull();
+    expect(within(panel).queryByRole('button', { name: 'Export XLSX' })).toBeNull();
   });
 
   it('keeps the owner-named commands visible in the toolbar instead of under „Więcej"', () => {
@@ -330,12 +361,12 @@ describe('SpreadsheetArtifactStudio', () => {
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
     const toolbar = screen.getByTestId('artifact-menu3');
     for (const label of [
-      'Waluta',
-      'Procent',
-      'Wstaw wiersz',
-      'Usuń wiersz',
-      'Wstaw kolumnę',
-      'Usuń kolumnę',
+      'Currency',
+      'Percent',
+      'Insert row',
+      'Delete row',
+      'Insert column',
+      'Delete column',
     ]) {
       expect(within(toolbar).getByRole('button', { name: label })).toBeInTheDocument();
     }
@@ -376,12 +407,12 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wewnętrzny' }));
-    expect(screen.getByRole('dialog', { name: 'Klasyfikacja skoroszytu' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Uzasadnienie obniżenia klasyfikacji'), {
+    fireEvent.click(screen.getByRole('button', { name: 'Internal' }));
+    expect(screen.getByRole('dialog', { name: 'Workbook classification' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Justification for lowering the classification'), {
       target: { value: 'Materiał zatwierdzony do publikacji.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Publiczny' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Public' }));
 
     await waitFor(() =>
       expect(apiMocks.updateWorkbookGovernance).toHaveBeenCalledWith('wb-1', {
@@ -391,7 +422,7 @@ describe('SpreadsheetArtifactStudio', () => {
         reason: 'Materiał zatwierdzony do publikacji.',
       })
     );
-    expect(await screen.findByRole('button', { name: 'Publiczny' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Public' })).toBeInTheDocument();
   });
 
   it('requires an assigned reviewer instead of exposing direct review or approval transitions', async () => {
@@ -406,13 +437,13 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Szkic' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
     await waitFor(() => expect(apiMocks.getWorkbookApprovalState).toHaveBeenCalledWith('wb-1'));
-    expect(screen.queryByRole('button', { name: 'Zatwierdzony' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Do przeglądu' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Finalny' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Przekaż do przeglądu' })).toBeDisabled();
-    expect(screen.getByText('Brak dostępnego recenzenta innego niż autor.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Approved' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'In review' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Final' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Submit for review' })).toBeDisabled();
+    expect(screen.getByText('No reviewer other than the author is available.')).toBeInTheDocument();
   });
 
   it('submits the workbook to an explicitly selected reviewer', async () => {
@@ -438,14 +469,17 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Szkic' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
     fireEvent.click(await screen.findByRole('button', { name: /Anna Kowalska/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Przekaż do przeglądu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit for review' }));
 
     await waitFor(() =>
       expect(apiMocks.submitWorkbookForReview).toHaveBeenCalledWith('wb-1', 'reviewer-2')
     );
-    expect(await screen.findByText('W przeglądzie')).toBeInTheDocument();
+    // Status OBIEGU zatwierdzania (approvalState.state === 'review'), a nie
+    // plakietka cyklu życia — oba mówiły po polsku „…przeglądzie" i po
+    // przejściu na angielski musiały dostać rozróżnialne napisy.
+    expect(await screen.findByText('Under review')).toBeInTheDocument();
   });
 
   it('lets the assigned review workflow approve the current workbook version', async () => {
@@ -471,11 +505,11 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Do przeglądu' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Zatwierdź' }));
+    fireEvent.click(screen.getByRole('button', { name: 'In review' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Approve' }));
 
     await waitFor(() => expect(apiMocks.approveWorkbook).toHaveBeenCalledWith('wb-1'));
-    expect(await screen.findByRole('button', { name: 'Zatwierdzony' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Approved' })).toBeInTheDocument();
   });
 
   it('switches the controlled grid and opens the global Teresa context', () => {
@@ -534,13 +568,13 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Źródła i założenia' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Sources and assumptions' }));
     expect(screen.getByTestId('spreadsheet-sources-panel')).toHaveTextContent('Finance close July');
     expect(screen.getByTestId('spreadsheet-sources-panel')).toHaveTextContent(
       'CRM snapshot 2026-08-05'
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Kontrola jakości' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Quality control' }));
     expect(screen.getByTestId('spreadsheet-qa-panel')).toHaveTextContent(
       'Brak zatwierdzonego źródła dla założenia.'
     );
@@ -571,9 +605,9 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Źródła i założenia' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Sources and assumptions' }));
     fireEvent.click(
-      screen.getByRole('button', { name: 'Przejdź do źródła CRM snapshot 2026-08-05' })
+      screen.getByRole('button', { name: 'Go to source CRM snapshot 2026-08-05' })
     );
 
     await waitFor(() => expect(selectCell).toHaveBeenCalledWith(1, 1));
@@ -594,7 +628,7 @@ describe('SpreadsheetArtifactStudio', () => {
     fireEvent.contextMenu(screen.getByRole('button', { name: 'menu komórki' }));
 
     expect(screen.getByTestId('spreadsheet-selection-context-menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Kopiuj/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Copy/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Przekaż Teresie' }));
 
     expect(openChatWithContext).toHaveBeenCalledWith(
@@ -625,16 +659,16 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByRole('button', { name: 'Edytuj komórkę' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit cell' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
 
     // Od 2026-08-30 pierwsze dziewięć miejsc w pasku zajmują polecenia, o które
     // prosił właściciel (waluta, procent, wiersze, kolumny), więc „Edytuj
     // komórkę" i „Wyczyść zawartość" mieszkają pod „Więcej".
     fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Edytuj komórkę' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit cell' }));
     fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Wyczyść zawartość' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Clear contents' }));
 
     expect(editSelectedCell).toHaveBeenCalledOnce();
     expect(clearSelectedCell).toHaveBeenCalledOnce();
@@ -655,18 +689,20 @@ describe('SpreadsheetArtifactStudio', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
 
-    expect(screen.getByLabelText('Statystyki zaznaczenia')).toHaveTextContent('Suma: 21,2');
-    expect(screen.getByLabelText('Statystyki zaznaczenia')).toHaveTextContent('Średnia: 21,2');
-    expect(screen.getByLabelText('Statystyki zaznaczenia')).toHaveTextContent('Licznik: 1');
+    // J1: liczba idzie przez SSOT list (locale z KONTA), wiec konto EN widzi
+    // kropke dziesietna, a nie polski przecinek — to jest naprawa, nie regresja.
+    expect(screen.getByLabelText('Selection statistics')).toHaveTextContent('Sum: 21.2');
+    expect(screen.getByLabelText('Selection statistics')).toHaveTextContent('Average: 21.2');
+    expect(screen.getByLabelText('Selection statistics')).toHaveTextContent('Count: 1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Powiększ arkusz' }));
-    expect(screen.getByRole('button', { name: 'Dopasuj arkusz' })).toHaveTextContent('110%');
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(screen.getByRole('button', { name: 'Fit sheet' })).toHaveTextContent('110%');
     expect(screen.getByTestId('spreadsheet-grid-zoom-surface')).toHaveStyle({
       transform: 'scale(1.1)',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dopasuj arkusz' }));
-    expect(screen.getByRole('button', { name: 'Dopasuj arkusz' })).toHaveTextContent('100%');
+    fireEvent.click(screen.getByRole('button', { name: 'Fit sheet' }));
+    expect(screen.getByRole('button', { name: 'Fit sheet' })).toHaveTextContent('100%');
   });
 
   it('creates and resolves an anchored workbook comment from the left panel', async () => {
@@ -696,12 +732,12 @@ describe('SpreadsheetArtifactStudio', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Komentarze' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Comments' }));
 
     expect(await screen.findByText('Sprawdź źródło wartości.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Komentarz do KPI Control!B2')).toBeInTheDocument();
+    expect(screen.getByLabelText('Comment on KPI Control!B2')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rozwiąż' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Resolve' }));
     await waitFor(() =>
       expect(apiMocks.setWorkbookCommentStatus).toHaveBeenCalledWith(
         'wb-1',
@@ -710,10 +746,10 @@ describe('SpreadsheetArtifactStudio', () => {
       )
     );
 
-    fireEvent.change(screen.getByLabelText('Komentarz do KPI Control!B2'), {
+    fireEvent.change(screen.getByLabelText('Comment on KPI Control!B2'), {
       target: { value: 'Potwierdź założenie.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Dodaj komentarz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add comment' }));
 
     await waitFor(() =>
       expect(apiMocks.createWorkbookComment).toHaveBeenCalledWith(
@@ -741,7 +777,7 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dodaj arkusz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
 
     await waitFor(() =>
       expect(apiMocks.applyWorkbookCommands).toHaveBeenCalledWith(
@@ -752,20 +788,22 @@ describe('SpreadsheetArtifactStudio', () => {
           operations: [
             expect.objectContaining({
               type: 'addSheet',
-              name: 'Arkusz 3',
+              name: 'Sheet 3',
               sheetId: expect.any(String),
             }),
           ],
         })
       )
     );
-    expect(await screen.findByRole('button', { name: 'Arkusz 3' })).toBeInTheDocument();
+    // Nazwa NOWEGO arkusza to dana tworzona w jezyku konta — konto EN dostaje
+    // „Sheet 3", polskie „Arkusz 3" zyje w pl/translation.json.
+    expect(await screen.findByRole('button', { name: 'Sheet 3' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Akcje arkusza KPI Control' }));
-    expect(screen.getByRole('menuitem', { name: 'Zmień nazwę' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Duplikuj' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Ukryj' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Usuń' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sheet actions: KPI Control' }));
+    expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Hide' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('renames a sheet and can undo the structural revision', async () => {
@@ -780,14 +818,14 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Akcje arkusza KPI Control' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Zmień nazwę' }));
-    const input = screen.getByRole('textbox', { name: 'Nowa nazwa arkusza KPI Control' });
+    fireEvent.click(screen.getByRole('button', { name: 'Sheet actions: KPI Control' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename' }));
+    const input = screen.getByRole('textbox', { name: 'New name for sheet KPI Control' });
     fireEvent.change(input, { target: { value: 'KPI Zarząd' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
     expect(await screen.findByRole('button', { name: 'KPI Zarząd' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cofnij' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
 
     await waitFor(() => expect(apiMocks.undoWorkbookCommand).toHaveBeenCalledWith('wb-1', 1, 1));
     expect(await screen.findByRole('button', { name: 'KPI Control' })).toBeInTheDocument();
@@ -805,11 +843,11 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Akcje arkusza KPI Control' }));
-    expect(screen.getByRole('menuitem', { name: 'Zmień nazwę' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sheet actions: KPI Control' }));
+    expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('menuitem', { name: 'Zmień nazwę' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Rename' })).not.toBeInTheDocument();
   });
 
   it('applies cell formatting through the versioned workbook command contract', async () => {
@@ -845,7 +883,7 @@ describe('SpreadsheetArtifactStudio', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Pogrubienie' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bold' }));
 
     await waitFor(() =>
       expect(apiMocks.applyWorkbookCommands).toHaveBeenCalledWith(
@@ -896,7 +934,7 @@ describe('SpreadsheetArtifactStudio', () => {
     fireEvent.click(screen.getByRole('button', { name: 'zaznacz wiersze' }));
     // „Wstaw wiersz" jest teraz WPROST w pasku, nie pod „Więcej" — to była
     // dosłowna prośba właściciela (2026-08-30).
-    fireEvent.click(screen.getByRole('button', { name: 'Wstaw wiersz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Insert row' }));
 
     await waitFor(() =>
       expect(apiMocks.applyWorkbookCommands).toHaveBeenCalledWith(
@@ -922,13 +960,13 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Znajdź' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Szukany tekst' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search text' }), {
       target: { value: 'conversion' },
     });
 
-    expect(screen.getByText('1 z 1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Następny' }));
+    expect(screen.getByText('1 of 1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(selectCell).toHaveBeenCalledWith(0, 0));
   });
 
@@ -950,17 +988,17 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Znajdź i zamień' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Szukany tekst' }), {
+    fireEvent.click(screen.getByRole('button', { name: 'Find and replace' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search text' }), {
       target: { value: 'Conversion' },
     });
-    fireEvent.change(screen.getByRole('textbox', { name: 'Zamień na' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Replace with' }), {
       target: { value: 'Activation' },
     });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Zakres wyszukiwania' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'Search scope' }), {
       target: { value: 'workbook' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Zamień wszystko (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Replace all (2)' }));
 
     await waitFor(() =>
       expect(apiMocks.applyWorkbookCommands).toHaveBeenCalledWith(
@@ -1030,15 +1068,15 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Historia wersji' }));
-    expect(await screen.findByText('Wersja 1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Przywróć' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Version history' }));
+    expect(await screen.findByText('Version 1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
 
     await waitFor(() =>
       expect(apiMocks.restoreWorkbookRevision).toHaveBeenCalledWith('wb-1', 1, 3)
     );
     expect(globalThis.confirm).toHaveBeenCalledWith(
-      'Przywrócić wersję 1 jako nową wersję skoroszytu?'
+      'Restore version 1 as a new workbook version?'
     );
     expect(apiMocks.getWorkbookSchema).toHaveBeenCalledWith('wb-1');
   });
@@ -1075,14 +1113,14 @@ describe('SpreadsheetArtifactStudio', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Źródła i założenia' }));
-    fireEvent.change(await screen.findByLabelText('Powiąż źródło z zaznaczeniem'), {
+    fireEvent.click(screen.getByRole('tab', { name: 'Sources and assumptions' }));
+    fireEvent.change(await screen.findByLabelText('Bind a source to the selection'), {
       target: { value: 'CRM snapshot 2026-08-05' },
     });
-    fireEvent.change(screen.getByLabelText('Odnośnik do źródła'), {
+    fireEvent.change(screen.getByLabelText('Source reference'), {
       target: { value: 'crm://snapshot/2026-08-05' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Powiąż z zaznaczeniem' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bind to selection' }));
 
     await waitFor(() =>
       expect(apiMocks.bindWorkbookSource).toHaveBeenCalledWith(
@@ -1098,7 +1136,7 @@ describe('SpreadsheetArtifactStudio', () => {
     );
     expect(await screen.findByText('CRM snapshot 2026-08-05')).toBeInTheDocument();
     expect(screen.getByText('KPI Control · B2')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Usuń powiązanie' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove binding' })).toBeInTheDocument();
   });
 
   it('mints, rotates and revokes a persisted public workbook share', async () => {
@@ -1117,14 +1155,14 @@ describe('SpreadsheetArtifactStudio', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zarządzaj udostępnieniem' }));
-    expect(screen.getByRole('dialog', { name: 'Udostępnianie skoroszytu' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Rotuj link i skopiuj' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Manage sharing' }));
+    expect(screen.getByRole('dialog', { name: 'Workbook sharing' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate the link and copy' }));
     await waitFor(() => expect(apiMocks.shareWorkbook).toHaveBeenCalledWith('wb-1', 7));
-    expect(await screen.findByRole('button', { name: 'Kopiuj nowy link' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cofnij udostępnienie' }));
+    expect(await screen.findByRole('button', { name: 'Copy the new link' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke sharing' }));
     await waitFor(() => expect(apiMocks.revokeWorkbookShare).toHaveBeenCalledWith('wb-1'));
-    expect(screen.getByText('Brak aktywnego linku')).toBeInTheDocument();
+    expect(screen.getByText('No active link')).toBeInTheDocument();
   });
 
   it('requests final export only from the current approved readback', async () => {
@@ -1139,7 +1177,7 @@ describe('SpreadsheetArtifactStudio', () => {
         />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Eksportuj XLSX' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export XLSX' }));
     expect(onDownload).toHaveBeenCalledWith('final');
   });
 });

@@ -235,12 +235,12 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
             {conversation.chatProjectId ? (
               <>
                 <Folder size={14} className="text-c-text-secondary" />
-                {t('aiChat.actions.moveProject', 'Zmień projekt')}
+                {t('aiChat.actions.moveProject', 'Change folder')}
               </>
             ) : (
               <>
                 <FolderPlus size={14} />
-                {t('aiChat.actions.addToProject', 'Dodaj do projektu')}
+                {t('aiChat.actions.addToProject', 'Add to folder')}
               </>
             )}
           </button>

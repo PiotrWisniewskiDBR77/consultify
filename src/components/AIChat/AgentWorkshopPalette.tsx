@@ -128,7 +128,7 @@ const PaletteItem: React.FC<{
           <div className="flex items-center gap-1.5">
             <span className="truncate text-xs font-medium text-c-text-muted">{label}</span>
             <span className="shrink-0 rounded-full border border-c-border-subtle px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">
-              {t('agentPlan.catalog.soonBadge', 'Wkrótce')}
+              {t('agentPlan.catalog.soonBadge', 'Soon')}
             </span>
           </div>
           <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{hint}</p>
@@ -173,7 +173,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
   onAdd,
   disabled = false,
   width = 'var(--ntype-right-panel-width)',
-  ariaLabel = 'Paleta klocków agenta',
+  ariaLabel,
 }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -226,7 +226,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
 
   return (
     <ArtifactRightPanel
-      ariaLabel={ariaLabel}
+      ariaLabel={ariaLabel ?? t('agentPlan.palette.ariaLabel', 'Agent block palette')}
       width={width}
       className="agent-workshop-palette"
       statusBar={
@@ -234,7 +234,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
           <div className="flex items-center gap-2">
             <Bot size={14} className="shrink-0 text-c-text-muted" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              Paleta klocków
+              {t('agentPlan.palette.title', 'Block palette')}
             </span>
           </div>
           <label className="relative block">
@@ -252,8 +252,11 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
           </label>
           <p className="text-[10px] text-c-text-muted">
             {disabled
-              ? 'Plan już wystartował — schemat jest zamrożony.'
-              : 'Kliknij, żeby dodać na koniec. Przeciągnij, żeby wstawić w wybrane miejsce.'}
+              ? t('agentPlan.palette.frozen', 'The plan already started — the diagram is frozen.')
+              : t(
+                  'agentPlan.palette.hint',
+                  'Click to append at the end. Drag to insert at a chosen position.'
+                )}
           </p>
         </div>
       }
@@ -263,11 +266,11 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
           : [
               {
                 id: 'palette-empty',
-                label: 'Brak wyników',
+                label: t('agentPlan.palette.noResults', 'No results'),
                 collapsible: false,
                 children: (
                   <p className="py-1.5 text-xs text-c-text-muted">
-                    Żaden klocek nie pasuje do „{query}".
+                    {t('agentPlan.palette.noMatch', 'No block matches “{{query}}”.', { query })}
                   </p>
                 ),
               },

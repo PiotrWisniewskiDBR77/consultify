@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface PMODocumentRendererProps {
   content: string;
@@ -335,7 +336,7 @@ const StatusReportRenderer: React.FC<{ data: any }> = ({ data }) => {
             {data.projectName || 'Project Status Report'}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {data.reportDate ? new Date(data.reportDate).toLocaleDateString() : 'Latest Report'}
+            {data.reportDate ? formatListDate(data.reportDate) : 'Latest Report'}
           </p>
         </div>
         <div

@@ -206,7 +206,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               onClick={() => onApprove(action.id)}
               disabled={disabled}
               className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-              title={t('aiActions.approve', 'Zatwierdź')}
+              title={t('aiActions.approve', 'Approve')}
             >
               <Check size={12} />
             </button>
@@ -214,7 +214,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               onClick={() => onDismiss(action.id)}
               disabled={disabled}
               className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-danger-600 dark:text-danger-400"
-              title={t('aiActions.dismiss', 'Odrzuć')}
+              title={t('aiActions.dismiss', 'Dismiss')}
             >
               <X size={12} />
             </button>
@@ -257,7 +257,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 `}
               >
                 {action.risk === 'medium'
-                  ? t('aiActions.mediumRisk', 'Średnie ryzyko')
+                  ? t('aiActions.mediumRisk', 'Medium risk')
                   : t('aiActions.highRisk', 'Wysokie ryzyko')}
               </span>
             )}
@@ -344,7 +344,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               `}
             >
               <Check size={14} />
-              {t('aiActions.approve', 'Zatwierdź')}
+              {t('aiActions.approve', 'Approve')}
             </button>
 
             {/* Edit (optional) */}
@@ -361,7 +361,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 `}
               >
                 <Edit size={14} />
-                {t('aiActions.edit', 'Edytuj')}
+                {t('aiActions.edit', 'Edit')}
               </button>
             )}
 
@@ -378,7 +378,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               `}
             >
               <X size={14} />
-              {t('aiActions.dismiss', 'Odrzuć')}
+              {t('aiActions.dismiss', 'Dismiss')}
             </button>
           </>
         )}
@@ -434,7 +434,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
             onClick={onDismissAll}
             className="text-xs text-slate-500 hover:text-danger-500 dark:text-slate-400 dark:hover:text-danger-400"
           >
-            {t('aiActions.dismissAll', 'Odrzuć wszystkie')}
+            {t('aiActions.dismissAll', 'Dismiss all')}
           </button>
         )}
       </div>
@@ -460,7 +460,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
           onClick={() => setShowAll(true)}
           className="w-full text-center py-2 text-xs text-c-text-secondary dark:text-c-text-secondary hover:underline"
         >
-          {t('aiActions.showMore', 'Pokaż więcej')} (+{hiddenCount})
+          {t('aiActions.showMore', 'Show more')} (+{hiddenCount})
         </button>
       )}
 
@@ -469,7 +469,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
           onClick={() => setShowAll(false)}
           className="w-full text-center py-2 text-xs text-slate-500 dark:text-slate-400 hover:underline"
         >
-          {t('aiActions.showLess', 'Pokaż mniej')}
+          {t('aiActions.showLess', 'Show less')}
         </button>
       )}
     </div>

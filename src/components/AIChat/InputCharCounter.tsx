@@ -31,6 +31,7 @@
 import React from 'react';
 
 import { isInputCharCounterEnabled } from '../../utils/inputCharCounterFlag';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 export interface InputCharCounterProps {
   /** Current textarea value. */
@@ -99,7 +100,7 @@ export const InputCharCounter: React.FC<InputCharCounterProps> = ({
       title={ariaLabel}
       className={`ml-1 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium tabular-nums select-none ${TONE_CLASS[tone]}`}
     >
-      {length.toLocaleString()} / {max.toLocaleString()}
+      {formatListNumber(length)} / {formatListNumber(max)}
     </span>
   );
 };

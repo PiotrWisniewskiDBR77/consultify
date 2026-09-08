@@ -362,7 +362,7 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     expect(fileInput).toBeDefined();
     fireEvent.change(fileInput!, { target: { files: [file] } });
     await waitFor(() => expect(importWorkbook).toHaveBeenCalledWith('wb-1', file));
-    await waitFor(() => expect(screen.getByText('Zapisano')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument());
   });
 
   it('renders and deletes an editable chart image that remains exportable in schema', async () => {

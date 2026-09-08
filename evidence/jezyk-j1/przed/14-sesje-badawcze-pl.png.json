@@ -1,0 +1,29 @@
+{
+ "ekran": "14-sesje-badawcze",
+ "jezyk": "pl",
+ "url": "http://127.0.0.1:3217/ai-os/research",
+ "obcychSlowUI": 2,
+ "obcychLiniiUI": 2,
+ "ui": [
+  {
+   "linia": "Skip to main content",
+   "trafienia": [
+    "content"
+   ]
+  },
+  {
+   "linia": "The address you followed doesn't exist or has moved.",
+   "trafienia": [
+    "The"
+   ]
+  }
+ ],
+ "dane": [
+  {
+   "linia": "Feedback",
+   "trafienia": [
+    "Feedback"
+   ]
+  }
+ ]
+}

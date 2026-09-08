@@ -168,7 +168,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     if (payload.navigation) {
       return (
         <div className="text-xs text-slate-600 dark:text-slate-400">
-          {t('aiActions.navigateTo', 'Przejdź do')}: {payload.navigation.view}
+          {t('aiActions.navigateTo', 'Go to')}: {payload.navigation.view}
         </div>
       );
     }
@@ -198,14 +198,14 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               onClick={() => onApprove(action.id)}
               disabled={isExecuting}
               className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors"
-              title={t('aiActions.approve', 'Zatwierdź')}
+              title={t('aiActions.approve', 'Approve')}
             >
               {isExecuting ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
             </button>
             <button
               onClick={() => onDismiss(action.id)}
               className="p-1 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-danger-500 dark:text-danger-400 transition-colors"
-              title={t('aiActions.dismiss', 'Odrzuć')}
+              title={t('aiActions.dismiss', 'Dismiss')}
             >
               <X size={12} />
             </button>
@@ -264,7 +264,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               >
                 {action.risk === 'high'
                   ? t('aiActions.highRisk', 'Wysokie ryzyko')
-                  : t('aiActions.mediumRisk', 'Średnie ryzyko')}
+                  : t('aiActions.mediumRisk', 'Medium risk')}
               </span>
             )}
           </div>
@@ -304,7 +304,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:bg-green-400 text-white text-xs font-medium rounded-lg transition-colors"
           >
             {isExecuting ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-            {t('aiActions.approve', 'Zatwierdź')}
+            {t('aiActions.approve', 'Approve')}
           </button>
 
           {onEdit && (
@@ -313,7 +313,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-colors"
             >
               <Edit3 size={12} />
-              {t('aiActions.edit', 'Edytuj')}
+              {t('aiActions.edit', 'Edit')}
             </button>
           )}
 
@@ -322,7 +322,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-900/30 text-xs font-medium rounded-lg transition-colors"
           >
             <X size={12} />
-            {t('aiActions.dismiss', 'Odrzuć')}
+            {t('aiActions.dismiss', 'Dismiss')}
           </button>
         </div>
       )}
@@ -348,7 +348,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
           ) : (
             <>
               <AlertTriangle size={12} />
-              {action.result?.error || t('aiActions.failed', 'Błąd wykonania')}
+              {action.result?.error || t('aiActions.failed', 'Failed')}
             </>
           )}
         </div>

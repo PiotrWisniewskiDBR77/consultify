@@ -47,6 +47,7 @@ import {
   markInputSoftLimitToastDismissedForSession,
   markInputSoftLimitToastFiredForSession,
 } from '../../utils/inputSoftLimitToastFlag';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 export interface InputSoftLimitToastNotifyOptions {
   /** Character count that triggered the toast. */
@@ -87,7 +88,7 @@ export interface InputSoftLimitToastProps {
 const DEFAULT_MAX = 8000;
 
 export function buildInputSoftLimitToastMessage(length: number, max: number): string {
-  return `Your message is ${length.toLocaleString()} characters — past the ${max.toLocaleString()}-character soft limit. Teresa may trim or summarise long inputs; shorten it if every line matters.`;
+  return `Your message is ${formatListNumber(length)} characters — past the ${formatListNumber(max)}-character soft limit. Teresa may trim or summarise long inputs; shorten it if every line matters.`;
 }
 
 function defaultNotify(message: string, options: InputSoftLimitToastNotifyOptions): void {

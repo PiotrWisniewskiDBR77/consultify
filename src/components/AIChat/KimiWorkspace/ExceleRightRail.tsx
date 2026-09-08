@@ -185,7 +185,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       : []),
     {
       id: 'sources',
-      label: t('excele.rightRail.sources', 'Źródła i liczby'),
+      label: t('excele.rightRail.sources', 'Sources and numbers'),
       icon: Link2,
       dotTone: hasSourceTable ? null : 'warning',
     },
@@ -196,7 +196,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       disabled: sheetCount === 0,
       disabledReason: t(
         'excele.rightRail.structureDisabled',
-        'Arkusz nie ma jeszcze żadnej karty do pokazania'
+        'The sheet has no tab to show yet'
       ),
     },
     {
@@ -215,8 +215,8 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   const renderSources = (): React.ReactElement => (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       {PANEL_HEADER(
-        t('excele.rightRail.sourcesTitle', 'Źródła i liczby'),
-        t('excele.rightRail.sourcesSubtitle', 'Skąd wzięły się dane w tym arkuszu.')
+        t('excele.rightRail.sourcesTitle', 'Sources and numbers'),
+        t('excele.rightRail.sourcesSubtitle', 'Where the data in this sheet came from.')
       )}
       {hasSourceTable ? (
         <button
@@ -225,14 +225,14 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
           className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle px-3 py-2 text-xs text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
           data-testid="excele-right-rail-source-table"
         >
-          <span className="truncate">{t('excele.rightRail.sourceTable', 'Tabela źródłowa')}</span>
+          <span className="truncate">{t('excele.rightRail.sourceTable', 'Source table')}</span>
           <span aria-hidden="true">{'→'}</span>
         </button>
       ) : (
         <p className="text-xs italic text-c-text-muted py-1.5">
           {t(
             'excele.rightRail.sourcesEmpty',
-            'Ten arkusz nie ma dziś zapisanego źródła danych — wstawianie faktów z liczbą pochodzenia to kolejna fala tej funkcji.'
+            'This sheet has no recorded data source yet — inserting facts with provenance is the next wave of this feature.'
           )}
         </p>
       )}
@@ -274,7 +274,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         </ul>
       ) : (
         <p className="text-xs italic text-c-text-muted py-1.5">
-          {t('excele.rightRail.structureEmpty', 'Arkusz jeszcze nie ma żadnej karty.')}
+          {t('excele.rightRail.structureEmpty', 'The sheet has no tab yet.')}
         </p>
       )}
     </div>
@@ -286,7 +286,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         t('excele.rightRail.selectedTitle', 'Wybrane'),
         t(
           'excele.rightRail.selectedSubtitle',
-          'Nic nie jest zaznaczone — właściwości całego dokumentu.'
+          'Nothing is selected — properties of the whole document.'
         )
       )}
       <dl className="space-y-2 text-xs">
@@ -300,7 +300,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         </div>
         {typeof qualityScore === 'number' && (
           <div className="flex items-center justify-between gap-2">
-            <dt className="text-c-text-muted">{t('excele.rightRail.quality', 'Jakość')}</dt>
+            <dt className="text-c-text-muted">{t('excele.rightRail.quality', 'Quality')}</dt>
             <dd className="text-c-text font-medium tabular-nums">
               {Math.round(qualityScore * 100)}%
             </dd>
@@ -346,8 +346,8 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       ) : (
         <p className="text-xs italic text-c-text-muted py-1.5 flex-1">
           {isFailed
-            ? failureReason || t('excele.rightRail.historyFailed', 'Generowanie nie powiodło się')
-            : t('excele.rightRail.historyEmpty', 'Historia pojawi się po wygenerowaniu')}
+            ? failureReason || t('excele.rightRail.historyFailed', 'Generation failed')
+            : t('excele.rightRail.historyEmpty', 'History will appear once the sheet is generated')}
         </p>
       )}
       <div className="pt-2 border-t border-c-border-subtle mt-2 space-y-1.5">
@@ -369,7 +369,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         <PreviewActionButton
           variant="neutral"
           icon={Sparkles}
-          label={t('excele.rightRail.checkpoint', 'Utwórz punkt kontrolny')}
+          label={t('excele.rightRail.checkpoint', 'Create checkpoint')}
           onClick={() => onCheckpoint?.()}
           disabled={!onCheckpoint || !workbookId}
         />
@@ -377,7 +377,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
           <PreviewActionButton
             variant="neutral"
             icon={ShieldOff}
-            label={t('excele.rightRail.revokeShare', 'Cofnij udostępnienie')}
+            label={t('excele.rightRail.revokeShare', 'Revoke sharing')}
             onClick={() => onRevokeShare?.()}
             disabled={!onRevokeShare || !workbookId}
           />
@@ -385,7 +385,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
           <PreviewActionButton
             variant="neutral"
             icon={Link2}
-            label={t('excele.rightRail.share', 'Udostępnij (kopiuj link)')}
+            label={t('excele.rightRail.share', 'Share (copy link)')}
             onClick={() => onShare?.()}
             disabled={!onShare || !workbookId}
           />
@@ -403,7 +403,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
 
   const renderArtefakt = (): React.ReactElement => (
     <ArtifactRightPanel
-      ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
+      ariaLabel={t('excele.rightPanel.ariaLabel', 'Sheet details')}
       className="border-l-0"
       width="100%"
       sections={artifactSections}
@@ -438,7 +438,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       onToggleCollapse={rail.toggleRight}
       onResize={rail.setRightWidth}
       resizeLabel={t('excele.rightRail.resize', 'Resize right rail')}
-      collapseLabel={t('excele.rightRail.collapseLabel', 'Zwiń/rozwiń pasek narzędzi')}
+      collapseLabel={t('excele.rightRail.collapseLabel', 'Collapse or expand the toolbar')}
       testId="excele-right-rail"
     />
   );

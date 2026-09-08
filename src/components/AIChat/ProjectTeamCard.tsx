@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TransformationCasesApi,
   type ProjectTeamBlueprintDto,
@@ -12,6 +13,7 @@ export const ProjectTeamCard: React.FC<{
   isPolish: boolean;
   onProjectBound?: () => Promise<void> | void;
 }> = ({ caseId, caseVersion, projectId, currentUserId, isPolish, onProjectBound }) => {
+  const { t } = useTranslation();
   const [team, setTeam] = useState<ProjectTeamBlueprintDto | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState<string | null>(null);
@@ -175,28 +177,28 @@ export const ProjectTeamCard: React.FC<{
       {!team && (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <input
-            aria-label="Sponsor user ID"
+            aria-label={t('chat.projectTeam.sponsorId', 'Sponsor user ID')}
             value={sponsor}
             onChange={(e) => setSponsor(e.target.value)}
-            placeholder="Sponsor user ID"
+            placeholder={t('chat.projectTeam.sponsorId', 'Sponsor user ID')}
             className="rounded border border-c-border bg-c-bg p-2 text-xs"
           />
           <input
-            aria-label="Project owner user ID"
+            aria-label={t('chat.projectTeam.ownerId', 'Project owner user ID')}
             value={humanId}
             onChange={(e) => setHumanId(e.target.value)}
-            placeholder="Project owner user ID"
+            placeholder={t('chat.projectTeam.ownerId', 'Project owner user ID')}
             className="rounded border border-c-border bg-c-bg p-2 text-xs"
           />
           <input
-            aria-label="Project owner name"
+            aria-label={t('chat.projectTeam.ownerName', 'Project owner name')}
             value={humanName}
             onChange={(e) => setHumanName(e.target.value)}
-            placeholder="Project owner name"
+            placeholder={t('chat.projectTeam.ownerName', 'Project owner name')}
             className="rounded border border-c-border bg-c-bg p-2 text-xs"
           />
           <input
-            aria-label="Agent budget limit"
+            aria-label={t('chat.projectTeam.budgetLimit', 'Agent budget limit')}
             type="number"
             min="0"
             value={agentBudget}

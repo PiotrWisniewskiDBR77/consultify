@@ -48,7 +48,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     {
       value: 'all',
       label: t('focusMode.all', 'Wszystko'),
-      description: t('focusMode.allDesc', 'Wszystkie dostępne źródła'),
+      description: t('focusMode.allDesc', 'All available sources'),
       icon: Sparkles,
       color: 'text-c-text-secondary dark:text-c-text-secondary',
       bgColor: 'bg-c-surface-raised dark:bg-c-surface-raised',
@@ -64,7 +64,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     {
       value: 'project-data',
       label: t('focusMode.projectData', 'Projekt'),
-      description: t('focusMode.projectDataDesc', 'Kontekst bieżącego projektu'),
+      description: t('focusMode.projectDataDesc', 'Context of the current project'),
       icon: FolderOpen,
       color: 'text-green-600 dark:text-green-400',
       bgColor: 'bg-green-100 dark:bg-green-900/30',
@@ -72,7 +72,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     {
       value: 'research',
       label: t('focusMode.research', 'Analiza'),
-      description: t('focusMode.researchDesc', 'Tryb głębokiej analizy'),
+      description: t('focusMode.researchDesc', 'Deep analysis mode'),
       icon: Search,
       color: 'text-amber-600 dark:text-amber-400',
       bgColor: 'bg-amber-100 dark:bg-amber-900/30',
@@ -181,7 +181,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
       {isOpen && (
         <div className="absolute top-full right-0 mt-1 z-50 w-56 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl">
           <div className="px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {t('focusMode.selectSource', 'Wybierz źródła')}
+            {t('focusMode.selectSource', 'Select sources')}
           </div>
           {focusModes.map((mode) => {
             const ModeIcon = mode.icon;

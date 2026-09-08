@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { Api } from '../../services/api';
@@ -45,6 +46,7 @@ function statusLabel(status: string | undefined): string {
 }
 
 export const ActionCenter: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const selectedActionId = searchParams.get('actionId');
   const [actions, setActions] = React.useState<ActionCenterAction[]>([]);
@@ -151,8 +153,10 @@ export const ActionCenter: React.FC = () => {
         </p>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Action Center</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Review execution proposals, approve separately from execution, and inspect AIRun audit
-          trails.
+          {t(
+            'aios.actionCenter.subtitle',
+            'Review execution proposals, approve separately from execution, and inspect AIRun audit trails.'
+          )}
         </p>
       </div>
 
@@ -167,10 +171,10 @@ export const ActionCenter: React.FC = () => {
           <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">
-                Proposals and Executions
+                {t('aios.actionCenter.listTitle', 'Proposals and Executions')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                No mutation is executed until it has an approved AIRun.
+                {t('aios.actionCenter.listHint', 'No mutation is executed until it has an approved AIRun.')}
               </p>
             </div>
             <button
@@ -183,9 +187,13 @@ export const ActionCenter: React.FC = () => {
           </div>
           <div className="divide-y divide-slate-200 dark:divide-navy-800">
             {loading ? (
-              <div className="p-6 text-sm text-slate-500">Loading AI actions...</div>
+              <div className="p-6 text-sm text-slate-500">
+                {t('aios.actionCenter.loading', 'Loading AI actions...')}
+              </div>
             ) : actions.length === 0 ? (
-              <div className="p-6 text-sm text-slate-500">No AI actions found.</div>
+              <div className="p-6 text-sm text-slate-500">
+                {t('aios.actionCenter.empty', 'No AI actions found.')}
+              </div>
             ) : (
               actions.map((action) => {
                 const status = action.status || 'proposed';
@@ -294,7 +302,7 @@ export const ActionCenter: React.FC = () => {
             <h2 className="font-semibold text-slate-900 dark:text-white">Audit Viewer</h2>
             {!selectedAudit ? (
               <p className="mt-3 text-sm text-slate-500">
-                Select an action to inspect who, what, when and why.
+                {t('aios.actionCenter.auditEmpty', 'Select an action to inspect who, what, when and why.')}
               </p>
             ) : (
               <div className="mt-3 space-y-3 text-sm">
@@ -305,7 +313,7 @@ export const ActionCenter: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Decision and Output</div>
+                  <div className="text-xs text-slate-500">{t('aios.actionCenter.decisionAndOutput', 'Decision and Output')}</div>
                   <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     Rollback:{' '}
                     {String(selectedAudit.audit?.rollbackStatus || 'rollback_unavailable').replace(
