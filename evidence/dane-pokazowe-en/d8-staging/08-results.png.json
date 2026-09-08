@@ -1,0 +1,13 @@
+{
+  "nazwa": "08-results",
+  "opis": "Results — KPI",
+  "url": "https://staging.consultify.ai/results/kpi",
+  "czas": "2026-09-08T19:36:47.266Z",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "polskieDiakrytykiLacznie": 0,
+  "polskieSlowaUnikalne_UI": [],
+  "polskieSlowaUnikalne_DANE": [],
+  "apiOdpowiedziZPolskimZnakami": []
+}

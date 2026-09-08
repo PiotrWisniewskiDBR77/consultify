@@ -1,0 +1,328 @@
+[
+  {
+    "nazwa": "01-chat",
+    "opis": "Chat — lista watkow (OWNER)",
+    "url": "https://staging.consultify.ai/chat",
+    "czas": "2026-09-08T19:34:27.709Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": [
+      {
+        "url": "https://staging.consultify.ai/api/ai/agent-audit/agents",
+        "dlugosc": 6968,
+        "trafieniaPL": 71
+      }
+    ]
+  },
+  {
+    "nazwa": "02-my-work",
+    "opis": "My Work — skrzynka OWNER-a",
+    "url": "https://staging.consultify.ai/my-work",
+    "czas": "2026-09-08T19:34:37.469Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "03-interview",
+    "opis": "Interview — lista sesji",
+    "url": "https://staging.consultify.ai/interview?tab=sessions",
+    "czas": "2026-09-08T19:34:47.402Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "04-tools",
+    "opis": "Tools — sesje narzedzi",
+    "url": "https://staging.consultify.ai/discovery-tools",
+    "czas": "2026-09-08T19:34:58.255Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 2,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [
+      "Narzędzia",
+      "procesów"
+    ],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "05-assessment",
+    "opis": "Assessment — lista ocen",
+    "url": "https://staging.consultify.ai/assessment?tab=library",
+    "czas": "2026-09-08T19:35:09.095Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "06a-initiatives-lista",
+    "opis": "Initiatives — lista (OWNER)",
+    "url": "https://staging.consultify.ai/initiatives?tab=list",
+    "czas": "2026-09-08T19:35:21.999Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "06b-initiatives-podglad",
+    "opis": "Initiatives — podglad \"Customer Portal for Order Tracking\" (DRAFT)",
+    "url": "https://staging.consultify.ai/initiatives?open=80ad392b-6581-5b41-bed6-98efd296365d&mode=drawer",
+    "czas": "2026-09-08T19:35:30.764Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "07a-execution-realizacje",
+    "opis": "Execution — Realizacje (OWNER)",
+    "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+    "czas": "2026-09-08T19:35:42.659Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "07b-execution-praca",
+    "opis": "Execution — Praca",
+    "url": "https://staging.consultify.ai/execution?tab=work&view=table",
+    "czas": "2026-09-08T19:35:56.156Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "07c-execution-zasoby",
+    "opis": "Execution — Zasoby/Obciazenie",
+    "url": "https://staging.consultify.ai/execution?tab=resources&view=table",
+    "czas": "2026-09-08T19:36:09.034Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "07d-execution-decyzje-ryzyka",
+    "opis": "Execution — Decyzje i ryzyka",
+    "url": "https://staging.consultify.ai/execution?tab=control&view=table",
+    "czas": "2026-09-08T19:36:20.852Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "07e-execution-raporty",
+    "opis": "Execution — Raporty statusu",
+    "url": "https://staging.consultify.ai/execution?tab=reports&view=table",
+    "czas": "2026-09-08T19:36:33.549Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "08-results",
+    "opis": "Results — KPI",
+    "url": "https://staging.consultify.ai/results/kpi",
+    "czas": "2026-09-08T19:36:47.266Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "09-finance",
+    "opis": "Finance — sprawozdania",
+    "url": "https://staging.consultify.ai/finance?tab=statements",
+    "czas": "2026-09-08T19:37:02.136Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "10-materials",
+    "opis": "Materials — lista",
+    "url": "https://staging.consultify.ai/presentations?tab=all",
+    "czas": "2026-09-08T19:37:14.393Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": [
+      {
+        "url": "https://staging.consultify.ai/api/artifacts?limit=200&artifactFamily=template&outputType=report",
+        "dlugosc": 165137,
+        "trafieniaPL": 135
+      },
+      {
+        "url": "https://staging.consultify.ai/api/artifacts?limit=200&artifactFamily=template&outputType=presentation",
+        "dlugosc": 34527,
+        "trafieniaPL": 73
+      }
+    ]
+  },
+  {
+    "nazwa": "11-audits",
+    "opis": "Audits — /audit-programs",
+    "url": "https://staging.consultify.ai/audit-programs?tab=library",
+    "czas": "2026-09-08T19:37:25.920Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "12-meetings",
+    "opis": "Meetings — lista",
+    "url": "https://staging.consultify.ai/meetings",
+    "czas": "2026-09-08T19:37:36.527Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "13-organization",
+    "opis": "Organization — profil",
+    "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+    "czas": "2026-09-08T19:37:46.349Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 46,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [
+      "Tożsamość",
+      "źródło",
+      "Uzupełnione",
+      "uzupełnienia",
+      "BRANŻA",
+      "PODBRANŻA",
+      "BRANŻY",
+      "Szczegóły",
+      "WIELKOŚĆ",
+      "PRACOWNIKÓW",
+      "PRZYCHÓD",
+      "ZAŁOŻENIA",
+      "KLIENTÓW",
+      "uzupełnione",
+      "Kompletność",
+      "gotowość",
+      "ŹRÓDŁA",
+      "twierdzeń",
+      "źródłowych",
+      "Pokaż",
+      "źródła",
+      "wersję",
+      "niezmienną",
+      "wersję,",
+      "której",
+      "korzystają",
+      "pozostałe",
+      "moduły."
+    ],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "14-admin",
+    "opis": "Admin — panel",
+    "url": "https://staging.consultify.ai/admin/team/members",
+    "czas": "2026-09-08T19:37:56.045Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "15-settings",
+    "opis": "Settings — preferencje OWNER-a",
+    "url": "https://staging.consultify.ai/settings/profile",
+    "czas": "2026-09-08T19:38:05.912Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "16-partners",
+    "opis": "Partner Portal — /partner",
+    "url": "https://staging.consultify.ai/partner?tab=partner-home",
+    "czas": "2026-09-08T19:38:15.791Z",
+    "bledyKonsoli": [],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": []
+  },
+  {
+    "nazwa": "17-initiatives-member",
+    "opis": "Initiatives — lista (MEMBER emily.carter)",
+    "url": "https://staging.consultify.ai/initiatives?tab=list",
+    "czas": "2026-09-08T19:38:45.622Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 403 ()"
+    ],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": [
+      {
+        "url": "https://staging.consultify.ai/api/notifications?limit=20",
+        "dlugosc": 5967,
+        "trafieniaPL": 3
+      }
+    ]
+  },
+  {
+    "nazwa": "18-execution-member",
+    "opis": "Execution — Realizacje (MEMBER emily.carter)",
+    "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+    "czas": "2026-09-08T19:38:58.050Z",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()",
+      "Failed to load resource: the server responded with a status of 403 ()"
+    ],
+    "polskieDiakrytykiLacznie": 0,
+    "polskieSlowaUnikalne_UI": [],
+    "polskieSlowaUnikalne_DANE": [],
+    "apiOdpowiedziZPolskimZnakami": [
+      {
+        "url": "https://staging.consultify.ai/api/notifications?limit=20",
+        "dlugosc": 5967,
+        "trafieniaPL": 3
+      }
+    ]
+  }
+]

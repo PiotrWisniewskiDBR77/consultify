@@ -1,0 +1,25 @@
+{
+  "nazwa": "18-execution-member",
+  "opis": "Execution — Realizacje (MEMBER emily.carter)",
+  "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+  "czas": "2026-09-08T19:38:58.050Z",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "Failed to load resource: the server responded with a status of 403 ()"
+  ],
+  "polskieDiakrytykiLacznie": 0,
+  "polskieSlowaUnikalne_UI": [],
+  "polskieSlowaUnikalne_DANE": [],
+  "apiOdpowiedziZPolskimZnakami": [
+    {
+      "url": "https://staging.consultify.ai/api/notifications?limit=20",
+      "dlugosc": 5967,
+      "trafieniaPL": 3
+    }
+  ]
+}

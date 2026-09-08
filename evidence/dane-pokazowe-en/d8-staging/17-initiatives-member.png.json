@@ -1,0 +1,19 @@
+{
+  "nazwa": "17-initiatives-member",
+  "opis": "Initiatives — lista (MEMBER emily.carter)",
+  "url": "https://staging.consultify.ai/initiatives?tab=list",
+  "czas": "2026-09-08T19:38:45.622Z",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 ()"
+  ],
+  "polskieDiakrytykiLacznie": 0,
+  "polskieSlowaUnikalne_UI": [],
+  "polskieSlowaUnikalne_DANE": [],
+  "apiOdpowiedziZPolskimZnakami": [
+    {
+      "url": "https://staging.consultify.ai/api/notifications?limit=20",
+      "dlugosc": 5967,
+      "trafieniaPL": 3
+    }
+  ]
+}

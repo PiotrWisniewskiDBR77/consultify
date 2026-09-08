@@ -1,0 +1,47 @@
+########## D8 LICZBY ze stagingu (thomas.proxy.rlwy.net) ##########
+
+=== NORTHWIND (468b234c-66c4-54e1-b626-5e0fb3a92f6a) ===
+users: 9
+organization_members: 9
+initiatives per status:
+   APPROVED 4
+   CLOSED 1
+   DRAFT 1
+   IN_EXECUTION 4
+   PENDING_APPROVAL 1
+   PROPOSED 1
+   REJECTED 1
+ie_aggregate_state per aggregate_type:
+   capacity_scenario 1
+   capacity_scenario_version 2
+   decision 8
+   execution_case 4
+   handoff_package 4
+   initiative 8
+   plan_scenario 1
+   plan_scenario_version 2
+   portfolio_scenario 1
+   portfolio_scenario_version 2
+   raid_item 7
+tasks: 42
+raid_items: 7
+decisions: 9
+initiative_milestones: 16
+kpis: 0
+kpi_definitions: 0
+rvn_kpi_definitions: 8
+rvn_kpi_measurements: 48
+budgets: 1
+financial_statements: 4
+v8_output_artifacts: 97
+meetings: 2
+conversations: 3
+interview_sessions: 2
+audit_programs: 1
+audit_program_findings: 3
+execution_report_snapshots: 2
+
+=== DBR77 (a3e05d4a-5397-419d-b486-8e44366c0063) ===
+initiatives: 106
+tasks: 214
+users: 16

@@ -1,0 +1,22 @@
+{
+  "nazwa": "10-materials",
+  "opis": "Materials — lista",
+  "url": "https://staging.consultify.ai/presentations?tab=all",
+  "czas": "2026-09-08T19:37:14.393Z",
+  "bledyKonsoli": [],
+  "polskieDiakrytykiLacznie": 0,
+  "polskieSlowaUnikalne_UI": [],
+  "polskieSlowaUnikalne_DANE": [],
+  "apiOdpowiedziZPolskimZnakami": [
+    {
+      "url": "https://staging.consultify.ai/api/artifacts?limit=200&artifactFamily=template&outputType=report",
+      "dlugosc": 165137,
+      "trafieniaPL": 135
+    },
+    {
+      "url": "https://staging.consultify.ai/api/artifacts?limit=200&artifactFamily=template&outputType=presentation",
+      "dlugosc": 34527,
+      "trafieniaPL": 73
+    }
+  ]
+}
