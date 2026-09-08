@@ -9,6 +9,7 @@
  */
 import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { answerStateDotClass } from './answerStateColors';
 import type { MethodEvidenceState, MethodNavigatorNode } from './types';
@@ -157,6 +158,7 @@ const NodeRow: React.FC<{
 };
 
 export const MethodNavigator: React.FC<MethodNavigatorProps> = ({ nodes, activeUnitId, onSelect, className = '' }) => {
+  const { t } = useTranslation();
   const tree = useMemo(() => buildTree(nodes), [nodes]);
   const activeRootId = useMemo(() => {
     const contains = (node: TreeNode): boolean =>
@@ -176,7 +178,7 @@ export const MethodNavigator: React.FC<MethodNavigatorProps> = ({ nodes, activeU
   if (nodes.length === 0) {
     return (
       <div className="p-4 text-xs text-c-text-muted" data-testid="method-navigator-empty">
-        Method Pack nie dostarczył jeszcze struktury.
+        {t('methodWorkspace.navigator.noStructure', 'The Method Pack has not delivered a structure yet.')}
       </div>
     );
   }

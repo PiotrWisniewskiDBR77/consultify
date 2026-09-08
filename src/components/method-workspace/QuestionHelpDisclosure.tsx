@@ -11,6 +11,7 @@
  */
 import { ChevronDown, MessageCircleQuestion, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { MethodQuestion } from '@/method-core/contracts';
 
@@ -29,6 +30,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
   onAskTeresa,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -42,7 +44,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
         data-testid="question-help-unavailable"
         className={`rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-muted ${className}`}
       >
-        Help content unavailable
+        {t('methodWorkspace.help.unavailable', 'Help content unavailable')}
       </div>
     );
   }
@@ -56,13 +58,13 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 space-y-2">
         {question.plainLanguageExplanation && (
           <p className="text-sm leading-relaxed text-c-text">
-            <span className="font-medium text-c-text-secondary">Co to znaczy? </span>
+            <span className="font-medium text-c-text-secondary">{t('methodWorkspace.help.whatItMeans', 'What does this mean? ')}</span>
             {question.plainLanguageExplanation}
           </p>
         )}
         {question.whyItMatters && (
           <p className="text-sm leading-relaxed text-c-text">
-            <span className="font-medium text-c-text-secondary">Dlaczego pytamy? </span>
+            <span className="font-medium text-c-text-secondary">{t('methodWorkspace.help.whyWeAsk', 'Why do we ask? ')}</span>
             {question.whyItMatters}
           </p>
         )}
@@ -76,32 +78,34 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           aria-expanded={examplesOpen}
           className="flex min-h-[2.75rem] w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
         >
-          Przykład i dowody
+          {t('methodWorkspace.help.examplesAndEvidence', 'Example and evidence')}
           <ChevronDown size={14} className={examplesOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
         {examplesOpen && (
           <div className="px-4 pb-4 space-y-2 text-sm leading-relaxed text-c-text-secondary">
             {question.positiveAnswerExample && (
               <p>
-                <span className="font-medium text-c-success">Potwierdzająca: </span>
+                <span className="font-medium text-c-success">{t('methodWorkspace.help.exampleConfirming', 'Confirming: ')}</span>
                 {question.positiveAnswerExample}
               </p>
             )}
             {question.partialAnswerExample && (
               <p>
-                <span className="font-medium text-c-warning">Częściowa: </span>
+                <span className="font-medium text-c-warning">{t('methodWorkspace.help.examplePartial', 'Partial: ')}</span>
                 {question.partialAnswerExample}
               </p>
             )}
             {question.negativeAnswerExample && (
               <p>
-                <span className="font-medium text-c-text-muted">Niepotwierdzająca: </span>
+                <span className="font-medium text-c-text-muted">{t('methodWorkspace.help.exampleNegative', 'Not confirming: ')}</span>
                 {question.negativeAnswerExample}
               </p>
             )}
             {question.expectedEvidence.length > 0 && (
               <div>
-                <p className="font-medium text-c-text-secondary">Typowe dowody:</p>
+                <p className="font-medium text-c-text-secondary">
+                  {t('methodWorkspace.help.typicalEvidence', 'Typical evidence:')}
+                </p>
                 <ul className="list-disc list-inside">
                   {question.expectedEvidence.map((e) => (
                     <li key={e}>{e}</li>
@@ -111,7 +115,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
             )}
             {question.commonMisunderstanding && (
               <p>
-                <span className="font-medium text-c-text-secondary">Typowy błąd: </span>
+                <span className="font-medium text-c-text-secondary">{t('methodWorkspace.help.commonMistake', 'Common mistake: ')}</span>
                 {question.commonMisunderstanding}
               </p>
             )}
@@ -128,7 +132,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
             aria-expanded={compareOpen}
             className="flex min-h-[2.75rem] w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
           >
-            Porównaj poziomy
+            {t('methodWorkspace.help.compareLevels', 'Compare levels')}
             <ChevronDown size={14} className={compareOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
           </button>
           {compareOpen && (
@@ -136,7 +140,10 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
               {help.levels.map((level) => (
                 <div key={level.level} className="rounded-md border border-c-border-subtle p-3 text-sm">
                   <p className="font-semibold text-c-text">
-                    Poziom {level.level} — {level.title}
+                    {t('methodWorkspace.help.levelTitle', 'Level {{level}} — {{title}}', {
+                      level: level.level,
+                      title: level.title,
+                    })}
                   </p>
                   <p className="text-c-text-secondary mt-1">{level.canonicalDefinition}</p>
                 </div>
@@ -154,7 +161,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Sparkles size={13} />
-          Zapytaj Teresę
+          {t('methodWorkspace.help.askTeresa', 'Ask Teresa')}
         </button>
         <button
           type="button"
@@ -162,7 +169,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <MessageCircleQuestion size={13} />
-          Pokaż różnicę L-1/L/L+1
+          {t('methodWorkspace.help.showLevelDiff', 'Show the L-1/L/L+1 difference')}
         </button>
       </div>
     </div>

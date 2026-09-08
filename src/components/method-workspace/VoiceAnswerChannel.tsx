@@ -46,7 +46,7 @@ export const VoiceAnswerChannel: React.FC<VoiceAnswerChannelProps> = ({
   disabled = false,
   className = '',
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const browserStt = hasBrowserSpeechRecognition();
 
   // `useUniversalVoice` cache'uje instancję `SpeechRecognition` w refie, więc
@@ -78,10 +78,13 @@ export const VoiceAnswerChannel: React.FC<VoiceAnswerChannelProps> = ({
         data-testid="voice-channel-degraded"
         role="status"
         className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text-muted ${className}`}
-        title="Ta przeglądarka nie udostępnia rozpoznawania mowy — użyj klawiatury lub Teresy."
+        title={t(
+          'methodWorkspace.voice.unsupportedTooltip',
+          'This browser does not provide speech recognition — use the keyboard or Teresa.'
+        )}
       >
         <MicOff size={13} />
-        Mowa niedostępna w tej przeglądarce
+        {t('methodWorkspace.voice.unsupported', 'Speech is unavailable in this browser')}
       </div>
     );
   }

@@ -9,7 +9,8 @@
  * path per channel (A5 spec, cross-cutting requirement).
  */
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
 import type { InterviewFocusQuestion } from './types';
@@ -17,7 +18,7 @@ import { AnswerStateControl } from './AnswerStateControl';
 import { answerStateCardClass, answerStateDotClass } from './answerStateColors';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
-import { SKIP_REASON_OPTIONS, type DrdSkipReasonCode } from './skipReasonCodes';
+import { skipReasonOptionsUi, type DrdSkipReasonCode } from './skipReasonCodes';
 
 export interface InterviewFocusPanelProps {
   /** Breadcrumb context — axis/pillar, area/dimension, level under consideration. */
@@ -46,12 +47,15 @@ export interface InterviewFocusPanelProps {
   className?: string;
 }
 
-const EVIDENCE_LABEL: Record<MethodEvidenceState, string> = {
-  complete: 'Dowód kompletny',
-  weak: 'Dowód słaby',
-  missing: 'Brak dowodu',
-  conflicting: 'Dowody sprzeczne',
-};
+/** Słownik enumu stanu dowodu (PLAN §2 pkt 6) — etykiety z `t()`. */
+function etykietyDowodu(t: TFunction): Record<MethodEvidenceState, string> {
+  return {
+    complete: t('methodWorkspace.evidence.complete', 'Evidence complete'),
+    weak: t('methodWorkspace.evidence.weak', 'Evidence weak'),
+    missing: t('methodWorkspace.evidence.missing', 'No evidence'),
+    conflicting: t('methodWorkspace.evidence.conflicting', 'Evidence conflicting'),
+  };
+}
 
 export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   breadcrumb,
@@ -73,6 +77,8 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   readOnly = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const EVIDENCE_LABEL = useMemo(() => etykietyDowodu(t), [t]);
   const [skipReasonCode, setSkipReasonCode] = useState<DrdSkipReasonCode | ''>('');
   const [skipping, setSkipping] = useState(false);
   const [dragActive, setDragActive] = useState<string | null>(null);
@@ -108,7 +114,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   if (!primary) {
     return (
       <div className="p-6 text-sm text-c-text-muted" data-testid="interview-focus-empty">
-        Brak pytań do wyświetlenia w tym obszarze.
+        {t('methodWorkspace.focus.noQuestions', 'No questions to show in this area.')}
       </div>
     );
   }
@@ -121,7 +127,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
     >
       {/* Breadcrumb + progress — compact, no visual overload */}
       <div className="flex items-center justify-between gap-3 text-xs text-c-text-muted">
-        <nav aria-label="Ścieżka pytania" className="flex items-center gap-1 min-w-0 truncate">
+        <nav aria-label={t('methodWorkspace.focus.questionPath', 'Question path')} className="flex items-center gap-1 min-w-0 truncate">
           {breadcrumb.map((crumb, i) => (
             <React.Fragment key={crumb}>
               {i > 0 && <span aria-hidden="true">/</span>}
@@ -136,9 +142,18 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
 
       {questions.length > 1 && (
         <div className="-mt-2 flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted">
-          <span>Ta jednostka ma {questions.length} krótkie kroki. Na ekranie pozostaje otwarty tylko bieżący krok.</span>
+          <span>
+            {t(
+              'methodWorkspace.focus.multiStepHint',
+              'This unit has {{count}} short steps. Only the current step stays open on screen.',
+              { count: questions.length }
+            )}
+          </span>
           <span className="shrink-0 font-medium text-c-text-secondary">
-            Krok {activeSequenceIndex + 1}/{questions.length}
+            {t('methodWorkspace.focus.stepOf', 'Step {{current}}/{{total}}', {
+              current: activeSequenceIndex + 1,
+              total: questions.length,
+            })}
           </span>
         </div>
       )}
@@ -155,7 +170,10 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               type="button"
               onClick={() => setActiveSequenceIndex(sequenceIndex)}
               className="flex w-full items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              aria-label={`Otwórz krok ${sequenceIndex + 1}: ${q.question.canonicalWording}`}
+              aria-label={t('methodWorkspace.focus.openStep', 'Open step {{number}}: {{wording}}', {
+                number: sequenceIndex + 1,
+                wording: q.question.canonicalWording,
+              })}
             >
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-surface-raised text-c-text' : 'bg-c-surface-raised text-c-text-muted'}`}>
                 {answered ? <Check size={14} /> : sequenceIndex + 1}
@@ -205,7 +223,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-c-text-secondary" htmlFor={`answer-${q.question.questionId}`}>
-              Twoja odpowiedź
+              {t('methodWorkspace.focus.yourAnswer', 'Your answer')}
             </label>
             <div className="flex items-start gap-2">
               <textarea
@@ -215,7 +233,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
                 rows={6}
                 className="min-h-[9.5rem] flex-1 rounded-lg border border-c-border bg-c-surface p-3 text-base leading-relaxed text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                placeholder="Opisz sytuację własnymi słowami…"
+                placeholder={t('methodWorkspace.focus.answerPlaceholder', 'Describe the situation in your own words…')}
               />
               <VoiceAnswerChannel
                 disabled={readOnly}
@@ -257,9 +275,9 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           >
             <span className="flex items-center gap-1.5 text-c-text-secondary">
               <Paperclip size={13} />
-              Przeciągnij dowód lub{' '}
+              {t('methodWorkspace.focus.dropEvidence', 'Drag evidence here or')}{' '}
               <label className={readOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer underline underline-offset-2 hover:text-c-text'}>
-                wybierz plik
+                {t('methodWorkspace.focus.chooseFile', 'choose a file')}
                 <input
                   type="file"
                   disabled={readOnly}
@@ -297,10 +315,15 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               {q.evidenceStrength && (
                 <span
                   data-testid="evidence-strength-badge"
-                  title="Siła dowodu E0–E4 (E0 deklaracja … E4 wynik potwierdzony) — niezależna od poziomu i od statusu zatwierdzenia."
+                  title={t(
+                    'methodWorkspace.focus.evidenceStrengthTooltip',
+                    'Evidence strength E0–E4 (E0 a declaration … E4 a confirmed result) — independent of the level and of the approval status.'
+                  )}
                   className="shrink-0 rounded-full border border-c-border px-2 py-0.5 font-medium text-c-text-secondary"
                 >
-                  Siła dowodu: {q.evidenceStrength}
+                  {t('methodWorkspace.focus.evidenceStrength', 'Evidence strength: {{value}}', {
+                    value: q.evidenceStrength,
+                  })}
                 </span>
               )}
             </span>
@@ -322,7 +345,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 onClick={() => setActiveSequenceIndex((value) => Math.min(questions.length - 1, value + 1))}
                 className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Następny krok
+                {t('methodWorkspace.focus.nextStep', 'Next step')}
               </button>
             </div>
           )}
@@ -339,7 +362,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border px-3.5 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <ArrowLeft size={14} />
-          Wstecz
+          {t('methodWorkspace.focus.back', 'Back')}
         </button>
         <button
           type="button"
@@ -347,7 +370,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           disabled={readOnly}
           className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border px-3.5 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Zapisz
+          {t('common.save', 'Save')}
         </button>
         {/* Single obvious primary action */}
         <button
@@ -356,7 +379,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           disabled={!canGoNext}
           className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3.5 py-2 text-sm font-semibold text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Dalej
+          {t('methodWorkspace.focus.next', 'Next')}
           <ArrowRight size={14} />
         </button>
 
@@ -369,7 +392,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Sparkles size={13} />
-          Zapytaj Teresę
+          {t('methodWorkspace.help.askTeresa', 'Ask Teresa')}
         </button>
 
         {!skipping ? (
@@ -380,12 +403,12 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <SkipForward size={13} />
-            Pomiń z uzasadnieniem
+            {t('methodWorkspace.focus.skipWithReason', 'Skip with a reason')}
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
             <label htmlFor="skip-reason-code" className="sr-only">
-              Powód pominięcia (wybierz kod)
+              {t('methodWorkspace.focus.skipReasonLabel', 'Skip reason (choose a code)')}
             </label>
             <select
               id="skip-reason-code"
@@ -394,8 +417,8 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               onChange={(e) => setSkipReasonCode(e.target.value as DrdSkipReasonCode | '')}
               className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              <option value="">Wybierz powód…</option>
-              {SKIP_REASON_OPTIONS.map((option) => (
+              <option value="">{t('methodWorkspace.focus.chooseReason', 'Choose a reason…')}</option>
+              {skipReasonOptionsUi(t).map((option) => (
                 <option key={option.code} value={option.code}>
                   {option.label}
                 </option>
@@ -412,7 +435,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               }}
               className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Potwierdź
+              {t('methodWorkspace.focus.confirm', 'Confirm')}
             </button>
           </div>
         )}

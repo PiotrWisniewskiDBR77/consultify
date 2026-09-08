@@ -7,8 +7,10 @@
  */
 import { AlertTriangle, Check, CloudOff, Loader2, PencilLine } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { MethodSaveState } from '@/method-core/contracts';
+import { formatListTime } from '@/utils/listDateFormat';
 
 export interface SaveStateIndicatorProps {
   state: MethodSaveState;
@@ -22,13 +24,15 @@ export interface SaveStateIndicatorProps {
   className?: string;
 }
 
+/**
+ * Godzina zapisu przez SSOT `listDateFormat` — locale idzie z języka konta.
+ * Wcześniej stało tu `toLocaleTimeString('pl-PL')`, więc użytkownik EN widział
+ * polski zapis godziny (K7).
+ */
 function formatTime(iso: string | null): string {
   if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return '';
-  }
+  const wynik = formatListTime(iso, '');
+  return wynik;
 }
 
 export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
@@ -41,6 +45,7 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   compact = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const base = 'inline-flex items-center gap-1.5 text-xs font-medium';
 
   let icon: React.ReactNode;
@@ -50,32 +55,37 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   switch (state) {
     case 'CLEAN':
       icon = <Check size={13} />;
-      label = compact ? 'Zapisano' : lastSavedAt ? `Zapisano ${formatTime(lastSavedAt)}` : 'Zapisano';
+      label =
+        compact || !lastSavedAt
+          ? t('methodWorkspace.saveState.saved', 'Saved')
+          : t('methodWorkspace.saveState.savedAt', 'Saved {{time}}', { time: formatTime(lastSavedAt) });
       tone = 'text-c-text-muted';
       break;
     case 'SAVED':
       icon = <Check size={13} className="text-c-success" />;
-      label = lastSavedAt ? `Zapisano ${formatTime(lastSavedAt)}` : 'Zapisano';
+      label = lastSavedAt
+        ? t('methodWorkspace.saveState.savedAt', 'Saved {{time}}', { time: formatTime(lastSavedAt) })
+        : t('methodWorkspace.saveState.saved', 'Saved');
       tone = 'text-c-success';
       break;
     case 'DIRTY':
       icon = <PencilLine size={13} />;
-      label = 'Niezapisane zmiany';
+      label = t('methodWorkspace.saveState.dirty', 'Unsaved changes');
       tone = 'text-c-warning';
       break;
     case 'SAVING':
       icon = <Loader2 size={13} className="animate-spin" />;
-      label = 'Zapisywanie…';
+      label = t('methodWorkspace.saveState.saving', 'Saving…');
       tone = 'text-c-info';
       break;
     case 'SAVE_FAILED':
       icon = <AlertTriangle size={13} />;
-      label = 'Zapis nieudany';
+      label = t('methodWorkspace.saveState.failed', 'Save failed');
       tone = 'text-c-danger';
       break;
     case 'OFFLINE_PENDING':
       icon = <CloudOff size={13} />;
-      label = 'Offline — w kolejce';
+      label = t('methodWorkspace.saveState.offlineQueued', 'Offline — queued');
       tone = 'text-c-warning';
       break;
     default:
@@ -93,7 +103,7 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
           onClick={onSaveNow}
           className="ml-1 rounded px-1.5 py-0.5 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          Zapisz teraz
+          {t('methodWorkspace.saveState.saveNow', 'Save now')}
         </button>
       )}
       {state === 'SAVE_FAILED' && errorMessage && (
@@ -107,7 +117,7 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
               onClick={onRetry}
               className="rounded px-1.5 py-0.5 text-c-danger hover:bg-c-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Spróbuj ponownie
+              {t('methodWorkspace.saveState.retry', 'Try again')}
             </button>
           )}
           {onStay && (
@@ -116,7 +126,7 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
               onClick={onStay}
               className="rounded px-1.5 py-0.5 text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Zostań
+              {t('methodWorkspace.saveState.stay', 'Stay')}
             </button>
           )}
         </span>

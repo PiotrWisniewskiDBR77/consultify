@@ -340,22 +340,33 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           className="grid shrink-0 gap-3 border-b border-c-border bg-c-surface px-4 py-3 text-xs text-c-text-secondary md:grid-cols-4"
         >
           <div>
-            <p className="font-semibold text-c-text">Informacje o dokumencie</p>
-            <p>Metoda {methodName} · {packVersionLabel}</p>
-            <p>Wersja sesji v{session.version}</p>
-            {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.documentInfo', 'Document information')}</p>
+            <p>
+              {t('methodWorkspace.info.method', 'Method {{name}}', { name: methodName })} · {packVersionLabel}
+            </p>
+            <p>{t('methodWorkspace.info.sessionVersion', 'Session version v{{version}}', { version: session.version })}</p>
+            {documentSourceLabel && (
+              <p>{t('methodWorkspace.info.source', 'Source: {{label}}', { label: documentSourceLabel })}</p>
+            )}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
             {/* Zapis nie ma już stałej reprezentacji w nagłówku (DEC-415b) —
                 i nie dostaje jej też tutaj: powtarzanie „zapisano" w miejscu,
                 w którym zapis jest automatyczny, to szum, nie informacja
                 (ta sama logika, co przy `degradedMessage` niżej). */}
             <p className="mt-2">
-              Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
+              {t('methodWorkspace.info.evidence', 'Evidence: {{done}}/{{total}}', {
+                done: readiness.totalUnits - readiness.unitsMissingEvidence,
+                total: readiness.totalUnits,
+              })}
             </p>
-            <p>Do przeglądu: {readiness.openDiscrepancies}</p>
+            <p>{t('methodWorkspace.info.toReview', 'To review: {{count}}', { count: readiness.openDiscrepancies })}</p>
             {readiness.freezeBlockers.length > 0 ? (
               <div className="mt-1">
-                <p>Blokery zamrożenia ({readiness.freezeBlockers.length}):</p>
+                <p>
+                  {t('methodWorkspace.info.freezeBlockers', 'Freeze blockers ({{count}}):', {
+                    count: readiness.freezeBlockers.length,
+                  })}
+                </p>
                 <ul className="ml-3 list-disc space-y-0.5">
                   {readiness.freezeBlockers.map((blocker, i) => (
                     <li key={i}>{blocker}</li>
@@ -363,38 +374,65 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
                 </ul>
               </div>
             ) : (
-              <p>Brak blokerów zamrożenia.</p>
+              <p>{t('methodWorkspace.info.noFreezeBlockers', 'No freeze blockers.')}</p>
             )}
             {/* Raw session UUID — technical detail, not something an
                 operator needs on first glance (the header already shows a
                 short, human-scannable "Sesja {id.slice(0,8)}"). */}
             <details className="mt-2">
               <summary className="cursor-pointer text-c-text-muted hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
-                Szczegóły techniczne
+                {t('methodWorkspace.info.technicalDetails', 'Technical details')}
               </summary>
-              <p className="mt-1 font-mono text-[10px] text-c-text-muted">ID sesji: {session.id}</p>
+              <p className="mt-1 font-mono text-[10px] text-c-text-muted">
+                {t('methodWorkspace.info.sessionId', 'Session ID: {{id}}', { id: session.id })}
+              </p>
             </details>
           </div>
           <div>
-            <p className="font-semibold text-c-text">Zespół i uprawnienia</p>
-            <p>Tryb pracy: {mode === 'teresa_led' ? 'AI assisted' : 'human led'}</p>
-            <p>{readOnly ? 'Tylko odczyt' : 'Edycja dozwolona'}</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.teamAndRights', 'Team and permissions')}</p>
+            <p>
+              {t('methodWorkspace.info.workMode', 'Work mode: {{mode}}', {
+                mode:
+                  mode === 'teresa_led'
+                    ? t('methodWorkspace.info.aiAssisted', 'AI assisted')
+                    : t('methodWorkspace.info.humanLed', 'human led'),
+              })}
+            </p>
+            <p>
+              {readOnly
+                ? t('methodWorkspace.info.readOnly', 'Read only')
+                : t('methodWorkspace.info.editAllowed', 'Editing allowed')}
+            </p>
           </div>
           <div>
             {/* DEC-2026-08-25-56: "Akceptacje", nie "Zatwierdzenia". */}
-            <p className="font-semibold text-c-text">Akceptacje</p>
-            <p>Odpowiedzi: {session.state === 'in_review' || session.state === 'frozen' ? 'w przeglądzie lub zatwierdzone' : 'robocze'}</p>
-            <p>Targety i raport: {session.state === 'frozen' ? 'zamrożone' : 'niezatwierdzone'}</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.approvals', 'Approvals')}</p>
+            <p>
+              {t('methodWorkspace.info.answers', 'Answers: {{state}}', {
+                state:
+                  session.state === 'in_review' || session.state === 'frozen'
+                    ? t('methodWorkspace.info.answersInReview', 'in review or approved')
+                    : t('methodWorkspace.info.answersDraft', 'draft'),
+              })}
+            </p>
+            <p>
+              {t('methodWorkspace.info.targetsAndReport', 'Targets and report: {{state}}', {
+                state:
+                  session.state === 'frozen'
+                    ? t('methodWorkspace.info.frozen', 'frozen')
+                    : t('methodWorkspace.info.notApproved', 'not approved'),
+              })}
+            </p>
             {governanceActions && <div className="mt-2 flex flex-wrap gap-2">{governanceActions}</div>}
           </div>
           <div>
-            <p className="font-semibold text-c-text">Licencja i wersje</p>
+            <p className="font-semibold text-c-text">{t('methodWorkspace.info.licenceAndVersions', 'Licence and versions')}</p>
             {/* 2026-08-26 assessment cleanup: removed "Status subskrypcji: do
                 potwierdzenia przez backend" — a developer TODO note, not
                 real data, left visible on the client's face (no field on
                 `session`/`readiness` backs a subscription status; showing
                 one would just be another fabricated fact). */}
-            <p>Historia wersji dostępna z menu dokumentu</p>
+            <p>{t('methodWorkspace.info.versionHistoryHint', 'Version history is available from the document menu')}</p>
           </div>
           {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}
         </section>
