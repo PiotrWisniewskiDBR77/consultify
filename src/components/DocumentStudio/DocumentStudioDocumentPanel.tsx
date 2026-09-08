@@ -123,6 +123,7 @@ import type {
   DocumentVersionSnapshotSummary,
 } from './types';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
@@ -778,7 +779,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
               </span>
             </div>
             <div className="mt-1 text-c-text-secondary">
-              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString('pl-PL')}
+              {entry.actorId} · {formatListDateTime(entry.occurredAt)}
             </div>
           </li>
         ))}
@@ -1264,7 +1265,7 @@ export function SchemaDiffPanel({
             </option>
             {[...snapshots].reverse().map((snapshot) => (
               <option key={snapshot.versionId} value={snapshot.versionId}>
-                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString('pl-PL')}${
+                {`v${snapshot.versionNumber} · ${formatListDateTime(snapshot.capturedAt)}${
                   snapshot.label ? ` · ${snapshot.label}` : ''
                 }`}
               </option>
@@ -1281,7 +1282,7 @@ export function SchemaDiffPanel({
                 defaultValue: 'Baseline v{{version}}',
                 version: result.baseSnapshot.versionNumber,
               })}{' '}
-              · {new Date(result.baseSnapshot.capturedAt).toLocaleString('pl-PL')}
+              · {formatListDateTime(result.baseSnapshot.capturedAt)}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">

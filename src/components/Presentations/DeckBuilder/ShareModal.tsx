@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 type ShareTab = 'collaborate' | 'share' | 'export' | 'embed';
 
@@ -422,7 +423,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   {shareExpiresAt ? (
                     <p className="text-xs text-c-text-secondary">
                       {t('presentations.builder.share.expires', 'Expires')}:{' '}
-                      {new Date(shareExpiresAt).toLocaleString('pl-PL')}
+                      {formatListDateTime(shareExpiresAt)}
                     </p>
                   ) : null}
                   <button

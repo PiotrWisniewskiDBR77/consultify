@@ -5,6 +5,7 @@
 
 import { FileCheck, Info, Shield } from 'lucide-react';
 import React from 'react';
+import { formatListDateTime } from '../../../../utils/listDateFormat';
 
 interface ReportFooterProps {
   reportId: string;
@@ -100,7 +101,7 @@ export const ReportFooter: React.FC<ReportFooterProps> = ({
         </span>
         <span>Version: {version}</span>
         <span>Domain: {pmoDomain}</span>
-        <span>Generated: {new Date(generatedAt).toLocaleString()}</span>
+        <span>Generated: {formatListDateTime(generatedAt)}</span>
       </div>
     </div>
   );

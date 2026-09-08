@@ -28,6 +28,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { ManagementReportType } from '../../../types';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 interface TemplateSection {
   id: string;
@@ -371,7 +372,7 @@ export const ReportTemplatesView: React.FC = () => {
                       </p>
                     </div>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {new Date(template.createdAt).toLocaleDateString()}
+                      {formatListDate(template.createdAt)}
                     </span>
                   </div>
                 </div>

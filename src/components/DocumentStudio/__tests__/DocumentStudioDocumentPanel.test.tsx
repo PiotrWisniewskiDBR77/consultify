@@ -617,7 +617,7 @@ describe('DocumentStudioDocumentPanel', () => {
       // 'idle', which reads as "already durable" (matches server state at
       // load), not as "nothing to report".
       const saveRow = screen.getByTestId('document-file-menu-save');
-      expect(saveRow).toHaveTextContent('Zapisano automatycznie');
+      expect(saveRow).toHaveTextContent('Saved automatically');
       // Not a button — clicking it must not pretend to trigger a save.
       expect(saveRow).toHaveAttribute('aria-disabled', 'true');
     });

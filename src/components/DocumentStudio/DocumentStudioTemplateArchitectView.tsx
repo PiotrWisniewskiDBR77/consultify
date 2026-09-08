@@ -67,6 +67,7 @@ import type {
 } from './types';
 import { normalizeTemplateFormattingSchema } from './types';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 export function getTemplateStructureSaveErrorMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : String(error ?? '');
@@ -910,7 +911,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                     <li key={entry.auditId} className="flex items-center justify-between gap-3">
                       <span>
                         {entry.action.replace(/_/g, ' ')} ·{' '}
-                        {new Date(entry.occurredAt).toLocaleString('pl-PL')}
+                        {formatListDateTime(entry.occurredAt)}
                       </span>
                       {entry.details?.templateSnapshot ? (
                         <span className="flex gap-2">

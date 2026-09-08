@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { ManagementReportScope, ManagementReportType } from '../../../types';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface ReportSchedule {
   id: string;
@@ -292,7 +293,7 @@ export const ReportScheduleView: React.FC = () => {
                   </p>
                   {schedule.nextScheduledAt && (
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                      Next: {new Date(schedule.nextScheduledAt).toLocaleString()}
+                      Next: {formatListDateTime(schedule.nextScheduledAt)}
                     </p>
                   )}
                 </div>

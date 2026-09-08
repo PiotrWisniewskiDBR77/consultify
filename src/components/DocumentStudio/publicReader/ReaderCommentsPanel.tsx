@@ -25,6 +25,7 @@ import {
   replySharedComment,
 } from './clientReaderApi';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface ThreadGroup {
   threadId: string;
@@ -59,7 +60,7 @@ function formatAuthor(authorId: string): string {
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('pl-PL');
+  return Number.isNaN(date.getTime()) ? iso : formatListDateTime(date);
 }
 
 function getOrCreateFingerprint(token: string): string {

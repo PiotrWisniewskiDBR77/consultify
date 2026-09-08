@@ -30,6 +30,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/primitives/Button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -205,11 +206,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
       {cert.validUntil && (
         <p className="text-xs text-c-text-muted">
           Valid until:{' '}
-          {new Date(cert.validUntil).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
+          {formatListDate(cert.validUntil)}
         </p>
       )}
     </div>

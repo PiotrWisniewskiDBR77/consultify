@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 interface ExecutiveReportProps {
   projectId?: string;
@@ -186,7 +187,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
                 {report.projectName}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-500">
-                Generated: {new Date(report.generatedAt).toLocaleString()}
+                Generated: {formatListDateTime(report.generatedAt)}
               </p>
             </div>
             <div

@@ -299,7 +299,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
           </span>
           <span>•</span>
           <span>
-            {/* Odbiór 2026-08-30 (przegląd całości): `toLocaleDateString()`
+            {/* Odbiór 2026-08-30 (przegląd całości): metoda lokalizująca datę
                 BEZ argumentu bierze locale z PRZEGLĄDARKI, nie z języka
                 konta — dawało `7/21/2026` (amerykański zapis) w polskim
                 interfejsie. Kanon dat (`src/utils/listDateFormat.ts`,

@@ -8,6 +8,7 @@ import React from 'react';
 
 import { ManagementReportScope, ManagementReportType, RAGStatus } from '../../../../types';
 import { RAGIndicator } from './RAGIndicator';
+import { formatListDate } from '../../../../utils/listDateFormat';
 
 interface ReportHeaderProps {
   title: string;
@@ -79,7 +80,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Clock size={13} className="text-slate-600 dark:text-slate-500" />
-          {new Date(generatedAt).toLocaleDateString()}
+          {formatListDate(generatedAt)}
         </span>
         {(projectName || organizationName) && (
           <span className="inline-flex items-center gap-1.5">

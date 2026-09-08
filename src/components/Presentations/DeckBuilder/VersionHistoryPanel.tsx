@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 
 import type { VersionSnapshot } from './useVersionHistory';
 import { useTranslation } from 'react-i18next';
+import { localeListy } from '../../../utils/listDateFormat';
 
 interface VersionHistoryPanelProps {
   isOpen: boolean;
@@ -207,7 +208,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 };
 
 function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  return new Date(timestamp).toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatTimeAgo(timestamp: number): string {

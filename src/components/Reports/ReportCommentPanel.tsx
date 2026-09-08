@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../utils/listDateFormat';
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
 
@@ -247,15 +248,9 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
   };
 
   // Format date
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pl-PL', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // SSOT dat: src/utils/listDateFormat.ts — jeden zapis DD/MM/YYYY HH:MM,
+  // locale z konta, nie z przeglądarki (kanon TRIADA).
+  const formatDate = (dateStr: string) => formatListDateTime(dateStr);
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700">

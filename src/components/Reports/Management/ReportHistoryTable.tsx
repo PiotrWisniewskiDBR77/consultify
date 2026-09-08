@@ -26,6 +26,7 @@ import {
 } from '../../../types';
 import { ReportHistoryRowSkeleton } from './shared/ReportSkeleton';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 interface ReportHistoryItem {
   id: string;
@@ -352,7 +353,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 text-sm text-c-text-secondary">
                         <Calendar size={14} className="text-c-text-muted" />
-                        {new Date(report.createdAt).toLocaleDateString()}
+                        {formatListDate(report.createdAt)}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-c-text-muted mt-1">
                         <User size={12} />

@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import type { BundleListItem } from '../../services/deliverablesBundle';
 import { useBundleList } from './useBundleList';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // ---------------------------------------------------------------------------
 // Lifecycle badge
@@ -69,11 +70,7 @@ function QualityIcon({ passed }: { passed: boolean | null }) {
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return formatListDate(iso);
   } catch {
     return iso;
   }

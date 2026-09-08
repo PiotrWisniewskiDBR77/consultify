@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/primitives/Button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -342,11 +343,7 @@ function ReleaseCard({ release }: { release: Release }) {
           <div className="flex items-center gap-4 text-xs text-c-text-muted">
             <span className="flex items-center gap-1">
               <Calendar size={12} />
-              {new Date(release.date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {formatListDate(release.date)}
             </span>
             {featureCount > 0 && <span className="text-green-400">{featureCount} features</span>}
             {improvementCount > 0 && (

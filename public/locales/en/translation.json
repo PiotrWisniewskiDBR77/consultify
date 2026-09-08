@@ -16010,6 +16010,46 @@
       "raidReport": {
         "escalationSummary": "Escalation Summary",
         "escalationNote": "Overall RAID status is <1>{{status}}</1>. Escalations are calculated from open issues, dependency blockers, and critical risks."
+      },
+      "type": {
+        "teamMeeting": "Team meeting",
+        "teamWeekly": "Weekly team report",
+        "steeringCommittee": "Steering committee",
+        "portfolioHealth": "Portfolio health"
+      },
+      "scope": {
+        "portfolio": "Portfolio",
+        "project": "Project",
+        "organization": "Organisation"
+      },
+      "status": {
+        "draft": "Draft",
+        "final": "Final",
+        "approved": "Approved",
+        "archived": "Archived"
+      },
+      "panel": {
+        "actions": "Actions",
+        "exportPdf": "Export PDF",
+        "exportPptx": "Export PPTX",
+        "properties": "Properties",
+        "property": "Property",
+        "value": "Value",
+        "type": "Type",
+        "scope": "Scope",
+        "status": "Status",
+        "period": "Period",
+        "author": "Author",
+        "noRelations": "This report declares no readable business relations.",
+        "evidence": "Sources and assumptions",
+        "noEvidence": "No sources or assumptions were recorded.",
+        "noComments": "A management report has no comment thread.",
+        "history": "History",
+        "createdVersion": "Created {{date}} · version {{version}}",
+        "primaryActionReason": "Export and sharing live in the Actions section.",
+        "reanalyzeBlocked": "This report holds the analysis from the moment it was generated; a fresh analysis needs a new report.",
+        "readOnlyReason": "the report is generator output and has no fields to fill in",
+        "ariaLabel": "Management report details"
       }
     },
     "premium": {

@@ -34,6 +34,7 @@ import { type CanvasOutputResource, createOutputFromCanvasDraft } from './create
 import { useDeliverableTemplates } from './useDeliverableTemplates';
 import { useRecentWorkCanvasDrafts } from './useRecentWorkCanvasDrafts';
 import { useTemplateSuggestion } from './useTemplateSuggestion';
+import { formatListDate } from '../../utils/listDateFormat';
 
 export type DeliverableType = 'report' | 'presentation' | 'table';
 
@@ -107,7 +108,7 @@ const BLANK_CARD: TemplateCard = {
 function formatCanvasUpdatedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' });
+  return formatListDate(d);
 }
 
 // v1 — kuratorowane szablony placeholder (realna biblioteka DBR77 = seria T).

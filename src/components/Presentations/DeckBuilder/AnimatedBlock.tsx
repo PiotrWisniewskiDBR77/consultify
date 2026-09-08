@@ -8,6 +8,7 @@ import { motion, useInView } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
 
 import type { BlockType } from '../wizard/types';
+import { formatListNumber } from '../../../utils/listDateFormat';
 
 interface AnimatedBlockProps {
   blockType: BlockType | string;
@@ -221,9 +222,9 @@ export const CountUpNumber: React.FC<CountUpProps> = ({
       const current = Math.round(numericValue * eased);
 
       if (prefix) {
-        setDisplayed(`${prefix}${current.toLocaleString()}`);
+        setDisplayed(`${prefix}${formatListNumber(current)}`);
       } else {
-        setDisplayed(current.toLocaleString());
+        setDisplayed(formatListNumber(current));
       }
 
       if (progress < 1) {

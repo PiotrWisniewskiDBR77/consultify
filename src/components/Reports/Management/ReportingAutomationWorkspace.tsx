@@ -31,6 +31,7 @@ import { LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../../services/api';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
+import { formatListDate, formatListDateTime } from '../../../utils/listDateFormat';
 
 // ============================================
 // TYPES
@@ -504,7 +505,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 </div>
                 {schedule.nextRunAt && (
                   <p className="text-[10px] text-c-text-secondary mt-1">
-                    {tp('nextRun')}: {new Date(schedule.nextRunAt).toLocaleDateString()}
+                    {tp('nextRun')}: {formatListDate(schedule.nextRunAt)}
                   </p>
                 )}
               </button>
@@ -571,7 +572,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     </span>
                     {selectedSchedule.lastRunAt && (
                       <span>
-                        {tp('lastRun')}: {new Date(selectedSchedule.lastRunAt).toLocaleString()}
+                        {tp('lastRun')}: {formatListDateTime(selectedSchedule.lastRunAt)}
                       </span>
                     )}
                   </div>
@@ -872,9 +873,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               )}
               {exec.error && <p className="text-xs text-danger-400 mt-1">{exec.error}</p>}
               <div className="flex items-center gap-3 mt-2 text-[10px] text-c-text-secondary">
-                <span>Started: {new Date(exec.startedAt).toLocaleString()}</span>
+                <span>Started: {formatListDateTime(exec.startedAt)}</span>
                 {exec.completedAt && (
-                  <span>Completed: {new Date(exec.completedAt).toLocaleString()}</span>
+                  <span>Completed: {formatListDateTime(exec.completedAt)}</span>
                 )}
               </div>
               {exec.deliveryResults.length > 0 && (

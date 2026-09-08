@@ -2323,7 +2323,8 @@
       "tool": "Narzędzie",
       "assessment": "Ocena",
       "finance": "Finanse",
-      "upload": "Przesłane"
+      "upload": "Przesłane",
+      "unknown": "Nieznany"
     },
     "actions": {
       "export": "Eksportuj",
@@ -2391,7 +2392,10 @@
       "restoreAsDraft": "Przywróć jako wersję roboczą",
       "typedFieldsArePersistedIn": "Pola z typem są zapisywane w schemacie wzorca i stają się\n                      wymaganiami danych przy generowaniu prezentacji.",
       "theCheckPassedTheDraft": "Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji."
-    }
+    },
+    "minimalPreview": "Podgląd uproszczony — pełny edytor wkrótce",
+    "previewPlaceholder": "Podgląd prezentacji pojawi się tutaj.",
+    "comingSoon": "Wkrótce"
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -15620,6 +15624,46 @@
       "raidReport": {
         "escalationSummary": "Podsumowanie eskalacji",
         "escalationNote": "Ogólny status RAID to <1>{{status}}</1>. Eskalacje wyliczamy z otwartych problemów, blokad zależności i ryzyk krytycznych."
+      },
+      "type": {
+        "teamMeeting": "Spotkanie zespołu",
+        "teamWeekly": "Raport tygodniowy zespołu",
+        "steeringCommittee": "Komitet sterujący",
+        "portfolioHealth": "Zdrowie portfela"
+      },
+      "scope": {
+        "portfolio": "Portfel",
+        "project": "Projekt",
+        "organization": "Organizacja"
+      },
+      "status": {
+        "draft": "Szkic",
+        "final": "Finalny",
+        "approved": "Zatwierdzony",
+        "archived": "Zarchiwizowany"
+      },
+      "panel": {
+        "actions": "Akcje",
+        "exportPdf": "Eksportuj PDF",
+        "exportPptx": "Eksportuj PPTX",
+        "properties": "Właściwości",
+        "property": "Właściwość",
+        "value": "Wartość",
+        "type": "Typ",
+        "scope": "Zakres",
+        "status": "Status",
+        "period": "Okres",
+        "author": "Autor",
+        "noRelations": "Raport nie deklaruje czytelnych powiązań biznesowych.",
+        "evidence": "Źródła i założenia",
+        "noEvidence": "Brak zapisanych źródeł i założeń.",
+        "noComments": "Raport zarządczy nie ma wątku komentarzy.",
+        "history": "Historia",
+        "createdVersion": "Utworzono {{date}} · wersja {{version}}",
+        "primaryActionReason": "Eksport i udostępnianie są w sekcji Akcje.",
+        "reanalyzeBlocked": "Raport zawiera analizę z chwili wygenerowania; ponowna analiza wymaga nowego raportu.",
+        "readOnlyReason": "raport jest wynikiem generatora i nie ma pól do uzupełnienia",
+        "ariaLabel": "Szczegóły raportu zarządczego"
       }
     },
     "premium": {

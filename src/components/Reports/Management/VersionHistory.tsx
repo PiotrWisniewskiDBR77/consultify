@@ -26,6 +26,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { ReportVersion, VersionComparisonResult } from '../../../types';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface VersionHistoryProps {
   reportId: string;
@@ -119,7 +120,7 @@ const VersionItem: React.FC<{
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={12} />
-                {new Date(version.createdAt).toLocaleString()}
+                {formatListDateTime(version.createdAt)}
               </span>
             </div>
           </div>

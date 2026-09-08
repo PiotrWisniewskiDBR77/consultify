@@ -8,6 +8,7 @@ import {
   type PresentationGovernanceCard,
 } from '@/services/presentationGovernance';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface DeckGovernanceCardModalProps {
   deckId: string;
@@ -60,7 +61,7 @@ function formatTimestamp(value: string | null | undefined): string {
   const ts = Date.parse(value);
   if (Number.isNaN(ts)) return value;
   try {
-    return new Date(ts).toLocaleString('pl-PL');
+    return formatListDateTime(ts);
   } catch {
     return value;
   }

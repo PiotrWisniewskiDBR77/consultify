@@ -61,6 +61,7 @@ import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 import { ManagementReportCard } from './ManagementReportsView';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListDateTime } from '../../../utils/listDateFormat';
 
 // Report type metadata. Identity (type) is carried by a muted icon + short
 // label — color is NOT a status signal here (canon §4.0a), so we keep the icon
@@ -351,7 +352,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
-              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.createdAt)}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {row.generatedByName || '—'}
@@ -466,7 +467,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportTemplate) => (
           <div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.createdAt)}
             </div>
             {row.createdByName && (
               <p className="text-xs text-slate-500 dark:text-slate-400">{row.createdByName}</p>
@@ -531,7 +532,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) =>
           row.nextScheduledAt ? (
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.nextScheduledAt).toLocaleDateString('pl-PL')}
+              {formatListDate(row.nextScheduledAt)}
             </div>
           ) : (
             <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
@@ -839,7 +840,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       {t('reports.col.generated', 'Generated')}
                     </dt>
                     <dd className="text-slate-700 dark:text-slate-200 text-right">
-                      {new Date(item.createdAt).toLocaleString('pl-PL')}
+                      {formatListDateTime(item.createdAt)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">

@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { PresentationRuntimeEvent } from '@/services/presentationRuntimeEvents';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface AgentActivityPanelProps {
   events: PresentationRuntimeEvent[];
@@ -25,7 +26,7 @@ function formatTimestamp(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   try {
-    return d.toLocaleString();
+    return formatListDateTime(d);
   } catch {
     return iso;
   }

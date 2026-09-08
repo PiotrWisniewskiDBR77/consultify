@@ -28,6 +28,7 @@ import type {
   DocumentQaReport,
   DocumentQaSeverity,
 } from './types';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 interface DocumentStudioQaPanelProps {
   artifactId: string;
@@ -265,7 +266,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
           <div className="flex items-center justify-between text-xs text-c-text-secondary">
             <span>
               {t('documentStudio.qa.generatedAt', 'Generated at')}:{' '}
-              {new Date(report.generatedAt).toLocaleString('pl-PL')}
+              {formatListDateTime(report.generatedAt)}
             </span>
             {report.anyBlocking ? (
               <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">

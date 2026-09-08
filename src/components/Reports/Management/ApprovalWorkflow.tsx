@@ -44,6 +44,7 @@ import {
   ROLE_DEFINITIONS,
 } from '@/services/roleDefinitions';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '../../../utils/listDateFormat';
 
 // Role icons — uses centralized icon mapping
 const RoleIcon: React.FC<{ role: string; className?: string }> = ({ role, className }) => {
@@ -173,7 +174,7 @@ const ApprovalStep: React.FC<{
           <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             <span>{approval.status === 'APPROVED' ? 'Approved' : 'Rejected'} by </span>
             <span className="font-medium">{approval.decidedByName}</span>
-            <span> on {new Date(approval.decidedAt).toLocaleDateString()}</span>
+            <span> on {formatListDate(approval.decidedAt)}</span>
           </div>
         )}
 

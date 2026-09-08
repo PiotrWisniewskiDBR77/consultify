@@ -3,6 +3,7 @@ import React from 'react';
 
 import { FullReport } from '../types';
 import { useTranslation } from 'react-i18next';
+import { formatListDate, formatListNumber } from '../utils/listDateFormat';
 
 interface FullReportDocumentProps {
   report: FullReport;
@@ -28,7 +29,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
         </span>
         <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-mono">
           Generated:{' '}
-          {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : 'Date unknown'}
+          {report.generatedAt ? formatListDate(report.generatedAt) : 'Date unknown'}
         </span>
       </div>
 
@@ -135,7 +136,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                     Total Investment
                   </div>
                   <div className="text-xl font-bold text-navy-900 dark:text-white">
-                    ${report.financials.cost.toLocaleString()}
+                    ${formatListNumber(report.financials.cost)}
                   </div>
                 </div>
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
@@ -143,7 +144,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                     Annual Benefit
                   </div>
                   <div className="text-xl font-bold text-green-700 dark:text-green-300">
-                    ${report.financials.benefit.toLocaleString()}
+                    ${formatListNumber(report.financials.benefit)}
                   </div>
                 </div>
                 <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">

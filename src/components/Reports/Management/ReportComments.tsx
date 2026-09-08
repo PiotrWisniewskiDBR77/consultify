@@ -21,6 +21,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ReportComment } from '../../../types';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface ReportCommentsProps {
   reportId: string;
@@ -71,7 +72,7 @@ const CommentItem: React.FC<{
                 {comment.createdByName || 'Unknown User'}
               </span>
               <span className="text-xs text-slate-600 dark:text-slate-500">
-                {new Date(comment.createdAt).toLocaleString()}
+                {formatListDateTime(comment.createdAt)}
               </span>
               {comment.isResolved && (
                 <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs">
