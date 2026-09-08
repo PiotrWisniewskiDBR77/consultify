@@ -25,6 +25,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import TeresaMark from '../components/shared/TeresaMark';
@@ -408,6 +409,7 @@ const fadeUp: Variants = {
 };
 
 export const V4ComingSoonView: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const moduleKey = resolveModuleKey(location.pathname);
   const copy = copyByModule[moduleKey];
@@ -491,7 +493,7 @@ export const V4ComingSoonView: React.FC = () => {
           {isRegistered ? (
             <>
               <Check size={isLg ? 16 : 14} />
-              Zgłoszenie wysłane
+              {t('v4ComingSoon.submitted', 'Request sent')}
             </>
           ) : (
             <>

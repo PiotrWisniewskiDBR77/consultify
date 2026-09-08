@@ -17,6 +17,7 @@ import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DateFilterSortControl } from '@/components/shared/DateFilterSortControl';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                         })}
                       />
                       <span className="text-[10px] text-c-text-secondary">
-                        {new Date(c.createdAt).toLocaleDateString()}
+                        {formatListDate(c.createdAt)}
                       </span>
                       {c.isAIGenerated && (
                         <span className="text-[9px] text-c-info font-medium">AI</span>

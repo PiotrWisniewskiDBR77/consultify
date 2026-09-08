@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAIContext } from '../../contexts/AIContext';
 import { useAIStream } from '../../hooks/useAIStream';
@@ -54,6 +55,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
   currentView,
   contextEntityId,
 }) => {
+  const { t } = useTranslation();
   const {
     activeChatMessages,
     addChatMessage,
@@ -349,7 +351,9 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     AI Consultant
                   </h3>
-                  <p className="text-[10px] text-slate-500">Twój asystent transformacji</p>
+                  <p className="text-[10px] text-slate-500">
+                    {t('layout.split.assistantSubtitle', 'Your transformation assistant')}
+                  </p>
                 </div>
               </div>
               <button

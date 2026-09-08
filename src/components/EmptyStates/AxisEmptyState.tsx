@@ -1,5 +1,6 @@
 import { Cpu, Globe, Layers, Target, TrendingUp, Users } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyStateWithActions } from './EmptyStateWithActions';
 
@@ -90,11 +91,15 @@ export const AxisEmptyState: React.FC<AxisEmptyStateProps> = ({
   onCreateAxis,
   onSelectTemplate,
 }) => {
+  const { t } = useTranslation();
   return (
     <EmptyStateWithActions
       icon={Target}
-      title="Brak osi decyzyjnych"
-      description="Oś decyzyjna to przestrzeń do ustrukturyzowania jednego tematu strategicznego. Zacznij od pustej osi lub wybierz gotowy szablon."
+      title={t('emptyStates.axis.title', 'No decision axes yet')}
+      description={t(
+        'emptyStates.axis.description',
+        'A decision axis is a space for structuring one strategic topic. Start from an empty axis or pick a ready-made template.'
+      )}
       actions={[
         {
           label: 'Utwórz pustą oś',

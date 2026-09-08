@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Settings } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '@/services/api';
@@ -19,11 +20,12 @@ const StatusDot: React.FC<{ isConnected: boolean; isLoading?: boolean }> = ({
   isConnected,
   isLoading,
 }) => {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div
         className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"
-        title="Sprawdzanie połączenia..."
+        title={t('modelSelector.checkingConnection', 'Checking connection…')}
       />
     );
   }

@@ -34,12 +34,12 @@ export const NotFoundPage: React.FC = () => {
 
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-c-text">
-          {t('notFoundPage.title', 'Nie ma takiej strony')}
+          {t('notFoundPage.title', 'This page does not exist')}
         </h1>
         <p className="max-w-md text-sm text-c-text-secondary">
           {t(
             'notFoundPage.message',
-            'Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.'
+            'The address you followed does not exist or has moved.'
           )}
         </p>
       </div>
@@ -49,7 +49,7 @@ export const NotFoundPage: React.FC = () => {
           {t('notFoundPage.goBack', 'Wstecz')}
         </Button>
         <Button variant="primary" icon={<MessageCircle />} onClick={handleBackToChat}>
-          {t('notFoundPage.backToChat', 'Wróć do Czatu')}
+          {t('notFoundPage.backToChat', 'Back to Chat')}
         </Button>
       </div>
     </div>

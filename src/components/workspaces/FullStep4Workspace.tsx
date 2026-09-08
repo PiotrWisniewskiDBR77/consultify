@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { BenefitRange, CostRange, FullInitiative, FullSession } from '../../types';
 import { ROIPaybackChart } from '../ROIPaybackChart';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface FullStep4WorkspaceProps {
   fullSession: FullSession;
@@ -87,7 +88,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
               </span>
             </div>
             <div className="text-xl font-bold text-slate-900 dark:text-white">
-              ${economics.totalCost.toLocaleString()}k
+              ${formatListNumber(economics.totalCost)}k
             </div>
           </div>
 
@@ -100,7 +101,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
               </span>
             </div>
             <div className="text-xl font-bold text-green-400">
-              ${economics.totalAnnualBenefit.toLocaleString()}k
+              ${formatListNumber(economics.totalAnnualBenefit)}k
             </div>
           </div>
 

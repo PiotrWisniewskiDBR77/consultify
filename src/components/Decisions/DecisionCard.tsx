@@ -24,6 +24,7 @@ import {
 import React from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { formatListDate } from '@/utils/listDateFormat';
 
 export interface Decision {
   id: string;
@@ -168,7 +169,7 @@ const StatusTimeline: React.FC<{
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    return formatListDate(date);
   };
 
   if (isOverdue && daysOverdue && daysOverdue > 0) {

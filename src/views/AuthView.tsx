@@ -699,7 +699,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     submitting: false,
                     error: t(
                       'mfa.setupRequired.startFailed',
-                      'Nie udało się rozpocząć konfiguracji. Zaloguj się ponownie, aby dostać nowy link.'
+                      'We could not start the setup. Sign in again to get a new link.'
                     ),
                   }
                 : current
@@ -1302,7 +1302,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           href={ROUTES.LEGAL.PRIVACY}
           className="text-xs text-c-text-muted hover:text-c-text transition-colors"
         >
-          {t('auth.privacyLink', 'Polityka prywatności')}
+          {t('auth.privacyLink', 'Privacy Policy')}
         </a>
         <span className="text-c-text-muted mx-2">•</span>
         <a
@@ -1351,7 +1351,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               code: '',
               error: t(
                 'mfa.setupRequired.verifyFailed',
-                'Kod nie został przyjęty. Spróbuj z aktualnym kodem.'
+                'That code was not accepted. Try again with the current code.'
               ),
             }
           : current
@@ -1368,12 +1368,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <ShieldCheck className="text-c-text" size={24} aria-hidden="true" />
           </div>
           <h2 className="text-2xl font-bold text-c-text">
-            {t('mfa.setupRequired.doneTitle', 'Drugi składnik jest już skonfigurowany')}
+            {t('mfa.setupRequired.doneTitle', 'Two-factor sign-in is already set up')}
           </h2>
           <p className="text-sm text-c-text-muted">
             {t(
               'mfa.setupRequired.doneBody',
-              'Zaloguj się ponownie — poprosimy o kod z aplikacji uwierzytelniającej.'
+              'Sign in again — we will ask for the code from your authenticator app.'
             )}
           </p>
           <button
@@ -1384,7 +1384,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             }}
             className="w-full rounded-lg bg-c-text py-2.5 text-sm font-semibold text-c-bg shadow-lg transition-opacity hover:opacity-90"
           >
-            {t('mfa.setupRequired.backToLogin', 'Wróć do logowania')}
+            {t('mfa.setupRequired.backToLogin', 'Back to sign-in')}
           </button>
         </div>
       );
@@ -1396,12 +1396,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <ShieldCheck className="text-c-text" size={24} aria-hidden="true" />
           </div>
           <h2 className="text-2xl font-bold text-c-text">
-            {t('mfa.setupRequired.title', 'Twoja organizacja wymaga drugiego składnika')}
+            {t('mfa.setupRequired.title', 'Your organization requires two-factor sign-in')}
           </h2>
           <p className="text-sm text-c-text-muted">
             {t(
               'mfa.setupRequired.body',
-              'Okres przejściowy minął. Skonfiguruj tu drugi składnik — ten krok jest jedyną rzeczą, na którą pozwala ta ograniczona sesja.'
+              'The grace period has ended. Set up two-factor sign-in here — it is the only thing this limited session allows.'
             )}
           </p>
         </div>
@@ -1410,7 +1410,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <form onSubmit={submitMfaSetup} className="space-y-4">
             <div className="rounded-lg border border-c-border bg-c-surface-raised p-3">
               <div className="text-xs font-medium text-c-text-secondary">
-                {t('mfa.setupRequired.secretLabel', 'Klucz do aplikacji uwierzytelniającej')}
+                {t('mfa.setupRequired.secretLabel', 'Key for your authenticator app')}
               </div>
               <div className="mt-1 break-all font-mono text-sm text-c-text">{mfaSetup.secret}</div>
             </div>
@@ -1449,7 +1449,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             >
               {mfaSetup.submitting
                 ? t('common.verifying', 'Sprawdzam…')
-                : t('mfa.setupRequired.confirm', 'Potwierdź i włącz')}
+                : t('mfa.setupRequired.confirm', 'Confirm and enable')}
             </button>
           </form>
         ) : (
@@ -1465,7 +1465,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             )}
             {!mfaSetup.error && (
               <p className="text-center text-sm text-c-text-muted">
-                {t('mfa.setupRequired.preparing', 'Przygotowuję konfigurację…')}
+                {t('mfa.setupRequired.preparing', 'Preparing setup…')}
               </p>
             )}
           </div>
@@ -1479,7 +1479,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           }}
           className="w-full text-sm font-medium text-c-text-muted hover:text-c-text"
         >
-          {t('mfa.setupRequired.backToLogin', 'Wróć do logowania')}
+          {t('mfa.setupRequired.backToLogin', 'Back to sign-in')}
         </button>
       </div>
     );

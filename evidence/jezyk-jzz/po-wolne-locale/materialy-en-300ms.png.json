@@ -1,0 +1,15 @@
+{
+ "ekran": "materialy",
+ "sciezka": "/presentations",
+ "probkaMs": 300,
+ "scenariusz": "wolne-locale",
+ "faktycznyMs": 347,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "jezykRenderu": "en",
+ "zgodnyJezyk": true,
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 0
+}

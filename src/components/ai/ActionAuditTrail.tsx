@@ -11,6 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React from 'react';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 export interface AuditRecord {
   id: string;
@@ -125,7 +126,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                 <Calendar size={12} />
-                {new Date(record.created_at).toLocaleString()}
+                {formatListDateTime(record.created_at)}
               </div>
             </div>
 

@@ -721,8 +721,14 @@ function raportTekstowy(limitPrzykladow, filtrModul, filtrKategoria) {
   linie.push('PRZYKŁADY');
   for (const k of kolumny) {
     if (filtrKategoria && k !== filtrKategoria) continue;
-    linie.push(`  [${k}] ${KATEGORIE[k]} — ${wynik.suma[k]}`);
-    for (const p of wynik.przyklady[k].slice(0, limitPrzykladow)) {
+    // filtr modulu obowiazuje TAKZE przyklady — inaczej `--modul X` pokazuje
+    // tabele dla X, a przyklady z calego repo (pulapka przyrzadu: robotnik
+    // naprawia nie swoj modul).
+    const przykladyK = filtrModul
+      ? wynik.przyklady[k].filter((p) => String(p.modul || '').toLowerCase().includes(filtrModul.toLowerCase()))
+      : wynik.przyklady[k];
+    linie.push(`  [${k}] ${KATEGORIE[k]} — ${filtrModul ? przykladyK.length + ' (w module; suma repo ' + wynik.suma[k] + ')' : wynik.suma[k]}`);
+    for (const p of przykladyK.slice(0, limitPrzykladow)) {
       linie.push(`      ${p.gdzie}`);
       linie.push(`        „${p.tekst}"  (${p.dowod})`);
     }

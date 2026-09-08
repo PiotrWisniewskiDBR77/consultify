@@ -28,6 +28,11 @@
  * setting.
  */
 import { changeLanguage, normalizeLanguageCode } from '../i18n';
+import {
+  clearStoredAccountLanguage,
+  markAccountLanguageResolved,
+  writeStoredAccountLanguage,
+} from './accountLanguageStorage';
 import { Api } from './api';
 
 // `/organization-context` resolves org claims consensus (DB reads, not free)
@@ -51,6 +56,10 @@ export const clearOrganizationDefaultLanguageCache = (): void => {
   } catch {
     // ignore — best effort
   }
+  // Język KONTA też jest cudzy po wylogowaniu — inaczej następne konto na tej
+  // samej przeglądarce dostałoby powłokę w języku poprzednika jeszcze przed
+  // pierwszym `GET /auth/me`.
+  clearStoredAccountLanguage();
 };
 
 /**
@@ -128,7 +137,12 @@ let languageSyncApplied = -1;
 async function applyIfNotStale(seq: number, language: string): Promise<void> {
   if (seq < languageSyncApplied) return;
   languageSyncApplied = seq;
+  // Zapamiętujemy język pochodzący z KONTA (albo z organizacji) osobno od
+  // `i18nextLng`, żeby następne wejście mogło go użyć PRZED pierwszym
+  // renderem — patrz `src/services/accountLanguageStorage.ts`.
+  writeStoredAccountLanguage(language);
   await changeLanguage(language);
+  markAccountLanguageResolved();
 }
 
 export const syncLanguageFromAccount = async (
@@ -153,6 +167,12 @@ export const syncLanguageFromAccount = async (
   // Neither account nor organization has an explicit language: deliberate
   // no-op, exactly as before this fix — whatever localStorage/navigator
   // already resolved to keeps being authoritative.
+  //
+  // To NADAL jest rozstrzygnięcie: „konto nie ma zdania, zostaje przeglądarka".
+  // Bez tego sygnału powłoka czekałaby na coś, co nigdy nie nadejdzie, i każdy
+  // użytkownik bez ustawionego języka konta oglądałby ekran ładowania do
+  // wyczerpania limitu czasu.
+  markAccountLanguageResolved();
 };
 
 /** Tylko dla testów — zeruje barierę kolejności między przypadkami. */

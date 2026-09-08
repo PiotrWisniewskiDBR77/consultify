@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import ConfidenceBadge from './ConfidenceBadge';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface Evidence {
   link_id: string;
@@ -159,7 +160,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return formatListDateTime(dateString);
   };
 
   if (loading) {

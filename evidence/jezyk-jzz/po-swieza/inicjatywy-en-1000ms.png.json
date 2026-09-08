@@ -1,0 +1,15 @@
+{
+ "ekran": "inicjatywy",
+ "sciezka": "/initiatives",
+ "probkaMs": 1000,
+ "scenariusz": "swieza",
+ "faktycznyMs": 1257,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "jezykRenderu": "en",
+ "zgodnyJezyk": true,
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 149
+}

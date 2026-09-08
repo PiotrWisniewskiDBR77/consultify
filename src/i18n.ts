@@ -3,6 +3,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
+import { readStoredAccountLanguage } from './services/accountLanguageStorage';
 import { setApiErrorTranslator } from './utils/apiError';
 
 // Supported languages in the application
@@ -72,6 +73,21 @@ export const LANGUAGE_DIRECTION: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   es: 'ltr',
 };
 
+/**
+ * JĘZYK KONTA WYGRYWA Z PRZEGLĄDARKĄ — paczka ZZ, 2026-09-09.
+ *
+ * Zmierzone (evidence/jezyk-jzz/README.md): konto `users.language='en'` w
+ * świeżej przeglądarce z `navigator=pl-PL` dostawało POLSKĄ powłokę i stało w
+ * niej przez cały lot `GET /auth/me`, bo `detection.order` zaczyna się od
+ * localStorage/navigator, a język konta dochodzi dopiero z sieci.
+ *
+ * `lng` podane jawnie ma w i18next pierwszeństwo przed detektorem, więc gdy
+ * pamiętamy język KONTA z poprzedniej sesji, pierwszy render idzie od razu w
+ * nim. Gdy nie pamiętamy (pierwsze wejście) — zostaje detektor, dokładnie jak
+ * dotąd, a powłoka czeka na rozstrzygnięcie (`LanguageBootGate`).
+ */
+const zapamietanyJezykKonta = readStoredAccountLanguage();
+
 i18n
   .use(HttpBackend)
   .use(LanguageDetector)
@@ -79,6 +95,7 @@ i18n
   .init({
     // Supported languages
     supportedLngs: SUPPORTED_LANGUAGES,
+    ...(zapamietanyJezykKonta ? { lng: zapamietanyJezykKonta } : {}),
     // Prefer per-language fallback chains.
     // NOTE (2026-09-02, grafika/logowanie-i18n): `default` is the ultimate
     // safety net when nothing usable was detected (unsupported navigator

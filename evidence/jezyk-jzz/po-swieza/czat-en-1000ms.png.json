@@ -1,0 +1,15 @@
+{
+ "ekran": "czat",
+ "sciezka": "/chat",
+ "probkaMs": 1000,
+ "scenariusz": "swieza",
+ "faktycznyMs": 1063,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "jezykRenderu": "en",
+ "zgodnyJezyk": true,
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 0
+}

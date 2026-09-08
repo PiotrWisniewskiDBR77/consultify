@@ -11,6 +11,8 @@
 
 import { AlertTriangle, Brain, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 interface MAXModeToggleProps {
   enabled: boolean;
@@ -29,6 +31,7 @@ export function MAXModeToggle({
   showWarning = true,
   compact = false,
 }: MAXModeToggleProps) {
+  const { t } = useTranslation();
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleToggle = () => {
@@ -131,7 +134,10 @@ export function MAXModeToggle({
           <div className="text-xs text-amber-700 dark:text-amber-300">
             <p className="font-medium">MAX Mode zużywa {tokenMultiplier}x więcej tokenów</p>
             <p className="mt-0.5 text-amber-600 dark:text-amber-400">
-              Zalecane dla: planowania strategicznego, złożonych analiz, decyzji krytycznych
+              {t(
+                'ai.maxMode.recommendedFor',
+                'Recommended for: strategic planning, complex analysis, critical decisions'
+              )}
             </p>
           </div>
         </div>
@@ -164,12 +170,19 @@ export function MAXModeCostBadge({
   baseTokens: number;
   multiplier?: number;
 }) {
+  const { t } = useTranslation();
   const totalTokens = baseTokens * multiplier;
 
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="text-gray-500 dark:text-gray-400">Szacowany koszt:</span>
-      <span className="font-medium text-primary-600">~{totalTokens.toLocaleString()} tokenów</span>
+      <span className="text-gray-500 dark:text-gray-400">
+        {t('ai.maxMode.estimatedCost', 'Estimated cost:')}
+      </span>
+      {/* Kanon TRIADY: `primary-*` = crimson #85182F, zarezerwowany dla stanow
+          krytycznych. Liczba tokenow nie jest alarmem — kolor neutralny. */}
+      <span className="font-medium text-c-text">
+        ~{formatListNumber(totalTokens)} {t('ai.maxMode.tokens', 'tokens')}
+      </span>
       <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
         ({multiplier}x MAX)
       </span>

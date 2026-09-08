@@ -68,7 +68,7 @@ export const MfaEnrollmentBanner: React.FC = () => {
       })
     : t(
         'mfa.graceBanner.expired',
-        'Twoja organizacja wymaga drugiego składnika logowania. Okres przejściowy minął — skonfiguruj go teraz.'
+        'Your organization requires two-factor sign-in. The grace period has ended — set it up now.'
       );
 
   return (
@@ -87,7 +87,7 @@ export const MfaEnrollmentBanner: React.FC = () => {
       </Link>
       <button
         type="button"
-        aria-label={t('common.dismiss', 'Ukryj')}
+        aria-label={t('common.dismiss', 'Dismiss')}
         onClick={() => {
           try {
             localStorage.setItem(DISMISS_KEY, new Date().toISOString().slice(0, 10));

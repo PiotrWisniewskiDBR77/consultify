@@ -42,18 +42,18 @@ export function ActionCard({
   const { t } = useTranslation();
   const critical = card.status === 'OPEN' && card.severity === 'RED';
   const statusLabel = card.status === 'OPEN'
-    ? t('actionCard.status.open', 'OTWARTY')
-    : t('actionCard.status.closed', 'ZAMKNIĘTY');
+    ? t('actionCard.status.open', 'OPEN')
+    : t('actionCard.status.closed', 'CLOSED');
   const fields = [
-    [t('actionCard.fields.period', 'Okres'), `${shown(card.periodStart)} – ${shown(card.periodEnd)}`],
-    [t('actionCard.fields.goalMet', 'Cel osiągnięty?'), card.goalMet ? t('common.yes', 'Tak') : t('common.no', 'Nie')],
-    [t('actionCard.fields.actionRequired', 'Działania wymagane?'), card.actionRequired ? t('common.yes', 'Tak') : t('common.no', 'Nie')],
-    [t('actionCard.fields.problem', 'Opis problemu'), shown(card.problem)],
-    [t('actionCard.fields.rootCause', 'Główna przyczyna'), shown(card.rootCause)],
-    [t('actionCard.fields.action', 'Opis działania'), shown(card.actionText)],
-    [t('actionCard.fields.owner', 'Odpowiedzialność'), shown(card.ownerName)],
-    [t('actionCard.fields.dueDate', 'Termin'), shown(card.dueDate)],
-    [t('actionCard.fields.comment', 'Komentarz'), shown(card.comment)],
+    [t('actionCard.fields.period', 'Period'), `${shown(card.periodStart)} – ${shown(card.periodEnd)}`],
+    [t('actionCard.fields.goalMet', 'Goal met?'), card.goalMet ? t('common.yes', 'Yes') : t('common.no', 'No')],
+    [t('actionCard.fields.actionRequired', 'Action required?'), card.actionRequired ? t('common.yes', 'Yes') : t('common.no', 'No')],
+    [t('actionCard.fields.problem', 'Problem description'), shown(card.problem)],
+    [t('actionCard.fields.rootCause', 'Root cause'), shown(card.rootCause)],
+    [t('actionCard.fields.action', 'Action description'), shown(card.actionText)],
+    [t('actionCard.fields.owner', 'Owner'), shown(card.ownerName)],
+    [t('actionCard.fields.dueDate', 'Due date'), shown(card.dueDate)],
+    [t('actionCard.fields.comment', 'Comment'), shown(card.comment)],
     [t('actionCard.fields.status', 'Status'), statusLabel],
   ] as const;
 
@@ -68,7 +68,7 @@ export function ActionCard({
             {critical ? <AlertTriangle size={18} aria-hidden="true" /> : <CircleDot size={18} aria-hidden="true" />}
           </span>
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-c-text">{t('actionCard.title', 'Karta działania')}</h2>
+            <h2 className="truncate text-sm font-semibold text-c-text">{t('actionCard.title', 'Action card')}</h2>
             <p className="truncate text-xs text-c-text-muted">{shown(card.problem)}</p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export function ActionCard({
               onClick={() => onCreateTask(card)}
               className={BUTTON_CLASS}
             >
-              {createTaskLabel ?? t('actionCard.createTask', 'Utwórz zadanie')}
+              {createTaskLabel ?? t('actionCard.createTask', 'Create task')}
             </button>
           ) : null}
           {onCloseCard && card.status === 'OPEN' ? (
@@ -106,12 +106,12 @@ export function ActionCard({
               onClick={() => onCloseCard(card)}
               className={BUTTON_CLASS}
             >
-              {t('actionCard.close', 'Zamknij kartę')}
+              {t('actionCard.close', 'Close card')}
             </button>
           ) : null}
           {onOpen ? (
             <button type="button" onClick={() => onOpen(card)} className={BUTTON_CLASS}>
-              {t('actionCard.open', 'Otwórz kartę')}
+              {t('actionCard.open', 'Reopen card')}
             </button>
           ) : null}
         </footer>

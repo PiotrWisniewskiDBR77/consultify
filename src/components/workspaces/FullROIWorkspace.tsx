@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 
 import { FullInitiative, FullSession, Language } from '../../types';
 import { ROIPaybackChart } from './ROIPaybackChart';
+import { formatListNumber } from '@/utils/listDateFormat';
 // We might reuse components from FullStep4Workspace or just inline them for now to get the structure right.
 
 interface FullROIWorkspaceProps {
@@ -71,8 +72,8 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             return (
               <tr key={init.id} className="hover:bg-white/5">
                 <td className="p-4 font-medium">{init.name}</td>
-                <td className="p-4 text-slate-700 dark:text-slate-300">${cost.toLocaleString()}</td>
-                <td className="p-4 text-green-400">${benefit.toLocaleString()}</td>
+                <td className="p-4 text-slate-700 dark:text-slate-300">${formatListNumber(cost)}</td>
+                <td className="p-4 text-green-400">${formatListNumber(benefit)}</td>
                 <td className="p-4 text-center">
                   <span
                     className={`px-2 py-1 rounded text-xs font-bold ${Number(roi) > 100 ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-700 dark:text-slate-300'}`}
@@ -97,7 +98,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             Total Capex/Opex
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            ${economics.totalCost.toLocaleString()}
+            ${formatListNumber(economics.totalCost)}
           </div>
         </div>
         <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
@@ -105,7 +106,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             Annual Value
           </div>
           <div className="text-2xl font-bold text-green-400">
-            ${economics.totalAnnualBenefit.toLocaleString()}
+            ${formatListNumber(economics.totalAnnualBenefit)}
           </div>
         </div>
         <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-white/5">
@@ -204,7 +205,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             Total Investment
           </h4>
           <p className="text-3xl font-bold text-navy-900">
-            ${economics.totalCost.toLocaleString()}
+            ${formatListNumber(economics.totalCost)}
           </p>
         </div>
         <div>
@@ -212,7 +213,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
             Net Value (5yr)
           </h4>
           <p className="text-3xl font-bold text-green-600">
-            ${(economics.totalAnnualBenefit * 5 - economics.totalCost).toLocaleString()}
+            ${formatListNumber(economics.totalAnnualBenefit * 5 - economics.totalCost)}
           </p>
         </div>
         <div>

@@ -547,6 +547,12 @@ export const login = async (
       status: user.status,
       organizationId: user.organization_id,
       companyName: org.name,
+      // Język interfejsu KONTA (paczka ZZ, 2026-09-09). Bez tego pola front po
+      // zalogowaniu nie wie, w jakim języku malować powłokę, i zgaduje z
+      // `navigator.language` aż do powrotu `GET /auth/me` — zmierzone: konto
+      // EN w przeglądarce PL dostawało polski interfejs (evidence/jezyk-jzz).
+      // Dodanie pola jest addytywne: nikt go dziś nie czyta poza nowym kodem.
+      language: (user as { language?: string | null }).language ?? null,
       mfaEnabled: mfaStatus.enabled,
       isAuthenticated: true,
       isDemo: orgType === ORG_TYPES.DEMO,

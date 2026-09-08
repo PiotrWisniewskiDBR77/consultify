@@ -1,5 +1,6 @@
 import { CheckCircle2, Eye, MessageSquare, Shield, UserPlus, Users } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyStateWithActions } from './EmptyStateWithActions';
 
@@ -33,6 +34,7 @@ interface TeamEmptyStateProps {
 }
 
 export const TeamEmptyState: React.FC<TeamEmptyStateProps> = ({ onInvite, onLearnMore }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6">
       {/* Icon */}
@@ -41,12 +43,14 @@ export const TeamEmptyState: React.FC<TeamEmptyStateProps> = ({ onInvite, onLear
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Pracujesz sam?</h3>
+      <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">{t('emptyStates.team.title', 'Working on your own?')}</h3>
 
       {/* Description */}
       <p className="text-slate-500 dark:text-slate-400 max-w-md text-center mb-8 leading-relaxed">
-        Niektóre decyzje wymagają wielu perspektyw. Zaproś członków zespołu, aby wnieśli swoje
-        punkty widzenia.
+        {t(
+          'emptyStates.team.body',
+          'Some decisions need more than one perspective. Invite your teammates so they can add theirs.'
+        )}
       </p>
 
       {/* Benefits */}
@@ -79,14 +83,14 @@ export const TeamEmptyState: React.FC<TeamEmptyStateProps> = ({ onInvite, onLear
           className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 transition-all"
         >
           <UserPlus size={16} />
-          Zaproś do zespołu
+          {t('emptyStates.team.invite', 'Invite to the team')}
         </button>
         {onLearnMore && (
           <button
             onClick={onLearnMore}
             className="px-5 py-3 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-900 transition-all"
           >
-            Dowiedz się więcej
+            {t('common.learnMore', 'Learn more')}
           </button>
         )}
       </div>
@@ -94,7 +98,7 @@ export const TeamEmptyState: React.FC<TeamEmptyStateProps> = ({ onInvite, onLear
       {/* Trust note */}
       <div className="flex items-center gap-2 mt-6 text-xs text-slate-600 dark:text-slate-500">
         <CheckCircle2 size={14} />
-        <span>Każda osoba dostaje indywidualne zaproszenie z własnym dostępem</span>
+        <span>{t('emptyStates.team.trustNote', 'Everyone gets their own invitation with their own access')}</span>
       </div>
     </div>
   );

@@ -1,0 +1,33 @@
+{
+ "ekran": "materialy",
+ "sciezka": "/presentations",
+ "probkaMs": 3000,
+ "scenariusz": "wolne-locale",
+ "faktycznyMs": 3292,
+ "i18nextLng": "en",
+ "htmlLang": "en",
+ "polskichSlowUI": 4,
+ "polskichLiniiUI": 3,
+ "ui": [
+  {
+   "linia": "TYTUŁ",
+   "trafienia": [
+    "TYTUŁ"
+   ]
+  },
+  {
+   "linia": "ŹRÓDŁO",
+   "trafienia": [
+    "ŹRÓDŁO"
+   ]
+  },
+  {
+   "linia": "Transformacja operacyjna DBR77: Predyktywne utrzymanie ruchu i zarządzanie energią",
+   "trafienia": [
+    "zarządzanie",
+    "energią"
+   ]
+  }
+ ],
+ "daneLinii": 19
+}

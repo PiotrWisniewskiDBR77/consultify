@@ -25,6 +25,7 @@ import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
 import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
 import { RouterSync } from './components/RouterSync';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
+import { useLanguageBootReady } from './bootstrap/useLanguageBootReady';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
@@ -187,6 +188,7 @@ function AppContent() {
   } = useAppStore();
 
   const { i18n } = useTranslation();
+  const languageBootReady = useLanguageBootReady();
   const skipRouterSync = isRuntimeDiagnosticMode('no-router-sync');
 
   // Handle Dark/Light Theme class - use useLayoutEffect to prevent flicker
@@ -428,8 +430,15 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run once on mount
 
-  // Show loading screen during auth initialization to prevent flicker
-  if (isAuthInitializing) {
+  // Show loading screen during auth initialization to prevent flicker.
+  //
+  // `languageBootReady` dokłada drugi warunek tej samej natury: nie malujemy
+  // pierwszego ekranu, dopóki nie wiadomo, w JAKIM JĘZYKU go namalować i czy
+  // są zasoby tego języka. Bez tego konto EN widziało polskie wartości
+  // domyślne z kodu, zanim doszedł `en/translation.json` (1,9 MB) — zmierzone
+  // w `evidence/jezyk-jzz/`. Brama ma twardy limit czasu, więc nie może
+  // zamienić się w biały ekran; szczegóły w `useLanguageBootReady.ts`.
+  if (isAuthInitializing || !languageBootReady) {
     return <LoadingScreen />;
   }
 

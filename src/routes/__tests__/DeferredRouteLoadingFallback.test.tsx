@@ -17,14 +17,14 @@ describe('DeferredRouteLoadingFallback', () => {
     act(() => vi.advanceTimersByTime(1));
     expect(screen.getByTestId('route-loading-skeleton')).toBeInTheDocument();
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Ładowanie narzędzi…');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading tools…');
   });
 
   it('adds the slow-load message at 8 seconds and replaces loading with timeout at 15 seconds', () => {
     render(<DeferredRouteLoadingFallback />);
 
     act(() => vi.advanceTimersByTime(8_000));
-    expect(screen.getByText('Ładowanie trwa dłużej niż zwykle…')).toBeInTheDocument();
+    expect(screen.getByText('This is taking longer than usual…')).toBeInTheDocument();
     expect(screen.getByTestId('route-loading-skeleton')).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(7_000));

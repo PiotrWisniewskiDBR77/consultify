@@ -1,5 +1,6 @@
 import { AlertTriangle, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 type ForbiddenEventDetail = {
@@ -16,6 +17,7 @@ const isAdminLikePath = (pathname: string): boolean =>
   );
 
 export const ForbiddenAccessBanner: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [message, setMessage] = React.useState<string | null>(null);
@@ -63,7 +65,7 @@ export const ForbiddenAccessBanner: React.FC = () => {
         <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700 dark:text-amber-300" />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-            Brak uprawnien
+            {t('access.forbidden.title', 'No permission')}
           </div>
           <div className="mt-1 text-sm text-amber-800 dark:text-amber-200">{message}</div>
           <button
@@ -76,7 +78,7 @@ export const ForbiddenAccessBanner: React.FC = () => {
         </div>
         <button
           type="button"
-          aria-label="Zamknij komunikat"
+          aria-label={t('access.forbidden.dismiss', 'Dismiss this message')}
           onClick={() => setMessage(null)}
           className="rounded-md p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
         >

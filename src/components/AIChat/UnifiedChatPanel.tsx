@@ -110,7 +110,6 @@ import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { retiredChatWriteCommand } from '../../utils/chatSlashCommandPolicy';
-import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
@@ -3055,13 +3054,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (!content.trim() || isDisabled) return;
 
       // ──────────────────────────────────────────────────────────────────────
-      // Language follows the message: reply in the language the user writes in.
-      // Detection wins ONLY when confident; otherwise we keep the existing
-      // chatLanguage resolution (explicit selector / conversation / UI). This is
-      // the "respond in the language I start speaking to the chat" rule.
+      // JĘZYK AI = JĘZYK INTERFEJSU (decyzja CTO, PLAN §2.8 i §5.3; paczka ZZ).
+      //
+      // Było: `detectMessageLanguage(content) || chatLanguage` — wykryty język
+      // TREŚCI wygrywał z językiem interfejsu. Skutek dla celu „konto EN nie
+      // widzi ani jednego innego języka": użytkownik EN, który wkleja do czatu
+      // polski cytat z dokumentu klienta, dostawał odpowiedź PO POLSKU — i to
+      // utrwalało się na całym wątku (niżej).
+      //
+      // Teraz o język odpowiedzi decyduje wyłącznie `chatLanguage`, czyli
+      // jawny wybór w selektorze czatu > język wątku > język interfejsu.
+      // Cytat po polsku w interfejsie EN daje odpowiedź po angielsku.
       // ──────────────────────────────────────────────────────────────────────
-      const detectedMessageLanguage = detectMessageLanguage(content);
-      const effectiveChatLanguage = detectedMessageLanguage || chatLanguage;
+      const effectiveChatLanguage = chatLanguage;
 
       // Wave 3 governance boundary: the old slash-command path wrote directly
       // to tasks/decisions and bypassed proposal, independent decision and
@@ -4453,18 +4458,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (useConversationStore.getState().activeConversationId !== conversationId) {
         setActiveConversation(conversationId);
       }
-      // Persist the detected language onto the conversation so the whole thread
-      // (and the chatLanguage memo on subsequent renders) follows the language
-      // the user opened the conversation in.
-      if (detectedMessageLanguage && conversationId) {
-        const storedLang =
-          useConversationStore.getState().chatLanguageByConversationId[conversationId];
-        if (storedLang !== detectedMessageLanguage) {
-          useConversationStore
-            .getState()
-            .setConversationChatLanguage(conversationId, detectedMessageLanguage);
-        }
-      }
+      // USUNIĘTE (paczka ZZ): utrwalanie WYKRYTEGO języka treści na wątku.
+      // Jeden wklejony akapit w obcym języku przestawiał cały wątek i przeżywał
+      // przeładowanie w `chatLanguageByConversationId`, więc konto EN nie miało
+      // jak wrócić do angielskiego bez ręcznego przestawienia selektora.
+      // Język wątku ustawia się dziś wyłącznie jawnie (selektor języka czatu,
+      // `TeresaVoiceContext` przy zakładaniu rozmowy) — nigdy heurystyką.
       const sourceMessages = customMessages || useConversationStore.getState().activeMessages;
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and

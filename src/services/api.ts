@@ -24,6 +24,7 @@ import {
   decodeHtmlEntities,
   POLA_TEKSTOWE_INICJATYWY,
 } from '../utils/decodeHtmlEntities';
+import { writeStoredAccountLanguage } from './accountLanguageStorage';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
@@ -1557,6 +1558,10 @@ export const Api = {
       }
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
+      // Język KONTA znany JUŻ TERAZ (serwer zwraca go w odpowiedzi logowania),
+      // a nie dopiero po `GET /auth/me` — dzięki temu pierwsza powłoka po
+      // zalogowaniu maluje się w języku konta, nie przeglądarki.
+      writeStoredAccountLanguage((data.user as { language?: string | null })?.language);
       return { ...data.user, demoSession: data.demoSession ?? null };
     });
   },

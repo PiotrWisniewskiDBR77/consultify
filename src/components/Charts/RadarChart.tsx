@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Legend,
   PolarAngleAxis,
@@ -84,6 +85,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   className = '',
   animationDuration = 500,
 }) => {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // Ensure data has fullMark
@@ -113,7 +115,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
       <div className="absolute top-0 left-0 z-10 flex gap-4 text-xs">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: currentColor }} />
-          <span className="text-slate-600 dark:text-slate-500">Średnia:</span>
+          <span className="text-slate-600 dark:text-slate-500">{t('charts.radar.average', 'Average:')}</span>
           <span className="font-semibold text-white">{overallCurrent.toFixed(1)}</span>
         </div>
         {showTarget && (

@@ -25,6 +25,7 @@ import React, { forwardRef } from 'react';
 
 import { Card } from '../primitives/Card';
 import { Skeleton } from '../primitives/Skeleton';
+import { formatListNumber } from '@/utils/listDateFormat';
 
 export type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -63,7 +64,7 @@ const formatValue = (value: string | number): string => {
   if (value >= 1_000) {
     return `${(value / 1_000).toFixed(1)}K`;
   }
-  return value.toLocaleString();
+  return formatListNumber(value);
 };
 
 // Simple sparkline component

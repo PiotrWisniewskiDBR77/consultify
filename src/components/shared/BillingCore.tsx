@@ -16,6 +16,7 @@ import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { Invoice, User } from '../../types';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 export interface BillingCoreProps {
   mode: 'user' | 'org-admin' | 'platform';
@@ -67,8 +68,8 @@ export const UsageMeter: React.FC<{
   colorClass: string;
 }> = ({ title, subtitle, used, limit, formatUsed, formatLimit, icon, colorClass }) => {
   const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
-  const usedStr = formatUsed ? formatUsed(used) : used.toLocaleString();
-  const limitStr = formatLimit ? formatLimit(limit) : limit.toLocaleString();
+  const usedStr = formatUsed ? formatUsed(used) : formatListNumber(used);
+  const limitStr = formatLimit ? formatLimit(limit) : formatListNumber(limit);
 
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -204,7 +205,7 @@ export const InvoiceTable: React.FC<{
           {invoices.slice(0, limit).map((inv) => (
             <tr key={inv.id} className="text-slate-700 dark:text-slate-300">
               <td className="px-4 py-3">
-                {new Date(inv.createdAt || inv.created_at || '').toLocaleDateString()}
+                {formatListDate(inv.createdAt || inv.created_at)}
               </td>
               <td className="px-4 py-3 font-mono">
                 ${((inv.amountPaid || inv.amount_paid || 0) / 100).toFixed(2)}
@@ -459,7 +460,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
               </p>
               {billingData?.billing?.current_period_end && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  Renews on {new Date(billingData.billing.current_period_end).toLocaleDateString()}
+                  Renews on {formatListDate(billingData.billing.current_period_end)}
                 </p>
               )}
             </div>

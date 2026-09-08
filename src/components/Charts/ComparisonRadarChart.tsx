@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Legend,
   PolarAngleAxis,
@@ -109,6 +110,7 @@ export const ComparisonRadarChart: React.FC<ComparisonRadarChartProps> = ({
   className = '',
   animationDuration = 500,
 }) => {
+  const { t } = useTranslation();
   // Assign colors to analyses if not provided
   const coloredAnalyses = useMemo(
     () =>
@@ -154,7 +156,9 @@ export const ComparisonRadarChart: React.FC<ComparisonRadarChartProps> = ({
   if (analyses.length === 0) {
     return (
       <div className={`flex items-center justify-center ${className}`} style={{ height }}>
-        <p className="text-slate-500 dark:text-slate-400">Wybierz analizy do porównania</p>
+        <p className="text-slate-500 dark:text-slate-400">
+          {t('charts.comparison.pickAnalyses', 'Choose analyses to compare')}
+        </p>
       </div>
     );
   }

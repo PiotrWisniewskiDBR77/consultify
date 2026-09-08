@@ -18,8 +18,10 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AIDraft, useDraftApproval } from '../../hooks/useDraftApproval';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 interface DraftReviewPanelProps {
   projectId?: string;
@@ -65,6 +67,7 @@ export function DraftReviewPanel({
   showStats = true,
   compact = false,
 }: DraftReviewPanelProps) {
+  const { t } = useTranslation();
   const { drafts, loading, error, stats, pendingCount, fetchDrafts, approveDraft, rejectDraft } =
     useDraftApproval({
       projectId,
@@ -179,12 +182,14 @@ export function DraftReviewPanel({
             <span
               className={`text-xs px-2 py-0.5 rounded-full ${confidenceLevel.bg} ${confidenceLevel.color}`}
             >
-              {Math.round(draft.confidence_score * 100)}% pewności
+              {t('ai.draftReview.confidence', '{{percent}}% confidence', {
+                percent: Math.round(draft.confidence_score * 100),
+              })}
             </span>
             {isExpiringSoon && (
               <span className="text-xs text-amber-600 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Wygasa wkrótce
+                {t('ai.draftReview.expiringSoon', 'Expiring soon')}
               </span>
             )}
           </div>
@@ -226,11 +231,11 @@ export function DraftReviewPanel({
         {isExpanded && draft.original_content && draft.diff_data?.hasChanges && (
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
-              <p className="text-xs font-medium text-danger-700 mb-1">Oryginał:</p>
+              <p className="text-xs font-medium text-danger-700 mb-1">{t('ai.draftReview.original', 'Original:')}</p>
               <div className="text-sm">{renderContent(draft.original_content)}</div>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <p className="text-xs font-medium text-green-700 mb-1">Sugestia AI:</p>
+              <p className="text-xs font-medium text-green-700 mb-1">{t('ai.draftReview.aiSuggestion', 'AI suggestion:')}</p>
               <div className="text-sm">{renderContent(draft.suggested_content)}</div>
             </div>
           </div>
@@ -241,7 +246,7 @@ export function DraftReviewPanel({
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {draft.model_used && <span>Model: {draft.model_used}</span>}
             <span className="mx-2">•</span>
-            <span>{new Date(draft.created_at).toLocaleString('pl-PL')}</span>
+            <span>{formatListDateTime(draft.created_at)}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -252,7 +257,7 @@ export function DraftReviewPanel({
                   className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-navy-800 rounded-lg"
                   disabled={isProcessing}
                 >
-                  Anuluj
+                  {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={() => handleApprove(draft, editContent)}
@@ -273,7 +278,7 @@ export function DraftReviewPanel({
                   onClick={() => handleReject(draft)}
                   className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg"
                   disabled={isProcessing}
-                  title="Odrzuć"
+                  title={t('common.reject', 'Reject')}
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
@@ -311,7 +316,7 @@ export function DraftReviewPanel({
         <AlertTriangle className="w-5 h-5" />
         <span>{error}</span>
         <button onClick={fetchDrafts} className="ml-auto text-sm underline">
-          Spróbuj ponownie
+          {t('common.tryAgain', 'Try again')}
         </button>
       </div>
     );
@@ -357,7 +362,7 @@ export function DraftReviewPanel({
       {loading && filteredDrafts.length === 0 && (
         <div className="flex items-center justify-center py-8">
           <RefreshCw className="w-6 h-6 animate-spin text-primary-500" />
-          <span className="ml-2 text-gray-500 dark:text-gray-400">Ładowanie sugestii...</span>
+          <span className="ml-2 text-gray-500 dark:text-gray-400">{t('ai.draftReview.loading', 'Loading suggestions…')}</span>
         </div>
       )}
 
@@ -365,8 +370,8 @@ export function DraftReviewPanel({
       {!loading && filteredDrafts.length === 0 && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-          <p className="font-medium">Brak sugestii do przeglądu</p>
-          <p className="text-sm">Nowe sugestie AI pojawią się tutaj</p>
+          <p className="font-medium">{t('ai.draftReview.emptyTitle', 'No suggestions to review')}</p>
+          <p className="text-sm">{t('ai.draftReview.emptyBody', 'New AI suggestions will appear here')}</p>
         </div>
       )}
 

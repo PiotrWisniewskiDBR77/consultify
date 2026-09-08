@@ -21,6 +21,7 @@ import {
 import { InitiativeStatus as InitiativeStatusCodes } from '../../packages/shared/src/constants/initiativeStatuses.generated';
 
 import type { InitiativeStatus } from '@/types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ==========================================
 // NEXT STEP
@@ -232,10 +233,7 @@ export const ALL_STATUSES: InitiativeStatus[] = Object.values(InitiativeStatusCo
 /** Format a date string to "Feb 16" or "—" */
 export function formatShortDate(dateStr?: string): string {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatListDate(dateStr);
 }
 
 /** Format relative "updated" time, e.g. "2h ago", "3d ago", "Just now" */
@@ -251,5 +249,5 @@ export function formatRelativeTime(dateStr?: string): string {
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatListDate(d);
 }

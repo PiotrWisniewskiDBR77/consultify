@@ -37,7 +37,7 @@ export const DesktopOnlyGuard: React.FC<DesktopOnlyGuardProps> = ({ moduleName, 
         <Monitor className="h-7 w-7" />
       </div>
       <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-        {t('admin.desktopOnly.title', 'Najlepiej na większym ekranie')}
+        {t('admin.desktopOnly.title', 'Best viewed on a larger screen')}
       </h2>
       <p className="mt-2 max-w-sm text-sm text-slate-600 dark:text-slate-300">
         {t('admin.desktopOnly.body', {

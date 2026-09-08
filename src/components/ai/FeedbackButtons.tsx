@@ -7,6 +7,7 @@
 
 import { Check, MessageSquare, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import api from '../../services/api';
 
@@ -33,6 +34,7 @@ export function FeedbackButtons({
   onFeedbackSubmitted,
   compact = false,
 }: FeedbackButtonsProps) {
+  const { t } = useTranslation();
   const [feedbackGiven, setFeedbackGiven] = useState<string | null>(null);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [comment, setComment] = useState('');
@@ -92,7 +94,7 @@ export function FeedbackButtons({
         className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400`}
       >
         <Check className="w-4 h-4 text-green-500" />
-        <span>Dziękujemy za opinię!</span>
+        <span>{t('ai.feedback.thanks', 'Thanks for the feedback!')}</span>
       </div>
     );
   }
@@ -101,7 +103,7 @@ export function FeedbackButtons({
     return (
       <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Co można poprawić?</span>
+          <span className="text-sm font-medium">{t('ai.feedback.whatToImprove', 'What could be better?')}</span>
           <button
             onClick={() => setShowCommentForm(false)}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
@@ -112,7 +114,7 @@ export function FeedbackButtons({
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Opisz problem lub sugestię..."
+          placeholder={t('ai.feedback.placeholder', 'Describe the problem or suggestion…')}
           className="w-full p-2 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
           rows={2}
         />
@@ -121,7 +123,7 @@ export function FeedbackButtons({
             onClick={() => setShowCommentForm(false)}
             className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-navy-800 rounded"
           >
-            Anuluj
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleCommentSubmit}
@@ -164,7 +166,7 @@ export function FeedbackButtons({
         <button
           onClick={() => setShowCommentForm(true)}
           className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-          title="Dodaj komentarz"
+          title={t('ai.feedback.addComment', 'Add a comment')}
         >
           <MessageSquare className="w-5 h-5" />
         </button>

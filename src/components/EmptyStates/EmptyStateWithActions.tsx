@@ -1,5 +1,6 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * EmptyStateWithActions — Reusable empty state with action buttons
@@ -44,6 +45,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
   templates = [],
   className = '',
 }) => {
+  const { t } = useTranslation();
   const getButtonClasses = (variant: EmptyStateAction['variant']) => {
     switch (variant) {
       case 'primary':
@@ -108,7 +110,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
       {templates.length > 0 && (
         <div className="w-full max-w-lg">
           <p className="text-xs font-medium text-slate-600 dark:text-slate-500 tracking-wider mb-3">
-            Lub wybierz szablon
+            {t('emptyStates.orPickTemplate', 'Or pick a template')}
           </p>
           <div className="grid grid-cols-1 gap-2">
             {templates.map((template) => {

@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatListDateTime } from '@/utils/listDateFormat';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -183,7 +184,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                     <div className="min-w-0">
                       <p className="text-sm text-c-text dark:text-c-text">{entry.description}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted">
-                        <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                        <span>{formatListDateTime(entry.timestamp)}</span>
                         {entry.userName && <span>{`· ${entry.userName}`}</span>}
                         <span className="px-1.5 py-0.5 rounded border border-c-border/60 dark:border-c-border/60">
                           {meta.label}
