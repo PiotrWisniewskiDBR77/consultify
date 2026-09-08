@@ -44,7 +44,7 @@ describe('SaveStateIndicator — save state is always visible', () => {
     const el = screen.getByTestId('save-state-indicator');
     expect(el.className).toMatch(/text-c-warning/);
     expect(el.className).not.toMatch(/text-c-danger/);
-    expect(el.textContent).toMatch(/Niezapisane zmiany/);
+    expect(el.textContent).toMatch(/Unsaved changes/);
   });
 
   it('OFFLINE_PENDING stays visible with an honest label, never silently hidden', () => {
@@ -62,8 +62,8 @@ describe('SaveStateIndicator — save state is always visible', () => {
         onStay={() => {}}
       />
     );
-    expect(screen.getByText(/Zapis nieudany/)).toBeInTheDocument();
+    expect(screen.getByText(/Save failed/)).toBeInTheDocument();
     expect(screen.getByText(/network down/)).toBeInTheDocument();
-    expect(screen.getByText('Spróbuj ponownie')).toBeInTheDocument();
+    expect(screen.getByText('Try again')).toBeInTheDocument();
   });
 });

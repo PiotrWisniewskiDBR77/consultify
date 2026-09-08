@@ -204,7 +204,7 @@ export const ProjectConversionModal: React.FC<ProjectConversionModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
           >
-            Anuluj
+            {t('discovery.conversion.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleConvert}

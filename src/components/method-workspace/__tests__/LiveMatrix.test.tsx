@@ -44,7 +44,7 @@ describe('LiveMatrix', () => {
       />
     );
     const cell = screen.getByLabelText(
-      'DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete'
+      'DRD, Strategia i governance, level 2, achieved, answer confirmed, evidence complete'
     );
     expect(cell).toBeInTheDocument();
 
@@ -52,7 +52,7 @@ describe('LiveMatrix', () => {
     // blocker, not review-required) — an unassessed cell, not a data-quality
     // problem, so its accessible name says so instead of "evidence missing".
     const unassessedCell = screen.getByLabelText(
-      'DRD, Strategia i governance, poziom 4, nieosiągnięty, odpowiedź nierozstrzygnięte, jeszcze nieoceniony'
+      'DRD, Strategia i governance, level 4, not achieved, answer unresolved, not assessed yet'
     );
     expect(unassessedCell).toBeInTheDocument();
   });
@@ -83,10 +83,10 @@ describe('LiveMatrix', () => {
         methodName="DRD"
       />
     );
-    expect(screen.getByLabelText(/poziom 2,.*Propozycja AI/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/poziom 3,.*Review/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/level 2,.*AI proposal/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/level 3,.*Review/)).toBeInTheDocument();
     // No legend block is rendered anywhere in the matrix header any more.
-    expect(screen.queryByText('Propozycja AI')).not.toBeInTheDocument();
+    expect(screen.queryByText('AI proposal')).not.toBeInTheDocument();
     expect(screen.queryByText('Evidence luka')).not.toBeInTheDocument();
     expect(screen.queryByText('Nieoceniony')).not.toBeInTheDocument();
   });
@@ -95,7 +95,7 @@ describe('LiveMatrix', () => {
     render(<ControlledMatrix />);
     expect(screen.queryByTestId('matrix-side-sheet')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByLabelText(/poziom 3,/));
+    fireEvent.click(screen.getByLabelText(/level 3,/));
     const sheet = screen.getByTestId('matrix-side-sheet');
     expect(sheet).toBeInTheDocument();
     expect(sheet).toHaveTextContent('Pytania dla unit-1 / poziom 3');
@@ -103,20 +103,20 @@ describe('LiveMatrix', () => {
 
   it('closing and reopening from the same controlled state returns to the identical position/selection', () => {
     render(<ControlledMatrix />);
-    fireEvent.click(screen.getByLabelText(/poziom 2,/));
+    fireEvent.click(screen.getByLabelText(/level 2,/));
     expect(screen.getByTestId('matrix-side-sheet')).toHaveTextContent('poziom 2');
 
-    fireEvent.click(screen.getByLabelText('Zamknij szczegóły komórki'));
+    fireEvent.click(screen.getByLabelText('Close cell details'));
     expect(screen.queryByTestId('matrix-side-sheet')).not.toBeInTheDocument();
 
     // Re-selecting the same cell reproduces exactly the same sheet/position.
-    fireEvent.click(screen.getByLabelText(/poziom 2,/));
+    fireEvent.click(screen.getByLabelText(/level 2,/));
     expect(screen.getByTestId('matrix-side-sheet')).toHaveTextContent('poziom 2');
   });
 
   it('closing the side sheet with Escape works, same as the explicit close button', () => {
     render(<ControlledMatrix />);
-    fireEvent.click(screen.getByLabelText(/poziom 2,/));
+    fireEvent.click(screen.getByLabelText(/level 2,/));
     expect(screen.getByTestId('matrix-side-sheet')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
@@ -232,7 +232,7 @@ describe('LiveMatrix — an unassessed area never looks like a blocker or an evi
       />
     );
     const cell = screen.getByTestId('matrix-cell');
-    expect(cell.getAttribute('aria-label')).toMatch(/jeszcze nieoceniony/);
+    expect(cell.getAttribute('aria-label')).toMatch(/not assessed yet/);
     expect(cell.getAttribute('aria-label')).not.toMatch(/evidence missing/);
   });
 });

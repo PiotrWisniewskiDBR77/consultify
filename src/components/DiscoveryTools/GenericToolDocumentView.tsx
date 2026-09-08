@@ -10,6 +10,7 @@
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { MarkdownRenderer } from '@/components/AIChat/Artifacts/renderers/MarkdownRenderer';
 import { LoadingState } from '@/components/ui/primitives';
@@ -32,6 +33,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   onBack,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
   const [session, setSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [catalogMarkdown, setCatalogMarkdown] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
         setSession(data);
       } catch (e: any) {
         if (!mounted) return;
-        setError(String(e?.message || 'Nie udało się wczytać sesji narzędzia'));
+        setError(String(e?.message || t('discoveryTools.generic.loadError', 'Could not load the tool session')));
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -92,12 +94,12 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   }, [toolSlug]);
 
   const computedTitle = useMemo(() => {
-    return title || session?.name || 'Sesja narzędzia';
-  }, [title, session?.name]);
+    return title || session?.name || t('discoveryTools.generic.defaultTitle', 'Tool session');
+  }, [title, session?.name, t]);
 
   const computedType = useMemo(() => {
-    return toolTypeLabel || session?.toolType || session?.tool_type || 'Nieznany typ';
-  }, [toolTypeLabel, session?.toolType, session?.tool_type]);
+    return toolTypeLabel || session?.toolType || session?.tool_type || t('discoveryTools.generic.unknownType', 'Unknown type');
+  }, [toolTypeLabel, session?.toolType, session?.tool_type, t]);
 
   const computedStatus = useMemo(() => {
     return statusLabel || session?.status || 'DRAFT';
@@ -106,16 +108,16 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   const copyJson = async (payload: any) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(payload ?? {}, null, 2));
-      toast.success('Skopiowano do schowka');
+      toast.success(t('discoveryTools.generic.copied', 'Copied to the clipboard'));
     } catch {
-      toast.error('Nie udało się skopiować');
+      toast.error(t('discoveryTools.generic.copyFailed', 'Could not copy'));
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <LoadingState variant="spinner" label="Wczytywanie sesji narzędzia…" />
+        <LoadingState variant="spinner" label={t('discoveryTools.generic.loading', 'Loading the tool session…')} />
       </div>
     );
   }
@@ -130,7 +132,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             onClick={onBack}
             className="mt-4 px-4 py-2 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white rounded-lg text-sm transition-colors"
           >
-            Wróć do listy
+            {t('discoveryTools.generic.backToList', 'Back to the list')}
           </button>
         </div>
       </div>
@@ -146,7 +148,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               onClick={onBack}
               className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
-              ← Wróć do listy
+              ← {t('discoveryTools.generic.backToList', 'Back to the list')}
             </button>
             <div className="mt-3">
               <div className="text-xs text-slate-500">
@@ -175,7 +177,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Wczytywanie dokumentacji narzędzia…</span>
+                  <span className="text-sm">{t('discoveryTools.generic.loadingDocs', 'Loading the tool documentation…')}</span>
                 </div>
               </div>
             )}
@@ -184,10 +186,12 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700/60">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Dokumentacja narzędzia (katalog)
+                    {t('discoveryTools.generic.catalogDocs', 'Tool documentation (catalogue)')}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Źródło: wdrozenia/modules/tools/catalog/strategy/{toolSlug}.md
+                    {t('discoveryTools.generic.catalogSource', 'Source: {{path}}', {
+                      path: `wdrozenia/modules/tools/catalog/strategy/${toolSlug}.md`,
+                    })}
                   </div>
                 </div>
                 <MarkdownRenderer content={catalogMarkdown} className="p-0" />
@@ -197,13 +201,13 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Kontekst sesji (dane techniczne)
+                  {t('discoveryTools.generic.sessionContext', 'Session context (technical data)')}
                 </h3>
                 <button
                   onClick={() => copyJson(session?.contextSnapshot)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  Kopiuj
+                  {t('common.copy', 'Copy')}
                 </button>
               </div>
               <pre className="mt-3 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
@@ -220,7 +224,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
                   onClick={() => copyJson(session?.answers)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  Kopiuj
+                  {t('common.copy', 'Copy')}
                 </button>
               </div>
               <pre className="mt-3 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
@@ -243,7 +247,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500 dark:text-slate-400">Typ narzędzia</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('discoveryTools.generic.toolType', 'Tool type')}</span>
                   <span className="text-slate-700 dark:text-slate-200">
                     {session?.toolType || computedType}
                   </span>
@@ -255,7 +259,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500 dark:text-slate-400">Projekt</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('discoveryTools.generic.project', 'Project')}</span>
                   <span className="text-slate-700 dark:text-slate-200 font-mono text-xs">
                     {session?.projectId || '—'}
                   </span>
@@ -265,12 +269,13 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                Dlaczego widzisz ten ekran
+                {t('discoveryTools.generic.whyThisScreen', 'Why you are seeing this screen')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu.
-                Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie
-                i można je skopiować albo przekazać dalej.
+                {t(
+                  'discoveryTools.generic.whyThisScreenBody',
+                  'This session uses a tool type that does not have its own workspace yet. Rather than block you, we show the full session data — nothing is lost, and it can be copied or passed on.'
+                )}
               </p>
             </div>
           </div>

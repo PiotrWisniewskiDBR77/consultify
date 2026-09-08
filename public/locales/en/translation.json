@@ -2471,7 +2471,9 @@
     "publish": "Publish",
     "loadingSlow": "This is taking longer than usual…",
     "reload": "Refresh",
-    "saveError": "Save failed"
+    "saveError": "Save failed",
+    "undo": "Undo",
+    "redo": "Redo"
   },
   "superadmin": {
     "confirm": {
@@ -47265,12 +47267,75 @@
       "opportunities": "Opportunities",
       "threats": "Threats",
       "strategicField": "Strategic field",
-      "tensionsCount": "{{count}} tensions connect the quadrants"
+      "tensionsCount": "{{count}} tensions connect the quadrants",
+      "evidence": {
+        "fact": "fact",
+        "observation": "observation",
+        "hypothesis": "hypothesis"
+      },
+      "proposalStatus": {
+        "aiProposed": "AI proposal",
+        "rethinking": "Rethinking",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "none": "No status"
+      },
+      "weight": "weight {{value}}",
+      "quadrantOf": "Quadrant: {{text}}",
+      "liveField": "Strategic field — live",
+      "tensionsHeading": "Tensions SO / WO / ST / WT",
+      "missing": "missing: {{list}}",
+      "noTensions": "No tensions — at least two accepted items in adjacent quadrants are needed.",
+      "pendingTray": "Off the field — not accepted (does not enter the Output)"
     },
     "report": {
       "execPresentation": "Executive presentation",
       "title": "Report",
-      "rendererInfo": "Renderer {{version}} · sources: {{count}}"
+      "rendererInfo": "Renderer {{version}} · sources: {{count}}",
+      "posture": {
+        "attack": "Attack the opportunity",
+        "repair": "Repair to reach it",
+        "defend": "Defend with strength",
+        "protect": "Protect the exposure"
+      },
+      "strategicTensions": "Strategic tensions",
+      "whatIs": "What it is",
+      "whatItMeans": "What it means",
+      "whatToDoFirst": "What to do first"
+    },
+    "generic": {
+      "loadError": "Could not load the tool session",
+      "defaultTitle": "Tool session",
+      "unknownType": "Unknown type",
+      "copied": "Copied to the clipboard",
+      "copyFailed": "Could not copy",
+      "loading": "Loading the tool session…",
+      "backToList": "Back to the list",
+      "loadingDocs": "Loading the tool documentation…",
+      "catalogDocs": "Tool documentation (catalogue)",
+      "catalogSource": "Source: {{path}}",
+      "sessionContext": "Session context (technical data)",
+      "toolType": "Tool type",
+      "project": "Project",
+      "copyJsonData": "Copy data (JSON)",
+      "whyThisScreen": "Why you are seeing this screen",
+      "whyThisScreenBody": "This session uses a tool type that does not have its own workspace yet. Rather than block you, we show the full session data — nothing is lost, and it can be copied or passed on."
+    },
+    "trace": {
+      "sourceIdea": "Idea",
+      "sourceNotebook": "Notebook",
+      "sourceMyWork": "My Work",
+      "loadError": "Could not load the provenance trace",
+      "title": "Provenance trace",
+      "loading": "Loading the provenance trace…",
+      "whatIsThis": "What this entry is",
+      "whatIsThisBody": "This is not a tool session and it has no workspace. The entry was created automatically when {{source}} from My Work was turned into an initiative, a task or a decision — so that object has a documented origin. The work itself happens in the source, or in the object created from it.",
+      "sourceSummary": "Source summary",
+      "source": "Source",
+      "kind": "Kind",
+      "identifier": "Identifier",
+      "openInMyWork": "Open the source in My Work",
+      "noSourceId": "This entry carries no source identifier — there is nowhere to go."
     }
   },
   "drd": {
@@ -47344,7 +47409,7 @@
       "partial": "Partially",
       "no": "No",
       "dontKnow": "I don’t know / I need help",
-      "noEvidence": "No evidence",
+      "noEvidence": "I have no evidence",
       "notApplicable": "Not applicable",
       "groupLabel": "Answer state",
       "naJustifyLabel": "Justify “Not applicable” (required)",
@@ -47423,7 +47488,11 @@
       "blocker": "blocker",
       "title": "Live matrix",
       "cellDetailsLabel": "Cell details: {{unit}}, level {{level}}",
-      "closeCellDetails": "Close cell details"
+      "closeCellDetails": "Close cell details",
+      "level": "level",
+      "evidence": "evidence",
+      "cellDetails": "Cell details",
+      "answerLabel": "answer"
     },
     "navigator": {
       "noStructure": "The Method Pack has not delivered a structure yet."
@@ -47467,7 +47536,8 @@
       "skipWithReason": "Skip with a reason",
       "skipReasonLabel": "Skip reason (choose a code)",
       "chooseReason": "Choose a reason…",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "evidenceStrengthLabel": "Evidence strength"
     },
     "skipReason": {
       "outsideOperatingModel": "outside the operating model",
@@ -47622,6 +47692,10 @@
       "back": "Back",
       "createAndEdit": "Create and edit",
       "next": "Next"
+    },
+    "structure": {
+      "moveUp": "Move up",
+      "moveDown": "Move down"
     }
   },
   "list": {

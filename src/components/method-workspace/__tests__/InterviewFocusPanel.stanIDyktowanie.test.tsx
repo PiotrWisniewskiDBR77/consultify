@@ -5,7 +5,7 @@
  * w `InterviewFocusPanel`:
  *  (A) po wyborze stanu CAŁA karta pytania dostaje lewą krawędź i tło w
  *      kolorze semantycznym („bardzo trudno się tym zarządza"),
- *  (C) „Podyktuj" dopisuje rozpoznany tekst do pola „Twoja odpowiedź"
+ *  (C) „Podyktuj" dopisuje rozpoznany tekst do pola „Your answer"
  *      (nie zastępuje) — sterowane prawdziwym zdarzeniem `result`
  *      przeglądarkowego `SpeechRecognition`, którego atrapę wstrzykujemy
  *      w miejsce hardware'u.
@@ -17,9 +17,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // Globalny mock w `tests/setup.ts` przybija język do 'en'. Tutaj interesuje
 // nas dowód, że `lang` rozpoznawania mowy IDZIE Z i18n (właściciel pracuje po
 // polsku), więc nadpisujemy mock lokalnie na 'pl'.
+// `t` musi zwracać `defaultValue`, nie sam klucz: po przeniesieniu etykiet
+// stanów odpowiedzi do `t()` (paczka J4) atrapa zwracająca klucz kazałaby
+// testować napis `methodWorkspace.answerState.confirmed`, którego użytkownik
+// nigdy nie zobaczy.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, domyslny?: unknown) => (typeof domyslny === 'string' ? domyslny : key),
     i18n: { language: 'pl', changeLanguage: vi.fn() },
     ready: true,
   }),
@@ -104,7 +108,7 @@ function renderPanel(
 }
 
 describe('(A) karta pytania niesie kolor wybranego stanu odpowiedzi', () => {
-  it('„Potwierdzone" → zielona lewa krawędź na CAŁEJ karcie', () => {
+  it('„Confirmed" → zielona lewa krawędź na CAŁEJ karcie', () => {
     const q = makeInterviewFocusQuestion({ answerState: 'confirmed' });
     renderPanel(q);
     const card = screen.getByTestId(`question-card-${q.question.questionId}`);
@@ -113,7 +117,7 @@ describe('(A) karta pytania niesie kolor wybranego stanu odpowiedzi', () => {
     expect(card.getAttribute('data-answer-state')).toBe('confirmed');
   });
 
-  it('„Częściowo" → pomarańczowa lewa krawędź, nigdy zielona', () => {
+  it('„Partially" → pomarańczowa lewa krawędź, nigdy zielona', () => {
     const q = makeInterviewFocusQuestion({ answerState: 'partial' });
     renderPanel(q);
     const card = screen.getByTestId(`question-card-${q.question.questionId}`);
@@ -132,7 +136,7 @@ describe('(A) karta pytania niesie kolor wybranego stanu odpowiedzi', () => {
   it('wybrany przycisk stanu jest wypełniony tym samym kolorem co karta', () => {
     const q = makeInterviewFocusQuestion({ answerState: 'confirmed' });
     renderPanel(q);
-    const button = screen.getByRole('radio', { name: /Potwierdzone/ });
+    const button = screen.getByRole('radio', { name: /Confirmed/ });
     expect(button.className).toMatch(/bg-c-success\/15/);
     expect(button.className).toContain('border-c-success');
   });

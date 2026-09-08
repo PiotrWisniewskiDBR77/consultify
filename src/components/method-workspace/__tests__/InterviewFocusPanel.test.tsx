@@ -42,27 +42,27 @@ function baseProps(overrides: Partial<React.ComponentProps<typeof InterviewFocus
 describe('InterviewFocusPanel — evidence tone never reads as critical for normal gaps', () => {
   it('evidenceState "missing" uses the warning token, never the danger token', () => {
     render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'missing' })] })} />);
-    const badge = screen.getByText('Brak dowodu').closest('span')!;
+    const badge = screen.getByText('No evidence').closest('span')!;
     expect(badge.className).toMatch(/text-c-warning/);
     expect(badge.className).not.toMatch(/text-c-danger/);
   });
 
   it('evidenceState "weak" uses the warning token, never the danger token', () => {
     render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'weak' })] })} />);
-    const badge = screen.getByText('Dowód słaby').closest('span')!;
+    const badge = screen.getByText('Evidence weak').closest('span')!;
     expect(badge.className).toMatch(/text-c-warning/);
     expect(badge.className).not.toMatch(/text-c-danger/);
   });
 
   it('evidenceState "conflicting" is the ONE legitimate danger case — contradicts and blocks freeze', () => {
     render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'conflicting' })] })} />);
-    const badge = screen.getByText('Dowody sprzeczne').closest('span')!;
+    const badge = screen.getByText('Evidence conflicting').closest('span')!;
     expect(badge.className).toMatch(/text-c-danger/);
   });
 
   it('evidenceState "complete" uses the success token', () => {
     render(<InterviewFocusPanel {...baseProps({ questions: [makeInterviewFocusQuestion({ evidenceState: 'complete' })] })} />);
-    const badge = screen.getByText('Dowód kompletny').closest('span')!;
+    const badge = screen.getByText('Evidence complete').closest('span')!;
     expect(badge.className).toMatch(/text-c-success/);
   });
 });
@@ -80,7 +80,7 @@ describe('InterviewFocusPanel — three independent axes render as three distinc
     expect(strengthBadge).toHaveTextContent('E2');
     // Not the same element as the rollup badge, and not colored like a warning —
     // strength describes the source, it is not itself an alarm.
-    const rollupBadge = screen.getByText('Dowód słaby').closest('span')!;
+    const rollupBadge = screen.getByText('Evidence weak').closest('span')!;
     expect(strengthBadge).not.toBe(rollupBadge);
     expect(strengthBadge.className).not.toMatch(/text-c-warning|text-c-danger/);
   });
@@ -128,7 +128,7 @@ describe('InterviewFocusPanel — long text does not break the layout', () => {
     );
     expect(screen.getByText(longWording)).toBeInTheDocument();
     // The command row (Wstecz/Zapisz/Dalej) survives regardless of content length.
-    expect(screen.getByText('Dalej')).toBeInTheDocument();
-    expect(screen.getByText('Wstecz')).toBeInTheDocument();
+    expect(screen.getByText('Next')).toBeInTheDocument();
+    expect(screen.getByText('Back')).toBeInTheDocument();
   });
 });

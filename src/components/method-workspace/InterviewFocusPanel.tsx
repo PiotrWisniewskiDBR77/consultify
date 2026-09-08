@@ -321,9 +321,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                   )}
                   className="shrink-0 rounded-full border border-c-border px-2 py-0.5 font-medium text-c-text-secondary"
                 >
-                  {t('methodWorkspace.focus.evidenceStrength', 'Evidence strength: {{value}}', {
-                    value: q.evidenceStrength,
-                  })}
+                  {t('methodWorkspace.focus.evidenceStrengthLabel', 'Evidence strength')}: {q.evidenceStrength}
                 </span>
               )}
             </span>

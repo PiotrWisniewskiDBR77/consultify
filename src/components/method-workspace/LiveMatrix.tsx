@@ -99,7 +99,7 @@ const Cell: React.FC<{
   // Not-yet-reached cells never mention evidence at all — there is nothing to
   // report yet, and saying "evidence missing" here would read as a defect.
   const evidencePhrase = engaged
-    ? t('methodWorkspace.matrix.evidenceState', 'evidence {{state}}', { state: cell.evidenceState })
+    ? `${t('methodWorkspace.matrix.evidence', 'evidence')} ${cell.evidenceState}`
     : t('methodWorkspace.matrix.notAssessedYet', 'not assessed yet');
 
   // ASM-OWN-013: the global legend (Propozycja AI / Review / Blocker /
@@ -113,22 +113,27 @@ const Cell: React.FC<{
     : cell.reviewRequired
       ? `, ${t('methodWorkspace.matrix.review', 'Review')}`
       : '';
-  const accessibleName = t(
-    'methodWorkspace.matrix.cellAccessibleName',
-    '{{method}}, {{unit}}, level {{level}}, {{achieved}}, answer {{answer}}, {{evidence}}{{workflow}}{{blocker}}',
-    {
-      method: methodName,
-      unit: unitName,
-      level: cell.level,
-      achieved: cell.achieved
-        ? t('methodWorkspace.matrix.achieved', 'achieved')
-        : t('methodWorkspace.matrix.notAchieved', 'not achieved'),
-      answer: ANSWER_STATE_LABEL[cell.answerState] || cell.answerState,
-      evidence: evidencePhrase,
-      workflow: workflowPhrase,
-      blocker: cell.blocker ? `, ${t('methodWorkspace.matrix.blocker', 'blocker')}` : '',
-    }
-  );
+  // Nazwa dostępnościowa składana z PRZETŁUMACZONYCH CZĘŚCI, nie z jednego
+  // klucza z interpolacją. Powód jest mierzalny: atrapa `react-i18next`
+  // w `tests/setup.ts` przyjmuje dwa argumenty, więc wzorzec
+  // `t(klucz, default, { zmienne })` zwraca w teście surowy szablon
+  // „{{method}}, {{unit}}…” — testowałbym napis, którego użytkownik nigdy
+  // nie zobaczy. Sklejenie części daje ten sam wynik w produkcie i w teście.
+  const poziomFraza = `${t('methodWorkspace.matrix.level', 'level')} ${cell.level}`;
+  const osiagniecieFraza = cell.achieved
+    ? t('methodWorkspace.matrix.achieved', 'achieved')
+    : t('methodWorkspace.matrix.notAchieved', 'not achieved');
+  const odpowiedzFraza = `${t('methodWorkspace.matrix.answerLabel', 'answer')} ${
+    ANSWER_STATE_LABEL[cell.answerState] || cell.answerState
+  }`;
+  const accessibleName = [
+    methodName,
+    unitName,
+    poziomFraza,
+    osiagniecieFraza,
+    odpowiedzFraza,
+    `${evidencePhrase}${workflowPhrase}${cell.blocker ? `, ${t('methodWorkspace.matrix.blocker', 'blocker')}` : ''}`,
+  ].join(', ');
 
   // Kanon: nieoceniony obszar (jeszcze nie dotknięty) NIE jest blokerem ani
   // luką dowodową — dostaje spokojną, neutralną obwódkę niezależnie od
@@ -285,10 +290,10 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
       {selection && (
         <div
           role="dialog"
-          aria-label={t('methodWorkspace.matrix.cellDetailsLabel', 'Cell details: {{unit}}, level {{level}}', {
-        unit: selection.unitId,
-        level: selection.level,
-      })}
+          aria-label={`${t('methodWorkspace.matrix.cellDetails', 'Cell details')}: ${selection.unitId}, ${t(
+        'methodWorkspace.matrix.level',
+        'level'
+      )} ${selection.level}`}
           data-testid="matrix-side-sheet"
           className="rounded-xl border border-c-border bg-c-surface p-4 mt-1"
         >

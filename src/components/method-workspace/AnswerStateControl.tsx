@@ -43,7 +43,7 @@ function opcjeStanow(t: TFunction): Array<{
       label: t('methodWorkspace.answerState.dontKnow', 'I don’t know / I need help'),
       icon: <HelpCircle size={14} />,
     },
-    { id: 'no_evidence', label: t('methodWorkspace.answerState.noEvidence', 'No evidence'), icon: <FileQuestion size={14} /> },
+    { id: 'no_evidence', label: t('methodWorkspace.answerState.noEvidence', 'I have no evidence'), icon: <FileQuestion size={14} /> },
     { id: 'not_applicable', label: t('methodWorkspace.answerState.notApplicable', 'Not applicable'), icon: <AlertCircle size={14} /> },
   ];
 }

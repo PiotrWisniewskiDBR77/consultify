@@ -35,40 +35,48 @@ import {
 } from '@/config/swot/swotTensionEngine';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import type { SWOTItem } from '@/store/useToolStore';
+import { useTranslation, type TFunction } from 'react-i18next';
+
 import { toEvidenceKind } from '@/toolOutputs/buildSwotOutput';
 import type { EvidenceKind } from '@/toolOutputs/types';
 
 const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, low: 1 };
 
-const QUADRANTS: Array<{ key: SWOTItem['quadrant']; pl: string }> = [
-  { key: 'strengths', pl: 'Siły' },
-  { key: 'weaknesses', pl: 'Słabości' },
-  { key: 'opportunities', pl: 'Szanse' },
-  { key: 'threats', pl: 'Zagrożenia' },
-];
+/** Słownik enumu ćwiartek (PLAN §2 pkt 6) — nazwy idą za językiem konta. */
+function cwiartki(t: TFunction): Array<{ key: SWOTItem['quadrant']; label: string }> {
+  return [
+    { key: 'strengths', label: t('discoveryTools.swot.strengths', 'Strengths') },
+    { key: 'weaknesses', label: t('discoveryTools.swot.weaknesses', 'Weaknesses') },
+    { key: 'opportunities', label: t('discoveryTools.swot.opportunities', 'Opportunities') },
+    { key: 'threats', label: t('discoveryTools.swot.threats', 'Threats') },
+  ];
+}
 
-const EVIDENCE_LABEL_PL: Record<EvidenceKind, string> = {
-  fact: 'fakt',
-  observation: 'obserwacja',
-  hypothesis: 'hipoteza',
-};
+function etykietyDowodu(t: TFunction): Record<EvidenceKind, string> {
+  return {
+    fact: t('discoveryTools.swot.evidence.fact', 'fact'),
+    observation: t('discoveryTools.swot.evidence.observation', 'observation'),
+    hypothesis: t('discoveryTools.swot.evidence.hypothesis', 'hypothesis'),
+  };
+}
 
 /**
  * Odbiór 2026-08-30 (przegląd modułów 04/11/16): pigułka „poza polem" renderowała
  * SUROWĄ wartość `proposalStatus` (`ai-proposed`, `rethinking`) wprost, tylko
  * ostylowaną `uppercase` — stąd „AI-PROPOSED" i „RETHINKING" po angielsku na
  * jedynym miejscu tego ekranu, które mówiło nie po polsku. Te same etykiety co
- * `ProposalStatusBadge` (`discoveryToolsSteps.proposalCardGovernance.status.*`
- * w translation.json), przepisane na stałą mapę — plik nie ma `useTranslation`
- * nigdzie indziej (patrz `EVIDENCE_LABEL_PL` obok), więc zamiast wprowadzać i18n
- * tylko dla jednej etykiety, trzymam się istniejącej konwencji pliku.
+ * `ProposalStatusBadge`. J4 (09.09): stała mapa PL zamieniona na słownik
+ * `t()` — cały plik przechodzi na i18n, więc argument „plik nie ma
+ * useTranslation nigdzie indziej” przestał obowiązywać.
  */
-const PROPOSAL_STATUS_LABEL_PL: Record<string, string> = {
-  'ai-proposed': 'Propozycja AI',
-  rethinking: 'Przemyślenie',
-  accepted: 'Zaakceptowane',
-  rejected: 'Odrzucone',
-};
+function etykietyStatusuPropozycji(t: TFunction): Record<string, string> {
+  return {
+    'ai-proposed': t('discoveryTools.swot.proposalStatus.aiProposed', 'AI proposal'),
+    rethinking: t('discoveryTools.swot.proposalStatus.rethinking', 'Rethinking'),
+    accepted: t('discoveryTools.swot.proposalStatus.accepted', 'Accepted'),
+    rejected: t('discoveryTools.swot.proposalStatus.rejected', 'Rejected'),
+  };
+}
 
 /** Hipoteza NIGDY nie ma tonu faktu — trzy odrębne, jednoznaczne sygnały. */
 const EVIDENCE_TONE: Record<EvidenceKind, string> = {
@@ -165,6 +173,8 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 }
 
 function EvidenceBadge({ item }: { item: SWOTItem }) {
+  const { t } = useTranslation();
+  const EVIDENCE_LABEL = etykietyDowodu(t);
   const kind = toEvidenceKind(item);
   return (
     <span
@@ -172,7 +182,7 @@ function EvidenceBadge({ item }: { item: SWOTItem }) {
       data-evidence-kind={kind}
       className={`shrink-0 text-[10px] uppercase tracking-[0.12em] ${EVIDENCE_TONE[kind]}`}
     >
-      {EVIDENCE_LABEL_PL[kind]}
+      {EVIDENCE_LABEL[kind]}
     </span>
   );
 }
@@ -184,6 +194,7 @@ function ItemCard({
   item: SWOTItem;
   onReclassify: (itemId: string, quadrant: SWOTItem['quadrant']) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <li
       data-testid={`swot-item-${item.id}`}
@@ -196,18 +207,18 @@ function ItemCard({
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="text-[11px] tabular-nums text-c-text-muted">
-          waga {IMPACT_WEIGHT[item.impact]}
+          {t('discoveryTools.swot.weight', 'weight {{value}}', { value: IMPACT_WEIGHT[item.impact] })}
         </span>
         <select
-          aria-label={`Ćwiartka: ${item.text}`}
+          aria-label={t('discoveryTools.swot.quadrantOf', 'Quadrant: {{text}}', { text: item.text })}
           data-testid={`swot-reclassify-${item.id}`}
           className="rounded border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           value={item.quadrant}
           onChange={(e) => onReclassify(item.id, e.target.value as SWOTItem['quadrant'])}
         >
-          {QUADRANTS.map((q) => (
+          {cwiartki(t).map((q) => (
             <option key={q.key} value={q.key}>
-              {q.pl}
+              {q.label}
             </option>
           ))}
         </select>
@@ -286,6 +297,7 @@ export function SwotLiveArtifact({
   maxTensionsPerType = 2,
   className = '',
 }: SwotLiveArtifactProps) {
+  const { t } = useTranslation();
   const history = useUndoRedo<SWOTItem[]>(items);
   const current = history.current;
 
@@ -308,33 +320,33 @@ export function SwotLiveArtifact({
   return (
     <div data-testid="swot-live-artifact" className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between gap-3">
-        <Eyebrow>Pole strategiczne — na żywo</Eyebrow>
+        <Eyebrow>{t('discoveryTools.swot.liveField', 'Strategic field — live')}</Eyebrow>
         <div className="flex items-center gap-2">
           <button
             type="button"
             data-testid="swot-undo"
-            aria-label="Cofnij"
+            aria-label={t('common.undo', 'Undo')}
             disabled={!history.canUndo}
             onClick={() => history.undo()}
             className="rounded border border-c-border-subtle px-2 py-1 text-[11px] text-c-text-secondary disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
-            Cofnij
+            {t('common.undo', 'Undo')}
           </button>
           <button
             type="button"
             data-testid="swot-redo"
-            aria-label="Ponów"
+            aria-label={t('common.redo', 'Redo')}
             disabled={!history.canRedo}
             onClick={() => history.redo()}
             className="rounded border border-c-border-subtle px-2 py-1 text-[11px] text-c-text-secondary disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
-            Ponów
+            {t('common.redo', 'Redo')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-c-border-subtle bg-c-border-subtle">
-        {QUADRANTS.map((q) => {
+        {cwiartki(t).map((q) => {
           const inQ = model.accepted.filter((i) => i.quadrant === q.key);
           return (
             <div
@@ -343,7 +355,7 @@ export function SwotLiveArtifact({
               className="min-h-[120px] space-y-2 bg-c-surface p-3"
             >
               <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-                {q.pl}
+                {q.label}
               </div>
               <ul className="space-y-1.5">
                 {inQ.map((item) => (
@@ -358,20 +370,23 @@ export function SwotLiveArtifact({
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <Eyebrow>Napięcia SO / WO / ST / WT</Eyebrow>
+          <Eyebrow>{t('discoveryTools.swot.tensionsHeading', 'Tensions SO / WO / ST / WT')}</Eyebrow>
           {missingTypes.length > 0 && (
             <span className="text-[11px] text-c-text-muted">
-              brakuje: {missingTypes.join(', ')}
+              {t('discoveryTools.swot.missing', 'missing: {{list}}', { list: missingTypes.join(', ') })}
             </span>
           )}
         </div>
         <ul className="space-y-1.5">
-          {model.tensions.map((t) => (
-            <TensionRow key={t.id} tension={t} items={model.accepted} />
+          {model.tensions.map((tension) => (
+            <TensionRow key={tension.id} tension={tension} items={model.accepted} />
           ))}
           {model.tensions.length === 0 && (
             <li className="text-[12px] text-c-text-muted">
-              Brak napięć — potrzebne co najmniej dwie zaakceptowane pozycje w sąsiednich ćwiartkach.
+              {t(
+                'discoveryTools.swot.noTensions',
+                'No tensions — at least two accepted items in adjacent quadrants are needed.'
+              )}
             </li>
           )}
         </ul>
@@ -382,7 +397,9 @@ export function SwotLiveArtifact({
           data-testid="swot-pending-tray"
           className="rounded-lg border border-dashed border-c-border-subtle bg-c-surface p-3"
         >
-          <Eyebrow>Poza polem — nie zaakceptowane (nie wchodzi do Output)</Eyebrow>
+          <Eyebrow>
+            {t('discoveryTools.swot.pendingTray', 'Off the field — not accepted (does not enter the Output)')}
+          </Eyebrow>
           <ul className="mt-2 space-y-1.5">
             {model.pending.map((item) => (
               <li
@@ -392,8 +409,8 @@ export function SwotLiveArtifact({
               >
                 <span>{item.text}</span>
                 <span className="shrink-0 text-[10px] uppercase tracking-[0.1em]">
-                  {PROPOSAL_STATUS_LABEL_PL[item.proposalStatus ?? item.status ?? ''] ??
-                    'Brak statusu'}
+                  {etykietyStatusuPropozycji(t)[item.proposalStatus ?? item.status ?? ''] ??
+                    t('discoveryTools.swot.proposalStatus.none', 'No status')}
                 </span>
               </li>
             ))}

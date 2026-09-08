@@ -886,7 +886,9 @@
     "publish": "Opublikuj",
     "loadingSlow": "Wczytywanie trwa dłużej niż zwykle…",
     "reload": "Odśwież",
-    "saveError": "Błąd zapisu"
+    "saveError": "Błąd zapisu",
+    "undo": "Cofnij",
+    "redo": "Ponów"
   },
   "superadmin": {
     "confirm": {
@@ -48658,12 +48660,75 @@
       "opportunities": "Szanse",
       "threats": "Zagrożenia",
       "strategicField": "Pole strategiczne",
-      "tensionsCount": "{{count}} napięć łączy ćwiartki"
+      "tensionsCount": "{{count}} napięć łączy ćwiartki",
+      "evidence": {
+        "fact": "fakt",
+        "observation": "obserwacja",
+        "hypothesis": "hipoteza"
+      },
+      "proposalStatus": {
+        "aiProposed": "Propozycja AI",
+        "rethinking": "Przemyślenie",
+        "accepted": "Zaakceptowane",
+        "rejected": "Odrzucone",
+        "none": "Brak statusu"
+      },
+      "weight": "waga {{value}}",
+      "quadrantOf": "Ćwiartka: {{text}}",
+      "liveField": "Pole strategiczne — na żywo",
+      "tensionsHeading": "Napięcia SO / WO / ST / WT",
+      "missing": "brakuje: {{list}}",
+      "noTensions": "Brak napięć — potrzebne co najmniej dwie zaakceptowane pozycje w sąsiednich ćwiartkach.",
+      "pendingTray": "Poza polem — nie zaakceptowane (nie wchodzi do Output)"
     },
     "report": {
       "execPresentation": "Prezentacja wykonawcza",
       "title": "Raport",
-      "rendererInfo": "Renderer {{version}} · źródła: {{count}}"
+      "rendererInfo": "Renderer {{version}} · źródła: {{count}}",
+      "posture": {
+        "attack": "Atakuj szansę",
+        "repair": "Napraw, by sięgnąć",
+        "defend": "Broń się siłą",
+        "protect": "Chroń ekspozycję"
+      },
+      "strategicTensions": "Napięcia strategiczne",
+      "whatIs": "Co jest",
+      "whatItMeans": "Co to znaczy",
+      "whatToDoFirst": "Co robić najpierw"
+    },
+    "generic": {
+      "loadError": "Nie udało się wczytać sesji narzędzia",
+      "defaultTitle": "Sesja narzędzia",
+      "unknownType": "Nieznany typ",
+      "copied": "Skopiowano do schowka",
+      "copyFailed": "Nie udało się skopiować",
+      "loading": "Wczytywanie sesji narzędzia…",
+      "backToList": "Wróć do listy",
+      "loadingDocs": "Wczytywanie dokumentacji narzędzia…",
+      "catalogDocs": "Dokumentacja narzędzia (katalog)",
+      "catalogSource": "Źródło: {{path}}",
+      "sessionContext": "Kontekst sesji (dane techniczne)",
+      "toolType": "Typ narzędzia",
+      "project": "Projekt",
+      "copyJsonData": "Kopiuj dane (JSON)",
+      "whyThisScreen": "Dlaczego widzisz ten ekran",
+      "whyThisScreenBody": "Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu. Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie i można je skopiować albo przekazać dalej."
+    },
+    "trace": {
+      "sourceIdea": "Pomysł",
+      "sourceNotebook": "Notatnik",
+      "sourceMyWork": "Moja Praca",
+      "loadError": "Nie udało się wczytać śladu pochodzenia",
+      "title": "Ślad pochodzenia",
+      "loading": "Wczytywanie śladu pochodzenia…",
+      "whatIsThis": "Czym jest ten wpis",
+      "whatIsThisBody": "To nie jest sesja narzędzia i nie ma warsztatu. Ten wpis powstał automatycznie, gdy {{source}} z Mojej Pracy został przekształcony w inicjatywę, zadanie lub decyzję — po to, żeby ten obiekt miał udokumentowane źródło. Pracę prowadzi się w źródle albo w obiekcie, który z niego powstał.",
+      "sourceSummary": "Streszczenie źródła",
+      "source": "Źródło",
+      "kind": "Rodzaj",
+      "identifier": "Identyfikator",
+      "openInMyWork": "Otwórz źródło w Mojej Pracy",
+      "noSourceId": "Ten wpis nie niesie identyfikatora źródła — nie ma dokąd przejść."
     }
   },
   "drd": {
@@ -48816,7 +48881,11 @@
       "blocker": "bloker",
       "title": "Macierz na żywo",
       "cellDetailsLabel": "Szczegóły komórki: {{unit}}, poziom {{level}}",
-      "closeCellDetails": "Zamknij szczegóły komórki"
+      "closeCellDetails": "Zamknij szczegóły komórki",
+      "level": "poziom",
+      "evidence": "dowód",
+      "cellDetails": "Szczegóły komórki",
+      "answerLabel": "odpowiedź"
     },
     "navigator": {
       "noStructure": "Method Pack nie dostarczył jeszcze struktury."
@@ -48860,7 +48929,8 @@
       "skipWithReason": "Pomiń z uzasadnieniem",
       "skipReasonLabel": "Powód pominięcia (wybierz kod)",
       "chooseReason": "Wybierz powód…",
-      "confirm": "Potwierdź"
+      "confirm": "Potwierdź",
+      "evidenceStrengthLabel": "Siła dowodu"
     },
     "skipReason": {
       "outsideOperatingModel": "poza modelem operacyjnym",
@@ -49015,6 +49085,10 @@
       "back": "Wstecz",
       "createAndEdit": "Utwórz i edytuj",
       "next": "Dalej"
+    },
+    "structure": {
+      "moveUp": "Przesuń w górę",
+      "moveDown": "Przesuń w dół"
     }
   },
   "list": {

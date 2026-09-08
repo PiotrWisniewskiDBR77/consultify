@@ -104,13 +104,13 @@ describe('MethodWorkspaceShell — view modes share one state', () => {
     // Same cell semantics as asserted directly on LiveMatrix — proves the shell
     // passes the identical rows/levels through, not a second copy.
     expect(
-      screen.getByLabelText('DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete')
+      screen.getByLabelText('DRD, Strategia i governance, level 2, achieved, answer confirmed, evidence complete')
     ).toBeInTheDocument();
   });
 
   it('a selection made in Matrix mode survives switching to Report and back to Matrix', () => {
     render(<Harness initialViewMode="matrix" />);
-    fireEvent.click(screen.getByLabelText(/poziom 3,/));
+    fireEvent.click(screen.getByLabelText(/level 3,/));
     expect(screen.getByTestId('shell-side-sheet-content')).toHaveTextContent('Wybrano unit-1/3');
 
     fireEvent.click(screen.getByTestId('view-mode-report'));

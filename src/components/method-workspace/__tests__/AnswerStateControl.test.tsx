@@ -21,12 +21,12 @@ describe('AnswerStateControl', () => {
         onResolutionAction={vi.fn()}
       />
     );
-    expect(screen.getByText('Potwierdzone')).toBeInTheDocument();
-    expect(screen.getByText('Częściowo')).toBeInTheDocument();
-    expect(screen.getByText('Nie', { selector: 'span' })).toBeInTheDocument();
-    expect(screen.getByText('Nie wiem / potrzebuję pomocy')).toBeInTheDocument();
-    expect(screen.getByText('Nie mam dowodu')).toBeInTheDocument();
-    expect(screen.getByText('Nie dotyczy')).toBeInTheDocument();
+    expect(screen.getByText('Confirmed')).toBeInTheDocument();
+    expect(screen.getByText('Partially')).toBeInTheDocument();
+    expect(screen.getByText('No', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText('I don’t know / I need help')).toBeInTheDocument();
+    expect(screen.getByText('I have no evidence')).toBeInTheDocument();
+    expect(screen.getByText('Not applicable')).toBeInTheDocument();
   });
 
   it('"Nie wiem" opens the ResolutionCard and reports dont_know, never a score', () => {
@@ -40,7 +40,7 @@ describe('AnswerStateControl', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Nie wiem / potrzebuję pomocy'));
+    fireEvent.click(screen.getByText('I don’t know / I need help'));
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('dont_know');
     // onChange never receives a numeric/level payload — only the answer-state id.
@@ -58,10 +58,10 @@ describe('AnswerStateControl', () => {
     );
     expect(screen.getByTestId('resolution-card')).toBeInTheDocument();
     expect(screen.getByText('Czy mamy proces X.')).toBeInTheDocument();
-    expect(screen.getByText(/nie ustawia poziomu i nie liczy się jako zero/i)).toBeInTheDocument();
+    expect(screen.getByText(/sets no level and does not count as a zero/i)).toBeInTheDocument();
   });
 
-  it('"Nie dotyczy" requires a justification before confirming', () => {
+  it('"Not applicable" requires a justification before confirming', () => {
     const onChange = vi.fn();
     render(
       <AnswerStateControl
@@ -71,11 +71,11 @@ describe('AnswerStateControl', () => {
         onResolutionAction={vi.fn()}
       />
     );
-    fireEvent.click(screen.getByText('Nie dotyczy'));
-    const confirmBtn = screen.getByText('Potwierdź „Nie dotyczy"');
+    fireEvent.click(screen.getByText('Not applicable'));
+    const confirmBtn = screen.getByText(/Confirm .Not applicable./);
     expect(confirmBtn).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/Uzasadnij/i), { target: { value: 'Proces nie istnieje w tej organizacji.' } });
+    fireEvent.change(screen.getByLabelText(/Justify/i), { target: { value: 'Proces nie istnieje w tej organizacji.' } });
     expect(confirmBtn).toBeEnabled();
     fireEvent.click(confirmBtn);
     expect(onChange).toHaveBeenCalledWith('not_applicable', 'Proces nie istnieje w tej organizacji.');
@@ -83,7 +83,7 @@ describe('AnswerStateControl', () => {
 
   // ★ 06.09 (DEC-415): mapa kolorów przeniesiona do `answerStateColors.ts`, a
   // właściciel rozstrzygnął, że stany bez rozstrzygnięcia (Nie wiem / Nie mam
-  // dowodu / Nie dotyczy) mają być NEUTRALNE — mają być widocznie WYBRANE, ale
+  // dowodu / Not applicable) mają być NEUTRALNE — mają być widocznie WYBRANE, ale
   // nie mogą pożyczać koloru wyniku. Gwarancja tego testu jest ta sama co
   // wcześniej: „nie wiem" nigdy nie jest pomyłką, więc nigdy nie jest czerwone.
   it('"Nie wiem" is styled neutral — never danger, and never borrows a result colour (success/warning)', () => {
@@ -95,7 +95,7 @@ describe('AnswerStateControl', () => {
         onResolutionAction={vi.fn()}
       />
     );
-    const option = screen.getByText('Nie wiem / potrzebuję pomocy').closest('button')!;
+    const option = screen.getByText('I don’t know / I need help').closest('button')!;
     expect(option.getAttribute('data-tone')).toBe('neutral');
     expect(option.className).not.toMatch(/c-danger/);
     expect(option.className).not.toMatch(/c-success/);
@@ -115,7 +115,7 @@ describe('AnswerStateControl', () => {
         onResolutionAction={onResolutionAction}
       />
     );
-    fireEvent.click(screen.getByText('Zapytaj Teresę'));
+    fireEvent.click(screen.getByText('Ask Teresa'));
     expect(onResolutionAction).toHaveBeenCalledWith('ask_teresa');
   });
 });
