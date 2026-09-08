@@ -32,6 +32,7 @@ const FAZA = process.argv[2] === 'po' ? 'po' : 'przed';
  *              przeciwko przegladarce — i w ktorym wyscig bootstrapu w ogole
  *              moze byc widoczny. Konto ma `users.language='en'`.
  */
+const JEZYK_KONTA = process.argv[4] === 'pl' ? 'pl' : 'en';
 const SCENARIUSZ = ['lepki', 'wolne-me', 'wolne-locale'].includes(process.argv[3])
   ? process.argv[3]
   : 'swieza';
@@ -44,7 +45,11 @@ const SCENARIUSZ = ['lepki', 'wolne-me', 'wolne-locale'].includes(process.argv[3
  * odpowiedzi sieciowej, ktora i tak jest asynchroniczna.
  */
 const BASE = 'http://127.0.0.1:3219';
-const OUT = path.resolve(process.cwd(), 'evidence/jezyk-jzz', `${FAZA}-${SCENARIUSZ}`);
+const OUT = path.resolve(
+  process.cwd(),
+  'evidence/jezyk-jzz',
+  `${FAZA}-${SCENARIUSZ}${process.argv[4] === 'pl' ? '-pl' : ''}`
+);
 fs.mkdirSync(OUT, { recursive: true });
 
 const sql = (q) =>
@@ -54,8 +59,44 @@ const sql = (q) =>
   ).trim();
 
 // --- wiadro DANE: wartości z bazy, nie z interfejsu -----------------------
+//
+// Zmierzone 09.09: pierwsza wersja tej listy wymieniała kolumny z palca i
+// PRZEPUŚCIŁA `initiatives.summary` — 295 słów treści pokazowej wpadło do
+// wiadra „interfejs" i wyglądało jak defekt językowy. Dlatego tabele kluczowe
+// czytamy KOLUMNA PO KOLUMNIE ze schematu, zamiast zgadywać nazwy.
 const DANE = new Set();
+const TABELE_TRESCI = [
+  'initiatives',
+  'tasks',
+  'projects',
+  'decisions',
+  'conversations',
+  'conversation_messages',
+  'presentation_decks',
+  'presentation_templates',
+  'management_reports',
+  'report_builder_reports',
+  'knowledge_documents',
+  'document_studio_templates',
+  'kpis',
+];
+const zapytaniaZeSchematu = [];
+for (const tabela of TABELE_TRESCI) {
+  let kolumny = '';
+  try {
+    kolumny = sql(
+      `select column_name from information_schema.columns where table_schema='public' and table_name='${tabela}' and data_type in ('text','character varying')`
+    );
+  } catch {
+    continue;
+  }
+  for (const kol of kolumny.split('\n').map((k) => k.trim()).filter(Boolean)) {
+    zapytaniaZeSchematu.push(`select left(${kol}, 400) from ${tabela} where ${kol} is not null`);
+  }
+}
+
 for (const q of [
+  ...zapytaniaZeSchematu,
   'select title from conversations',
   'select left(content, 400) from conversation_messages where content is not null',
   'select title from initiatives',
@@ -92,6 +133,8 @@ for (const q of [
   }
 }
 const DANE_LISTA = [...DANE];
+/** Surowe odpowiedzi API zebrane w trakcie przebiegu (patrz `page.on('response')`). */
+const DANE_SIEC = [];
 const norm = (s) =>
   String(s)
     .toLowerCase()
@@ -103,6 +146,8 @@ const KORPUS = norm(DANE_LISTA.join(' \n '));
 function czyDane(linia) {
   const l = linia.toLowerCase().trim();
   if (!l) return false;
+  // najpierw sieć: jeśli serwer przysłał ten tekst, to jest treść, nie napis produktu
+  if (l.length >= 8 && DANE_SIEC.some((body) => body.includes(l))) return true;
   if (DANE.has(l)) return true;
   const ucieta = l.replace(/(\.\.\.|…)$/, '').trim();
   if (ucieta.length >= 8 && DANE_LISTA.some((d) => d.startsWith(ucieta))) return true;
@@ -151,14 +196,33 @@ function polskieLinie(text) {
 const b = await chromium.launch();
 
 async function zalogujEN() {
-  sql("UPDATE users SET language='en' WHERE email='audyt@dbr77.local'");
+  sql(`UPDATE users SET language='${JEZYK_KONTA}' WHERE email='audyt@dbr77.local'`);
   const ctx = await b.newContext({
     viewport: { width: 1440, height: 900 },
     colorScheme: 'light',
     // przegladarka „mowi po polsku" — konto mowi po angielsku. Kto wygra?
-    locale: SCENARIUSZ === 'lepki' ? 'en-US' : 'pl-PL',
+    // przegladarka mowi ZAWSZE w drugim jezyku niz konto — konto ma wygrac
+    locale: JEZYK_KONTA === 'pl' ? 'en-US' : 'pl-PL',
   });
   const page = await ctx.newPage();
+  // WIADRO DANE Z SIECI — dowód niezależny od nazw tabel.
+  //
+  // Zmierzone 09.09: lista kolumn wypisana z palca przepuściła `initiatives.summary`,
+  // a część treści ekranu Inicjatyw w ogóle nie leży w tabeli `initiatives`
+  // (API składa rekordy z kilku źródeł, część ma id `seed:...`). Zamiast zgadywać,
+  // gdzie mieszka tekst, zapisujemy CO SERWER FAKTYCZNIE PRZYSŁAŁ i po tym
+  // rozstrzygamy, czy polska linia na ekranie jest treścią, czy interfejsem.
+  page.on('response', async (r) => {
+    try {
+      if (!r.url().includes('/api/')) return;
+      const typ = r.headers()['content-type'] || '';
+      if (!typ.includes('json')) return;
+      const tekst = await r.text();
+      if (tekst && tekst.length < 4_000_000) DANE_SIEC.push(tekst.toLowerCase());
+    } catch {
+      /* odpowiedź mogła zniknąć — brak wpisu to nie błąd dowodu */
+    }
+  });
   if (SCENARIUSZ === 'wolne-locale') {
     // `en/translation.json` wazy 1,9 MB. Na localhoscie idzie z dysku w
     // milisekundach; u uzytkownika przez siec to sekundy. Przy
@@ -241,10 +305,14 @@ for (const [nazwa, sciezka] of EKRANY) {
           return null;
         }
       })(),
+      // `i18nextLng` w localStorage to klucz DETEKTORA, nie aktywny jezyk —
+      // zmierzone 09.09: zrzut mial i18nextLng='en' i POLSKA powloke.
+      // Jezyk faktycznie uzyty do renderu czytamy z <html lang>, ktore ustawia
+      // sam produkt w `i18n.on('languageChanged')`.
       htmlLang: document.documentElement.lang,
     }));
-    const w = polskieLinie(stan.tekst);
-    const plik = path.join(OUT, `${nazwa}-en-${ms}ms.png`);
+    const w = JEZYK_KONTA === 'pl' ? { ui: [], dane: [] } : polskieLinie(stan.tekst);
+    const plik = path.join(OUT, `${nazwa}-${JEZYK_KONTA}-${ms}ms.png`);
     await page.screenshot({ path: plik });
     const meta = {
       ekran: nazwa,
@@ -254,6 +322,8 @@ for (const [nazwa, sciezka] of EKRANY) {
       faktycznyMs: Date.now() - t0,
       i18nextLng: stan.lng,
       htmlLang: stan.htmlLang,
+      jezykRenderu: stan.htmlLang || null,
+      zgodnyJezyk: stan.htmlLang ? stan.htmlLang === JEZYK_KONTA : null,
       polskichSlowUI: w.ui.reduce((a, x) => a + x.trafienia.length, 0),
       polskichLiniiUI: w.ui.length,
       ui: w.ui.slice(0, 40),
@@ -262,7 +332,7 @@ for (const [nazwa, sciezka] of EKRANY) {
     fs.writeFileSync(`${plik}.json`, JSON.stringify(meta, null, 1));
     raport.push(meta);
     console.log(
-      `${nazwa} @${ms}ms: polskich slow UI=${meta.polskichSlowUI} (linii ${meta.polskichLiniiUI}), lng=${stan.lng}`
+      `${nazwa} @${ms}ms: polskich slow UI=${meta.polskichSlowUI} (linii ${meta.polskichLiniiUI}), jezyk renderu=${stan.htmlLang}`
     );
     if (w.ui.length) console.log('   ' + w.ui.slice(0, 5).map((x) => x.linia).join(' | '));
   }

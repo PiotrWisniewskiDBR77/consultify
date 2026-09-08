@@ -1,0 +1,387 @@
+[
+ {
+  "plik": "src/components/Feedback/FeedbackFloatingButton.tsx",
+  "klucz": "feedback.floatingButton.label",
+  "pl": "Zgłoś błąd"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackFloatingButton.tsx",
+  "klucz": "feedback.floatingButton.ariaLabel",
+  "pl": "Zgłoś błąd (Shift+Ctrl+B)"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.notAnImage",
+  "pl": "Plik musi być obrazem (PNG, JPG, GIF lub WebP)."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.tooLarge",
+  "pl": "Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.readFailed",
+  "pl": "Nie udało się odczytać pliku. Spróbuj ponownie."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.uploaded",
+  "pl": "Screenshot dodany do zgłoszenia."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.readFailed",
+  "pl": "Nie udało się odczytać pliku. Spróbuj ponownie."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.severity.medium",
+  "pl": "Średni"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.preparing",
+  "pl": "Przygotowuję…"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.screenshot",
+  "pl": "Dołącz screenshot bieżącego widoku (opcjonalnie)"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.diagnostics",
+  "pl": "Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.uploadHint",
+  "pl": "Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V)."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.replace",
+  "pl": "Wymień screenshot"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.upload",
+  "pl": "Wgraj własny screenshot"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.remove",
+  "pl": "Usuń załączony screenshot"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.removeShort",
+  "pl": "Usuń"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.pasteHint",
+  "pl": "lub wklej (Ctrl/⌘+V)"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.attach.previewHint",
+  "pl": "Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.feature.categories.missing",
+  "pl": "Brakująca funkcja"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.feature.impactLevels.low",
+  "pl": "Dobrze mieć"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.feature.impactLevels.medium",
+  "pl": "Ważne"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.success.reference",
+  "pl": "Numer zgłoszenia"
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.success.referenceHint",
+  "pl": "Powiadomimy Cię tutaj, gdy zmieni się status."
+ },
+ {
+  "plik": "src/components/Feedback/FeedbackSidePanel.tsx",
+  "klucz": "feedback.footer",
+  "pl": "Opinia wysyłana jako"
+ },
+ {
+  "plik": "src/components/NotFoundPage.tsx",
+  "klucz": "notFoundPage.title",
+  "pl": "Nie ma takiej strony"
+ },
+ {
+  "plik": "src/components/NotFoundPage.tsx",
+  "klucz": "notFoundPage.message",
+  "pl": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony."
+ },
+ {
+  "plik": "src/components/NotFoundPage.tsx",
+  "klucz": "notFoundPage.backToChat",
+  "pl": "Wróć do Czatu"
+ },
+ {
+  "plik": "src/components/layout/MfaEnrollmentBanner.tsx",
+  "klucz": "mfa.graceBanner.expired",
+  "pl": "Twoja organizacja wymaga drugiego składnika logowania. Okres przejściowy minął — skonfiguruj go teraz."
+ },
+ {
+  "plik": "src/components/layout/MfaEnrollmentBanner.tsx",
+  "klucz": "common.dismiss",
+  "pl": "Ukryj"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errNoProvider",
+  "pl": "nie skonfigurowano dostawcy AI"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errBudget",
+  "pl": "wyczerpany budżet AI"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errAccessBlocked",
+  "pl": "dostęp do AI jest zablokowany dla tej organizacji"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errEmpty",
+  "pl": "AI zwróciło pustą odpowiedź"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errCallFailed",
+  "pl": "wywołanie AI nie powiodło się"
+ },
+ {
+  "plik": "src/components/shared/AIFieldEnhancer.tsx",
+  "klucz": "sharedComponents.aiFieldEnhancer.errUnavailable",
+  "pl": "AI jest chwilowo niedostępne"
+ },
+ {
+  "plik": "src/components/shared/DesktopOnlyGuard.tsx",
+  "klucz": "admin.desktopOnly.title",
+  "pl": "Najlepiej na większym ekranie"
+ },
+ {
+  "plik": "src/components/shared/ExecutiveModuleShell/RightRail.tsx",
+  "klucz": "mels.leftRailPanel",
+  "pl": "Panel narzędzi (lewy)"
+ },
+ {
+  "plik": "src/components/shared/ExecutiveModuleShell/RightRail.tsx",
+  "klucz": "mels.rightRailPanel",
+  "pl": "Panel narzędzi (prawy)"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.status.closed",
+  "pl": "ZAMKNIĘTY"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.fields.goalMet",
+  "pl": "Cel osiągnięty?"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "common.no",
+  "pl": "Nie"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.fields.actionRequired",
+  "pl": "Działania wymagane?"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "common.no",
+  "pl": "Nie"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.fields.rootCause",
+  "pl": "Główna przyczyna"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.fields.action",
+  "pl": "Opis działania"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.fields.owner",
+  "pl": "Odpowiedzialność"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.title",
+  "pl": "Karta działania"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.createTask",
+  "pl": "Utwórz zadanie"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.close",
+  "pl": "Zamknij kartę"
+ },
+ {
+  "plik": "src/components/standard/ActionCard.tsx",
+  "klucz": "actionCard.open",
+  "pl": "Otwórz kartę"
+ },
+ {
+  "plik": "src/components/standard/ArtifactRightRail.tsx",
+  "klucz": "artifactRail.teresa.empty",
+  "pl": "Ten artefakt nie ma jeszcze rozmowy z Teresą."
+ },
+ {
+  "plik": "src/components/standard/ArtifactRightRail.tsx",
+  "klucz": "artifactRail.teresa.composeUnavailable",
+  "pl": "Pisanie niedostępne"
+ },
+ {
+  "plik": "src/components/standard/ArtifactRightRail.tsx",
+  "klucz": "artifactRail.teresa.composeLabel",
+  "pl": "Wiadomość do Teresy"
+ },
+ {
+  "plik": "src/components/standard/ArtifactRightRail.tsx",
+  "klucz": "artifactRail.teresa.send",
+  "pl": "Wyślij"
+ },
+ {
+  "plik": "src/components/standard/ReasonDialog.tsx",
+  "klucz": "common.close",
+  "pl": "Zamknij"
+ },
+ {
+  "plik": "src/components/standard/ReasonDialog.tsx",
+  "klucz": "common.reasonRequired",
+  "pl": "Powód (wymagany)"
+ },
+ {
+  "plik": "src/components/standard/ReasonDialog.tsx",
+  "klucz": "common.cancel",
+  "pl": "Anuluj"
+ },
+ {
+  "plik": "src/components/standard/StandardPreview.tsx",
+  "klucz": "standardPreview.property",
+  "pl": "Właściwość"
+ },
+ {
+  "plik": "src/components/standard/StandardPreview.tsx",
+  "klucz": "standardPreview.value",
+  "pl": "Wartość"
+ },
+ {
+  "plik": "src/routes/AppRoutes.tsx",
+  "klucz": "auth.sessionExpiredMessage",
+  "pl": "Sesja wygasła. Zaloguj się ponownie."
+ },
+ {
+  "plik": "src/routes/AppRoutes.tsx",
+  "klucz": "auth.passwordResetMessage",
+  "pl": "Hasło zmienione. Zaloguj się nowym hasłem."
+ },
+ {
+  "plik": "src/routes/AppRoutes.tsx",
+  "klucz": "notFoundPage.title",
+  "pl": "Nie ma takiej strony"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.startFailed",
+  "pl": "Nie udało się rozpocząć konfiguracji. Zaloguj się ponownie, aby dostać nowy link."
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "auth.privacyLink",
+  "pl": "Polityka prywatności"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.verifyFailed",
+  "pl": "Kod nie został przyjęty. Spróbuj z aktualnym kodem."
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.doneTitle",
+  "pl": "Drugi składnik jest już skonfigurowany"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.doneBody",
+  "pl": "Zaloguj się ponownie — poprosimy o kod z aplikacji uwierzytelniającej."
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.backToLogin",
+  "pl": "Wróć do logowania"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.title",
+  "pl": "Twoja organizacja wymaga drugiego składnika"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.body",
+  "pl": "Okres przejściowy minął. Skonfiguruj tu drugi składnik — ten krok jest jedyną rzeczą, na którą pozwala ta ograniczona sesja."
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.secretLabel",
+  "pl": "Klucz do aplikacji uwierzytelniającej"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.confirm",
+  "pl": "Potwierdź i włącz"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.preparing",
+  "pl": "Przygotowuję konfigurację…"
+ },
+ {
+  "plik": "src/views/AuthView.tsx",
+  "klucz": "mfa.setupRequired.backToLogin",
+  "pl": "Wróć do logowania"
+ },
+ {
+  "plik": "src/views/PublicLandingPage.tsx",
+  "klucz": "pages.public.cards.tour.description",
+  "pl": "Guided by Dr. Piotr Wiśniewski"
+ },
+ {
+  "plik": "src/views/UserDashboardView.tsx",
+  "klucz": "dashboard.shortcuts.allMarkedRead",
+  "pl": "Wszystkie powiadomienia oznaczone jako przeczytane"
+ },
+ {
+  "plik": "src/views/UserDashboardView.tsx",
+  "klucz": "dashboard.shortcuts.error",
+  "pl": "Wystąpił błąd"
+ }
+]

@@ -45921,7 +45921,8 @@
     }
   },
   "import": {
-    "clickToChoose": "click to choose"
+    "clickToChoose": "click to choose",
+    "dragFileHere": "Drag a file here or"
   },
   "modelSelector": {
     "checkingConnection": "Checking connection…"

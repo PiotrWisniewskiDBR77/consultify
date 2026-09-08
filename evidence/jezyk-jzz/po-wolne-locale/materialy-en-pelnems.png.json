@@ -3,19 +3,13 @@
  "sciezka": "/presentations",
  "probkaMs": "pelne",
  "scenariusz": "wolne-locale",
- "faktycznyMs": 7354,
+ "faktycznyMs": 7535,
  "i18nextLng": "en",
  "htmlLang": "en",
- "polskichSlowUI": 2,
- "polskichLiniiUI": 1,
- "ui": [
-  {
-   "linia": "Transformacja operacyjna DBR77: Predyktywne utrzymanie ruchu i zarządzanie energią",
-   "trafienia": [
-    "zarządzanie",
-    "energią"
-   ]
-  }
- ],
- "daneLinii": 18
+ "jezykRenderu": "en",
+ "zgodnyJezyk": true,
+ "polskichSlowUI": 0,
+ "polskichLiniiUI": 0,
+ "ui": [],
+ "daneLinii": 19
 }

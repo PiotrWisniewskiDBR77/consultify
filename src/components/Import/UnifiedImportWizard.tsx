@@ -235,6 +235,11 @@ const UploadStep: React.FC<{
   setIsDragging: (v: boolean) => void;
   isPolish: boolean;
 }> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging, isPolish }) => {
+  // `isPolish ? 'polski' : 'English'` to RÓWNOLEGŁY, dwujęzyczny mechanizm poza
+  // słownikiem (znalezisko J1: 879 takich miejsc). Nie przepisuję tu całego
+  // komponentu — przenoszę na `t()` ten jeden blok, który paczka ZZ ruszyła,
+  // żeby nie zostawić po sobie napisu bez klucza.
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const acceptedMimeTypes = SUPPORTED_FORMATS.flatMap((f) => f.mimeTypes);
@@ -317,12 +322,17 @@ const UploadStep: React.FC<{
           <p className="text-slate-600 dark:text-slate-400">
             {isPolish ? (
               <>
-                Przeciągnij plik tutaj lub{' '}
-                <span className="text-blue-500 font-medium">{t('import.clickToChoose', 'click to choose')}</span>
+                {t('import.dragFileHere', 'Drag a file here or')}{' '}
+                <span className="text-blue-500 font-medium">
+                  {t('import.clickToChoose', 'click to choose')}
+                </span>
               </>
             ) : (
               <>
-                Drag file here or <span className="text-blue-500 font-medium">click to select</span>
+                {t('import.dragFileHere', 'Drag a file here or')}{' '}
+                <span className="text-blue-500 font-medium">
+                  {t('import.clickToChoose', 'click to choose')}
+                </span>
               </>
             )}
           </p>

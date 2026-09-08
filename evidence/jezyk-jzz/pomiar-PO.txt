@@ -1,0 +1,2027 @@
+POMIAR SPÓJNOŚCI JĘZYKOWEJ — 2026-09-08 22:13:23
+
+LEGENDA KATEGORII
+  K1    PL w plikach EN (klucze tłumaczeń)
+  K1def polski defaultValue w t() — widoczny w EN
+  K1defWID   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE
+  K2    EN w plikach PL (klucze tłumaczeń)
+  K3a   klucz jest w PL, brak w EN (razem)
+  K3aKLUCZ   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ
+  K3b   klucz jest w EN, brak w PL (fallback pokaże angielski)
+  K4pl  polski tekst na sztywno w JSX/TSX (poza t())
+  K4en  angielski tekst na sztywno w JSX/TSX (poza t())
+  K5pl  polskie zdania z serwera do UI
+  K5en  angielskie zdania z serwera do UI
+  K7    daty/liczby/waluty bez locale albo z locale na sztywno
+
+TABELA: MODUŁ × KATEGORIA
+(K1defWID ⊂ K1def, K3aKLUCZ ⊂ K3a — wiersze rozbicia nie wchodzą do kolumny RAZEM)
+| Moduł                |     K1 |  K1def | K1defWID |     K2 |    K3a | K3aKLUCZ |    K3b |   K4pl |   K4en |   K5pl |   K5en |     K7 | RAZEM |
+|----------------------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+| ZZ wspólne           |      1 |      1 |      0 |      2 |    175 |      0 |      0 |     25 |    232 |     19 |    523 |    105 |  1083 |
+| RAZEM                |      2 |    970 |    166 |     12 |   1651 |    326 |      4 |    854 |   1250 |    256 |   1822 |    786 |  7607 |
+
+TOP 10 NAJGORSZYCH PLIKÓW
+    338  public/locales/pl/translation.json
+     95  src/views/partner/PartnerPortalView.tsx
+     86  server/src/routes/document-studio.routes.ts
+     61  server/src/routes/work-canvas.routes.ts
+     56  src/views/legal/TermsOfServiceView.tsx
+     53  src/components/MyWork/panel/IdeaElementInspector.tsx
+     53  src/components/assessment/report/AssessmentReportDocument.tsx
+     52  src/components/Organization/redesign/OrganizationReadinessScreen.tsx
+     51  server/src/routes/table-platform.routes.ts
+     50  src/components/billing/SubscriptionAnalytics.tsx
+
+PRZYKŁADY
+  [K1] PL w plikach EN (klucze tłumaczeń) — 1 (w module; suma repo 2)
+      public/locales/en/translation.json:pages.public.cards.tour.description
+        „Guided by Dr. Piotr Wiśniewski"  (diakrytyk:ś)
+  [K1def] polski defaultValue w t() — widoczny w EN — 1 (w module; suma repo 970)
+      src/views/PublicLandingPage.tsx:156
+        „pages.public.cards.tour.description = "Guided by Dr. Piotr Wiśniewski""  (diakrytyk:ś)
+  [K1defWID]   z tego: brak klucza w EN -> EN WIDZI POLSKI NA STAŁE — 0 (w module; suma repo 166)
+  [K2] EN w plikach PL (klucze tłumaczeń) — 2 (w module; suma repo 12)
+      public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder
+        „Szukaj task, decision, initiative..."  (en?:task,en?:initiative)
+      public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge
+        „AI-draft"  (en:draft)
+  [K3a] klucz jest w PL, brak w EN (razem) — 175 (w module; suma repo 1651)
+      public/locales/pl/translation.json:mels.moreActions
+        „Więcej działań"  (brak w en)
+      public/locales/pl/translation.json:mels.outline
+        „Struktura"  (brak w en)
+      public/locales/pl/translation.json:mels.expandLeftRail
+        „Rozwiń lewy panel"  (brak w en)
+      public/locales/pl/translation.json:mels.collapseLeftRail
+        „Zwiń lewy panel"  (brak w en)
+      public/locales/pl/translation.json:mels.resizeLeftRail
+        „Zmień szerokość lewego panelu"  (brak w en)
+      public/locales/pl/translation.json:mels.expandRightRail
+        „Rozwiń prawy panel"  (brak w en)
+      public/locales/pl/translation.json:mels.collapseRightRail
+        „Zwiń prawy panel"  (brak w en)
+      public/locales/pl/translation.json:mels.resizeRightRail
+        „Zmień szerokość prawego panelu"  (brak w en)
+      public/locales/pl/translation.json:mels.discussWithTeresa
+        „Porozmawiaj z Teresą"  (brak w en)
+      public/locales/pl/translation.json:sidebar.agentPlan
+        „Uruchom agenta"  (brak w en)
+      public/locales/pl/translation.json:demo.toast.disabled
+        „Tryb demo wyłączony. Wracasz do swojego workspace."  (brak w en)
+      public/locales/pl/translation.json:demo.toast.toggleError
+        „Nie udało się przełączyć trybu demo"  (brak w en)
+      public/locales/pl/translation.json:demo.toast.toggleErrorShort
+        „Błąd przełączania trybu demo"  (brak w en)
+      public/locales/pl/translation.json:demo.banner.sampleWorkspace
+        „Przykładowy workspace"  (brak w en)
+      public/locales/pl/translation.json:demo.banner.exitWorkspace
+        „Wyjdź z przykładowego workspace"  (brak w en)
+      public/locales/pl/translation.json:demo.banner.backToWorkspace
+        „Wróć do mojego workspace"  (brak w en)
+      public/locales/pl/translation.json:rap.filters.statusLabel
+        „Status"  (brak w en)
+      public/locales/pl/translation.json:rap.actions.newDocument
+        „Nowy dokument"  (brak w en)
+      public/locales/pl/translation.json:rap.actions.newSheet
+        „Nowy arkusz"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.ai.improve
+        „Zaproponuj ulepszenia"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.ai.summary
+        „Podsumuj sekcje"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.aiNextSteps
+        „Zaproponuj kolejne kroki"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.aiSummarize
+        „Podsumuj raport"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.open
+        „Podgląd"  (brak w en)
+      public/locales/pl/translation.json:rap.preview.source
+        „Źródło"  (brak w en)
+      public/locales/pl/translation.json:rap.outputs.ai.suggestNext
+        „Zaproponuj kolejne kroki"  (brak w en)
+      public/locales/pl/translation.json:rap.outputs.ai.summarize
+        „Podsumuj"  (brak w en)
+      public/locales/pl/translation.json:rap.outputs.archive.sheetsComingSoon
+        „Archiwizacja arkuszy nie jest jeszcze dostępna"  (brak w en)
+      public/locales/pl/translation.json:rap.outputs.delete.comingSoon
+        „Usuwanie nie jest jeszcze dostępne"  (brak w en)
+      public/locales/pl/translation.json:rap.outputs.launcher.bundleBriefPlaceholder
+        „Opisz firmę, produkt, rynek, potrzebne finansowanie i najważniejsze wskaźniki."  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.untitled
+        „Komplet bez tytułu"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.detail.created
+        „Utworzono"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.detail.language
+        „Język"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.detail.quality
+        „Jakość"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.detail.status
+        „Status"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.quality.issues
+        „Problemy z jakością"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.quality.ok
+        „Jakość poprawna"  (brak w en)
+      public/locales/pl/translation.json:rap.bundles.quality.pending
+        „Oczekuje na kontrolę"  (brak w en)
+      public/locales/pl/translation.json:rap.templateBuilder.savedBuildNow
+        „Wzorzec zapisany — wybierz „Zbuduj skoroszyt”"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.allFormats
+        „Wszystkie formaty"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.allScopes
+        „Wszystkie źródła"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.backToLibrary
+        „Wzorce"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.deprecatedUseBlocked
+        „Wycofanego wzorca nie można użyć."  (brak w en)
+      public/locales/pl/translation.json:rap.templates.galleryEmpty
+        „Żaden wzorzec nie pasuje do filtrów."  (brak w en)
+      public/locales/pl/translation.json:rap.templates.legacyBadge
+        „Starszy wzorzec"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.orphanedBadge
+        „Brak źródła"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.orphanedHint
+        „Brak rekordu źródłowego wzorca — generowanie jest niedostępne."  (brak w en)
+      public/locales/pl/translation.json:rap.templates.provenanceQueue
+        „Pochodzenie i prawa"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.scopeUnknown
+        „Nieznany"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.statusApproved
+        „Zatwierdzony"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.statusPublished
+        „Opublikowany"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.statusUnknown
+        „Nieznany"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.useBlocked
+        „Brak rekordu źródłowego wzorca — generowanie jest niedostępne."  (brak w en)
+      public/locales/pl/translation.json:rap.templates.viewGallery
+        „Galeria"  (brak w en)
+      public/locales/pl/translation.json:rap.templates.viewTable
+        „Tabela"  (brak w en)
+      public/locales/pl/translation.json:vector.hero.badge
+        „Przemysłowy silnik rozumowania"  (brak w en)
+      public/locales/pl/translation.json:vector.hero.titleHighlight
+        „rozumuje jak inżynier przemysłowy."  (brak w en)
+      public/locales/pl/translation.json:vector.hero.subtitle
+        „DBR77 Vector 1.0 przekształca surowe dane fabryczne w ustrukturyzowane, wykonalne decyzje biznesowe w mniej niż 120 seku"  (brak w en)
+      public/locales/pl/translation.json:vector.hero.downloadCta
+        „Pobierz whitepaper"  (brak w en)
+      public/locales/pl/translation.json:vector.hero.demoCta
+        „Umów demo"  (brak w en)
+      public/locales/pl/translation.json:vector.beyond.title
+        „Poza AI generatywnym"  (brak w en)
+      public/locales/pl/translation.json:vector.beyond.problem.title
+        „Problem"  (brak w en)
+      public/locales/pl/translation.json:vector.beyond.generic.title
+        „Generyczne LLM-y"  (brak w en)
+      public/locales/pl/translation.json:vector.beyond.vector.title
+        „DBR77 Vector"  (brak w en)
+      public/locales/pl/translation.json:vector.beyond.vector.body
+        „Pierwszy przemysłowy silnik rozumowania. Trenowany na 1400+ uwierzytelnionych przypadkach transformacji. Konstruuje ustr"  (brak w en)
+      public/locales/pl/translation.json:vector.pipeline.badge
+        „Architektura decyzyjna"  (brak w en)
+      public/locales/pl/translation.json:vector.pipeline.title
+        „Jak myśli Vector"  (brak w en)
+      public/locales/pl/translation.json:vector.pipeline.subtitle
+        „Sześcioetapowy pipeline rozumowania przekształcający surowy kontekst przemysłowy w ustrukturyzowane, wykonalne decyzje."  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.title
+        „Liczby"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.parity
+        „Zgodność z seniorami konsultantami"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.speed
+        „Czas analizy"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.speedSub
+        „vs tygodnie pracy manualnej"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.cases
+        „Uwierzytelnione studia przypadków"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.casesSub
+        „Autorski korpus treningowy"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.params
+        „Parametry modelu"  (brak w en)
+      public/locales/pl/translation.json:vector.numbers.paramsSub
+        „+ adapter domenowy QLoRA"  (brak w en)
+      public/locales/pl/translation.json:vector.comparison.title
+        „Vector vs. generyczne LLM-y"  (brak w en)
+      public/locales/pl/translation.json:vector.comparison.subtitle
+        „Celowo zbudowane rozumowanie przemysłowe vs. generowanie języka ogólnego przeznaczenia."  (brak w en)
+      public/locales/pl/translation.json:vector.comparison.dimensionHeader
+        „Wymiar"  (brak w en)
+      public/locales/pl/translation.json:vector.comparison.vectorHeader
+        „DBR77 Vector"  (brak w en)
+      public/locales/pl/translation.json:vector.comparison.genericHeader
+        „Generyczny LLM"  (brak w en)
+      public/locales/pl/translation.json:vector.roadmap.title
+        „Od wsparcia decyzji do autonomii"  (brak w en)
+      public/locales/pl/translation.json:vector.roadmap.subtitle
+        „Czteroetapowa trajektoria ewolucyjna w kierunku w pełni autonomicznych systemów przemysłowych."  (brak w en)
+      public/locales/pl/translation.json:vector.roadmap.now
+        „Teraz"  (brak w en)
+      public/locales/pl/translation.json:vector.roadmap.done
+        „Zrobione"  (brak w en)
+      public/locales/pl/translation.json:vector.ecosystem.title
+        „Część kompletnego ekosystemu przemysłowego"  (brak w en)
+      public/locales/pl/translation.json:vector.ecosystem.subtitle
+        „Vector nie jest samodzielnym narzędziem. Jest jądrem poznawczym przemysłowego systemu operacyjnego AI DBR77."  (brak w en)
+      public/locales/pl/translation.json:vector.cta.title
+        „Gotowy zobaczyć rozumowanie przemysłowe w akcji?"  (brak w en)
+      public/locales/pl/translation.json:vector.cta.subtitle
+        „Pobierz pełny whitepaper po szczegóły techniczne lub umów demo na żywo, aby zobaczyć jak Vector analizuje realny scenari"  (brak w en)
+      public/locales/pl/translation.json:vector.cta.download
+        „Pobierz whitepaper (PDF)"  (brak w en)
+      public/locales/pl/translation.json:vector.cta.demo
+        „Umów demo na żywo"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.acceptButton
+        „Zaakceptuj plan"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.acceptFailed
+        „Nie udało się zaakceptować planu materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.accepted
+        „Plan zaakceptowano i utworzono propozycję"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.approveReviewButton
+        „Zatwierdź weryfikację"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.artifactReady
+        „Materiał jest gotowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.captureFirst
+        „Zapisz stan rozmowy, aby rozpocząć planowanie materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.captureSnapshotAction
+        „Zapisz stan rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.goal
+        „Cel"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.goalPlaceholder
+        „Opisz materiał, który ma powstać na podstawie tej rozmowy."  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.governedExecution
+        „Wykonanie oczekujące na kontrolę"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.historyOriginal
+        „Pierwszy przebieg"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.historyRetry
+        „Ponowienie"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.historyTitle
+        „Historia przebiegów"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.latestSnapshot
+        „Ostatni zapis rozmowy jest gotowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.materializeButton
+        „Utwórz materiał"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.materializeFailed
+        „Nie udało się utworzyć materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.materialized
+        „Utworzono docelowy materiał"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.noSnapshot
+        „Zapisz stan rozmowy przed zaplanowaniem materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.outputType
+        „Rodzaj materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.status.planned
+        „Zaplanowano"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.executionState.unknown
+        „Stan niedostępny"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.planButton
+        „Zaplanuj materiał"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.planCreated
+        „Utworzono plan materiału na podstawie rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.planFailed
+        „Nie udało się utworzyć planu materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.planVersion
+        „Wersja planu"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightAction
+        „Sprawdź przed uruchomieniem"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightFailed
+        „Nie udało się sprawdzić tego przebiegu"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightNotRun
+        „Nie wykonano"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightOk
+        „Kontrola została zaktualizowana"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightTitle
+        „Kontrola przed uruchomieniem"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightCheckPending
+        „Kontrola oczekuje na wykonanie"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.preflightCheckFailed
+        „Kontrola wymaga poprawy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.proposalReady
+        „Propozycja jest gotowa"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.proposalsCount
+        „Propozycje"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.rejectReviewButton
+        „Odrzuć weryfikację"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.retried
+        „Ponowiono planowanie materiału na podstawie rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.retryButton
+        „Ponów"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.retryFailed
+        „Nie udało się ponowić planowania"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewApproveFailed
+        „Nie udało się zatwierdzić wykonania"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewApproved
+        „Wykonanie zostało zatwierdzone"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewRejectFailed
+        „Nie udało się odrzucić wykonania"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewRejected
+        „Wykonanie zostało odrzucone"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewSubmitFailed
+        „Nie udało się wysłać wykonania do weryfikacji"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.reviewSubmitted
+        „Wykonanie wysłano do weryfikacji"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.sheetTableId
+        „Identyfikator tabeli docelowej"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.sheetTableIdHint
+        „Dane zostaną zapisane w istniejącej tabeli docelowej."  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.sheetTableIdPlaceholder
+        „Podaj identyfikator tabeli docelowej"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.snapshotCaptureFailed
+        „Nie udało się zapisać stanu rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.snapshotCaptured
+        „Zapisano stan tej rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.snapshotMissing
+        „Przed rozpoczęciem planowania trzeba zapisać stan rozmowy."  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.snapshotMissingButCapturable
+        „Zapisz stan rozmowy, aby rozpocząć planowanie materiału."  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.snapshotReady
+        „Wykorzystany zostanie ostatni zapis tej rozmowy."  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.submitReviewButton
+        „Wyślij do weryfikacji"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.title
+        „Plan materiału wynikowego"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.trigger
+        „Utwórz plan materiału"  (brak w en)
+      public/locales/pl/translation.json:v8.artifactRun.waitingSnapshot
+        „Brak zapisanego stanu rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.contextSnapshots
+        „Zapisy kontekstu: {{count}}"  (brak w en)
+      public/locales/pl/translation.json:v8.contextShortCount
+        „Kontekst: {{count}}"  (brak w en)
+      public/locales/pl/translation.json:v8.searchShortCount
+        „Wyszukiwania: {{count}}"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffShortCount
+        „Przekazania: {{count}}"  (brak w en)
+      public/locales/pl/translation.json:v8.contextSnapshotsCount
+        „Liczba zapisów tej rozmowy: {{count}}"  (brak w en)
+      public/locales/pl/translation.json:v8.contextSnapshotsLabel
+        „Zapisy kontekstu"  (brak w en)
+      public/locales/pl/translation.json:v8.contextSummary
+        „Kontekst rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.contextUnavailable
+        „Część kontekstu jest niedostępna"  (brak w en)
+      public/locales/pl/translation.json:v8.contextUnavailableHint
+        „Brakujące źródło nie jest traktowane jako wczytane. Spróbuj ponownie albo kontynuuj bez przekazywania zadania."  (brak w en)
+      public/locales/pl/translation.json:v8.handoffCount
+        „Przekazania"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffCreateAction
+        „Utwórz przekazanie"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffCreateFailed
+        „Nie udało się utworzyć przekazania"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffCreated
+        „Utworzono przekazanie na podstawie aktywnej rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffEmpty
+        „W tej rozmowie nie zapisano jeszcze przekazań."  (brak w en)
+      public/locales/pl/translation.json:v8.handoffGoal
+        „Ostatni cel"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffIntent
+        „Zamiar"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffRun
+        „Przebieg"  (brak w en)
+      public/locales/pl/translation.json:v8.handoffSummary
+        „Przekazania z rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalDenied
+        „Odmowa dostępu"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalEmpty
+        „W tej rozmowie nie zapisano jeszcze informacji o wyszukiwaniu."  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalLatency
+        „Czas odpowiedzi"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalPreset
+        „Ustawienie wyszukiwania"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalPresetConfigured
+        „Ustawienie dobrane do rozmowy"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalResults
+        „Wyniki"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalSummary
+        „Wyszukiwanie informacji"  (brak w en)
+      public/locales/pl/translation.json:v8.retrievalWarnings
+        „Ostrzeżenia"  (brak w en)
+      public/locales/pl/translation.json:shared.executiveModuleShell.expandElementInspector
+        „Rozwiń panel inspektora"  (brak w en)
+      public/locales/pl/translation.json:shared.executiveModuleShell.collapseElementInspector
+        „Zwiń panel inspektora"  (brak w en)
+  [K3aKLUCZ]   z tego: brak defaultu w kodzie -> EN widzi SUROWY KLUCZ — 0 (w module; suma repo 326)
+  [K3b] klucz jest w EN, brak w PL (fallback pokaże angielski) — 0 (w module; suma repo 4)
+  [K4pl] polski tekst na sztywno w JSX/TSX (poza t()) — 25 (w module; suma repo 854)
+      src/components/shared/ModuleHub/GridView.tsx:244
+        „(
+  // Lokalny inline SVG zamiast dodatkowego importu — identyczny wygląd co lucide Plus 24px."  (diakrytyk:ą)
+      src/components/shared/TableWithPreviewLayout.tsx:712
+        „) : panelWidoczny ? (
+            /* DEC-404: ten JEDEN prawy panel jest tym samym bytem co
+               `"  (pl:jest)
+      src/components/shared/TableWithPreviewLayout.tsx:715
+        „` w `JedenPrawyPanel` — element
+               semantyczny musi być ten sam, żeby bramka „dokładnie jeden"  (diakrytyk:ć,pl:musi)
+      src/layouts/MainLayout.tsx:521
+        „`
+                      co `JedenPrawyPanel`/`TableWithPreviewLayout`: bramka
+                      „dokładnie jeden"  (diakrytyk:ł)
+      src/pages/dev/StyleGuide.tsx:58
+        „VF0-11 · dev-only, za flagą"  (diakrytyk:ą)
+      src/pages/dev/StyleGuide.tsx:59
+        „· bez logowania. Zero
+              re-implementacji — wszystko importowane z żywego systemu."  (diakrytyk:ż)
+      src/pages/dev/styleguide/ComponentsSection.tsx:296
+        „Otwórz źródło"  (diakrytyk:ó,pl:otwórz)
+      src/pages/dev/styleguide/ComponentsSection.tsx:219
+        „Kliknij wiersz, by zobaczyć podgląd."  (diakrytyk:ć)
+      src/pages/dev/styleguide/ComponentsSection.tsx:386
+        „Zatwierdź"  (diakrytyk:ź)
+      src/pages/dev/styleguide/ComponentsSection.tsx:402
+        „Właściciel: Anna Kowalska"  (diakrytyk:ł)
+      src/pages/dev/styleguide/ComponentsSection.tsx:418
+        „Brak komentarzy."  (pl:brak)
+      src/pages/dev/styleguide/ComponentsSection.tsx:425
+        „Utworzono przez Teresę · 2 dni temu"  (diakrytyk:ę,pl:przez)
+      src/pages/dev/styleguide/ComponentsSection.tsx:442
+        „Widoczność: Zespół"  (diakrytyk:ś)
+      src/pages/dev/styleguide/ComponentsSection.tsx:446
+        „3 powiązane notatki, 1 initiative."  (diakrytyk:ą)
+      src/pages/dev/styleguide/ComponentsSection.tsx:449
+        „Komendy + strumień sugestii Teresy."  (diakrytyk:ń)
+      src/pages/dev/styleguide/ComponentsSection.tsx:517
+        „Sekcja „Źródła i założenia" (ArtifactRightPanel slot) — realny fetch
+            `fetchEvidenceEnvelope('insight', 'demo"  (diakrytyk:Ź)
+      src/pages/dev/styleguide/StatesSection.tsx:147
+        „Nie udało się załadować tej inicjatywy"  (diakrytyk:ł,pl:nie,pl:się)
+      src/pages/dev/styleguide/StatesSection.tsx:148
+        „Rekord mógł zostać przeniesiony lub usunięty."  (diakrytyk:ó,pl:lub)
+      src/pages/dev/styleguide/StatesSection.tsx:155
+        „StreamingState (na żywo — token po tokenie)"  (diakrytyk:ż)
+      src/pages/dev/styleguide/TokensSection.tsx:132
+        „Paleta tagów (c-tag-1..12)"  (diakrytyk:ó)
+      src/pages/dev/styleguide/TokensSection.tsx:137
+        „Paleta wykresów (c-chart-1..8)"  (diakrytyk:ó)
+      src/pages/dev/styleguide/TokensSection.tsx:156
+        „Odstępy (4·8·12·16·20·24·32·40·48)"  (diakrytyk:ę)
+      src/views/LegalIndexView.tsx:284
+        „Toruń, Poland"  (diakrytyk:ń)
+      src/views/LegalIndexView.tsx:414
+        „ul. Żółkiewskiego 31"  (diakrytyk:Ż)
+      src/views/LegalIndexView.tsx:415
+        „87-100 Toruń, Poland"  (diakrytyk:ń)
+  [K4en] angielski tekst na sztywno w JSX/TSX (poza t()) — 232 (w module; suma repo 1250)
+      src/App.tsx:134
+        „This invitation URL is incomplete. Please request a new invitation link."  (en:this,en:please)
+      src/components/AIAnalyticsDashboard.tsx:305
+        „Cost Saved"  (en?:cost,en?:saved)
+      src/components/AIAnalyticsDashboard.tsx:497
+        „Failed"  (en:failed)
+      src/components/AIFeedbackButton.tsx:115
+        „Tell us more about your experience... (optional)"  (en:about,en:your)
+      src/components/AIInsightFeed.tsx:113
+        „No critical alerts at this time."  (en:this)
+      src/components/AIInterviewModal.tsx:163
+        „Type your answer..."  (en:your)
+      src/components/AIUsageIndicator.tsx:148
+        „Last 7 days"  (en?:last,en?:days)
+      src/components/Charts/RechartsWrapper.tsx:38
+        „Chart failed to load. Please refresh the page."  (en:failed,en:please,en:the)
+      src/components/Charts/RechartsWrapper.tsx:125
+        „Chart failed to load. Please refresh the page."  (en:failed,en:please,en:the)
+      src/components/ErrorBoundary.tsx:126
+        „The application encountered an unexpected error. This usually happens due to corrupted
+              local data or a tem"  (en:the,en:this)
+      src/components/ErrorBoundary.tsx:134
+        „Runtime details are hidden for safety. You can retry, reset app data, or report this
+              incident with context"  (en:you,en:this,en:with)
+      src/components/ErrorBoundary.tsx:138
+        „Technical diagnostics are captured in telemetry and available through the report
+              action."  (en:and,en:the)
+      src/components/ErrorBoundary.tsx:146
+        „Crash diagnostics were sent to the observability pipeline."  (en:were,en:the)
+      src/components/ErrorBoundary.tsx:154
+        „Crash diagnostics could not be delivered. Retry or report manually."  (en:could)
+      src/components/ErrorBoundary.tsx:162
+        „Crash diagnostics were not sent in this environment."  (en:were,en:this)
+      src/components/ModelSelector.tsx:295
+        „Loading options..."  (en:loading)
+      src/components/RouteErrorBoundary.tsx:192
+        „Crash diagnostics were sent successfully."  (en:were,en:successfully)
+      src/components/RouteErrorBoundary.tsx:200
+        „Crash diagnostics could not be delivered. You can retry or report manually."  (en:could,en:you)
+      src/components/RouteErrorBoundary.tsx:208
+        „Crash diagnostics were not sent in this environment."  (en:were,en:this)
+      src/components/ai/ActionAuditTrail.tsx:103
+        „No decisions have been recorded yet."  (en:have,en:been)
+      src/components/ai/ActionProposalDetail.tsx:56
+        „Review AI-generated suggestions to optimize your digital transformation flow."  (en:your)
+      src/components/ai/ActionProposalDetail.tsx:75
+        „Draft Action"  (en:draft)
+      src/components/ai/ActionProposalList.tsx:77
+        „No pending action proposals found."  (en:pending)
+      src/components/ai/EvidencePanel.tsx:170
+        „Loading evidence..."  (en:loading)
+      src/components/ai/EvidencePanel.tsx:190
+        „No evidence available for this item yet."  (en:this)
+      src/components/ai/EvidencePanel.tsx:191
+        „Evidence is generated when AI decisions are made."  (en:when)
+      src/components/ai/PlaybookStepEvidence.tsx:114
+        „Loading evidence..."  (en:loading)
+      src/components/ai/PlaybookStepEvidence.tsx:132
+        „No evidence available for this step."  (en:this)
+      src/components/dashboard/DashboardExecutionSnapshot.tsx:194
+        „Start by creating initiatives in the Roadmap phase."  (en:the)
+      src/components/dashboard/DashboardOverview.tsx:162
+        „Welcome to Your Transformation Dashboard"  (en:your)
+      src/components/dashboard/DashboardOverview.tsx:163
+        „Start your digital transformation journey by completing the initial assessment and
+            planning."  (en:your,en:the,en:and)
+      src/components/dashboard/DashboardOverview.tsx:424
+        „New Task"  (en?:new,en?:task)
+      src/components/dashboard/LiveDashboard.tsx:370
+        „Loading KPI data..."  (en:loading)
+      src/components/dashboard/OnboardingDashboard.tsx:151
+        „Start with Expectations & Challenges"  (en:with)
+      src/components/dashboard/OnboardingDashboard.tsx:157
+        „Please proceed to the active module via the sidebar or Cockpit tab."  (en:please,en:the)
+      src/components/dashboard/OnboardingDashboard.tsx:169
+        „"I am monitoring your progress. Once you complete the Expectations phase, I will
+              prepare a tailored assess"  (en:your,en:you,en:the)
+      src/components/dashboard/UserTaskList.tsx:70
+        „Complete these steps to keep progress moving."  (en:these)
+      src/components/dashboard/UserTaskList.tsx:87
+        „Add Task"  (en?:add,en?:task)
+      src/components/dashboard/UserTaskList.tsx:93
+        „Loading tasks..."  (en:loading)
+      src/components/dashboard/UserTaskList.tsx:96
+        „No pending tasks. Great job!"  (en:pending)
+      src/components/dashboard/UserTaskList.tsx:136
+        „Focus on your next actionable steps and track progress from one place."  (en:your,en:and,en:from)
+      src/components/navigation/BackToChatButton.tsx:99
+        „Back to active conversation"  (en:back)
+      src/components/navigation/BackToChatButton.tsx:100
+        „Back to active conversation"  (en:back)
+      src/components/navigation/BackToChatButton.tsx:105
+        „Back to chat"  (en:back)
+      src/components/shared/AIConfigCore.tsx:90
+        „Loading available models..."  (en:loading)
+      src/components/shared/AIConfigCore.tsx:340
+        „You are using the organization's default AI provider. No configuration is needed.
+                Usage counts towards y"  (en:you,en:the,en:your)
+      src/components/shared/AIConfigCore.tsx:354
+        „Your Preferred Models"  (en:your)
+      src/components/shared/AIConfigCore.tsx:357
+        „Select which models appear in your top bar selector."  (en:which,en:your)
+      src/components/shared/AIConfigCore.tsx:387
+        „Your API key is stored locally in your browser and used directly. It is never sent
+                to our servers."  (en:your,en:and)
+      src/components/shared/BillingCore.tsx:488
+        „AI requests this month"  (en:this)
+      src/components/shared/BillingCore.tsx:419
+        „Your User License"  (en:your)
+      src/components/shared/BillingCore.tsx:482
+        „Usage This Period"  (en:this)
+      src/components/shared/CommunicationSurfaceModelPanel.tsx:65
+        „Communication should preserve context, separate internal from external channels, and
+            convert messages into v"  (en:should,en:from,en:and)
+      src/components/shared/CreateFormatModeLauncher.tsx:176
+        „Back"  (en:back)
+      src/components/shared/EasySyncSetupShellPanel.tsx:77
+        „Users should be able to choose, connect, authorize, configure, test, and monitor a
+            provider without guessing"  (en:should,en:and,en:which)
+      src/components/shared/InfoButton.tsx:303
+        „Need more help? Contact support or check the full documentation."  (en:the)
+      src/components/shared/ModuleHub/FilterableTable.tsx:1470
+        „Array.from(scroller.querySelectorAll"  (en:from)
+      src/components/shared/ModuleHub/TableSettingsPopover.tsx:110
+        „Table settings"  (en?:table,en?:settings)
+      src/components/shared/TableWithPreviewLayout.tsx:346
+        „Array.from(
+        dialog.querySelectorAll"  (en:from)
+      src/components/shared/UserManagementCore.tsx:300
+        „First Name"  (en?:first,en?:name)
+      src/components/shared/UserManagementCore.tsx:307
+        „Last Name"  (en?:last,en?:name)
+      src/components/shared/UserManagementCore.tsx:846
+        „Search users..."  (en?:search,en?:users)
+      src/components/shared/UserManagementCore.tsx:946
+        „This admin surface can edit existing users, but direct creation is not backed by a reliable tenant-admin endpoint. Use t"  (en:this,en:the)
+      src/components/shared/UserManagementCore.tsx:425
+        „Invite New User"  (en?:new,en?:user)
+      src/components/shared/UserManagementCore.tsx:937
+        „Add User"  (en?:add,en?:user)
+      src/components/shared/V8UnavailableBanner.tsx:31
+        „This module requires server-side V8 features to be enabled. Contact your administrator to
+          activate this module"  (en:this,en:your)
+      src/components/shared/ViewLayouts/NotionListView.tsx:193
+        „No items in this section"  (en:this)
+      src/components/ui/ResizableTable/FilterDropdown.tsx:163
+        „From"  (en:from)
+      src/components/ui/primitives/OptimizedImage.tsx:201
+        „Failed to load"  (en:failed)
+      src/components/ui/primitives/Spinner.tsx:50
+        „Loading"  (en:loading)
+      src/components/v10/V10TeresaRuntimeWorkspace.tsx:20
+        „Frontend V10 surface backed by `/api/v10/teresa/voice-config`. It exposes the runtime
+            state instead of leavi"  (en:the)
+      src/components/workspaces/FullROIWorkspace.tsx:144
+        „Model breaking down Capex (One-off) vs Opex (Recurring) for each initiative. (Placeholder
+        for Cost Modeling Tool"  (en?:initiative,en?:cost)
+      src/components/workspaces/FullStep1Workspace.tsx:108
+        „Evaluate your organization across 7 key dimensions."  (en:your)
+      src/components/workspaces/FullStep2Workspace.tsx:148
+        „New Initiative"  (en?:new,en?:initiative)
+      src/components/workspaces/FullStep2Workspace.tsx:261
+        „No initiatives found in this group."  (en:this)
+      src/components/workspaces/PilotDecisionWorkspace.tsx:103
+        „is the optimal
+                  pilot. It offers high visibility with manageable risk."  (en:the,en:with)
+      src/components/workspaces/Step2Workspace.tsx:81
+        „No strategic goals defined yet. Chat with AI to define them."  (en:with,en:them)
+      src/components/workspaces/Step3Workspace.tsx:123
+        „Drag strategy files here"  (en:here)
+      src/components/workspaces/Step3Workspace.tsx:137
+        „AI has built the context model. We can proceed to Assessment."  (en:has,en:the)
+      src/index.tsx:132
+        „React createRoot and render completed without AppProviders, RouterSync, auth verification, or app shell."  (en:and)
+      src/index.tsx:99
+        „The browser is clearing stale service worker and cache state before React providers mount."  (en:the,en:and)
+      src/index.tsx:113
+        „The application bundle executed, but React was intentionally not mounted. Use this mode to confirm whether renderer cras"  (en:the,en:was,en:this)
+      src/index.tsx:168
+        „Failed to start the application. Please check the console for details."  (en:failed,en:the,en:please)
+      src/lib/recharts-lazy.tsx:14
+        „Loading chart..."  (en:loading)
+      src/lib/recharts-lazy.tsx:33
+        „Loading chart..."  (en:loading)
+      src/pages/dev/styleguide/ComponentsSection.tsx:401
+        „Status: Draft"  (en:draft)
+      src/pages/dev/styleguide/ComponentsSection.tsx:524
+        „Pasek statusu HP-7 (draft→review→approved/rejected) — realny fetch
+            `getArtifactApprovalState('insight', 'dem"  (en:draft)
+      src/views/AcceptInvitationView.tsx:254
+        „Your account has been created successfully. You can now log in to access your
+            organization."  (en:your,en:has,en:been)
+      src/views/AcceptInvitationView.tsx:315
+        „Signed in with a different account"  (en:with)
+      src/views/AcceptInvitationView.tsx:316
+        „This invitation is for"  (en:this)
+      src/views/AcceptInvitationView.tsx:317
+        „.
+                Sign out and continue with the invited address."  (en:and,en:with,en:the)
+      src/views/AcceptInvitationView.tsx:324
+        „Sign out and continue"  (en:and)
+      src/views/AcceptInvitationView.tsx:346
+        „Your work email *"  (en:your)
+      src/views/AcceptInvitationView.tsx:359
+        „Use the work email this invitation was sent to."  (en:the,en:this,en:was)
+      src/views/AcceptInvitationView.tsx:375
+        „First Name *"  (en?:first,en?:name)
+      src/views/AcceptInvitationView.tsx:391
+        „Last Name *"  (en?:last,en?:name)
+      src/views/BusinessCasesPage.tsx:59
+        „Zero shared view of the transformation."  (en:the)
+      src/views/BusinessCasesPage.tsx:81
+        „This is the story of how they fixed that with Consultify."  (en:this,en:the,en:that)
+      src/views/BusinessCasesPage.tsx:125
+        „The company"  (en:the)
+      src/views/BusinessCasesPage.tsx:194
+        „The problem"  (en:the)
+      src/views/BusinessCasesPage.tsx:199
+        „"We had 40 project ideas and no way to tell the board which five to fund first.""  (en:and,en:the,en:which)
+      src/views/BusinessCasesPage.tsx:258
+        „What AluForm deployed"  (en:what)
+      src/views/BusinessCasesPage.tsx:263
+        „One transformation system for HQ, plants, and finance — not another dashboard."  (en:and)
+      src/views/BusinessCasesPage.tsx:343
+        „How the program scaled"  (en:the)
+      src/views/BusinessCasesPage.tsx:406
+        „EUR 2.85 million in annual value. 14-month payback. 173 % risk-adjusted ROI."  (en?:value,en?:month)
+      src/views/BusinessCasesPage.tsx:488
+        „Beyond the numbers"  (en:the)
+      src/views/BusinessCasesPage.tsx:491
+        „The real transformation was how the organization makes decisions."  (en:the,en:was)
+      src/views/BusinessCasesPage.tsx:590
+        „Ready to see this for your organization?"  (en:this,en:your)
+      src/views/BusinessCasesPage.tsx:593
+        „Start with a trial or talk to our team about your rollout."  (en:with,en:about,en:your)
+      src/views/BusinessCasesPage.tsx:613
+        „Discuss your rollout"  (en:your)
+      src/views/LegalDocumentView.tsx:255
+        „Loading document..."  (en:loading)
+      src/views/LegalDocumentView.tsx:295
+        „Back to Legal Center"  (en:back)
+      src/views/LegalDocumentView.tsx:313
+        „Back to Homepage"  (en:back)
+      src/views/LegalDocumentView.tsx:275
+        „Back to Legal Documents"  (en:back)
+      src/views/LegalIndexView.tsx:338
+        „Commercial terms for pricing, subscriptions, enterprise procurement, and paid plans."  (en:and)
+      src/views/LegalIndexView.tsx:353
+        „Reference documentation about our security practices and data processing."  (en:about,en:and)
+      src/views/LegalIndexView.tsx:220
+        „Back to Home"  (en:back)
+      src/views/LegalIndexView.tsx:375
+        „If you have any questions about these documents or need clarification, please
+                contact us."  (en:you,en:have,en:about)
+      src/views/LegalIndexView.tsx:449
+        „Last updated: April 2026 · Version 2.0"  (en?:last,en?:updated)
+      src/views/OAuthCallback.tsx:135
+        „Authentication Failed"  (en:failed)
+      src/views/OAuthCallback.tsx:142
+        „Back to Home"  (en:back)
+      src/views/legal/AboutView.tsx:145
+        „Human-in-the-Loop"  (en:the)
+      src/views/legal/AboutView.tsx:146
+        „AI augments human judgment, never replaces it. You maintain full control over every strategic choice."  (en:you)
+      src/views/legal/AboutView.tsx:151
+        „World-class strategic frameworks should be accessible to every organization, not just Fortune 500 companies."  (en:should)
+      src/views/legal/AboutView.tsx:58
+        „About Consultify"  (en:about)
+      src/views/legal/AboutView.tsx:95
+        „Consultify changes that."  (en:that)
+      src/views/legal/AboutView.tsx:95
+        „We've built a
+                platform that combines the rigor of top-tier consulting methodologies with the speed
+     "  (en:that,en:the,en:with)
+      src/views/legal/AboutView.tsx:99
+        „The result? Strategic decisions in days, not months. At a fraction of the cost. With
+                full control stayin"  (en:the,en:with,en:your)
+      src/views/legal/AboutView.tsx:132
+        „The principles that guide everything we build"  (en:the,en:that)
+      src/views/legal/AboutView.tsx:183
+        „Ready to Transform Your Strategy?"  (en:your)
+      src/views/legal/AboutView.tsx:184
+        „Experience the future of strategic consulting. Start with a free demo or begin your
+            trial today."  (en:the,en:with,en:your)
+      src/views/legal/CookiePolicyView.tsx:70
+        „1. What Are Cookies?"  (en:what)
+      src/views/legal/CookiePolicyView.tsx:79
+        „Consultify uses only essential and functional cookies. We do not use third-party tracking
+          or advertising cooki"  (en:and)
+      src/views/legal/CookiePolicyView.tsx:89
+        „Remember your preferences for a better experience."  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:33
+        „By using Consultify, you agree to the collection and use of information in accordance with
+          this policy."  (en:you,en:the,en:and)
+      src/views/legal/PrivacyPolicyView.tsx:42
+        „The data controller responsible for your personal data is:"  (en:the,en:your)
+      src/views/legal/PrivacyPolicyView.tsx:62
+        „3.1 Information You Provide"  (en:you)
+      src/views/legal/PrivacyPolicyView.tsx:65
+        „Name, email address, company name, job title"  (en?:name,en?:company)
+      src/views/legal/PrivacyPolicyView.tsx:74
+        „Documents, reports, assessments, and other content you create"  (en:and,en:you)
+      src/views/legal/PrivacyPolicyView.tsx:77
+        „Support requests, feedback, and correspondence"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:107
+        „4. How We Use Your Data"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:108
+        „We use your personal data for the following purposes:"  (en:your,en:the)
+      src/views/legal/PrivacyPolicyView.tsx:111
+        „To provide and maintain Consultify's features"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:114
+        „To manage your account and subscription"  (en:your,en:and)
+      src/views/legal/PrivacyPolicyView.tsx:120
+        „To send service updates, security alerts, and support
+            messages"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:124
+        „To analyze usage patterns and improve our platform"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:127
+        „To comply with legal obligations and protect our
+            rights"  (en:with,en:and)
+      src/views/legal/PrivacyPolicyView.tsx:136
+        „We process your personal data based on the following legal grounds (GDPR Article 6):"  (en:your,en:the)
+      src/views/legal/PrivacyPolicyView.tsx:157
+        „6. Data Sharing and Third Parties"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:158
+        „We may share your data with:"  (en:your,en:with)
+      src/views/legal/PrivacyPolicyView.tsx:166
+        „OpenAI, Anthropic, Google (based on your configuration)"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:177
+        „We may disclose data if required by law, court order, or to protect our rights and safety."  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:182
+        „In the event of a merger, acquisition, or sale, your data may be transferred as part of
+          the business assets."  (en:the,en:your)
+      src/views/legal/PrivacyPolicyView.tsx:198
+        „Data Processing Agreements with all providers"  (en:with)
+      src/views/legal/PrivacyPolicyView.tsx:199
+        „Adequacy decisions where applicable"  (en:where)
+      src/views/legal/PrivacyPolicyView.tsx:206
+        „We retain your personal data for as long as necessary to:"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:208
+        „Provide our services while your account is active"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:209
+        „Comply with legal obligations (typically 5-7 years for financial records)"  (en:with)
+      src/views/legal/PrivacyPolicyView.tsx:210
+        „Resolve disputes and enforce agreements"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:212
+        „After account deletion, we anonymize or delete your data within 90 days, except where
+          retention is required by"  (en:your,en:where)
+      src/views/legal/PrivacyPolicyView.tsx:220
+        „9. Your Rights (GDPR)"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:221
+        „Under the General Data Protection Regulation, you have the following rights:"  (en:the,en:you,en:have)
+      src/views/legal/PrivacyPolicyView.tsx:224
+        „Request a copy of your personal data"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:230
+        „Request deletion of your data ("right to be
+            forgotten")"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:234
+        „Limit how we process your data"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:237
+        „Receive your data in a portable
+            format"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:250
+        „. We will respond within 30 days."  (en:will)
+      src/views/legal/PrivacyPolicyView.tsx:257
+        „We implement robust security measures to protect your data:"  (en:your)
+      src/views/legal/PrivacyPolicyView.tsx:259
+        „Encryption at rest (AES-256) and in transit (TLS 1.3)"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:260
+        „Secure authentication with password hashing (bcrypt)"  (en:with)
+      src/views/legal/PrivacyPolicyView.tsx:262
+        „Regular security audits and penetration testing"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:263
+        „24/7 monitoring and intrusion detection"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:272
+        „11. Cookies and Tracking"  (en:and)
+      src/views/legal/PrivacyPolicyView.tsx:292
+        „13. Changes to This Policy"  (en:this)
+      src/views/legal/PrivacyPolicyView.tsx:303
+        „If you have questions about this Privacy Policy or wish to exercise your rights, contact
+          us:"  (en:you,en:have,en:about)
+      src/views/legal/PrivacyPolicyView.tsx:314
+        „You also have the right to lodge a complaint with your local data protection authority."  (en:you,en:have,en:the)
+      src/views/legal/TermsOfServiceView.tsx:26
+        „1. Introduction and Acceptance"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:36
+        „These Terms apply to all users, including trial users, subscribers, and enterprise
+          customers."  (en:these,en:and)
+      src/views/legal/TermsOfServiceView.tsx:47
+        „- Your registered user account on the Platform"  (en:your,en:the)
+      src/views/legal/TermsOfServiceView.tsx:50
+        „- All data, text, documents, and materials you create or
+            upload"  (en:and,en:you)
+      src/views/legal/TermsOfServiceView.tsx:58
+        „- A company or entity using the Platform with multiple
+            users"  (en:the,en:with)
+      src/views/legal/TermsOfServiceView.tsx:62
+        „- Your paid access plan to the Platform"  (en:your,en:the)
+      src/views/legal/TermsOfServiceView.tsx:65
+        „- A limited free access period to evaluate the Service"  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:73
+        „To use Consultify, you must:"  (en:you)
+      src/views/legal/TermsOfServiceView.tsx:76
+        „Have the legal capacity to enter into binding agreements"  (en:have,en:the,en:into)
+      src/views/legal/TermsOfServiceView.tsx:77
+        „Not be prohibited from using the Service under applicable laws"  (en:from,en:the)
+      src/views/legal/TermsOfServiceView.tsx:78
+        „Provide accurate and complete registration information"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:80
+        „If you are using the Service on behalf of an organization, you represent that you have
+          authority to bind that "  (en:you,en:the,en:that)
+      src/views/legal/TermsOfServiceView.tsx:88
+        „4. Account Registration and Security"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:103
+        „You may not share your account with others or create multiple accounts for the same
+          person."  (en:you,en:your,en:with)
+      src/views/legal/TermsOfServiceView.tsx:111
+        „5. Subscription and Payment"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:113
+        „5.1 Plans and Pricing"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:114
+        „Consultify offers various subscription plans. Current pricing is available on our website.
+          We reserve the righ"  (en:the,en:with)
+      src/views/legal/TermsOfServiceView.tsx:130
+        „You are responsible for applicable taxes"  (en:you)
+      src/views/legal/TermsOfServiceView.tsx:134
+        „Subscriptions automatically renew unless cancelled before the renewal date. You may cancel
+          at any time through"  (en:the,en:you,en:your)
+      src/views/legal/TermsOfServiceView.tsx:139
+        „5.5 Failed Payments"  (en:failed)
+      src/views/legal/TermsOfServiceView.tsx:140
+        „If payment fails, we may suspend your access until payment is resolved. After 30 days of
+          non-payment, we may t"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:148
+        „6. License and Access"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:157
+        „You may not:"  (en:you)
+      src/views/legal/TermsOfServiceView.tsx:159
+        „Copy, modify, or distribute the Platform or its content"  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:161
+        „Use the Service for illegal purposes"  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:163
+        „Use automated means to access the Service (bots, scrapers)"  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:179
+        „7.2 Your Content"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:193
+        „If you provide feedback or suggestions, we may use them without obligation to compensate
+          you."  (en:you,en:them)
+      src/views/legal/TermsOfServiceView.tsx:202
+        „You agree not to use the Platform to:"  (en:you,en:the)
+      src/views/legal/TermsOfServiceView.tsx:209
+        „Interfere with the Platform's operation or security"  (en:with,en:the)
+      src/views/legal/TermsOfServiceView.tsx:210
+        „Collect data about other users without consent"  (en:about)
+      src/views/legal/TermsOfServiceView.tsx:213
+        „We reserve the right to suspend or terminate accounts that violate these policies."  (en:the,en:that,en:these)
+      src/views/legal/TermsOfServiceView.tsx:218
+        „9. AI Services and Third-Party Providers"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:234
+        „9.3 Bring Your Own Key (BYOK)"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:235
+        „If you use your own API keys for AI providers, you are responsible for compliance with
+          that provider's terms a"  (en:you,en:your,en:with)
+      src/views/legal/TermsOfServiceView.tsx:243
+        „10. Data and Privacy"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:244
+        „Your privacy is important to us. Our"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:249
+        „You are responsible for ensuring you have appropriate rights to upload any data to the
+          Platform."  (en:you,en:have,en:the)
+      src/views/legal/TermsOfServiceView.tsx:258
+        „THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS
+          OR IMPLIED, INCLUDI"  (en:the,en:and)
+      src/views/legal/TermsOfServiceView.tsx:266
+        „SECURITY from unauthorized access"  (en:from)
+      src/views/legal/TermsOfServiceView.tsx:284
+        „DAMAGES RESULTING FROM YOUR RELIANCE ON AI-GENERATED CONTENT"  (en:from,en:your)
+      src/views/legal/TermsOfServiceView.tsx:287
+        „OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE
+          CLAIM."  (en:the,en:you)
+      src/views/legal/TermsOfServiceView.tsx:302
+        „Your use of the Service"  (en:your,en:the)
+      src/views/legal/TermsOfServiceView.tsx:303
+        „Your violation of these Terms"  (en:your,en:these)
+      src/views/legal/TermsOfServiceView.tsx:304
+        „Your Content or data"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:305
+        „Your violation of third-party rights"  (en:your)
+      src/views/legal/TermsOfServiceView.tsx:313
+        „14.1 By You"  (en:you)
+      src/views/legal/TermsOfServiceView.tsx:334
+        „15. Governing Law and Disputes"  (en:and)
+      src/views/legal/TermsOfServiceView.tsx:335
+        „These Terms are governed by the laws of Poland, without regard to conflict of law
+          principles."  (en:these,en:the)
+      src/views/legal/TermsOfServiceView.tsx:341
+        „Good faith negotiation between the parties"  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:345
+        „For EU consumers, nothing in these Terms affects your statutory rights or your right to
+          bring claims in your l"  (en:these,en:your)
+      src/views/legal/TermsOfServiceView.tsx:366
+        „These Terms, together with the Privacy Policy and any
+            additional agreements, constitute the entire agreement"  (en:these,en:with,en:the)
+      src/views/legal/TermsOfServiceView.tsx:370
+        „If any provision is found unenforceable, the remaining
+            provisions continue in effect."  (en:the)
+      src/views/legal/TermsOfServiceView.tsx:374
+        „Our failure to enforce any right does not constitute a waiver."  (en:does)
+      src/views/legal/TermsOfServiceView.tsx:377
+        „You may not assign these Terms. We may assign our rights in
+            connection with a business transfer."  (en:you,en:these,en:with)
+      src/views/legal/TermsOfServiceView.tsx:390
+        „For questions about these Terms, contact us:"  (en:about,en:these)
+  [K5pl] polskie zdania z serwera do UI — 19 (w module; suma repo 256)
+      server/src/routes/ai/agent-plan.routes.ts:593
+        „Brak dostępu do projektu"  (diakrytyk:ę,pl:brak)
+      server/src/routes/ai/agent-plan.routes.ts:625
+        „Nie udało się pobrać folderów"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai/agent-plan.routes.ts:675
+        „Brak dostępu do projektu"  (diakrytyk:ę,pl:brak)
+      server/src/routes/ai/agent-plan.routes.ts:707
+        „Nie udało się utworzyć folderu"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai/agent-plan.routes.ts:736
+        „Nie udało się zaktualizować folderu"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai/agent-plan.routes.ts:759
+        „Nie udało się usunąć folderu"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai.routes.ts:6930
+        „Nie udało się wygenerować odpowiedzi asystenta"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai.routes.ts:9316
+        „Nie udało się utworzyć powiadomienia AI"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/ai.routes.ts:1189
+        „Generowanie pytań doprecyzowujących przekroczyło limit czasu"  (diakrytyk:ń)
+      server/src/routes/client-errors.routes.ts:198
+        „Ten sam błąd frontendu wystąpił ${count}× w ciągu ${Math.round(
+                WINDOW_MS / 60000
+              )} min ("  (diakrytyk:ł)
+      server/src/routes/dataExport.routes.ts:112
+        „Nie udało się utworzyć wniosku o eksport danych"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/dataExport.routes.ts:152
+        „Nie udało się pobrać statusu eksportu"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/dataExport.routes.ts:185
+        „Nie udało się pobrać wniosków o eksport"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/dataExport.routes.ts:250
+        „Nie udało się pobrać eksportu"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/dataExport.routes.ts:317
+        „Nie udało się anulować wniosku o usunięcie danych"  (diakrytyk:ł,pl:nie,pl:się)
+      server/src/routes/integrations/integrations.routes.ts:758
+        „Integracja nie jest dostępna w tej wersji"  (diakrytyk:ę,pl:nie,pl:jest)
+      server/src/routes/integrations/integrations.routes.ts:821
+        „Integracja nie jest dostępna w tej wersji"  (diakrytyk:ę,pl:nie,pl:jest)
+      server/src/routes/v8/sync.routes.ts:1070
+        „Integracja nie jest dostępna w tej wersji"  (diakrytyk:ę,pl:nie,pl:jest)
+      server/src/routes/v8/sync.routes.ts:1258
+        „Integracja nie jest dostępna w tej wersji"  (diakrytyk:ę,pl:nie,pl:jest)
+  [K5en] angielskie zdania z serwera do UI — 523 (w module; suma repo 1822)
+      server/src/routes/access-control.routes.ts:51
+        „Access request already pending"  (en:pending)
+      server/src/routes/access-control.routes.ts:447
+        „This access code has been deactivated"  (en:this,en:has,en:been)
+      server/src/routes/access-control.routes.ts:450
+        „This access code has expired"  (en:this,en:has)
+      server/src/routes/access-control.routes.ts:453
+        „This access code has reached its usage limit"  (en:this,en:has)
+      server/src/routes/access-control.routes.ts:79
+        „Access request submitted successfully"  (en:successfully)
+      server/src/routes/access-control.routes.ts:558
+        „Failed to deactivate access code"  (en:failed)
+      server/src/routes/accessCodes.routes.ts:182
+        „Cannot generate this access code for another organization"  (en:cannot,en:this)
+      server/src/routes/accessCodes.routes.ts:218
+        „Cannot generate invite for another organization"  (en:cannot)
+      server/src/routes/accessCodes.routes.ts:410
+        „Not authorized to revoke this access code"  (en:this)
+      server/src/routes/agents.routes.ts:282
+        „initiativeId and projectId are required"  (en:and)
+      server/src/routes/ai/agent-plan.routes.ts:249
+        „Unknown manifestId"  (en:unknown)
+      server/src/routes/ai/agent-plan.routes.ts:301
+        „No steps could be resolved for this plan"  (en:could,en:this)
+      server/src/routes/ai/ai-ab-testing.routes.ts:98
+        „Failed to list experiments"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:133
+        „Failed to create experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:159
+        „Failed to get experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:190
+        „Failed to start experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:217
+        „Failed to stop experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:243
+        „Failed to pause experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:269
+        „Failed to resume experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:295
+        „Failed to archive experiment"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:329
+        „Failed to declare winner"  (en:failed)
+      server/src/routes/ai/ai-ab-testing.routes.ts:357
+        „experimentId, metric, and value are required"  (en:and)
+      server/src/routes/ai/ai-ab-testing.routes.ts:365
+        „Failed to record outcome"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:67
+        „Failed to fetch FinOps overview"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:200
+        „Failed to fetch cost data"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:303
+        „Failed to fetch usage data"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:384
+        „Failed to fetch quota data"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:498
+        „Failed to fetch performance data"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:548
+        „Failed to configure alerts"  (en:failed)
+      server/src/routes/ai/ai-analytics.routes.ts:64
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-analytics.routes.ts:197
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-analytics.routes.ts:300
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-analytics.routes.ts:381
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-analytics.routes.ts:495
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-analytics.routes.ts:545
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-budgets.routes.ts:356
+        „modelId and modelProvider are required"  (en:and)
+      server/src/routes/ai/ai-budgets.routes.ts:121
+        „Budget updated successfully"  (en:successfully)
+      server/src/routes/ai/ai-budgets.routes.ts:139
+        „Budget deleted successfully"  (en:successfully)
+      server/src/routes/ai/ai-budgets.routes.ts:157
+        „Budget reset successfully"  (en:successfully)
+      server/src/routes/ai/ai-budgets.routes.ts:373
+        „Model permission set successfully"  (en:successfully)
+      server/src/routes/ai/ai-budgets.routes.ts:420
+        „Model permission deleted successfully"  (en:successfully)
+      server/src/routes/ai/ai-development.routes.ts:143
+        „Failed to list prompts"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:171
+        „Failed to list categories"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:223
+        „Failed to get prompt"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:248
+        „Name, category, and template are required"  (en:and)
+      server/src/routes/ai/ai-development.routes.ts:301
+        „Failed to create prompt"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:385
+        „Failed to update prompt"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:435
+        „Failed to test prompt"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:477
+        „Failed to list experiments"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:512
+        „Failed to create experiment"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:538
+        „Failed to get experiment"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:569
+        „Failed to start experiment"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:596
+        „Failed to stop experiment"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:627
+        „Failed to list candidates"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:659
+        „Failed to submit candidate"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:686
+        „Failed to update status"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:716
+        „Failed to get approved ideas"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:754
+        „Failed to get config"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:789
+        „Failed to update config"  (en:failed)
+      server/src/routes/ai/ai-development.routes.ts:853
+        „Failed to get summary"  (en:failed)
+      server/src/routes/ai/ai-drafts.routes.ts:153
+        „Failed to fetch drafts"  (en:failed)
+      server/src/routes/ai/ai-drafts.routes.ts:176
+        „Draft not found"  (en:draft)
+      server/src/routes/ai/ai-drafts.routes.ts:194
+        „Failed to fetch draft"  (en:failed,en:draft)
+      server/src/routes/ai/ai-drafts.routes.ts:225
+        „Failed to fetch entity drafts"  (en:failed)
+      server/src/routes/ai/ai-drafts.routes.ts:301
+        „Failed to create draft"  (en:failed,en:draft)
+      server/src/routes/ai/ai-drafts.routes.ts:350
+        „Failed to approve draft"  (en:failed,en:draft)
+      server/src/routes/ai/ai-drafts.routes.ts:394
+        „Failed to reject draft"  (en:failed,en:draft)
+      server/src/routes/ai/ai-drafts.routes.ts:439
+        „Failed to fetch stats"  (en:failed)
+      server/src/routes/ai/ai-drafts.routes.ts:475
+        „Failed to expire drafts"  (en:failed)
+      server/src/routes/ai/ai-drafts.routes.ts:150
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:191
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:222
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:298
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:347
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:391
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:436
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-drafts.routes.ts:472
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-health-check.routes.ts:1033
+        „Unknown subsystem"  (en:unknown)
+      server/src/routes/ai/ai-infrastructure.routes.ts:19
+        „AI infrastructure endpoints are not implemented in this deployment."  (en:this)
+      server/src/routes/ai/ai-nudges.routes.ts:97
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-nudges.routes.ts:145
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-nudges.routes.ts:189
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-nudges.routes.ts:233
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-nudges.routes.ts:277
+        „Unknown error"  (en:unknown)
+      server/src/routes/ai/ai-operations.routes.ts:58
+        „KnowledgeIndexer initialize() failed"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:65
+        „Tool packs indexing failed"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:102
+        „KnowledgeIndexer initialize() failed"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:109
+        „Product pills indexing failed"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:178
+        „Failed to get status"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:223
+        „Failed to get providers"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:251
+        „Failed to get alerts"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:306
+        „Failed to resolve alert"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:406
+        „Failed to get metrics"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:483
+        „Failed to get trends"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:583
+        „Failed to get costs"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:647
+        „Failed to get trends"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:725
+        „Failed to get user costs"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:814
+        „Failed to get SLA status"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:865
+        „Failed to get SLA history"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:965
+        „Failed to get analytics"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:1387
+        „Failed to get LLM observatory analytics"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:1498
+        „Failed to get insights"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:1574
+        „Failed to get summary"  (en:failed)
+      server/src/routes/ai/ai-operations.routes.ts:296
+        „Alerting store unavailable in this deployment; nothing to resolve"  (en:this)
+      server/src/routes/ai/ai-operations.routes.ts:1426
+        „Error rate is ${errorRateValue.toFixed(1)}% in the last hour"  (en:the)
+      server/src/routes/ai/ai-preferences-extended.routes.ts:21
+        „Extended AI preferences are not implemented in this deployment."  (en:this)
+      server/src/routes/ai/ai-trust.routes.ts:245
+        „each option requires id, name, and numeric baseOutcome"  (en:and)
+      server/src/routes/ai/ai-trust.routes.ts:249
+        „variables must be an array when provided"  (en:when)
+      server/src/routes/ai/ai-trust.routes.ts:277
+        „option requires id, name, and numeric baseOutcome"  (en:and)
+      server/src/routes/ai/aiActions.routes.ts:19
+        „AI actions endpoints are not implemented in this deployment."  (en:this)
+      server/src/routes/ai/deep-thinking.routes.ts:49
+        „a and b are required"  (en:and)
+      server/src/routes/ai/deep-thinking.routes.ts:80
+        „content and sessionId are required"  (en:and)
+      server/src/routes/ai/deep-thinking.routes.ts:296
+        „eventType and sessionId are required"  (en:and)
+      server/src/routes/ai/smart-followup.routes.ts:59
+        „smart-followup LLM adapter requires organizationId and userId"  (en:and)
+      server/src/routes/ai-development.routes.ts:140
+        „Failed to list prompts"  (en:failed)
+      server/src/routes/ai-development.routes.ts:168
+        „Failed to list categories"  (en:failed)
+      server/src/routes/ai-development.routes.ts:220
+        „Failed to get prompt"  (en:failed)
+      server/src/routes/ai-development.routes.ts:245
+        „Name, category, and template are required"  (en:and)
+      server/src/routes/ai-development.routes.ts:290
+        „Failed to create prompt"  (en:failed)
+      server/src/routes/ai-development.routes.ts:372
+        „Failed to update prompt"  (en:failed)
+      server/src/routes/ai-development.routes.ts:422
+        „Failed to test prompt"  (en:failed)
+      server/src/routes/ai-development.routes.ts:464
+        „Failed to list experiments"  (en:failed)
+      server/src/routes/ai-development.routes.ts:499
+        „Failed to create experiment"  (en:failed)
+      server/src/routes/ai-development.routes.ts:526
+        „Failed to get experiment"  (en:failed)
+      server/src/routes/ai-development.routes.ts:558
+        „Failed to start experiment"  (en:failed)
+      server/src/routes/ai-development.routes.ts:586
+        „Failed to stop experiment"  (en:failed)
+      server/src/routes/ai-development.routes.ts:617
+        „Failed to list candidates"  (en:failed)
+      server/src/routes/ai-development.routes.ts:649
+        „Failed to submit candidate"  (en:failed)
+      server/src/routes/ai-development.routes.ts:677
+        „Failed to update status"  (en:failed)
+      server/src/routes/ai-development.routes.ts:707
+        „Failed to get approved ideas"  (en:failed)
+      server/src/routes/ai-development.routes.ts:745
+        „Failed to get config"  (en:failed)
+      server/src/routes/ai-development.routes.ts:780
+        „Failed to update config"  (en:failed)
+      server/src/routes/ai-development.routes.ts:844
+        „Failed to get summary"  (en:failed)
+      server/src/routes/ai-operator.routes.ts:210
+        „Intervention is no longer pending acceptance"  (en:pending)
+      server/src/routes/ai-prompts.routes.ts:106
+        „Failed to list prompts"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:137
+        „Failed to list categories"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:198
+        „Failed to get prompt"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:226
+        „Name, category, and template are required"  (en:and)
+      server/src/routes/ai-prompts.routes.ts:279
+        „Failed to create prompt"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:407
+        „Failed to update prompt"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:432
+        „Failed to get prompt versions"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:468
+        „Failed to delete prompt"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:521
+        „Failed to test prompt"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:604
+        „Failed to restore version"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:762
+        „name, prompt_id, and variants are required"  (en:and)
+      server/src/routes/ai-prompts.routes.ts:812
+        „Failed to start experiment"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:835
+        „Failed to stop experiment"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:867
+        „Failed to promote winner"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:925
+        „Failed to approve suggestion"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:947
+        „Failed to reject suggestion"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:973
+        „Failed to apply suggestion"  (en:failed)
+      server/src/routes/ai-prompts.routes.ts:661
+        „Rolled back to version ${version} (now v${newVersion})"  (en:back,en:now)
+      server/src/routes/ai-prompts.routes.ts:970
+        „Suggestion applied — will be used by assembler at runtime"  (en:will)
+      server/src/routes/ai.routes.ts:841
+        „Failed to fetch URL (${msg})"  (en:failed)
+      server/src/routes/ai.routes.ts:847
+        „Failed to fetch URL (HTTP ${resp.status})"  (en:failed)
+      server/src/routes/ai.routes.ts:872
+        „Failed to read URL response body"  (en:failed)
+      server/src/routes/ai.routes.ts:920
+        „Could not extract any text from URL"  (en:could,en:from)
+      server/src/routes/ai.routes.ts:1210
+        „Failed to generate clarification questions"  (en:failed)
+      server/src/routes/ai.routes.ts:1277
+        „Failed to export research report"  (en:failed)
+      server/src/routes/ai.routes.ts:1721
+        „Local inference is disabled on this environment."  (en:this)
+      server/src/routes/ai.routes.ts:1763
+        „Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingCo"  (en:and,en:with)
+      server/src/routes/ai.routes.ts:5160
+        „Conversation tool cost limit reached"  (en?:tool,en?:cost)
+      server/src/routes/ai.routes.ts:7858
+        „Failed to generate schedule"  (en:failed)
+      server/src/routes/ai.routes.ts:7918
+        „Failed to analyze conflicts"  (en:failed)
+      server/src/routes/ai.routes.ts:7964
+        „Failed to recommend priorities"  (en:failed)
+      server/src/routes/ai.routes.ts:8972
+        „Chart type and data required"  (en:and)
+      server/src/routes/ai.routes.ts:9044
+        „Title and options are required"  (en:and)
+      server/src/routes/ai.routes.ts:9071
+        „baseROI and capex are required"  (en:and)
+      server/src/routes/ai.routes.ts:9115
+        „Axis and area are required"  (en:and)
+      server/src/routes/ai.routes.ts:9140
+        „Axis, area, and answer are required"  (en:and)
+      server/src/routes/ai.routes.ts:9250
+        „type, title, and description are required"  (en:and)
+      server/src/routes/ai.routes.ts:9304
+        „Unknown AI notification type: ${type}. Supported: AI_RISK_DETECTED, AI_RECOMMENDATION, AI_OVERLOAD_DETECTED, AI_DEPENDEN"  (en:unknown)
+      server/src/routes/ai.routes.ts:9620
+        „Failed to log audit event"  (en:failed)
+      server/src/routes/ai.routes.ts:10210
+        „actionType and dataClass are required"  (en:and)
+      server/src/routes/ai.routes.ts:10333
+        „requestId and tier are required"  (en:and)
+      server/src/routes/ai.routes.ts:5029
+        „Proposal created and waiting for human approval; no change was made."  (en:and,en:was)
+      server/src/routes/aiMemory.routes.ts:189
+        „Invalid key format. Use lowercase letters and underscores only."  (en:and)
+      server/src/routes/apiKeys.routes.ts:123
+        „API key created successfully"  (en:successfully)
+      server/src/routes/apiKeys.routes.ts:163
+        „API key rotated successfully"  (en:successfully)
+      server/src/routes/apiKeys.routes.ts:196
+        „API key revoked successfully"  (en:successfully)
+      server/src/routes/budget.routes.ts:121
+        „plannedAmount required and must be > 0"  (en:and)
+      server/src/routes/budget.routes.ts:144
+        „amount required and must be > 0"  (en:and)
+      server/src/routes/budget.routes.ts:237
+        „Failed to create budget"  (en:failed)
+      server/src/routes/budget.routes.ts:270
+        „Failed to update budget"  (en:failed)
+      server/src/routes/budget.routes.ts:284
+        „Failed to delete budget"  (en:failed)
+      server/src/routes/cloud.routes.ts:82
+        „Failed to list cloud sources"  (en:failed)
+      server/src/routes/cloud.routes.ts:95
+        „Organization and user context required"  (en:and)
+      server/src/routes/cloud.routes.ts:100
+        „Provider and name are required"  (en:and)
+      server/src/routes/cloud.routes.ts:135
+        „Failed to create cloud source"  (en:failed)
+      server/src/routes/cloud.routes.ts:158
+        „Failed to delete cloud source"  (en:failed)
+      server/src/routes/cloud.routes.ts:180
+        „Failed to list cloud files"  (en:failed)
+      server/src/routes/cloud.routes.ts:219
+        „Failed to download cloud file"  (en:failed)
+      server/src/routes/cloud.routes.ts:266
+        „Failed to upload file"  (en:failed)
+      server/src/routes/cloud.routes.ts:279
+        „Organization and user context required"  (en:and)
+      server/src/routes/cloud.routes.ts:284
+        „cloudSourceId, filePath, and fileName are required"  (en:and)
+      server/src/routes/cloud.routes.ts:301
+        „Failed to start import job"  (en:failed)
+      server/src/routes/cloud.routes.ts:326
+        „Failed to get import job status"  (en:failed)
+      server/src/routes/cloud.routes.ts:349
+        „Failed to process import"  (en:failed)
+      server/src/routes/cloud.routes.ts:404
+        „Failed to sync cloud source"  (en:failed)
+      server/src/routes/compliance.routes.ts:104
+        „Failed to fetch GDPR settings"  (en:failed)
+      server/src/routes/compliance.routes.ts:165
+        „Failed to update GDPR settings"  (en:failed)
+      server/src/routes/compliance.routes.ts:224
+        „Failed to fetch cookie settings"  (en:failed)
+      server/src/routes/compliance.routes.ts:286
+        „Failed to update cookie settings"  (en:failed)
+      server/src/routes/compliance.routes.ts:339
+        „Failed to fetch data retention settings"  (en:failed)
+      server/src/routes/compliance.routes.ts:399
+        „Failed to update data retention settings"  (en:failed)
+      server/src/routes/conclusions.routes.ts:70
+        „title, statement, sourceModule and sourceRefs are required"  (en:and)
+      server/src/routes/context.routes.ts:58
+        „Name and content required"  (en:and)
+      server/src/routes/data-collection.routes.ts:77
+        „Webhook receive failed"  (en:failed)
+      server/src/routes/data-collection.routes.ts:169
+        „Failed to list connectors"  (en:failed)
+      server/src/routes/data-collection.routes.ts:180
+        „Failed to list scheduled connectors"  (en:failed)
+      server/src/routes/data-collection.routes.ts:200
+        „Failed to get connector"  (en:failed)
+      server/src/routes/data-collection.routes.ts:284
+        „Failed to delete connector"  (en:failed)
+      server/src/routes/data-collection.routes.ts:374
+        „Failed to list runs"  (en:failed)
+      server/src/routes/data-collection.routes.ts:477
+        „Connector has no target table set"  (en:has)
+      server/src/routes/dataExport.routes.ts:228
+        „Export has expired. Please create a new request."  (en:has,en:please)
+      server/src/routes/dataExport.routes.ts:100
+        „Data export request created. You will be notified when the export is ready."  (en:you,en:will,en:when)
+      server/src/routes/db-metrics.routes.ts:33
+        „Failed to get slow query statistics"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:59
+        „Failed to get recent slow queries"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:85
+        „Failed to get top slow queries"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:102
+        „Slow queries exported successfully"  (en:successfully)
+      server/src/routes/db-metrics.routes.ts:110
+        „Failed to export slow queries"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:134
+        „Failed to clear slow queries"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:159
+        „Failed to get database metrics"  (en:failed)
+      server/src/routes/db-metrics.routes.ts:183
+        „Failed to get performance metrics"  (en:failed)
+      server/src/routes/deliverablesGenerations.routes.ts:193
+        „Generation failed"  (en:failed)
+      server/src/routes/deliverablesGenerations.routes.ts:326
+        „Business plan generation failed"  (en:failed)
+      server/src/routes/deliverablesGenerations.routes.ts:427
+        „Bundle generation failed: spine could not be created"  (en:failed,en:could)
+      server/src/routes/deliverablesGenerations.routes.ts:510
+        „Bundle generation failed"  (en:failed)
+      server/src/routes/evidence.routes.ts:113
+        „Unknown artifactType: ${req.params.artifactType}"  (en:unknown)
+      server/src/routes/featureFlags.routes.ts:354
+        „A flag with this key already exists"  (en:with,en:this)
+      server/src/routes/featureFlags.routes.ts:386
+        „Failed to create feature flag"  (en:failed)
+      server/src/routes/featureFlags.routes.ts:472
+        „Failed to update feature flag"  (en:failed)
+      server/src/routes/featureUpdates.routes.ts:602
+        „title and bodyMd are required"  (en:and)
+      server/src/routes/featureUpdates.routes.ts:679
+        „Published updates cannot be edited; archive and republish instead"  (en:cannot,en:and)
+      server/src/routes/featureUpdates.routes.ts:773
+        „Only draft or review updates can be published"  (en:draft)
+      server/src/routes/final-batch.routes.ts:372
+        „Action is no longer pending acceptance"  (en:pending)
+      server/src/routes/gdpr.routes.ts:587
+        „A deletion request is already pending"  (en:pending)
+      server/src/routes/gdpr.routes.ts:346
+        „Retention settings updated"  (en?:settings,en?:updated)
+      server/src/routes/health.routes.ts:76
+        „Health check failed"  (en:failed)
+      server/src/routes/health.routes.ts:114
+        „Connection status check failed"  (en:failed)
+      server/src/routes/health.routes.ts:193
+        „Failed to resolve data context"  (en:failed)
+      server/src/routes/health.routes.ts:283
+        „Failed to resolve rate limit telemetry"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:68
+        „Failed to list source baskets"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:99
+        „Failed to create source basket"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:115
+        „Failed to read source basket"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:132
+        „sessionIds must be a non-empty array when provided"  (en:when)
+      server/src/routes/insightSourceBaskets.routes.ts:148
+        „Failed to update source basket"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:164
+        „Failed to delete source basket"  (en:failed)
+      server/src/routes/insightSourceBaskets.routes.ts:180
+        „Failed to touch source basket"  (en:failed)
+      server/src/routes/integrations/automation.routes.ts:241
+        „Action not allowed for this key"  (en:this)
+      server/src/routes/integrations/connectors.routes.ts:60
+        „Name and type required"  (en:and)
+      server/src/routes/integrations/integrations.routes.ts:290
+        „Unknown provider: ${provider}"  (en:unknown)
+      server/src/routes/integrations/integrations.routes.ts:467
+        „Test not implemented for this provider"  (en:this)
+      server/src/routes/integrations/integrations.routes.ts:494
+        „eventType, title, and body are required"  (en:and)
+      server/src/routes/integrations/integrations.routes.ts:754
+        „Unknown connector"  (en:unknown)
+      server/src/routes/integrations/integrations.routes.ts:817
+        „Unknown connector"  (en:unknown)
+      server/src/routes/integrations/integrations.routes.ts:959
+        „Settings update not supported in current schema"  (en?:settings,en?:update)
+      server/src/routes/integrations/integrations.routes.ts:752
+        „Failed to connect"  (en:failed)
+      server/src/routes/integrations/integrations.routes.ts:815
+        „Failed to connect"  (en:failed)
+      server/src/routes/integrations/integrations.routes.ts:189
+        „Unknown connector: ${input.provider}"  (en:unknown)
+      server/src/routes/integrations/webhooks.routes.ts:141
+        „Failed to update task"  (en:failed)
+      server/src/routes/intelligence.routes.ts:354
+        „projectId, category and title are required"  (en:and)
+      server/src/routes/journeyAnalytics.routes.ts:25
+        „eventType and eventName are required"  (en:and)
+      server/src/routes/llm.routes.ts:1428
+        „purpose and kind are required"  (en:and)
+      server/src/routes/llm.routes.ts:1545
+        „purpose and providerId are required"  (en:and)
+      server/src/routes/llm.routes.ts:1560
+        „Cannot create assignments for a different organization"  (en:cannot)
+      server/src/routes/llm.routes.ts:1586
+        „release bundle has not passed eval gates"  (en:has)
+      server/src/routes/llm.routes.ts:1597
+        „release bundle purpose does not match assignment purpose"  (en:does)
+      server/src/routes/llm.routes.ts:1670
+        „purpose and providerId are required"  (en:and)
+      server/src/routes/llm.routes.ts:1846
+        „organizationId and versionId are required"  (en:and)
+      server/src/routes/llm.routes.ts:1986
+        „provider and model_id are required"  (en:and)
+      server/src/routes/llm.routes.ts:2072
+        „id and status are required"  (en:and)
+      server/src/routes/llm.routes.ts:2172
+        „Could not parse pricing units"  (en:could)
+      server/src/routes/llm.routes.ts:2434
+        „name and purpose are required"  (en:and)
+      server/src/routes/llm.routes.ts:2488
+        „datasetId and purpose are required"  (en:and)
+      server/src/routes/llm.routes.ts:2631
+        „Both runId1 and runId2 are required"  (en:and)
+      server/src/routes/llmHealth.routes.ts:162
+        „Unknown error"  (en:unknown)
+      server/src/routes/llmHealth.routes.ts:239
+        „Unknown error"  (en:unknown)
+      server/src/routes/llmHealth.routes.ts:369
+        „Unknown error"  (en:unknown)
+      server/src/routes/loginHistory.routes.ts:92
+        „Failed to fetch login history"  (en:failed)
+      server/src/routes/loginHistory.routes.ts:128
+        „Failed to record login"  (en:failed)
+      server/src/routes/loginHistory.routes.ts:163
+        „Failed to fetch suspicious logins"  (en:failed)
+      server/src/routes/media-ingestion.routes.ts:94
+        „filename and mimeType are required"  (en:and)
+      server/src/routes/method-core.routes.ts:153
+        „Idempotency-Key header is required for this write"  (en:this)
+      server/src/routes/method-core.routes.ts:363
+        „Session does not belong to this organization"  (en:does,en:this)
+      server/src/routes/method-core.routes.ts:635
+        „methodPackId and methodPackVersion are required"  (en:and)
+      server/src/routes/method-core.routes.ts:802
+        „state must be one of the closed METHOD_SESSION_STATES set"  (en:the)
+      server/src/routes/method-core.routes.ts:912
+        „role must be one of the closed METHOD_PROCESS_ROLES set"  (en:the)
+      server/src/routes/method-core.routes.ts:1019
+        „role must be one of the closed METHOD_PROCESS_ROLES set"  (en:the)
+      server/src/routes/method-core.routes.ts:1079
+        „type must be one of the closed METHOD_EVENT_TYPES set"  (en:the)
+      server/src/routes/method-core.routes.ts:1259
+        „decision must be approved|sent_back"  (en:back)
+      server/src/routes/method-core.routes.ts:1266
+        „comment_required_for_send_back"  (en:back)
+      server/src/routes/method-core.routes.ts:1353
+        „capabilityId must be one of the closed TERESA_CAPABILITIES set"  (en:the)
+      server/src/routes/method-core.routes.ts:1365
+        „quality.verdict is required and must be a valid TeresaQualityVerdict"  (en:and)
+      server/src/routes/method-core.routes.ts:1445
+        „decision must be accept|accept_with_edits|reject|rethink"  (en:with)
+      server/src/routes/method-core.routes.ts:1956
+        „findingIds contains ids not present on this Output"  (en:this)
+      server/src/routes/method-core.routes.ts:1964
+        „rationale and expectedOutcome are required"  (en:and)
+      server/src/routes/method-core.routes.ts:2070
+        „Initiative Proposal Draft not found"  (en:draft)
+      server/src/routes/method-core.routes.ts:928
+        „A user cannot grant themselves a role that carries transition authority."  (en:cannot,en:that)
+      server/src/routes/method-core.routes.ts:1588
+        „method-core-http: session ${session.id} is frozen with no frozen_snapshot_id — cannot self-heal Output"  (en:with,en:cannot)
+      server/src/routes/metrics.routes.ts:402
+        „Failed to read metrics warnings."  (en:failed)
+      server/src/routes/modelRegistry.routes.ts:201
+        „purpose and registryModelId are required"  (en:and)
+      server/src/routes/modelRegistry.routes.ts:255
+        „purpose and orderedIds are required"  (en:and)
+      server/src/routes/modelRegistry.routes.ts:279
+        „organizationId and purpose are required"  (en:and)
+      server/src/routes/performance.routes.ts:160
+        „Failed to generate performance metrics"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:75
+        „Failed to fetch prompt assistant stats"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:111
+        „Failed to fetch templates"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:191
+        „Failed to fetch blocks"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:223
+        „Failed to generate preview"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:245
+        „templateCode and languages are required"  (en:and)
+      server/src/routes/prompt-assistant.routes.ts:297
+        „Test execution failed"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:359
+        „Chat failed"  (en:failed)
+      server/src/routes/prompt-assistant.routes.ts:378
+        „Failed to clear history"  (en:failed)
+      server/src/routes/public-contact.routes.ts:194
+        „Failed to record contact request"  (en:failed)
+      server/src/routes/publicApiV1.routes.ts:101
+        „provider, accountRef, and declaredMode are required"  (en:and)
+      server/src/routes/publicApiV1.routes.ts:39
+        „Use a user API key for this endpoint."  (en:this)
+      server/src/routes/raid.routes.ts:122
+        „Type and title required"  (en:and)
+      server/src/routes/research.routes.ts:71
+        „Organization and user context are required"  (en:and)
+      server/src/routes/research.routes.ts:93
+        „Organization and user context are required"  (en:and)
+      server/src/routes/resourceManagement.routes.ts:47
+        „Failed to fetch subscription plans"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:98
+        „Failed to create subscription plan"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:151
+        „Failed to update subscription plan"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:171
+        „Cannot delete plan in use"  (en:cannot)
+      server/src/routes/resourceManagement.routes.ts:183
+        „Failed to delete subscription plan"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:232
+        „Failed to fetch organization resources"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:256
+        „Failed to update budget"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:296
+        „Failed to update quotas"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:340
+        „Failed to charge for resource change"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:365
+        „Failed to fetch budget"  (en:failed)
+      server/src/routes/resourceManagement.routes.ts:391
+        „Failed to fetch expenses"  (en:failed)
+      server/src/routes/share.routes.ts:306
+        „Failed to check share permission"  (en:failed)
+      server/src/routes/share.routes.ts:317
+        „Conversation already has an active share"  (en:has)
+      server/src/routes/share.routes.ts:429
+        „Too many attempts. Please try again later."  (en:please,en:again)
+      server/src/routes/share.routes.ts:437
+        „Share has been revoked"  (en:has,en:been)
+      server/src/routes/share.routes.ts:490
+        „Share has been revoked"  (en:has,en:been)
+      server/src/routes/share.routes.ts:494
+        „Share has expired"  (en:has)
+      server/src/routes/share.routes.ts:514
+        „Too many attempts. Please try again later."  (en:please,en:again)
+      server/src/routes/syncHub.routes.ts:352
+        „Unknown connector"  (en:unknown)
+      server/src/routes/syncHub.routes.ts:695
+        „Sync failed"  (en:failed)
+      server/src/routes/syncHub.routes.ts:290
+        „Unknown callback materialization error"  (en:unknown)
+      server/src/routes/systemHealth.routes.ts:113
+        „Health check failed"  (en:failed)
+      server/src/routes/systemHealth.routes.ts:139
+        „Failed to fetch system metrics"  (en:failed)
+      server/src/routes/systemHealth.routes.ts:165
+        „Failed to fetch service status"  (en:failed)
+      server/src/routes/systemHealth.routes.ts:191
+        „Failed to refresh health data"  (en:failed)
+      server/src/routes/systemHealth.routes.ts:229
+        „name, metric, threshold and operator are required"  (en:and)
+      server/src/routes/testSupport.routes.ts:1048
+        „rbac-fixture failed and was rolled back"  (en:failed,en:and,en:was)
+      server/src/routes/testSupport.routes.ts:1072
+        „userId and organizationId are required"  (en:and)
+      server/src/routes/testSupport.routes.ts:1075
+        „refusing to re-activate through the revoke route"  (en:the)
+      server/src/routes/testSupport.routes.ts:1148
+        „flagKey and organizationId are required"  (en:and)
+      server/src/routes/testSupport.routes.ts:1152
+        „flagKey is not in the G4 override allowlist"  (en:the)
+      server/src/routes/transactionReadiness.routes.ts:41
+        „No readiness data for this organization"  (en:this)
+      server/src/routes/user/loginHistory.routes.ts:94
+        „Failed to fetch login history"  (en:failed)
+      server/src/routes/user/loginHistory.routes.ts:130
+        „Failed to record login"  (en:failed)
+      server/src/routes/user/loginHistory.routes.ts:164
+        „Failed to fetch suspicious logins"  (en:failed)
+      server/src/routes/user/user-data-controls.routes.ts:28
+        „Direct data export is retired. Use the governed GDPR export lifecycle."  (en:the)
+      server/src/routes/user/users.routes.ts:123
+        „Not authorized to update this avatar"  (en:this)
+      server/src/routes/user/users.routes.ts:169
+        „Failed to upload avatar"  (en:failed)
+      server/src/routes/user/users.routes.ts:185
+        „Not authorized to remove this avatar"  (en:this)
+      server/src/routes/user/users.routes.ts:223
+        „Failed to remove avatar"  (en:failed)
+      server/src/routes/user/users.routes.ts:253
+        „Not authorized to change capacity for this user"  (en:this)
+      server/src/routes/user/users.routes.ts:285
+        „Not authorized to change capacity for this user"  (en:this)
+      server/src/routes/users.routes.ts:154
+        „Failed to fetch users"  (en:failed)
+      server/src/routes/users.routes.ts:186
+        „Failed to fetch user"  (en:failed)
+      server/src/routes/users.routes.ts:222
+        „Not authorized to update this user"  (en:this)
+      server/src/routes/users.routes.ts:227
+        „First name is required before saving"  (en?:first,en?:name)
+      server/src/routes/users.routes.ts:289
+        „Failed to update user"  (en:failed)
+      server/src/routes/users.routes.ts:312
+        „Not authorized to update this avatar"  (en:this)
+      server/src/routes/users.routes.ts:361
+        „Failed to upload avatar"  (en:failed)
+      server/src/routes/users.routes.ts:379
+        „Not authorized to remove this avatar"  (en:this)
+      server/src/routes/users.routes.ts:418
+        „Failed to remove avatar"  (en:failed)
+      server/src/routes/users.routes.ts:462
+        „Failed to delete user"  (en:failed)
+      server/src/routes/v10/teresa.routes.ts:148
+        „Teresa voice (read-aloud) is not configured on this server."  (en:this)
+      server/src/routes/v10/teresa.routes.ts:184
+        „Teresa text-to-speech failed unexpectedly."  (en:failed)
+      server/src/routes/v8/advisory.routes.ts:111
+        „Business case generation failed"  (en:failed)
+      server/src/routes/v8/agent-operations.routes.ts:167
+        „agent_recovery_failed"  (en:failed)
+      server/src/routes/v8/agent-proposals.routes.ts:25
+        „proposal_governance_failed"  (en:failed)
+      server/src/routes/v8/ai-core.routes.ts:45
+        „conversationId, workspaceId, and message are required"  (en:and)
+      server/src/routes/v8/calendar.routes.ts:129
+        „provider, accountRef, and declaredMode are required"  (en:and)
+      server/src/routes/v8/calendar.routes.ts:228
+        „Transition from ${existing.lifecycleState} to ${state} is not allowed"  (en:from)
+      server/src/routes/v8/calendar.routes.ts:340
+        „itemType, sourceSystem, sourceObjectRef, startAt, allDay, visibilityClass, and editAuthority are required"  (en:and)
+      server/src/routes/v8/calendar.routes.ts:432
+        „If-Match header with a concrete etag is required"  (en:with)
+      server/src/routes/v8/calendar.routes.ts:453
+        „Conditional write failed — etag mismatch"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:71
+        „multi_agent_graph_creation_failed"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:98
+        „multi_agent_synthesis_failed"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:117
+        „synthesis_proposal_failed"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:156
+        „contradiction_resolution_failed"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:200
+        „work_graph_cancel_failed"  (en:failed)
+      server/src/routes/v8/multi-agent.routes.ts:226
+        „branch_retry_failed"  (en:failed)
+      server/src/routes/v8/multiplayer.routes.ts:115
+        „Query resourceType is required and must be a known workspace tool"  (en:and)
+      server/src/routes/v8/multiplayer.routes.ts:195
+        „Query surface is required and must be a known surface"  (en:and)
+      server/src/routes/v8/prompt-os.routes.ts:47
+        „Cannot activate in the current state"  (en:cannot,en:the)
+      server/src/routes/v8/prompt-os.routes.ts:53
+        „Already rolled back"  (en:back)
+      server/src/routes/v8/prompt-os.routes.ts:171
+        „Preset ${parsed.presetId} not found for this organization"  (en:this)
+      server/src/routes/v8/sync.routes.ts:350
+        „Governed credential expired and no governed refresh secret is materialized for this connector. Re-authorize the integrat"  (en:and,en:this,en:the)
+      server/src/routes/v8/sync.routes.ts:376
+        „Governed refresh execution now exists on the active runtime path, but this connector still needs a governed refresh secr"  (en:now,en:the,en:this)
+      server/src/routes/v8/sync.routes.ts:409
+        „Governed refresh execution failed with a transient provider/runtime error. Retry the sync after the provider recovers."  (en:failed,en:with,en:the)
+      server/src/routes/v8/sync.routes.ts:457
+        „Governed refresh execution determined that the provider credential now requires re-authorization before sync can continu"  (en:that,en:the,en:now)
+      server/src/routes/v8/sync.routes.ts:907
+        „Unknown connector"  (en:unknown)
+      server/src/routes/v8/sync.routes.ts:1027
+        „Unknown connector"  (en:unknown)
+      server/src/routes/v8/sync.routes.ts:1223
+        „Unknown connector"  (en:unknown)
+  [K7] daty/liczby/waluty bez locale albo z locale na sztywno — 105 (w module; suma repo 786)
+      src/components/shared/ModuleHub/FilterableTable.tsx:1671
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/services/api/financeV2.types.ts:106
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/services/api/financeV2.types.ts:326
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/services/api/financeV2.types.ts:329
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/services/pdf/pdfExport.ts:87
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/utils/listDateFormat.ts:14
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/utils/notebookExport.ts:228
+        „toLocaleString()"  (toLocaleString() bez locale)
+      src/utils/pdfExport.ts:80
+        „toLocaleString()"  (toLocaleString() bez locale)
+      src/utils/pdfExport.ts:155
+        „toLocaleString()"  (toLocaleString() bez locale)
+      src/utils/pdfExport.ts:182
+        „toLocaleString()"  (toLocaleString() bez locale)
+      src/utils/workbookFormulaEngine.ts:921
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/utils/workbookFormulaEngine.ts:925
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/utils/workbookFormulaEngine.ts:927
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/utils/workbookFormulaEngine.ts:930
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      src/views/StatusPageView.tsx:370
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      src/views/StatusPageView.tsx:386
+        „toLocaleTimeString()"  (toLocaleTimeString() bez locale)
+      src/views/StatusPageView.tsx:239
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/controllers/DecisionController.ts:1564
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/controllers/InterviewController.ts:2097
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/controllers/InterviewController.ts:4319
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/controllers/SuperAdminController.ts:1936
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/controllers/SuperAdminController.ts:1937
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/cron/HealthCheckJob.ts:89
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/cron/HealthCheckJob.ts:121
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/cron/InvoiceReminderCron.ts:174
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/jobs/aiWatchdog.ts:563
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/routes/analytics-superadmin.routes.ts:1099
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/routes/executionReports.routes.ts:121
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/routes/finance-statements.routes.ts:466
+        „toLocaleString('en-US'"  (locale przybity na sztywno)
+      server/src/routes/organization/ownership.routes.ts:468
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/routes/report-builder-public.routes.ts:71
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/routes/report-builder-public.routes.ts:212
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/routes/report-builder.routes.ts:3326
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/routes/report-builder.routes.ts:3747
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/AlertAggregator.ts:177
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/AlertEmailService.ts:111
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/InterviewAssignmentService.ts:1307
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/InvoiceService.ts:517
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/InvoiceService.ts:518
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/actionCard/kpiDeviationActionCard.ts:68
+        „new Intl.NumberFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/advisory/BusinessCaseService.ts:204
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/ai/AIPipeline.ts:2245
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/ai/AIPipeline.ts:2246
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/ai/AIPipeline.ts:2254
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/ai/AIPipeline.ts:2263
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/ai/AIPipeline.ts:1982
+        „toLocaleDateString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/ai/alerting.ts:425
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/ai/taskAdvisorService.ts:57
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/assessment/assessmentDeckModel.ts:111
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/assessment/assessmentLegacyReportContractService.ts:38
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/assessment/assessmentReportContractService.ts:89
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/assessment/assessmentReportContractService.ts:94
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/billing/BillingCommandService.ts:708
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/billing/BillingCommandService.ts:738
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/businessCaseGeneratorService.ts:186
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/businessCaseGeneratorService.ts:157
+        „new Intl.NumberFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/deliverables/deckAltText.ts:41
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/documentStudio/documentDocxRenderer.ts:1448
+        „new Intl.DateTimeFormat('pl-PL'"  (Intl z locale na sztywno)
+      server/src/services/executionBudgetService.ts:473
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/executionBudgetService.ts:473
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/executionBudgetService.ts:511
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/executionBudgetService.ts:511
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/narrativeEngine/postChecks.ts:40
+        „toLocaleString('en-US'"  (locale przybity na sztywno)
+      server/src/services/narrativeEngine/postChecks.ts:41
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/partnerCertificatePdf.ts:52
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/partnerEmailService.ts:81
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/partnerEmailService.ts:138
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/partnerEmailService.ts:190
+        „toLocaleDateString('en-US'"  (locale przybity na sztywno)
+      server/src/services/partnerToolkitResources.ts:350
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/presentationHtmlExportService.ts:252
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/presentationOperationsHealthDrilldownService.ts:587
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/presentationOperationsHealthPdfService.ts:162
+        „toLocaleString('en-US'"  (locale przybity na sztywno)
+      server/src/services/presentationOperationsHealthService.ts:367
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/results/valueDecisionService.ts:110
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/riskDetectionService.ts:178
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/riskDetectionService.ts:228
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/riskDetectionService.ts:363
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/slackService.ts:171
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/slackService.ts:347
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/slackService.ts:473
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/slackService.ts:554
+        „toLocaleString('en-US'"  (locale przybity na sztywno)
+      server/src/services/tablePlatform/ScheduledAutomationExecutor.ts:142
+        „new Intl.DateTimeFormat('en-US'"  (Intl z locale na sztywno)
+      server/src/services/tablePlatform/formulaEngine.ts:723
+        „toLocaleString('en-US'"  (locale przybity na sztywno)
+      server/src/services/usageService.ts:1024
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/usageService.ts:1028
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/v8/managerProblemsService.ts:219
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/v8/managerProblemsService.ts:289
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/v8/managerProblemsService.ts:398
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/v8/managerProblemsService.ts:772
+        „toLocaleDateString()"  (toLocaleDateString() bez locale)
+      server/src/services/v8/teresaCopilotService.ts:729
+        „toLocaleDateString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:436
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:436
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:437
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:437
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:642
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:643
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:644
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:647
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/v8/transformationFinalOutputService.ts:737
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/valuationDepthProfileService.ts:224
+        „toLocaleString('pl-PL'"  (locale przybity na sztywno)
+      server/src/services/valuationService.ts:1171
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/valuationService.ts:1186
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/valuationService.ts:1196
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/valuationService.ts:1220
+        „toLocaleString()"  (toLocaleString() bez locale)
+      server/src/services/valuationService.ts:1220
+        „toLocaleString()"  (toLocaleString() bez locale)

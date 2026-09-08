@@ -48301,7 +48301,8 @@
     }
   },
   "import": {
-    "clickToChoose": "kliknij aby wybrać"
+    "clickToChoose": "kliknij aby wybrać",
+    "dragFileHere": "Przeciągnij plik tutaj lub"
   },
   "modelSelector": {
     "checkingConnection": "Sprawdzanie połączenia…"

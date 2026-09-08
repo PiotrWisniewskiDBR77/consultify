@@ -1,24 +1,24 @@
 {
   "_meta": {
-    "data": "2026-09-08T20:25:26.746Z",
-    "root": "/Users/piotrwisniewski/Developer/wt/j1-czat",
-    "sha": "e1033f9cb8b41b6f965838f19bbd4df049854574",
-    "poprzedni_sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95",
-    "paczka": "J1 — modul 01 Chat"
+    "data": "2026-09-08T22:13:14.999Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/jzz-wspolne",
+    "sha": "e4d43983bb33c5fe28e204a1a463b7fa47a26b92",
+    "paczka": "ZZ — komponenty wspolne i bootstrap i18n",
+    "poprzedni_sha": "e1033f9cb8b41b6f965838f19bbd4df049854574"
   },
   "suma": {
     "K1": 2,
-    "K1def": 1046,
-    "K1defWID": 173,
+    "K1def": 970,
+    "K1defWID": 166,
     "K2": 12,
-    "K3a": 1756,
-    "K3aKLUCZ": 429,
-    "K3b": 7,
-    "K4pl": 901,
-    "K4en": 1251,
+    "K3a": 1651,
+    "K3aKLUCZ": 326,
+    "K3b": 4,
+    "K4pl": 854,
+    "K4en": 1250,
     "K5pl": 256,
     "K5en": 1822,
-    "K7": 822
+    "K7": 786
   },
   "moduly": {
     "01 Chat": {
@@ -247,17 +247,17 @@
     },
     "ZZ wspólne": {
       "K1": 1,
-      "K1def": 77,
-      "K1defWID": 7,
+      "K1def": 1,
+      "K1defWID": 0,
       "K2": 2,
-      "K3a": 280,
-      "K3aKLUCZ": 103,
-      "K3b": 3,
-      "K4pl": 72,
-      "K4en": 233,
+      "K3a": 175,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 25,
+      "K4en": 232,
       "K5pl": 19,
       "K5en": 523,
-      "K7": 141
+      "K7": 105
     }
   },
   "przyklady": {
@@ -721,18 +721,6 @@
         "dowod": "brak w en"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.leftRailPanel",
-        "tekst": "Panel narzędzi (lewy)",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.rightRailPanel",
-        "tekst": "Panel narzędzi (prawy)",
-        "dowod": "brak w en"
-      },
-      {
         "modul": "10 Materials",
         "gdzie": "public/locales/pl/translation.json:presentations.comments.addComment",
         "tekst": "Dodaj komentarz",
@@ -802,6 +790,18 @@
         "modul": "10 Materials",
         "gdzie": "public/locales/pl/translation.json:presentations.comments.deleteFailed",
         "tekst": "Nie udało się usunąć komentarza",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/translation.json:presentations.comments.deleted",
+        "tekst": "Usunięto komentarz",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/translation.json:presentations.comments.deletedBody",
+        "tekst": "(komentarz usunięty)",
         "dowod": "brak w en"
       }
     ],
@@ -958,24 +958,6 @@
       }
     ],
     "K3b": [
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.0",
-        "tekst": "Anna explains fit, pricing, and security before you commit to a path.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.1",
-        "tekst": "The demo shows the Consulting Intelligence Platform on seeded, read-only data.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.2",
-        "tekst": "The trial starts your own guided consulting workflow, from context to execution.",
-        "dowod": "brak w pl"
-      },
       {
         "modul": "10 Materials",
         "gdzie": "public/locales/en/translation.json:presentations.sourceType.unknown",
@@ -1156,7 +1138,7 @@
     "K4en": [
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/App.tsx:133",
+        "gdzie": "src/App.tsx:134",
         "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
         "dowod": "en:this,en:please"
       },
@@ -1683,12 +1665,6 @@
         "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/Decisions/DecisionCard.tsx:171",
-        "tekst": "toLocaleDateString('en-US'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
         "modul": "04 Tools",
         "gdzie": "src/components/Discovery/DiscoveryFooterActions.tsx:73",
         "tekst": "toLocaleTimeString()",
@@ -1759,11 +1735,17 @@
         "gdzie": "src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx:913",
         "tekst": "toLocaleString('pl-PL'",
         "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/DocumentStudio/publicReader/ReaderCommentsPanel.tsx:61",
+        "tekst": "toLocaleString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
       }
     ]
   },
   "plikiTop": {
-    "public/locales/pl/translation.json": 441,
+    "public/locales/pl/translation.json": 338,
     "src/views/partner/PartnerPortalView.tsx": 95,
     "server/src/routes/document-studio.routes.ts": 86,
     "server/src/routes/work-canvas.routes.ts": 61,
