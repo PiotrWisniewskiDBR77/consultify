@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
-import { localeListy } from '../../utils/listDateFormat';
+import { formatListPercent, localeListy } from '../../utils/listDateFormat';
 import { Button } from '../ui/primitives/Button';
 import { DegradedState } from './AdminState';
 
@@ -247,7 +247,7 @@ export const AIMissionControl: React.FC = () => {
             </h3>
             <div className="mt-2 flex items-baseline">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">
-                {status.metrics.uptime50.toFixed(1)}%
+                {formatListPercent(status.metrics.uptime50 / 100)}
               </span>
               <span
                 className={`ml-2 text-sm font-medium ${status.metrics.uptime50 > 95 ? 'text-emerald-400' : 'text-amber-300'}`}
@@ -395,7 +395,9 @@ export const AIMissionControl: React.FC = () => {
             .map(([id, res]) => (
               <div key={id} className="mb-4">
                 <div className="flex gap-2">
-                  <span className="text-blue-300">[{new Date().toLocaleTimeString(localeListy())}]</span>
+                  <span className="text-blue-300">
+                    [{new Date().toLocaleTimeString(localeListy())}]
+                  </span>
                   <span className="text-amber-300">{id.toUpperCase()}</span>
                   <span
                     className={res.status === 'SUCCESS' ? 'text-emerald-200' : 'text-danger-200'}

@@ -42,6 +42,7 @@ import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { AIPolicyLevel, AIRole, OrgAISettings } from '../../types/domain/ai';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { formatListNumber } from '../../utils/listDateFormat';
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
 
@@ -733,7 +734,7 @@ export const OrgAISettingsView: React.FC = () => {
                     min={50000}
                     max={10000000}
                     step={50000}
-                    formatValue={(v) => `${(v / 1000).toFixed(0)}k`}
+                    formatValue={(v) => `${formatListNumber(Math.round(v / 1000))}k`}
                     defaultValue={500000}
                   />
                 </div>

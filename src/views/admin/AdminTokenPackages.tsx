@@ -7,6 +7,7 @@ import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
+import { formatListNumber } from '../../utils/listDateFormat';
 
 export const AdminTokenPackages = () => {
   const { t } = useTranslation();
@@ -311,14 +312,14 @@ export const AdminTokenPackages = () => {
                   <span className="text-c-text-secondary">
                     {t('admin.aiControlCenter.tokenPackages.card.tokens', 'Tokens')}
                   </span>
-                  <span className="text-c-text font-mono">{pkg.tokens.toLocaleString()}</span>
+                  <span className="text-c-text font-mono">{formatListNumber(pkg.tokens)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
                   <span className="text-c-text-secondary">
                     {t('admin.aiControlCenter.tokenPackages.card.totalValue', 'Total Value')}
                   </span>
                   <span className="text-emerald-400 font-mono font-medium">
-                    {(pkg.tokens * (1 + pkg.bonus_percent / 100)).toLocaleString()}
+                    {formatListNumber(pkg.tokens * (1 + pkg.bonus_percent / 100))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">

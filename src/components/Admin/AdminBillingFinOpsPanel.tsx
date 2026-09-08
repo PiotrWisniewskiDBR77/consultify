@@ -112,7 +112,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         setUsageDetails(usageResult?.summary || usageResult);
         setPlanOptions(Array.isArray(plansResult?.plans) ? plansResult.plans : []);
       } catch (error: any) {
-        toast.error(error?.message || t('admin.billing.errors.loadSummary', "Failed to load billing summary"));
+        toast.error(
+          error?.message || t('admin.billing.errors.loadSummary', 'Failed to load billing summary')
+        );
       }
     };
 
@@ -138,7 +140,12 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const persistedPlan = refreshed?.summary?.plan;
       const expectedPlan = payload.planName || planForm.planName || undefined;
       if (!refreshed?.summary || (expectedPlan && persistedPlan?.name !== expectedPlan)) {
-        throw new Error(t('admin.billing.errors.planReadback', "Plan request completed, but provider readback did not match the target."));
+        throw new Error(
+          t(
+            'admin.billing.errors.planReadback',
+            'Plan request completed, but provider readback did not match the target.'
+          )
+        );
       }
       setSummary(refreshed);
       toast.success(t('admin.billing.plan.saved', { defaultValue: 'Plan and limits assigned' }));
@@ -147,7 +154,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       if (Array.isArray(validationErrors) && validationErrors.length > 0) {
         toast.error(validationErrors.join('; '));
       } else {
-        toast.error(error?.message || t('admin.billing.errors.assignPlan', "Failed to assign plan"));
+        toast.error(
+          error?.message || t('admin.billing.errors.assignPlan', 'Failed to assign plan')
+        );
       }
     } finally {
       setSavingPlan(false);
@@ -168,13 +177,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const readback = await Api.getAdminBillingPaymentMethods();
       const persisted = readback?.paymentMethods || [];
       if (!persisted.some((method: any) => method.id === newPaymentMethodId.trim())) {
-        throw new Error(t('admin.billing.errors.paymentReadback', "Payment request completed, but provider readback did not confirm it."));
+        throw new Error(
+          t(
+            'admin.billing.errors.paymentReadback',
+            'Payment request completed, but provider readback did not confirm it.'
+          )
+        );
       }
       setPaymentMethods(persisted);
       setNewPaymentMethodId('');
-      toast.success(t('admin.billing.payments.added', "Payment method added"));
+      toast.success(t('admin.billing.payments.added', 'Payment method added'));
     } catch (error: any) {
-      toast.error(error?.message || t('admin.billing.errors.addPayment', "Failed to add payment method"));
+      toast.error(
+        error?.message || t('admin.billing.errors.addPayment', 'Failed to add payment method')
+      );
     }
   };
 
@@ -184,12 +200,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const readback = await Api.getAdminBillingPaymentMethods();
       const persisted = readback?.paymentMethods || [];
       if (!persisted.some((method: any) => method.id === paymentMethodId && method.is_default)) {
-        throw new Error(t('admin.billing.errors.defaultReadback', "Default change was not confirmed by provider readback."));
+        throw new Error(
+          t(
+            'admin.billing.errors.defaultReadback',
+            'Default change was not confirmed by provider readback.'
+          )
+        );
       }
       setPaymentMethods(persisted);
-      toast.success(t('admin.billing.payments.defaultUpdated', "Default payment method updated"));
+      toast.success(t('admin.billing.payments.defaultUpdated', 'Default payment method updated'));
     } catch (error: any) {
-      toast.error(error?.message || t('admin.billing.errors.updateDefault', "Failed to update default payment method"));
+      toast.error(
+        error?.message ||
+          t('admin.billing.errors.updateDefault', 'Failed to update default payment method')
+      );
     }
   };
 
@@ -200,13 +224,18 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const persisted = readback?.paymentMethods || [];
       if (persisted.some((method: any) => method.id === paymentMethodId)) {
         throw new Error(
-          t('admin.billing.errors.removeReadback', "Removal request completed, but provider readback still contains the method.")
+          t(
+            'admin.billing.errors.removeReadback',
+            'Removal request completed, but provider readback still contains the method.'
+          )
         );
       }
       setPaymentMethods(persisted);
-      toast.success(t('admin.billing.payments.removed', "Payment method removed"));
+      toast.success(t('admin.billing.payments.removed', 'Payment method removed'));
     } catch (error: any) {
-      toast.error(error?.message || t('admin.billing.errors.removePayment', "Failed to remove payment method"));
+      toast.error(
+        error?.message || t('admin.billing.errors.removePayment', 'Failed to remove payment method')
+      );
     }
   };
 
@@ -248,12 +277,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       await Api.updateAdminBillingTaxSettings(taxSettings || {});
       const readback = await Api.getAdminBillingTaxSettings();
       if (!readback?.settings && !readback?.tax && !readback?.company) {
-        throw new Error(t('admin.billing.errors.taxReadback', "Tax settings request completed, but durable readback was unavailable."));
+        throw new Error(
+          t(
+            'admin.billing.errors.taxReadback',
+            'Tax settings request completed, but durable readback was unavailable.'
+          )
+        );
       }
       setTaxSettings(readback?.settings || readback);
-      toast.success(t('admin.billing.tax.updated', "Billing tax settings updated"));
+      toast.success(t('admin.billing.tax.updated', 'Billing tax settings updated'));
     } catch (error: any) {
-      toast.error(error?.message || t('admin.billing.errors.updateTax', "Failed to update billing tax settings"));
+      toast.error(
+        error?.message ||
+          t('admin.billing.errors.updateTax', 'Failed to update billing tax settings')
+      );
     }
   };
 
@@ -319,7 +356,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       label: t('admin.billing.columns.default', 'Default'),
       width: '120px',
       render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.isDefault ? t('common.yes', 'Yes') : '—'}</span>
+        <span className="text-slate-600 dark:text-slate-300">
+          {row.isDefault ? t('common.yes', 'Yes') : '—'}
+        </span>
       ),
     },
   ];
@@ -780,7 +819,10 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       {!stripeEnabled && (
         <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
           <p className="text-sm font-semibold">
-            {t('admin.billing.selfServiceOff.title', 'Self-service checkout is currently disabled.')}
+            {t(
+              'admin.billing.selfServiceOff.title',
+              'Self-service checkout is currently disabled.'
+            )}
           </p>
           <p className="mt-1 text-sm">
             {t(

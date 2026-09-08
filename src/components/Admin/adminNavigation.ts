@@ -117,10 +117,10 @@ const c = (id: AdminScreen, labelKey: string, label: string, icon = FileText) =>
 
 /** Wpis nawigacji nosi KLUCZ i18n obok angielskiego napisu domyślnego. */
 export type AdminNavScreen = DomainNavigationChild<AdminScreen> & { labelKey: string };
-export type AdminNavDomain = Omit<
-  DomainNavigationModule<AdminDomain, AdminScreen>,
-  'children'
-> & { labelKey: string; children: AdminNavScreen[] };
+export type AdminNavDomain = Omit<DomainNavigationModule<AdminDomain, AdminScreen>, 'children'> & {
+  labelKey: string;
+  children: AdminNavScreen[];
+};
 
 export const ADMIN_DOMAINS: AdminNavDomain[] = [
   {
@@ -130,7 +130,12 @@ export const ADMIN_DOMAINS: AdminNavDomain[] = [
     children: [
       c('members', 'admin.nav.screen.members', 'Members', Users),
       c('invitations', 'admin.nav.screen.invitations', 'Invitations', UserCheck),
-      c('roles-permissions', 'admin.nav.screen.roles-permissions', 'Roles & Permissions', ShieldCheck),
+      c(
+        'roles-permissions',
+        'admin.nav.screen.roles-permissions',
+        'Roles & Permissions',
+        ShieldCheck
+      ),
       c('teams', 'admin.nav.screen.teams', 'Teams', Users),
       c('guests-external', 'admin.nav.screen.guests-external', 'Guests & External Access', Network),
       c('access-requests', 'admin.nav.screen.access-requests', 'Access Requests', FileClock),
@@ -162,11 +167,26 @@ export const ADMIN_DOMAINS: AdminNavDomain[] = [
       c('policy-autonomy', 'admin.nav.screen.policy-autonomy', 'Policy & Autonomy', ShieldCheck),
       c('personas', 'admin.nav.screen.personas', 'Personas', Bot),
       c('models-providers', 'admin.nav.screen.models-providers', 'Models & Providers', Sparkles),
-      c('ai-limits-budgets', 'admin.nav.screen.ai-limits-budgets', 'Limits & Budgets', SlidersHorizontal),
+      c(
+        'ai-limits-budgets',
+        'admin.nav.screen.ai-limits-budgets',
+        'Limits & Budgets',
+        SlidersHorizontal
+      ),
       c('data-privacy', 'admin.nav.screen.data-privacy', 'Data & Privacy', ShieldCheck),
-      c('quality-evaluations', 'admin.nav.screen.quality-evaluations', 'Quality Evaluations', Activity),
+      c(
+        'quality-evaluations',
+        'admin.nav.screen.quality-evaluations',
+        'Quality Evaluations',
+        Activity
+      ),
       c('ai-incidents', 'admin.nav.screen.ai-incidents', 'AI Incidents', AlertTriangle),
-      c('configuration-versions', 'admin.nav.screen.configuration-versions', 'Configuration Versions', FileClock),
+      c(
+        'configuration-versions',
+        'admin.nav.screen.configuration-versions',
+        'Configuration Versions',
+        FileClock
+      ),
       c('ai-operations', 'admin.nav.screen.ai-operations', 'AI Operations', SlidersHorizontal),
       c('ai-audit', 'admin.nav.screen.ai-audit', 'AI Audit', ScrollText),
     ],
@@ -194,8 +214,18 @@ export const ADMIN_DOMAINS: AdminNavDomain[] = [
     label: 'Audit Log',
     children: [
       c('events', 'admin.nav.screen.events', 'Events', ScrollText),
-      c('high-risk-changes', 'admin.nav.screen.high-risk-changes', 'High-risk Changes', AlertTriangle),
-      c('compliance-evidence', 'admin.nav.screen.compliance-evidence', 'Compliance Evidence', ShieldCheck),
+      c(
+        'high-risk-changes',
+        'admin.nav.screen.high-risk-changes',
+        'High-risk Changes',
+        AlertTriangle
+      ),
+      c(
+        'compliance-evidence',
+        'admin.nav.screen.compliance-evidence',
+        'Compliance Evidence',
+        ShieldCheck
+      ),
       c('retention-export', 'admin.nav.screen.retention-export', 'Retention & Export', FileText),
       c('integrity', 'admin.nav.screen.integrity', 'Integrity', ShieldCheck),
       c('legal-hold', 'admin.nav.screen.legal-hold', 'Legal Hold', FileClock),
@@ -210,7 +240,12 @@ export const ADMIN_DOMAINS: AdminNavDomain[] = [
       c('overview', 'admin.nav.screen.overview', 'Overview', Gauge),
       c('attention-queue', 'admin.nav.screen.attention-queue', 'Attention Queue', AlertTriangle),
       c('cost-capacity', 'admin.nav.screen.cost-capacity', 'Cost & Capacity', Activity),
-      c('organization-defaults', 'admin.nav.screen.organization-defaults', 'Organization Defaults', SlidersHorizontal),
+      c(
+        'organization-defaults',
+        'admin.nav.screen.organization-defaults',
+        'Organization Defaults',
+        SlidersHorizontal
+      ),
       c('agent-trace', 'admin.nav.screen.agent-trace', 'Agent Trace', Bot),
       c('audit', 'admin.nav.screen.audit', 'SOC2 Audit', ScrollText),
       c('dlp', 'admin.nav.screen.dlp', 'DLP', Lock),
@@ -231,7 +266,12 @@ export const ADMIN_DOMAINS: AdminNavDomain[] = [
       c('incident-history', 'admin.nav.screen.incident-history', 'Incident History', AlertTriangle),
       c('queues-jobs', 'admin.nav.screen.queues-jobs', 'Queues & Jobs', FileClock),
       c('sla-slo', 'admin.nav.screen.sla-slo', 'SLA / SLO', Gauge),
-      c('platform-operations', 'admin.nav.screen.platform-operations', 'Platform Operations', KeyRound),
+      c(
+        'platform-operations',
+        'admin.nav.screen.platform-operations',
+        'Platform Operations',
+        KeyRound
+      ),
     ],
   },
 ];

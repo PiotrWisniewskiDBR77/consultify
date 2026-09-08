@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListNumber } from '../../utils/listDateFormat';
 
 interface Provider {
   id: string;
@@ -161,7 +162,7 @@ export const AdminLLMMultipliers = () => {
               const currentMultiplier = isEditing
                 ? editForm.markup_multiplier
                 : p.markup_multiplier || 1.0;
-              const userCostInTokens = (1000 * currentMultiplier).toFixed(0);
+              const userCostInTokens = Math.round(1000 * currentMultiplier);
 
               return (
                 <tr
@@ -240,7 +241,7 @@ export const AdminLLMMultipliers = () => {
                     <div className="flex flex-col">
                       <span className="text-emerald-400 font-bold font-mono text-base">
                         {t('admin.aiControlCenter.llmMultipliers.tokensValue', '{{value}} Tokens', {
-                          value: parseInt(userCostInTokens).toLocaleString(),
+                          value: formatListNumber(userCostInTokens),
                         })}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400">

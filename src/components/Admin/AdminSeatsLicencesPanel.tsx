@@ -10,7 +10,7 @@ import {
   updateAdminSeatAutoAdd,
 } from '../../services/adminSeatsApi';
 import { humanizeEnum } from '../../utils/enumLabels';
-import { formatListDateTime } from '../../utils/listDateFormat';
+import { formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 const buttonClass =
   'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
@@ -100,7 +100,10 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           [item.first_name, item.last_name].filter(Boolean).join(' ') ||
           item.triggered_by_email ||
           t('admin.billing.seats-licences.systemActor'),
-        amount: item.total_amount == null ? '—' : item.total_amount.toFixed(2),
+        amount: formatListNumber(item.total_amount, '—', {
+          maximumFractionDigits: 2,
+          minimumFractionDigits: 2,
+        }),
       })),
     [history, t]
   );

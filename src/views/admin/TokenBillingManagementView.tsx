@@ -7,6 +7,7 @@ import { Api } from '../../services/api';
 import { AdminLLMMultipliers } from './AdminLLMMultipliers';
 import { AdminMarginConfig } from './AdminMarginConfig';
 import { AdminTokenPackages } from './AdminTokenPackages';
+import { formatListNumber } from '../../utils/listDateFormat';
 
 export const TokenBillingManagementView = () => {
   const { t } = useTranslation();
@@ -141,7 +142,7 @@ export const TokenBillingManagementView = () => {
           />
           <KPICard
             title={t('admin.aiControlCenter.tokenBilling.kpi.systemBalance', 'System Balance')}
-            value={(stats.balance / 1000).toFixed(1) + 'k'}
+            value={`${formatListNumber(stats.balance / 1000, '0', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}k`}
             icon={<DollarSign size={20} className="text-primary-400" />}
             loading={loading}
             subtext={t(
