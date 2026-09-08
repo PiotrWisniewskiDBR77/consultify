@@ -9040,6 +9040,128 @@
         "overviewSubtitle": "Cell color = achieved maturity level. Click an axis to open it.",
         "levelRamp": "Level ramp",
         "areasAssessed": "Areas assessed"
+      },
+      "http": {
+        "blockers": {
+          "noConfirmedUnits": "No confirmed units — the interview has not started yet.",
+          "pendingProposals": "{{count}} Teresa proposals awaiting a decision",
+          "unitsWithoutEvidence": "{{count}} answered units without evidence"
+        },
+        "boot": {
+          "createFailed": "The session could not be created.",
+          "createFailedWithReason": "The session could not be created: {{reason}}"
+        },
+        "cell": {
+          "achieved": "achieved",
+          "blocker": "BLOCKER (first unmet level)",
+          "line": "{{unit}} · level {{level}} — {{state}}",
+          "notAchieved": "not achieved",
+          "reviewRequired": "above-gap: needs review"
+        },
+        "conflict": {
+          "body": "Your browser had version {{local}}, the server is already at version {{server}}. Nothing was overwritten automatically — choose how to continue.",
+          "exit": "Leave without changes",
+          "indicatorTitle": "Version conflict — your local view is out of date.",
+          "loadServer": "Load the server version",
+          "title": "The session changed on the server"
+        },
+        "error": {
+          "exit": "Leave",
+          "retry": "Try again",
+          "retryInline": "Try again"
+        },
+        "field": {
+          "answerTo": "Answer to the question: “{{question}}”",
+          "level": "Level {{level}}"
+        },
+        "frozen": {
+          "draftNotice": "Draft — the “Register as Initiative” decision belongs to a human, outside this module.",
+          "exit": "Leave",
+          "findings": "Findings ({{count}})",
+          "generateInitiative": "Generate from findings",
+          "generateReport": "Generate a report from the Output",
+          "heading": "Session {{id}} — {{state}}",
+          "initiativeDraftTitle": "Initiative Proposal Draft (local, NOT a Registered Initiative)",
+          "noInitiativeDraft": "No Initiative Proposal Draft saved for this Output.",
+          "noReport": "No report saved for this Output.",
+          "outputMissing": "The session is frozen on the server, but its current Output could not be found. Refresh the view; this screen will not rebuild the content from a local cache.",
+          "recommendation": "Recommendation: {{value}}",
+          "reopenButton": "Reopen the session (not available over HTTP)",
+          "reopenTitle": "Reopen — new revision",
+          "reopenUnavailable": "There is no HTTP endpoint for reopen (outside the scope of this file — server/src/method-core/*, server/src/routes/method-core.routes.ts). The action is disabled explicitly, not faked.",
+          "sourceTitle": "A frozen Output always comes from the server response, never from localStorage.",
+          "stateClosed": "Closed",
+          "stateFrozen": "Frozen",
+          "unitLine": "Unit: {{name}}"
+        },
+        "generated": {
+          "initiativeOutcome": "Raising the maturity level.",
+          "initiativeRationale": "The Output findings show a gap between current and target.",
+          "initiativeTitle": "Complete the sales process automation in the CRM",
+          "reportStrength": "The sales process has basic documentation.",
+          "reportSummary": "DRD session — partial result.",
+          "reportTitle": "DRD report"
+        },
+        "governance": {
+          "freeze": "Freeze",
+          "sendBack": "Send back to work",
+          "sendToReview": "Send for review"
+        },
+        "offline": {
+          "body": "No connection to the server — writes are queued locally and never lost, but this is NOT a confirmed server state.",
+          "retry": "Try to reconnect"
+        },
+        "readiness": {
+          "close": "Close",
+          "evidence": "Evidence",
+          "evidenceCount": "{{withEvidence}}/{{total}} units have evidence",
+          "freezeBlockers": "Freeze blockers",
+          "nextSafeAction": "Safe next move",
+          "noFreezeBlockers": "No freeze blockers.",
+          "title": "Session readiness assessment",
+          "whatIsMissing": "What is missing",
+          "whatMattersNow": "What matters now",
+          "whereAreWe": "Where we are"
+        },
+        "recovery": {
+          "apply": "Apply pending changes ({{count}})",
+          "body": "These changes were saved locally while there was no connection to the server. Choose explicitly: apply them on the server, or discard them and load the current server state. Nothing happens automatically.",
+          "discard": "Discard local, load the server",
+          "indicatorTitle": "Changes saved locally, not yet confirmed by the server.",
+          "title": "Connection is back — {{count}} pending change(s) waiting"
+        },
+        "report": {
+          "axisMatrix": "Axis matrix",
+          "confirmedLevels": "Confirmed levels: {{levels}}. Requires an expert comment before approval.",
+          "noConfirmedLevel": "No confirmed assessment — the report must not pretend to draw a conclusion for this area.",
+          "workingChapter": "A working report chapter based on the current answers, evidence and targets of this same session. It is not an approved report until the session is frozen by an approver."
+        },
+        "resolution": {
+          "artifactHint": "A procedure document or a screenshot from the system.",
+          "likelyOwner": "Process owner",
+          "requestEvidence": "Evidence requested from the process owner.",
+          "returnLater": "Deferred — come back to this question later.",
+          "whatIsUnknown": "Whether unit {{unit}} meets the criteria of level {{level}}."
+        },
+        "source": {
+          "recovery": "Not fully synchronised with the server.",
+          "server": "Freshly confirmed by the server."
+        },
+        "state": {
+          "conflict": "The session changed on the server.",
+          "offline": "No connection to the server.",
+          "unknownError": "Unknown error."
+        },
+        "teresa": {
+          "answerOrAttach": "Answer the current question or attach evidence.",
+          "confirmedAfterAccept": "Confirmed after accepting Teresa’s proposal (a human decision).",
+          "decidePending": "Decide on Teresa’s pending proposals.",
+          "evidenceCollected": "{{count}} piece(s) of evidence collected.",
+          "noEvidence": "No evidence for this unit.",
+          "noQuestions": "No questions at this level.",
+          "whereAreWe": "DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.",
+          "why": "Axis “{{axis}}” needs this unit confirmed to unlock the next levels."
+        }
       }
     },
     "glossary": {

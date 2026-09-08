@@ -84,20 +84,34 @@ vi.mock('react-i18next', () => {
 
   // Match react-i18next's stable `t` identity. Recreating this function for
   // every mocked hook call causes artificial callback/effect loops in tests.
-  const translate = (key: string, options?: any) => {
-    if (typeof options === 'string') return options;
+  // J5 (program spójności językowej): ta atrapa MILCZAŁA o dwóch realnych
+  // kształtach wywołania i18next i przez to KŁAMAŁA o produkcie:
+  //   (a) `t(klucz, 'Default {{x}}', { x })` — trzyargumentowa sygnatura;
+  //       stary kod robił `typeof options === 'string' -> return options`,
+  //       więc zwracał surowe `{{x}}` i test „widział" napis, którego
+  //       użytkownik nigdy nie zobaczy;
+  //   (b) i18next interpoluje `{{x}}` (podwójne klamry), atrapa podmieniała
+  //       wyłącznie `{x}`.
+  // Poprawka jest addytywna: obsługuje obie sygnatury i obie formy klamer.
+  const interpolate = (input: string, vars: Record<string, unknown>) => {
+    let result = input;
+    Object.keys(vars).forEach((varKey) => {
+      if (varKey === 'defaultValue' || varKey === 'returnObjects') return;
+      result = result
+        .replace(new RegExp(`\\{\\{\\s*${varKey}\\s*\\}\\}`, 'g'), String(vars[varKey]))
+        .replace(new RegExp(`\\{${varKey}\\}`, 'g'), String(vars[varKey]));
+    });
+    return result;
+  };
+
+  const translate = (key: string, options?: any, extra?: any) => {
+    if (typeof options === 'string') {
+      if (extra && typeof extra === 'object') return interpolate(options, extra);
+      return options;
+    }
     if (options?.returnObjects) return returnObjectsProxy;
     if (options && typeof options === 'object') {
-      let result = options.defaultValue || key;
-      Object.keys(options).forEach((optKey) => {
-        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
-          result = String(result).replace(
-            new RegExp(`\\{${optKey}\\}`, 'g'),
-            String(options[optKey])
-          );
-        }
-      });
-      return result;
+      return interpolate(String(options.defaultValue || key), options);
     }
     return key;
   };

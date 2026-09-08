@@ -8428,6 +8428,128 @@
         "overviewSubtitle": "Kolor komórki = osiągnięty poziom dojrzałości. Kliknij oś, aby ją otworzyć.",
         "levelRamp": "Skala poziomów",
         "areasAssessed": "Ocenione obszary"
+      },
+      "http": {
+        "blockers": {
+          "noConfirmedUnits": "Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.",
+          "pendingProposals": "{{count}} propozycji Teresy oczekuje decyzji",
+          "unitsWithoutEvidence": "{{count}} odpowiedzianych jednostek bez dowodu"
+        },
+        "boot": {
+          "createFailed": "Nie udało się utworzyć sesji.",
+          "createFailedWithReason": "Nie udało się utworzyć sesji: {{reason}}"
+        },
+        "cell": {
+          "achieved": "osiągnięty",
+          "blocker": "BLOKER (pierwszy niespełniony poziom)",
+          "line": "{{unit}} · poziom {{level}} — {{state}}",
+          "notAchieved": "nieosiągnięty",
+          "reviewRequired": "above-gap: wymaga przeglądu"
+        },
+        "conflict": {
+          "body": "Twoja przeglądarka miała wersję {{local}}, serwer ma już wersję {{server}}. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.",
+          "exit": "Wyjdź bez zmian",
+          "indicatorTitle": "Konflikt wersji — lokalny widok jest nieaktualny.",
+          "loadServer": "Wczytaj wersję serwera",
+          "title": "Sesja zmieniła się na serwerze"
+        },
+        "error": {
+          "exit": "Wyjdź",
+          "retry": "Spróbuj ponownie",
+          "retryInline": "Spróbuj ponownie"
+        },
+        "field": {
+          "answerTo": "Odpowiedź na pytanie: „{{question}}”",
+          "level": "Poziom {{level}}"
+        },
+        "frozen": {
+          "draftNotice": "Draft — decyzja „Register as Initiative” należy do człowieka, poza tym modułem.",
+          "exit": "Wyjdź",
+          "findings": "Findings ({{count}})",
+          "generateInitiative": "Wygeneruj z findingów",
+          "generateReport": "Generuj raport z Outputu",
+          "heading": "Sesja {{id}} — {{state}}",
+          "initiativeDraftTitle": "Initiative Proposal Draft (lokalny, NIE Registered Initiative)",
+          "noInitiativeDraft": "Brak zapisanego Initiative Proposal Draft dla tego Outputu.",
+          "noReport": "Brak zapisanego raportu dla tego Outputu.",
+          "outputMissing": "Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu. Odśwież widok; ekran nie odtworzy treści z lokalnego cache.",
+          "recommendation": "Rekomendacja: {{value}}",
+          "reopenButton": "Reopen sesji (niedostępne przez HTTP)",
+          "reopenTitle": "Reopen — nowa rewizja",
+          "reopenUnavailable": "Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*, server/src/routes/method-core.routes.ts). Akcja wyłączona jawnie, nie udawana.",
+          "sourceTitle": "Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage.",
+          "stateClosed": "Zamknięta",
+          "stateFrozen": "Zamrożona",
+          "unitLine": "Jednostka: {{name}}"
+        },
+        "generated": {
+          "initiativeOutcome": "Podniesienie poziomu dojrzałości.",
+          "initiativeRationale": "Znaleziska Outputu wskazują lukę między current a target.",
+          "initiativeTitle": "Domknij automatyzację procesu sprzedaży w CRM",
+          "reportStrength": "Proces sprzedaży ma podstawową dokumentację.",
+          "reportSummary": "Sesja DRD — wynik cząstkowy.",
+          "reportTitle": "Raport DRD"
+        },
+        "governance": {
+          "freeze": "Zamroź",
+          "sendBack": "Odeślij do pracy",
+          "sendToReview": "Wyślij do przeglądu"
+        },
+        "offline": {
+          "body": "Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE jest potwierdzony stan serwera.",
+          "retry": "Spróbuj połączyć ponownie"
+        },
+        "readiness": {
+          "close": "Zamknij",
+          "evidence": "Dowody",
+          "evidenceCount": "{{withEvidence}}/{{total}} jednostek ma dowód",
+          "freezeBlockers": "Blokery zamrożenia",
+          "nextSafeAction": "Bezpieczny następny ruch",
+          "noFreezeBlockers": "Brak blokerów zamrożenia.",
+          "title": "Ocena gotowości sesji",
+          "whatIsMissing": "Czego brakuje",
+          "whatMattersNow": "Co teraz ma znaczenie",
+          "whereAreWe": "Gdzie jesteśmy"
+        },
+        "recovery": {
+          "apply": "Zastosuj zaległe zmiany ({{count}})",
+          "body": "Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie: zastosować je na serwerze, czy je odrzucić i wczytać bieżący stan serwera. Nic nie dzieje się automatycznie.",
+          "discard": "Odrzuć lokalne, wgraj serwer",
+          "indicatorTitle": "Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer.",
+          "title": "Połączenie wróciło — {{count}} zaległych zmian czeka"
+        },
+        "report": {
+          "axisMatrix": "Macierz osi",
+          "confirmedLevels": "Potwierdzone poziomy: {{levels}}. Wymaga komentarza eksperckiego przed zatwierdzeniem.",
+          "noConfirmedLevel": "Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.",
+          "workingChapter": "Roboczy rozdział raportu oparty na bieżących odpowiedziach, dowodach i targetach tej samej sesji. Nie jest zatwierdzonym raportem, dopóki sesja nie zostanie zamrożona przez approvera."
+        },
+        "resolution": {
+          "artifactHint": "Dokument procedury lub zrzut z systemu.",
+          "likelyOwner": "Właściciel procesu",
+          "requestEvidence": "Poproszono o dowód od właściciela procesu.",
+          "returnLater": "Odłożone — wróć później do tego pytania.",
+          "whatIsUnknown": "Czy jednostka {{unit}} spełnia kryteria poziomu {{level}}."
+        },
+        "source": {
+          "recovery": "Nie w pełni zsynchronizowane z serwerem.",
+          "server": "Świeżo potwierdzone przez serwer."
+        },
+        "state": {
+          "conflict": "Sesja zmieniła się na serwerze.",
+          "offline": "Brak połączenia z serwerem.",
+          "unknownError": "Nieznany błąd."
+        },
+        "teresa": {
+          "answerOrAttach": "Odpowiedz na bieżące pytanie lub dołącz dowód.",
+          "confirmedAfterAccept": "Potwierdzone po akceptacji propozycji Teresy (decyzja człowieka).",
+          "decidePending": "Zdecyduj o oczekujących propozycjach Teresy.",
+          "evidenceCollected": "{{count}} dowód/-ody zebrane.",
+          "noEvidence": "Brak dowodu dla tej jednostki.",
+          "noQuestions": "Brak pytań na tym poziomie.",
+          "whereAreWe": "Sesja DRD, jednostka {{unit}}, poziom {{level}}. {{answered}}/{{total}} jednostek dotkniętych.",
+          "why": "Oś „{{axis}}” wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy."
+        }
       }
     },
     "glossary": {

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { nazwaWJezyku } from './drdNazwa';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
@@ -257,7 +258,9 @@ const ConflictView: React.FC<{
   state: DrdHttpRuntimeState;
   onLoadServerVersion: () => void;
   onExit: () => void;
-}> = ({ state, onLoadServerVersion, onExit }) => (
+}> = ({ state, onLoadServerVersion, onExit }) => {
+  const { t } = useTranslation();
+  return (
   <div
     data-testid="drd-http-conflict-view"
     role="alert"
@@ -266,7 +269,10 @@ const ConflictView: React.FC<{
     <div className="flex items-center gap-2">
       <DrdSourceIndicator
         source="RECOVERY_DRAFT"
-        title="Konflikt wersji — lokalny widok jest nieaktualny."
+        title={t(
+          'assessment.drd.http.conflict.indicatorTitle',
+          'Version conflict — your local view is out of date.'
+        )}
       />
       {/* CONFLICT requires a human decision but is NOT a failure — kanon UI
           (CLAUDE.md): not crimson, not c-danger. See AssessmentSaveStateIndicator.
@@ -276,11 +282,15 @@ const ConflictView: React.FC<{
       <AssessmentSaveStateIndicator state="CONFLICT" />
     </div>
     <AlertTriangle size={28} className="text-c-info" />
-    <h2 className="text-sm font-semibold text-c-text">Sesja zmieniła się na serwerze</h2>
+    <h2 className="text-sm font-semibold text-c-text">
+      {t('assessment.drd.http.conflict.title', 'The session changed on the server')}
+    </h2>
     <p className="max-w-md text-xs text-c-text-secondary">
-      Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję{' '}
-      {state.serverVersion ?? '—'}. Nic nie zostało nadpisane automatycznie — wybierz, jak
-      kontynuować.
+      {t(
+        'assessment.drd.http.conflict.body',
+        'Your browser had version {{local}}, the server is already at version {{server}}. Nothing was overwritten automatically — choose how to continue.',
+        { local: state.session?.version ?? '—', server: state.serverVersion ?? '—' }
+      )}
     </p>
     <div className="flex items-center gap-2">
       <button
@@ -289,24 +299,28 @@ const ConflictView: React.FC<{
         onClick={onLoadServerVersion}
         className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
       >
-        <RefreshCw size={13} /> Wczytaj wersję serwera
+        <RefreshCw size={13} />{' '}
+        {t('assessment.drd.http.conflict.loadServer', 'Load the server version')}
       </button>
       <button
         type="button"
         onClick={onExit}
         className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
       >
-        Wyjdź bez zmian
+        {t('assessment.drd.http.conflict.exit', 'Leave without changes')}
       </button>
     </div>
   </div>
-);
+  );
+};
 
 const RecoveryQueueView: React.FC<{
   state: DrdHttpRuntimeState;
   onApplyPending: () => void;
   onDiscardPending: () => void;
-}> = ({ state, onApplyPending, onDiscardPending }) => (
+}> = ({ state, onApplyPending, onDiscardPending }) => {
+  const { t } = useTranslation();
+  return (
   <div
     data-testid="drd-http-recovery-view"
     role="alert"
@@ -315,7 +329,10 @@ const RecoveryQueueView: React.FC<{
     <div className="flex items-center gap-2">
       <DrdSourceIndicator
         source="RECOVERY_DRAFT"
-        title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer."
+        title={t(
+          'assessment.drd.http.recovery.indicatorTitle',
+          'Changes saved locally, not yet confirmed by the server.'
+        )}
       />
       {/* Status here is always 'recovery' with pendingWriteCount > 0 by
           construction (this view only renders for `state.status === 'recovery'`),
@@ -325,12 +342,17 @@ const RecoveryQueueView: React.FC<{
     </div>
     <CloudOff size={28} className="text-c-warning" />
     <h2 className="text-sm font-semibold text-c-text">
-      Połączenie wróciło — {state.pendingWriteCount} zaległych zmian czeka
+      {t(
+        'assessment.drd.http.recovery.title',
+        'Connection is back — {{count}} pending change(s) waiting',
+        { count: state.pendingWriteCount }
+      )}
     </h2>
     <p className="max-w-md text-xs text-c-text-secondary">
-      Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie:
-      zastosować je na serwerze, czy je odrzucić i wczytać bieżący stan serwera. Nic nie dzieje się
-      automatycznie.
+      {t(
+        'assessment.drd.http.recovery.body',
+        'These changes were saved locally while there was no connection to the server. Choose explicitly: apply them on the server, or discard them and load the current server state. Nothing happens automatically.'
+      )}
     </p>
     <div className="flex items-center gap-2">
       <button
@@ -339,7 +361,10 @@ const RecoveryQueueView: React.FC<{
         onClick={onApplyPending}
         className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
       >
-        <RefreshCw size={13} /> Zastosuj zaległe zmiany ({state.pendingWriteCount})
+        <RefreshCw size={13} />{' '}
+        {t('assessment.drd.http.recovery.apply', 'Apply pending changes ({{count}})', {
+          count: state.pendingWriteCount,
+        })}
       </button>
       <button
         type="button"
@@ -347,13 +372,16 @@ const RecoveryQueueView: React.FC<{
         onClick={onDiscardPending}
         className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
       >
-        Odrzuć lokalne, wgraj serwer
+        {t('assessment.drd.http.recovery.discard', 'Discard local, load the server')}
       </button>
     </div>
   </div>
-);
+  );
+};
 
-const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+  const { t } = useTranslation();
+  return (
   <div
     data-testid="drd-http-offline-banner"
     role="alert"
@@ -361,24 +389,29 @@ const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
   >
     <CloudOff size={13} className="shrink-0" />
     <span>
-      Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE
-      jest potwierdzony stan serwera.
+      {t(
+        'assessment.drd.http.offline.body',
+        'No connection to the server — writes are queued locally and never lost, but this is NOT a confirmed server state.'
+      )}
     </span>
     <button
       type="button"
       onClick={onRetry}
       className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20"
     >
-      <RefreshCw size={11} /> Spróbuj połączyć ponownie
+      <RefreshCw size={11} /> {t('assessment.drd.http.offline.retry', 'Try to reconnect')}
     </button>
   </div>
-);
+  );
+};
 
 const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: () => void }> = ({
   message,
   onRetry,
   onExit,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div
     data-testid="drd-http-error-view"
     role="alert"
@@ -394,18 +427,19 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
         onClick={onRetry}
         className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
       >
-        <RefreshCw size={13} /> Spróbuj ponownie
+        <RefreshCw size={13} /> {t('assessment.drd.http.error.retry', 'Try again')}
       </button>
       <button
         type="button"
         onClick={onExit}
         className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
       >
-        Wyjdź
+        {t('assessment.drd.http.error.exit', 'Leave')}
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -503,7 +537,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         runtime = await bootPromiseRef.current;
       } catch (err) {
         if (!cancelled)
-          setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
+          setBootError(
+            err instanceof Error
+              ? err.message
+              : t('assessment.drd.http.boot.createFailed', 'The session could not be created.')
+          );
         return;
       }
       if (cancelled) return;
@@ -528,12 +566,18 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         forceStateAppliedRef.current = true;
         const debugPatch: Partial<DrdHttpRuntimeState> =
           forceState === 'offline'
-            ? { status: 'offline', error: 'Brak połączenia z serwerem.' }
+            ? {
+                status: 'offline',
+                error: t('assessment.drd.http.state.offline', 'No connection to the server.'),
+              }
             : forceState === 'conflict'
               ? {
                   status: 'conflict',
                   serverVersion: (runtimeRef.current.getState().session?.version ?? 1) + 1,
-                  error: 'Sesja zmieniła się na serwerze.',
+                  error: t(
+                    'assessment.drd.http.state.conflict',
+                    'The session changed on the server.'
+                  ),
                 }
               : forceState === 'recovery'
                 ? { status: 'recovery', pendingWriteCount: 2 }
@@ -894,8 +938,14 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       if (!runtime || !canWrite) return;
       const note =
         action === 'request_evidence'
-          ? 'Poproszono o dowód od właściciela procesu.'
-          : 'Odłożone — wróć później do tego pytania.';
+          ? t(
+              'assessment.drd.http.resolution.requestEvidence',
+              'Evidence requested from the process owner.'
+            )
+          : t(
+              'assessment.drd.http.resolution.returnLater',
+              'Deferred — come back to this question later.'
+            );
       await runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevelFallback,
@@ -938,7 +988,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             level: change.after,
             questionId: preview.intent.questionId ?? `${activeArea.id}-L${change.after}-Q1`,
             answerState: 'confirmed',
-            text: 'Potwierdzone po akceptacji propozycji Teresy (decyzja człowieka).',
+            text: t(
+              'assessment.drd.http.teresa.confirmedAfterAccept',
+              'Confirmed after accepting Teresa’s proposal (a human decision).'
+            ),
           });
         }
       }
@@ -962,11 +1015,24 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     }
     const freezeBlockers: string[] = [];
     if (answeredUnits === 0)
-      freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
+      freezeBlockers.push(
+        t(
+          'assessment.drd.http.blockers.noConfirmedUnits',
+          'No confirmed units — the interview has not started yet.'
+        )
+      );
     if (answeredUnitsMissingEvidence > 0)
-      freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
+      freezeBlockers.push(
+        t('assessment.drd.http.blockers.unitsWithoutEvidence', '{{count}} answered units without evidence', {
+          count: answeredUnitsMissingEvidence,
+        })
+      );
     if (pendingPreviews.length > 0)
-      freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
+      freezeBlockers.push(
+        t('assessment.drd.http.blockers.pendingProposals', '{{count}} Teresa proposals awaiting a decision', {
+          count: pendingPreviews.length,
+        })
+      );
     const frozenAlready = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
     return {
       answeredUnits,
@@ -976,22 +1042,44 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       pendingProposals: pendingPreviews.length,
       freezeBlockers: frozenAlready ? [] : freezeBlockers,
     };
-  }, [events, pendingPreviews.length, state?.session?.state]);
+  }, [events, pendingPreviews.length, state?.session?.state, t]);
 
+  const activeAreaName = nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish);
+  const activeAxisName = nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish);
   const teresaSixQuestions = {
-    whereAreWe: `Sesja DRD, jednostka ${activeArea.namePL || activeArea.name}, poziom ${focusLevelFallback}. ${readiness.answeredUnits}/${readiness.totalUnits} jednostek dotkniętych.`,
-    whatMattersNow: focusQuestions[0]?.canonicalWording ?? 'Brak pytań na tym poziomie.',
-    why: activeAxis.namePL
-      ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.`
+    whereAreWe: t(
+      'assessment.drd.http.teresa.whereAreWe',
+      'DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.',
+      {
+        unit: activeAreaName,
+        level: focusLevelFallback,
+        answered: readiness.answeredUnits,
+        total: readiness.totalUnits,
+      }
+    ),
+    whatMattersNow:
+      focusQuestions[0]?.canonicalWording ??
+      t('assessment.drd.http.teresa.noQuestions', 'No questions at this level.'),
+    why: activeAxisName
+      ? t(
+          'assessment.drd.http.teresa.why',
+          'Axis “{{axis}}” needs this unit confirmed to unlock the next levels.',
+          { axis: activeAxisName }
+        )
       : '',
     whatIsMissing:
       evidenceCountForUnit === 0
-        ? 'Brak dowodu dla tej jednostki.'
-        : `${evidenceCountForUnit} dowód/-ody zebrane.`,
+        ? t('assessment.drd.http.teresa.noEvidence', 'No evidence for this unit.')
+        : t('assessment.drd.http.teresa.evidenceCollected', '{{count}} piece(s) of evidence collected.', {
+            count: evidenceCountForUnit,
+          }),
     nextSafeAction:
       pendingPreviews.length > 0
-        ? 'Zdecyduj o oczekujących propozycjach Teresy.'
-        : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
+        ? t('assessment.drd.http.teresa.decidePending', 'Decide on Teresa’s pending proposals.')
+        : t(
+            'assessment.drd.http.teresa.answerOrAttach',
+            'Answer the current question or attach evidence.'
+          ),
   };
 
 
@@ -1030,11 +1118,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const poleZPytania = useCallback(
     (q: (typeof pack.questions)[number]): PoleDoUzupelnienia => ({
       id: q.questionId,
-      etykieta: `Odpowiedź na pytanie: „${q.canonicalWording}"`,
+      etykieta: t('assessment.drd.http.field.answerTo', 'Answer to the question: “{{question}}”', {
+        question: q.canonicalWording,
+      }),
       wartosc: draftAnswerText[q.questionId] ?? questionAnswerState(events, q.questionId).text ?? '',
       format: 'paragraph',
       sekcjaId: q.questionId,
-      sekcjaEtykieta: `Poziom ${q.level}`,
+      sekcjaEtykieta: t('assessment.drd.http.field.level', 'Level {{level}}', { level: q.level }),
     }),
     [draftAnswerText, events]
   );
@@ -1074,7 +1164,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   if (bootError) {
     return (
       <ErrorRetryView
-        message={`Nie udało się utworzyć sesji: ${bootError}`}
+        message={t('assessment.drd.http.boot.createFailedWithReason', 'The session could not be created: {{reason}}', {
+          reason: bootError,
+        })}
         onRetry={() => window.location.reload()}
         onExit={onExit ?? (() => {})}
       />
@@ -1129,7 +1221,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   if (state.status === 'error' && !state.session) {
     return (
       <ErrorRetryView
-        message={state.error ?? 'Nieznany błąd.'}
+        message={state.error ?? t('assessment.drd.http.state.unknownError', 'Unknown error.')}
         onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
         onExit={onExit ?? (() => {})}
       />
@@ -1156,11 +1248,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         onGenerateReport={() =>
           canWrite
             ? runtime?.generateReport({
-                title: 'Raport DRD',
+                title: t('assessment.drd.http.generated.reportTitle', 'DRD report'),
                 content: {
-                  executiveSummary: 'Sesja DRD — wynik cząstkowy.',
+                  executiveSummary: t(
+                    'assessment.drd.http.generated.reportSummary',
+                    'DRD session — partial result.'
+                  ),
                   participants: ['Piotr (Owner)', 'Anna (Approver)'],
-                  strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
+                  strengths: [
+                    t(
+                      'assessment.drd.http.generated.reportStrength',
+                      'The sales process has basic documentation.'
+                    ),
+                  ],
                 },
               })
             : undefined
@@ -1168,10 +1268,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         onGenerateInitiative={() =>
           canWrite
             ? runtime?.generateInitiativeDraft({
-                title: 'Domknij automatyzację procesu sprzedaży w CRM',
+                title: t(
+                  'assessment.drd.http.generated.initiativeTitle',
+                  'Complete the sales process automation in the CRM'
+                ),
                 findingIds: (state.output?.findings ?? []).map((f) => f.id),
-                rationale: 'Znaleziska Outputu wskazują lukę między current a target.',
-                expectedOutcome: 'Podniesienie poziomu dojrzałości.',
+                rationale: t(
+                  'assessment.drd.http.generated.initiativeRationale',
+                  'The Output findings show a gap between current and target.'
+                ),
+                expectedOutcome: t(
+                  'assessment.drd.http.generated.initiativeOutcome',
+                  'Raising the maturity level.'
+                ),
                 confidence: 'medium',
               })
             : undefined
@@ -1223,8 +1332,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           source={sourceKind}
           title={
             sourceKind === 'SERVER'
-              ? 'Świeżo potwierdzone przez serwer.'
-              : 'Nie w pełni zsynchronizowane z serwerem.'
+              ? t('assessment.drd.http.source.server', 'Freshly confirmed by the server.')
+              : t(
+                  'assessment.drd.http.source.recovery',
+                  'Not fully synchronised with the server.'
+                )
           }
         />
         <AssessmentSaveStateIndicator state={saveIndicatorState} />
@@ -1241,7 +1353,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onClick={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
             className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20"
           >
-            Spróbuj ponownie
+            {t('assessment.drd.http.error.retryInline', 'Try again')}
           </button>
         </div>
       )}
@@ -1308,17 +1420,29 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           interviewProps={{
             breadcrumb: [
               activeAxis.namePL || activeAxis.name,
-              activeArea.namePL || activeArea.name,
-              `Poziom ${focusLevelFallback}`,
+              nazwaWJezyku(activeArea.namePL, activeArea.name, isPolish),
+              t('assessment.drd.http.field.level', 'Level {{level}}', {
+                level: focusLevelFallback,
+              }),
             ],
             questions: interviewQuestions,
             questionIndex: focusLevelFallback - 1,
             questionTotal: activeArea.levels.length,
             resolutionData: {
               questionId: focusQuestions[0]?.questionId ?? '',
-              whatIsUnknown: `Czy jednostka ${activeArea.id} spełnia kryteria poziomu ${focusLevelFallback}.`,
-              likelyOwnerLabel: 'Właściciel procesu',
-              resolvingArtifactHint: 'Dokument procedury lub zrzut z systemu.',
+              whatIsUnknown: t(
+                'assessment.drd.http.resolution.whatIsUnknown',
+                'Whether unit {{unit}} meets the criteria of level {{level}}.',
+                { unit: activeArea.id, level: focusLevelFallback }
+              ),
+              likelyOwnerLabel: t(
+                'assessment.drd.http.resolution.likelyOwner',
+                'Process owner'
+              ),
+              resolvingArtifactHint: t(
+                'assessment.drd.http.resolution.artifactHint',
+                'A procedure document or a screenshot from the system.'
+              ),
               dueDate: null,
               blocksFreeze: true,
             },
@@ -1359,14 +1483,23 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               renderSideSheet={(selection, cell) => (
                 <div className="text-xs text-c-text-secondary">
                   <p>
-                    {selection.unitId} · poziom {selection.level} —{' '}
-                    {cell?.blocker
-                      ? 'BLOKER (pierwszy niespełniony poziom)'
-                      : cell?.reviewRequired
-                        ? 'above-gap: wymaga przeglądu'
-                        : cell?.achieved
-                          ? 'osiągnięty'
-                          : 'nieosiągnięty'}
+                    {t('assessment.drd.http.cell.line', '{{unit}} · level {{level}} — {{state}}', {
+                      unit: selection.unitId,
+                      level: selection.level,
+                      state: cell?.blocker
+                        ? t(
+                            'assessment.drd.http.cell.blocker',
+                            'BLOCKER (first unmet level)'
+                          )
+                        : cell?.reviewRequired
+                          ? t(
+                              'assessment.drd.http.cell.reviewRequired',
+                              'above-gap: needs review'
+                            )
+                          : cell?.achieved
+                            ? t('assessment.drd.http.cell.achieved', 'achieved')
+                            : t('assessment.drd.http.cell.notAchieved', 'not achieved'),
+                    })}
                   </p>
                 </div>
               )}
@@ -1385,14 +1518,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             renderSideSheet: (selection, cell) => (
               <div className="text-xs text-c-text-secondary">
                 <p>
-                  {selection.unitId} · poziom {selection.level} —{' '}
-                  {cell?.blocker
-                    ? 'BLOKER (pierwszy niespełniony poziom)'
-                    : cell?.reviewRequired
-                      ? 'above-gap: wymaga przeglądu'
-                      : cell?.achieved
-                        ? 'osiągnięty'
-                        : 'nieosiągnięty'}
+                  {t('assessment.drd.http.cell.line', '{{unit}} · level {{level}} — {{state}}', {
+                    unit: selection.unitId,
+                    level: selection.level,
+                    state: cell?.blocker
+                      ? t('assessment.drd.http.cell.blocker', 'BLOCKER (first unmet level)')
+                      : cell?.reviewRequired
+                        ? t('assessment.drd.http.cell.reviewRequired', 'above-gap: needs review')
+                        : cell?.achieved
+                          ? t('assessment.drd.http.cell.achieved', 'achieved')
+                          : t('assessment.drd.http.cell.notAchieved', 'not achieved'),
+                  })}
                 </p>
               </div>
             ),
@@ -1416,16 +1552,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                     DRD report · axis {activeAxis.id}
                   </p>
                   <h2 className="text-lg font-semibold text-c-text">
-                    {activeAxis.namePL || activeAxis.name}
+                    {nazwaWJezyku(activeAxis.namePL, activeAxis.name, isPolish)}
                   </h2>
                   <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
-                    Roboczy rozdział raportu oparty na bieżących odpowiedziach, dowodach i targetach
-                    tej samej sesji. Nie jest zatwierdzonym raportem, dopóki sesja nie zostanie
-                    zamrożona przez approvera.
+                    {t(
+                      'assessment.drd.http.report.workingChapter',
+                      'A working report chapter based on the current answers, evidence and targets of this same session. It is not an approved report until the session is frozen by an approver.'
+                    )}
                   </p>
                 </div>
                 <div className="rounded-xl border border-c-border bg-c-surface p-4">
-                  <h3 className="mb-3 text-sm font-semibold text-c-text">Macierz osi</h3>
+                  <h3 className="mb-3 text-sm font-semibold text-c-text">
+                    {t('assessment.drd.http.report.axisMatrix', 'Axis matrix')}
+                  </h3>
                   <LiveMatrix
                     {...{
                       rows: matrixRows,
@@ -1440,14 +1579,30 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                       renderSideSheet: (selection, cell) => (
                         <div className="text-xs text-c-text-secondary">
                           <p>
-                            {selection.unitId} · poziom {selection.level} —{' '}
-                            {cell?.blocker
-                              ? 'BLOKER (pierwszy niespełniony poziom)'
-                              : cell?.reviewRequired
-                                ? 'above-gap: wymaga przeglądu'
-                                : cell?.achieved
-                                  ? 'osiągnięty'
-                                  : 'nieosiągnięty'}
+                            {t(
+                              'assessment.drd.http.cell.line',
+                              '{{unit}} · level {{level}} — {{state}}',
+                              {
+                                unit: selection.unitId,
+                                level: selection.level,
+                                state: cell?.blocker
+                                  ? t(
+                                      'assessment.drd.http.cell.blocker',
+                                      'BLOCKER (first unmet level)'
+                                    )
+                                  : cell?.reviewRequired
+                                    ? t(
+                                        'assessment.drd.http.cell.reviewRequired',
+                                        'above-gap: needs review'
+                                      )
+                                    : cell?.achieved
+                                      ? t('assessment.drd.http.cell.achieved', 'achieved')
+                                      : t(
+                                          'assessment.drd.http.cell.notAchieved',
+                                          'not achieved'
+                                        ),
+                              }
+                            )}
                           </p>
                         </div>
                       ),
@@ -1463,12 +1618,19 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                     >
                       <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
                       <h3 className="text-sm font-semibold text-c-text">
-                        {area.namePL || area.name}
+                        {nazwaWJezyku(area.namePL, area.name, isPolish)}
                       </h3>
                       <p className="mt-2 text-xs text-c-text-secondary">
                         {confirmedLevelsFor(events, area.id).length > 0
-                          ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Wymaga komentarza eksperckiego przed zatwierdzeniem.`
-                          : 'Brak potwierdzonej oceny — raport nie może udawać wniosku dla tego obszaru.'}
+                          ? t(
+                              'assessment.drd.http.report.confirmedLevels',
+                              'Confirmed levels: {{levels}}. Requires an expert comment before approval.',
+                              { levels: confirmedLevelsFor(events, area.id).join(', ') }
+                            )
+                          : t(
+                              'assessment.drd.http.report.noConfirmedLevel',
+                              'No confirmed assessment — the report must not pretend to draw a conclusion for this area.'
+                            )}
                       </p>
                     </article>
                   ))}
@@ -1493,7 +1655,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                 disabled={!canSendToReview}
                 className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
               >
-                Wyślij do przeglądu
+                {t('assessment.drd.http.governance.sendToReview', 'Send for review')}
               </button>
               <button
                 type="button"
@@ -1501,7 +1663,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                 disabled={!canSendBack}
                 className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
               >
-                Odeślij do pracy
+                {t('assessment.drd.http.governance.sendBack', 'Send back to work')}
               </button>
               <button
                 type="button"
@@ -1511,7 +1673,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                 className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
               >
                 <Lock size={12} />
-                Zamroź
+                {t('assessment.drd.http.governance.freeze', 'Freeze')}
               </button>
             </>
           }
@@ -1527,46 +1689,60 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         <aside
           role="dialog"
           aria-modal="false"
-          aria-label="Ocena gotowości sesji"
+          aria-label={t('assessment.drd.http.readiness.title', 'Session readiness assessment')}
           data-testid="drd-analiza-gotowosci"
           className="fixed bottom-5 right-5 z-40 max-h-[70vh] w-[min(460px,calc(100vw-2.5rem))] overflow-y-auto rounded-2xl border border-c-border bg-c-surface p-4 shadow-2xl"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
-            <strong className="text-sm text-c-text">Ocena gotowości sesji</strong>
+            <strong className="text-sm text-c-text">
+              {t('assessment.drd.http.readiness.title', 'Session readiness assessment')}
+            </strong>
             <button
               type="button"
               onClick={() => setAnalizaOtwarta(false)}
-              aria-label="Zamknij"
+              aria-label={t('assessment.drd.http.readiness.close', 'Close')}
               className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Zamknij
+              {t('assessment.drd.http.readiness.close', 'Close')}
             </button>
           </div>
           <dl className="space-y-2 text-sm text-c-text-secondary">
             <div>
-              <dt className="font-medium text-c-text">Gdzie jesteśmy</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.whereAreWe', 'Where we are')}
+              </dt>
               <dd>{teresaSixQuestions.whereAreWe}</dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Co teraz ma znaczenie</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.whatMattersNow', 'What matters now')}
+              </dt>
               <dd>{teresaSixQuestions.whatMattersNow}</dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Czego brakuje</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.whatIsMissing', 'What is missing')}
+              </dt>
               <dd>{teresaSixQuestions.whatIsMissing}</dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Dowody</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.evidence', 'Evidence')}
+              </dt>
               <dd>
-                {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}{' '}
-                jednostek ma dowód
+                {t('assessment.drd.http.readiness.evidenceCount', '{{withEvidence}}/{{total}} units have evidence', {
+                  withEvidence: readiness.totalUnits - readiness.unitsMissingEvidence,
+                  total: readiness.totalUnits,
+                })}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Blokery zamrożenia</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.freezeBlockers', 'Freeze blockers')}
+              </dt>
               <dd>
                 {readiness.freezeBlockers.length === 0 ? (
-                  'Brak blokerów zamrożenia.'
+                  t('assessment.drd.http.readiness.noFreezeBlockers', 'No freeze blockers.')
                 ) : (
                   <ul className="ml-4 list-disc space-y-0.5">
                     {readiness.freezeBlockers.map((b, i) => (
@@ -1577,7 +1753,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Bezpieczny następny ruch</dt>
+              <dt className="font-medium text-c-text">
+                {t('assessment.drd.http.readiness.nextSafeAction', 'Safe next move')}
+              </dt>
               <dd>{teresaSixQuestions.nextSafeAction}</dd>
             </div>
           </dl>
@@ -1599,6 +1777,7 @@ const FrozenOutputHttpView: React.FC<{
   onExit: () => void;
   readOnly?: boolean;
 }> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit, readOnly = false }) => {
+  const { t } = useTranslation();
   const session = state.session!;
   const output = state.output;
 
@@ -1613,10 +1792,16 @@ const FrozenOutputHttpView: React.FC<{
           onClick={onExit}
           className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
         >
-          <ArrowLeft size={13} /> Wyjdź
+          <ArrowLeft size={13} /> {t('assessment.drd.http.frozen.exit', 'Leave')}
         </button>
         <h1 className="text-sm font-semibold text-c-text">
-          Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
+          {t('assessment.drd.http.frozen.heading', 'Session {{id}} — {{state}}', {
+            id: session.id.slice(0, 8),
+            state:
+              session.state === 'closed'
+                ? t('assessment.drd.http.frozen.stateClosed', 'Closed')
+                : t('assessment.drd.http.frozen.stateFrozen', 'Frozen'),
+          })}
         </h1>
         {/* ★ Frozen Output must NEVER be labeled SERVER unless `output` is a
             confirmed server response for THIS session's current freeze —
@@ -1624,7 +1809,10 @@ const FrozenOutputHttpView: React.FC<{
             a `getOutput()` re-fetch (see drdHttpSessionRuntime.ts refresh()). */}
         <DrdSourceIndicator
           source={output ? sourceKind : 'RECOVERY_DRAFT'}
-          title="Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage."
+          title={t(
+            'assessment.drd.http.frozen.sourceTitle',
+            'A frozen Output always comes from the server response, never from localStorage.'
+          )}
         />
       </div>
 
@@ -1641,8 +1829,10 @@ const FrozenOutputHttpView: React.FC<{
         </div>
         {!output ? (
           <p className="text-xs text-c-text-muted">
-            Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu.
-            Odśwież widok; ekran nie odtworzy treści z lokalnego cache.
+            {t(
+              'assessment.drd.http.frozen.outputMissing',
+              'The session is frozen on the server, but its current Output could not be found. Refresh the view; this screen will not rebuild the content from a local cache.'
+            )}
           </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
@@ -1664,14 +1854,23 @@ const FrozenOutputHttpView: React.FC<{
                 }))}
               />
             </div>
-            <p className="pt-1 font-medium text-c-text">Findings ({output.findings.length})</p>
+            <p className="pt-1 font-medium text-c-text">
+              {t('assessment.drd.http.frozen.findings', 'Findings ({{count}})', {
+                count: output.findings.length,
+              })}
+            </p>
             {output.findings.map((f) => (
               <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
                 <p className="text-c-text">{f.businessMeaning}</p>
-                <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
                 <p className="text-c-text-muted">
-                  Jednostka: {f.unitName} · current {f.currentLevel ?? '—'} · target{' '}
-                  {f.targetLevel ?? '—'} · gap {f.gap ?? '—'}
+                  {t('assessment.drd.http.frozen.recommendation', 'Recommendation: {{value}}', {
+                    value: f.recommendation,
+                  })}
+                </p>
+                <p className="text-c-text-muted">
+                  {t('assessment.drd.http.frozen.unitLine', 'Unit: {{name}}', { name: f.unitName })}{' '}
+                  · current {f.currentLevel ?? '—'} · target {f.targetLevel ?? '—'} · gap{' '}
+                  {f.gap ?? '—'}
                 </p>
               </div>
             ))}
@@ -1695,11 +1894,16 @@ const FrozenOutputHttpView: React.FC<{
             disabled={!output || readOnly}
             className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
           >
-            Generuj raport z Outputu
+            {t('assessment.drd.http.frozen.generateReport', 'Generate a report from the Output')}
           </button>
         </div>
         {state.reports.length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak zapisanego raportu dla tego Outputu.</p>
+          <p className="text-xs text-c-text-muted">
+            {t(
+              'assessment.drd.http.frozen.noReport',
+              'No report saved for this Output.'
+            )}
+          </p>
         ) : (
           state.reports.map((r, i) => {
             const rec = r as {
@@ -1729,7 +1933,10 @@ const FrozenOutputHttpView: React.FC<{
           <div className="flex items-center gap-2">
             <Lightbulb size={14} className="text-c-text-secondary" />
             <h2 className="text-sm font-semibold text-c-text">
-              Initiative Proposal Draft (lokalny, NIE Registered Initiative)
+              {t(
+                'assessment.drd.http.frozen.initiativeDraftTitle',
+                'Initiative Proposal Draft (local, NOT a Registered Initiative)'
+              )}
             </h2>
           </div>
           <button
@@ -1738,12 +1945,15 @@ const FrozenOutputHttpView: React.FC<{
             disabled={!output || readOnly}
             className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
           >
-            Wygeneruj z findingów
+            {t('assessment.drd.http.frozen.generateInitiative', 'Generate from findings')}
           </button>
         </div>
         {state.initiatives.length === 0 ? (
           <p className="text-xs text-c-text-muted">
-            Brak zapisanego Initiative Proposal Draft dla tego Outputu.
+            {t(
+              'assessment.drd.http.frozen.noInitiativeDraft',
+              'No Initiative Proposal Draft saved for this Output.'
+            )}
           </p>
         ) : (
           state.initiatives.map((d, i) => {
@@ -1762,7 +1972,10 @@ const FrozenOutputHttpView: React.FC<{
                 <p className="text-c-text-secondary">{rec.summary}</p>
                 <p className="text-c-text-muted">confidence: {rec.confidence}</p>
                 <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">
-                  Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.
+                  {t(
+                    'assessment.drd.http.frozen.draftNotice',
+                    'Draft — the “Register as Initiative” decision belongs to a human, outside this module.'
+                  )}
                 </p>
               </div>
             );
@@ -1777,11 +1990,15 @@ const FrozenOutputHttpView: React.FC<{
       >
         <div className="mb-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-c-text-secondary" />
-          <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
+          <h2 className="text-sm font-semibold text-c-text">
+            {t('assessment.drd.http.frozen.reopenTitle', 'Reopen — new revision')}
+          </h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
-          Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*,
-          server/src/routes/method-core.routes.ts). Akcja wyłączona jawnie, nie udawana.
+          {t(
+            'assessment.drd.http.frozen.reopenUnavailable',
+            'There is no HTTP endpoint for reopen (outside the scope of this file — server/src/method-core/*, server/src/routes/method-core.routes.ts). The action is disabled explicitly, not faked.'
+          )}
         </p>
         <button
           type="button"
@@ -1789,7 +2006,7 @@ const FrozenOutputHttpView: React.FC<{
           data-testid="reopen-button"
           className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary opacity-40"
         >
-          Reopen sesji (niedostępne przez HTTP)
+          {t('assessment.drd.http.frozen.reopenButton', 'Reopen the session (not available over HTTP)')}
         </button>
       </section>
     </div>

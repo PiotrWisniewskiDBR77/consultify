@@ -50,10 +50,13 @@ describe('AdminAIControlCenterPanel day218 honest policy states', () => {
 
     expect(await screen.findByText('PROACTIVE')).toBeInTheDocument();
     expect(screen.getByText('Internet enabled')).toBeInTheDocument();
-    expect(screen.getByText('Audit: {{status}}')).toBeInTheDocument();
+    // J5: atrapa `react-i18next` w tests/setup.ts nie interpolowała `{{x}}`,
+    // więc te asercje utrwalały napis, którego użytkownik nigdy nie widzi.
+    // Po naprawie atrapy sprawdzamy realnie renderowany tekst.
+    expect(screen.getByText('Audit: required')).toBeInTheDocument();
     expect(screen.getByText('on')).toBeInTheDocument();
-    expect(screen.getByText('Review state: {{state}}')).toBeInTheDocument();
-    expect(screen.getByText('External context: {{status}}')).toBeInTheDocument();
+    expect(screen.getByText('Review state: APPROVED')).toBeInTheDocument();
+    expect(screen.getByText('External context: n/a')).toBeInTheDocument();
   });
 
   it('keeps an empty LLM policy distinct from a failed check', async () => {
@@ -72,7 +75,7 @@ describe('AdminAIControlCenterPanel day218 honest policy states', () => {
 
     render(<AdminAIControlCenterPanel />);
 
-    expect(await screen.findByText('Review state: {{state}}')).toBeInTheDocument();
+    expect(await screen.findByText('Review state: n/a')).toBeInTheDocument();
     expect(screen.queryByText('Unavailable (check failed)')).not.toBeInTheDocument();
   });
 
