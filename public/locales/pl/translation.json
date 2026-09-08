@@ -20304,7 +20304,45 @@
           "title": "Certyfikacja DRD Framework",
           "description": "Głębokie zanurzenie w metodologię Digital Readiness Diagnostic."
         }
-      }
+      },
+      "certifications": {
+        "unknown": {
+          "label": "Certyfikat partnera",
+          "description": "Szczegóły certyfikatu niedostępne"
+        },
+        "CONSULTIFY_CERTIFIED": {
+          "label": "Partner certyfikowany Consultify",
+          "description": "Ukończone wszystkie wymagane moduły metodyczne"
+        },
+        "CO_SELL_EXPERT": {
+          "label": "Ekspert sprzedaży wspólnej",
+          "description": "Opanowane dobre praktyki sprzedaży wspólnej i rejestracji transakcji"
+        },
+        "ENTERPRISE_PARTNER": {
+          "label": "Partner korporacyjny",
+          "description": "Zaawansowane wzorce integracji i certyfikacja zgodności"
+        }
+      },
+      "certificationReady": "Gotowy do certyfikacji",
+      "stats": {
+        "modulesCompleted": "Ukończone moduły",
+        "totalDuration": "Łączny czas",
+        "minutes": "{{count}} min",
+        "averageScore": "Średni wynik",
+        "certifications": "Certyfikaty"
+      },
+      "overallProgress": "Postęp ogółem",
+      "yourCertifications": "Twoje certyfikaty",
+      "certified": "Certyfikowany",
+      "earnedOn": "Zdobyty {{date}}",
+      "completedOfTotal": "ukończone {{done}}/{{total}}",
+      "minutesTotal": "łącznie {{count}} min",
+      "unlockTitle": "Odblokuj certyfikację Consultify",
+      "unlockBody": "Ukończ jeszcze {{count}} wymaganych modułów, aby zdobyć certyfikat",
+      "continueLearning": "Kontynuuj naukę",
+      "moduleRequired": "Wymagany",
+      "moduleScore": "Wynik",
+      "moduleStart": "Rozpocznij"
     },
     "contact": {
       "title": "Masz pytania? Porozmawiajmy!",
@@ -20905,6 +20943,36 @@
         "incorrectAmountAnswer": "Użyj formularza zapytania powyżej, wybierając 'Pytanie o wyciąg'. Dołącz numer wyciągu i szczegóły rozbieżności. Finance Team odpowie w ciągu 2 dni roboczych.",
         "pmoMapping": "Jak transakcje są mapowane do standardów PMO?",
         "pmoMappingAnswer": "Każda transakcja i wypłata prowizji jest rejestrowana, aby zachować pełną historię rozliczeń."
+      },
+      "runtimeTitle": "Podsumowanie prowizji",
+      "runtimeSubtitle": "Nadzorowany odczyt zestawień i wypłat dla aktywnego ekranu prowizji.",
+      "paidStatements": "Zestawienia opłacone",
+      "settledCount": "rozliczonych zestawień: {{count}}",
+      "approvedStatements": "Zestawienia zatwierdzone",
+      "awaitingPayoutCount": "oczekuje na wypłatę: {{count}}",
+      "pendingStatements": "Zestawienia oczekujące",
+      "underReviewCount": "wciąż w weryfikacji: {{count}}",
+      "dealIntelUnavailableTitle": "Analityka transakcji jest niedostępna w nadzorowanym środowisku",
+      "dealIntelUnavailableBody": "Ten ekran nie pokazuje już zastępczych prognoz lejka transakcji. Analityka prowizji wróci dopiero po wdrożeniu prawdziwego kontraktu lejka dla uwierzytelnionego partnera.",
+      "statementsTitle": "Zestawienia prowizji",
+      "statementsSubtitle": "Historia zestawień i wypłat",
+      "statementsLoading": "Wczytywanie zestawień prowizji…",
+      "statementRef": "Nr {{ref}}",
+      "statementDeals": "transakcji: {{count}}",
+      "statementHistorical": "Zestawienie historyczne",
+      "statementPaidOn": "Wypłacono {{date}}",
+      "statementView": "Zobacz",
+      "noStatements": "Brak zestawień prowizji",
+      "inquiryUnavailableTitle": "Kierowanie zapytań o prowizje jest niedostępne",
+      "inquiryUnavailableBody": "Ten ekran nie udaje już, że wysyła zapytania bez nadzorowanego kontraktu wsparcia dla użytkownika partnera.",
+      "inquiryUnavailableHint": "Przejrzyj powyższą historię zestawień i skorzystaj z materiałów partnera, dopóki kierowanie zapytań pozostaje poza nadzorowanym środowiskiem partnera.",
+      "openResources": "Otwórz materiały partnera",
+      "faqTitle": "FAQ o prowizjach",
+      "statementStatus": {
+        "PENDING": "Oczekuje",
+        "APPROVED": "Zatwierdzone",
+        "PAID": "Opłacone",
+        "REJECTED": "Odrzucone"
       }
     },
     "referrals": {
@@ -21050,6 +21118,155 @@
       "networkGrowth": "Wzrost sieci",
       "multiplier": "mnożnik {{value}}x",
       "pmoDomains": "Domeny zgodności ze standardami PMO"
+    },
+    "resourcesHub": {
+      "title": "Baza wiedzy partnera",
+      "subtitle": "Zacznij od publicznej dokumentacji, a potem przejdź do portalu partnera po akademię, egzaminy, certyfikaty i materiały dla zalogowanych.",
+      "openPortal": "Otwórz materiały w portalu",
+      "openDocs": "Otwórz dokumentację partnera",
+      "cards": {
+        "docs": {
+          "title": "Dokumentacja publiczna",
+          "description": "Opis programu, ścieżka zgłoszenia, wypłaty, certyfikacja, FAQ i studia przypadków."
+        },
+        "academy": {
+          "title": "Akademia partnera",
+          "description": "Ścieżki nauki podzielone na moduły, wraz z warunkami dopuszczenia do egzaminu i statusami weryfikacji."
+        },
+        "readiness": {
+          "title": "Nadzorowana gotowość",
+          "description": "Weryfikacja operatora, gotowość do wypłat i certyfikaty pozostają widoczne w portalu."
+        }
+      }
+    },
+    "lifecycleCanon": {
+      "steps": {
+        "apply": {
+          "title": "Zgłoszenie i kwalifikacja",
+          "description": "Zgłoszenie, ocena dopasowania i pierwsza kwalifikacja do ekosystemu dzieją się przed aktywacją."
+        },
+        "activate": {
+          "title": "Aktywacja profilu partnera",
+          "description": "Zaakceptuj umowę i ustal poziom handlowy przed szerszym dostępem do przestrzeni pracy."
+        },
+        "workspace": {
+          "title": "Domknięcie przestrzeni pracy i wypłat",
+          "description": "Uruchom operacje wdrożeniowe, gotowość do wypłat i własność przestrzeni partnera."
+        },
+        "grow": {
+          "title": "Rozwój przez akademię i awans",
+          "description": "Wsparcie, certyfikacja i awans poziomu zamieniają aktywację w żywy cykl życia partnera."
+        }
+      },
+      "badge": "Kanon cyklu życia partnera",
+      "title": "Jedna ścieżka od zgłoszenia do aktywnego partnera",
+      "subtitle": "Pozyskanie, aktywacja, wsparcie i prowizje powinny czytać się jako jeden nadzorowany cykl życia ekosystemu, a nie osobne strony partnera.",
+      "journey": "Kanoniczna ścieżka partnera",
+      "stepDone": "Gotowe",
+      "stepOpen": "Otwarte",
+      "closureTitle": "Co musi objąć domknięcie",
+      "closure": {
+        "ownership": "Zgłoszenie, aktywacja i wsparcie potrzebują jednego widocznego łańcucha odpowiedzialności.",
+        "reinforce": "Awans poziomu, akademia i prowizje powinny się wzmacniać, a nie żyć w osobnych silosach.",
+        "workspace": "Status aktywnego partnera powinien odblokowywać realną przestrzeń pracy, a nie samą powłokę."
+      },
+      "progress": "Postęp cyklu życia",
+      "chips": {
+        "application": "Zgłoszenie",
+        "activation": "Aktywacja",
+        "academy": "Akademia",
+        "earnings": "Prowizje"
+      }
+    },
+    "commissionIntel": {
+      "insights": {
+        "strongWinRate": {
+          "title": "Wysoka skuteczność",
+          "description": "Twoja skuteczność {{percent}}% jest powyżej średniej. Trzymaj się tego, co działa."
+        },
+        "winRateOptimization": {
+          "title": "Poprawa skuteczności",
+          "description": "Obecna skuteczność to {{percent}}%. Rozważ przegląd kryteriów kwalifikacji transakcji."
+        },
+        "pipeline": {
+          "title": "Lejek prowizji",
+          "description": "{{amount}} potencjalnej prowizji z {{count}} aktywnych transakcji."
+        },
+        "stalled": {
+          "title": "Wykryto zatrzymane transakcje",
+          "description": "{{count}} transakcji jest w toku od ponad 30 dni bez postępu."
+        },
+        "pendingPayouts": {
+          "title": "Oczekujące wypłaty",
+          "description": "{{amount}} w zestawieniach prowizji oczekuje na płatność."
+        }
+      },
+      "actions": {
+        "viewAcademyModule": "Zobacz moduł akademii",
+        "reviewDeals": "Przejrzyj transakcje",
+        "viewDetails": "Zobacz szczegóły",
+        "viewStatements": "Zobacz zestawienia"
+      },
+      "title": "Analityka prowizji",
+      "subtitle": "Wnioski i prognozy wspierane przez AI",
+      "noInsights": "Brak wniosków. Rejestruj kolejne transakcje, aby odblokować rekomendacje AI.",
+      "projectionsTitle": "Prognozy prowizji",
+      "forecastLabel": "Prognoza I kw. 2026",
+      "projection": {
+        "earned": "Zarobione",
+        "earnedSubtitle": "Wygrane transakcje",
+        "pipeline": "Lejek",
+        "pipelineSubtitle": "Aktywne szanse",
+        "projected": "Prognoza",
+        "projectedSubtitle": "Na podstawie skuteczności {{percent}}%",
+        "quarterTotal": "Razem I kw.",
+        "quarterTotalSubtitle": "Oczekiwana suma kwartalna"
+      },
+      "activeDeals": "Aktywne transakcje",
+      "viewAll": "Zobacz wszystkie",
+      "noActiveDeals": "Brak aktywnych transakcji w lejku",
+      "submitInquiry": "Wyślij zapytanie",
+      "submitInquiryHint": "Pytania lub aktualizacje dotyczące prowizji",
+      "viewStatements": "Zobacz zestawienia",
+      "viewStatementsHint": "Historia wypłat i raporty",
+      "dealValue": "wartość transakcji {{amount}}",
+      "commissionRate": "stawka {{percent}}%",
+      "dealStatus": {
+        "REGISTERED": "Zarejestrowana",
+        "QUALIFIED": "Zakwalifikowana",
+        "PROPOSAL": "Oferta",
+        "NEGOTIATION": "Negocjacje",
+        "WON": "Wygrana",
+        "LOST": "Przegrana"
+      }
+    },
+    "providerHome": {
+      "enablement": {
+        "eyebrow": "Wsparcie",
+        "title": "Korzystaj tylko z materiałów dostępnych na Twoim etapie programu",
+        "description": "Dokumentacja i wskazówki wdrożeniowe są dostępne od razu. Akademia, certyfikacja i pozostałe możliwości przestrzeni pracy zależą od dostępu do konta i statusu w programie.",
+        "docs": {
+          "title": "Dokumentacja programu",
+          "body": "Przejrzyj model programu, zakresy odpowiedzialności i zasady współpracy.",
+          "cta": "Otwórz dokumentację"
+        },
+        "academy": {
+          "title": "Akademia partnera",
+          "body": "Uporządkowane wsparcie może być dostępne po aktywacji; dostęp i postęp są weryfikowane w przestrzeni partnera.",
+          "badge": "Zależne od dostępu"
+        },
+        "support": {
+          "title": "Wsparcie handlowe i operacyjne",
+          "body": "Zakres wsparcia i czasy reakcji wynikają z obowiązującej umowy, a nie z tego przeglądu.",
+          "badge": "Zależne od umowy"
+        }
+      },
+      "contact": {
+        "eyebrow": "Potrzebujesz rozmowy o dopasowaniu?",
+        "title": "Porozmawiajmy o modelu współpracy, nie o wstępnych warunkach",
+        "body": "Skorzystaj z zatwierdzonej ścieżki kontaktu. Imienny opiekun programu pojawi się dopiero po potwierdzeniu prawa do publikacji.",
+        "cta": "Skontaktuj się z Consultify"
+      }
     }
   },
   "thinking": {
@@ -49775,6 +49992,72 @@
       "now": "Teraz — krok {{index}} z {{total}}",
       "notStarted": "Proces jeszcze nie wystartował.",
       "noCurrentStep": "Brak kroku w toku."
+    }
+  },
+  "subscriber": {
+    "dashboard": {
+      "title": "Pulpit subskrybenta Consultify",
+      "subtitle": "Wprowadź token pulpitu otrzymany od operatora Consultify.",
+      "tokenLabel": "Token pulpitu",
+      "tokenPlaceholder": "64-znakowy token od operatora",
+      "tokenHelp": "Token jest przechowywany wyłącznie w tej karcie przeglądarki i znika po jej zamknięciu. Nigdy nie udostępniaj go publicznie.",
+      "continue": "Dalej",
+      "signOut": "Wyloguj",
+      "refresh": "Odśwież",
+      "loading": "Wczytywanie pulpitu…",
+      "refreshing": "Odświeżanie…",
+      "tryAgain": "Spróbuj ponownie",
+      "signature": {
+        "title": "Sekret podpisujący",
+        "whyTitle": "Dlaczego to ważne",
+        "whyBody": "Podpisy HMAC pozwalają sprawdzić, że każdy webhook przyszedł z Consultify i nie został zmieniony po drodze. Regularna rotacja sekretu ogranicza skutki jego wycieku.",
+        "rotationOverdue": "Sekret podpisujący jest przeterminowany i wymaga rotacji.",
+        "rotationDueSoon": "Sekret podpisujący wkrótce będzie wymagał rotacji."
+      },
+      "delivery": {
+        "title": "Podsumowanie dostarczeń",
+        "last7Days": "Ostatnie 7 dni",
+        "last30Days": "Ostatnie 30 dni",
+        "sent": "Wysłane",
+        "failed": "Nieudane",
+        "suppressed": "Wstrzymane",
+        "dryRun": "Próbne",
+        "consecutiveFailures": "Kolejne niepowodzenia:",
+        "lastDispatch": "Ostatnia wysyłka:",
+        "lastFailure": "Ostatnie niepowodzenie:"
+      },
+      "warnings": {
+        "heading": "Ostrzeżenia i przyczyny",
+        "none": "Brak zgłoszonych ostrzeżeń."
+      },
+      "invalidToken": "To nie wygląda na poprawny token pulpitu. Token ma 64 małe znaki szesnastkowe.",
+      "errors": {
+        "unauthorized": {
+          "title": "Token odrzucony",
+          "body": "Token pulpitu nie został przyjęty. Mógł wygasnąć, zostać unieważniony albo wydany dla innej subskrypcji. Wyloguj się i poproś operatora Consultify o nowy token."
+        },
+        "forbidden": {
+          "title": "Brak dostępu",
+          "body": "Token jest poprawny, ale nie ma uprawnień do tego pulpitu. Skontaktuj się z operatorem Consultify."
+        },
+        "rateLimited": {
+          "title": "Zbyt wiele żądań",
+          "body": "Pulpit został pobrany zbyt wiele razy w krótkim czasie. Odczekaj minutę i spróbuj ponownie. Zalecamy odpytywanie nie częściej niż raz na 5 minut."
+        },
+        "storageUnavailable": {
+          "title": "Usługa chwilowo niedostępna",
+          "body": "Zaplecze pulpitu chwilowo nie ma dostępu do warstwy magazynu. Zwykle jest to przejściowe — spróbuj za chwilę."
+        },
+        "network": {
+          "title": "Błąd sieci",
+          "body": "Nie udało się połączyć z pulpitem. Sprawdź połączenie i spróbuj ponownie."
+        }
+      },
+      "never": "nigdy",
+      "secondsAgo": "{{count}} s temu",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     }
   }
 }

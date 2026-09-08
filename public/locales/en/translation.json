@@ -1586,7 +1586,45 @@
           "title": "DRD Framework Certification",
           "description": "Deep dive into Digital Readiness Diagnostic methodology."
         }
-      }
+      },
+      "certifications": {
+        "unknown": {
+          "label": "Partner certificate",
+          "description": "Certificate details unavailable"
+        },
+        "CONSULTIFY_CERTIFIED": {
+          "label": "Consultify Certified Partner",
+          "description": "Completed all required methodology modules"
+        },
+        "CO_SELL_EXPERT": {
+          "label": "Co-Sell Expert",
+          "description": "Mastered co-selling best practices and deal registration"
+        },
+        "ENTERPRISE_PARTNER": {
+          "label": "Enterprise Partner",
+          "description": "Advanced integration patterns and compliance certification"
+        }
+      },
+      "certificationReady": "Certification ready",
+      "stats": {
+        "modulesCompleted": "Modules completed",
+        "totalDuration": "Total duration",
+        "minutes": "{{count}} min",
+        "averageScore": "Average score",
+        "certifications": "Certifications"
+      },
+      "overallProgress": "Overall progress",
+      "yourCertifications": "Your certifications",
+      "certified": "Certified",
+      "earnedOn": "Earned {{date}}",
+      "completedOfTotal": "{{done}}/{{total}} completed",
+      "minutesTotal": "{{count}} min total",
+      "unlockTitle": "Unlock Consultify certification",
+      "unlockBody": "Complete {{count}} more required module to earn your certification",
+      "continueLearning": "Continue learning",
+      "moduleRequired": "Required",
+      "moduleScore": "Score",
+      "moduleStart": "Start"
     },
     "contact": {
       "title": "Questions? Let's Talk!",
@@ -2187,6 +2225,36 @@
         "incorrectAmountAnswer": "Use the inquiry form above, selecting 'Statement question'. Include the statement number and details of the discrepancy. Finance Team will respond within 2 business days.",
         "pmoMapping": "How are deals mapped to PMO standards?",
         "pmoMappingAnswer": "Each deal registration is automatically mapped to GOVERNANCE_DECISION_MAKING (ISO 21500 Clause 4.3.4), and commission settlement to BENEFITS_REALIZATION (Clause 4.4.1)."
+      },
+      "runtimeTitle": "Commission runtime summary",
+      "runtimeSubtitle": "Governed statement and payout readback for the active commission surface.",
+      "paidStatements": "Paid statements",
+      "settledCount": "{{count}} settled statements",
+      "approvedStatements": "Approved statements",
+      "awaitingPayoutCount": "{{count}} awaiting payout",
+      "pendingStatements": "Pending statements",
+      "underReviewCount": "{{count}} still under review",
+      "dealIntelUnavailableTitle": "Deal intelligence is unavailable on the governed runtime",
+      "dealIntelUnavailableBody": "This screen no longer shows placeholder deal pipeline projections. Commission intelligence returns only once a real partner-authenticated deal-pipeline contract lands.",
+      "statementsTitle": "Commission statements",
+      "statementsSubtitle": "Historical statements and payouts",
+      "statementsLoading": "Loading commission statements…",
+      "statementRef": "Ref {{ref}}",
+      "statementDeals": "{{count}} deals",
+      "statementHistorical": "Historical statement",
+      "statementPaidOn": "Paid {{date}}",
+      "statementView": "View",
+      "noStatements": "No commission statements yet",
+      "inquiryUnavailableTitle": "Commission inquiry routing is unavailable",
+      "inquiryUnavailableBody": "This screen no longer pretends to submit inquiries without a governed partner-user support contract.",
+      "inquiryUnavailableHint": "Review the governed statement history above and use the partner resources for current commission guidance while inquiry routing stays outside the bounded partner runtime.",
+      "openResources": "Open partner resources",
+      "faqTitle": "Commission FAQ",
+      "statementStatus": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "PAID": "Paid",
+        "REJECTED": "Rejected"
       }
     },
     "referrals": {
@@ -2386,6 +2454,155 @@
       "networkGrowth": "Network growth",
       "multiplier": "{{value}}x multiplier",
       "pmoDomains": "PMO standards compliance domains"
+    },
+    "resourcesHub": {
+      "title": "Partner knowledge hub",
+      "subtitle": "Start from the canonical public docs, then continue into the partner portal for the academy, exams, certificates and gated resources.",
+      "openPortal": "Open portal resources",
+      "openDocs": "Open partner docs",
+      "cards": {
+        "docs": {
+          "title": "Public docs",
+          "description": "Program overview, application flow, payouts, certification, FAQ and case studies."
+        },
+        "academy": {
+          "title": "Partner academy",
+          "description": "Track-based learning paths with modules, exam eligibility and review states."
+        },
+        "readiness": {
+          "title": "Governed readiness",
+          "description": "Operator review, payout readiness and certificates stay visible in the portal."
+        }
+      }
+    },
+    "lifecycleCanon": {
+      "steps": {
+        "apply": {
+          "title": "Apply and qualify",
+          "description": "Application, fit review and first ecosystem qualification happen before activation."
+        },
+        "activate": {
+          "title": "Activate partner profile",
+          "description": "Accept the agreement and lock the commercial tier before deeper workspace access."
+        },
+        "workspace": {
+          "title": "Finish workspace and payouts",
+          "description": "Enable onboarding operations, payout readiness and partner workspace ownership."
+        },
+        "grow": {
+          "title": "Grow through academy and progression",
+          "description": "Enablement, certification and tier progression turn activation into an active partner lifecycle."
+        }
+      },
+      "badge": "Partner lifecycle canon",
+      "title": "One path from application to active partner",
+      "subtitle": "Recruitment, activation, enablement and earnings should read as one governed ecosystem lifecycle rather than separate partner pages.",
+      "journey": "Canonical partner journey",
+      "stepDone": "Done",
+      "stepOpen": "Open",
+      "closureTitle": "What closure must include",
+      "closure": {
+        "ownership": "Application, activation and enablement need one visible ownership chain.",
+        "reinforce": "Tier progression, academy and earnings should reinforce each other instead of living in separate silos.",
+        "workspace": "Active partner status should unlock a real workspace, not just a bounded shell."
+      },
+      "progress": "Lifecycle progress",
+      "chips": {
+        "application": "Application",
+        "activation": "Activation",
+        "academy": "Academy",
+        "earnings": "Earnings"
+      }
+    },
+    "commissionIntel": {
+      "insights": {
+        "strongWinRate": {
+          "title": "Strong win rate",
+          "description": "Your {{percent}}% win rate is above average. Keep leveraging what works."
+        },
+        "winRateOptimization": {
+          "title": "Win rate optimization",
+          "description": "The current win rate is {{percent}}%. Consider reviewing your deal qualification criteria."
+        },
+        "pipeline": {
+          "title": "Commission pipeline",
+          "description": "{{amount}} in potential commission from {{count}} active deals."
+        },
+        "stalled": {
+          "title": "Stalled deals detected",
+          "description": "{{count}} deals have been in progress for over 30 days without moving forward."
+        },
+        "pendingPayouts": {
+          "title": "Pending payouts",
+          "description": "{{amount}} in commission statements awaiting payment."
+        }
+      },
+      "actions": {
+        "viewAcademyModule": "View academy module",
+        "reviewDeals": "Review deals",
+        "viewDetails": "View details",
+        "viewStatements": "View statements"
+      },
+      "title": "Commission intelligence",
+      "subtitle": "AI-powered insights and predictions",
+      "noInsights": "No insights yet. Keep registering deals to unlock AI recommendations.",
+      "projectionsTitle": "Commission projections",
+      "forecastLabel": "Q1 2026 forecast",
+      "projection": {
+        "earned": "Earned",
+        "earnedSubtitle": "Closed won deals",
+        "pipeline": "Pipeline",
+        "pipelineSubtitle": "Active opportunities",
+        "projected": "Projected",
+        "projectedSubtitle": "Based on a {{percent}}% win rate",
+        "quarterTotal": "Q1 total",
+        "quarterTotalSubtitle": "Expected quarterly total"
+      },
+      "activeDeals": "Active deals",
+      "viewAll": "View all",
+      "noActiveDeals": "No active deals in the pipeline",
+      "submitInquiry": "Submit inquiry",
+      "submitInquiryHint": "Commission questions or updates",
+      "viewStatements": "View statements",
+      "viewStatementsHint": "Historical payouts and reports",
+      "dealValue": "{{amount}} deal value",
+      "commissionRate": "{{percent}}% rate",
+      "dealStatus": {
+        "REGISTERED": "Registered",
+        "QUALIFIED": "Qualified",
+        "PROPOSAL": "Proposal",
+        "NEGOTIATION": "Negotiation",
+        "WON": "Won",
+        "LOST": "Lost"
+      }
+    },
+    "providerHome": {
+      "enablement": {
+        "eyebrow": "Enablement",
+        "title": "Use only the resources available to your program state",
+        "description": "Documentation and onboarding guidance are available entry points. Academy, certification and other workspace capabilities remain subject to account access and runtime status.",
+        "docs": {
+          "title": "Program documentation",
+          "body": "Review the program model, responsibilities and working guidance.",
+          "cta": "Open documentation"
+        },
+        "academy": {
+          "title": "Partner academy",
+          "body": "Structured enablement may be available after activation; access and progress are verified in the partner workspace.",
+          "badge": "Access-dependent"
+        },
+        "support": {
+          "title": "Deal and operational support",
+          "body": "Support scope and response expectations follow the applicable agreement, not this overview.",
+          "badge": "Agreement-dependent"
+        }
+      },
+      "contact": {
+        "eyebrow": "Need a fit conversation?",
+        "title": "Discuss the cooperation model, not provisional terms",
+        "body": "Use the approved contact route. A named program owner appears only after publication authority is confirmed.",
+        "cta": "Contact Consultify"
+      }
     }
   },
   "common": {
@@ -48500,6 +48717,72 @@
       "now": "Now — step {{index}} of {{total}}",
       "notStarted": "The process has not started yet.",
       "noCurrentStep": "No step is running."
+    }
+  },
+  "subscriber": {
+    "dashboard": {
+      "title": "Consultify subscriber dashboard",
+      "subtitle": "Enter the dashboard token your Consultify operator gave you.",
+      "tokenLabel": "Dashboard token",
+      "tokenPlaceholder": "64-character token from your operator",
+      "tokenHelp": "Your token is held only in this browser tab and is cleared when you close it. Never share this token publicly.",
+      "continue": "Continue",
+      "signOut": "Sign out",
+      "refresh": "Refresh",
+      "loading": "Loading dashboard…",
+      "refreshing": "Refreshing…",
+      "tryAgain": "Try again",
+      "signature": {
+        "title": "Signing secret",
+        "whyTitle": "Why this matters",
+        "whyBody": "HMAC signatures let you verify each webhook came from Consultify and was not tampered with in transit. Rotating the secret regularly limits the blast radius of a leak.",
+        "rotationOverdue": "Your signing secret is overdue for rotation.",
+        "rotationDueSoon": "Your signing secret should be rotated soon."
+      },
+      "delivery": {
+        "title": "Delivery summary",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "sent": "Sent",
+        "failed": "Failed",
+        "suppressed": "Suppressed",
+        "dryRun": "Dry-run",
+        "consecutiveFailures": "Consecutive failures:",
+        "lastDispatch": "Last dispatch:",
+        "lastFailure": "Last failure:"
+      },
+      "warnings": {
+        "heading": "Warnings and reasons",
+        "none": "No warnings reported."
+      },
+      "invalidToken": "That does not look like a valid dashboard token. Tokens are 64 lowercase hex characters.",
+      "errors": {
+        "unauthorized": {
+          "title": "Token rejected",
+          "body": "The dashboard token was not accepted. It may have expired, been revoked, or been issued for a different subscription. Sign out and request a fresh token from your Consultify operator."
+        },
+        "forbidden": {
+          "title": "Access denied",
+          "body": "This token is valid but does not have permission to view the dashboard. Contact your Consultify operator."
+        },
+        "rateLimited": {
+          "title": "Too many requests",
+          "body": "You have requested the dashboard too many times in a short period. Wait a minute and try again. We recommend polling no faster than once every 5 minutes."
+        },
+        "storageUnavailable": {
+          "title": "Service temporarily unavailable",
+          "body": "The dashboard backend is temporarily unable to reach its storage layer. This is usually transient — try again in a moment."
+        },
+        "network": {
+          "title": "Network error",
+          "body": "We could not reach the dashboard. Check your connection and try again."
+        }
+      },
+      "never": "never",
+      "secondsAgo": "{{count}}s ago",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     }
   }
 }

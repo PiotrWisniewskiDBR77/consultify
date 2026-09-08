@@ -49,6 +49,7 @@ import {
   Wifi,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation, type TFunction } from 'react-i18next';
 
 import SubscriberDashboardLayout from '../../components/Subscriber/SubscriberDashboardLayout';
 import SubscriberDispatchTable from '../../components/Subscriber/SubscriberDispatchTable';
@@ -66,76 +67,126 @@ import {
 // COPY (centralized for future i18n; placeholder for translation layer)
 // ============================================================================
 
-const COPY = {
-  title: 'Consultify Subscriber Dashboard',
-  subtitle: 'Enter the dashboard token your Consultify operator gave you.',
-  tokenLabel: 'Dashboard token',
-  tokenPlaceholder: '64-character token from your operator',
-  tokenHelp:
-    'Your token is held only in this browser tab and is cleared when you close it. Never share this token publicly.',
-  continueButton: 'Continue',
-  signOut: 'Sign out',
-  refresh: 'Refresh',
-  loading: 'Loading dashboard…',
-  manualLoading: 'Refreshing…',
-  errorTryAgain: 'Try again',
-  signatureCardTitle: 'Signing secret',
-  signatureWhyTitle: 'Why this matters',
-  signatureWhyBody:
-    'HMAC signatures let you verify each webhook came from Consultify and was not tampered with in transit. Rotating the secret regularly limits the blast radius of a leak.',
-  rotationOverdue: 'Your signing secret is overdue for rotation.',
-  rotationDueSoon: 'Your signing secret should be rotated soon.',
-  deliveryCardTitle: 'Delivery summary',
-  deliverySent: 'Sent',
-  deliveryFailed: 'Failed',
-  deliverySuppressed: 'Suppressed',
-  deliveryDryRun: 'Dry-run',
-  consecutiveFailuresPrefix: 'Consecutive failures:',
-  lastDispatchPrefix: 'Last dispatch:',
-  lastFailurePrefix: 'Last failure:',
-  warningsHeading: 'Warnings & reasons',
-  noWarnings: 'No warnings reported.',
-  invalidTokenInline:
-    'That does not look like a valid dashboard token. Tokens are 64 lowercase hex characters.',
-  errorTitles: {
-    unauthorized: 'Token rejected',
-    forbidden: 'Access denied',
-    rate_limited: 'Too many requests',
-    storage_unavailable: 'Service temporarily unavailable',
-    network_error: 'Network error',
-  } as Record<SubscriberFetchStatus, string>,
-  errorBodies: {
-    unauthorized:
-      'The dashboard token was not accepted. It may have expired, been revoked, or been issued for a different subscription. Sign out and request a fresh token from your Consultify operator.',
-    forbidden:
-      'This token is valid but does not have permission to view the dashboard. Contact your Consultify operator.',
-    rate_limited:
-      'You have requested the dashboard too many times in a short period. Wait a minute and try again. We recommend polling no faster than once every 5 minutes.',
-    storage_unavailable:
-      'The dashboard backend is temporarily unable to reach its storage layer. This is usually transient — try again in a moment.',
-    network_error: 'We could not reach the dashboard. Check your connection and try again.',
-  } as Record<SubscriberFetchStatus, string>,
-} as const;
+/**
+ * Napisy interfejsu tego pulpitu ida przez `t()` — angielski jest DEFAULTEM
+ * w kodzie (PLAN.md §2.3), polski zyje w `public/locales/pl/translation.json`.
+ * Ekran nie mial ani jednego `useTranslation`, wiec uzytkownik polski widzial
+ * go w calosci po angielsku.
+ */
+function buildCopy(t: TFunction) {
+  return {
+    title: t('subscriber.dashboard.title', 'Consultify subscriber dashboard'),
+    subtitle: t(
+      'subscriber.dashboard.subtitle',
+      'Enter the dashboard token your Consultify operator gave you.'
+    ),
+    tokenLabel: t('subscriber.dashboard.tokenLabel', 'Dashboard token'),
+    tokenPlaceholder: t(
+      'subscriber.dashboard.tokenPlaceholder',
+      '64-character token from your operator'
+    ),
+    tokenHelp: t(
+      'subscriber.dashboard.tokenHelp',
+      'Your token is held only in this browser tab and is cleared when you close it. Never share this token publicly.'
+    ),
+    continueButton: t('subscriber.dashboard.continue', 'Continue'),
+    signOut: t('subscriber.dashboard.signOut', 'Sign out'),
+    refresh: t('subscriber.dashboard.refresh', 'Refresh'),
+    loading: t('subscriber.dashboard.loading', 'Loading dashboard…'),
+    manualLoading: t('subscriber.dashboard.refreshing', 'Refreshing…'),
+    errorTryAgain: t('subscriber.dashboard.tryAgain', 'Try again'),
+    signatureCardTitle: t('subscriber.dashboard.signature.title', 'Signing secret'),
+    signatureWhyTitle: t('subscriber.dashboard.signature.whyTitle', 'Why this matters'),
+    signatureWhyBody: t(
+      'subscriber.dashboard.signature.whyBody',
+      'HMAC signatures let you verify each webhook came from Consultify and was not tampered with in transit. Rotating the secret regularly limits the blast radius of a leak.'
+    ),
+    rotationOverdue: t(
+      'subscriber.dashboard.signature.rotationOverdue',
+      'Your signing secret is overdue for rotation.'
+    ),
+    rotationDueSoon: t(
+      'subscriber.dashboard.signature.rotationDueSoon',
+      'Your signing secret should be rotated soon.'
+    ),
+    deliveryCardTitle: t('subscriber.dashboard.delivery.title', 'Delivery summary'),
+    deliveryLast7Days: t('subscriber.dashboard.delivery.last7Days', 'Last 7 days'),
+    deliveryLast30Days: t('subscriber.dashboard.delivery.last30Days', 'Last 30 days'),
+    deliverySent: t('subscriber.dashboard.delivery.sent', 'Sent'),
+    deliveryFailed: t('subscriber.dashboard.delivery.failed', 'Failed'),
+    deliverySuppressed: t('subscriber.dashboard.delivery.suppressed', 'Suppressed'),
+    deliveryDryRun: t('subscriber.dashboard.delivery.dryRun', 'Dry-run'),
+    consecutiveFailuresPrefix: t(
+      'subscriber.dashboard.delivery.consecutiveFailures',
+      'Consecutive failures:'
+    ),
+    lastDispatchPrefix: t('subscriber.dashboard.delivery.lastDispatch', 'Last dispatch:'),
+    lastFailurePrefix: t('subscriber.dashboard.delivery.lastFailure', 'Last failure:'),
+    warningsHeading: t('subscriber.dashboard.warnings.heading', 'Warnings and reasons'),
+    noWarnings: t('subscriber.dashboard.warnings.none', 'No warnings reported.'),
+    invalidTokenInline: t(
+      'subscriber.dashboard.invalidToken',
+      'That does not look like a valid dashboard token. Tokens are 64 lowercase hex characters.'
+    ),
+    errorTitles: {
+      unauthorized: t('subscriber.dashboard.errors.unauthorized.title', 'Token rejected'),
+      forbidden: t('subscriber.dashboard.errors.forbidden.title', 'Access denied'),
+      rate_limited: t('subscriber.dashboard.errors.rateLimited.title', 'Too many requests'),
+      storage_unavailable: t(
+        'subscriber.dashboard.errors.storageUnavailable.title',
+        'Service temporarily unavailable'
+      ),
+      network_error: t('subscriber.dashboard.errors.network.title', 'Network error'),
+    } as Record<SubscriberFetchStatus, string>,
+    errorBodies: {
+      unauthorized: t(
+        'subscriber.dashboard.errors.unauthorized.body',
+        'The dashboard token was not accepted. It may have expired, been revoked, or been issued for a different subscription. Sign out and request a fresh token from your Consultify operator.'
+      ),
+      forbidden: t(
+        'subscriber.dashboard.errors.forbidden.body',
+        'This token is valid but does not have permission to view the dashboard. Contact your Consultify operator.'
+      ),
+      rate_limited: t(
+        'subscriber.dashboard.errors.rateLimited.body',
+        'You have requested the dashboard too many times in a short period. Wait a minute and try again. We recommend polling no faster than once every 5 minutes.'
+      ),
+      storage_unavailable: t(
+        'subscriber.dashboard.errors.storageUnavailable.body',
+        'The dashboard backend is temporarily unable to reach its storage layer. This is usually transient — try again in a moment.'
+      ),
+      network_error: t(
+        'subscriber.dashboard.errors.network.body',
+        'We could not reach the dashboard. Check your connection and try again.'
+      ),
+    } as Record<SubscriberFetchStatus, string>,
+  };
+}
+
+function useCopy() {
+  const { t } = useTranslation();
+  return useMemo(() => buildCopy(t), [t]);
+}
 
 // ============================================================================
 // SMALL HELPERS (formatters)
 // ============================================================================
 
-function formatRelative(iso: string | null): string {
-  if (!iso) return 'never';
+function formatRelative(t: TFunction, locale: string, iso: string | null): string {
+  if (!iso) return t('subscriber.dashboard.never', 'never');
   const ts = Date.parse(iso);
-  if (Number.isNaN(ts)) return 'never';
+  if (Number.isNaN(ts)) return t('subscriber.dashboard.never', 'never');
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return new Date(ts).toLocaleString(locale);
   const sec = Math.floor(diffMs / 1000);
-  if (sec < 60) return `${sec}s ago`;
+  if (sec < 60) return t('subscriber.dashboard.secondsAgo', '{{count}}s ago', { count: sec });
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
+  if (min < 60) return t('subscriber.dashboard.minutesAgo', '{{count}}m ago', { count: min });
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
+  if (hr < 24) return t('subscriber.dashboard.hoursAgo', '{{count}}h ago', { count: hr });
   const day = Math.floor(hr / 24);
-  if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  if (day < 30) return t('subscriber.dashboard.daysAgo', '{{count}}d ago', { count: day });
+  return new Date(ts).toLocaleDateString(locale);
 }
 
 function formatClock(date: Date | null): string {
@@ -163,6 +214,7 @@ function isEmbedFromLocation(): boolean {
 // ============================================================================
 
 const SubscriberDashboardPage: React.FC = () => {
+  const COPY = useCopy();
   const [embed] = useState<boolean>(() => isEmbedFromLocation());
   const [hasToken, setHasToken] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -357,6 +409,7 @@ interface TokenEntryProps {
 }
 
 const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
+  const COPY = useCopy();
   const [value, setValue] = useState<string>('');
   const [touched, setTouched] = useState<boolean>(false);
 
@@ -432,7 +485,9 @@ const TokenEntryView: React.FC<TokenEntryProps> = ({ onSubmit }) => {
 // SKELETON (State 2)
 // ============================================================================
 
-const SkeletonView: React.FC = () => (
+const SkeletonView: React.FC = () => {
+  const COPY = useCopy();
+  return (
   <div className="space-y-4" aria-busy="true" aria-live="polite">
     <div className="flex items-center gap-2 text-sm text-c-text-secondary">
       <Loader2 size={14} className="animate-spin text-c-accent" aria-hidden />
@@ -446,7 +501,8 @@ const SkeletonView: React.FC = () => (
     ))}
     <div className="h-48 animate-pulse rounded-lg border border-c-border-subtle bg-c-surface shadow-sm" />
   </div>
-);
+  );
+};
 
 // ============================================================================
 // LOADED (State 3)
@@ -470,6 +526,7 @@ const LoadedView: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
 };
 
 const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
+  const COPY = useCopy();
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
@@ -502,6 +559,8 @@ const HeaderStrip: React.FC<LoadedProps> = ({ data, lastRefreshAt }) => {
 };
 
 const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) => {
+  const { t, i18n } = useTranslation();
+  const COPY = useCopy();
   const [open, setOpen] = useState<boolean>(false);
   const overdue =
     data.signature.daysSinceRotation !== null && data.signature.daysSinceRotation > 90;
@@ -523,7 +582,7 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
         <span>
           Last rotated:{' '}
           <strong className="font-medium">
-            {formatRelative(data.signature.secretLastRotatedAt)}
+            {formatRelative(t, i18n.language, data.signature.secretLastRotatedAt)}
           </strong>
           {data.signature.daysSinceRotation !== null && (
             <span className="ml-1 text-c-text-muted">({data.signature.daysSinceRotation}d)</span>
@@ -558,21 +617,23 @@ const SignatureCard: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) =
 };
 
 const DeliverySummary: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) => {
+  const { t, i18n } = useTranslation();
+  const COPY = useCopy();
   const { delivery } = data;
   return (
     <div className="rounded-lg border border-c-border-subtle bg-c-surface p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-c-text-secondary">{COPY.deliveryCardTitle}</h3>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <DeliveryColumn label="Last 7 days" agg={delivery.last7Days} />
-        <DeliveryColumn label="Last 30 days" agg={delivery.last30Days} />
+        <DeliveryColumn label={COPY.deliveryLast7Days} agg={delivery.last7Days} />
+        <DeliveryColumn label={COPY.deliveryLast30Days} agg={delivery.last30Days} />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-c-text-muted">
         <span>
-          {COPY.lastDispatchPrefix} {formatRelative(delivery.lastDispatchAt)}
+          {COPY.lastDispatchPrefix} {formatRelative(t, i18n.language, delivery.lastDispatchAt)}
         </span>
         <span>·</span>
         <span>
-          {COPY.lastFailurePrefix} {formatRelative(delivery.lastFailureAt)}
+          {COPY.lastFailurePrefix} {formatRelative(t, i18n.language, delivery.lastFailureAt)}
         </span>
         {delivery.consecutiveFailures > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full bg-c-warning/10 px-2 py-0.5 text-[10px] font-semibold text-c-warning">
@@ -591,6 +652,7 @@ interface DeliveryColumnProps {
 }
 
 const DeliveryColumn: React.FC<DeliveryColumnProps> = ({ label, agg }) => {
+  const COPY = useCopy();
   return (
     <div className="rounded-md border border-c-border-subtle bg-c-surface-raised p-3">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -620,6 +682,7 @@ const STAT_TONE: Record<DeliveryStatProps['tone'], string> = {
 };
 
 const DeliveryStat: React.FC<DeliveryStatProps> = ({ label, value, tone }) => {
+  const COPY = useCopy();
   return (
     <div>
       <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -633,6 +696,7 @@ const DeliveryStat: React.FC<DeliveryStatProps> = ({ label, value, tone }) => {
 };
 
 const ReasonsAndWarnings: React.FC<{ data: ClientSubscriberSnapshot }> = ({ data }) => {
+  const COPY = useCopy();
   const items: string[] = [...data.health.reasons, ...data.warnings].filter(
     (s) => typeof s === 'string' && s.length > 0
   );
@@ -687,6 +751,7 @@ const ERROR_ICON: Record<
 };
 
 const ErrorView: React.FC<ErrorViewProps> = ({ status, embed, onSignOut, onRetry }) => {
+  const COPY = useCopy();
   const Icon = ERROR_ICON[status];
   const isAuthError = status === 'unauthorized' || status === 'forbidden';
   return (
