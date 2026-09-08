@@ -1367,7 +1367,24 @@
         }
       },
       "title": "Your governance reality. Your deployment model.",
-      "subtitle": "Consultify runs on a proprietary DBR77 model layer built for consulting logic and executive-grade outputs. Choose how and where it runs."
+      "subtitle": "Consultify runs on a proprietary DBR77 model layer built for consulting logic and executive-grade outputs. Choose how and where it runs.",
+      "options": {
+        "shared": {
+          "title": "Shared Consultify Cloud",
+          "body": "A fast start on managed infrastructure, with automatic updates and shared governance. Ideal for teams evaluating or scaling an AI consulting workflow.",
+          "tag": "Fastest start"
+        },
+        "dedicated": {
+          "title": "Dedicated API",
+          "body": "An isolated runtime behind its own API boundary. Stronger data separation, your own integration rules and dedicated compute for enterprise teams.",
+          "tag": "Enterprise isolation"
+        },
+        "onPrem": {
+          "title": "On-premise",
+          "body": "Full control over infrastructure and data. Deployed inside your environment when governance, procurement or compliance require zero external exposure.",
+          "tag": "Full control"
+        }
+      }
     },
     "narrativeCta": {
       "askAnna": "Ask Anna first",
@@ -1376,11 +1393,11 @@
       "tryDemo": "Try demo",
       "footer": "One narrative, three safe entry paths: guided orientation, product exploration, or direct trial onboarding.",
       "heading": "Move from category clarity to your first value moment.",
-      "points": {
-        "0": "Anna explains fit, pricing, and security before you commit to a path.",
-        "1": "The demo shows the Consulting Intelligence Platform on seeded, read-only data.",
-        "2": "The trial starts your own guided consulting workflow, from context to execution."
-      },
+      "points": [
+        "Anna will walk you through fit, pricing and security before you commit to a path.",
+        "The demo shows the Consulting Intelligence Platform on read-only sample data.",
+        "The trial starts your own guided consulting workflow, from context to delivery."
+      ],
       "sub": "Start with Anna if you want guided orientation, try the demo if you want to explore the platform, or launch a trial when you are ready to apply consulting intelligence to your own organization."
     }
   },
@@ -27134,7 +27151,9 @@
       "aiUsageLabel": "AI",
       "used": "used",
       "aiUsageTooltip": "AI calls used today / daily limit",
-      "tokenUsageTooltip": "Tokens used today / daily limit"
+      "tokenUsageTooltip": "Tokens used today / daily limit",
+      "readyForMore": "Ready for your own data?",
+      "readyForMoreWorkspace": "Want to run the same flow on your own work?"
     },
     "session": {
       "returnWorkspace": "Back to my workspace",
@@ -27210,11 +27229,25 @@
       "signUp": "Sign up",
       "startDemo": "Sign up & Enter Demo",
       "subtitle": "Explore the Atelier Toys guided workspace",
-      "title": "Experience Consultify Demo"
+      "title": "Experience Consultify Demo",
+      "contactSales": "Talk to us"
     },
     "indicator": "Demo mode",
     "badge": {
       "getFullAccess": "Get full access"
+    },
+    "toast": {
+      "enabled": "Demo mode is on. You are browsing {{organization}}."
+    },
+    "loading": {
+      "title": "Preparing your environment",
+      "subtitle": "We are setting up your personalized demo",
+      "steps": {
+        "environment": "Creating the demo environment",
+        "data": "Loading demonstration data",
+        "ai": "Configuring the AI engine",
+        "dashboard": "Preparing the dashboard"
+      }
     }
   },
   "ui": {
@@ -29811,7 +29844,66 @@
       "executionRun": "Material creation run",
       "failureStage": "Failure at the material creation stage",
       "preflightCheckPassed": "Check passed",
-      "runFailed": "Failed to create the material. Try again."
+      "runFailed": "Failed to create the material. Try again.",
+      "option": {
+        "report": "Document",
+        "presentation": "Presentation",
+        "sheet": "Spreadsheet"
+      },
+      "status": {
+        "proposal_created": "Proposal created",
+        "awaiting_review": "Awaiting review",
+        "approved_for_apply": "Approved to run",
+        "applying": "Creating the material",
+        "rejected": "Rejected",
+        "retry_requested": "Retry requested",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "visibility": {
+        "private": "Only me",
+        "project": "Project members",
+        "organization": "The organization",
+        "review_shared": "Shared for review",
+        "demo": "Demo version"
+      },
+      "executionState": {
+        "drafting": "Drafting",
+        "planning": "Planning",
+        "proposals_ready": "Proposals are ready",
+        "waiting_for_review": "Awaiting review",
+        "approved_for_apply": "Approved to run",
+        "rejected": "Rejected",
+        "applying": "Creating the material",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "expired": "Deadline passed"
+      },
+      "preflightState": {
+        "passed": "Checks passed",
+        "pending": "Checks pending",
+        "attention_required": "Checks need attention"
+      },
+      "preflightCheck": {
+        "execution_run_resolvable": "Creation process available",
+        "plan_supported": "Chosen material type supported",
+        "materialization_inputs": "Input data complete",
+        "materialization_target": "Destination available"
+      },
+      "checkStatus": {
+        "passed": "Ready",
+        "pending": "Pending",
+        "failed": "Needs fixing"
+      }
+    },
+    "handoffIntentValue": {
+      "unknown": "Not specified",
+      "question": "Question",
+      "task": "Task",
+      "decision": "Decision",
+      "analysis": "Analysis"
     }
   },
   "billing": {
@@ -44435,7 +44527,17 @@
     "needs_changes": "Needs changes",
     "ready_for_review": "Ready for review",
     "superseded": "Superseded",
-    "invalidated": "Invalidated"
+    "invalidated": "Invalidated",
+    "applied": "Applied",
+    "suggested": "Suggested",
+    "staging": "Staging",
+    "canary": "Canary",
+    "rolled_back": "Rolled back",
+    "modified": "Modified",
+    "completed_with_errors": "Completed with errors",
+    "skipped": "Skipped",
+    "deprecated": "Deprecated",
+    "paid": "Paid out"
   },
   "state": {
     "save": {
@@ -45686,6 +45788,72 @@
       "composeUnavailable": "Composing unavailable",
       "composeLabel": "Message to Teresa",
       "send": "Send"
+    }
+  },
+  "vector": {
+    "hero": {
+      "title": "The world's first AI that"
+    },
+    "beyond": {
+      "subtitle": "Manufacturing faces a “data-rich, decision-poor” paradox. Vector closes the gap that generic AI cannot.",
+      "problem": {
+        "body": "Factories generate exascale telemetry, yet optimization still waits on slow human analysis. Data is no longer the bottleneck — the missing piece is a decision system."
+      },
+      "generic": {
+        "body": "GPT and other LLMs are “industrially blind”. They are not grounded in factory physics, MTM motion analysis or operational constraints. Their answers read well and mean little on the shop floor."
+      }
+    },
+    "pipeline": {
+      "steps": {
+        "01": {
+          "title": "Context construction",
+          "body": "Raw telemetry from ERP, WMS and IoT systems is normalized into a structured operational model with process flows, constraints and baseline metrics."
+        },
+        "02": {
+          "title": "Baseline quantification",
+          "body": "Operational indicators derived from ISO 22400-2 establish a rigorous as-is state — cycle times, FTE allocation, baseline OEE."
+        },
+        "03": {
+          "title": "Causal structural analysis",
+          "body": "The engine identifies hidden root causes of inefficiency and how they depend on each other, through automated planning logic rather than surface pattern matching."
+        },
+        "04": {
+          "title": "Action plan construction",
+          "body": "Interventions are sequenced for maximum feasibility, accounting for resource availability, technical dependencies and operational constraints."
+        },
+        "05": {
+          "title": "Board-level financial evaluation",
+          "body": "Every technical intervention is translated into balance-sheet impact — ROI projections, CAPEX/OPEX trajectories, payback estimates."
+        },
+        "06": {
+          "title": "Structured decision artifact",
+          "body": "The output is not prose — it is a complete, defensible business case with a diagnostic summary, a prioritized action plan and financial projections."
+        }
+      }
+    },
+    "roadmap": {
+      "stages": {
+        "1": {
+          "label": "Stage 1",
+          "title": "Analytical systems",
+          "body": "Telemetry goes digital. Human judgement still dominates."
+        },
+        "2": {
+          "label": "Stage 2",
+          "title": "Decision support",
+          "body": "Structured AI-generated recommendations, validated by experts. Vector 1.0 operates here."
+        },
+        "3": {
+          "label": "Stage 3",
+          "title": "Bounded automation",
+          "body": "AI autonomously executes predefined low-risk interventions within controlled parameters."
+        },
+        "4": {
+          "label": "Stage 4",
+          "title": "Autonomous decision systems",
+          "body": "A fully closed loop with real-time feedback and iterative learning."
+        }
+      }
     }
   }
 }
