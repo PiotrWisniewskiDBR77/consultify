@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from 'react-i18next';
 
 interface ExecutiveReportProps {
   projectId?: string;
@@ -231,7 +231,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {report.keyMetrics.decisionsPending}
               </div>
-              <div className="text-xs text-amber-500">Pending Decisions</div>
+              <div className="text-xs text-amber-500">{t('reports.executiveReport.pendingDecisions', 'Pending Decisions')}</div>
             </div>
           </div>
 
@@ -318,7 +318,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
             No Report Generated
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
-            Click "Generate Report" to create an AI-powered executive summary
+            {t('reports.executiveReport.clickGenerateReportToCreate', 'Click "Generate Report" to create an AI-powered executive summary')}
           </p>
         </div>
       )}

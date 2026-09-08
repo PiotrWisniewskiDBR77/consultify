@@ -25,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { ReportVersion, VersionComparisonResult } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface VersionHistoryProps {
   reportId: string;
@@ -68,6 +69,7 @@ const VersionItem: React.FC<{
   onView: () => void;
   onCompare: () => void;
 }> = ({ version, isCurrent, isSelected, isComparing, onSelect, onView, onCompare }) => {
+  const { t } = useTranslation();
   return (
     <div
       className={`
@@ -140,7 +142,7 @@ const VersionItem: React.FC<{
                 onCompare();
               }}
               className="p-2 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors"
-              title="Compare with selected"
+              title={t('reports.management.versionHistory.compareWithSelected', 'Compare with selected')}
             >
               <ArrowLeftRight size={16} className="text-primary-600 dark:text-primary-400" />
             </button>

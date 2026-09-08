@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '../../../hooks/useOpenChatWithContext';
@@ -61,6 +60,7 @@ import { ReportingAutomationWorkspace } from './ReportingAutomationWorkspace';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 import { ManagementReportCard } from './ManagementReportsView';
+import { useTranslation } from 'react-i18next';
 
 // Report type metadata. Identity (type) is carried by a muted icon + short
 // label — color is NOT a status signal here (canon §4.0a), so we keep the icon
@@ -730,7 +730,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       case 'RAID':
         return <RaidReport report={currentReport} />;
       default:
-        return <div className="p-6 text-slate-600">Nieznany typ raportu</div>;
+        return <div className="p-6 text-slate-600">{t('reports.management.reportsHub.unknownReportType', 'Unknown report type')}</div>;
     }
   };
 

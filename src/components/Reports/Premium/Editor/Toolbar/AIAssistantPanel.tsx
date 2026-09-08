@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface AIAssistantPanelProps {
   assessmentId?: string;
@@ -86,6 +87,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   onInsertBlock,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [customPrompt, setCustomPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'quick' | 'custom'>('quick');
@@ -124,7 +126,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-white">Asystent AI</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Generuj treści klasy McKinsey
+              {t('reports.premium.aIAssistantPanel.generateMckinseyGradeContent', 'Generate McKinsey-grade content')}
             </p>
           </div>
         </div>
@@ -166,7 +168,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           <div className="p-4 space-y-3">
             {!assessmentId && (
               <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 text-sm">
-                Wybierz assessment, aby generować treści.
+                {t('reports.premium.aIAssistantPanel.chooseAnAssessmentToGenerate', 'Choose an assessment to generate content.')}
               </div>
             )}
 
@@ -220,7 +222,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           <div className="p-4 space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Twój prompt
+                {t('reports.premium.aIAssistantPanel.yourPrompt', 'Your prompt')}
               </label>
               <textarea
                 value={customPrompt}
@@ -243,12 +245,12 @@ Przykłady:
               {isGenerating === 'custom' ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Generuję...
+                  {t('reports.premium.aIAssistantPanel.generating', 'Generating...')}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-5 h-5" />
-                  Generuj treść
+                  {t('reports.premium.aIAssistantPanel.generateContent', 'Generate content')}
                 </>
               )}
             </button>
@@ -259,8 +261,7 @@ Przykłady:
       {/* Footer Tips */}
       <div className="p-4 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700">
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          <strong className="text-slate-700 dark:text-slate-300">Pro tip:</strong> AI generuje
-          treści w stylu raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle.
+          <strong className="text-slate-700 dark:text-slate-300">Pro tip:</strong> {t('reports.premium.aIAssistantPanel.theAiGeneratesContentIn', 'The AI generates\n          content in the style of Big 4 consulting reports (McKinsey, BCG), using the Pyramid Principle.')}
         </div>
       </div>
     </div>

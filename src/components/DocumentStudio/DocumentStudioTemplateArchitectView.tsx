@@ -22,7 +22,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
@@ -67,6 +66,7 @@ import type {
   TemplateSectionBlueprint,
 } from './types';
 import { normalizeTemplateFormattingSchema } from './types';
+import { useTranslation } from 'react-i18next';
 
 export function getTemplateStructureSaveErrorMessage(error: unknown): string {
   const code = error instanceof Error ? error.message : String(error ?? '');
@@ -928,18 +928,18 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                               void handleRestoreSnapshot(selectedTemplate.templateId, entry.auditId)
                             }
                           >
-                            Restore as draft
+                            {t('documentStudio.documentStudioTemplateArchitectView.restoreAsDraft', 'Restore as draft')}
                           </Button>
                         </span>
                       ) : (
-                        <span className="text-xs">Podgląd wersji jest niedostępny</span>
+                        <span className="text-xs">{t('documentStudio.documentStudioTemplateArchitectView.theVersionPreviewIsUnavailable', 'The version preview is unavailable')}</span>
                       )}
                     </li>
                   ))}
                 </ol>
                 {comparedSnapshot ? (
                   <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-                    <div className="font-semibold text-c-text">Porównanie wersji</div>
+                    <div className="font-semibold text-c-text">{t('documentStudio.documentStudioTemplateArchitectView.versionComparison', 'Version comparison')}</div>
                     <dl className="mt-2 grid gap-1 text-xs">
                       <div>
                         Sections:{' '}

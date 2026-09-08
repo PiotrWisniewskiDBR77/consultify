@@ -1,5 +1,6 @@
 import { Check, ShieldCheck, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type PendingTemplate = {
   registry: 'document_studio_templates' | 'presentation_templates' | 'tp_base_templates';
@@ -36,6 +37,7 @@ export function TemplateProvenanceApprovalDialog(props: {
   onClose: () => void;
   onApproved?: () => void;
 }) {
+  const { t } = useTranslation();
   const { open, onClose, onApproved } = props;
   const [items, setItems] = useState<PendingTemplate[]>([]);
   const [selected, setSelected] = useState<PendingTemplate | null>(null);
@@ -122,16 +124,15 @@ export function TemplateProvenanceApprovalDialog(props: {
               className="flex items-center gap-2 text-base font-semibold text-c-text"
             >
               <ShieldCheck size={18} aria-hidden="true" />
-              Zatwierdzenie pochodzenia wzorców
+              {t('rap.templateProvenanceApprovalDialog.templateProvenanceApproval', 'Template provenance approval')}
             </h2>
             <p className="mt-1 text-sm text-c-text-secondary">
-              Tylko OWNER lub ADMIN. Brakujące albo niepełne prawa pozostawiają wzorzec w
-              kwarantannie.
+              {t('rap.templateProvenanceApprovalDialog.ownerOrAdminOnlyMissing', 'OWNER or ADMIN only. Missing or incomplete rights keep a template in\n              quarantine.')}
             </p>
           </div>
           <button
             type="button"
-            aria-label="Zamknij"
+            aria-label={t('rap.templateProvenanceApprovalDialog.close', 'Close')}
             onClick={onClose}
             className="inline-flex size-10 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
           >
@@ -141,16 +142,16 @@ export function TemplateProvenanceApprovalDialog(props: {
         <div className="grid min-h-0 flex-1 md:grid-cols-[300px_1fr]">
           <div className="overflow-y-auto border-r border-c-border p-3">
             {state === 'loading' ? (
-              <p className="p-3 text-sm text-c-text-secondary">Ładowanie…</p>
+              <p className="p-3 text-sm text-c-text-secondary">{t('rap.templateProvenanceApprovalDialog.loading', 'Loading…')}</p>
             ) : null}
             {state === 'forbidden' ? (
               <p role="alert" className="p-3 text-sm text-c-danger">
-                Ta kolejka jest dostępna wyłącznie dla aktywnego OWNER lub ADMIN tej organizacji.
+                {t('rap.templateProvenanceApprovalDialog.thisQueueIsAvailableOnly', 'This queue is available only to an active OWNER or ADMIN of this organisation.')}
               </p>
             ) : null}
             {state !== 'loading' && state !== 'forbidden' && items.length === 0 ? (
               <p className="p-3 text-sm text-c-text-secondary">
-                Brak wzorców oczekujących na pochodzenie.
+                {t('rap.templateProvenanceApprovalDialog.noTemplatesAreWaitingFor', 'No templates are waiting for provenance.')}
               </p>
             ) : null}
             {items.map((item) => (
@@ -176,7 +177,7 @@ export function TemplateProvenanceApprovalDialog(props: {
           <div className="overflow-y-auto p-5">
             {!selected ? (
               <p className="text-sm text-c-text-secondary">
-                Wybierz wzorzec. Nic nie zostanie zatwierdzone automatycznie.
+                {t('rap.templateProvenanceApprovalDialog.pickATemplateNothingIs', 'Pick a template. Nothing is approved automatically.')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -210,7 +211,7 @@ export function TemplateProvenanceApprovalDialog(props: {
                   className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-surface disabled:opacity-45"
                 >
                   <Check size={16} aria-hidden="true" />
-                  Zatwierdź kompletne pochodzenie
+                  {t('rap.templateProvenanceApprovalDialog.approveTheCompleteProvenance', 'Approve the complete provenance')}
                 </button>
               </div>
             )}

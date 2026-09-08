@@ -15779,7 +15779,8 @@
       "monthsSuffix": "months",
       "phasesSuffix": "phases",
       "milestonesSuffix": "milestones",
-      "onCriticalPathSuffix": "on critical path"
+      "onCriticalPathSuffix": "on critical path",
+      "addPhasesToYourRoadmap": "Add phases to your roadmap to see the Gantt chart"
     },
     "initiativesReportSection": {
       "effortPrefix": "Effort",
@@ -15933,6 +15934,149 @@
     "keyTakeaways": {
       "defaultTitle": "Key Takeaways",
       "pointsSuffix": "points"
+    },
+    "fullDocument": {
+      "fullReportDocument": {
+        "initiativeName": "Initiative Name",
+        "thisReportContainsProprietaryAnalysis": "This report contains proprietary analysis and should not be distributed without\n              authorization."
+      }
+    },
+    "executiveReport": {
+      "pendingDecisions": "Pending Decisions",
+      "clickGenerateReportToCreate": "Click \"Generate Report\" to create an AI-powered executive summary"
+    },
+    "importReportModal": {
+      "reportImportedSuccessfully": "Report Imported Successfully",
+      "youCanNowGenerateInitiatives": "You can now generate initiatives from this report",
+      "dataExtractedSuccessfully": "Data Extracted Successfully",
+      "reviewAndAdjustExtractedScores": "Review and adjust extracted scores before saving. You can generate initiatives from this\n            report.",
+      "dropYourReportHere": "Drop your report here",
+      "reportName": "Report Name",
+      "saveReport": "Save Report"
+    },
+    "management": {
+      "approvalWorkflow": {
+        "reportHasNotBeenSubmitted": "Report has not been submitted for approval",
+        "returnReportToDraftStatus": "Return report to DRAFT status for revisions"
+      },
+      "managementReportsView": {
+        "shareLink": "Share link",
+        "generateTeamMeetingAndSteering": "Generate Team Meeting and Steering Committee reports",
+        "newReport": "New Report",
+        "generateNewReport": "Generate New Report",
+        "failedToLoadProjectsReport": "Failed to load projects. Report generation is unavailable until projects can be\n                  loaded.",
+        "dayOfMonth": "Day of month",
+        "aiWillAnalyzeYourData": "AI will analyze your data and generate a comprehensive report with insights.",
+        "settingsAreAppliedWhenCreating": "Settings are applied when creating new reports or schedules."
+      },
+      "reportGeneratorDrawer": {
+        "generateNewReport": "Generate New Report",
+        "aiWillAnalyzeYourData": "AI will analyze your data and generate insights",
+        "failedToLoadProjectsReport": "Failed to load projects. Report generation is unavailable."
+      },
+      "reportHistoryTable": {
+        "draft": "Draft",
+        "generateYourFirstReportTo": "Generate your first report to see it here."
+      },
+      "reportScheduleView": {
+        "dayOfMonth": "Day of month",
+        "loading": "Loading..."
+      },
+      "reportTemplatesView": {
+        "highlightKeyDecisionDriversAnd": "Highlight key decision drivers and escalation status.",
+        "loading": "Loading..."
+      },
+      "reportTypeSelector": {
+        "selectWhichSectionsToInclude": "Select which sections to include in the report. Required sections cannot be\n                disabled."
+      },
+      "reportsHub": {
+        "unknownReportType": "Unknown report type"
+      },
+      "steeringCommitteeReport": {
+        "aiTransparencyTheseWarningsAre": "AI Transparency: These warnings are automatically generated. AI never hides bad news.",
+        "daysOpen": "Days Open",
+        "decisionsRequiredFromBoard": "Decisions Required from Board"
+      },
+      "teamMeetingReport": {
+        "completedThisPeriod": "Completed This Period",
+        "pendingDecisions": "Pending Decisions"
+      },
+      "versionHistory": {
+        "compareWithSelected": "Compare with selected"
+      },
+      "reportSkeleton": {
+        "loadingReport": "Loading report…"
+      },
+      "raidReport": {
+        "escalationSummary": "Escalation Summary",
+        "escalationNote": "Overall RAID status is <1>{{status}}</1>. Escalations are calculated from open issues, dependency blockers, and critical risks."
+      }
+    },
+    "premium": {
+      "gapHeatmap": {
+        "title": "Title",
+        "showValues": "Show values",
+        "blueOrange": "Blue-Orange",
+        "noDataToShow": "No data to show",
+        "smallGap01": "Small gap (0-1)",
+        "medium12": "Medium (1-2)",
+        "largeGap2": "Large gap (2+)"
+      },
+      "maturityRadar": {
+        "chartTitle": "Chart title",
+        "showTheTarget": "Show the target",
+        "showTheLegend": "Show the legend",
+        "noDataToShow": "No data to show"
+      },
+      "metricCard": {
+        "value": "Value",
+        "editTheCard": "Edit the card",
+        "orange": "Orange"
+      },
+      "recommendationCard": {
+        "editTheRecommendation": "Edit the recommendation",
+        "title": "Title",
+        "medium": "Medium",
+        "impact": "Impact",
+        "effort": "Effort",
+        "low": "Low",
+        "high": "High",
+        "owner": "Owner",
+        "effort2": "Effort"
+      },
+      "premiumReportEditor": {
+        "ctrlSToSaveTo": "Ctrl+S to save • \"/\" to insert a block"
+      },
+      "aIAssistantPanel": {
+        "generateMckinseyGradeContent": "Generate McKinsey-grade content",
+        "chooseAnAssessmentToGenerate": "Choose an assessment to generate content.",
+        "yourPrompt": "Your prompt",
+        "generating": "Generating...",
+        "generateContent": "Generate content",
+        "theAiGeneratesContentIn": "The AI generates\n          content in the style of Big 4 consulting reports (McKinsey, BCG), using the Pyramid Principle."
+      },
+      "blockInsertMenu": {
+        "searchBlocks": "Search blocks...",
+        "noBlocksFound": "No blocks found",
+        "navigateEnterSelectEscClose": "↑↓ navigate • Enter select • Esc close"
+      },
+      "editorToolbar": {
+        "redoCtrlY": "Redo (Ctrl+Y)",
+        "underlineCtrlU": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "highlight": "Highlight",
+        "heading1": "Heading 1",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "alignLeft": "Align left",
+        "centre": "Centre",
+        "alignRight": "Align right",
+        "insertATable": "Insert a table"
+      }
+    },
+    "reportCommentPanel": {
+      "addACommentToStart": "Add a comment to start the discussion",
+      "regenerateSectionWithFeedback": "Regenerate section with feedback"
     }
   },
   "auth": {
@@ -24342,7 +24486,11 @@
           "export": "Export and present",
           "navigate": "Navigate",
           "ai": "AI actions"
-        }
+        },
+        "pressEnterToOpenTeresa": "Press Enter to open Teresa and continue the conversation.",
+        "select": "↵ Select",
+        "escClose": "ESC Close",
+        "talkToTeresaToUse": "Talk to Teresa to use the AI"
       },
       "mediaLibrary": {
         "title": "Media library",
@@ -24386,7 +24534,116 @@
       },
       "sourceTraceability": {
         "dataFrom": "Data from",
-        "clickToOpen": "Click to open the source"
+        "clickToOpen": "Click to open the source",
+        "clickToOpen2": "Click to open"
+      },
+      "agentActivityPanel": {
+        "aiActivity": "AI activity",
+        "theFullActivityHistoryCannot": "The full activity history cannot be shown",
+        "noAiActivityYet": "No AI activity yet."
+      },
+      "blockToolbar": {
+        "redo": "Redo",
+        "redoZ": "Redo (⇧⌘Z)",
+        "metricsOnePerLineLabel": "Metrics (one per line: label | value | unit | direction | change)",
+        "headersCommaSeparated": "Headers (comma separated)",
+        "chartTitle": "Chart title",
+        "metricLabel": "Metric label",
+        "metricValue": "Metric value",
+        "typeface": "Typeface",
+        "fontWeight": "Font weight",
+        "letterSpacing": "Letter spacing",
+        "underline": "Underline",
+        "alignment": "Alignment",
+        "layoutArea": "Layout area",
+        "layerOrder": "Layer order",
+        "width": "Width (%)",
+        "minimumHeightPx": "Minimum height (px)",
+        "horizontalPosition": "Horizontal position",
+        "typeToSearchEverySlide": "Type to search every slide",
+        "noMatchingSlides": "No matching slides",
+        "bar": "Bar",
+        "pie": "Pie",
+        "doughnut": "Doughnut",
+        "themeDefault": "Theme default",
+        "regular": "Regular",
+        "medium": "Medium",
+        "centre": "Centre",
+        "positionAndSize": "Position and size",
+        "full": "Full",
+        "top": "Top",
+        "bottom": "Bottom",
+        "overlay": "Overlay",
+        "stretch": "Stretch"
+      },
+      "deckAuditLogModal": {
+        "filterByAction": "Filter by action",
+        "clearTheActiveSavedView": "Clear the active saved view",
+        "eGAiActivityFrom": "e.g. AI activity from the last 7 days",
+        "clearFilters": "Clear filters",
+        "close": "Close",
+        "copyALinkWithThe": "Copy a link with the current filters",
+        "loadMoreEvents": "Load more events",
+        "loadingTheAuditLog": "Loading the audit log…",
+        "noAuditEventsYet": "No audit events yet",
+        "activityForThisDeckWill": "Activity for this deck will appear here once edits, shares, or AI proposals occur.",
+        "allActions": "All actions",
+        "from": "From",
+        "noEventsMatchTheCurrent": "No events match the current filters",
+        "loading": "Loading…"
+      },
+      "deckBuilderMelsView": {
+        "presentationTools": "Presentation tools",
+        "artifactStudio": {
+          "test": {
+            "presentationQaAndApprovalWorkflow": "Presentation QA and approval workflow",
+            "savedDraft": "Saved Draft"
+          }
+        }
+      },
+      "deckGovernanceCardModal": {
+        "quality": "Quality",
+        "confidentiality": "Confidentiality",
+        "activityData": "Activity data"
+      },
+      "deckOverflowWarning": {
+        "exportDespiteTheWarning": "Export despite the warning",
+        "cancel": "Cancel"
+      },
+      "presenceIndicators": {
+        "onlyYou": "Only you"
+      },
+      "presentMode": {
+        "nextSlide": "Next slide"
+      },
+      "presentationReviewPanel": {
+        "loading": "Loading…",
+        "tryAgain": "Try again",
+        "thisVersionIsApproved": "This version is approved.",
+        "thePresentationIsAwaitingThe": "The presentation is awaiting the assigned reviewer's decision.",
+        "approve": "Approve",
+        "requestChanges": "Request changes",
+        "sendThePresentationAgainOnce": "Send the presentation again once it is fixed.",
+        "chooseAPerson": "Choose a person",
+        "sendForApproval": "Send for approval"
+      },
+      "shareModal": {
+        "embedThisDeckOnExternal": "Embed this deck on external websites:"
+      },
+      "themeSwitcher": {
+        "readyMadePalettes": "Ready-made palettes"
+      },
+      "tipTapEditor": {
+        "strikethrough": "Strikethrough",
+        "highlight": "Highlight",
+        "alignLeft": "Align left",
+        "alignCentre": "Align centre",
+        "alignRight": "Align right",
+        "link": "Link"
+      },
+      "versionHistoryPanel": {
+        "nameThisVersion": "Name this version…",
+        "noSavedVersionsYet": "No saved versions yet"
       }
     },
     "governance": {
@@ -24560,6 +24817,9 @@
         "aiOnly": "AI generated",
         "none": "No images",
         "manual": "Manual only"
+      },
+      "outlineStep": {
+        "sourcesForTheClaim": "Sources for the claim"
       }
     },
     "outline": {
@@ -24865,6 +25125,50 @@
         "noNotes": "You have no speaker notes. Generate them?",
         "betterChart": "The chart on slide {{number}} would read better as a {{type}}. Change it?"
       }
+    },
+    "studio": {
+      "presentationStudioLayoutAuditBanner": {
+        "outlineFitsCanonicalPptx16": "Outline fits canonical PPTX 16:9 capacities, every evidence slide is grounded, and all\n            intents are renderable by the PPTX and PDF pipelines.",
+        "findingsAreAdvisoryAndNever": "Findings are advisory and never block generation. Review the breakdown below before\n            confirming."
+      },
+      "presentationStudioLayoutCapacityAdminPanel": {
+        "loadingLayoutCapacityAdminSurface": "Loading layout-capacity admin surface…",
+        "failedToLoadLayoutCapacity": "Failed to load layout-capacity admin surface",
+        "serverValidatorRejectedThePayload": "Server validator rejected the payload:",
+        "overrideAppliedAndAudited": "Override applied and audited"
+      },
+      "presentationStudioPage": {
+        "tenantScopedReadOfSource": "Tenant-scoped read of source coverage, missing inputs, and readiness.",
+        "deckLevelThesisStorylineDecisions": "Deck-level thesis, storyline, decisions, and per-slide narrative role.",
+        "methodologyFirstTemplatePlanAlways": "Methodology-first template plan. Always returned with approvalRequired=true.",
+        "whatTheDeckWouldLook": "What the deck would look like if generated now. Read-only — never persists.",
+        "fixTheHighlightedRequiredFields": "Fix the highlighted required fields above before running a Studio preview. No silent\n                defaults are applied.",
+        "studioPreviewFailed": "Studio preview failed",
+        "approvalCannotBeRequestedYet": "Approval cannot be requested yet",
+        "deckGeneratedAndAudited": "Deck generated and audited",
+        "approvalRequiredBeforeThisTemplate": "Approval required before this template enters the registry."
+      },
+      "presentationStudioSetupForm": {
+        "fieldsDriveTheSourcePack": "Fields drive the source pack, narrative plan, template architect, and generate previews.\n          Required fields are marked with",
+        "oneLineWorkingTitleFor": "One-line working title for the deck.",
+        "drivesTheTemplateArchitectDispatcher": "Drives the template architect dispatcher."
+      },
+      "presentationStudioSourceArtifactPicker": {
+        "loadingSourceArtifacts": "Loading source artifacts…",
+        "createOrCompleteAnAssessment": "Create or complete an assessment first — nothing is silently attached to the deck.",
+        "tenantScopedReadOfYour": "Tenant-scoped read of your assessments. Selected artifacts are attached to every preview\n            and to the approval-gated generate flow.",
+        "sourceArtifactsCouldNotBe": "Source artifacts could not be loaded"
+      }
+    },
+    "brandKitSettings": {
+      "confidentialInternalUseOnly": "Confidential — internal use only",
+      "internal": "Internal"
+    },
+    "presentationTemplateArchitectView": {
+      "defaultValue": "Default value",
+      "restoreAsDraft": "Restore as draft",
+      "typedFieldsArePersistedIn": "Typed fields are persisted in the template schema and become the\n                      deck-generation data requirements.",
+      "theCheckPassedTheDraft": "The check passed. The draft is ready to publish."
     }
   },
   "finance": {
@@ -29332,6 +29636,29 @@
       "useBlocked": "No canonical template record — there is nothing to use.",
       "galleryEmpty": "No template matches these filters.",
       "statusUnknown": "Unknown"
+    },
+    "bundleHistoryPanel": {
+      "qualityIsFine": "Quality is fine",
+      "qualityProblems": "Quality problems",
+      "qualityCheckInProgress": "Quality check in progress"
+    },
+    "dataSourcesTabContent": {
+      "shortPreview": "short preview",
+      "dataSourcesForThisMaterial": "Data sources for this material",
+      "connectDataToTheMaterials": "Connect data to the materials you generate — from a connector or from an intake form.",
+      "connectASource": "Connect a source",
+      "noConnectorsAvailableTheData": "No connectors available (the data layer is off or has no registry).",
+      "collectViaAForm": "Collect via a form"
+    },
+    "templateProvenanceApprovalDialog": {
+      "close": "Close",
+      "templateProvenanceApproval": "Template provenance approval",
+      "ownerOrAdminOnlyMissing": "OWNER or ADMIN only. Missing or incomplete rights keep a template in\n              quarantine.",
+      "loading": "Loading…",
+      "thisQueueIsAvailableOnly": "This queue is available only to an active OWNER or ADMIN of this organisation.",
+      "noTemplatesAreWaitingFor": "No templates are waiting for provenance.",
+      "pickATemplateNothingIs": "Pick a template. Nothing is approved automatically.",
+      "approveTheCompleteProvenance": "Approve the complete provenance"
     }
   },
   "rbHub": {
@@ -31320,7 +31647,11 @@
     "openAdminOperations": "Open Admin Operations",
     "lastStatusRefresh": "Last status refresh: {{time}}",
     "owner": "Owner",
-    "chunks": "{{count}} chunks"
+    "chunks": "{{count}} chunks",
+    "contextAssetSelector": {
+      "loadingDocuments": "Loading documents...",
+      "orgWideResearchModeSearches": "Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected."
+    }
   },
   "intelligence": {
     "analyzing": "Analyzing…",
@@ -32957,6 +33288,26 @@
       "copied": "Copied!",
       "share": "Share",
       "watchVideo": "Watch video tutorial"
+    },
+    "docsArticleView": {
+      "wasThisArticleHelpful": "Was this article helpful?",
+      "thankYouForYourFeedback": "Thank you for your feedback! 🙏",
+      "onThisPage": "On this page"
+    },
+    "docsChangelogView": {
+      "trackAllUpdatesNewFeatures": "Track all updates, new features, and improvements to the Consultify platform.",
+      "backToDocumentationHome": "Back to Documentation Home"
+    },
+    "docsHomeView": {
+      "stayUpToDateWith": "Stay up to date with new features, improvements, bug fixes, and breaking changes.",
+      "enterpriseSecurityCertificationsComplianceStandards": "Enterprise security certifications, compliance standards, and data protection\n                policies.",
+      "readyToTransformYourOrganization": "Ready to Transform Your Organization?",
+      "startYourFreeTrialToday": "Start your free trial today and access the complete Consultify Transformation AI\n              Platform."
+    },
+    "docsSecurityView": {
+      "enterpriseGradeSecurityBuiltInto": "Enterprise-grade security built into every layer of the Consultify platform. Your data\n              protection is our top priority.",
+      "weAreFullyCompliantWith": "We are fully compliant with the EU General Data Protection Regulation (GDPR). Here's\n              how we protect your rights:",
+      "backToDocumentationHome": "Back to Documentation Home"
     }
   },
   "documentStudio": {
@@ -33672,6 +34023,32 @@
       "statusResolved": "Resolved",
       "subtitle": "Review threads for this document. Section and block links jump to the right place in the editor.",
       "title": "Comments"
+    },
+    "documentStudioDocumentPanel": {
+      "selectTextInTheDocument": "Select text in the document to improve it with Teresa."
+    },
+    "documentStudioTemplateArchitectView": {
+      "restoreAsDraft": "Restore as draft",
+      "theVersionPreviewIsUnavailable": "The version preview is unavailable",
+      "versionComparison": "Version comparison"
+    },
+    "documentTipTapEditor": {
+      "uploadOrChangeTheImage": "Upload or change the image",
+      "uploadChangeTheImage": "Upload / change the image"
+    },
+    "useManualPrompt": {
+      "thisCannotBeUndoneOnce": "This cannot be undone once the session is closed.",
+      "cancel": "Cancel"
+    },
+    "readerBlockRenderer": {
+      "assumption": "Assumption"
+    },
+    "readerCommentsPanel": {
+      "writeAReply": "Write a reply…",
+      "addACommentAboutThe": "Add a comment about the whole document…",
+      "cancel": "Cancel",
+      "send": "Send",
+      "noCommentsYetBeThe": "No comments yet — be the first."
     }
   },
   "priority": {
@@ -41323,6 +41700,13 @@
     },
     "scheduleReportModal": {
       "eGWeeklyStatusReport": "e.g. Weekly Status Report"
+    },
+    "view": {
+      "reportBuilderView": {
+        "thisTemplateCannotBeUsed": "This template cannot be used",
+        "goToProvenanceAndRights": "Go to Provenance and rights",
+        "backToTheLibrary": "Back to the library"
+      }
     }
   },
   "discoveryToolsSteps": {

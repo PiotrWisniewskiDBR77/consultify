@@ -20,6 +20,7 @@ import { MetricCard } from './shared/MetricCard';
 import { RAGIndicator, RAGStatusGrid } from './shared/RAGIndicator';
 import { ReportFooter } from './shared/ReportFooter';
 import { ReportHeader } from './shared/ReportHeader';
+import { useTranslation } from 'react-i18next';
 
 interface SteeringCommitteeReportProps {
   report: ManagementReport;
@@ -30,6 +31,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
   report,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const content = report.content as SteeringCommitteeReportContent;
   const overallStatus = content.overallStatus;
 
@@ -106,7 +108,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
             ))}
           </ul>
           <p className="mt-4 text-xs text-danger-600 dark:text-danger-400 italic">
-            AI Transparency: These warnings are automatically generated. AI never hides bad news.
+            {t('reports.management.steeringCommitteeReport.aiTransparencyTheseWarningsAre', 'AI Transparency: These warnings are automatically generated. AI never hides bad news.')}
           </p>
         </div>
       )}
@@ -162,7 +164,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                     Owner
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Days Open
+                    {t('reports.management.steeringCommitteeReport.daysOpen', 'Days Open')}
                   </th>
                   {report.scope === 'PORTFOLIO' && (
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -227,7 +229,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
             <HelpCircle size={20} className="text-primary-500" />
-            Decisions Required from Board
+            {t('reports.management.steeringCommitteeReport.decisionsRequiredFromBoard', 'Decisions Required from Board')}
           </h2>
           <div className="space-y-4">
             {content.decisionsRequired.map((decision) => {

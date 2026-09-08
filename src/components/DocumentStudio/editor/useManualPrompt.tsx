@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 
 import Button from '@/components/ui/primitives/Button';
+import { useTranslation } from 'react-i18next';
 
 interface PromptRequest {
   title: string;
@@ -13,6 +14,7 @@ export function useManualPrompt(): {
   requestConfirm: (title: string) => Promise<boolean>;
   promptDialog: React.ReactNode;
 } {
+  const { t } = useTranslation();
   const [request, setRequest] = useState<PromptRequest | null>(null);
   const [value, setValue] = useState('');
   const resolver = useRef<((value: string | null) => void) | null>(null);
@@ -70,12 +72,12 @@ export function useManualPrompt(): {
           />
         ) : (
           <p className="mt-2 text-xs text-c-text-secondary">
-            Tej operacji nie można cofnąć po zamknięciu sesji.
+            {t('documentStudio.useManualPrompt.thisCannotBeUndoneOnce', 'This cannot be undone once the session is closed.')}
           </p>
         )}
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={() => close(null)}>
-            Anuluj
+            {t('documentStudio.useManualPrompt.cancel', 'Cancel')}
           </Button>
           <Button type="submit" variant={request.confirmOnly ? 'danger' : 'primary'} size="sm">
             {request.confirmOnly ? 'Potwierdź' : 'Zastosuj'}

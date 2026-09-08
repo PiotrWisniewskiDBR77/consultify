@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -123,6 +122,7 @@ import type {
   DocumentVariantSummary,
   DocumentVersionSnapshotSummary,
 } from './types';
+import { useTranslation } from 'react-i18next';
 
 interface DocumentStudioDocumentPanelProps {
   artifactId: string;
@@ -2000,7 +2000,7 @@ function TeresaDrawerPanel({
         </p>
       </div>
       <p className="text-xs text-c-text-secondary">
-        Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+        {t('documentStudio.documentStudioDocumentPanel.selectTextInTheDocument', 'Select text in the document to improve it with Teresa.')}
       </p>
     </div>
   );
@@ -2975,7 +2975,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       content = (
         <div className="h-full overflow-y-auto p-3">
           <p className="text-xs text-c-text-secondary">
-            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+            {t('documentStudio.documentStudioDocumentPanel.selectTextInTheDocument', 'Select text in the document to improve it with Teresa.')}
           </p>
         </div>
       );

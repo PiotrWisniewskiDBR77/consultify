@@ -29,6 +29,7 @@ import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/primitives/Button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 // ============================================
 // TYPES
@@ -236,6 +237,7 @@ function SecurityFeatureCard({ feature }: { feature: SecurityFeature }) {
 // ============================================
 
 export function DocsSecurityView() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-c-bg">
       {/* Hero Section */}
@@ -251,8 +253,7 @@ export function DocsSecurityView() {
             </div>
             <h1 className="text-4xl font-bold text-c-text mb-4">Security & Compliance</h1>
             <p className="text-xl text-c-text-secondary max-w-2xl mx-auto mb-8">
-              Enterprise-grade security built into every layer of the Consultify platform. Your data
-              protection is our top priority.
+              {t('docs.docsSecurityView.enterpriseGradeSecurityBuiltInto', 'Enterprise-grade security built into every layer of the Consultify platform. Your data\n              protection is our top priority.')}
             </p>
 
             <div className="flex items-center justify-center gap-4">
@@ -319,8 +320,7 @@ export function DocsSecurityView() {
               GDPR Compliance
             </h2>
             <p className="text-c-text-secondary mb-6">
-              We are fully compliant with the EU General Data Protection Regulation (GDPR). Here's
-              how we protect your rights:
+              {t('docs.docsSecurityView.weAreFullyCompliantWith', 'We are fully compliant with the EU General Data Protection Regulation (GDPR). Here\'s\n              how we protect your rights:')}
             </p>
 
             <div className="grid md:grid-cols-2 gap-3 mb-6">
@@ -415,7 +415,7 @@ export function DocsSecurityView() {
             className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
           >
             <ArrowRight size={16} />
-            Back to Documentation Home
+            {t('docs.docsSecurityView.backToDocumentationHome', 'Back to Documentation Home')}
           </Link>
         </div>
       </div>

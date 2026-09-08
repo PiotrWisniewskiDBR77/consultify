@@ -1441,6 +1441,9 @@
         "aiOnly": "Generowane AI",
         "none": "Bez obrazów",
         "manual": "Tylko ręcznie"
+      },
+      "outlineStep": {
+        "sourcesForTheClaim": "Źródła tezy"
       }
     },
     "steps": {
@@ -1982,7 +1985,11 @@
           "export": "Eksport i prezentacja",
           "navigate": "Nawigacja",
           "ai": "Akcje AI"
-        }
+        },
+        "pressEnterToOpenTeresa": "Naciśnij Enter, aby otworzyć Teresę i kontynuować rozmowę.",
+        "select": "↵ Wybierz",
+        "escClose": "ESC Zamknij",
+        "talkToTeresaToUse": "Porozmawiaj z Teresą, aby użyć AI"
       },
       "mediaLibrary": {
         "title": "Biblioteka mediów",
@@ -2034,7 +2041,8 @@
       },
       "sourceTraceability": {
         "dataFrom": "Dane z",
-        "clickToOpen": "Kliknij aby otworzyć źródło"
+        "clickToOpen": "Kliknij aby otworzyć źródło",
+        "clickToOpen2": "Kliknij, aby przejść"
       },
       "loading": "Ładowanie…",
       "back": "Wstecz",
@@ -2094,7 +2102,115 @@
         "newSlide": "Nowy slajd",
         "untitledArtifact": "Artefakt bez nazwy"
       },
-      "autosaveOffline": "Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane."
+      "autosaveOffline": "Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.",
+      "agentActivityPanel": {
+        "aiActivity": "Aktywność AI",
+        "theFullActivityHistoryCannot": "Nie można wyświetlić pełnej historii aktywności",
+        "noAiActivityYet": "Nie ma jeszcze aktywności AI."
+      },
+      "blockToolbar": {
+        "redo": "Ponów",
+        "redoZ": "Ponów (⇧⌘Z)",
+        "metricsOnePerLineLabel": "Miary (po jednej w wierszu: etykieta | wartość | jednostka | kierunek | zmiana)",
+        "headersCommaSeparated": "Nagłówki (oddzielone przecinkami)",
+        "chartTitle": "Tytuł wykresu",
+        "metricLabel": "Etykieta wskaźnika",
+        "metricValue": "Wartość wskaźnika",
+        "typeface": "Krój pisma",
+        "fontWeight": "Grubość pisma",
+        "letterSpacing": "Odstępy między literami",
+        "underline": "Podkreślenie",
+        "alignment": "Wyrównanie",
+        "layoutArea": "Obszar układu",
+        "layerOrder": "Kolejność warstw",
+        "width": "Szerokość (%)",
+        "minimumHeightPx": "Minimalna wysokość (px)",
+        "horizontalPosition": "Położenie w poziomie",
+        "typeToSearchEverySlide": "Wpisz tekst, aby przeszukać wszystkie slajdy",
+        "noMatchingSlides": "Brak pasujących slajdów",
+        "bar": "Słupkowy",
+        "pie": "Kołowy",
+        "doughnut": "Pierścieniowy",
+        "themeDefault": "Domyślny dla motywu",
+        "regular": "Zwykłe",
+        "medium": "Średnie",
+        "centre": "Do środka",
+        "positionAndSize": "Położenie i rozmiar",
+        "full": "Całość",
+        "top": "Góra",
+        "bottom": "Dół",
+        "overlay": "Nakładka",
+        "stretch": "Rozciągnij"
+      },
+      "deckAuditLogModal": {
+        "filterByAction": "Filtruj według działania",
+        "clearTheActiveSavedView": "Wyczyść aktywny zapisany widok",
+        "eGAiActivityFrom": "np. aktywność AI z ostatnich 7 dni",
+        "clearFilters": "Wyczyść filtry",
+        "close": "Zamknij",
+        "copyALinkWithThe": "Skopiuj odnośnik z bieżącymi filtrami",
+        "loadMoreEvents": "Wczytaj więcej zdarzeń",
+        "loadingTheAuditLog": "Ładowanie dziennika audytu…",
+        "noAuditEventsYet": "Nie ma jeszcze zdarzeń audytowych",
+        "activityForThisDeckWill": "Aktywność tej prezentacji pojawi się tutaj po edycjach, udostępnieniach lub propozycjach AI.",
+        "allActions": "Wszystkie działania",
+        "from": "Od",
+        "noEventsMatchTheCurrent": "Żadne zdarzenie nie pasuje do bieżących filtrów",
+        "loading": "Ładowanie…"
+      },
+      "deckBuilderMelsView": {
+        "presentationTools": "Narzędzia prezentacji",
+        "artifactStudio": {
+          "test": {
+            "presentationQaAndApprovalWorkflow": "Kontrola jakości i obieg zatwierdzania prezentacji",
+            "savedDraft": "Zapisana wersja robocza"
+          }
+        }
+      },
+      "deckGovernanceCardModal": {
+        "quality": "Jakość",
+        "confidentiality": "Poufność",
+        "activityData": "Dane o działaniu"
+      },
+      "deckOverflowWarning": {
+        "exportDespiteTheWarning": "Eksportuj mimo ostrzeżenia",
+        "cancel": "Anuluj"
+      },
+      "presenceIndicators": {
+        "onlyYou": "Tylko Ty"
+      },
+      "presentMode": {
+        "nextSlide": "Następny slajd"
+      },
+      "presentationReviewPanel": {
+        "loading": "Ładowanie…",
+        "tryAgain": "Spróbuj ponownie",
+        "thisVersionIsApproved": "Ta wersja jest zatwierdzona.",
+        "thePresentationIsAwaitingThe": "Prezentacja oczekuje na decyzję przypisanego recenzenta.",
+        "approve": "Zatwierdź",
+        "requestChanges": "Poproś o zmiany",
+        "sendThePresentationAgainOnce": "Po poprawkach wyślij prezentację ponownie.",
+        "chooseAPerson": "Wybierz osobę",
+        "sendForApproval": "Wyślij do zatwierdzenia"
+      },
+      "shareModal": {
+        "embedThisDeckOnExternal": "Osadź tę prezentację na zewnętrznych stronach:"
+      },
+      "themeSwitcher": {
+        "readyMadePalettes": "Gotowe palety"
+      },
+      "tipTapEditor": {
+        "strikethrough": "Przekreślenie",
+        "highlight": "Wyróżnienie",
+        "alignLeft": "Wyrównaj do lewej",
+        "alignCentre": "Wyrównaj do środka",
+        "alignRight": "Wyrównaj do prawej",
+        "link": "Odnośnik"
+      },
+      "versionHistoryPanel": {
+        "nameThisVersion": "Nadaj nazwę tej wersji…",
+        "noSavedVersionsYet": "Nie ma jeszcze zapisanych wersji"
+      }
     },
     "agent": {
       "title": "Agent AI",
@@ -2231,7 +2347,51 @@
       "subtitle": "Wszystkie źródła powiązane z tą prezentacją — kliknij, aby przejść do artefaktu.",
       "title": "Powiązania"
     },
-    "deckDiffSkippedLocked": "· pominięto {{count}} zablokowanych slajdów: {{numbers}}"
+    "deckDiffSkippedLocked": "· pominięto {{count}} zablokowanych slajdów: {{numbers}}",
+    "studio": {
+      "presentationStudioLayoutAuditBanner": {
+        "outlineFitsCanonicalPptx16": "Konspekt mieści się w kanonicznych pojemnościach PPTX 16:9, każdy slajd dowodowy ma ugruntowanie, a wszystkie\n            intencje da się wyrenderować w ścieżkach PPTX i PDF.",
+        "findingsAreAdvisoryAndNever": "Ustalenia mają charakter doradczy i nigdy nie blokują generowania. Przejrzyj rozbicie poniżej przed\n            potwierdzeniem."
+      },
+      "presentationStudioLayoutCapacityAdminPanel": {
+        "loadingLayoutCapacityAdminSurface": "Ładowanie panelu pojemności układów…",
+        "failedToLoadLayoutCapacity": "Nie udało się wczytać panelu pojemności układów",
+        "serverValidatorRejectedThePayload": "Walidator serwera odrzucił dane:",
+        "overrideAppliedAndAudited": "Zastosowano odstępstwo i zapisano je w dzienniku"
+      },
+      "presentationStudioPage": {
+        "tenantScopedReadOfSource": "Odczyt w zakresie organizacji: pokrycie źródeł, brakujące dane wejściowe i gotowość.",
+        "deckLevelThesisStorylineDecisions": "Teza całej prezentacji, narracja, decyzje i rola narracyjna każdego slajdu.",
+        "methodologyFirstTemplatePlanAlways": "Plan wzorca zaczynający od metodyki. Zawsze zwracany z approvalRequired=true.",
+        "whatTheDeckWouldLook": "Jak wyglądałaby prezentacja wygenerowana teraz. Tylko do odczytu — nic nie jest zapisywane.",
+        "fixTheHighlightedRequiredFields": "Uzupełnij wyróżnione pola wymagane powyżej przed uruchomieniem podglądu Studia. Nic nie jest\n                uzupełniane po cichu.",
+        "studioPreviewFailed": "Podgląd Studia nie powiódł się",
+        "approvalCannotBeRequestedYet": "Nie można jeszcze wystąpić o zatwierdzenie",
+        "deckGeneratedAndAudited": "Prezentacja wygenerowana i zapisana w dzienniku",
+        "approvalRequiredBeforeThisTemplate": "Ten wzorzec wymaga zatwierdzenia, zanim trafi do rejestru."
+      },
+      "presentationStudioSetupForm": {
+        "fieldsDriveTheSourcePack": "Pola sterują pakietem źródeł, planem narracji, architektem wzorców i podglądami generowania.\n          Pola wymagane są oznaczone",
+        "oneLineWorkingTitleFor": "Jednowierszowy roboczy tytuł prezentacji.",
+        "drivesTheTemplateArchitectDispatcher": "Steruje dyspozytorem architekta wzorców."
+      },
+      "presentationStudioSourceArtifactPicker": {
+        "loadingSourceArtifacts": "Ładowanie artefaktów źródłowych…",
+        "createOrCompleteAnAssessment": "Najpierw utwórz lub dokończ ocenę — nic nie jest dołączane do prezentacji po cichu.",
+        "tenantScopedReadOfYour": "Odczyt Twoich ocen w zakresie organizacji. Wybrane artefakty są dołączane do każdego podglądu\n            i do generowania objętego zatwierdzeniem.",
+        "sourceArtifactsCouldNotBe": "Nie udało się wczytać artefaktów źródłowych"
+      }
+    },
+    "brandKitSettings": {
+      "confidentialInternalUseOnly": "Poufne — tylko do użytku wewnętrznego",
+      "internal": "Wewnętrzne"
+    },
+    "presentationTemplateArchitectView": {
+      "defaultValue": "Wartość domyślna",
+      "restoreAsDraft": "Przywróć jako wersję roboczą",
+      "typedFieldsArePersistedIn": "Pola z typem są zapisywane w schemacie wzorca i stają się\n                      wymaganiami danych przy generowaniu prezentacji.",
+      "theCheckPassedTheDraft": "Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji."
+    }
   },
   "sidebar": {
     "module3_1": "Inicjatywy",
@@ -15229,7 +15389,8 @@
       "monthsSuffix": "miesięcy",
       "phasesSuffix": "faz",
       "milestonesSuffix": "kamieni milowych",
-      "onCriticalPathSuffix": "na ścieżce krytycznej"
+      "onCriticalPathSuffix": "na ścieżce krytycznej",
+      "addPhasesToYourRoadmap": "Dodaj fazy do mapy drogowej, aby zobaczyć wykres Gantta"
     },
     "initiativesReportSection": {
       "effortPrefix": "Wysiłek",
@@ -15383,6 +15544,149 @@
     "keyTakeaways": {
       "defaultTitle": "Kluczowe wnioski",
       "pointsSuffix": "punktów"
+    },
+    "fullDocument": {
+      "fullReportDocument": {
+        "initiativeName": "Nazwa inicjatywy",
+        "thisReportContainsProprietaryAnalysis": "Ten raport zawiera analizę zastrzeżoną i nie powinien być rozpowszechniany bez\n              zezwolenia."
+      }
+    },
+    "executiveReport": {
+      "pendingDecisions": "Decyzje oczekujące",
+      "clickGenerateReportToCreate": "Kliknij „Generuj raport”, aby utworzyć streszczenie zarządcze przygotowane przez AI"
+    },
+    "importReportModal": {
+      "reportImportedSuccessfully": "Raport zaimportowany",
+      "youCanNowGenerateInitiatives": "Możesz teraz wygenerować inicjatywy z tego raportu",
+      "dataExtractedSuccessfully": "Dane wyodrębnione",
+      "reviewAndAdjustExtractedScores": "Przejrzyj i popraw wyodrębnione wyniki przed zapisem. Z tego raportu możesz wygenerować\n            inicjatywy.",
+      "dropYourReportHere": "Upuść tutaj swój raport",
+      "reportName": "Nazwa raportu",
+      "saveReport": "Zapisz raport"
+    },
+    "management": {
+      "approvalWorkflow": {
+        "reportHasNotBeenSubmitted": "Raport nie został zgłoszony do zatwierdzenia",
+        "returnReportToDraftStatus": "Cofnij raport do statusu roboczego w celu poprawek"
+      },
+      "managementReportsView": {
+        "shareLink": "Udostępnij link",
+        "generateTeamMeetingAndSteering": "Generuj raporty ze spotkania zespołu i komitetu sterującego",
+        "newReport": "Nowy raport",
+        "generateNewReport": "Generuj nowy raport",
+        "failedToLoadProjectsReport": "Nie udało się wczytać projektów. Generowanie raportów jest niedostępne, dopóki projekty się nie\n                  wczytają.",
+        "dayOfMonth": "Dzień miesiąca",
+        "aiWillAnalyzeYourData": "AI przeanalizuje Twoje dane i wygeneruje pełny raport ze spostrzeżeniami.",
+        "settingsAreAppliedWhenCreating": "Ustawienia są stosowane przy tworzeniu nowych raportów i harmonogramów."
+      },
+      "reportGeneratorDrawer": {
+        "generateNewReport": "Generuj nowy raport",
+        "aiWillAnalyzeYourData": "AI przeanalizuje Twoje dane i przygotuje spostrzeżenia",
+        "failedToLoadProjectsReport": "Nie udało się wczytać projektów. Generowanie raportów jest niedostępne."
+      },
+      "reportHistoryTable": {
+        "draft": "Wersja robocza",
+        "generateYourFirstReportTo": "Wygeneruj pierwszy raport, aby zobaczyć go tutaj."
+      },
+      "reportScheduleView": {
+        "dayOfMonth": "Dzień miesiąca",
+        "loading": "Ładowanie..."
+      },
+      "reportTemplatesView": {
+        "highlightKeyDecisionDriversAnd": "Wyróżnij kluczowe przesłanki decyzji i stan eskalacji.",
+        "loading": "Ładowanie..."
+      },
+      "reportTypeSelector": {
+        "selectWhichSectionsToInclude": "Wybierz sekcje do umieszczenia w raporcie. Sekcji wymaganych nie da się\n                wyłączyć."
+      },
+      "reportsHub": {
+        "unknownReportType": "Nieznany typ raportu"
+      },
+      "steeringCommitteeReport": {
+        "aiTransparencyTheseWarningsAre": "Przejrzystość AI: te ostrzeżenia powstają automatycznie. AI nigdy nie ukrywa złych wiadomości.",
+        "daysOpen": "Dni otwarcia",
+        "decisionsRequiredFromBoard": "Decyzje wymagane od zarządu"
+      },
+      "teamMeetingReport": {
+        "completedThisPeriod": "Zakończone w tym okresie",
+        "pendingDecisions": "Decyzje oczekujące"
+      },
+      "versionHistory": {
+        "compareWithSelected": "Porównaj z wybraną"
+      },
+      "reportSkeleton": {
+        "loadingReport": "Ładowanie raportu…"
+      },
+      "raidReport": {
+        "escalationSummary": "Podsumowanie eskalacji",
+        "escalationNote": "Ogólny status RAID to <1>{{status}}</1>. Eskalacje wyliczamy z otwartych problemów, blokad zależności i ryzyk krytycznych."
+      }
+    },
+    "premium": {
+      "gapHeatmap": {
+        "title": "Tytuł",
+        "showValues": "Pokaż wartości",
+        "blueOrange": "Niebiesko-Pomarańczowy",
+        "noDataToShow": "Brak danych do wyświetlenia",
+        "smallGap01": "Mała luka (0-1)",
+        "medium12": "Średnia (1-2)",
+        "largeGap2": "Duża luka (2+)"
+      },
+      "maturityRadar": {
+        "chartTitle": "Tytuł wykresu",
+        "showTheTarget": "Pokaż cel",
+        "showTheLegend": "Pokaż legendę",
+        "noDataToShow": "Brak danych do wyświetlenia"
+      },
+      "metricCard": {
+        "value": "Wartość",
+        "editTheCard": "Edytuj kartę",
+        "orange": "Pomarańczowy"
+      },
+      "recommendationCard": {
+        "editTheRecommendation": "Edytuj Rekomendację",
+        "title": "Tytuł",
+        "medium": "Średni",
+        "impact": "Wpływ",
+        "effort": "Nakład pracy",
+        "low": "Mały",
+        "high": "Duży",
+        "owner": "Właściciel",
+        "effort2": "Nakład"
+      },
+      "premiumReportEditor": {
+        "ctrlSToSaveTo": "Ctrl+S aby zapisać • \"/\" aby wstawić blok"
+      },
+      "aIAssistantPanel": {
+        "generateMckinseyGradeContent": "Generuj treści klasy McKinsey",
+        "chooseAnAssessmentToGenerate": "Wybierz assessment, aby generować treści.",
+        "yourPrompt": "Twój prompt",
+        "generating": "Generuję...",
+        "generateContent": "Generuj treść",
+        "theAiGeneratesContentIn": "AI generuje\n          treści w stylu raportów konsultingowych Big 4 (McKinsey, BCG) z użyciem Pyramid Principle."
+      },
+      "blockInsertMenu": {
+        "searchBlocks": "Szukaj bloków...",
+        "noBlocksFound": "Nie znaleziono bloków",
+        "navigateEnterSelectEscClose": "↑↓ nawiguj • Enter wybierz • Esc zamknij"
+      },
+      "editorToolbar": {
+        "redoCtrlY": "Ponów (Ctrl+Y)",
+        "underlineCtrlU": "Podkreślenie (Ctrl+U)",
+        "strikethrough": "Przekreślenie",
+        "highlight": "Wyróżnienie",
+        "heading1": "Nagłówek 1",
+        "heading2": "Nagłówek 2",
+        "heading3": "Nagłówek 3",
+        "alignLeft": "Wyrównaj do lewej",
+        "centre": "Wyśrodkuj",
+        "alignRight": "Wyrównaj do prawej",
+        "insertATable": "Wstaw tabelę"
+      }
+    },
+    "reportCommentPanel": {
+      "addACommentToStart": "Dodaj komentarz, aby rozpocząć dyskusję",
+      "regenerateSectionWithFeedback": "Wygeneruj sekcję ponownie z uwagami"
     }
   },
   "auth": {
@@ -30284,6 +30588,29 @@
       "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.",
       "ctaFrozen": "Tworzenie wzorców w fali 2",
       "viewToggle": "Widok biblioteki wzorców"
+    },
+    "bundleHistoryPanel": {
+      "qualityIsFine": "Jakość poprawna",
+      "qualityProblems": "Problemy z jakością",
+      "qualityCheckInProgress": "Kontrola jakości w toku"
+    },
+    "dataSourcesTabContent": {
+      "shortPreview": "podgląd skrócony",
+      "dataSourcesForThisMaterial": "Źródła danych materiału",
+      "connectDataToTheMaterials": "Podłącz dane do generowanych materiałów — z konektora albo z formularza intake.",
+      "connectASource": "Połącz źródło",
+      "noConnectorsAvailableTheData": "Brak dostępnych konektorów (warstwa danych wyłączona lub bez rejestru).",
+      "collectViaAForm": "Zbierz przez formularz"
+    },
+    "templateProvenanceApprovalDialog": {
+      "close": "Zamknij",
+      "templateProvenanceApproval": "Zatwierdzenie pochodzenia wzorców",
+      "ownerOrAdminOnlyMissing": "Tylko OWNER lub ADMIN. Brakujące albo niepełne prawa pozostawiają wzorzec w\n              kwarantannie.",
+      "loading": "Ładowanie…",
+      "thisQueueIsAvailableOnly": "Ta kolejka jest dostępna wyłącznie dla aktywnego OWNER lub ADMIN tej organizacji.",
+      "noTemplatesAreWaitingFor": "Brak wzorców oczekujących na pochodzenie.",
+      "pickATemplateNothingIs": "Wybierz wzorzec. Nic nie zostanie zatwierdzone automatycznie.",
+      "approveTheCompleteProvenance": "Zatwierdź kompletne pochodzenie"
     }
   },
   "rbHub": {
@@ -33038,7 +33365,11 @@
     "openAdminOperations": "Otwórz Operacje administracyjne",
     "lastStatusRefresh": "Ostatnie odświeżenie statusu: {{time}}",
     "owner": "Właściciel",
-    "chunks": "{{count}} fragmentów"
+    "chunks": "{{count}} fragmentów",
+    "contextAssetSelector": {
+      "loadingDocuments": "Ładowanie dokumentów...",
+      "orgWideResearchModeSearches": "Tryb badania w skali organizacji przeszukuje cały zatwierdzony kontekst organizacji. Nie trzeba wybierać\n          konkretnych dokumentów."
+    }
   },
   "intelligence": {
     "analyzing": "Analizowanie…",
@@ -34698,6 +35029,26 @@
       "copied": "Skopiowano!",
       "share": "Udostępnij",
       "watchVideo": "Obejrzyj samouczek wideo"
+    },
+    "docsArticleView": {
+      "wasThisArticleHelpful": "Czy ten artykuł był pomocny?",
+      "thankYouForYourFeedback": "Dziękujemy za opinię! 🙏",
+      "onThisPage": "Na tej stronie"
+    },
+    "docsChangelogView": {
+      "trackAllUpdatesNewFeatures": "Śledź wszystkie aktualizacje, nowe funkcje i usprawnienia platformy Consultify.",
+      "backToDocumentationHome": "Powrót do strony głównej dokumentacji"
+    },
+    "docsHomeView": {
+      "stayUpToDateWith": "Bądź na bieżąco z nowymi funkcjami, usprawnieniami, poprawkami błędów i zmianami niezgodnymi wstecz.",
+      "enterpriseSecurityCertificationsComplianceStandards": "Certyfikaty bezpieczeństwa klasy korporacyjnej, standardy zgodności i zasady ochrony\n                danych.",
+      "readyToTransformYourOrganization": "Gotowi na transformację swojej organizacji?",
+      "startYourFreeTrialToday": "Rozpocznij bezpłatny okres próbny już dziś i uzyskaj dostęp do całej platformy Consultify\n              Transformation AI."
+    },
+    "docsSecurityView": {
+      "enterpriseGradeSecurityBuiltInto": "Bezpieczeństwo klasy korporacyjnej wbudowane w każdą warstwę platformy Consultify. Ochrona Twoich\n              danych to nasz najwyższy priorytet.",
+      "weAreFullyCompliantWith": "Działamy w pełnej zgodzie z unijnym RODO. Oto\n              jak chronimy Twoje prawa:",
+      "backToDocumentationHome": "Powrót do strony głównej dokumentacji"
     }
   },
   "documentStudio": {
@@ -35435,6 +35786,32 @@
     "report": {
       "empty": "Ten raport nie ma jeszcze treści.",
       "sectionEmpty": "Ta sekcja jest pusta."
+    },
+    "documentStudioDocumentPanel": {
+      "selectTextInTheDocument": "Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy."
+    },
+    "documentStudioTemplateArchitectView": {
+      "restoreAsDraft": "Przywróć jako wersję roboczą",
+      "theVersionPreviewIsUnavailable": "Podgląd wersji jest niedostępny",
+      "versionComparison": "Porównanie wersji"
+    },
+    "documentTipTapEditor": {
+      "uploadOrChangeTheImage": "Wgraj lub zmień obraz",
+      "uploadChangeTheImage": "Wgraj / zmień obraz"
+    },
+    "useManualPrompt": {
+      "thisCannotBeUndoneOnce": "Tej operacji nie można cofnąć po zamknięciu sesji.",
+      "cancel": "Anuluj"
+    },
+    "readerBlockRenderer": {
+      "assumption": "Założenie"
+    },
+    "readerCommentsPanel": {
+      "writeAReply": "Napisz odpowiedź…",
+      "addACommentAboutThe": "Dodaj komentarz do całego dokumentu…",
+      "cancel": "Anuluj",
+      "send": "Wyślij",
+      "noCommentsYetBeThe": "Brak komentarzy — bądź pierwszy."
     }
   },
   "priority": {
@@ -43182,6 +43559,13 @@
     },
     "scheduleReportModal": {
       "eGWeeklyStatusReport": "np. Tygodniowy raport statusu"
+    },
+    "view": {
+      "reportBuilderView": {
+        "thisTemplateCannotBeUsed": "Nie można użyć tego wzorca",
+        "goToProvenanceAndRights": "Przejdź do Pochodzenie i prawa",
+        "backToTheLibrary": "Powrót do Biblioteki"
+      }
     }
   },
   "discoveryToolsSteps": {

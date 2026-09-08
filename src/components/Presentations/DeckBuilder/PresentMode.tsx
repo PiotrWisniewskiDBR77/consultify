@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
 import { CardRenderer } from './CardRenderer';
+import { useTranslation } from 'react-i18next';
 
 interface PresentModeProps {
   cards: DeckCard[];
@@ -27,6 +28,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
   presenterView = false,
   initialIndex = 0,
 }) => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(() =>
     Math.min(Math.max(0, initialIndex), Math.max(0, cards.length - 1))
   );
@@ -102,7 +104,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           {/* Next slide preview */}
           {nextCard && (
             <div className="p-4 border-b border-c-border-subtle">
-              <p className="text-[10px] text-c-text-secondary uppercase mb-2">Następny slajd</p>
+              <p className="text-[10px] text-c-text-secondary uppercase mb-2">{t('presentations.builder.presentMode.nextSlide', 'Next slide')}</p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
               </div>

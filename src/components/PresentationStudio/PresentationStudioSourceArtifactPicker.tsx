@@ -32,6 +32,7 @@ import type {
   PresentationStudioSourceArtifactList,
   PresentationStudioSourceArtifactReadiness,
 } from '@/services/api/presentationStudio.api';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -149,6 +150,7 @@ function ArtifactRow({
 export const PresentationStudioSourceArtifactPicker: React.FC<
   PresentationStudioSourceArtifactPickerProps
 > = ({ list, loading, error, selectedIds, onSelectionChange, onReload, disabled }) => {
+  const { t } = useTranslation();
   const selectedSet = new Set(selectedIds);
 
   const toggle = (id: string) => {
@@ -174,8 +176,7 @@ export const PresentationStudioSourceArtifactPicker: React.FC<
             Source artifacts
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Tenant-scoped read of your assessments. Selected artifacts are attached to every preview
-            and to the approval-gated generate flow.
+            {t('presentations.studio.presentationStudioSourceArtifactPicker.tenantScopedReadOfYour', 'Tenant-scoped read of your assessments. Selected artifacts are attached to every preview\n            and to the approval-gated generate flow.')}
           </p>
         </div>
         <button
@@ -203,7 +204,7 @@ export const PresentationStudioSourceArtifactPicker: React.FC<
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div>
-              <div className="font-medium">Source artifacts could not be loaded</div>
+              <div className="font-medium">{t('presentations.studio.presentationStudioSourceArtifactPicker.sourceArtifactsCouldNotBe', 'Source artifacts could not be loaded')}</div>
               <div className="mt-0.5">{error}</div>
             </div>
           </div>
@@ -229,7 +230,7 @@ export const PresentationStudioSourceArtifactPicker: React.FC<
 
         {loading && artifacts.length === 0 ? (
           <div data-testid="psstudio-source-picker-loading">
-            <SharedLoadingState template="list" rows={3} label="Loading source artifacts…" />
+            <SharedLoadingState template="list" rows={3} label={t('presentations.studio.presentationStudioSourceArtifactPicker.loadingSourceArtifacts', 'Loading source artifacts…')} />
           </div>
         ) : null}
 
@@ -240,7 +241,7 @@ export const PresentationStudioSourceArtifactPicker: React.FC<
               compact
               icon={FileText}
               title="No source material yet"
-              description="Create or complete an assessment first — nothing is silently attached to the deck."
+              description={t('presentations.studio.presentationStudioSourceArtifactPicker.createOrCompleteAnAssessment', 'Create or complete an assessment first — nothing is silently attached to the deck.')}
             />
           </div>
         ) : null}

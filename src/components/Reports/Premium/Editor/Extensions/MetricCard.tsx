@@ -8,6 +8,7 @@ import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { Check, Edit3, Minus, TrendingDown, TrendingUp, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MetricCardAttrs {
   value: string;
@@ -40,6 +41,7 @@ const MetricCardComponent: React.FC<{
   updateAttributes: (attrs: Partial<MetricCardAttrs>) => void;
   selected: boolean;
 }> = ({ node, updateAttributes, selected }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(node.attrs);
 
@@ -56,7 +58,7 @@ const MetricCardComponent: React.FC<{
       {isEditing ? (
         <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-600 space-y-3 min-w-[200px]">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium"> Edytuj kartę </span>
+            <span className="text-sm font-medium"> {t('reports.premium.metricCard.editTheCard', 'Edit the card')} </span>
             <div className="flex gap-1">
               <button
                 onClick={() => setIsEditing(false)}
@@ -76,7 +78,7 @@ const MetricCardComponent: React.FC<{
             type="text"
             value={editForm.value}
             onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
-            placeholder="Wartość"
+            placeholder={t('reports.premium.metricCard.value', 'Value')}
             className="w-full px-2 py-1 border rounded text-sm"
           />
           <input
@@ -95,7 +97,7 @@ const MetricCardComponent: React.FC<{
           >
             <option value="primary"> Niebieski </option>
             <option value="success"> Zielony </option>
-            <option value="warning"> Pomarańczowy </option>
+            <option value="warning"> {t('reports.premium.metricCard.orange', 'Orange')} </option>
             <option value="danger"> Czerwony </option>
           </select>
           <select

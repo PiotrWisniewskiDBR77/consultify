@@ -31,6 +31,7 @@ import {
   Undo,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -83,6 +84,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onSave,
   onAIClick,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1 px-4 py-2 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-slate-700 flex-wrap">
       {/* History */}
@@ -96,7 +98,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={Redo}
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title="Ponów (Ctrl+Y)"
+        title={t('reports.premium.editorToolbar.redoCtrlY', 'Redo (Ctrl+Y)')}
       />
 
       <ToolbarDivider />
@@ -118,19 +120,19 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={UnderlineIcon}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
-        title="Podkreślenie (Ctrl+U)"
+        title={t('reports.premium.editorToolbar.underlineCtrlU', 'Underline (Ctrl+U)')}
       />
       <ToolbarButton
         icon={Strikethrough}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
-        title="Przekreślenie"
+        title={t('reports.premium.editorToolbar.strikethrough', 'Strikethrough')}
       />
       <ToolbarButton
         icon={Highlighter}
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         isActive={editor.isActive('highlight')}
-        title="Wyróżnienie"
+        title={t('reports.premium.editorToolbar.highlight', 'Highlight')}
       />
 
       <ToolbarDivider />
@@ -140,19 +142,19 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={Heading1}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive('heading', { level: 1 })}
-        title="Nagłówek 1"
+        title={t('reports.premium.editorToolbar.heading1', 'Heading 1')}
       />
       <ToolbarButton
         icon={Heading2}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive('heading', { level: 2 })}
-        title="Nagłówek 2"
+        title={t('reports.premium.editorToolbar.heading2', 'Heading 2')}
       />
       <ToolbarButton
         icon={Heading3}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive('heading', { level: 3 })}
-        title="Nagłówek 3"
+        title={t('reports.premium.editorToolbar.heading3', 'Heading 3')}
       />
 
       <ToolbarDivider />
@@ -178,19 +180,19 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={AlignLeft}
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
         isActive={editor.isActive({ textAlign: 'left' })}
-        title="Wyrównaj do lewej"
+        title={t('reports.premium.editorToolbar.alignLeft', 'Align left')}
       />
       <ToolbarButton
         icon={AlignCenter}
         onClick={() => editor.chain().focus().setTextAlign('center').run()}
         isActive={editor.isActive({ textAlign: 'center' })}
-        title="Wyśrodkuj"
+        title={t('reports.premium.editorToolbar.centre', 'Centre')}
       />
       <ToolbarButton
         icon={AlignRight}
         onClick={() => editor.chain().focus().setTextAlign('right').run()}
         isActive={editor.isActive({ textAlign: 'right' })}
-        title="Wyrównaj do prawej"
+        title={t('reports.premium.editorToolbar.alignRight', 'Align right')}
       />
 
       <ToolbarDivider />
@@ -201,7 +203,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         onClick={() =>
           editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
         }
-        title="Wstaw tabelę"
+        title={t('reports.premium.editorToolbar.insertATable', 'Insert a table')}
       />
       <ToolbarButton
         icon={Quote}

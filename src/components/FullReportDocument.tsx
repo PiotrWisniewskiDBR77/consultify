@@ -1,8 +1,8 @@
 import { FileText } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { FullReport } from '../types';
+import { useTranslation } from 'react-i18next';
 
 interface FullReportDocumentProps {
   report: FullReport;
@@ -103,7 +103,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
               >
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400">
-                    <th className="pb-2 font-semibold">Initiative Name</th>
+                    <th className="pb-2 font-semibold">{t('reports.fullDocument.fullReportDocument.initiativeName', 'Initiative Name')}</th>
                     <th className="pb-2 font-semibold">Status</th>
                     <th className="pb-2 font-semibold">Expected Impact</th>
                   </tr>
@@ -231,8 +231,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
               {report.executiveSummary.split(',')[0].split('for ')[1] || 'Internal Use'}
             </p>
             <p className="mt-1">
-              This report contains proprietary analysis and should not be distributed without
-              authorization.
+              {t('reports.fullDocument.fullReportDocument.thisReportContainsProprietaryAnalysis', 'This report contains proprietary analysis and should not be distributed without\n              authorization.')}
             </p>
           </div>
         </div>

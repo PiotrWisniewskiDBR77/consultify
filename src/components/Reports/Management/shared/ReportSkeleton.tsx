@@ -13,6 +13,7 @@
 import React from 'react';
 
 import { ManagementReportType } from '../../../../types';
+import { useTranslation } from 'react-i18next';
 
 const bar = 'rounded bg-slate-200/80 dark:bg-white/[0.08]';
 
@@ -22,6 +23,7 @@ interface ReportSkeletonProps {
 
 /** Full-report loading placeholder used as a Suspense fallback. */
 export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType }) => {
+  const { t } = useTranslation();
   // Portfolio health renders a denser metric grid; everything else is content-first.
   const metricCount = reportType === 'PORTFOLIO_HEALTH' ? 6 : 3;
 
@@ -44,7 +46,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType }) =>
         ))}
       </div>
 
-      <span className="sr-only">Loading report…</span>
+      <span className="sr-only">{t('reports.management.reportSkeleton.loadingReport', 'Loading report…')}</span>
     </div>
   );
 };

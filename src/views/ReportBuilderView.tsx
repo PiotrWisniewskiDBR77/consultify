@@ -8,7 +8,6 @@
 
 import { AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { NewAssessmentReportModal } from '../components/assessment/modals/NewAssessmentReportModal';
@@ -24,6 +23,7 @@ import SourceSelectStep from '../components/ReportBuilder/steps/SourceSelectStep
 import { TemplatePickerModal } from '../components/ReportBuilder/TemplatePickerModal';
 import type { ReportSourceType, SourceOption } from '../components/ReportBuilder/useReportBuilder';
 import { Api } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 // ==========================================
 // LIBRARY „UŻYJ WZORCA" / „KLONUJ" (report_template, 2026-07-26)
@@ -111,6 +111,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
   onCancel: () => void;
   onCreated: (reportId: string) => void;
 }> = ({ templateArtifactId, onCancel, onCreated }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -219,7 +220,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-navy-900 dark:text-white">
-                Nie można użyć tego wzorca
+                {t('reportBuilder.view.reportBuilderView.thisTemplateCannotBeUsed', 'This template cannot be used')}
               </div>
               <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{message}</div>
             </div>
@@ -232,7 +233,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
                 onClick={() => navigate(resolveTemplateProvenancePath())}
                 className="h-10 px-4 rounded-lg border border-navy-900 dark:border-white text-navy-900 dark:text-white text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/10"
               >
-                Przejdź do Pochodzenie i prawa
+                {t('reportBuilder.view.reportBuilderView.goToProvenanceAndRights', 'Go to Provenance and rights')}
               </button>
             ) : null}
             <button
@@ -240,7 +241,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
               onClick={onCancel}
               className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold"
             >
-              Powrót do Biblioteki
+              {t('reportBuilder.view.reportBuilderView.backToTheLibrary', 'Back to the library')}
             </button>
           </div>
         </div>

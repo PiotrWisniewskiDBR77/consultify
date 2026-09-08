@@ -26,15 +26,17 @@ import {
   narrowTableContent,
 } from '../blocks';
 import type { ReaderBlock } from './clientReaderApi';
+import { useTranslation } from 'react-i18next';
 
 function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
 }
 
 function AssumptionTag(): React.ReactElement {
+  const { t } = useTranslation();
   return (
     <span className="ml-1.5 rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[10px] font-medium text-c-text-secondary align-middle">
-      Założenie
+      {t('documentStudio.readerBlockRenderer.assumption', 'Assumption')}
     </span>
   );
 }

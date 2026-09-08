@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 
 import { useDemoSession } from '@/hooks/useDemoSession';
+import { useTranslation } from 'react-i18next';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -36,6 +37,7 @@ interface MaturityRadarAttrs {
 
 // React component for the radar chart
 const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, selected }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<{
     axes: { id: string; name: string; actual: number; target: number }[];
   } | null>(null);
@@ -170,7 +172,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
         <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-800 rounded-lg space-y-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Tytuł wykresu
+              {t('reports.premium.maturityRadar.chartTitle', 'Chart title')}
             </label>
             <input
               type="text"
@@ -187,7 +189,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
                 onChange={(e) => updateAttributes({ showTarget: e.target.checked })}
                 className="rounded"
               />
-              Pokaż cel
+              {t('reports.premium.maturityRadar.showTheTarget', 'Show the target')}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -196,7 +198,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
                 onChange={(e) => updateAttributes({ showLegend: e.target.checked })}
                 className="rounded"
               />
-              Pokaż legendę
+              {t('reports.premium.maturityRadar.showTheLegend', 'Show the legend')}
             </label>
           </div>
         </div>
@@ -212,7 +214,7 @@ const MaturityRadarComponent: React.FC<NodeViewProps> = ({ node, updateAttribute
           <Radar data={chartData} options={chartOptions} />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-600 dark:text-slate-500">
-            Brak danych do wyświetlenia
+            {t('reports.premium.maturityRadar.noDataToShow', 'No data to show')}
           </div>
         )}
       </div>

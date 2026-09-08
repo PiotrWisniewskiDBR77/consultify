@@ -34,6 +34,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import type { PresentationStudioSetupInput } from '@/services/api/presentationStudio.api';
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -151,6 +152,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
   formId,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const errors = useMemo(() => validatePresentationStudioSetupForm(value), [value]);
 
   const setField = useCallback(
@@ -181,8 +183,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
       <header className="mb-4">
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Deck setup</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Fields drive the source pack, narrative plan, template architect, and generate previews.
-          Required fields are marked with <span className="text-danger-500">*</span>; no silent
+          {t('presentations.studio.presentationStudioSetupForm.fieldsDriveTheSourcePack', 'Fields drive the source pack, narrative plan, template architect, and generate previews.\n          Required fields are marked with')} <span className="text-danger-500">*</span>; no silent
           defaults.
         </p>
       </header>
@@ -214,7 +215,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
               {errors.title}
             </p>
           ) : (
-            <p className={FIELD_HELP}>One-line working title for the deck.</p>
+            <p className={FIELD_HELP}>{t('presentations.studio.presentationStudioSetupForm.oneLineWorkingTitleFor', 'One-line working title for the deck.')}</p>
           )}
         </div>
 
@@ -249,7 +250,7 @@ export const PresentationStudioSetupForm: React.FC<PresentationStudioSetupFormPr
               {errors.deckType}
             </p>
           ) : (
-            <p className={FIELD_HELP}>Drives the template architect dispatcher.</p>
+            <p className={FIELD_HELP}>{t('presentations.studio.presentationStudioSetupForm.drivesTheTemplateArchitectDispatcher', 'Drives the template architect dispatcher.')}</p>
           )}
         </div>
 

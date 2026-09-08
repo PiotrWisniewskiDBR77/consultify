@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
@@ -43,6 +42,7 @@ import { ReportTemplatesView } from './ReportTemplatesView';
 // Import sub-components
 import { ReportTypeSelector } from './ReportTypeSelector';
 import { ReportSkeleton } from './shared/ReportSkeleton';
+import { useTranslation } from 'react-i18next';
 
 // Lazy load report components for better performance
 const TeamMeetingReport = lazy(() =>
@@ -67,6 +67,7 @@ export const ManagementReportCard: React.FC<{
   onShare: () => Promise<{ shareUrl: string; expiresAt: string }>;
   children: React.ReactNode;
 }> = ({ report, onBack, onExportPDF, onExportPPTX, onShare, children }) => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('report');
   const sections: StandardSekcjaDef[] = MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
     ...item,
@@ -77,7 +78,7 @@ export const ManagementReportCard: React.FC<{
   const scopeLabel: Record<string, string> = { PORTFOLIO: 'Portfel', PROJECT: 'Projekt', ORGANIZATION: 'Organizacja' };
   const statusLabel: Record<string, string> = { DRAFT: 'Szkic', FINAL: 'Finalny', APPROVED: 'Zatwierdzony', ARCHIVED: 'Zarchiwizowany' };
   const rightPanel = {
-    actions: { label: 'Akcje', children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>Eksportuj PDF</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>Eksportuj PPTX</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>Udostępnij link</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
+    actions: { label: 'Akcje', children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>Eksportuj PDF</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>Eksportuj PPTX</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>{t('reports.management.managementReportsView.shareLink', 'Share link')}</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
     properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'type', label: 'Typ', value: reportTypeLabel[report.reportType] ?? report.reportType }, { id: 'scope', label: 'Zakres', value: scopeLabel[report.scope] ?? report.scope }, { id: 'status', label: 'Status', value: statusLabel[report.status] ?? report.status }, { id: 'period', label: 'Okres', value: `${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodStart))} – ${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodEnd))}`, mono: true }, { id: 'author', label: 'Autor', value: report.generatedByName || '—' }]} /> },
     relations: { pominieta: true as const, reason: 'Raport nie deklaruje czytelnych powiązań biznesowych.' },
     evidence: report.aiWarnings?.length ? { label: 'Źródła i założenia', children: <ul className="list-disc pl-4 text-sm">{report.aiWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> } : { pominieta: true as const, reason: 'Brak zapisanych źródeł i założeń.' },
@@ -333,7 +334,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 Management Reports
               </h1>
               <p className="text-sm text-c-text-muted mt-1">
-                Generate Team Meeting and Steering Committee reports
+                {t('reports.management.managementReportsView.generateTeamMeetingAndSteering', 'Generate Team Meeting and Steering Committee reports')}
               </p>
             </div>
           </div>
@@ -369,7 +370,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:opacity-90 text-white rounded-lg font-medium transition-colors"
               >
                 <Plus size={18} />
-                <span>New Report</span>
+                <span>{t('reports.management.managementReportsView.newReport', 'New Report')}</span>
               </button>
             )}
           </div>
@@ -383,13 +384,12 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles size={20} className="text-c-accent" />
-                <h2 className="text-lg font-semibold text-c-text">Generate New Report</h2>
+                <h2 className="text-lg font-semibold text-c-text">{t('reports.management.managementReportsView.generateNewReport', 'Generate New Report')}</h2>
               </div>
 
               {projectsLoadError && (
                 <div role="alert" className="mb-4 text-sm text-red-600 dark:text-red-300">
-                  Failed to load projects. Report generation is unavailable until projects can be
-                  loaded.
+                  {t('reports.management.managementReportsView.failedToLoadProjectsReport', 'Failed to load projects. Report generation is unavailable until projects can be\n                  loaded.')}
                 </div>
               )}
 
@@ -516,7 +516,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       ) : (
                         <div>
                           <label className="block text-xs text-c-text-muted mb-1">
-                            Day of month
+                            {t('reports.management.managementReportsView.dayOfMonth', 'Day of month')}
                           </label>
                           <input
                             type="number"
@@ -583,7 +583,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </button>
 
                 <p className="mt-4 text-center text-sm text-c-text-muted">
-                  AI will analyze your data and generate a comprehensive report with insights.
+                  {t('reports.management.managementReportsView.aiWillAnalyzeYourData', 'AI will analyze your data and generate a comprehensive report with insights.')}
                 </p>
               </div>
             </div>
@@ -690,7 +690,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </div>
               </div>
               <p className="text-xs text-c-text-muted">
-                Settings are applied when creating new reports or schedules.
+                {t('reports.management.managementReportsView.settingsAreAppliedWhenCreating', 'Settings are applied when creating new reports or schedules.')}
               </p>
             </div>
           </div>

@@ -43,6 +43,7 @@ import {
   type ProjectRole,
   ROLE_DEFINITIONS,
 } from '@/services/roleDefinitions';
+import { useTranslation } from 'react-i18next';
 
 // Role icons — uses centralized icon mapping
 const RoleIcon: React.FC<{ role: string; className?: string }> = ({ role, className }) => {
@@ -199,6 +200,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
   onRefresh,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const [showDecisionModal, setShowDecisionModal] = useState<'approve' | 'reject' | null>(null);
   const [decisionComment, setDecisionComment] = useState('');
@@ -276,7 +278,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             <div>
               <h3 className="font-semibold text-navy-900 dark:text-white">Approval Workflow</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Report has not been submitted for approval
+                {t('reports.management.approvalWorkflow.reportHasNotBeenSubmitted', 'Report has not been submitted for approval')}
               </p>
             </div>
           </div>
@@ -407,7 +409,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                     className="w-4 h-4 text-primary-500 rounded focus:ring-primary-500"
                   />
                   <span className="text-sm text-slate-600 dark:text-slate-300">
-                    Return report to DRAFT status for revisions
+                    {t('reports.management.approvalWorkflow.returnReportToDraftStatus', 'Return report to DRAFT status for revisions')}
                   </span>
                 </label>
               )}

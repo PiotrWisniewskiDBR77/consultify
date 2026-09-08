@@ -20,6 +20,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface BlockInsertMenuProps {
   position: { x: number; y: number };
@@ -129,6 +130,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
   onSelect,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -260,7 +262,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
             setSearch(e.target.value);
             setSelectedIndex(0);
           }}
-          placeholder="Szukaj bloków..."
+          placeholder={t('reports.premium.blockInsertMenu.searchBlocks', 'Search blocks...')}
           className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -269,7 +271,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
       <div className="max-h-80 overflow-y-auto py-2">
         {filteredBlocks.length === 0 ? (
           <div className="px-3 py-8 text-center text-slate-600 dark:text-slate-500">
-            Nie znaleziono bloków
+            {t('reports.premium.blockInsertMenu.noBlocksFound', 'No blocks found')}
           </div>
         ) : (
           <>
@@ -282,7 +284,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
 
       {/* Help */}
       <div className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-500">
-        ↑↓ nawiguj • Enter wybierz • Esc zamknij
+        {t('reports.premium.blockInsertMenu.navigateEnterSelectEscClose', '↑↓ navigate • Enter select • Esc close')}
       </div>
     </div>
   );

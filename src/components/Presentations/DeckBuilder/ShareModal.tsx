@@ -17,9 +17,9 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 type ShareTab = 'collaborate' | 'share' | 'export' | 'embed';
 
@@ -508,7 +508,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               ) : (
                 <>
                   <p className="text-sm text-c-text-secondary">
-                    Embed this deck on external websites:
+                    {t('presentations.builder.shareModal.embedThisDeckOnExternal', 'Embed this deck on external websites:')}
                   </p>
                   <div className="relative">
                     <textarea

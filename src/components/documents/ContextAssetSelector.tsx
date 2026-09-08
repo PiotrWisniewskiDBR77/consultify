@@ -19,6 +19,7 @@ import { CheckCircle2, Circle, FileText, Info, ShieldAlert } from 'lucide-react'
 import React from 'react';
 
 import { Document } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 export type ContextWorkflowMode =
   | 'selected_material_only'
@@ -111,6 +112,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
   showWorkflowModePicker = true,
   maxSelections,
 }) => {
+  const { t } = useTranslation();
   const selectedSet = new Set(selectedDocumentIds);
   const isModeWithoutSelection = workflowMode === 'org_context_research_mode';
   const documentSelectionDisabled =
@@ -189,7 +191,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
               <div className="px-3 py-6 text-center text-xs text-gray-500">
-                Loading documents...
+                {t('documents.contextAssetSelector.loadingDocuments', 'Loading documents...')}
               </div>
             ) : documents.length === 0 ? (
               <div className="px-3 py-6 text-center text-xs text-gray-500">
@@ -241,8 +243,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
 
       {isModeWithoutSelection && (
         <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-600">
-          Org-wide research mode searches the full approved organization context. No specific
-          documents need to be selected.
+          {t('documents.contextAssetSelector.orgWideResearchModeSearches', 'Org-wide research mode searches the full approved organization context. No specific\n          documents need to be selected.')}
         </div>
       )}
     </div>

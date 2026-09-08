@@ -312,7 +312,7 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
 
     const cta = screen.getByTestId('outputs-new-btn');
     expect(cta).toBeDisabled();
-    expect(cta).toHaveAttribute('title', 'Tworzenie wzorców w fali 2');
+    expect(cta).toHaveAttribute('title', 'Template creation lands in wave 2');
   });
 
   it.each(TABS.slice(0, 4))('zakładka $nazwa: CTA NIE jest zamrożony', async ({ url }) => {

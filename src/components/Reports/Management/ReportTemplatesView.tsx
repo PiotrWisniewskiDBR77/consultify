@@ -24,10 +24,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReportType } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface TemplateSection {
   id: string;
@@ -227,7 +227,7 @@ export const ReportTemplatesView: React.FC = () => {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 min-h-[80px]"
-                placeholder="Highlight key decision drivers and escalation status."
+                placeholder={t('reports.management.reportTemplatesView.highlightKeyDecisionDriversAnd', 'Highlight key decision drivers and escalation status.')}
               />
             </div>
 
@@ -340,7 +340,7 @@ export const ReportTemplatesView: React.FC = () => {
         {savedExpanded && (
           <div className="divide-y divide-slate-100 dark:divide-navy-700 border-t border-slate-100 dark:border-navy-700">
             {loading ? (
-              <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
+              <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">{t('reports.management.reportTemplatesView.loading', 'Loading...')}</div>
             ) : templates.length === 0 ? (
               <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">
                 No templates created yet.

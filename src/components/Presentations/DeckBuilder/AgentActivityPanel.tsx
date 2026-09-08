@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { PresentationRuntimeEvent } from '@/services/presentationRuntimeEvents';
+import { useTranslation } from 'react-i18next';
 
 interface AgentActivityPanelProps {
   events: PresentationRuntimeEvent[];
@@ -30,30 +31,34 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
+  return (
   <aside
-    aria-label="Aktywność AI"
+    aria-label={t('presentations.builder.agentActivityPanel.aiActivity', 'AI activity')}
     className="w-72 flex-shrink-0 border-l border-c-border-subtle bg-c-surface flex flex-col"
   >
     <div className="m-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm flex flex-col overflow-hidden">
       <div className="px-3 py-2 border-b border-c-border-subtle">
-        <h3 className="text-sm font-semibold text-c-text">Aktywność AI</h3>
+        <h3 className="text-sm font-semibold text-c-text">{t('presentations.builder.agentActivityPanel.aiActivity', 'AI activity')}</h3>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">{children}</div>
     </div>
   </aside>
-);
+  );
+};
 
 export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   events,
   degraded = false,
   reason,
 }) => {
+  const { t } = useTranslation();
   if (degraded) {
     return (
       <PanelShell>
         <div className="rounded-lg border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-          <p className="font-medium">Nie można wyświetlić pełnej historii aktywności</p>
+          <p className="font-medium">{t('presentations.builder.agentActivityPanel.theFullActivityHistoryCannot', 'The full activity history cannot be shown')}</p>
           {reason ? (
             <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300/90">
               Reason: <span className="font-mono">{reason}</span>
@@ -70,7 +75,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   if (!events || events.length === 0) {
     return (
       <PanelShell>
-        <p className="text-xs text-c-text-secondary italic">Nie ma jeszcze aktywności AI.</p>
+        <p className="text-xs text-c-text-secondary italic">{t('presentations.builder.agentActivityPanel.noAiActivityYet', 'No AI activity yet.')}</p>
       </PanelShell>
     );
   }

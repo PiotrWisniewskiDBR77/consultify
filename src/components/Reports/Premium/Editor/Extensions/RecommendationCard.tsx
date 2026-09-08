@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface RecommendationAttrs {
   title: string;
@@ -73,6 +74,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
   updateAttributes,
   selected,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -101,7 +103,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
         // Edit Mode
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-slate-900 dark:text-white">Edytuj Rekomendację</h4>
+            <h4 className="font-semibold text-slate-900 dark:text-white">{t('reports.premium.recommendationCard.editTheRecommendation', 'Edit the recommendation')}</h4>
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
@@ -121,7 +123,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Tytuł
+                {t('reports.premium.recommendationCard.title', 'Title')}
               </label>
               <input
                 type="text"
@@ -159,14 +161,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
               >
                 <option value="critical">Krytyczny</option>
                 <option value="high">Wysoki</option>
-                <option value="medium">Średni</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
                 <option value="low">Niski</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Wpływ
+                {t('reports.premium.recommendationCard.impact', 'Impact')}
               </label>
               <select
                 value={editForm.impact}
@@ -179,14 +181,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
                 <option value="high">Wysoki</option>
-                <option value="medium">Średni</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
                 <option value="low">Niski</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Nakład pracy
+                {t('reports.premium.recommendationCard.effort', 'Effort')}
               </label>
               <select
                 value={editForm.effort}
@@ -198,9 +200,9 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 }
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
-                <option value="low">Mały</option>
-                <option value="medium">Średni</option>
-                <option value="high">Duży</option>
+                <option value="low">{t('reports.premium.recommendationCard.low', 'Low')}</option>
+                <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
+                <option value="high">{t('reports.premium.recommendationCard.high', 'High')}</option>
               </select>
             </div>
 
@@ -232,7 +234,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Właściciel
+                {t('reports.premium.recommendationCard.owner', 'Owner')}
               </label>
               <input
                 type="text"
@@ -296,14 +298,14 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="text-xs">Wpływ</span>
+                    <span className="text-xs">{t('reports.premium.recommendationCard.impact', 'Impact')}</span>
                   </div>
                   <span className={`font-semibold ${impactStyle.color}`}>{impactStyle.label}</span>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <Clock className="w-4 h-4" />
-                    <span className="text-xs">Nakład</span>
+                    <span className="text-xs">{t('reports.premium.recommendationCard.effort2', 'Effort')}</span>
                   </div>
                   <span className={`font-semibold ${effortStyle.color}`}>{effortStyle.label}</span>
                 </div>

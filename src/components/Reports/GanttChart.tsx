@@ -384,7 +384,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         <Calendar className="w-12 h-12 mx-auto mb-3 text-c-text-secondary" />
         <p className="text-lg font-medium text-c-text">No schedule data</p>
         <p className="text-sm text-c-text-muted mt-1">
-          Add phases to your roadmap to see the Gantt chart
+          {t('reports.ganttChart.addPhasesToYourRoadmap', 'Add phases to your roadmap to see the Gantt chart')}
         </p>
       </div>
     );

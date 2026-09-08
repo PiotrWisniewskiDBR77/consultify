@@ -6,10 +6,10 @@
 
 import { Check, Crown, X } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { CURATED_COLOR_SETS, type CuratedColorSet } from '../wizard/types';
 import { useDeckTheme } from './DeckThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface ThemeSwitcherProps {
   isOpen: boolean;
@@ -102,7 +102,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
           </div>
         )}
 
-        <p className="text-[10px] text-slate-600 uppercase mb-2">Gotowe palety</p>
+        <p className="text-[10px] text-slate-600 uppercase mb-2">{t('presentations.builder.themeSwitcher.readyMadePalettes', 'Ready-made palettes')}</p>
         <div className="grid grid-cols-3 gap-2">
           {CURATED_COLOR_SETS.map((set) => (
             <ThemeCard

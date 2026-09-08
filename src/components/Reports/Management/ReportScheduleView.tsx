@@ -6,10 +6,10 @@
 import { CalendarClock, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReportScope, ManagementReportType } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface ReportSchedule {
   id: string;
@@ -188,7 +188,7 @@ export const ReportScheduleView: React.FC = () => {
           {frequency === 'MONTHLY' ? (
             <div>
               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                Day of month
+                {t('reports.management.reportScheduleView.dayOfMonth', 'Day of month')}
               </label>
               <input
                 type="number"
@@ -272,7 +272,7 @@ export const ReportScheduleView: React.FC = () => {
         </div>
         <div className="divide-y divide-slate-100 dark:divide-navy-700">
           {loading ? (
-            <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
+            <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">{t('reports.management.reportScheduleView.loading', 'Loading...')}</div>
           ) : schedules.length === 0 ? (
             <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">
               No schedules created yet.

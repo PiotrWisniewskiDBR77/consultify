@@ -6,10 +6,10 @@
 import { Check, Image, Loader2, Palette, Save, Type } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { useTranslation } from 'react-i18next';
 
 interface BrandKit {
   name: string;
@@ -215,7 +215,7 @@ export const BrandKitSettings: React.FC = () => {
           label={t('presentations.brandKit.footerText', 'Footer text')}
           value={kit.footer_text || ''}
           onChange={(v) => updateField('footer_text', v || null)}
-          placeholder="Poufne — tylko do użytku wewnętrznego"
+          placeholder={t('presentations.brandKitSettings.confidentialInternalUseOnly', 'Confidential — internal use only')}
         />
         <div className="flex items-center gap-6">
           <ToggleField
@@ -242,7 +242,7 @@ export const BrandKitSettings: React.FC = () => {
           className="w-full max-w-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
         >
           <option value="confidential">Poufne</option>
-          <option value="internal">Wewnętrzne</option>
+          <option value="internal">{t('presentations.brandKitSettings.internal', 'Internal')}</option>
           <option value="public">Publiczne</option>
         </select>
       </div>

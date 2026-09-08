@@ -18,6 +18,7 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { ManagementReportScope, ManagementReportType } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface Project {
   id: string;
@@ -148,6 +149,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
   onSectionsChange,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [showSectionConfig, setShowSectionConfig] = useState(false);
 
   // Get sections based on report type
@@ -353,8 +355,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
           {showSectionConfig && (
             <div className="mt-3 p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg space-y-2">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                Select which sections to include in the report. Required sections cannot be
-                disabled.
+                {t('reports.management.reportTypeSelector.selectWhichSectionsToInclude', 'Select which sections to include in the report. Required sections cannot be\n                disabled.')}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {availableSections.map((section) => {

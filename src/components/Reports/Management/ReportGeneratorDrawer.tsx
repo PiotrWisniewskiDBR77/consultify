@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReport, ManagementReportScope, ManagementReportType } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface Project {
   id: string;
@@ -191,10 +191,10 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Generate New Report
+                {t('reports.management.reportGeneratorDrawer.generateNewReport', 'Generate New Report')}
               </h2>
               <p className="text-sm text-slate-600">
-                AI will analyze your data and generate insights
+                {t('reports.management.reportGeneratorDrawer.aiWillAnalyzeYourData', 'AI will analyze your data and generate insights')}
               </p>
             </div>
           </div>
@@ -316,7 +316,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
               </div>
               {projectsLoadError && (
                 <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-300">
-                  Failed to load projects. Report generation is unavailable.
+                  {t('reports.management.reportGeneratorDrawer.failedToLoadProjectsReport', 'Failed to load projects. Report generation is unavailable.')}
                 </p>
               )}
             </div>

@@ -51,6 +51,7 @@ import {
 import { schemaToProseMirror } from './schemaToTipTap';
 import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
 import { useManualPrompt } from './useManualPrompt';
+import { useTranslation } from 'react-i18next';
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -90,6 +91,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   onEditorInstance,
   collapsedSectionIds,
 }) => {
+  const { t } = useTranslation();
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
   // Always read the freshest schema + callback from refs so the (stable) editor
@@ -800,12 +802,12 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             </select>
           </label>
           <label className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover hover:text-c-text">
-            Wgraj / zmień obraz
+            {t('documentStudio.documentTipTapEditor.uploadChangeTheImage', 'Upload / change the image')}
             <input
               type="file"
               accept="image/png,image/jpeg"
               className="sr-only"
-              aria-label="Wgraj lub zmień obraz"
+              aria-label={t('documentStudio.documentTipTapEditor.uploadOrChangeTheImage', 'Upload or change the image')}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = '';

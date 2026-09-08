@@ -15,9 +15,9 @@ import {
   X,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { type CardIntent, INTENT_COLORS, type IntentInfo, type OutlineItem } from './types';
+import { useTranslation } from 'react-i18next';
 
 interface OutlineStepProps {
   outline: OutlineItem[];
@@ -320,7 +320,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               />
 
               {Array.isArray(item.zrodla) && item.zrodla.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Źródła tezy">
+                <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t('presentations.wizard.outlineStep.sourcesForTheClaim', 'Sources for the claim')}>
                   {item.zrodla.map((source) => (
                     <span
                       key={`${source.typ}:${source.id}`}

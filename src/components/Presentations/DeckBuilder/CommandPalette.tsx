@@ -310,7 +310,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <div className="px-4 py-6 text-center">
               <Sparkles size={16} className="mx-auto text-c-accent mb-2" />
               <p className="text-xs text-c-text-secondary">
-                Press Enter to open Teresa and continue the conversation.
+                {t('presentations.builder.commandPalette.pressEnterToOpenTeresa', 'Press Enter to open Teresa and continue the conversation.')}
               </p>
             </div>
           ) : (
@@ -364,9 +364,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Footer */}
         <div className="flex items-center gap-3 px-4 py-2 border-t border-c-border-subtle text-[10px] text-c-text-secondary">
           <span>↑↓ Nawigacja</span>
-          <span>↵ Wybierz</span>
-          <span>ESC Zamknij</span>
-          <span className="ml-auto">Porozmawiaj z Teresą, aby użyć AI</span>
+          <span>{t('presentations.builder.commandPalette.select', '↵ Select')}</span>
+          <span>{t('presentations.builder.commandPalette.escClose', 'ESC Close')}</span>
+          <span className="ml-auto">{t('presentations.builder.commandPalette.talkToTeresaToUse', 'Talk to Teresa to use the AI')}</span>
         </div>
       </div>
     </div>

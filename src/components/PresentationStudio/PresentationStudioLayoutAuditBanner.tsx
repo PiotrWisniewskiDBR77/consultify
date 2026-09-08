@@ -28,6 +28,7 @@ import type {
   PresentationStudioLayoutAuditFlag,
   PresentationStudioOutlineLayoutAudit,
 } from '../../services/api/presentationStudio.api';
+import { useTranslation } from 'react-i18next';
 
 const FLAG_DISPLAY_LABEL: Record<PresentationStudioLayoutAuditFlag, string> = {
   layout_overflow_title: 'Title overflow',
@@ -102,6 +103,7 @@ export function PresentationStudioLayoutAuditBanner({
   defaultExpanded = false,
   'data-testid': dataTestId = 'presentation-studio-layout-audit',
 }: PresentationStudioLayoutAuditBannerProps): React.ReactElement | null {
+  const { t } = useTranslation();
   const highPriority = useMemo<boolean>(
     () => (audit ? hasHighPriorityFlags(audit) : false),
     [audit]
@@ -158,8 +160,7 @@ export function PresentationStudioLayoutAuditBanner({
         <div className="min-w-0 flex-1">
           <div className="font-medium">Layout audit: no findings</div>
           <div className="mt-1">
-            Outline fits canonical PPTX 16:9 capacities, every evidence slide is grounded, and all
-            intents are renderable by the PPTX and PDF pipelines.
+            {t('presentations.studio.presentationStudioLayoutAuditBanner.outlineFitsCanonicalPptx16', 'Outline fits canonical PPTX 16:9 capacities, every evidence slide is grounded, and all\n            intents are renderable by the PPTX and PDF pipelines.')}
           </div>
         </div>
       </div>
@@ -195,8 +196,7 @@ export function PresentationStudioLayoutAuditBanner({
             ) : null}
           </div>
           <div className="mt-1">
-            Findings are advisory and never block generation. Review the breakdown below before
-            confirming.
+            {t('presentations.studio.presentationStudioLayoutAuditBanner.findingsAreAdvisoryAndNever', 'Findings are advisory and never block generation. Review the breakdown below before\n            confirming.')}
           </div>
         </div>
         <button

@@ -110,6 +110,6 @@ describe('DocumentStudioReportView', () => {
 
   it('mówi wprost, gdy raport nie ma treści', () => {
     render(<DocumentStudioReportView schema={{ ...schema, sections: [] }} />);
-    expect(screen.getByText('Ten raport nie ma jeszcze treści.')).toBeInTheDocument();
+    expect(screen.getByText('This report has no content yet.')).toBeInTheDocument();
   });
 });

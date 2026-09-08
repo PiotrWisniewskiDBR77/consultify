@@ -1,10 +1,10 @@
 import { BarChart3, Image, LayoutGrid, Redo2, Search, Share2, Type, Undo2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, DeckCard } from '../wizard/types';
 import type { HorizontalAlignment, VerticalAlignment } from './geometryOps';
 import { parseMetricStrip, serializeMetricStrip } from './metricStripEditor';
+import { useTranslation } from 'react-i18next';
 
 type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
@@ -89,8 +89,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
           <Undo2 size={18} />
         </button>
         <button
-          aria-label="Ponów"
-          title="Ponów (⇧⌘Z)"
+          aria-label={t('presentations.builder.blockToolbar.redo', 'Redo')}
+          title={t('presentations.builder.blockToolbar.redoZ', 'Redo (⇧⌘Z)')}
           disabled={!canRedo}
           onClick={onRedo}
           className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
@@ -437,6 +437,7 @@ const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) 
   cards,
   onSelectCard,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const normalized = query.trim().toLowerCase();
   const matches = normalized
@@ -458,10 +459,10 @@ const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) 
         className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
       />
       {!normalized && (
-        <p className="text-[10px] text-c-text-secondary mt-2">Wpisz tekst, aby przeszukać wszystkie slajdy</p>
+        <p className="text-[10px] text-c-text-secondary mt-2">{t('presentations.builder.blockToolbar.typeToSearchEverySlide', 'Type to search every slide')}</p>
       )}
       {normalized && matches.length === 0 && (
-        <p className="text-xs text-c-text-secondary mt-3">Brak pasujących slajdów</p>
+        <p className="text-xs text-c-text-secondary mt-3">{t('presentations.builder.blockToolbar.noMatchingSlides', 'No matching slides')}</p>
       )}
       <div className="mt-2 space-y-1">
         {matches.map(({ card, cardIndex }) => (
@@ -510,6 +511,7 @@ const BlockInspector: React.FC<{
   block: CardBlock;
   onUpdate: (updates: Partial<CardBlock>) => void;
 }> = ({ block, onUpdate }) => {
+  const { t } = useTranslation();
   const content = block.content || {};
   const textStyle = ((content.style as Record<string, unknown>) || {}) as Record<string, unknown>;
   const frameStyle = block.style_overrides || {};
@@ -556,7 +558,7 @@ const BlockInspector: React.FC<{
       )}
       {block.type === 'metric_strip' && (
         <InspectorField
-          label="Miary (po jednej w wierszu: etykieta | wartość | jednostka | kierunek | zmiana)"
+          label={t('presentations.builder.blockToolbar.metricsOnePerLineLabel', 'Metrics (one per line: label | value | unit | direction | change)')}
           multiline
           value={serializeMetricStrip(content.metrics)}
           onChange={(value) => patchContent({ metrics: parseMetricStrip(value) })}
@@ -565,7 +567,7 @@ const BlockInspector: React.FC<{
       {block.type === 'table' && (
         <>
           <InspectorField
-            label="Nagłówki (oddzielone przecinkami)"
+            label={t('presentations.builder.blockToolbar.headersCommaSeparated', 'Headers (comma separated)')}
             value={(Array.isArray(content.headers) ? content.headers : []).join(', ')}
             onChange={(value) => patchContent({ headers: value.split(',').map((x) => x.trim()) })}
           />
@@ -589,7 +591,7 @@ const BlockInspector: React.FC<{
       {block.type === 'chart' && (
         <>
           <InspectorField
-            label="Tytuł wykresu"
+            label={t('presentations.builder.blockToolbar.chartTitle', 'Chart title')}
             value={String(content.title || '')}
             onChange={(title) => patchContent({ title })}
           />
@@ -601,11 +603,11 @@ const BlockInspector: React.FC<{
               onChange={(e) => patchContent({ chartType: e.target.value })}
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
-              <option value="bar">Słupkowy</option>
+              <option value="bar">{t('presentations.builder.blockToolbar.bar', 'Bar')}</option>
               <option value="line">Liniowy</option>
               <option value="area">Warstwowy</option>
-              <option value="pie">Kołowy</option>
-              <option value="donut">Pierścieniowy</option>
+              <option value="pie">{t('presentations.builder.blockToolbar.pie', 'Pie')}</option>
+              <option value="donut">{t('presentations.builder.blockToolbar.doughnut', 'Doughnut')}</option>
             </select>
           </label>
           <InspectorField
@@ -625,12 +627,12 @@ const BlockInspector: React.FC<{
       {block.type === 'kpi_widget' && (
         <>
           <InspectorField
-            label="Etykieta wskaźnika"
+            label={t('presentations.builder.blockToolbar.metricLabel', 'Metric label')}
             value={String(content.label || '')}
             onChange={(label) => patchContent({ label })}
           />
           <InspectorField
-            label="Wartość wskaźnika"
+            label={t('presentations.builder.blockToolbar.metricValue', 'Metric value')}
             value={String(content.value || '')}
             onChange={(value) => patchContent({ value })}
           />
@@ -674,12 +676,12 @@ const BlockInspector: React.FC<{
       <label className="block text-[10px] text-c-text-secondary">
         Font family
         <select
-          aria-label="Krój pisma"
+          aria-label={t('presentations.builder.blockToolbar.typeface', 'Typeface')}
           value={String(textStyle.fontFamily || '')}
           onChange={(e) => patchContent({ style: { ...textStyle, fontFamily: e.target.value } })}
           className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
         >
-          <option value="">Domyślny dla motywu</option>
+          <option value="">{t('presentations.builder.blockToolbar.themeDefault', 'Theme default')}</option>
           <option value="Inter">Inter</option>
           <option value="Arial">Arial</option>
           <option value="Georgia">Georgia</option>
@@ -690,13 +692,13 @@ const BlockInspector: React.FC<{
         <label className="block text-[10px] text-c-text-secondary">
           Font weight
           <select
-            aria-label="Grubość pisma"
+            aria-label={t('presentations.builder.blockToolbar.fontWeight', 'Font weight')}
             value={String(textStyle.fontWeight || 'normal')}
             onChange={(e) => patchContent({ style: { ...textStyle, fontWeight: e.target.value } })}
             className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
           >
-            <option value="normal">Zwykłe</option>
-            <option value="500">Średnie</option>
+            <option value="normal">{t('presentations.builder.blockToolbar.regular', 'Regular')}</option>
+            <option value="500">{t('presentations.builder.blockToolbar.medium', 'Medium')}</option>
             <option value="600">Pogrubione</option>
             <option value="700">Grube</option>
           </select>
@@ -709,7 +711,7 @@ const BlockInspector: React.FC<{
       </div>
       <div className="grid grid-cols-2 gap-2">
         <InspectorField
-          label="Odstępy między literami"
+          label={t('presentations.builder.blockToolbar.letterSpacing', 'Letter spacing')}
           value={String(textStyle.letterSpacing || '')}
           onChange={(letterSpacing) => patchContent({ style: { ...textStyle, letterSpacing } })}
         />
@@ -729,7 +731,7 @@ const BlockInspector: React.FC<{
           </label>
           <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
             <input
-              aria-label="Podkreślenie"
+              aria-label={t('presentations.builder.blockToolbar.underline', 'Underline')}
               type="checkbox"
               checked={textStyle.textDecoration === 'underline'}
               onChange={(e) =>
@@ -748,7 +750,7 @@ const BlockInspector: React.FC<{
       <label className="block text-[10px] text-c-text-secondary">
         Alignment
         <select
-          aria-label="Wyrównanie"
+          aria-label={t('presentations.builder.blockToolbar.alignment', 'Alignment')}
           value={String((content.style as any)?.textAlign || 'left')}
           onChange={(e) =>
             patchContent({
@@ -758,19 +760,19 @@ const BlockInspector: React.FC<{
           className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
         >
           <option value="left">Do lewej</option>
-          <option value="center">Do środka</option>
+          <option value="center">{t('presentations.builder.blockToolbar.centre', 'Centre')}</option>
           <option value="right">Do prawej</option>
         </select>
       </label>
       <div className="mt-3 border-t border-c-border-subtle pt-3 space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
-          Position and size
+          {t('presentations.builder.blockToolbar.positionAndSize', 'Position and size')}
         </p>
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-[10px] text-c-text-secondary">
             Layout region
             <select
-              aria-label="Obszar układu"
+              aria-label={t('presentations.builder.blockToolbar.layoutArea', 'Layout area')}
               value={block.position.area}
               onChange={(e) =>
                 onUpdate({
@@ -782,16 +784,16 @@ const BlockInspector: React.FC<{
               }
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
-              <option value="full">Całość</option>
+              <option value="full">{t('presentations.builder.blockToolbar.full', 'Full')}</option>
               <option value="left">Lewa strona</option>
               <option value="right">Prawa strona</option>
-              <option value="top">Góra</option>
-              <option value="bottom">Dół</option>
-              <option value="overlay">Nakładka</option>
+              <option value="top">{t('presentations.builder.blockToolbar.top', 'Top')}</option>
+              <option value="bottom">{t('presentations.builder.blockToolbar.bottom', 'Bottom')}</option>
+              <option value="overlay">{t('presentations.builder.blockToolbar.overlay', 'Overlay')}</option>
             </select>
           </label>
           <InspectorField
-            label="Kolejność warstw"
+            label={t('presentations.builder.blockToolbar.layerOrder', 'Layer order')}
             value={String(block.position.order)}
             onChange={(value) =>
               onUpdate({
@@ -802,14 +804,14 @@ const BlockInspector: React.FC<{
         </div>
         <div className="grid grid-cols-2 gap-2">
           <InspectorField
-            label="Szerokość (%)"
+            label={t('presentations.builder.blockToolbar.width', 'Width (%)')}
             value={String(frameStyle.widthPercent || 100)}
             onChange={(widthPercent) =>
               onUpdate({ style_overrides: { ...frameStyle, widthPercent } })
             }
           />
           <InspectorField
-            label="Minimalna wysokość (px)"
+            label={t('presentations.builder.blockToolbar.minimumHeightPx', 'Minimum height (px)')}
             value={String(frameStyle.minHeight || '')}
             onChange={(minHeight) => onUpdate({ style_overrides: { ...frameStyle, minHeight } })}
           />
@@ -817,16 +819,16 @@ const BlockInspector: React.FC<{
         <label className="block text-[10px] text-c-text-secondary">
           Horizontal placement
           <select
-            aria-label="Położenie w poziomie"
+            aria-label={t('presentations.builder.blockToolbar.horizontalPosition', 'Horizontal position')}
             value={String(frameStyle.alignSelf || 'stretch')}
             onChange={(e) =>
               onUpdate({ style_overrides: { ...frameStyle, alignSelf: e.target.value } })
             }
             className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
           >
-            <option value="stretch">Rozciągnij</option>
+            <option value="stretch">{t('presentations.builder.blockToolbar.stretch', 'Stretch')}</option>
             <option value="flex-start">Do lewej</option>
-            <option value="center">Do środka</option>
+            <option value="center">{t('presentations.builder.blockToolbar.centre', 'Centre')}</option>
             <option value="flex-end">Do prawej</option>
           </select>
         </label>

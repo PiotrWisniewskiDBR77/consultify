@@ -45,7 +45,7 @@ describe('PresentationReviewPanel', () => {
     expect(screen.queryByRole('option', { name: 'Autor' })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Recenzent'), { target: { value: 'reviewer' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Wyślij do zatwierdzenia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send for approval' }));
 
     await waitFor(() => expect(approvals.submit).toHaveBeenCalledWith('deck-1', 'reviewer'));
   });
@@ -61,7 +61,7 @@ describe('PresentationReviewPanel', () => {
     render(<PresentationReviewPanel deckId="deck-1" version={7} organizationId="org-1" currentUserId="reviewer" qualityPanel={<div>Quality</div>} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));
 
-    const requestChanges = await screen.findByRole('button', { name: 'Poproś o zmiany' });
+    const requestChanges = await screen.findByRole('button', { name: 'Request changes' });
     expect(requestChanges).toBeDisabled();
     fireEvent.change(screen.getByPlaceholderText('Uzasadnienie wymaganych zmian'), { target: { value: 'Uzupełnij źródło.' } });
     fireEvent.click(requestChanges);

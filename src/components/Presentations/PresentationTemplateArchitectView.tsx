@@ -32,7 +32,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
@@ -70,6 +69,7 @@ import {
   type ClientTemplateLineageNode,
   fetchTemplateLineage,
 } from '@/services/presentationTemplateGovernance';
+import { useTranslation } from 'react-i18next';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -1093,7 +1093,7 @@ export const PresentationTemplateArchitectView: React.FC<
                           disabled={cloningId === version.id}
                           onClick={() => void handleRestoreVersionAsDraft(version)}
                         >
-                          Restore as draft
+                          {t('presentations.presentationTemplateArchitectView.restoreAsDraft', 'Restore as draft')}
                         </Button>
                       </div>
                     </div>
@@ -1332,8 +1332,7 @@ export const PresentationTemplateArchitectView: React.FC<
                       Template variables
                     </div>
                     <p className="text-[11px] text-c-text-secondary">
-                      Typed fields are persisted in the template schema and become the
-                      deck-generation data requirements.
+                      {t('presentations.presentationTemplateArchitectView.typedFieldsArePersistedIn', 'Typed fields are persisted in the template schema and become the\n                      deck-generation data requirements.')}
                     </p>
                   </div>
                   <Button
@@ -1395,7 +1394,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { defaultValue: event.target.value })
                         }
-                        placeholder="Wartość domyślna"
+                        placeholder={t('presentations.presentationTemplateArchitectView.defaultValue', 'Default value')}
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <label className="flex items-center gap-1 text-xs text-c-text-secondary">
@@ -1748,7 +1747,7 @@ export const PresentationTemplateArchitectView: React.FC<
               >
                 {validationIssues.length === 0 ? (
                   <p className="font-medium">
-                    Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.
+                    {t('presentations.presentationTemplateArchitectView.theCheckPassedTheDraft', 'The check passed. The draft is ready to publish.')}
                   </p>
                 ) : (
                   <>
