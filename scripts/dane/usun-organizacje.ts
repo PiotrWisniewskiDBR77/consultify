@@ -681,6 +681,35 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
           await c.query('ROLLBACK TO SAVEPOINT k');
           nieudane.push(t);
           ostatniBlad.set(`${t.tabela}.${t.kolumna}`, (e as Error).message);
+          // Dziecko BEZ wskaźnika na organizację, przypięte do rodzica kluczem obcym
+          // NO ACTION/RESTRICT (np. ai_chat_run_events → ai_chat_runs). Kaskada go nie
+          // dosięga, a pętla po tabelach z organization_id go nie widzi. Zbieramy jego
+          // wiersze do manifestu i kasujemy jawnie; rodzic zejdzie w następnym przebiegu.
+          const m = /violates foreign key constraint "([^"]+)" on table "([^"]+)"/.exec((e as Error).message);
+          if (m) {
+            // eslint-disable-next-line no-await-in-loop
+            const fk = await c.query(
+              `SELECT c.conrelid::regclass::text AS dziecko,
+                      (SELECT array_agg(a.attname ORDER BY x.ord) FROM unnest(c.conkey) WITH ORDINALITY x(attnum, ord)
+                         JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = x.attnum) AS kol_dziecka,
+                      (SELECT array_agg(a.attname ORDER BY x.ord) FROM unnest(c.confkey) WITH ORDINALITY x(attnum, ord)
+                         JOIN pg_attribute a ON a.attrelid = c.confrelid AND a.attnum = x.attnum) AS kol_rodzica
+                 FROM pg_constraint c WHERE c.conname = $1 AND c.confrelid = $2::regclass`,
+              [m[1], t.tabela]
+            );
+            const f = fk.rows[0] as { dziecko: string; kol_dziecka: string[]; kol_rodzica: string[] } | undefined;
+            if (f && f.kol_dziecka.length === 1 && f.kol_rodzica.length === 1) {
+              const sel = `SELECT * FROM ${qi(f.dziecko)} WHERE ${qi(f.kol_dziecka[0])} IN (SELECT ${qi(f.kol_rodzica[0])} FROM ${qi(t.tabela)} WHERE ${qi(t.kolumna)}::text = ANY($1::text[]))`;
+              // eslint-disable-next-line no-await-in-loop
+              const rows = (await c.query(sel, [idyIstniejace])).rows as Record<string, unknown>[];
+              manifest.wiersze[f.dziecko] = [...(manifest.wiersze[f.dziecko] ?? []), ...rows];
+              // eslint-disable-next-line no-await-in-loop
+              const del = await c.query(sel.replace(/^SELECT \* FROM/, 'DELETE FROM'), [idyIstniejace]);
+              usuniete += del.rowCount ?? 0;
+              wTymPrzebiegu += del.rowCount ?? 0;
+              console.log(`[d0] dziecko bez wskaźnika na organizację: ${f.dziecko}.${f.kol_dziecka[0]} → ${t.tabela}: ${del.rowCount} wierszy do manifestu i skasowanych`);
+            }
+          }
           if (przebieg >= 9) console.error(`[d0] ${t.tabela}: ${(e as Error).message}`);
         }
       }
@@ -695,6 +724,8 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
     if (pozostale.length) throw new Error(`Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.`);
 
     const org = await c.query('DELETE FROM organizations WHERE id = ANY($1::text[])', [idyIstniejace]);
+    // Manifest dopisany o dzieci bez wskaźnika na organizację — nadpisz plik przed COMMIT.
+    fs.writeFileSync(sciezkaManifestu, JSON.stringify(manifest, null, 0));
     await c.query('COMMIT');
     console.log(
       `[d0] APPLY: usunięto ${org.rowCount} organizacji i ${usuniete} wierszy jawnie ` +
