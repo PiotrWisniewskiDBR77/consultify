@@ -1,0 +1,94 @@
+[d0] Tryb bez listy identyfikatorów (sieroty nie należą do żadnej organizacji).
+[d0] Tryb: sieroty-apply · cel: 127.0.0.1:54418/consultify_kopia_d28
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację.
+[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…
+[d0] SIEROTY do usunięcia: 38715 wierszy w 45 tabelach.
+        1. organization_context_claims.organization_id: 34210
+        2. organization_context_items.organization_id: 1522
+        3. organization_context_snapshots.organization_id: 1434
+        4. knowledge_doc_versions.organization_id: 222
+        5. wave6_context_ledger.organization_id: 143
+        6. ie_aggregate_state.organization_id: 123
+        7. project_role_templates.organization_id: 120
+        8. my_ideas.organization_id: 102
+        9. ie_audit_events.organization_id: 81
+       10. ie_command_receipts.organization_id: 80
+       11. partner_commission_transactions.organization_id: 80
+       12. ie_outbox_events.organization_id: 79
+       13. radar_ranked_signals.organization_id: 54
+       14. partner_attributions.organization_id: 48
+       15. conversion_events.organization_id: 44
+       16. document_studio_templates.organization_id: 44
+       17. ie_aggregate_relations.organization_id: 39
+       18. ai_chat_runs.organization_id: 31
+       19. wave6_context_snapshots.organization_id: 29
+       20. conversations.organization_id: 27
+       21. ai_cost_usage.organization_id: 25
+       22. ai_quality_metrics.organization_id: 25
+       23. v8_artifact_origin_links.organization_id: 24
+       24. v8_output_artifacts.organization_id: 24
+       25. my_idea_maps.organization_id: 21
+
+[d0] DOMKNIĘCIE PO DZIECIACH: 147 wierszy w 2 tabelach BEZ wskaźnika na organizację, trzymanych przez FK NO ACTION/RESTRICT. Bez nich rodzic nie da się skasować.
+        1. ai_chat_run_events.run_id ← ai_chat_runs (gł. 1): 140
+        2. teresa_audit_log.proposal_id ← teresa_proposals (gł. 1): 7
+[d0] Te wiersze WCHODZĄ do manifestu — rollback je przywróci.
+[d0] Suma wierszy CAŁEJ bazy PRZED: 164399.
+[d0] Manifest „przed” zapisany: /private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/c567f897-e8c7-489d-89b6-c2d26dd765cf/scratchpad/manifest2/manifest-2026-09-09T04-45-20-630Z.json (38862 wierszy).
+[d0] GRANICA ROLLBACKU: manifest obejmuje sieroty i ich dzieci trzymane przez FK NO ACTION/RESTRICT. Wiersze zdejmowane przez FK CASCADE z tabel BEZ wskaźnika na organizację do manifestu NIE wchodzą i --rollback ich NIE przywróci — dla nich jedynym zabezpieczeniem jest pg_dump zrobiony przed operacją.
+[d0] kasowanie sierot przebieg 1: usunięto łącznie 38804, zadań z problemem 2
+[d0] kasowanie sierot przebieg 2: usunięto łącznie 38841, zadań z problemem 0
+[d0] SIEROTY-APPLY: usunięto 38841 wierszy jawnie (naliczono przed kasowaniem 38715 sierot + 147 dzieci = 38862).
+
+[d0] === RAPORT PER TABELA (usunięte) ===
+        1. organization_context_claims.organization_id: 34210
+        2. organization_context_items.organization_id: 1522
+        3. organization_context_snapshots.organization_id: 1434
+        4. knowledge_doc_versions.organization_id: 222
+        5. wave6_context_ledger.organization_id: 143
+        6. ai_chat_run_events.run_id (dziecko ai_chat_runs): 140
+        7. ie_aggregate_state.organization_id: 123
+        8. project_role_templates.organization_id: 120
+        9. my_ideas.organization_id: 102
+       10. ie_audit_events.organization_id: 81
+       11. ie_command_receipts.organization_id: 80
+       12. partner_commission_transactions.organization_id: 80
+       13. ie_outbox_events.organization_id: 79
+       14. radar_ranked_signals.organization_id: 54
+       15. partner_attributions.organization_id: 48
+       16. conversion_events.organization_id: 44
+       17. document_studio_templates.organization_id: 44
+       18. ie_aggregate_relations.organization_id: 39
+       19. ai_chat_runs.organization_id: 31
+       20. wave6_context_snapshots.organization_id: 29
+       21. conversations.organization_id: 27
+       22. ai_cost_usage.organization_id: 25
+       23. ai_quality_metrics.organization_id: 25
+       24. v8_artifact_origin_links.organization_id: 24
+       25. v8_output_artifacts.organization_id: 24
+       26. ie_initiative_card_versions.organization_id: 11
+       27. knowledge_graph_entities.organization_id: 11
+       28. ie_governance_role_bindings.organization_id: 9
+       29. ie_governance_policies.organization_id: 7
+       30. teresa_audit_log.proposal_id (dziecko teresa_proposals): 7
+       31. ai_actions.organization_id: 6
+       32. ai_run_ledger.organization_id: 6
+       33. teresa_proposals.organization_id: 6
+       34. interview_sessions.organization_id: 5
+       35. security_policies.organization_id: 4
+       36. collab_sessions.organization_id: 3
+       37. interview_insight_findings.organization_id: 3
+       38. interview_insight_handoffs.organization_id: 3
+       39. initiative_candidates.organization_id: 2
+       40. rollout_kpis.organization_id: 2
+       41. assessment_reports.organization_id: 1
+       42. financial_models.organization_id: 1
+       43. organization_context_processing_jobs.organization_id: 1
+       44. organization_context_storage_events.organization_id: 1
+       45. tp_bases.organization_id: 1
+       46. user_radar_profiles.organization_id: 1
+       47. my_idea_maps.organization_id: 0
+
+[d0] Suma wierszy CAŁEJ bazy: PRZED 164399 → PO 125537. Różnica 38862.
+[d0] Z tego objęte manifestem (odwracalne przez --rollback): 38862. Zdjęte kaskadą POZA manifestem: 0.
+[d0] Rollback: --rollback=/private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/c567f897-e8c7-489d-89b6-c2d26dd765cf/scratchpad/manifest2/manifest-2026-09-09T04-45-20-630Z.json

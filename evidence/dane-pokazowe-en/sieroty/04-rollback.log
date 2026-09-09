@@ -1,0 +1,6 @@
+[d0] Manifest rodzaju: sieroty.
+[d0] Tryb: rollback · cel: 127.0.0.1:54418/consultify_kopia_d28
+[d0] ROLLBACK z manifestu rodzaju „sieroty”: 38862 wierszy do przywrócenia.
+[d0] rollback przebieg 1 (paczka 500): wstawiono łącznie 4652, zostało 34210
+[d0] rollback przebieg 2 (paczka 100): wstawiono łącznie 38862, zostało 0
+[d0] ROLLBACK zakończony: przywrócono 38862 wierszy.
