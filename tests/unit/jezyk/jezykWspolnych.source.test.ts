@@ -112,6 +112,11 @@ const POJEDYNCZE = [
   'src/components/shared/ArtifactStudio/ArtifactMenu3.tsx',
   'src/components/shared/CanonicalWorkHardeningPanel.tsx',
   'src/components/shared/TaskMilestoneBlastRadius.tsx',
+  // J-DOG-A (09.09): plakietka srodowiska widoczna na KAZDYM ekranie (fixed
+  // bottom-right, montowana raz w App.tsx) — aria-label mial polski szablon
+  // "Srodowisko X, wersja Y" hardcoded, niezalezny od jezyka konta; naprawiony
+  // w tej paczce (t() z layout.environmentBadge.*).
+  'src/components/layout/EnvironmentBadge.tsx',
 ];
 
 const PLIKI = [
