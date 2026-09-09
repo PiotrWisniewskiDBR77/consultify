@@ -1,0 +1,25 @@
+
+=== 01 Chat — plików: 213, trafień: 0 ===
+
+=== 03 Interview — plików: 36, trafień: 0 ===
+
+=== 05 Assessment — plików: 95, trafień: 2 ===
+src/components/assessment/reports/templates/DBR77ReportTemplate.tsx:219: [jsx-tekst] "AUTOMATYZUJ" — automatyzuj(auto)
+src/components/assessment/reports/templates/DBR77ReportTemplate.tsx:392: [jsx-tekst] "Stanowisk" — stanowisk(auto)
+
+=== 06 Initiatives — plików: 139, trafień: 0 ===
+
+=== 07 Execution — plików: 75, trafień: 0 ===
+
+=== 08 Results — plików: 160, trafień: 0 ===
+
+=== 10 Materials — plików: 302, trafień: 1 ===
+src/views/docs/DocsSecurityView.tsx:259: [jsx-tekst] "Download Security Whitepaper" — whitepaper(auto)
+
+=== 11 Audits — plików: 35, trafień: 0 ===
+
+=== 12 Meeting — plików: 5, trafień: 0 ===
+
+=== 13 Organization — plików: 33, trafień: 0 ===
+
+SUMA trafień (zakres J-DOG-C): 3
