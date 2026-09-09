@@ -17,18 +17,35 @@
  * ==========================================================================
  * TRZY PREMISY RAPORTU, KTORE POMIAR NA KOPII OBALIL (KROK 0 — zmierz premise)
  * ==========================================================================
- * P1. „Profil ma 13 pol, UI liczy 8/13."  W KODZIE SA **15** POL.
- *     `src/views/ContextBuilder/modules/organizationProfileTaxonomy.tsx:317-335`
- *     (`completenessChecks`) wylicza 15 warunkow; `OrganizationReadinessScreen.tsx:13`
- *     mowi wprost „te same 15 pol". Denominator „13" nie ma pokrycia w kodzie.
- *     Ten etap celuje w 15/15, nie w 13/13.
+ * P1. „Profil ma 13 pol, UI liczy 8/13."  DOPRECYZOWANIE, NIE OBALENIE —
+ *     i SPROSTOWANIE MOJEJ WLASNEJ PIERWSZEJ WERSJI TEJ NOTATKI, ktora mowila
+ *     „13 nie ma pokrycia w kodzie". MA. W module zyja CZTERY rozne liczniki
+ *     kompletnosci i raport trafil w jeden z nich:
+ *       (a) 13 — chipy ekranu Identity & Operating Model („All 13 · Filled in 13"),
+ *           licza pola TEGO ekranu; to jest liczba z raportu i to ona pokazywala 8/13;
+ *       (b) 15 — `completenessChecks()` w
+ *           `organizationProfileTaxonomy.tsx:317-335`, kompletnosc CALEGO profilu;
+ *           ta liczba trafia do kolumny `profile_completeness`
+ *           (`OrganizationReadinessScreen.tsx:13` mowi wprost „te same 15 pol");
+ *       (c) 5  — wlasne liczenie backendu w `GET /api/organization-profiles/:id`
+ *           (`organization-profiles.routes.ts:226-235`: nazwa, logo, industry,
+ *           company_size, opis), zwracane jako `payload.completeness`;
+ *       (d) kolumna `profile_completeness` w bazie, ktora jest zapisem (b).
+ *     Ten etap domyka WSZYSTKIE: ekran Identity pokazuje 13/13, a kolumna 100 %
+ *     policzone formula (b). Cztery liczniki kompletnosci w jednym module to
+ *     dlug KODU, nie danych — do zgloszenia osobno.
  *
- * P2. „Wywiad: statusy `pending`, `answered`, `approved`."  SLOWNIK KANONICZNY
- *     TAKICH WARTOSCI NIE MA. `InterviewAssignmentService.ts:452` wstawia
- *     `'assigned'`, a `:819` porzadkuje po `assigned|sent_back|in_progress|submitted`.
+ * P2. „Wywiad: statusy `pending`, `answered`, `approved`."  W BAZIE TAKICH
+ *     WARTOSCI NIE MA — to sa ETYKIETY UI, nie statusy.
+ *     `InterviewAssignmentService.ts:452` wstawia `'assigned'`, a `:819`
+ *     porzadkuje po `assigned|sent_back|in_progress|submitted`.
  *     `interviewStatusNormalization.ts:17` tylko normalizuje wielkosc liter —
  *     nie ma aliasu `pending`→`assigned` ani `answered`→`submitted`.
- *     Dosiewamy `assigned` / `submitted` / `approved` (odpowiedniki 1:1).
+ *     Dosiewamy `assigned` / `submitted` / `approved`; POTWIERDZONE ZRZUTEM
+ *     (`evidence/dane-pokazowe-en/d9/PO-brak2-wywiad-inbox.png`): Inbox rysuje
+ *     te trzy wiersze jako „Assigned", „Submitted" i „Approved", a chip nad
+ *     tabela nazywa `submitted` slowem „Answered" — czyli dokladnie tak, jak
+ *     nazwal je raport. Zlecenie opisywalo to, co widac; slownik bazy jest inny.
  *
  * P3. „Realizacja: 7 z 8 tygodni ma zerowy popyt."  W BAZIE OSIEM TYGODNI MA
  *     POPYT (pomiar `evidence/dane-pokazowe-en/d9/pomiar-PRZED.txt`: 23 zadania,

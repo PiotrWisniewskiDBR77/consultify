@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "items": [
+    {
+      "title": "Scrap Cost Model",
+      "exportFormat": "xlsx",
+      "originRuntime": "sheet",
+      "artifactFamily": "sheet"
+    },
+    {
+      "title": "Line 3 MES Rollout Kick-off",
+      "exportFormat": "pptx",
+      "originRuntime": "presentation",
+      "artifactFamily": "presentation"
+    },
+    {
+      "title": "Steering Committee — September 2026",
+      "exportFormat": "pptx",
+      "originRuntime": "presentation",
+      "artifactFamily": "presentation"
+    },
+    {
+      "title": "Digital Roadmap 2026–2028",
+      "exportFormat": "docx",
+      "originRuntime": "report",
+      "artifactFamily": "document"
+    },
+    {
+      "title": "Supplier Quality Gate Procedure",
+      "exportFormat": "docx",
+      "originRuntime": "report",
+      "artifactFamily": "document"
+    },
+    {
+      "title": "OEE Baseline Report Q2 2026",
+      "exportFormat": "docx",
+      "originRuntime": "report",
+      "artifactFamily": "document"
+    },
+    {
+      "title": "Operational Excellence Charter",
+      "exportFormat": "docx",
+      "originRuntime": "report",
+      "artifactFamily": "document"
+    }
+  ]
+}
