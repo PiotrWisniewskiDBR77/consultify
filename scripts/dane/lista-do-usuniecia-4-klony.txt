@@ -1,0 +1,25 @@
+# Paczka D0d — 09.09.2026 wieczor: klony sesji demo powstale w ciagu dnia.
+# Mechanizm: kazde uzycie sesji demo tworzy organizacje `<org>-session-<hash>`; cron 2:30 sprząta po dobie.
+
+ateliertoys-demo-session-3558536b54-mttxs4gb | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-7b9b0e0300-mttwfzqe | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-7b9b0e0300-mttwg1pf | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-7b9b0e0300-mttwh27k | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-7b9b0e0300-mttwn0hk | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttwqfvo | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttwsuyw | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttwvt9m | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxi4n9 | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxji9p | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxk1cp | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxk95b | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxljqj | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxmw24 | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxopfb | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxopoo | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxorv7 | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxorzo | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxoyg9 | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxoykl | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxs1i1 | Atelier Toys | czlonkow 0
+ateliertoys-demo-session-f786e8f37a-mttxtrm6 | Atelier Toys | czlonkow 0
