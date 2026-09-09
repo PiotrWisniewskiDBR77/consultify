@@ -19,12 +19,27 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { znajdzPolskiJsx, znajdzPolskieDefaultValue, zbierzPlikiZrodlowe } from '../../../../tests/unit/i18n/polskiBezOgonkowWspolny';
+import {
+  znajdzPolskiJsx,
+  znajdzPolskieDefaultValue,
+  znajdzPolskieLiteralyPol,
+  zbierzPliki,
+  zbierzPlikiZrodlowe,
+} from '../../../../tests/unit/i18n/polskiBezOgonkowWspolny';
 
 const KATALOGI = [
   __dirname + '/..',
   __dirname + '/../../MaturityMatrix',
 ];
+
+/**
+ * TEST-DANE D-02 (09.09.2026): rejestr metodyk mieszka POZA
+ * `src/components/assessment/**`, więc żaden z dwóch pierwszych warunków go
+ * nie obejmował — i przepuścił pięć pełnych polskich akapitów prawnych
+ * (SIRI/ADMA/CMMI/Lean 4.0) oraz polskie nazwy osi Lean, które angielskie
+ * konto czytało wprost w podglądzie Ocena -> Library.
+ */
+const PLIKI_REJESTROW = [__dirname + '/../../../services/frameworkRegistry.ts'];
 
 describe('J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonków też)', () => {
   it('nie ma polskiego defaultValue w t() (z ogonkami ani bez)', () => {
@@ -43,5 +58,15 @@ describe('J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonkó
     // paczki, zgłoszone jako STOP w evidence/jezyk-crimson-3/README.md.
     const trafienia = znajdzPolskiJsx(zrodla);
     expect(trafienia).toEqual([]);
+  });
+
+  /**
+   * MUTACJA (dowód, że warunek działa): przywróć w
+   * `src/services/frameworkRegistry.ts` dowolny z polskich napisów sprzed
+   * naprawy D-02 (np. `legalNotice: 'ADMA … jest narzędziem opracowanym …'`
+   * albo `name: 'Pomierz'`) -> RED. Cofnięcie -> GREEN.
+   */
+  it('rejestr metodyk (frameworkRegistry.ts) nie ma polskich napisów w literałach', () => {
+    expect(znajdzPolskieLiteralyPol(zbierzPliki(PLIKI_REJESTROW))).toEqual([]);
   });
 });

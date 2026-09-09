@@ -211,6 +211,19 @@ export interface AuditPack {
   sourceVersion: string | null;
   sourceType: AuditSourceType;
   verificationStatus: AuditVerificationState;
+  /**
+   * TEST-DANE D-11 (09.09.2026): kolumny ŹRÓDŁO i KRYTERIA w Bibliotece
+   * Audytów były puste, mimo 7 kryteriów w `audit_pack_criteria`. Kontrakt
+   * frontu (`src/components/Audit/method/auditsMethodApi.ts`,
+   * `AuditPackSummary`) deklarował OBA pola, a `mapPackRow` nie wysyłał
+   * ŻADNEGO — typ obiecywał coś, czego trasa nigdy nie oddała. Doliczane
+   * w `listPacks` (podzapytanie skorelowane + LEFT JOIN na źródle), więc
+   * lista nie potrzebuje N+1 zapytań o kryteria.
+   * Opcjonalne, bo `getPackById` zwraca pełne `criteria[]` i nie musi ich
+   * liczyć drugi raz.
+   */
+  criteriaCount?: number;
+  sourceTitle?: string | null;
   /** @deprecated Oś zlana; czytana wyłącznie dla danych historycznych. */
   classification: PackClassification;
   publicationStatus: PublicationStatus;

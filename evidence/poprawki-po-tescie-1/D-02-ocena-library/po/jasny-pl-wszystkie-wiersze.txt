@@ -1,0 +1,513 @@
+--- wiersz 1 ---
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Advanced Digital Maturity Assessment
+ADMA
+Planowane
+SZCZEGÓŁY
+~65 słów
+
+Rozszerzony model dojrzałości cyfrowej w wymiarach procesowych.
+
+• Widok pięciu filarów dojrzałości • Struktura oceny na poziomie wymiarów • Kontekst edukacyjny metodyki
+
+Osie i obszary: • Strategy & Organization • Smart Products • Smart Operations • Smart Supply Chain • Data-Driven Services
+
+ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez Komisję Europejską w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.
+
+Właściwość	Wartość
+Obszar	Produkcja cyfrowa
+Dostęp	Wiedza dostępna; uruchomienie wkrótce
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań
+
+--- wiersz 2 ---
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Capability Maturity Model Integration
+CMMI
+Planowane
+SZCZEGÓŁY
+~49 słów
+
+Model dojrzałości i zdolności procesowych organizacji.
+
+• Pięć poziomów dojrzałości • Struktura wg obszarów praktyk • Kontekst edukacyjny metodyki
+
+Osie i obszary: • Doing • Managing • Enabling
+
+CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraisera. Implementacja w Consultify służy celom edukacyjnym.
+
+Właściwość	Wartość
+Obszar	Zdolność procesowa
+Dostęp	Wiedza dostępna; uruchomienie wkrótce
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań
+
+--- wiersz 3 ---
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Digital Readiness Diagnosis
+DRD
+Dostępna
+SZCZEGÓŁY
+~51 słów
+
+Ocena dojrzałości cyfrowej w 5 osiach, obszar po obszarze.
+
+• Dojrzałość obecna i docelowa per obszar • Wnioski poparte dowodami • Dane wejściowe do raportu i inicjatyw
+
+Osie i obszary: • Procesy Cyfrowe • Produkty Cyfrowe • Cyfrowe Modele Biznesowe • Zarządzanie Danymi • Kultura Transformacji • Cyberbezpieczeństwo • Dojrzałość AI
+
+Właściwość	Wartość
+Obszar	Transformacja cyfrowa
+Dostęp	Dostępny Method Core
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań
+Rozpocznij ocenę
+
+--- wiersz 4 ---
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Lean 4.0
+LEAN
+Planowane
+SZCZEGÓŁY
+~50 słów
+
+Ocena dojrzałości Lean w produkcji.
+
+• Ścieżka Zmierz → Optymalizuj → Automatyzuj • Perspektywa dojrzałości Lean • Kontekst szans automatyzacji i AI
+
+Osie i obszary: • Pomierz • Zoptymalizuj • Automatyzuj
+
+Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.
+
+Właściwość	Wartość
+Obszar	Lean i automatyzacja
+Dostęp	Wiedza dostępna; uruchomienie wkrótce
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań
+
+--- wiersz 5 ---
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Smart Industry Readiness Index
+SIRI
+Planowane
+SZCZEGÓŁY
+~71 słów
+
+Singapurskie ramy dojrzałości Przemysłu 4.0 (SIRI).
+
+• Widok procesu, technologii i organizacji • Skala dojrzałości Przemysłu 4.0 • Kontekst edukacyjny metodyki
+
+Osie i obszary: • Process • Technology • Organization
+
+SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodyki Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.
+
+Właściwość	Wartość
+Obszar	Inteligentna produkcja
+Dostęp	Wiedza dostępna; uruchomienie wkrótce
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań

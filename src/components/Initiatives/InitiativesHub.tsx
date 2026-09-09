@@ -112,6 +112,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { Banner } from '../shared/Banner';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
@@ -385,6 +386,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   >('operational');
   const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
+  /**
+   * TEST-DANE D-15: zapis recznego formularza szedl przez
+   * `createInitiativeWriteTruth`, ktory ODRZUCA pusty `projectId`
+   * („Canonical initiative creation requires projectId and initiativeOwnerId"),
+   * a formularz podawal `currentProjectId || ''`. Na koncie Northwind
+   * `currentProjectId` jest `null` (zmierzone w magazynie przegladarki:
+   * `currentProjectId: null`, `projects: 0`), wiec zapis nie mial prawa przejsc.
+   * Kreator AI od dawna rozwiazuje to tym samym, wspolnym komponentem
+   * (`RequiredProjectPicker`) — formularz reczny dostaje go teraz tak samo,
+   * z `currentProjectId` jako wartoscia poczatkowa.
+   */
+  const [newProjectId, setNewProjectId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const closeNewModal = useCallback(() => {
     if (!isCreating) setShowNewModal(false);
@@ -2671,8 +2684,46 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   ),
                 }
               : {
+                  /* TEST-DANE D-15 (09.09.2026): jedyne wejscie „New initiative"
+                     otwieralo kreator AI, ktorego krok 3 to `Generate AI draft`
+                     — bez dzialajacego LLM nie dalo sie utworzyc inicjatywy
+                     z interfejsu, choc API dziala. Recznego formularza NIE
+                     trzeba bylo budowac: `showNewModal` (linia 363) i cale
+                     okno (~235 linii, walidacja tytulu, ostrzezenie
+                     o duplikacie, `createInitiativeWriteTruth`, dopisanie do
+                     portfela) siedzialy w tym pliku od dawna, a
+                     `setShowNewModal(true)` nie wolal NIKT — ksztalt
+                     „zbudowane, ale niepodlaczone". Tu jest ten brakujacy
+                     przewod: kanoniczny wariant CTA z menu (TRIADA §A2/§C4,
+                     ten sam co „Dodaj raport" w Realizacji), dwie pozycje. */
                   label: t('initiatives.form.newInitiative'),
-                  onClick: () => setShowInitiativeWizard(true),
+                  onClick: () => undefined,
+                  menu: {
+                    ariaLabel: t('initiatives.form.newInitiative'),
+                    items: [
+                      {
+                        id: 'manual',
+                        label: t('initiatives.form.newInitiativeManual', 'Fill in the form'),
+                        description: t(
+                          'initiatives.form.newInitiativeManualDesc',
+                          'Title, axis, level and a short summary — no AI needed.'
+                        ),
+                        onSelect: () => {
+                          setNewProjectId(currentProjectId || '');
+                          setShowNewModal(true);
+                        },
+                      },
+                      {
+                        id: 'ai',
+                        label: t('initiatives.form.newInitiativeAi', 'AI initiative wizard'),
+                        description: t(
+                          'initiatives.form.newInitiativeAiDesc',
+                          'Build a draft from a source insight, then review it.'
+                        ),
+                        onSelect: () => setShowInitiativeWizard(true),
+                      },
+                    ],
+                  },
                 }
         }
         filterControls={rightControls}
@@ -2842,6 +2893,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </div>
               </div>
 
+              {/* D-15: projekt jest wymagany przez kanoniczna sciezke zapisu —
+                  ten sam wspolny komponent, ktorego uzywa kreator AI. */}
+              <RequiredProjectPicker
+                value={newProjectId}
+                onChange={setNewProjectId}
+                language={i18n.language === 'pl' ? 'pl' : 'en'}
+              />
+
               {/* Axis */}
               <div>
                 <label className="block text-xs text-c-text-muted mb-1">
@@ -2938,7 +2997,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 try {
                   setIsCreating(true);
                   const { createdId, truth } = await createInitiativeWriteTruth({
-                    projectId: currentProjectId || '',
+                    projectId: newProjectId || currentProjectId || '',
                     initiativeOwnerId: String((currentUser as any)?.id || ''),
                     title: newTitle.trim(),
                     problem: newSummary.trim() || newTitle.trim(),
@@ -2949,6 +3008,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewTitle('');
                   setNewSummary('');
                   setNewLevel('standard');
+                  setNewProjectId('');
                   if (createdId) {
                     try {
                       const full =

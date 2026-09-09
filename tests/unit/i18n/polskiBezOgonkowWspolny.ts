@@ -219,3 +219,66 @@ export function znajdzPolskiJsx(zrodla: PlikZrodlowy[]): string[] {
   }
   return trafienia;
 }
+
+// ---------------------------------------------------------------------------
+// TEST-DANE D-02 (09.09.2026) — trzeci kształt polskiego napisu, którego dwa
+// powyższe detektory NIE widzą: literał w obiekcie konfiguracyjnym poza JSX
+// i poza `t()`. Tak przeszło pięć pełnych polskich akapitów prawnych
+// (SIRI/ADMA/CMMI/Lean) oraz nazwy osi „Pomierz/Zoptymalizuj/Automatyzuj"
+// w `src/services/frameworkRegistry.ts` — plik-rejestr, nie komponent, więc
+// `znajdzPolskiJsx` i `znajdzPolskieDefaultValue` mijały go co do jednego.
+// ---------------------------------------------------------------------------
+
+/** `klucz: 'wartość'` w literale obiektu — jedno- i wielolinijkowe. */
+const WZORZEC_LITERAL_POLA =
+  /\b([A-Za-z_$][\w]*)\s*:\s*(?:\n\s*)?(['"])((?:\\.|(?!\2)[^\\])*)\2/g;
+
+/**
+ * Pola, których wartość NIE jest napisem na ekranie (identyfikatory, klasy,
+ * ikony, klucze i18n, kolory). Bez tej listy detektor zgłaszałby kod.
+ */
+const POLA_NIEWIDOCZNE = new Set([
+  'id',
+  'key',
+  'icon',
+  'color',
+  'colorDark',
+  'className',
+  'testId',
+  'type',
+  'status',
+  'legalNoticeType',
+  'legalNoticeKey',
+  'descriptionKey',
+  'nameKey',
+  'href',
+  'path',
+  'route',
+]);
+
+/**
+ * Zwraca listę `plik: pole = "tekst"` dla polskich napisów przypisanych do pól
+ * literałów obiektowych (rejestry, katalogi, konfiguracje) poza `t()`.
+ */
+export function znajdzPolskieLiteralyPol(zrodla: PlikZrodlowy[]): string[] {
+  const trafienia: string[] = [];
+  for (const { nazwa, tekst } of zrodla) {
+    WZORZEC_LITERAL_POLA.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = WZORZEC_LITERAL_POLA.exec(tekst))) {
+      const pole = m[1];
+      const wartosc = m[3];
+      if (POLA_NIEWIDOCZNE.has(pole)) continue;
+      if (czyPolskiBezOgonkow(wartosc)) trafienia.push(`${nazwa}: ${pole} = „${wartosc}"`);
+    }
+  }
+  return trafienia;
+}
+
+/** Wczytuje pojedyncze pliki (ścieżki bezwzględne) z wygaszonymi komentarzami. */
+export function zbierzPliki(sciezki: string[]): PlikZrodlowy[] {
+  return sciezki.map((p) => ({
+    nazwa: path.basename(p),
+    tekst: bezKomentarzy(fs.readFileSync(p, 'utf8')),
+  }));
+}

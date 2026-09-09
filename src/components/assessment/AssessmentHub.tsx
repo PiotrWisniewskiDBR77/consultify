@@ -223,6 +223,16 @@ interface AssessmentFromAPI {
   business_unit?: string | null;
   /** Identifies the canonical Method Core DRD rows from legacy assessments. */
   source?: 'method-core' | 'legacy';
+  /**
+   * D-01: SCORE/CONFIDENCE/completion for the canonical Method Core DRD row,
+   * carried over from its legacy twin (see `methodSessionToAssessment`). The
+   * Processes projection already reads these keys off legacy rows; declaring
+   * them here lets a Method Core row fill the same three columns.
+   */
+  completionPercent?: number;
+  confidenceAvg?: number;
+  projectId?: string | null;
+  project_id?: string | null;
 }
 
 interface ReportBuilderReportFromAPI {
@@ -268,7 +278,32 @@ function writeCachedAssessmentHubList(items: AssessmentFromAPI[]): void {
   }
 }
 
-function methodSessionToAssessment(session: MethodSessionListItem): AssessmentFromAPI {
+/**
+ * TEST-DANE D-01 (09.09.2026): a frozen DRD session rendered as
+ * „DRD · 614e5f28" — a raw UUID fragment — with empty SCORE/CONFIDENCE
+ * columns, while the very same diagnosis has a named legacy row
+ * („Northwind 2027 — Operational Maturity Assessment", overall_score 3,
+ * confidence_avg 3.6).
+ *
+ * WHY IT LOOKED EMPTY: `method_sessions` has no name, score or confidence
+ * column at all (see src/method-core/contracts/session.ts — id, state,
+ * pack, owner, timestamps and nothing else), and Method Core's
+ * `aggregation_json` explicitly leaves per-axis aggregation to the client.
+ * So there is no canonical Method Core source for those three values; the
+ * only store that holds them is the legacy `assessments` row that the hub
+ * deliberately hides (canonical DRD comes from Method Core).
+ *
+ * THE JOIN: both rows carry the same `project_id` (measured on the demo
+ * copy: session 614e5f28 and assessment b2de5832 share project 6174636d).
+ * We therefore keep Method Core as the canonical row (id, state, lifecycle)
+ * and read ONLY the display fields it cannot provide from its legacy twin.
+ * With no twin the previous `DRD · <id8>` label stays as the fallback, so a
+ * session created without a legacy counterpart still renders honestly.
+ */
+function methodSessionToAssessment(
+  session: MethodSessionListItem,
+  legacyTwin?: AssessmentFromAPI
+): AssessmentFromAPI {
   const statusByState: Record<MethodSessionListItem['state'], AssessmentStatusType> = {
     draft: 'DRAFT',
     prepared: 'DRAFT',
@@ -278,13 +313,32 @@ function methodSessionToAssessment(session: MethodSessionListItem): AssessmentFr
     closed: 'ARCHIVED',
     archived: 'ARCHIVED',
   };
+  const twin = legacyTwin as
+    | (AssessmentFromAPI & {
+        completionPercent?: number | string | null;
+        completion_percent?: number | string | null;
+        overall_score?: number | null;
+        confidenceAvg?: number | null;
+        confidence_avg?: number | null;
+      })
+    | undefined;
+  const twinName = typeof twin?.name === 'string' ? twin.name.trim() : '';
+  const twinScore = twin?.overallScore ?? twin?.overall_score ?? null;
+  const twinConfidence = twin?.confidenceAvg ?? twin?.confidence_avg ?? null;
+  const twinCompletion = twin?.completionPercent ?? twin?.completion_percent ?? null;
   return {
     id: session.id,
-    name: `DRD · ${session.id.slice(0, 8)}`,
+    name: twinName || `DRD · ${session.id.slice(0, 8)}`,
     description: session.domainStage || undefined,
     status: statusByState[session.state],
     type: 'DRD',
-    progress: 0,
+    // Progress is read by the Processes projection from `completionPercent`
+    // first; keep `progress` as the same fallback it uses for legacy rows.
+    progress: twinCompletion !== null ? Number(twinCompletion) || 0 : 0,
+    completionPercent: twinCompletion !== null ? Number(twinCompletion) || 0 : undefined,
+    overallScore: twinScore !== null ? Number(twinScore) : undefined,
+    confidenceAvg: twinConfidence !== null ? Number(twinConfidence) : undefined,
+    businessUnit: twin?.businessUnit ?? twin?.business_unit ?? null,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
     organizationId: session.organizationId,
@@ -670,6 +724,22 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       retry(() => listMethodSessions({ methodPackId: DRD_METHOD_PACK_ID, limit: 100, offset: 0 })),
       retry(() => Api.listAssessments({ limit: 200, offset: 0 })),
     ]);
+    const cached = readCachedAssessmentHubList();
+    const legacyData =
+      legacyOutcome.status === 'fulfilled' ? (legacyOutcome.value as any)?.items || [] : cached;
+    // D-01: display-only twin lookup. The legacy DRD rows stay hidden from the
+    // list (Method Core is canonical); they are used ONLY to fill the name,
+    // score and confidence that `method_sessions` does not store. Keyed by
+    // project id — the one column both stores share.
+    const legacyDrdByProject = new Map<string, AssessmentFromAPI>();
+    if (Array.isArray(legacyData)) {
+      for (const item of legacyData as any[]) {
+        if (String(item?.type || item?.assessment_type || '').toUpperCase() !== 'DRD') continue;
+        const projectId = item?.projectId ?? item?.project_id;
+        if (typeof projectId !== 'string' || !projectId) continue;
+        if (!legacyDrdByProject.has(projectId)) legacyDrdByProject.set(projectId, item);
+      }
+    }
     const canonicalDrd =
       methodOutcome.status === 'fulfilled'
         ? methodOutcome.value.sessions
@@ -677,11 +747,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               (session) =>
                 session.module === 'assessment' && session.methodPackId === DRD_METHOD_PACK_ID
             )
-            .map(methodSessionToAssessment)
+            .map((session) =>
+              methodSessionToAssessment(
+                session,
+                session.projectId ? legacyDrdByProject.get(session.projectId) : undefined
+              )
+            )
         : [];
-    const cached = readCachedAssessmentHubList();
-    const legacyData =
-      legacyOutcome.status === 'fulfilled' ? (legacyOutcome.value as any)?.items || [] : cached;
     const legacyNonDrd: AssessmentFromAPI[] = Array.isArray(legacyData)
       ? legacyData
           .filter((item) => String(item?.type || '').toUpperCase() !== 'DRD')
@@ -1022,9 +1094,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         if (!Number.isFinite(raw) || row?.confidenceAvg === null) {
           return <span className="text-sm text-c-text-muted">—</span>;
         }
-        // confidence_avg jest w skali 0–1 (server: DEFAULT 0, ustawiane
-        // ułamkiem); obraz pokazuje procent.
-        const percent = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+        // TEST-DANE D-01 (09.09.2026): the old comment here claimed
+        // „confidence_avg jest w skali 0–1" and rendered `Math.round(raw)%`
+        // for anything above 1 — so the first row that ever carried a real
+        // value (3.6) printed „4%". The canonical domain is 1–5, declared by
+        // the server validator (`server/src/validators/assessment.validators.ts`
+        // — `confidenceAvg: z.number().min(1).max(5)`) and used as such by
+        // ToolController's `confidence_avg >= 3` gate. The approved image
+        // shows a percentage, so 1–5 is normalised against its maximum
+        // (3.6 → 72%); values at or below 1 stay readable as a legacy
+        // fraction rather than collapsing to 20%.
+        const percent = raw <= 1 ? Math.round(raw * 100) : Math.round((raw / 5) * 100);
         return <span className="tabular-nums text-sm text-c-text">{percent}%</span>;
       },
     };

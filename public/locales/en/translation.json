@@ -11151,16 +11151,25 @@
         "description": "Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)"
       },
       "siri": {
-        "description": "Industry 4.0 readiness framework focusing on process, technology and organization"
+        "description": "Industry 4.0 readiness framework focusing on process, technology and organization",
+        "legalNotice": "SIRI (Smart Industry Readiness Index) is a tool developed by the Singapore Economic Development Board (EDB) in cooperation with TÜV SÜD. The SIRI structure is used in Consultify for educational purposes only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor."
       },
       "adma": {
-        "description": "Advanced assessment model for digital transformation capabilities"
+        "description": "Advanced assessment model for digital transformation capabilities",
+        "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission under the Digital Innovation Hubs programme. Its use in Consultify is for educational purposes."
       },
       "cmmi": {
-        "description": "Process improvement framework for software and product development"
+        "description": "Process improvement framework for software and product development",
+        "legalNotice": "CMMI is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. The Consultify implementation is for educational purposes."
       },
       "lean": {
-        "description": "Lean manufacturing principles integrated with Industry 4.0 technologies"
+        "description": "Lean manufacturing principles integrated with Industry 4.0 technologies",
+        "legalNotice": "The DBR77 Lean 4.0 method (Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential.",
+        "category": {
+          "measure": "Measure",
+          "optimise": "Optimise",
+          "automate": "Automate"
+        }
       }
     },
     "dbr77": {
@@ -11602,7 +11611,11 @@
       "levelStrategicLabel": "Strategic Program",
       "levelStrategicCardDesc": "Cross-functional program. 3-12 months, multiple teams, executive sponsor.",
       "levelTransformationLabel": "Transformation",
-      "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight."
+      "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight.",
+      "newInitiativeManual": "Fill in the form",
+      "newInitiativeManualDesc": "Title, axis, level and a short summary — no AI needed.",
+      "newInitiativeAi": "AI initiative wizard",
+      "newInitiativeAiDesc": "Build a draft from a source insight, then review it."
     },
     "axis": {
       "operational": "Operational",
@@ -15638,7 +15651,8 @@
       },
       "summary": {
         "decisions": "Decisions",
-        "risks": "Risks"
+        "risks": "Risks",
+        "toResolve": "To resolve"
       }
     },
     "scope": {

@@ -583,7 +583,20 @@ export const AdminMembersRolesPanel: React.FC<{
       id: 'email',
       label: t('admin.membersRoles.columns.email', 'Email'),
       width: '220px',
-      render: (row) => <span className="text-c-text-secondary">{row.email}</span>,
+      /* TEST-DANE D-10 (09.09.2026): adres „james.whitfield@northwind.example"
+         wychodzil poza kolumne 220 px i wchodzil POD liste ROLE. To nie defekt
+         kanonu tabeli: jadro (`FilterableTable`) przycina wielokropkiem tylko
+         GOLY tekst zwrocony z `render` — gdy modul zwraca WLASNY element,
+         wielokropek jest jego odpowiedzialnoscia (komentarz przy
+         `CELL_ELEMENT_WRAP_CLASS`: „truncate na wlasnym spanie"), bo
+         `overflow-hidden` w jadrze przycinalby popovery innych kolumn.
+         Adres nie ma spacji, wiec nie da sie go zlamac — musi byc przyciety,
+         a pelna wartosc zostaje w podpowiedzi. */
+      render: (row) => (
+        <span className="block truncate text-c-text-secondary" title={row.email}>
+          {row.email}
+        </span>
+      ),
     },
     {
       id: 'role',
@@ -645,7 +658,12 @@ export const AdminMembersRolesPanel: React.FC<{
       id: 'email',
       label: t('admin.membersRoles.columns.email', 'Email'),
       width: '220px',
-      render: (row) => <span className="font-medium text-c-text">{row.email}</span>,
+      /* D-10, ta sama rodzina: kolumna zaproszen ma tak samo waski adres. */
+      render: (row) => (
+        <span className="block truncate font-medium text-c-text" title={row.email}>
+          {row.email}
+        </span>
+      ),
     },
     {
       id: 'role',

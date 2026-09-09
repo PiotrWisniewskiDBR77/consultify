@@ -149,6 +149,7 @@ import {
   type PredictionType,
   statusToItemStatus,
   statusToProgress,
+  financeCompletenessLabel,
 } from './financeTypes';
 import { useFinanceData } from './hooks/useFinanceData';
 import { useFinanceLane } from './hooks/useFinanceLane';
@@ -1166,9 +1167,7 @@ export const FinanceHub: React.FC = () => {
           ),
           statementIds: childStatements.map((row: any) => row.id),
           missingStatementTypes: missingStatementTypes.map((value: unknown) => String(value)),
-          completenessLabel: ['P&L', 'BS', 'CF']
-            .map((type) => (presentTypes.has(type) ? type : `—${type}`))
-            .join(' / '),
+          completenessLabel: financeCompletenessLabel((type) => presentTypes.has(type)),
           childStatements,
           nonFinancialLineCount: Number(statement.non_financial_line_count ?? 0),
           overallConfidence: Number(statement.overall_confidence ?? 0),

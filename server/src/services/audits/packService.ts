@@ -62,6 +62,9 @@ interface PackRow {
   /** Kolumny dodane migracją rozdzielenia osi; stare wiersze ich nie mają. */
   source_type?: string | null;
   verification_state?: string | null;
+  /** D-11: doliczane w `listPacks`, nieobecne w `SELECT *` pojedynczego wiersza. */
+  criteria_count?: number | string | null;
+  source_title?: string | null;
   id: string;
   organization_id: string | null;
   pack_key: string;
@@ -174,6 +177,10 @@ function mapPackRow(row: PackRow): AuditPack {
     createdBy: row.created_by,
     createdAt: toIso(row.created_at) as string,
     updatedAt: toIso(row.updated_at) as string,
+    // D-11: obecne tylko na wierszach z `listPacks`; `undefined` gdzie
+    // indziej, żeby nikt nie wziął braku doliczenia za „zero kryteriów".
+    ...(row.criteria_count == null ? {} : { criteriaCount: Number(row.criteria_count) }),
+    ...(row.source_title === undefined ? {} : { sourceTitle: row.source_title }),
   };
 }
 
@@ -306,7 +313,15 @@ export async function listPacks(
     conditions.push(`classification = $${values.length}`);
   }
 
+  // D-11: warunki są budowane z gołych nazw kolumn, a zapytanie listy dokłada
+  // teraz LEFT JOIN na `audit_norm_sources` (ta tabela ma SWOJE
+  // `organization_id` i `title`). Bez kwalifikacji `p.` te dwa warunki byłyby
+  // dwuznaczne i Postgres odrzuciłby zapytanie.
   const where = conditions.join(' AND ');
+  const wherePack = where.replace(
+    /\b(organization_id|title|pack_key|summary|created_by|publication_status|classification)\b/g,
+    'p.$1',
+  );
   const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
   const offset = Math.max(params.offset ?? 0, 0);
 
@@ -314,9 +329,17 @@ export async function listPacks(
     `SELECT COUNT(*)::text AS count FROM audit_packs WHERE ${where}`,
     values,
   );
+  // D-11: KRYTERIA i ŹRÓDŁO dolicza JEDNO zapytanie (podzapytanie skorelowane
+  // + LEFT JOIN), a nie N dodatkowych odczytów na wiersz.
   const rows = await auditAll<PackRow>(
-    `SELECT * FROM audit_packs WHERE ${where}
-       ORDER BY pack_key ASC, version DESC
+    `SELECT p.*,
+            (SELECT COUNT(*)::int FROM audit_pack_criteria c WHERE c.pack_id = p.id)
+              AS criteria_count,
+            s.title AS source_title
+       FROM audit_packs p
+       LEFT JOIN audit_norm_sources s ON s.id = p.source_id
+      WHERE ${wherePack}
+       ORDER BY p.pack_key ASC, p.version DESC
        LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
     [...values, limit, offset],
   );
