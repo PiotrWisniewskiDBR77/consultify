@@ -38389,10 +38389,32 @@
       "termsError": "Couldn't accept the terms",
       "tierError": "Couldn't select the plan",
       "termsAccepted": "Terms accepted",
-      "tierSelected": "Pricing plan selected"
+      "tierSelected": "Pricing plan selected",
+      "setupPayment": "Contact the partner team to arrange payout and billing."
     },
     "featureSpotlight": {
       "gotIt": "Got it"
+    },
+    "enterpriseWizard": {
+      "step1": {
+        "intro": "This is the same application path launched from the LP and from the product.",
+        "termsTitle": "Program terms",
+        "termsAccept": "I accept the partner program terms",
+        "privacyTitle": "Privacy policy",
+        "privacyAccept": "I accept the privacy policy",
+        "confirmButton": "Confirm and continue"
+      },
+      "step2": {
+        "intro": "Choose the entry model that best fits your collaboration plan."
+      },
+      "step3": {
+        "intro": "Set up your billing details now, or continue and finish them later with the partner team.",
+        "billingTitle": "Partner billing",
+        "billingBody": "Final payout and billing details can be arranged automatically in the flow, or manually with the partner team for non-standard terms."
+      },
+      "step4": {
+        "intro": "Your workspace is ready for the next step of activation and work in the program."
+      }
     }
   },
   "editor": {
@@ -51047,6 +51069,129 @@
     "canvas": {
       "empty": "Empty canvas",
       "emptyHint": "Use the toolbar to add nodes"
+    }
+  },
+  "caseWorkspace": {
+    "results": {
+      "closure": {
+        "heading": "Is the order closed",
+        "contracted": "Contracted closure: {{type}}",
+        "closedOn": "Closed {{date}} as {{type}}."
+      },
+      "steps": {
+        "heading": "Step execution results",
+        "emptyTitle": "No step has a recorded result yet",
+        "emptyDescription": "A result appears here only once a step is completed or skipped — this is not an error."
+      },
+      "measurements": {
+        "heading": "Measured value",
+        "emptyTitle": "Nothing measured yet",
+        "emptyDescription": "The effect of the order is measured after rollout. Until then this list stays empty — this is not an error.",
+        "preview": {
+          "intro": "Measurement of this order's effect.",
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "baseline": "Starting point",
+          "target": "Target",
+          "result": "Result",
+          "measurementDate": "Measurement date",
+          "nextMeasurement": "Next measurement",
+          "notScheduled": "not scheduled",
+          "evidence": "Evidence",
+          "evidenceAttached": "attached",
+          "evidenceMissing": "missing",
+          "evidenceHeading": "Measurement evidence",
+          "noEvidence": "No evidence was attached to this measurement. The “no evidence” state is different from “not achieved” — the result itself is not invalidated by this.",
+          "evidencePointsTo": "Evidence points to object: {{label}}.",
+          "openEvidenceAria": "Open measurement evidence: {{label}}"
+        }
+      },
+      "links": {
+        "heading": "Linked objects",
+        "linkObject": "Link object",
+        "emptyTitle": "No linked objects",
+        "emptyDescription": "Documents, decisions, initiatives and evidence this order relies on land here.",
+        "preview": {
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "role": "Role in the order",
+          "linkStatus": "Link status",
+          "linkedAt": "Linked",
+          "pinnedVersion": "Pinned version",
+          "alwaysLatest": "always latest",
+          "objectId": "Object ID",
+          "stale": "Outdated",
+          "changedNotice": "The object changed after linking — check whether it still confirms what it was meant to confirm.",
+          "linkedNotice": "Object linked to this order.",
+          "cannotOpenTitle": "This object won't open",
+          "staleRevisionTitle": "You'll open an outdated revision",
+          "openFooterNotice": "“Open object” in the preview header takes you to the module this object belongs to. You'll return here to the same order, in the same section.",
+          "pinVersion": "Pin version",
+          "unlinkFromOrder": "Unlink from order",
+          "openObject": "Open object"
+        }
+      },
+      "nodeResult": {
+        "openLabel": "Open result",
+        "preview": {
+          "intro": "Result of a single execution step of this order.",
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "sourceRun": "Source run",
+          "nodeRun": "Node run",
+          "occurredAt": "Occurred",
+          "recordedAt": "Recorded",
+          "skipAuthorization": "Skip authorization",
+          "graphConditionYes": "yes — graph condition",
+          "graphConditionNo": "not confirmed",
+          "graphConditionUnknown": "unknown",
+          "runContextHeading": "Run context",
+          "loading": "Loading…",
+          "runBlocked": "You don't have permission to view this run's details.",
+          "runNotFound": "The link to this run was not found — it may have been deleted.",
+          "runLoadError": "Couldn't load run details. The rest of this result stays visible.",
+          "planVersion": "Plan version:",
+          "graphDigest": "Graph digest:",
+          "linkedToPlan": "Linked to plan:",
+          "evidenceHeading": "Evidence",
+          "noEvidenceDescription": "No readable evidence description was recorded for this step.",
+          "enableExpertHint": " Turn on expert view to see the raw data.",
+          "noOpenTarget": "This result doesn't point to an object to open.",
+          "cannotOpenTitle": "This object won't open",
+          "staleRevisionTitle": "You'll open an outdated revision",
+          "openFooterNotice": "“Open result” in the preview header takes you to the module this object belongs to. You'll return here to the same order, in the same section."
+        }
+      },
+      "linkDialog": {
+        "title": "Link an existing object",
+        "description": "The object becomes LINKED, not copied — it still belongs to its own module, and this order only gets a pointer to it (CW-RT-025).",
+        "confirm": "Link",
+        "objectType": "Object type",
+        "objectId": "Object ID",
+        "objectIdHelp": "Copy the identifier from the object's own screen in its module (expert view shows it next to the name).",
+        "objectIdPlaceholder": "e.g. doc-... / decision-...",
+        "role": "Role in the order",
+        "pinVersion": "Pin a specific version",
+        "pinVersionHelp": "Empty = always the latest version of the object.",
+        "revisionPlaceholder": "e.g. v3 / revision hash",
+        "pinReason": "Reason for pinning this version"
+      },
+      "pinDialog": {
+        "title": "Pin object version",
+        "description": "Pinning a NEW version clears the “outdated” flag — exactly the action after which the order once again treats the link as current (CW-01-026-INV9).",
+        "confirm": "Pin",
+        "version": "Version",
+        "versionPlaceholder": "e.g. v4 / revision hash",
+        "reason": "Reason",
+        "reasonPlaceholder": "e.g. updated after client feedback"
+      },
+      "unlinkDialog": {
+        "title": "Unlink object from order",
+        "description": "The link disappears from this order's active list. The object itself is NOT deleted — it stays in its own module, it just stops being a result of this order. The history of this link can still be recovered.",
+        "confirm": "Unlink",
+        "reasonLabel": "Reason for unlinking",
+        "reasonPlaceholder": "e.g. linked by mistake / superseded by a newer document"
+      }
     }
   }
 }

@@ -39328,10 +39328,32 @@
       "termsError": "Nie udało się zaakceptować regulaminu",
       "tierError": "Nie udało się wybrać planu",
       "termsAccepted": "Regulamin zaakceptowany",
-      "tierSelected": "Plan cenowy wybrany"
+      "tierSelected": "Plan cenowy wybrany",
+      "setupPayment": "Skontaktuj się z zespołem partnerskim, aby uzgodnić payout i billing."
     },
     "featureSpotlight": {
       "gotIt": "Rozumiem"
+    },
+    "enterpriseWizard": {
+      "step1": {
+        "intro": "To jest ta sama ścieżka aplikacyjna uruchamiana z LP i z produktu.",
+        "termsTitle": "Warunki programu",
+        "termsAccept": "Akceptuję warunki programu partnerskiego",
+        "privacyTitle": "Polityka prywatności",
+        "privacyAccept": "Akceptuję politykę prywatności",
+        "confirmButton": "Potwierdź i przejdź dalej"
+      },
+      "step2": {
+        "intro": "Wybierz model wejścia, który najlepiej pasuje do planu współpracy."
+      },
+      "step3": {
+        "intro": "Ustal dane do rozliczeń teraz albo przejdź dalej i dopnij je z zespołem partnerskim.",
+        "billingTitle": "Rozliczenia partnera",
+        "billingBody": "Finalne dane payout i billing można uzgodnić automatycznie w flow albo manualnie z zespołem partnerskim dla niestandardowych warunków."
+      },
+      "step4": {
+        "intro": "Twój workspace jest gotowy do kolejnego kroku aktywacji i pracy w programie."
+      }
     }
   },
   "editor": {
@@ -51903,6 +51925,129 @@
     "canvas": {
       "empty": "Pusta kanwa",
       "emptyHint": "Użyj paska narzędzi, aby dodać węzły"
+    }
+  },
+  "caseWorkspace": {
+    "results": {
+      "closure": {
+        "heading": "Czy zlecenie jest domknięte",
+        "contracted": "Umówione zamknięcie: {{type}}",
+        "closedOn": "Zamknięte {{date}} jako {{type}}."
+      },
+      "steps": {
+        "heading": "Wyniki wykonania kroków",
+        "emptyTitle": "Żaden krok nie ma jeszcze zapisanego wyniku",
+        "emptyDescription": "Wynik pojawia się tu dopiero, gdy krok wykonania zostanie zakończony albo pominięty — to nie jest błąd."
+      },
+      "measurements": {
+        "heading": "Zmierzona wartość",
+        "emptyTitle": "Nic jeszcze nie zmierzono",
+        "emptyDescription": "Efekt zlecenia mierzy się po wdrożeniu. Do tego czasu ta lista pozostaje pusta — to nie jest błąd.",
+        "preview": {
+          "intro": "Pomiar efektu tego zlecenia.",
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "baseline": "Punkt wyjścia",
+          "target": "Cel",
+          "result": "Wynik",
+          "measurementDate": "Data pomiaru",
+          "nextMeasurement": "Następny pomiar",
+          "notScheduled": "nie zaplanowano",
+          "evidence": "Dowód",
+          "evidenceAttached": "dołączony",
+          "evidenceMissing": "brak",
+          "evidenceHeading": "Dowód pomiaru",
+          "noEvidence": "Do tego pomiaru nie dołączono dowodu. Stan „brak dowodu” jest czymś innym niż „nieosiągnięte” — sam wynik nie jest przez to unieważniony.",
+          "evidencePointsTo": "Dowód wskazuje obiekt: {{label}}.",
+          "openEvidenceAria": "Otwórz dowód pomiaru: {{label}}"
+        }
+      },
+      "links": {
+        "heading": "Powiązane obiekty",
+        "linkObject": "Powiąż obiekt",
+        "emptyTitle": "Brak powiązanych obiektów",
+        "emptyDescription": "Tu trafiają dokumenty, decyzje, inicjatywy i dowody, na których opiera się to zlecenie.",
+        "preview": {
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "role": "Rola w zleceniu",
+          "linkStatus": "Stan powiązania",
+          "linkedAt": "Powiązane",
+          "pinnedVersion": "Przypięta wersja",
+          "alwaysLatest": "zawsze najnowsza",
+          "objectId": "Identyfikator obiektu",
+          "stale": "Nieaktualny",
+          "changedNotice": "Obiekt zmienił się po powiązaniu — sprawdź, czy nadal potwierdza to, co miał potwierdzać.",
+          "linkedNotice": "Obiekt powiązany z tym zleceniem.",
+          "cannotOpenTitle": "Tego obiektu nie otworzymy",
+          "staleRevisionTitle": "Otworzysz nieaktualną rewizję",
+          "openFooterNotice": "„Otwórz obiekt” w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.",
+          "pinVersion": "Przypnij wersję",
+          "unlinkFromOrder": "Odepnij od zlecenia",
+          "openObject": "Otwórz obiekt"
+        }
+      },
+      "nodeResult": {
+        "openLabel": "Otwórz rezultat",
+        "preview": {
+          "intro": "Wynik pojedynczego kroku wykonania tego zlecenia.",
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "sourceRun": "Źródłowy Run",
+          "nodeRun": "NodeRun",
+          "occurredAt": "Zdarzyło się",
+          "recordedAt": "Zapisano",
+          "skipAuthorization": "Autoryzacja pominięcia",
+          "graphConditionYes": "tak — warunek grafu",
+          "graphConditionNo": "nie potwierdzona",
+          "graphConditionUnknown": "nieznana",
+          "runContextHeading": "Kontekst Run",
+          "loading": "Wczytywanie…",
+          "runBlocked": "Nie masz uprawnień do szczegółów tego Run.",
+          "runNotFound": "Powiązanie z tym Run nie zostało znalezione — mogło zostać usunięte.",
+          "runLoadError": "Nie udało się wczytać szczegółów Run. Reszta tego wyniku pozostaje widoczna.",
+          "planVersion": "Wersja planu:",
+          "graphDigest": "Skrót grafu:",
+          "linkedToPlan": "Powiązano z planem:",
+          "evidenceHeading": "Dowód",
+          "noEvidenceDescription": "Do tego kroku nie zapisano czytelnego opisu dowodu.",
+          "enableExpertHint": " Włącz widok ekspercki, by zobaczyć surowe dane.",
+          "noOpenTarget": "Ten wynik nie wskazuje obiektu do otwarcia.",
+          "cannotOpenTitle": "Tego obiektu nie otworzymy",
+          "staleRevisionTitle": "Otworzysz nieaktualną rewizję",
+          "openFooterNotice": "„Otwórz rezultat” w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji."
+        }
+      },
+      "linkDialog": {
+        "title": "Powiąż istniejący obiekt",
+        "description": "Obiekt zostaje POWIĄZANY, nie skopiowany — nadal należy do swojego modułu, a to zlecenie dostaje tylko wskaźnik do niego (CW-RT-025).",
+        "confirm": "Powiąż",
+        "objectType": "Typ obiektu",
+        "objectId": "Identyfikator obiektu",
+        "objectIdHelp": "Skopiuj identyfikator z ekranu obiektu w jego własnym module (widok ekspercki pokazuje go obok nazwy).",
+        "objectIdPlaceholder": "np. doc-... / decision-...",
+        "role": "Rola w zleceniu",
+        "pinVersion": "Przypnij konkretną wersję",
+        "pinVersionHelp": "Puste = zawsze najnowsza wersja obiektu.",
+        "revisionPlaceholder": "np. v3 / skrót rewizji",
+        "pinReason": "Powód przypięcia tej wersji"
+      },
+      "pinDialog": {
+        "title": "Przypnij wersję obiektu",
+        "description": "Przypięcie NOWEJ wersji zdejmuje flagę „nieaktualny” — dokładnie ta czynność, po której zlecenie ponownie uznaje powiązanie za aktualne (CW-01-026-INV9).",
+        "confirm": "Przypnij",
+        "version": "Wersja",
+        "versionPlaceholder": "np. v4 / skrót rewizji",
+        "reason": "Powód",
+        "reasonPlaceholder": "np. zaktualizowano po uwagach klienta"
+      },
+      "unlinkDialog": {
+        "title": "Odepnij obiekt od zlecenia",
+        "description": "Powiązanie zniknie z aktywnej listy tego zlecenia. Sam obiekt NIE zostanie usunięty — zostaje w swoim module, tylko przestaje być rezultatem tego zlecenia. Historię tego powiązania da się odtworzyć.",
+        "confirm": "Odepnij",
+        "reasonLabel": "Powód odpięcia",
+        "reasonPlaceholder": "np. powiązano przez pomyłkę / zastąpione nowszym dokumentem"
+      }
     }
   }
 }
