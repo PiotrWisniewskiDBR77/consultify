@@ -18,6 +18,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListCurrency } from '../../utils/listDateFormat';
 
 interface AlertSettings {
   token_threshold_80: number;
@@ -39,12 +40,10 @@ interface UsageAlertsConfigProps {
 export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) => {
   const { t } = useTranslation();
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency: 'USD',
+    formatListCurrency(value, 'USD', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value);
+    });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<AlertSettings>({
@@ -341,7 +340,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
             <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — {formatCurrency(plan.price_monthly)} / {t('billing.alerts.month', 'miesiąc')}
+                {plan.name} — {formatCurrency(plan.price_monthly)} / {t('billing.alerts.month', 'month')}
               </option>
             ))}
           </select>

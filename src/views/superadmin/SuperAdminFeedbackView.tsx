@@ -765,7 +765,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                   className="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-900 inline-flex items-center gap-1"
                   title={t(
                     'feedback.duplicateBadge.title',
-                    'Triage wykrył podobne zgłoszenia — otwórz szczegóły żeby je zobaczyć'
+                    'Triage detected similar reports — open details to see them'
                   )}
                 >
                   <Copy size={10} />×{item.duplicate_count}
@@ -774,7 +774,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               {item.has_screenshot && (
                 <span
                   className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-900 inline-flex items-center gap-1"
-                  title={t('feedback.hasScreenshot', 'Zgłoszenie zawiera screenshot')}
+                  title={t('feedback.hasScreenshot', 'Report contains a screenshot')}
                 >
                   <ImageIcon size={10} />
                 </span>
@@ -784,7 +784,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                   className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-900 inline-flex items-center gap-1"
                   title={t(
                     'feedback.hasDiagnostics',
-                    'Zgłoszenie zawiera logi konsoli / sieci / breadcrumbs'
+                    'Report contains console / network logs / breadcrumbs'
                   )}
                 >
                   <Sparkles size={10} />
@@ -1788,9 +1788,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 ? 'bg-danger-600 border-danger-600 text-white'
                 : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-danger-400'
             }`}
-            title={t('feedback.overdueHint', 'Pokaż tylko zgłoszenia po terminie odpowiedzi (SLA)')}
+            title={t('feedback.overdueHint', 'Show only reports past the response deadline (SLA)')}
           >
-            {t('feedback.overdueOnly', 'Zaległe (SLA)')}
+            {t('feedback.overdueOnly', 'Overdue (SLA)')}
           </button>
         </div>
       </div>

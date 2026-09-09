@@ -3314,6 +3314,10 @@
         "providers": "Providers",
         "status": "Status"
       }
+    },
+    "settlements": {
+      "title": "Partner Settlements",
+      "subtitle": "Review historical partner economics"
     }
   },
   "dynamicTabBar": {
@@ -24905,7 +24909,26 @@
         "externalContextAllowed": "External context allowed",
         "externalContextRestricted": "External context restricted",
         "title": "AI Governance & AI Operations",
-        "description": "Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell."
+        "description": "Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside the primary Admin shell.",
+        "budget": "Budget: {{status}}"
+      },
+      "llmManagement": {
+        "customOption": "↳ custom (enter below)",
+        "customModelIdPlaceholder": "or enter your own model ID"
+      },
+      "llmHealth": {
+        "unknownDate": "Unknown date",
+        "retryButton": "Try again",
+        "total": "Total",
+        "unavailable": "Unavailable",
+        "action": "Action",
+        "providerStatus": "Provider Status",
+        "checking": "Checking...",
+        "refresh": "Refresh",
+        "recommendedAction": "Recommended action",
+        "lastCheck": "Last check",
+        "testAgain": "Test again",
+        "editConfig": "Edit configuration"
       }
     },
     "ai": {
@@ -34187,17 +34210,64 @@
     },
     "analytics": {
       "unavailableTitle": "Revenue analytics coming soon",
-      "unavailableBody": "MRR, churn, cohort and expansion analytics are not available yet. They will appear here once self-serve billing is enabled."
+      "unavailableBody": "MRR, churn, cohort and expansion analytics are not available yet. They will appear here once self-serve billing is enabled.",
+      "title": "Subscription analytics",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "last6Months": "Last 6 months",
+      "lastYear": "Last year",
+      "loadError": "Failed to load analytics data",
+      "mrrLabel": "Monthly recurring revenue (MRR)",
+      "arrLabel": "Annual recurring revenue (ARR)",
+      "ltvLabel": "Customer lifetime value (LTV)",
+      "arpaLabel": "Average revenue per account (ARPA)",
+      "vsPreviousPeriod": "vs previous period",
+      "activeSubscriptions": "{{count}} active subscriptions",
+      "revenueByPlan": "Revenue by plan",
+      "subscribersCount": "{{count}} subscribers",
+      "noPlanDistribution": "No plan revenue data available",
+      "churnRate": "Churn rate",
+      "monthlyMrrChurn": "Monthly MRR churn",
+      "monthShort": "mo.",
+      "mrrTrend": "MRR trend",
+      "churnAnalysis": "Churn analysis",
+      "month": "Month",
+      "churned": "Churned",
+      "mrrLost": "MRR lost",
+      "rate": "Rate",
+      "noChurnData": "No churn data available",
+      "expansionRevenue": "Expansion revenue",
+      "expansion": "Expansion",
+      "contraction": "Contraction",
+      "net": "Net",
+      "noCohortData": "No cohort data available",
+      "customerValueMetrics": "Customer value metrics",
+      "lifetimeValue": "Lifetime value",
+      "avgRevenuePerCustomer": "Avg. revenue per customer",
+      "avgLifespan": "Avg. lifespan",
+      "monthlyChurn": "Monthly churn"
     },
     "pending": {
       "title": "Not available yet",
       "description": "This billing capability is not enabled yet. It will appear here once self-serve billing is turned on."
     },
     "tax": {
-      "saved": "Saved"
+      "saved": "Saved",
+      "billingNamePlaceholder": "e.g. Example Ltd.",
+      "addressLine1Placeholder": "e.g. 123 Example Street",
+      "taxIdPlaceholder": "e.g. PL1234567890",
+      "billingEmailPlaceholder": "e.g. billing@company.com",
+      "addressLine2Placeholder": "e.g. Suite 10",
+      "cityPlaceholder": "e.g. New York",
+      "statePlaceholder": "e.g. NY"
     },
     "alerts": {
-      "saved": "Saved"
+      "saved": "Saved",
+      "month": "month"
+    },
+    "usage": {
+      "resetsOn": "Limit resets on {{date}}"
     }
   },
   "firstRun": {

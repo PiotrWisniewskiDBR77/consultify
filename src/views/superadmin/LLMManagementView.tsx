@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
@@ -40,6 +41,7 @@ import {
 import { Api } from '../../services/api';
 import { LLMProviderConfig } from '../../types/domain/ai';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 import { StatusBadge } from './components/shared/AdminTable';
 import { Button, IconButton } from './components/shared/Button';
 import { Card } from './components/shared/Card';
@@ -218,6 +220,7 @@ const providerMatchesForm = (
   (!expected.model_id || provider.model_id === expected.model_id);
 
 export const LLMManagementView: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<LLMConfigTab>('providers');
   const [loading, setLoading] = useState(true);
   const [applyingPreset, setApplyingPreset] = useState(false);
@@ -1000,7 +1003,7 @@ export const LLMManagementView: React.FC = () => {
                 <MetricCard
                   icon={Zap}
                   label="Tokens Today"
-                  value={usageStats?.user?.tokens_used_today?.toLocaleString() || '0'}
+                  value={formatListNumber(usageStats?.user?.tokens_used_today, '0')}
                 />
               </Card>
               <Card variant="bordered" padding="md">
@@ -1014,7 +1017,7 @@ export const LLMManagementView: React.FC = () => {
                 <MetricCard
                   icon={Activity}
                   label="Requests (30d)"
-                  value={costStats?.totals?.requests?.toLocaleString() || '0'}
+                  value={formatListNumber(costStats?.totals?.requests, '0')}
                 />
               </Card>
               <Card variant="bordered" padding="md">
@@ -1046,7 +1049,7 @@ export const LLMManagementView: React.FC = () => {
                           ${(m.cost || 0).toFixed(4)}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                          {(m.tokens || 0).toLocaleString()} tokens
+                          {formatListNumber(m.tokens || 0)} tokens
                         </div>
                       </div>
                     </div>
@@ -1091,10 +1094,8 @@ export const LLMManagementView: React.FC = () => {
                           {(incidentsData?.incidents || [])
                             .slice(0, 20)
                             .map((inc: any, idx: number) => {
-                              const start = inc?.start
-                                ? new Date(inc.start).toLocaleString()
-                                : 'n/a';
-                              const end = inc?.end ? new Date(inc.end).toLocaleString() : 'ongoing';
+                              const start = inc?.start ? formatListDateTime(inc.start) : 'n/a';
+                              const end = inc?.end ? formatListDateTime(inc.end) : 'ongoing';
                               const durMin =
                                 typeof inc?.durationMs === 'number'
                                   ? Math.round(inc.durationMs / 60000)
@@ -1384,7 +1385,7 @@ export const LLMManagementView: React.FC = () => {
                             {m.label} — {m.id}
                           </option>
                         ))}
-                        <option value="__custom__">↳ custom (wpisz poniżej)</option>
+                        <option value="__custom__">{t('admin.aiControlCenter.llmManagement.customOption', '\u21b3 custom (enter below)')}</option>
                       </select>
                       <input
                         required
@@ -1393,7 +1394,7 @@ export const LLMManagementView: React.FC = () => {
                           setProviderForm({ ...providerForm, model_id: e.target.value })
                         }
                         className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:outline-none focus:border-blue-500/50"
-                        placeholder="lub wpisz własne ID modelu"
+                        placeholder={t('admin.aiControlCenter.llmManagement.customModelIdPlaceholder', 'or enter your own model ID')}
                       />
                     </>
                   ) : (

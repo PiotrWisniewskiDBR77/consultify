@@ -2,6 +2,8 @@ import { AlertTriangle, Database, HardDrive } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formatListDate } from '../../utils/listDateFormat';
+
 interface UsageData {
   tokens: {
     used: number;
@@ -173,7 +175,7 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
       {/* Period Info */}
       {usage.periodEnd && (
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('billing.usage.resetsOn', 'Limit odnowi się {{date}}', { date: new Date(usage.periodEnd).toLocaleDateString('pl-PL') })}
+          {t('billing.usage.resetsOn', 'Limit resets on {{date}}', { date: formatListDate(usage.periodEnd) })}
         </p>
       )}
     </div>

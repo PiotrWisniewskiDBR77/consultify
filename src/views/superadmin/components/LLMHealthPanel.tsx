@@ -20,12 +20,14 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 
 interface HealthError {
   title: string;
@@ -194,6 +196,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   autoRefresh = true,
   refreshInterval = 60000, // 1 minute
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [providers, setProviders] = useState<ProviderHealth[]>([]);
@@ -203,10 +206,11 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const formatDateTime = (value: string | null | undefined) => {
-    if (!value) return 'Unknown date';
+    if (!value) return t('admin.aiControlCenter.llmHealth.unknownDate', 'Unknown date');
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Unknown date';
-    return date.toLocaleString('pl-PL');
+    if (Number.isNaN(date.getTime()))
+      return t('admin.aiControlCenter.llmHealth.unknownDate', 'Unknown date');
+    return formatListDateTime(date);
   };
 
   const fetchHealthData = useCallback(async (showRefreshing = false) => {
@@ -316,7 +320,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
           onClick={handleRefresh}
           className="mt-3 px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-500"
         >
-          Spróbuj ponownie
+          {t('admin.aiControlCenter.llmHealth.retryButton', 'Try again')}
         </button>
       </div>
     );
@@ -331,7 +335,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <div className="bg-slate-100 dark:bg-navy-800 rounded-lg p-4">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm">
             <Activity className="w-4 h-4" />
-            Łącznie
+            {t('admin.aiControlCenter.llmHealth.total', 'Total')}
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
             {summary?.total || 0}
@@ -361,7 +365,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 text-danger-600 dark:text-danger-400 text-sm">
             <XCircle className="w-4 h-4" />
-            Niedostępne
+            {t('admin.aiControlCenter.llmHealth.unavailable', 'Unavailable')}
           </div>
           <div className="text-2xl font-bold text-danger-600 dark:text-danger-400 mt-1">
             {summary?.unhealthyCount || 0}
@@ -414,7 +418,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                     <div className="mt-2 p-2 bg-white dark:bg-navy-800 rounded border border-slate-200 dark:border-navy-700">
                       <p className="text-sm text-primary-600 dark:text-primary-400 flex items-center gap-1">
                         <Zap className="w-4 h-4" />
-                        <strong>Działanie:</strong> {alert.action}
+                        <strong>{t('admin.aiControlCenter.llmHealth.action', 'Action')}:</strong> {alert.action}
                       </p>
                     </div>
                   </div>
@@ -430,7 +434,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
         <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="w-5 h-5" />
-            Status Providerów
+            {t('admin.aiControlCenter.llmHealth.providerStatus', 'Provider Status')}
           </h3>
           <button
             onClick={handleRefresh}
@@ -438,7 +442,9 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Sprawdzanie...' : 'Odśwież'}
+            {refreshing
+              ? t('admin.aiControlCenter.llmHealth.checking', 'Checking...')
+              : t('admin.aiControlCenter.llmHealth.refresh', 'Refresh')}
           </button>
         </div>
 
@@ -501,7 +507,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                       </p>
                       <div className="mt-2 p-2 bg-white dark:bg-navy-800 rounded">
                         <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <strong>Zalecane działanie:</strong> {provider.error.action}
+                          <strong>{t('admin.aiControlCenter.llmHealth.recommendedAction', 'Recommended action')}:</strong> {provider.error.action}
                         </p>
                       </div>
                       {provider.rawError && (
@@ -514,7 +520,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
                   <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <Clock className="w-4 h-4" />
-                    Ostatnie sprawdzenie: {formatDateTime(provider.lastCheck)}
+                    {t('admin.aiControlCenter.llmHealth.lastCheck', 'Last check')}: {formatDateTime(provider.lastCheck)}
                   </div>
 
                   <div className="flex gap-2">
@@ -523,7 +529,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                       className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 flex items-center gap-1"
                     >
                       <RefreshCw className="w-4 h-4" />
-                      Testuj ponownie
+                      {t('admin.aiControlCenter.llmHealth.testAgain', 'Test again')}
                     </button>
                     {onProviderAction && (
                       <button
@@ -531,7 +537,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                         className="px-3 py-1.5 text-sm bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 flex items-center gap-1"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        Edytuj konfigurację
+                        {t('admin.aiControlCenter.llmHealth.editConfig', 'Edit configuration')}
                       </button>
                     )}
                   </div>

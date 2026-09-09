@@ -26115,6 +26115,24 @@
         "required": "wymagany",
         "notRequired": "niewymagany",
         "externalContext": "Kontekst zewnętrzny: {{status}}"
+      },
+      "llmManagement": {
+        "customOption": "↳ custom (wpisz poniżej)",
+        "customModelIdPlaceholder": "lub wpisz własne ID modelu"
+      },
+      "llmHealth": {
+        "unknownDate": "Nieznana data",
+        "retryButton": "Spróbuj ponownie",
+        "total": "Łącznie",
+        "unavailable": "Niedostępne",
+        "action": "Działanie",
+        "providerStatus": "Status Providerów",
+        "checking": "Sprawdzanie...",
+        "refresh": "Odśwież",
+        "recommendedAction": "Zalecane działanie",
+        "lastCheck": "Ostatnie sprawdzenie",
+        "testAgain": "Testuj ponownie",
+        "editConfig": "Edytuj konfigurację"
       }
     },
     "ai": {
