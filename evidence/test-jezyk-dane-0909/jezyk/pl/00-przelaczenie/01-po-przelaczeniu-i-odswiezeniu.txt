@@ -1,0 +1,59 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ustawienia
+Język
+Dane
+Model
+James Whitfield
+JW
+Ustawienia
+
+Preferencje osobiste
+
+Moje ustawienia
+Profil
+Awatar i zdjęcie
+Podpisy e-mail
+Godziny pracy
+Preferencje pracy
+Panel
+Preferencje pracy
+Regionalne
+Język
+AI i automatyzacja
+Powiadomienia
+Bezpieczeństwo
+Integracje
+Dane i prywatność
+Płatności
+Wygląd
+Zaawansowane
+Wróć do panelu
+Ustawienia
+Język
+Język
+
+Wybierz preferowany język
+
+Język
+
+Wybierz preferowany język interfejsu.
+
+Domyślne ustawienia języka organizacji pozostają tutaj tylko do odczytu. Nadal możesz zastąpić język interfejsu dla własnego konta.
+TENANT DEFAULT LANGUAGE: EN
+🇬🇧
+English
+🇵🇱
+Polski
+🇩🇪
+Deutsch
+🇸🇦
+العربية
+🇯🇵
+日本語
+🇪🇸
+Español

@@ -1,0 +1,66 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+Nowy wniosek
+TYP
+	
+ZAKRES
+	
+MODUŁ
+	
+WERSJA
+	
+ZAMROŻONO
+	
+
+
+Wniosek
+	
+Northwind 2027 Operational Maturity Report
+	
+Ocena
+	
+—
+Opublikowany
+	
+09/09/2026
+	
+
+
+Wynik zamrożony
+	
+Sesja 614e5f28-286f-4462-b5e8-a14f31930566 — drd@2.0.0-methodpack.1, zamrożona z event-store.
+	
+Ocena
+	
+v1
+Aktualny
+	
+08/09/2026
+	
+
+
+Zapis sesji
+	
+Northwind 2027 — Operational Maturity Assessment
+	
+Ocena
+	
+—
+Zapis sesji
+	
+—
+	

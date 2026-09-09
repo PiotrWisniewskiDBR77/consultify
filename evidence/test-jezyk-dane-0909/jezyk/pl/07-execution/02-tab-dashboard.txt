@@ -1,0 +1,137 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Realizacja
+Dane
+Model
+James Whitfield
+JW
+Kokpit
+Realizacje
+Praca
+Zasoby
+Decyzje i ryzyka
+Raporty
+Ryzyka
+7
+Rozstrzygnięcia
+7
+Kokpit menedżera
+
+Pięć pytań zarządczych, jedna odpowiedź na spojrzenie.
+
+KONDYCJA
+63
+/100
+postęp 27%
+NA CZAS
+100%
+4 na tor
+0 ryzyk
+0 opóźn.
+WARTOŚĆ VS PLAN
+Brak policzonego ROI
+OBŁOŻENIE
+13%
+2 przeciąż.
+9 osób
+DO ROZSTRZYGNIĘCIA
+7
+pozycji
+1 bloker
+3 przetermin.
+Co nam grozi — TOP ryzyka
+
+Ryzyka o najwyższym wyniku (P × I).
+
+RYZYKO
+	
+POZIOM (P×I)
+	
+WŁAŚCICIEL
+	
+INICJATYWA
+	
+STATUS
+
+
+Works council has not signed the shuttle safety case
+	
+Wysokie (12)
+	
+Priya Sharma
+	
+Warehouse Automation Pilot
+	
+Otwarte
+
+
+Line 3 cutover slips past the summer shutdown window
+	
+Wysokie (12)
+	
+Laura Novak
+	
+MES Rollout Line 3
+	
+Otwarte
+
+
+Paused upskilling leaves key roles single-deep
+	
+Wysokie (9)
+	
+Sarah Mitchell
+	
+Skills Matrix and Upskilling
+	
+Otwarte
+
+
+Downtime reason codes are not agreed between Quality and Operations
+	
+Wysokie (9)
+	
+Robert Chen
+	
+MES Rollout Line 3
+	
+Otwarte
+
+
+Spare-parts holding can be cut by fifteen per cent without service impact
+	
+Umiarkowane (6)
+	
+Thomas Baker
+	
+Predictive Maintenance for CNC Line
+	
+Otwarte
+
+
+SCADA bridge depends on the vendor firmware release
+	
+Umiarkowane (6)
+	
+Daniel Osei
+	
+MES Rollout Line 3
+	
+Otwarte
+
+
+False positives erode operator trust in predictive alerts
+	
+Umiarkowane (4)
+	
+Michael Grant
+	
+Predictive Maintenance for CNC Line
+	
+Mitygowane
+Najbliższe kamienie milowe
+Brak zaplanowanych kamieni milowych.

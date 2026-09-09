@@ -1,0 +1,390 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Inicjatywy
+Dane
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Priorytet
+Wszystkie priorytety
+Krytyczny
+Wysoki
+Średni
+Niski
+Status
+Aktywne
+Wszystkie
+Nowa inicjatywa
+Wszystkie
+11
+Do zatwierdzenia
+1
+W realizacji
+4
+INICJATYWA
+	
+STATUS
+	
+NASTĘPNA BRAMKA
+	
+GOTOWOŚĆ
+	
+WŁAŚCICIEL
+	
+OBSZAR / OŚ
+	
+NASTĘPNE DZIAŁANIE
+	
+OCZEKIWANY EFEKT
+	
+PLANOWANE OKNO
+	
+KONDYCJA
+	
+AKTUALIZACJA
+	
+
+
+Skills Matrix and Upskilling
+No single record of machine sign-off; cover for absence is arranged from memory and eleven roles have no backup.
+	
+W realizacji
+	
+Realizacja
+	
+Nie oceniono
+	
+Priya Sharma
+	
+—
+	
+Monitoruj realizację
+	
+A live skills matrix for 340 production roles, feeding shift planning and closing eleven single points of failure.
+Pewność: Nieznana
+	
+—
+	
+Nieznana
+	
+wczoraj
+	
+
+
+Warehouse Automation Pilot
+Handling cost per unit rose 11% in two years while order lines grew only 4%; picking walks the full aisle.
+	
+W realizacji
+	
+Realizacja
+	
+Nie oceniono
+	
+Emily Carter
+	
+—
+	
+Monitoruj realizację
+	
+Goods-to-person shuttle for the 400 fastest-moving SKUs in one Leeds aisle, sized to prove the business case.
+Pewność: Nieznana
+	
+—
+	
+Nieznana
+	
+wczoraj
+	
+
+
+MES Rollout Line 3
+Line 3 production data reaches the ERP a day late, so schedule adherence cannot be managed within the shift.
+	
+W realizacji
+	
+Realizacja
+	
+Nie oceniono
+	
+Laura Novak
+	
+—
+	
+Monitoruj realizację
+	
+Extends the existing MES from Lines 1-2 to Rotherham Line 3, replacing paper travellers with live reporting.
+Pewność: Nieznana
+	
+—
+	
+Nieznana
+	
+wczoraj
+	
+
+
+Predictive Maintenance for CNC Line
+Unplanned CNC stoppages cost 640 production hours in 2025 and are invisible until the machine stops.
+	
+W realizacji
+	
+Realizacja
+	
+Nie oceniono
+	
+Daniel Osei
+	
+—
+	
+Monitoruj realizację
+	
+Condition-based maintenance on Leeds CNC cells 1-6, replacing the fixed 12-week service calendar.
+Pewność: Nieznana
+	
+—
+	
+Nieznana
+	
+wczoraj
+	
+
+
+Shift Handover Digitisation
+The June audit found 30% of open issues were lost at handover because the record is verbal plus a paper logbook.
+	
+Zatwierdzona
+	
+Harmonogram
+	
+Nie oceniono
+	
+Michael Grant
+	
+—
+	
+Zaplanuj realizację
+	
+A structured digital shift handover with open-issue carry-forward and a searchable history.
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Scrap Reduction Programme
+Scrap at 3.4% of material cost against a 2.1% benchmark is about GBP 640k a year of avoidable loss.
+	
+Zatwierdzona
+	
+Harmonogram
+	
+Nie oceniono
+	
+Sarah Mitchell
+	
+—
+	
+Zaplanuj realizację
+	
+A focused programme on the five largest scrap codes, each with an owner, a baseline and a weekly countermeasure review.
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Supplier Quality Gate
+Two thirds of 2026 non-conformances come from bought-in castings; goods-in is a visual check with no feedback loop.
+	
+Zatwierdzona
+	
+Harmonogram
+	
+Nie oceniono
+	
+Michael Grant
+	
+—
+	
+Zaplanuj realizację
+	
+A documented goods-in quality gate with risk-based sampling and a monthly defect feedback loop to suppliers.
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Energy Monitoring and ISO 50001
+14.2 GWh a year is metered at four points only, so no department can be held to an energy budget.
+	
+Zatwierdzona
+	
+Harmonogram
+	
+Nie oceniono
+	
+Daniel Osei
+	
+—
+	
+Zaplanuj realizację
+	
+Sub-metering of the twelve largest loads, energy per production hour, and ISO 50001 certification.
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Cybersecurity Hardening OT
+Segment the OT network, retire unsupported controller firmware and monitor vendor remote access.
+	
+Propozycja
+	
+Definicja
+	
+Nie oceniono
+	
+Robert Chen
+	
+Information Technology
+	
+Uzupełnij definicję
+	
+—
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Customer Portal for Order Tracking
+A self-service portal exposing delivery date, production stage and dispatch tracking for every open order.
+	
+Szkic
+	
+Definicja
+	
+Nie oceniono
+	
+Michael Grant
+	
+Commercial
+	
+Uzupełnij definicję
+	
+—
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+
+
+Digital Work Instructions
+Tablet-based work instructions served from the current revision, replacing laminated folders at the station.
+	
+Do zatwierdzenia
+	
+Portfel
+	
+Nie oceniono
+	
+Sarah Mitchell
+	
+Digital Manufacturing
+	
+Przygotuj decyzję portfelową
+	
+—
+Pewność: Nieznana
+	
+—
+	
+Nie dotyczy
+	
+wczoraj
+	
+Kreator Inicjatyw AI
+Źródło(opcjonalnie)
+Wybierz wnioski z wywiadów
+2
+Założenie
+Problem, rezultat i zakres
+3
+Szkic AI
+Przegląd, korekta i podobieństwa
+4
+Zatwierdzenie
+Wybór, dowody i reguły
+5
+Potwierdzenie
+Zapis i ślad audytu
+Założenie i rdzeń inicjatywy
+
+Opisz problem i oczekiwany rezultat. Jeśli wybrano źródło, pola są wstępnie uzupełnione; przejrzyj je przed wygenerowaniem szkicu AI.
+
+Problem
+Uzupełnij z AI
+Rozwiązanie
+Uzupełnij z AI
+Zakres
+Uzupełnij z AI
+KPI
+Uzupełnij z AI
+Projekt *
+Wybierz projekt…
+Operational Excellence Programme
+Digital & Automation Roadmap
+zespół ma 11 aktywnych inicjatyw — sugerowane: 2
+Portfolio jest przeciążone — utwórz tylko 1–2 nowe inicjatywy.
+Decyzja transformacyjna
+Stwórz pierwsze portfolio
+Priorytety biznesowe
+Marża / EBITDA
+Jakość
+Terminowość
+Automatyzacja
+Governance
+Redukcja ryzyka
+Liczba
+Horyzont
+90 dni
+Ryzyko
+Mieszany portfel
+Notatka konsultanta / kontekst
+Anuluj
+Uzupełnij założenie i wygeneruj szkic AI.
+Wstecz
+Wygeneruj szkic AI

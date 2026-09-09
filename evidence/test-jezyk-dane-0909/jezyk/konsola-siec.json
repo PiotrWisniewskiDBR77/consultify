@@ -1,0 +1,47 @@
+[
+ {
+  "ekran": "init",
+  "typ": "console.error",
+  "tekst": "Failed to fetch notifications TypeError: Failed to fetch\n    at window.fetch (https://staging.consultify.ai/assets/index-CoaULSpq.js:57:2101)\n    at window.fetch (https://staging.consultify.ai/assets/index-CoaULSpq.js:53:1502)\n    at Yp.window.fetch (https://staging.consultify.ai/assets/index-CoaULS"
+ },
+ {
+  "ekran": "en/08-results/01-menu1",
+  "typ": "http-404",
+  "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published"
+ },
+ {
+  "ekran": "en/08-results/01-menu1",
+  "typ": "console.error",
+  "tekst": "Failed to load resource: the server responded with a status of 404 ()"
+ },
+ {
+  "ekran": "en/08-results/02-tab-management-reports",
+  "typ": "http-404",
+  "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published"
+ },
+ {
+  "ekran": "en/08-results/02-tab-management-reports",
+  "typ": "console.error",
+  "tekst": "Failed to load resource: the server responded with a status of 404 ()"
+ },
+ {
+  "ekran": "pl/08-results/01-menu1",
+  "typ": "http-404",
+  "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published"
+ },
+ {
+  "ekran": "pl/08-results/01-menu1",
+  "typ": "console.error",
+  "tekst": "Failed to load resource: the server responded with a status of 404 ()"
+ },
+ {
+  "ekran": "pl/08-results/02-tab-management-reports",
+  "typ": "http-404",
+  "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published"
+ },
+ {
+  "ekran": "pl/08-results/02-tab-management-reports",
+  "typ": "console.error",
+  "tekst": "Failed to load resource: the server responded with a status of 404 ()"
+ }
+]

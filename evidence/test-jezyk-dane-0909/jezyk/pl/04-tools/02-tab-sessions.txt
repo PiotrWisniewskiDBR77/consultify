@@ -1,0 +1,104 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Narzędzia
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Sesje
+Insighty
+Raporty
+Inicjatywy
+Status: Wszystkie
+Nowa sesja
+Wszystkie
+4
+Szkic
+0
+Oczekuje na przegląd
+0
+W trakcie
+0
+Zatwierdzone
+4
+Zakończony
+0
+Archived
+0
+Blocked
+0
+TYP
+	
+NAZWA
+	
+KATEGORIA
+	
+STATUS
+	
+POSTĘP
+	
+AUTOR
+	
+AKTUALIZACJA
+	
+
+
+VSM
+	
+Warehouse Outbound Value Stream Map — Leeds
+	
+Operacyjne
+	
+Zatwierdzone
+	
+100%
+	
+Sarah Mitchell
+	1 dzień temu	
+
+
+SWT
+	
+Northwind 2027 Strategic SWOT
+	
+Strategiczne
+	
+Zatwierdzone
+	
+100%
+	
+James Whitfield
+	1 dzień temu	
+
+
+CAP
+	
+Digital & Automation Capability Map
+	
+Strategiczne
+	
+Zatwierdzone
+	
+100%
+	
+Daniel Osei
+	1 dzień temu	
+
+
+DRD
+	
+Northwind 2027 — Operational Maturity Assessment
+	
+Oceny
+	
+Zatwierdzone
+	
+100%
+	
+James Whitfield
+	Przed chwilą	

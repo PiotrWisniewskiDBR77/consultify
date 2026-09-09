@@ -1,0 +1,65 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Inicjatywy
+Dane
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Status
+Nowy plan
+Szkice
+0
+Opublikowane
+1
+Z konfliktami
+0
+NAZWA
+	
+PORTFEL / WERSJA
+	
+HORYZONT
+	
+STATUS
+	
+INICJATYW W PLANIE
+	
+KONFLIKTY
+	
+ZAKTUALIZOWANO
+	
+AUTOR
+
+
+Northwind 2027 — Wave 1 delivery plan
+	
+Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-08 · v2
+	
+02 lut 2026 – 31 gru 2027
+	
+Opublikowany
+	
+8
+	
+brak
+	
+08 wrz 2026
+	
+James Whitfield
+Northwind 2027 — Wave 1 delivery plan
+Otwórz
+Opublikowany
+SZCZEGÓŁY
+Właściwość	Wartość
+Portfel / wersja	Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-08 · v2
+Horyzont	02 lut 2026 – 31 gru 2027
+Inicjatyw w planie	8
+Konflikty	brak
+POWIĄZANIA
+Brak powiązań

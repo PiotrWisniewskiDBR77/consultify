@@ -1,0 +1,1507 @@
+{
+ "start": "2026-09-09T15:47:45.254Z",
+ "en": [
+  {
+   "lang": "en",
+   "modul": "01-chat",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/chat",
+   "plik": "en/01-chat/01-menu1",
+   "dlugoscTekstu": 364,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "01-chat",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "en",
+   "modul": "01-chat",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/chat/17bca117-2932-4bdb-a676-1c7b32589217",
+   "plik": "en/01-chat/91-tworzenie",
+   "dlugoscTekstu": 369
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/01-menu1",
+   "dlugoscTekstu": 1293,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-ideas",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/02-tab-ideas",
+   "dlugoscTekstu": 357,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-notebook",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/02-tab-notebook",
+   "dlugoscTekstu": 356,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-inbox",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/02-tab-inbox",
+   "dlugoscTekstu": 356,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-calendar",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/02-tab-calendar",
+   "dlugoscTekstu": 1307,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-tasks",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/02-tab-tasks",
+   "dlugoscTekstu": 1730,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-decisions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Decisions' }).first()\n    - locator resolved to <button data-testid=\"mywork-tab-decisions\" class=\"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-"
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "02-tab-vaults",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Vaults' }).first()\n    - locator resolved to <button data-testid=\"mywork-tab-vault\" class=\"inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whi"
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "en/02-my-work/90-podglad-rekordu",
+   "dlugoscTekstu": 1841
+  },
+  {
+   "lang": "en",
+   "modul": "02-my-work",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/interview",
+   "plik": "en/03-interview/01-menu1",
+   "dlugoscTekstu": 322,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-inbox",
+   "url": "https://staging.consultify.ai/interview?tab=my_assignments",
+   "plik": "en/03-interview/02-tab-inbox",
+   "dlugoscTekstu": 322,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/interview?tab=sessions",
+   "plik": "en/03-interview/02-tab-sessions",
+   "dlugoscTekstu": 467,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-assigned",
+   "url": "https://staging.consultify.ai/interview?tab=managed",
+   "plik": "en/03-interview/02-tab-assigned",
+   "dlugoscTekstu": 334,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-templates",
+   "url": "https://staging.consultify.ai/interview?tab=templates",
+   "plik": "en/03-interview/02-tab-templates",
+   "dlugoscTekstu": 1620,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/interview?tab=insights",
+   "plik": "en/03-interview/02-tab-insights",
+   "dlugoscTekstu": 909,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/interview?tab=initiatives",
+   "plik": "en/03-interview/02-tab-initiatives",
+   "dlugoscTekstu": 429,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/interview",
+   "plik": "en/03-interview/90-podglad-rekordu",
+   "dlugoscTekstu": 322
+  },
+  {
+   "lang": "en",
+   "modul": "03-interview",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "en/04-tools/01-menu1",
+   "dlugoscTekstu": 3753,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "en/04-tools/02-tab-library",
+   "dlugoscTekstu": 3753,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=sessions",
+   "plik": "en/04-tools/02-tab-sessions",
+   "dlugoscTekstu": 741,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=outputs",
+   "plik": "en/04-tools/02-tab-insights",
+   "dlugoscTekstu": 345,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=reports",
+   "plik": "en/04-tools/02-tab-reports",
+   "dlugoscTekstu": 584,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=initiatives",
+   "plik": "en/04-tools/02-tab-initiatives",
+   "dlugoscTekstu": 380,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "en/04-tools/90-podglad-rekordu",
+   "dlugoscTekstu": 4237
+  },
+  {
+   "lang": "en",
+   "modul": "04-tools",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "en/04-tools/91-tworzenie",
+   "dlugoscTekstu": 5767
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library",
+   "plik": "en/05-assessment/01-menu1",
+   "dlugoscTekstu": 579,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library",
+   "plik": "en/05-assessment/02-tab-library",
+   "dlugoscTekstu": 579,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "02-tab-processes",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=processes",
+   "plik": "en/05-assessment/02-tab-processes",
+   "dlugoscTekstu": 320,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=outputs",
+   "plik": "en/05-assessment/02-tab-insights",
+   "dlugoscTekstu": 464,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=reports",
+   "plik": "en/05-assessment/02-tab-reports",
+   "dlugoscTekstu": 397,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=initiatives",
+   "plik": "en/05-assessment/02-tab-initiatives",
+   "dlugoscTekstu": 393,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library",
+   "plik": "en/05-assessment/90-podglad-rekordu",
+   "dlugoscTekstu": 1283
+  },
+  {
+   "lang": "en",
+   "modul": "05-assessment",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "en",
+   "modul": "06-initiatives",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/initiatives",
+   "plik": "en/06-initiatives/01-menu1",
+   "dlugoscTekstu": 4322,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "06-initiatives",
+   "ekran": "02-tab-plan",
+   "url": "https://staging.consultify.ai/initiatives?tab=plan",
+   "plik": "en/06-initiatives/02-tab-plan",
+   "dlugoscTekstu": 725,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "06-initiatives",
+   "ekran": "02-tab-load",
+   "url": "https://staging.consultify.ai/initiatives?tab=capacity",
+   "plik": "en/06-initiatives/02-tab-load",
+   "dlugoscTekstu": 553,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "06-initiatives",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/initiatives",
+   "plik": "en/06-initiatives/90-podglad-rekordu",
+   "dlugoscTekstu": 4967
+  },
+  {
+   "lang": "en",
+   "modul": "06-initiatives",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/initiatives",
+   "plik": "en/06-initiatives/91-tworzenie",
+   "dlugoscTekstu": 5285
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+   "plik": "en/07-execution/01-menu1",
+   "dlugoscTekstu": 731,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-dashboard",
+   "url": "https://staging.consultify.ai/execution?tab=summary&view=table&kokpit=ryzyka",
+   "plik": "en/07-execution/02-tab-dashboard",
+   "dlugoscTekstu": 1439,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-deliveries",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+   "plik": "en/07-execution/02-tab-deliveries",
+   "dlugoscTekstu": 731,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-work",
+   "url": "https://staging.consultify.ai/execution?tab=work&view=table",
+   "plik": "en/07-execution/02-tab-work",
+   "dlugoscTekstu": 5447,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-resources",
+   "url": "https://staging.consultify.ai/execution?tab=resources&view=table",
+   "plik": "en/07-execution/02-tab-resources",
+   "dlugoscTekstu": 6807,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-decisions-risks",
+   "url": "https://staging.consultify.ai/execution?tab=control&view=table",
+   "plik": "en/07-execution/02-tab-decisions-risks",
+   "dlugoscTekstu": 1242,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/execution?tab=reports&view=table",
+   "plik": "en/07-execution/02-tab-reports",
+   "dlugoscTekstu": 559,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+   "plik": "en/07-execution/90-podglad-rekordu",
+   "dlugoscTekstu": 1232
+  },
+  {
+   "lang": "en",
+   "modul": "07-execution",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/results/kpi",
+   "plik": "en/08-results/01-menu1",
+   "dlugoscTekstu": 376,
+   "bledyLiczba": 2
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "02-tab-okr",
+   "url": "https://staging.consultify.ai/results/okr",
+   "plik": "en/08-results/02-tab-okr",
+   "dlugoscTekstu": 331,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "02-tab-roi",
+   "url": "https://staging.consultify.ai/results/roi",
+   "plik": "en/08-results/02-tab-roi",
+   "dlugoscTekstu": 424,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "02-tab-management-reports",
+   "url": "https://staging.consultify.ai/results/kpi?resultsView=reports",
+   "plik": "en/08-results/02-tab-management-reports",
+   "dlugoscTekstu": 404,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/results/kpi",
+   "plik": "en/08-results/90-podglad-rekordu",
+   "dlugoscTekstu": 931
+  },
+  {
+   "lang": "en",
+   "modul": "08-results",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/results/kpi",
+   "plik": "en/08-results/91-tworzenie",
+   "dlugoscTekstu": 699
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/finance?tab=statements",
+   "plik": "en/09-finance/01-menu1",
+   "dlugoscTekstu": 443,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "02-tab-analysis",
+   "url": "https://staging.consultify.ai/finance?tab=analysis",
+   "plik": "en/09-finance/02-tab-analysis",
+   "dlugoscTekstu": 341,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "02-tab-models",
+   "url": "https://staging.consultify.ai/finance?tab=models",
+   "plik": "en/09-finance/02-tab-models",
+   "dlugoscTekstu": 541,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "02-tab-prediction",
+   "url": "https://staging.consultify.ai/finance?tab=prediction",
+   "plik": "en/09-finance/02-tab-prediction",
+   "dlugoscTekstu": 411,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "02-tab-enterprise-valuation",
+   "url": "https://staging.consultify.ai/finance?tab=valuation",
+   "plik": "en/09-finance/02-tab-enterprise-valuation",
+   "dlugoscTekstu": 954,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/finance?tab=statements",
+   "plik": "en/09-finance/90-podglad-rekordu",
+   "dlugoscTekstu": 791
+  },
+  {
+   "lang": "en",
+   "modul": "09-finance",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/finance?tab=statements",
+   "plik": "en/09-finance/91-tworzenie",
+   "dlugoscTekstu": 423
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/presentations",
+   "plik": "en/10-materials/01-menu1",
+   "dlugoscTekstu": 504,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "02-tab-documents",
+   "url": "https://staging.consultify.ai/presentations?tab=documents",
+   "plik": "en/10-materials/02-tab-documents",
+   "dlugoscTekstu": 795,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "02-tab-presentations",
+   "url": "https://staging.consultify.ai/presentations?tab=presentations",
+   "plik": "en/10-materials/02-tab-presentations",
+   "dlugoscTekstu": 518,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "02-tab-sheets",
+   "url": "https://staging.consultify.ai/presentations?tab=sheets",
+   "plik": "en/10-materials/02-tab-sheets",
+   "dlugoscTekstu": 440,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "02-tab-template-library",
+   "url": "https://staging.consultify.ai/presentations?tab=templates",
+   "plik": "en/10-materials/02-tab-template-library",
+   "dlugoscTekstu": 20641,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/presentations",
+   "plik": "en/10-materials/90-podglad-rekordu",
+   "dlugoscTekstu": 677
+  },
+  {
+   "lang": "en",
+   "modul": "10-materials",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/presentations",
+   "plik": "en/10-materials/91-tworzenie",
+   "dlugoscTekstu": 924
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library",
+   "plik": "en/11-audits/01-menu1",
+   "dlugoscTekstu": 489,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library",
+   "plik": "en/11-audits/02-tab-library",
+   "dlugoscTekstu": 489,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/audit-programs?tab=processes",
+   "plik": "en/11-audits/02-tab-sessions",
+   "dlugoscTekstu": 508,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "02-tab-conclusions",
+   "url": "https://staging.consultify.ai/audit-programs?tab=conclusions",
+   "plik": "en/11-audits/02-tab-conclusions",
+   "dlugoscTekstu": 361,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/audit-programs?tab=reports",
+   "plik": "en/11-audits/02-tab-reports",
+   "dlugoscTekstu": 417,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/audit-programs?tab=initiatives",
+   "plik": "en/11-audits/02-tab-initiatives",
+   "dlugoscTekstu": 554,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library",
+   "plik": "en/11-audits/90-podglad-rekordu",
+   "dlugoscTekstu": 489
+  },
+  {
+   "lang": "en",
+   "modul": "11-audits",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /^(New|Add|Create|Import)\\b/i }).first()\n    - locator resolved to <button disabled type=\"button\" aria-dis"
+  },
+  {
+   "lang": "en",
+   "modul": "12-meeting",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/meetings",
+   "plik": "en/12-meeting/01-menu1",
+   "dlugoscTekstu": 218,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "13-organization",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+   "plik": "en/13-organization/01-menu1",
+   "dlugoscTekstu": 1813,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "13-organization",
+   "ekran": "02-tab-scale",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+   "plik": "en/13-organization/02-tab-scale",
+   "dlugoscTekstu": 1813,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "13-organization",
+   "ekran": "02-tab-markets-systems",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+   "plik": "en/13-organization/02-tab-markets-systems",
+   "dlugoscTekstu": 1813,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "13-organization",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "en",
+   "modul": "13-organization",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+   "plik": "en/13-organization/91-tworzenie",
+   "dlugoscTekstu": 1813
+  },
+  {
+   "lang": "en",
+   "modul": "14-admin",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/admin/team/members",
+   "plik": "en/14-admin/01-menu1",
+   "dlugoscTekstu": 2156,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "14-admin",
+   "ekran": "03-subnav-invitations",
+   "url": "https://staging.consultify.ai/admin/team/invitations",
+   "plik": "en/14-admin/03-subnav-invitations",
+   "dlugoscTekstu": 673,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "14-admin",
+   "ekran": "03-subnav-roles-permissions",
+   "url": "https://staging.consultify.ai/admin/team/roles-permissions",
+   "plik": "en/14-admin/03-subnav-roles-permissions",
+   "dlugoscTekstu": 686,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "15-settings",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/settings/profile",
+   "plik": "en/15-settings/01-menu1",
+   "dlugoscTekstu": 1351,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "15-settings",
+   "ekran": "03-subnav-security",
+   "url": "https://staging.consultify.ai/settings/profile",
+   "plik": "en/15-settings/03-subnav-security",
+   "dlugoscTekstu": 1393,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "16-partner",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/partner?tab=partner-home",
+   "plik": "en/16-partner/01-menu1",
+   "dlugoscTekstu": 818,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "en",
+   "modul": "00-przywrocenie",
+   "ekran": "02-po-przywroceniu-en",
+   "url": "https://staging.consultify.ai/settings/language",
+   "plik": "en/00-przywrocenie/02-po-przywroceniu-en",
+   "dlugoscTekstu": 0
+  }
+ ],
+ "pl": [
+  {
+   "lang": "pl",
+   "modul": "00-przelaczenie",
+   "ekran": "01-po-przelaczeniu-i-odswiezeniu",
+   "url": "https://staging.consultify.ai/settings/language",
+   "plik": "pl/00-przelaczenie/01-po-przelaczeniu-i-odswiezeniu",
+   "dlugoscTekstu": 723
+  },
+  {
+   "lang": "pl",
+   "modul": "01-chat",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/chat",
+   "plik": "pl/01-chat/01-menu1",
+   "dlugoscTekstu": 401,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "01-chat",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "pl",
+   "modul": "01-chat",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/my-work",
+   "plik": "pl/02-my-work/01-menu1",
+   "dlugoscTekstu": 1395,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-ideas",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Ideas' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-notebook",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Notebook' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-inbox",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Inbox' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-calendar",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Calendar' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-tasks",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Tasks' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-decisions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Decisions' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "02-tab-vaults",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Vaults' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "pl",
+   "modul": "02-my-work",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/interview",
+   "plik": "pl/03-interview/01-menu1",
+   "dlugoscTekstu": 364,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-inbox",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Inbox' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-sessions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Sessions' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-assigned",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Assigned' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-templates",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Templates' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-insights",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Insights' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "02-tab-initiatives",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Initiatives' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/interview",
+   "plik": "pl/03-interview/90-podglad-rekordu",
+   "dlugoscTekstu": 364
+  },
+  {
+   "lang": "pl",
+   "modul": "03-interview",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "pl/04-tools/01-menu1",
+   "dlugoscTekstu": 3897,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "02-tab-library",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Library' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "02-tab-sessions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Sessions' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "02-tab-insights",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Insights' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "02-tab-reports",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Reports' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "02-tab-initiatives",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Initiatives' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/discovery-tools",
+   "plik": "pl/04-tools/90-podglad-rekordu",
+   "dlugoscTekstu": 4392
+  },
+  {
+   "lang": "pl",
+   "modul": "04-tools",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library",
+   "plik": "pl/05-assessment/01-menu1",
+   "dlugoscTekstu": 598,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "02-tab-library",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Library' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "02-tab-processes",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Processes' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "02-tab-insights",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Insights' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "02-tab-reports",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Reports' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "02-tab-initiatives",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Initiatives' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library",
+   "plik": "pl/05-assessment/90-podglad-rekordu",
+   "dlugoscTekstu": 1321
+  },
+  {
+   "lang": "pl",
+   "modul": "05-assessment",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "06-initiatives",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/initiatives",
+   "plik": "pl/06-initiatives/01-menu1",
+   "dlugoscTekstu": 4331,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "06-initiatives",
+   "ekran": "02-tab-plan",
+   "url": "https://staging.consultify.ai/initiatives?tab=plan",
+   "plik": "pl/06-initiatives/02-tab-plan",
+   "dlugoscTekstu": 496,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "06-initiatives",
+   "ekran": "02-tab-load",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Load' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "06-initiatives",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "pl",
+   "modul": "06-initiatives",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+   "plik": "pl/07-execution/01-menu1",
+   "dlugoscTekstu": 760,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-dashboard",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Dashboard' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-deliveries",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Deliveries' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-work",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Work' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-resources",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Resources' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-decisions-risks",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Decisions & risks' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "02-tab-reports",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Reports' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table",
+   "plik": "pl/07-execution/90-podglad-rekordu",
+   "dlugoscTekstu": 1287
+  },
+  {
+   "lang": "pl",
+   "modul": "07-execution",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/results/kpi",
+   "plik": "pl/08-results/01-menu1",
+   "dlugoscTekstu": 388,
+   "bledyLiczba": 2
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "02-tab-okr",
+   "url": "https://staging.consultify.ai/results/okr",
+   "plik": "pl/08-results/02-tab-okr",
+   "dlugoscTekstu": 334,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "02-tab-roi",
+   "url": "https://staging.consultify.ai/results/roi",
+   "plik": "pl/08-results/02-tab-roi",
+   "dlugoscTekstu": 444,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "02-tab-management-reports",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Management reports' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/results/kpi",
+   "plik": "pl/08-results/90-podglad-rekordu",
+   "dlugoscTekstu": 952
+  },
+  {
+   "lang": "pl",
+   "modul": "08-results",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/finance?tab=statements",
+   "plik": "pl/09-finance/01-menu1",
+   "dlugoscTekstu": 492,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "02-tab-analysis",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Analysis' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "02-tab-models",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Models' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "02-tab-prediction",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Prediction' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "02-tab-enterprise-valuation",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Enterprise valuation' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/finance?tab=statements",
+   "plik": "pl/09-finance/90-podglad-rekordu",
+   "dlugoscTekstu": 868
+  },
+  {
+   "lang": "pl",
+   "modul": "09-finance",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/presentations",
+   "plik": "pl/10-materials/01-menu1",
+   "dlugoscTekstu": 533,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "02-tab-documents",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Documents' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "02-tab-presentations",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Presentations' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "02-tab-sheets",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Sheets' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "02-tab-template-library",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Template Library' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/presentations",
+   "plik": "pl/10-materials/90-podglad-rekordu",
+   "dlugoscTekstu": 735
+  },
+  {
+   "lang": "pl",
+   "modul": "10-materials",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library",
+   "plik": "pl/11-audits/01-menu1",
+   "dlugoscTekstu": 508,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "02-tab-library",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Library' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "02-tab-sessions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Sessions' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "02-tab-conclusions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Conclusions' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "02-tab-reports",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Reports' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "02-tab-initiatives",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Initiatives' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library",
+   "plik": "pl/11-audits/90-podglad-rekordu",
+   "dlugoscTekstu": 1207
+  },
+  {
+   "lang": "pl",
+   "modul": "11-audits",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "12-meeting",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/meetings",
+   "plik": "pl/12-meeting/01-menu1",
+   "dlugoscTekstu": 229,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "13-organization",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale",
+   "plik": "pl/13-organization/01-menu1",
+   "dlugoscTekstu": 1872,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "13-organization",
+   "ekran": "02-tab-scale",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Scale' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "13-organization",
+   "ekran": "02-tab-markets-systems",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Markets & systems' }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "13-organization",
+   "ekran": "90-podglad-rekordu",
+   "status": "N/A",
+   "powod": "brak wierszy tabeli"
+  },
+  {
+   "lang": "pl",
+   "modul": "13-organization",
+   "ekran": "91-tworzenie",
+   "status": "N/A",
+   "powod": "brak przycisku New/Add/Create"
+  },
+  {
+   "lang": "pl",
+   "modul": "14-admin",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/admin/team/members",
+   "plik": "pl/14-admin/01-menu1",
+   "dlugoscTekstu": 2616,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "14-admin",
+   "ekran": "03-subnav-invitations",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByText('Invitations', { exact: true }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "14-admin",
+   "ekran": "03-subnav-roles-permissions",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByText('Roles & Permissions', { exact: true }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "15-settings",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/settings/profile",
+   "plik": "pl/15-settings/01-menu1",
+   "dlugoscTekstu": 1407,
+   "bledyLiczba": 0
+  },
+  {
+   "lang": "pl",
+   "modul": "15-settings",
+   "ekran": "03-subnav-security",
+   "status": "N/A",
+   "powod": "locator.click: Timeout 4000ms exceeded.\nCall log:\n  - waiting for getByText('Security', { exact: true }).first()\n"
+  },
+  {
+   "lang": "pl",
+   "modul": "16-partner",
+   "ekran": "01-menu1",
+   "url": "https://staging.consultify.ai/partner?tab=partner-home",
+   "plik": "pl/16-partner/01-menu1",
+   "dlugoscTekstu": 862,
+   "bledyLiczba": 0
+  }
+ ],
+ "koniec": "2026-09-09T15:56:10.373Z"
+}

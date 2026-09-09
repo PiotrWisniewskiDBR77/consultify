@@ -1,0 +1,629 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Realizacja
+Dane
+Model
+James Whitfield
+JW
+Kokpit
+Realizacje
+Praca
+Zasoby
+Decyzje i ryzyka
+Raporty
+Wszystkie realizacje
+Skills Matrix and Upskilling
+Warehouse Automation Pilot
+MES Rollout Line 3
+Predictive Maintenance for CNC Line
+Nowe zadanie
+Wszystkie
+42
+Po terminie
+10
+Zablokowane
+2
+ZADANIE
+	
+INICJATYWA
+	
+OSOBA
+	
+TERMIN
+	
+STATUS
+	
+DNI PO TERMINIE
+	
+
+
+Agree the shuttle safety case with the works council
+	
+Warehouse Automation Pilot
+	
+Priya Sharma
+	
+14/08/2026
+	
+Zablokowane
+	
++25
+	
+
+
+Agree the MES downtime reason-code taxonomy
+	
+MES Rollout Line 3
+	
+Robert Chen
+	
+21/08/2026
+	
+Zablokowane
+	
++18
+	
+
+
+Commission the shuttle system in the pilot aisle
+	
+Warehouse Automation Pilot
+	
+Daniel Osei
+	
+28/08/2026
+	
+Wykonane
+	
+—
+	
+
+
+Agree the maintenance work-order trigger with Planning
+	
+Predictive Maintenance for CNC Line
+	
+Emily Carter
+	
+03/09/2026
+	
+Do zrobienia
+	
++5
+	
+
+
+Identify single points of failure per line
+	
+Skills Matrix and Upskilling
+	
+Priya Sharma
+	
+04/09/2026
+	
+W toku
+	
++4
+	
+
+
+Configure the MES work-order interface to ERP
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+11/09/2026
+	
+W toku
+	
+—
+	
+
+
+Install shop-floor terminals on Line 3
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+26/06/2026
+	
+Wykonane
+	
+—
+	
+
+
+Commission vibration sensors on cells 1 and 2
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+30/06/2026
+	
+Wykonane
+	
+—
+	
+
+
+Populate the skills matrix for all production roles
+	
+Skills Matrix and Upskilling
+	
+Priya Sharma
+	
+31/07/2026
+	
+Wykonane
+	
+—
+	
+
+
+Agree the cross-training rota with the shift leads
+	
+Skills Matrix and Upskilling
+	
+Sarah Mitchell
+	
+31/08/2026
+	
+Do zrobienia
+	
++8
+	
+
+
+Retrain the goods-out team on the new pick path
+	
+Warehouse Automation Pilot
+	
+Priya Sharma
+	
+01/09/2026
+	
+Do zrobienia
+	
++7
+	
+
+
+Validate barcode traceability at the packing station
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+11/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Connect the condition-monitoring gateway to the historian
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+11/09/2026
+	
+W toku
+	
+—
+	
+
+
+Prepare the restart decision pack for the paused programme
+	
+Skills Matrix and Upskilling
+	
+James Whitfield
+	
+11/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Tune alert thresholds against the 2026 failure history
+	
+Predictive Maintenance for CNC Line
+	
+Michael Grant
+	
+11/09/2026
+	
+W toku
+	
+—
+	
+
+
+Write the Line 3 cutover runbook
+	
+MES Rollout Line 3
+	
+Laura Novak
+	
+18/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Re-slot the pilot aisle by pick frequency
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+18/09/2026
+	
+W toku
+	
+—
+	
+
+
+Migrate paper travellers for the top twenty part numbers
+	
+MES Rollout Line 3
+	
+Emily Carter
+	
+18/09/2026
+	
+W toku
+	
+—
+	
+
+
+Extend sensors to cells 3, 4 and 5
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+25/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Run the false-positive review with the shift leads
+	
+Predictive Maintenance for CNC Line
+	
+Daniel Osei
+	
+25/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Commission the MES-to-SCADA data bridge
+	
+MES Rollout Line 3
+	
+Daniel Osei
+	
+25/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Measure pick rate before and after re-slotting
+	
+Warehouse Automation Pilot
+	
+Michael Grant
+	
+02/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Integrate the shuttle controller with the warehouse system
+	
+Warehouse Automation Pilot
+	
+Laura Novak
+	
+09/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Write the pilot result pack for the steering committee
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+29/01/2027
+	
+Do zrobienia
+	
+—
+	
+
+
+Sign off the MES acceptance test pack
+	
+MES Rollout Line 3
+	
+Sarah Mitchell
+	
+26/03/2027
+	
+Do zrobienia
+	
+—
+	
+
+
+Build the failure-mode catalogue for spindle bearings
+	
+Predictive Maintenance for CNC Line
+	
+Michael Grant
+	
+10/07/2026
+	
+Wykonane
+	
+—
+	
+
+
+Cost the spare-parts holding reduction
+	
+Predictive Maintenance for CNC Line
+	
+Thomas Baker
+	
+28/08/2026
+	
+Do zrobienia
+	
++11
+	
+
+
+Define the OEE calculation rules with Quality
+	
+MES Rollout Line 3
+	
+Robert Chen
+	
+18/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Refresh the training records interface with HR
+	
+Skills Matrix and Upskilling
+	
+Michael Grant
+	
+25/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Quantify the labour saving per shift
+	
+Warehouse Automation Pilot
+	
+Thomas Baker
+	
+16/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Train Line 3 operators on the MES terminal
+	
+MES Rollout Line 3
+	
+Priya Sharma
+	
+16/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Document the predictive maintenance standard operating procedure
+	
+Predictive Maintenance for CNC Line
+	
+Laura Novak
+	
+23/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Cost the upskilling programme for 2027
+	
+Skills Matrix and Upskilling
+	
+Thomas Baker
+	
+30/10/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Review benefit realisation with the Plant Manager
+	
+Predictive Maintenance for CNC Line
+	
+Sarah Mitchell
+	
+27/11/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Close the pilot aisle housekeeping actions
+	
+Warehouse Automation Pilot
+	
+Emily Carter
+	
+25/08/2026
+	
+Do zrobienia
+	
++14
+	
+
+
+Confirm the apprenticeship levy funding route
+	
+Skills Matrix and Upskilling
+	
+Thomas Baker
+	
+06/11/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Approve Q3 capex request
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+25/08/2026
+	
+Do zrobienia
+	
++15
+	
+
+
+Sign off Line 3 MES kickoff deck
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+10/09/2026
+	
+W toku
+	
+—
+	
+
+
+Follow up with Rotherham plant manager on downtime log
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+02/09/2026
+	
+Do zrobienia
+	
++7
+	
+
+
+Review supplier corrective action plan
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+12/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Draft opening remarks for steering committee
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+18/09/2026
+	
+Do zrobienia
+	
+—
+	
+
+
+Prepare board pack for October review
+	
+Bez inicjatywy
+	
+James Whitfield
+	
+30/09/2026
+	
+Do zrobienia
+	
+—
+	

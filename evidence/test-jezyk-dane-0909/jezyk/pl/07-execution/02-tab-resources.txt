@@ -1,0 +1,1198 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Realizacja
+Dane
+Model
+James Whitfield
+JW
+Kokpit
+Realizacje
+Praca
+Zasoby
+Decyzje i ryzyka
+Raporty
+Wszystkie realizacje
+Skills Matrix and Upskilling
+Warehouse Automation Pilot
+MES Rollout Line 3
+Predictive Maintenance for CNC Line
+Dodaj dostępność
+Osoby
+9
+Przeciążeni
+2
+Z zaległością
+5
+
+Stan na 09/09/2026 · osób 9 · popyt 360 h · podaż 2704 h · obłożenie 13 % · przeciążonych tygodni 2 · zaległość 73 h u 5 os.
+
+OSOBA / ROLA
+	
+TYDZIEŃ
+	
+POPYT (H)
+	
+PODAŻ (H)
+	
+OBŁOŻENIE %
+	
+LUKA (H)
+	
+ZALEGŁOŚĆ (H)
+	
+
+
+James Whitfield · Operations Director
+	
+od 07/09/2026
+	
+6 h
+	
+40 h
+	
+15 %
+	
++34 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 14/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 21/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 05/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 12/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 19/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+od 26/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 07/09/2026
+	
+20 h
+	
+40 h
+	
+50 %
+	
++20 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 14/09/2026
+	
+15 h
+	
+40 h
+	
+38 %
+	
++25 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 21/09/2026
+	
+59 h
+	
+40 h
+	
+148 %
+	
+-19 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 05/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 12/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 19/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+od 26/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 07/09/2026
+	
+48 h
+	
+36 h
+	
+133 %
+	
+-12 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 14/09/2026
+	
+12 h
+	
+36 h
+	
+33 %
+	
++24 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 21/09/2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 28/09/2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 05/10/2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 12/10/2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 19/10/2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+od 26/10/2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 07/09/2026
+	
+14 h
+	
+37 h
+	
+38 %
+	
++23 h
+	
+15 h
+	
+
+
+Emily Carter · Production Planner
+	
+od 14/09/2026
+	
+32 h
+	
+37 h
+	
+86 %
+	
++5 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 21/09/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 28/09/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 05/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 12/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 19/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+od 26/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 07/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+28 h
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 14/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 21/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 28/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 05/10/2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 12/10/2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 19/10/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+od 26/10/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 07/09/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+10 h
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 14/09/2026
+	
+10 h
+	
+38 h
+	
+26 %
+	
++28 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 21/09/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 28/09/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 05/10/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 12/10/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 19/10/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Robert Chen · Head Of Quality
+	
+od 26/10/2026
+	
+0 h
+	
+38 h
+	
+0 %
+	
++38 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 07/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+12 h
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 14/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 21/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 05/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 12/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 19/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Sarah Mitchell · Plant Manager
+	
+od 26/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 07/09/2026
+	
+12 h
+	
+35 h
+	
+34 %
+	
++23 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 14/09/2026
+	
+8 h
+	
+35 h
+	
+23 %
+	
++27 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 21/09/2026
+	
+18 h
+	
+35 h
+	
+51 %
+	
++17 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 28/09/2026
+	
+10 h
+	
+35 h
+	
+29 %
+	
++25 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 05/10/2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 12/10/2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 19/10/2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Michael Grant · Data Analyst
+	
+od 26/10/2026
+	
+0 h
+	
+35 h
+	
+0 %
+	
++35 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 07/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+8 h
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 14/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 21/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 05/10/2026
+	
+7 h
+	
+40 h
+	
+18 %
+	
++33 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 12/10/2026
+	
+7 h
+	
+40 h
+	
+18 %
+	
++33 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 19/10/2026
+	
+5 h
+	
+40 h
+	
+13 %
+	
++35 h
+	
+—
+	
+
+
+Thomas Baker · Finance Controller
+	
+od 26/10/2026
+	
+9 h
+	
+40 h
+	
+23 %
+	
++31 h
+	
+—
+	

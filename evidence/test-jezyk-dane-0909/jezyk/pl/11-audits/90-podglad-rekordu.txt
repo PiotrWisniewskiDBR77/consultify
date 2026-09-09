@@ -1,0 +1,76 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Audyty
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Sesje
+Wnioski
+Raporty
+Inicjatywy
+Weryfikacja: Wszystkie
+1
+Nowy audyt
+Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.
+Wszystkie
+1
+Zweryfikowane
+0
+W przeglądzie
+0
+TYTUŁ
+	
+ŹRÓDŁO
+	
+WERSJA
+	
+TYP ŹRÓDŁA
+	
+WERYFIKACJA
+	
+STATUS PUBLIKACJI
+	
+KRYTERIA
+	
+ZAKTUALIZOWANO
+	
+
+
+Operational Excellence Audit 2026
+	
+—
+	
+v1
+	
+Procedura wewnętrzna
+	
+Niezweryfikowane
+	
+Opublikowany
+	
+	
+08/09/2026
+	
+Operational Excellence Audit 2026
+Typ źródła: Procedura wewnętrzna
+Weryfikacja: Niezweryfikowane
+Publikacja: Opublikowany
+Podstawa audytu zgodności: Nie
+SZCZEGÓŁY
+Właściwość	Wartość
+Cel	Give plant leadership an independent, evidence-based read on operational discipline ahead of the next Operational Excellence steering review.
+Zakres	Any Northwind production line nominated for an internal operational excellence audit.
+Źródło	— (v1.0)
+Prawa	Nie zweryfikowano
+Wymagane role	Audytor wiodący, Audytor, Audytowany
+Taksonomia ustaleń	Conforming, Nonconforming, Observation, Opportunity for improvement, Not applicable, Evidence insufficient
+Liczba kryteriów	1
+POWIĄZANIA
+Brak powiązań
+Rozpocznij audyt

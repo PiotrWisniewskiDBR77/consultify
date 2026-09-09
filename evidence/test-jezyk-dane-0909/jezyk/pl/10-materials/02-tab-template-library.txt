@@ -1,0 +1,1195 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Materiały
+Biblioteka wzorców
+Dane
+Model
+James Whitfield
+JW
+Wszystkie
+Dokumenty
+Prezentacje
+Arkusze
+Biblioteka wzorców
+Pochodzenie i prawa
+Status
+Nowy wzorzec
+Tworzenie wzorców w fali 2
+Wszystkie formaty
+90
+Raporty
+77
+Tabele
+0
+Prezentacje
+13
+Wszystkie źródła
+90
+Osobisty
+0
+System
+90
+Organizacja
+0
+Nieznany
+0
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] business case (EN)
+BRAK ŹRÓDŁA
+
+Economic justification with assumptions, scenarios, ROI, sensitivity.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] board report (EN)
+BRAK ŹRÓDŁA
+
+Board-level report: executive summary, strategic decisions, risks.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] decision memo (EN)
+BRAK ŹRÓDŁA
+
+Drive a single named decision with options, recommendation and risks.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Assessment Summary
+
+Evidence-governed assessment readout linking maturity scores and confidence to gaps, root causes, recommendations and a sequenced transformation roadmap.
+
+Prezentacja
+·
+9 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Valuation Pack
+
+Investor-grade valuation decision pack with reconciled financials, methodology, scenario sensitivity, comparable evidence, risk and explicit transaction next steps.
+
+Prezentacja
+·
+9 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Steering Committee Update
+
+Decision-led steering deck with reconciled performance, value, milestones, dependencies, residual risk and explicit committee asks.
+
+Prezentacja
+·
+8 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Results - KPI Performance Review
+STARSZY WZORZEC
+
+KPI performance review report with deviation cases and action plan (R1).
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+PMO Weekly
+STARSZY WZORZEC
+
+Raport operacyjny PMO: zadania on-time/late, obciążenia zespołu (capacity/overload) i cycle-time per status inicjatyw (Observability).
+
+Raport
+·
+4 sekcje
+·
+System
+Użyj wzorca
+Podgląd
+Raport Steering
+STARSZY WZORZEC
+
+Pełniejszy przegląd dla komitetu sterującego: 3 osie per inicjatywa, ryzyka otwarte (risk_register) i zmiany zakresu z ostatnich 30 dni (scope_change_log).
+
+Raport
+·
+4 sekcje
+·
+System
+Użyj wzorca
+Podgląd
+Sponsor One-Pager
+STARSZY WZORZEC
+
+1 strona dla sponsora: agregat 3 osi (czas × zadania × wartość, z rozbiciem D12 na wartość finansową i KPI operacyjny), top 3 alerty (overdue/blocked) i decyzje czekające na akceptację.
+
+Raport
+·
+4 sekcje
+·
+System
+Użyj wzorca
+Podgląd
+KPI Review Report
+STARSZY WZORZEC
+
+Default template for scheduled/ad-hoc KPI review reports promoted from Results KPI snapshots.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Cotygodniowy status PMO (PMO Weekly Status)
+STARSZY WZORZEC
+
+Rytmiczny raport operacyjny zespołu/PMO: podsumowanie, zrealizowane, w toku, blokery, plan na następny tydzień. Do cotygodniowej synchronizacji i śladu decyzyjnego.
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Streszczenie wykonawcze (Executive Summary)
+STARSZY WZORZEC
+
+Samodzielne streszczenie w piramidzie Minto: główny wniosek na górze, argumenty wspierające, dowody, implikacje i rekomendacja. Do otwierania każdego większego raportu.
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Uzasadnienie biznesowe (Business Case)
+STARSZY WZORZEC
+
+Dokument decyzyjny inwestycji: problem, rozważane opcje, analiza kosztów i korzyści (NPV/ROI), ryzyka i rekomendacja. Standard dla bramek finansowania inicjatyw.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Raport diagnostyczny DRD (Diagnostic Report)
+STARSZY WZORZEC
+
+Ustrukturyzowany raport diagnostyczny w układzie DRD: kontekst → metodyka → ustalenia → analiza luk → rekomendacje → roadmapa. Rdzeń doradztwa: od faktów, przez wnioski, do planu działania.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Aktualizacja dla komitetu sterującego (Steering Committee Update)
+STARSZY WZORZEC
+
+Pełny brief dla komitetu sterującego: streszczenie wykonawcze, status RAG w wymiarach, kamienie i prognoza, ryzyka, decyzje wymagane. Standard PMBOK/PRINCE2 dla przeglądów zarządczych.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Jednostronicowy raport dla sponsora (Sponsor One-Pager)
+STARSZY WZORZEC
+
+Zwięzły, jednostronicowy status dla sponsora projektu — RAG, postęp vs plan, decyzje i eskalacje. Używaj między komitetami sterującymi, gdy sponsor potrzebuje szybkiego obrazu i jasnego "o co proszę".
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Deck raportu końcowego (Final Report Deck)
+
+Prezentacja zamknięcia projektu: cele vs osiągnięte wyniki, kluczowe wnioski, rekomendacje na przyszłość i utrzymanie korzyści. Domyka narrację i przekazuje wartość.
+
+Prezentacja
+·
+8 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Przegląd komitetu sterującego (Steering Review)
+
+Deck na komitet sterujący: status RAG i KPI, kamienie i prognoza, ryzyka i decyzje wymagane. Format zarządczego przeglądu portfela/projektu.
+
+Prezentacja
+·
+8 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Deck rekomendacji Minto (Recommendation Deck)
+
+Prezentacja rekomendacji w piramidzie Minto: rekomendacja na górze, argumenty wspierające, dowody, rozważane opcje, plan wdrożenia i decyzja. Do przekonania decydentów.
+
+Prezentacja
+·
+7 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Prezentacja ustaleń SCR (Findings Readout)
+
+Odczyt ustaleń w strukturze Situation–Complication–Resolution: sytuacja, komplikacja, kluczowe ustalenia, implikacje, rekomendacja. Klasyczny format prezentacji wyników diagnozy.
+
+Prezentacja
+·
+7 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Deck otwarcia projektu (Kickoff Deck)
+
+Prezentacja rozpoczęcia projektu: cel, zakres, zespół, plan i zasady współpracy. Ustawia wspólne rozumienie i mandat na starcie.
+
+Prezentacja
+·
+8 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Finance — Sekcja finansowa raportu
+STARSZY WZORZEC
+
+Sekcja finansowa: wskaźniki Z111 (financeRatioFamilyCatalog, 24/5 rodzin) + reconcile R1-R8 (shadow, czytane nie przeliczane) + koszyk EV (valuationBasketService, football-field). Deterministyczna — zero liczb z LLM. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Program — Raport 3 osi (czas × zadania × wartość)
+STARSZY WZORZEC
+
+Flagowy raport wykonawczy PM: T (earned-schedule) × Z (EV/BAC) × W (value_ledger banked/target). Wzorzec McKinsey Wave. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Raport statusowy
+STARSZY WZORZEC
+
+Okresowy raport postępu projektu dla sponsora. Sekcje: streszczenie statusu, zakres, postęp, ryzyka, następne kroki.
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Investor pitch
+
+Pitch inwestorski: problem→rozwiązanie→trakcja→ask. Układ: okładka, teza, problem/rynek, rozwiązanie, model+trakcja, plan, ask.
+
+Prezentacja
+·
+7 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Executive memo
+STARSZY WZORZEC
+
+Zwięzłe memo decyzyjne dla zarządu. Sekcje: kontekst, problem, opcje, rekomendacja.
+
+Raport
+·
+4 sekcje
+·
+System
+Użyj wzorca
+Podgląd
+Raport audytowy
+STARSZY WZORZEC
+
+Ustrukturyzowany raport z audytu organizacyjnego lub procesowego. Sekcje: streszczenie, metodologia, wyniki, rekomendacje.
+
+Raport
+·
+4 sekcje
+·
+System
+Użyj wzorca
+Podgląd
+Board deck
+
+Prezentacja dla zarządu lub rady nadzorczej. Układ: okładka, agenda, kontekst, wyniki, plan, Q&A.
+
+Prezentacja
+·
+6 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Diagnostic deck
+
+Diagnoza organizacji lub procesu. Układ: teza, dane, analiza, wnioski, rekomendacje.
+
+Prezentacja
+·
+6 slajdów
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] client final report (EN)
+BRAK ŹRÓDŁA
+
+Final client report: scope, methodology, findings, recommendations, roadmap.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] client final report (PL)
+BRAK ŹRÓDŁA
+
+Finalny raport dla klienta: zakres, metodologia, wnioski, rekomendacje, roadmapa.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] internal policy document (EN)
+BRAK ŹRÓDŁA
+
+Internal policy: scope, applicability, rules, enforcement, exceptions.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] internal policy document (PL)
+BRAK ŹRÓDŁA
+
+Polityka wewnętrzna: zakres, zastosowanie, zasady, egzekwowanie, wyjątki.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] due diligence note (EN)
+BRAK ŹRÓDŁA
+
+Due diligence note: business model, financials, risks, recommendation.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] due diligence note (PL)
+BRAK ŹRÓDŁA
+
+Due diligence: model biznesowy, finanse, ryzyka, rekomendacja.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] research report (EN)
+BRAK ŹRÓDŁA
+
+Research report with methodology, findings, conclusions, citations.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] research report (PL)
+BRAK ŹRÓDŁA
+
+Raport badawczy z metodologią, obserwacjami, wnioskami, cytowaniami.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] board report (PL)
+BRAK ŹRÓDŁA
+
+Raport dla zarządu: executive summary, decyzje strategiczne, ryzyka.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] change management plan (EN)
+BRAK ŹRÓDŁA
+
+Change management plan with stakeholder analysis, comms, training.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] change management plan (PL)
+BRAK ŹRÓDŁA
+
+Plan zarządzania zmianą: analiza interesariuszy, komunikacja, szkolenia.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] implementation plan (EN)
+BRAK ŹRÓDŁA
+
+Implementation plan: phases, milestones, owners, dependencies, deadlines.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] implementation plan (PL)
+BRAK ŹRÓDŁA
+
+Plan wdrożenia: fazy, kamienie milowe, właściciele, zależności, terminy.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] sop document (EN)
+BRAK ŹRÓDŁA
+
+Standard Operating Procedure with steps, roles, controls.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] sop document (PL)
+BRAK ŹRÓDŁA
+
+Standard Operating Procedure: kroki, role, kontrole.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] risk register report (EN)
+BRAK ŹRÓDŁA
+
+Risk register with severity, mitigation, owner, status.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] risk register report (PL)
+BRAK ŹRÓDŁA
+
+Rejestr ryzyk z severity, mitigacją, ownerem, statusem.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] workshop summary (EN)
+BRAK ŹRÓDŁA
+
+Workshop output: decisions, themes, next steps, owners.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] workshop summary (PL)
+BRAK ŹRÓDŁA
+
+Wynik warsztatu: decyzje, tematy, następne kroki, właściciele.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] client discovery report (EN)
+BRAK ŹRÓDŁA
+
+Discovery findings: pain points, goals, constraints, opportunities.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] client discovery report (PL)
+BRAK ŹRÓDŁA
+
+Wyniki discovery: bóle, cele, ograniczenia, szanse.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] sales proposal (EN)
+BRAK ŹRÓDŁA
+
+Client-facing proposal with scope, methodology, team, timeline, investment.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] sales proposal (PL)
+BRAK ŹRÓDŁA
+
+Oferta dla klienta: zakres, metodologia, zespół, harmonogram, inwestycja.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] business case (PL)
+BRAK ŹRÓDŁA
+
+Uzasadnienie ekonomiczne z założeniami, scenariuszami, ROI, wrażliwością.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] digital transformation roadmap (EN)
+BRAK ŹRÓDŁA
+
+Multi-year digital transformation roadmap with phases, dependencies, KPIs.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] digital transformation roadmap (PL)
+BRAK ŹRÓDŁA
+
+Wieloletnia roadmapa transformacji cyfrowej z fazami, zależnościami i KPI.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] interview summary report (EN)
+BRAK ŹRÓDŁA
+
+Structured summary of interview findings for an organization.
+
+Raport
+·
+11 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] interview summary report (PL)
+BRAK ŹRÓDŁA
+
+Strukturalne podsumowanie obserwacji z rozmów w organizacji.
+
+Raport
+·
+11 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] ai audit report (EN)
+BRAK ŹRÓDŁA
+
+Formal AI readiness audit with risks, opportunities, recommended initiatives.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] ai audit report (PL)
+BRAK ŹRÓDŁA
+
+Formalny audyt gotowości AI z ryzykami, szansami i rekomendowanymi inicjatywami.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] portfolio overview (EN)
+BRAK ŹRÓDŁA
+
+Portfolio-level view of initiatives, status, dependencies.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] portfolio overview (PL)
+BRAK ŹRÓDŁA
+
+Widok portfela: inicjatywy, status, zależności.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] benefits tracking report (EN)
+BRAK ŹRÓDŁA
+
+Track realized vs planned benefits per initiative.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] benefits tracking report (PL)
+BRAK ŹRÓDŁA
+
+Śledź zrealizowane vs planowane korzyści per inicjatywa.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] steering committee report (EN)
+BRAK ŹRÓDŁA
+
+Formal steering committee report with decisions required and risk dashboard.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] steering committee report (PL)
+BRAK ŹRÓDŁA
+
+Formalny raport na komitet sterujący z decyzjami i mapą ryzyk.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] project status report (EN)
+BRAK ŹRÓDŁA
+
+Periodic project status: progress, risks, blockers, asks.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] project status report (PL)
+BRAK ŹRÓDŁA
+
+Okresowy status projektu: postęp, ryzyka, blokery, prośby.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] decision memo (PL)
+BRAK ŹRÓDŁA
+
+Doprowadzić do jednej decyzji z opcjami, rekomendacją i ryzykami.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] executive memo (EN)
+BRAK ŹRÓDŁA
+
+Standardize executive memos: context, findings, decisions required, next steps.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+
+Brak rekordu źródłowego wzorca — generowanie jest niedostępne.
+
+[System] executive memo (PL)
+BRAK ŹRÓDŁA
+
+Ujednolić memo zarządcze: kontekst, wnioski, decyzje, następne kroki.
+
+Raport
+·
+6 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Final Transformation Report
+STARSZY WZORZEC
+
+Board-ready end-of-phase transformation report: impact, ROI, decisions, and next 90-day plan.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Assessment Report (Default)
+STARSZY WZORZEC
+
+Default template for assessment-based reports
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Financial Analysis Report
+STARSZY WZORZEC
+
+Draft report from financial analysis. Covers overview, key metrics, and recommendations.
+
+Raport
+·
+5 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Assessment Summary Report
+STARSZY WZORZEC
+
+Structured assessment summary report covering maturity scores, gaps, strengths, and actionable recommendations. Works with DRD, SIRI, and ADMA frameworks.
+
+Raport
+·
+11 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Tool Workshop Summary
+STARSZY WZORZEC
+
+Summary report from consulting tool workshops. Captures methodology, findings, generated initiatives, and recommended actions.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Valuation Pack & Investment Summary
+STARSZY WZORZEC
+
+Comprehensive valuation document for investment decisions. Includes DCF analysis, comparables, sensitivity analysis, and investment thesis.
+
+Raport
+·
+10 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Steering Committee / Program Update
+STARSZY WZORZEC
+
+Concise program status report for steering committee meetings. Traffic light status, key decisions, escalations, and forward plan.
+
+Raport
+·
+9 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Financial Analysis & Business Case
+STARSZY WZORZEC
+
+Comprehensive financial analysis including statements, ratios, budget analysis, and business case justification. Suitable for CFO and finance committee presentations.
+
+Raport
+·
+10 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Transformation Roadmap & Portfolio Review
+STARSZY WZORZEC
+
+Comprehensive portfolio and roadmap document for transformation programs. Includes initiative portfolio, timeline, resource allocation, and benefits tracking.
+
+Raport
+·
+10 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Strategic Review & Executive Brief
+STARSZY WZORZEC
+
+High-level strategic assessment for board members and executive sponsors. Covers situation analysis, strategic options, recommendations, and implementation roadmap.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Tool Workshop Summary
+
+Summary of consulting tool session results, insights, and recommended actions.
+
+Prezentacja
+·
+6 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+Program / Execution Update
+
+Operational update on execution progress, delays, budget status, and team delivery.
+
+Prezentacja
+·
+8 slajdów
+·
+System
+Użyj wzorca
+Podgląd
+DRD Presentation Deck
+STARSZY WZORZEC
+
+Slide-style presentation format optimized for workshops, stakeholder meetings, and transformation kickoffs. Each section maps to 1-3 slides with visual-first content — charts, scorecards, bullet points. Designed for PPTX export.
+
+Raport
+·
+10 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+DRD Board Report
+STARSZY WZORZEC
+
+Concise, decision-oriented report for board members and C-level executives. Focuses on strategic implications, investment decisions, and key risks — stripped of technical details. Designed to be read in 15 minutes and drive boardroom decisions.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+DRD Full Diagnostic Report
+STARSZY WZORZEC
+
+Comprehensive digital maturity diagnostic covering all 7 transformation axes with detailed gap analysis, axis-by-axis deep dives, strategic recommendations, and a prioritized roadmap. Best suited for transformation teams, consultants, and technical stakeholders who need the full picture.
+
+Raport
+·
+14 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Tool Comparison Report
+STARSZY WZORZEC
+
+Comparative analysis across multiple tool sessions with scoring and prioritization.
+
+Raport
+·
+7 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Tool Evaluation Report
+STARSZY WZORZEC
+
+Summary report from tool-based assessment sessions with findings and recommendations.
+
+Raport
+·
+8 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Interview Detailed Analysis
+STARSZY WZORZEC
+
+Comprehensive analysis of all interview questions, answers, and cross-cutting themes.
+
+Raport
+·
+13 sekcji
+·
+System
+Użyj wzorca
+Podgląd
+Interview Summary Report
+STARSZY WZORZEC
+
+Concise summary of discovery interview findings, key insights, gaps and recommendations.
+
+Raport
+·
+8 sekcji
+·
+System
+Komplet AI — historia generacji

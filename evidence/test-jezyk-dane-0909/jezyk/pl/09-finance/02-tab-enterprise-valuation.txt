@@ -1,0 +1,91 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Finanse
+Wycena przedsiębiorstw
+Dane
+Model
+James Whitfield
+JW
+Sprawozdania
+Analiza
+Modele
+Predykcja
+Wycena przedsiębiorstw
++ Nowa wycena
+Wszystkie
+0
+Szkic
+0
+Przegląd
+0
+Zatwierdzone
+0
+Analizuj
+AI
+Wartość bankowa
+Prognoza gotówkowa
+Planer czynników
+Drzewo czynników
+Wskaźniki rozszerzone
+Planer zatrudnienia
+Ocena inwestycji
+Prognoza krocząca
+Wizualizacje wyceny
+Atrybucja wartości
+Ścieżka przechwytywania wartości
+Rejestr wartości
+Biuro wartości
+Mostek odchyleń
+Komentarz do odchyleń
+Koszyk EV
+Symulacja Monte Carlo NPV
+Opcje rzeczywiste
+Granica efektywna
+Analiza wrażliwości (what-if)
+Obliczenia scenariuszy
+Symulacja Monte Carlo NPV
+
+Symuluj wyniki NPV w zakresach niepewności czynników.
+
+Czynnik
+Min.
+Moda
+Maks
+Waga
+×
+Czynnik
+Min.
+Moda
+Maks
+Waga
+×
++ czynnik
+Iteracje
+Ziarno (seed)
+Liczba przedziałów histogramu
+Uruchom symulację
+
+Ustaw czynniki i uruchom symulację, aby zobaczyć rozkład NPV.
+
+	
+TYP
+	
+NAZWA
+	
+ŹRÓDŁO
+	
+METODA
+	
+HORYZONT
+	
+STATUS
+	
+AKTUALIZACJA
+	
+
+
+Brak wycen. Utwórz pierwszą wycenę.
