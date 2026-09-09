@@ -2884,7 +2884,6 @@
     "resolved": "Resolved",
     "batchOperations": "Batch Operations",
     "dragToMove": "Drag to move to another column",
-    "backToDashboard": "Back to Dashboard",
     "saveProfile": "Save Profile",
     "exitFullscreen": "Exit Fullscreen",
     "fullscreen": "Fullscreen",
@@ -3438,13 +3437,6 @@
     "tabele": "Table Studio",
     "meeting": "Meeting",
     "assessmentDRD": "DRD assessment",
-    "context": {
-      "challenges": "Challenges",
-      "goals": "Goals",
-      "megatrends": "Megatrends",
-      "profile": "Profile",
-      "strategy": "Strategy"
-    },
     "realization": "Execution",
     "expand": "Expand",
     "finance": "Finance",
