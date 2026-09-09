@@ -16,7 +16,7 @@ const OUT = '/private/tmp/wt-d6/evidence/dane-pokazowe-en/d6';
 fs.mkdirSync(OUT, { recursive: true });
 
 const EMAIL = 'james.whitfield@northwind.example';
-const PASSWORD = 'JPJxSySkX8jiM1OrORQ';
+const PASSWORD = process.env.NORTHWIND_PASSWORD ?? (() => { throw new Error('Ustaw NORTHWIND_PASSWORD (haslo poza repo: ~/Developer/consultify-secrets/)'); })();
 
 // Id-y ustalone deterministycznie (det() z 00-wspolne.ts), odczytane z bazy
 // po --apply — patrz `docs/program/DANE_POKAZOWE_EN_20260908` D6.

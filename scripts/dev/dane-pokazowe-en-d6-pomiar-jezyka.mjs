@@ -10,7 +10,7 @@ import fs from 'node:fs';
 const BASE = 'http://127.0.0.1:3201';
 const OUT = '/private/tmp/wt-d6/evidence/dane-pokazowe-en/d6/pomiar-jezyka-innerText.txt';
 const EMAIL = 'james.whitfield@northwind.example';
-const PASSWORD = 'JPJxSySkX8jiM1OrORQ';
+const PASSWORD = process.env.NORTHWIND_PASSWORD ?? (() => { throw new Error('Ustaw NORTHWIND_PASSWORD (haslo poza repo: ~/Developer/consultify-secrets/)'); })();
 const MEETING_ID = '2e124a9f-30cd-5ea8-bf77-49441a1861bf';
 const CONVERSATION_ID = '017b0fd4-655e-5072-8454-36b4c6817ef1';
 
