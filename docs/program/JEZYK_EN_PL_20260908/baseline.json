@@ -1,603 +1,1215 @@
 {
-  "plikiTop": {
-    "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx": 35,
-    "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx": 60,
-    "src/views/partner/sections/EarningsSection.tsx": 34,
-    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
-    "server/src/routes/settings.routes.ts": 43,
-    "src/components/assessment/report/AssessmentReportDocument.tsx": 53,
-    "src/views/legal/TermsOfServiceView.tsx": 56,
-    "server/src/routes/work-canvas.routes.ts": 61,
-    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
-    "server/src/routes/auth.routes.ts": 37,
-    "server/src/routes/billing/billing.routes.ts": 46,
-    "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
-    "server/src/routes/knowledge.routes.ts": 48,
-    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31,
-    "src/components/Presentations/DeckBuilder/BlockToolbar.tsx": 37,
-    "src/components/Organization/redesign/OrganizationReadinessScreen.tsx": 52,
-    "server/src/routes/v8/finance.routes.ts": 35,
-    "server/src/routes/workbook.routes.ts": 36,
-    "src/views/partner/PartnerPortalView.tsx": 95,
-    "server/src/routes/document-studio.routes.ts": 86,
-    "server/src/routes/table-platform.routes.ts": 51,
-    "src/components/DocumentStudio/DocumentStudioView.tsx": 35,
-    "src/components/billing/SubscriptionAnalytics.tsx": 50,
-    "public/locales/pl/translation.json": 338,
-    "server/src/controllers/InitiativeController.ts": 30,
-    "src/components/MyWork/panel/IdeaElementInspector.tsx": 53,
-    "server/src/controllers/InterviewController.ts": 39,
-    "src/views/superadmin/revenue/PartnerSettlementsView.tsx": 34,
-    "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "server/src/routes/assessment-reports.routes.ts": 36,
-    "src/views/legal/PrivacyPolicyView.tsx": 42,
-    "src/components/assessment/drd/DrdHttpMethodWorkspaceScreen.tsx": 29,
-    "server/src/routes/presentations.routes.ts": 42
-  },
-  "moduly": {
-    "03 Interview": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 51,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "05 Assessment": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 97,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 76,
-      "K4en": 5,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "06 Initiatives": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 2,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 97,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "ZZ wspólne": {
-      "K4pl": 25,
-      "K3aKLUCZ": 0,
-      "K5pl": 19,
-      "K1": 1,
-      "K3b": 0,
-      "K5en": 523,
-      "K4en": 232,
-      "K7": 105,
-      "K1def": 1,
-      "K3a": 175,
-      "K2": 2,
-      "K1defWID": 0
-    },
-    "10 Materials": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 19,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 223,
-      "K4en": 2,
-      "K7": 8,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 1,
-      "K1defWID": 0
-    },
-    "04 Tools": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 49,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 112,
-      "K4en": 10,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 1,
-      "K1defWID": 0
-    },
-    "02 My Work": {
-      "K4pl": 62,
-      "K3aKLUCZ": 0,
-      "K5pl": 1,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 61,
-      "K4en": 56,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 1,
-      "K1defWID": 0
-    },
-    "13 Organization": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 1,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 64,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "16 Partner Portal": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 3,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 29,
-      "K4en": 1,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "01 Chat": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 27,
-      "K4en": 2,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "14 Admin Panel": {
-      "K4pl": 9,
-      "K3aKLUCZ": 1,
-      "K5pl": 13,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 73,
-      "K4en": 560,
-      "K7": 288,
-      "K1def": 36,
-      "K3a": 3,
-      "K2": 0,
-      "K1defWID": 26
-    },
-    "08 Results": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 45,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "15 Settings": {
-      "K4pl": 14,
-      "K3aKLUCZ": 0,
-      "K5pl": 32,
-      "K1": 1,
-      "K3b": 0,
-      "K5en": 196,
-      "K4en": 32,
-      "K7": 6,
-      "K1def": 6,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "07 Execution": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 63,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "12 Meeting": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 12,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "09 Finance": {
-      "K4pl": 15,
-      "K3aKLUCZ": 33,
-      "K5pl": 6,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 158,
-      "K4en": 7,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 175,
-      "K2": 0,
-      "K1defWID": 0
-    },
-    "11 Audits": {
-      "K4pl": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 14,
-      "K1": 0,
-      "K3b": 0,
-      "K5en": 12,
-      "K4en": 0,
-      "K7": 0,
-      "K1def": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K1defWID": 0
-    }
+  "_meta": {
+    "data": "2026-09-09T01:47:58.948Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/jdog-a",
+    "sha": "7550fe89c46469217c72b3c6f49cf782bae08b29"
   },
   "suma": {
-    "K4pl": 720,
-    "K3aKLUCZ": 195,
-    "K5pl": 256,
     "K1": 2,
-    "K3b": 3,
+    "K1def": 34,
+    "K1defWID": 26,
+    "K2": 4,
+    "K3a": 338,
+    "K3aKLUCZ": 34,
+    "K3b": 0,
+    "K4pl": 53,
+    "K4en": 881,
+    "K5pl": 256,
     "K5en": 1822,
-    "K4en": 1093,
-    "K7": 698,
-    "K1def": 856,
-    "K3a": 1017,
-    "K2": 5,
-    "K1defWID": 143
+    "K7": 380
   },
-  "_meta": {
-    "data": "2026-09-08T20:25:26.746Z",
-    "root": "/Users/piotrwisniewski/Developer/wt/j1-czat",
-    "sha": "e1033f9cb8b41b6f965838f19bbd4df049854574",
-    "poprzedni_sha": "2151bf5e7238aa0008f1c9da7cea8486f3a4eb95",
-    "paczka": "J1 — modul 01 Chat"
+  "moduly": {
+    "01 Chat": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 1,
+      "K5pl": 0,
+      "K5en": 27,
+      "K7": 0
+    },
+    "02 My Work": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 1,
+      "K4en": 52,
+      "K5pl": 1,
+      "K5en": 61,
+      "K7": 0
+    },
+    "03 Interview": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 0,
+      "K5en": 51,
+      "K7": 0
+    },
+    "04 Tools": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 1,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 10,
+      "K5pl": 49,
+      "K5en": 112,
+      "K7": 0
+    },
+    "05 Assessment": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 3,
+      "K5pl": 97,
+      "K5en": 76,
+      "K7": 0
+    },
+    "06 Initiatives": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 2,
+      "K5en": 97,
+      "K7": 0
+    },
+    "07 Execution": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 0,
+      "K5en": 63,
+      "K7": 0
+    },
+    "08 Results": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 0,
+      "K5en": 45,
+      "K7": 0
+    },
+    "09 Finance": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 175,
+      "K3aKLUCZ": 33,
+      "K3b": 0,
+      "K4pl": 13,
+      "K4en": 6,
+      "K5pl": 6,
+      "K5en": 158,
+      "K7": 0
+    },
+    "10 Materials": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 1,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 1,
+      "K5pl": 19,
+      "K5en": 223,
+      "K7": 8
+    },
+    "11 Audits": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 14,
+      "K5en": 12,
+      "K7": 0
+    },
+    "12 Meeting": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 0,
+      "K5en": 12,
+      "K7": 0
+    },
+    "13 Organization": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 0,
+      "K5pl": 1,
+      "K5en": 64,
+      "K7": 0
+    },
+    "14 Admin Panel": {
+      "K1": 0,
+      "K1def": 33,
+      "K1defWID": 26,
+      "K2": 0,
+      "K3a": 3,
+      "K3aKLUCZ": 1,
+      "K3b": 0,
+      "K4pl": 9,
+      "K4en": 543,
+      "K5pl": 13,
+      "K5en": 73,
+      "K7": 277
+    },
+    "15 Settings": {
+      "K1": 1,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 9,
+      "K4en": 32,
+      "K5pl": 32,
+      "K5en": 196,
+      "K7": 4
+    },
+    "16 Partner Portal": {
+      "K1": 0,
+      "K1def": 0,
+      "K1defWID": 0,
+      "K2": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 0,
+      "K4en": 1,
+      "K5pl": 3,
+      "K5en": 29,
+      "K7": 0
+    },
+    "ZZ wspólne": {
+      "K1": 1,
+      "K1def": 1,
+      "K1defWID": 0,
+      "K2": 2,
+      "K3a": 160,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4pl": 21,
+      "K4en": 232,
+      "K5pl": 19,
+      "K5en": 523,
+      "K7": 91
+    }
   },
   "przyklady": {
-    "K4pl": [
+    "K1": [
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
+        "tekst": "Guided by Dr. Piotr Wiśniewski",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "public/locales/en/translation.json:welcome.videoPerson",
+        "tekst": "Paweł Bochniarz",
+        "dowod": "diakrytyk:ł"
+      }
+    ],
+    "K1def": [
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:878",
-        "tekst": ") : loadError ? (\n            /* M15-H03 — stan błędu/degraded zamiast fałszywej pustki. */",
-        "dowod": "diakrytyk:ł"
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:169",
+        "tekst": "billing.analytics.loadError = \"Nie udało się załadować danych analitycznych\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/AuditHistoryView.tsx:198",
-        "tekst": "Brak zapisanych akcji.",
-        "dowod": "pl:brak"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:235",
+        "tekst": "billing.analytics.last6Months = \"Ostatnie 6 miesięcy\"",
+        "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/method/AuditReportDocumentView.tsx:409",
-        "tekst": "Brak pozycji.",
-        "dowod": "pl:brak"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:236",
+        "tekst": "billing.analytics.lastYear = \"Ostatni rok\"",
+        "dowod": "pl?:ostatni,pl?:rok"
       },
       {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/method/AuditReportDocumentView.tsx:481",
-        "tekst": "Brak pozycji.",
-        "dowod": "pl:brak"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:253",
+        "tekst": "billing.analytics.mrrLabel = \"Miesięczny przychód cykliczny (MRR)\"",
+        "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/method/workspace/AuditActionCards.tsx:8",
-        "tekst": "Karty działania — Audyty",
-        "dowod": "diakrytyk:ł"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:275",
+        "tekst": "billing.analytics.vsPreviousPeriod = \"względem poprzedniego okresu\"",
+        "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:695",
-        "tekst": "Wskaźnik",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:698",
-        "tekst": "Wskaźnik branżowy",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2178",
-        "tekst": "Sposób pokazania zlecenia",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:285",
+        "tekst": "billing.analytics.arrLabel = \"Roczny przychód cykliczny (ARR)\"",
         "dowod": "diakrytyk:ó"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2427",
-        "tekst": "Typ zamknięcia",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:305",
+        "tekst": "billing.analytics.churnRate = \"Wskaźnik rezygnacji\"",
+        "dowod": "diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:314",
+        "tekst": "billing.analytics.monthlyMrrChurn = \"Miesięczna utrata MRR\"",
         "dowod": "diakrytyk:ę"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2452",
-        "tekst": "Dowód / opis pozostałego zakresu",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:321",
+        "tekst": "billing.analytics.ltvLabel = \"Wartość klienta (LTV)\"",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:331",
+        "tekst": "billing.analytics.arpaLabel = \"Średni przychód na konto (ARPA)\"",
+        "dowod": "diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:369",
+        "tekst": "billing.analytics.revenueByPlan = \"Przychód według planu\"",
         "dowod": "diakrytyk:ó"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2015",
-        "tekst": "Zlecenie LIGHT nie zostało uruchomione.",
-        "dowod": "diakrytyk:ł,pl:nie"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:406",
+        "tekst": "billing.analytics.noPlanDistribution = \"Brak danych o przychodach według planu\"",
+        "dowod": "diakrytyk:ł,pl:brak"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2028",
-        "tekst": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie\n              zostaną poprawione. ",
-        "dowod": "diakrytyk:ą,pl:jest,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2072",
-        "tekst": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest\n            widoczna — poproś wła",
-        "dowod": "diakrytyk:ń,pl:nie,pl:jest"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2375",
-        "tekst": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
-        "dowod": "diakrytyk:ę,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1004",
-        "tekst": "Więcej",
-        "dowod": "diakrytyk:ę,pl:więcej"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1005",
-        "tekst": "Więcej widoków listy zleceń",
-        "dowod": "diakrytyk:ę,pl:więcej"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:342",
-        "tekst": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przy",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:527",
-        "tekst": "Przybliż plan",
-        "dowod": "diakrytyk:ż"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:551",
-        "tekst": "Ustaw powiększenie na sto procent",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:331",
-        "tekst": "Ten plan nie ma jeszcze żadnych kroków.",
-        "dowod": "diakrytyk:ż,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:503",
-        "tekst": "Przeciągnij, aby przesunąć. Kółko przybliża.",
-        "dowod": "diakrytyk:ą,pl:aby"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:504",
-        "tekst": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.",
-        "dowod": "diakrytyk:ą,pl:aby"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:940",
-        "tekst": "Po czym następuje",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:408",
-        "tekst": "Do czego dążymy",
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:426",
+        "tekst": "billing.analytics.month = \"Miesiąc\"",
         "dowod": "diakrytyk:ą"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:476",
-        "tekst": "Odrzuć zmiany",
-        "dowod": "diakrytyk:ć"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:429",
+        "tekst": "billing.analytics.rate = \"Wskaźnik\"",
+        "dowod": "diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:453",
+        "tekst": "billing.analytics.noChurnData = \"Brak danych o rezygnacjach\"",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:462",
+        "tekst": "billing.analytics.expansionRevenue = \"Rozszerzenie przychodów\"",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:468",
+        "tekst": "billing.analytics.month = \"Miesiąc\"",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:528",
+        "tekst": "billing.analytics.noCohortData = \"Brak danych kohortowych\"",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:537",
+        "tekst": "billing.analytics.customerValueMetrics = \"Wskaźniki wartości klienta\"",
+        "dowod": "diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:541",
+        "tekst": "billing.analytics.lifetimeValue = \"Wartość klienta\"",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:548",
+        "tekst": "billing.analytics.arpaLabel = \"Średni przychód na konto (ARPA)\"",
+        "dowod": "diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:555",
+        "tekst": "billing.analytics.avgRevenuePerCustomer = \"Śr. przychód na klienta\"",
+        "dowod": "diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:561",
+        "tekst": "billing.analytics.avgLifespan = \"Śr. okres współpracy\"",
+        "dowod": "diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:567",
+        "tekst": "billing.analytics.monthlyChurn = \"Miesięczna rezygnacja\"",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/TaxSettingsForm.tsx:249",
+        "tekst": "billing.tax.billingNamePlaceholder = \"np. Przykładowa Sp. z o.o.\"",
+        "dowod": "diakrytyk:ł"
+      }
+    ],
+    "K1defWID": [
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:169",
+        "tekst": "billing.analytics.loadError = \"Nie udało się załadować danych analitycznych\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:235",
+        "tekst": "billing.analytics.last6Months = \"Ostatnie 6 miesięcy\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:236",
+        "tekst": "billing.analytics.lastYear = \"Ostatni rok\"",
+        "dowod": "brak klucza w EN,pl?:ostatni,pl?:rok"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:253",
+        "tekst": "billing.analytics.mrrLabel = \"Miesięczny przychód cykliczny (MRR)\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:275",
+        "tekst": "billing.analytics.vsPreviousPeriod = \"względem poprzedniego okresu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:285",
+        "tekst": "billing.analytics.arrLabel = \"Roczny przychód cykliczny (ARR)\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:305",
+        "tekst": "billing.analytics.churnRate = \"Wskaźnik rezygnacji\"",
+        "dowod": "brak klucza w EN,diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:314",
+        "tekst": "billing.analytics.monthlyMrrChurn = \"Miesięczna utrata MRR\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:321",
+        "tekst": "billing.analytics.ltvLabel = \"Wartość klienta (LTV)\"",
+        "dowod": "brak klucza w EN,diakrytyk:ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:331",
+        "tekst": "billing.analytics.arpaLabel = \"Średni przychód na konto (ARPA)\"",
+        "dowod": "brak klucza w EN,diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:369",
+        "tekst": "billing.analytics.revenueByPlan = \"Przychód według planu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:406",
+        "tekst": "billing.analytics.noPlanDistribution = \"Brak danych o przychodach według planu\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł,pl:brak"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:426",
+        "tekst": "billing.analytics.month = \"Miesiąc\"",
+        "dowod": "brak klucza w EN,diakrytyk:ą"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:429",
+        "tekst": "billing.analytics.rate = \"Wskaźnik\"",
+        "dowod": "brak klucza w EN,diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:453",
+        "tekst": "billing.analytics.noChurnData = \"Brak danych o rezygnacjach\"",
+        "dowod": "brak klucza w EN,pl:brak"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:462",
+        "tekst": "billing.analytics.expansionRevenue = \"Rozszerzenie przychodów\"",
+        "dowod": "brak klucza w EN,diakrytyk:ó"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:528",
+        "tekst": "billing.analytics.noCohortData = \"Brak danych kohortowych\"",
+        "dowod": "brak klucza w EN,pl:brak"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:537",
+        "tekst": "billing.analytics.customerValueMetrics = \"Wskaźniki wartości klienta\"",
+        "dowod": "brak klucza w EN,diakrytyk:ź"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:541",
+        "tekst": "billing.analytics.lifetimeValue = \"Wartość klienta\"",
+        "dowod": "brak klucza w EN,diakrytyk:ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:555",
+        "tekst": "billing.analytics.avgRevenuePerCustomer = \"Śr. przychód na klienta\"",
+        "dowod": "brak klucza w EN,diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:561",
+        "tekst": "billing.analytics.avgLifespan = \"Śr. okres współpracy\"",
+        "dowod": "brak klucza w EN,diakrytyk:Ś"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/SubscriptionAnalytics.tsx:567",
+        "tekst": "billing.analytics.monthlyChurn = \"Miesięczna rezygnacja\"",
+        "dowod": "brak klucza w EN,diakrytyk:ę"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/TaxSettingsForm.tsx:249",
+        "tekst": "billing.tax.billingNamePlaceholder = \"np. Przykładowa Sp. z o.o.\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/TaxSettingsForm.tsx:276",
+        "tekst": "billing.tax.addressLine1Placeholder = \"np. ul. Przykładowa 12\"",
+        "dowod": "brak klucza w EN,diakrytyk:ł"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/billing/UsageAlertsConfig.tsx:344",
+        "tekst": "billing.alerts.month = \"miesiąc\"",
+        "dowod": "brak klucza w EN,diakrytyk:ą"
+      }
+    ],
+    "K2": [
+      {
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
+        "tekst": "MUST: {{must}} · SHOULD: {{should}}",
+        "dowod": "en:should"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder",
+        "tekst": "Szukaj task, decision, initiative...",
+        "dowod": "en?:task,en?:initiative"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge",
+        "tekst": "AI-draft",
+        "dowod": "en:draft"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "public/locales/pl/translation.json:discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder",
+        "tekst": "Powod odeslania do Draft",
+        "dowod": "en:draft"
+      }
+    ],
+    "K3a": [
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "public/locales/pl/translation.json:superadmin.settlements.title",
+        "tekst": "Rozliczenia z partnerami",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "public/locales/pl/translation.json:superadmin.settlements.subtitle",
+        "tekst": "Przegląd historycznej ekonomii partnerów",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.moreActions",
+        "tekst": "Więcej działań",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.outline",
+        "tekst": "Struktura",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.expandLeftRail",
+        "tekst": "Rozwiń lewy panel",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.collapseLeftRail",
+        "tekst": "Zwiń lewy panel",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.resizeLeftRail",
+        "tekst": "Zmień szerokość lewego panelu",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.expandRightRail",
+        "tekst": "Rozwiń prawy panel",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.collapseRightRail",
+        "tekst": "Zwiń prawy panel",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.resizeRightRail",
+        "tekst": "Zmień szerokość prawego panelu",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:mels.discussWithTeresa",
+        "tekst": "Porozmawiaj z Teresą",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:sidebar.agentPlan",
+        "tekst": "Uruchom agenta",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "public/locales/pl/translation.json:admin.aiControlCenter.panel.budget",
+        "tekst": "Budżet: {{status}}",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.toast.disabled",
+        "tekst": "Tryb demo wyłączony. Wracasz do swojego workspace.",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.toast.toggleError",
+        "tekst": "Nie udało się przełączyć trybu demo",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.toast.toggleErrorShort",
+        "tekst": "Błąd przełączania trybu demo",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.banner.sampleWorkspace",
+        "tekst": "Przykładowy workspace",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.banner.exitWorkspace",
+        "tekst": "Wyjdź z przykładowego workspace",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:demo.banner.backToWorkspace",
+        "tekst": "Wróć do mojego workspace",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.filters.statusLabel",
+        "tekst": "Status",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.actions.newDocument",
+        "tekst": "Nowy dokument",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.actions.newSheet",
+        "tekst": "Nowy arkusz",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.preview.ai.improve",
+        "tekst": "Zaproponuj ulepszenia",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.preview.ai.summary",
+        "tekst": "Podsumuj sekcje",
+        "dowod": "brak w en"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:rap.preview.aiNextSteps",
+        "tekst": "Zaproponuj kolejne kroki",
+        "dowod": "brak w en"
       }
     ],
     "K3aKLUCZ": [
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorSlide",
-        "tekst": "Slajd {{number}}",
+        "modul": "14 Admin Panel",
+        "gdzie": "public/locales/pl/translation.json:admin.aiControlCenter.panel.budget",
+        "tekst": "Budżet: {{status}}",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorToSlide",
-        "tekst": "Do slajdu {{number}}",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.shared.title",
+        "tekst": "Wspólny budżet AI dla organizacji",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.show",
-        "tekst": "Pokaz",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.shared.body",
+        "tekst": "Użycie AI jest poolowane na poziomie organizacji zamiast fragmentowania per użytkownik, co odpowiada temu, jak naprawdę ",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.showDesc",
-        "tekst": "Narracyjna prezentacja na żywo. Duże wizualizacje, minimum tekstu.",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.topUp.title",
+        "tekst": "Miesięczne pakiety doładowań",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.document",
-        "tekst": "Dokument",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.topUp.body",
+        "tekst": "Organizacje mogą kupić dodatkowe miesięczne pakiety budżetu AI. Niewykorzystane saldo przenosi się i kumuluje zamiast zn",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.documentDesc",
-        "tekst": "Samodzielny materiał konsultingowy. Gęsta treść, minimalne obrazy.",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.payg.title",
+        "tekst": "Automatyczny fallback pay-as-you-go",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.briefing",
-        "tekst": "Briefing",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.budget.payg.body",
+        "tekst": "Gdy budżet się wyczerpie, użycie AI może kontynuować przez pay-as-you-go lub przejście na większy pakiet.",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.briefingDesc",
-        "tekst": "Szybki update zarządczy. Kluczowe metryki i zmiany statusów.",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.overLimit.items[0]",
+        "tekst": "Po wyczerpaniu budżetu AI użytkownicy zachowują dostęp do istniejących danych, workspace'ów i wcześniejszych outputów.",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.workshop",
-        "tekst": "Warsztat",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.overLimit.items[1]",
+        "tekst": "Co się zatrzymuje, to asystent AI: generowanie, wsparcie prowadzone przez AI i akcje zużywające tokeny.",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.modes.workshopDesc",
-        "tekst": "Materiał warsztatowy z frameworkami i elementami interaktywnymi.",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.overLimit.items[2]",
+        "tekst": "Zespoły mogą kontynuować przez pay-as-you-go, upgrade pakietu lub kontakt ze sprzedażą w sprawie większej umowy komercyj",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.executive",
-        "tekst": "Zarządczy",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.licensedTools.items[0]",
+        "tekst": "Wybrane assessmenty i frameworki, takie jak SIR lub DRD, mogą wymagać osobnej licencji.",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.executiveDesc",
-        "tekst": "Decyzyjny, zwięzły, framing 'so what'",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.licensedTools.items[1]",
+        "tekst": "Licencjonowane narzędzia są sprzedawane jako dodatki lub wyceniane na zapytanie, nie mieszane z ceną bazowego stanowiska",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.professional",
-        "tekst": "Profesjonalny",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.licensedTools.items[2]",
+        "tekst": "To utrzymuje czytelność platformy bazowej, zachowując przestrzeń dla specjalistycznych konfiguracji enterprise.",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.professionalDesc",
-        "tekst": "Biznesowo-neutralny, kanoniczny domyślny",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:pricing.salesNote.body",
+        "tekst": "Budżet AI jest sprzedawany jako budżet, a nie jako publiczna obietnica stawki za token, ponieważ różne akcje zużywają ró",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.technical",
-        "tekst": "Techniczny",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.eu_vat",
+        "tekst": "Numer VAT UE",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.technicalDesc",
-        "tekst": "Analityczny, precyzyjny, więcej detali",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.gb_vat",
+        "tekst": "Numer VAT Wielkiej Brytanii",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.narrative",
-        "tekst": "Narracyjny",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.us_ein",
+        "tekst": "Amerykański numer EIN",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.registers.narrativeDesc",
-        "tekst": "Styl storytelling, najlepszy dla trybu Pokaz",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.au_abn",
+        "tekst": "Australijski numer ABN",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.corporatePhotography",
-        "tekst": "Foto korporacyjne",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.br_cnpj",
+        "tekst": "Brazylijski numer CNPJ",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.corporatePhotographyDesc",
-        "tekst": "Profesjonalne zdjęcia ludzi, biur, produktów",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.ca_bn",
+        "tekst": "Kanadyjski numer BN",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.abstractGeometric",
-        "tekst": "Abstrakcyjne",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.ch_vat",
+        "tekst": "Szwajcarski numer VAT",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.abstractGeometricDesc",
-        "tekst": "Gradienty, kształty, wzory",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.in_gst",
+        "tekst": "Indyjski numer GST",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.flatIllustration",
-        "tekst": "Ilustracje",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.jp_cn",
+        "tekst": "Japoński numer przedsiębiorstwa",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.flatIllustrationDesc",
-        "tekst": "Nowoczesne ilustracje wektorowe",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.kr_brn",
+        "tekst": "Koreański numer rejestracyjny firmy",
         "dowod": "brak w en,brak defaultu w kodzie"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.wizard.imageStyles.dataFocused",
-        "tekst": "Dane",
+        "modul": "09 Finance",
+        "gdzie": "public/locales/pl/translation.json:billing.tax.idType.mx_rfc",
+        "tekst": "Meksykański numer RFC",
         "dowod": "brak w en,brak defaultu w kodzie"
+      }
+    ],
+    "K3b": [],
+    "K4pl": [
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/podglad/main.tsx:224",
+        "tekst": "ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy *.pg.test.ts na realnym P",
+        "dowod": "diakrytyk:ó,pl:nie"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/InAppNudges/SmartNudge.tsx:91",
+        "tekst": "Utknąłeś?",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/QuestionExplanation.tsx:122",
+        "tekst": "Wpływ:",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/QuestionExplanation.tsx:126",
+        "tekst": "Przykład:",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:76",
+        "tekst": "To jest snapshot — punkt w czasie",
+        "dowod": "pl:jest"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:79",
+        "tekst": "Ten widok przedstawia stan Twojego myślenia w momencie jego zapisania. To nie jest\n            ostateczna rekomendacja a",
+        "dowod": "diakrytyk:ś,pl:nie,pl:jest"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:86",
+        "tekst": "Możesz wrócić i zaktualizować w dowolnym momencie",
+        "dowod": "diakrytyk:ż"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:90",
+        "tekst": "Nowe informacje mogą zmienić percepcję",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/TourTrigger.tsx:43",
+        "tekst": "Pokaż przewodnik",
+        "dowod": "diakrytyk:ż,pl:pokaż"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/TourTrigger.tsx:81",
+        "tekst": "(ukończony)",
+        "dowod": "diakrytyk:ń"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/StyleGuide.tsx:58",
+        "tekst": "VF0-11 · dev-only, za flagą",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/StyleGuide.tsx:59",
+        "tekst": "· bez logowania. Zero\n              re-implementacji — wszystko importowane z żywego systemu.",
+        "dowod": "diakrytyk:ż"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:296",
+        "tekst": "Otwórz źródło",
+        "dowod": "diakrytyk:ó,pl:otwórz"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:219",
+        "tekst": "Kliknij wiersz, by zobaczyć podgląd.",
+        "dowod": "diakrytyk:ć"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:386",
+        "tekst": "Zatwierdź",
+        "dowod": "diakrytyk:ź"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:402",
+        "tekst": "Właściciel: Anna Kowalska",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:418",
+        "tekst": "Brak komentarzy.",
+        "dowod": "pl:brak"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:425",
+        "tekst": "Utworzono przez Teresę · 2 dni temu",
+        "dowod": "diakrytyk:ę,pl:przez"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:442",
+        "tekst": "Widoczność: Zespół",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:446",
+        "tekst": "3 powiązane notatki, 1 initiative.",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:449",
+        "tekst": "Komendy + strumień sugestii Teresy.",
+        "dowod": "diakrytyk:ń"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/ComponentsSection.tsx:517",
+        "tekst": "Sekcja „Źródła i założenia\" (ArtifactRightPanel slot) — realny fetch\n            `fetchEvidenceEnvelope('insight', 'demo",
+        "dowod": "diakrytyk:Ź"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:147",
+        "tekst": "Nie udało się załadować tej inicjatywy",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:148",
+        "tekst": "Rekord mógł zostać przeniesiony lub usunięty.",
+        "dowod": "diakrytyk:ó,pl:lub"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/pages/dev/styleguide/StatesSection.tsx:155",
+        "tekst": "StreamingState (na żywo — token po tokenie)",
+        "dowod": "diakrytyk:ż"
+      }
+    ],
+    "K4en": [
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/App.tsx:134",
+        "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
+        "dowod": "en:this,en:please"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:305",
+        "tekst": "Cost Saved",
+        "dowod": "en?:cost,en?:saved"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:497",
+        "tekst": "Failed",
+        "dowod": "en:failed"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
+        "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIFeedbackButton.tsx:115",
+        "tekst": "Tell us more about your experience... (optional)",
+        "dowod": "en:about,en:your"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInsightFeed.tsx:113",
+        "tekst": "No critical alerts at this time.",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInterviewModal.tsx:163",
+        "tekst": "Type your answer...",
+        "dowod": "en:your"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:230",
+        "tekst": "Search settings...",
+        "dowod": "en?:search,en?:settings"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
+        "tekst": "Contact your administrator to enable AI models",
+        "dowod": "en:your"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
+        "tekst": "How should AI interact with you?",
+        "dowod": "en:should,en:with,en:you"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIUsageIndicator.tsx:148",
+        "tekst": "Last 7 days",
+        "dowod": "en?:last,en?:days"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
+        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
+        "tekst": "Overrides inside this group",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
+        "tekst": "Overridden away from the shipped default",
+        "dowod": "en:from,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/Charts/RechartsWrapper.tsx:38",
+        "tekst": "Chart failed to load. Please refresh the page.",
+        "dowod": "en:failed,en:please,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/Charts/RechartsWrapper.tsx:125",
+        "tekst": "Chart failed to load. Please refresh the page.",
+        "dowod": "en:failed,en:please,en:the"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:181",
+        "tekst": "Essential for the platform to function. Cannot be disabled.",
+        "dowod": "en:the,en:cannot"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:189",
+        "tekst": "Remember your preferences like theme and language.",
+        "dowod": "en:your,en:and"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:197",
+        "tekst": "Help us understand how you use the platform to improve it.",
+        "dowod": "en:you,en:the"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "src/components/DiscoveryTools/shared/ProposalCard.tsx:116",
+        "tekst": "0 ? (\n            // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Education/ToolVideoModal.tsx:114",
+        "tekst": "We're preparing an in-depth walkthrough of this tool. In the meantime, try it\n                    yourself!",
+        "dowod": "en:this,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:126",
+        "tekst": "The application encountered an unexpected error. This usually happens due to corrupted\n              local data or a tem",
+        "dowod": "en:the,en:this"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:134",
+        "tekst": "Runtime details are hidden for safety. You can retry, reset app data, or report this\n              incident with context",
+        "dowod": "en:you,en:this,en:with"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:138",
+        "tekst": "Technical diagnostics are captured in telemetry and available through the report\n              action.",
+        "dowod": "en:and,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:146",
+        "tekst": "Crash diagnostics were sent to the observability pipeline.",
+        "dowod": "en:were,en:the"
       }
     ],
     "K5pl": [
@@ -752,64 +1364,6 @@
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       }
     ],
-    "K1": [
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
-        "tekst": "Guided by Dr. Piotr Wiśniewski",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "public/locales/en/translation.json:welcome.videoPerson",
-        "tekst": "Paweł Bochniarz",
-        "dowod": "diakrytyk:ł"
-      }
-    ],
-    "K3b": [
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.0",
-        "tekst": "Anna explains fit, pricing, and security before you commit to a path.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.1",
-        "tekst": "The demo shows the Consulting Intelligence Platform on seeded, read-only data.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:landing.narrativeCta.points.2",
-        "tekst": "The trial starts your own guided consulting workflow, from context to execution.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/en/translation.json:presentations.sourceType.unknown",
-        "tekst": "Unknown",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/en/translation.json:presentations.minimalPreview",
-        "tekst": "Minimal preview — full editor coming soon",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/en/translation.json:presentations.previewPlaceholder",
-        "tekst": "Deck preview will be rendered here.",
-        "dowod": "brak w pl"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/en/translation.json:presentations.comingSoon",
-        "tekst": "Coming soon",
-        "dowod": "brak w pl"
-      }
-    ],
     "K5en": [
       {
         "modul": "ZZ wspólne",
@@ -962,839 +1516,189 @@
         "dowod": "en:unknown"
       }
     ],
-    "K4en": [
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/App.tsx:133",
-        "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
-        "dowod": "en:this,en:please"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:305",
-        "tekst": "Cost Saved",
-        "dowod": "en?:cost,en?:saved"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:497",
-        "tekst": "Failed",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
-        "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/ChatHistorySidebar.tsx:1163",
-        "tekst": ")\n            ) : searchQuery ? (\n              /* Search mode: show flat grouped results (server-side when available) *",
-        "dowod": "en:when"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIFeedbackButton.tsx:115",
-        "tekst": "Tell us more about your experience... (optional)",
-        "dowod": "en:about,en:your"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInsightFeed.tsx:113",
-        "tekst": "No critical alerts at this time.",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInterviewModal.tsx:163",
-        "tekst": "Type your answer...",
-        "dowod": "en:your"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:229",
-        "tekst": "Search settings...",
-        "dowod": "en?:search,en?:settings"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
-        "tekst": "Contact your administrator to enable AI models",
-        "dowod": "en:your"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
-        "tekst": "How should AI interact with you?",
-        "dowod": "en:should,en:with,en:you"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIUsageIndicator.tsx:148",
-        "tekst": "Last 7 days",
-        "dowod": "en?:last,en?:days"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AI/CustomComplianceTemplateEditor.tsx:688",
-        "tekst": "Describe the purpose and scope of this compliance framework...",
-        "dowod": "en:the,en:and,en:this"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AI/CustomComplianceTemplateEditor.tsx:584",
-        "tekst": "Choose a base template to start from, or create a blank template:",
-        "dowod": "en:from"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:672",
-        "tekst": "Legal company name",
-        "dowod": "en?:company,en?:name"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:660",
-        "tekst": "Tax and invoicing",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:690",
-        "tekst": "Save tax settings",
-        "dowod": "en?:save,en?:settings"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:741",
-        "tekst": "Usage and overage posture",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:759",
-        "tekst": "Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.",
-        "dowod": "en:your,en:please"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:766",
-        "tekst": "Billing, FinOps, and commercial controls",
-        "dowod": "en:and"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminBillingFinOpsPanel.tsx:769",
-        "tekst": "P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and usage\n          posture as first-cl",
-        "dowod": "en:now,en:and"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
-        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
-        "tekst": "Overrides inside this group",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
-        "tekst": "Overridden away from the shipped default",
-        "dowod": "en:from,en:the"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/method/tabs/AuditCriteriaBrowser.tsx:118",
-        "tekst": "applyColumnFilters(searched as unknown as Array",
-        "dowod": "en:unknown"
-      }
-    ],
     "K7": [
       {
         "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:119",
-        "tekst": "new Intl.DateTimeFormat('en-US'",
-        "dowod": "Intl z locale na sztywno"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AI/AccessLimitsTab.tsx:835",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AI/AccessLimitsTab.tsx:965",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/AuditHistoryView.tsx:91",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/AuditHistoryView.tsx:222",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "11 Audits",
-        "gdzie": "src/components/Audit/method/AuditsMethodHub.tsx:530",
+        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:260",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/BudgetWorkspace.tsx:484",
-        "tekst": "new Intl.NumberFormat('pl-PL'",
-        "dowod": "Intl z locale na sztywno"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/FinancialAnalysisWorkspace.tsx:415",
-        "tekst": "new Intl.NumberFormat('pl-PL'",
-        "dowod": "Intl z locale na sztywno"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/LessonsLearnedPanel.tsx:159",
-        "tekst": "toLocaleDateString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/RezultatyView.tsx:644",
-        "tekst": "new Intl.NumberFormat('pl-PL'",
-        "dowod": "Intl z locale na sztywno"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/ui.tsx:108",
-        "tekst": "toLocaleDateString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/ui.tsx:115",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/Decisions/DecisionCard.tsx:171",
-        "tekst": "toLocaleDateString('en-US'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/Discovery/DiscoveryFooterActions.tsx:73",
-        "tekst": "toLocaleTimeString()",
-        "dowod": "toLocaleTimeString() bez locale"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:2311",
+        "modul": "15 Settings",
+        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:361",
         "tekst": "toLocaleDateString()",
         "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "04 Tools",
-        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:4746",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/Discovery/DiscoveryToolsHub.tsx:3490",
-        "tekst": "toLocaleDateString('en-US'",
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:25",
+        "tekst": "toLocaleDateString('pl-PL'",
         "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "04 Tools",
-        "gdzie": "src/components/Discovery/InsightDetailView.tsx:428",
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:107",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ExportSharePanel.tsx:508",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ReportEditor/ReportEditor.tsx:258",
         "tekst": "toLocaleDateString('en-GB'",
         "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/ToolDocumentView.tsx:484",
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ReportEditor/ReviewPanel.tsx:809",
         "tekst": "toLocaleString()",
         "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CommentThreadItem.tsx:30",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
+        "gdzie": "src/components/ReportBuilder/blocks/InitiativeCards.tsx:460",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:781",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:1267",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:1284",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioQaPanel.tsx:268",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx:913",
-        "tekst": "toLocaleString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      }
-    ],
-    "K1def": [
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:887",
-        "tekst": "admin.membersRoles.loadErrorTitle = \"Nie udało się wczytać listy członków tej organizacji.\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "gdzie": "src/components/ReportBuilder/blocks/KPICards.tsx:175",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminMembersRolesPanel.tsx:905",
-        "tekst": "admin.membersRoles.loadErrorRetry = \"Spróbuj ponownie\"",
-        "dowod": "diakrytyk:ó"
+        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:104",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/AdminSecurityPolicyPanel.tsx:79",
-        "tekst": "admin.security.policyPanel.mfa.errors.noEnrolledAccounts = \"Nie można wymagać drugiego składnika: żadne konto w tej orga",
-        "dowod": "diakrytyk:ż,pl:nie"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/BudgetWorkspace.tsx:701",
-        "tekst": "finance.budget.valuate = \"Wycen budżet\"",
-        "dowod": "diakrytyk:ż"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:556",
-        "tekst": "valuation.advisory.candidateAlreadyExists = \"To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative\"",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:703",
-        "tekst": "valuation.archiveOnly.body = \"Ten rekord nie ma jeszcze odpowiednika w nowym modelu finansowym, więc wyniki i założenia ",
-        "dowod": "diakrytyk:ę,pl:nie,pl:jest"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:876",
-        "tekst": "valuation.assumptions.exitMultiple = \"Mnożnik wyjścia\"",
-        "dowod": "diakrytyk:ż"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:973",
-        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
-        "dowod": "diakrytyk:ź,pl:wymagane"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:974",
-        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
-        "dowod": "diakrytyk:ź,pl:wymagane"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1351",
-        "tekst": "valuation.advisory.convert = \"Wyślij jako kandydata na Initiative\"",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1781",
-        "tekst": "valuation.advisory.candidateModalTitle = \"Wyślij jako kandydata na Initiative\"",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1786",
-        "tekst": "valuation.advisory.candidateModalConfirm = \"Wyślij\"",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1787",
-        "tekst": "valuation.advisory.candidateModalCancel = \"Anuluj\"",
-        "dowod": "pl:anuluj"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1788",
-        "tekst": "valuation.advisory.candidateModalClose = \"Zamknij\"",
-        "dowod": "pl:zamknij"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1789",
-        "tekst": "valuation.advisory.candidateChecking = \"Sprawdzanie kwalifikowalności…\"",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:179",
-        "tekst": "discoveryTools.swot.strengths = \"Siły\"",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:180",
-        "tekst": "discoveryTools.swot.weaknesses = \"Słabości\"",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:182",
-        "tekst": "discoveryTools.swot.threats = \"Zagrożenia\"",
-        "dowod": "diakrytyk:ż"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:210",
-        "tekst": "discoveryTools.swot.tensionsCount = \"{{count}} napięć łączy ćwiartki\"",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/report/ToolReportView.tsx:244",
-        "tekst": "discoveryTools.report.rendererInfo = \"Renderer {{version}} · źródła: {{count}}\"",
-        "dowod": "diakrytyk:ź"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:112",
-        "tekst": "documentStudio.createFromArtifact.error = \"Nie udało się utworzyć wzorca\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:124",
-        "tekst": "documentStudio.createFromArtifact.title = \"Zrób z tego wzorzec\"",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:132",
-        "tekst": "documentStudio.createFromArtifact.title = \"Zrób z tego wzorzec\"",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:135",
-        "tekst": "documentStudio.createFromArtifact.subtitle = \"Strukturę wyciągamy automatycznie. Zostały tylko rzeczy, których nie da si",
-        "dowod": "diakrytyk:ę,pl:tylko,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/CreateTemplateFromArtifactModal.tsx:145",
-        "tekst": "documentStudio.createFromArtifact.close = \"Zamknij\"",
-        "dowod": "pl:zamknij"
-      }
-    ],
-    "K3a": [
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "public/locales/pl/translation.json:superadmin.settlements.title",
-        "tekst": "Rozliczenia z partnerami",
-        "dowod": "brak w en"
+        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:109",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "public/locales/pl/translation.json:superadmin.settlements.subtitle",
-        "tekst": "Przegląd historycznej ekonomii partnerów",
-        "dowod": "brak w en"
+        "gdzie": "src/components/SuperAdmin/BackupPanel.tsx:121",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.moreActions",
-        "tekst": "Więcej działań",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.outline",
-        "tekst": "Struktura",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/EmailConfigurationPanel.tsx:380",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.expandLeftRail",
-        "tekst": "Rozwiń lewy panel",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/FeatureFlagsPanel.tsx:490",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.collapseLeftRail",
-        "tekst": "Zwiń lewy panel",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/IntegrationsPanel.tsx:206",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.resizeLeftRail",
-        "tekst": "Zmień szerokość lewego panelu",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/LegalPanel.tsx:57",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.expandRightRail",
-        "tekst": "Rozwiń prawy panel",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.collapseRightRail",
-        "tekst": "Zwiń prawy panel",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.resizeRightRail",
-        "tekst": "Zmień szerokość prawego panelu",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106",
+        "tekst": "toLocaleTimeString()",
+        "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.discussWithTeresa",
-        "tekst": "Porozmawiaj z Teresą",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.leftRailPanel",
-        "tekst": "Panel narzędzi (lewy)",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:mels.rightRailPanel",
-        "tekst": "Panel narzędzi (prawy)",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.addComment",
-        "tekst": "Dodaj komentarz",
-        "dowod": "brak w en"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/PlaybookTemplateComments.tsx:218",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.addFailed",
-        "tekst": "Nie udało się dodać komentarza",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.added",
-        "tekst": "Dodano komentarz",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.adding",
-        "tekst": "Dodawanie…",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorDeck",
-        "tekst": "Cała prezentacja",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorSlide",
-        "tekst": "Slajd {{number}}",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorSlideUnknown",
-        "tekst": "Slajd (usunięty)",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorToDeck",
-        "tekst": "Do całej prezentacji",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.anchorToSlide",
-        "tekst": "Do slajdu {{number}}",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.composerPlaceholder",
-        "tekst": "Dodaj komentarz do przeglądu…",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.delete",
-        "tekst": "Usuń",
-        "dowod": "brak w en"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:presentations.comments.deleteFailed",
-        "tekst": "Nie udało się usunąć komentarza",
-        "dowod": "brak w en"
-      }
-    ],
-    "K2": [
-      {
-        "modul": "02 My Work",
-        "gdzie": "public/locales/pl/translation.json:myWork.hub.label51",
-        "tekst": "Decyzje (pending)",
-        "dowod": "en:pending"
-      },
-      {
-        "modul": "03 Interview",
-        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.newDraftFromPublished",
-        "tekst": "Nowy draft z publikacji",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "03 Interview",
-        "gdzie": "public/locales/pl/translation.json:interview.insightViewer.newDraftFromVersion",
-        "tekst": "Utworzono nowy draft z opublikowanej wersji v{{version}}.",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "07 Execution",
-        "gdzie": "public/locales/pl/translation.json:execution.whatIf.title",
-        "tekst": "What-if — symulacja interwencji",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "09 Finance",
-        "gdzie": "public/locales/pl/translation.json:finance.driverPlanner.title",
-        "tekst": "Planowanie driver-based + what-if",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "09 Finance",
-        "gdzie": "public/locales/pl/translation.json:pricing.budget.payg.title",
-        "tekst": "Automatyczny fallback pay-as-you-go",
-        "dowod": "en:you"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
-        "tekst": "MUST: {{must}} · SHOULD: {{should}}",
-        "dowod": "en:should"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "public/locales/pl/translation.json:myWorkMindmap.aiAction.whatIfAnalysis",
-        "tekst": "What-if analiza",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "public/locales/pl/translation.json:myWorkMindmap.governance.generator.whatIf",
-        "tekst": "Scenariusze what-if",
-        "dowod": "en:what"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder",
-        "tekst": "Szukaj task, decision, initiative...",
-        "dowod": "en?:task,en?:initiative"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge",
-        "tekst": "AI-draft",
-        "dowod": "en:draft"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "public/locales/pl/translation.json:discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder",
-        "tekst": "Powod odeslania do Draft",
-        "dowod": "en:draft"
-      }
-    ],
-    "K1defWID": [
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:556",
-        "tekst": "valuation.advisory.candidateAlreadyExists = \"To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:973",
-        "tekst": "valuation.assumptions.sourceDataRequired = \"wymagane dane źródłowe\"",
-        "dowod": "brak klucza w EN,diakrytyk:ź,pl:wymagane"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1781",
-        "tekst": "valuation.advisory.candidateModalTitle = \"Wyślij jako kandydata na Initiative\"",
-        "dowod": "brak klucza w EN,diakrytyk:ś"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1786",
-        "tekst": "valuation.advisory.candidateModalConfirm = \"Wyślij\"",
-        "dowod": "brak klucza w EN,diakrytyk:ś"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1787",
-        "tekst": "valuation.advisory.candidateModalCancel = \"Anuluj\"",
-        "dowod": "brak klucza w EN,pl:anuluj"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1788",
-        "tekst": "valuation.advisory.candidateModalClose = \"Zamknij\"",
-        "dowod": "brak klucza w EN,pl:zamknij"
-      },
-      {
-        "modul": "08 Results",
-        "gdzie": "src/components/Benefits/ValuationWorkspace.tsx:1789",
-        "tekst": "valuation.advisory.candidateChecking = \"Sprawdzanie kwalifikowalności…\"",
-        "dowod": "brak klucza w EN,diakrytyk:ś"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:108",
-        "tekst": "documentStudio.aiEntry.startingReply = \"Zaczynam planować i pisać dokument — pojawi się obok w kilka chwil.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ć,pl:się"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:132",
-        "tekst": "documentStudio.aiEntry.placeholderTitle = \"Twój dokument pojawi się tutaj\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó,pl:się"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:135",
-        "tekst": "documentStudio.aiEntry.placeholderHint = \"Opisz w oknie obok, jaki dokument potrzebujesz — Teresa zaplanuje strukturę i ",
-        "dowod": "brak klucza w EN,diakrytyk:ę"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx:146",
-        "tekst": "documentStudio.intake.backToModes = \"Wybór trybu\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:2263",
-        "tekst": "documentStudio.outline.saveFailed = \"Nie udało się zapisać struktury.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:2679",
-        "tekst": "documentStudio.panel.chipQaReview = \"QA i przegląd\"",
-        "dowod": "brak klucza w EN,diakrytyk:ą"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3413",
-        "tekst": "common.saveError = \"Błąd zapisu\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3477",
-        "tekst": "documentStudio.panel.toolQaReview = \"QA i przegląd\"",
-        "dowod": "brak klucza w EN,diakrytyk:ą"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:3545",
-        "tekst": "documentStudio.panel.contextTools = \"Narzędzia dokumentu\"",
-        "dowod": "brak klucza w EN,diakrytyk:ę"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioIntakeForm.tsx:637",
-        "tekst": "documentStudio.intake.blockedReason = \"Aby zaplanować dokument, opisz go w co najmniej 10 znakach.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ć,pl:aby"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioQaPanel.tsx:65",
-        "tekst": "documentStudio.qa.fabrication.notDetected = \"Nie wykryto nieoznaczonych precyzyjnych liczb — ugruntowanie nie zostało zw",
-        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:156",
-        "tekst": "documentStudio.view.goToProvenance = \"Przejdź do Pochodzenie i prawa\"",
-        "dowod": "brak klucza w EN,diakrytyk:ź"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:164",
-        "tekst": "documentStudio.view.backToLibrary = \"Wróć do Biblioteki wzorców\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:432",
-        "tekst": "documentStudio.view.artifactNotFound = \"Nie znaleziono tego dokumentu. Mógł zostać usunięty albo link prowadzi do innego",
-        "dowod": "brak klucza w EN,diakrytyk:ó,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:437",
-        "tekst": "documentStudio.view.artifactLoadFailedGeneric = \"Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:831",
-        "tekst": "documentStudio.blank.title = \"Nowy dokument\"",
-        "dowod": "brak klucza w EN,pl?:nowy,pl?:dokument"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:873",
-        "tekst": "documentStudio.blank.failed = \"Nie udało się utworzyć pustego dokumentu.\"",
-        "dowod": "brak klucza w EN,diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/DocumentStudio/DocumentStudioView.tsx:1115",
-        "tekst": "documentStudio.blank.retry = \"Spróbuj ponownie\"",
-        "dowod": "brak klucza w EN,diakrytyk:ó"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx:462",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
       }
     ]
+  },
+  "plikiTop": {
+    "server/src/routes/document-studio.routes.ts": 86,
+    "server/src/routes/work-canvas.routes.ts": 61,
+    "src/views/legal/TermsOfServiceView.tsx": 56,
+    "server/src/routes/table-platform.routes.ts": 51,
+    "src/components/billing/SubscriptionAnalytics.tsx": 50,
+    "server/src/routes/knowledge.routes.ts": 48,
+    "server/src/routes/billing/billing.routes.ts": 46,
+    "server/src/routes/settings.routes.ts": 43,
+    "src/views/legal/PrivacyPolicyView.tsx": 42,
+    "server/src/routes/presentations.routes.ts": 42,
+    "server/src/controllers/InterviewController.ts": 39,
+    "public/locales/pl/translation.json": 38,
+    "server/src/routes/auth.routes.ts": 37,
+    "server/src/routes/assessment-reports.routes.ts": 36,
+    "server/src/routes/workbook.routes.ts": 36,
+    "server/src/routes/v8/finance.routes.ts": 35,
+    "src/views/superadmin/revenue/PartnerSettlementsView.tsx": 34,
+    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
+    "server/src/routes/ai/ai-settings.routes.ts": 32,
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
+    "server/src/controllers/InitiativeController.ts": 30,
+    "server/src/routes/assessment/assessment-ai.routes.ts": 28,
+    "server/src/routes/ai.routes.ts": 26,
+    "server/src/routes/v8/sync.routes.ts": 24,
+    "server/src/routes/finance-statements.routes.ts": 23,
+    "server/src/routes/pmo/initiatives.routes.ts": 23,
+    "server/src/routes/superadmin.routes.ts": 23,
+    "server/src/routes/v8/results.routes.ts": 23,
+    "server/src/routes/report-builder.routes.ts": 22,
+    "server/src/routes/ai/ai-operations.routes.ts": 21
   }
 }
