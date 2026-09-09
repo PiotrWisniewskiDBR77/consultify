@@ -1,0 +1,208 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+1
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Due
+New RAID item
+Decisions
+10
+Risks
+7
+Signals
+8
+New RAID item
+Close
+Title (required)
+Type
+Risk
+Issue
+Dependency
+Assumption
+Initiative (required)
+Pick an initiative…
+Predictive Maintenance for CNC Line
+MES Rollout Line 3
+Warehouse Automation Pilot
+Skills Matrix and Upskilling
+Owner
+Unassigned
+James Whitfield
+Sarah Mitchell
+Robert Chen
+Emily Carter
+Daniel Osei
+Laura Novak
+Michael Grant
+Priya Sharma
+Thomas Baker
+Due
+Probability
+Low (2)
+Medium (3)
+High (4)
+Impact
+Low (2)
+Medium (3)
+High (4)
+Critical (5)
+Exposure
+4
+Save RAID item
+TITLE
+	
+TYPE
+	
+OWNER
+	
+DUE
+	
+PROBABILITY
+	
+IMPACT
+	
+EXPOSURE
+	
+STATUS
+	
+
+
+Paused upskilling leaves key roles single-deep
+	
+Risk
+	
+Sarah Mitchell
+	
+27/11/2026
+	
+High (4)
+	
+High (4)
+	
+16
+	
+Open
+	
+
+
+Works council has not signed the shuttle safety case
+	
+Issue
+	
+Priya Sharma
+	
+28/08/2026
+	
+High (4)
+	
+Critical (5)
+	
+20
+	
+Open
+	
+
+
+Spare-parts holding can be cut by fifteen per cent without service impact
+	
+Assumption
+	
+Thomas Baker
+	
+18/12/2026
+	
+Medium (3)
+	
+High (4)
+	
+12
+	
+Open
+	
+
+
+False positives erode operator trust in predictive alerts
+	
+Risk
+	
+Michael Grant
+	
+16/10/2026
+	
+Medium (3)
+	
+Medium (3)
+	
+9
+	
+Mitigated
+	
+
+
+SCADA bridge depends on the vendor firmware release
+	
+Dependency
+	
+Daniel Osei
+	
+13/11/2026
+	
+Medium (3)
+	
+High (4)
+	
+12
+	
+Open
+	
+
+
+Downtime reason codes are not agreed between Quality and Operations
+	
+Issue
+	
+Robert Chen
+	
+04/09/2026
+	
+High (4)
+	
+High (4)
+	
+16
+	
+Open
+	
+
+
+Line 3 cutover slips past the summer shutdown window
+	
+Risk
+	
+Laura Novak
+	
+30/10/2026
+	
+High (4)
+	
+Critical (5)
+	
+20
+	
+Open
+	

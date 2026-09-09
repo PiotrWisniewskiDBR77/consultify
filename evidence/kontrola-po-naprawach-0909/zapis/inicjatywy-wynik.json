@@ -1,0 +1,151 @@
+{
+ "modul": "inicjatywy",
+ "znacznik": "KONTROLA-mtuiqmqh",
+ "kroki": [
+  {
+   "krok": "inicjatywy/lista",
+   "opis": "wejście na moduł",
+   "znacznik": "2026-09-09T19:56:21.540Z",
+   "liczbaSieci": 176,
+   "zapisy": [
+    "200 POST /api/auth/login",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event"
+   ],
+   "bledy": [],
+   "wierszy": 11
+  },
+  {
+   "krok": "inicjatywy/menu",
+   "opis": "menu CTA",
+   "znacznik": "2026-09-09T19:56:24.131Z",
+   "liczbaSieci": 0,
+   "zapisy": [],
+   "bledy": [],
+   "maPozycjeReczna": true
+  },
+  {
+   "krok": "inicjatywy/formularz",
+   "opis": "formularz wypełniony",
+   "znacznik": "2026-09-09T19:56:30.260Z",
+   "liczbaSieci": 2,
+   "zapisy": [],
+   "bledy": []
+  },
+  {
+   "krok": "inicjatywy/utworz",
+   "opis": "kliknięte Create",
+   "znacznik": "2026-09-09T19:56:38.881Z",
+   "liczbaSieci": 30,
+   "zapisy": [
+    "201 POST /api/initiatives/runtime-v1/source-proposals",
+    "201 POST /api/initiatives/runtime-v1/registrations",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+   ],
+   "bledy": [
+    "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a/suggested-changes",
+    "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 GET /api/my-work/object-attachments/initiative/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+   ],
+   "tytul": "KONTROLA-mtuiqmqh Manual initiative",
+   "toast": "LOCAL @996d9145910b | Skip to main content |  | "
+  },
+  {
+   "krok": "inicjatywy/lista-po",
+   "opis": "nowy rekord na liście",
+   "znacznik": "2026-09-09T19:56:45.081Z",
+   "liczbaSieci": 87,
+   "zapisy": [
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "202 POST /api/v10/teresa/voice-event",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+   ],
+   "bledy": [
+    "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a/suggested-changes",
+    "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 GET /api/my-work/object-attachments/initiative/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+    "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+   ],
+   "naLiscie": 0,
+   "wierszy": 6
+  }
+ ],
+ "konsola": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "siec4xx5xx": [
+  "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a/suggested-changes",
+  "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/my-work/object-attachments/initiative/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a/suggested-changes",
+  "404 GET /api/v8/planning/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 GET /api/my-work/object-attachments/initiative/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+ ],
+ "wszystkieZapisy": [
+  "200 POST /api/auth/login",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "201 POST /api/initiatives/runtime-v1/source-proposals",
+  "201 POST /api/initiatives/runtime-v1/registrations",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "202 POST /api/v10/teresa/voice-event",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a",
+  "404 PUT /api/initiatives/initiative-726d2776-837b-4993-b816-37bcdaeb892a"
+ ]
+}

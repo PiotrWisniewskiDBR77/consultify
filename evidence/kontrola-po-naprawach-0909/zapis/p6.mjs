@@ -1,0 +1,28 @@
+import { otworz, zaloguj, zrzut, nowyLog, BASE } from '/Users/piotrwisniewski/Developer/wt/kontrola-po-naprawach/scripts/dev/kontrola-0909-wspolne.mjs';
+const Z='KONTROLA-spot3';
+const log=nowyLog(); const {browser,page}=await otworz(log);
+page.on('dialog',d=>d.accept().catch(()=>{}));
+await zaloguj(page);
+await page.goto(`${BASE}/meetings`,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(8000);
+await page.getByRole('button',{name:/^New meeting$/}).first().click({force:true});
+await page.waitForTimeout(3500);
+await page.mouse.click(558, 258);            // pole „Title" — wg zrzutu 1440x900
+await page.keyboard.type(`${Z} meeting`);
+await page.waitForTimeout(1200);
+const dt=page.locator('input[type="datetime-local"]');
+await dt.nth(0).fill('2026-10-12T10:00').catch(()=>{});
+await dt.nth(1).fill('2026-10-12T11:00').catch(()=>{});
+await page.mouse.click(558, 449); await page.keyboard.type('James Whitfield');
+await zrzut(page,'spotkania-17-formularz','zapis');
+const btn = page.getByRole('button',{name:/^Create meeting$/}).first();
+console.log('przycisk aktywny:', !(await btn.isDisabled().catch(()=>true)));
+await btn.click({force:true});
+await page.waitForTimeout(7000);
+await zrzut(page,'spotkania-18-po','zapis');
+await page.goto(`${BASE}/meetings`,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(8000);
+console.log('na liscie:', await page.locator(`tbody tr:has-text("${Z}")`).count().catch(()=>0), '| wierszy:', await page.locator('tbody tr').count().catch(()=>0));
+await zrzut(page,'spotkania-19-lista','zapis');
+console.log('ZAPISY:', log.siec.filter(s=>['POST','PUT','DELETE','PATCH'].includes(s.metoda)&&!/voice-event|auth\/login|materialize/.test(s.url)).map(s=>`${s.status} ${s.metoda} ${s.url}`).join(' | ')||'brak');
+console.log('4xx5xx:', [...new Set(log.siec.filter(s=>s.status>=400).map(s=>`${s.status} ${s.metoda} ${s.url.replace(/[0-9a-f-]{20,}/g,'<id>')}`))].join(' | ')||'brak');
+console.log('konsola:', log.konsola.length);
+await browser.close();

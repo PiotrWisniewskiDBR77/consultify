@@ -1,0 +1,63 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Audits
+Data
+Model
+1
+James Whitfield
+JW
+Library
+Sessions
+Conclusions
+Reports
+Initiatives
+Verification: All
+1
+New audit
+Frozen until wave 2: uploading audit assumptions and the question generator.
+All
+1
+Verified
+0
+Pending review
+0
+TITLE
+	
+SOURCE
+	
+VERSION
+	
+SOURCE TYPE
+	
+VERIFICATION
+	
+PUBLICATION STATUS
+	
+CRITERIA
+	
+UPDATED
+	
+
+
+Operational Excellence Audit 2026
+	
+Northwind Operational Excellence Programme — internal audit procedure
+	
+v1
+	
+Internal procedure
+	
+Unverified
+	
+Published
+	
+7
+	
+08/09/2026
+	

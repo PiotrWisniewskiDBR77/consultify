@@ -1,0 +1,75 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+My Work
+Tasks
+Data
+Model
+1
+James Whitfield
+JW
+Ideas
+Notebook
+Inbox
+Calendar
+Tasks
+Decisions
+Vaults
+List
+New Task
+To Do
+Unsaved
+AI
+Start
+Sections
+Edit
+Preview
+Work with AI
+Description & Scope
+Checklist
+Dependencies
+Evidence
+Attachments & Links
+Strategy
+Edited
+Description & Scope
+RELATED TONo linked source — standalone task
+TASK DESCRIPTION
+AI
+RELEVANT IDEAS
+
+No suggestions
+
+Save ideas from chat to build your private library.
+RELEVANT NOTES
+
+No suggestions
+
+Save notes to build your personal knowledge base.
+EXPECTED OUTCOME
+AI
+
+Review this draft, then save the task to persist it.
+
+Regenerate
+Edit
+ACTIONS
+Block
+Reassign
+PROPERTIES
+Property	Value
+Status	To Do
+Priority	Medium
+Due date	—
+Owner	—
+Source	—
+RELATIONS
+SOURCES AND ASSUMPTIONS
+COMMENTS
+HISTORY
+1

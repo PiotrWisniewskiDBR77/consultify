@@ -1,0 +1,50 @@
+{
+ "modul": "realizacja",
+ "znacznik": "KONTROLA-mtuirqqp",
+ "kroki": [
+  {
+   "krok": "realizacja/work",
+   "opis": "zakładka Work",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 45
+  },
+  {
+   "krok": "realizacja/zadanie",
+   "opis": "utworzenie zadania",
+   "zapisy": [
+    "201 POST /api/tasks"
+   ],
+   "bledy": [],
+   "formularz": true,
+   "naLiscie": 1
+  },
+  {
+   "krok": "realizacja/decyzja",
+   "opis": "utworzenie decyzji",
+   "zapisy": [
+    "201 POST /api/decisions"
+   ],
+   "bledy": [],
+   "formularz": true,
+   "naLiscie": 1
+  },
+  {
+   "krok": "realizacja/raid",
+   "opis": "utworzenie RAID",
+   "zapisy": [
+    "201 POST /api/initiatives/runtime-v1/initiatives/88013795-c478-5b1a-88da-fce4d1203621/raid-items/bd026517-0fa1-41b7-936e-e39168c156c4"
+   ],
+   "bledy": [],
+   "formularz": true,
+   "znacznikNaEkranie": true
+  }
+ ],
+ "konsola": [],
+ "siec4xx5xx": [],
+ "wszystkieZapisy": [
+  "201 POST /api/tasks",
+  "201 POST /api/decisions",
+  "201 POST /api/initiatives/runtime-v1/initiatives/88013795-c478-5b1a-88da-fce4d1203621/raid-items/bd026517-0fa1-41b7-936e-e39168c156c4"
+ ]
+}

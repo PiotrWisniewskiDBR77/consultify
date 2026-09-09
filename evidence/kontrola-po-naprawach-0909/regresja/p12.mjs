@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const t=fs.readFileSync('/Users/piotrwisniewski/Developer/consultify-secrets/northwind-konta-STAGING.txt','utf8');
+const h=(t.match(/Wspólne hasło do wszystkich kont poniżej \(dostęp pokazowy\): (.+)/)||[])[1].trim();
+const API='http://127.0.0.1:4213/api';
+const tok=(await (await fetch(`${API}/auth/login`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'james.whitfield@northwind.example',password:h})})).json()).token;
+const H={authorization:`Bearer ${tok}`};
+const sc=await (await fetch(`${API}/vnext/results/kpi/scorecards`,{headers:H})).json();
+const arr=Array.isArray(sc)?sc:(sc.data||sc.scorecards||sc.items||[]);
+console.log('kart wynikow:', arr.length, arr[0]? Object.keys(arr[0]).slice(0,8):'');
+const id=arr[0]?.scorecardId||arr[0]?.id;
+console.log('id:', id);
+const r=await fetch(`${API}/vnext/results/kpi/scorecards/${id}/review-snapshots/published`,{headers:H});
+console.log('GET review-snapshots/published ->', r.status, (await r.text()).slice(0,220));

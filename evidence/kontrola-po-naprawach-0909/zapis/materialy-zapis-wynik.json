@@ -1,0 +1,44 @@
+{
+ "modul": "materialy",
+ "znacznik": "KONTROLA-mtuivmvt",
+ "kroki": [
+  {
+   "krok": "materialy/tab-All",
+   "opis": "zakładka",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 2
+  },
+  {
+   "krok": "materialy/tab-Documents",
+   "opis": "zakładka",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 2
+  },
+  {
+   "krok": "materialy/tab-Presentations",
+   "opis": "zakładka",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 2
+  },
+  {
+   "krok": "materialy/tab-Sheets",
+   "opis": "zakładka",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 2
+  },
+  {
+   "krok": "materialy/utworz",
+   "opis": "kliknięte New presentation",
+   "zapisy": [],
+   "bledy": [],
+   "url": "http://127.0.0.1:3231/presentations"
+  }
+ ],
+ "konsola": [],
+ "siec4xx5xx": [],
+ "wszystkieZapisy": []
+}

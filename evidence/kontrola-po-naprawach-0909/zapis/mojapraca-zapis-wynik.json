@@ -1,0 +1,40 @@
+{
+ "modul": "mojapraca",
+ "znacznik": "KONTROLA-mtuitokj",
+ "kroki": [
+  {
+   "krok": "mojapraca/root",
+   "opis": "wejście",
+   "zapisy": [
+    "201 POST /api/v8/my-work/inbox/canonical/materialize",
+    "201 POST /api/v8/my-work/inbox/canonical/materialize"
+   ],
+   "bledy": [],
+   "wierszy": 8
+  },
+  {
+   "krok": "mojapraca/utworz",
+   "opis": "utworzenie zadania",
+   "zapisy": [
+    "201 POST /api/v8/my-work/inbox/canonical/materialize",
+    "201 POST /api/v8/my-work/inbox/canonical/materialize"
+   ],
+   "bledy": [],
+   "cta": [
+    "New Task",
+    "New\n8"
+   ],
+   "maForm": true,
+   "url": "http://127.0.0.1:3231/my-work",
+   "naEkranie": false
+  }
+ ],
+ "konsola": [],
+ "siec4xx5xx": [],
+ "wszystkieZapisy": [
+  "201 POST /api/v8/my-work/inbox/canonical/materialize",
+  "201 POST /api/v8/my-work/inbox/canonical/materialize",
+  "201 POST /api/v8/my-work/inbox/canonical/materialize",
+  "201 POST /api/v8/my-work/inbox/canonical/materialize"
+ ]
+}

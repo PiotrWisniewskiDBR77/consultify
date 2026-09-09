@@ -1,0 +1,80 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Materials
+Presentations
+Data
+Model
+1
+James Whitfield
+JW
+All
+Documents
+Presentations
+Sheets
+Template Library
+Status
+Visibility
+New presentation
+All
+2
+Draft
+0
+Ready
+2
+PRESENTATION
+	
+SOURCE
+	
+OWNER
+	
+STATUS
+	
+MODE
+	
+DATE
+	
+SLIDES
+	
+
+
+PPT
+Line 3 MES Rollout Kick-off
+	
+Tool
+	
+D
+Daniel Osei
+	
+Ready
+	
+Briefing
+	
+Sep 8, 2026
+	
+6
+	
+
+
+PPT
+Steering Committee — September 2026
+	
+Tool
+	
+J
+James Whitfield
+	
+Ready
+	
+Briefing
+	
+Sep 8, 2026
+	
+6
+	
+AI bundle — generation history
