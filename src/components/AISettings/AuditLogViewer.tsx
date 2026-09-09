@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
 import { AISettingsAuditEntry } from '../../types';
+import { localeListy } from '@/utils/listDateFormat';
 
 interface AuditLogViewerProps {
   level?: 'superadmin' | 'admin' | 'user';
@@ -116,7 +117,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
   const formatTimestamp = (ts: string) => {
     const date = new Date(ts);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(localeListy(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

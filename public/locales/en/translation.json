@@ -611,6 +611,10 @@
     },
     "split": {
       "assistantSubtitle": "Your transformation assistant"
+    },
+    "environmentBadge": {
+      "ariaLabel": "Environment {{env}}",
+      "ariaLabelWithVersion": "Environment {{env}}, version {{sha}}"
     }
   },
   "landing": {
