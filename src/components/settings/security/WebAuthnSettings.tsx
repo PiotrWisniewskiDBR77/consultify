@@ -303,7 +303,9 @@ const WebAuthnSettings: React.FC = () => {
         <div className="flex items-start gap-3">
           <Fingerprint className="text-c-accent flex-shrink-0 mt-0.5" size={20} />
           <div className="text-sm">
-            <p className="text-c-accent font-medium">What are passkeys?</p>
+            <p className="text-c-info font-medium">
+              {t('settings.webauthn.whatArePasskeysTitle', 'What are passkeys?')}
+            </p>
             <p className="text-c-text-muted mt-1">
               Passkeys are a secure replacement for passwords. They use your device's biometrics
               (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity.

@@ -1,616 +1,308 @@
 {
-  "_meta": {
-    "data": "2026-09-09T00:59:57.307Z",
-    "root": "/Users/piotrwisniewski/Developer/wt/jdog-b",
-    "sha": "879c06db6a6565086088566c1ff2db004203cfe7"
-  },
-  "suma": {
-    "K7": 289,
-    "K4pl": 53,
-    "K3b": 0,
-    "K5en": 1822,
-    "K1defWID": 0,
-    "K3aKLUCZ": 0,
-    "K5pl": 256,
-    "K3a": 257,
-    "K2": 4,
-    "K4en": 881,
-    "K1": 2,
-    "K1def": 7
-  },
   "moduly": {
-    "12 Meeting": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 12,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 0,
-      "K1": 0,
-      "K1def": 0
-    },
-    "16 Partner Portal": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 29,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 3,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 1,
-      "K1": 0,
-      "K1def": 0
-    },
-    "08 Results": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 45,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 0,
-      "K1": 0,
-      "K1def": 0
-    },
     "09 Finance": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 158,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 6,
+      "K7": 0,
       "K3a": 97,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 6,
       "K1": 0,
-      "K1def": 0
-    },
-    "02 My Work": {
-      "K7": 0,
-      "K4pl": 1,
-      "K3b": 0,
-      "K5en": 61,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 1,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 52,
-      "K1": 0,
-      "K1def": 0
+      "K5pl": 6
     },
     "07 Execution": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 63,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
+      "K7": 0,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 0,
       "K1": 0,
-      "K1def": 0
+      "K5pl": 0
     },
-    "10 Materials": {
-      "K7": 8,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 223,
+    "02 My Work": {
+      "K5en": 61,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 19,
-      "K3a": 0,
-      "K2": 1,
-      "K4en": 1,
-      "K1": 0,
-      "K1def": 0
-    },
-    "06 Initiatives": {
       "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 97,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 2,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 1,
       "K2": 0,
-      "K4en": 0,
-      "K1": 0,
-      "K1def": 0
-    },
-    "04 Tools": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 112,
-      "K1defWID": 0,
       "K3aKLUCZ": 0,
-      "K5pl": 49,
-      "K3a": 0,
-      "K2": 1,
-      "K4en": 10,
+      "K3b": 0,
+      "K4en": 52,
       "K1": 0,
-      "K1def": 0
+      "K5pl": 1
     },
     "05 Assessment": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 76,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 97,
+      "K7": 0,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 3,
       "K1": 0,
-      "K1def": 0
-    },
-    "01 Chat": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 27,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 1,
-      "K1": 0,
-      "K1def": 0
-    },
-    "15 Settings": {
-      "K7": 4,
-      "K4pl": 9,
-      "K3b": 0,
-      "K5en": 196,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 32,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 32,
-      "K1": 1,
-      "K1def": 0
-    },
-    "ZZ wspólne": {
-      "K7": 91,
-      "K4pl": 21,
-      "K3b": 0,
-      "K5en": 523,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 19,
-      "K3a": 160,
-      "K2": 2,
-      "K4en": 232,
-      "K1": 1,
-      "K1def": 1
-    },
-    "03 Interview": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
-      "K5en": 51,
-      "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 0,
-      "K3a": 0,
-      "K2": 0,
-      "K4en": 0,
-      "K1": 0,
-      "K1def": 0
+      "K5pl": 97
     },
     "13 Organization": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 64,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 1,
+      "K7": 0,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 0,
       "K1": 0,
-      "K1def": 0
+      "K5pl": 1
+    },
+    "01 Chat": {
+      "K5en": 27,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 1,
+      "K1": 0,
+      "K5pl": 0
     },
     "11 Audits": {
-      "K7": 0,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 12,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 14,
+      "K7": 0,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 0,
       "K1": 0,
-      "K1def": 0
+      "K5pl": 14
+    },
+    "06 Initiatives": {
+      "K5en": 97,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 0,
+      "K1": 0,
+      "K5pl": 2
+    },
+    "15 Settings": {
+      "K5en": 196,
+      "K1defWID": 0,
+      "K7": 4,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 9,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 31,
+      "K1": 1,
+      "K5pl": 32
+    },
+    "08 Results": {
+      "K5en": 45,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 0,
+      "K1": 0,
+      "K5pl": 0
+    },
+    "04 Tools": {
+      "K5en": 112,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 1,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 10,
+      "K1": 0,
+      "K5pl": 49
     },
     "14 Admin Panel": {
-      "K7": 174,
-      "K4pl": 0,
-      "K3b": 0,
       "K5en": 73,
       "K1defWID": 0,
-      "K3aKLUCZ": 0,
-      "K5pl": 13,
+      "K7": 174,
       "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
       "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
       "K4en": 543,
       "K1": 0,
-      "K1def": 0
+      "K5pl": 13
+    },
+    "03 Interview": {
+      "K5en": 51,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 0,
+      "K1": 0,
+      "K5pl": 0
+    },
+    "ZZ wspólne": {
+      "K5en": 523,
+      "K1defWID": 0,
+      "K7": 91,
+      "K3a": 150,
+      "K1def": 1,
+      "K4pl": 21,
+      "K2": 2,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 232,
+      "K1": 1,
+      "K5pl": 19
+    },
+    "10 Materials": {
+      "K5en": 223,
+      "K1defWID": 0,
+      "K7": 8,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 1,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 1,
+      "K1": 0,
+      "K5pl": 19
+    },
+    "12 Meeting": {
+      "K5en": 12,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 0,
+      "K1": 0,
+      "K5pl": 0
+    },
+    "16 Partner Portal": {
+      "K5en": 29,
+      "K1defWID": 0,
+      "K7": 0,
+      "K3a": 0,
+      "K1def": 0,
+      "K4pl": 0,
+      "K2": 0,
+      "K3aKLUCZ": 0,
+      "K3b": 0,
+      "K4en": 1,
+      "K1": 0,
+      "K5pl": 3
     }
   },
   "plikiTop": {
-    "server/src/routes/ai/ai-operations.routes.ts": 21,
     "src/views/superadmin/revenue/PartnerSettlementsView.tsx": 34,
-    "server/src/routes/v8/sync.routes.ts": 24,
-    "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx": 60,
-    "server/src/routes/v8/results.routes.ts": 23,
-    "src/views/legal/TermsOfServiceView.tsx": 56,
-    "server/src/controllers/InitiativeController.ts": 30,
-    "src/components/DocumentStudio/DocumentStudioView.tsx": 35,
-    "src/components/billing/SubscriptionAnalytics.tsx": 50,
-    "src/components/assessment/drd/DrdHttpMethodWorkspaceScreen.tsx": 29,
-    "server/src/routes/assessment-reports.routes.ts": 36,
-    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
-    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31,
-    "server/src/routes/v8/finance.routes.ts": 35,
-    "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
-    "src/components/Organization/redesign/OrganizationReadinessScreen.tsx": 52,
-    "server/src/routes/knowledge.routes.ts": 48,
-    "server/src/controllers/InterviewController.ts": 39,
-    "server/src/routes/work-canvas.routes.ts": 61,
-    "server/src/routes/report-builder.routes.ts": 22,
-    "server/src/routes/assessment/assessment-ai.routes.ts": 28,
-    "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "src/views/partner/sections/EarningsSection.tsx": 34,
-    "server/src/routes/billing/billing.routes.ts": 46,
-    "src/views/legal/PrivacyPolicyView.tsx": 42,
-    "server/src/routes/document-studio.routes.ts": 86,
-    "src/components/CaseWorkspace/RezultatyView.tsx": 24,
-    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": 24,
-    "server/src/routes/actionDecisions.routes.ts": 20,
-    "server/src/routes/settings.routes.ts": 43,
-    "server/src/routes/auth.routes.ts": 37,
     "src/components/MyWork/panel/IdeaElementInspector.tsx": 53,
-    "server/src/routes/pmo/initiatives.routes.ts": 23,
     "src/views/partner/PartnerPortalView.tsx": 95,
-    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
-    "server/src/routes/presentations.routes.ts": 42,
-    "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx": 35,
-    "server/src/routes/superadmin.routes.ts": 23,
-    "src/components/Presentations/DeckBuilder/BlockToolbar.tsx": 37,
+    "server/src/routes/finance-statements.routes.ts": 23,
+    "server/src/routes/v8/results.routes.ts": 23,
     "server/src/routes/workbook.routes.ts": 36,
     "src/components/assessment/report/AssessmentReportDocument.tsx": 53,
-    "public/locales/pl/translation.json": 38,
     "server/src/routes/ai.routes.ts": 26,
-    "server/src/routes/finance-statements.routes.ts": 23,
-    "server/src/routes/table-platform.routes.ts": 51
+    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": 24,
+    "server/src/routes/presentations.routes.ts": 42,
+    "server/src/routes/v8/sync.routes.ts": 24,
+    "src/views/partner/sections/EarningsSection.tsx": 34,
+    "src/components/billing/SubscriptionAnalytics.tsx": 50,
+    "server/src/routes/actionDecisions.routes.ts": 20,
+    "server/src/controllers/InterviewController.ts": 39,
+    "server/src/routes/assessment-reports.routes.ts": 36,
+    "server/src/routes/pmo/initiatives.routes.ts": 23,
+    "server/src/routes/work-canvas.routes.ts": 61,
+    "server/src/routes/superadmin.routes.ts": 23,
+    "src/components/AIChat/KimiWorkspace/ExceleRightRail.tsx": 31,
+    "public/locales/pl/translation.json": 38,
+    "server/src/routes/ai/ai-operations.routes.ts": 21,
+    "server/src/routes/document-studio.routes.ts": 86,
+    "server/src/routes/ai/ai-development.routes.ts": 19,
+    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
+    "server/src/controllers/InitiativeController.ts": 30,
+    "server/src/routes/knowledge.routes.ts": 48,
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
+    "server/src/routes/ai-development.routes.ts": 19,
+    "src/components/Organization/redesign/OrganizationReadinessScreen.tsx": 52,
+    "server/src/routes/auth.routes.ts": 37,
+    "src/components/MyWork/notebook/NotebookRightRail.tsx": 33,
+    "server/src/routes/report-builder.routes.ts": 22,
+    "server/src/routes/table-platform.routes.ts": 51,
+    "src/components/AIChat/KimiWorkspace/ExceleRightPanel.tsx": 35,
+    "src/components/Presentations/DeckBuilder/BlockToolbar.tsx": 37,
+    "src/views/legal/TermsOfServiceView.tsx": 56,
+    "server/src/routes/v8/finance.routes.ts": 35,
+    "server/src/routes/billing/billing.routes.ts": 46,
+    "src/views/legal/PrivacyPolicyView.tsx": 42,
+    "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx": 60,
+    "server/src/routes/settings.routes.ts": 43,
+    "src/components/assessment/drd/DrdHttpMethodWorkspaceScreen.tsx": 29,
+    "src/components/CaseWorkspace/RezultatyView.tsx": 24,
+    "server/src/routes/ai/ai-settings.routes.ts": 32,
+    "src/components/DocumentStudio/DocumentStudioView.tsx": 35,
+    "server/src/routes/assessment/assessment-ai.routes.ts": 28
+  },
+  "suma": {
+    "K5en": 1822,
+    "K1defWID": 0,
+    "K7": 277,
+    "K3a": 247,
+    "K1def": 1,
+    "K4pl": 31,
+    "K2": 4,
+    "K3aKLUCZ": 0,
+    "K3b": 0,
+    "K4en": 880,
+    "K1": 2,
+    "K5pl": 256
   },
   "przyklady": {
-    "K7": [
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:119",
-        "tekst": "new Intl.DateTimeFormat('en-US'",
-        "dowod": "Intl z locale na sztywno"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:260",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:361",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Help/WhatsNewModal.tsx:180",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:25",
-        "tekst": "toLocaleDateString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:107",
-        "tekst": "toLocaleDateString('pl-PL'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/ReportBuilder/ExportSharePanel.tsx:508",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/ReportBuilder/ReportEditor/ReportEditor.tsx:258",
-        "tekst": "toLocaleDateString('en-GB'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/ReportBuilder/ReportEditor/ReviewPanel.tsx:809",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/ReportBuilder/blocks/InitiativeCards.tsx:460",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "10 Materials",
-        "gdzie": "src/components/ReportBuilder/blocks/KPICards.tsx:175",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:104",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:109",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/BackupPanel.tsx:121",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/EmailConfigurationPanel.tsx:380",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/FeatureFlagsPanel.tsx:490",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/IntegrationsPanel.tsx:206",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/LegalPanel.tsx:57",
-        "tekst": "toLocaleDateString()",
-        "dowod": "toLocaleDateString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122",
-        "tekst": "toLocaleDateString('en-US'",
-        "dowod": "locale przybity na sztywno"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106",
-        "tekst": "toLocaleTimeString()",
-        "dowod": "toLocaleTimeString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276",
-        "tekst": "toLocaleString()",
-        "dowod": "toLocaleString() bez locale"
-      }
-    ],
-    "K4pl": [
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2178",
-        "tekst": "Sposób pokazania zlecenia",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2427",
-        "tekst": "Typ zamknięcia",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2452",
-        "tekst": "Dowód / opis pozostałego zakresu",
-        "dowod": "diakrytyk:ó"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2015",
-        "tekst": "Zlecenie LIGHT nie zostało uruchomione.",
-        "dowod": "diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2028",
-        "tekst": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie\n              zostaną poprawione. ",
-        "dowod": "diakrytyk:ą,pl:jest,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2072",
-        "tekst": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest\n            widoczna — poproś wła",
-        "dowod": "diakrytyk:ń,pl:nie,pl:jest"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2375",
-        "tekst": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
-        "dowod": "diakrytyk:ę,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1004",
-        "tekst": "Więcej",
-        "dowod": "diakrytyk:ę,pl:więcej"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1005",
-        "tekst": "Więcej widoków listy zleceń",
-        "dowod": "diakrytyk:ę,pl:więcej"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:342",
-        "tekst": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przy",
-        "dowod": "diakrytyk:ł"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:527",
-        "tekst": "Przybliż plan",
-        "dowod": "diakrytyk:ż"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:551",
-        "tekst": "Ustaw powiększenie na sto procent",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:331",
-        "tekst": "Ten plan nie ma jeszcze żadnych kroków.",
-        "dowod": "diakrytyk:ż,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:503",
-        "tekst": "Przeciągnij, aby przesunąć. Kółko przybliża.",
-        "dowod": "diakrytyk:ą,pl:aby"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:504",
-        "tekst": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.",
-        "dowod": "diakrytyk:ą,pl:aby"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:940",
-        "tekst": "Po czym następuje",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:408",
-        "tekst": "Do czego dążymy",
-        "dowod": "diakrytyk:ą"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:476",
-        "tekst": "Odrzuć zmiany",
-        "dowod": "diakrytyk:ć"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:483",
-        "tekst": "Zamknij edycję",
-        "dowod": "diakrytyk:ę,pl:zamknij"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:494",
-        "tekst": "Edytuj plan",
-        "dowod": "pl:edytuj"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:522",
-        "tekst": "Plan przeszedł sprawdzenie — nic nie blokuje zatwierdzenia.",
-        "dowod": "diakrytyk:ł,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:555",
-        "tekst": "Ten plan nie ma jeszcze kroków",
-        "dowod": "diakrytyk:ó,pl:nie"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:916",
-        "tekst": "Zamknij szczegóły",
-        "dowod": "diakrytyk:ó,pl:zamknij"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/RealizacjaView.tsx:1373",
-        "tekst": "Co się teraz dzieje",
-        "dowod": "diakrytyk:ę,pl:się"
-      },
-      {
-        "modul": "02 My Work",
-        "gdzie": "src/components/CaseWorkspace/RezultatyView.tsx:1965",
-        "tekst": "Powiąż istniejący obiekt",
-        "dowod": "diakrytyk:ą"
-      }
-    ],
-    "K3b": [],
     "K5en": [
       {
         "modul": "ZZ wspólne",
@@ -764,157 +456,156 @@
       }
     ],
     "K1defWID": [],
-    "K3aKLUCZ": [],
-    "K5pl": [
+    "K7": [
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:119",
+        "tekst": "new Intl.DateTimeFormat('en-US'",
+        "dowod": "Intl z locale na sztywno"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:260",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Help/FeatureUpdatesPanel.tsx:361",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Help/WhatsNewModal.tsx:180",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:25",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/SnapshotLabel.tsx:107",
+        "tekst": "toLocaleDateString('pl-PL'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ExportSharePanel.tsx:508",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ReportEditor/ReportEditor.tsx:258",
+        "tekst": "toLocaleDateString('en-GB'",
+        "dowod": "locale przybity na sztywno"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/ReportEditor/ReviewPanel.tsx:809",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/blocks/InitiativeCards.tsx:460",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
+      {
+        "modul": "10 Materials",
+        "gdzie": "src/components/ReportBuilder/blocks/KPICards.tsx:175",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
+      },
       {
         "modul": "14 Admin Panel",
-        "gdzie": "server/src/routes/adminP32.routes.ts:2814",
-        "tekst": "Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:104",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:593",
-        "tekst": "Brak dostępu do projektu",
-        "dowod": "diakrytyk:ę,pl:brak"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ApiManagementPanel.tsx:109",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:625",
-        "tekst": "Nie udało się pobrać folderów",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/BackupPanel.tsx:121",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:675",
-        "tekst": "Brak dostępu do projektu",
-        "dowod": "diakrytyk:ę,pl:brak"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx:403",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:707",
-        "tekst": "Nie udało się utworzyć folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/EmailConfigurationPanel.tsx:380",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:736",
-        "tekst": "Nie udało się zaktualizować folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/FeatureFlagsPanel.tsx:490",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:759",
-        "tekst": "Nie udało się usunąć folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/IntegrationsPanel.tsx:206",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:6930",
-        "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/LegalPanel.tsx:57",
+        "tekst": "toLocaleDateString()",
+        "dowod": "toLocaleDateString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:9316",
-        "tekst": "Nie udało się utworzyć powiadomienia AI",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:343",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:1189",
-        "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
-        "dowod": "diakrytyk:ń"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx:122",
+        "tekst": "toLocaleDateString('en-US'",
+        "dowod": "locale przybity na sztywno"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "server/src/routes/artifactApprovals.routes.ts:74",
-        "tekst": "Wystąpił błąd serwera",
-        "dowod": "diakrytyk:ą"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:106",
+        "tekst": "toLocaleTimeString()",
+        "dowod": "toLocaleTimeString() bez locale"
       },
       {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:39",
-        "tekst": "Nie znaleziono oceny o podanym identyfikatorze.",
-        "dowod": "pl:nie"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:89",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:44",
-        "tekst": "Źródło danych oceny jest chwilowo niedostępne.",
-        "dowod": "diakrytyk:Ź,pl:jest"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx:347",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       },
       {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:184",
-        "tekst": "Nie udało się wygenerować sugestii",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:210",
-        "tekst": "Nie udało się wygenerować sugestii dowodów",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:240",
-        "tekst": "Nie udało się wygenerować sugestii celu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:271",
-        "tekst": "Nie udało się poprawić tekstu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:301",
-        "tekst": "Nie udało się uzupełnić automatycznie",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:335",
-        "tekst": "Nie udało się zweryfikować pola",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:365",
-        "tekst": "Nie udało się zweryfikować spójności",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
-        "tekst": "Nie udało się pobrać wskazówek",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
-        "tekst": "Nie udało się wygenerować analizy luk",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
-        "tekst": "Nie udało się wygenerować wniosków",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
-        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
-        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx:276",
+        "tekst": "toLocaleString()",
+        "dowod": "toLocaleString() bez locale"
       }
     ],
     "K3a": [
@@ -1069,6 +760,202 @@
         "dowod": "brak w en"
       }
     ],
+    "K1def": [
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:102",
+        "tekst": "onboarding.toast.acceptBoth = \"Zaakceptuj Regulamin i Politykę Prywatności\"",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:125",
+        "tekst": "onboarding.toast.termsError = \"Nie udało się zaakceptować regulaminu\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:133",
+        "tekst": "onboarding.toast.selectTier = \"Wybierz plan cenowy\"",
+        "dowod": "pl:wybierz"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:150",
+        "tekst": "onboarding.toast.tierError = \"Nie udało się wybrać planu\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:168",
+        "tekst": "onboarding.toast.completed = \"Onboarding zakończony!\"",
+        "dowod": "diakrytyk:ń"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:171",
+        "tekst": "onboarding.toast.completeError = \"Nie udało się zakończyć onboardingu\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/views/PublicLandingPage.tsx:156",
+        "tekst": "pages.public.cards.tour.description = \"Guided by Dr. Piotr Wiśniewski\"",
+        "dowod": "diakrytyk:ś"
+      }
+    ],
+    "K4pl": [
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2178",
+        "tekst": "Sposób pokazania zlecenia",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2427",
+        "tekst": "Typ zamknięcia",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2452",
+        "tekst": "Dowód / opis pozostałego zakresu",
+        "dowod": "diakrytyk:ó"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2015",
+        "tekst": "Zlecenie LIGHT nie zostało uruchomione.",
+        "dowod": "diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2028",
+        "tekst": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie\n              zostaną poprawione. ",
+        "dowod": "diakrytyk:ą,pl:jest,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2072",
+        "tekst": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest\n            widoczna — poproś wła",
+        "dowod": "diakrytyk:ń,pl:nie,pl:jest"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CaseDetailScreen.tsx:2375",
+        "tekst": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
+        "dowod": "diakrytyk:ę,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1004",
+        "tekst": "Więcej",
+        "dowod": "diakrytyk:ę,pl:więcej"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/CasesListScreen.tsx:1005",
+        "tekst": "Więcej widoków listy zleceń",
+        "dowod": "diakrytyk:ę,pl:więcej"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:342",
+        "tekst": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przy",
+        "dowod": "diakrytyk:ł"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:527",
+        "tekst": "Przybliż plan",
+        "dowod": "diakrytyk:ż"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:551",
+        "tekst": "Ustaw powiększenie na sto procent",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:331",
+        "tekst": "Ten plan nie ma jeszcze żadnych kroków.",
+        "dowod": "diakrytyk:ż,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:503",
+        "tekst": "Przeciągnij, aby przesunąć. Kółko przybliża.",
+        "dowod": "diakrytyk:ą,pl:aby"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanGraphCanvas.tsx:504",
+        "tekst": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.",
+        "dowod": "diakrytyk:ą,pl:aby"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:940",
+        "tekst": "Po czym następuje",
+        "dowod": "diakrytyk:ę"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:408",
+        "tekst": "Do czego dążymy",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:476",
+        "tekst": "Odrzuć zmiany",
+        "dowod": "diakrytyk:ć"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:483",
+        "tekst": "Zamknij edycję",
+        "dowod": "diakrytyk:ę,pl:zamknij"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:494",
+        "tekst": "Edytuj plan",
+        "dowod": "pl:edytuj"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:522",
+        "tekst": "Plan przeszedł sprawdzenie — nic nie blokuje zatwierdzenia.",
+        "dowod": "diakrytyk:ł,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:555",
+        "tekst": "Ten plan nie ma jeszcze kroków",
+        "dowod": "diakrytyk:ó,pl:nie"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/PlanView.tsx:916",
+        "tekst": "Zamknij szczegóły",
+        "dowod": "diakrytyk:ó,pl:zamknij"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/RealizacjaView.tsx:1373",
+        "tekst": "Co się teraz dzieje",
+        "dowod": "diakrytyk:ę,pl:się"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "src/components/CaseWorkspace/RezultatyView.tsx:1965",
+        "tekst": "Powiąż istniejący obiekt",
+        "dowod": "diakrytyk:ą"
+      }
+    ],
     "K2": [
       {
         "modul": "10 Materials",
@@ -1095,6 +982,8 @@
         "dowod": "en:draft"
       }
     ],
+    "K3aKLUCZ": [],
+    "K3b": [],
     "K4en": [
       {
         "modul": "ZZ wspólne",
@@ -1261,49 +1150,162 @@
         "dowod": "diakrytyk:ł"
       }
     ],
-    "K1def": [
+    "K5pl": [
       {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:102",
-        "tekst": "onboarding.toast.acceptBoth = \"Zaakceptuj Regulamin i Politykę Prywatności\"",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:125",
-        "tekst": "onboarding.toast.termsError = \"Nie udało się zaakceptować regulaminu\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:133",
-        "tekst": "onboarding.toast.selectTier = \"Wybierz plan cenowy\"",
-        "dowod": "pl:wybierz"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:150",
-        "tekst": "onboarding.toast.tierError = \"Nie udało się wybrać planu\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:168",
-        "tekst": "onboarding.toast.completed = \"Onboarding zakończony!\"",
-        "dowod": "diakrytyk:ń"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:171",
-        "tekst": "onboarding.toast.completeError = \"Nie udało się zakończyć onboardingu\"",
+        "modul": "14 Admin Panel",
+        "gdzie": "server/src/routes/adminP32.routes.ts:2814",
+        "tekst": "Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/views/PublicLandingPage.tsx:156",
-        "tekst": "pages.public.cards.tour.description = \"Guided by Dr. Piotr Wiśniewski\"",
-        "dowod": "diakrytyk:ś"
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:593",
+        "tekst": "Brak dostępu do projektu",
+        "dowod": "diakrytyk:ę,pl:brak"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:625",
+        "tekst": "Nie udało się pobrać folderów",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:675",
+        "tekst": "Brak dostępu do projektu",
+        "dowod": "diakrytyk:ę,pl:brak"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:707",
+        "tekst": "Nie udało się utworzyć folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:736",
+        "tekst": "Nie udało się zaktualizować folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:759",
+        "tekst": "Nie udało się usunąć folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:6930",
+        "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:9316",
+        "tekst": "Nie udało się utworzyć powiadomienia AI",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:1189",
+        "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
+        "dowod": "diakrytyk:ń"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "server/src/routes/artifactApprovals.routes.ts:74",
+        "tekst": "Wystąpił błąd serwera",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:39",
+        "tekst": "Nie znaleziono oceny o podanym identyfikatorze.",
+        "dowod": "pl:nie"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:44",
+        "tekst": "Źródło danych oceny jest chwilowo niedostępne.",
+        "dowod": "diakrytyk:Ź,pl:jest"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:184",
+        "tekst": "Nie udało się wygenerować sugestii",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:210",
+        "tekst": "Nie udało się wygenerować sugestii dowodów",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:240",
+        "tekst": "Nie udało się wygenerować sugestii celu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:271",
+        "tekst": "Nie udało się poprawić tekstu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:301",
+        "tekst": "Nie udało się uzupełnić automatycznie",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:335",
+        "tekst": "Nie udało się zweryfikować pola",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:365",
+        "tekst": "Nie udało się zweryfikować spójności",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
+        "tekst": "Nie udało się pobrać wskazówek",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
+        "tekst": "Nie udało się wygenerować analizy luk",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
+        "tekst": "Nie udało się wygenerować wniosków",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
+        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
+        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       }
     ]
+  },
+  "_meta": {
+    "data": "2026-09-09T00:59:57.307Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/jdog-b",
+    "sha": "879c06db6a6565086088566c1ff2db004203cfe7"
   }
 }

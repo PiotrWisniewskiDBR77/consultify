@@ -157,6 +157,13 @@ const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
 // ORGANIZATION_MODULES — flaga orgRedesignV1 OFF od 2026-08-29). Patrz
 // nagłówki dev-render/screens/ustawienia-grupy.tsx i org-legacy.tsx.
 const UstawieniaGrupyScreen = React.lazy(() => import('./screens/ustawienia-grupy'));
+const UstawieniaBezpieczenstwoWebAuthnScreen = React.lazy(
+  () => import('./screens/ustawienia-bezpieczenstwo-webauthn')
+);
+const AssessmentDbr77ReportScreen = React.lazy(() => import('./screens/assessment-dbr77-report'));
+const MegatrendCustomTrendCardScreen = React.lazy(
+  () => import('./screens/megatrend-custom-trend-card')
+);
 const Day377GovernedConnectScreen = React.lazy(
   () => import('./screens/day377-governed-connect')
 );
@@ -2443,6 +2450,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ustawienia-bezpieczenstwo': {
     label: 'Ustawienia — SECURITY (REALNY <SettingsView>, grupa security → security-dashboard)',
     render: () => <UstawieniaGrupyScreen grupa="bezpieczenstwo" />,
+  },
+  'ustawienia-bezpieczenstwo-webauthn': {
+    label:
+      'JEZYK-CRIMSON-3 (09.09) — WebAuthnSettings.tsx STANDALONE (UWAGA: martwy komponent, ZERO importerow w src/, nieosiagalny z zadnej sekcji <SettingsView> — dowod wzrokiem dla naprawy i18n/koloru "What are passkeys?" mozliwy tylko tak). &lang=pl|en &theme=light|dark',
+    render: () => <UstawieniaBezpieczenstwoWebAuthnScreen />,
+  },
+  'assessment-dbr77-report': {
+    label:
+      'JEZYK-CRIMSON-3 (09.09) — DBR77ReportTemplate.tsx STANDALONE z atrapa danych (UWAGA: metoda DBR77 ma status coming_soon w frameworkRegistry.ts, Decision D-B — raportu nie da sie wygenerowac zadna zywa sciezka aplikacji — dowod wzrokiem dla naprawy i18n/koloru etykiet "AUTOMATYZUJ"/"Stanowisk" mozliwy tylko tak). &lang=pl|en &theme=light|dark',
+    render: () => <AssessmentDbr77ReportScreen />,
+  },
+  'megatrend-custom-trend-card': {
+    label:
+      'JEZYK-CRIMSON-3 (09.09) — CustomTrendCard.tsx (Megatrend) STANDALONE z atrapa danych — dowod wzrokiem dla naprawy i18n/koloru przycisku "Add to the list?". &lang=pl|en &theme=light|dark',
+    render: () => <MegatrendCustomTrendCardScreen />,
   },
   'ustawienia-integracje': {
     label:
