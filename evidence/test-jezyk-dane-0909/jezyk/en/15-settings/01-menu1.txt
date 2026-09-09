@@ -1,0 +1,100 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Settings
+Profile
+Data
+Model
+James Whitfield
+JW
+Settings
+
+Personal preferences
+
+My settings
+Profile
+Avatar & Photo
+Email Signatures
+Working Hours
+Work preferences
+AI & automation
+Notifications
+Security
+Integrations
+Data & privacy
+Billing
+Appearance
+Advanced
+Back to Dashboard
+Settings
+Profile
+Profile
+
+Manage your personal information and account
+
+Save Changes
+Personal Information
+
+Manage your personal information and preferences
+
+Change Photo
+James Whitfield
+
+Northwind Manufacturing Ltd.
+
+james.whitfield@northwind.example
+Owner
+Operations
+PUBLIC PROFILE
+Display Name
+
+This is how your name will appear to other users. Leave empty to use your full name.
+
+Pronouns
+Prefer not to say
+He/Him
+She/Her
+They/Them
+Other
+Department
+Select department...
+Engineering
+Product
+Design
+Marketing
+Sales
+Operations
+Finance
+Human Resources
+Legal
+Customer Success
+Support
+Executive
+Other
+Personal Information
+First Name
+Last Name
+Phone
+Company
+LinkedIn Profile ID
+
+Enter your profile ID from the LinkedIn URL (after /in/)
+
+Job Title
+Availability & Status
+Status Message
+
+Let your team know what you're up to (0/100)
+
+Out of Office
+
+Automatically notify others when you're away
+
+Regional Settings
+
+Timezone, date, time, number and unit formats are managed together in Regional Settings.
+
+Open Regional Settings

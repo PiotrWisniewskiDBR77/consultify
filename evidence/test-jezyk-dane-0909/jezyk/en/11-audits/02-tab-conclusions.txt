@@ -1,0 +1,40 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Audits
+Data
+Model
+James Whitfield
+JW
+Library
+Sessions
+Conclusions
+Reports
+Initiatives
+Status: All
+0
+New conclusion
+All
+0
+Candidate
+0
+Published
+0
+TITLE
+	
+TYPE
+	
+SOURCE
+	
+STATUS
+	
+DATE
+	
+
+
+No conclusions yet
+
+An audit conclusion is built from an audit report. Start with “New conclusion” in the module bar.

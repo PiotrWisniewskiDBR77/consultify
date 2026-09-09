@@ -1,0 +1,52 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Admin
+Overview
+Data
+Model
+James Whitfield
+JW
+Back
+ADMIN PANEL
+
+Access, organization policies, evidence, and safe operations
+
+TEAM & ACCESS
+Members
+Invitations
+Roles & Permissions
+Teams
+Guests & External Access
+Access Requests
+Access Reviews
+Ownership
+BILLING & PLANS
+AI CONTROL
+SECURITY & IDENTITY
+AUDIT LOG
+ADMIN COMMAND CENTER
+SYSTEM HEALTH
+Admin panel
+Team & Access
+Roles & Permissions
+Roles & Permissions
+
+Membership operations, role changes, ownership transfer, and team invite codes.
+
+Roles and permissions
+Add role
+ROLE
+	
+PERMISSIONS
+	
+UPDATED
+	
+
+
+No custom roles
+
+No project roles have been defined for this organization.

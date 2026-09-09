@@ -1,0 +1,64 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Audits
+Data
+Model
+James Whitfield
+JW
+Library
+Sessions
+Conclusions
+Reports
+Initiatives
+Stage: All
+1
+New audit
+Frozen until wave 2: uploading audit assumptions and the question generator.
+All
+1
+Planning
+0
+Fieldwork
+0
+NAME
+	
+PACK
+	
+STAGE
+	
+PROGRESS
+	
+OPEN FINDINGS
+	
+LEAD AUDITOR
+	
+START
+	
+DUE
+	
+UPDATED
+	
+
+
+Line 3 Quality and Safety Audit
+	
+Operational Excellence Audit 2026 v1
+	
+Remediation
+	
+6/7
+	
+3
+	
+Robert Chen
+	
+06/07/2026
+	
+Overdue
+	
+08/09/2026
+	

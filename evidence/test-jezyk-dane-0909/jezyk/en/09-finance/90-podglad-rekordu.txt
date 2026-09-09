@@ -1,0 +1,83 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Finance
+Statements
+Data
+Model
+James Whitfield
+JW
+Statements
+Analysis
+Models
+Prediction
+Enterprise valuation
+Import statement
+All
+1
+Rejected Imports
+0
+Recovery Queue
+0
+Ready Statements
+1
+Analyze
+AI
+	
+TYPE
+	
+NAME
+	
+COMPLETENESS
+	
+PERIOD
+	
+CURRENCY
+	
+DOCS
+	
+STATUS
+	
+UPDATED
+	
+
+	
+STM
+	
+Northwind Manufacturing Ltd.
+	
+P&L / —BS / —CF
+	
+Q3 FY2025 – Q2 FY2026
+	
+GBP
+	
+4
+	
+Approved
+	1 day ago	
+Northwind Manufacturing Ltd.
+Open
+Approved
+P&L / —BS / —CF
+Q3 FY2025 – Q2 FY2026
+DETAILS
+Property	Value
+Currency	GBP
+Docs	4
+Mapped lines	44 / 44
+Pack health	The pack is complete: profit and loss, balance sheet and cash flow statement.
+AI
+Summarize statement
+Flag data risks
+RELATIONS
+No relations
+Confirm
+Open
+O
+Create model
+Create analysis
+Delete

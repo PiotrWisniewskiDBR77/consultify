@@ -1,0 +1,37 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Finance
+Statements
+Data
+Model
+James Whitfield
+JW
+CURRENT DOCUMENT
+No document selected
+Upload
+1/4
+Finance
+/
+Import
+Import financial statement
+
+Upload a document to extract and standardize financial data
+
+1
+Upload
+2
+Detect
+3
+Map and correct
+4
+Confirm
+
+Drop file here or click to browse
+
+Supported: PDF, Excel (XLSX/XLS), and CSV financial statements
+
+Upload & Analyze

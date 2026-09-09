@@ -1,0 +1,199 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+My Work
+Inbox
+Data
+Model
+James Whitfield
+JW
+Ideas
+Notebook
+Inbox
+Calendar
+Tasks
+Decisions
+Vaults
+ALL
+8
+Overdue
+2
+Saved
+0
+AI
+0
+Critical
+0
+Action required
+8
+Today
+0
+This week
+0
+Done
+0
+AI Triage
+	
+TITLE
+	
+STATUS
+	
+URGENCY
+	
+TYPE
+	
+SECTION
+	
+SOURCE
+	
+RECEIVED
+	
+SLA
+	
+
+	
+Prepare the restart decision pack for the paused programme
+	
+Open
+	
+High
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 2d
+	
+
+	
+Sign off Line 3 MES kickoff deck
+	
+Open
+	
+High
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 8h
+	
+
+	
+Approve Q3 capex request
+	
+Open
+	
+High
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 15d
+	
+
+	
+Accept the vendor firmware release as a hard dependency
+	
+Open
+	
+Normal
+	
+Decision
+	
+Requires Your Decision
+	
+System
+	
+1d ago
+	
+L1 58d
+	
+
+	
+Follow up with Rotherham plant manager on downtime log
+	
+Open
+	
+Normal
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 7d
+	
+
+	
+Review supplier corrective action plan
+	
+Open
+	
+Normal
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 2d
+	
+
+	
+Draft opening remarks for steering committee
+	
+Open
+	
+Normal
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 8d
+	
+
+	
+Prepare board pack for October review
+	
+Open
+	
+Low
+	
+Assignment
+	
+New Assignments
+	
+System
+	
+1d ago
+	
+L1 20d
+	

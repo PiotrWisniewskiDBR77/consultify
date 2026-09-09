@@ -1,0 +1,133 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Organization
+Data
+Model
+James Whitfield
+JW
+Back to Dashboard
+Organization
+
+Business context, sources, and decision readiness
+
+ORGANIZATION PROFILE
+Identity & Operating Model
+Direction & Constraints
+GOALS & EXPECTATIONS
+Goals & Metrics
+Scope & Ways of Working
+CHALLENGES
+Challenges & Evidence
+Root Causes & Blockers
+STRATEGIC SYNTHESIS
+Risks & Opportunities
+Scenarios & Brief
+SOURCES & KNOWLEDGE
+Sources & Claims
+Knowledge Graph
+READINESS & GOVERNANCE
+Organization Readiness
+Organization
+Organization Profile
+Identity & Operating Model
+Add org profile details to improve Teresa's answers
+View knowledge graph
+Identity
+Scale
+Markets & systems
+Add source
+All
+13
+Filled in
+8
+To fill in
+5
+Conflicts
+0
+Identity
+
+The organization type decides what Teresa asks about next.
+
+ORGANIZATION TYPE
+
+Manufacturing
+Professional Services
+Technology
+Public Sector
+Nonprofit / NGO
+Other
+INDUSTRY
+—
+Technology
+Financial Services
+Healthcare
+Manufacturing
+Industrial
+Consumer
+Energy
+Telecommunications
+Real Estate
+Transportation & Logistics
+Education
+Government
+Retail & E-commerce
+Media & Entertainment
+Agriculture
+Construction
+Hospitality
+Professional Services
+Other
+SUB-INDUSTRY
+INDUSTRY CODE
+ORGANIZATION DESCRIPTION
+Technical details
+Scale
+COMPANY SIZE
+—
+Startup (< 50)
+SMB (50-250)
+Mid-Market (250-1000)
+Enterprise (1000+)
+EMPLOYEE COUNT
+ANNUAL REVENUE
+HEADQUARTERS COUNTRY
+FOUNDING YEAR
+Markets & core systems
+PRIMARY MARKETS
+CUSTOMER SEGMENTS
+KEY COMPETITORS
+DATA STATE
+v1
+
+8/13
+
+Fields filled in
+
+0
+
+Approved facts
+
+Data completeness — this is not decision readiness.
+
+SOURCES
+0 claims
+
+Context items
+
+0 source records
+
+OK
+
+Last update
+
+never
+
+Show field sources
+Save changes
+Publish context version
+
+Publishing creates an immutable version that the other modules read.

@@ -1,0 +1,1195 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Materials
+Template Library
+Data
+Model
+James Whitfield
+JW
+All
+Documents
+Presentations
+Sheets
+Template Library
+Provenance and rights
+Status
+New template
+Template creation lands in wave 2
+All formats
+90
+Reports
+77
+Sheets
+0
+Presentations
+13
+All sources
+90
+Personal
+0
+Application
+90
+Organization
+0
+Unknown
+0
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] business case (EN)
+NO SOURCE
+
+Economic justification with assumptions, scenarios, ROI, sensitivity.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] board report (EN)
+NO SOURCE
+
+Board-level report: executive summary, strategic decisions, risks.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] decision memo (EN)
+NO SOURCE
+
+Drive a single named decision with options, recommendation and risks.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Assessment Summary
+
+Evidence-governed assessment readout linking maturity scores and confidence to gaps, root causes, recommendations and a sequenced transformation roadmap.
+
+Presentation
+·
+9 slajdów
+·
+Application
+Use template
+Preview
+Valuation Pack
+
+Investor-grade valuation decision pack with reconciled financials, methodology, scenario sensitivity, comparable evidence, risk and explicit transaction next steps.
+
+Presentation
+·
+9 slajdów
+·
+Application
+Use template
+Preview
+Steering Committee Update
+
+Decision-led steering deck with reconciled performance, value, milestones, dependencies, residual risk and explicit committee asks.
+
+Presentation
+·
+8 slajdów
+·
+Application
+Use template
+Preview
+Results - KPI Performance Review
+LEGACY
+
+KPI performance review report with deviation cases and action plan (R1).
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+PMO Weekly
+LEGACY
+
+Raport operacyjny PMO: zadania on-time/late, obciążenia zespołu (capacity/overload) i cycle-time per status inicjatyw (Observability).
+
+Report
+·
+4 sekcje
+·
+Application
+Use template
+Preview
+Raport Steering
+LEGACY
+
+Pełniejszy przegląd dla komitetu sterującego: 3 osie per inicjatywa, ryzyka otwarte (risk_register) i zmiany zakresu z ostatnich 30 dni (scope_change_log).
+
+Report
+·
+4 sekcje
+·
+Application
+Use template
+Preview
+Sponsor One-Pager
+LEGACY
+
+1 strona dla sponsora: agregat 3 osi (czas × zadania × wartość, z rozbiciem D12 na wartość finansową i KPI operacyjny), top 3 alerty (overdue/blocked) i decyzje czekające na akceptację.
+
+Report
+·
+4 sekcje
+·
+Application
+Use template
+Preview
+KPI Review Report
+LEGACY
+
+Default template for scheduled/ad-hoc KPI review reports promoted from Results KPI snapshots.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Cotygodniowy status PMO (PMO Weekly Status)
+LEGACY
+
+Rytmiczny raport operacyjny zespołu/PMO: podsumowanie, zrealizowane, w toku, blokery, plan na następny tydzień. Do cotygodniowej synchronizacji i śladu decyzyjnego.
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Streszczenie wykonawcze (Executive Summary)
+LEGACY
+
+Samodzielne streszczenie w piramidzie Minto: główny wniosek na górze, argumenty wspierające, dowody, implikacje i rekomendacja. Do otwierania każdego większego raportu.
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Uzasadnienie biznesowe (Business Case)
+LEGACY
+
+Dokument decyzyjny inwestycji: problem, rozważane opcje, analiza kosztów i korzyści (NPV/ROI), ryzyka i rekomendacja. Standard dla bramek finansowania inicjatyw.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Raport diagnostyczny DRD (Diagnostic Report)
+LEGACY
+
+Ustrukturyzowany raport diagnostyczny w układzie DRD: kontekst → metodyka → ustalenia → analiza luk → rekomendacje → roadmapa. Rdzeń doradztwa: od faktów, przez wnioski, do planu działania.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Aktualizacja dla komitetu sterującego (Steering Committee Update)
+LEGACY
+
+Pełny brief dla komitetu sterującego: streszczenie wykonawcze, status RAG w wymiarach, kamienie i prognoza, ryzyka, decyzje wymagane. Standard PMBOK/PRINCE2 dla przeglądów zarządczych.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Jednostronicowy raport dla sponsora (Sponsor One-Pager)
+LEGACY
+
+Zwięzły, jednostronicowy status dla sponsora projektu — RAG, postęp vs plan, decyzje i eskalacje. Używaj między komitetami sterującymi, gdy sponsor potrzebuje szybkiego obrazu i jasnego "o co proszę".
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Deck raportu końcowego (Final Report Deck)
+
+Prezentacja zamknięcia projektu: cele vs osiągnięte wyniki, kluczowe wnioski, rekomendacje na przyszłość i utrzymanie korzyści. Domyka narrację i przekazuje wartość.
+
+Presentation
+·
+8 slajdów
+·
+Application
+Use template
+Preview
+Przegląd komitetu sterującego (Steering Review)
+
+Deck na komitet sterujący: status RAG i KPI, kamienie i prognoza, ryzyka i decyzje wymagane. Format zarządczego przeglądu portfela/projektu.
+
+Presentation
+·
+8 slajdów
+·
+Application
+Use template
+Preview
+Deck rekomendacji Minto (Recommendation Deck)
+
+Prezentacja rekomendacji w piramidzie Minto: rekomendacja na górze, argumenty wspierające, dowody, rozważane opcje, plan wdrożenia i decyzja. Do przekonania decydentów.
+
+Presentation
+·
+7 slajdów
+·
+Application
+Use template
+Preview
+Prezentacja ustaleń SCR (Findings Readout)
+
+Odczyt ustaleń w strukturze Situation–Complication–Resolution: sytuacja, komplikacja, kluczowe ustalenia, implikacje, rekomendacja. Klasyczny format prezentacji wyników diagnozy.
+
+Presentation
+·
+7 slajdów
+·
+Application
+Use template
+Preview
+Deck otwarcia projektu (Kickoff Deck)
+
+Prezentacja rozpoczęcia projektu: cel, zakres, zespół, plan i zasady współpracy. Ustawia wspólne rozumienie i mandat na starcie.
+
+Presentation
+·
+8 slajdów
+·
+Application
+Use template
+Preview
+Finance — Sekcja finansowa raportu
+LEGACY
+
+Sekcja finansowa: wskaźniki Z111 (financeRatioFamilyCatalog, 24/5 rodzin) + reconcile R1-R8 (shadow, czytane nie przeliczane) + koszyk EV (valuationBasketService, football-field). Deterministyczna — zero liczb z LLM. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Program — Raport 3 osi (czas × zadania × wartość)
+LEGACY
+
+Flagowy raport wykonawczy PM: T (earned-schedule) × Z (EV/BAC) × W (value_ledger banked/target). Wzorzec McKinsey Wave. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Raport statusowy
+LEGACY
+
+Okresowy raport postępu projektu dla sponsora. Sekcje: streszczenie statusu, zakres, postęp, ryzyka, następne kroki.
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Investor pitch
+
+Pitch inwestorski: problem→rozwiązanie→trakcja→ask. Układ: okładka, teza, problem/rynek, rozwiązanie, model+trakcja, plan, ask.
+
+Presentation
+·
+7 slajdów
+·
+Application
+Use template
+Preview
+Executive memo
+LEGACY
+
+Zwięzłe memo decyzyjne dla zarządu. Sekcje: kontekst, problem, opcje, rekomendacja.
+
+Report
+·
+4 sekcje
+·
+Application
+Use template
+Preview
+Raport audytowy
+LEGACY
+
+Ustrukturyzowany raport z audytu organizacyjnego lub procesowego. Sekcje: streszczenie, metodologia, wyniki, rekomendacje.
+
+Report
+·
+4 sekcje
+·
+Application
+Use template
+Preview
+Board deck
+
+Prezentacja dla zarządu lub rady nadzorczej. Układ: okładka, agenda, kontekst, wyniki, plan, Q&A.
+
+Presentation
+·
+6 slajdów
+·
+Application
+Use template
+Preview
+Diagnostic deck
+
+Diagnoza organizacji lub procesu. Układ: teza, dane, analiza, wnioski, rekomendacje.
+
+Presentation
+·
+6 slajdów
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] client final report (EN)
+NO SOURCE
+
+Final client report: scope, methodology, findings, recommendations, roadmap.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] client final report (PL)
+NO SOURCE
+
+Finalny raport dla klienta: zakres, metodologia, wnioski, rekomendacje, roadmapa.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] internal policy document (EN)
+NO SOURCE
+
+Internal policy: scope, applicability, rules, enforcement, exceptions.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] internal policy document (PL)
+NO SOURCE
+
+Polityka wewnętrzna: zakres, zastosowanie, zasady, egzekwowanie, wyjątki.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] due diligence note (EN)
+NO SOURCE
+
+Due diligence note: business model, financials, risks, recommendation.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] due diligence note (PL)
+NO SOURCE
+
+Due diligence: model biznesowy, finanse, ryzyka, rekomendacja.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] research report (EN)
+NO SOURCE
+
+Research report with methodology, findings, conclusions, citations.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] research report (PL)
+NO SOURCE
+
+Raport badawczy z metodologią, obserwacjami, wnioskami, cytowaniami.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] board report (PL)
+NO SOURCE
+
+Raport dla zarządu: executive summary, decyzje strategiczne, ryzyka.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] change management plan (EN)
+NO SOURCE
+
+Change management plan with stakeholder analysis, comms, training.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] change management plan (PL)
+NO SOURCE
+
+Plan zarządzania zmianą: analiza interesariuszy, komunikacja, szkolenia.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] implementation plan (EN)
+NO SOURCE
+
+Implementation plan: phases, milestones, owners, dependencies, deadlines.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] implementation plan (PL)
+NO SOURCE
+
+Plan wdrożenia: fazy, kamienie milowe, właściciele, zależności, terminy.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] sop document (EN)
+NO SOURCE
+
+Standard Operating Procedure with steps, roles, controls.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] sop document (PL)
+NO SOURCE
+
+Standard Operating Procedure: kroki, role, kontrole.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] risk register report (EN)
+NO SOURCE
+
+Risk register with severity, mitigation, owner, status.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] risk register report (PL)
+NO SOURCE
+
+Rejestr ryzyk z severity, mitigacją, ownerem, statusem.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] workshop summary (EN)
+NO SOURCE
+
+Workshop output: decisions, themes, next steps, owners.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] workshop summary (PL)
+NO SOURCE
+
+Wynik warsztatu: decyzje, tematy, następne kroki, właściciele.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] client discovery report (EN)
+NO SOURCE
+
+Discovery findings: pain points, goals, constraints, opportunities.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] client discovery report (PL)
+NO SOURCE
+
+Wyniki discovery: bóle, cele, ograniczenia, szanse.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] sales proposal (EN)
+NO SOURCE
+
+Client-facing proposal with scope, methodology, team, timeline, investment.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] sales proposal (PL)
+NO SOURCE
+
+Oferta dla klienta: zakres, metodologia, zespół, harmonogram, inwestycja.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] business case (PL)
+NO SOURCE
+
+Uzasadnienie ekonomiczne z założeniami, scenariuszami, ROI, wrażliwością.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] digital transformation roadmap (EN)
+NO SOURCE
+
+Multi-year digital transformation roadmap with phases, dependencies, KPIs.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] digital transformation roadmap (PL)
+NO SOURCE
+
+Wieloletnia roadmapa transformacji cyfrowej z fazami, zależnościami i KPI.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] interview summary report (EN)
+NO SOURCE
+
+Structured summary of interview findings for an organization.
+
+Report
+·
+11 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] interview summary report (PL)
+NO SOURCE
+
+Strukturalne podsumowanie obserwacji z rozmów w organizacji.
+
+Report
+·
+11 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] ai audit report (EN)
+NO SOURCE
+
+Formal AI readiness audit with risks, opportunities, recommended initiatives.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] ai audit report (PL)
+NO SOURCE
+
+Formalny audyt gotowości AI z ryzykami, szansami i rekomendowanymi inicjatywami.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] portfolio overview (EN)
+NO SOURCE
+
+Portfolio-level view of initiatives, status, dependencies.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] portfolio overview (PL)
+NO SOURCE
+
+Widok portfela: inicjatywy, status, zależności.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] benefits tracking report (EN)
+NO SOURCE
+
+Track realized vs planned benefits per initiative.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] benefits tracking report (PL)
+NO SOURCE
+
+Śledź zrealizowane vs planowane korzyści per inicjatywa.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] steering committee report (EN)
+NO SOURCE
+
+Formal steering committee report with decisions required and risk dashboard.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] steering committee report (PL)
+NO SOURCE
+
+Formalny raport na komitet sterujący z decyzjami i mapą ryzyk.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] project status report (EN)
+NO SOURCE
+
+Periodic project status: progress, risks, blockers, asks.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] project status report (PL)
+NO SOURCE
+
+Okresowy status projektu: postęp, ryzyka, blokery, prośby.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] decision memo (PL)
+NO SOURCE
+
+Doprowadzić do jednej decyzji z opcjami, rekomendacją i ryzykami.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] executive memo (EN)
+NO SOURCE
+
+Standardize executive memos: context, findings, decisions required, next steps.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+
+No canonical template record — there is nothing to use.
+
+[System] executive memo (PL)
+NO SOURCE
+
+Ujednolić memo zarządcze: kontekst, wnioski, decyzje, następne kroki.
+
+Report
+·
+6 sekcji
+·
+Application
+Use template
+Preview
+Final Transformation Report
+LEGACY
+
+Board-ready end-of-phase transformation report: impact, ROI, decisions, and next 90-day plan.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+Preview
+Assessment Report (Default)
+LEGACY
+
+Default template for assessment-based reports
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Financial Analysis Report
+LEGACY
+
+Draft report from financial analysis. Covers overview, key metrics, and recommendations.
+
+Report
+·
+5 sekcji
+·
+Application
+Use template
+Preview
+Assessment Summary Report
+LEGACY
+
+Structured assessment summary report covering maturity scores, gaps, strengths, and actionable recommendations. Works with DRD, SIRI, and ADMA frameworks.
+
+Report
+·
+11 sekcji
+·
+Application
+Use template
+Preview
+Tool Workshop Summary
+LEGACY
+
+Summary report from consulting tool workshops. Captures methodology, findings, generated initiatives, and recommended actions.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+Preview
+Valuation Pack & Investment Summary
+LEGACY
+
+Comprehensive valuation document for investment decisions. Includes DCF analysis, comparables, sensitivity analysis, and investment thesis.
+
+Report
+·
+10 sekcji
+·
+Application
+Use template
+Preview
+Steering Committee / Program Update
+LEGACY
+
+Concise program status report for steering committee meetings. Traffic light status, key decisions, escalations, and forward plan.
+
+Report
+·
+9 sekcji
+·
+Application
+Use template
+Preview
+Financial Analysis & Business Case
+LEGACY
+
+Comprehensive financial analysis including statements, ratios, budget analysis, and business case justification. Suitable for CFO and finance committee presentations.
+
+Report
+·
+10 sekcji
+·
+Application
+Use template
+Preview
+Transformation Roadmap & Portfolio Review
+LEGACY
+
+Comprehensive portfolio and roadmap document for transformation programs. Includes initiative portfolio, timeline, resource allocation, and benefits tracking.
+
+Report
+·
+10 sekcji
+·
+Application
+Use template
+Preview
+Strategic Review & Executive Brief
+LEGACY
+
+High-level strategic assessment for board members and executive sponsors. Covers situation analysis, strategic options, recommendations, and implementation roadmap.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+Preview
+Tool Workshop Summary
+
+Summary of consulting tool session results, insights, and recommended actions.
+
+Presentation
+·
+6 slajdów
+·
+Application
+Use template
+Preview
+Program / Execution Update
+
+Operational update on execution progress, delays, budget status, and team delivery.
+
+Presentation
+·
+8 slajdów
+·
+Application
+Use template
+Preview
+DRD Presentation Deck
+LEGACY
+
+Slide-style presentation format optimized for workshops, stakeholder meetings, and transformation kickoffs. Each section maps to 1-3 slides with visual-first content — charts, scorecards, bullet points. Designed for PPTX export.
+
+Report
+·
+10 sekcji
+·
+Application
+Use template
+Preview
+DRD Board Report
+LEGACY
+
+Concise, decision-oriented report for board members and C-level executives. Focuses on strategic implications, investment decisions, and key risks — stripped of technical details. Designed to be read in 15 minutes and drive boardroom decisions.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+Preview
+DRD Full Diagnostic Report
+LEGACY
+
+Comprehensive digital maturity diagnostic covering all 7 transformation axes with detailed gap analysis, axis-by-axis deep dives, strategic recommendations, and a prioritized roadmap. Best suited for transformation teams, consultants, and technical stakeholders who need the full picture.
+
+Report
+·
+14 sekcji
+·
+Application
+Use template
+Preview
+Tool Comparison Report
+LEGACY
+
+Comparative analysis across multiple tool sessions with scoring and prioritization.
+
+Report
+·
+7 sekcji
+·
+Application
+Use template
+Preview
+Tool Evaluation Report
+LEGACY
+
+Summary report from tool-based assessment sessions with findings and recommendations.
+
+Report
+·
+8 sekcji
+·
+Application
+Use template
+Preview
+Interview Detailed Analysis
+LEGACY
+
+Comprehensive analysis of all interview questions, answers, and cross-cutting themes.
+
+Report
+·
+13 sekcji
+·
+Application
+Use template
+Preview
+Interview Summary Report
+LEGACY
+
+Concise summary of discovery interview findings, key insights, gaps and recommendations.
+
+Report
+·
+8 sekcji
+·
+Application
+AI bundle — generation history
