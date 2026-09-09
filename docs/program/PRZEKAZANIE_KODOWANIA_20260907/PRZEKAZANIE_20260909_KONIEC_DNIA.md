@@ -7,8 +7,8 @@ Zasada dnia: **PASS tylko po pomiarze; „nie sprawdziłem" to N/A z powodem, ni
 
 | | staging (thomas) | demo (trolley) |
 |---|---|---|
-| kod (health `gitSha`) | `ac3354f3ff` | `ac3354f3ff` |
-| gałąź integracyjna | `mvp/inicjatywy-lancuch-20260907` = `019de3a76f` (wypchnięta na `staging`) | — |
+| kod (health `gitSha`) | `f24e4065d7` | `f24e4065d7` |
+| gałąź integracyjna | `mvp/inicjatywy-lancuch-20260907` = `f24e4065d7` (wypchnięta na `staging`) | — |
 | organizacje | 4 docelowe + 4 konta testerów z 09.09 | 4 docelowe |
 | konfiguracja produktu | 319 wierszy, komplet | 319 wierszy, komplet |
 | dane Northwind | pełne po dosiewie D9 | pełne po dosiewie D9 |
@@ -70,6 +70,32 @@ Czystka sierot skasowała 319 wierszy konfiguracji produktu, bo one z definicji 
 **Po każdej operacji na danych przejdź jeden pełny przepływ zapisu, nie tylko policz rekordy.**
 Zabezpieczenie: `predykatSieroty` wyklucza wartości wzorcowe, test `server/tests/dane-sieroty/wzorcowe.test.ts`,
 przywracanie punktowe `scripts/dane/przywroc-wzorcowe.mjs <manifest> --apply`.
+
+
+## 5b. Dwa defekty znalezione PO moim raporcie kontrolnym (naprawione 09.09 22:40)
+
+Robotnik kontrolny, którego omyłkowo uznałem za martwego, dokończył pomiar i znalazł to, czego mój
+szybszy pomiar nie objął. Oba naprawione i wdrożone.
+
+1. **Pętla autozapisu inicjatywy (blokujący).** Ekran-artefakt zapisuje sam `summary`/`description` co 1,5 s.
+   Schemat edycji dziedziczył `status … .default('DRAFT')`, a `validateBody` podmienia `req.body` na obiekt
+   PO parsowaniu — do kontrolera trafiał status, którego przeglądarka nie wysłała. Bramka M13 odrzucała to
+   jako przejście statusu: **400 dla 12 z 13 inicjatyw i stała plakietka „Unsaved"**. Naprawa: `status`
+   w `UpdateInitiativeSchema` jest opcjonalny BEZ wartości domyślnej (`server/src/validators/initiative.validators.ts`),
+   bezpiecznik `server/tests/initiatives/updateStatusDefault.test.ts` (4/4).
+2. **Surowy zapis techniczny w skrzynce Mojej Pracy.** Opisy zadań niosły JSON zamiast zdania — to były DANE,
+   nie kod. Poprawione na stagingu (99 wierszy) i demo (98). Producent, który wpisuje JSON do pola opisu,
+   zostaje do paczki 2.
+
+**Moja pomyłka do zapamiętania:** uznałem żywego robotnika za martwego po 13 minutach ciszy i skasowałem mu
+worktree wraz z bazą. Jego commit etapu leżał w repo od kwadransa, a „urwany" zrzut 59 MB był licznikiem
+w połowie kopiowania (skończył na 236 MB). Żywotność mierz commitami etapów, `mtime` plików i obecnością
+procesu — nie zegarkiem. Cudzego stanowiska nie kasuj nigdy; załóż własne obok.
+
+Nierozstrzygnięte z jego raportu (paczka 2): brak przycisków edycji i usuwania w menu kontekstowych
+Realizacji i Mojej Pracy (na API cykl przechodzi — brakuje przewodu w UI); kreator materiałów nie otworzył się
+w jednym przebiegu; kolumna SOURCE wypełniona w 2 z 7 wierszy mimo deklaracji 7/7; nowa inicjatywa żyje
+w `runtime-v1`, nie ma jej w `GET /api/initiatives` ani w tabeli `initiatives`.
 
 ## 6. Kolejka na jutro (paczka 2), wg wartości
 
