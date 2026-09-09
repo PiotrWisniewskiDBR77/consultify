@@ -34,19 +34,14 @@ describe('J-DOG-C — moduł Assessment mówi po angielsku w kodzie (bez ogonkó
 
   it('nie ma polskich napisów poza t() w treści JSX i atrybutach', () => {
     const zrodla = zbierzPlikiZrodlowe(KATALOGI);
-    // WYJĄTEK ŚWIADOMY (STOP J-DOG-C 2026-09-09, zostawione i zgłoszone —
-    // patrz evidence/jezyk-jdog-c/README.md): obie linie w
-    // DBR77ReportTemplate.tsx niosą klasę `text-primary-*` (crimson, dług
-    // zastany — `scripts/check-triada.baseline.txt`). Dotknięcie tej linii
-    // (nawet samego tekstu) bramka TRIADA czyta jako NOWE naruszenie —
-    // zmiana koloru byłaby zmianą wizualną zamrożonego modułu bez akceptu
-    // właściciela. Do rozstrzygnięcia razem z resztą długu `primary-*`
-    // w tym pliku, nie w paczce językowej.
-    const DOZWOLONE = new Set([
-      'reports/templates/DBR77ReportTemplate.tsx: „AUTOMATYZUJ"',
-      'reports/templates/DBR77ReportTemplate.tsx: „Stanowisk"',
-    ]);
-    const trafienia = znajdzPolskiJsx(zrodla).filter((t) => !DOZWOLONE.has(t));
+    // NAPRAWIONE (JEZYK-CRIMSON-3, DEC-453, 09.09): obie linie w
+    // DBR77ReportTemplate.tsx („AUTOMATYZUJ" linia ~219, „Stanowisk" linia
+    // ~392) przeniesione do `t()` — właściciel zgodził się na zmianę koloru
+    // WYŁĄCZNIE tych dwóch linii (crimson → teal), żeby odblokować naprawę
+    // językową. Reszta długu `primary-*` w tym pliku (kontener/ikona/wartość
+    // liczbowa obu kafelków) zostaje ŚWIADOMIE crimson — poza zakresem tej
+    // paczki, zgłoszone jako STOP w evidence/jezyk-crimson-3/README.md.
+    const trafienia = znajdzPolskiJsx(zrodla);
     expect(trafienia).toEqual([]);
   });
 });

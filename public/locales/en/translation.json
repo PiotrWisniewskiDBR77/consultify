@@ -11183,6 +11183,7 @@
       "report": {
         "measure": "MEASURE",
         "optimize": "OPTIMIZE",
+        "automate": "AUTOMATE",
         "identifiedWastes": "Identified wastes:",
         "automationPercent": "% to automate:",
         "recommendedTechnologies": "Recommended technologies:",

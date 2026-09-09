@@ -10363,6 +10363,7 @@
       "report": {
         "measure": "POMIERZ",
         "optimize": "ZOPTYMALIZUJ",
+        "automate": "AUTOMATYZUJ",
         "identifiedWastes": "Zidentyfikowane marnotrawstwa:",
         "automationPercent": "% do automatyzacji:",
         "recommendedTechnologies": "Rekomendowane technologie:",

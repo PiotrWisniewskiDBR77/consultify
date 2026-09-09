@@ -212,11 +212,20 @@ const WorkstationPage: React.FC<{
           )}
         </div>
 
-        {/* Phase 3: AUTOMATYZUJ */}
+        {/* Phase 3: AUTOMATYZUJ.
+            ODMROZENIE 04_ASSESSMENT DEC-453 (JEZYK-CRIMSON-3, 09.09): właściciel
+            zgodził się na zmianę koloru WYŁĄCZNIE linii nagłówka (poniżej), żeby
+            odblokować naprawę językową (dawniej „AUTOMATYZUJ" na sztywno). Kontener
+            i ikona (klasy tła/tekstu z crimson w numerze odcienia) ŚWIADOMIE
+            zostają — zastany dług tego pliku, poza zakresem tej paczki. Kafelek ma teraz
+            niespójny kolor (kontener+ikona crimson, nagłówek teal) — zgłoszone jako
+            STOP do decyzji właściciela, patrz evidence/jezyk-crimson-3/README.md. */}
         <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <Cpu className="w-5 h-5 text-primary-600" />
-            <h3 className="font-bold text-primary-900 dark:text-primary-300">AUTOMATYZUJ</h3>
+            <h3 className="font-bold text-teal-900 dark:text-teal-300">
+              {t('assessment.dbr77.report.automate', 'AUTOMATE')}
+            </h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -382,14 +391,18 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
           </div>
           <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-primary-600">{data.workstations.length}</div>
-            {/* STOP J5 (program językowy): ta jedna etykieta zostaje po polsku
-                ŚWIADOMIE. Klasa tekstu w linii niżej niesie kolor zastany
-                (dług 15 sztuk w tym pliku, `scripts/check-triada.baseline.txt`);
-                każde dotknięcie tej linii bramka TRIADA czyta jako NOWE
-                naruszenie, a zmiana koloru byłaby zmianą wizualną zamrożonego
-                modułu bez akceptu właściciela. Do rozstrzygnięcia razem
-                z pozostałymi 14 wystąpieniami w tym szablonie. */}
-            <div className="text-sm text-primary-600/70">Stanowisk</div>
+            {/* ODMROZENIE 04_ASSESSMENT DEC-453 (JEZYK-CRIMSON-3, 09.09): STOP J5
+                rozstrzygnięty częściowo — właściciel zgodził się na zmianę koloru
+                WYŁĄCZNIE tej jednej linii (etykieta), żeby odblokować naprawę
+                językową. Kontener/wartość liczby wyżej (klasy tła/tekstu z
+                crimson w numerze odcienia) ŚWIADOMIE zostają — to wciąż część
+                zastanego długu 15 wystąpień w tym pliku, poza zakresem tej
+                paczki. Efekt: kafelek ma teraz niespójny kolor (kontener+liczba
+                crimson, etykieta teal) — zgłoszone jako STOP do decyzji
+                właściciela (patrz evidence/jezyk-crimson-3/README.md). */}
+            <div className="text-sm text-teal-600/70">
+              {t('assessment.reportTemplates.dbr77.workstations', 'Workstations')}
+            </div>
           </div>
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-amber-600">{totalHeadcount}</div>
