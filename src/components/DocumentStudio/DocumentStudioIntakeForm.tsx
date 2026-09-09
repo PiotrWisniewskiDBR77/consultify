@@ -503,7 +503,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       </label>
 
       <div className={`${SECTION_LABEL} pt-2`}>
-        {t('documentStudio.intake.sectionFormat', 'Format i odbiorcy')}
+        {t('documentStudio.intake.sectionFormat', 'Format and recipients')}
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

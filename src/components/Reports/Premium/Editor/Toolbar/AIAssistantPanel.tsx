@@ -124,7 +124,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-slate-900 dark:text-white">Asystent AI</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">{t('reports.premium.aIAssistantPanel.title', 'AI Assistant')}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {t('reports.premium.aIAssistantPanel.generateMckinseyGradeContent', 'Generate McKinsey-grade content')}
             </p>
@@ -148,7 +148,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
-          Szybkie akcje
+          {t('reports.premium.aIAssistantPanel.quickActions', 'Quick actions')}
         </button>
         <button
           onClick={() => setActiveTab('custom')}

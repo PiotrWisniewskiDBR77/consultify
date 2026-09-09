@@ -14,7 +14,7 @@ export const ArtifactEmbedBlock: React.FC<Props> = ({ block, theme }) => {
   const artifactType = (block.content.artifact_type as string) || 'initiative';
   const artifactName =
     (block.content.artifact_name as string) ||
-    t('presentations.builder.defaultContent.untitledArtifact', 'Artefakt bez nazwy');
+    t('presentations.builder.defaultContent.untitledArtifact', 'Untitled artifact');
   const status = (block.content.status as string) || '';
 
   return (

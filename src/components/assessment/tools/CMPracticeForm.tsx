@@ -345,7 +345,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
             {/* Current Level */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Current Level (Stan Obecny)
+                {t('assessment.cmmi.form.currentLevel', 'Current Level')}
               </label>
               {renderLevelSelector(practiceArea, 'level', paScore.level)}
               {paScore.level > 0 && (

@@ -223,7 +223,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
           plannedStartDate: nextStart,
           plannedEndDate: nextEnd,
         });
-        toast.success(t('initiatives.toast.scheduleUpdated', 'Harmonogram zaktualizowany'));
+        toast.success(t('initiatives.toast.scheduleUpdated', 'Schedule updated'));
         // INI-05: the portfolio list / detail view for this initiative must
         // not keep showing the pre-drag dates.
         bumpInitiativeRefresh();

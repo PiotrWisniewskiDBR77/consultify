@@ -61,7 +61,7 @@ export const ReasoningTrace: React.FC<ReasoningTraceProps> = ({
       >
         <Chevron size={13} className="shrink-0" />
         <Brain size={13} className="shrink-0 text-c-text-secondary" />
-        <span className="font-medium">{t('chat.reasoning.title', 'Tok rozumowania')}</span>
+        <span className="font-medium">{t('chat.reasoning.title', 'Reasoning trace')}</span>
         {isStreaming && (
           <span className="ml-1 inline-flex items-center gap-0.5" aria-hidden>
             <span

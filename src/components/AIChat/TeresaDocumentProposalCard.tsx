@@ -58,18 +58,18 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
   const badge =
     state === 'applied'
       ? {
-          label: t('aiChat.documentProposal.state.applied', 'Wstawione do dokumentu'),
+          label: t('aiChat.documentProposal.state.applied', 'Inserted into document'),
           className:
             'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
         }
       : state === 'rejected'
         ? {
-            label: t('aiChat.documentProposal.state.rejected', 'Odrzucone'),
+            label: t('aiChat.documentProposal.state.rejected', 'Rejected'),
             className:
               'border-c-border bg-c-surface-raised text-c-text-secondary dark:border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary',
           }
         : {
-            label: t('aiChat.documentProposal.state.pending', 'Do zatwierdzenia'),
+            label: t('aiChat.documentProposal.state.pending', 'Pending approval'),
             className:
               'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300',
           };
@@ -83,11 +83,11 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary">
-            {t('aiChat.documentProposal.heading', 'Propozycja Teresy')}
+            {t('aiChat.documentProposal.heading', "Teresa's proposal")}
           </div>
           <div className="truncate text-sm font-semibold text-c-text">{proposal.request}</div>
           <div className="text-xs text-c-text-secondary">
-            {t('aiChat.documentProposal.target', 'Dokument obok: {{title}}', {
+            {t('aiChat.documentProposal.target', 'Document alongside: {{title}}', {
               title: proposal.documentTitle,
             })}
           </div>
@@ -116,7 +116,7 @@ export const TeresaDocumentProposalCard: React.FC<TeresaDocumentProposalCardProp
             className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-bg transition-colors hover:bg-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <FileInput size={13} />
-            {t('aiChat.documentProposal.insert', 'Wstaw do dokumentu')}
+            {t('aiChat.documentProposal.insert', 'Insert into document')}
           </button>
 
           {proposal.hasSelection && (

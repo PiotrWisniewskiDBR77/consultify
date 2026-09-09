@@ -258,7 +258,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               >
                 {action.risk === 'medium'
                   ? t('aiActions.mediumRisk', 'Medium risk')
-                  : t('aiActions.highRisk', 'Wysokie ryzyko')}
+                  : t('aiActions.highRisk', 'High risk')}
               </span>
             )}
           </div>
@@ -292,12 +292,12 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               <div className="space-y-1">
                 {action.payload.task.priority && (
                   <div>
-                    <span className="font-medium">Priorytet:</span> {action.payload.task.priority}
+                    <span className="font-medium">{t('aiActions.fields.priority', 'Priority:')}</span> {action.payload.task.priority}
                   </div>
                 )}
                 {action.payload.task.dueDate && (
                   <div>
-                    <span className="font-medium">Termin:</span> {action.payload.task.dueDate}
+                    <span className="font-medium">{t('aiActions.fields.dueDate', 'Deadline:')}</span> {action.payload.task.dueDate}
                   </div>
                 )}
               </div>
@@ -307,13 +307,13 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               <div className="space-y-1">
                 {action.payload.initiative.category && (
                   <div>
-                    <span className="font-medium">Kategoria:</span>{' '}
+                    <span className="font-medium">{t('aiActions.fields.category', 'Category:')}</span>{' '}
                     {action.payload.initiative.category}
                   </div>
                 )}
                 {action.payload.initiative.estimatedEffort && (
                   <div>
-                    <span className="font-medium">Estymacja:</span>{' '}
+                    <span className="font-medium">{t('aiActions.fields.estimation', 'Estimation:')}</span>{' '}
                     {action.payload.initiative.estimatedEffort}h
                   </div>
                 )}
@@ -328,7 +328,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         {isExecuting ? (
           <div className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-secondary">
             <Loader2 size={16} className="animate-spin" />
-            {t('aiActions.executing', 'Wykonywanie...')}
+            {t('aiActions.executing', 'Running...')}
           </div>
         ) : (
           <>
@@ -427,7 +427,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-          {t('aiActions.pendingActions', 'Proponowane akcje')} ({actions.length})
+          {t('aiActions.pendingActions', 'Proposed actions')} ({actions.length})
         </h4>
         {onDismissAll && actions.length > 1 && (
           <button

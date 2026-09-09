@@ -241,18 +241,21 @@ async function seedHttpSession(
 // Small state-specific views
 // ---------------------------------------------------------------------------
 
-const BootstrapLoadingView: React.FC<{ label: string }> = ({ label }) => (
-  <div
-    data-testid="drd-http-bootstrap-loading"
-    className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted"
-  >
-    <DrdSourceIndicator
-      source="RECOVERY_DRAFT"
-      title="Jeszcze bez potwierdzonej odpowiedzi serwera."
-    />
-    {label}
-  </div>
-);
+const BootstrapLoadingView: React.FC<{ label: string }> = ({ label }) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-testid="drd-http-bootstrap-loading"
+      className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted"
+    >
+      <DrdSourceIndicator
+        source="RECOVERY_DRAFT"
+        title={t('assessment.drd.http.bootstrap.notConfirmedYet', 'No confirmed server response yet.')}
+      />
+      {label}
+    </div>
+  );
+};
 
 const ConflictView: React.FC<{
   state: DrdHttpRuntimeState;
@@ -1173,12 +1176,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     );
   }
   if (!state) {
-    return <BootstrapLoadingView label="Tworzenie sesji…" />;
+    return <BootstrapLoadingView label={t('assessment.drd.http.bootstrap.creatingSession', 'Creating session…')} />;
   }
 
   // -- render: runtime-level states that pre-empt the shell -------------------
   if (state.status === 'loading' && !state.session) {
-    return <BootstrapLoadingView label="Wczytywanie sesji z serwera…" />;
+    return <BootstrapLoadingView label={t('assessment.drd.http.bootstrap.loadingFromServer', 'Loading session from server…')} />;
   }
   if (state.status === 'conflict') {
     return (
@@ -1231,7 +1234,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   const session = state.session;
   const assessmentReportEnabled = isAssessmentReportViewEnabled();
   if (!session) {
-    return <BootstrapLoadingView label="Wczytywanie sesji…" />;
+    return <BootstrapLoadingView label={t('assessment.drd.http.bootstrap.loadingSession', 'Loading session…')} />;
   }
 
   // status is 'ready' (with a possibly-error-decorated retry still showing

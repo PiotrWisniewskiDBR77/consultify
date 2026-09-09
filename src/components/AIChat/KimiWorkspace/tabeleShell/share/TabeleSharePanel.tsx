@@ -76,7 +76,7 @@ function useTargetOptions(t: (key: string, def: string) => string): Array<{
         Icon: Presentation,
         description: t(
           'kimi.tabeleShell.share.targetPresentationDescription',
-          'Open in Prezentacje with slide outline'
+          'Open in Presentations with slide outline'
         ),
       },
     ],
@@ -259,7 +259,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-share-panel"
-      aria-label={t('kimi.tabeleShell.share.ariaLabel', 'Tabele share and conversions')}
+      aria-label={t('kimi.tabeleShell.share.ariaLabel', 'Tables share and conversions')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-c-text">

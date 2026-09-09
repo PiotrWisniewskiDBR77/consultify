@@ -158,7 +158,7 @@ export function PlanRoleDemandEditor({
         <thead>
           <tr className="border-b border-c-border-subtle">
             <th className={head}>
-              {t('initiatives.planScenario.roleDemand.initiative', 'Inicjatywa')}
+              {t('initiatives.planScenario.roleDemand.initiative', 'Initiative')}
             </th>
             {columns.map((column) => (
               <th key={column.roleId} className={head}>

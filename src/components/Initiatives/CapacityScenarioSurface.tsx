@@ -117,7 +117,7 @@ export const variantDecisionNote = (
   if (kind === 'SCOPE_SPLIT')
     return i18n.t(
       'initiatives.capacityAnalysis.decision.scopeSplit',
-      'Podziel zakres — decyzja zapisana, plan bez zmian.'
+      'Split scope — decision saved, plan unchanged.'
     );
   return i18n.t(
     'initiatives.capacityAnalysis.decision.addCapacity',
@@ -616,10 +616,10 @@ export const CapacityScenarioSurface: React.FC<
         title: resolveBusinessDisplayLabel({
           displayName: x.name,
           rawId: x.id,
-          fallback: `${t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy')} · ${formatPeriodDate(x.updatedAt)}`,
+          fallback: `${t('initiatives.capacityAnalysis.unnamed', 'Untitled analysis')} · ${formatPeriodDate(x.updatedAt)}`,
         }),
         state: x.state,
-        plan: `${resolveBusinessDisplayLabel({ displayName: x.planRef.name, rawId: x.planRef.scenarioId, fallback: t('initiatives.plan.unnamed', 'Plan bez nazwy') })} · v${x.planRef.scenarioVersion}`,
+        plan: `${resolveBusinessDisplayLabel({ displayName: x.planRef.name, rawId: x.planRef.scenarioId, fallback: t('initiatives.plan.unnamed', 'Untitled plan') })} · v${x.planRef.scenarioVersion}`,
         window: `${x.window.start ?? '—'} → ${x.window.end ?? '—'}`,
         knowledge: `K ${x.knowledgeSummary.known} · E ${x.knowledgeSummary.estimated} · U ${x.knowledgeSummary.unknown} · UC ${x.knowledgeSummary.unconfirmed}`,
         updatedAt: x.updatedAt,
@@ -1036,22 +1036,22 @@ export const CapacityScenarioSurface: React.FC<
               meta={{ pills: [{ label: scenarioStateLabel(row.state) ?? t('common.unknown', 'unknown'), tone: 'neutral' }] }}
               details={{ properties: [
                 { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Source plan'), value: row.plan },
-                { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), value: String(row.periods) },
+                { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Periods'), value: String(row.periods) },
                 { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), value: String(row.roles) },
-                { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), value: row.gaps ? String(row.gaps) : t('common.none', 'none') },
+                { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Gaps'), value: row.gaps ? String(row.gaps) : t('common.none', 'none') },
               ] }}
             />
           )}
         >
           <StandardTable
             columns={[
-              { id: 'title', label: t('initiatives.capacityAnalysis.columns.name', 'Nazwa'), sortable: true },
+              { id: 'title', label: t('initiatives.capacityAnalysis.columns.name', 'Name'), sortable: true },
               { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Source plan'), sortable: true },
-              { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), sortable: true },
+              { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Periods'), sortable: true },
               { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), sortable: true },
-              { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), sortable: true, render: (row) => row.gaps ? row.gaps : t('common.none', 'none') },
+              { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Gaps'), sortable: true, render: (row) => row.gaps ? row.gaps : t('common.none', 'none') },
               { id: 'state', label: t('common.status', 'Status'), render: (row) => scenarioStateLabel(row.state) ?? t('common.unknown', 'unknown') },
-              { id: 'updatedAt', label: t('initiatives.capacityAnalysis.columns.updatedAt', 'Zaktualizowano'), render: (row) => formatPeriodDate(row.updatedAt) },
+              { id: 'updatedAt', label: t('initiatives.capacityAnalysis.columns.updatedAt', 'Updated'), render: (row) => formatPeriodDate(row.updatedAt) },
             ]}
             data={visibleAnalyses}
             selectedRowId={selectedId}

@@ -759,7 +759,7 @@ export const PrezentacjeView: React.FC = () => {
     return (
       <BlankCreationState
         status={blankCreateFailed ? 'failed' : 'creating'}
-        creatingLabel={t('prezentacje.blank.creating', 'Tworzenie pustej prezentacji…')}
+        creatingLabel={t('prezentacje.blank.creating', 'Creating a blank presentation…')}
         failedMessage={t(
           'prezentacje.blankFailedPermanent',
           'Failed to create a blank presentation. Try again or go back to Materials.'
@@ -782,7 +782,7 @@ export const PrezentacjeView: React.FC = () => {
       <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
         <Loader2 size={18} className="animate-spin" />
         <span className="text-sm">
-          {t('prezentacje.template.creating', 'Tworzenie prezentacji z szablonu…')}
+          {t('prezentacje.template.creating', 'Creating a presentation from template…')}
         </span>
       </div>
     );
@@ -868,10 +868,10 @@ export const PrezentacjeView: React.FC = () => {
           'Choose a mode — all three are equally valid.'
         )}
         clean={{
-          title: t('prezentacje.tri.cleanTitle', 'Czysto'),
+          title: t('prezentacje.tri.cleanTitle', 'Blank'),
           desc: t(
             'prezentacje.tri.cleanDesc',
-            'Pusty deck (1 slajd) w Deck Builderze. Budujesz sam, bez AI.'
+            'Blank deck (1 slide) in Deck Builder. You build it yourself, without AI.'
           ),
         }}
         ai={{
@@ -879,8 +879,8 @@ export const PrezentacjeView: React.FC = () => {
           desc: t('prezentacje.tri.aiDesc', 'Describe the deck — AI will build the slides and the content.'),
         }}
         template={{
-          title: t('prezentacje.tri.templateTitle', 'Z szablonu'),
-          desc: t('prezentacje.tri.templateDesc', 'Zacznij od gotowego szablonu prezentacji.'),
+          title: t('prezentacje.tri.templateTitle', 'From template'),
+          desc: t('prezentacje.tri.templateDesc', 'Start from a ready-made presentation template.'),
         }}
         onClean={handleCreateEmptyDeck}
         onAi={() => setEntryMode('ai')}

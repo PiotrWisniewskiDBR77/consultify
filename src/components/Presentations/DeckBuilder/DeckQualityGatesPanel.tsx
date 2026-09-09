@@ -381,7 +381,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
         {!loading && report && report.gates.length > 0 && (
           <div
             role="group"
-            aria-label="Tryb widoku"
+            aria-label={t('presentations.builder.qualityGates.viewMode', 'View mode')}
             className="inline-flex rounded-md border border-c-border-subtle overflow-hidden text-[11px]"
           >
             <button

@@ -236,7 +236,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 size={20} />
-          Ocena Kategorii
+          {t('assessment.cmmi.report.categoryScore', 'Category Score')}
         </h2>
         <div className="grid grid-cols-3 gap-4">
           {categoryScores.map((cat) => {
@@ -311,10 +311,10 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                   Kod
                 </th>
                 <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Obszar Praktyk
+                  {t('assessment.cmmi.report.table.practiceArea', 'Practice Area')}
                 </th>
                 <th className="text-center px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Kategoria
+                  {t('assessment.cmmi.report.table.category', 'Category')}
                 </th>
                 <th className="text-center px-2 py-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                   L1
@@ -382,7 +382,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={20} />
-          Plan Doskonalenia - Top Priorytety
+          {t('assessment.cmmi.report.improvementPlanTopPriorities', 'Improvement Plan - Top Priorities')}
         </h2>
         <div className="space-y-3">
           {topPriorities.map((pa, idx) => {
@@ -434,7 +434,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    Luka
+                    {t('assessment.cmmi.report.gapLabel', 'Gap')}
                   </div>
                   <div className="text-lg font-bold text-danger-600">
                     +{pa.gap} poziom{pa.gap > 1 ? 'y' : ''}

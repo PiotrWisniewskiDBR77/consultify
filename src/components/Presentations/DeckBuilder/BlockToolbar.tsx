@@ -80,8 +80,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
       {/* Icon strip */}
       <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
         <button
-          aria-label="Cofnij"
-          title="Cofnij (⌘Z)"
+          aria-label={t('presentations.builder.blockToolbar.undo', 'Undo')}
+          title={t('presentations.builder.blockToolbar.undoShortcut', 'Undo (⌘Z)')}
           disabled={!canUndo}
           onClick={onUndo}
           className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
@@ -283,27 +283,27 @@ const LayoutsPanel: React.FC<{
   const { t } = useTranslation();
   const layouts = [
     {
-      label: t('presentations.builder.toolbar.layoutItems.twoColumns', '2 kolumny'),
+      label: t('presentations.builder.toolbar.layoutItems.twoColumns', '2 columns'),
       type: 'smart_layout',
       content: { layoutType: '2col' },
     },
     {
-      label: t('presentations.builder.toolbar.layoutItems.threeColumns', '3 kolumny'),
+      label: t('presentations.builder.toolbar.layoutItems.threeColumns', '3 columns'),
       type: 'smart_layout',
       content: { layoutType: '3col' },
     },
     {
-      label: t('presentations.builder.toolbar.layoutItems.fourColumns', '4 kolumny'),
+      label: t('presentations.builder.toolbar.layoutItems.fourColumns', '4 columns'),
       type: 'smart_layout',
       content: { layoutType: '4col' },
     },
     {
-      label: t('presentations.builder.toolbar.layoutItems.boxes', 'Bloki'),
+      label: t('presentations.builder.toolbar.layoutItems.boxes', 'Blocks'),
       type: 'smart_layout',
       content: { layoutType: 'boxes' },
     },
     {
-      label: t('presentations.builder.toolbar.layoutItems.cards', 'Karty'),
+      label: t('presentations.builder.toolbar.layoutItems.cards', 'Cards'),
       type: 'smart_layout',
       content: { layoutType: 'cards' },
     },
@@ -323,22 +323,22 @@ const DiagramsPanel: React.FC<{
 }> = ({ onInsertBlock }) => {
   const { t } = useTranslation();
   const diagrams = [
-    { label: t('presentations.builder.toolbar.diagramItems.processSteps', 'Kroki procesu'), kind: 'process_steps' },
-    { label: t('presentations.builder.toolbar.diagramItems.funnel', 'Lejek'), kind: 'funnel' },
+    { label: t('presentations.builder.toolbar.diagramItems.processSteps', 'Process steps'), kind: 'process_steps' },
+    { label: t('presentations.builder.toolbar.diagramItems.funnel', 'Funnel'), kind: 'funnel' },
     { label: t('presentations.builder.toolbar.diagramItems.timeline', 'Timeline'), kind: 'timeline_horizontal' },
-    { label: t('presentations.builder.toolbar.diagramItems.matrix2x2', 'Macierz 2x2'), kind: 'matrix_2x2' },
+    { label: t('presentations.builder.toolbar.diagramItems.matrix2x2', '2x2 Matrix'), kind: 'matrix_2x2' },
     { label: t('presentations.builder.toolbar.diagramItems.swot', 'SWOT'), kind: 'swot' },
-    { label: t('presentations.builder.toolbar.diagramItems.pyramid', 'Piramida'), kind: 'pyramid' },
+    { label: t('presentations.builder.toolbar.diagramItems.pyramid', 'Pyramid'), kind: 'pyramid' },
     { label: t('presentations.builder.toolbar.diagramItems.venn2', 'Venn (2)'), kind: 'venn_2' },
     { label: t('presentations.builder.toolbar.diagramItems.venn3', 'Venn (3)'), kind: 'venn_3' },
-    { label: t('presentations.builder.toolbar.diagramItems.cycle', 'Cykl'), kind: 'cycle' },
+    { label: t('presentations.builder.toolbar.diagramItems.cycle', 'Cycle'), kind: 'cycle' },
     {
       label: t('presentations.builder.toolbar.diagramItems.roadmap', 'Now/Next/Later'),
       kind: 'roadmap_now_next_later',
     },
-    { label: t('presentations.builder.toolbar.diagramItems.hierarchy', 'Hierarchia'), kind: 'org_hierarchy' },
+    { label: t('presentations.builder.toolbar.diagramItems.hierarchy', 'Hierarchy'), kind: 'org_hierarchy' },
     {
-      label: t('presentations.builder.toolbar.diagramItems.decisionTree', 'Drzewo decyzyjne'),
+      label: t('presentations.builder.toolbar.diagramItems.decisionTree', 'Decision tree'),
       kind: 'decision_tree_light',
     },
   ];
@@ -362,10 +362,10 @@ const ChartsPanel: React.FC<{
   const { t } = useTranslation();
   const charts = [
     { label: t('presentations.builder.toolbar.chartItems.bar', 'Bar chart'), chartType: 'bar' },
-    { label: t('presentations.builder.toolbar.chartItems.line', 'Wykres liniowy'), chartType: 'line' },
+    { label: t('presentations.builder.toolbar.chartItems.line', 'Line chart'), chartType: 'line' },
     { label: t('presentations.builder.toolbar.chartItems.pie', 'Pie chart'), chartType: 'pie' },
     { label: t('presentations.builder.blocks.kpiWidget', 'Widget KPI'), type: 'kpi_widget' },
-    { label: t('presentations.builder.blocks.metricStrip', 'Pasek metryk'), type: 'metric_strip' },
+    { label: t('presentations.builder.blocks.metricStrip', 'Metrics bar'), type: 'metric_strip' },
   ];
 
   return (
@@ -529,7 +529,7 @@ const BlockInspector: React.FC<{
       </h4>
       {(block.type === 'heading' || block.type === 'paragraph' || block.type === 'callout') && (
         <InspectorField
-          label="Tekst"
+          label={t('presentations.builder.blockToolbar.text', 'Text')}
           multiline
           value={String(content.text || '')}
           onChange={(text) => patchContent({ text })}
@@ -539,7 +539,7 @@ const BlockInspector: React.FC<{
         block.type === 'numbered_list' ||
         block.type === 'smart_diagram') && (
         <InspectorField
-          label="Elementy (po jednym w wierszu)"
+          label={t('presentations.builder.blockToolbar.itemsOnePerLine', 'Items (one per line)')}
           multiline
           value={items
             .map((x: unknown) =>
@@ -572,7 +572,7 @@ const BlockInspector: React.FC<{
             onChange={(value) => patchContent({ headers: value.split(',').map((x) => x.trim()) })}
           />
           <InspectorField
-            label="Wiersze CSV (po jednym w wierszu)"
+            label={t('presentations.builder.blockToolbar.csvRowsOnePerLine', 'CSV rows (one per line)')}
             multiline
             value={(Array.isArray(content.rows) ? content.rows : [])
               .map((r: unknown) => (Array.isArray(r) ? r.join(', ') : ''))
@@ -598,20 +598,20 @@ const BlockInspector: React.FC<{
           <label className="block text-[10px] text-c-text-secondary">
             Chart type
             <select
-              aria-label="Typ wykresu"
+              aria-label={t('presentations.builder.blockToolbar.chartType', 'Chart type')}
               value={String(content.chartType || 'bar')}
               onChange={(e) => patchContent({ chartType: e.target.value })}
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
               <option value="bar">{t('presentations.builder.blockToolbar.bar', 'Bar')}</option>
-              <option value="line">Liniowy</option>
-              <option value="area">Warstwowy</option>
+              <option value="line">{t('presentations.builder.blockToolbar.line', 'Line')}</option>
+              <option value="area">{t('presentations.builder.blockToolbar.area', 'Area')}</option>
               <option value="pie">{t('presentations.builder.blockToolbar.pie', 'Pie')}</option>
               <option value="donut">{t('presentations.builder.blockToolbar.doughnut', 'Doughnut')}</option>
             </select>
           </label>
           <InspectorField
-            label="Dane wykresu (JSON)"
+            label={t('presentations.builder.blockToolbar.chartDataJson', 'Chart data (JSON)')}
             multiline
             value={dataText}
             onChange={(value) => {
@@ -637,7 +637,7 @@ const BlockInspector: React.FC<{
             onChange={(value) => patchContent({ value })}
           />
           <InspectorField
-            label="Kierunek zmiany"
+            label={t('presentations.builder.blockToolbar.changeDirection', 'Change direction')}
             value={String(content.trend || '')}
             onChange={(trend) => patchContent({ trend })}
           />
@@ -646,12 +646,12 @@ const BlockInspector: React.FC<{
       {block.type === 'image' && (
         <>
           <InspectorField
-            label="Adres URL obrazu"
+            label={t('presentations.builder.blockToolbar.imageUrl', 'Image URL')}
             value={String(content.url || '')}
             onChange={(url) => patchContent({ url })}
           />
           <InspectorField
-            label="Tekst alternatywny"
+            label={t('presentations.builder.blockToolbar.altText', 'Alt text')}
             value={String(content.alt || '')}
             onChange={(alt) => patchContent({ alt })}
           />
@@ -659,14 +659,14 @@ const BlockInspector: React.FC<{
       )}
       <div className="grid grid-cols-2 gap-2">
         <InspectorField
-          label="Rozmiar pisma"
+          label={t('presentations.builder.blockToolbar.fontSize', 'Font size')}
           value={String((content.style as any)?.fontSize || '')}
           onChange={(fontSize) =>
             patchContent({ style: { ...((content.style as any) || {}), fontSize } })
           }
         />
         <InspectorField
-          label="Kolor tekstu"
+          label={t('presentations.builder.blockToolbar.textColor', 'Text color')}
           value={String((content.style as any)?.color || '')}
           onChange={(color) =>
             patchContent({ style: { ...((content.style as any) || {}), color } })
@@ -718,7 +718,7 @@ const BlockInspector: React.FC<{
         <div className="flex items-end gap-3 pb-1">
           <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
             <input
-              aria-label="Kursywa"
+              aria-label={t('presentations.builder.blockToolbar.italic', 'Italic')}
               type="checkbox"
               checked={textStyle.fontStyle === 'italic'}
               onChange={(e) =>
@@ -759,9 +759,9 @@ const BlockInspector: React.FC<{
           }
           className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
         >
-          <option value="left">Do lewej</option>
+          <option value="left">{t('presentations.builder.blockToolbar.left', 'Left')}</option>
           <option value="center">{t('presentations.builder.blockToolbar.centre', 'Centre')}</option>
-          <option value="right">Do prawej</option>
+          <option value="right">{t('presentations.builder.blockToolbar.right', 'Right')}</option>
         </select>
       </label>
       <div className="mt-3 border-t border-c-border-subtle pt-3 space-y-2">
@@ -785,7 +785,7 @@ const BlockInspector: React.FC<{
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
               <option value="full">{t('presentations.builder.blockToolbar.full', 'Full')}</option>
-              <option value="left">Lewa strona</option>
+              <option value="left">{t('presentations.builder.blockToolbar.leftSide', 'Left side')}</option>
               <option value="right">{t('presentations.builder.blockToolbar.rightSide', 'Right side')}</option>
               <option value="top">{t('presentations.builder.blockToolbar.top', 'Top')}</option>
               <option value="bottom">{t('presentations.builder.blockToolbar.bottom', 'Bottom')}</option>
@@ -827,9 +827,9 @@ const BlockInspector: React.FC<{
             className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
           >
             <option value="stretch">{t('presentations.builder.blockToolbar.stretch', 'Stretch')}</option>
-            <option value="flex-start">Do lewej</option>
+            <option value="flex-start">{t('presentations.builder.blockToolbar.left', 'Left')}</option>
             <option value="center">{t('presentations.builder.blockToolbar.centre', 'Centre')}</option>
-            <option value="flex-end">Do prawej</option>
+            <option value="flex-end">{t('presentations.builder.blockToolbar.right', 'Right')}</option>
           </select>
         </label>
       </div>

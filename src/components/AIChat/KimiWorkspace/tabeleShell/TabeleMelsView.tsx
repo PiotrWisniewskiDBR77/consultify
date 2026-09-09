@@ -158,7 +158,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
   const { t, i18n } = useTranslation();
   const [activeSection, setActiveSection] = useState<TabeleSectionId>(initialActiveSection);
 
-  const moduleLbl = moduleLabel ?? t('tabele.moduleLabel', 'Tabele');
+  const moduleLbl = moduleLabel ?? t('tabele.moduleLabel', 'Tables');
   const title = preview?.title ?? fallbackTitle ?? t('tabele.defaultTitle', 'Operational table');
 
   const chips = useMemo(
@@ -276,7 +276,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
       title={title}
       onTitleChange={onTitleChange}
       onBack={onBack}
-      backLabel={t('tabele.back', 'Back to Tabele home')}
+      backLabel={t('tabele.back', 'Back to Tables home')}
       topBarChips={chips}
       leftRailTitle={t('tabele.leftRail.title', 'Outline')}
       leftRailToolsSlot={leftRailToolsSlot}

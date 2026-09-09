@@ -136,7 +136,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-qa-panel"
-      aria-label={t('kimi.tabeleShell.qa.ariaLabel', 'Tabele QA report')}
+      aria-label={t('kimi.tabeleShell.qa.ariaLabel', 'Tables QA report')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-c-text">

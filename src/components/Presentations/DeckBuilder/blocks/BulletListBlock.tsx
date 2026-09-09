@@ -14,14 +14,14 @@ export const BulletListBlock: React.FC<Props> = ({ block, theme }) => {
   const isNumbered = block.type === 'numbered_list';
   const defaultItems = isNumbered
     ? [
-        t('presentations.builder.defaultContent.step1', 'Krok 1'),
-        t('presentations.builder.defaultContent.step2', 'Krok 2'),
-        t('presentations.builder.defaultContent.step3', 'Krok 3'),
+        t('presentations.builder.defaultContent.step1', 'Step 1'),
+        t('presentations.builder.defaultContent.step2', 'Step 2'),
+        t('presentations.builder.defaultContent.step3', 'Step 3'),
       ]
     : [
-        t('presentations.builder.defaultContent.item1', 'Punkt 1'),
-        t('presentations.builder.defaultContent.item2', 'Punkt 2'),
-        t('presentations.builder.defaultContent.item3', 'Punkt 3'),
+        t('presentations.builder.defaultContent.item1', 'Point 1'),
+        t('presentations.builder.defaultContent.item2', 'Point 2'),
+        t('presentations.builder.defaultContent.item3', 'Point 3'),
       ];
   const items = (block.content.items as string[]) || defaultItems;
 

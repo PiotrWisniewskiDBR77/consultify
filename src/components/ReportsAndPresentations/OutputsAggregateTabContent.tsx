@@ -730,14 +730,14 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       if (row.kind === 'document') {
         primary.push({
           id: 'export',
-          label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+          label: t('rap.actions.exportPdf', 'Export PDF'),
           icon: Download,
           onClick: () => actions.exportReportPdf(row),
         });
       } else if (row.kind === 'presentation') {
         primary.push({
           id: 'export',
-          label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+          label: t('rap.actions.exportPptx', 'Export PPTX'),
           icon: Download,
           onClick: () => actions.exportDeckPptx(row),
         });
@@ -1000,7 +1000,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
         emptyMessage={t('rap.empty.outputs', 'No outputs')}
-        newItemLabel={t('rap.actions.newFromTemplate', 'Nowy z szablonu')}
+        newItemLabel={t('rap.actions.newFromTemplate', 'New from template')}
       />
     );
   }

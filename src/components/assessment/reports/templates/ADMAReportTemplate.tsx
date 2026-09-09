@@ -199,7 +199,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} />
-          Podsumowanie Wykonawcze
+          {t('assessment.adma.report.executiveSummary', 'Executive Summary')}
         </h2>
         <ConclusionExecutiveSummary vm={execVM} language="pl" />
       </section>
@@ -223,7 +223,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         <section className="mb-8">
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp size={20} />
-            Kluczowe Luki — Priorytety
+            {t('assessment.adma.report.keyGapsPriorities', 'Key Gaps — Priorities')}
           </h2>
           <ConclusionGapCards cards={gapCardVMs} language="pl" />
         </section>
@@ -423,26 +423,26 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={20} />
-          Analiza Luk - Top Priorytety
+          {t('assessment.adma.report.gapAnalysisTopPriorities', 'Gap Analysis - Top Priorities')}
         </h2>
         <div className="bg-slate-50 dark:bg-navy-900/50 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-slate-100 dark:bg-navy-800">
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Wymiar
+                  {t('assessment.adma.report.table.dimension', 'Dimension')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Filar
+                  {t('assessment.adma.report.table.pillar', 'Pillar')}
                 </th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Aktualny
+                  {t('assessment.adma.report.table.current', 'Current')}
                 </th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
                   Cel
                 </th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Luka
+                  {t('assessment.adma.report.table.gap', 'Gap')}
                 </th>
               </tr>
             </thead>
@@ -491,7 +491,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
       {/* Recommendations */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4">
-          Rekomendacje Transformacyjne
+          {t('assessment.adma.report.transformationRecommendations', 'Transformation Recommendations')}
         </h2>
         <div className="space-y-3">
           {topPriorities.map((dim, idx) => {
@@ -552,7 +552,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                    Luka
+                    {t('assessment.adma.report.gapLabel', 'Gap')}
                   </div>
                   <div className="text-lg font-bold text-danger-600">-{dim.gap}</div>
                 </div>

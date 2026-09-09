@@ -128,8 +128,8 @@ export const stanSygnalu = (
 
 export const stanSygnaluLabel = (stan: StanSygnalu, t: Tlumacz): string =>
   ({
-    NOWY: t('execution.signals.state.new', 'Nowy'),
-    INTERWENCJA: t('execution.signals.state.intervention', 'Interwencja'),
+    NOWY: t('execution.signals.state.new', 'New'),
+    INTERWENCJA: t('execution.signals.state.intervention', 'Intervention'),
     ZAMKNIETY: t('execution.signals.state.closed', 'Closed'),
   })[stan];
 

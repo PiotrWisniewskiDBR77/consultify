@@ -178,9 +178,11 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
         <div className="flex items-center gap-3">
           <History size={18} className="text-primary-500" />
           <div className="text-left">
-            <h3 className="font-semibold text-navy-900 dark:text-white">Historia zmian</h3>
+            <h3 className="font-semibold text-navy-900 dark:text-white">
+              {t('audit.history.heading', 'Change history')}
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {events.length} ostatnich akcji
+              {t('audit.history.recentActionsCount', '{{count}} recent actions', { count: events.length })}
             </p>
           </div>
         </div>

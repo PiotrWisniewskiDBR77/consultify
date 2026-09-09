@@ -571,7 +571,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                 navigate('/initiatives');
               }}
             >
-              {t('valuation.advisory.openCandidates', 'Otwórz (zakładka „Kandydaci")')}
+              {t('valuation.advisory.openCandidates', 'Open ("Candidates" tab)')}
             </button>
           </div>
         ),
@@ -1775,7 +1775,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           title={t('valuation.advisory.candidateModalTitle', 'Send as an initiative candidate')}
           noticeText={t(
             'valuation.advisory.candidateModalBody',
-            'Zostanie utworzony kandydat na Initiative — nie sama Initiative. Kandydata zaakceptujesz w zakładce „Kandydaci" w Initiatives.'
+            'A candidate for an initiative is created — not the initiative itself. You approve the candidate in the "Candidates" tab in Initiatives.'
           )}
           confirmLabel={t('valuation.advisory.candidateModalConfirm', 'Send')}
           cancelLabel={t('valuation.advisory.candidateModalCancel', 'Cancel')}

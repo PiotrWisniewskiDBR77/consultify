@@ -375,7 +375,7 @@ export const ExecutionResourcesSurface = ({
   const columns: TableColumn[] = [
     {
       id: 'resourceLabel',
-      label: t('execution.resources.columns.person', 'Osoba / rola'),
+      label: t('execution.resources.columns.person', 'Person / role'),
       sortable: true,
       width: '260px',
     },
@@ -387,7 +387,7 @@ export const ExecutionResourcesSurface = ({
     },
     {
       id: 'demandLabel',
-      label: t('execution.resources.columns.demand', 'Popyt (h)'),
+      label: t('execution.resources.columns.demand', 'Demand (h)'),
       sortable: true,
       width: '120px',
     },
@@ -406,7 +406,7 @@ export const ExecutionResourcesSurface = ({
     },
     {
       id: 'gapLabel',
-      label: t('execution.resources.columns.gap', 'Luka (h)'),
+      label: t('execution.resources.columns.gap', 'Gap (h)'),
       sortable: true,
       width: '130px',
     },

@@ -467,7 +467,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Wastes */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Identified Wastes (Zidentyfikowane Marnotrawstwa)
+                {t('assessment.lean.form.identifiedWastes', 'Identified Wastes')}
               </label>
               {renderWasteSelector(process.wastesIdentified, (waste) =>
                 toggleWaste('process', index, waste)
@@ -477,7 +477,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Priority */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Priority (Priorytet)
+                {t('assessment.lean.form.priority', 'Priority')}
               </label>
               {renderLevelSelector(process.priority, (level) =>
                 handleProcessScoreChange(index, 'priority', level)
@@ -554,7 +554,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             {/* Wastes */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Identified Wastes (Zidentyfikowane Marnotrawstwa)
+                {t('assessment.lean.form.identifiedWastes', 'Identified Wastes')}
               </label>
               {renderWasteSelector(workstation.wastesIdentified, (waste) =>
                 toggleWaste('workstation', index, waste)

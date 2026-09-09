@@ -25,6 +25,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { GovernedContextWorkspace } from '../GovernedContextWorkspace';
 import { OrganizationFilesBoundary } from '../OrganizationDecisionQualityPanel';
@@ -36,25 +37,28 @@ export interface OrganizationSourcesClaimsScreenProps {
 
 export const OrganizationSourcesClaimsScreen: React.FC<OrganizationSourcesClaimsScreenProps> = ({
   isAdmin,
-}) => (
-  <div className="space-y-3">
-    <section aria-labelledby="org-sources-files-heading">
-      <h3 id="org-sources-files-heading" className={ORG_L1}>
-        Pliki
-      </h3>
-      <div className="mt-2">
-        <OrganizationFilesBoundary />
-      </div>
-    </section>
-    <section aria-labelledby="org-sources-claims-heading">
-      <h3 id="org-sources-claims-heading" className={ORG_L1}>
-        Twierdzenia, konflikty i publikacja
-      </h3>
-      <div className="mt-2">
-        <GovernedContextWorkspace isAdmin={isAdmin} />
-      </div>
-    </section>
-  </div>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3">
+      <section aria-labelledby="org-sources-files-heading">
+        <h3 id="org-sources-files-heading" className={ORG_L1}>
+          {t('organization.redesign.sources.filesHeading', 'Files')}
+        </h3>
+        <div className="mt-2">
+          <OrganizationFilesBoundary />
+        </div>
+      </section>
+      <section aria-labelledby="org-sources-claims-heading">
+        <h3 id="org-sources-claims-heading" className={ORG_L1}>
+          {t('organization.redesign.sources.claimsHeading', 'Claims, conflicts and publication')}
+        </h3>
+        <div className="mt-2">
+          <GovernedContextWorkspace isAdmin={isAdmin} />
+        </div>
+      </section>
+    </div>
+  );
+};
 
 export default OrganizationSourcesClaimsScreen;

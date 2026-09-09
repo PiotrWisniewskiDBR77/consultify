@@ -113,8 +113,8 @@ export function GeneratorPlanuModal({
     'inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50';
   const statusLabel = (item: GeneratorInitiative) =>
     item.conditional
-      ? t('initiatives.planGenerator.statusPending', 'Do zatwierdzenia')
-      : t('initiatives.planGenerator.statusApproved', 'Zatwierdzona');
+      ? t('initiatives.planGenerator.statusPending', 'Pending approval')
+      : t('initiatives.planGenerator.statusApproved', 'Approved');
   // ZMIERZONE 07.09 (evidence/p15-k2/przeplyw/06-…): `bg-c-overlay/60` i
   // `bg-c-background` NIE ISTNIEJĄ w skali tokenów (tailwind.config.js `c:` ma
   // `bg`/`surface`/`surface-raised`, nie `overlay`/`background`), więc okno
@@ -124,13 +124,13 @@ export function GeneratorPlanuModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t('initiatives.planGenerator.title', 'Generator planu')}
+      aria-label={t('initiatives.planGenerator.title', 'Plan generator')}
       className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-6"
     >
       <div className="max-h-[92vh] w-full max-w-4xl overflow-auto rounded-2xl border border-c-border bg-c-surface p-5 text-c-text shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
-            {t('initiatives.planGenerator.title', 'Generator planu')}
+            {t('initiatives.planGenerator.title', 'Plan generator')}
           </h2>
           <button
             className="rounded-lg p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -186,7 +186,7 @@ export function GeneratorPlanuModal({
                       <span className="ml-1 text-c-text-muted">· {statusLabel(item)}</span>
                       {item.conditional && (
                         <span className="ml-2 rounded-full border border-c-border px-2 py-0.5 text-xs">
-                          {t('initiatives.planGenerator.conditionalChip', 'warunkowa')}
+                          {t('initiatives.planGenerator.conditionalChip', 'conditional')}
                         </span>
                       )}
                     </span>
@@ -204,7 +204,7 @@ export function GeneratorPlanuModal({
           </section>
           <section className={stepClass}>
             <h3 className="font-semibold">
-              {t('initiatives.planGenerator.step3', '3. Parametry')}
+              {t('initiatives.planGenerator.step3', '3. Parameters')}
             </h3>
             <div className="mt-2 flex flex-wrap gap-3">
               <input
@@ -222,7 +222,7 @@ export function GeneratorPlanuModal({
                 onChange={(event) => setPeriods(Number(event.target.value))}
               />
               <select
-                aria-label={t('initiatives.planGenerator.unitAria', 'Jednostka')}
+                aria-label={t('initiatives.planGenerator.unitAria', 'Unit')}
                 value={unit}
                 onChange={(event) => setUnit(event.target.value as 'WEEK' | 'MONTH')}
               >
@@ -230,7 +230,7 @@ export function GeneratorPlanuModal({
                 <option value="MONTH">{t('initiatives.planScenario.form.monthOption')}</option>
               </select>
               <select
-                aria-label={t('initiatives.planGenerator.modeAria', 'Tryb analizy')}
+                aria-label={t('initiatives.planGenerator.modeAria', 'Analysis mode')}
                 value={mode}
                 onChange={(event) => setMode(event.target.value as PlanGenerationMode)}
               >
@@ -241,7 +241,7 @@ export function GeneratorPlanuModal({
                   {t('initiatives.planGenerator.modeCapacity', 'By role capacity')}
                 </option>
                 <option value="MIXED" disabled={Boolean(capacityModesBlockedReason)}>
-                  {t('initiatives.planGenerator.modeMixed', 'Mieszany')}
+                  {t('initiatives.planGenerator.modeMixed', 'Mixed')}
                 </option>
               </select>
             </div>
@@ -252,7 +252,7 @@ export function GeneratorPlanuModal({
             )}
           </section>
           <section className={stepClass}>
-            <h3 className="font-semibold">{t('initiatives.planGenerator.step4', '4. Generuj')}</h3>
+            <h3 className="font-semibold">{t('initiatives.planGenerator.step4', '4. Generate')}</h3>
             <button
               disabled={busy || !selected.size}
               className={`mt-2 ${buttonClass}`}
@@ -276,16 +276,16 @@ export function GeneratorPlanuModal({
                   <thead>
                     <tr className="text-left text-c-text-muted">
                       <th className="py-1 pr-3">
-                        {t('initiatives.planGenerator.columnInitiative', 'Inicjatywa')}
+                        {t('initiatives.planGenerator.columnInitiative', 'Initiative')}
                       </th>
                       <th className="py-1 pr-3">
-                        {t('initiatives.planGenerator.columnWindow', 'Okno od–do')}
+                        {t('initiatives.planGenerator.columnWindow', 'Window from–to')}
                       </th>
                       <th className="py-1 pr-3">
-                        {t('initiatives.planGenerator.columnRationale', 'Uzasadnienie')}
+                        {t('initiatives.planGenerator.columnRationale', 'Justification')}
                       </th>
                       <th className="py-1">
-                        {t('initiatives.planGenerator.columnConflict', 'Konflikt')}
+                        {t('initiatives.planGenerator.columnConflict', 'Conflict')}
                       </th>
                     </tr>
                   </thead>

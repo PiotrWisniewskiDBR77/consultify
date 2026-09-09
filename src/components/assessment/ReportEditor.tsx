@@ -418,7 +418,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {hasChanges && (
               <span className="text-xs text-amber-500 flex items-center gap-1">
                 <AlertCircle size={12} />
-                Niezapisane zmiany
+                {t('assessment.reportEditor.unsavedChanges', 'Unsaved changes')}
               </span>
             )}
             {lastSaved && !hasChanges && (
@@ -495,7 +495,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
                 <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                   <Target size={20} className="text-primary-500" />
-                  Podsumowanie Gap Analysis
+                  {t('assessment.reportEditor.gapAnalysisSummary', 'Gap Analysis Summary')}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {gapSummary.slice(0, 4).map((item) => (
@@ -534,7 +534,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 value={executiveSummary}
                 onChange={(e) => setExecutiveSummary(e.target.value)}
                 disabled={isReadOnly}
-                placeholder="Podsumowanie wykonawcze raportu..."
+                placeholder={t('assessment.reportEditor.executiveSummaryPlaceholder', 'Executive summary of the report...')}
                 rows={6}
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
               />
@@ -644,13 +644,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {/* Notes */}
             <div>
               <label className="block text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                Notatki dodatkowe
+                {t('assessment.reportEditor.additionalNotesLabel', 'Additional notes')}
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={isReadOnly}
-                placeholder="Dodatkowe uwagi i notatki..."
+                placeholder={t('assessment.reportEditor.additionalNotesPlaceholder', 'Additional comments and notes...')}
                 rows={4}
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
               />

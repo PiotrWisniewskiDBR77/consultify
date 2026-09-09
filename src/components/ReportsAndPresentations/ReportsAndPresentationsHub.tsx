@@ -479,7 +479,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'blank' as MaterialStart,
         icon: PenLine,
-        title: t('rap.materialsLauncher.blankTitle', 'Czysto'),
+        title: t('rap.materialsLauncher.blankTitle', 'Blank'),
         desc: t(
           'rap.materialsLauncher.blankDesc',
           'Manual start — an empty artifact in the editor, no AI.'
@@ -494,7 +494,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {
         id: 'from_template' as MaterialStart,
         icon: LayoutTemplate,
-        title: t('rap.materialsLauncher.templateTitle', 'Z szablonu'),
+        title: t('rap.materialsLauncher.templateTitle', 'From template'),
         desc: t('rap.materialsLauncher.templateDesc', 'Pick an existing template and adjust it.'),
       },
     ],
@@ -821,7 +821,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     // wybrane, żeby wybór nie zniknął spod kursora.
     const statusDropdownOptions = [
       { id: '__all__', label: t('common.all', 'All'), count: tabRows.length },
-      { id: '__drafts__', label: t('rap.filters.drafts', 'Robocze') },
+      { id: '__drafts__', label: t('rap.filters.drafts', 'Draft') },
       ...tabStatusOptions
         .map((o) => ({
           id: o.value,
@@ -986,7 +986,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           >
             {(
               [
-                ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
+                ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Gallery')],
                 ['table', Table2, t('rap.templates.viewTable', 'Table')],
               ] as const
             ).map(([id, Icon, label]) => (
@@ -1596,7 +1596,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           >
             <Package2 className="h-4 w-4 shrink-0 text-blue-500" />
             <span className="flex-1">
-              {t('rap.bundles.sectionTitle', 'Komplet AI — historia generacji')}
+              {t('rap.bundles.sectionTitle', 'AI package — generation history')}
             </span>
             {bundleHistoryOpen ? (
               <ChevronUp className="h-4 w-4 text-c-text-muted" />

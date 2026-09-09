@@ -36,7 +36,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
 
       {/* Current theme preview */}
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
-        <p className="text-[10px] text-slate-600 uppercase mb-2">Aktywny motyw</p>
+        <p className="text-[10px] text-slate-600 uppercase mb-2">{t('presentations.builder.themeSwitcher.activeTheme', 'Active theme')}</p>
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 h-8 w-24 rounded-lg overflow-hidden">
             <div className="flex-1" style={{ backgroundColor: theme.colors.primary }} />
@@ -69,7 +69,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
         {/* Brand Kit first */}
         {brandKit && (
           <div className="mb-3">
-            <p className="text-[10px] text-slate-600 uppercase mb-2">Identyfikacja marki</p>
+            <p className="text-[10px] text-slate-600 uppercase mb-2">{t('presentations.builder.themeSwitcher.brandIdentity', 'Brand identity')}</p>
             <ThemeCard
               colorSet={{
                 id: 'brand_kit',

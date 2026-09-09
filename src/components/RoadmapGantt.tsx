@@ -452,7 +452,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         plannedEndDate: currentEnd.toISOString(),
       });
 
-      toast.success(t('roadmap.toast.initiativeMoved', 'Inicjatywa przeniesiona'));
+      toast.success(t('roadmap.toast.initiativeMoved', 'Initiative moved'));
     },
     [cellWidth, currentYear, onUpdateInitiative, zoomLevel]
   );

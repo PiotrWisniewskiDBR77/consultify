@@ -1069,7 +1069,7 @@ export const InterviewHub: React.FC = () => {
       setInterviewBreadcrumbs([base, `${typeLabel}: ${docName}`]);
     } else {
       const TAB_LABELS: Record<string, string> = {
-        my_assignments: t('interview.hub.inbox', 'Skrzynka'),
+        my_assignments: t('interview.hub.inbox', 'Inbox'),
         sessions: t('interview.hub.sessions'),
         templates: t('interview.hub.templates'),
         insights: t('interview.hub.insights'),
@@ -4081,7 +4081,7 @@ export const InterviewHub: React.FC = () => {
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Sparkles size={14} />
-                  {t('interview.hub.generateInitiatives', 'Generuj inicjatywy')}
+                  {t('interview.hub.generateInitiatives', 'Generate initiatives')}
                 </button>
                 <button
                   type="button"

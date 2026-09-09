@@ -2204,7 +2204,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             : payloadKind === 'table'
               ? t('chat.titles.ideasTable', 'Ideas Table')
               : payloadKind === 'whiteboard'
-                ? t('chat.titles.whiteboard', 'Tablica')
+                ? t('chat.titles.whiteboard', 'Board')
                 : t('chat.titles.idea', 'Idea');
         const mmTitle = String(payload.title || fallbackTitle).slice(0, 120);
         const seedText = String((payload as any)?.seedText || mmTitle);
@@ -4565,7 +4565,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             toast.error(
               t(
                 'aiChat.attachments.sizeExceeded',
-                'Plik "{{name}}" przekracza limit {{maxMb}} MB.',
+                'File "{{name}}" exceeds the {{maxMb}} MB limit.',
                 { name: file.name, maxMb }
               ),
               { duration: 5000 }
@@ -4574,7 +4574,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             toast.error(
               t(
                 'aiChat.attachments.unsupportedType',
-                'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: {{types}}.',
+                'File "{{name}}" is not supported. Allowed formats: {{types}}.',
                 { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
               ),
               { duration: 5000 }
@@ -4598,7 +4598,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           const docId = String((resp as any)?.docId || '');
           if (!docId) {
             toast.error(
-              t('aiChat.attachments.uploadFailed', 'Nie udało się przetworzyć pliku "{{name}}".', {
+              t('aiChat.attachments.uploadFailed', 'Could not process file "{{name}}".', {
                 name: file.name,
               }),
               { duration: 4000 }
@@ -4616,7 +4616,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           // re-attached later without re-uploading.
           pushRecentAttachment({ name: file.name, docId, mimeType: file.type || undefined });
           toast.success(
-            t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
+            t('aiChat.attachments.uploadSuccess', 'Attachment "{{name}}" processed.', {
               name: file.name,
             }),
             { duration: 2000 }
@@ -4644,12 +4644,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             isTextExtraction
               ? t(
                   'aiChat.attachments.extractionFailed',
-                  'Nie udało się odczytać tekstu z pliku "{{name}}". Sprawdź czy plik nie jest pusty lub uszkodzony.',
+                  'Could not read text from file "{{name}}". Check that the file is not empty or corrupted.',
                   { name: file.name }
                 )
               : t(
                   'aiChat.attachments.uploadError',
-                  'Błąd przesyłania pliku "{{name}}": {{error}}',
+                  'Error uploading file "{{name}}": {{error}}',
                   { name: file.name, error: errMsg.slice(0, 100) }
                 ),
             { duration: 5000 }
@@ -4680,7 +4680,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             sourceUrl: String((resp as any)?.sourceUrl || url),
             kind: 'url',
           });
-          toast.success(t('aiChat.attachments.urlReady', 'Link przetworzony.'), { duration: 1500 });
+          toast.success(t('aiChat.attachments.urlReady', 'Link processed.'), { duration: 1500 });
         } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to ingest URL attachment:', err);
           failedAttachments.push({
@@ -7358,7 +7358,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   {
                     id: 'market-analysis',
                     icon: Search,
-                    label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
+                    label: t('aiChat.homeCards.market.label', 'Market analysis'),
                     desc: t(
                       'aiChat.homeCards.market.desc',
                       'Research a market, competitors, and positioning'
@@ -7376,7 +7376,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   {
                     id: 'financial-analysis',
                     icon: Calculator,
-                    label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
+                    label: t('aiChat.homeCards.finance.label', 'Financial analysis'),
                     desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
                     prompt: t(
                       'aiChat.homeCards.finance.kickoff',
@@ -7391,7 +7391,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   {
                     id: 'classic-consulting',
                     icon: Wrench,
-                    label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
+                    label: t('aiChat.homeCards.consulting.label', 'Classic consulting'),
                     desc: t(
                       'aiChat.homeCards.consulting.acceptanceDesc',
                       'Use classic frameworks and tools'
@@ -7409,7 +7409,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   {
                     id: 'digital-transformation',
                     icon: CheckCircle2,
-                    label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
+                    label: t('aiChat.homeCards.digital.label', 'Digital transformation'),
                     desc: t(
                       'aiChat.homeCards.digital.desc',
                       'Run licensed diagnostics and assessments'

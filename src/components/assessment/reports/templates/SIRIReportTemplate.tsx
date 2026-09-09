@@ -246,8 +246,11 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             {t('assessment.reportTemplates.siri.legalNoticeA', 'is a tool developed by the')}{' '}
             <strong>Singapore Economic Development Board (EDB)</strong>{' '}
             {t('assessment.reportTemplates.siri.legalNoticeB', 'in cooperation with')}{' '}
-            <strong>TÜV SÜD</strong>. Wykorzystanie w celach edukacyjnych. Oficjalna certyfikacja
-            wymaga akredytowanego audytora.
+            <strong>TÜV SÜD</strong>.{' '}
+            {t(
+              'assessment.reportTemplates.siri.legalNoticeC',
+              'Used for educational purposes. Official certification requires an accredited auditor.'
+            )}
           </div>
         </div>
       )}
@@ -256,7 +259,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} />
-          Podsumowanie Wykonawcze
+          {t('assessment.siri.report.executiveSummary', 'Executive Summary')}
         </h2>
         <ConclusionExecutiveSummary vm={execVM} language="pl" />
       </section>
@@ -266,7 +269,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
         <section className="mb-8">
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp size={20} />
-            Kluczowe Luki — Priorytety
+            {t('assessment.siri.report.keyGapsPriorities', 'Key Gaps — Priorities')}
           </h2>
           <ConclusionGapCards cards={gapCardVMs} language="pl" />
         </section>

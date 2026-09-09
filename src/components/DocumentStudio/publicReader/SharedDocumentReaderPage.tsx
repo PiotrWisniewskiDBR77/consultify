@@ -20,6 +20,7 @@
 
 import { FileWarning } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -70,6 +71,7 @@ function ErrorState({ code }: { code: string }): React.ReactElement {
 }
 
 export function SharedDocumentReaderPage(): React.ReactElement {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const [result, setResult] = useState<GetSharedDocumentResult | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export function SharedDocumentReaderPage(): React.ReactElement {
     <PageShell>
       <header className="mb-8 border-b border-c-border-subtle pb-6">
         <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-c-text-secondary">
-          Tryb czytania klienta
+          {t('documentStudio.reader.clientReadingMode', 'Client reading mode')}
         </div>
         <h1 className="text-2xl font-semibold leading-snug text-c-text" data-testid="reader-title">
           {document.title}

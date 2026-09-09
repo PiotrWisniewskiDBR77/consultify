@@ -752,7 +752,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
             title={t('reports.generateClientReport', 'Generate DRD client report (print/PDF)')}
           >
             <FileText className="w-4 h-4" />
-            {t('reports.clientReport', 'Raport DRD')}
+            {t('reports.clientReport', 'DRD report')}
           </button>
 
           <button

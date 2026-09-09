@@ -62,7 +62,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
     assessmentId,
     showNumbers = true,
     colorScheme = 'redGreen',
-    title = 'Analiza Luk',
+    title = t('reports.premium.gapHeatmap.defaultTitle', 'Gap Analysis'),
   } = attrs;
 
   // Fetch or use demo data
@@ -185,7 +185,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
               onChange={(e) => updateAttributes({ colorScheme: e.target.value })}
               className="px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
             >
-              <option value="redGreen">Czerwono-Zielony</option>
+              <option value="redGreen">{t('reports.premium.gapHeatmap.redGreen', 'Red-Green')}</option>
               <option value="blueOrange">{t('reports.premium.gapHeatmap.blueOrange', 'Blue-Orange')}</option>
             </select>
           </div>
@@ -207,16 +207,16 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
                 <th className="text-left py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
                   {t('reports.premium.gapHeatmap.axis', 'Axis')}</th>
                 <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
-                  Obecny
+                  {t('reports.premium.gapHeatmap.current', 'Current')}
                 </th>
                 <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
                   Cel
                 </th>
                 <th className="text-center py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold">
-                  Luka
+                  {t('reports.premium.gapHeatmap.gap', 'Gap')}
                 </th>
                 <th className="py-3 px-4 bg-slate-100 dark:bg-slate-800 font-semibold w-48">
-                  Wizualizacja
+                  {t('reports.premium.gapHeatmap.visualization', 'Visualization')}
                 </th>
               </tr>
             </thead>

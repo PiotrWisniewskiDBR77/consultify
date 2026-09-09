@@ -495,7 +495,7 @@ const escalationAddressee = (
     ? t('execution.decisions.escalation.level1', 'Initiative owner')
     : step === 2
       ? t('execution.decisions.escalation.level2', 'PMO')
-      : t('execution.decisions.escalation.level3', 'Komitet');
+      : t('execution.decisions.escalation.level3', 'Committee');
 
 /**
  * KOLUMNA — sam licznik („2/3"), jedna linia.
@@ -559,15 +559,15 @@ const decisionStatusLabel = (
 ): string => {
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
-    PENDING: t('execution.decisions.status.pending', 'Oczekuje'),
-    ESCALATED: t('execution.decisions.status.escalated', 'Eskalowana'),
+    PENDING: t('execution.decisions.status.pending', 'Pending'),
+    ESCALATED: t('execution.decisions.status.escalated', 'Escalated'),
     APPROVED: t('execution.decisions.status.approved', 'Resolved'),
-    REJECTED: t('execution.decisions.status.rejected', 'Odrzucona'),
-    SUPERSEDED: t('execution.decisions.status.superseded', 'Nieaktualna'),
+    REJECTED: t('execution.decisions.status.rejected', 'Rejected'),
+    SUPERSEDED: t('execution.decisions.status.superseded', 'Outdated'),
     RETURNED_FOR_CLARIFICATION: t('execution.decisions.status.returned', 'Returned for completion'
     ),
-    DEFERRED: t('execution.decisions.status.deferred', 'Odroczona'),
-    CANCELLED: t('execution.decisions.status.cancelled', 'Anulowana'),
+    DEFERRED: t('execution.decisions.status.deferred', 'Deferred'),
+    CANCELLED: t('execution.decisions.status.cancelled', 'Cancelled'),
   };
   return slownik[key] ?? String(value ?? '—');
 };
@@ -607,9 +607,9 @@ const raidProbabilityLabel = (
 ): string => {
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
-    LOW: t('execution.raid.probability.low', 'Niskie'),
+    LOW: t('execution.raid.probability.low', 'Low'),
     MEDIUM: t('execution.raid.probability.medium', 'Medium'),
-    HIGH: t('execution.raid.probability.high', 'Wysokie'),
+    HIGH: t('execution.raid.probability.high', 'High'),
   };
   const nazwa = slownik[key];
   if (!nazwa) return '—';
@@ -619,10 +619,10 @@ const raidProbabilityLabel = (
 const raidImpactLabel = (value: unknown, t: (key: string, fallback: string) => string): string => {
   const key = String(value ?? '').toUpperCase();
   const slownik: Record<string, string> = {
-    LOW: t('execution.raid.impact.low', 'Niski'),
+    LOW: t('execution.raid.impact.low', 'Low'),
     MEDIUM: t('execution.raid.impact.medium', 'Medium'),
-    HIGH: t('execution.raid.impact.high', 'Wysoki'),
-    CRITICAL: t('execution.raid.impact.critical', 'Krytyczny'),
+    HIGH: t('execution.raid.impact.high', 'High'),
+    CRITICAL: t('execution.raid.impact.critical', 'Critical'),
   };
   const nazwa = slownik[key];
   if (!nazwa) return '—';
@@ -633,9 +633,9 @@ const raidImpactLabel = (value: unknown, t: (key: string, fallback: string) => s
 const raidStatusPl = (value: unknown, t: (key: string, fallback: string) => string): string => {
   const key = String(value ?? 'OPEN').toUpperCase();
   const slownik: Record<string, string> = {
-    OPEN: t('execution.raid.status.open', 'Otwarta'),
-    MITIGATED: t('execution.raid.status.mitigated', 'Ograniczona'),
-    REALIZED: t('execution.raid.status.realized', 'Zmaterializowana'),
+    OPEN: t('execution.raid.status.open', 'Open'),
+    MITIGATED: t('execution.raid.status.mitigated', 'Limited'),
+    REALIZED: t('execution.raid.status.realized', 'Materialized'),
     CLOSED: t('execution.raid.status.closed', 'Closed'),
   };
   return slownik[key] ?? String(value ?? '—');
@@ -665,7 +665,7 @@ const kolumnaTytul = (t: (key: string, fallback: string) => string): TableColumn
 
 const kolumnaDniPoTerminie = (t: (key: string, fallback: string) => string): TableColumn => ({
   id: 'daysOverdue',
-  label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+  label: t('execution.governance.columns.daysOverdue', 'Days overdue'),
   sortable: true,
   width: '130px',
   render: (row) => {
@@ -680,13 +680,13 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
   kolumnaTytul(t),
   {
     id: 'dueAt',
-    label: t('execution.decisions.columns.due', 'Potrzebna do dnia'),
+    label: t('execution.decisions.columns.due', 'Needed by'),
     sortable: true,
     width: '150px',
   },
   {
     id: 'decydent',
-    label: t('execution.decisions.columns.decisionMaker', 'Decydent'),
+    label: t('execution.decisions.columns.decisionMaker', 'Decision maker'),
     sortable: true,
     width: '170px',
   },
@@ -713,7 +713,7 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
   kolumnaDniPoTerminie(t),
   {
     id: 'escalation',
-    label: t('execution.governance.columns.escalation', 'Eskalacja'),
+    label: t('execution.governance.columns.escalation', 'Escalation'),
     sortable: true,
     filterable: true,
     width: '130px',
@@ -802,7 +802,7 @@ const buildRaidColumns = (t: (key: string, fallback: string) => string): TableCo
     // potrzebuje ~85 px i ZAWIJAŁO SIĘ na dwie linie (wiersz 65 px zamiast 57).
     // Zmierzone `.local/mierz4.mjs` — defekt widoczny przy JEDNEJ wartości:
     // wiersze bez terminu („—") wyglądały poprawnie i zasłaniały problem.
-    label: t('execution.governance.columns.due', 'Termin'),
+    label: t('execution.governance.columns.due', 'Deadline'),
     dataType: 'date',
     sortable: true,
     width: '128px',
@@ -828,7 +828,7 @@ const buildRaidColumns = (t: (key: string, fallback: string) => string): TableCo
   },
   {
     id: 'exposure',
-    label: t('execution.raid.columns.exposure', 'Ekspozycja'),
+    label: t('execution.raid.columns.exposure', 'Exposure'),
     dataType: 'number',
     align: 'right',
     sortable: true,
@@ -893,7 +893,7 @@ const buildDelayColumns = (t: (key: string, fallback: string) => string): TableC
   },
   {
     id: 'deviationDays',
-    label: t('execution.signals.columns.deviation', 'Odchylenie (dni)'),
+    label: t('execution.signals.columns.deviation', 'Deviation (days)'),
     dataType: 'number',
     sortable: true,
     width: '176px',
@@ -920,14 +920,14 @@ const buildDelayColumns = (t: (key: string, fallback: string) => string): TableC
   },
   {
     id: 'detectedAt',
-    label: t('execution.signals.columns.detectedAt', 'Wykryto'),
+    label: t('execution.signals.columns.detectedAt', 'Detected'),
     dataType: 'date',
     sortable: true,
     width: '130px',
   },
   {
     id: 'stateLabel',
-    label: t('execution.signals.columns.state', 'Stan'),
+    label: t('execution.signals.columns.state', 'State'),
     dataType: 'status',
     sortable: true,
     filterable: true,
@@ -1929,7 +1929,7 @@ export const ExecutionControlSurface = ({
         menu.primary = [
           {
             id: 'raid-escalate-to-issue',
-            label: t('execution.raid.actions.escalateToIssue', 'Eskaluj do problemu'),
+            label: t('execution.raid.actions.escalateToIssue', 'Escalate to issue'),
             icon: ShieldAlert,
             onClick:
               juzProblem || zamknieta || raidBusy
@@ -1950,7 +1950,7 @@ export const ExecutionControlSurface = ({
       menu.primary = [
         {
           id: 'decision-escalate',
-          label: t('execution.decisions.actions.escalate', 'Eskaluj'),
+          label: t('execution.decisions.actions.escalate', 'Escalate'),
           icon: ArrowUpCircle,
           onClick:
             zakonczona || naMaksie
@@ -2204,7 +2204,7 @@ export const ExecutionControlSurface = ({
       <div className={MENU_2_FILTERS_ROW}>
         <Menu2PresetDropdown
           compact
-          label={t('execution.governance.filters.dueLabel', 'Termin')}
+          label={t('execution.governance.filters.dueLabel', 'Deadline')}
           data-testid="execution-governance-due-filter"
           value={filtrTerminu}
           onChange={(id) => setFiltrTerminu(id as FiltrTerminu)}
@@ -2216,7 +2216,7 @@ export const ExecutionControlSurface = ({
             },
             {
               id: 'po-terminie',
-              label: t('execution.menu3.governance.overdue', 'Po terminie'),
+              label: t('execution.menu3.governance.overdue', 'Overdue'),
               count: liczbaPoTerminie,
             },
           ]}
@@ -2259,7 +2259,7 @@ export const ExecutionControlSurface = ({
     if (!onRegisterPrimaryCta) return;
     if (activeGovernancePreset === 'decyzje' && canDecide(null)) {
       onRegisterPrimaryCta({
-        label: t('execution.governance.actions.newDecision', 'Nowa decyzja'),
+        label: t('execution.governance.actions.newDecision', 'New decision'),
         testId: 'execution-new-decision-open',
         onClick: () => setNewDecisionOpen(true),
       });
@@ -2316,7 +2316,7 @@ export const ExecutionControlSurface = ({
       {newDecisionOpen && (
         <div className="mb-3 rounded-lg border border-c-border p-4">
           <div className="mb-2 flex items-center justify-between">
-            <strong>{t('execution.governance.actions.newDecision', 'Nowa decyzja')}</strong>
+            <strong>{t('execution.governance.actions.newDecision', 'New decision')}</strong>
             <button
               type="button"
               className="btn-secondary"
@@ -2345,9 +2345,9 @@ export const ExecutionControlSurface = ({
               />
             </label>
             <label className="text-xs">
-              {t('execution.decisions.form.initiative', 'Inicjatywa (wymagana)')}
+              {t('execution.decisions.form.initiative', 'Initiative (required)')}
               <select
-                aria-label={t('execution.decisions.form.initiative', 'Inicjatywa (wymagana)')}
+                aria-label={t('execution.decisions.form.initiative', 'Initiative (required)')}
                 value={newDecision.initiativeId}
                 onChange={(event) => {
                   const initiativeId = event.target.value;
@@ -2385,9 +2385,9 @@ export const ExecutionControlSurface = ({
               />
             </label>
             <label className="text-xs">
-              {t('execution.decisions.form.decisionMaker', 'Decydent')}
+              {t('execution.decisions.form.decisionMaker', 'Decision maker')}
               <select
-                aria-label={t('execution.decisions.form.decisionMaker', 'Decydent')}
+                aria-label={t('execution.decisions.form.decisionMaker', 'Decision maker')}
                 value={newDecision.decisionOwnerId}
                 onChange={(event) =>
                   setNewDecision((current) => ({
@@ -2475,9 +2475,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.raid.form.initiative', 'Inicjatywa (wymagana)')}
+              {t('execution.raid.form.initiative', 'Initiative (required)')}
               <select
-                aria-label={t('execution.raid.form.initiative', 'Inicjatywa (wymagana)')}
+                aria-label={t('execution.raid.form.initiative', 'Initiative (required)')}
                 value={newRaid.initiativeId}
                 onChange={(event) =>
                   setNewRaid((current) => ({ ...current, initiativeId: event.target.value }))
@@ -2504,7 +2504,7 @@ export const ExecutionControlSurface = ({
                 }
                 className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                <option value="">{t('execution.raid.form.unassigned', 'Nieprzypisana')}</option>
+                <option value="">{t('execution.raid.form.unassigned', 'Unassigned')}</option>
                 {orgMembers.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name}
@@ -2513,9 +2513,9 @@ export const ExecutionControlSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('execution.governance.columns.due', 'Termin')}
+              {t('execution.governance.columns.due', 'Deadline')}
               <input
-                aria-label={t('execution.governance.columns.due', 'Termin')}
+                aria-label={t('execution.governance.columns.due', 'Deadline')}
                 type="date"
                 value={newRaid.dueDate}
                 onChange={(event) =>
@@ -2564,10 +2564,10 @@ export const ExecutionControlSurface = ({
               nikt nie odkrywa jej dopiero na liście.
             */}
             <div className="text-xs">
-              {t('execution.raid.columns.exposure', 'Ekspozycja')}
+              {t('execution.raid.columns.exposure', 'Exposure')}
               <output
                 data-testid="execution-new-raid-exposure"
-                aria-label={t('execution.raid.columns.exposure', 'Ekspozycja')}
+                aria-label={t('execution.raid.columns.exposure', 'Exposure')}
                 className="mt-[2px] block w-full rounded border border-c-border bg-c-surface-muted p-2 font-semibold tabular-nums"
               >
                 {ekspozycjaRaid(newRaid.probability, newRaid.impact) ?? '—'}
@@ -2652,7 +2652,7 @@ export const ExecutionControlSurface = ({
                     ? !czyRaidOtwarty(row.rawRaidStatus)
                       ? t('execution.raid.preview.closed', 'Item closed — stays in the register.')
                       : row.daysOverdue != null
-                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
+                        ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'days — change the due date or close the item.')}`
                         : row.rawDueAt
                           ? t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.')
                           : t('execution.raid.preview.noDue', 'Item has no due date — set one so it can be tracked.')
@@ -2660,14 +2660,14 @@ export const ExecutionControlSurface = ({
                       ? t('execution.decisions.preview.resolved', 'The decision has been resolved — this entry cannot be deleted.'
                         )
                       : row.daysOverdue != null
-                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'dni — rozstrzygnij albo eskaluj.')}`
+                        ? `${t('execution.decisions.preview.overduePrefix', 'Overdue by')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'days — resolve or escalate.')}`
                         : t('execution.decisions.preview.onTime', 'The due date hasn\'t passed yet.'),
               }}
               details={{
                 label:
                   row.kind === 'DECISION'
-                    ? t('execution.decisions.preview.label', 'Decyzja')
-                    : t('execution.governance.preview.raidLabel', 'Pozycja RAID'),
+                    ? t('execution.decisions.preview.label', 'Decision')
+                    : t('execution.governance.preview.raidLabel', 'RAID item'),
                 text:
                   row.source?.description ||
                   row.source?.recommendation ||
@@ -2677,12 +2677,12 @@ export const ExecutionControlSurface = ({
                     ? [
                         {
                           id: 'decydent',
-                          label: t('execution.decisions.columns.decisionMaker', 'Decydent'),
+                          label: t('execution.decisions.columns.decisionMaker', 'Decision maker'),
                           value: row.decydent ?? '—',
                         },
                         {
                           id: 'due',
-                          label: t('execution.decisions.columns.due', 'Potrzebna do dnia'),
+                          label: t('execution.decisions.columns.due', 'Needed by'),
                           value: row.dueAt,
                         },
                         {
@@ -2692,7 +2692,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'overdue',
-                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+                          label: t('execution.governance.columns.daysOverdue', 'Days overdue'),
                           value:
                             row.daysOverdue == null
                               ? t('execution.decisions.escalation.none', 'None')
@@ -2700,7 +2700,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'escalation',
-                          label: t('execution.governance.columns.escalation', 'Eskalacja'),
+                          label: t('execution.governance.columns.escalation', 'Escalation'),
                           value: row.escalation,
                         },
                         // Uzasadnienie pokazujemy TYLKO wtedy, gdy istnieje —
@@ -2710,7 +2710,7 @@ export const ExecutionControlSurface = ({
                           ? [
                               {
                                 id: 'rationale',
-                                label: t('execution.decisions.preview.rationale', 'Uzasadnienie'),
+                                label: t('execution.decisions.preview.rationale', 'Justification'),
                                 value: row.rationale,
                               },
                             ]
@@ -2730,12 +2730,12 @@ export const ExecutionControlSurface = ({
                         // plus inicjatywe (NAZWA, nie UUID) i zrodlo eskalacji.
                         {
                           id: 'initiative',
-                          label: t('execution.raid.preview.initiative', 'Inicjatywa'),
+                          label: t('execution.raid.preview.initiative', 'Initiative'),
                           value:
                             initiativeNames[String(row.raidInitiativeId ?? '')] ??
                             (row.raidInitiativeId
                               ? String(row.raidInitiativeId)
-                              : t('execution.raid.preview.noInitiative', 'Bez inicjatywy')),
+                              : t('execution.raid.preview.noInitiative', 'No initiative')),
                         },
                         {
                           id: 'owner',
@@ -2744,7 +2744,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'due',
-                          label: t('execution.governance.columns.due', 'Termin'),
+                          label: t('execution.governance.columns.due', 'Deadline'),
                           value: row.dueAt,
                         },
                         {
@@ -2759,7 +2759,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'exposure',
-                          label: t('execution.raid.columns.exposure', 'Ekspozycja'),
+                          label: t('execution.raid.columns.exposure', 'Exposure'),
                           value: row.exposure == null ? '—' : String(row.exposure),
                         },
                         {
@@ -2769,7 +2769,7 @@ export const ExecutionControlSurface = ({
                         },
                         {
                           id: 'overdue',
-                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+                          label: t('execution.governance.columns.daysOverdue', 'Days overdue'),
                           value:
                             row.daysOverdue == null
                               ? t('execution.decisions.escalation.none', 'None')
@@ -2862,7 +2862,7 @@ export const ExecutionControlSurface = ({
                         {
                           id: 'decision-approve',
                           variant: 'positive',
-                          label: t('execution.decisions.actions.approve', 'Rozstrzygnij'),
+                          label: t('execution.decisions.actions.approve', 'Resolve'),
                           icon: CheckCircle2,
                           onClick: () => {
                             setReasonError(null);
@@ -2884,7 +2884,7 @@ export const ExecutionControlSurface = ({
                         {
                           id: 'decision-supersede',
                           variant: 'neutral',
-                          label: t('execution.decisions.actions.supersede', 'Nieaktualna'),
+                          label: t('execution.decisions.actions.supersede', 'Outdated'),
                           icon: CircleSlash,
                           onClick: () => {
                             setReasonError(null);
@@ -2993,7 +2993,7 @@ export const ExecutionControlSurface = ({
                     },
                     {
                       id: 'deviation',
-                      label: t('execution.signals.columns.deviation', 'Odchylenie (dni)'),
+                      label: t('execution.signals.columns.deviation', 'Deviation (days)'),
                       value: row.deviationDays > 0 ? `+${row.deviationDays}` : '—',
                     },
                     {
@@ -3003,17 +3003,17 @@ export const ExecutionControlSurface = ({
                     },
                     {
                       id: 'planned',
-                      label: t('execution.signals.preview.planned', 'Data planowana'),
+                      label: t('execution.signals.preview.planned', 'Planned date'),
                       value: formatDay(row.signal.plannedDate),
                     },
                     {
                       id: 'detected',
-                      label: t('execution.signals.columns.detectedAt', 'Wykryto'),
+                      label: t('execution.signals.columns.detectedAt', 'Detected'),
                       value: row.detectedAt,
                     },
                     {
                       id: 'state',
-                      label: t('execution.signals.columns.state', 'Stan'),
+                      label: t('execution.signals.columns.state', 'State'),
                       value: row.stateLabel,
                     },
                     ...(row.decisionId
@@ -3805,14 +3805,14 @@ export const ExecutionControlSurface = ({
         }
         confirmLabel={
           reasonDialog?.kind === 'approve'
-            ? t('execution.decisions.actions.approve', 'Rozstrzygnij')
+            ? t('execution.decisions.actions.approve', 'Resolve')
             : reasonDialog?.kind === 'reject'
               ? t('execution.decisions.actions.reject', 'Reject')
               : reasonDialog?.kind === 'supersede'
-                ? t('execution.decisions.actions.supersede', 'Nieaktualna')
+                ? t('execution.decisions.actions.supersede', 'Outdated')
                 : reasonDialog?.kind === 'raid-close'
                   ? t('execution.raid.actions.close', 'Close item')
-                  : t('execution.decisions.actions.escalate', 'Eskaluj')
+                  : t('execution.decisions.actions.escalate', 'Escalate')
         }
         label={
           reasonDialog?.kind === 'escalate'
@@ -3878,7 +3878,7 @@ export const ExecutionControlSurface = ({
                 type="date"
                 autoFocus
                 data-testid="execution-raid-edit-input"
-                aria-label={t('execution.governance.columns.due', 'Termin')}
+                aria-label={t('execution.governance.columns.due', 'Deadline')}
                 value={raidEdit.wartosc}
                 onChange={(event) =>
                   setRaidEdit((current) =>
@@ -3900,7 +3900,7 @@ export const ExecutionControlSurface = ({
                 }
                 className="mt-3 block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
-                <option value="">{t('execution.raid.form.unassigned', 'Nieprzypisana')}</option>
+                <option value="">{t('execution.raid.form.unassigned', 'Unassigned')}</option>
                 {orgMembers.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name}

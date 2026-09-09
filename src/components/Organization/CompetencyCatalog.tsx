@@ -322,7 +322,7 @@ export const CompetencyCatalog: React.FC = () => {
                   <input
                     value={newCatNamePl}
                     onChange={(e) => setNewCatNamePl(e.target.value)}
-                    placeholder={t('competency.categories.namePlaceholderPl', 'Nazwa (PL)')}
+                    placeholder={t('competency.categories.namePlaceholderPl', 'Name (PL)')}
                     className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white"
                   />
                 </div>

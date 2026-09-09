@@ -181,7 +181,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       });
       // Mirror into global aiConfig so it flows into the chat payload immediately
       setAIConfig({ customInstructions: customInstructions.trim() } as any);
-      toast.success(t('aiChat.menu.instructionsSaved', 'Instrukcje zapisane'));
+      toast.success(t('aiChat.menu.instructionsSaved', 'Instructions saved'));
     } catch {
       toast.error(t('aiChat.menu.instructionsSaveError', 'Failed to save instructions'));
     } finally {
@@ -430,7 +430,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               {t('aiChat.menu.responseStyle', 'Response style')}
               {customInstructions.trim() && (
                 <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text-secondary font-medium align-middle">
-                  {t('aiChat.menu.customSet', 'instrukcje')}
+                  {t('aiChat.menu.customSet', 'instructions')}
                 </span>
               )}
             </span>

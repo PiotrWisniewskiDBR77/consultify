@@ -969,24 +969,24 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <div className="flex shrink-0 flex-wrap items-center gap-1.5">
             <StatusChip label={lifecycleLabel} tone={lifecycleTone} />
             {output.demoBypassActive ? (
-              <StatusChip label={t('assessment.report.demoMode', 'Tryb demo')} tone="warning" />
+              <StatusChip label={t('assessment.report.demoMode', 'Demo mode')} tone="warning" />
             ) : null}
           </div>
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
           <Property
-            label={t('assessment.report.project', 'Projekt')}
+            label={t('assessment.report.project', 'Project')}
             value={session?.projectId ?? t('assessment.report.noProject', 'No project assigned')}
             mono={!!session?.projectId}
           />
           <Property
-            label={t('assessment.report.session', 'Sesja')}
+            label={t('assessment.report.session', 'Session')}
             value={output.sessionId || '—'}
             mono={!!output.sessionId}
           />
           <Property
-            label={t('assessment.report.outputVersion', 'Wersja Outputu')}
+            label={t('assessment.report.outputVersion', 'Output version')}
             value={zZapisuSesji ? '—' : `v${output.outputVersion}`}
           />
           <Property

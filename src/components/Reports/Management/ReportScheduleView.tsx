@@ -87,7 +87,7 @@ export const ReportScheduleView: React.FC = () => {
       });
       if (response.data?.schedule) {
         setSchedules((prev) => [response.data.schedule, ...prev]);
-        toast.success(t('reports.toast.scheduleCreated', 'Harmonogram utworzony'));
+        toast.success(t('reports.toast.scheduleCreated', 'Schedule created'));
       }
     } catch (error) {
       console.error('Failed to create schedule:', error);

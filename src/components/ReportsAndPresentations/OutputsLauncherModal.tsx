@@ -393,7 +393,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
               className="text-base font-semibold text-slate-900 dark:text-white truncate"
             >
               {bundleStep
-                ? t('rap.outputs.launcher.bundleTitle', 'Komplet AI — brief')
+                ? t('rap.outputs.launcher.bundleTitle', 'AI package — brief')
                 : selectedType
                   ? t('rap.outputs.launcher.chooseTemplate', 'Choose a template')
                   : t('rap.outputs.launcher.title', 'New output')}
@@ -551,7 +551,7 @@ export const OutputsLauncherModal: React.FC<OutputsLauncherModalProps> = ({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm text-violet-900 dark:text-violet-100">
-                      {t('rap.outputs.launcher.bundle', 'Komplet AI')}
+                      {t('rap.outputs.launcher.bundle', 'AI package')}
                     </span>
                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300">
                       {t('common.new', 'NEW')}

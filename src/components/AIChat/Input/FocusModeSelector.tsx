@@ -47,7 +47,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
   const focusModes: FocusModeOption[] = [
     {
       value: 'all',
-      label: t('focusMode.all', 'Wszystko'),
+      label: t('focusMode.all', 'All'),
       description: t('focusMode.allDesc', 'All available sources'),
       icon: Sparkles,
       color: 'text-c-text-secondary dark:text-c-text-secondary',
@@ -63,7 +63,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     },
     {
       value: 'project-data',
-      label: t('focusMode.projectData', 'Projekt'),
+      label: t('focusMode.projectData', 'Project'),
       description: t('focusMode.projectDataDesc', 'Context of the current project'),
       icon: FolderOpen,
       color: 'text-green-600 dark:text-green-400',
@@ -71,7 +71,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     },
     {
       value: 'research',
-      label: t('focusMode.research', 'Analiza'),
+      label: t('focusMode.research', 'Analysis'),
       description: t('focusMode.researchDesc', 'Deep analysis mode'),
       icon: Search,
       color: 'text-amber-600 dark:text-amber-400',
@@ -80,7 +80,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
     {
       value: 'web',
       label: t('focusMode.web', 'Web'),
-      description: t('focusMode.webDesc', 'Wyszukiwanie w czasie rzeczywistym'),
+      description: t('focusMode.webDesc', 'Real-time search'),
       icon: Globe,
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30',
@@ -116,7 +116,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
                         ${selectedMode.bgColor} border-transparent
                         ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-sm cursor-pointer'}
                     `}
-          title={`${t('focusMode.label', 'Tryb')}: ${selectedMode.label}${activeSourceCount ? ` (${activeSourceCount} sources)` : ''}`}
+          title={`${t('focusMode.label', 'Mode')}: ${selectedMode.label}${activeSourceCount ? ` (${activeSourceCount} sources)` : ''}`}
         >
           <Icon size={14} className={selectedMode.color} />
           {activeSourceCount != null && activeSourceCount > 0 && value !== 'all' && (

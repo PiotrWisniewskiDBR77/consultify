@@ -1754,7 +1754,7 @@ export const DeckBuilder: React.FC = () => {
             activity: t('presentations.builder.rightRail.activity', 'Activity'),
             relations: t('presentations.builder.rightRail.relations', 'Relations'),
             evidence: t('presentations.builder.rightRail.evidence', 'Sources & assumptions'),
-            artefakt: t('presentations.builder.rightRail.artefakt', 'Artefakt'),
+            artefakt: t('presentations.builder.rightRail.artefakt', 'Artifact'),
           }}
           rightRailPanels={{
             blocks: (
@@ -2457,21 +2457,21 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
     case 'heading':
       return { text: t('presentations.builder.defaultContent.heading', 'Heading'), level: 2 };
     case 'paragraph':
-      return { text: t('presentations.builder.defaultContent.paragraph', 'Wpisz tekst tutaj…') };
+      return { text: t('presentations.builder.defaultContent.paragraph', 'Type text here…') };
     case 'bullet_list':
       return {
         items: [
-          t('presentations.builder.defaultContent.item1', 'Punkt 1'),
-          t('presentations.builder.defaultContent.item2', 'Punkt 2'),
-          t('presentations.builder.defaultContent.item3', 'Punkt 3'),
+          t('presentations.builder.defaultContent.item1', 'Point 1'),
+          t('presentations.builder.defaultContent.item2', 'Point 2'),
+          t('presentations.builder.defaultContent.item3', 'Point 3'),
         ],
       };
     case 'numbered_list':
       return {
         items: [
-          t('presentations.builder.defaultContent.step1', 'Krok 1'),
-          t('presentations.builder.defaultContent.step2', 'Krok 2'),
-          t('presentations.builder.defaultContent.step3', 'Krok 3'),
+          t('presentations.builder.defaultContent.step1', 'Step 1'),
+          t('presentations.builder.defaultContent.step2', 'Step 2'),
+          t('presentations.builder.defaultContent.step3', 'Step 3'),
         ],
       };
     case 'table':
@@ -2479,7 +2479,7 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
     case 'chart':
       return {
         chartType: 'bar',
-        title: t('presentations.builder.defaultContent.chart', 'Wykres'),
+        title: t('presentations.builder.defaultContent.chart', 'Chart'),
         data: [
           { label: 'A', value: 30 },
           { label: 'B', value: 50 },
@@ -2488,7 +2488,7 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
       };
     case 'kpi_widget':
       return {
-        label: t('presentations.builder.defaultContent.metric', 'Miernik'),
+        label: t('presentations.builder.defaultContent.metric', 'Gauge'),
         value: '0',
         trend: 'stable',
       };
@@ -2510,9 +2510,9 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
       return {
         diagram_kind: 'process_steps',
         items: [
-          { label: t('presentations.builder.defaultContent.step1', 'Krok 1') },
-          { label: t('presentations.builder.defaultContent.step2', 'Krok 2') },
-          { label: t('presentations.builder.defaultContent.step3', 'Krok 3') },
+          { label: t('presentations.builder.defaultContent.step1', 'Step 1') },
+          { label: t('presentations.builder.defaultContent.step2', 'Step 2') },
+          { label: t('presentations.builder.defaultContent.step3', 'Step 3') },
         ],
       };
     case 'timeline_block':
@@ -2520,7 +2520,7 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
         items: [
           { date: 'Q1', title: t('presentations.builder.defaultContent.timelineStart', 'Start') },
           { date: 'Q2', title: t('presentations.builder.defaultContent.timelineMid', 'Middle') },
-          { date: 'Q3', title: t('presentations.builder.defaultContent.timelineEnd', 'Koniec') },
+          { date: 'Q3', title: t('presentations.builder.defaultContent.timelineEnd', 'End') },
         ],
       };
     case 'divider':
@@ -2528,7 +2528,7 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
     case 'image':
       return {
         url: '',
-        alt: t('presentations.builder.defaultContent.image', 'Obraz'),
+        alt: t('presentations.builder.defaultContent.image', 'Image'),
         fit: 'cover',
       };
     default:

@@ -207,7 +207,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                    Historia Wersji
+                    {t('assessment.versionHistory.heading', 'Version history')}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
                     {assessmentName}
@@ -300,7 +300,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                               </span>
                               {index === 0 && (
                                 <span className="px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-medium rounded">
-                                  Aktualna
+                                  {t('assessment.versionHistory.current', 'Current')}
                                 </span>
                               )}
                             </div>

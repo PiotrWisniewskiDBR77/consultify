@@ -114,7 +114,7 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
       <ul
         className="flex-1 overflow-y-auto py-1"
         role="listbox"
-        aria-label={t('kimi.tabeleShell.leftRail.ariaLabel', 'Tabele outline')}
+        aria-label={t('kimi.tabeleShell.leftRail.ariaLabel', 'Tables outline')}
       >
         {empty ? (
           <li className="px-3 py-6 text-c-text-secondary text-xs italic flex items-center gap-2">

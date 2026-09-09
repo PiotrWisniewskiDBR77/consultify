@@ -1969,7 +1969,7 @@ function WorkCanvasMarkdownDocumentPanel({
   const startBlankDocument = () => {
     const blankTemplate: StarterTemplate = {
       id: 'document',
-      label: t('canvas.panel.newMenu.blank', 'Czysty dokument'),
+      label: t('canvas.panel.newMenu.blank', 'Blank document'),
       title: t('canvas.panel.newMenu.blankTitle', 'New document'),
       description: t('canvas.panel.newMenu.blankDesc', 'Empty — start from scratch with Teresa.'),
       capability: 'real',
@@ -2466,7 +2466,7 @@ function WorkCanvasMarkdownDocumentPanel({
       }
 
       setStatusFeedback(
-        t('canvas.panel.documentProposal.inserted', 'Propozycja Teresy wstawiona do dokumentu.')
+        t('canvas.panel.documentProposal.inserted', "Teresa's proposal inserted into the document.")
       );
     };
     window.addEventListener(CANVAS_DOCUMENT_APPLY_EVENT, handler);
@@ -3658,7 +3658,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   className="w-full rounded-xl px-2.5 py-2 text-left text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                   <span className="font-semibold">
-                    {t('canvas.panel.newMenu.blank', 'Czysty dokument')}
+                    {t('canvas.panel.newMenu.blank', 'Blank document')}
                   </span>
                   {/* G06 (2026-09-03, canvas-new-doc): text-slate-500 na
                       hover/active tle bg-slate-100 tego kafla mierzyło 4,34:1
@@ -3673,7 +3673,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 {/* (b) Z szablonu — existing starterTemplates gallery, unchanged content. */}
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {t('canvas.panel.newMenu.fromTemplate', 'Z szablonu')}
+                  {t('canvas.panel.newMenu.fromTemplate', 'From template')}
                 </div>
                 <div className="mt-1 space-y-1">
                   {starterTemplates.map((template) => (
@@ -3717,7 +3717,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 {/* (c) Z canvasa — pick one of the user's other Work Canvas drafts. */}
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {t('canvas.panel.newMenu.fromCanvas', 'Z canvasa')}
+                  {t('canvas.panel.newMenu.fromCanvas', 'From canvas')}
                 </div>
                 <div className="mt-1 max-h-[180px] space-y-1 overflow-y-auto">
                   {isOtherCanvasDraftsLoading ? (
@@ -4117,7 +4117,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 {/* #87d — grupa EDYCJA I AI: łączy „AI on selection" + „Manual editing". */}
                 <details className="group mt-3 border-b border-slate-200 dark:border-white/10" open>
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.edit', 'Edycja i AI')}</span>
+                    <span>{t('canvas.panel.groups.edit', 'Editing and AI')}</span>
                     <ChevronDown
                       size={14}
                       className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
@@ -4316,7 +4316,7 @@ function WorkCanvasMarkdownDocumentPanel({
                     provenance + dataset + Markdown/eksporty (Word/Excel/PPTX/PDF/Studia). */}
                 <details className="group mt-3 border-b border-slate-200 dark:border-white/10">
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.file', 'Plik, eksport i workspace')}</span>
+                    <span>{t('canvas.panel.groups.file', 'File, export and workspace')}</span>
                     <ChevronDown
                       size={14}
                       className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
@@ -4348,7 +4348,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       data-testid="canvas-materialized-to"
                     >
                       <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                        Utworzone z tego dokumentu
+                        {t('canvas.panel.materializedTo.heading', 'Created from this document')}
                       </div>
                       {(documentState.materializedTo || []).map((entry, index) => {
                         const EntryIcon = materializedTargetIcons[entry.target] || FileText;
@@ -5024,7 +5024,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
                 <details className="group mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.advanced', 'Zaawansowane')}</span>
+                    <span>{t('canvas.panel.groups.advanced', 'Advanced')}</span>
                     <ChevronDown
                       size={14}
                       className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"

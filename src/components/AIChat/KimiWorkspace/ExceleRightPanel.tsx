@@ -118,13 +118,13 @@ export function useExceleRightPanelSections({
   const sectionsById: Partial<Record<string, ArtifactRightPanelSection>> = {
     actions: {
       id: 'actions',
-      label: t('excele.rightPanel.actions', 'Akcje'),
+      label: t('excele.rightPanel.actions', 'Actions'),
       children: (
         <div className="space-y-2">
           <PreviewActionButton
             variant="neutral"
             icon={Download}
-            label={t('excele.rightPanel.download', 'Pobierz XLSX')}
+            label={t('excele.rightPanel.download', 'Download XLSX')}
             onClick={() => onDownload?.()}
             disabled={!onDownload || isGenerating || (!workbookId && !preview)}
           />
@@ -147,7 +147,7 @@ export function useExceleRightPanelSections({
           <PreviewActionButton
             variant="neutral"
             icon={History}
-            label={t('excele.rightPanel.versionHistory', 'Historia wersji')}
+            label={t('excele.rightPanel.versionHistory', 'Version history')}
             onClick={() => onOpenVersionHistory?.()}
             disabled={!onOpenVersionHistory || !workbookId}
           />
@@ -178,7 +178,7 @@ export function useExceleRightPanelSections({
           <PreviewActionButton
             variant="neutral"
             icon={FileSpreadsheet}
-            label={t('excele.rightPanel.exportCsv', 'Eksportuj CSV')}
+            label={t('excele.rightPanel.exportCsv', 'Export CSV')}
             onClick={() => onExportCsv?.()}
             disabled={!onExportCsv || !workbookId}
           />
@@ -200,7 +200,7 @@ export function useExceleRightPanelSections({
             <dd className="text-c-text font-medium">XLSX</dd>
           </div>
           <div className="flex items-center justify-between gap-2">
-            <dt className="text-c-text-muted">{t('excele.rightPanel.sheets', 'Arkusze')}</dt>
+            <dt className="text-c-text-muted">{t('excele.rightPanel.sheets', 'Sheets')}</dt>
             <dd className="text-c-text font-medium tabular-nums">{sheetCount || '—'}</dd>
           </div>
           {typeof qualityScore === 'number' && (
@@ -213,7 +213,7 @@ export function useExceleRightPanelSections({
           )}
           {preview?.fileName && (
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-c-text-muted">{t('excele.rightPanel.fileName', 'Plik')}</dt>
+              <dt className="text-c-text-muted">{t('excele.rightPanel.fileName', 'File')}</dt>
               <dd
                 className="text-c-text font-medium truncate max-w-[180px]"
                 title={preview.fileName}
@@ -243,14 +243,14 @@ export function useExceleRightPanelSections({
     },
     comments: {
       id: 'comments',
-      label: t('excele.rightPanel.comments', 'Komentarze'),
+      label: t('excele.rightPanel.comments', 'Comments'),
       isEmpty: true,
       emptyLabel: t('excele.rightPanel.commentsEmpty', 'Comments are coming soon'),
       children: null,
     },
     history: {
       id: 'history',
-      label: t('excele.rightPanel.history', 'Historia'),
+      label: t('excele.rightPanel.history', 'History'),
       icon: Sparkles,
       isEmpty: taskSteps.length === 0,
       emptyLabel: isFailed
@@ -298,7 +298,7 @@ function buildExceleStructureTypeMode(
   const sheetNames = preview?.sheetNames ?? [];
   return {
     id: 'struktura',
-    label: t('excele.rightPanel.structure', 'Struktura'),
+    label: t('excele.rightPanel.structure', 'Structure'),
     icon: ListTree,
     contextLabel: t(
       'excele.rightPanel.structureHint',

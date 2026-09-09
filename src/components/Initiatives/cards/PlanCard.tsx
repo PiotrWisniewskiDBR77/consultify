@@ -370,7 +370,7 @@ export function PlanCard({
               <option key={item.id} value={item.id}>
                 {item.name}
                 {item.conditional
-                  ? ` · ${t('initiatives.planGenerator.statusPending', 'Do zatwierdzenia')}`
+                  ? ` · ${t('initiatives.planGenerator.statusPending', 'Pending approval')}`
                   : ''}
               </option>
             ))}
@@ -548,16 +548,16 @@ export function PlanCard({
             <thead>
               <tr className="text-left text-c-text-muted">
                 <th className="py-1 pr-3">
-                  {t('initiatives.planGenerator.columnInitiative', 'Inicjatywa')}
+                  {t('initiatives.planGenerator.columnInitiative', 'Initiative')}
                 </th>
                 <th className="py-1 pr-3">
-                  {t('initiatives.planGenerator.columnWindow', 'Okno od–do')}
+                  {t('initiatives.planGenerator.columnWindow', 'Window from–to')}
                 </th>
                 <th className="py-1 pr-3">
-                  {t('initiatives.planGenerator.columnRationale', 'Uzasadnienie')}
+                  {t('initiatives.planGenerator.columnRationale', 'Justification')}
                 </th>
                 <th className="py-1">
-                  {t('initiatives.planGenerator.columnConflict', 'Konflikt')}
+                  {t('initiatives.planGenerator.columnConflict', 'Conflict')}
                 </th>
               </tr>
             </thead>
@@ -656,7 +656,7 @@ export function PlanCard({
                   defaultValue: 'Wynik analizy „{{name}}" (wersja {{version}}).',
                   name:
                     capacityAnalysis?.name ??
-                    t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy'),
+                    t('initiatives.capacityAnalysis.unnamed', 'Untitled analysis'),
                   version: capacityAnalysis?.scenarioVersion ?? 0,
                 })}
               </p>
@@ -678,19 +678,19 @@ export function PlanCard({
               <thead>
                 <tr className="border-b border-c-border-subtle text-left text-xs text-c-text-muted">
                   <th className="px-3 py-2">
-                    {t('initiatives.capacityAnalysis.columns.period', 'Okres')}
+                    {t('initiatives.capacityAnalysis.columns.period', 'Period')}
                   </th>
                   <th className="px-3 py-2">
-                    {t('initiatives.capacityAnalysis.columns.role', 'Rola')}
+                    {t('initiatives.capacityAnalysis.columns.role', 'Role')}
                   </th>
                   <th className="px-3 py-2">
-                    {t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}
+                    {t('initiatives.capacityAnalysis.columns.demand', 'Demand (FTE)')}
                   </th>
                   <th className="px-3 py-2">
                     {t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}
                   </th>
                   <th className="px-3 py-2">
-                    {t('initiatives.capacityAnalysis.columns.gap', 'Luka')}
+                    {t('initiatives.capacityAnalysis.columns.gap', 'Gap')}
                   </th>
                 </tr>
               </thead>
@@ -765,7 +765,7 @@ export function PlanCard({
         )}
         {scenario.status === 'DRAFT' && (
           <button type="button" className={`mt-2 ${button}`} onClick={onPublish}>
-            Opublikuj plan
+            {t('initiatives.planCard.publishPlan', 'Publish plan')}
           </button>
         )}
         {publishedNotice}

@@ -225,7 +225,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-source-pack-panel"
-      aria-label={t('kimi.tabeleShell.sourcePack.ariaLabel', 'Tabele source pack builder')}
+      aria-label={t('kimi.tabeleShell.sourcePack.ariaLabel', 'Tables source pack builder')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-c-text">

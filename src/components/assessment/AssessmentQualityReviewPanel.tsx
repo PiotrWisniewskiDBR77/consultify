@@ -127,7 +127,9 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             // oceny dojrzałości (jeszcze nie udokumentowane) — NIE błąd/awaria.
             // Crimson/danger w tym repo jest zarezerwowany dla semantyki
             // krytycznej; tu ostrzegawczy amber (do uzupełnienia, nie alarm).
-            <span className="text-amber-800 dark:text-amber-400">brak</span>
+            <span className="text-amber-800 dark:text-amber-400">
+              {t('assessment.qualityReview.table.none', 'none')}
+            </span>
           ),
       },
     ],
@@ -379,7 +381,9 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                 data-testid="assessment-quality-tile-evidence-coverage"
                 className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
               >
-                <div className="text-xs text-slate-500 dark:text-slate-400">Pokrycie dowodami</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('assessment.qualityReview.evidenceCoverage', 'Evidence coverage')}
+                </div>
                 <div className="text-lg font-semibold text-navy-900 dark:text-white">
                   {scoring.evidenceCoverage}%
                 </div>
@@ -588,13 +592,13 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
 
       <section>
         <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
-          Zaakceptowany output
+          {t('assessment.qualityReview.acceptedOutput.heading', 'Accepted output')}
         </h3>
         {report ? (
           <div className="p-4 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-900/10">
             <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-medium mb-1">
               <CheckCircle2 size={16} />
-              Niezmienny output istnieje
+              {t('assessment.qualityReview.acceptedOutput.immutableExists', 'An immutable output exists')}
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {t('assessment.qualityReview.acceptedBy', 'Accepted {{date}} by {{who}}', {

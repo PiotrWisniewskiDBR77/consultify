@@ -135,7 +135,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Opis
+                {t('reports.premium.recommendationCard.description', 'Description')}
               </label>
               <textarea
                 value={editForm.description}
@@ -147,7 +147,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Priorytet
+                {t('reports.premium.recommendationCard.priority', 'Priority')}
               </label>
               <select
                 value={editForm.priority}
@@ -159,10 +159,10 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 }
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
-                <option value="critical">Krytyczny</option>
-                <option value="high">Wysoki</option>
+                <option value="critical">{t('reports.premium.recommendationCard.critical', 'Critical')}</option>
+                <option value="high">{t('reports.premium.recommendationCard.high', 'High')}</option>
                 <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
-                <option value="low">Niski</option>
+                <option value="low">{t('reports.premium.recommendationCard.low', 'Low')}</option>
               </select>
             </div>
 
@@ -180,9 +180,9 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
                 }
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm"
               >
-                <option value="high">Wysoki</option>
+                <option value="high">{t('reports.premium.recommendationCard.high', 'High')}</option>
                 <option value="medium">{t('reports.premium.recommendationCard.medium', 'Medium')}</option>
-                <option value="low">Niski</option>
+                <option value="low">{t('reports.premium.recommendationCard.low', 'Low')}</option>
               </select>
             </div>
 
@@ -221,7 +221,7 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Szacowany ROI
+                {t('reports.premium.recommendationCard.estimatedRoi', 'Estimated ROI')}
               </label>
               <input
                 type="text"

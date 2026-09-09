@@ -148,7 +148,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
       // Tytul nie moze byc pusty: i wycofany zapis legacy, i kanoniczna
       // komenda odrzucaja pusty tytul (400). Wpisujemy roboczy, ktory
       // uzytkownik nadpisuje w tabeli.
-      const title = t('initiatives.raid.newItemTitle', 'Nowa pozycja');
+      const title = t('initiatives.raid.newItemTitle', 'New item');
       const newItem = {
         id,
         type,

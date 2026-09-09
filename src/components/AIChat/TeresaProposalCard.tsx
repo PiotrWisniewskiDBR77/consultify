@@ -207,7 +207,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
               teresaProposal.heading` / `.state.*` istnieją teraz w pl i en
               (ZASADY_AI_TERESA_SSOT §8 J1). */}
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
-            {t('aiChat.teresaProposal.heading', 'Propozycja Teresy')}
+            {t('aiChat.teresaProposal.heading', "Teresa's proposal")}
           </div>
           <div className="text-sm font-semibold text-navy-900 dark:text-slate-100">
             {currentProposal.title}

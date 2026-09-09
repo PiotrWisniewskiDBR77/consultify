@@ -96,7 +96,7 @@ export const CanonicalInitiativeRegister = ({
             // „Do zatwierdzenia" świeciło w podglądzie jako „Nieznany", gdy wiersz obok
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
             label: initiative.onHold
-              ? t('initiatives.status.ON_HOLD', 'Wstrzymana')
+              ? t('initiatives.status.ON_HOLD', 'On hold')
               : (isKnownEnumValue('initiativeLifecycle', String(initiative.displayStatus))
                   ? enumLabel('initiativeLifecycle', String(initiative.displayStatus), t)
                   : '') ||
@@ -187,7 +187,7 @@ export const CanonicalInitiativeRegister = ({
       <InitiativeLifecycleActions
         initiativeId={initiative.id}
         density="full"
-        heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
+        heading={t('initiatives.lifecycle.heading', 'Initiative stage')}
         className="mt-4"
       />
     </StandardPreview>

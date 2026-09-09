@@ -1055,7 +1055,7 @@ export const PresentationTemplateArchitectView: React.FC<
               aria-label={t('presentations.presentationTemplateArchitectView.templateVersionHistory', 'Template version history')}
             >
               <div className="flex items-center justify-between gap-2">
-                <h4 className="text-xs font-semibold text-c-text">Historia wersji</h4>
+                <h4 className="text-xs font-semibold text-c-text">{t('presentations.templateArchitect.versionHistory', 'Version history')}</h4>
                 <span className="text-[10px] text-c-text-secondary">
                   {lineage.length} version(s)
                 </span>
@@ -1179,7 +1179,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 <div className="col-span-1 sm:col-span-2">
                   <label className="flex flex-col gap-1 text-xs">
                     <span className="font-medium text-c-text">
-                      {t('presentations.templateArchitect.imageStyleLabel', 'Styl obrazu')}
+                      {t('presentations.templateArchitect.imageStyleLabel', 'Image style')}
                     </span>
                     <textarea
                       value={editImageStylePrompt}
@@ -1357,7 +1357,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { key: event.target.value })
                         }
-                        placeholder="klucz"
+                        placeholder={t('presentations.templateArchitect.keyPlaceholder', 'key')}
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <input
@@ -1367,7 +1367,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { label: event.target.value })
                         }
-                        placeholder="Etykieta"
+                        placeholder={t('presentations.templateArchitect.labelPlaceholder', 'Label')}
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <select
@@ -1428,7 +1428,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { description: event.target.value })
                         }
-                        placeholder="Opis"
+                        placeholder={t('presentations.templateArchitect.descriptionPlaceholder', 'Description')}
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                       />
                       {variable.type === 'enum' ? (
@@ -1444,7 +1444,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 .filter(Boolean),
                             })
                           }
-                          placeholder="Opcje oddzielone przecinkami"
+                          placeholder={t('presentations.templateArchitect.optionsCommaSeparated', 'Options separated by commas')}
                           className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                         />
                       ) : null}
@@ -1624,7 +1624,7 @@ export const PresentationTemplateArchitectView: React.FC<
                               <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                                 {t(
                                   'presentations.templateArchitect.dataNeeded',
-                                  'Dane do zebrania'
+                                  'Data to collect'
                                 )}
                               </span>
                               <textarea
@@ -1642,7 +1642,7 @@ export const PresentationTemplateArchitectView: React.FC<
                               <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                                 {t(
                                   'presentations.templateArchitect.suggestedVisual',
-                                  'Sugerowana wizualizacja'
+                                  'Suggested visualization'
                                 )}
                               </span>
                               <input
@@ -1678,7 +1678,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                                   {t(
                                     'presentations.templateArchitect.dataNeeded',
-                                    'Dane do zebrania'
+                                    'Data to collect'
                                   )}
                                 </span>
                                 <ul className="mt-0.5 list-inside list-disc text-xs text-c-text-secondary">
@@ -1693,7 +1693,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
                                   {t(
                                     'presentations.templateArchitect.suggestedVisual',
-                                    'Sugerowana wizualizacja'
+                                    'Suggested visualization'
                                   )}
                                 </span>
                                 <p className="mt-0.5 text-xs text-c-text-secondary">

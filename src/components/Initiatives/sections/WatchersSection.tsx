@@ -35,7 +35,7 @@ export const WatchersSection: React.FC<InitiativeSectionProps> = ({
   return (
     <CollapsibleSection
       id="watchers"
-      title={t('initiatives.watchers2', 'Obserwatorzy')}
+      title={t('initiatives.watchers2', 'Watchers')}
       icon={<Eye size={18} className="text-slate-500 dark:text-slate-400" />}
       iconBg="bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20"
       expanded={expanded}
@@ -59,7 +59,7 @@ export const WatchersSection: React.FC<InitiativeSectionProps> = ({
           <span>
             {isWatching
               ? t('initiatives.watchersSection.stopWatching', 'Stop watching')
-              : t('initiatives.watchersSection.startWatching', 'Obserwuj')}
+              : t('initiatives.watchersSection.startWatching', 'Watch')}
           </span>
         </button>
       }

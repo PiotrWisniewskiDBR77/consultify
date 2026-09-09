@@ -251,17 +251,21 @@ const CMMICategoryAccordion: React.FC<{
 /**
  * Legal Notice Banner
  */
-const CMMILegalNotice: React.FC = () => (
-  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
-    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-    <div className="text-sm text-amber-800 dark:text-amber-200">
-      <strong>CMMI (Capability Maturity Model Integration)</strong> jest znakiem towarowym{' '}
-      <strong>ISACA</strong> (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga{' '}
-      <strong>akredytowanego Lead Appraiser</strong>. Implementacja w Consultify służy{' '}
-      <strong>celom edukacyjnym</strong>.
+const CMMILegalNotice: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+      <div className="text-sm text-amber-800 dark:text-amber-200">
+        <strong>CMMI (Capability Maturity Model Integration)</strong>{' '}
+        {t(
+          'assessment.cmmi.legalNotice.body',
+          'is a trademark of ISACA (formerly CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. This implementation in Consultify serves educational purposes.'
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ============================================
 // MAIN COMPONENT

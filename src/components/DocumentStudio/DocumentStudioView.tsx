@@ -831,7 +831,7 @@ export const DocumentStudioView: React.FC = () => {
       title: t('documentStudio.blank.title', 'New document'),
       sections: [
         {
-          title: t('documentStudio.blank.section', 'Sekcja 1'),
+          title: t('documentStudio.blank.section', 'Section 1'),
           level: 1,
           purpose: '',
           expectedLengthHint: 'short',
@@ -1127,7 +1127,7 @@ export const DocumentStudioView: React.FC = () => {
                 'Pick a mode — all three are equal.'
               )}
               clean={{
-                title: t('documentStudio.tri.cleanTitle', 'Czysto'),
+                title: t('documentStudio.tri.cleanTitle', 'Blank'),
                 desc: t(
                   'documentStudio.tri.cleanDesc',
                   'A blank document in the editor. You write it yourself, no AI.'
@@ -1141,7 +1141,7 @@ export const DocumentStudioView: React.FC = () => {
                 ),
               }}
               template={{
-                title: t('documentStudio.tri.templateTitle', 'Z szablonu'),
+                title: t('documentStudio.tri.templateTitle', 'From template'),
                 desc: t(
                   'documentStudio.tri.templateDesc',
                   'Start from an approved template and adjust the content.'

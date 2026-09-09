@@ -304,18 +304,18 @@ const buildCols = ({
   const podpowiedz = t('execution.work.edit.hint', 'Double-click to change');
   const podpowiedzBrak = t('execution.work.edit.notEditable', 'This row comes from the canonical execution register — open the work item to change it.'
   );
-  const brakOsoby = t('execution.work.edit.unassigned', 'Nieprzypisany');
+  const brakOsoby = t('execution.work.edit.unassigned', 'Unassigned');
 
   return [
     {
       id: 'title',
-      label: t('execution.work.columns.title', 'Zadanie'),
+      label: t('execution.work.columns.title', 'Task'),
       sortable: true,
       width: '260px',
     },
     {
       id: 'initiativeName',
-      label: t('execution.work.columns.initiative', 'Inicjatywa'),
+      label: t('execution.work.columns.initiative', 'Initiative'),
       sortable: true,
       width: '200px',
       // „—" nie mówi, czy danych brakuje, czy zadanie naprawdę nie należy do
@@ -323,13 +323,13 @@ const buildCols = ({
       render: (row) =>
         (row.initiativeName as string) || (
           <span className="text-c-text-muted">
-            {t('execution.work.withoutInitiative', 'Bez inicjatywy')}
+            {t('execution.work.withoutInitiative', 'No initiative')}
           </span>
         ),
     },
     {
       id: 'owner',
-      label: t('execution.work.columns.person', 'Osoba'),
+      label: t('execution.work.columns.person', 'Person'),
       sortable: true,
       width: '170px',
       render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
@@ -349,7 +349,7 @@ const buildCols = ({
     },
     {
       id: 'dueAt',
-      label: t('execution.work.columns.due', 'Termin'),
+      label: t('execution.work.columns.due', 'Deadline'),
       sortable: true,
       width: '150px',
       editable: {
@@ -398,7 +398,7 @@ const buildCols = ({
       // `dziś − termin` dla zadań niezakończonych — czyli DNI PO TERMINIE.
       // Mylenie tych dwóch liczb jest najczęstszym błędem rynku
       // (`AUDYT_RYNKU_PMO_20260907.md` §4.1).
-      label: t('execution.work.columns.daysOverdue', 'Dni po terminie'),
+      label: t('execution.work.columns.daysOverdue', 'Days overdue'),
       sortable: true,
       width: '130px',
       render: (row) => {
@@ -1069,7 +1069,7 @@ export const ExecutionWorkSurface = ({
         blad: null,
         zapisywanie: false,
       });
-      toast.success(t('execution.work.create.created', 'Zadanie utworzone'));
+      toast.success(t('execution.work.create.created', 'Task created'));
     } catch (error) {
       const komunikat = komunikatBledu(error);
       setFormularzNowego((biezacy) => ({ ...biezacy, zapisywanie: false, blad: komunikat }));
@@ -1507,9 +1507,9 @@ export const ExecutionWorkSurface = ({
                 />
               </label>
               <label className="block text-xs text-c-text-secondary">
-                {t('execution.work.columns.initiative', 'Inicjatywa')}
+                {t('execution.work.columns.initiative', 'Initiative')}
                 <select
-                  aria-label={t('execution.work.columns.initiative', 'Inicjatywa')}
+                  aria-label={t('execution.work.columns.initiative', 'Initiative')}
                   value={formularzNowego.initiativeId}
                   onChange={(event) =>
                     setFormularzNowego((biezacy) => ({
@@ -1520,7 +1520,7 @@ export const ExecutionWorkSurface = ({
                   className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <option value="">
-                    {t('execution.work.withoutInitiative', 'Bez inicjatywy')}
+                    {t('execution.work.withoutInitiative', 'No initiative')}
                   </option>
                   {inicjatywy.map((inicjatywa) => (
                     <option key={inicjatywa.id} value={inicjatywa.id}>
@@ -1530,9 +1530,9 @@ export const ExecutionWorkSurface = ({
                 </select>
               </label>
               <label className="block text-xs text-c-text-secondary">
-                {t('execution.work.columns.person', 'Osoba')}
+                {t('execution.work.columns.person', 'Person')}
                 <select
-                  aria-label={t('execution.work.columns.person', 'Osoba')}
+                  aria-label={t('execution.work.columns.person', 'Person')}
                   value={formularzNowego.assigneeId}
                   onChange={(event) =>
                     setFormularzNowego((biezacy) => ({
@@ -1542,7 +1542,7 @@ export const ExecutionWorkSurface = ({
                   }
                   className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <option value="">{t('execution.work.edit.unassigned', 'Nieprzypisany')}</option>
+                  <option value="">{t('execution.work.edit.unassigned', 'Unassigned')}</option>
                   {osoby.map((osoba) => (
                     <option key={osoba.id} value={osoba.id}>
                       {osoba.label}
@@ -1551,10 +1551,10 @@ export const ExecutionWorkSurface = ({
                 </select>
               </label>
               <label className="block text-xs text-c-text-secondary">
-                {t('execution.work.columns.due', 'Termin')}
+                {t('execution.work.columns.due', 'Deadline')}
                 <input
                   type="date"
-                  aria-label={t('execution.work.columns.due', 'Termin')}
+                  aria-label={t('execution.work.columns.due', 'Deadline')}
                   value={formularzNowego.dueDate}
                   onChange={(event) =>
                     setFormularzNowego((biezacy) => ({ ...biezacy, dueDate: event.target.value }))
@@ -1723,7 +1723,7 @@ export const ExecutionWorkSurface = ({
                       id: 'slip',
                       // Ta sama nazwa co kolumna w tabeli — podgląd i wiersz
                       // nie mogą nazywać tej samej liczby dwoma słowami.
-                      label: t('execution.work.columns.daysOverdue', 'Dni po terminie'),
+                      label: t('execution.work.columns.daysOverdue', 'Days overdue'),
                       value:
                         r.slipDays == null
                           ? '—'
@@ -1846,7 +1846,7 @@ export const ExecutionWorkSurface = ({
                           }}
                         >
                           <option value="">
-                            {t('execution.work.edit.unassigned', 'Nieprzypisany')}
+                            {t('execution.work.edit.unassigned', 'Unassigned')}
                           </option>
                           {osoby.map((osoba) => (
                             <option key={osoba.id} value={osoba.id}>

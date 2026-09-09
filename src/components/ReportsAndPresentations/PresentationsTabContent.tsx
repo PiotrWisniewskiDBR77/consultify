@@ -317,7 +317,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
       {
         id: 'export',
-        label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+        label: t('rap.actions.exportPptx', 'Export PPTX'),
         icon: Download,
         onClick: () => actions.exportDeckPptx(row),
       },
@@ -525,7 +525,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                     );
                   },
                   onExport: () => actions.exportDeckPptx(previewItem),
-                  exportLabel: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+                  exportLabel: t('rap.actions.exportPptx', 'Export PPTX'),
                 }}
                 ai={{
                   hints: [t('rap.actions.discuss', 'Discuss')],

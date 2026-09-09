@@ -258,7 +258,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 .map((entry) => entry.trim())
                 .filter(Boolean),
             });
-            toast.success(t('reports.toast.scheduleCreated', 'Harmonogram cykliczny utworzony'));
+            toast.success(t('reports.toast.scheduleCreated', 'Recurring schedule created'));
           } catch (scheduleError) {
             console.error('Failed to create schedule:', scheduleError);
             toast.error(

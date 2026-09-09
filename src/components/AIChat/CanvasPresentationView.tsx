@@ -122,7 +122,7 @@ export function CanvasPresentationView({ deckId, onClose }: CanvasPresentationVi
         <div className="flex min-w-0 items-center gap-2">
           <Presentation className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate text-sm font-medium text-foreground">
-            {deck?.title || t('canvas.presentation.title', 'Prezentacja')}
+            {deck?.title || t('canvas.presentation.title', 'Presentation')}
           </span>
           {phase === 'generating' && (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">

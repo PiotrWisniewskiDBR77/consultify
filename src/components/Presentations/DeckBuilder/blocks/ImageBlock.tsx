@@ -13,7 +13,7 @@ export const ImageBlock: React.FC<Props> = ({ block, theme }) => {
   const { t } = useTranslation();
   const url = block.content.url as string | undefined;
   const alt =
-    (block.content.alt as string) || t('presentations.builder.defaultContent.image', 'Obraz');
+    (block.content.alt as string) || t('presentations.builder.defaultContent.image', 'Image');
 
   if (url) {
     return (
