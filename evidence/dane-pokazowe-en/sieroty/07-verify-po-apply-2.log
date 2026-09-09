@@ -1,0 +1,5 @@
+[d0] Tryb bez listy identyfikatorów (sieroty nie należą do żadnej organizacji).
+[d0] Tryb: verify · cel: 127.0.0.1:54418/consultify_kopia_d28
+[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…
+[d0] VERIFY --sieroty: 0 wierszy-sierot w 0 tabelach (oczekiwane 0 po --sieroty-apply).
+[d0] VERIFY sierot: czysto (0).

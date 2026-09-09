@@ -1,0 +1,20 @@
+### 1. brak FORCE_PURGE
+[d0] --sieroty-apply wymaga FORCE_PURGE=true (dwa klucze). Uruchom ponownie z FORCE_PURGE=true, ale dopiero gdy raport dry-run jest zaakceptowany przez właściciela. STOP.
+EXIT=1
+
+### 2. produkcja centerbeam (odmowa bezwarunkowa)
+[d0] Cel wskazuje PRODUKCJĘ (centerbeam). Odmowa bezwarunkowa. STOP.
+EXIT=1
+
+### 3. host zdalny bez ALLOW_REMOTE_PURGE
+[d0] Cel „thomas.proxy.rlwy.net" nie jest hostem lokalnym. Domyślnie ten skrypt działa wyłącznie na 127.0.0.1 / localhost / ::1 / 0.0.0.0. Zdalny host wymaga ALLOW_REMOTE_PURGE=1. STOP.
+EXIT=1
+
+### 4. host zdalny spoza listy dozwolonych
+[d0] Cel „obcy.example.com" nie jest na jawnej liście hostów zdalnych (thomas.proxy.rlwy.net, trolley.proxy.rlwy.net). Sama zmienna ALLOW_REMOTE_PURGE=1 nie wystarcza. STOP.
+EXIT=1
+
+### 5. brak --oczekiwany-host
+[d0] Brak --oczekiwany-host. Podaj fragment hosta bazy (np. 127.0.0.1). STOP.
+EXIT=1
+

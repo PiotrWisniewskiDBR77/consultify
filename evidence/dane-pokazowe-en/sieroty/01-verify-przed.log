@@ -1,0 +1,25 @@
+[d0] Tryb bez listy identyfikatorów (sieroty nie należą do żadnej organizacji).
+[d0] Tryb: verify · cel: 127.0.0.1:54418/consultify_kopia_d28
+[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…
+[d0] VERIFY --sieroty: 38715 wierszy-sierot w 45 tabelach (oczekiwane 0 po --sieroty-apply).
+      - organization_context_claims.organization_id: 34210
+      - organization_context_items.organization_id: 1522
+      - organization_context_snapshots.organization_id: 1434
+      - knowledge_doc_versions.organization_id: 222
+      - wave6_context_ledger.organization_id: 143
+      - ie_aggregate_state.organization_id: 123
+      - project_role_templates.organization_id: 120
+      - my_ideas.organization_id: 102
+      - ie_audit_events.organization_id: 81
+      - ie_command_receipts.organization_id: 80
+      - partner_commission_transactions.organization_id: 80
+      - ie_outbox_events.organization_id: 79
+      - radar_ranked_signals.organization_id: 54
+      - partner_attributions.organization_id: 48
+      - conversion_events.organization_id: 44
+      - document_studio_templates.organization_id: 44
+      - ie_aggregate_relations.organization_id: 39
+      - ai_chat_runs.organization_id: 31
+      - wave6_context_snapshots.organization_id: 29
+      - conversations.organization_id: 27
+[d0] VERIFY sierot: NIEZEROWE.
