@@ -182,6 +182,7 @@ import {
   resolveEffectiveAccess,
 } from '../../services/effectiveAccessService.js';
 import { ControlKpiReadModel } from '../../services/executionControl/controlKpiReadModel.js';
+import logger from '../../utils/Logger.js';
 
 /**
  * P15-K1 (DEC-421): komunikat domeny -> KOD REGULY dla ekranu.
@@ -7513,6 +7514,21 @@ export function createInitiativesExecutionRuntimeRouter(
       res.status(400).json({ error: { code: 'COMMAND_VALIDATION_FAILED' } });
       return;
     }
+    // POMIAR 09.09 (POPRAWKI-PO-TESCIE-1): ten handler zwracal 500 bez ani jednego
+    // sladu w logu — przyczyna ginela, a operator widzial „Operacja nie powiodla sie".
+    // Kod bledu na ekranie zostaje bez zmian (nie wypuszczamy szczegolow na zewnatrz),
+    // ale przyczyna MUSI byc do odczytania po stronie serwera.
+    logger.error('[initiatives-execution] runtime failed', {
+      method: _req.method,
+      path: _req.originalUrl,
+      correlationId: _req.header('X-Correlation-ID') ?? null,
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+      pgCode: (error as { code?: unknown } | null)?.code ?? null,
+      constraint: (error as { constraint?: unknown } | null)?.constraint ?? null,
+      detail: (error as { detail?: unknown } | null)?.detail ?? null,
+      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 6).join('\n') : null,
+    });
     res.status(500).json({ error: { code: 'INITIATIVES_EXECUTION_RUNTIME_FAILED' } });
   });
   return router;

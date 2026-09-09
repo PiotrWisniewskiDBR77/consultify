@@ -506,9 +506,27 @@ export type ZadanieKasowania = {
   glebokosc: number;
 };
 
+/**
+ * WARTOŚCI WZORCOWE — nie są sierotami, choć w `organizations` ich nie ma.
+ *
+ * POMIAR 09.09.2026 (kosztowny): `--sieroty-apply` skasował na stagingu i demo
+ * wiersz `ie_governance_policies ('*','PRODUCT','DEFAULT')` — bazową politykę
+ * produktu z migracji 932. Skutek: KAŻDA próba utworzenia inicjatywy kończyła się
+ * HTTP 500 `INITIATIVES_EXECUTION_RUNTIME_FAILED` („Product baseline is missing”).
+ * Razem z nią zeszły szablony systemowe (`__system__`), polityki globalne
+ * (`__global__`) i wersje dokumentów bez organizacji (pusty ciąg) — 319 wierszy
+ * konfiguracji produktu. Sierota to wiersz po USUNIĘTYM najemcy, a nie wiersz,
+ * który celowo nie należy do żadnego.
+ */
+export const ORGANIZACJE_WZORCOWE = ['*', '__system__', '__global__', ''] as const;
+
 export function predykatSieroty(tabela: string, kolumna: string): string {
   const k = `${qi(tabela)}.${qi(kolumna)}`;
-  return `${k} IS NOT NULL AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = ${k}::text)`;
+  const wzorcowe = ORGANIZACJE_WZORCOWE.map((v) => `'${v.replace(/'/g, "''")}'`).join(',');
+  return (
+    `${k} IS NOT NULL AND ${k}::text NOT IN (${wzorcowe}) ` +
+    `AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = ${k}::text)`
+  );
 }
 
 /**
