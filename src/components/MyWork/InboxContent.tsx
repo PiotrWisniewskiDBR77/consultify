@@ -113,6 +113,7 @@ import {
 } from '@/components/ui/ResizableTable';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { useInitiativeNames } from '@/hooks/useInitiativeNames';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import {
@@ -1353,6 +1354,15 @@ const PreviewPane: React.FC<{
     item.sourceEntityType === 'task' && item.linkedTaskId
       ? `/my-work?taskId=${encodeURIComponent(item.linkedTaskId)}`
       : undefined;
+  /* TEST-DANE D-06: nazwa zrodlowego zadania zamiast fragmentu UUID-a.
+     `canonical_inbox_items.title` to tytul zadania przepisany przy
+     materializacji (zmierzone na kopii bazy), wiec dla wiersza o zrodle
+     `task` mamy nazwe pod reka. Dla innych zrodel (gdyby kiedys mialy
+     `linkedTaskId`) zostaje identyfikator — lepszy niz nic. */
+  const sourceTaskLabel =
+    item.sourceEntityType === 'task' && item.title ? item.title : item.linkedTaskId;
+  const resolveInitiativeName = useInitiativeNames();
+  const initiativeLabel = item.initiativeId ? resolveInitiativeName(item.initiativeId) : null;
   const lineageUpdatedText = item.updatedAt
     ? formatRelativeTime(item.updatedAt, isPolish).text
     : undefined;
@@ -1779,6 +1789,13 @@ const PreviewPane: React.FC<{
                 <span className="text-slate-500 dark:text-slate-400 shrink-0">
                   {i18n.t('myWork.inboxContent.lineageSourceTask', 'Source task')}:
                 </span>
+                {/* TEST-DANE D-06: bylo `item.linkedTaskId.slice(0, 8)…`, czyli
+                    „541eaaf3…" — fragment identyfikatora zamiast nazwy. Wiersz
+                    skrzynki przepisuje TYTUL zrodlowego zadania do `title`
+                    w chwili materializacji (zmierzone w `canonical_inbox_items`),
+                    wiec nazwa jest na miejscu i nie wymaga ani jednego
+                    dodatkowego zapytania. Identyfikator zostaje w `title=`
+                    (podpowiedz) i w odnosniku — dla tych, ktorzy go potrzebuja. */}
                 {sourceTaskDeepLink ? (
                   <a
                     href={sourceTaskDeepLink}
@@ -1791,18 +1808,27 @@ const PreviewPane: React.FC<{
                     className="text-c-info hover:underline truncate"
                     title={item.linkedTaskId}
                   >
-                    {item.linkedTaskId.slice(0, 8)}…
+                    {sourceTaskLabel}
                   </a>
                 ) : (
-                  <span className="text-slate-700 dark:text-slate-300 truncate">
-                    {item.linkedTaskId}
+                  <span
+                    className="text-slate-700 dark:text-slate-300 truncate"
+                    title={item.linkedTaskId}
+                  >
+                    {sourceTaskLabel}
                   </span>
                 )}
               </div>
             ) : null}
 
+            {/* TEST-DANE D-06: te dwa pola staly w siatce dwukolumnowej
+                w panelu o szerokosci ~300 px, wiec wartosc — nie etykieta —
+                dostawala ~90 px i scinala sie do „Jam…" / „Nort…". Nazwisko
+                i nazwa organizacji sa dluzsze niz polowa panelu z zalozenia,
+                wiec dostaja caly wiersz; krotkie pola (Updated, Source status)
+                zostaja parami. */}
             {recipientLabel ? (
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="col-span-2 flex items-center gap-1.5 min-w-0">
                 <User size={12} className="text-slate-400 dark:text-slate-500 shrink-0" />
                 <span className="text-slate-500 dark:text-slate-400 shrink-0">
                   {i18n.t('myWork.inboxContent.lineageRecipient', 'Recipient')}:
@@ -1814,7 +1840,7 @@ const PreviewPane: React.FC<{
             ) : null}
 
             {organizationLabel ? (
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="col-span-2 flex items-center gap-1.5 min-w-0">
                 <span className="text-slate-500 dark:text-slate-400 shrink-0">
                   {i18n.t('myWork.inboxContent.lineageOrganization', 'Organization')}:
                 </span>
@@ -1845,13 +1871,23 @@ const PreviewPane: React.FC<{
               </div>
             ) : null}
 
-            {item.initiativeId ? (
+            {/* TEST-DANE D-06: bylo `{item.initiativeId}`, czyli pelny surowy
+                UUID rozlewajacy sie poza szerokosc panelu. Wiersz skrzynki
+                przenosi sam identyfikator (nazwy nie ma ani w kolumnie, ani
+                w odpowiedzi trasy v8), wiec nazwe rozwiazuje `useInitiativeNames`
+                — tak samo, jak nazwiska rozwiazuje `useOrganizationMemberNames`.
+                Gdy rejestr nie zna identyfikatora, wiersz sie NIE pokazuje:
+                pokazanie UUID-a jest wlasnie tym defektem. */}
+            {initiativeLabel ? (
               <div className="col-span-2 flex items-center gap-1.5 min-w-0">
                 <span className="text-slate-500 dark:text-slate-400 shrink-0">
                   {i18n.t('myWork.inboxContent.lineageInitiative', 'Initiative')}:
                 </span>
-                <span className="text-slate-700 dark:text-slate-300 truncate">
-                  {item.initiativeId}
+                <span
+                  className="text-slate-700 dark:text-slate-300 truncate"
+                  title={item.initiativeId}
+                >
+                  {initiativeLabel}
                 </span>
               </div>
             ) : null}
