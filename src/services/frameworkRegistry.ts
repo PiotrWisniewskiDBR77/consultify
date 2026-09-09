@@ -50,6 +50,18 @@ export interface FrameworkConfig {
    */
   status?: FrameworkStatus;
   legalNotice?: string;
+  /**
+   * TEST-DANE D-02 (09.09.2026): `description`/`legalNotice`/category names
+   * below were full Polish paragraphs hard-coded outside i18n, so an English
+   * account read Polish in Assessment -> Library. The shipped text is now
+   * English (the product default) and these keys let a consumer translate it
+   * at render time — `public/locales/{en,pl}/translation.json` carry both
+   * languages. Resolution deliberately does NOT happen here: this module is a
+   * static const evaluated once at import, so calling `i18n.t` in it would
+   * freeze the language of the first render.
+   */
+  legalNoticeKey?: string;
+  descriptionKey?: string;
   legalNoticeType?: 'educational' | 'proprietary' | 'open';
   dimensions: FrameworkDimension[];
   categories?: FrameworkCategory[];
@@ -58,6 +70,8 @@ export interface FrameworkConfig {
 export interface FrameworkCategory {
   id: string;
   name: string;
+  /** D-02: i18n key for `name`, resolved by the consumer (see FrameworkConfig). */
+  nameKey?: string;
   description?: string;
   dimensionIds: string[];
 }
@@ -71,7 +85,9 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     id: 'DRD',
     name: 'DRD',
     fullName: 'Digital Readiness Diagnosis',
-    description: '7-osiowa ocena dojrzałości cyfrowej oparta na metodologii Digital Pathfinder',
+    description:
+      'Seven-axis digital maturity assessment based on the Digital Pathfinder methodology',
+    descriptionKey: 'assessment.frameworks.drd.description',
     icon: 'Activity',
     color: 'purple',
     colorDark: 'primary-400',
@@ -96,7 +112,8 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.',
+      'SIRI (Smart Industry Readiness Index) is a tool developed by the Singapore Economic Development Board (EDB) in cooperation with TÜV SÜD. The SIRI structure is used in Consultify for educational purposes only, to learn the Industry 4.0 methodology. Official SIRI certification requires an accredited assessor.',
+    legalNoticeKey: 'assessment.frameworks.siri.legalNotice',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from siriStructure.ts
     categories: [
@@ -134,7 +151,8 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.',
+      'ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission under the Digital Innovation Hubs programme. Its use in Consultify is for educational purposes.',
+    legalNoticeKey: 'assessment.frameworks.adma.legalNotice',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from admaStructure.ts
     categories: [
@@ -163,7 +181,8 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
-      'CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultify służy celom edukacyjnym.',
+      'CMMI is a trademark of ISACA (formerly the CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. The Consultify implementation is for educational purposes.',
+    legalNoticeKey: 'assessment.frameworks.cmmi.legalNotice',
     legalNoticeType: 'educational',
     dimensions: [], // Loaded from cmmiStructure.ts
     categories: [
@@ -192,7 +211,8 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     id: 'LEAN',
     name: 'Lean 4.0',
     fullName: 'DBR77 Lean 4.0 Assessment',
-    description: 'Autorska metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj',
+    description: 'Proprietary DBR77 method: Measure -> Optimise -> Automate',
+    descriptionKey: 'assessment.frameworks.lean.description',
     icon: 'Workflow',
     color: 'cyan',
     colorDark: 'blue-400',
@@ -204,26 +224,30 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     supportsImport: false,
     supportsManualEntry: true,
     legalNotice:
-      'Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.',
+      'The DBR77 Lean 4.0 method (Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential.',
+    legalNoticeKey: 'assessment.frameworks.lean.legalNotice',
     legalNoticeType: 'proprietary',
     dimensions: [], // Loaded from dbr77LeanStructure.ts
     categories: [
       {
         id: 'MEASURE',
-        name: 'Pomierz',
-        description: 'Analiza stanu obecnego - procesy i stanowiska',
+        name: 'Measure',
+        nameKey: 'assessment.frameworks.lean.category.measure',
+        description: 'Current-state analysis - processes and workstations',
         dimensionIds: [],
       },
       {
         id: 'OPTIMIZE',
-        name: 'Zoptymalizuj',
-        description: 'Klasyczne metody Lean - eliminacja marnotrawstwa',
+        name: 'Optimise',
+        nameKey: 'assessment.frameworks.lean.category.optimise',
+        description: 'Classic Lean methods - waste elimination',
         dimensionIds: [],
       },
       {
         id: 'AUTOMATE',
-        name: 'Automatyzuj',
-        description: 'Audyt możliwości automatyzacji i AI',
+        name: 'Automate',
+        nameKey: 'assessment.frameworks.lean.category.automate',
+        description: 'Automation and AI opportunity audit',
         dimensionIds: [],
       },
     ],

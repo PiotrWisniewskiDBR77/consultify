@@ -1,0 +1,101 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	
+Smart Industry Readiness Index
+SIRI
+Planowane
+SZCZEGÓŁY
+~71 słów
+
+Singapurskie ramy dojrzałości Przemysłu 4.0 (SIRI).
+
+• Widok procesu, technologii i organizacji • Skala dojrzałości Przemysłu 4.0 • Kontekst edukacyjny metodyki
+
+Osie i obszary: • Process • Technology • Organization
+
+SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodyki Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.
+
+Właściwość	Wartość
+Obszar	Inteligentna produkcja
+Dostęp	Wiedza dostępna; uruchomienie wkrótce
+Warunki komercyjne	Nie skonfigurowano w katalogu
+POWIĄZANIA
+Brak powiązań

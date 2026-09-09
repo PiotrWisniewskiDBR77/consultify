@@ -14,6 +14,7 @@ const ROOT = process.env.ROOT || '/Users/piotrwisniewski/Developer/wt/poprawki-p
 const HASLO_PLIK = process.env.HASLO_PLIK || '/Users/piotrwisniewski/Developer/consultify-secrets/northwind-konta-STAGING.txt';
 const EMAIL = process.env.EMAIL || 'james.whitfield@northwind.example';
 const FAZA = process.argv[2] || 'przed';
+const JEZYK = process.env.JEZYK || 'en';
 const WYBOR = (process.argv[3] || '').split(',').map(s => s.trim()).filter(Boolean);
 
 function haslo() {
@@ -25,7 +26,7 @@ function haslo() {
 /** Scenariusze: id = katalog defektu, kroki = co kliknac po wejsciu na route. */
 const SCENARIUSZE = [
   { id: "D-01-ocena-nazwa", route: "/assessment?tab=processes" },
-  { id: 'D-02-ocena-library', route: '/assessment', tab: 'Library', wiersz: true },
+  { id: 'D-02-ocena-library', route: '/assessment?tab=library', wszystkieWiersze: true },
   { id: 'D-17-v9-overrides', route: '/my-work' },
   { id: 'D-06-mywork-podglad', route: '/my-work', wiersz: true },
   { id: 'D-08-execution-resources', route: '/execution', tab: 'Resources' },
@@ -66,11 +67,11 @@ async function main() {
   await page.fill('input[type="password"], input[name="password"]', haslo());
   await page.click('button[type="submit"]');
   await page.waitForTimeout(9000);
-  await page.evaluate(() => {
-    localStorage.setItem('i18nextLng', 'en');
+  await page.evaluate((jezyk) => {
+    localStorage.setItem('i18nextLng', jezyk);
     try { const u = JSON.parse(localStorage.getItem('user') || '{}'); if (u && u.id) localStorage.setItem(`consultify_onboarding_done:${u.id}`, '1'); } catch { /* brak uzytkownika */ }
     for (const k of ['demo_tour_skipped', 'demo_tour_completed', 'teresa_onboarding_dismissed', 'consultify_teresa_onboarding_seen']) localStorage.setItem(k, '1');
-  });
+  }, JEZYK);
   await ustawMotyw(page, 'light');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(4000);
@@ -89,6 +90,20 @@ async function main() {
         if (await el.isVisible({ timeout: 2500 }).catch(() => false)) { await el.click({ force: true }).catch(() => {}); await page.waitForTimeout(3000); }
         else console.log(`  ! brak zakladki ${s.tab} na ${s.route}`);
       }
+      if (s.wszystkieWiersze) {
+        // D-02: kazdy wiersz katalogu ma wlasna notke prawna — jeden zrzut
+        // pierwszego wiersza nie pokrywa rodziny piecu metodyk.
+        const n = await page.locator('tbody tr').count().catch(() => 0);
+        const zebrane = [];
+        for (let idx = 0; idx < n; idx += 1) {
+          await page.locator('tbody tr').nth(idx).click({ force: true }).catch(() => {});
+          await page.waitForTimeout(1500);
+          const txt = await page.evaluate(() => (document.body.innerText || '')).catch(() => '');
+          zebrane.push(`--- wiersz ${idx + 1} ---\n${txt}`);
+          if (idx === 0) await page.screenshot({ path: path.join(kat, `${motyw === 'light' ? 'jasny' : 'ciemny'}${JEZYK === 'en' ? '' : `-${JEZYK}`}.png`) }).catch(() => {});
+        }
+        fs.writeFileSync(path.join(kat, `${motyw === 'light' ? 'jasny' : 'ciemny'}${JEZYK === 'en' ? '' : `-${JEZYK}`}-wszystkie-wiersze.txt`), zebrane.join('\n\n'));
+      }
       if (s.wiersz) {
         const w = page.locator('tbody tr').first();
         if (await w.isVisible({ timeout: 3000 }).catch(() => false)) { await w.click({ force: true }).catch(() => {}); await page.waitForTimeout(3000); }
@@ -98,7 +113,8 @@ async function main() {
         const b = page.locator('button:has-text("New"), button:has-text("Create")').first();
         if (await b.isVisible({ timeout: 2500 }).catch(() => false)) { await b.click({ force: true }).catch(() => {}); await page.waitForTimeout(2500); }
       }
-      const plik = path.join(kat, `${motyw === 'light' ? 'jasny' : 'ciemny'}.png`);
+      const sufiks = JEZYK === 'en' ? '' : `-${JEZYK}`;
+      const plik = path.join(kat, `${motyw === 'light' ? 'jasny' : 'ciemny'}${sufiks}.png`);
       await page.screenshot({ path: plik }).catch(() => {});
       const tekst = await page.evaluate(() => (document.body.innerText || '').slice(0, 4000)).catch(() => '');
       fs.writeFileSync(plik.replace(/\.png$/, '.txt'), tekst);

@@ -68,6 +68,12 @@ export type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 interface Bilingual {
   pl: string;
   en: string;
+  /**
+   * D-02: optional i18n key. When present the value is resolved through
+   * `t(key, en)` at render time (English default straight from the shipped
+   * catalogue), so a translated string never has to be duplicated in code.
+   */
+  key?: string;
 }
 
 export interface MethodologyRow {
@@ -79,6 +85,8 @@ export interface MethodologyRow {
   accessCondition: Bilingual;
   whatYouGet: Bilingual[];
   legalNotice: string | null;
+  /** D-02: i18n key for `legalNotice` (see `Bilingual.key`). */
+  legalNoticeKey: string | null;
   axes: Bilingual[];
   questionCount: number | null;
   duration: null;
@@ -86,7 +94,7 @@ export interface MethodologyRow {
   status: 'active' | 'draft';
 }
 
-const bilingual = (value: string): Bilingual => ({ pl: value, en: value });
+const bilingual = (value: string, key?: string): Bilingual => ({ pl: value, en: value, key });
 const configuredAxes = (id: MethodologyId): Bilingual[] => {
   if (id === 'DRD') {
     return DRD_STRUCTURE.map((axis) => ({
@@ -94,7 +102,13 @@ const configuredAxes = (id: MethodologyId): Bilingual[] => {
       en: axis.name,
     }));
   }
-  return (FRAMEWORK_CONFIGS[id].categories ?? []).map((category) => bilingual(category.name));
+  // TEST-DANE D-02: the LEAN categories were named „Pomierz"/„Zoptymalizuj"/
+  // „Automatyzuj" in the registry, so an English account read Polish axis
+  // names here. The registry now ships English plus an i18n key; `key` is
+  // carried through so `tekstDwujezyczny` below can translate at render time.
+  return (FRAMEWORK_CONFIGS[id].categories ?? []).map((category) =>
+    bilingual(category.name, category.nameKey)
+  );
 };
 
 const QUESTION_COUNTS: Partial<Record<MethodologyId, number>> = {
@@ -122,6 +136,7 @@ export const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Dane wejściowe do raportu i inicjatyw', en: 'Report and initiative inputs' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.DRD.legalNotice ?? null,
+    legalNoticeKey: FRAMEWORK_CONFIGS.DRD.legalNoticeKey ?? null,
     axes: configuredAxes('DRD'),
     questionCount: QUESTION_COUNTS.DRD ?? null,
     duration: null,
@@ -150,6 +165,7 @@ export const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.SIRI.legalNotice ?? null,
+    legalNoticeKey: FRAMEWORK_CONFIGS.SIRI.legalNoticeKey ?? null,
     axes: configuredAxes('SIRI'),
     questionCount: QUESTION_COUNTS.SIRI ?? null,
     duration: null,
@@ -175,6 +191,7 @@ export const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.ADMA.legalNotice ?? null,
+    legalNoticeKey: FRAMEWORK_CONFIGS.ADMA.legalNoticeKey ?? null,
     axes: configuredAxes('ADMA'),
     questionCount: null,
     duration: null,
@@ -200,6 +217,7 @@ export const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.CMMI.legalNotice ?? null,
+    legalNoticeKey: FRAMEWORK_CONFIGS.CMMI.legalNoticeKey ?? null,
     axes: configuredAxes('CMMI'),
     questionCount: null,
     duration: null,
@@ -228,6 +246,7 @@ export const METHODOLOGY_CATALOG: MethodologyRow[] = [
       { pl: 'Kontekst szans automatyzacji i AI', en: 'Automation and AI opportunity context' },
     ],
     legalNotice: FRAMEWORK_CONFIGS.LEAN.legalNotice ?? null,
+    legalNoticeKey: FRAMEWORK_CONFIGS.LEAN.legalNoticeKey ?? null,
     axes: configuredAxes('LEAN'),
     questionCount: null,
     duration: null,
@@ -286,8 +305,22 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
   statusFilter = 'all',
 }) => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  /**
+   * TEST-DANE D-02 (09.09.2026): Library preview rendered full Polish
+   * paragraphs (ADMA/SIRI/CMMI/Lean legal notices, LEAN axis names) to an
+   * English account, because those strings were hard-coded in
+   * `src/services/frameworkRegistry.ts` outside i18n. The registry now ships
+   * English text plus an i18n key; resolution happens HERE, at render time,
+   * so switching the language re-renders the translated string instead of
+   * freezing whatever language was active at module import.
+   */
+  const tekstDwujezyczny = useCallback(
+    (value: Bilingual): string =>
+      value.key ? t(value.key, value.en) : isPolish ? value.pl : value.en,
+    [t, isPolish]
+  );
   const [startError, setStartError] = useState<string | null>(null);
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
@@ -668,11 +701,19 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
                   ],
                 }}
                 details={{
-                  text: `${isPolish ? item.description.pl : item.description.en}\n\n${item.whatYouGet
-                    .map((value) => `• ${isPolish ? value.pl : value.en}`)
+                  text: `${tekstDwujezyczny(item.description)}\n\n${item.whatYouGet
+                    .map((value) => `• ${tekstDwujezyczny(value)}`)
                     .join('\n')}\n\n${isPolish ? 'Osie i obszary' : 'Axes and areas'}:\n${item.axes
-                    .map((axis) => `• ${isPolish ? axis.pl : axis.en}`)
-                    .join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
+                    .map((axis) => `• ${tekstDwujezyczny(axis)}`)
+                    .join('\n')}${
+                    item.legalNotice
+                      ? `\n\n${
+                          item.legalNoticeKey
+                            ? t(item.legalNoticeKey, item.legalNotice)
+                            : item.legalNotice
+                        }`
+                      : ''
+                  }`,
                   /* ★ 2026-09-02 — było `showWordCount: false`. Kanon §7.3 pkt 3
                      mówi: licznik słów widoczny, gdy treść > 0. Wyłączenie go
                      TU i tylko tu sprawiało, że podgląd Biblioteki różnił się

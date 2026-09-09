@@ -10331,16 +10331,25 @@
         "description": "Kompleksowa diagnoza dojrzałości cyfrowej w 7 osiach transformacji (39 obszarów)"
       },
       "siri": {
-        "description": "Model gotowości Przemysłu 4.0 skupiony na procesie, technologii i organizacji"
+        "description": "Model gotowości Przemysłu 4.0 skupiony na procesie, technologii i organizacji",
+        "legalNotice": "SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodyki Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora."
       },
       "adma": {
-        "description": "Zaawansowany model oceny zdolności do transformacji cyfrowej"
+        "description": "Zaawansowany model oceny zdolności do transformacji cyfrowej",
+        "legalNotice": "ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez Komisję Europejską w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym."
       },
       "cmmi": {
-        "description": "Model doskonalenia procesów wytwarzania oprogramowania i produktów"
+        "description": "Model doskonalenia procesów wytwarzania oprogramowania i produktów",
+        "legalNotice": "CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraisera. Implementacja w Consultify służy celom edukacyjnym."
       },
       "lean": {
-        "description": "Zasady Lean w produkcji połączone z technologiami Przemysłu 4.0"
+        "description": "Zasady Lean w produkcji połączone z technologiami Przemysłu 4.0",
+        "legalNotice": "Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.",
+        "category": {
+          "measure": "Pomierz",
+          "optimise": "Zoptymalizuj",
+          "automate": "Automatyzuj"
+        }
       }
     },
     "dbr77": {
