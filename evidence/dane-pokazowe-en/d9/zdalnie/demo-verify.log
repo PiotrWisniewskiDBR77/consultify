@@ -1,0 +1,30 @@
+[d9] cel:  postgresql://postgres:2evh7mlls1n00vmwhzm180ner3xndjo3@trolley.proxy.rlwy.net:28146/railway
+[d9] tryb: verify
+[d9] organizacja: Northwind Manufacturing Ltd.
+[verify] OK   BRAK 1 — industry ze slownika INDUSTRIES                   prog = 'Manufacturing'            rzeczywiste=1
+[verify] OK   BRAK 1 — industry_code niepusty                            prog >= 1 znak                    rzeczywiste=1
+[verify] OK   BRAK 1 — strategic_priorities                              prog >= 3                         rzeczywiste=4
+[verify] OK   BRAK 1 — technology_stack                                  prog >= 3                         rzeczywiste=5
+[verify] OK   BRAK 1 — primary_markets                                   prog >= 2                         rzeczywiste=4
+[verify] OK   BRAK 1 — digital_maturity_overall                          prog > 0 (skala 1-7)              rzeczywiste=1
+[verify] OK   BRAK 1 — profile_completeness (formula frontu, 15 pol)     prog = 100 %                      rzeczywiste=100
+[verify] OK   BRAK 2 — przydzialy Northwind                              prog >= 3                         rzeczywiste=3
+[verify] OK   BRAK 2 — przydzial w statusie assigned                     prog >= 1                         rzeczywiste=1
+[verify] OK   BRAK 2 — przydzial w statusie submitted                    prog >= 1                         rzeczywiste=1
+[verify] OK   BRAK 2 — przydzial w statusie approved                     prog >= 1                         rzeczywiste=1
+[verify] OK   BRAK 2 — czlonkowie przydzialow                            prog >= 3                         rzeczywiste=7
+[verify] OK   BRAK 2 — Inbox wlasciciela (warunek getMyAssignments)      prog >= 1                         rzeczywiste=3
+[verify] OK   BRAK 3 — migawki przegladu w statusie published            prog >= 1                         rzeczywiste=1
+[verify] OK   BRAK 3 — migawka ma zmaterializowany snapshot_payload.items prog >= 1 pozycja                 rzeczywiste=8
+[verify] OK   BRAK 4 — tygodnie z popytem w oknie 8 tygodni              prog >= 6 z 8                     rzeczywiste=8
+[verify] OK   BRAK 4 — wykorzystanie w oknie 8 tygodni                   prog > 40 %                       rzeczywiste=45
+[verify] OK   BRAK 4 — osoby z zalegloscia (backlog > 0 h)               prog >= 3                         rzeczywiste=6
+[verify] OK   BRAK 5 — LEVEL: inicjatywy z current_stage                 prog = 13 (wszystkie)             rzeczywiste=13
+[verify] OK   BRAK 5 — VARIANCE: inicjatywy z baseline_end_date          prog = 13 (wszystkie)             rzeczywiste=13
+[verify] OK   BRAK 5 — AREA/AXIS: inicjatywy z area i axis               prog = 13 (wszystkie)             rzeczywiste=13
+[verify] OK   BRAK 5 — FORMAT: artefakty z exportFormat                  prog = 7 (wszystkie nie-szablony) rzeczywiste=7
+[verify] OK   BRAK 5 — SOURCE: artefakty z origin_runtime                prog = 7 (wszystkie nie-szablony) rzeczywiste=7
+[verify] OK   BRAK 5 — raport KPI: pozycje z AREA i TYPE                 prog = 8 (wszystkie)              rzeczywiste=8
+[verify] OK   D9 — polskie znaki w danych dosianych przez ten etap       prog = 0                          rzeczywiste=0
+
+[verify] PASS: wszystkie 25 asercji przeszly (5/5 kontroli).
