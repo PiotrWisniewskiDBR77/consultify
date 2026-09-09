@@ -1,0 +1,426 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Materials
+Template Library
+Data
+Model
+1
+James Whitfield
+JW
+All
+Documents
+Presentations
+Sheets
+Template Library
+Provenance and rights
+Status
+New template
+Template creation lands in wave 2
+All formats
+90
+Reports
+77
+Sheets
+0
+Presentations
+13
+All sources
+90
+Personal
+0
+Application
+90
+Organization
+0
+Unknown
+0
+Use template
+Preview
+[System] business case (EN)
+
+Economic justification with assumptions, scenarios, ROI, sensitivity.
+
+Report
+·
+9 sections
+·
+Application
+Use template
+Preview
+[System] board report (EN)
+
+Board-level report: executive summary, strategic decisions, risks.
+
+Report
+·
+7 sections
+·
+Application
+Use template
+Preview
+[System] decision memo (EN)
+
+Drive a single named decision with options, recommendation and risks.
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Assessment Summary
+
+Evidence-governed assessment readout linking maturity scores and confidence to gaps, root causes, recommendations and a sequenced transformation roadmap.
+
+Presentation
+·
+9 slides
+·
+Application
+Use template
+Preview
+Valuation Pack
+
+Investor-grade valuation decision pack with reconciled financials, methodology, scenario sensitivity, comparable evidence, risk and explicit transaction next steps.
+
+Presentation
+·
+9 slides
+·
+Application
+Use template
+Preview
+Steering Committee Update
+
+Decision-led steering deck with reconciled performance, value, milestones, dependencies, residual risk and explicit committee asks.
+
+Presentation
+·
+8 slides
+·
+Application
+Use template
+Preview
+Results - KPI Performance Review
+LEGACY
+
+KPI performance review report with deviation cases and action plan (R1).
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+PMO Weekly
+LEGACY
+
+Raport operacyjny PMO: zadania on-time/late, obciążenia zespołu (capacity/overload) i cycle-time per status inicjatyw (Observability).
+
+Report
+·
+4 sections
+·
+Application
+Use template
+Preview
+Raport Steering
+LEGACY
+
+Pełniejszy przegląd dla komitetu sterującego: 3 osie per inicjatywa, ryzyka otwarte (risk_register) i zmiany zakresu z ostatnich 30 dni (scope_change_log).
+
+Report
+·
+4 sections
+·
+Application
+Use template
+Preview
+Sponsor One-Pager
+LEGACY
+
+1 strona dla sponsora: agregat 3 osi (czas × zadania × wartość, z rozbiciem D12 na wartość finansową i KPI operacyjny), top 3 alerty (overdue/blocked) i decyzje czekające na akceptację.
+
+Report
+·
+4 sections
+·
+Application
+Use template
+Preview
+KPI Review Report
+LEGACY
+
+Default template for scheduled/ad-hoc KPI review reports promoted from Results KPI snapshots.
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Cotygodniowy status PMO (PMO Weekly Status)
+LEGACY
+
+Rytmiczny raport operacyjny zespołu/PMO: podsumowanie, zrealizowane, w toku, blokery, plan na następny tydzień. Do cotygodniowej synchronizacji i śladu decyzyjnego.
+
+Report
+·
+5 sections
+·
+Application
+Use template
+Preview
+Streszczenie wykonawcze (Executive Summary)
+LEGACY
+
+Samodzielne streszczenie w piramidzie Minto: główny wniosek na górze, argumenty wspierające, dowody, implikacje i rekomendacja. Do otwierania każdego większego raportu.
+
+Report
+·
+5 sections
+·
+Application
+Use template
+Preview
+Uzasadnienie biznesowe (Business Case)
+LEGACY
+
+Dokument decyzyjny inwestycji: problem, rozważane opcje, analiza kosztów i korzyści (NPV/ROI), ryzyka i rekomendacja. Standard dla bramek finansowania inicjatyw.
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Raport diagnostyczny DRD (Diagnostic Report)
+LEGACY
+
+Ustrukturyzowany raport diagnostyczny w układzie DRD: kontekst → metodyka → ustalenia → analiza luk → rekomendacje → roadmapa. Rdzeń doradztwa: od faktów, przez wnioski, do planu działania.
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Aktualizacja dla komitetu sterującego (Steering Committee Update)
+LEGACY
+
+Pełny brief dla komitetu sterującego: streszczenie wykonawcze, status RAG w wymiarach, kamienie i prognoza, ryzyka, decyzje wymagane. Standard PMBOK/PRINCE2 dla przeglądów zarządczych.
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Jednostronicowy raport dla sponsora (Sponsor One-Pager)
+LEGACY
+
+Zwięzły, jednostronicowy status dla sponsora projektu — RAG, postęp vs plan, decyzje i eskalacje. Używaj między komitetami sterującymi, gdy sponsor potrzebuje szybkiego obrazu i jasnego "o co proszę".
+
+Report
+·
+5 sections
+·
+Application
+Use template
+Preview
+Deck raportu końcowego (Final Report Deck)
+
+Prezentacja zamknięcia projektu: cele vs osiągnięte wyniki, kluczowe wnioski, rekomendacje na przyszłość i utrzymanie korzyści. Domyka narrację i przekazuje wartość.
+
+Presentation
+·
+8 slides
+·
+Application
+Use template
+Preview
+Przegląd komitetu sterującego (Steering Review)
+
+Deck na komitet sterujący: status RAG i KPI, kamienie i prognoza, ryzyka i decyzje wymagane. Format zarządczego przeglądu portfela/projektu.
+
+Presentation
+·
+8 slides
+·
+Application
+Use template
+Preview
+Deck rekomendacji Minto (Recommendation Deck)
+
+Prezentacja rekomendacji w piramidzie Minto: rekomendacja na górze, argumenty wspierające, dowody, rozważane opcje, plan wdrożenia i decyzja. Do przekonania decydentów.
+
+Presentation
+·
+7 slides
+·
+Application
+Use template
+Preview
+Prezentacja ustaleń SCR (Findings Readout)
+
+Odczyt ustaleń w strukturze Situation–Complication–Resolution: sytuacja, komplikacja, kluczowe ustalenia, implikacje, rekomendacja. Klasyczny format prezentacji wyników diagnozy.
+
+Presentation
+·
+7 slides
+·
+Application
+Use template
+Preview
+Deck otwarcia projektu (Kickoff Deck)
+
+Prezentacja rozpoczęcia projektu: cel, zakres, zespół, plan i zasady współpracy. Ustawia wspólne rozumienie i mandat na starcie.
+
+Presentation
+·
+8 slides
+·
+Application
+Use template
+Preview
+Finance — Sekcja finansowa raportu
+LEGACY
+
+Sekcja finansowa: wskaźniki Z111 (financeRatioFamilyCatalog, 24/5 rodzin) + reconcile R1-R8 (shadow, czytane nie przeliczane) + koszyk EV (valuationBasketService, football-field). Deterministyczna — zero liczb z LLM. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Report
+·
+5 sections
+·
+Application
+Use template
+Preview
+Program — Raport 3 osi (czas × zadania × wartość)
+LEGACY
+
+Flagowy raport wykonawczy PM: T (earned-schedule) × Z (EV/BAC) × W (value_ledger banked/target). Wzorzec McKinsey Wave. Kontrakt F5 (_KONCEPT_RDZEN §4).
+
+Report
+·
+6 sections
+·
+Application
+Use template
+Preview
+Raport statusowy
+LEGACY
+
+Okresowy raport postępu projektu dla sponsora. Sekcje: streszczenie statusu, zakres, postęp, ryzyka, następne kroki.
+
+Report
+·
+5 sections
+·
+Application
+Use template
+Preview
+Investor pitch
+
+Pitch inwestorski: problem→rozwiązanie→trakcja→ask. Układ: okładka, teza, problem/rynek, rozwiązanie, model+trakcja, plan, ask.
+
+Presentation
+·
+7 slides
+·
+Application
+Use template
+Preview
+Executive memo
+LEGACY
+
+Zwięzłe memo decyzyjne dla zarządu. Sekcje: kontekst, problem, opcje, rekomendacja.
+
+Report
+·
+4 sections
+·
+Application
+Use template
+Preview
+Raport audytowy
+LEGACY
+
+Ustrukturyzowany raport z audytu organizacyjnego lub procesowego. Sekcje: streszczenie, metodologia, wyniki, rekomendacje.
+
+Report
+·
+4 sections
+·
+Application
+Use template
+Preview
+Board deck
+
+Prezentacja dla zarządu lub rady nadzorczej. Układ: okładka, agenda, kontekst, wyniki, plan, Q&A.
+
+Presentation
+·
+6 slides
+·
+Application
+Use template
+Preview
+Diagnostic deck
+
+Diagnoza organizacji lub procesu. Układ: teza, dane, analiza, wnioski, rekomendacje.
+
+Presentation
+·
+6 slides
+·
+Application
+Use template
+Preview
+[System] client final report (EN)
+
+Final client report: scope, methodology, findings, recommendations, roadmap.
+
+Report
+·
+8 sections
+·
+Application
+Use template
+Preview
+[System] client final report (PL)
+
+Finalny raport dla klienta: zakres, metodologia, wnioski, rekomendacje, roadmapa.
+
+Report
+·
+8 sections
+·
+Application
+Use template
+Preview
+[System] internal policy document (EN)
+
+Internal policy: scope, applicability, rules, enforcement, exceptions.
+
+Report
+·
+7 sections
+·
+Application
+Use template
+Preview
+[System] internal policy document (PL)
+
+Polityka wewnętrzna: zakres, zastosowanie, zas

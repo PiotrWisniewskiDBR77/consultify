@@ -1,0 +1,73 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Materials
+Sheets
+Data
+Model
+1
+James Whitfield
+JW
+All
+Documents
+Presentations
+Sheets
+Template Library
+Status
+Visibility
+New sheet
+All
+1
+Draft
+0
+Ready
+1
+	
+PRESENTATION
+	
+TYPE
+	
+FORMAT
+	
+STATUS
+	
+OWNER
+	
+VISIBILITY
+	
+SOURCE
+	
+REVIEW
+	
+EXPORTS
+	
+DATE
+	
+
+	
+Scrap Cost Model
+	
+Sheet (Model)
+	
+XLSX
+	
+Ready
+	
+Thomas Baker
+	
+Organization
+	
+—
+	
+—
+	
+XLSX
+	
+Sep 8, 2026
+	
+AI bundle — generation history

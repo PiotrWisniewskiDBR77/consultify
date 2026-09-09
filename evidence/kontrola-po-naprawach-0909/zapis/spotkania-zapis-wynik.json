@@ -1,0 +1,25 @@
+{
+ "modul": "spotkania",
+ "znacznik": "KONTROLA-mtuiuqxz",
+ "kroki": [
+  {
+   "krok": "spotkania/root",
+   "opis": "wejście",
+   "zapisy": [],
+   "bledy": [],
+   "wierszy": 2
+  },
+  {
+   "krok": "spotkania/utworz",
+   "opis": "utworzenie spotkania",
+   "zapisy": [],
+   "bledy": [],
+   "maForm": false,
+   "naLiscie": 0,
+   "wierszy": 2
+  }
+ ],
+ "konsola": [],
+ "siec4xx5xx": [],
+ "wszystkieZapisy": []
+}

@@ -1,0 +1,18 @@
+{
+ "modul": "audyty",
+ "znacznik": "KONTROLA-mtuizcex",
+ "kroki": [
+  {
+   "krok": "audyty/root",
+   "opis": "stan CTA",
+   "zapisy": [],
+   "bledy": [],
+   "jest": true,
+   "wygaszony": true,
+   "podpis": "Frozen until wave 2: uploading audit assumptions and the question generator."
+  }
+ ],
+ "konsola": [],
+ "siec4xx5xx": [],
+ "wszystkieZapisy": []
+}

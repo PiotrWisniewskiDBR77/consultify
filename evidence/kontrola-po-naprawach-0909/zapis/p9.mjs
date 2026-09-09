@@ -1,0 +1,32 @@
+import { otworz, zaloguj, zrzut, nowyLog, BASE } from '/Users/piotrwisniewski/Developer/wt/kontrola-po-naprawach/scripts/dev/kontrola-0909-wspolne.mjs';
+const Z='KONTROLA-mtuirqqp';
+const log=nowyLog(); const {browser,page}=await otworz(log);
+page.on('dialog',d=>d.accept().catch(()=>{}));
+await zaloguj(page);
+const net=()=>log.siec.filter(s=>['POST','PUT','PATCH','DELETE'].includes(s.metoda)&&!/voice-event|auth\/login|materialize/.test(s.url)).map(s=>`${s.status} ${s.metoda} ${s.url}`);
+let b=0; const nowe=()=>{const a=net().slice(b); b=net().length; return a;};
+await page.goto(`${BASE}/execution?tab=work`,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(9000);
+const w=page.locator(`tbody tr:has-text("${Z}")`).first();
+await w.locator('button[aria-label*="Row actions"]').first().click({force:true}); await page.waitForTimeout(1800);
+await page.locator('[role="menuitem"]:has-text("Open task")').first().click({force:true}); await page.waitForTimeout(9000);
+await page.getByRole('button',{name:/^Edit$/}).first().click({force:true}).catch(e=>console.log('Edit:',String(e).slice(0,60)));
+await page.waitForTimeout(4000);
+await zrzut(page,'realizacja-27-tryb-edycji','zapis');
+const pola=await page.evaluate(()=>[...document.querySelectorAll('input,textarea,[contenteditable="true"]')].map(i=>({typ:i.tagName,aria:i.getAttribute('aria-label'),ph:i.placeholder||'',val:(i.value||i.innerText||'').slice(0,40)})).slice(0,10));
+console.log('POLA:',JSON.stringify(pola));
+const t=page.locator('input[type="text"], [contenteditable="true"]').first();
+if (await t.isVisible({timeout:4000}).catch(()=>false)) {
+  await t.click({force:true});
+  await page.keyboard.press('Control+a').catch(()=>{}); await page.keyboard.press('Meta+a').catch(()=>{});
+  await page.keyboard.type(`${Z} task EDYTOWANE`);
+  await page.waitForTimeout(2500);
+  const zap=page.getByRole('button',{name:/^(Save|Zapisz|Done|Save changes)$/}).first();
+  console.log('przycisk zapisu:', await zap.isVisible({timeout:2500}).catch(()=>false));
+  if (await zap.isVisible({timeout:1500}).catch(()=>false)) await zap.click({force:true});
+  await page.waitForTimeout(7000);
+}
+await zrzut(page,'realizacja-28-po-edycji','zapis');
+console.log('EDYCJA zapisy:', nowe().join(' | ')||'brak');
+console.log('4xx5xx:', [...new Set(log.siec.filter(s=>s.status>=400).map(s=>`${s.status} ${s.metoda} ${s.url.replace(/[0-9a-f-]{20,}/g,'<id>')}`))].join(' | ')||'brak');
+console.log('konsola:', log.konsola.length, log.konsola.slice(0,3));
+await browser.close();

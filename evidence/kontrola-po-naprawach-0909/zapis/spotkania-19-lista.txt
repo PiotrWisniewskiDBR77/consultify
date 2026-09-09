@@ -1,0 +1,78 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Meeting
+Data
+Model
+1
+James Whitfield
+JW
+Meetings
+Shared workspace
+New meeting
+All
+3
+Upcoming
+1
+Past — needs update
+0
+Needs follow-up
+0
+Completed
+2
+Operator brief
+	
+MEETING
+	
+WHEN
+	
+ATTENDEES
+	
+STATUS
+	
+FOLLOW-UPS
+	
+
+	
+Weekly PMO Review
+Leeds — Meeting Room 2 / Teams
+	
+Sep 2, 2026, 11:00 AM
+	
+4
+	
+Completed
+	
+0
+	
+
+	
+Steering Committee
+Leeds — Boardroom / Teams
+	
+Sep 4, 2026, 04:00 PM
+	
+4
+	
+Completed
+	
+0
+	
+
+	
+KONTROLA-spot3 meeting
+No location
+	
+Oct 12, 2026, 10:00 AM
+	
+1
+	
+Scheduled
+	
+0
+	
