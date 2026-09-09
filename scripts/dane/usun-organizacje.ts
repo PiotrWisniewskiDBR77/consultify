@@ -491,6 +491,163 @@ export async function zbierzSieroty(
   return out;
 }
 
+/**
+ * Zadanie kasowania: jedna tabela + pełny warunek WHERE.
+ * Kolumny w predykacie są KWALIFIKOWANE nazwą tabeli, żeby zagnieżdżone
+ * podzapytania dziecka nie złapały przypadkiem kolumny o tej samej nazwie
+ * z innego poziomu.
+ */
+export type ZadanieKasowania = {
+  tabela: string;
+  kolumna: string | null;
+  predykat: string;
+  skad: 'sierota' | 'dziecko';
+  rodzic?: string;
+  glebokosc: number;
+};
+
+export function predykatSieroty(tabela: string, kolumna: string): string {
+  const k = `${qi(tabela)}.${qi(kolumna)}`;
+  return `${k} IS NOT NULL AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = ${k}::text)`;
+}
+
+/**
+ * Tabele-dzieci, które ZABLOKUJĄ usunięcie wiersza z `tabela`: klucz obcy
+ * `NO ACTION` (`a`) albo `RESTRICT` (`r`). `CASCADE` i `SET NULL` nie blokują —
+ * te baza obsłuży sama (i właśnie one produkują wiersze POZA manifestem).
+ *
+ * Klucze wielokolumnowe są pomijane i zgłaszane osobno: sklejanie predykatu dla
+ * FK złożonego wymaga `(a,b) IN (SELECT …)`, a zgadywanie tu byłoby kasowaniem
+ * na wyczucie.
+ */
+export async function dzieciBlokujace(
+  c: PoolClient,
+  tabela: string
+): Promise<{ dzieci: Array<{ dziecko: string; kolDziecka: string; kolRodzica: string }>; zlozone: string[] }> {
+  const r = await c.query<{ dziecko: string; kol_dziecka: string; kol_rodzica: string; szer: number }>(
+    `SELECT src.relname AS dziecko, sa.attname AS kol_dziecka, ta.attname AS kol_rodzica,
+            array_length(con.conkey, 1) AS szer
+       FROM pg_constraint con
+       JOIN pg_class src ON src.oid = con.conrelid
+       JOIN pg_class tgt ON tgt.oid = con.confrelid
+       JOIN pg_namespace ns ON ns.oid = src.relnamespace AND ns.nspname = 'public'
+       JOIN pg_attribute sa ON sa.attrelid = src.oid AND sa.attnum = con.conkey[1]
+       JOIN pg_attribute ta ON ta.attrelid = tgt.oid AND ta.attnum = con.confkey[1]
+      WHERE con.contype = 'f' AND tgt.relname = $1 AND con.confdeltype IN ('a', 'r')
+      ORDER BY 1, 2`,
+    [tabela]
+  );
+  const dzieci: Array<{ dziecko: string; kolDziecka: string; kolRodzica: string }> = [];
+  const zlozone: string[] = [];
+  for (const x of r.rows) {
+    if (Number(x.szer) !== 1) {
+      zlozone.push(`${x.dziecko} → ${tabela} (FK wielokolumnowy)`);
+      continue;
+    }
+    dzieci.push({ dziecko: x.dziecko, kolDziecka: x.kol_dziecka, kolRodzica: x.kol_rodzica });
+  }
+  return { dzieci, zlozone };
+}
+
+/**
+ * DOMKNIĘCIE PO DZIECIACH.
+ *
+ * Sierota potrafi mieć własne dzieci przez FK `NO ACTION` w tabeli, która sama
+ * żadnego wskaźnika na organizację nie ma (zmierzone na kopii 2026-09-09:
+ * `ai_chat_runs` → `ai_chat_run_events`, `teresa_proposals` → `teresa_audit_log`).
+ * Bez domknięcia pętla zbieżna nie ma jak ruszyć — dziecka nikt nie kasuje,
+ * więc rodzic odmawia w każdym przebiegu i CAŁA transakcja leci do wycofania.
+ *
+ * Dzieci wchodzą do manifestu na równi z sierotami, więc rollback je przywróci.
+ * Wiersze zdejmowane przez `CASCADE` nadal zostają poza manifestem — to jest
+ * granica opisana w D0-RAPORT.md §5 i tego domknięcie nie zmienia.
+ */
+export async function domknijDzieci(
+  c: PoolClient,
+  bazowe: ZadanieKasowania[],
+  maxGlebokosc = 5
+): Promise<{ zadania: ZadanieKasowania[]; pominiete: string[] }> {
+  const zadania: ZadanieKasowania[] = [...bazowe];
+  const widziane = new Set(bazowe.map((z) => `${z.tabela}::${z.predykat}`));
+  const pominiete: string[] = [];
+  let front = [...bazowe];
+
+  for (let g = 1; g <= maxGlebokosc && front.length; g++) {
+    const nastepny: ZadanieKasowania[] = [];
+    for (const rodzic of front) {
+      // eslint-disable-next-line no-await-in-loop
+      const { dzieci, zlozone } = await dzieciBlokujace(c, rodzic.tabela);
+      pominiete.push(...zlozone);
+      for (const d of dzieci) {
+        if (d.dziecko === rodzic.tabela) {
+          // Tabela wskazująca sama na siebie: przy `NO ACTION` predykat dziecka
+          // byłby tym samym zbiorem co rodzica i pętla by się zapętliła.
+          pominiete.push(`${d.dziecko} → ${rodzic.tabela} (FK na samą siebie)`);
+          continue;
+        }
+        const predykat =
+          `${qi(d.dziecko)}.${qi(d.kolDziecka)} IN (` +
+          `SELECT ${qi(rodzic.tabela)}.${qi(d.kolRodzica)} FROM ${qi(rodzic.tabela)} WHERE ${rodzic.predykat})`;
+        const klucz = `${d.dziecko}::${predykat}`;
+        if (widziane.has(klucz)) continue;
+        widziane.add(klucz);
+        const z: ZadanieKasowania = {
+          tabela: d.dziecko,
+          kolumna: d.kolDziecka,
+          predykat,
+          skad: 'dziecko',
+          rodzic: rodzic.tabela,
+          glebokosc: g,
+        };
+        zadania.push(z);
+        nastepny.push(z);
+      }
+    }
+    front = nastepny;
+    if (g === maxGlebokosc && front.length)
+      pominiete.push(`osiągnięto limit głębokości ${maxGlebokosc}; ${front.length} tabel niezbadanych`);
+  }
+  return { zadania, pominiete };
+}
+
+/** Liczy wiersze objęte zadaniem. Zero = zadanie zbędne, odsiewamy je przed kasowaniem. */
+export async function policzZadania(c: PoolClient, zadania: ZadanieKasowania[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const z of zadania) {
+    // eslint-disable-next-line no-await-in-loop
+    const r = await c.query<{ n: string }>(
+      `SELECT count(*)::bigint AS n FROM ${qi(z.tabela)} WHERE ${z.predykat}`
+    );
+    out.set(`${z.tabela}::${z.predykat}`, Number(r.rows[0]?.n ?? 0));
+  }
+  return out;
+}
+
+/** Snapshot wierszy objętych zadaniami, deduplikowany w obrębie tabeli. */
+export async function zbierzZadania(
+  c: PoolClient,
+  zadania: ZadanieKasowania[]
+): Promise<Record<string, Record<string, unknown>[]>> {
+  const out: Record<string, Record<string, unknown>[]> = {};
+  const widziane = new Map<string, Set<string>>();
+  for (const z of zadania) {
+    // eslint-disable-next-line no-await-in-loop
+    const r = await c.query(`SELECT * FROM ${qi(z.tabela)} WHERE ${z.predykat}`);
+    if (!r.rows.length) continue;
+    const klucze = widziane.get(z.tabela) ?? new Set<string>();
+    const lista = out[z.tabela] ?? [];
+    for (const w of r.rows as Record<string, unknown>[]) {
+      const klucz = JSON.stringify(w);
+      if (klucze.has(klucz)) continue;
+      klucze.add(klucz);
+      lista.push(w);
+    }
+    widziane.set(z.tabela, klucze);
+    out[z.tabela] = lista;
+  }
+  return out;
+}
+
 // ============================================================================
 // 7. Manifest — snapshot „przed” i podstawa rollbacku
 // ============================================================================
@@ -858,12 +1015,46 @@ async function trybSierotyApply(c: PoolClient, cel: string, opcje: Opcje) {
     console.log(`      ${String(i + 1).padStart(3)}. ${t.tabela}.${t.kolumna}: ${t.wierszy}`);
   });
 
+  // --- domknięcie po dzieciach ------------------------------------------------
+  const bazowe: ZadanieKasowania[] = przed.map((t) => ({
+    tabela: t.tabela,
+    kolumna: t.kolumna,
+    predykat: predykatSieroty(t.tabela, t.kolumna),
+    skad: 'sierota' as const,
+    glebokosc: 0,
+  }));
+  const { zadania: wszystkie, pominiete } = await domknijDzieci(c, bazowe);
+  const liczby = await policzZadania(c, wszystkie);
+  const zadania = wszystkie.filter((z) => (liczby.get(`${z.tabela}::${z.predykat}`) ?? 0) > 0);
+  const dzieci = zadania.filter((z) => z.skad === 'dziecko');
+  const sumaDzieci = dzieci.reduce((s, z) => s + (liczby.get(`${z.tabela}::${z.predykat}`) ?? 0), 0);
+
+  if (dzieci.length) {
+    console.log(
+      `\n[d0] DOMKNIĘCIE PO DZIECIACH: ${sumaDzieci} wierszy w ${dzieci.length} tabelach BEZ wskaźnika na ` +
+        'organizację, trzymanych przez FK NO ACTION/RESTRICT. Bez nich rodzic nie da się skasować.'
+    );
+    dzieci.forEach((z, i) =>
+      console.log(
+        `      ${String(i + 1).padStart(3)}. ${z.tabela}.${z.kolumna} ← ${z.rodzic} (gł. ${z.glebokosc}): ` +
+          `${liczby.get(`${z.tabela}::${z.predykat}`) ?? 0}`
+      )
+    );
+    console.log('[d0] Te wiersze WCHODZĄ do manifestu — rollback je przywróci.');
+  } else {
+    console.log('\n[d0] DOMKNIĘCIE PO DZIECIACH: brak — żadna sierota nie ma dzieci na FK NO ACTION/RESTRICT.');
+  }
+  if (pominiete.length) {
+    console.log('[d0] POMINIĘTE w domknięciu (skrypt nie zgaduje — jeśli zablokują kasowanie, zobaczysz je niżej):');
+    pominiete.forEach((p) => console.log(`      - ${p}`));
+  }
+
   const sumaBazyPrzed = await sumaWierszyBazy(c);
   console.log(`[d0] Suma wierszy CAŁEJ bazy PRZED: ${sumaBazyPrzed}.`);
 
   // Manifest powstaje PRZED transakcją i PRZED pierwszym DELETE. Gdyby powstawał
   // po kasowaniu, awaria w połowie zostawiłaby operację bez ścieżki powrotu.
-  const wiersze = await zbierzSieroty(c, przed);
+  const wiersze = await zbierzZadania(c, zadania);
   const wierszyWManifescie = Object.values(wiersze).reduce((s, x) => s + x.length, 0);
   const manifest: Manifest = {
     wersja: 1,
@@ -873,104 +1064,130 @@ async function trybSierotyApply(c: PoolClient, cel: string, opcje: Opcje) {
     cel,
     organizacje: [],
     wiersze,
-    kolejnoscKasowania: przed.map((t) => t.tabela),
+    kolejnoscKasowania: zadania.map((z) => z.tabela),
     sieroty: przed,
     sumaWierszyBazyPrzed: sumaBazyPrzed,
   };
   const sciezkaManifestu = zapiszManifest(manifest, opcje.katalogManifestu || undefined);
   console.log(`[d0] Manifest „przed” zapisany: ${sciezkaManifestu} (${wierszyWManifescie} wierszy).`);
-  if (wierszyWManifescie !== sumaPrzed)
+  const oczekiwane = sumaPrzed + sumaDzieci;
+  if (wierszyWManifescie !== oczekiwane)
     console.log(
-      `[d0] UWAGA: manifest ma ${wierszyWManifescie} wierszy przy ${sumaPrzed} policzonych — ` +
-        'różnica to wiersze będące sierotą po DWÓCH kolumnach naraz (zdeduplikowane).'
+      `[d0] UWAGA: manifest ma ${wierszyWManifescie} wierszy przy ${oczekiwane} policzonych ` +
+        `(${sumaPrzed} sierot + ${sumaDzieci} dzieci) — różnica to wiersze złapane przez dwa zadania naraz ` +
+        '(np. sierota po DWÓCH kolumnach), zdeduplikowane.'
     );
   console.log(
-    '[d0] GRANICA ROLLBACKU: manifest obejmuje wyłącznie wiersze-sieroty z tabel ze wskaźnikiem ' +
-      'na organizację. Wiersze zdjęte kaskadą z tabel BEZ takiego wskaźnika (dziecko ginie razem ' +
-      'z rodzicem) do manifestu NIE wchodzą i --rollback ich NIE przywróci — dla nich jedynym ' +
-      'zabezpieczeniem jest pg_dump zrobiony przed operacją.'
+    '[d0] GRANICA ROLLBACKU: manifest obejmuje sieroty i ich dzieci trzymane przez FK NO ACTION/RESTRICT. ' +
+      'Wiersze zdejmowane przez FK CASCADE z tabel BEZ wskaźnika na organizację do manifestu NIE wchodzą ' +
+      'i --rollback ich NIE przywróci — dla nich jedynym zabezpieczeniem jest pg_dump zrobiony przed operacją.'
   );
 
-  const doKasacji = przed.map((t) => ({ tabela: t.tabela, kolumna: t.kolumna }));
-  const usunietePerTabela = new Map<string, number>();
+  const usunietePerZadanie = new Map<string, number>();
+  // Bez treści błędu operator dostaje samą liczbę „utknęło na 2 tabelach" i nie
+  // wie, gdzie szukać. Ta mapa trzyma ostatni komunikat bazy per zadanie.
+  const ostatniBlad = new Map<string, string>();
+  const etykieta = (z: ZadanieKasowania) =>
+    `${z.tabela}.${z.kolumna ?? '?'}${z.skad === 'dziecko' ? ` (dziecko ${z.rodzic})` : ''}`;
 
   await c.query('BEGIN');
   try {
     let usuniete = 0;
-    let pozostale = [...doKasacji];
+    let pozostale = [...zadania];
     for (let przebieg = 1; przebieg <= 10 && pozostale.length; przebieg++) {
       const nieudane: typeof pozostale = [];
       let wTymPrzebiegu = 0;
-      for (const t of pozostale) {
+      for (const z of pozostale) {
         try {
           // eslint-disable-next-line no-await-in-loop
           await c.query('SAVEPOINT k');
           // eslint-disable-next-line no-await-in-loop
-          const r = await c.query(
-            `DELETE FROM ${qi(t.tabela)} t
-              WHERE t.${qi(t.kolumna)} IS NOT NULL
-                AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = t.${qi(t.kolumna)}::text)`
-          );
+          const r = await c.query(`DELETE FROM ${qi(z.tabela)} WHERE ${z.predykat}`);
           // eslint-disable-next-line no-await-in-loop
           await c.query('RELEASE SAVEPOINT k');
           const n = r.rowCount ?? 0;
           usuniete += n;
           wTymPrzebiegu += n;
-          usunietePerTabela.set(`${t.tabela}.${t.kolumna}`, n);
+          usunietePerZadanie.set(etykieta(z), (usunietePerZadanie.get(etykieta(z)) ?? 0) + n);
         } catch (e) {
           // eslint-disable-next-line no-await-in-loop
           await c.query('ROLLBACK TO SAVEPOINT k');
-          nieudane.push(t);
-          if (przebieg >= 9) console.error(`[d0] ${t.tabela}: ${(e as Error).message}`);
+          nieudane.push(z);
+          ostatniBlad.set(etykieta(z), (e as Error).message);
         }
       }
       pozostale = nieudane;
       console.log(
-        `[d0] kasowanie sierot przebieg ${przebieg}: usunięto łącznie ${usuniete}, tabel z problemem ${pozostale.length}`
+        `[d0] kasowanie sierot przebieg ${przebieg}: usunięto łącznie ${usuniete}, zadań z problemem ${pozostale.length}`
       );
-      if (pozostale.length && !wTymPrzebiegu)
-        throw new Error(`Kasowanie utknęło na ${pozostale.length} tabelach. Transakcja wycofana.`);
+      if (pozostale.length && !wTymPrzebiegu) {
+        for (const z of pozostale)
+          console.error(`[d0] utknęło na ${etykieta(z)}: ${ostatniBlad.get(etykieta(z)) ?? '(brak treści błędu)'}`);
+        throw new Error(`Kasowanie utknęło na ${pozostale.length} zadaniach. Transakcja wycofana.`);
+      }
     }
-    if (pozostale.length) throw new Error('Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.');
+    if (pozostale.length) {
+      for (const z of pozostale)
+        console.error(`[d0] nie zbiegło się na ${etykieta(z)}: ${ostatniBlad.get(etykieta(z)) ?? '(brak treści błędu)'}`);
+      throw new Error('Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.');
+    }
 
     await c.query('COMMIT');
-    console.log(`[d0] SIEROTY-APPLY: usunięto ${usuniete} wierszy (naliczono przed kasowaniem ${sumaPrzed}).`);
+    console.log(
+      `[d0] SIEROTY-APPLY: usunięto ${usuniete} wierszy jawnie ` +
+        `(naliczono przed kasowaniem ${sumaPrzed} sierot + ${sumaDzieci} dzieci = ${oczekiwane}).`
+    );
   } catch (e) {
     await c.query('ROLLBACK');
     throw e;
   }
 
   console.log('\n[d0] === RAPORT PER TABELA (usunięte) ===');
-  [...usunietePerTabela.entries()]
+  [...usunietePerZadanie.entries()]
     .sort((a, b) => b[1] - a[1])
     .forEach(([klucz, n], i) => console.log(`      ${String(i + 1).padStart(3)}. ${klucz}: ${n}`));
 
   const sumaBazyPo = await sumaWierszyBazy(c);
   const roznica = sumaBazyPrzed - sumaBazyPo;
-  const jawnie = przed.reduce((s, x) => s + x.wierszy, 0);
+  console.log(`\n[d0] Suma wierszy CAŁEJ bazy: PRZED ${sumaBazyPrzed} → PO ${sumaBazyPo}. Różnica ${roznica}.`);
   console.log(
-    `\n[d0] Suma wierszy CAŁEJ bazy: PRZED ${sumaBazyPrzed} → PO ${sumaBazyPo}. Różnica ${roznica}.`
-  );
-  console.log(
-    `[d0] Z tego jawnie zaplanowane (i objęte manifestem): ${jawnie}. ` +
-      `Kaskadą, POZA manifestem: ${roznica - jawnie}.`
+    `[d0] Z tego objęte manifestem (odwracalne przez --rollback): ${wierszyWManifescie}. ` +
+      `Zdjęte kaskadą POZA manifestem: ${roznica - wierszyWManifescie}.`
   );
   console.log(`[d0] Rollback: --rollback=${sciezkaManifestu}`);
 }
 
 /**
- * Rollback: wstawia wiersze z manifestu z powrotem. Kolejność wstawiania jest
- * odwrotna do kasowania (`organizations` najpierw), a dodatkowo powtarzamy
- * przebiegi dopóki którykolwiek wiersz wchodzi — to znosi zależności między
- * tabelami bez potrzeby sortowania topologicznego.
+ * Rollback: wstawia wiersze z manifestu z powrotem.
+ *
+ * PACZKI, NIE POJEDYNCZE WIERSZE. Pierwsza wersja robiła `SAVEPOINT` przed
+ * KAŻDYM wierszem. Przy manifeście organizacji (345 wierszy) to działało;
+ * przy manifeście sierot (38 862 wiersze) baza przewróciła się na
+ * „out of shared memory" — każda podtransakcja trzyma swoje blokady do końca
+ * transakcji, a 38 tysięcy podtransakcji nie mieści się w tablicy blokad.
+ * Zmierzone 2026-09-09 na kopii: rollback przerwany, transakcja wycofana,
+ * ZERO wierszy przywróconych. Rollback, który nie działa dokładnie wtedy,
+ * gdy jest potrzebny, jest gorszy niż jego brak.
+ *
+ * Teraz jeden `SAVEPOINT` przypada na PACZKĘ wierszy, a paczka maleje z każdym
+ * przebiegiem (500 → 100 → 20 → 5 → 1). Dzięki temu:
+ *   - liczba podtransakcji spada o dwa rzędy wielkości,
+ *   - jeden zepsuty wiersz nie blokuje na stałe 499 dobrych: w kolejnym
+ *     przebiegu paczka jest mniejsza, aż do izolacji pojedynczego wiersza.
+ *
+ * Kolejność: `organizations` najpierw (wszystko inne na nie wskazuje), reszta
+ * dowolnie — pętla zbieżna powtarza przebiegi, dopóki cokolwiek wchodzi, więc
+ * dziecko wejdzie w przebiegu po rodzicu bez sortowania topologicznego.
+ *
+ * Postęp mierzymy SPADKIEM liczby wierszy do wstawienia, a nie sumą `rowCount`:
+ * `ON CONFLICT DO NOTHING` zwraca 0 dla wiersza, który już w bazie jest, więc
+ * licznik wstawień potrafi stać w miejscu przy realnym postępie.
  */
 async function trybRollback(c: PoolClient, manifest: Manifest) {
   const rodzaj = rodzajManifestu(manifest);
   const doWstawienia = Object.values(manifest.wiersze).reduce((s, x) => s + x.length, 0);
   console.log(`[d0] ROLLBACK z manifestu rodzaju „${rodzaj}”: ${doWstawienia} wierszy do przywrócenia.`);
-  // `organizations` musi wejść pierwsze — wszystko inne na nie wskazuje.
-  // Reszta idzie w dowolnej kolejności, bo pętla zbieżna i tak powtarza przebiegi,
-  // dopóki cokolwiek wchodzi.
+
   const tabele = ['organizations', ...Object.keys(manifest.wiersze).filter((t) => t !== 'organizations')];
   const zostalo = new Map<string, Record<string, unknown>[]>();
   for (const t of tabele) if (manifest.wiersze[t]?.length) zostalo.set(t, [...manifest.wiersze[t]!]);
@@ -979,62 +1196,134 @@ async function trybRollback(c: PoolClient, manifest: Manifest) {
   // ich nie przyjmuje („cannot insert a non-DEFAULT value into column"). Ta jedna
   // kolumna w `assessments` wywracała cały rollback — całą transakcję, nie jeden
   // wiersz. Dlatego przed wstawianiem pytamy bazę, co wolno zapisać.
+  //
+  // Drugi powód, dla którego pytamy bazę o kolumny: TYP `json`/`jsonb`.
+  // Sterownik `pg` zwraca taką kolumnę już ROZPARSOWANĄ (obiekt albo tablica JS).
+  // Przy wstawianiu z powrotem tablica JS jest przez sterownik zamieniana na
+  // literał tablicy Postgresa (`{…}`), a nie na JSON — baza odpowiada
+  // „invalid input syntax for type json" i wywraca całą transakcję rollbacku.
+  // Zmierzone 2026-09-09 na kopii: 53 wiersze w `document_studio_templates`
+  // i `ie_initiative_card_versions` (kolumny `audience`, `required_inputs`,
+  // `section_blueprint` — wszystkie trzymają tablice). Dlatego wartości kolumn
+  // json/jsonb serializujemy ręcznie przez JSON.stringify.
+  //
   const zapisywalne = new Map<string, Set<string>>();
+  const kolumnyJson = new Map<string, Set<string>>();
   for (const t of zostalo.keys()) {
     // eslint-disable-next-line no-await-in-loop
-    const r = await c.query<{ column_name: string }>(
-      `SELECT column_name FROM information_schema.columns
-        WHERE table_schema='public' AND table_name=$1 AND is_generated='NEVER'`,
+    const r = await c.query<{ column_name: string; udt_name: string; is_generated: string }>(
+      `SELECT column_name, udt_name, is_generated FROM information_schema.columns
+        WHERE table_schema='public' AND table_name=$1`,
       [t]
     );
-    zapisywalne.set(t, new Set(r.rows.map((x) => x.column_name)));
+    zapisywalne.set(t, new Set(r.rows.filter((x) => x.is_generated === 'NEVER').map((x) => x.column_name)));
+    kolumnyJson.set(
+      t,
+      new Set(r.rows.filter((x) => x.udt_name === 'json' || x.udt_name === 'jsonb').map((x) => x.column_name))
+    );
   }
+
+  /** Wartość gotowa do wstawienia: json/jsonb zawsze jako tekst JSON, reszta bez zmian. */
+  const naParametr = (tabela: string, kolumna: string, v: unknown): unknown => {
+    if (v === null || v === undefined) return null;
+    return kolumnyJson.get(tabela)?.has(kolumna) ? JSON.stringify(v) : v;
+  };
+
+  /** Rozmiar paczki w kolejnych przebiegach. Maleje aż do izolacji wiersza. */
+  const PACZKI = [500, 100, 20, 5, 1, 1, 1, 1, 1, 1];
+  /** Twardy limit parametrów w jednym zapytaniu Postgresa to 65535. */
+  const LIMIT_PARAMETROW = 60000;
 
   let wstawione = 0;
   const ostatniBlad = new Map<string, string>();
+  let poprzednioZostalo = doWstawienia;
+
   await c.query('BEGIN');
   try {
-    for (let przebieg = 1; przebieg <= 10; przebieg++) {
-      let wTymPrzebiegu = 0;
+    for (let przebieg = 1; przebieg <= PACZKI.length; przebieg++) {
+      const bazowaPaczka = PACZKI[przebieg - 1]!;
       for (const [tabela, wiersze] of zostalo) {
+        if (!wiersze.length) continue;
+        const dozwolone = zapisywalne.get(tabela);
         const nieudane: Record<string, unknown>[] = [];
+
+        // Grupowanie po ZESTAWIE kolumn: wiersze jednej tabeli zwykle mają ten
+        // sam zestaw, ale manifest to JSON — nie ma gwarancji, a INSERT
+        // wielowierszowy wymaga jednej listy kolumn dla całej paczki.
+        const grupy = new Map<string, Record<string, unknown>[]>();
         for (const w of wiersze) {
-          const dozwolone = zapisywalne.get(tabela);
-          const kolumny = Object.keys(w).filter((k) => !dozwolone || dozwolone.has(k));
-          const sql = `INSERT INTO ${qi(tabela)} (${kolumny.map(qi).join(',')}) VALUES (${kolumny
-            .map((_, i) => `$${i + 1}`)
-            .join(',')}) ON CONFLICT DO NOTHING`;
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            await c.query('SAVEPOINT s');
-            // eslint-disable-next-line no-await-in-loop
-            const r = await c.query(sql, kolumny.map((k) => w[k]));
-            // eslint-disable-next-line no-await-in-loop
-            await c.query('RELEASE SAVEPOINT s');
-            wstawione += r.rowCount ?? 0;
-            wTymPrzebiegu += r.rowCount ?? 0;
-          } catch (e) {
-            // eslint-disable-next-line no-await-in-loop
-            await c.query('ROLLBACK TO SAVEPOINT s');
-            ostatniBlad.set(tabela, (e as Error).message);
-            nieudane.push(w);
+          const kol = Object.keys(w).filter((k) => !dozwolone || dozwolone.has(k));
+          const klucz = JSON.stringify(kol);
+          const lista = grupy.get(klucz);
+          if (lista) lista.push(w);
+          else grupy.set(klucz, [w]);
+        }
+
+        for (const [kluczKolumn, lista] of grupy) {
+          const kolumny = JSON.parse(kluczKolumn) as string[];
+          if (!kolumny.length) {
+            nieudane.push(...lista);
+            ostatniBlad.set(tabela, 'wiersz nie ma ani jednej kolumny zapisywalnej');
+            continue;
+          }
+          const limit = Math.max(1, Math.min(bazowaPaczka, Math.floor(LIMIT_PARAMETROW / kolumny.length)));
+          for (let i = 0; i < lista.length; i += limit) {
+            const paczka = lista.slice(i, i + limit);
+            const wartosci: unknown[] = [];
+            const krotki = paczka.map((_, j) => {
+              const baza = j * kolumny.length;
+              return `(${kolumny.map((__, k) => `$${baza + k + 1}`).join(',')})`;
+            });
+            for (const w of paczka) for (const k of kolumny) wartosci.push(naParametr(tabela, k, w[k]));
+            const sql =
+              `INSERT INTO ${qi(tabela)} (${kolumny.map(qi).join(',')}) ` +
+              `VALUES ${krotki.join(',')} ON CONFLICT DO NOTHING`;
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              await c.query('SAVEPOINT s');
+              // eslint-disable-next-line no-await-in-loop
+              const r = await c.query(sql, wartosci);
+              // eslint-disable-next-line no-await-in-loop
+              await c.query('RELEASE SAVEPOINT s');
+              wstawione += r.rowCount ?? 0;
+            } catch (e) {
+              // eslint-disable-next-line no-await-in-loop
+              await c.query('ROLLBACK TO SAVEPOINT s');
+              ostatniBlad.set(tabela, (e as Error).message);
+              nieudane.push(...paczka);
+            }
           }
         }
         zostalo.set(tabela, nieudane);
       }
+
       const pozostalo = [...zostalo.values()].reduce((s, x) => s + x.length, 0);
-      console.log(`[d0] rollback przebieg ${przebieg}: wstawiono łącznie ${wstawione}, zostało ${pozostalo}`);
+      console.log(
+        `[d0] rollback przebieg ${przebieg} (paczka ${bazowaPaczka}): wstawiono łącznie ${wstawione}, zostało ${pozostalo}`
+      );
       if (!pozostalo) break;
-      if (!wTymPrzebiegu) {
+      const postep = pozostalo < poprzednioZostalo;
+      poprzednioZostalo = pozostalo;
+      if (!postep && bazowaPaczka === 1) {
         // Bez treści błędu operator dostałby samą liczbę i nie wiedziałby, czego
         // szukać. Pokazujemy, która tabela i dlaczego odmawia.
-        for (const [tabela, wiersze] of zostalo) {
-          if (!wiersze.length) continue;
-          console.error(`[d0] utknęło ${wiersze.length} w ${tabela}: ${ostatniBlad.get(tabela) ?? '(brak treści błędu)'}`);
+        for (const [tabela, w] of zostalo) {
+          if (!w.length) continue;
+          console.error(`[d0] utknęło ${w.length} w ${tabela}: ${ostatniBlad.get(tabela) ?? '(brak treści błędu)'}`);
         }
         throw new Error(`Rollback utknął: ${pozostalo} wierszy nie da się wstawić. Transakcja wycofana.`);
       }
     }
+
+    const nadal = [...zostalo.values()].reduce((s, x) => s + x.length, 0);
+    if (nadal) {
+      for (const [tabela, w] of zostalo) {
+        if (!w.length) continue;
+        console.error(`[d0] nie weszło ${w.length} w ${tabela}: ${ostatniBlad.get(tabela) ?? '(brak treści błędu)'}`);
+      }
+      throw new Error(`Rollback nie zbiegł się: ${nadal} wierszy nie da się wstawić. Transakcja wycofana.`);
+    }
+
     await c.query('COMMIT');
     console.log(`[d0] ROLLBACK zakończony: przywrócono ${wstawione} wierszy.`);
   } catch (e) {
