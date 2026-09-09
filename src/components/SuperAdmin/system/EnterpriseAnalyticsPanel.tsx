@@ -32,6 +32,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDate, formatListNumber } from '../../../utils/listDateFormat';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 import { LoadingState } from '../../shared/states';
 
@@ -93,7 +94,7 @@ const asText = (value: unknown, fallback = 'Unknown') => {
 
 const formatDate = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDate(date);
 };
 
 const METRIC_COLOR_STYLES: Record<string, { bg: string; border: string; icon: string }> = {
@@ -151,7 +152,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         {
           id: 'api_requests',
           title: 'API Requests',
-          value: (analyticsData.metrics?.api?.total_requests || 0).toLocaleString(),
+          value: formatListNumber(analyticsData.metrics?.api?.total_requests || 0),
           change: analyticsData.metrics?.api?.change || 0,
           changeLabel: 'vs last period',
           icon: Globe,
@@ -160,7 +161,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         {
           id: 'ai_requests',
           title: 'AI Requests',
-          value: (analyticsData.metrics?.ai?.total_requests || 0).toLocaleString(),
+          value: formatListNumber(analyticsData.metrics?.ai?.total_requests || 0),
           change: analyticsData.metrics?.ai?.change || 0,
           changeLabel: 'vs last period',
           icon: Zap,
@@ -178,7 +179,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         {
           id: 'db_queries',
           title: 'DB Queries',
-          value: (analyticsData.metrics?.database?.total_queries || 0).toLocaleString(),
+          value: formatListNumber(analyticsData.metrics?.database?.total_queries || 0),
           change: analyticsData.metrics?.api?.change || 0,
           changeLabel: 'vs last period',
           icon: Database,

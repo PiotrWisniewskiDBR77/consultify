@@ -31,6 +31,7 @@ import { StandardTable } from '../../components/standard/StandardTable';
 import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
 
 interface SCIMToken {
   id: string;
@@ -612,7 +613,7 @@ const SCIMProvisioningView: React.FC = () => {
                     <p className="text-sm text-slate-600 dark:text-gray-400">
                       {token.tokenPrefix}••••••••
                       {token.lastUsedAt &&
-                        ` • Last used: ${new Date(token.lastUsedAt).toLocaleDateString()}`}
+                        ` • Last used: ${formatListDate(token.lastUsedAt)}`}
                     </p>
                   </div>
                 </div>
@@ -995,7 +996,7 @@ const SCIMProvisioningView: React.FC = () => {
                   )}
                 </div>
                 <span className="text-sm text-slate-500 dark:text-gray-400">
-                  {new Date(log.createdAt).toLocaleString()}
+                  {formatListDateTime(log.createdAt)}
                 </span>
               </div>
               {log.errorMessage && (
@@ -1082,7 +1083,7 @@ const SCIMProvisioningView: React.FC = () => {
                               </div>
                             )}
                             <div className="text-xs text-slate-600 dark:text-gray-500 mt-1">
-                              {new Date(conflict.createdAt).toLocaleString()}
+                              {formatListDateTime(conflict.createdAt)}
                             </div>
                           </div>
                         </div>
@@ -1136,7 +1137,7 @@ const SCIMProvisioningView: React.FC = () => {
                         </div>
                         <span className="text-xs text-slate-500 dark:text-gray-400">
                           {conflict.resolvedAt
-                            ? new Date(conflict.resolvedAt).toLocaleString()
+                            ? formatListDateTime(conflict.resolvedAt)
                             : ''}
                         </span>
                       </div>

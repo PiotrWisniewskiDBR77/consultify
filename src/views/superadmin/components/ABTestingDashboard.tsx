@@ -41,6 +41,7 @@ import { LoadingState, StatusChip, type StatusTone } from '@/components/ui/primi
 import { DegradedState } from '../../../components/Admin/AdminState';
 import api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListNumber, localeListy } from '../../../utils/listDateFormat';
 
 interface ExperimentVariant {
   id: string;
@@ -278,7 +279,7 @@ export function ABTestingDashboard() {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return 'Unknown date';
-    return new Date(dateStr).toLocaleDateString('pl-PL', {
+    return new Date(dateStr).toLocaleDateString(localeListy(), {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -437,9 +438,9 @@ export function ABTestingDashboard() {
                     <div className="text-right text-sm">
                       <p className="text-slate-500 dark:text-slate-400">Participants</p>
                       <p className="font-medium text-slate-900 dark:text-white">
-                        {experiment.variants
-                          .reduce((sum, v) => sum + v.participants, 0)
-                          .toLocaleString()}
+                        {formatListNumber(
+                          experiment.variants.reduce((sum, v) => sum + v.participants, 0)
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -594,10 +595,10 @@ export function ABTestingDashboard() {
                                 {variant.traffic}%
                               </td>
                               <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">
-                                {variant.participants.toLocaleString()}
+                                {formatListNumber(variant.participants)}
                               </td>
                               <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">
-                                {variant.conversions.toLocaleString()}
+                                {formatListNumber(variant.conversions)}
                               </td>
                               <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-white">
                                 {variant.conversionRate.toFixed(1)}%

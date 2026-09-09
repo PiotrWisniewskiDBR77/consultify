@@ -42,6 +42,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { formatListDate, formatListDateTime, formatListNumber, formatListTime } from '../../utils/listDateFormat';
+
 import { buildHighlightSegments } from '../../services/highlightTextMatch';
 import type { DashboardDeepLink } from '../../services/presentationGovernanceDeepLinks';
 import {
@@ -168,7 +170,7 @@ function formatRelativeTime(iso: string | null): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return formatListDateTime(ts);
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
@@ -177,13 +179,13 @@ function formatRelativeTime(iso: string | null): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return formatListDate(ts);
 }
 
 function formatClockTime(date: Date | null): string {
   if (!date) return '—';
   try {
-    return date.toLocaleTimeString();
+    return formatListTime(date);
   } catch {
     return date.toISOString();
   }
@@ -191,7 +193,7 @@ function formatClockTime(date: Date | null): string {
 
 function formatNumber(n: number): string {
   if (!Number.isFinite(n)) return '—';
-  return n.toLocaleString();
+  return formatListNumber(n);
 }
 
 function escapeCsvCell(value: unknown): string {
@@ -1136,7 +1138,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} · {data.entries.length} of{' '}
+              Generated {formatListDateTime(data.generatedAt)} · {data.entries.length} of{' '}
               {data.totals.decks} deck
               {data.totals.decks === 1 ? '' : 's'} shown
             </p>
@@ -2211,7 +2213,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                       </td>
                       <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
                         {entry.updatedAt ? (
-                          <span title={new Date(entry.updatedAt).toLocaleString()}>
+                          <span title={formatListDateTime(entry.updatedAt)}>
                             {formatRelativeTime(entry.updatedAt)}
                           </span>
                         ) : (

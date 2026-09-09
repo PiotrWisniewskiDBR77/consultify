@@ -50,6 +50,7 @@ import {
   type TableRow,
 } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
+import { formatListCurrency, formatListDate } from '../../utils/listDateFormat';
 
 interface Invoice {
   id: string;
@@ -365,12 +366,8 @@ export const InvoiceCenterView: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number, currency: string = 'USD') =>
+    formatListCurrency(amount, currency);
 
   const getStatusBadge = (status: Invoice['status']) => {
     const styles = {
@@ -451,7 +448,7 @@ export const InvoiceCenterView: React.FC = () => {
         label: 'Date',
         render: (row: TableRow) => (
           <span className="text-sm text-slate-500 dark:text-slate-400">
-            {new Date(row.createdAt).toLocaleDateString()}
+            {formatListDate(row.createdAt)}
           </span>
         ),
       },
@@ -466,7 +463,7 @@ export const InvoiceCenterView: React.FC = () => {
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
-            {new Date(row.dueDate).toLocaleDateString()}
+            {formatListDate(row.dueDate)}
           </span>
         ),
       },
@@ -1117,13 +1114,13 @@ export const InvoiceCenterView: React.FC = () => {
               <div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Issue Date</div>
                 <div className="font-medium text-slate-900 dark:text-white">
-                  {new Date(selectedInvoice.createdAt).toLocaleDateString()}
+                  {formatListDate(selectedInvoice.createdAt)}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Due Date</div>
                 <div className="font-medium text-slate-900 dark:text-white">
-                  {new Date(selectedInvoice.dueDate).toLocaleDateString()}
+                  {formatListDate(selectedInvoice.dueDate)}
                 </div>
               </div>
               <div>

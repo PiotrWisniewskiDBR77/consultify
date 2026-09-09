@@ -30,6 +30,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 
 import { Api } from '../../services/api';
+import { formatListDate, formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 
 // Types
 interface PlatformStats {
@@ -240,7 +241,7 @@ const ListItem: React.FC<{
     )}
     {timestamp && (
       <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5">
-        {new Date(timestamp).toLocaleString()}
+        {formatListDateTime(timestamp)}
       </div>
     )}
   </div>
@@ -494,7 +495,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
                 <ListItem
                   key={i}
                   primary={t.name}
-                  secondary={`Expires: ${new Date(t.trial_ends_at).toLocaleDateString()}`}
+                  secondary={`Expires: ${formatListDate(t.trial_ends_at)}`}
                   status="warning"
                 />
               ))}
@@ -510,7 +511,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
               <ListItem
                 key={i}
                 primary={inv.org_name}
-                secondary={`$${inv.amount} • Due: ${new Date(inv.due_date).toLocaleDateString()}`}
+                secondary={`$${inv.amount} • Due: ${formatListDate(inv.due_date)}`}
                 status="critical"
               />
             ))}
@@ -617,7 +618,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         <DetailRow label="AI Requests Today" value={stats?.performance.aiRequestsToday || 0} />
         <DetailRow
           label="AI Tokens Today"
-          value={(stats?.performance.aiTokensToday || 0).toLocaleString()}
+          value={formatListNumber(stats?.performance.aiTokensToday || 0)}
         />
         <DetailRow
           label="AI Errors Today"

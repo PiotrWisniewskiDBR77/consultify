@@ -37,6 +37,7 @@ import {
 } from '../../components/standard/StandardTable';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { formatListDate, formatListNumber } from '../../utils/listDateFormat';
 
 interface APIKey {
   id: string;
@@ -118,7 +119,7 @@ function formatDate(value?: string | null): string {
   if (!value) return 'n/a';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'n/a';
-  return date.toLocaleDateString();
+  return formatListDate(date);
 }
 
 function safeNumber(value: unknown, fallback = 0): number {
@@ -169,7 +170,7 @@ const hasListShape = (value: unknown, keys: string[]) => {
 };
 
 function formatInteger(value: unknown): string {
-  return Math.round(safeNumber(value)).toLocaleString();
+  return formatListNumber(Math.round(safeNumber(value)));
 }
 
 function parseScopes(value: unknown): string[] {
@@ -691,7 +692,7 @@ export const APIManagementView: React.FC = () => {
           return (
             <div className="text-sm">
               <div className="font-medium text-slate-900 dark:text-white">
-                {key.usageCount.toLocaleString()}
+                {formatListNumber(key.usageCount)}
               </div>
               {key.lastUsedAt && (
                 <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -863,7 +864,7 @@ export const APIManagementView: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {stats.totalUsage.toLocaleString()}
+                    {formatListNumber(stats.totalUsage)}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">Total API Calls</div>
                 </div>

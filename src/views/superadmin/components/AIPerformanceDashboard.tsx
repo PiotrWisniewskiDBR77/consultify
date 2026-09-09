@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListNumber, formatListTime } from '../../../utils/listDateFormat';
 
 interface PerformanceMetrics {
   avgResponseTime: number;
@@ -464,7 +465,7 @@ export function AIPerformanceDashboard() {
             <MetricCard
               icon={Layers}
               label="Total Requests"
-              value={metrics.totalRequests.toLocaleString()}
+              value={formatListNumber(metrics.totalRequests)}
               color="text-blue-400"
             />
             <MetricCard
@@ -531,7 +532,7 @@ export function AIPerformanceDashboard() {
                           height: `${(point.value / maxTrendValue) * 100}%`,
                           minHeight: '2px',
                         }}
-                        title={`${new Date(point.timestamp).toLocaleTimeString()}: ${point.value.toFixed(2)}s`}
+                        title={`${formatListTime(point.timestamp)}: ${point.value.toFixed(2)}s`}
                       />
                     </div>
                   ))}
@@ -559,7 +560,7 @@ export function AIPerformanceDashboard() {
                         {cap.capability}
                       </div>
                       <div className="text-xs text-slate-600 dark:text-slate-400">
-                        {cap.requests.toLocaleString()} requests
+                        {formatListNumber(cap.requests)} requests
                       </div>
                     </div>
                     <div className="text-right text-xs space-y-1">
@@ -597,7 +598,7 @@ export function AIPerformanceDashboard() {
                         {model.model}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {model.requests.toLocaleString()} requests
+                        {formatListNumber(model.requests)} requests
                       </div>
                     </div>
                     <div className="text-right text-xs space-y-1">

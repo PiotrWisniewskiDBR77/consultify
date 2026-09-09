@@ -54,6 +54,7 @@ import {
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
+import { formatListDate, formatListNumber } from '@/utils/listDateFormat';
 
 interface SettlementsSummary {
   totalPendingCommissions: number;
@@ -164,7 +165,7 @@ const formatDate = (value?: string): string => {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  return formatListDate(date);
 };
 
 // ── FIX (odkryte podczas migracji, blokowało render — realny bug produkcyjny) ──
@@ -344,7 +345,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-c-text-secondary">
-            €{(row.grossAmount as number).toLocaleString()}
+            €{formatListNumber(row.grossAmount)}
           </span>
         ),
       },
@@ -357,7 +358,7 @@ export const PartnerSettlementsView: React.FC = () => {
         render: (row: TableRow) => (
           <span>
             <span className="font-medium text-emerald-700 dark:text-emerald-400">
-              €{(row.commissionAmount as number).toLocaleString()}
+              €{formatListNumber(row.commissionAmount)}
             </span>
             <span className="text-xs text-c-text-muted ml-1">({row.commissionRate}%)</span>
           </span>
@@ -595,7 +596,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-c-text font-medium">
-            €{(row.lifetimeValue as number).toLocaleString()}
+            €{formatListNumber(row.lifetimeValue)}
           </span>
         ),
       },
@@ -607,7 +608,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-emerald-400">
-            €{(row.totalCommissionEarned as number).toLocaleString()}
+            €{formatListNumber(row.totalCommissionEarned)}
           </span>
         ),
       },
@@ -662,7 +663,7 @@ export const PartnerSettlementsView: React.FC = () => {
         align: 'center',
         sortable: true,
         render: (row: TableRow) => (
-          <span className="text-c-text">{(row.totalClicks as number).toLocaleString()}</span>
+          <span className="text-c-text">{formatListNumber(row.totalClicks)}</span>
         ),
       },
       {
@@ -672,7 +673,7 @@ export const PartnerSettlementsView: React.FC = () => {
         align: 'center',
         sortable: true,
         render: (row: TableRow) => (
-          <span className="text-c-text">{(row.totalSignups as number).toLocaleString()}</span>
+          <span className="text-c-text">{formatListNumber(row.totalSignups)}</span>
         ),
       },
       {
@@ -719,7 +720,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-c-text font-medium">
-            €{(row.totalRevenue as number).toLocaleString()}
+            €{formatListNumber(row.totalRevenue)}
           </span>
         ),
       },
@@ -731,7 +732,7 @@ export const PartnerSettlementsView: React.FC = () => {
         sortable: true,
         render: (row: TableRow) => (
           <span className="text-emerald-400 font-medium">
-            €{(row.totalCommissions as number).toLocaleString()}
+            €{formatListNumber(row.totalCommissions)}
           </span>
         ),
       },
@@ -800,7 +801,7 @@ export const PartnerSettlementsView: React.FC = () => {
           </div>
           <p className="text-2xl font-bold text-c-text">{summary?.totalPendingCommissions}</p>
           <p className="text-sm text-c-text-muted mt-1">
-            €{summary?.pendingCommissionAmount.toLocaleString()} {isPolish ? 'łącznie' : 'total'}
+            €{formatListNumber(summary?.pendingCommissionAmount)} {isPolish ? 'łącznie' : 'total'}
           </p>
         </div>
 
@@ -815,7 +816,7 @@ export const PartnerSettlementsView: React.FC = () => {
           </div>
           <p className="text-2xl font-bold text-c-text">{summary?.totalPendingPayouts}</p>
           <p className="text-sm text-c-text-muted mt-1">
-            €{summary?.pendingPayoutAmount.toLocaleString()} {isPolish ? 'łącznie' : 'total'}
+            €{formatListNumber(summary?.pendingPayoutAmount)} {isPolish ? 'łącznie' : 'total'}
           </p>
         </div>
 
@@ -829,7 +830,7 @@ export const PartnerSettlementsView: React.FC = () => {
             </span>
           </div>
           <p className="text-2xl font-bold text-c-text">
-            €{summary?.thisMonthCommissions.toLocaleString()}
+            €{formatListNumber(summary?.thisMonthCommissions)}
           </p>
         </div>
 
@@ -841,7 +842,7 @@ export const PartnerSettlementsView: React.FC = () => {
             {isPolish ? 'Wypłaty w tym miesiącu' : 'This Month Payouts'}
           </span>
           <p className="text-2xl font-bold text-c-text">
-            €{summary?.thisMonthPayouts.toLocaleString()}
+            €{formatListNumber(summary?.thisMonthPayouts)}
           </p>
         </div>
       </div>
@@ -986,13 +987,13 @@ export const PartnerSettlementsView: React.FC = () => {
                   text: isPolish
                     ? [
                         `Klient: ${previewCommission.organizationName || '—'}`,
-                        `Kwota brutto: €${previewCommission.grossAmount.toLocaleString()}`,
-                        `Prowizja: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
+                        `Kwota brutto: €${formatListNumber(previewCommission.grossAmount)}`,
+                        `Prowizja: €${formatListNumber(previewCommission.commissionAmount)} (${previewCommission.commissionRate}%)`,
                       ].join('\n\n')
                     : [
                         `Customer: ${previewCommission.organizationName || '—'}`,
-                        `Gross amount: €${previewCommission.grossAmount.toLocaleString()}`,
-                        `Commission: €${previewCommission.commissionAmount.toLocaleString()} (${previewCommission.commissionRate}%)`,
+                        `Gross amount: €${formatListNumber(previewCommission.grossAmount)}`,
+                        `Commission: €${formatListNumber(previewCommission.commissionAmount)} (${previewCommission.commissionRate}%)`,
                       ].join('\n\n'),
                   onCopy: () => {
                     void navigator.clipboard?.writeText(previewCommission.id);
@@ -1041,12 +1042,12 @@ export const PartnerSettlementsView: React.FC = () => {
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <p className="text-xl font-bold text-c-text-secondary dark:text-white">
-                      €{payout.netAmount.toLocaleString()}
+                      €{formatListNumber(payout.netAmount)}
                     </p>
                     <p className="text-xs text-c-text-muted">
                       {isPolish
-                        ? `Brutto: €${payout.grossAmount.toLocaleString()} • Opłaty: €${payout.fees.toLocaleString()}`
-                        : `Gross: €${payout.grossAmount.toLocaleString()} • Fees: €${payout.fees.toLocaleString()}`}
+                        ? `Brutto: €${formatListNumber(payout.grossAmount)} • Opłaty: €${formatListNumber(payout.fees)}`
+                        : `Gross: €${formatListNumber(payout.grossAmount)} • Fees: €${formatListNumber(payout.fees)}`}
                     </p>
                   </div>
                   <span className="rounded-full bg-c-surface-raised px-3 py-1 text-xs text-c-text-muted">
@@ -1202,16 +1203,16 @@ export const PartnerSettlementsView: React.FC = () => {
                         previewExpiring.referralCodeUsed
                           ? `Kod polecający: ${previewExpiring.referralCodeUsed}`
                           : '',
-                        `Wartość życiowa: €${previewExpiring.lifetimeValue.toLocaleString()}`,
-                        `Zarobiona prowizja: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
+                        `Wartość życiowa: €${formatListNumber(previewExpiring.lifetimeValue)}`,
+                        `Zarobiona prowizja: €${formatListNumber(previewExpiring.totalCommissionEarned)}`,
                       ]
                     : [
                         `Partner: ${previewExpiring.partnerName}`,
                         previewExpiring.referralCodeUsed
                           ? `Referral code: ${previewExpiring.referralCodeUsed}`
                           : '',
-                        `Lifetime value: €${previewExpiring.lifetimeValue.toLocaleString()}`,
-                        `Commission earned: €${previewExpiring.totalCommissionEarned.toLocaleString()}`,
+                        `Lifetime value: €${formatListNumber(previewExpiring.lifetimeValue)}`,
+                        `Commission earned: €${formatListNumber(previewExpiring.totalCommissionEarned)}`,
                       ]
                   )
                     .filter(Boolean)
@@ -1262,18 +1263,18 @@ export const PartnerSettlementsView: React.FC = () => {
                 details={{
                   text: isPolish
                     ? [
-                        `Kliknięcia: ${previewAnalytics.totalClicks.toLocaleString()}`,
-                        `Rejestracje: ${previewAnalytics.totalSignups.toLocaleString()}`,
+                        `Kliknięcia: ${formatListNumber(previewAnalytics.totalClicks)}`,
+                        `Rejestracje: ${formatListNumber(previewAnalytics.totalSignups)}`,
                         `Aktywne organizacje: ${previewAnalytics.activeAttributions}`,
-                        `Przychód: €${previewAnalytics.totalRevenue.toLocaleString()}`,
-                        `Prowizje: €${previewAnalytics.totalCommissions.toLocaleString()}`,
+                        `Przychód: €${formatListNumber(previewAnalytics.totalRevenue)}`,
+                        `Prowizje: €${formatListNumber(previewAnalytics.totalCommissions)}`,
                       ].join('\n\n')
                     : [
-                        `Clicks: ${previewAnalytics.totalClicks.toLocaleString()}`,
-                        `Signups: ${previewAnalytics.totalSignups.toLocaleString()}`,
+                        `Clicks: ${formatListNumber(previewAnalytics.totalClicks)}`,
+                        `Signups: ${formatListNumber(previewAnalytics.totalSignups)}`,
                         `Active orgs: ${previewAnalytics.activeAttributions}`,
-                        `Revenue: €${previewAnalytics.totalRevenue.toLocaleString()}`,
-                        `Commissions: €${previewAnalytics.totalCommissions.toLocaleString()}`,
+                        `Revenue: €${formatListNumber(previewAnalytics.totalRevenue)}`,
+                        `Commissions: €${formatListNumber(previewAnalytics.totalCommissions)}`,
                       ].join('\n\n'),
                   onCopy: () => {
                     void navigator.clipboard?.writeText(previewAnalytics.referralCode);
