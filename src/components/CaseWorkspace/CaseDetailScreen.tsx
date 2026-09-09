@@ -364,7 +364,7 @@ interface CaseBundle {
  * niesie), więc wyjmujemy ją z cudzysłowu — a gdy kształt się nie zgadza, wraca
  * ORYGINALNY napis serwera. Nigdy nie zgadujemy treści zdarzenia.
  */
-function opisZdarzenia(event: CaseHistoryEvent, isPolish: boolean): string {
+function opisZdarzenia(event: CaseHistoryEvent, isPolish: boolean, t: TFunction): string {
   const surowy = event.summary || event.eventType;
   if (event.eventType !== 'VALUE_MEASUREMENT_RECORDED') return surowy;
 
@@ -378,7 +378,11 @@ function opisZdarzenia(event: CaseHistoryEvent, isPolish: boolean): string {
       : null;
 
   if (!wskaznik || !stan) return surowy;
-  return `Zapisano pomiar wartości dla wskaźnika „${wskaznik}" — stan: ${stan}.`;
+  return t(
+    'caseWorkspace.detail.history.measurementRecorded',
+    'Recorded a value measurement for indicator "{{indicator}}" — status: {{status}}.',
+    { indicator: wskaznik, status: stan },
+  );
 }
 
 /**
@@ -420,7 +424,8 @@ interface ZdarzenieHistorii {
 function syntetyczneZdarzeniaCyklu(
   caseItem: CaseCoreView,
   history: CaseHistoryEvent[],
-  isPolish: boolean
+  isPolish: boolean,
+  t: TFunction
 ): ZdarzenieHistorii[] {
   const maRealnyWpis = (eventType: string) =>
     history.some((event) => event.eventType === eventType);
@@ -429,7 +434,7 @@ function syntetyczneZdarzeniaCyklu(
   if (!maRealnyWpis('case.created')) {
     wpisy.push({
       id: 'syntetyczne:zalozenie',
-      description: 'Zlecenie założone.',
+      description: t('caseWorkspace.detail.history.founded', 'Order created.'),
       timestamp: caseItem.createdAt,
     });
   }
@@ -440,11 +445,13 @@ function syntetyczneZdarzeniaCyklu(
     CLOSED: {
       eventType: 'case.closed',
       opis: caseItem.closureType
-        ? `Zlecenie zamknięte jako „${closureTypeLabel(caseItem.closureType, isPolish).toLowerCase()}".`
-        : 'Zlecenie zamknięte.',
+        ? t('caseWorkspace.detail.history.closedAs', 'Order closed as "{{type}}".', {
+            type: closureTypeLabel(caseItem.closureType, isPolish).toLowerCase(),
+          })
+        : t('caseWorkspace.detail.history.closed', 'Order closed.'),
     },
-    FAILED: { eventType: 'case.failed', opis: 'Zlecenie zakończone niepowodzeniem.' },
-    CANCELLED: { eventType: 'case.cancelled', opis: 'Zlecenie anulowane.' },
+    FAILED: { eventType: 'case.failed', opis: t('caseWorkspace.detail.history.failed', 'Order ended in failure.') },
+    CANCELLED: { eventType: 'case.cancelled', opis: t('caseWorkspace.detail.history.cancelled', 'Order cancelled.') },
   };
   const terminal = TERMINALNE[caseItem.caseStatus];
   if (terminal && !maRealnyWpis(terminal.eventType)) {
@@ -1776,11 +1783,11 @@ export const CaseDetailScreen: React.FC = () => {
     if (!bundle) return [];
     const realne = bundle.history.map((event) => ({
       id: event.eventId,
-      description: opisZdarzenia(event, isPolish),
+      description: opisZdarzenia(event, isPolish, t),
       timestamp: event.occurredAt,
       userName: event.actorId,
     }));
-    const syntetyczne = syntetyczneZdarzeniaCyklu(bundle.caseItem, bundle.history, isPolish);
+    const syntetyczne = syntetyczneZdarzeniaCyklu(bundle.caseItem, bundle.history, isPolish, t);
     return [...realne, ...syntetyczne].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
@@ -2431,7 +2438,7 @@ export const CaseDetailScreen: React.FC = () => {
                     <span className="text-sm text-c-text">{closureAxisLabel(axis, isPolish)}</span>
                     <div className="flex items-center gap-2">
                       {axisSaving[axis] ? (
-                        <span className="text-xs text-c-text-muted">Zapisywanie…</span>
+                        <span className="text-xs text-c-text-muted">{t('caseWorkspace.detail.saving', 'Saving…')}</span>
                       ) : null}
                       <select
                         value={biezaca}
@@ -2458,10 +2465,19 @@ export const CaseDetailScreen: React.FC = () => {
           </div>
           {bundle.caseItem.closureType ? (
             <p className="text-xs text-c-text-secondary">
-              Zarejestrowano jako „{closureTypeLabel(bundle.caseItem.closureType, isPolish)}"
-              {bundle.caseItem.closedAt ? ` (${formatDateTime(bundle.caseItem.closedAt)})` : ''}.
+              {t('caseWorkspace.detail.registeredAs', 'Registered as "{{type}}"', {
+                type: closureTypeLabel(bundle.caseItem.closureType, isPolish),
+              })}
+              {bundle.caseItem.closedAt
+                ? t('caseWorkspace.detail.closedAtSuffix', ' ({{date}})', {
+                    date: formatDateTime(bundle.caseItem.closedAt),
+                  })
+                : ''}
+              .
               {bundle.caseItem.closureEvidenceRef
-                ? ` Dowód: ${bundle.caseItem.closureEvidenceRef}`
+                ? t('caseWorkspace.detail.evidenceSuffix', ' Evidence: {{ref}}', {
+                    ref: bundle.caseItem.closureEvidenceRef,
+                  })
                 : ''}
             </p>
           ) : (
@@ -2471,8 +2487,24 @@ export const CaseDetailScreen: React.FC = () => {
                 required
                 helpText={
                   closureTypeForm !== 'COMPLETED_PARTIAL'
-                    ? `Wymaga poziomu „${closureAxisLabel(CLOSURE_TYPE_AXIS[closureTypeForm as Exclude<ClosureType, 'COMPLETED_PARTIAL'>], isPolish)}" ustawionego na „${closureTypeForm === 'OUTCOME_VALIDATED' ? closureAxisStatusLabel('VALIDATED', isPolish) : closureAxisStatusLabel('COMPLETED', isPolish)}" — serwer odmówi (409), jeśli poziom wyżej jeszcze na to nie wskazuje.`
-                    : 'Wymaga dowodu/opisu pozostałego zakresu poniżej albo już zapisanych kryteriów odbioru zlecenia.'
+                    ? t(
+                        'caseWorkspace.detail.closureTypeHelpConditional',
+                        'Requires the level "{{axis}}" set to "{{status}}" — the server will refuse (409) if the level above doesn\'t yet indicate this.',
+                        {
+                          axis: closureAxisLabel(
+                            CLOSURE_TYPE_AXIS[closureTypeForm as Exclude<ClosureType, 'COMPLETED_PARTIAL'>],
+                            isPolish,
+                          ),
+                          status:
+                            closureTypeForm === 'OUTCOME_VALIDATED'
+                              ? closureAxisStatusLabel('VALIDATED', isPolish)
+                              : closureAxisStatusLabel('COMPLETED', isPolish),
+                        },
+                      )
+                    : t(
+                        'caseWorkspace.detail.closureTypeHelpPartial',
+                        'Requires evidence/description of remaining scope below, or already recorded acceptance criteria.',
+                      )
                 }
               >
                 <select
@@ -2481,12 +2513,15 @@ export const CaseDetailScreen: React.FC = () => {
                   className={FORM_INPUT_CLASS}
                 >
                   <option value={bundle.caseItem.contractedClosureType}>
-                    Zgodnie z kontraktem —{' '}
-                    {closureTypeLabel(bundle.caseItem.contractedClosureType, isPolish)}
+                    {t('caseWorkspace.detail.contractOption', 'As contracted — {{type}}', {
+                      type: closureTypeLabel(bundle.caseItem.contractedClosureType, isPolish),
+                    })}
                   </option>
                   {bundle.caseItem.contractedClosureType !== 'COMPLETED_PARTIAL' ? (
                     <option value="COMPLETED_PARTIAL">
-                      Częściowo — {closureTypeLabel('COMPLETED_PARTIAL', isPolish)}
+                      {t('caseWorkspace.detail.partialOption', 'Partial — {{type}}', {
+                        type: closureTypeLabel('COMPLETED_PARTIAL', isPolish),
+                      })}
                     </option>
                   ) : null}
                 </select>
@@ -2496,13 +2531,16 @@ export const CaseDetailScreen: React.FC = () => {
                 required={
                   closureTypeForm === 'COMPLETED_PARTIAL' && !bundle.caseItem.acceptanceCriteriaRef
                 }
-                helpText="Wskaźnik na dowód dostarczenia/decyzji/wdrożenia/efektu — np. link do raportu odbioru albo notatki z decyzji sponsora."
+                helpText={t(
+                  'caseWorkspace.detail.evidenceFieldHelp',
+                  "A pointer to evidence of delivery/decision/implementation/outcome — e.g. a link to an acceptance report or a note from the sponsor's decision.",
+                )}
               >
                 <textarea
                   value={closureEvidenceForm}
                   onChange={(event) => setClosureEvidenceForm(event.target.value)}
                   rows={3}
-                  placeholder="np. link do raportu odbioru, notatka z decyzji sponsora…"
+                  placeholder={t('caseWorkspace.detail.evidencePlaceholder', 'e.g. link to acceptance report, note from sponsor decision…')}
                   className={FORM_INPUT_CLASS}
                 />
               </FormField>

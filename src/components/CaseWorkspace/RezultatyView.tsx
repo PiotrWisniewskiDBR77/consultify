@@ -663,6 +663,7 @@ const OpenButton: React.FC<{
   onOpen: (zadanie: OtwarcieZadanie) => void;
   szeroki?: boolean;
 }> = ({ otwarcie, kluczFokusu, etykietaDostepna, onOpen, szeroki }) => {
+  const { t } = useTranslation();
   const otwieralny = otwarcie.status === 'otwieralny';
   const nieaktualny = otwieralny && Boolean(otwarcie.ostrzezenie);
   return (
@@ -673,12 +674,17 @@ const OpenButton: React.FC<{
       title={
         otwieralny
           ? nieaktualny
-            ? `Otwórz: ${otwarcie.etykieta} — ${otwarcie.ostrzezenie}`
-            : `Otwórz: ${otwarcie.etykieta}`
+            ? t('caseWorkspace.results.openButton.openWithWarning', 'Open: {{label}} — {{warning}}', {
+                label: otwarcie.etykieta,
+                warning: otwarcie.ostrzezenie,
+              })
+            : t('caseWorkspace.results.openButton.openLabel', 'Open: {{label}}', { label: otwarcie.etykieta })
           : otwarcie.powod
       }
       aria-label={
-        nieaktualny ? `${etykietaDostepna} (przypięta rewizja jest starsza)` : etykietaDostepna
+        nieaktualny
+          ? `${etykietaDostepna}${t('caseWorkspace.results.openButton.staleRevisionSuffix', ' (the pinned revision is older)')}`
+          : etykietaDostepna
       }
       onClick={(event) => {
         event.stopPropagation();
@@ -705,7 +711,7 @@ const OpenButton: React.FC<{
       ) : (
         <ArrowUpRight size={14} aria-hidden />
       )}
-      Otwórz
+      {t('caseWorkspace.results.openButton.openText', 'Open')}
     </button>
   );
 };
@@ -865,7 +871,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           if (!typObiektu || !idObiektu) {
             setArtifactCommandNotice({
               tone: 'warning',
-              text: 'Podaj typ i identyfikator obiektu — oba pola są wymagane.',
+              text: t('caseWorkspace.results.notices.linkFieldsRequired', 'Enter the object type and identifier — both fields are required.'),
             });
             return;
           }
@@ -901,8 +907,13 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, isPolish)}".`
-                : 'Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t('caseWorkspace.results.notices.linkedAs', 'Object linked to the order as "{{relation}}".', {
+                    relation: artifactLinkRelationLabel(result.value.relation, isPolish),
+                  })
+                : t(
+                    'caseWorkspace.results.notices.linkAcceptedUnconfirmed',
+                    "The link was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
           return;
         }
@@ -913,7 +924,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           if (!revision) {
             setArtifactCommandNotice({
               tone: 'warning',
-              text: 'Podaj wersję do przypięcia — jest wymagana.',
+              text: t('caseWorkspace.results.notices.pinVersionRequired', 'Enter the version to pin — it is required.'),
             });
             return;
           }
@@ -941,8 +952,15 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Wersja przypięta: „${revision}". Powiązanie przestało być oznaczone jako nieaktualne.`
-                : 'Wersja została przypięta, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t(
+                    'caseWorkspace.results.notices.pinnedVersion',
+                    'Pinned version: "{{revision}}". The link is no longer marked as outdated.',
+                    { revision },
+                  )
+                : t(
+                    'caseWorkspace.results.notices.pinAcceptedUnconfirmed',
+                    "The version was pinned, but this couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
           return;
         }
@@ -975,8 +993,14 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? 'Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.'
-                : 'Odpięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t(
+                    'caseWorkspace.results.notices.unlinked',
+                    'The link was removed. The object itself was NOT deleted — it stays in its own module, it just stopped being a result of this order.',
+                  )
+                : t(
+                    'caseWorkspace.results.notices.unlinkAcceptedUnconfirmed',
+                    "The unlink was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
         }
       } finally {
@@ -1180,7 +1204,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   const measurementColumns: TableColumn[] = [
     {
       id: 'wskaznik',
-      label: 'Co mierzymy',
+      label: t('caseWorkspace.results.columns.whatWeMeasure', 'What we measure'),
       /*
        * ★ SZEROKOŚCI DOBRANE POMIAREM, nie na oko. Suma zadeklarowanych
        * szerokości JEST szerokością tabeli (`table-fixed`, `parsePx` w
@@ -1197,12 +1221,12 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         <span className="text-sm font-medium text-c-text">{String(row.wskaznik)}</span>
       ),
     },
-    { id: 'punktWyjscia', label: 'Punkt wyjścia', width: '100px', align: 'right' },
-    { id: 'cel', label: 'Cel', width: '90px', align: 'right' },
-    { id: 'wynik', label: 'Wynik', width: '90px', align: 'right' },
+    { id: 'punktWyjscia', label: t('caseWorkspace.results.columns.baseline', 'Starting point'), width: '100px', align: 'right' },
+    { id: 'cel', label: t('caseWorkspace.results.columns.target', 'Target'), width: '90px', align: 'right' },
+    { id: 'wynik', label: t('caseWorkspace.results.columns.result', 'Result'), width: '90px', align: 'right' },
     {
       id: 'stan',
-      label: 'Stan pomiaru',
+      label: t('caseWorkspace.results.columns.measurementStatus', 'Measurement status'),
       // Pigułka „Zmierzone częściowo” nie łamie się w linii — na zrzucie przy
       // 120 px nachodziła na kolumnę daty. 175 px ją mieści.
       width: '175px',
@@ -1213,7 +1237,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'pomiar',
-      label: 'Data pomiaru',
+      label: t('caseWorkspace.results.columns.measurementDate', 'Measurement date'),
       width: '95px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -1227,7 +1251,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       // Suma szerokości = szerokość tabeli (patrz komentarz przy 'wskaznik'):
       // 160+170+130+110+95 = 665 px mieści się w kolumnie 700 px.
       id: 'obiekt',
-      label: 'Obiekt',
+      label: t('caseWorkspace.results.columns.object', 'Object'),
       width: '160px',
       sortable: true,
       filterable: true,
@@ -1235,10 +1259,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         <span className="text-sm font-medium text-c-text">{String(row.obiekt)}</span>
       ),
     },
-    { id: 'rola', label: 'Rola w zleceniu', width: '170px', filterable: true },
+    { id: 'rola', label: t('caseWorkspace.results.columns.roleInOrder', 'Role in the order'), width: '170px', filterable: true },
     {
       id: 'stan',
-      label: 'Stan powiązania',
+      label: t('caseWorkspace.results.columns.linkStatus', 'Link status'),
       width: '130px',
       render: (row: Record<string, unknown>) => (
         <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
@@ -1246,7 +1270,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'dodane',
-      label: 'Powiązane',
+      label: t('caseWorkspace.results.columns.linked', 'Linked'),
       width: '110px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -1255,7 +1279,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'otwieralny',
-      label: 'Otwórz',
+      label: t('caseWorkspace.results.columns.open', 'Open'),
       width: '95px',
       align: 'right',
       render: (row: Record<string, unknown>) => {
@@ -1267,7 +1291,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           <OpenButton
             otwarcie={otwarcie}
             kluczFokusu={kluczFokusuObiektu(linkId)}
-            etykietaDostepna={`Otwórz obiekt: ${linkedTypeLabel(link.artifactType, isPolish) || link.artifactType}`}
+            etykietaDostepna={t('caseWorkspace.results.columns.openObjectAria', 'Open object: {{label}}', {
+              label: linkedTypeLabel(link.artifactType, isPolish) || link.artifactType,
+            })}
             onOpen={otworz}
           />
         );
@@ -1285,7 +1311,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   const nodeResultColumns: TableColumn[] = [
     {
       id: 'krok',
-      label: 'Krok',
+      label: t('caseWorkspace.results.columns.step', 'Step'),
       width: '220px',
       sortable: true,
       filterable: true,
@@ -1299,10 +1325,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         </span>
       ),
     },
-    { id: 'stan', label: 'Stan zakończenia', width: '100px' },
+    { id: 'stan', label: t('caseWorkspace.results.columns.completionStatus', 'Completion status'), width: '100px' },
     {
       id: 'akceptacja',
-      label: 'Status akceptacji',
+      label: t('caseWorkspace.results.columns.acceptanceStatus', 'Acceptance status'),
       width: '180px',
       filterable: true,
       render: (row: Record<string, unknown>) => (
@@ -1311,7 +1337,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'kiedy',
-      label: 'Kiedy',
+      label: t('caseWorkspace.results.columns.when', 'When'),
       width: '110px',
       sortable: true,
       render: (row: Record<string, unknown>) => (

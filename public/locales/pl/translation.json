@@ -52051,6 +52051,40 @@
         "confirm": "Odepnij",
         "reasonLabel": "Powód odpięcia",
         "reasonPlaceholder": "np. powiązano przez pomyłkę / zastąpione nowszym dokumentem"
+      },
+      "columns": {
+        "whatWeMeasure": "Co mierzymy",
+        "baseline": "Punkt wyjścia",
+        "target": "Cel",
+        "result": "Wynik",
+        "measurementStatus": "Stan pomiaru",
+        "measurementDate": "Data pomiaru",
+        "object": "Obiekt",
+        "roleInOrder": "Rola w zleceniu",
+        "linkStatus": "Stan powiązania",
+        "linked": "Powiązane",
+        "open": "Otwórz",
+        "step": "Krok",
+        "completionStatus": "Stan zakończenia",
+        "acceptanceStatus": "Status akceptacji",
+        "when": "Kiedy",
+        "openObjectAria": "Otwórz obiekt: {{label}}"
+      },
+      "openButton": {
+        "openWithWarning": "Otwórz: {{label}} — {{warning}}",
+        "openLabel": "Otwórz: {{label}}",
+        "staleRevisionSuffix": " (przypięta rewizja jest starsza)",
+        "openText": "Otwórz"
+      },
+      "notices": {
+        "linkFieldsRequired": "Podaj typ i identyfikator obiektu — oba pola są wymagane.",
+        "linkedAs": "Obiekt powiązany ze zleceniem jako „{{relation}}”.",
+        "linkAcceptedUnconfirmed": "Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.",
+        "pinVersionRequired": "Podaj wersję do przypięcia — jest wymagana.",
+        "pinnedVersion": "Wersja przypięta: „{{revision}}”. Powiązanie przestało być oznaczone jako nieaktualne.",
+        "pinAcceptedUnconfirmed": "Wersja została przypięta, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.",
+        "unlinked": "Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.",
+        "unlinkAcceptedUnconfirmed": "Odpięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane."
       }
     },
     "ui": {
@@ -52281,6 +52315,24 @@
         "propertyLabel": "Właściwość",
         "valueLabel": "Wartość",
         "planVersionValue": "nr {{number}} · {{status}}"
+      },
+      "saving": "Zapisywanie…",
+      "registeredAs": "Zarejestrowano jako „{{type}}”",
+      "closedAtSuffix": " ({{date}})",
+      "evidenceSuffix": " Dowód: {{ref}}",
+      "closureTypeHelpConditional": "Wymaga poziomu „{{axis}}” ustawionego na „{{status}}” — serwer odmówi (409), jeśli poziom wyżej jeszcze na to nie wskazuje.",
+      "closureTypeHelpPartial": "Wymaga dowodu/opisu pozostałego zakresu poniżej albo już zapisanych kryteriów odbioru zlecenia.",
+      "contractOption": "Zgodnie z kontraktem — {{type}}",
+      "partialOption": "Częściowo — {{type}}",
+      "evidenceFieldHelp": "Wskaźnik na dowód dostarczenia/decyzji/wdrożenia/efektu — np. link do raportu odbioru albo notatki z decyzji sponsora.",
+      "evidencePlaceholder": "np. link do raportu odbioru, notatka z decyzji sponsora…",
+      "history": {
+        "measurementRecorded": "Zapisano pomiar wartości dla wskaźnika „{{indicator}}” — stan: {{status}}.",
+        "founded": "Zlecenie założone.",
+        "closedAs": "Zlecenie zamknięte jako „{{type}}”.",
+        "closed": "Zlecenie zamknięte.",
+        "failed": "Zlecenie zakończone niepowodzeniem.",
+        "cancelled": "Zlecenie anulowane."
       }
     },
     "execution": {

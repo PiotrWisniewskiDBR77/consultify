@@ -51195,6 +51195,40 @@
         "confirm": "Unlink",
         "reasonLabel": "Reason for unlinking",
         "reasonPlaceholder": "e.g. linked by mistake / superseded by a newer document"
+      },
+      "columns": {
+        "whatWeMeasure": "What we measure",
+        "baseline": "Starting point",
+        "target": "Target",
+        "result": "Result",
+        "measurementStatus": "Measurement status",
+        "measurementDate": "Measurement date",
+        "object": "Object",
+        "roleInOrder": "Role in the order",
+        "linkStatus": "Link status",
+        "linked": "Linked",
+        "open": "Open",
+        "step": "Step",
+        "completionStatus": "Completion status",
+        "acceptanceStatus": "Acceptance status",
+        "when": "When",
+        "openObjectAria": "Open object: {{label}}"
+      },
+      "openButton": {
+        "openWithWarning": "Open: {{label}} — {{warning}}",
+        "openLabel": "Open: {{label}}",
+        "staleRevisionSuffix": " (the pinned revision is older)",
+        "openText": "Open"
+      },
+      "notices": {
+        "linkFieldsRequired": "Enter the object type and identifier — both fields are required.",
+        "linkedAs": "Object linked to the order as \"{{relation}}\".",
+        "linkAcceptedUnconfirmed": "The link was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+        "pinVersionRequired": "Enter the version to pin — it is required.",
+        "pinnedVersion": "Pinned version: \"{{revision}}\". The link is no longer marked as outdated.",
+        "pinAcceptedUnconfirmed": "The version was pinned, but this couldn't be confirmed with a follow-up read. Refresh the data.",
+        "unlinked": "The link was removed. The object itself was NOT deleted — it stays in its own module, it just stopped being a result of this order.",
+        "unlinkAcceptedUnconfirmed": "The unlink was accepted, but couldn't be confirmed with a follow-up read. Refresh the data."
       }
     },
     "ui": {
@@ -51425,6 +51459,24 @@
         "propertyLabel": "Property",
         "valueLabel": "Value",
         "planVersionValue": "#{{number}} · {{status}}"
+      },
+      "saving": "Saving…",
+      "registeredAs": "Registered as \"{{type}}\"",
+      "closedAtSuffix": " ({{date}})",
+      "evidenceSuffix": " Evidence: {{ref}}",
+      "closureTypeHelpConditional": "Requires the level \"{{axis}}\" set to \"{{status}}\" — the server will refuse (409) if the level above doesn't yet indicate this.",
+      "closureTypeHelpPartial": "Requires evidence/description of remaining scope below, or already recorded acceptance criteria.",
+      "contractOption": "As contracted — {{type}}",
+      "partialOption": "Partial — {{type}}",
+      "evidenceFieldHelp": "A pointer to evidence of delivery/decision/implementation/outcome — e.g. a link to an acceptance report or a note from the sponsor's decision.",
+      "evidencePlaceholder": "e.g. link to acceptance report, note from sponsor decision…",
+      "history": {
+        "measurementRecorded": "Recorded a value measurement for indicator \"{{indicator}}\" — status: {{status}}.",
+        "founded": "Order created.",
+        "closedAs": "Order closed as \"{{type}}\".",
+        "closed": "Order closed.",
+        "failed": "Order ended in failure.",
+        "cancelled": "Order cancelled."
       }
     },
     "execution": {
