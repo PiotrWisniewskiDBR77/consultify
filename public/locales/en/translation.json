@@ -21493,7 +21493,9 @@
       "breadcrumb": "Admin panel",
       "description": "Access, organization policies, evidence, and safe operations",
       "navigation": "Admin Panel navigation",
-      "moduleName": "Admin Panel"
+      "moduleName": "Admin Panel",
+      "closeNavigation": "Close admin navigation",
+      "toggleNavigation": "Toggle admin navigation"
     },
     "section": {
       "people": {
@@ -21980,7 +21982,8 @@
           "apiAccess": "API access",
           "iam": "Delegated IAM",
           "scim": "SCIM & lifecycle",
-          "risk": "Risk summary"
+          "risk": "Risk summary",
+          "label": "Security and identity sections"
         },
         "title": "Security & Identity",
         "description": "One tenant-admin surface for authentication policy, collaboration controls, API access, delegated admin governance, SCIM identity lifecycle, and risk follow-up."
@@ -22082,7 +22085,8 @@
           "load": "Failed to load IAM policy",
           "update": "Failed to update IAM policy",
           "createAssignment": "Failed to create delegated assignment",
-          "deleteAssignment": "Failed to delete delegated assignment"
+          "deleteAssignment": "Failed to delete delegated assignment",
+          "stale": "This IAM state changed elsewhere. The authoritative state was reloaded."
         },
         "toasts": {
           "updated": "IAM policy updated",
@@ -22222,7 +22226,9 @@
           "enabled": "SSO enabled",
           "enforce": "Enforce SSO login",
           "allowPasswordFallback": "Allow password fallback",
-          "providerCustom": "Custom"
+          "providerCustom": "Custom",
+          "providerTypeLabel": "SSO provider type",
+          "protocolLabel": "SSO protocol"
         },
         "sessionPassword": {
           "title": "Session and password",
@@ -22396,7 +22402,16 @@
       }
     },
     "tabs": {
-      "templates": "Templates"
+      "templates": "Templates",
+      "llmConfig": "LLM Config",
+      "accessLimits": "Access & Limits",
+      "policyGovernance": "Policy & Governance",
+      "modelsProviders": "Models & Providers",
+      "featuresPrivacy": "Features & Privacy",
+      "auditCompliance": "Audit & Compliance",
+      "aiHealth": "AI Health",
+      "helpAnalytics": "Help Analytics",
+      "tokenManagement": "Tokens"
     },
     "membersRoles": {
       "title": "Members & Roles",
@@ -22463,7 +22478,10 @@
         "ownerFlow": "Owner changes must use the ownership transfer flow",
         "updated": "Member role updated",
         "readbackFailed": "The role command completed without exact member read-back.",
-        "updateFailed": "Failed to update role"
+        "updateFailed": "Failed to update role",
+        "recovered": "Member role was already updated and has been reconciled from the server.",
+        "retryIdentity": "Retry uses the same command identity.",
+        "staleReconciled": "Membership changed on the server. Current role: {{role}}. Review and retry."
       },
       "remove": {
         "action": "Remove",
@@ -22472,7 +22490,8 @@
         "confirmBody": "{{member}} will immediately lose workspace access and active sessions will be revoked.",
         "confirm": "Remove member",
         "readbackFailed": "The removal command completed without exact member read-back.",
-        "failed": "Failed to remove member"
+        "failed": "Failed to remove member",
+        "denied": "Only a team owner or admin can remove members"
       },
       "invitations": {
         "title": "Invitations",
@@ -22511,7 +22530,8 @@
         "regLink": "Registration link",
         "copyLink": "Copy link",
         "linkCopied": "Registration link copied",
-        "copyFailed": "Failed to copy to clipboard"
+        "copyFailed": "Failed to copy to clipboard",
+        "denied": "Only a team owner or admin can generate invite codes"
       },
       "errors": {
         "loadMembers": "Failed to load members",
@@ -24220,7 +24240,13 @@
       "emptyTitle": "No API keys",
       "emptyBody": "Create your first API key to get started with integrations",
       "shownOnceTitle": "This key will only be shown once!",
-      "shownOnceBody": "Make sure to copy it now. You will not be able to see it again."
+      "shownOnceBody": "Make sure to copy it now. You will not be able to see it again.",
+      "title": "API Keys",
+      "desc": "Create and manage API keys for external integrations"
+    },
+    "modules": {
+      "ai": "AI",
+      "aiDesc": "LLM configuration, access governance, model providers, and token management"
     }
   },
   "access": {
@@ -39383,7 +39409,8 @@
         "clean": "Clean — no violations",
         "blocked_one": "Blocked by {{count}} rule",
         "blocked_other": "Blocked by {{count}} rules",
-        "violations": "{{count}} violation(s) found"
+        "violations": "{{count}} violation(s) found",
+        "blocked": "Blocked by {{count}} rule(s)"
       },
       "columns": {
         "ruleName": "Rule",
@@ -39477,6 +39504,9 @@
         "initializeError": "Failed to initialize retention schedules",
         "updateError": "Failed to update retention schedule",
         "executeError": "Failed to execute retention"
+      },
+      "fields": {
+        "retentionDaysFor": "Retention days for {{dataType}}"
       }
     },
     "aiPolicy": {
@@ -39504,7 +39534,8 @@
         "title": "Custom safety rules",
         "description_one": "Read-only in this view — {{count}} rule configured.",
         "description_other": "Read-only in this view — {{count}} rules configured.",
-        "empty": "No custom safety rules configured."
+        "empty": "No custom safety rules configured.",
+        "description": "Read-only in this view — {{count}} rule(s) configured."
       },
       "actions": {
         "save": "Save policy"

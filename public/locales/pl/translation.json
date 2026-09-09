@@ -22949,7 +22949,9 @@
       "breadcrumb": "Panel administratora",
       "description": "Dostęp, polityki organizacji, dowody i bezpieczne operacje",
       "navigation": "Nawigacja panelu administratora",
-      "moduleName": "Panel administratora"
+      "moduleName": "Panel administratora",
+      "closeNavigation": "Zamknij nawigację panelu",
+      "toggleNavigation": "Przełącz nawigację panelu"
     },
     "section": {
       "people": {
@@ -23436,7 +23438,8 @@
           "apiAccess": "Dostęp API",
           "iam": "Delegowane IAM",
           "scim": "SCIM i cykl życia",
-          "risk": "Podsumowanie ryzyka"
+          "risk": "Podsumowanie ryzyka",
+          "label": "Sekcje bezpieczeństwa i tożsamości"
         },
         "title": "Bezpieczeństwo i tożsamość",
         "description": "Jedna powierzchnia administracyjna dla polityki uwierzytelniania, kontroli współpracy, dostępu API, delegowanego zarządzania administracyjnego, cyklu życia tożsamości SCIM i działań następczych związanych z ryzykiem."
@@ -23538,7 +23541,8 @@
           "load": "Nie udało się załadować polityki IAM",
           "update": "Nie udało się zaktualizować polityki IAM",
           "createAssignment": "Nie udało się utworzyć delegowanego przypisania",
-          "deleteAssignment": "Nie udało się usunąć delegowanego przypisania"
+          "deleteAssignment": "Nie udało się usunąć delegowanego przypisania",
+          "stale": "Stan IAM zmienił się gdzie indziej. Wczytano stan miarodajny."
         },
         "toasts": {
           "updated": "Zaktualizowano politykę IAM",
@@ -23678,7 +23682,9 @@
           "enabled": "SSO włączone",
           "enforce": "Wymuś logowanie SSO",
           "allowPasswordFallback": "Zezwól na logowanie hasłem awaryjnie",
-          "providerCustom": "Niestandardowy"
+          "providerCustom": "Niestandardowy",
+          "providerTypeLabel": "Typ dostawcy SSO",
+          "protocolLabel": "Protokół SSO"
         },
         "sessionPassword": {
           "title": "Sesja i hasło",
@@ -23854,7 +23860,16 @@
       }
     },
     "tabs": {
-      "templates": "Wzorce"
+      "templates": "Wzorce",
+      "llmConfig": "Konfiguracja LLM",
+      "accessLimits": "Dostęp i limity",
+      "policyGovernance": "Polityka i nadzór",
+      "modelsProviders": "Modele i dostawcy",
+      "featuresPrivacy": "Funkcje i prywatność",
+      "auditCompliance": "Audyt i zgodność",
+      "aiHealth": "Stan AI",
+      "helpAnalytics": "Analityka pomocy",
+      "tokenManagement": "Tokeny"
     },
     "membersRoles": {
       "title": "Członkowie i role",
@@ -23921,7 +23936,10 @@
         "ownerFlow": "Zmiany właściciela muszą przebiegać przez proces przekazania własności",
         "updated": "Zaktualizowano rolę członka",
         "readbackFailed": "Polecenie zmiany roli zakończyło się bez dokładnego odczytu członka.",
-        "updateFailed": "Nie udało się zaktualizować roli"
+        "updateFailed": "Nie udało się zaktualizować roli",
+        "recovered": "Rola członka była już zmieniona i została uzgodniona z zapisem po stronie serwera.",
+        "retryIdentity": "Ponowienie używa tej samej tożsamości polecenia.",
+        "staleReconciled": "Członkostwo zmieniło się na serwerze. Aktualna rola: {{role}}. Odświeżono z odczytu zwrotnego."
       },
       "remove": {
         "action": "Usuń",
@@ -23930,7 +23948,8 @@
         "confirmBody": "{{member}} natychmiast utraci dostęp do przestrzeni, a aktywne sesje zostaną unieważnione.",
         "confirm": "Usuń członka",
         "readbackFailed": "Polecenie usunięcia zakończyło się bez dokładnego odczytu członka.",
-        "failed": "Nie udało się usunąć członka"
+        "failed": "Nie udało się usunąć członka",
+        "denied": "Tylko właściciel lub administrator zespołu może usuwać członków"
       },
       "invitations": {
         "title": "Zaproszenia",
@@ -23969,7 +23988,8 @@
         "regLink": "Link rejestracyjny",
         "copyLink": "Kopiuj link",
         "linkCopied": "Skopiowano link rejestracyjny",
-        "copyFailed": "Nie udało się skopiować do schowka"
+        "copyFailed": "Nie udało się skopiować do schowka",
+        "denied": "Tylko właściciel lub administrator zespołu może generować kody zaproszeń"
       },
       "errors": {
         "loadMembers": "Nie udało się wczytać członków",
@@ -25687,7 +25707,13 @@
       "emptyTitle": "Brak kluczy API",
       "emptyBody": "Utwórz pierwszy klucz API, żeby zacząć korzystać z integracji",
       "shownOnceTitle": "Ten klucz zobaczysz tylko raz!",
-      "shownOnceBody": "Skopiuj go teraz — później nie będzie już widoczny."
+      "shownOnceBody": "Skopiuj go teraz — później nie będzie już widoczny.",
+      "title": "Klucze API",
+      "desc": "Twórz klucze API dla integracji zewnętrznych i zarządzaj nimi"
+    },
+    "modules": {
+      "ai": "AI",
+      "aiDesc": "Konfiguracja LLM, nadzór nad dostępem, dostawcy modeli i telemetria tokenów"
     }
   },
   "access": {
@@ -40793,7 +40819,8 @@
         "blocked_few": "Zablokowane przez {{count}} reguły",
         "blocked_many": "Zablokowane przez {{count}} reguł",
         "blocked_other": "Zablokowane przez {{count}} reguł",
-        "violations": "Znaleziono {{count}} naruszeń"
+        "violations": "Znaleziono {{count}} naruszeń",
+        "blocked": "Zablokowane przez {{count}} regułę(-y)"
       },
       "columns": {
         "ruleName": "Reguła",
@@ -40887,6 +40914,9 @@
         "initializeError": "Nie udało się zainicjować harmonogramów retencji",
         "updateError": "Nie udało się zaktualizować harmonogramu retencji",
         "executeError": "Nie udało się wykonać retencji"
+      },
+      "fields": {
+        "retentionDaysFor": "Dni retencji dla: {{dataType}}"
       }
     },
     "aiPolicy": {
@@ -40916,7 +40946,8 @@
         "description_few": "Tylko do odczytu w tym widoku — skonfigurowano {{count}} reguły.",
         "description_many": "Tylko do odczytu w tym widoku — skonfigurowano {{count}} reguł.",
         "description_other": "Tylko do odczytu w tym widoku — skonfigurowano {{count}} reguł.",
-        "empty": "Brak skonfigurowanych niestandardowych reguł bezpieczeństwa."
+        "empty": "Brak skonfigurowanych niestandardowych reguł bezpieczeństwa.",
+        "description": "Tylko do odczytu w tym widoku — skonfigurowanych reguł: {{count}}."
       },
       "actions": {
         "save": "Zapisz politykę"
