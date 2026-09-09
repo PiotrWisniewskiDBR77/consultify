@@ -52240,6 +52240,89 @@
       "resetZoom": "Ustaw powiększenie na sto procent",
       "hintMobile": "Przeciągnij, aby przesunąć. Kółko przybliża.",
       "hintDesktop": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków."
+    },
+    "plan": {
+      "projections": {
+        "simpleLabel": "Prosty",
+        "simpleDescription": "Kroki po kolei, bez szczegółów technicznych.",
+        "expertLabel": "Ekspercki",
+        "expertDescription": "Płótno przepływu z identyfikatorami technicznymi.",
+        "listLabel": "Lista",
+        "listDescription": "Tabela kroków — najlepsza na telefonie i dla czytnika ekranu."
+      },
+      "blockers": {
+        "noEntryNode": "Plan nie ma kroku początkowego.",
+        "noTerminalNode": "Plan nie ma kroku końcowego.",
+        "unreachableNode": "Do jednego z kroków nie da się dojść z początku planu.",
+        "missingEdgeTarget": "Strzałka prowadzi do kroku, którego nie ma w planie.",
+        "unboundInput": "Krok wymaga danych, których nikt mu nie przekazuje.",
+        "default": "Plan wymaga poprawki przed zatwierdzeniem."
+      },
+      "header": {
+        "goalHeading": "Do czego dążymy",
+        "goalUndescribed": "Oczekiwany rezultat nie został jeszcze opisany w projekcie.",
+        "closurePrefix": "Zamknięcie: {{type}}",
+        "planPrefix": "Plan: {{status}} (wersja {{number}})",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saving": "Zapisywanie…",
+        "saveChanges": "Zapisz zmiany",
+        "discardChanges": "Odrzuć zmiany",
+        "closeEditing": "Zamknij edycję",
+        "editPlan": "Edytuj plan",
+        "publishedImmutable": "Opublikowany plan jest niezmienny. Aby wprowadzić zmiany, utwórz nowy szkic w panelu „Akcje\" po prawej.",
+        "notEditableHere": "Ta wersja planu nie jest już szkicem — edycja na miejscu nie jest tu dostępna.",
+        "refreshing": "Odświeżanie…",
+        "refresh": "Odśwież",
+        "validationPassed": "Plan przeszedł sprawdzenie — nic nie blokuje zatwierdzenia.",
+        "refreshFailed": "Nie udało się odświeżyć danych planu z serwera. Spróbuj ponownie.",
+        "savedDraft": "Zapisano zmiany w szkicu planu (wersja {{version}}).",
+        "saveUnconfirmed": "Zapis został przyjęty, ale nie udało się potwierdzić stanu ponownym odczytem serwera. Odśwież dane."
+      },
+      "empty": {
+        "noStepsTitle": "Ten plan nie ma jeszcze kroków",
+        "versionHasNoSteps": "Ta wersja planu nie ma jeszcze zapisanych kroków.",
+        "noVersionAtAll": "Zlecenie nie ma jeszcze żadnej wersji planu. Utwórz pierwszy szkic w panelu „Akcje\" po prawej."
+      },
+      "list": {
+        "stepNameAria": "Nazwa kroku {{number}}",
+        "step": "Krok",
+        "who": "Kto to robi",
+        "after": "Po czym następuje",
+        "leadsTo": "Prowadzi do",
+        "stepAndOwner": "Krok i wykonawca",
+        "flow": "Przepływ",
+        "afterPrefix": "Po: {{value}}",
+        "nextPrefix": "Dalej: {{value}}",
+        "stepsInOrder": "Kroki planu po kolei",
+        "emptyTitle": "Plan nie ma kroków",
+        "unnamedStep": "Krok bez nazwy",
+        "isStart": "To jest początek",
+        "isEnd": "To jest koniec",
+        "afterAndNext": "Po: {{after}} → Dalej: {{next}}"
+      },
+      "simple": {
+        "unnamedStep": "Krok bez nazwy",
+        "nextPrefix": " · dalej: {{value}}",
+        "isEndSuffix": " · to jest koniec",
+        "stepNameLabel": "Nazwa kroku {{number}}",
+        "stepDetailsAria": "Szczegóły kroku: {{label}}",
+        "unnamedStepFallback": "krok bez nazwy"
+      },
+      "expert": {
+        "stepNameLabel": "Nazwa kroku",
+        "closeDetails": "Zamknij szczegóły",
+        "who": "Kto to robi",
+        "stepIdLabel": "Identyfikator kroku",
+        "technicalName": "nazwa techniczna",
+        "changeKind": "Rodzaj zmiany",
+        "comesAfter": "Po czym następuje",
+        "leadsTo": "Prowadzi do",
+        "unnamedStep": "Krok bez nazwy",
+        "isStartOfPlan": "To jest początek planu",
+        "isEndOfPlan": "To jest koniec planu",
+        "versionFooter": "Wersja planu {{number}} · ostatnia zmiana {{date}}",
+        "graphDigestTitle": "Odcisk grafu planu"
+      }
     }
   }
 }

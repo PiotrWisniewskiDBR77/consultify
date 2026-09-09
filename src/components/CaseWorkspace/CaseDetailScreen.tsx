@@ -114,7 +114,7 @@ import {
 } from './api';
 import { startLightOneClick } from './apiLightStart';
 import { nazwaZlecenia, rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
-import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
+import { getPlanProjections, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import {
   jestPowiazaniemDokumentu,
@@ -2180,13 +2180,14 @@ export const CaseDetailScreen: React.FC = () => {
   };
 
   // ── Menu 3 (view-local): projekcja planu ──────────────────────────────────
+  const planProjections = useMemo(() => getPlanProjections(t), [t]);
   const przelacznikProjekcji = (
     <div
       role="radiogroup"
       aria-label={t('caseWorkspace.detail.projectionRadioLabel', 'How to show the order')}
       className="flex flex-wrap items-center gap-1 rounded-full border border-c-border p-0.5"
     >
-      {PLAN_PROJECTIONS.map((item) => {
+      {planProjections.map((item) => {
         const active = item.id === projection;
         return (
           <button
@@ -2332,7 +2333,7 @@ export const CaseDetailScreen: React.FC = () => {
             isPolish
             activeSectionLabel={aktywnaSekcja.label}
             sectionsDropdown={przelacznikProjekcji}
-            visibleActionCount={PLAN_PROJECTIONS.length}
+            visibleActionCount={planProjections.length}
           />
         }
         panelAriaLabel="Szczegóły zlecenia"

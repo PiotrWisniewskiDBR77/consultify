@@ -51384,6 +51384,89 @@
       "resetZoom": "Set zoom to one hundred percent",
       "hintMobile": "Drag to pan. Wheel zooms.",
       "hintDesktop": "Drag to pan. Mouse wheel zooms. The arrow shows step order."
+    },
+    "plan": {
+      "projections": {
+        "simpleLabel": "Simple",
+        "simpleDescription": "Steps in order, without technical detail.",
+        "expertLabel": "Expert",
+        "expertDescription": "Flow canvas with technical identifiers.",
+        "listLabel": "List",
+        "listDescription": "A table of steps — best on a phone and for screen readers."
+      },
+      "blockers": {
+        "noEntryNode": "The plan has no starting step.",
+        "noTerminalNode": "The plan has no final step.",
+        "unreachableNode": "One of the steps can't be reached from the start of the plan.",
+        "missingEdgeTarget": "An arrow leads to a step that isn't in the plan.",
+        "unboundInput": "A step requires data that nothing provides to it.",
+        "default": "The plan needs a fix before it can be approved."
+      },
+      "header": {
+        "goalHeading": "What we're aiming for",
+        "goalUndescribed": "The expected outcome has not been described in the project yet.",
+        "closurePrefix": "Closure: {{type}}",
+        "planPrefix": "Plan: {{status}} (version {{number}})",
+        "unsavedChanges": "Unsaved changes",
+        "saving": "Saving…",
+        "saveChanges": "Save changes",
+        "discardChanges": "Discard changes",
+        "closeEditing": "Close editing",
+        "editPlan": "Edit plan",
+        "publishedImmutable": "A published plan is immutable. To make changes, create a new draft in the \"Actions\" panel on the right.",
+        "notEditableHere": "This plan version is no longer a draft — in-place editing isn't available here.",
+        "refreshing": "Refreshing…",
+        "refresh": "Refresh",
+        "validationPassed": "The plan passed validation — nothing blocks approval.",
+        "refreshFailed": "Couldn't refresh the plan data from the server. Try again.",
+        "savedDraft": "Saved changes to the plan draft (version {{version}}).",
+        "saveUnconfirmed": "The save was accepted, but the follow-up check with the server couldn't confirm the state. Refresh the data."
+      },
+      "empty": {
+        "noStepsTitle": "This plan doesn't have any steps yet",
+        "versionHasNoSteps": "This plan version doesn't have any saved steps yet.",
+        "noVersionAtAll": "The order doesn't have any plan version yet. Create the first draft in the \"Actions\" panel on the right."
+      },
+      "list": {
+        "stepNameAria": "Step name {{number}}",
+        "step": "Step",
+        "who": "Who does it",
+        "after": "Comes after",
+        "leadsTo": "Leads to",
+        "stepAndOwner": "Step and owner",
+        "flow": "Flow",
+        "afterPrefix": "After: {{value}}",
+        "nextPrefix": "Next: {{value}}",
+        "stepsInOrder": "Plan steps in order",
+        "emptyTitle": "The plan has no steps",
+        "unnamedStep": "Unnamed step",
+        "isStart": "This is the start",
+        "isEnd": "This is the end",
+        "afterAndNext": "After: {{after}} → Next: {{next}}"
+      },
+      "simple": {
+        "unnamedStep": "Unnamed step",
+        "nextPrefix": " · next: {{value}}",
+        "isEndSuffix": " · this is the end",
+        "stepNameLabel": "Step name {{number}}",
+        "stepDetailsAria": "Step details: {{label}}",
+        "unnamedStepFallback": "unnamed step"
+      },
+      "expert": {
+        "stepNameLabel": "Step name",
+        "closeDetails": "Close details",
+        "who": "Who does it",
+        "stepIdLabel": "Step identifier",
+        "technicalName": "technical name",
+        "changeKind": "Type of change",
+        "comesAfter": "Comes after",
+        "leadsTo": "Leads to",
+        "unnamedStep": "Unnamed step",
+        "isStartOfPlan": "This is the start of the plan",
+        "isEndOfPlan": "This is the end of the plan",
+        "versionFooter": "Plan version {{number}} · last change {{date}}",
+        "graphDigestTitle": "Plan graph fingerprint"
+      }
     }
   }
 }
