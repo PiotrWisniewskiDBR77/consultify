@@ -742,7 +742,16 @@ export function zapiszCsv(nazwa: string, naglowek: string[], wiersze: unknown[][
 
 function pula(): Pool {
   if (!process.env.DATABASE_URL) throw new Error('Brak jawnego DATABASE_URL. STOP.');
-  return new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+  // keepAlive: zdalny proxy Railway zrywał połączenie w trakcie długiego skanu sierot
+  // (09.09: EADDRNOTAVAIL, potem ETIMEDOUT) — bez keepalive tryb sierot nie dojeżdża na stagingu.
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 2,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10_000,
+    idleTimeoutMillis: 0,
+    connectionTimeoutMillis: 60_000,
+  });
 }
 
 async function nazwyOrganizacji(c: PoolClient, idy: string[]) {
