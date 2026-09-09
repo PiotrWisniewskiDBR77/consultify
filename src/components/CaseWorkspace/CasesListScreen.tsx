@@ -15,8 +15,10 @@
  * na wiersz, z którego użytkownik wyszedł (`data-zlecenie-wiersz`).
  */
 
+import type { TFunction } from 'i18next';
 import { ArrowRight, Ban, FolderOpen, ListChecks, Pause, Play } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
@@ -93,23 +95,31 @@ export function rememberedListLocation(): string {
 
 type SavedView = 'wszystkie' | 'uwaga' | 'zakonczone';
 
-const SAVED_VIEWS: Array<{ id: SavedView; label: string; description: string }> = [
-  {
-    id: 'wszystkie',
-    label: 'Wszystkie zlecenia',
-    description: 'Pełna lista zleceń Twojej organizacji.',
-  },
-  {
-    id: 'uwaga',
-    label: 'Wymagają uwagi',
-    description: 'Zlecenia zablokowane, nieudane albo z niezatwierdzonym planem.',
-  },
-  {
-    id: 'zakonczone',
-    label: 'Zakończone',
-    description: 'Zlecenia zamknięte, anulowane lub domknięte częściowo.',
-  },
-];
+function getSavedViews(t: TFunction): Array<{ id: SavedView; label: string; description: string }> {
+  return [
+    {
+      id: 'wszystkie',
+      label: t('caseWorkspace.list.savedViews.allLabel', 'All orders'),
+      description: t('caseWorkspace.list.savedViews.allDescription', "Full list of your organization's orders."),
+    },
+    {
+      id: 'uwaga',
+      label: t('caseWorkspace.list.savedViews.attentionLabel', 'Needs attention'),
+      description: t(
+        'caseWorkspace.list.savedViews.attentionDescription',
+        'Orders that are blocked, failed, or have an unapproved plan.',
+      ),
+    },
+    {
+      id: 'zakonczone',
+      label: t('caseWorkspace.list.savedViews.closedLabel', 'Closed'),
+      description: t(
+        'caseWorkspace.list.savedViews.closedDescription',
+        'Orders that are closed, cancelled, or partially closed.',
+      ),
+    },
+  ];
+}
 
 /** Osie zamknięcia, które realnie dotyczą zlecenia (bez „nie dotyczy"). */
 function closureProgress(item: CaseCoreView): { done: number; total: number } {
@@ -130,34 +140,38 @@ function closureProgress(item: CaseCoreView): { done: number; total: number } {
  * zatwierdzenia, więc UI nie udaje, że je zna — mówi tylko to, co wynika ze
  * statusu zlecenia i osi zamknięcia.
  */
-function attentionOf(item: CaseCoreView): {
+function attentionOf(
+  item: CaseCoreView,
+  t: TFunction,
+): {
   label: string;
   tone: 'critical' | 'warning' | 'neutral';
 } {
   if (item.caseStatus === 'BLOCKED')
-    return { label: 'Zablokowane — potrzebna decyzja', tone: 'critical' };
+    return { label: t('caseWorkspace.list.attention.blocked', 'Blocked — decision needed'), tone: 'critical' };
   if (item.caseStatus === 'FAILED')
-    return { label: 'Nieudane — potrzebna reakcja', tone: 'critical' };
-  if (item.caseStatus === 'DRAFT') return { label: 'Plan niezatwierdzony', tone: 'warning' };
-  return { label: 'Nic nie czeka na Ciebie', tone: 'neutral' };
+    return { label: t('caseWorkspace.list.attention.failed', 'Failed — needs a response'), tone: 'critical' };
+  if (item.caseStatus === 'DRAFT')
+    return { label: t('caseWorkspace.list.attention.draft', 'Plan not yet approved'), tone: 'warning' };
+  return { label: t('caseWorkspace.list.attention.none', 'Nothing waiting on you'), tone: 'neutral' };
 }
 
-function nextActionOf(item: CaseCoreView): string {
+function nextActionOf(item: CaseCoreView, t: TFunction): string {
   switch (item.caseStatus) {
     case 'DRAFT':
-      return 'Uzgodnij i zatwierdź plan';
+      return t('caseWorkspace.list.nextAction.draft', 'Agree and approve the plan');
     case 'ACTIVE':
-      return 'Sprawdź realizację';
+      return t('caseWorkspace.list.nextAction.active', 'Check progress');
     case 'BLOCKED':
-      return 'Usuń blokadę';
+      return t('caseWorkspace.list.nextAction.blocked', 'Remove the blocker');
     case 'FAILED':
-      return 'Zdecyduj, czy ponawiamy';
+      return t('caseWorkspace.list.nextAction.failed', 'Decide whether to retry');
     case 'CLOSED':
-      return 'Przejrzyj rezultaty';
+      return t('caseWorkspace.list.nextAction.closed', 'Review results');
     case 'CANCELLED':
-      return 'Brak — zlecenie anulowane';
+      return t('caseWorkspace.list.nextAction.cancelled', 'None — order cancelled');
     default:
-      return '—';
+      return t('caseWorkspace.list.nextAction.default', '—');
   }
 }
 
@@ -212,14 +226,17 @@ function niepusty(value: string | null | undefined): string | null {
 }
 
 /** Nazwa zlecenia wg kolejności źródeł opisanej wyżej. Nigdy pusta. */
-export function nazwaZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
+export function nazwaZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction, isPolish = false): string {
   const wlasna = niepusty(item.caseName);
   if (wlasna) return wlasna;
   const cel = niepusty(naming?.goal);
   if (cel) return cel;
   const projekt = niepusty(naming?.projectName ?? item.projectName);
   if (projekt) return projekt;
-  return `Zlecenie ${skrotZlecenia(item.caseId)} · ${caseProfileLabel(item.caseProfile, true)}`;
+  return t('caseWorkspace.list.fallbackName', 'Order {{shortId}} · {{profile}}', {
+    shortId: skrotZlecenia(item.caseId),
+    profile: caseProfileLabel(item.caseProfile, isPolish),
+  });
 }
 
 /**
@@ -230,17 +247,19 @@ export function nazwaZlecenia(item: CaseCoreView, naming?: CaseNaming | null): s
  * pola) i oczekiwany rezultat. Pusty string, gdy nie ma czego napisać —
  * wołający decyduje, co wtedy pokazać.
  */
-export function podtytulZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
-  const nazwa = nazwaZlecenia(item, naming);
+export function podtytulZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction, isPolish = false): string {
+  const nazwa = nazwaZlecenia(item, naming, t, isPolish);
   const czesci: string[] = [];
   const projekt = niepusty(naming?.projectName ?? item.projectName);
-  if (projekt && projekt !== nazwa) czesci.push(`Projekt: ${projekt}`);
+  if (projekt && projekt !== nazwa)
+    czesci.push(t('caseWorkspace.list.subtitle.project', 'Project: {{value}}', { value: projekt }));
   const cel = niepusty(naming?.goal);
-  if (cel && cel !== nazwa) czesci.push(`Cel: ${cel}`);
+  if (cel && cel !== nazwa) czesci.push(t('caseWorkspace.list.subtitle.goal', 'Goal: {{value}}', { value: cel }));
   const rezultat = niepusty(
     naming?.expectedOutcome ?? naming?.projectDescription ?? item.projectDescription
   );
-  if (rezultat) czesci.push(`Oczekiwany rezultat: ${rezultat}`);
+  if (rezultat)
+    czesci.push(t('caseWorkspace.list.subtitle.outcome', 'Expected outcome: {{value}}', { value: rezultat }));
   return czesci.join(' · ');
 }
 
@@ -255,6 +274,8 @@ function statusTone(
 }
 
 export const CasesListScreen: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -448,24 +469,30 @@ export const CasesListScreen: React.FC = () => {
               tone: 'success',
               // Nazwa albo nic — NIGDY surowy identyfikator techniczny
               // (warunek właściciela: `case_id` tylko w widoku eksperckim).
-              text: `Zapisane. ${
-                niepusty(
+              text: (() => {
+                const name = niepusty(
                   naming[result.value.caseId]?.goal ??
                     naming[result.value.caseId]?.projectName ??
                     result.value.projectName
-                )
-                  ? `Zlecenie „${niepusty(
-                      naming[result.value.caseId]?.goal ??
-                        naming[result.value.caseId]?.projectName ??
-                        result.value.projectName
-                    )}"`
-                  : 'Zlecenie'
-              } ma teraz status: ${caseStatusLabel(result.value.caseStatus, true)}.`,
+                );
+                const status = caseStatusLabel(result.value.caseStatus, isPolish);
+                return name
+                  ? t('caseWorkspace.list.notice.savedNamed', 'Saved. Order “{{name}}” now has status: {{status}}.', {
+                      name,
+                      status,
+                    })
+                  : t('caseWorkspace.list.notice.savedUnnamed', 'Saved. Order now has status: {{status}}.', {
+                      status,
+                    });
+              })(),
             }
           : {
               tone: 'warning',
               refresh: true,
-              text: 'Operacja została przyjęta przez serwer, ale nie udało się potwierdzić stanu odczytem kontrolnym. Odśwież dane, żeby zobaczyć, jak jest naprawdę.',
+              text: t(
+                'caseWorkspace.list.notice.unconfirmed',
+                "The operation was accepted by the server, but the follow-up check couldn't confirm the state. Refresh the data to see what's really going on.",
+              ),
             }
       );
     },
@@ -480,46 +507,68 @@ export const CasesListScreen: React.FC = () => {
     const rawName = niepusty(
       naming[pending.item.caseId]?.goal ?? naming[pending.item.caseId]?.projectName ?? pending.item.projectName
     );
-    const subject = rawName ? `Zlecenie „${rawName}"` : 'To zlecenie';
+    const subject = rawName
+      ? t('caseWorkspace.list.commandDialog.subjectNamed', 'Order “{{name}}”', { name: rawName })
+      : t('caseWorkspace.list.commandDialog.subjectUnnamed', 'This order');
     if (pending.kind === 'start') {
       return {
-        title: 'Rozpocząć zlecenie?',
-        description: `${subject} przejdzie ze szkicu do realizacji.`,
-        confirmLabel: 'Rozpocznij',
-        reason: { label: 'Powód', required: false, placeholder: 'np. plan uzgodniony z klientem' },
+        title: t('caseWorkspace.list.commandDialog.start.title', 'Start the order?'),
+        description: t('caseWorkspace.list.commandDialog.start.description', '{{subject}} will move from draft to execution.', {
+          subject,
+        }),
+        confirmLabel: t('caseWorkspace.list.commandDialog.start.confirm', 'Start'),
+        reason: {
+          label: t('caseWorkspace.list.commandDialog.start.reasonLabel', 'Reason'),
+          required: false,
+          placeholder: t('caseWorkspace.list.commandDialog.start.reasonPlaceholder', 'e.g. plan agreed with the client'),
+        },
       };
     }
     if (pending.kind === 'pause') {
       return {
-        title: 'Wstrzymać zlecenie?',
-        description: `${subject} zostanie zablokowane do czasu usunięcia przyczyny.`,
-        confirmLabel: 'Wstrzymaj',
+        title: t('caseWorkspace.list.commandDialog.pause.title', 'Pause the order?'),
+        description: t(
+          'caseWorkspace.list.commandDialog.pause.description',
+          '{{subject}} will be blocked until the cause is resolved.',
+          { subject },
+        ),
+        confirmLabel: t('caseWorkspace.list.commandDialog.pause.confirm', 'Pause'),
         reason: {
-          label: 'Powód wstrzymania',
+          label: t('caseWorkspace.list.commandDialog.pause.reasonLabel', 'Reason for pausing'),
           required: true,
-          placeholder: 'np. czekamy na dane od klienta',
+          placeholder: t('caseWorkspace.list.commandDialog.pause.reasonPlaceholder', 'e.g. waiting for data from the client'),
         },
       };
     }
     if (pending.kind === 'resume') {
       return {
-        title: 'Wznowić zlecenie?',
-        description: `${subject} wróci do realizacji.`,
-        confirmLabel: 'Wznów',
-        reason: { label: 'Powód', required: false, placeholder: 'np. blokada usunięta' },
+        title: t('caseWorkspace.list.commandDialog.resume.title', 'Resume the order?'),
+        description: t('caseWorkspace.list.commandDialog.resume.description', '{{subject}} will return to execution.', {
+          subject,
+        }),
+        confirmLabel: t('caseWorkspace.list.commandDialog.resume.confirm', 'Resume'),
+        reason: {
+          label: t('caseWorkspace.list.commandDialog.resume.reasonLabel', 'Reason'),
+          required: false,
+          placeholder: t('caseWorkspace.list.commandDialog.resume.reasonPlaceholder', 'e.g. blocker removed'),
+        },
       };
     }
     return {
-      title: 'Anulować zlecenie?',
-      description: `${subject} zostanie zamknięte jako anulowane. Tej zmiany nie da się cofnąć — status anulowany jest końcowy.`,
-      confirmLabel: 'Anuluj zlecenie',
+      title: t('caseWorkspace.list.commandDialog.cancel.title', 'Cancel the order?'),
+      description: t(
+        'caseWorkspace.list.commandDialog.cancel.description',
+        "{{subject}} will be closed as cancelled. This change can't be undone — cancelled is a final status.",
+        { subject },
+      ),
+      confirmLabel: t('caseWorkspace.list.commandDialog.cancel.confirm', 'Cancel order'),
       reason: {
-        label: 'Powód anulowania',
+        label: t('caseWorkspace.list.commandDialog.cancel.reasonLabel', 'Reason for cancelling'),
         required: true,
-        placeholder: 'np. klient wycofał zapotrzebowanie',
+        placeholder: t('caseWorkspace.list.commandDialog.cancel.reasonPlaceholder', 'e.g. client withdrew the request'),
       },
     };
-  }, [pending, naming]);
+  }, [pending, naming, t]);
 
   // Powrót ze zlecenia (Wstecz): filtr wraca sam z adresu, a fokus stawiamy na
   // wierszu, z którego użytkownik wyszedł. Bez tego czytnik ekranu i klawiatura
@@ -602,8 +651,8 @@ export const CasesListScreen: React.FC = () => {
       // polach, których lista nigdy nie pokazała.
       const info = naming[item.caseId];
       const haystack = [
-        nazwaZlecenia(item, info),
-        podtytulZlecenia(item, info),
+        nazwaZlecenia(item, info, t, isPolish),
+        podtytulZlecenia(item, info, t, isPolish),
         item.projectName,
         item.projectDescription,
         item.caseId,
@@ -613,30 +662,35 @@ export const CasesListScreen: React.FC = () => {
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [bySavedView, statusChip, query, naming]);
+  }, [bySavedView, statusChip, query, naming, t, isPolish]);
 
   const rows = useMemo(
     () =>
       visible.map((item) => {
         const progress = closureProgress(item);
-        const attention = attentionOf(item);
+        const attention = attentionOf(item, t);
         const info = naming[item.caseId];
         return {
           id: item.caseId,
-          nazwa: nazwaZlecenia(item, info),
-          rezultat: podtytulZlecenia(item, info),
-          rodzaj: caseProfileLabel(item.caseProfile, true),
-          status: caseStatusLabel(item.caseStatus, true),
+          nazwa: nazwaZlecenia(item, info, t, isPolish),
+          rezultat: podtytulZlecenia(item, info, t, isPolish),
+          rodzaj: caseProfileLabel(item.caseProfile, isPolish),
+          status: caseStatusLabel(item.caseStatus, isPolish),
           uwaga: attention.label,
           uwagaTone: attention.tone,
-          postep: progress.total ? `${progress.done} z ${progress.total}` : 'nie dotyczy',
-          nastepna: nextActionOf(item),
+          postep: progress.total
+            ? t('caseWorkspace.list.columns.progressOfTotal', '{{done}} of {{total}}', {
+                done: progress.done,
+                total: progress.total,
+              })
+            : t('caseWorkspace.list.columns.progressNotApplicable', 'not applicable'),
+          nastepna: nextActionOf(item, t),
           aktywnosc: item.updatedAt,
           statusTone: statusTone(item.caseStatus),
           raw: item,
         };
       }),
-    [visible, naming]
+    [visible, naming, t, isPolish]
   );
 
   /*
@@ -675,7 +729,7 @@ export const CasesListScreen: React.FC = () => {
     () => [
       {
         id: 'nazwa',
-        label: 'Zlecenie',
+        label: t('caseWorkspace.list.columns.orderMobile', 'Order'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -691,20 +745,23 @@ export const CasesListScreen: React.FC = () => {
               ) : null}
             </div>
             <div className="text-xs text-c-text-muted">
-              Następna akcja: {String(row.nastepna)} · {relativeDays(String(row.aktywnosc))}
+              {t('caseWorkspace.list.columns.nextActionInline', 'Next action: {{action}} · {{when}}', {
+                action: String(row.nastepna),
+                when: relativeDays(String(row.aktywnosc), t),
+              })}
             </div>
           </div>
         ),
       },
     ],
-    []
+    [t]
   );
 
   const desktopColumns = useMemo<TableColumn[]>(
     () => [
       {
         id: 'nazwa',
-        label: 'Zlecenie i oczekiwany rezultat',
+        label: t('caseWorkspace.list.columns.orderAndOutcome', 'Order and expected outcome'),
         width: '300px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
@@ -724,21 +781,23 @@ export const CasesListScreen: React.FC = () => {
                 {String(row.rezultat)}
               </div>
             ) : (
-              <div className="text-xs text-c-text-muted">Cel i rezultat nieopisane</div>
+              <div className="text-xs text-c-text-muted">
+                {t('caseWorkspace.list.columns.goalOutcomeUndescribed', 'Goal and outcome not described')}
+              </div>
             )}
           </div>
         ),
       },
       {
         id: 'rodzaj',
-        label: 'Rodzaj',
+        label: t('caseWorkspace.list.columns.type', 'Type'),
         width: '130px',
         sortable: true,
         filterable: true,
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('caseWorkspace.list.columns.status', 'Status'),
         width: '130px',
         sortable: true,
         filterable: true,
@@ -748,7 +807,7 @@ export const CasesListScreen: React.FC = () => {
       },
       {
         id: 'uwaga',
-        label: 'Uwaga',
+        label: t('caseWorkspace.list.columns.attention', 'Attention'),
         width: '190px',
         render: (row: Record<string, unknown>) =>
           row.uwagaTone === 'neutral' ? (
@@ -759,18 +818,18 @@ export const CasesListScreen: React.FC = () => {
       },
       {
         id: 'postep',
-        label: 'Postęp rezultatu',
+        label: t('caseWorkspace.list.columns.progress', 'Progress toward outcome'),
         width: '120px',
         align: 'right',
       },
       {
         id: 'nastepna',
-        label: 'Następna akcja',
+        label: t('caseWorkspace.list.columns.nextAction', 'Next action'),
         width: '170px',
       },
       {
         id: 'aktywnosc',
-        label: 'Ostatnia aktywność',
+        label: t('caseWorkspace.list.columns.lastActivity', 'Last activity'),
         width: '140px',
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => String(row.aktywnosc ?? ''),
@@ -779,12 +838,12 @@ export const CasesListScreen: React.FC = () => {
             className="text-sm text-c-text-secondary"
             title={formatDateTime(String(row.aktywnosc))}
           >
-            {relativeDays(String(row.aktywnosc))}
+            {relativeDays(String(row.aktywnosc), t)}
           </span>
         ),
       },
     ],
-    []
+    [t]
   );
 
   const columns = isNarrow ? mobileColumns : desktopColumns;
@@ -801,18 +860,19 @@ export const CasesListScreen: React.FC = () => {
   // (Pierwsza wersja zostawiała w pasku zawsze „Wszystkie zlecenia" — test
   // klawiaturowy pokazał, że po wyborze „Zakończone" pasek nadal podświetlał
   // „Wszystkie", czyli użytkownik nie miał POTWIERDZENIA, co wybrał.)
-  const visibleViews = isNarrow ? SAVED_VIEWS.filter((view) => view.id === savedView) : SAVED_VIEWS;
-  const hiddenViews = isNarrow ? SAVED_VIEWS.filter((view) => view.id !== savedView) : [];
+  const savedViews = useMemo(() => getSavedViews(t), [t]);
+  const visibleViews = isNarrow ? savedViews.filter((view) => view.id === savedView) : savedViews;
+  const hiddenViews = isNarrow ? savedViews.filter((view) => view.id !== savedView) : [];
 
   const statusChips = useMemo(
     () => [
-      { id: 'wszystkie', label: 'Wszystkie', count: statusCounts.wszystkie ?? 0 },
-      { id: 'ACTIVE', label: caseStatusLabel('ACTIVE', true), count: statusCounts.ACTIVE ?? 0 },
-      { id: 'BLOCKED', label: caseStatusLabel('BLOCKED', true), count: statusCounts.BLOCKED ?? 0 },
-      { id: 'DRAFT', label: caseStatusLabel('DRAFT', true), count: statusCounts.DRAFT ?? 0 },
-      { id: 'CLOSED', label: caseStatusLabel('CLOSED', true), count: statusCounts.CLOSED ?? 0 },
+      { id: 'wszystkie', label: t('caseWorkspace.list.allChip', 'All'), count: statusCounts.wszystkie ?? 0 },
+      { id: 'ACTIVE', label: caseStatusLabel('ACTIVE', isPolish), count: statusCounts.ACTIVE ?? 0 },
+      { id: 'BLOCKED', label: caseStatusLabel('BLOCKED', isPolish), count: statusCounts.BLOCKED ?? 0 },
+      { id: 'DRAFT', label: caseStatusLabel('DRAFT', isPolish), count: statusCounts.DRAFT ?? 0 },
+      { id: 'CLOSED', label: caseStatusLabel('CLOSED', isPolish), count: statusCounts.CLOSED ?? 0 },
     ],
-    [statusCounts]
+    [statusCounts, t]
   );
 
   /*
@@ -861,7 +921,7 @@ export const CasesListScreen: React.FC = () => {
       if (item.caseStatus === 'DRAFT') {
         statusTransitions.push({
           id: 'rozpocznij',
-          label: 'Rozpocznij zlecenie',
+          label: t('caseWorkspace.list.rowMenu.start', 'Start order'),
           icon: Play,
           onClick: () => setPending({ kind: 'start', item }),
         });
@@ -869,7 +929,7 @@ export const CasesListScreen: React.FC = () => {
       if (item.caseStatus === 'ACTIVE') {
         statusTransitions.push({
           id: 'wstrzymaj',
-          label: 'Wstrzymaj zlecenie',
+          label: t('caseWorkspace.list.rowMenu.pause', 'Pause order'),
           icon: Pause,
           onClick: () => setPending({ kind: 'pause', item }),
         });
@@ -877,7 +937,7 @@ export const CasesListScreen: React.FC = () => {
       if (item.caseStatus === 'BLOCKED') {
         statusTransitions.push({
           id: 'wznow',
-          label: 'Wznów zlecenie',
+          label: t('caseWorkspace.list.rowMenu.resume', 'Resume order'),
           icon: Play,
           onClick: () => setPending({ kind: 'resume', item }),
         });
@@ -886,7 +946,7 @@ export const CasesListScreen: React.FC = () => {
         primary: [
           {
             id: 'otworz',
-            label: 'Otwórz zlecenie',
+            label: t('caseWorkspace.list.rowMenu.open', 'Open order'),
             icon: ArrowRight,
             onClick: () => openCase(String(row.id)),
           },
@@ -901,13 +961,13 @@ export const CasesListScreen: React.FC = () => {
         destructive: terminal
           ? undefined
           : {
-              label: 'Anuluj zlecenie',
+              label: t('caseWorkspace.list.rowMenu.cancel', 'Cancel order'),
               icon: Ban,
               onClick: () => setPending({ kind: 'cancel', item }),
             },
       };
     },
-    [openCase]
+    [openCase, t]
   );
 
   /** Wiersze „właściwość → wartość" w podglądzie. Wszystkie po polsku. */
@@ -916,34 +976,46 @@ export const CasesListScreen: React.FC = () => {
     return [
       {
         id: 'zamkniecie',
-        label: 'Umówiony sposób zamknięcia',
-        value: closureTypeLabel(selected.contractedClosureType, true),
+        label: t('caseWorkspace.list.preview.closureType', 'Agreed closure method'),
+        value: closureTypeLabel(selected.contractedClosureType, isPolish),
       },
-      { id: 'nadzor', label: 'Nadzór', value: governanceTierLabel(selected.governanceTier, true) },
+      {
+        id: 'nadzor',
+        label: t('caseWorkspace.list.preview.governance', 'Governance'),
+        value: governanceTierLabel(selected.governanceTier, isPolish),
+      },
       {
         id: 'samodzielnosc',
-        label: 'Samodzielność systemu',
-        value: autonomyPolicyLabel(selected.autonomyPolicy, true),
+        label: t('caseWorkspace.list.preview.autonomy', 'System autonomy'),
+        value: autonomyPolicyLabel(selected.autonomyPolicy, isPolish),
       },
       {
         id: 'dostarczenie',
-        label: 'Dostarczenie',
-        value: closureAxisStatusLabel(selected.deliveryStatus, true),
+        label: t('caseWorkspace.list.preview.delivery', 'Delivery'),
+        value: closureAxisStatusLabel(selected.deliveryStatus, isPolish),
       },
       {
         id: 'decyzja',
-        label: 'Decyzja',
-        value: closureAxisStatusLabel(selected.decisionStatus, true),
+        label: t('caseWorkspace.list.preview.decision', 'Decision'),
+        value: closureAxisStatusLabel(selected.decisionStatus, isPolish),
       },
       {
         id: 'wdrozenie',
-        label: 'Wdrożenie',
-        value: closureAxisStatusLabel(selected.implementationStatus, true),
+        label: t('caseWorkspace.list.preview.implementation', 'Implementation'),
+        value: closureAxisStatusLabel(selected.implementationStatus, isPolish),
       },
-      { id: 'efekt', label: 'Efekt', value: closureAxisStatusLabel(selected.outcomeStatus, true) },
-      { id: 'zmiana', label: 'Ostatnia zmiana', value: formatDateTime(selected.updatedAt) },
+      {
+        id: 'efekt',
+        label: t('caseWorkspace.list.preview.outcome', 'Effect'),
+        value: closureAxisStatusLabel(selected.outcomeStatus, isPolish),
+      },
+      {
+        id: 'zmiana',
+        label: t('caseWorkspace.list.preview.lastChange', 'Last change'),
+        value: formatDateTime(selected.updatedAt),
+      },
     ];
-  }, [selected]);
+  }, [selected, t]);
 
   /** „Co dalej" — wejście na wybraną zakładkę zlecenia. */
   const previewNextItems = useMemo(() => {
@@ -955,14 +1027,22 @@ export const CasesListScreen: React.FC = () => {
     return [
       {
         id: 'plan',
-        label: 'Plan',
+        label: t('caseWorkspace.list.preview.plan', 'Plan'),
         icon: ListChecks,
         onClick: go('zakladka=plan&widok-planu=prosty'),
       },
-      { id: 'realizacja', label: 'Realizacja', onClick: go('zakladka=realizacja') },
-      { id: 'rezultaty', label: 'Rezultaty', onClick: go('zakladka=rezultaty') },
+      {
+        id: 'realizacja',
+        label: t('caseWorkspace.list.preview.execution', 'Execution'),
+        onClick: go('zakladka=realizacja'),
+      },
+      {
+        id: 'rezultaty',
+        label: t('caseWorkspace.list.preview.results', 'Results'),
+        onClick: go('zakladka=rezultaty'),
+      },
     ];
-  }, [selected, navigate]);
+  }, [selected, navigate, t]);
 
   const stateBlock = (
     <CaseStateBlock
@@ -972,14 +1052,16 @@ export const CasesListScreen: React.FC = () => {
       empty={
         items && items.length === 0
           ? {
-              title: 'Nie masz jeszcze żadnych zleceń',
-              description:
-                'Zlecenie powstaje z projektu — gdy pierwsze ruszy, pojawi się tutaj razem z planem, realizacją i rezultatami.',
+              title: t('caseWorkspace.list.empty.noOrdersTitle', "You don't have any orders yet"),
+              description: t(
+                'caseWorkspace.list.empty.noOrdersDescription',
+                'An order is created from a project — once the first one starts, it appears here together with its plan, execution and results.',
+              ),
             }
           : items && visible.length === 0
             ? {
-                title: 'Żadne zlecenie nie pasuje do filtrów',
-                description: 'Zmień zakładkę, status albo wyczyść wyszukiwanie.',
+                title: t('caseWorkspace.list.empty.noMatchTitle', 'No order matches the filters'),
+                description: t('caseWorkspace.list.empty.noMatchDescription', 'Change the tab, status, or clear the search.'),
               }
             : null
       }
@@ -1001,8 +1083,8 @@ export const CasesListScreen: React.FC = () => {
               items={hiddenViews}
               activeId={savedView}
               onSelect={(id) => setParam('widok', id)}
-              label="Więcej"
-              ariaLabel="Więcej widoków listy zleceń"
+              label={t('caseWorkspace.list.moreViews.label', 'More')}
+              ariaLabel={t('caseWorkspace.list.moreViews.ariaLabel', 'More order list views')}
             />
           ) : undefined
         }
@@ -1061,42 +1143,42 @@ export const CasesListScreen: React.FC = () => {
                   minTableWidth="columns"
                   empty={{
                     icon: FolderOpen,
-                    title: 'Brak zleceń w tym widoku',
-                    description: 'Zmień zakładkę albo wyczyść filtry.',
+                    title: t('caseWorkspace.list.empty.tableEmptyTitle', 'No orders in this view'),
+                    description: t('caseWorkspace.list.empty.tableEmptyDescription', 'Change the tab or clear the filters.'),
                   }}
                   rowMenu={rowMenu}
                 />
               </div>
               <JedenPrawyPanel rekord={selected ? (
                   <StandardPreview
-                    title={nazwaZlecenia(selected, naming[selected.caseId])}
+                    title={nazwaZlecenia(selected, naming[selected.caseId], t, isPolish)}
                     onClose={() => setSelectedId(null)}
                     onOpenFull={() => openCase(selected.caseId)}
-                    openLabel="Otwórz zlecenie"
+                    openLabel={t('caseWorkspace.list.preview.openOrder', 'Open order')}
                     meta={{
                       pills: [
-                        { label: caseStatusLabel(selected.caseStatus, true), tone: 'info' },
-                        { label: caseProfileLabel(selected.caseProfile, true), tone: 'neutral' },
+                        { label: caseStatusLabel(selected.caseStatus, isPolish), tone: 'info' },
+                        { label: caseProfileLabel(selected.caseProfile, isPolish), tone: 'neutral' },
                       ],
                       trailing: (
                         <span className="text-xs text-c-text-muted">
-                          {relativeDays(selected.updatedAt)}
+                          {relativeDays(selected.updatedAt, t)}
                         </span>
                       ),
-                      recommendation: nextActionOf(selected),
+                      recommendation: nextActionOf(selected, t),
                     }}
                     details={{
                       text:
-                        podtytulZlecenia(selected, naming[selected.caseId]) ||
-                        'Cel i oczekiwany rezultat nie zostały opisane.',
+                        podtytulZlecenia(selected, naming[selected.caseId], t, isPolish) ||
+                        t('caseWorkspace.list.preview.goalOutcomeUndescribed', 'Goal and expected outcome were not described.'),
                       showWordCount: false,
-                      propertyLabel: 'Właściwość',
-                      valueLabel: 'Wartość',
+                      propertyLabel: t('caseWorkspace.list.preview.propertyLabel', 'Property'),
+                      valueLabel: t('caseWorkspace.list.preview.valueLabel', 'Value'),
                       properties: previewProperties,
                     }}
                     whatsNext={{
-                      label: 'Co dalej',
-                      note: 'Otwiera zlecenie na wybranej zakładce.',
+                      label: t('caseWorkspace.list.preview.whatsNextLabel', "What's next"),
+                      note: t('caseWorkspace.list.preview.whatsNextNote', 'Opens the order on the selected tab.'),
                       items: previewNextItems,
                     }}
                   />

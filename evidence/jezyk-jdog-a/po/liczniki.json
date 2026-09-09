@@ -1,0 +1,50 @@
+[
+ {
+  "lang": "en",
+  "ekran": "01-lista-zlecen",
+  "napisowUi": 35,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 4
+ },
+ {
+  "lang": "en",
+  "ekran": "02-szczegol-zlecenia-plan",
+  "napisowUi": 37,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 7
+ },
+ {
+  "lang": "en",
+  "ekran": "03-szczegol-zlecenia-execution",
+  "napisowUi": 50,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 18
+ },
+ {
+  "lang": "en",
+  "ekran": "04-szczegol-zlecenia-results",
+  "napisowUi": 76,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 14
+ },
+ {
+  "lang": "en",
+  "ekran": "05-plotno-planu-ekspercki",
+  "napisowUi": 42,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 8
+ },
+ {
+  "lang": "en",
+  "ekran": "06-onboarding-enterprise",
+  "napisowUi": 8,
+  "polskichUi": 0,
+  "polskie": [],
+  "angielskichUi": 4
+ }
+]

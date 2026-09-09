@@ -21,6 +21,7 @@
 
 import { Crosshair, Maximize2, Minus, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { planEdgeTypeLabel, planNodeTypeLabel } from '@/utils/enumLabels';
 
@@ -66,7 +67,10 @@ export function nodeLabel(node: GraphNode): string {
  * Cykle (graf nie musi być drzewem) są przycinane licznikiem odwiedzin, więc
  * funkcja zawsze się kończy, nawet dla planu z pętlą ponowienia.
  */
-export function layoutGraph(graph: CanonicalGraph): {
+export function layoutGraph(
+  graph: CanonicalGraph,
+  isPolish = false
+): {
   nodes: PositionedNode[];
   width: number;
   height: number;
@@ -140,7 +144,7 @@ export function layoutGraph(graph: CanonicalGraph): {
         x: columnIndex * (NODE_W + GAP_X),
         y: offsetY + rowIndex * (NODE_H + GAP_Y),
         label: nodeLabel(node),
-        typeLabel: planNodeTypeLabel(String(node.type ?? ''), true),
+        typeLabel: planNodeTypeLabel(String(node.type ?? ''), isPolish),
       });
     });
   });
@@ -166,6 +170,8 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   onSelectNode,
   runtimeStateByNodeId,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 });
@@ -178,7 +184,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   } | null>(null);
   const didInitialFit = useRef(false);
 
-  const layout = useMemo(() => layoutGraph(graph), [graph]);
+  const layout = useMemo(() => layoutGraph(graph, isPolish), [graph, isPolish]);
   const edges: GraphEdge[] = useMemo(
     () => (Array.isArray(graph?.edges) ? graph.edges : []),
     [graph]
@@ -329,7 +335,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   if (!layout.nodes.length) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-c-border bg-c-surface p-8 text-center text-sm text-c-text-muted">
-        Ten plan nie ma jeszcze żadnych kroków.
+        {t('caseWorkspace.planCanvas.emptyNoSteps', "This plan doesn't have any steps yet.")}
       </div>
     );
   }
@@ -339,7 +345,10 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
       <div
         ref={wrapperRef}
         role="application"
-        aria-label="Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przybliżają, zero dopasowuje widok."
+        aria-label={t(
+          'caseWorkspace.planCanvas.canvasAriaLabel',
+          'Order plan — flow canvas. Drag with the mouse, zoom with the wheel, keys: arrows pan, plus and minus zoom, zero fits the view.',
+        )}
         tabIndex={0}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -391,7 +400,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
                   />
                   {kind !== 'SEQUENCE'
                     ? (() => {
-                        const text = planEdgeTypeLabel(kind, true);
+                        const text = planEdgeTypeLabel(kind, isPolish);
                         // Szerokość liczona z długości napisu (bez pomiaru DOM —
                         // płótno jest w SVG i musi rysować się w jednym przebiegu).
                         const boxW = text.length * 5.9 + 12;
@@ -500,9 +509,9 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
        */}
       <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col gap-1.5 md:flex-row md:items-end md:justify-between md:gap-3">
         <p className="min-w-0 text-[11px] leading-snug text-c-text-muted md:max-w-[45%]">
-          <span className="md:hidden">Przeciągnij, aby przesunąć. Kółko przybliża.</span>
+          <span className="md:hidden">{t('caseWorkspace.planCanvas.hintMobile', 'Drag to pan. Wheel zooms.')}</span>
           <span className="hidden md:inline">
-            Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.
+            {t('caseWorkspace.planCanvas.hintDesktop', 'Drag to pan. Mouse wheel zooms. The arrow shows step order.')}
           </span>
         </p>
         {/* Sterowanie widokiem — neutralne, nigdy crimson (crimson = krytyczne). */}
@@ -510,7 +519,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
           <button
             type="button"
             onClick={() => zoomBy(1 / 1.2)}
-            aria-label="Oddal plan"
+            aria-label={t('caseWorkspace.planCanvas.zoomOut', 'Zoom out')}
             className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
             <Minus size={16} aria-hidden />
@@ -524,7 +533,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
           <button
             type="button"
             onClick={() => zoomBy(1.2)}
-            aria-label="Przybliż plan"
+            aria-label={t('caseWorkspace.planCanvas.zoomIn', 'Zoom in')}
             className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
             <Plus size={16} aria-hidden />
@@ -538,17 +547,17 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
             // „Dopasuj do ekranu" rozpychało pasek do 282 px przy 270 px
             // dostępnych, więc pasek łamał się na dwie linie (78 px wysokości)
             // i zjadał połowę płótna. Skrót mieści cały rząd w jednej linii.
-            aria-label="Dopasuj do ekranu"
+            aria-label={t('caseWorkspace.planCanvas.fitToView', 'Fit to view')}
             className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
             <Maximize2 size={14} aria-hidden />
-            <span className="md:hidden">Dopasuj</span>
-            <span className="hidden md:inline">Dopasuj do ekranu</span>
+            <span className="md:hidden">{t('caseWorkspace.planCanvas.fitShort', 'Fit')}</span>
+            <span className="hidden md:inline">{t('caseWorkspace.planCanvas.fitToView', 'Fit to view')}</span>
           </button>
           <button
             type="button"
             onClick={() => setTransform((p) => ({ ...p, k: 1 }))}
-            aria-label="Ustaw powiększenie na sto procent"
+            aria-label={t('caseWorkspace.planCanvas.resetZoom', 'Set zoom to one hundred percent')}
             className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
             <Crosshair size={15} aria-hidden />

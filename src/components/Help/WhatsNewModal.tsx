@@ -27,6 +27,7 @@ import {
   ReleaseNote,
 } from '../../config/releaseNotes';
 import DynamicIcon from '../shared/DynamicIcon';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // Storage key for last seen version
 const LAST_SEEN_KEY = 'consultify_last_seen_version';
@@ -177,7 +178,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                   {release.type}
                 </span>
                 <span className="text-white/80 text-sm">
-                  {tTrans.version} {release.version} • {new Date(release.date).toLocaleDateString()}
+                  {tTrans.version} {release.version} • {formatListDate(release.date)}
                 </span>
               </div>
               {release.summary && (

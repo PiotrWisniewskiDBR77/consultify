@@ -59,7 +59,9 @@ import {
   Send,
   Undo2,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { NModeToolbar } from '@/components/shared/NModeLayout/NModeToolbar';
@@ -113,7 +115,7 @@ import {
 } from './api';
 import { startLightOneClick } from './apiLightStart';
 import { nazwaZlecenia, rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
-import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
+import { getPlanProjections, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import {
   jestPowiazaniemDokumentu,
@@ -163,31 +165,39 @@ import {
 
 type Tab = 'plan' | 'realizacja' | 'rezultaty';
 
-const TABS: Array<{
+function getTabs(t: TFunction): Array<{
   id: Tab;
   label: string;
   description: string;
   icon: React.FC<{ size?: number; className?: string }>;
-}> = [
-  {
-    id: 'plan',
-    label: 'Plan',
-    description: 'Co i w jakiej kolejności ma się wydarzyć.',
-    icon: RouteIcon,
-  },
-  {
-    id: 'realizacja',
-    label: 'Realizacja',
-    description: 'Co się dzieje teraz i na co czekamy.',
-    icon: ListChecks,
-  },
-  {
-    id: 'rezultaty',
-    label: 'Rezultaty',
-    description: 'Co powstało i czy efekt został potwierdzony.',
-    icon: BarChart3,
-  },
-];
+}> {
+  return [
+    {
+      id: 'plan',
+      label: t('caseWorkspace.detail.tabs.planLabel', 'Plan'),
+      description: t('caseWorkspace.detail.tabs.planDescription', 'What should happen, and in what order.'),
+      icon: RouteIcon,
+    },
+    {
+      id: 'realizacja',
+      label: t('caseWorkspace.detail.tabs.executionLabel', 'Execution'),
+      description: t(
+        'caseWorkspace.detail.tabs.executionDescription',
+        "What's happening now and what we're waiting for.",
+      ),
+      icon: ListChecks,
+    },
+    {
+      id: 'rezultaty',
+      label: t('caseWorkspace.detail.tabs.resultsLabel', 'Results'),
+      description: t(
+        'caseWorkspace.detail.tabs.resultsDescription',
+        'What was produced and whether the effect was confirmed.',
+      ),
+      icon: BarChart3,
+    },
+  ];
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PAMIĘĆ POWROTU — wyjście do innego modułu i powrót „tam, gdzie byłem"
@@ -354,7 +364,7 @@ interface CaseBundle {
  * niesie), więc wyjmujemy ją z cudzysłowu — a gdy kształt się nie zgadza, wraca
  * ORYGINALNY napis serwera. Nigdy nie zgadujemy treści zdarzenia.
  */
-function opisZdarzenia(event: CaseHistoryEvent): string {
+function opisZdarzenia(event: CaseHistoryEvent, isPolish: boolean, t: TFunction): string {
   const surowy = event.summary || event.eventType;
   if (event.eventType !== 'VALUE_MEASUREMENT_RECORDED') return surowy;
 
@@ -364,11 +374,15 @@ function opisZdarzenia(event: CaseHistoryEvent): string {
   const wskaznik = nazwaZCudzyslowu || klucz || null;
   const stan =
     typeof payload.measurementStatus === 'string'
-      ? valueMeasurementStatusLabel(payload.measurementStatus, true)
+      ? valueMeasurementStatusLabel(payload.measurementStatus, isPolish)
       : null;
 
   if (!wskaznik || !stan) return surowy;
-  return `Zapisano pomiar wartości dla wskaźnika „${wskaznik}" — stan: ${stan}.`;
+  return t(
+    'caseWorkspace.detail.history.measurementRecorded',
+    'Recorded a value measurement for indicator "{{indicator}}" — status: {{status}}.',
+    { indicator: wskaznik, status: stan },
+  );
 }
 
 /**
@@ -409,7 +423,9 @@ interface ZdarzenieHistorii {
  */
 function syntetyczneZdarzeniaCyklu(
   caseItem: CaseCoreView,
-  history: CaseHistoryEvent[]
+  history: CaseHistoryEvent[],
+  isPolish: boolean,
+  t: TFunction
 ): ZdarzenieHistorii[] {
   const maRealnyWpis = (eventType: string) =>
     history.some((event) => event.eventType === eventType);
@@ -418,7 +434,7 @@ function syntetyczneZdarzeniaCyklu(
   if (!maRealnyWpis('case.created')) {
     wpisy.push({
       id: 'syntetyczne:zalozenie',
-      description: 'Zlecenie założone.',
+      description: t('caseWorkspace.detail.history.founded', 'Order created.'),
       timestamp: caseItem.createdAt,
     });
   }
@@ -429,11 +445,13 @@ function syntetyczneZdarzeniaCyklu(
     CLOSED: {
       eventType: 'case.closed',
       opis: caseItem.closureType
-        ? `Zlecenie zamknięte jako „${closureTypeLabel(caseItem.closureType, true).toLowerCase()}".`
-        : 'Zlecenie zamknięte.',
+        ? t('caseWorkspace.detail.history.closedAs', 'Order closed as "{{type}}".', {
+            type: closureTypeLabel(caseItem.closureType, isPolish).toLowerCase(),
+          })
+        : t('caseWorkspace.detail.history.closed', 'Order closed.'),
     },
-    FAILED: { eventType: 'case.failed', opis: 'Zlecenie zakończone niepowodzeniem.' },
-    CANCELLED: { eventType: 'case.cancelled', opis: 'Zlecenie anulowane.' },
+    FAILED: { eventType: 'case.failed', opis: t('caseWorkspace.detail.history.failed', 'Order ended in failure.') },
+    CANCELLED: { eventType: 'case.cancelled', opis: t('caseWorkspace.detail.history.cancelled', 'Order cancelled.') },
   };
   const terminal = TERMINALNE[caseItem.caseStatus];
   if (terminal && !maRealnyWpis(terminal.eventType)) {
@@ -585,6 +603,8 @@ function closureAxisValue(
 const ZLECENIE_TERMINALNE = new Set(['CLOSED', 'FAILED', 'CANCELLED']);
 
 export const CaseDetailScreen: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -636,7 +656,7 @@ export const CaseDetailScreen: React.FC = () => {
     const linki = bundle?.artifactLinks ?? [];
     linki
       .filter(jestPowiazaniemDokumentu)
-      .filter((link) => rozstrzygnijOtwarcie(link).status === 'otwieralny')
+      .filter((link) => rozstrzygnijOtwarcie(link, isPolish).status === 'otwieralny')
       .forEach((link) => {
         weryfikujIstnienieDokumentu(link.artifactId).then((istnieje) => {
           if (anulowano || istnieje) return;
@@ -675,8 +695,8 @@ export const CaseDetailScreen: React.FC = () => {
     (link: CaseArtifactLink): OtwarcieObiektu =>
       nadpisaniaWeryfikacji[link.linkId] ??
       nadpisaniaBackendu[link.linkId] ??
-      rozstrzygnijOtwarcie(link),
-    [nadpisaniaWeryfikacji, nadpisaniaBackendu]
+      rozstrzygnijOtwarcie(link, isPolish),
+    [nadpisaniaWeryfikacji, nadpisaniaBackendu, isPolish]
   );
 
   /*
@@ -965,7 +985,7 @@ export const CaseDetailScreen: React.FC = () => {
         tone: 'success',
         text:
           result.readback === 'confirmed'
-            ? `Poziom „${closureAxisLabel(axis, true)}" ustawiony na „${closureAxisStatusLabel(status, true).toLowerCase()}".`
+            ? `Poziom „${closureAxisLabel(axis, isPolish)}" ustawiony na „${closureAxisStatusLabel(status, isPolish).toLowerCase()}".`
             : 'Zapisano, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.',
       });
       await load();
@@ -1019,7 +1039,7 @@ export const CaseDetailScreen: React.FC = () => {
               : 'critical',
           text: jużZarejestrowane
             ? closeResult.failure.message
-            : `Zamknięcie zostało zarejestrowane (typ: „${closureTypeLabel(closureTypeForm, true)}"), ale przejście zlecenia do stanu „Zamknięte" nie powiodło się: ${closeResult.failure.message}`,
+            : `Zamknięcie zostało zarejestrowane (typ: „${closureTypeLabel(closureTypeForm, isPolish)}"), ale przejście zlecenia do stanu „Zamknięte" nie powiodło się: ${closeResult.failure.message}`,
           refresh: true,
         });
         return;
@@ -1029,7 +1049,7 @@ export const CaseDetailScreen: React.FC = () => {
         tone: closeResult.readback === 'confirmed' ? 'success' : 'warning',
         text:
           closeResult.readback === 'confirmed'
-            ? `Zlecenie zamknięte jako „${closureTypeLabel(closeResult.value.closureType ?? closureTypeForm, true).toLowerCase()}".`
+            ? `Zlecenie zamknięte jako „${closureTypeLabel(closeResult.value.closureType ?? closureTypeForm, isPolish).toLowerCase()}".`
             : 'Zlecenie zostało zamknięte, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.',
       });
       await load();
@@ -1212,7 +1232,7 @@ export const CaseDetailScreen: React.FC = () => {
         setPinnedPlanVersionId(result.value.casePlanVersionId);
         const komunikatSukcesu =
           result.readback === 'confirmed'
-            ? `Plan nr ${result.value.planNumber} ma teraz status: ${planVersionStatusLabel(result.value.status, true)}.`
+            ? `Plan nr ${result.value.planNumber} ma teraz status: ${planVersionStatusLabel(result.value.status, isPolish)}.`
             : 'Komenda została przyjęta, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.';
         setPlanNotice({ tone: 'success', text: komunikatSukcesu });
         setKomunikat(komunikatSukcesu);
@@ -1250,7 +1270,7 @@ export const CaseDetailScreen: React.FC = () => {
       if (pending.seedFrom) {
         return {
           title: 'Nowy szkic planu',
-          description: `Powstanie nowy szkic, punkt startowy: treść wersji nr ${pending.seedFrom.planNumber} (${planVersionStatusLabel(pending.seedFrom.status, true).toLowerCase()}). Poprawki wprowadzisz przed zaproponowaniem go do przeglądu.`,
+          description: `Powstanie nowy szkic, punkt startowy: treść wersji nr ${pending.seedFrom.planNumber} (${planVersionStatusLabel(pending.seedFrom.status, isPolish).toLowerCase()}). Poprawki wprowadzisz przed zaproponowaniem go do przeglądu.`,
           confirmLabel: 'Utwórz szkic',
           reason: {
             label: 'Powód',
@@ -1424,8 +1444,8 @@ export const CaseDetailScreen: React.FC = () => {
      */
     const doklejkaKontekstu = stan.kontekstPowrotu
       ? stan.kontekstPowrotu.casePhase !== bundle.caseItem.caseStatus
-        ? ` Zlecenie zmieniło w międzyczasie stan na „${caseStatusLabel(bundle.caseItem.caseStatus, true).toLowerCase()}" — sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, true).toLowerCase()}.`
-        : ` Sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, true).toLowerCase()}.`
+        ? ` Zlecenie zmieniło w międzyczasie stan na „${caseStatusLabel(bundle.caseItem.caseStatus, isPolish).toLowerCase()}" — sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, isPolish).toLowerCase()}.`
+        : ` Sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, isPolish).toLowerCase()}.`
       : '';
 
     const brakujace: Record<string, string | null> = {};
@@ -1545,6 +1565,7 @@ export const CaseDetailScreen: React.FC = () => {
   }, [bundle, rozstrzygnijOtwarcieZWeryfikacja]);
 
   // ── Sekcje lewej kolumny = KANONICZNA nawigacja powłoki ───────────────────
+  const TABS = useMemo(() => getTabs(t), [t]);
   const aktywnaSekcja = TABS.find((item) => item.id === tab) ?? TABS[0];
 
   const trescSekcji = (id: Tab): React.ReactNode => {
@@ -1662,62 +1683,65 @@ export const CaseDetailScreen: React.FC = () => {
     ? [
         {
           id: 'status',
-          label: 'Stan zlecenia',
+          label: t('caseWorkspace.detail.properties.status', 'Order status'),
           value: (
-            <StatusTag tone="info">{caseStatusLabel(bundle.caseItem.caseStatus, true)}</StatusTag>
+            <StatusTag tone="info">{caseStatusLabel(bundle.caseItem.caseStatus, isPolish)}</StatusTag>
           ),
         },
         {
           id: 'profil',
-          label: 'Profil',
-          value: caseProfileLabel(bundle.caseItem.caseProfile, true),
+          label: t('caseWorkspace.detail.properties.profile', 'Profile'),
+          value: caseProfileLabel(bundle.caseItem.caseProfile, isPolish),
         },
         {
           id: 'nadzor',
-          label: 'Tryb nadzoru',
-          value: governanceTierLabel(bundle.caseItem.governanceTier, true),
+          label: t('caseWorkspace.detail.properties.governance', 'Governance mode'),
+          value: governanceTierLabel(bundle.caseItem.governanceTier, isPolish),
         },
         {
           id: 'samodzielnosc',
-          label: 'Samodzielność',
-          value: autonomyPolicyLabel(bundle.caseItem.autonomyPolicy, true),
+          label: t('caseWorkspace.detail.properties.autonomy', 'Autonomy'),
+          value: autonomyPolicyLabel(bundle.caseItem.autonomyPolicy, isPolish),
         },
         {
           id: 'plan',
-          label: 'Plan',
+          label: t('caseWorkspace.detail.properties.plan', 'Plan'),
           value: currentPlanVersion
-            ? `nr ${currentPlanVersion.planNumber} · ${planVersionStatusLabel(currentPlanVersion.status, true)}`
-            : 'brak wersji planu',
+            ? t('caseWorkspace.detail.properties.planVersionValue', '#{{number}} · {{status}}', {
+                number: currentPlanVersion.planNumber,
+                status: planVersionStatusLabel(currentPlanVersion.status, isPolish),
+              })
+            : t('caseWorkspace.detail.properties.noPlanVersion', 'no plan version'),
         },
         {
           id: 'zalozone',
-          label: 'Założone',
+          label: t('caseWorkspace.detail.properties.created', 'Created'),
           value: formatDate(bundle.caseItem.createdAt),
           mono: true,
         },
         {
           id: 'zmienione',
-          label: 'Ostatnia zmiana',
+          label: t('caseWorkspace.detail.properties.lastChange', 'Last change'),
           value: formatDateTime(bundle.caseItem.updatedAt),
           mono: true,
         },
         {
           id: 'zamkniete',
-          label: 'Zamknięte',
-          value: bundle.caseItem.closedAt ? formatDateTime(bundle.caseItem.closedAt) : 'nie',
+          label: t('caseWorkspace.detail.properties.closed', 'Closed'),
+          value: bundle.caseItem.closedAt ? formatDateTime(bundle.caseItem.closedAt) : t('caseWorkspace.detail.properties.no', 'no'),
           mono: true,
         },
         {
           id: 'typ-zamkniecia-kontrakt',
-          label: 'Kontraktowy typ zamknięcia',
-          value: closureTypeLabel(bundle.caseItem.contractedClosureType, true),
+          label: t('caseWorkspace.detail.properties.contractedClosureType', 'Contracted closure type'),
+          value: closureTypeLabel(bundle.caseItem.contractedClosureType, isPolish),
         },
         ...(bundle.caseItem.closureType
           ? [
               {
                 id: 'typ-zamkniecia-zarejestrowany',
-                label: 'Zarejestrowany typ zamknięcia',
-                value: closureTypeLabel(bundle.caseItem.closureType, true),
+                label: t('caseWorkspace.detail.properties.registeredClosureType', 'Registered closure type'),
+                value: closureTypeLabel(bundle.caseItem.closureType, isPolish),
               },
             ]
           : []),
@@ -1759,15 +1783,15 @@ export const CaseDetailScreen: React.FC = () => {
     if (!bundle) return [];
     const realne = bundle.history.map((event) => ({
       id: event.eventId,
-      description: opisZdarzenia(event),
+      description: opisZdarzenia(event, isPolish, t),
       timestamp: event.occurredAt,
       userName: event.actorId,
     }));
-    const syntetyczne = syntetyczneZdarzeniaCyklu(bundle.caseItem, bundle.history);
+    const syntetyczne = syntetyczneZdarzeniaCyklu(bundle.caseItem, bundle.history, isPolish, t);
     return [...realne, ...syntetyczne].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
-  }, [bundle]);
+  }, [bundle, isPolish]);
 
   /*
    * "Zatwierdź i rozpocznij" pokazuje się TYLKO dla zleceń LIGHT, które
@@ -1818,11 +1842,11 @@ export const CaseDetailScreen: React.FC = () => {
     disabled?: boolean;
   }> = [];
   if (bundle) {
-    const busyLabel = (label: string) => (planCommandBusy ? 'Wysyłam…' : label);
+    const busyLabel = (label: string) => (planCommandBusy ? t('caseWorkspace.detail.sending', 'Sending…') : label);
     if (!currentPlanVersion) {
       planActionButtons.push({
         id: 'plan-utworz-szkic',
-        label: busyLabel('Utwórz szkic planu'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.createDraft', 'Create plan draft')),
         icon: FilePlus2,
         colorScheme: 'primary',
         disabled: planCommandBusy,
@@ -1832,7 +1856,7 @@ export const CaseDetailScreen: React.FC = () => {
     } else if (currentPlanVersion.status === 'DRAFT') {
       planActionButtons.push({
         id: 'plan-zaproponuj',
-        label: busyLabel('Zaproponuj do przeglądu'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.proposeForReview', 'Propose for review')),
         icon: Send,
         colorScheme: 'primary',
         disabled: planCommandBusy,
@@ -1841,7 +1865,7 @@ export const CaseDetailScreen: React.FC = () => {
     } else if (currentPlanVersion.status === 'IN_REVIEW') {
       planActionButtons.push({
         id: 'plan-publikuj',
-        label: busyLabel('Publikuj'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.publish', 'Publish')),
         icon: CheckCircle2,
         colorScheme: 'primary',
         disabled: planCommandBusy || planPublishBlokowany,
@@ -1849,7 +1873,7 @@ export const CaseDetailScreen: React.FC = () => {
       });
       planActionButtons.push({
         id: 'plan-popros-o-zmiany',
-        label: busyLabel('Poproś o zmiany'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.requestChanges', 'Request changes')),
         icon: RotateCcw,
         colorScheme: 'neutral',
         disabled: planCommandBusy,
@@ -1858,7 +1882,7 @@ export const CaseDetailScreen: React.FC = () => {
     } else if (currentPlanVersion.status === 'PUBLISHED') {
       planActionButtons.push({
         id: 'plan-wycofaj',
-        label: busyLabel('Wycofaj plan'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.withdraw', 'Withdraw plan')),
         icon: Undo2,
         colorScheme: 'red',
         disabled: planCommandBusy,
@@ -1866,7 +1890,7 @@ export const CaseDetailScreen: React.FC = () => {
       });
       planActionButtons.push({
         id: 'plan-nowy-szkic-zmiana',
-        label: busyLabel('Nowy szkic (zmiana planu)'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.newDraftChange', 'New draft (plan change)')),
         icon: GitBranch,
         colorScheme: 'neutral',
         disabled: planCommandBusy,
@@ -1880,7 +1904,7 @@ export const CaseDetailScreen: React.FC = () => {
     } else if (currentPlanVersion.status === 'WITHDRAWN') {
       planActionButtons.push({
         id: 'plan-nowy-szkic',
-        label: busyLabel('Nowy szkic planu'),
+        label: busyLabel(t('caseWorkspace.detail.planActions.newDraft', 'New plan draft')),
         icon: FilePlus2,
         colorScheme: 'primary',
         disabled: planCommandBusy,
@@ -1907,8 +1931,8 @@ export const CaseDetailScreen: React.FC = () => {
    * ale przycisk i okno są te same.
    */
   const zamknieciePrzycisk = bundle?.caseItem.closureType
-    ? 'Dokończ zamknięcie zlecenia'
-    : 'Zamknij zlecenie';
+    ? t('caseWorkspace.detail.rightPanel.finishClosingOrder', 'Finish closing the order')
+    : t('caseWorkspace.detail.rightPanel.closeOrder', 'Close order');
   const zamkniecieDostepne =
     Boolean(bundle) && !ZLECENIE_TERMINALNE.has(bundle?.caseItem.caseStatus ?? '');
   // DOKTRYNA_GESTOSCI §1: pasek główny ≤ 5 widocznych akcji. Zamknięcie jest
@@ -1921,7 +1945,7 @@ export const CaseDetailScreen: React.FC = () => {
 
   const prawyPanel = {
     actions: {
-      label: 'Akcje',
+      label: t('caseWorkspace.detail.rightPanel.actionsLabel', 'Actions'),
       icon: ClipboardList,
       children: (
         <div>
@@ -1980,14 +2004,14 @@ export const CaseDetailScreen: React.FC = () => {
               {
                 buttons: [
                   {
-                    label: 'Wczytaj ponownie',
+                    label: t('caseWorkspace.detail.rightPanel.reload', 'Reload'),
                     icon: RefreshCw,
                     colorScheme: 'neutral',
                     flex: true,
                     onClick: () => void load(),
                   },
                   {
-                    label: 'Wróć do listy zleceń',
+                    label: t('caseWorkspace.detail.rightPanel.backToList', 'Back to order list'),
                     icon: ListChecks,
                     colorScheme: 'neutral',
                     flex: true,
@@ -2013,7 +2037,7 @@ export const CaseDetailScreen: React.FC = () => {
           {lightStart.status === 'refused' ? (
             <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
               <span className="font-medium text-c-text">
-                Zlecenie LIGHT nie zostało uruchomione.
+                {t('caseWorkspace.detail.lightNotStarted', 'The LIGHT order was not started.')}
               </span>{' '}
               {lightStart.reasonDetail}
             </div>
@@ -2021,13 +2045,17 @@ export const CaseDetailScreen: React.FC = () => {
           {lightStart.status === 'error' ? (
             <div className="mt-2 rounded-lg border border-danger-300/40 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200">
               {lightStart.message}
-              {lightStart.refreshSuggested ? ' Odśwież dane i spróbuj ponownie.' : ''}
+              {lightStart.refreshSuggested
+                ? t('caseWorkspace.detail.refreshAndRetry', ' Refresh the data and try again.')
+                : ''}
             </div>
           ) : null}
           {planPublishBlokowany && currentPlanVersion?.status === 'IN_REVIEW' ? (
             <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-              Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie
-              zostaną poprawione. Lista blokerów jest w zakładce „Plan".
+              {t(
+                'caseWorkspace.detail.planBlockedNotice',
+                'This plan has unresolved validation blockers — publishing isn\'t available until they are fixed. The list of blockers is on the “Plan” tab.',
+              )}
             </div>
           ) : null}
           <CommandBanner
@@ -2051,27 +2079,29 @@ export const CaseDetailScreen: React.FC = () => {
       ],
     },
     properties: {
-      label: 'Właściwości',
+      label: t('caseWorkspace.detail.rightPanel.propertiesLabel', 'Properties'),
       children: wierszeWlasciwosci.length ? (
         <ArtifactPropertiesTable
           rows={wierszeWlasciwosci}
-          propertyLabel="Właściwość"
-          valueLabel="Wartość"
+          propertyLabel={t('caseWorkspace.detail.properties.propertyLabel', 'Property')}
+          valueLabel={t('caseWorkspace.detail.properties.valueLabel', 'Value')}
         />
       ) : null,
       isEmpty: !wierszeWlasciwosci.length,
-      emptyLabel: 'Dane zlecenia nie zostały jeszcze wczytane.',
+      emptyLabel: t('caseWorkspace.detail.rightPanel.propertiesEmpty', "The order's data hasn't been loaded yet."),
     },
     relations: {
-      label: 'Powiązania',
+      label: t('caseWorkspace.detail.rightPanel.relationsLabel', 'Relations'),
       icon: Link2,
       badge: linkiPanelu.length,
       children: brakDostepuDoPowiazan ? (
         <div className="flex items-start gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
           <Lock className="mt-0.5 h-4 w-4 shrink-0 text-c-text-muted" aria-hidden />
           <p className="min-w-0 text-xs text-c-text-secondary">
-            Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest
-            widoczna — poproś właściciela zlecenia o dostęp.
+            {t(
+              'caseWorkspace.detail.noLinksAccess',
+              "You don't have permission to view objects linked to this order. The rest of the order is visible — ask the order's owner for access.",
+            )}
           </p>
         </div>
       ) : (
@@ -2081,14 +2111,18 @@ export const CaseDetailScreen: React.FC = () => {
             // Nagłówek pozycji to zawsze RODZAJ obiektu (Dokument/Prezentacja/
             // Arkusz), a nie jego rola — inaczej pozycja niedostępna pokazywała
             // „Dowód / Dowód", czyli tę samą informację dwa razy.
-            const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+            const etykietaTypu = linkedTypeLabel(link.artifactType, isPolish) || link.artifactType;
             return (
               <li key={link.linkId}>
                 <button
                   type="button"
                   data-cw-focus={kluczFokusuObiektu(link.linkId)}
                   disabled={!otwieralny}
-                  title={otwieralny ? `Otwórz: ${otwarcie.etykieta}` : otwarcie.powod}
+                  title={
+                    otwieralny
+                      ? t('caseWorkspace.detail.rightPanel.openPrefix', 'Open: {{label}}', { label: otwarcie.etykieta })
+                      : otwarcie.powod
+                  }
                   onClick={() =>
                     otwieralny
                       ? otworzObiekt({
@@ -2113,8 +2147,8 @@ export const CaseDetailScreen: React.FC = () => {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium">{etykietaTypu}</span>
                     <span className="block truncate text-[11px] text-c-text-muted">
-                      {artifactLinkRelationLabel(link.relation, true)}
-                      {link.isStale ? ' · nieaktualny' : ''}
+                      {artifactLinkRelationLabel(link.relation, isPolish)}
+                      {link.isStale ? t('caseWorkspace.detail.rightPanel.staleSuffix', ' · outdated') : ''}
                     </span>
                     {!otwieralny ? (
                       // Pełny powód siedzi w `title`; tu dwie linijki, żeby panel
@@ -2131,11 +2165,13 @@ export const CaseDetailScreen: React.FC = () => {
         </ul>
       ),
       isEmpty: !brakDostepuDoPowiazan && linkiPanelu.length === 0,
-      emptyLabel:
-        'Nic jeszcze nie powiązano. Tu trafiają dokumenty, decyzje i dowody tego zlecenia.',
+      emptyLabel: t(
+        'caseWorkspace.detail.rightPanel.relationsEmpty',
+        "Nothing linked yet. This order's documents, decisions and evidence land here.",
+      ),
     },
     evidence: {
-      label: 'Źródła i założenia',
+      label: t('caseWorkspace.detail.rightPanel.evidenceLabel', 'Sources and assumptions'),
       icon: ScrollText,
       children: (
         <dl className="space-y-2">
@@ -2152,8 +2188,10 @@ export const CaseDetailScreen: React.FC = () => {
         </dl>
       ),
       isEmpty: zrodla.length === 0,
-      emptyLabel:
-        'Zlecenie nie wskazuje jeszcze kryteriów odbioru ani polityk, na których się opiera.',
+      emptyLabel: t(
+        'caseWorkspace.detail.rightPanel.evidenceEmpty',
+        "The order doesn't specify acceptance criteria or policies it relies on yet.",
+      ),
     },
     comments: {
       pominieta: true as const,
@@ -2164,21 +2202,25 @@ export const CaseDetailScreen: React.FC = () => {
         'do którego należy dany obiekt.',
     },
     history: {
-      label: 'Historia',
+      label: t('caseWorkspace.detail.rightPanel.historyLabel', 'History'),
       children: <PreviewActivityStrip events={zdarzeniaHistorii} initialCount={5} />,
       isEmpty: zdarzeniaHistorii.length === 0,
-      emptyLabel: 'Przebieg zlecenia jest jeszcze pusty — nic się na nim nie wydarzyło.',
+      emptyLabel: t(
+        'caseWorkspace.detail.rightPanel.historyEmpty',
+        "This order's activity is still empty — nothing has happened on it yet.",
+      ),
     },
   };
 
   // ── Menu 3 (view-local): projekcja planu ──────────────────────────────────
+  const planProjections = useMemo(() => getPlanProjections(t), [t]);
   const przelacznikProjekcji = (
     <div
       role="radiogroup"
-      aria-label="Sposób pokazania zlecenia"
+      aria-label={t('caseWorkspace.detail.projectionRadioLabel', 'How to show the order')}
       className="flex flex-wrap items-center gap-1 rounded-full border border-c-border p-0.5"
     >
-      {PLAN_PROJECTIONS.map((item) => {
+      {planProjections.map((item) => {
         const active = item.id === projection;
         return (
           <button
@@ -2208,13 +2250,18 @@ export const CaseDetailScreen: React.FC = () => {
    * projektu nazywało się dokładnie tak samo.
    */
   const tytul = bundle
-    ? nazwaZlecenia(bundle.caseItem, {
-        goal: bundle.intake?.goal ?? null,
-        expectedOutcome: bundle.intake?.expectedOutcome ?? null,
-        projectName: bundle.caseItem.projectName,
-        projectDescription: bundle.caseItem.projectDescription,
-      })
-    : 'Zlecenie';
+    ? nazwaZlecenia(
+        bundle.caseItem,
+        {
+          goal: bundle.intake?.goal ?? null,
+          expectedOutcome: bundle.intake?.expectedOutcome ?? null,
+          projectName: bundle.caseItem.projectName,
+          projectDescription: bundle.caseItem.projectDescription,
+        },
+        t,
+        isPolish,
+      )
+    : t('caseWorkspace.detail.loadingTitle', 'Order');
   const stanZlecenia = bundle?.caseItem.caseStatus;
   const tonStatusu: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
     stanZlecenia === 'BLOCKED' || stanZlecenia === 'FAILED'
@@ -2250,7 +2297,7 @@ export const CaseDetailScreen: React.FC = () => {
             ? `Dane odczytane z serwera · ostatnia zmiana zlecenia ${formatDateTime(bundle.caseItem.updatedAt)}`
             : undefined,
           onClose: goToList,
-          statusLabel: stanZlecenia ? caseStatusLabel(stanZlecenia, true) : undefined,
+          statusLabel: stanZlecenia ? caseStatusLabel(stanZlecenia, isPolish) : undefined,
           statusTone: tonStatusu,
         }}
         primaryAction={
@@ -2320,10 +2367,10 @@ export const CaseDetailScreen: React.FC = () => {
             isPolish
             activeSectionLabel={aktywnaSekcja.label}
             sectionsDropdown={przelacznikProjekcji}
-            visibleActionCount={PLAN_PROJECTIONS.length}
+            visibleActionCount={planProjections.length}
           />
         }
-        panelAriaLabel="Szczegóły zlecenia"
+        panelAriaLabel={t('caseWorkspace.detail.panelAriaLabel', 'Order details')}
         loading={false}
       />
       {planPending ? (
@@ -2373,7 +2420,10 @@ export const CaseDetailScreen: React.FC = () => {
           />
           <div>
             <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
-              Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)
+              {t(
+                'caseWorkspace.detail.closureAxesLabel',
+                'Closure levels (CW-00-016/017 — independent, one does not replace another)',
+              )}
             </span>
             <div className="mt-1.5 space-y-1.5">
               {CLOSURE_AXES.map((axis) => {
@@ -2385,10 +2435,10 @@ export const CaseDetailScreen: React.FC = () => {
                     key={axis}
                     className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle px-2.5 py-1.5"
                   >
-                    <span className="text-sm text-c-text">{closureAxisLabel(axis, true)}</span>
+                    <span className="text-sm text-c-text">{closureAxisLabel(axis, isPolish)}</span>
                     <div className="flex items-center gap-2">
                       {axisSaving[axis] ? (
-                        <span className="text-xs text-c-text-muted">Zapisywanie…</span>
+                        <span className="text-xs text-c-text-muted">{t('caseWorkspace.detail.saving', 'Saving…')}</span>
                       ) : null}
                       <select
                         value={biezaca}
@@ -2403,7 +2453,7 @@ export const CaseDetailScreen: React.FC = () => {
                       >
                         {wartosci.map((wartosc) => (
                           <option key={wartosc} value={wartosc}>
-                            {closureAxisStatusLabel(wartosc, true)}
+                            {closureAxisStatusLabel(wartosc, isPolish)}
                           </option>
                         ))}
                       </select>
@@ -2415,21 +2465,46 @@ export const CaseDetailScreen: React.FC = () => {
           </div>
           {bundle.caseItem.closureType ? (
             <p className="text-xs text-c-text-secondary">
-              Zarejestrowano jako „{closureTypeLabel(bundle.caseItem.closureType, true)}"
-              {bundle.caseItem.closedAt ? ` (${formatDateTime(bundle.caseItem.closedAt)})` : ''}.
+              {t('caseWorkspace.detail.registeredAs', 'Registered as "{{type}}"', {
+                type: closureTypeLabel(bundle.caseItem.closureType, isPolish),
+              })}
+              {bundle.caseItem.closedAt
+                ? t('caseWorkspace.detail.closedAtSuffix', ' ({{date}})', {
+                    date: formatDateTime(bundle.caseItem.closedAt),
+                  })
+                : ''}
+              .
               {bundle.caseItem.closureEvidenceRef
-                ? ` Dowód: ${bundle.caseItem.closureEvidenceRef}`
+                ? t('caseWorkspace.detail.evidenceSuffix', ' Evidence: {{ref}}', {
+                    ref: bundle.caseItem.closureEvidenceRef,
+                  })
                 : ''}
             </p>
           ) : (
             <>
               <FormField
-                label="Typ zamknięcia"
+                label={t('caseWorkspace.detail.closureTypeFieldLabel', 'Closure type')}
                 required
                 helpText={
                   closureTypeForm !== 'COMPLETED_PARTIAL'
-                    ? `Wymaga poziomu „${closureAxisLabel(CLOSURE_TYPE_AXIS[closureTypeForm as Exclude<ClosureType, 'COMPLETED_PARTIAL'>], true)}" ustawionego na „${closureTypeForm === 'OUTCOME_VALIDATED' ? closureAxisStatusLabel('VALIDATED', true) : closureAxisStatusLabel('COMPLETED', true)}" — serwer odmówi (409), jeśli poziom wyżej jeszcze na to nie wskazuje.`
-                    : 'Wymaga dowodu/opisu pozostałego zakresu poniżej albo już zapisanych kryteriów odbioru zlecenia.'
+                    ? t(
+                        'caseWorkspace.detail.closureTypeHelpConditional',
+                        'Requires the level "{{axis}}" set to "{{status}}" — the server will refuse (409) if the level above doesn\'t yet indicate this.',
+                        {
+                          axis: closureAxisLabel(
+                            CLOSURE_TYPE_AXIS[closureTypeForm as Exclude<ClosureType, 'COMPLETED_PARTIAL'>],
+                            isPolish,
+                          ),
+                          status:
+                            closureTypeForm === 'OUTCOME_VALIDATED'
+                              ? closureAxisStatusLabel('VALIDATED', isPolish)
+                              : closureAxisStatusLabel('COMPLETED', isPolish),
+                        },
+                      )
+                    : t(
+                        'caseWorkspace.detail.closureTypeHelpPartial',
+                        'Requires evidence/description of remaining scope below, or already recorded acceptance criteria.',
+                      )
                 }
               >
                 <select
@@ -2438,28 +2513,34 @@ export const CaseDetailScreen: React.FC = () => {
                   className={FORM_INPUT_CLASS}
                 >
                   <option value={bundle.caseItem.contractedClosureType}>
-                    Zgodnie z kontraktem —{' '}
-                    {closureTypeLabel(bundle.caseItem.contractedClosureType, true)}
+                    {t('caseWorkspace.detail.contractOption', 'As contracted — {{type}}', {
+                      type: closureTypeLabel(bundle.caseItem.contractedClosureType, isPolish),
+                    })}
                   </option>
                   {bundle.caseItem.contractedClosureType !== 'COMPLETED_PARTIAL' ? (
                     <option value="COMPLETED_PARTIAL">
-                      Częściowo — {closureTypeLabel('COMPLETED_PARTIAL', true)}
+                      {t('caseWorkspace.detail.partialOption', 'Partial — {{type}}', {
+                        type: closureTypeLabel('COMPLETED_PARTIAL', isPolish),
+                      })}
                     </option>
                   ) : null}
                 </select>
               </FormField>
               <FormField
-                label="Dowód / opis pozostałego zakresu"
+                label={t('caseWorkspace.detail.evidenceFieldLabel', 'Evidence / description of remaining scope')}
                 required={
                   closureTypeForm === 'COMPLETED_PARTIAL' && !bundle.caseItem.acceptanceCriteriaRef
                 }
-                helpText="Wskaźnik na dowód dostarczenia/decyzji/wdrożenia/efektu — np. link do raportu odbioru albo notatki z decyzji sponsora."
+                helpText={t(
+                  'caseWorkspace.detail.evidenceFieldHelp',
+                  "A pointer to evidence of delivery/decision/implementation/outcome — e.g. a link to an acceptance report or a note from the sponsor's decision.",
+                )}
               >
                 <textarea
                   value={closureEvidenceForm}
                   onChange={(event) => setClosureEvidenceForm(event.target.value)}
                   rows={3}
-                  placeholder="np. link do raportu odbioru, notatka z decyzji sponsora…"
+                  placeholder={t('caseWorkspace.detail.evidencePlaceholder', 'e.g. link to acceptance report, note from sponsor decision…')}
                   className={FORM_INPUT_CLASS}
                 />
               </FormField>

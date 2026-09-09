@@ -12,8 +12,10 @@
  * dotyczy; kanon powłoki i podglądu — tak).
  */
 
+import type { TFunction } from 'i18next';
 import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, RefreshCw, Undo2 } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { closureTypeLabel, planNodeTypeLabel, planVersionStatusLabel } from '@/utils/enumLabels';
@@ -35,19 +37,30 @@ import {
 
 export type PlanProjection = 'prosty' | 'ekspercki' | 'lista';
 
-export const PLAN_PROJECTIONS: Array<{ id: PlanProjection; label: string; description: string }> = [
-  { id: 'prosty', label: 'Prosty', description: 'Kroki po kolei, bez szczegółów technicznych.' },
-  {
-    id: 'ekspercki',
-    label: 'Ekspercki',
-    description: 'Płótno przepływu z identyfikatorami technicznymi.',
-  },
-  {
-    id: 'lista',
-    label: 'Lista',
-    description: 'Tabela kroków — najlepsza na telefonie i dla czytnika ekranu.',
-  },
-];
+export function getPlanProjections(
+  t: TFunction,
+): Array<{ id: PlanProjection; label: string; description: string }> {
+  return [
+    {
+      id: 'prosty',
+      label: t('caseWorkspace.plan.projections.simpleLabel', 'Simple'),
+      description: t('caseWorkspace.plan.projections.simpleDescription', 'Steps in order, without technical detail.'),
+    },
+    {
+      id: 'ekspercki',
+      label: t('caseWorkspace.plan.projections.expertLabel', 'Expert'),
+      description: t('caseWorkspace.plan.projections.expertDescription', 'Flow canvas with technical identifiers.'),
+    },
+    {
+      id: 'lista',
+      label: t('caseWorkspace.plan.projections.listLabel', 'List'),
+      description: t(
+        'caseWorkspace.plan.projections.listDescription',
+        'A table of steps — best on a phone and for screen readers.',
+      ),
+    },
+  ];
+}
 
 export interface PlanViewProps {
   caseItem: CaseCoreView;
@@ -150,16 +163,28 @@ function graphFor(planVersion: CasePlanVersion, graphProp: CanonicalGraph | null
   return graphProp ?? planVersion.semanticGraph ?? EMPTY_GRAPH;
 }
 
-/** Polski opis reguły walidacji. Kod techniczny pokazujemy tylko obok. */
-function blockerText(code: string, detail: string): string {
+/** Opis reguły walidacji (lokalizowany). Kod techniczny pokazujemy tylko obok. */
+function blockerText(code: string, detail: string, t: TFunction): string {
   const known: Record<string, string> = {
-    plan_has_no_entry_node: 'Plan nie ma kroku początkowego.',
-    plan_has_no_terminal_node: 'Plan nie ma kroku końcowego.',
-    plan_node_unreachable: 'Do jednego z kroków nie da się dojść z początku planu.',
-    plan_edge_target_missing: 'Strzałka prowadzi do kroku, którego nie ma w planie.',
-    plan_required_input_unbound: 'Krok wymaga danych, których nikt mu nie przekazuje.',
+    plan_has_no_entry_node: t('caseWorkspace.plan.blockers.noEntryNode', 'The plan has no starting step.'),
+    plan_has_no_terminal_node: t('caseWorkspace.plan.blockers.noTerminalNode', 'The plan has no final step.'),
+    plan_node_unreachable: t(
+      'caseWorkspace.plan.blockers.unreachableNode',
+      "One of the steps can't be reached from the start of the plan.",
+    ),
+    plan_edge_target_missing: t(
+      'caseWorkspace.plan.blockers.missingEdgeTarget',
+      "An arrow leads to a step that isn't in the plan.",
+    ),
+    plan_required_input_unbound: t(
+      'caseWorkspace.plan.blockers.unboundInput',
+      "A step requires data that nothing provides to it.",
+    ),
   };
-  return known[code] ?? (detail?.trim() ? detail : 'Plan wymaga poprawki przed zatwierdzeniem.');
+  return (
+    known[code] ??
+    (detail?.trim() ? detail : t('caseWorkspace.plan.blockers.default', 'The plan needs a fix before it can be approved.'))
+  );
 }
 
 export const PlanView: React.FC<PlanViewProps> = ({
@@ -172,6 +197,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
   onSelectNode,
   onDraftSaved,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   /*
    * ── EDYCJA SZKICU (`updatePlanDraft`) ─────────────────────────────────────
    *
@@ -283,8 +310,13 @@ export const PlanView: React.FC<PlanViewProps> = ({
       tone: 'success',
       text:
         result.readback === 'confirmed'
-          ? `Zapisano zmiany w szkicu planu (wersja ${result.value.version}).`
-          : 'Zapis został przyjęty, ale nie udało się potwierdzić stanu ponownym odczytem serwera. Odśwież dane.',
+          ? t('caseWorkspace.plan.header.savedDraft', 'Saved changes to the plan draft (version {{version}}).', {
+              version: result.value.version,
+            })
+          : t(
+              'caseWorkspace.plan.header.saveUnconfirmed',
+              "The save was accepted, but the follow-up check with the server couldn't confirm the state. Refresh the data.",
+            ),
       refresh: result.readback !== 'confirmed',
     });
     // Właściciel stanu (CaseDetailScreen) trzyma własny `bundle` z wersją planu
@@ -310,7 +342,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
     } catch {
       setNotice({
         tone: 'critical',
-        text: 'Nie udało się odświeżyć danych planu z serwera. Spróbuj ponownie.',
+        text: t('caseWorkspace.plan.header.refreshFailed', "Couldn't refresh the plan data from the server. Try again."),
       });
     } finally {
       setRefreshBusy(false);
@@ -369,8 +401,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
   const effectivePlanVersion = local?.planVersion ?? planVersion;
 
   const layout = useMemo(
-    () => (effectiveGraph ? layoutGraph(effectiveGraph) : { nodes: [], width: 0, height: 0 }),
-    [effectiveGraph]
+    () => (effectiveGraph ? layoutGraph(effectiveGraph, isPolish) : { nodes: [], width: 0, height: 0 }),
+    [effectiveGraph, isPolish]
   );
 
   const successorsById = useMemo(() => {
@@ -405,10 +437,12 @@ export const PlanView: React.FC<PlanViewProps> = ({
       <CommandBanner notice={notice} onRefresh={handleRefresh} onDismiss={() => setNotice(null)} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-c-text">Do czego dążymy</h2>
+          <h2 className="text-base font-semibold text-c-text">
+            {t('caseWorkspace.plan.header.goalHeading', "What we're aiming for")}
+          </h2>
           <p className="mt-0.5 text-sm text-c-text-secondary">
             {caseItem.projectDescription?.trim() ||
-              'Oczekiwany rezultat nie został jeszcze opisany w projekcie.'}
+              t('caseWorkspace.plan.header.goalUndescribed', 'The expected outcome has not been described in the project yet.')}
           </p>
         </div>
         {/*
@@ -430,16 +464,20 @@ export const PlanView: React.FC<PlanViewProps> = ({
          */}
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <StatusTag tone="neutral">
-            Zamknięcie: {closureTypeLabel(caseItem.contractedClosureType, true)}
+            {t('caseWorkspace.plan.header.closurePrefix', 'Closure: {{type}}', {
+              type: closureTypeLabel(caseItem.contractedClosureType, isPolish),
+            })}
           </StatusTag>
           {effectivePlanVersion ? (
             <StatusTag tone={effectivePlanVersion.status === 'PUBLISHED' ? 'success' : 'warning'}>
-              Plan: {planVersionStatusLabel(effectivePlanVersion.status, true)} (wersja{' '}
-              {effectivePlanVersion.planNumber})
+              {t('caseWorkspace.plan.header.planPrefix', 'Plan: {{status}} (version {{number}})', {
+                status: planVersionStatusLabel(effectivePlanVersion.status, isPolish),
+                number: effectivePlanVersion.planNumber,
+              })}
             </StatusTag>
           ) : null}
           {editMode && local?.dirty ? (
-            <StatusTag tone="warning">Niezapisane zmiany</StatusTag>
+            <StatusTag tone="warning">{t('caseWorkspace.plan.header.unsavedChanges', 'Unsaved changes')}</StatusTag>
           ) : null}
         </div>
       </div>
@@ -464,7 +502,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
                   onClick={handleSave}
                   className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5 text-xs font-semibold text-c-text hover:bg-c-bg disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  {saveBusy ? 'Zapisywanie…' : 'Zapisz zmiany'}
+                  {saveBusy
+                    ? t('caseWorkspace.plan.header.saving', 'Saving…')
+                    : t('caseWorkspace.plan.header.saveChanges', 'Save changes')}
                 </button>
                 <button
                   type="button"
@@ -474,14 +514,14 @@ export const PlanView: React.FC<PlanViewProps> = ({
                   className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   <Undo2 size={13} aria-hidden />
-                  Odrzuć zmiany
+                  {t('caseWorkspace.plan.header.discardChanges', 'Discard changes')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditMode(false)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
                 >
-                  Zamknij edycję
+                  {t('caseWorkspace.plan.header.closeEditing', 'Close editing')}
                 </button>
               </>
             ) : (
@@ -492,14 +532,20 @@ export const PlanView: React.FC<PlanViewProps> = ({
                 className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
               >
                 <Pencil size={13} aria-hidden />
-                Edytuj plan
+                {t('caseWorkspace.plan.header.editPlan', 'Edit plan')}
               </button>
             )
           ) : (
             <p className="text-xs text-c-text-muted">
               {effectivePlanVersion.status === 'PUBLISHED'
-                ? 'Opublikowany plan jest niezmienny. Aby wprowadzić zmiany, utwórz nowy szkic w panelu „Akcje" po prawej.'
-                : 'Ta wersja planu nie jest już szkicem — edycja na miejscu nie jest tu dostępna.'}
+                ? t(
+                    'caseWorkspace.plan.header.publishedImmutable',
+                    'A published plan is immutable. To make changes, create a new draft in the "Actions" panel on the right.',
+                  )
+                : t(
+                    'caseWorkspace.plan.header.notEditableHere',
+                    "This plan version is no longer a draft — in-place editing isn't available here.",
+                  )}
             </p>
           )}
           <button
@@ -510,7 +556,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
             className={`ml-auto inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
           >
             <RefreshCw size={13} aria-hidden className={refreshBusy ? 'animate-spin' : ''} />
-            {refreshBusy ? 'Odświeżanie…' : 'Odśwież'}
+            {refreshBusy ? t('caseWorkspace.plan.header.refreshing', 'Refreshing…') : t('caseWorkspace.plan.header.refresh', 'Refresh')}
           </button>
         </div>
       ) : null}
@@ -520,7 +566,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
           {validation.valid ? (
             <p className="flex items-center gap-2 text-sm text-success-700 dark:text-success-300">
               <CheckCircle2 size={16} aria-hidden />
-              Plan przeszedł sprawdzenie — nic nie blokuje zatwierdzenia.
+              {t('caseWorkspace.plan.header.validationPassed', 'The plan passed validation — nothing blocks approval.')}
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -535,7 +581,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
                     className="mt-0.5 shrink-0 text-danger-600 dark:text-danger-400"
                   />
                   <span className="min-w-0">
-                    {blockerText(blocker.code, blocker.detail)}
+                    {blockerText(blocker.code, blocker.detail, t)}
                     {projection === 'ekspercki' ? <TechnicalId value={blocker.code} /> : null}
                   </span>
                 </li>
@@ -552,7 +598,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
       <div className="min-w-0">
         {header}
         <div className="rounded-xl border border-c-border bg-c-surface p-8 text-center">
-          <p className="text-sm font-medium text-c-text">Ten plan nie ma jeszcze kroków</p>
+          <p className="text-sm font-medium text-c-text">
+            {t('caseWorkspace.plan.empty.noStepsTitle', "This plan doesn't have any steps yet")}
+          </p>
           <p className="mt-1 text-sm text-c-text-muted">
             {/*
              * ★ Dwa różne fakty pod jednym „pusto" (2026-08-12). Gdy `planVersion`
@@ -566,8 +614,11 @@ export const PlanView: React.FC<PlanViewProps> = ({
              * zera do pustego grafu).
              */}
             {effectivePlanVersion
-              ? 'Ta wersja planu nie ma jeszcze zapisanych kroków.'
-              : 'Zlecenie nie ma jeszcze żadnej wersji planu. Utwórz pierwszy szkic w panelu „Akcje" po prawej.'}
+              ? t('caseWorkspace.plan.empty.versionHasNoSteps', "This plan version doesn't have any saved steps yet.")
+              : t(
+                  'caseWorkspace.plan.empty.noVersionAtAll',
+                  'The order doesn\'t have any plan version yet. Create the first draft in the "Actions" panel on the right.',
+                )}
           </p>
         </div>
       </div>
@@ -598,7 +649,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
         value={String(row.krok)}
         onChange={(event) => updateNodeLabel(String(row.id), event.target.value)}
         onClick={(event) => event.stopPropagation()}
-        aria-label={`Nazwa kroku ${String(row.kolejnosc ?? row.krok)}`}
+        aria-label={t('caseWorkspace.plan.list.stepNameAria', 'Step name {{number}}', {
+          number: String(row.kolejnosc ?? row.krok),
+        })}
         className={`${className} rounded-md border border-c-border bg-c-bg px-1.5 py-0.5 ${FOCUS_RING}`}
       />
     );
@@ -606,7 +659,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
     const columnsWide: TableColumn[] = [
       {
         id: 'krok',
-        label: 'Krok',
+        label: t('caseWorkspace.plan.list.step', 'Step'),
         width: '260px',
         sortable: true,
         render: (row: Record<string, unknown>) =>
@@ -616,9 +669,15 @@ export const PlanView: React.FC<PlanViewProps> = ({
             <span className="text-sm font-medium text-c-text">{String(row.krok)}</span>
           ),
       },
-      { id: 'rodzaj', label: 'Kto to robi', width: '150px', filterable: true, sortable: true },
-      { id: 'poprzednik', label: 'Po czym następuje', width: '180px' },
-      { id: 'nastepnik', label: 'Prowadzi do', width: '180px' },
+      {
+        id: 'rodzaj',
+        label: t('caseWorkspace.plan.list.who', 'Who does it'),
+        width: '150px',
+        filterable: true,
+        sortable: true,
+      },
+      { id: 'poprzednik', label: t('caseWorkspace.plan.list.after', 'Comes after'), width: '180px' },
+      { id: 'nastepnik', label: t('caseWorkspace.plan.list.leadsTo', 'Leads to'), width: '180px' },
     ];
 
     /*
@@ -631,7 +690,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
     const columnsMedium: TableColumn[] = [
       {
         id: 'krok',
-        label: 'Krok i wykonawca',
+        label: t('caseWorkspace.plan.list.stepAndOwner', 'Step and owner'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div className="min-w-0 space-y-0.5">
@@ -653,12 +712,12 @@ export const PlanView: React.FC<PlanViewProps> = ({
       },
       {
         id: 'nastepnik',
-        label: 'Przepływ',
+        label: t('caseWorkspace.plan.list.flow', 'Flow'),
         width: '240px',
         render: (row: Record<string, unknown>) => (
           <div className="min-w-0 space-y-0.5 text-xs text-c-text-muted">
-            <div>Po: {String(row.poprzednik)}</div>
-            <div>Dalej: {String(row.nastepnik)}</div>
+            <div>{t('caseWorkspace.plan.list.afterPrefix', 'After: {{value}}', { value: String(row.poprzednik) })}</div>
+            <div>{t('caseWorkspace.plan.list.nextPrefix', 'Next: {{value}}', { value: String(row.nastepnik) })}</div>
           </div>
         ),
       },
@@ -667,7 +726,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
     const columnsNarrow: TableColumn[] = [
       {
         id: 'krok',
-        label: 'Kroki planu po kolei',
+        label: t('caseWorkspace.plan.list.stepsInOrder', 'Plan steps in order'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div className="min-w-0 space-y-0.5">
@@ -685,7 +744,10 @@ export const PlanView: React.FC<PlanViewProps> = ({
             </div>
             <div className="pl-6 text-xs text-c-text-muted">{String(row.rodzaj)}</div>
             <div className="pl-6 text-xs text-c-text-muted">
-              Po: {String(row.poprzednik)} → Dalej: {String(row.nastepnik)}
+              {t('caseWorkspace.plan.list.afterAndNext', 'After: {{after}} → Next: {{next}}', {
+                after: String(row.poprzednik),
+                next: String(row.nastepnik),
+              })}
             </div>
           </div>
         ),
@@ -711,12 +773,12 @@ export const PlanView: React.FC<PlanViewProps> = ({
       rodzaj: item.typeLabel,
       poprzednik:
         (predecessorsById.get(item.node.nodeId) ?? [])
-          .map((id) => labelById.get(id) ?? 'Krok bez nazwy')
-          .join(', ') || 'To jest początek',
+          .map((id) => labelById.get(id) ?? t('caseWorkspace.plan.list.unnamedStep', 'Unnamed step'))
+          .join(', ') || t('caseWorkspace.plan.list.isStart', 'This is the start'),
       nastepnik:
         (successorsById.get(item.node.nodeId) ?? [])
-          .map((id) => labelById.get(id) ?? 'Krok bez nazwy')
-          .join(', ') || 'To jest koniec',
+          .map((id) => labelById.get(id) ?? t('caseWorkspace.plan.list.unnamedStep', 'Unnamed step'))
+          .join(', ') || t('caseWorkspace.plan.list.isEnd', 'This is the end'),
     }));
 
     return (
@@ -747,7 +809,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
              * ukrytego przewijania przy 768/1024/1440/1920).
              */
             minTableWidth={tier === 'pelny' ? PLAN_FULL_WIDTH : 'columns'}
-            empty={{ title: 'Plan nie ma kroków' }}
+            empty={{ title: t('caseWorkspace.plan.list.emptyTitle', 'The plan has no steps') }}
           />
         </div>
       </div>
@@ -763,7 +825,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
           {layout.nodes.map((item, index) => {
             const isSelected = item.node.nodeId === selectedNodeId;
             const next = (successorsById.get(item.node.nodeId) ?? [])
-              .map((id) => labelById.get(id) ?? 'Krok bez nazwy')
+              .map((id) => labelById.get(id) ?? t('caseWorkspace.plan.simple.unnamedStep', 'Unnamed step'))
               .join(', ');
             /*
              * WARUNEK WŁAŚCICIELA: „Prosty → edycja semantyczna". W trybie
@@ -786,7 +848,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
                     </span>
                     <span className="min-w-0 flex-1">
                       <label className="sr-only" htmlFor={`plan-prosty-label-${item.node.nodeId}`}>
-                        Nazwa kroku {index + 1}
+                        {t('caseWorkspace.plan.simple.stepNameLabel', 'Step name {{number}}', { number: index + 1 })}
                       </label>
                       <input
                         id={`plan-prosty-label-${item.node.nodeId}`}
@@ -797,14 +859,18 @@ export const PlanView: React.FC<PlanViewProps> = ({
                       />
                       <span className="mt-1 block text-xs text-c-text-muted">
                         {item.typeLabel}
-                        {next ? ` · dalej: ${next}` : ' · to jest koniec'}
+                        {next
+                          ? t('caseWorkspace.plan.simple.nextPrefix', ' · next: {{value}}', { value: next })
+                          : t('caseWorkspace.plan.simple.isEndSuffix', ' · this is the end')}
                       </span>
                     </span>
                     <button
                       type="button"
                       onClick={() => onSelectNode(isSelected ? null : item.node.nodeId)}
                       aria-pressed={isSelected}
-                      aria-label={`Szczegóły kroku: ${item.label || 'krok bez nazwy'}`}
+                      aria-label={t('caseWorkspace.plan.simple.stepDetailsAria', 'Step details: {{label}}', {
+                        label: item.label || t('caseWorkspace.plan.simple.unnamedStepFallback', 'unnamed step'),
+                      })}
                       className={`mt-0.5 shrink-0 rounded-lg p-1 text-c-text-muted hover:bg-c-surface-raised ${FOCUS_RING}`}
                     >
                       <ChevronRight size={16} aria-hidden />
@@ -842,7 +908,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
                     <span className="block text-sm font-medium text-c-text">{item.label}</span>
                     <span className="mt-0.5 block text-xs text-c-text-muted">
                       {item.typeLabel}
-                      {next ? ` · dalej: ${next}` : ' · to jest koniec'}
+                      {next
+                        ? t('caseWorkspace.plan.simple.nextPrefix', ' · next: {{value}}', { value: next })
+                        : t('caseWorkspace.plan.simple.isEndSuffix', ' · this is the end')}
                     </span>
                   </span>
                   <ChevronRight size={16} aria-hidden className="mt-1 shrink-0 text-c-text-muted" />
@@ -896,7 +964,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
                   className="block text-xs font-medium uppercase tracking-wide text-c-text-muted"
                   htmlFor={`plan-ekspercki-label-${selected.node.nodeId}`}
                 >
-                  Nazwa kroku
+                  {t('caseWorkspace.plan.expert.stepNameLabel', 'Step name')}
                 </label>
                 <input
                   id={`plan-ekspercki-label-${selected.node.nodeId}`}
@@ -914,7 +982,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
               onClick={() => onSelectNode(null)}
               className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              Zamknij szczegóły
+              {t('caseWorkspace.plan.expert.closeDetails', 'Close details')}
             </button>
           </div>
           {/*
@@ -923,40 +991,42 @@ export const PlanView: React.FC<PlanViewProps> = ({
             eksperckim i zawsze OBOK polskiego wyjaśnienia, nigdy zamiast.
           */}
           <div className="mt-2 grid gap-x-6 sm:grid-cols-2">
-            <FactRow label="Kto to robi">
-              {planNodeTypeLabel(String(selected.node.type ?? ''), true)}
+            <FactRow label={t('caseWorkspace.plan.expert.who', 'Who does it')}>
+              {planNodeTypeLabel(String(selected.node.type ?? ''), isPolish)}
               <TechnicalId value={selected.node.type ? String(selected.node.type) : null} />
             </FactRow>
-            <FactRow label="Identyfikator kroku">
-              <span className="text-c-text-muted">nazwa techniczna</span>
+            <FactRow label={t('caseWorkspace.plan.expert.stepIdLabel', 'Step identifier')}>
+              <span className="text-c-text-muted">{t('caseWorkspace.plan.expert.technicalName', 'technical name')}</span>
               <TechnicalId value={selected.node.nodeId} />
             </FactRow>
             {selected.node.effectClass ? (
-              <FactRow label="Rodzaj zmiany">
+              <FactRow label={t('caseWorkspace.plan.expert.changeKind', 'Type of change')}>
                 {String(selected.node.effectClass)}
                 <TechnicalId value={String(selected.node.effectClass)} />
               </FactRow>
             ) : null}
-            <FactRow label="Po czym następuje">
+            <FactRow label={t('caseWorkspace.plan.expert.comesAfter', 'Comes after')}>
               {(predecessorsById.get(selected.node.nodeId) ?? [])
-                .map((id) => labelById.get(id) ?? 'Krok bez nazwy')
-                .join(', ') || 'To jest początek planu'}
+                .map((id) => labelById.get(id) ?? t('caseWorkspace.plan.expert.unnamedStep', 'Unnamed step'))
+                .join(', ') || t('caseWorkspace.plan.expert.isStartOfPlan', 'This is the start of the plan')}
             </FactRow>
-            <FactRow label="Prowadzi do">
+            <FactRow label={t('caseWorkspace.plan.expert.leadsTo', 'Leads to')}>
               {(successorsById.get(selected.node.nodeId) ?? [])
-                .map((id) => labelById.get(id) ?? 'Krok bez nazwy')
-                .join(', ') || 'To jest koniec planu'}
+                .map((id) => labelById.get(id) ?? t('caseWorkspace.plan.expert.unnamedStep', 'Unnamed step'))
+                .join(', ') || t('caseWorkspace.plan.expert.isEndOfPlan', 'This is the end of the plan')}
             </FactRow>
           </div>
         </div>
       ) : null}
       {effectivePlanVersion ? (
         <p className="text-xs text-c-text-muted">
-          Wersja planu {effectivePlanVersion.planNumber} · ostatnia zmiana{' '}
-          {formatDateTime(effectivePlanVersion.updatedAt)}
+          {t('caseWorkspace.plan.expert.versionFooter', 'Plan version {{number}} · last change {{date}}', {
+            number: effectivePlanVersion.planNumber,
+            date: formatDateTime(effectivePlanVersion.updatedAt),
+          })}
           <TechnicalId
             value={effectivePlanVersion.graphDigest?.slice(0, 12)}
-            title="Odcisk grafu planu"
+            title={t('caseWorkspace.plan.expert.graphDigestTitle', 'Plan graph fingerprint')}
           />
         </p>
       ) : null}

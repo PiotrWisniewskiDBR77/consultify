@@ -38,6 +38,7 @@ import {
   Unlink,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -230,8 +231,8 @@ export function kluczFokusuDowodu(measurementId: string): string {
  * Odwrotna kolejność kazałaby nam mówić „nie znamy typu" o obiekcie, który
  * backend już oznaczył jako niedostępny — czyli mylić własną lukę z faktem.
  */
-export function rozstrzygnijOtwarcie(link: CaseArtifactLink): OtwarcieObiektu {
-  const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+export function rozstrzygnijOtwarcie(link: CaseArtifactLink, isPolish = false): OtwarcieObiektu {
+  const etykietaTypu = linkedTypeLabel(link.artifactType, isPolish) || link.artifactType;
 
   if (link.linkStatus === 'UNAVAILABLE') {
     return {
@@ -326,9 +327,10 @@ export function invalidujOtwarcieBackendu(linkId: string): void {
  */
 function otwarcieZOdpowiedziBackendu(
   link: CaseArtifactLink,
-  resolution: ArtifactLinkOpenResolution
+  resolution: ArtifactLinkOpenResolution,
+  isPolish = false
 ): OtwarcieObiektu {
-  const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+  const etykietaTypu = linkedTypeLabel(link.artifactType, isPolish) || link.artifactType;
 
   if (resolution.state === 'UNAVAILABLE') {
     return {
@@ -502,7 +504,8 @@ export function jestPowiazaniemDokumentu(link: Pick<CaseArtifactLink, 'artifactT
  * nam znany — reszta zostaje uczciwym tekstem.
  */
 export function rozstrzygnijOtwarcieDowodu(
-  evidenceRef: string | null | undefined
+  evidenceRef: string | null | undefined,
+  isPolish = false
 ): OtwarcieObiektu | null {
   const surowy = String(evidenceRef ?? '').trim();
   if (!surowy) return null;
@@ -526,7 +529,7 @@ export function rozstrzygnijOtwarcieDowodu(
   return {
     status: 'otwieralny',
     sciezka: getArtifactPath(typ, ref.id),
-    etykieta: linkedTypeLabel(ref.type, true) || ref.type,
+    etykieta: linkedTypeLabel(ref.type, isPolish) || ref.type,
   };
 }
 
@@ -660,6 +663,7 @@ const OpenButton: React.FC<{
   onOpen: (zadanie: OtwarcieZadanie) => void;
   szeroki?: boolean;
 }> = ({ otwarcie, kluczFokusu, etykietaDostepna, onOpen, szeroki }) => {
+  const { t } = useTranslation();
   const otwieralny = otwarcie.status === 'otwieralny';
   const nieaktualny = otwieralny && Boolean(otwarcie.ostrzezenie);
   return (
@@ -670,12 +674,17 @@ const OpenButton: React.FC<{
       title={
         otwieralny
           ? nieaktualny
-            ? `Otwórz: ${otwarcie.etykieta} — ${otwarcie.ostrzezenie}`
-            : `Otwórz: ${otwarcie.etykieta}`
+            ? t('caseWorkspace.results.openButton.openWithWarning', 'Open: {{label}} — {{warning}}', {
+                label: otwarcie.etykieta,
+                warning: otwarcie.ostrzezenie,
+              })
+            : t('caseWorkspace.results.openButton.openLabel', 'Open: {{label}}', { label: otwarcie.etykieta })
           : otwarcie.powod
       }
       aria-label={
-        nieaktualny ? `${etykietaDostepna} (przypięta rewizja jest starsza)` : etykietaDostepna
+        nieaktualny
+          ? `${etykietaDostepna}${t('caseWorkspace.results.openButton.staleRevisionSuffix', ' (the pinned revision is older)')}`
+          : etykietaDostepna
       }
       onClick={(event) => {
         event.stopPropagation();
@@ -702,7 +711,7 @@ const OpenButton: React.FC<{
       ) : (
         <ArrowUpRight size={14} aria-hidden />
       )}
-      Otwórz
+      {t('caseWorkspace.results.openButton.openText', 'Open')}
     </button>
   );
 };
@@ -716,6 +725,8 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   wybor,
   onWybor,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   // Sterowanie z powłoki, gdy powłoka je podaje; własny stan, gdy widok stoi sam
   // (np. w harnessie zrzutowym) — bez tego fallbacku komponent przestałby działać
   // wszędzie poza jednym wywołaniem.
@@ -860,7 +871,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           if (!typObiektu || !idObiektu) {
             setArtifactCommandNotice({
               tone: 'warning',
-              text: 'Podaj typ i identyfikator obiektu — oba pola są wymagane.',
+              text: t('caseWorkspace.results.notices.linkFieldsRequired', 'Enter the object type and identifier — both fields are required.'),
             });
             return;
           }
@@ -896,8 +907,13 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, true)}".`
-                : 'Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t('caseWorkspace.results.notices.linkedAs', 'Object linked to the order as "{{relation}}".', {
+                    relation: artifactLinkRelationLabel(result.value.relation, isPolish),
+                  })
+                : t(
+                    'caseWorkspace.results.notices.linkAcceptedUnconfirmed',
+                    "The link was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
           return;
         }
@@ -908,7 +924,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           if (!revision) {
             setArtifactCommandNotice({
               tone: 'warning',
-              text: 'Podaj wersję do przypięcia — jest wymagana.',
+              text: t('caseWorkspace.results.notices.pinVersionRequired', 'Enter the version to pin — it is required.'),
             });
             return;
           }
@@ -936,8 +952,15 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Wersja przypięta: „${revision}". Powiązanie przestało być oznaczone jako nieaktualne.`
-                : 'Wersja została przypięta, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t(
+                    'caseWorkspace.results.notices.pinnedVersion',
+                    'Pinned version: "{{revision}}". The link is no longer marked as outdated.',
+                    { revision },
+                  )
+                : t(
+                    'caseWorkspace.results.notices.pinAcceptedUnconfirmed',
+                    "The version was pinned, but this couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
           return;
         }
@@ -970,8 +993,14 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? 'Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.'
-                : 'Odpięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+                ? t(
+                    'caseWorkspace.results.notices.unlinked',
+                    'The link was removed. The object itself was NOT deleted — it stays in its own module, it just stopped being a result of this order.',
+                  )
+                : t(
+                    'caseWorkspace.results.notices.unlinkAcceptedUnconfirmed',
+                    "The unlink was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+                  ),
           });
         }
       } finally {
@@ -1066,7 +1095,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     let anulowano = false;
     artifactLinks
       .filter(jestPowiazaniemDokumentu)
-      .filter((link) => rozstrzygnijOtwarcie(link).status === 'otwieralny')
+      .filter((link) => rozstrzygnijOtwarcie(link, isPolish).status === 'otwieralny')
       .forEach((link) => {
         weryfikujIstnienieDokumentu(link.artifactId).then((istnieje) => {
           if (anulowano || istnieje) return;
@@ -1108,7 +1137,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         link.linkId,
         nadpisaniaWeryfikacji[link.linkId] ??
           nadpisaniaBackendu[link.linkId] ??
-          rozstrzygnijOtwarcie(link)
+          rozstrzygnijOtwarcie(link, isPolish)
       )
     );
     return mapa;
@@ -1122,9 +1151,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         punktWyjscia: formatValue(item.baselineValue, item.baselineUnit),
         cel: formatValue(item.targetValue, item.targetUnit),
         wynik: formatValue(item.actualValue, item.actualUnit),
-        stan: valueMeasurementStatusLabel(item.measurementStatus, true),
+        stan: valueMeasurementStatusLabel(item.measurementStatus, isPolish),
         stanTone: measurementTone(item.measurementStatus),
-        pewnosc: measurementConfidenceLabel(item.confidence, true),
+        pewnosc: measurementConfidenceLabel(item.confidence, isPolish),
         pomiar: item.measurementDate,
       })),
     [measurements]
@@ -1136,9 +1165,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         const otwarcie = otwarciaObiektow.get(link.linkId);
         return {
           id: link.linkId,
-          obiekt: linkedTypeLabel(link.artifactType, true) || link.artifactType,
-          rola: artifactLinkRelationLabel(link.relation, true),
-          stan: link.isStale ? 'Nieaktualny' : artifactLinkStatusLabel(link.linkStatus, true),
+          obiekt: linkedTypeLabel(link.artifactType, isPolish) || link.artifactType,
+          rola: artifactLinkRelationLabel(link.relation, isPolish),
+          stan: link.isStale ? 'Nieaktualny' : artifactLinkStatusLabel(link.linkStatus, isPolish),
           stanTone:
             link.isStale || link.linkStatus === 'UNAVAILABLE'
               ? ('warning' as const)
@@ -1163,7 +1192,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     () =>
       nodeResults.map((item) => ({
         id: item.nodeRunId,
-        krok: planNodeTypeLabel(item.nodeType, true) || item.nodeType,
+        krok: planNodeTypeLabel(item.nodeType, isPolish) || item.nodeType,
         stan: nodeCompletionStateLabel(item.nodeCompletionState),
         akceptacja: resultAcceptanceLabel(item.resultAcceptance),
         akceptacjaTone: resultAcceptanceTone(item.resultAcceptance),
@@ -1175,7 +1204,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   const measurementColumns: TableColumn[] = [
     {
       id: 'wskaznik',
-      label: 'Co mierzymy',
+      label: t('caseWorkspace.results.columns.whatWeMeasure', 'What we measure'),
       /*
        * ★ SZEROKOŚCI DOBRANE POMIAREM, nie na oko. Suma zadeklarowanych
        * szerokości JEST szerokością tabeli (`table-fixed`, `parsePx` w
@@ -1192,12 +1221,12 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         <span className="text-sm font-medium text-c-text">{String(row.wskaznik)}</span>
       ),
     },
-    { id: 'punktWyjscia', label: 'Punkt wyjścia', width: '100px', align: 'right' },
-    { id: 'cel', label: 'Cel', width: '90px', align: 'right' },
-    { id: 'wynik', label: 'Wynik', width: '90px', align: 'right' },
+    { id: 'punktWyjscia', label: t('caseWorkspace.results.columns.baseline', 'Starting point'), width: '100px', align: 'right' },
+    { id: 'cel', label: t('caseWorkspace.results.columns.target', 'Target'), width: '90px', align: 'right' },
+    { id: 'wynik', label: t('caseWorkspace.results.columns.result', 'Result'), width: '90px', align: 'right' },
     {
       id: 'stan',
-      label: 'Stan pomiaru',
+      label: t('caseWorkspace.results.columns.measurementStatus', 'Measurement status'),
       // Pigułka „Zmierzone częściowo” nie łamie się w linii — na zrzucie przy
       // 120 px nachodziła na kolumnę daty. 175 px ją mieści.
       width: '175px',
@@ -1208,7 +1237,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'pomiar',
-      label: 'Data pomiaru',
+      label: t('caseWorkspace.results.columns.measurementDate', 'Measurement date'),
       width: '95px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -1222,7 +1251,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       // Suma szerokości = szerokość tabeli (patrz komentarz przy 'wskaznik'):
       // 160+170+130+110+95 = 665 px mieści się w kolumnie 700 px.
       id: 'obiekt',
-      label: 'Obiekt',
+      label: t('caseWorkspace.results.columns.object', 'Object'),
       width: '160px',
       sortable: true,
       filterable: true,
@@ -1230,10 +1259,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         <span className="text-sm font-medium text-c-text">{String(row.obiekt)}</span>
       ),
     },
-    { id: 'rola', label: 'Rola w zleceniu', width: '170px', filterable: true },
+    { id: 'rola', label: t('caseWorkspace.results.columns.roleInOrder', 'Role in the order'), width: '170px', filterable: true },
     {
       id: 'stan',
-      label: 'Stan powiązania',
+      label: t('caseWorkspace.results.columns.linkStatus', 'Link status'),
       width: '130px',
       render: (row: Record<string, unknown>) => (
         <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
@@ -1241,7 +1270,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'dodane',
-      label: 'Powiązane',
+      label: t('caseWorkspace.results.columns.linked', 'Linked'),
       width: '110px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -1250,7 +1279,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'otwieralny',
-      label: 'Otwórz',
+      label: t('caseWorkspace.results.columns.open', 'Open'),
       width: '95px',
       align: 'right',
       render: (row: Record<string, unknown>) => {
@@ -1262,7 +1291,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           <OpenButton
             otwarcie={otwarcie}
             kluczFokusu={kluczFokusuObiektu(linkId)}
-            etykietaDostepna={`Otwórz obiekt: ${linkedTypeLabel(link.artifactType, true) || link.artifactType}`}
+            etykietaDostepna={t('caseWorkspace.results.columns.openObjectAria', 'Open object: {{label}}', {
+              label: linkedTypeLabel(link.artifactType, isPolish) || link.artifactType,
+            })}
             onOpen={otworz}
           />
         );
@@ -1280,7 +1311,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   const nodeResultColumns: TableColumn[] = [
     {
       id: 'krok',
-      label: 'Krok',
+      label: t('caseWorkspace.results.columns.step', 'Step'),
       width: '220px',
       sortable: true,
       filterable: true,
@@ -1294,10 +1325,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         </span>
       ),
     },
-    { id: 'stan', label: 'Stan zakończenia', width: '100px' },
+    { id: 'stan', label: t('caseWorkspace.results.columns.completionStatus', 'Completion status'), width: '100px' },
     {
       id: 'akceptacja',
-      label: 'Status akceptacji',
+      label: t('caseWorkspace.results.columns.acceptanceStatus', 'Acceptance status'),
       width: '180px',
       filterable: true,
       render: (row: Record<string, unknown>) => (
@@ -1306,7 +1337,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
     {
       id: 'kiedy',
-      label: 'Kiedy',
+      label: t('caseWorkspace.results.columns.when', 'When'),
       width: '110px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -1329,7 +1360,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       : null;
   const selectedLinkOtwarcie = selectedLink ? otwarciaObiektow.get(selectedLink.linkId) : undefined;
   const selectedEvidence = selectedMeasurement
-    ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef)
+    ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef, isPolish)
     : null;
   const selectedNodeResultOtwarcie = selectedNodeResult
     ? rozstrzygnijOtwarcieRezultatuKroku(selectedNodeResult, artifactLinks, otwarciaObiektow)
@@ -1374,9 +1405,13 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       <div className="min-w-0 flex-1 space-y-4">
         <div className="rounded-xl border border-c-border bg-c-surface p-3 sm:p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-base font-semibold text-c-text">Czy zlecenie jest domknięte</h3>
+            <h3 className="text-base font-semibold text-c-text">
+              {t('caseWorkspace.results.closure.heading', 'Is the order closed')}
+            </h3>
             <span className="text-xs text-c-text-muted">
-              Umówione zamknięcie: {closureTypeLabel(caseItem.contractedClosureType, true)}
+              {t('caseWorkspace.results.closure.contracted', 'Contracted closure: {{type}}', {
+                type: closureTypeLabel(caseItem.contractedClosureType, isPolish),
+              })}
             </span>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -1386,11 +1421,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2"
               >
                 <div className="text-xs uppercase tracking-wide text-c-text-muted">
-                  {closureAxisLabel(axis.key, true)}
+                  {closureAxisLabel(axis.key, isPolish)}
                 </div>
                 <div className="mt-1">
                   <StatusTag tone={axisTone(axis.status)}>
-                    {closureAxisStatusLabel(axis.status, true)}
+                    {closureAxisStatusLabel(axis.status, isPolish)}
                   </StatusTag>
                 </div>
               </div>
@@ -1398,15 +1433,17 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           </div>
           {caseItem.closedAt ? (
             <p className="mt-3 text-sm text-c-text-secondary">
-              Zamknięte {formatDateTime(caseItem.closedAt)} jako{' '}
-              {closureTypeLabel(caseItem.closureType, true).toLowerCase()}.
+              {t('caseWorkspace.results.closure.closedOn', 'Closed {{date}} as {{type}}.', {
+                date: formatDateTime(caseItem.closedAt),
+                type: closureTypeLabel(caseItem.closureType, isPolish).toLowerCase(),
+              })}
             </p>
           ) : null}
         </div>
 
         <section aria-labelledby="zlecenia-wyniki-krokow" className="min-w-0">
           <h3 id="zlecenia-wyniki-krokow" className="mb-2 text-sm font-semibold text-c-text">
-            Wyniki wykonania kroków
+            {t('caseWorkspace.results.steps.heading', 'Step execution results')}
           </h3>
           <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
             {nodeResultsStan !== 'ok' ? (
@@ -1431,9 +1468,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 defaultSort={{ columnId: 'kiedy', direction: 'desc' }}
                 empty={{
                   icon: ClipboardCheck,
-                  title: 'Żaden krok nie ma jeszcze zapisanego wyniku',
-                  description:
-                    'Wynik pojawia się tu dopiero, gdy krok wykonania zostanie zakończony albo pominięty — to nie jest błąd.',
+                  title: t('caseWorkspace.results.steps.emptyTitle', 'No step has a recorded result yet'),
+                  description: t(
+                    'caseWorkspace.results.steps.emptyDescription',
+                    'A result appears here only once a step is completed or skipped — this is not an error.',
+                  ),
                 }}
               />
             )}
@@ -1442,7 +1481,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
 
         <section aria-labelledby="zlecenia-wartosc" className="min-w-0">
           <h3 id="zlecenia-wartosc" className="mb-2 text-sm font-semibold text-c-text">
-            Zmierzona wartość
+            {t('caseWorkspace.results.measurements.heading', 'Measured value')}
           </h3>
           <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
             <StandardTable
@@ -1475,9 +1514,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               defaultSort={{ columnId: 'pomiar', direction: 'desc' }}
               empty={{
                 icon: BarChart3,
-                title: 'Nic jeszcze nie zmierzono',
-                description:
-                  'Efekt zlecenia mierzy się po wdrożeniu. Do tego czasu ta lista pozostaje pusta — to nie jest błąd.',
+                title: t('caseWorkspace.results.measurements.emptyTitle', 'Nothing measured yet'),
+                description: t(
+                  'caseWorkspace.results.measurements.emptyDescription',
+                  'The effect of the order is measured after rollout. Until then this list stays empty — this is not an error.',
+                ),
               }}
             />
           </div>
@@ -1486,7 +1527,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         <section aria-labelledby="zlecenia-obiekty" className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h3 id="zlecenia-obiekty" className="text-sm font-semibold text-c-text">
-              Powiązane obiekty
+              {t('caseWorkspace.results.links.heading', 'Linked objects')}
             </h3>
             {/* Powiąż ISTNIEJĄCY obiekt — nigdy kopia, zawsze wskaźnik
                (CW-RT-025: „late binding creates a link, not a copy or
@@ -1499,7 +1540,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               className={`inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border px-2.5 text-xs font-medium text-c-text transition hover:bg-c-surface-raised ${FOCUS_RING}`}
             >
               <Plus size={14} aria-hidden />
-              Powiąż obiekt
+              {t('caseWorkspace.results.links.linkObject', 'Link object')}
             </button>
           </div>
           <CommandBanner
@@ -1520,9 +1561,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               defaultSort={{ columnId: 'dodane', direction: 'desc' }}
               empty={{
                 icon: Link2,
-                title: 'Brak powiązanych obiektów',
-                description:
-                  'Tu trafiają dokumenty, decyzje, inicjatywy i dowody, na których opiera się to zlecenie.',
+                title: t('caseWorkspace.results.links.emptyTitle', 'No linked objects'),
+                description: t(
+                  'caseWorkspace.results.links.emptyDescription',
+                  "Documents, decisions, initiatives and evidence this order relies on land here.",
+                ),
               }}
             />
           </div>
@@ -1536,24 +1579,24 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             meta={{
               pills: [
                 {
-                  label: valueMeasurementStatusLabel(selectedMeasurement.measurementStatus, true),
+                  label: valueMeasurementStatusLabel(selectedMeasurement.measurementStatus, isPolish),
                   tone: 'info',
                 },
                 {
-                  label: measurementConfidenceLabel(selectedMeasurement.confidence, true),
+                  label: measurementConfidenceLabel(selectedMeasurement.confidence, isPolish),
                   tone: 'neutral',
                 },
               ],
             }}
             details={{
-              text: 'Pomiar efektu tego zlecenia.',
+              text: t('caseWorkspace.results.measurements.preview.intro', "Measurement of this order's effect."),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.results.measurements.preview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.results.measurements.preview.valueLabel', 'Value'),
               properties: [
                 {
                   id: 'baza',
-                  label: 'Punkt wyjścia',
+                  label: t('caseWorkspace.results.measurements.preview.baseline', 'Starting point'),
                   value: formatValue(
                     selectedMeasurement.baselineValue,
                     selectedMeasurement.baselineUnit
@@ -1561,7 +1604,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 },
                 {
                   id: 'cel',
-                  label: 'Cel',
+                  label: t('caseWorkspace.results.measurements.preview.target', 'Target'),
                   value: formatValue(
                     selectedMeasurement.targetValue,
                     selectedMeasurement.targetUnit
@@ -1569,7 +1612,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 },
                 {
                   id: 'wynik',
-                  label: 'Wynik',
+                  label: t('caseWorkspace.results.measurements.preview.result', 'Result'),
                   value: formatValue(
                     selectedMeasurement.actualValue,
                     selectedMeasurement.actualUnit
@@ -1577,20 +1620,22 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 },
                 {
                   id: 'data',
-                  label: 'Data pomiaru',
+                  label: t('caseWorkspace.results.measurements.preview.measurementDate', 'Measurement date'),
                   value: formatDate(selectedMeasurement.measurementDate),
                 },
                 {
                   id: 'nastepny',
-                  label: 'Następny pomiar',
+                  label: t('caseWorkspace.results.measurements.preview.nextMeasurement', 'Next measurement'),
                   value: selectedMeasurement.nextMeasurementDueAt
                     ? formatDate(selectedMeasurement.nextMeasurementDueAt)
-                    : 'nie zaplanowano',
+                    : t('caseWorkspace.results.measurements.preview.notScheduled', 'not scheduled'),
                 },
                 {
                   id: 'dowod',
-                  label: 'Dowód',
-                  value: selectedMeasurement.evidenceRef ? 'dołączony' : 'brak',
+                  label: t('caseWorkspace.results.measurements.preview.evidence', 'Evidence'),
+                  value: selectedMeasurement.evidenceRef
+                    ? t('caseWorkspace.results.measurements.preview.evidenceAttached', 'attached')
+                    : t('caseWorkspace.results.measurements.preview.evidenceMissing', 'missing'),
                 },
               ],
             }}
@@ -1598,22 +1643,30 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             {/* Dowód pomiaru — otwieralny, gdy wskazuje realny obiekt. */}
             <div className="rounded-lg border border-c-border-subtle p-3">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                Dowód pomiaru
+                {t('caseWorkspace.results.measurements.preview.evidenceHeading', 'Measurement evidence')}
               </div>
               {selectedEvidence === null ? (
                 <p className="text-xs italic text-c-text-muted">
-                  Do tego pomiaru nie dołączono dowodu. Stan „brak dowodu" jest czymś innym niż
-                  „nieosiągnięte" — sam wynik nie jest przez to unieważniony.
+                  {t(
+                    'caseWorkspace.results.measurements.preview.noEvidence',
+                    'No evidence was attached to this measurement. The “no evidence” state is different from “not achieved” — the result itself is not invalidated by this.',
+                  )}
                 </p>
               ) : selectedEvidence.status === 'otwieralny' ? (
                 <div className="space-y-2">
                   <p className="text-xs text-c-text-secondary">
-                    Dowód wskazuje obiekt: {selectedEvidence.etykieta}.
+                    {t('caseWorkspace.results.measurements.preview.evidencePointsTo', 'Evidence points to object: {{label}}.', {
+                      label: selectedEvidence.etykieta,
+                    })}
                   </p>
                   <OpenButton
                     otwarcie={selectedEvidence}
                     kluczFokusu={kluczFokusuDowodu(selectedMeasurement.measurementId)}
-                    etykietaDostepna={`Otwórz dowód pomiaru: ${selectedEvidence.etykieta}`}
+                    etykietaDostepna={t(
+                      'caseWorkspace.results.measurements.preview.openEvidenceAria',
+                      'Open measurement evidence: {{label}}',
+                      { label: selectedEvidence.etykieta },
+                    )}
                     onOpen={otworz}
                     szeroki
                   />
@@ -1628,7 +1681,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           </StandardPreview>
       ) : selectedLink ? (
           <StandardPreview
-            title={linkedTypeLabel(selectedLink.artifactType, true) || selectedLink.artifactType}
+            title={linkedTypeLabel(selectedLink.artifactType, isPolish) || selectedLink.artifactType}
             onClose={() => setSelection(null)}
             /* Kanon podglądu: „Otwórz" mieszka w nagłówku podglądu, nie w
                dorobionym przycisku w treści. Podajemy go WYŁĄCZNIE wtedy, gdy
@@ -1645,7 +1698,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                     })
                 : undefined
             }
-            openLabel="Otwórz obiekt"
+            openLabel={t('caseWorkspace.results.links.preview.openObject', 'Open object')}
             /*
              * Blok 6 kanonu podglądu — akcje ZARZĄDZANIA powiązaniem, nie
              * treścią artefaktu (tej moduł nie posiada, patrz nagłówek pliku:
@@ -1672,14 +1725,14 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                       {
                         id: 'przypnij-wersje',
                         variant: 'neutral',
-                        label: 'Przypnij wersję',
+                        label: t('caseWorkspace.results.links.preview.pinVersion', 'Pin version'),
                         icon: Pin,
                         onClick: () => otworzDialogPrzypiecia(selectedLink),
                       },
                       {
                         id: 'odepnij-obiekt',
                         variant: 'destructive',
-                        label: 'Odepnij od zlecenia',
+                        label: t('caseWorkspace.results.links.preview.unlinkFromOrder', 'Unlink from order'),
                         icon: Unlink,
                         onClick: () => otworzDialogOdpiecia(selectedLink),
                       },
@@ -1689,9 +1742,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             }
             meta={{
               pills: [
-                { label: artifactLinkRelationLabel(selectedLink.relation, true), tone: 'info' },
+                { label: artifactLinkRelationLabel(selectedLink.relation, isPolish), tone: 'info' },
                 ...(selectedLink.isStale
-                  ? [{ label: 'Nieaktualny', tone: 'warning' as const }]
+                  ? [{ label: t('caseWorkspace.results.links.preview.stale', 'Outdated'), tone: 'warning' as const }]
                   : []),
               ],
             }}
@@ -1700,33 +1753,42 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 selectedLinkOtwarcie?.status === 'otwieralny' && selectedLinkOtwarcie.ostrzezenie
                   ? selectedLinkOtwarcie.ostrzezenie
                   : selectedLink.isStale
-                    ? 'Obiekt zmienił się po powiązaniu — sprawdź, czy nadal potwierdza to, co miał potwierdzać.'
-                    : 'Obiekt powiązany z tym zleceniem.',
+                    ? t(
+                        'caseWorkspace.results.links.preview.changedNotice',
+                        'The object changed after linking — check whether it still confirms what it was meant to confirm.',
+                      )
+                    : t('caseWorkspace.results.links.preview.linkedNotice', 'Object linked to this order.'),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.results.links.preview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.results.links.preview.valueLabel', 'Value'),
               properties: [
                 {
                   id: 'rola',
-                  label: 'Rola w zleceniu',
-                  value: artifactLinkRelationLabel(selectedLink.relation, true),
+                  label: t('caseWorkspace.results.links.preview.role', 'Role in the order'),
+                  value: artifactLinkRelationLabel(selectedLink.relation, isPolish),
                 },
                 {
                   id: 'stan',
-                  label: 'Stan powiązania',
-                  value: artifactLinkStatusLabel(selectedLink.linkStatus, true),
+                  label: t('caseWorkspace.results.links.preview.linkStatus', 'Link status'),
+                  value: artifactLinkStatusLabel(selectedLink.linkStatus, isPolish),
                 },
-                { id: 'dodane', label: 'Powiązane', value: formatDateTime(selectedLink.linkedAt) },
+                {
+                  id: 'dodane',
+                  label: t('caseWorkspace.results.links.preview.linkedAt', 'Linked'),
+                  value: formatDateTime(selectedLink.linkedAt),
+                },
                 {
                   id: 'wersja',
-                  label: 'Przypięta wersja',
-                  value: selectedLink.artifactRevision ?? 'zawsze najnowsza',
+                  label: t('caseWorkspace.results.links.preview.pinnedVersion', 'Pinned version'),
+                  value:
+                    selectedLink.artifactRevision ??
+                    t('caseWorkspace.results.links.preview.alwaysLatest', 'always latest'),
                 },
                 ...(expert
                   ? [
                       {
                         id: 'id',
-                        label: 'Identyfikator obiektu',
+                        label: t('caseWorkspace.results.links.preview.objectId', 'Object ID'),
                         value: <TechnicalId value={selectedLink.artifactId} />,
                       },
                     ]
@@ -1746,7 +1808,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                   />
                 )}
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-c-text">Tego obiektu nie otworzymy</p>
+                  <p className="text-xs font-medium text-c-text">
+                    {t('caseWorkspace.results.links.preview.cannotOpenTitle', "This object won't open")}
+                  </p>
                   <p className="mt-0.5 text-xs text-c-text-secondary">
                     {selectedLinkOtwarcie.powod}
                   </p>
@@ -1762,7 +1826,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                   aria-hidden
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-c-text">Otworzysz nieaktualną rewizję</p>
+                  <p className="text-xs font-medium text-c-text">
+                    {t('caseWorkspace.results.links.preview.staleRevisionTitle', "You'll open an outdated revision")}
+                  </p>
                   <p className="mt-0.5 text-xs text-c-text-secondary">
                     {selectedLinkOtwarcie.ostrzezenie}
                   </p>
@@ -1770,15 +1836,17 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               </div>
             ) : (
               <p className="text-xs text-c-text-muted">
-                „Otwórz obiekt" w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt
-                należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.
+                {t(
+                  'caseWorkspace.results.links.preview.openFooterNotice',
+                  '“Open object” in the preview header takes you to the module this object belongs to. You\'ll return here to the same order, in the same section.',
+                )}
               </p>
             )}
           </StandardPreview>
       ) : selectedNodeResult ? (
           <StandardPreview
             title={
-              planNodeTypeLabel(selectedNodeResult.nodeType, true) || selectedNodeResult.nodeType
+              planNodeTypeLabel(selectedNodeResult.nodeType, isPolish) || selectedNodeResult.nodeType
             }
             onClose={() => setSelection(null)}
             /* Ten sam kanon co „Powiązane obiekty" wyżej: „Otwórz" w nagłówku
@@ -1794,7 +1862,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                     })
                 : undefined
             }
-            openLabel="Otwórz rezultat"
+            openLabel={t('caseWorkspace.results.nodeResult.openLabel', 'Open result')}
             meta={{
               pills: [
                 {
@@ -1817,42 +1885,42 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               ],
             }}
             details={{
-              text: 'Wynik pojedynczego kroku wykonania tego zlecenia.',
+              text: t('caseWorkspace.results.nodeResult.preview.intro', 'Result of a single execution step of this order.'),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.results.nodeResult.preview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.results.nodeResult.preview.valueLabel', 'Value'),
               properties: [
                 {
                   id: 'run',
-                  label: 'Źródłowy Run',
+                  label: t('caseWorkspace.results.nodeResult.preview.sourceRun', 'Source run'),
                   value: <TechnicalId value={selectedNodeResult.runId} title="Run" />,
                 },
                 {
                   id: 'noderun',
-                  label: 'NodeRun',
+                  label: t('caseWorkspace.results.nodeResult.preview.nodeRun', 'Node run'),
                   value: <TechnicalId value={selectedNodeResult.nodeRunId} title="NodeRun" />,
                 },
                 {
                   id: 'zdarzylo',
-                  label: 'Zdarzyło się',
+                  label: t('caseWorkspace.results.nodeResult.preview.occurredAt', 'Occurred'),
                   value: formatDateTime(selectedNodeResult.occurredAt),
                 },
                 {
                   id: 'zapisano',
-                  label: 'Zapisano',
+                  label: t('caseWorkspace.results.nodeResult.preview.recordedAt', 'Recorded'),
                   value: formatDateTime(selectedNodeResult.recordedAt),
                 },
                 ...(selectedNodeResult.nodeCompletionState === 'SKIPPED'
                   ? [
                       {
                         id: 'pominiecie',
-                        label: 'Autoryzacja pominięcia',
+                        label: t('caseWorkspace.results.nodeResult.preview.skipAuthorization', 'Skip authorization'),
                         value:
                           selectedNodeResult.skipAuthorizedByGraphCondition === true
-                            ? 'tak — warunek grafu'
+                            ? t('caseWorkspace.results.nodeResult.preview.graphConditionYes', 'yes — graph condition')
                             : selectedNodeResult.skipAuthorizedByGraphCondition === false
-                              ? 'nie potwierdzona'
-                              : 'nieznana',
+                              ? t('caseWorkspace.results.nodeResult.preview.graphConditionNo', 'not confirmed')
+                              : t('caseWorkspace.results.nodeResult.preview.graphConditionUnknown', 'unknown'),
                       },
                     ]
                   : []),
@@ -1862,27 +1930,40 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             {/* Źródłowy Run — dociągnięty leniwie, uczciwy o trzech stanach. */}
             <div className="rounded-lg border border-c-border-subtle p-3">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                Kontekst Run
+                {t('caseWorkspace.results.nodeResult.preview.runContextHeading', 'Run context')}
               </div>
               {zrodloRun.runId !== selectedNodeResult.runId || zrodloRun.stan === 'ladowanie' ? (
-                <p className="text-xs text-c-text-muted">Wczytywanie…</p>
+                <p className="text-xs text-c-text-muted">
+                  {t('caseWorkspace.results.nodeResult.preview.loading', 'Loading…')}
+                </p>
               ) : zrodloRun.stan === 'blad' ? (
                 <p className="text-xs text-c-text-secondary">
                   {zrodloRun.blad?.kind === 'blocked'
-                    ? 'Nie masz uprawnień do szczegółów tego Run.'
+                    ? t('caseWorkspace.results.nodeResult.preview.runBlocked', "You don't have permission to view this run's details.")
                     : zrodloRun.blad?.kind === 'notFound'
-                      ? 'Powiązanie z tym Run nie zostało znalezione — mogło zostać usunięte.'
-                      : 'Nie udało się wczytać szczegółów Run. Reszta tego wyniku pozostaje widoczna.'}
+                      ? t(
+                          'caseWorkspace.results.nodeResult.preview.runNotFound',
+                          'The link to this run was not found — it may have been deleted.',
+                        )
+                      : t(
+                          'caseWorkspace.results.nodeResult.preview.runLoadError',
+                          "Couldn't load run details. The rest of this result stays visible.",
+                        )}
                 </p>
               ) : zrodloRun.dane ? (
                 <dl className="space-y-1 text-xs text-c-text-secondary">
                   <div>
-                    Wersja planu: <TechnicalId value={zrodloRun.dane.casePlanVersionId} />
+                    {t('caseWorkspace.results.nodeResult.preview.planVersion', 'Plan version:')}{' '}
+                    <TechnicalId value={zrodloRun.dane.casePlanVersionId} />
                   </div>
                   <div>
-                    Skrót grafu: <TechnicalId value={zrodloRun.dane.graphDigest} />
+                    {t('caseWorkspace.results.nodeResult.preview.graphDigest', 'Graph digest:')}{' '}
+                    <TechnicalId value={zrodloRun.dane.graphDigest} />
                   </div>
-                  <div>Powiązano z planem: {formatDateTime(zrodloRun.dane.createdAt)}</div>
+                  <div>
+                    {t('caseWorkspace.results.nodeResult.preview.linkedToPlan', 'Linked to plan:')}{' '}
+                    {formatDateTime(zrodloRun.dane.createdAt)}
+                  </div>
                 </dl>
               ) : null}
             </div>
@@ -1890,7 +1971,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             {/* Dowód — treść, na której oparto zapisaną akceptację. */}
             <div className="mt-3 rounded-lg border border-c-border-subtle p-3">
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                Dowód
+                {t('caseWorkspace.results.nodeResult.preview.evidenceHeading', 'Evidence')}
               </div>
               {summaryFromSnapshot(selectedNodeResult.acceptanceInputSnapshot) ? (
                 <p className="text-xs text-c-text-secondary">
@@ -1898,8 +1979,8 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 </p>
               ) : (
                 <p className="text-xs italic text-c-text-muted">
-                  Do tego kroku nie zapisano czytelnego opisu dowodu.
-                  {!expert ? ' Włącz widok ekspercki, by zobaczyć surowe dane.' : ''}
+                  {t('caseWorkspace.results.nodeResult.preview.noEvidenceDescription', 'No readable evidence description was recorded for this step.')}
+                  {!expert ? t('caseWorkspace.results.nodeResult.preview.enableExpertHint', ' Turn on expert view to see the raw data.') : ''}
                 </p>
               )}
               {expert && selectedNodeResult.acceptanceInputSnapshot != null ? (
@@ -1913,7 +1994,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             <div className="mt-3">
               {selectedNodeResultOtwarcie === null ? (
                 <p className="text-xs text-c-text-muted">
-                  Ten wynik nie wskazuje obiektu do otwarcia.
+                  {t('caseWorkspace.results.nodeResult.preview.noOpenTarget', "This result doesn't point to an object to open.")}
                 </p>
               ) : selectedNodeResultOtwarcie.status !== 'otwieralny' ? (
                 <div className="flex items-start gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
@@ -1926,7 +2007,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                     />
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-c-text">Tego obiektu nie otworzymy</p>
+                    <p className="text-xs font-medium text-c-text">
+                      {t('caseWorkspace.results.nodeResult.preview.cannotOpenTitle', "This object won't open")}
+                    </p>
                     <p className="mt-0.5 text-xs text-c-text-secondary">
                       {selectedNodeResultOtwarcie.powod}
                     </p>
@@ -1939,7 +2022,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                     aria-hidden
                   />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-c-text">Otworzysz nieaktualną rewizję</p>
+                    <p className="text-xs font-medium text-c-text">
+                      {t('caseWorkspace.results.nodeResult.preview.staleRevisionTitle', "You'll open an outdated revision")}
+                    </p>
                     <p className="mt-0.5 text-xs text-c-text-secondary">
                       {selectedNodeResultOtwarcie.ostrzezenie}
                     </p>
@@ -1947,8 +2032,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 </div>
               ) : (
                 <p className="text-xs text-c-text-muted">
-                  „Otwórz rezultat" w nagłówku podglądu przeniesie Cię do modułu, do którego ten
-                  obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.
+                  {t(
+                    'caseWorkspace.results.nodeResult.preview.openFooterNotice',
+                    '“Open result” in the preview header takes you to the module this object belongs to. You\'ll return here to the same order, in the same section.',
+                  )}
                 </p>
               )}
             </div>
@@ -1962,15 +2049,18 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
          obsługują). */}
       <FormDialog
         open={pendingArtifactCommand?.kind === 'powiaz'}
-        title="Powiąż istniejący obiekt"
-        description="Obiekt zostaje POWIĄZANY, nie skopiowany — nadal należy do swojego modułu, a to zlecenie dostaje tylko wskaźnik do niego (CW-RT-025)."
-        confirmLabel="Powiąż"
+        title={t('caseWorkspace.results.linkDialog.title', 'Link an existing object')}
+        description={t(
+          'caseWorkspace.results.linkDialog.description',
+          'The object becomes LINKED, not copied — it still belongs to its own module, and this order only gets a pointer to it (CW-RT-025).',
+        )}
+        confirmLabel={t('caseWorkspace.results.linkDialog.confirm', 'Link')}
         busy={artifactCommandBusy}
         confirmDisabled={!formTypObiektu.trim() || !formIdObiektu.trim()}
         onConfirm={() => uruchomKomendeArtefaktu('')}
         onCancel={zamknijDialogArtefaktu}
       >
-        <FormField label="Typ obiektu" required>
+        <FormField label={t('caseWorkspace.results.linkDialog.objectType', 'Object type')} required>
           <select
             value={formTypObiektu}
             onChange={(event) => setFormTypObiektu(event.target.value)}
@@ -1978,25 +2068,28 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           >
             {LINKOWALNE_TYPY_OBIEKTOW.map((typ) => (
               <option key={typ} value={typ}>
-                {linkedTypeLabel(typ, true) || typ}
+                {linkedTypeLabel(typ, isPolish) || typ}
               </option>
             ))}
           </select>
         </FormField>
         <FormField
-          label="Identyfikator obiektu"
+          label={t('caseWorkspace.results.linkDialog.objectId', 'Object ID')}
           required
-          helpText="Skopiuj identyfikator z ekranu obiektu w jego własnym module (widok ekspercki pokazuje go obok nazwy)."
+          helpText={t(
+            'caseWorkspace.results.linkDialog.objectIdHelp',
+            "Copy the identifier from the object's own screen in its module (expert view shows it next to the name).",
+          )}
         >
           <input
             type="text"
             value={formIdObiektu}
             onChange={(event) => setFormIdObiektu(event.target.value)}
-            placeholder="np. doc-... / decision-..."
+            placeholder={t('caseWorkspace.results.linkDialog.objectIdPlaceholder', 'e.g. doc-... / decision-...')}
             className={FORM_INPUT_CLASS}
           />
         </FormField>
-        <FormField label="Rola w zleceniu" required>
+        <FormField label={t('caseWorkspace.results.linkDialog.role', 'Role in the order')} required>
           <select
             value={formRelacja}
             onChange={(event) => setFormRelacja(event.target.value as ArtifactLinkRelation)}
@@ -2004,25 +2097,25 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           >
             {RELACJE_POWIAZANIA.map((relacja) => (
               <option key={relacja} value={relacja}>
-                {artifactLinkRelationLabel(relacja, true)}
+                {artifactLinkRelationLabel(relacja, isPolish)}
               </option>
             ))}
           </select>
         </FormField>
         <FormField
-          label="Przypnij konkretną wersję"
-          helpText="Puste = zawsze najnowsza wersja obiektu."
+          label={t('caseWorkspace.results.linkDialog.pinVersion', 'Pin a specific version')}
+          helpText={t('caseWorkspace.results.linkDialog.pinVersionHelp', 'Empty = always the latest version of the object.')}
         >
           <input
             type="text"
             value={formRewizja}
             onChange={(event) => setFormRewizja(event.target.value)}
-            placeholder="np. v3 / skrót rewizji"
+            placeholder={t('caseWorkspace.results.linkDialog.revisionPlaceholder', 'e.g. v3 / revision hash')}
             className={FORM_INPUT_CLASS}
           />
         </FormField>
         {formRewizja.trim() ? (
-          <FormField label="Powód przypięcia tej wersji">
+          <FormField label={t('caseWorkspace.results.linkDialog.pinReason', 'Reason for pinning this version')}>
             <input
               type="text"
               value={formPowodPrzypiecia}
@@ -2035,29 +2128,32 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
 
       <FormDialog
         open={pendingArtifactCommand?.kind === 'przypnij'}
-        title="Przypnij wersję obiektu"
-        description="Przypięcie NOWEJ wersji zdejmuje flagę „nieaktualny” — dokładnie ta czynność, po której zlecenie ponownie uznaje powiązanie za aktualne (CW-01-026-INV9)."
-        confirmLabel="Przypnij"
+        title={t('caseWorkspace.results.pinDialog.title', 'Pin object version')}
+        description={t(
+          'caseWorkspace.results.pinDialog.description',
+          'Pinning a NEW version clears the “outdated” flag — exactly the action after which the order once again treats the link as current (CW-01-026-INV9).',
+        )}
+        confirmLabel={t('caseWorkspace.results.pinDialog.confirm', 'Pin')}
         busy={artifactCommandBusy}
         confirmDisabled={!pinRewizja.trim()}
         onConfirm={() => uruchomKomendeArtefaktu(pinRewizja)}
         onCancel={zamknijDialogArtefaktu}
       >
-        <FormField label="Wersja" required>
+        <FormField label={t('caseWorkspace.results.pinDialog.version', 'Version')} required>
           <input
             type="text"
             value={pinRewizja}
             onChange={(event) => setPinRewizja(event.target.value)}
-            placeholder="np. v4 / skrót rewizji"
+            placeholder={t('caseWorkspace.results.pinDialog.versionPlaceholder', 'e.g. v4 / revision hash')}
             className={FORM_INPUT_CLASS}
           />
         </FormField>
-        <FormField label="Powód">
+        <FormField label={t('caseWorkspace.results.pinDialog.reason', 'Reason')}>
           <input
             type="text"
             value={pinPowod}
             onChange={(event) => setPinPowod(event.target.value)}
-            placeholder="np. zaktualizowano po uwagach klienta"
+            placeholder={t('caseWorkspace.results.pinDialog.reasonPlaceholder', 'e.g. updated after client feedback')}
             className={FORM_INPUT_CLASS}
           />
         </FormField>
@@ -2074,13 +2170,19 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
        */}
       <CommandDialog
         open={pendingArtifactCommand?.kind === 'odepnij'}
-        title="Odepnij obiekt od zlecenia"
-        description="Powiązanie zniknie z aktywnej listy tego zlecenia. Sam obiekt NIE zostanie usunięty — zostaje w swoim module, tylko przestaje być rezultatem tego zlecenia. Historię tego powiązania da się odtworzyć."
-        confirmLabel="Odepnij"
+        title={t('caseWorkspace.results.unlinkDialog.title', 'Unlink object from order')}
+        description={t(
+          'caseWorkspace.results.unlinkDialog.description',
+          'The link disappears from this order\'s active list. The object itself is NOT deleted — it stays in its own module, it just stops being a result of this order. The history of this link can still be recovered.',
+        )}
+        confirmLabel={t('caseWorkspace.results.unlinkDialog.confirm', 'Unlink')}
         reason={{
-          label: 'Powód odpięcia',
+          label: t('caseWorkspace.results.unlinkDialog.reasonLabel', 'Reason for unlinking'),
           required: false,
-          placeholder: 'np. powiązano przez pomyłkę / zastąpione nowszym dokumentem',
+          placeholder: t(
+            'caseWorkspace.results.unlinkDialog.reasonPlaceholder',
+            'e.g. linked by mistake / superseded by a newer document',
+          ),
         }}
         busy={artifactCommandBusy}
         onConfirm={(reason) => uruchomKomendeArtefaktu(reason)}

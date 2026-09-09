@@ -53,6 +53,8 @@
  * komórki w cyklu zawiesza kartę), nie osobną „bramką jakości".
  */
 
+import { localeListy } from '@/utils/listDateFormat';
+
 // ---------------------------------------------------------------------------
 // Typy wejścia — dokładnie kształt WorkbookSchema (server/src/services/workbook/
 // WorkbookSchema.ts): sheets[].columns[].key/header, sheets[].rows[].cells[key].
@@ -918,16 +920,16 @@ export function formatComputedForDisplay(cell: ComputedCell | undefined, numberF
         useGrouping: /[#0][ ,.]##0/.test(decimalPattern),
       };
       if (decimalPattern.includes('%')) {
-        return v.toLocaleString('pl-PL', { ...options, style: 'percent' });
+        return v.toLocaleString(localeListy(), { ...options, style: 'percent' });
       }
       const currency = decimalPattern.match(/(?:^|\s)(PLN|EUR|USD|GBP)(?:\s|$)/i)?.[1]?.toUpperCase();
       if (currency) {
-        return v.toLocaleString('pl-PL', { ...options, style: 'currency', currency });
+        return v.toLocaleString(localeListy(), { ...options, style: 'currency', currency });
       }
-      return v.toLocaleString('pl-PL', options);
+      return v.toLocaleString(localeListy(), options);
     }
     const rounded = Math.round(v * 100) / 100;
-    return rounded.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+    return rounded.toLocaleString(localeListy(), { maximumFractionDigits: 2 });
   }
   return v;
 }

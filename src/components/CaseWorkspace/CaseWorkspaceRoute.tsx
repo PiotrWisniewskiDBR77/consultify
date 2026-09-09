@@ -11,15 +11,19 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MainLayout } from '@/layouts/MainLayout';
 
 import { CaseWorkspaceHub } from './CaseWorkspaceHub';
 
-export const CaseWorkspaceRoute: React.FC = () => (
-  <MainLayout breadcrumbs={[{ label: 'Zlecenia' }]} noPadding>
-    <CaseWorkspaceHub />
-  </MainLayout>
-);
+export const CaseWorkspaceRoute: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <MainLayout breadcrumbs={[{ label: t('caseWorkspace.breadcrumb', 'Orders') }]} noPadding>
+      <CaseWorkspaceHub />
+    </MainLayout>
+  );
+};
 
 export default CaseWorkspaceRoute;

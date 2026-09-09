@@ -1,6 +1,8 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+import { formatListDate } from '@/utils/listDateFormat';
+
 interface ExportOptions {
   filename: string;
   title?: string;
@@ -84,7 +86,7 @@ export const exportDashboardToPDF = async (options: ExportOptions) => {
     // Subtitle
     pdf.setFontSize(12);
     pdf.setTextColor(100, 116, 139); // slate-500
-    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 35);
+    pdf.text(`Generated: ${formatListDate(new Date().toISOString())}`, 20, 35);
 
     // Divider
     pdf.setDrawColor(226, 232, 240); // slate-200

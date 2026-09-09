@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '@/store/useAppStore';
 import { isDebugOverlaysOptedIn } from '@/utils/debugOverlays';
@@ -41,6 +42,7 @@ function shortSha(sha?: string): string | null {
 }
 
 export const EnvironmentBadge: React.FC = () => {
+  const { t } = useTranslation();
   const currentUser = useAppStore((s) => s.currentUser);
 
   const [health, setHealth] = useState<HealthMeta | null>(null);
@@ -142,7 +144,11 @@ export const EnvironmentBadge: React.FC = () => {
       className="pointer-events-none fixed bottom-14 right-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur"
       title={tooltip}
       role="status"
-      aria-label={`Środowisko ${label}${sha ? `, wersja ${sha}` : ''}`}
+      aria-label={
+        sha
+          ? t('layout.environmentBadge.ariaLabelWithVersion', 'Environment {{env}}, version {{sha}}', { env: label, sha })
+          : t('layout.environmentBadge.ariaLabel', 'Environment {{env}}', { env: label })
+      }
       data-testid="environment-badge"
     >
       <span className="opacity-90">{chip}</span>

@@ -26,7 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { formatListDate } from '@/utils/listDateFormat';
+import { formatListDate, formatListDateTime, formatListTime } from '@/utils/listDateFormat';
 
 // Types
 interface ServiceStatus {
@@ -236,7 +236,7 @@ export const StatusPageView: React.FC = () => {
                   : overallConfig.label[lang]}
               </h2>
               <p className="text-sm text-c-text-secondary">
-                {t.lastUpdated[lang]}: {status ? new Date(status.timestamp).toLocaleString() : '-'}
+                {t.lastUpdated[lang]}: {status ? formatListDateTime(status.timestamp) : '-'}
               </p>
             </div>
           </div>
@@ -367,7 +367,7 @@ export const StatusPageView: React.FC = () => {
                     <div>
                       <h4 className="font-medium text-c-text">{incident.title}</h4>
                       <p className="text-sm text-c-text-secondary">
-                        {new Date(incident.createdAt).toLocaleDateString()} • {incident.status}
+                        {formatListDate(incident.createdAt)} • {incident.status}
                       </p>
                     </div>
                     {expandedIncident === incident.id ? (
@@ -383,7 +383,7 @@ export const StatusPageView: React.FC = () => {
                         {incident.updates.map((update, i) => (
                           <div key={i} className="flex gap-3 text-sm">
                             <span className="text-c-text-muted">
-                              {new Date(update.timestamp).toLocaleTimeString()}
+                              {formatListTime(update.timestamp)}
                             </span>
                             <span className="text-c-text-secondary">{update.message}</span>
                           </div>

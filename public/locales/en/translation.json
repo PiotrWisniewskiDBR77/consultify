@@ -611,6 +611,10 @@
     },
     "split": {
       "assistantSubtitle": "Your transformation assistant"
+    },
+    "environmentBadge": {
+      "ariaLabel": "Environment {{env}}",
+      "ariaLabelWithVersion": "Environment {{env}}, version {{sha}}"
     }
   },
   "landing": {
@@ -38833,10 +38837,32 @@
       "termsError": "Couldn't accept the terms",
       "tierError": "Couldn't select the plan",
       "termsAccepted": "Terms accepted",
-      "tierSelected": "Pricing plan selected"
+      "tierSelected": "Pricing plan selected",
+      "setupPayment": "Contact the partner team to arrange payout and billing."
     },
     "featureSpotlight": {
       "gotIt": "Got it"
+    },
+    "enterpriseWizard": {
+      "step1": {
+        "intro": "This is the same application path launched from the LP and from the product.",
+        "termsTitle": "Program terms",
+        "termsAccept": "I accept the partner program terms",
+        "privacyTitle": "Privacy policy",
+        "privacyAccept": "I accept the privacy policy",
+        "confirmButton": "Confirm and continue"
+      },
+      "step2": {
+        "intro": "Choose the entry model that best fits your collaboration plan."
+      },
+      "step3": {
+        "intro": "Set up your billing details now, or continue and finish them later with the partner team.",
+        "billingTitle": "Partner billing",
+        "billingBody": "Final payout and billing details can be arranged automatically in the flow, or manually with the partner team for non-standard terms."
+      },
+      "step4": {
+        "intro": "Your workspace is ready for the next step of activation and work in the program."
+      }
     }
   },
   "editor": {
@@ -51508,5 +51534,662 @@
       "empty": "Empty canvas",
       "emptyHint": "Use the toolbar to add nodes"
     }
+  },
+  "caseWorkspace": {
+    "results": {
+      "closure": {
+        "heading": "Is the order closed",
+        "contracted": "Contracted closure: {{type}}",
+        "closedOn": "Closed {{date}} as {{type}}."
+      },
+      "steps": {
+        "heading": "Step execution results",
+        "emptyTitle": "No step has a recorded result yet",
+        "emptyDescription": "A result appears here only once a step is completed or skipped — this is not an error."
+      },
+      "measurements": {
+        "heading": "Measured value",
+        "emptyTitle": "Nothing measured yet",
+        "emptyDescription": "The effect of the order is measured after rollout. Until then this list stays empty — this is not an error.",
+        "preview": {
+          "intro": "Measurement of this order's effect.",
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "baseline": "Starting point",
+          "target": "Target",
+          "result": "Result",
+          "measurementDate": "Measurement date",
+          "nextMeasurement": "Next measurement",
+          "notScheduled": "not scheduled",
+          "evidence": "Evidence",
+          "evidenceAttached": "attached",
+          "evidenceMissing": "missing",
+          "evidenceHeading": "Measurement evidence",
+          "noEvidence": "No evidence was attached to this measurement. The “no evidence” state is different from “not achieved” — the result itself is not invalidated by this.",
+          "evidencePointsTo": "Evidence points to object: {{label}}.",
+          "openEvidenceAria": "Open measurement evidence: {{label}}"
+        }
+      },
+      "links": {
+        "heading": "Linked objects",
+        "linkObject": "Link object",
+        "emptyTitle": "No linked objects",
+        "emptyDescription": "Documents, decisions, initiatives and evidence this order relies on land here.",
+        "preview": {
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "role": "Role in the order",
+          "linkStatus": "Link status",
+          "linkedAt": "Linked",
+          "pinnedVersion": "Pinned version",
+          "alwaysLatest": "always latest",
+          "objectId": "Object ID",
+          "stale": "Outdated",
+          "changedNotice": "The object changed after linking — check whether it still confirms what it was meant to confirm.",
+          "linkedNotice": "Object linked to this order.",
+          "cannotOpenTitle": "This object won't open",
+          "staleRevisionTitle": "You'll open an outdated revision",
+          "openFooterNotice": "“Open object” in the preview header takes you to the module this object belongs to. You'll return here to the same order, in the same section.",
+          "pinVersion": "Pin version",
+          "unlinkFromOrder": "Unlink from order",
+          "openObject": "Open object"
+        }
+      },
+      "nodeResult": {
+        "openLabel": "Open result",
+        "preview": {
+          "intro": "Result of a single execution step of this order.",
+          "propertyLabel": "Property",
+          "valueLabel": "Value",
+          "sourceRun": "Source run",
+          "nodeRun": "Node run",
+          "occurredAt": "Occurred",
+          "recordedAt": "Recorded",
+          "skipAuthorization": "Skip authorization",
+          "graphConditionYes": "yes — graph condition",
+          "graphConditionNo": "not confirmed",
+          "graphConditionUnknown": "unknown",
+          "runContextHeading": "Run context",
+          "loading": "Loading…",
+          "runBlocked": "You don't have permission to view this run's details.",
+          "runNotFound": "The link to this run was not found — it may have been deleted.",
+          "runLoadError": "Couldn't load run details. The rest of this result stays visible.",
+          "planVersion": "Plan version:",
+          "graphDigest": "Graph digest:",
+          "linkedToPlan": "Linked to plan:",
+          "evidenceHeading": "Evidence",
+          "noEvidenceDescription": "No readable evidence description was recorded for this step.",
+          "enableExpertHint": " Turn on expert view to see the raw data.",
+          "noOpenTarget": "This result doesn't point to an object to open.",
+          "cannotOpenTitle": "This object won't open",
+          "staleRevisionTitle": "You'll open an outdated revision",
+          "openFooterNotice": "“Open result” in the preview header takes you to the module this object belongs to. You'll return here to the same order, in the same section."
+        }
+      },
+      "linkDialog": {
+        "title": "Link an existing object",
+        "description": "The object becomes LINKED, not copied — it still belongs to its own module, and this order only gets a pointer to it (CW-RT-025).",
+        "confirm": "Link",
+        "objectType": "Object type",
+        "objectId": "Object ID",
+        "objectIdHelp": "Copy the identifier from the object's own screen in its module (expert view shows it next to the name).",
+        "objectIdPlaceholder": "e.g. doc-... / decision-...",
+        "role": "Role in the order",
+        "pinVersion": "Pin a specific version",
+        "pinVersionHelp": "Empty = always the latest version of the object.",
+        "revisionPlaceholder": "e.g. v3 / revision hash",
+        "pinReason": "Reason for pinning this version"
+      },
+      "pinDialog": {
+        "title": "Pin object version",
+        "description": "Pinning a NEW version clears the “outdated” flag — exactly the action after which the order once again treats the link as current (CW-01-026-INV9).",
+        "confirm": "Pin",
+        "version": "Version",
+        "versionPlaceholder": "e.g. v4 / revision hash",
+        "reason": "Reason",
+        "reasonPlaceholder": "e.g. updated after client feedback"
+      },
+      "unlinkDialog": {
+        "title": "Unlink object from order",
+        "description": "The link disappears from this order's active list. The object itself is NOT deleted — it stays in its own module, it just stops being a result of this order. The history of this link can still be recovered.",
+        "confirm": "Unlink",
+        "reasonLabel": "Reason for unlinking",
+        "reasonPlaceholder": "e.g. linked by mistake / superseded by a newer document"
+      },
+      "columns": {
+        "whatWeMeasure": "What we measure",
+        "baseline": "Starting point",
+        "target": "Target",
+        "result": "Result",
+        "measurementStatus": "Measurement status",
+        "measurementDate": "Measurement date",
+        "object": "Object",
+        "roleInOrder": "Role in the order",
+        "linkStatus": "Link status",
+        "linked": "Linked",
+        "open": "Open",
+        "step": "Step",
+        "completionStatus": "Completion status",
+        "acceptanceStatus": "Acceptance status",
+        "when": "When",
+        "openObjectAria": "Open object: {{label}}"
+      },
+      "openButton": {
+        "openWithWarning": "Open: {{label}} — {{warning}}",
+        "openLabel": "Open: {{label}}",
+        "staleRevisionSuffix": " (the pinned revision is older)",
+        "openText": "Open"
+      },
+      "notices": {
+        "linkFieldsRequired": "Enter the object type and identifier — both fields are required.",
+        "linkedAs": "Object linked to the order as \"{{relation}}\".",
+        "linkAcceptedUnconfirmed": "The link was accepted, but couldn't be confirmed with a follow-up read. Refresh the data.",
+        "pinVersionRequired": "Enter the version to pin — it is required.",
+        "pinnedVersion": "Pinned version: \"{{revision}}\". The link is no longer marked as outdated.",
+        "pinAcceptedUnconfirmed": "The version was pinned, but this couldn't be confirmed with a follow-up read. Refresh the data.",
+        "unlinked": "The link was removed. The object itself was NOT deleted — it stays in its own module, it just stopped being a result of this order.",
+        "unlinkAcceptedUnconfirmed": "The unlink was accepted, but couldn't be confirmed with a follow-up read. Refresh the data."
+      }
+    },
+    "ui": {
+      "relativeDays": {
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "yesterday": "yesterday",
+        "inDays": "in {{count}} days",
+        "daysAgo": "{{count}} days ago"
+      },
+      "stateBlock": {
+        "loading": "Loading order data…",
+        "blockedTitle": "You don't have access to this order",
+        "blockedDescription": "Ask the order's owner or your organization admin to add you to the team. Data stays hidden until permissions are granted.",
+        "notFoundTitle": "We couldn't find this order",
+        "notFoundDescription": "The order doesn't exist, or doesn't belong to your organization. Check the address, or go back to the list.",
+        "backToList": "Back to order list",
+        "loadErrorTitle": "Couldn't load the data",
+        "loadErrorDescription": "The connection to the server failed. Try again — nothing has been changed.",
+        "retry": "Try again"
+      },
+      "partialBanner": {
+        "notice": "Partial view — failed to load: {{sections}}. The remaining data is current.",
+        "reload": "Reload"
+      },
+      "commandBanner": {
+        "refresh": "Refresh data",
+        "dismissAria": "Dismiss notice",
+        "dismiss": "Dismiss"
+      },
+      "dialog": {
+        "reasonRequired": " (required)",
+        "reasonOptional": " (optional)",
+        "cancel": "Not now",
+        "sending": "Sending…"
+      },
+      "formField": {
+        "required": " (required)",
+        "optional": " (optional)"
+      },
+      "technicalId": {
+        "title": "Technical identifier (expert view)"
+      },
+      "moreTabs": {
+        "label": "More",
+        "ariaLabel": "More order sections"
+      }
+    },
+    "list": {
+      "savedViews": {
+        "allLabel": "All orders",
+        "allDescription": "Full list of your organization's orders.",
+        "attentionLabel": "Needs attention",
+        "attentionDescription": "Orders that are blocked, failed, or have an unapproved plan.",
+        "closedLabel": "Closed",
+        "closedDescription": "Orders that are closed, cancelled, or partially closed."
+      },
+      "attention": {
+        "blocked": "Blocked — decision needed",
+        "failed": "Failed — needs a response",
+        "draft": "Plan not yet approved",
+        "none": "Nothing waiting on you"
+      },
+      "nextAction": {
+        "draft": "Agree and approve the plan",
+        "active": "Check progress",
+        "blocked": "Remove the blocker",
+        "failed": "Decide whether to retry",
+        "closed": "Review results",
+        "cancelled": "None — order cancelled",
+        "default": "—"
+      },
+      "fallbackName": "Order {{shortId}} · {{profile}}",
+      "subtitle": {
+        "project": "Project: {{value}}",
+        "goal": "Goal: {{value}}",
+        "outcome": "Expected outcome: {{value}}"
+      },
+      "notice": {
+        "savedNamed": "Saved. Order “{{name}}” now has status: {{status}}.",
+        "savedUnnamed": "Saved. Order now has status: {{status}}.",
+        "unconfirmed": "The operation was accepted by the server, but the follow-up check couldn't confirm the state. Refresh the data to see what's really going on."
+      },
+      "commandDialog": {
+        "subjectNamed": "Order “{{name}}”",
+        "subjectUnnamed": "This order",
+        "start": {
+          "title": "Start the order?",
+          "description": "{{subject}} will move from draft to execution.",
+          "confirm": "Start",
+          "reasonLabel": "Reason",
+          "reasonPlaceholder": "e.g. plan agreed with the client"
+        },
+        "pause": {
+          "title": "Pause the order?",
+          "description": "{{subject}} will be blocked until the cause is resolved.",
+          "confirm": "Pause",
+          "reasonLabel": "Reason for pausing",
+          "reasonPlaceholder": "e.g. waiting for data from the client"
+        },
+        "resume": {
+          "title": "Resume the order?",
+          "description": "{{subject}} will return to execution.",
+          "confirm": "Resume",
+          "reasonLabel": "Reason",
+          "reasonPlaceholder": "e.g. blocker removed"
+        },
+        "cancel": {
+          "title": "Cancel the order?",
+          "description": "{{subject}} will be closed as cancelled. This change can't be undone — cancelled is a final status.",
+          "confirm": "Cancel order",
+          "reasonLabel": "Reason for cancelling",
+          "reasonPlaceholder": "e.g. client withdrew the request"
+        }
+      },
+      "columns": {
+        "orderMobile": "Order",
+        "nextActionInline": "Next action: {{action}} · {{when}}",
+        "orderAndOutcome": "Order and expected outcome",
+        "goalOutcomeUndescribed": "Goal and outcome not described",
+        "type": "Type",
+        "status": "Status",
+        "attention": "Attention",
+        "progress": "Progress toward outcome",
+        "progressNotApplicable": "not applicable",
+        "nextAction": "Next action",
+        "lastActivity": "Last activity",
+        "progressOfTotal": "{{done}} of {{total}}"
+      },
+      "moreViews": {
+        "label": "More",
+        "ariaLabel": "More order list views"
+      },
+      "rowMenu": {
+        "start": "Start order",
+        "pause": "Pause order",
+        "resume": "Resume order",
+        "open": "Open order",
+        "cancel": "Cancel order"
+      },
+      "empty": {
+        "noOrdersTitle": "You don't have any orders yet",
+        "noOrdersDescription": "An order is created from a project — once the first one starts, it appears here together with its plan, execution and results.",
+        "noMatchTitle": "No order matches the filters",
+        "noMatchDescription": "Change the tab, status, or clear the search.",
+        "tableEmptyTitle": "No orders in this view",
+        "tableEmptyDescription": "Change the tab or clear the filters."
+      },
+      "preview": {
+        "openOrder": "Open order",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "closureType": "Agreed closure method",
+        "governance": "Governance",
+        "autonomy": "System autonomy",
+        "delivery": "Delivery",
+        "decision": "Decision",
+        "implementation": "Implementation",
+        "outcome": "Effect",
+        "lastChange": "Last change",
+        "whatsNextLabel": "What's next",
+        "whatsNextNote": "Opens the order on the selected tab.",
+        "plan": "Plan",
+        "execution": "Execution",
+        "results": "Results",
+        "goalOutcomeUndescribed": "Goal and expected outcome were not described."
+      },
+      "allChip": "All"
+    },
+    "detail": {
+      "projectionRadioLabel": "How to show the order",
+      "lightNotStarted": "The LIGHT order was not started.",
+      "planBlockedNotice": "This plan has unresolved validation blockers — publishing isn't available until they are fixed. The list of blockers is on the “Plan” tab.",
+      "noLinksAccess": "You don't have permission to view objects linked to this order. The rest of the order is visible — ask the order's owner for access.",
+      "closureAxesLabel": "Closure levels (CW-00-016/017 — independent, one does not replace another)",
+      "closureTypeFieldLabel": "Closure type",
+      "evidenceFieldLabel": "Evidence / description of remaining scope",
+      "refreshAndRetry": " Refresh the data and try again.",
+      "loadingTitle": "Order",
+      "tabs": {
+        "planLabel": "Plan",
+        "planDescription": "What should happen, and in what order.",
+        "executionLabel": "Execution",
+        "executionDescription": "What's happening now and what we're waiting for.",
+        "resultsLabel": "Results",
+        "resultsDescription": "What was produced and whether the effect was confirmed."
+      },
+      "sending": "Sending…",
+      "planActions": {
+        "createDraft": "Create plan draft",
+        "proposeForReview": "Propose for review",
+        "publish": "Publish",
+        "requestChanges": "Request changes",
+        "withdraw": "Withdraw plan",
+        "newDraftChange": "New draft (plan change)",
+        "newDraft": "New plan draft"
+      },
+      "rightPanel": {
+        "actionsLabel": "Actions",
+        "propertiesLabel": "Properties",
+        "propertiesEmpty": "The order's data hasn't been loaded yet.",
+        "relationsLabel": "Relations",
+        "reload": "Reload",
+        "backToList": "Back to order list",
+        "closeOrder": "Close order",
+        "finishClosingOrder": "Finish closing the order",
+        "historyEmpty": "This order's activity is still empty — nothing has happened on it yet.",
+        "relationsEmpty": "Nothing linked yet. This order's documents, decisions and evidence land here.",
+        "evidenceLabel": "Sources and assumptions",
+        "evidenceEmpty": "The order doesn't specify acceptance criteria or policies it relies on yet.",
+        "historyLabel": "History",
+        "openPrefix": "Open: {{label}}",
+        "staleSuffix": " · outdated"
+      },
+      "properties": {
+        "status": "Order status",
+        "profile": "Profile",
+        "governance": "Governance mode",
+        "autonomy": "Autonomy",
+        "plan": "Plan",
+        "noPlanVersion": "no plan version",
+        "created": "Created",
+        "lastChange": "Last change",
+        "closed": "Closed",
+        "no": "no",
+        "contractedClosureType": "Contracted closure type",
+        "registeredClosureType": "Registered closure type",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "planVersionValue": "#{{number}} · {{status}}"
+      },
+      "saving": "Saving…",
+      "registeredAs": "Registered as \"{{type}}\"",
+      "closedAtSuffix": " ({{date}})",
+      "evidenceSuffix": " Evidence: {{ref}}",
+      "closureTypeHelpConditional": "Requires the level \"{{axis}}\" set to \"{{status}}\" — the server will refuse (409) if the level above doesn't yet indicate this.",
+      "closureTypeHelpPartial": "Requires evidence/description of remaining scope below, or already recorded acceptance criteria.",
+      "contractOption": "As contracted — {{type}}",
+      "partialOption": "Partial — {{type}}",
+      "evidenceFieldHelp": "A pointer to evidence of delivery/decision/implementation/outcome — e.g. a link to an acceptance report or a note from the sponsor's decision.",
+      "evidencePlaceholder": "e.g. link to acceptance report, note from sponsor decision…",
+      "history": {
+        "measurementRecorded": "Recorded a value measurement for indicator \"{{indicator}}\" — status: {{status}}.",
+        "founded": "Order created.",
+        "closedAs": "Order closed as \"{{type}}\".",
+        "closed": "Order closed.",
+        "failed": "Order ended in failure.",
+        "cancelled": "Order cancelled."
+      },
+      "panelAriaLabel": "Order details"
+    },
+    "execution": {
+      "heading": "What's happening now",
+      "decisionLabels": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "requestChanges": "Send back for changes",
+        "defer": "Defer"
+      },
+      "dialog": {
+        "decisionTitle": "{{decision}} this case?",
+        "reasonOptional": "Reason (optional)",
+        "reasonOptionalPlaceholder": "Short justification for the decision…",
+        "submitTitle": "Send this case to review?",
+        "submitDescription": "The case moves from draft to the \"Cases for approval\" queue — you or another authorized person will be able to approve it, reject it, or send it back for changes.",
+        "submitConfirm": "Send for review",
+        "retryTitle": "Retry this case?",
+        "retryDescription": "The case returns to the approved state and the system will try to perform the action again. The target will be re-checked — if it has gone stale in the meantime, the retry will be rejected.",
+        "retryConfirm": "Retry",
+        "revokeTitle": "Revoke approval of this case?",
+        "revokeDescription": "The approval stops being valid and the action will NOT be performed until someone approves it again. This operation can't be undone.",
+        "revokeConfirm": "Revoke approval",
+        "revokeReasonLabel": "Reason for revoking",
+        "revokeReasonPlaceholder": "Why are you revoking this approval?",
+        "executeTitle": "Start executing this case?",
+        "executeDescription": "The approved action moves to execution. The state will only be shown after a confirming read from the server.",
+        "executeConfirm": "Start execution",
+        "markFailedTitle": "Mark this case as failed?",
+        "markFailedDescription": "The action currently being executed will be recorded as failed. You will be able to retry it later with the \"Retry\" button.",
+        "markFailedConfirm": "Mark as failed",
+        "failureReasonLabel": "Reason for failure",
+        "failureReasonPlaceholder": "What went wrong?",
+        "provideInputTitle": "Provide data",
+        "provideInputDescription": "The system is waiting for input from a person to move forward with this step. Enter the content that should be provided.",
+        "provideInputConfirm": "Send data",
+        "inputContentLabel": "Input content",
+        "inputContentPlaceholder": "E.g. a decision, a number, a link to a document…",
+        "waitCancelTitle": "Cancel this wait?",
+        "waitCancelDescription": "The step will stop waiting for this signal. This operation can't be undone.",
+        "waitCancelConfirm": "Cancel wait",
+        "waitCancelReasonLabel": "Reason for cancelling",
+        "waitCancelReasonPlaceholder": "Why are you cancelling this wait?",
+        "runStartTitle": "Start this run?",
+        "runStartDescription": "The plan's entry steps will be created and the run will move to \"Active\". This operation can't be undone.",
+        "runStartConfirm": "Start",
+        "runPauseTitle": "Pause this run?",
+        "runPauseDescription": "The run will stop advancing automatically until you resume it.",
+        "runPauseConfirm": "Pause",
+        "runResumeTitle": "Resume this run?",
+        "runResumeDescription": "The run will return to \"Active\".",
+        "runResumeConfirm": "Resume",
+        "runCancelTitle": "Cancel this run?",
+        "runCancelDescription": "All pending steps of this run will be cancelled along with it. This operation can't be undone.",
+        "runCancelConfirm": "Cancel run",
+        "runCancelReasonLabel": "Reason for cancelling",
+        "runCancelReasonPlaceholder": "Why are you cancelling this run?"
+      },
+      "statusSentence": "The order is in status \"{{status}}\".",
+      "waitingCount_one": "Waiting on {{count}} thing.",
+      "waitingCount_other": "Waiting on {{count}} things.",
+      "waitingNone": "Nothing is in a waiting state.",
+      "pendingDecisionCount_one": "{{count}} case is waiting on your decision.",
+      "pendingDecisionCount_other": "{{count}} cases are waiting on your decision.",
+      "pendingDecisionNone": "Nothing is waiting on your decision.",
+      "partialCount_one": "{{count}} step completed partially",
+      "partialCount_other": "{{count}} steps completed partially",
+      "rejectedCount_one": "{{count}} rejected",
+      "rejectedCount_other": "{{count}} rejected",
+      "detailsInResults": " — details in the Results tab.",
+      "waitingOnHeading": "What we are waiting on",
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "requestChanges": "Request changes",
+        "defer": "Defer",
+        "sendForReview": "Send for review",
+        "startExecution": "Start execution",
+        "revokeApproval": "Revoke approval",
+        "retry": "Retry",
+        "markAsFailed": "Mark as failed",
+        "provideData": "Provide data",
+        "cancelWait": "Cancel wait",
+        "start": "Start",
+        "pause": "Pause",
+        "resume": "Resume",
+        "cancelRun": "Cancel run"
+      },
+      "recommendation": {
+        "draft": "This case is a draft — send it for review so someone can approve it.",
+        "pendingReview": "This case is waiting on your decision.",
+        "approved": "This case is approved and waiting for the system to execute it.",
+        "failed": "This case's execution didn't succeed — you can retry it.",
+        "executing": "This case is currently being executed."
+      },
+      "tables": {
+        "waitsEmptyTitle": "Nothing waiting",
+        "waitsEmptyDescription": "No order step is currently paused.",
+        "approvalHeading": "Cases for approval",
+        "approvalEmptyTitle": "Nothing waiting on a decision",
+        "approvalEmptyDescription": "When the system wants to do something on your behalf, it will ask here.",
+        "runsHeading": "Execution runs",
+        "runsEmptyTitle": "No runs",
+        "runsEmptyDescription": "This run doesn't have any execution yet.",
+        "historyHeading": "Order activity"
+      },
+      "waitPreview": {
+        "provideDataAction": "Provide data",
+        "cancelWaitAction": "Cancel wait",
+        "detailsText": "This order step is paused until the signal described below arrives.",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "waitingSince": "Waiting since",
+        "deadline": "Deadline",
+        "noDeadline": "no deadline",
+        "expectedSignal": "Expected signal",
+        "systemEvent": "system event",
+        "noneWaitingOnHuman": "none — waiting on a person",
+        "resolvedAt": "Resolved",
+        "notYet": "not yet"
+      },
+      "proposalPreview": {
+        "detailsText": "Action proposal submitted as part of this order.",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "submittedBy": "Submitted by",
+        "byHuman": "Person",
+        "byAgent": "AI assistant",
+        "bySystem": "System",
+        "submitted": "Submitted",
+        "validUntil": "Valid until",
+        "noExpiry": "no expiry"
+      },
+      "runPreview": {
+        "title": "Run {{number}}",
+        "detailsText": "A run of this order's plan execution — a specific attempt at performing the steps in graph order.",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "status": "Status",
+        "outcomeAssessment": "Outcome assessment",
+        "started": "Started",
+        "notYet": "not yet",
+        "completed": "Completed",
+        "lastChange": "Last change",
+        "runId": "Run identifier",
+        "graphDigest": "Graph fingerprint"
+      },
+      "columns": {
+        "waitingOn": "What we're waiting on",
+        "status": "Status",
+        "fromWhenToWhen": "From when to when",
+        "whatItConcerns": "What it concerns",
+        "whoAndWhen": "Who and when",
+        "run": "Run",
+        "runs": "Runs",
+        "submittedByPrefix": "Submitted by: {{who}} · {{when}}"
+      }
+    },
+    "planCanvas": {
+      "emptyNoSteps": "This plan doesn't have any steps yet.",
+      "canvasAriaLabel": "Order plan — flow canvas. Drag with the mouse, zoom with the wheel, keys: arrows pan, plus and minus zoom, zero fits the view.",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "fitToView": "Fit to view",
+      "fitShort": "Fit",
+      "resetZoom": "Set zoom to one hundred percent",
+      "hintMobile": "Drag to pan. Wheel zooms.",
+      "hintDesktop": "Drag to pan. Mouse wheel zooms. The arrow shows step order."
+    },
+    "plan": {
+      "projections": {
+        "simpleLabel": "Simple",
+        "simpleDescription": "Steps in order, without technical detail.",
+        "expertLabel": "Expert",
+        "expertDescription": "Flow canvas with technical identifiers.",
+        "listLabel": "List",
+        "listDescription": "A table of steps — best on a phone and for screen readers."
+      },
+      "blockers": {
+        "noEntryNode": "The plan has no starting step.",
+        "noTerminalNode": "The plan has no final step.",
+        "unreachableNode": "One of the steps can't be reached from the start of the plan.",
+        "missingEdgeTarget": "An arrow leads to a step that isn't in the plan.",
+        "unboundInput": "A step requires data that nothing provides to it.",
+        "default": "The plan needs a fix before it can be approved."
+      },
+      "header": {
+        "goalHeading": "What we're aiming for",
+        "goalUndescribed": "The expected outcome has not been described in the project yet.",
+        "closurePrefix": "Closure: {{type}}",
+        "planPrefix": "Plan: {{status}} (version {{number}})",
+        "unsavedChanges": "Unsaved changes",
+        "saving": "Saving…",
+        "saveChanges": "Save changes",
+        "discardChanges": "Discard changes",
+        "closeEditing": "Close editing",
+        "editPlan": "Edit plan",
+        "publishedImmutable": "A published plan is immutable. To make changes, create a new draft in the \"Actions\" panel on the right.",
+        "notEditableHere": "This plan version is no longer a draft — in-place editing isn't available here.",
+        "refreshing": "Refreshing…",
+        "refresh": "Refresh",
+        "validationPassed": "The plan passed validation — nothing blocks approval.",
+        "refreshFailed": "Couldn't refresh the plan data from the server. Try again.",
+        "savedDraft": "Saved changes to the plan draft (version {{version}}).",
+        "saveUnconfirmed": "The save was accepted, but the follow-up check with the server couldn't confirm the state. Refresh the data."
+      },
+      "empty": {
+        "noStepsTitle": "This plan doesn't have any steps yet",
+        "versionHasNoSteps": "This plan version doesn't have any saved steps yet.",
+        "noVersionAtAll": "The order doesn't have any plan version yet. Create the first draft in the \"Actions\" panel on the right."
+      },
+      "list": {
+        "stepNameAria": "Step name {{number}}",
+        "step": "Step",
+        "who": "Who does it",
+        "after": "Comes after",
+        "leadsTo": "Leads to",
+        "stepAndOwner": "Step and owner",
+        "flow": "Flow",
+        "afterPrefix": "After: {{value}}",
+        "nextPrefix": "Next: {{value}}",
+        "stepsInOrder": "Plan steps in order",
+        "emptyTitle": "The plan has no steps",
+        "unnamedStep": "Unnamed step",
+        "isStart": "This is the start",
+        "isEnd": "This is the end",
+        "afterAndNext": "After: {{after}} → Next: {{next}}"
+      },
+      "simple": {
+        "unnamedStep": "Unnamed step",
+        "nextPrefix": " · next: {{value}}",
+        "isEndSuffix": " · this is the end",
+        "stepNameLabel": "Step name {{number}}",
+        "stepDetailsAria": "Step details: {{label}}",
+        "unnamedStepFallback": "unnamed step"
+      },
+      "expert": {
+        "stepNameLabel": "Step name",
+        "closeDetails": "Close details",
+        "who": "Who does it",
+        "stepIdLabel": "Step identifier",
+        "technicalName": "technical name",
+        "changeKind": "Type of change",
+        "comesAfter": "Comes after",
+        "leadsTo": "Leads to",
+        "unnamedStep": "Unnamed step",
+        "isStartOfPlan": "This is the start of the plan",
+        "isEndOfPlan": "This is the end of the plan",
+        "versionFooter": "Plan version {{number}} · last change {{date}}",
+        "graphDigestTitle": "Plan graph fingerprint"
+      }
+    },
+    "breadcrumb": "Orders"
   }
 }

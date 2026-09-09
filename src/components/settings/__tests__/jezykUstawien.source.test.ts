@@ -33,7 +33,19 @@ import { describe, expect, it } from 'vitest';
 
 const KORZEN = path.resolve(__dirname, '../../..'); // src/
 const KATALOGI = ['components/settings', 'components/Profile', 'views/settings'];
-const POJEDYNCZE = ['views/SettingsView.tsx'];
+const POJEDYNCZE = [
+  'views/SettingsView.tsx',
+  // J-DOG-A (09.09): EnterpriseOnboardingWizard byl jawnie POZA zasiegiem
+  // paczki J15 (patrz komentarz przy ZASIEG wyzej — "Onboarding... swiadomie
+  // POZA"), ale mandat J-DOG-A przypisal go do MOJEGO zakresu wprost ("teraz
+  // sa w zakresie"). Dodaje TYLKO ten jeden plik (nie caly katalog
+  // components/Onboarding) — reszta katalogu (SmartNudge w InAppNudges,
+  // QuestionExplanation.tsx, SnapshotLabel.tsx, TourTrigger.tsx) to martwy kod
+  // bez importera z App.tsx/AppRoutes.tsx, wciaz po polsku, zgloszony do
+  // usuniecia w STOP tej paczki — dodanie calego katalogu zaswieciloby ten
+  // test na czerwono z powodu niezwiazanego.
+  'components/Onboarding/EnterpriseOnboardingWizard.tsx',
+];
 
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 

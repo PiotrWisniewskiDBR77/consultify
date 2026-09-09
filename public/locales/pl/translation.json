@@ -611,6 +611,10 @@
     },
     "split": {
       "assistantSubtitle": "Twój asystent transformacji"
+    },
+    "environmentBadge": {
+      "ariaLabel": "Środowisko {{env}}",
+      "ariaLabelWithVersion": "Środowisko {{env}}, wersja {{sha}}"
     }
   },
   "common": {
@@ -39657,10 +39661,32 @@
       "termsError": "Nie udało się zaakceptować regulaminu",
       "tierError": "Nie udało się wybrać planu",
       "termsAccepted": "Regulamin zaakceptowany",
-      "tierSelected": "Plan cenowy wybrany"
+      "tierSelected": "Plan cenowy wybrany",
+      "setupPayment": "Skontaktuj się z zespołem partnerskim, aby uzgodnić payout i billing."
     },
     "featureSpotlight": {
       "gotIt": "Rozumiem"
+    },
+    "enterpriseWizard": {
+      "step1": {
+        "intro": "To jest ta sama ścieżka aplikacyjna uruchamiana z LP i z produktu.",
+        "termsTitle": "Warunki programu",
+        "termsAccept": "Akceptuję warunki programu partnerskiego",
+        "privacyTitle": "Polityka prywatności",
+        "privacyAccept": "Akceptuję politykę prywatności",
+        "confirmButton": "Potwierdź i przejdź dalej"
+      },
+      "step2": {
+        "intro": "Wybierz model wejścia, który najlepiej pasuje do planu współpracy."
+      },
+      "step3": {
+        "intro": "Ustal dane do rozliczeń teraz albo przejdź dalej i dopnij je z zespołem partnerskim.",
+        "billingTitle": "Rozliczenia partnera",
+        "billingBody": "Finalne dane payout i billing można uzgodnić automatycznie w flow albo manualnie z zespołem partnerskim dla niestandardowych warunków."
+      },
+      "step4": {
+        "intro": "Twój workspace jest gotowy do kolejnego kroku aktywacji i pracy w programie."
+      }
     }
   },
   "editor": {
@@ -52249,5 +52275,662 @@
       "empty": "Pusta kanwa",
       "emptyHint": "Użyj paska narzędzi, aby dodać węzły"
     }
+  },
+  "caseWorkspace": {
+    "results": {
+      "closure": {
+        "heading": "Czy zlecenie jest domknięte",
+        "contracted": "Umówione zamknięcie: {{type}}",
+        "closedOn": "Zamknięte {{date}} jako {{type}}."
+      },
+      "steps": {
+        "heading": "Wyniki wykonania kroków",
+        "emptyTitle": "Żaden krok nie ma jeszcze zapisanego wyniku",
+        "emptyDescription": "Wynik pojawia się tu dopiero, gdy krok wykonania zostanie zakończony albo pominięty — to nie jest błąd."
+      },
+      "measurements": {
+        "heading": "Zmierzona wartość",
+        "emptyTitle": "Nic jeszcze nie zmierzono",
+        "emptyDescription": "Efekt zlecenia mierzy się po wdrożeniu. Do tego czasu ta lista pozostaje pusta — to nie jest błąd.",
+        "preview": {
+          "intro": "Pomiar efektu tego zlecenia.",
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "baseline": "Punkt wyjścia",
+          "target": "Cel",
+          "result": "Wynik",
+          "measurementDate": "Data pomiaru",
+          "nextMeasurement": "Następny pomiar",
+          "notScheduled": "nie zaplanowano",
+          "evidence": "Dowód",
+          "evidenceAttached": "dołączony",
+          "evidenceMissing": "brak",
+          "evidenceHeading": "Dowód pomiaru",
+          "noEvidence": "Do tego pomiaru nie dołączono dowodu. Stan „brak dowodu” jest czymś innym niż „nieosiągnięte” — sam wynik nie jest przez to unieważniony.",
+          "evidencePointsTo": "Dowód wskazuje obiekt: {{label}}.",
+          "openEvidenceAria": "Otwórz dowód pomiaru: {{label}}"
+        }
+      },
+      "links": {
+        "heading": "Powiązane obiekty",
+        "linkObject": "Powiąż obiekt",
+        "emptyTitle": "Brak powiązanych obiektów",
+        "emptyDescription": "Tu trafiają dokumenty, decyzje, inicjatywy i dowody, na których opiera się to zlecenie.",
+        "preview": {
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "role": "Rola w zleceniu",
+          "linkStatus": "Stan powiązania",
+          "linkedAt": "Powiązane",
+          "pinnedVersion": "Przypięta wersja",
+          "alwaysLatest": "zawsze najnowsza",
+          "objectId": "Identyfikator obiektu",
+          "stale": "Nieaktualny",
+          "changedNotice": "Obiekt zmienił się po powiązaniu — sprawdź, czy nadal potwierdza to, co miał potwierdzać.",
+          "linkedNotice": "Obiekt powiązany z tym zleceniem.",
+          "cannotOpenTitle": "Tego obiektu nie otworzymy",
+          "staleRevisionTitle": "Otworzysz nieaktualną rewizję",
+          "openFooterNotice": "„Otwórz obiekt” w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.",
+          "pinVersion": "Przypnij wersję",
+          "unlinkFromOrder": "Odepnij od zlecenia",
+          "openObject": "Otwórz obiekt"
+        }
+      },
+      "nodeResult": {
+        "openLabel": "Otwórz rezultat",
+        "preview": {
+          "intro": "Wynik pojedynczego kroku wykonania tego zlecenia.",
+          "propertyLabel": "Właściwość",
+          "valueLabel": "Wartość",
+          "sourceRun": "Źródłowy Run",
+          "nodeRun": "NodeRun",
+          "occurredAt": "Zdarzyło się",
+          "recordedAt": "Zapisano",
+          "skipAuthorization": "Autoryzacja pominięcia",
+          "graphConditionYes": "tak — warunek grafu",
+          "graphConditionNo": "nie potwierdzona",
+          "graphConditionUnknown": "nieznana",
+          "runContextHeading": "Kontekst Run",
+          "loading": "Wczytywanie…",
+          "runBlocked": "Nie masz uprawnień do szczegółów tego Run.",
+          "runNotFound": "Powiązanie z tym Run nie zostało znalezione — mogło zostać usunięte.",
+          "runLoadError": "Nie udało się wczytać szczegółów Run. Reszta tego wyniku pozostaje widoczna.",
+          "planVersion": "Wersja planu:",
+          "graphDigest": "Skrót grafu:",
+          "linkedToPlan": "Powiązano z planem:",
+          "evidenceHeading": "Dowód",
+          "noEvidenceDescription": "Do tego kroku nie zapisano czytelnego opisu dowodu.",
+          "enableExpertHint": " Włącz widok ekspercki, by zobaczyć surowe dane.",
+          "noOpenTarget": "Ten wynik nie wskazuje obiektu do otwarcia.",
+          "cannotOpenTitle": "Tego obiektu nie otworzymy",
+          "staleRevisionTitle": "Otworzysz nieaktualną rewizję",
+          "openFooterNotice": "„Otwórz rezultat” w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji."
+        }
+      },
+      "linkDialog": {
+        "title": "Powiąż istniejący obiekt",
+        "description": "Obiekt zostaje POWIĄZANY, nie skopiowany — nadal należy do swojego modułu, a to zlecenie dostaje tylko wskaźnik do niego (CW-RT-025).",
+        "confirm": "Powiąż",
+        "objectType": "Typ obiektu",
+        "objectId": "Identyfikator obiektu",
+        "objectIdHelp": "Skopiuj identyfikator z ekranu obiektu w jego własnym module (widok ekspercki pokazuje go obok nazwy).",
+        "objectIdPlaceholder": "np. doc-... / decision-...",
+        "role": "Rola w zleceniu",
+        "pinVersion": "Przypnij konkretną wersję",
+        "pinVersionHelp": "Puste = zawsze najnowsza wersja obiektu.",
+        "revisionPlaceholder": "np. v3 / skrót rewizji",
+        "pinReason": "Powód przypięcia tej wersji"
+      },
+      "pinDialog": {
+        "title": "Przypnij wersję obiektu",
+        "description": "Przypięcie NOWEJ wersji zdejmuje flagę „nieaktualny” — dokładnie ta czynność, po której zlecenie ponownie uznaje powiązanie za aktualne (CW-01-026-INV9).",
+        "confirm": "Przypnij",
+        "version": "Wersja",
+        "versionPlaceholder": "np. v4 / skrót rewizji",
+        "reason": "Powód",
+        "reasonPlaceholder": "np. zaktualizowano po uwagach klienta"
+      },
+      "unlinkDialog": {
+        "title": "Odepnij obiekt od zlecenia",
+        "description": "Powiązanie zniknie z aktywnej listy tego zlecenia. Sam obiekt NIE zostanie usunięty — zostaje w swoim module, tylko przestaje być rezultatem tego zlecenia. Historię tego powiązania da się odtworzyć.",
+        "confirm": "Odepnij",
+        "reasonLabel": "Powód odpięcia",
+        "reasonPlaceholder": "np. powiązano przez pomyłkę / zastąpione nowszym dokumentem"
+      },
+      "columns": {
+        "whatWeMeasure": "Co mierzymy",
+        "baseline": "Punkt wyjścia",
+        "target": "Cel",
+        "result": "Wynik",
+        "measurementStatus": "Stan pomiaru",
+        "measurementDate": "Data pomiaru",
+        "object": "Obiekt",
+        "roleInOrder": "Rola w zleceniu",
+        "linkStatus": "Stan powiązania",
+        "linked": "Powiązane",
+        "open": "Otwórz",
+        "step": "Krok",
+        "completionStatus": "Stan zakończenia",
+        "acceptanceStatus": "Status akceptacji",
+        "when": "Kiedy",
+        "openObjectAria": "Otwórz obiekt: {{label}}"
+      },
+      "openButton": {
+        "openWithWarning": "Otwórz: {{label}} — {{warning}}",
+        "openLabel": "Otwórz: {{label}}",
+        "staleRevisionSuffix": " (przypięta rewizja jest starsza)",
+        "openText": "Otwórz"
+      },
+      "notices": {
+        "linkFieldsRequired": "Podaj typ i identyfikator obiektu — oba pola są wymagane.",
+        "linkedAs": "Obiekt powiązany ze zleceniem jako „{{relation}}”.",
+        "linkAcceptedUnconfirmed": "Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.",
+        "pinVersionRequired": "Podaj wersję do przypięcia — jest wymagana.",
+        "pinnedVersion": "Wersja przypięta: „{{revision}}”. Powiązanie przestało być oznaczone jako nieaktualne.",
+        "pinAcceptedUnconfirmed": "Wersja została przypięta, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.",
+        "unlinked": "Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.",
+        "unlinkAcceptedUnconfirmed": "Odpięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane."
+      }
+    },
+    "ui": {
+      "relativeDays": {
+        "today": "dzisiaj",
+        "tomorrow": "jutro",
+        "yesterday": "wczoraj",
+        "inDays": "za {{count}} dni",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "stateBlock": {
+        "loading": "Wczytywanie danych zlecenia…",
+        "blockedTitle": "Nie masz dostępu do tego zlecenia",
+        "blockedDescription": "Poproś właściciela zlecenia albo administratora organizacji o dodanie Cię do zespołu. Dane pozostają ukryte do czasu nadania uprawnień.",
+        "notFoundTitle": "Nie znaleźliśmy tego zlecenia",
+        "notFoundDescription": "Zlecenie nie istnieje albo nie należy do Twojej organizacji. Sprawdź adres lub wróć do listy.",
+        "backToList": "Wróć do listy zleceń",
+        "loadErrorTitle": "Nie udało się wczytać danych",
+        "loadErrorDescription": "Połączenie z serwerem nie doszło do skutku. Spróbuj ponownie — nic nie zostało zmienione.",
+        "retry": "Spróbuj ponownie"
+      },
+      "partialBanner": {
+        "notice": "Widok niepełny — nie wczytały się: {{sections}}. Pozostałe dane są aktualne.",
+        "reload": "Wczytaj ponownie"
+      },
+      "commandBanner": {
+        "refresh": "Odśwież dane",
+        "dismissAria": "Zamknij komunikat",
+        "dismiss": "Zamknij"
+      },
+      "dialog": {
+        "reasonRequired": " (wymagany)",
+        "reasonOptional": " (opcjonalny)",
+        "cancel": "Nie teraz",
+        "sending": "Wysyłam…"
+      },
+      "formField": {
+        "required": " (wymagane)",
+        "optional": " (opcjonalne)"
+      },
+      "technicalId": {
+        "title": "Identyfikator techniczny (widok ekspercki)"
+      },
+      "moreTabs": {
+        "label": "Więcej",
+        "ariaLabel": "Więcej sekcji zlecenia"
+      }
+    },
+    "list": {
+      "savedViews": {
+        "allLabel": "Wszystkie zlecenia",
+        "allDescription": "Pełna lista zleceń Twojej organizacji.",
+        "attentionLabel": "Wymagają uwagi",
+        "attentionDescription": "Zlecenia zablokowane, nieudane albo z niezatwierdzonym planem.",
+        "closedLabel": "Zakończone",
+        "closedDescription": "Zlecenia zamknięte, anulowane lub domknięte częściowo."
+      },
+      "attention": {
+        "blocked": "Zablokowane — potrzebna decyzja",
+        "failed": "Nieudane — potrzebna reakcja",
+        "draft": "Plan niezatwierdzony",
+        "none": "Nic nie czeka na Ciebie"
+      },
+      "nextAction": {
+        "draft": "Uzgodnij i zatwierdź plan",
+        "active": "Sprawdź realizację",
+        "blocked": "Usuń blokadę",
+        "failed": "Zdecyduj, czy ponawiamy",
+        "closed": "Przejrzyj rezultaty",
+        "cancelled": "Brak — zlecenie anulowane",
+        "default": "—"
+      },
+      "fallbackName": "Zlecenie {{shortId}} · {{profile}}",
+      "subtitle": {
+        "project": "Projekt: {{value}}",
+        "goal": "Cel: {{value}}",
+        "outcome": "Oczekiwany rezultat: {{value}}"
+      },
+      "notice": {
+        "savedNamed": "Zapisane. Zlecenie „{{name}}\" ma teraz status: {{status}}.",
+        "savedUnnamed": "Zapisane. Zlecenie ma teraz status: {{status}}.",
+        "unconfirmed": "Operacja została przyjęta przez serwer, ale nie udało się potwierdzić stanu odczytem kontrolnym. Odśwież dane, żeby zobaczyć, jak jest naprawdę."
+      },
+      "commandDialog": {
+        "subjectNamed": "Zlecenie „{{name}}\"",
+        "subjectUnnamed": "To zlecenie",
+        "start": {
+          "title": "Rozpocząć zlecenie?",
+          "description": "{{subject}} przejdzie ze szkicu do realizacji.",
+          "confirm": "Rozpocznij",
+          "reasonLabel": "Powód",
+          "reasonPlaceholder": "np. plan uzgodniony z klientem"
+        },
+        "pause": {
+          "title": "Wstrzymać zlecenie?",
+          "description": "{{subject}} zostanie zablokowane do czasu usunięcia przyczyny.",
+          "confirm": "Wstrzymaj",
+          "reasonLabel": "Powód wstrzymania",
+          "reasonPlaceholder": "np. czekamy na dane od klienta"
+        },
+        "resume": {
+          "title": "Wznowić zlecenie?",
+          "description": "{{subject}} wróci do realizacji.",
+          "confirm": "Wznów",
+          "reasonLabel": "Powód",
+          "reasonPlaceholder": "np. blokada usunięta"
+        },
+        "cancel": {
+          "title": "Anulować zlecenie?",
+          "description": "{{subject}} zostanie zamknięte jako anulowane. Tej zmiany nie da się cofnąć — status anulowany jest końcowy.",
+          "confirm": "Anuluj zlecenie",
+          "reasonLabel": "Powód anulowania",
+          "reasonPlaceholder": "np. klient wycofał zapotrzebowanie"
+        }
+      },
+      "columns": {
+        "orderMobile": "Zlecenie",
+        "nextActionInline": "Następna akcja: {{action}} · {{when}}",
+        "orderAndOutcome": "Zlecenie i oczekiwany rezultat",
+        "goalOutcomeUndescribed": "Cel i rezultat nieopisane",
+        "type": "Rodzaj",
+        "status": "Status",
+        "attention": "Uwaga",
+        "progress": "Postęp rezultatu",
+        "progressNotApplicable": "nie dotyczy",
+        "nextAction": "Następna akcja",
+        "lastActivity": "Ostatnia aktywność",
+        "progressOfTotal": "{{done}} z {{total}}"
+      },
+      "moreViews": {
+        "label": "Więcej",
+        "ariaLabel": "Więcej widoków listy zleceń"
+      },
+      "rowMenu": {
+        "start": "Rozpocznij zlecenie",
+        "pause": "Wstrzymaj zlecenie",
+        "resume": "Wznów zlecenie",
+        "open": "Otwórz zlecenie",
+        "cancel": "Anuluj zlecenie"
+      },
+      "empty": {
+        "noOrdersTitle": "Nie masz jeszcze żadnych zleceń",
+        "noOrdersDescription": "Zlecenie powstaje z projektu — gdy pierwsze ruszy, pojawi się tutaj razem z planem, realizacją i rezultatami.",
+        "noMatchTitle": "Żadne zlecenie nie pasuje do filtrów",
+        "noMatchDescription": "Zmień zakładkę, status albo wyczyść wyszukiwanie.",
+        "tableEmptyTitle": "Brak zleceń w tym widoku",
+        "tableEmptyDescription": "Zmień zakładkę albo wyczyść filtry."
+      },
+      "preview": {
+        "openOrder": "Otwórz zlecenie",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "closureType": "Umówiony sposób zamknięcia",
+        "governance": "Nadzór",
+        "autonomy": "Samodzielność systemu",
+        "delivery": "Dostarczenie",
+        "decision": "Decyzja",
+        "implementation": "Wdrożenie",
+        "outcome": "Efekt",
+        "lastChange": "Ostatnia zmiana",
+        "whatsNextLabel": "Co dalej",
+        "whatsNextNote": "Otwiera zlecenie na wybranej zakładce.",
+        "plan": "Plan",
+        "execution": "Realizacja",
+        "results": "Rezultaty",
+        "goalOutcomeUndescribed": "Cel i oczekiwany rezultat nie zostały opisane."
+      },
+      "allChip": "Wszystkie"
+    },
+    "detail": {
+      "projectionRadioLabel": "Sposób pokazania zlecenia",
+      "lightNotStarted": "Zlecenie LIGHT nie zostało uruchomione.",
+      "planBlockedNotice": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie zostaną poprawione. Lista blokerów jest w zakładce „Plan\".",
+      "noLinksAccess": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest widoczna — poproś właściciela zlecenia o dostęp.",
+      "closureAxesLabel": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
+      "closureTypeFieldLabel": "Typ zamknięcia",
+      "evidenceFieldLabel": "Dowód / opis pozostałego zakresu",
+      "refreshAndRetry": " Odśwież dane i spróbuj ponownie.",
+      "loadingTitle": "Zlecenie",
+      "tabs": {
+        "planLabel": "Plan",
+        "planDescription": "Co i w jakiej kolejności ma się wydarzyć.",
+        "executionLabel": "Realizacja",
+        "executionDescription": "Co się dzieje teraz i na co czekamy.",
+        "resultsLabel": "Rezultaty",
+        "resultsDescription": "Co powstało i czy efekt został potwierdzony."
+      },
+      "sending": "Wysyłam…",
+      "planActions": {
+        "createDraft": "Utwórz szkic planu",
+        "proposeForReview": "Zaproponuj do przeglądu",
+        "publish": "Publikuj",
+        "requestChanges": "Poproś o zmiany",
+        "withdraw": "Wycofaj plan",
+        "newDraftChange": "Nowy szkic (zmiana planu)",
+        "newDraft": "Nowy szkic planu"
+      },
+      "rightPanel": {
+        "actionsLabel": "Akcje",
+        "propertiesLabel": "Właściwości",
+        "propertiesEmpty": "Dane zlecenia nie zostały jeszcze wczytane.",
+        "relationsLabel": "Powiązania",
+        "reload": "Wczytaj ponownie",
+        "backToList": "Wróć do listy zleceń",
+        "closeOrder": "Zamknij zlecenie",
+        "finishClosingOrder": "Dokończ zamknięcie zlecenia",
+        "historyEmpty": "Przebieg zlecenia jest jeszcze pusty — nic się na nim nie wydarzyło.",
+        "relationsEmpty": "Nic jeszcze nie powiązano. Tu trafiają dokumenty, decyzje i dowody tego zlecenia.",
+        "evidenceLabel": "Źródła i założenia",
+        "evidenceEmpty": "Zlecenie nie wskazuje jeszcze kryteriów odbioru ani polityk, na których się opiera.",
+        "historyLabel": "Historia",
+        "openPrefix": "Otwórz: {{label}}",
+        "staleSuffix": " · nieaktualny"
+      },
+      "properties": {
+        "status": "Stan zlecenia",
+        "profile": "Profil",
+        "governance": "Tryb nadzoru",
+        "autonomy": "Samodzielność",
+        "plan": "Plan",
+        "noPlanVersion": "brak wersji planu",
+        "created": "Założone",
+        "lastChange": "Ostatnia zmiana",
+        "closed": "Zamknięte",
+        "no": "nie",
+        "contractedClosureType": "Kontraktowy typ zamknięcia",
+        "registeredClosureType": "Zarejestrowany typ zamknięcia",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "planVersionValue": "nr {{number}} · {{status}}"
+      },
+      "saving": "Zapisywanie…",
+      "registeredAs": "Zarejestrowano jako „{{type}}”",
+      "closedAtSuffix": " ({{date}})",
+      "evidenceSuffix": " Dowód: {{ref}}",
+      "closureTypeHelpConditional": "Wymaga poziomu „{{axis}}” ustawionego na „{{status}}” — serwer odmówi (409), jeśli poziom wyżej jeszcze na to nie wskazuje.",
+      "closureTypeHelpPartial": "Wymaga dowodu/opisu pozostałego zakresu poniżej albo już zapisanych kryteriów odbioru zlecenia.",
+      "contractOption": "Zgodnie z kontraktem — {{type}}",
+      "partialOption": "Częściowo — {{type}}",
+      "evidenceFieldHelp": "Wskaźnik na dowód dostarczenia/decyzji/wdrożenia/efektu — np. link do raportu odbioru albo notatki z decyzji sponsora.",
+      "evidencePlaceholder": "np. link do raportu odbioru, notatka z decyzji sponsora…",
+      "history": {
+        "measurementRecorded": "Zapisano pomiar wartości dla wskaźnika „{{indicator}}” — stan: {{status}}.",
+        "founded": "Zlecenie założone.",
+        "closedAs": "Zlecenie zamknięte jako „{{type}}”.",
+        "closed": "Zlecenie zamknięte.",
+        "failed": "Zlecenie zakończone niepowodzeniem.",
+        "cancelled": "Zlecenie anulowane."
+      },
+      "panelAriaLabel": "Szczegóły zlecenia"
+    },
+    "execution": {
+      "heading": "Co się teraz dzieje",
+      "decisionLabels": {
+        "approve": "Zatwierdzić",
+        "reject": "Odrzucić",
+        "requestChanges": "Odesłać do poprawy",
+        "defer": "Odłożyć"
+      },
+      "dialog": {
+        "decisionTitle": "{{decision}} tę sprawę?",
+        "reasonOptional": "Powód (opcjonalnie)",
+        "reasonOptionalPlaceholder": "Krótkie uzasadnienie decyzji…",
+        "submitTitle": "Wysłać tę sprawę do przeglądu?",
+        "submitDescription": "Sprawa przejdzie ze szkicu do kolejki „Sprawy do zatwierdzenia\" — Ty albo inna uprawniona osoba będzie mógł ją zatwierdzić, odrzucić albo odesłać do poprawy.",
+        "submitConfirm": "Wyślij do przeglądu",
+        "retryTitle": "Ponowić tę sprawę?",
+        "retryDescription": "Sprawa wraca do stanu zatwierdzonej i system spróbuje wykonać czynność jeszcze raz. Cel zostanie sprawdzony ponownie — jeśli w międzyczasie zwietrzał, ponowienie zostanie odrzucone.",
+        "retryConfirm": "Ponów",
+        "revokeTitle": "Cofnąć zatwierdzenie tej sprawy?",
+        "revokeDescription": "Zatwierdzenie przestanie obowiązywać i czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie. Tej operacji nie da się cofnąć.",
+        "revokeConfirm": "Cofnij zatwierdzenie",
+        "revokeReasonLabel": "Powód cofnięcia",
+        "revokeReasonPlaceholder": "Dlaczego cofasz to zatwierdzenie?",
+        "executeTitle": "Rozpocząć wykonanie tej sprawy?",
+        "executeDescription": "Zatwierdzona czynność przejdzie do wykonania. Stan zostanie pokazany dopiero po potwierdzającym odczycie z serwera.",
+        "executeConfirm": "Rozpocznij wykonanie",
+        "markFailedTitle": "Oznaczyć tę sprawę jako nieudaną?",
+        "markFailedDescription": "Wykonywana właśnie czynność zostanie zapisana jako nieudana. Będzie można ją potem ponowić przyciskiem „Ponów\".",
+        "markFailedConfirm": "Oznacz jako nieudane",
+        "failureReasonLabel": "Powód niepowodzenia",
+        "failureReasonPlaceholder": "Co poszło nie tak?",
+        "provideInputTitle": "Podaj dane",
+        "provideInputDescription": "System czeka na dane od człowieka, żeby ruszyć dalej z tym krokiem. Wpisz treść, która ma zostać przekazana.",
+        "provideInputConfirm": "Wyślij dane",
+        "inputContentLabel": "Treść danych",
+        "inputContentPlaceholder": "Np. decyzja, liczba, link do dokumentu…",
+        "waitCancelTitle": "Anulować to oczekiwanie?",
+        "waitCancelDescription": "Krok przestanie czekać na ten sygnał. Tej operacji nie da się cofnąć.",
+        "waitCancelConfirm": "Anuluj oczekiwanie",
+        "waitCancelReasonLabel": "Powód anulowania",
+        "waitCancelReasonPlaceholder": "Dlaczego anulujesz to oczekiwanie?",
+        "runStartTitle": "Uruchomić ten przebieg?",
+        "runStartDescription": "Zostaną utworzone kroki wejściowe planu i przebieg przejdzie w stan „W toku\". Tej operacji nie da się cofnąć.",
+        "runStartConfirm": "Uruchom",
+        "runPauseTitle": "Wstrzymać ten przebieg?",
+        "runPauseDescription": "Przebieg przestanie automatycznie ruszać dalej, dopóki go nie wznowisz.",
+        "runPauseConfirm": "Wstrzymaj",
+        "runResumeTitle": "Wznowić ten przebieg?",
+        "runResumeDescription": "Przebieg wróci do stanu „W toku\".",
+        "runResumeConfirm": "Wznów",
+        "runCancelTitle": "Anulować ten przebieg?",
+        "runCancelDescription": "Wszystkie oczekujące kroki tego przebiegu zostaną anulowane razem z nim. Tej operacji nie da się cofnąć.",
+        "runCancelConfirm": "Anuluj przebieg",
+        "runCancelReasonLabel": "Powód anulowania",
+        "runCancelReasonPlaceholder": "Dlaczego anulujesz ten przebieg?"
+      },
+      "statusSentence": "Zlecenie jest w stanie „{{status}}”.",
+      "waitingCount_one": "Czekamy na {{count}} rzecz.",
+      "waitingCount_other": "Czekamy na {{count}} rzeczy.",
+      "waitingNone": "Nic nie jest w stanie oczekiwania.",
+      "pendingDecisionCount_one": "{{count}} sprawa czeka na Twoją decyzję.",
+      "pendingDecisionCount_other": "{{count}} sprawy czekają na Twoją decyzję.",
+      "pendingDecisionNone": "Nic nie czeka na Twoją decyzję.",
+      "partialCount_one": "{{count}} krok zakończony częściowo",
+      "partialCount_other": "{{count}} kroki zakończone częściowo",
+      "rejectedCount_one": "{{count}} odrzucony",
+      "rejectedCount_other": "{{count}} odrzucone",
+      "detailsInResults": " — szczegóły w zakładce Rezultaty.",
+      "waitingOnHeading": "Na co czekamy",
+      "actions": {
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "requestChanges": "Poproś o zmiany",
+        "defer": "Odłóż",
+        "sendForReview": "Wyślij do przeglądu",
+        "startExecution": "Rozpocznij wykonanie",
+        "revokeApproval": "Cofnij zatwierdzenie",
+        "retry": "Ponów",
+        "markAsFailed": "Oznacz jako nieudane",
+        "provideData": "Podaj dane",
+        "cancelWait": "Anuluj oczekiwanie",
+        "start": "Uruchom",
+        "pause": "Wstrzymaj",
+        "resume": "Wznów",
+        "cancelRun": "Anuluj przebieg"
+      },
+      "recommendation": {
+        "draft": "Ta sprawa jest szkicem — wyślij ją do przeglądu, żeby ktoś mógł ją zatwierdzić.",
+        "pendingReview": "Ta sprawa czeka na Twoją decyzję.",
+        "approved": "Ta sprawa jest zatwierdzona i czeka na wykonanie przez system.",
+        "failed": "Wykonanie tej sprawy się nie powiodło — możesz spróbować ponownie.",
+        "executing": "Ta sprawa jest właśnie wykonywana."
+      },
+      "tables": {
+        "waitsEmptyTitle": "Nic nie czeka",
+        "waitsEmptyDescription": "Żaden krok zlecenia nie jest w tej chwili wstrzymany.",
+        "approvalHeading": "Sprawy do zatwierdzenia",
+        "approvalEmptyTitle": "Nic nie czeka na decyzję",
+        "approvalEmptyDescription": "Gdy system będzie chciał coś zrobić w Twoim imieniu, zapyta tutaj.",
+        "runsHeading": "Przebiegi wykonania",
+        "runsEmptyTitle": "Brak przebiegów",
+        "runsEmptyDescription": "Ten Run nie ma jeszcze żadnego przebiegu.",
+        "historyHeading": "Przebieg zlecenia"
+      },
+      "waitPreview": {
+        "provideDataAction": "Podaj dane",
+        "cancelWaitAction": "Anuluj oczekiwanie",
+        "detailsText": "Ten krok zlecenia jest wstrzymany do czasu, aż nadejdzie opisany niżej sygnał.",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "waitingSince": "Czeka od",
+        "deadline": "Termin",
+        "noDeadline": "bez terminu",
+        "expectedSignal": "Oczekiwany sygnał",
+        "systemEvent": "zdarzenie w systemie",
+        "noneWaitingOnHuman": "brak — czekamy na człowieka",
+        "resolvedAt": "Doczekało się",
+        "notYet": "jeszcze nie"
+      },
+      "proposalPreview": {
+        "detailsText": "Propozycja czynności zgłoszona w ramach tego zlecenia.",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "submittedBy": "Kto zgłosił",
+        "byHuman": "Człowiek",
+        "byAgent": "Asystent AI",
+        "bySystem": "System",
+        "submitted": "Zgłoszone",
+        "validUntil": "Ważne do",
+        "noExpiry": "bezterminowo"
+      },
+      "runPreview": {
+        "title": "Przebieg {{number}}",
+        "detailsText": "Przebieg wykonania planu tego zlecenia — konkretna próba wykonania kroków w kolejności grafu.",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "status": "Stan",
+        "outcomeAssessment": "Ocena wyniku",
+        "started": "Wystartował",
+        "notYet": "jeszcze nie",
+        "completed": "Zakończony",
+        "lastChange": "Ostatnia zmiana",
+        "runId": "Identyfikator Run",
+        "graphDigest": "Odcisk grafu"
+      },
+      "columns": {
+        "waitingOn": "Na co czekamy",
+        "status": "Stan",
+        "fromWhenToWhen": "Od kiedy i do kiedy",
+        "whatItConcerns": "Czego dotyczy",
+        "whoAndWhen": "Kto i kiedy",
+        "run": "Przebieg",
+        "runs": "Przebiegi",
+        "submittedByPrefix": "Zgłosił: {{who}} · {{when}}"
+      }
+    },
+    "planCanvas": {
+      "emptyNoSteps": "Ten plan nie ma jeszcze żadnych kroków.",
+      "canvasAriaLabel": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przybliżają, zero dopasowuje widok.",
+      "zoomOut": "Oddal plan",
+      "zoomIn": "Przybliż plan",
+      "fitToView": "Dopasuj do ekranu",
+      "fitShort": "Dopasuj",
+      "resetZoom": "Ustaw powiększenie na sto procent",
+      "hintMobile": "Przeciągnij, aby przesunąć. Kółko przybliża.",
+      "hintDesktop": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków."
+    },
+    "plan": {
+      "projections": {
+        "simpleLabel": "Prosty",
+        "simpleDescription": "Kroki po kolei, bez szczegółów technicznych.",
+        "expertLabel": "Ekspercki",
+        "expertDescription": "Płótno przepływu z identyfikatorami technicznymi.",
+        "listLabel": "Lista",
+        "listDescription": "Tabela kroków — najlepsza na telefonie i dla czytnika ekranu."
+      },
+      "blockers": {
+        "noEntryNode": "Plan nie ma kroku początkowego.",
+        "noTerminalNode": "Plan nie ma kroku końcowego.",
+        "unreachableNode": "Do jednego z kroków nie da się dojść z początku planu.",
+        "missingEdgeTarget": "Strzałka prowadzi do kroku, którego nie ma w planie.",
+        "unboundInput": "Krok wymaga danych, których nikt mu nie przekazuje.",
+        "default": "Plan wymaga poprawki przed zatwierdzeniem."
+      },
+      "header": {
+        "goalHeading": "Do czego dążymy",
+        "goalUndescribed": "Oczekiwany rezultat nie został jeszcze opisany w projekcie.",
+        "closurePrefix": "Zamknięcie: {{type}}",
+        "planPrefix": "Plan: {{status}} (wersja {{number}})",
+        "unsavedChanges": "Niezapisane zmiany",
+        "saving": "Zapisywanie…",
+        "saveChanges": "Zapisz zmiany",
+        "discardChanges": "Odrzuć zmiany",
+        "closeEditing": "Zamknij edycję",
+        "editPlan": "Edytuj plan",
+        "publishedImmutable": "Opublikowany plan jest niezmienny. Aby wprowadzić zmiany, utwórz nowy szkic w panelu „Akcje\" po prawej.",
+        "notEditableHere": "Ta wersja planu nie jest już szkicem — edycja na miejscu nie jest tu dostępna.",
+        "refreshing": "Odświeżanie…",
+        "refresh": "Odśwież",
+        "validationPassed": "Plan przeszedł sprawdzenie — nic nie blokuje zatwierdzenia.",
+        "refreshFailed": "Nie udało się odświeżyć danych planu z serwera. Spróbuj ponownie.",
+        "savedDraft": "Zapisano zmiany w szkicu planu (wersja {{version}}).",
+        "saveUnconfirmed": "Zapis został przyjęty, ale nie udało się potwierdzić stanu ponownym odczytem serwera. Odśwież dane."
+      },
+      "empty": {
+        "noStepsTitle": "Ten plan nie ma jeszcze kroków",
+        "versionHasNoSteps": "Ta wersja planu nie ma jeszcze zapisanych kroków.",
+        "noVersionAtAll": "Zlecenie nie ma jeszcze żadnej wersji planu. Utwórz pierwszy szkic w panelu „Akcje\" po prawej."
+      },
+      "list": {
+        "stepNameAria": "Nazwa kroku {{number}}",
+        "step": "Krok",
+        "who": "Kto to robi",
+        "after": "Po czym następuje",
+        "leadsTo": "Prowadzi do",
+        "stepAndOwner": "Krok i wykonawca",
+        "flow": "Przepływ",
+        "afterPrefix": "Po: {{value}}",
+        "nextPrefix": "Dalej: {{value}}",
+        "stepsInOrder": "Kroki planu po kolei",
+        "emptyTitle": "Plan nie ma kroków",
+        "unnamedStep": "Krok bez nazwy",
+        "isStart": "To jest początek",
+        "isEnd": "To jest koniec",
+        "afterAndNext": "Po: {{after}} → Dalej: {{next}}"
+      },
+      "simple": {
+        "unnamedStep": "Krok bez nazwy",
+        "nextPrefix": " · dalej: {{value}}",
+        "isEndSuffix": " · to jest koniec",
+        "stepNameLabel": "Nazwa kroku {{number}}",
+        "stepDetailsAria": "Szczegóły kroku: {{label}}",
+        "unnamedStepFallback": "krok bez nazwy"
+      },
+      "expert": {
+        "stepNameLabel": "Nazwa kroku",
+        "closeDetails": "Zamknij szczegóły",
+        "who": "Kto to robi",
+        "stepIdLabel": "Identyfikator kroku",
+        "technicalName": "nazwa techniczna",
+        "changeKind": "Rodzaj zmiany",
+        "comesAfter": "Po czym następuje",
+        "leadsTo": "Prowadzi do",
+        "unnamedStep": "Krok bez nazwy",
+        "isStartOfPlan": "To jest początek planu",
+        "isEndOfPlan": "To jest koniec planu",
+        "versionFooter": "Wersja planu {{number}} · ostatnia zmiana {{date}}",
+        "graphDigestTitle": "Odcisk grafu planu"
+      }
+    },
+    "breadcrumb": "Zlecenia"
   }
 }

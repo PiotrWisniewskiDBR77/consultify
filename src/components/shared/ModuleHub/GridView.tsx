@@ -242,7 +242,7 @@ export const GridView: React.FC<GridViewProps> = ({
 };
 
 const PlusIcon: React.FC = () => (
-  // Lokalny inline SVG zamiast dodatkowego importu — identyczny wygląd co lucide Plus 24px.
+  // Local inline SVG instead of an extra import — identical look to lucide Plus 24px.
   <svg
     width="24"
     height="24"

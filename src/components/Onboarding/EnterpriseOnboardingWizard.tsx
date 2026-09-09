@@ -99,7 +99,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleAcceptTerms = async () => {
     if (!termsAccepted || !privacyAccepted) {
-      toast.error(t('onboarding.toast.acceptBoth', 'Zaakceptuj Regulamin i Politykę Prywatności'));
+      toast.error(t('onboarding.toast.acceptBoth', 'Accept the Terms and Privacy Policy'));
       return;
     }
 
@@ -119,10 +119,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           privacyVersion: 'v1.0',
         });
       }
-      toast.success(t('onboarding.toast.termsAccepted', 'Regulamin zaakceptowany'));
+      toast.success(t('onboarding.toast.termsAccepted', 'Terms accepted'));
       setStep(2);
     } catch (error) {
-      toast.error(t('onboarding.toast.termsError', 'Nie udało się zaakceptować regulaminu'));
+      toast.error(t('onboarding.toast.termsError', "Couldn't accept the terms"));
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleSelectTier = async () => {
     if (!selectedTier) {
-      toast.error(t('onboarding.toast.selectTier', 'Wybierz plan cenowy'));
+      toast.error(t('onboarding.toast.selectTier', 'Select a pricing plan'));
       return;
     }
 
@@ -144,10 +144,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         }
         await Api.post('/onboarding/select-tier', { tier: selectedTier });
       }
-      toast.success(t('onboarding.toast.tierSelected', 'Plan cenowy wybrany'));
+      toast.success(t('onboarding.toast.tierSelected', 'Pricing plan selected'));
       setStep(3);
     } catch (error) {
-      toast.error(t('onboarding.toast.tierError', 'Nie udało się wybrać planu'));
+      toast.error(t('onboarding.toast.tierError', "Couldn't select the plan"));
     } finally {
       setLoading(false);
     }
@@ -165,17 +165,17 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         }
         await Api.post('/onboarding/complete', {});
       }
-      toast.success(t('onboarding.toast.completed', 'Onboarding zakończony!'));
+      toast.success(t('onboarding.toast.completed', 'Completed'));
       navigate('/app');
     } catch (error) {
-      toast.error(t('onboarding.toast.completeError', 'Nie udało się zakończyć onboardingu'));
+      toast.error(t('onboarding.toast.completeError', "Couldn't complete onboarding"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleSetupPayment = async () => {
-    toast('Skontaktuj sie z zespołem partnerskim, aby uzgodnic payout i billing.', {
+    toast(t('onboarding.toast.setupPayment', 'Contact the partner team to arrange payout and billing.'), {
       icon: 'ℹ️',
     });
     navigate(ROUTES.LEGAL.CONTACT);
@@ -192,7 +192,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             </div>
             <h1 className="text-3xl font-bold text-c-text mb-2">Start your partner application</h1>
             <p className="text-c-text-secondary">
-              To jest ta sama sciezka aplikacyjna uruchamiana z LP i z produktu.
+              {t('onboarding.enterpriseWizard.step1.intro', 'This is the same application path launched from the LP and from the product.')}
             </p>
           </div>
 
@@ -210,7 +210,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
           <div className="space-y-6">
             {/* Terms & Conditions */}
             <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
-              <h3 className="font-semibold text-c-text mb-3">Warunki programu</h3>
+              <h3 className="font-semibold text-c-text mb-3">{t('onboarding.enterpriseWizard.step1.termsTitle', 'Program terms')}</h3>
               <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
                 <p>By using Consultify, you agree to our enterprise service agreement...</p>
                 <p>• Professional services and AI-powered consulting tools</p>
@@ -225,14 +225,14 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   className="mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
                 <span className="text-sm text-c-text-secondary">
-                  Akceptuje warunki programu partnerskiego
+                  {t('onboarding.enterpriseWizard.step1.termsAccept', 'I accept the partner program terms')}
                 </span>
               </label>
             </div>
 
             {/* Privacy Policy */}
             <div className="border border-c-border-subtle rounded-xl p-6 bg-c-surface-raised dark:bg-c-surface">
-              <h3 className="font-semibold text-c-text mb-3">Polityka prywatnosci</h3>
+              <h3 className="font-semibold text-c-text mb-3">{t('onboarding.enterpriseWizard.step1.privacyTitle', 'Privacy policy')}</h3>
               <div className="max-h-40 overflow-y-auto text-sm text-c-text-secondary mb-4 space-y-2">
                 <p>We respect your privacy and protect your data...</p>
                 <p>• We collect only necessary business information</p>
@@ -247,7 +247,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                   className="mt-1 w-5 h-5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
                 <span className="text-sm text-c-text-secondary">
-                  Akceptuje polityke prywatnosci
+                  {t('onboarding.enterpriseWizard.step1.privacyAccept', 'I accept the privacy policy')}
                 </span>
               </label>
             </div>
@@ -265,7 +265,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
               </>
             ) : (
               <>
-                Potwierdz i przejdz dalej
+                {t('onboarding.enterpriseWizard.step1.confirmButton', 'Confirm and continue')}
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
@@ -353,7 +353,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             </div>
             <h1 className="text-3xl font-bold text-c-text mb-2">Choose your partner track</h1>
             <p className="text-c-text-secondary">
-              Wybierz model wejscia, ktory najlepiej pasuje do planu wspolpracy.
+              {t('onboarding.enterpriseWizard.step2.intro', 'Choose the entry model that best fits your collaboration plan.')}
             </p>
           </div>
 
@@ -447,7 +447,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             </div>
             <h1 className="text-3xl font-bold text-c-text mb-2">Payout and billing readiness</h1>
             <p className="text-c-text-secondary">
-              Ustal dane do rozliczen teraz albo przejdz dalej i dopnij je z zespołem partnerskim.
+              {t('onboarding.enterpriseWizard.step3.intro', 'Set up your billing details now, or continue and finish them later with the partner team.')}
             </p>
           </div>
 
@@ -466,10 +466,12 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
             <div className="flex gap-3">
               <Shield className="w-6 h-6 text-c-info flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-c-text mb-1">Rozliczenia partnera</h3>
+                <h3 className="font-semibold text-c-text mb-1">{t('onboarding.enterpriseWizard.step3.billingTitle', 'Partner billing')}</h3>
                 <p className="text-sm text-c-text-secondary">
-                  Finalne dane payout i billing mozna uzgodnic automatycznie w flow albo manualnie z
-                  zespołem partnerskim dla niestandardowych warunkow.
+                  {t(
+                    'onboarding.enterpriseWizard.step3.billingBody',
+                    'Final payout and billing details can be arranged automatically in the flow, or manually with the partner team for non-standard terms.',
+                  )}
                 </p>
               </div>
             </div>
@@ -523,7 +525,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         </div>
         <h1 className="text-3xl font-bold text-c-text mb-4">Partner application completed</h1>
         <p className="text-lg text-c-text-secondary mb-8">
-          Twoj workspace jest gotowy do kolejnego kroku aktywacji i pracy w programie.
+          {t('onboarding.enterpriseWizard.step4.intro', 'Your workspace is ready for the next step of activation and work in the program.')}
         </p>
         <button
           onClick={() => navigate('/app')}

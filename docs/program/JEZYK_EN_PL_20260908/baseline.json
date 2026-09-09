@@ -1,347 +1,409 @@
 {
-  "_meta": {
-    "data": "2026-09-09T00:59:57.307Z",
-    "root": "/Users/piotrwisniewski/Developer/wt/jdog-b",
-    "sha": "879c06db6a6565086088566c1ff2db004203cfe7"
-  },
   "suma": {
-    "K1": 2,
-    "K1def": 7,
-    "K1defWID": 0,
-    "K2": 4,
+    "K4en": 881,
     "K3a": 257,
     "K3aKLUCZ": 0,
-    "K3b": 0,
-    "K4pl": 97,
-    "K4en": 881,
     "K5pl": 256,
+    "K2": 4,
+    "K1": 2,
+    "K4pl": 53,
+    "K3b": 0,
+    "K1defWID": 0,
+    "K1def": 7,
     "K5en": 1822,
     "K7": 289
   },
   "moduly": {
-    "01 Chat": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 1,
-      "K5pl": 0,
-      "K5en": 27,
-      "K7": 0
-    },
-    "02 My Work": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 61,
-      "K4en": 52,
-      "K5pl": 1,
-      "K5en": 61,
-      "K7": 0
-    },
-    "03 Interview": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
-      "K5pl": 0,
-      "K5en": 51,
-      "K7": 0
-    },
-    "04 Tools": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 1,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 10,
-      "K5pl": 49,
-      "K5en": 112,
-      "K7": 0
-    },
-    "05 Assessment": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 3,
-      "K5pl": 97,
-      "K5en": 76,
-      "K7": 0
-    },
-    "06 Initiatives": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
-      "K5pl": 2,
-      "K5en": 97,
-      "K7": 0
-    },
-    "07 Execution": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
-      "K5pl": 0,
-      "K5en": 63,
-      "K7": 0
-    },
     "08 Results": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+      "K4en": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
       "K5pl": 0,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
       "K5en": 45,
       "K7": 0
     },
-    "09 Finance": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 97,
+    "07 Execution": {
+      "K4en": 0,
+      "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
+      "K5pl": 0,
+      "K2": 0,
+      "K1": 0,
       "K4pl": 0,
-      "K4en": 6,
-      "K5pl": 6,
-      "K5en": 158,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 63,
+      "K7": 0
+    },
+    "04 Tools": {
+      "K4en": 10,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 49,
+      "K2": 1,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 112,
+      "K7": 0
+    },
+    "02 My Work": {
+      "K4en": 52,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 1,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 1,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 61,
       "K7": 0
     },
     "10 Materials": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 1,
+      "K4en": 1,
       "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 1,
       "K5pl": 19,
+      "K2": 1,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
       "K5en": 223,
       "K7": 8
     },
-    "11 Audits": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+    "03 Interview": {
+      "K4en": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
+      "K5pl": 0,
+      "K2": 0,
+      "K1": 0,
       "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 51,
+      "K7": 0
+    },
+    "06 Initiatives": {
       "K4en": 0,
-      "K5pl": 14,
-      "K5en": 12,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 2,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 97,
+      "K7": 0
+    },
+    "01 Chat": {
+      "K4en": 1,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 0,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 27,
       "K7": 0
     },
     "12 Meeting": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+      "K4en": 0,
       "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 0,
       "K5pl": 0,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
       "K5en": 12,
       "K7": 0
     },
-    "13 Organization": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+    "15 Settings": {
+      "K4en": 32,
       "K3a": 0,
       "K3aKLUCZ": 0,
+      "K5pl": 32,
+      "K2": 0,
+      "K1": 1,
+      "K4pl": 9,
       "K3b": 0,
-      "K4pl": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 196,
+      "K7": 4
+    },
+    "11 Audits": {
       "K4en": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 14,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 12,
+      "K7": 0
+    },
+    "05 Assessment": {
+      "K4en": 3,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 97,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 76,
+      "K7": 0
+    },
+    "ZZ wspólne": {
+      "K4en": 232,
+      "K3a": 160,
+      "K3aKLUCZ": 0,
+      "K5pl": 19,
+      "K2": 2,
+      "K1": 1,
+      "K4pl": 21,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 1,
+      "K5en": 523,
+      "K7": 91
+    },
+    "16 Partner Portal": {
+      "K4en": 1,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
+      "K5pl": 3,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 29,
+      "K7": 0
+    },
+    "13 Organization": {
+      "K4en": 0,
+      "K3a": 0,
+      "K3aKLUCZ": 0,
       "K5pl": 1,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
       "K5en": 64,
       "K7": 0
     },
     "14 Admin Panel": {
-      "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
+      "K4en": 543,
       "K3a": 0,
       "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 0,
-      "K4en": 543,
       "K5pl": 13,
+      "K2": 0,
+      "K1": 0,
+      "K4pl": 0,
+      "K3b": 0,
+      "K1defWID": 0,
+      "K1def": 0,
       "K5en": 73,
       "K7": 174
     },
-    "15 Settings": {
-      "K1": 1,
-      "K1def": 6,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
+    "09 Finance": {
+      "K4en": 6,
+      "K3a": 97,
       "K3aKLUCZ": 0,
-      "K3b": 0,
-      "K4pl": 14,
-      "K4en": 32,
-      "K5pl": 32,
-      "K5en": 196,
-      "K7": 6
-    },
-    "16 Partner Portal": {
+      "K5pl": 6,
+      "K2": 0,
       "K1": 0,
-      "K1def": 0,
-      "K1defWID": 0,
-      "K2": 0,
-      "K3a": 0,
-      "K3aKLUCZ": 0,
-      "K3b": 0,
       "K4pl": 0,
-      "K4en": 1,
-      "K5pl": 3,
-      "K5en": 29,
-      "K7": 0
-    },
-    "ZZ wspólne": {
-      "K1": 1,
-      "K1def": 1,
-      "K1defWID": 0,
-      "K2": 2,
-      "K3a": 160,
-      "K3aKLUCZ": 0,
       "K3b": 0,
-      "K4pl": 22,
-      "K4en": 232,
-      "K5pl": 19,
-      "K5en": 523,
-      "K7": 101
+      "K1defWID": 0,
+      "K1def": 0,
+      "K5en": 158,
+      "K7": 0
     }
   },
   "przyklady": {
-    "K1": [
+    "K4en": [
       {
         "modul": "ZZ wspólne",
-        "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
-        "tekst": "Guided by Dr. Piotr Wiśniewski",
-        "dowod": "diakrytyk:ś"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "public/locales/en/translation.json:welcome.videoPerson",
-        "tekst": "Paweł Bochniarz",
-        "dowod": "diakrytyk:ł"
-      }
-    ],
-    "K1def": [
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:102",
-        "tekst": "onboarding.toast.acceptBoth = \"Zaakceptuj Regulamin i Politykę Prywatności\"",
-        "dowod": "diakrytyk:ę"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:125",
-        "tekst": "onboarding.toast.termsError = \"Nie udało się zaakceptować regulaminu\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:133",
-        "tekst": "onboarding.toast.selectTier = \"Wybierz plan cenowy\"",
-        "dowod": "pl:wybierz"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:150",
-        "tekst": "onboarding.toast.tierError = \"Nie udało się wybrać planu\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:168",
-        "tekst": "onboarding.toast.completed = \"Onboarding zakończony!\"",
-        "dowod": "diakrytyk:ń"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:171",
-        "tekst": "onboarding.toast.completeError = \"Nie udało się zakończyć onboardingu\"",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "gdzie": "src/App.tsx:134",
+        "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
+        "dowod": "en:this,en:please"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "src/views/PublicLandingPage.tsx:156",
-        "tekst": "pages.public.cards.tour.description = \"Guided by Dr. Piotr Wiśniewski\"",
-        "dowod": "diakrytyk:ś"
-      }
-    ],
-    "K1defWID": [],
-    "K2": [
-      {
-        "modul": "10 Materials",
-        "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
-        "tekst": "MUST: {{must}} · SHOULD: {{should}}",
-        "dowod": "en:should"
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:305",
+        "tekst": "Cost Saved",
+        "dowod": "en?:cost,en?:saved"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder",
-        "tekst": "Szukaj task, decision, initiative...",
-        "dowod": "en?:task,en?:initiative"
+        "gdzie": "src/components/AIAnalyticsDashboard.tsx:497",
+        "tekst": "Failed",
+        "dowod": "en:failed"
+      },
+      {
+        "modul": "01 Chat",
+        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
+        "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
+        "dowod": "en:the"
       },
       {
         "modul": "ZZ wspólne",
-        "gdzie": "public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge",
-        "tekst": "AI-draft",
-        "dowod": "en:draft"
+        "gdzie": "src/components/AIFeedbackButton.tsx:115",
+        "tekst": "Tell us more about your experience... (optional)",
+        "dowod": "en:about,en:your"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInsightFeed.tsx:113",
+        "tekst": "No critical alerts at this time.",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIInterviewModal.tsx:163",
+        "tekst": "Type your answer...",
+        "dowod": "en:your"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:229",
+        "tekst": "Search settings...",
+        "dowod": "en?:search,en?:settings"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
+        "tekst": "Contact your administrator to enable AI models",
+        "dowod": "en:your"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
+        "tekst": "How should AI interact with you?",
+        "dowod": "en:should,en:with,en:you"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/AIUsageIndicator.tsx:148",
+        "tekst": "Last 7 days",
+        "dowod": "en?:last,en?:days"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
+        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
+        "tekst": "Overrides inside this group",
+        "dowod": "en:this"
+      },
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
+        "tekst": "Overridden away from the shipped default",
+        "dowod": "en:from,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/Charts/RechartsWrapper.tsx:38",
+        "tekst": "Chart failed to load. Please refresh the page.",
+        "dowod": "en:failed,en:please,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/Charts/RechartsWrapper.tsx:125",
+        "tekst": "Chart failed to load. Please refresh the page.",
+        "dowod": "en:failed,en:please,en:the"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:181",
+        "tekst": "Essential for the platform to function. Cannot be disabled.",
+        "dowod": "en:the,en:cannot"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:189",
+        "tekst": "Remember your preferences like theme and language.",
+        "dowod": "en:your,en:and"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/CookieConsentBanner.tsx:197",
+        "tekst": "Help us understand how you use the platform to improve it.",
+        "dowod": "en:you,en:the"
       },
       {
         "modul": "04 Tools",
-        "gdzie": "public/locales/pl/translation.json:discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder",
-        "tekst": "Powod odeslania do Draft",
-        "dowod": "en:draft"
+        "gdzie": "src/components/DiscoveryTools/shared/ProposalCard.tsx:116",
+        "tekst": "0 ? (\n            // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).",
+        "dowod": "en:the"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "src/components/Education/ToolVideoModal.tsx:114",
+        "tekst": "We're preparing an in-depth walkthrough of this tool. In the meantime, try it\n                    yourself!",
+        "dowod": "en:this,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:126",
+        "tekst": "The application encountered an unexpected error. This usually happens due to corrupted\n              local data or a tem",
+        "dowod": "en:the,en:this"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:134",
+        "tekst": "Runtime details are hidden for safety. You can retry, reset app data, or report this\n              incident with context",
+        "dowod": "en:you,en:this,en:with"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:138",
+        "tekst": "Technical diagnostics are captured in telemetry and available through the report\n              action.",
+        "dowod": "en:and,en:the"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "src/components/ErrorBoundary.tsx:146",
+        "tekst": "Crash diagnostics were sent to the observability pipeline.",
+        "dowod": "en:were,en:the"
       }
     ],
     "K3a": [
@@ -497,7 +559,198 @@
       }
     ],
     "K3aKLUCZ": [],
-    "K3b": [],
+    "K5pl": [
+      {
+        "modul": "14 Admin Panel",
+        "gdzie": "server/src/routes/adminP32.routes.ts:2814",
+        "tekst": "Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:593",
+        "tekst": "Brak dostępu do projektu",
+        "dowod": "diakrytyk:ę,pl:brak"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:625",
+        "tekst": "Nie udało się pobrać folderów",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:675",
+        "tekst": "Brak dostępu do projektu",
+        "dowod": "diakrytyk:ę,pl:brak"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:707",
+        "tekst": "Nie udało się utworzyć folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:736",
+        "tekst": "Nie udało się zaktualizować folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:759",
+        "tekst": "Nie udało się usunąć folderu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:6930",
+        "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:9316",
+        "tekst": "Nie udało się utworzyć powiadomienia AI",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "server/src/routes/ai.routes.ts:1189",
+        "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
+        "dowod": "diakrytyk:ń"
+      },
+      {
+        "modul": "02 My Work",
+        "gdzie": "server/src/routes/artifactApprovals.routes.ts:74",
+        "tekst": "Wystąpił błąd serwera",
+        "dowod": "diakrytyk:ą"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:39",
+        "tekst": "Nie znaleziono oceny o podanym identyfikatorze.",
+        "dowod": "pl:nie"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:44",
+        "tekst": "Źródło danych oceny jest chwilowo niedostępne.",
+        "dowod": "diakrytyk:Ź,pl:jest"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:184",
+        "tekst": "Nie udało się wygenerować sugestii",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:210",
+        "tekst": "Nie udało się wygenerować sugestii dowodów",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:240",
+        "tekst": "Nie udało się wygenerować sugestii celu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:271",
+        "tekst": "Nie udało się poprawić tekstu",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:301",
+        "tekst": "Nie udało się uzupełnić automatycznie",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:335",
+        "tekst": "Nie udało się zweryfikować pola",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:365",
+        "tekst": "Nie udało się zweryfikować spójności",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
+        "tekst": "Nie udało się pobrać wskazówek",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
+        "tekst": "Nie udało się wygenerować analizy luk",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
+        "tekst": "Nie udało się wygenerować wniosków",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
+        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      },
+      {
+        "modul": "05 Assessment",
+        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
+        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+      }
+    ],
+    "K2": [
+      {
+        "modul": "10 Materials",
+        "gdzie": "public/locales/pl/translation.json:documentStudio.panel.manifestCounts",
+        "tekst": "MUST: {{must}} · SHOULD: {{should}}",
+        "dowod": "en:should"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:sharedComponents.attachmentsLinksCanvas.searchPlaceholder",
+        "tekst": "Szukaj task, decision, initiative...",
+        "dowod": "en?:task,en?:initiative"
+      },
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/pl/translation.json:sharedComponents.nModeCardState.aiDraftBadge",
+        "tekst": "AI-draft",
+        "dowod": "en:draft"
+      },
+      {
+        "modul": "04 Tools",
+        "gdzie": "public/locales/pl/translation.json:discoveryToolsMain.toolReviewPanel.sendBackReasonPlaceholder",
+        "tekst": "Powod odeslania do Draft",
+        "dowod": "en:draft"
+      }
+    ],
+    "K1": [
+      {
+        "modul": "ZZ wspólne",
+        "gdzie": "public/locales/en/translation.json:pages.public.cards.tour.description",
+        "tekst": "Guided by Dr. Piotr Wiśniewski",
+        "dowod": "diakrytyk:ś"
+      },
+      {
+        "modul": "15 Settings",
+        "gdzie": "public/locales/en/translation.json:welcome.videoPerson",
+        "tekst": "Paweł Bochniarz",
+        "dowod": "diakrytyk:ł"
+      }
+    ],
     "K4pl": [
       {
         "modul": "02 My Work",
@@ -650,308 +903,50 @@
         "dowod": "diakrytyk:ą"
       }
     ],
-    "K4en": [
+    "K3b": [],
+    "K1defWID": [],
+    "K1def": [
       {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/App.tsx:134",
-        "tekst": "This invitation URL is incomplete. Please request a new invitation link.",
-        "dowod": "en:this,en:please"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:305",
-        "tekst": "Cost Saved",
-        "dowod": "en?:cost,en?:saved"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIAnalyticsDashboard.tsx:497",
-        "tekst": "Failed",
-        "dowod": "en:failed"
-      },
-      {
-        "modul": "01 Chat",
-        "gdzie": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx:53",
-        "tekst": ",\n  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.\n  deck:",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIFeedbackButton.tsx:115",
-        "tekst": "Tell us more about your experience... (optional)",
-        "dowod": "en:about,en:your"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInsightFeed.tsx:113",
-        "tekst": "No critical alerts at this time.",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIInterviewModal.tsx:163",
-        "tekst": "Type your answer...",
-        "dowod": "en:your"
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:102",
+        "tekst": "onboarding.toast.acceptBoth = \"Zaakceptuj Regulamin i Politykę Prywatności\"",
+        "dowod": "diakrytyk:ę"
       },
       {
         "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/AuditLogViewer.tsx:229",
-        "tekst": "Search settings...",
-        "dowod": "en?:search,en?:settings"
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:125",
+        "tekst": "onboarding.toast.termsError = \"Nie udało się zaakceptować regulaminu\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ModelSelector.tsx:281",
-        "tekst": "Contact your administrator to enable AI models",
-        "dowod": "en:your"
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:133",
+        "tekst": "onboarding.toast.selectTier = \"Wybierz plan cenowy\"",
+        "dowod": "pl:wybierz"
       },
       {
         "modul": "15 Settings",
-        "gdzie": "src/components/AISettings/ProactivitySelector.tsx:181",
-        "tekst": "How should AI interact with you?",
-        "dowod": "en:should,en:with,en:you"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/AIUsageIndicator.tsx:148",
-        "tekst": "Last 7 days",
-        "dowod": "en?:last,en?:days"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:481",
-        "tekst": "Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:733",
-        "tekst": "Overrides inside this group",
-        "dowod": "en:this"
-      },
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "src/components/Admin/ChatV9FlagsPanel.tsx:796",
-        "tekst": "Overridden away from the shipped default",
-        "dowod": "en:from,en:the"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/Charts/RechartsWrapper.tsx:38",
-        "tekst": "Chart failed to load. Please refresh the page.",
-        "dowod": "en:failed,en:please,en:the"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/Charts/RechartsWrapper.tsx:125",
-        "tekst": "Chart failed to load. Please refresh the page.",
-        "dowod": "en:failed,en:please,en:the"
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:150",
+        "tekst": "onboarding.toast.tierError = \"Nie udało się wybrać planu\"",
+        "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
         "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:181",
-        "tekst": "Essential for the platform to function. Cannot be disabled.",
-        "dowod": "en:the,en:cannot"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:189",
-        "tekst": "Remember your preferences like theme and language.",
-        "dowod": "en:your,en:and"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/CookieConsentBanner.tsx:197",
-        "tekst": "Help us understand how you use the platform to improve it.",
-        "dowod": "en:you,en:the"
-      },
-      {
-        "modul": "04 Tools",
-        "gdzie": "src/components/DiscoveryTools/shared/ProposalCard.tsx:116",
-        "tekst": "0 ? (\n            // #40 — pure-wiring bridge onto the sectional kebab contract (zero visible change).",
-        "dowod": "en:the"
-      },
-      {
-        "modul": "15 Settings",
-        "gdzie": "src/components/Education/ToolVideoModal.tsx:114",
-        "tekst": "We're preparing an in-depth walkthrough of this tool. In the meantime, try it\n                    yourself!",
-        "dowod": "en:this,en:the"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:126",
-        "tekst": "The application encountered an unexpected error. This usually happens due to corrupted\n              local data or a tem",
-        "dowod": "en:the,en:this"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:134",
-        "tekst": "Runtime details are hidden for safety. You can retry, reset app data, or report this\n              incident with context",
-        "dowod": "en:you,en:this,en:with"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:138",
-        "tekst": "Technical diagnostics are captured in telemetry and available through the report\n              action.",
-        "dowod": "en:and,en:the"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "src/components/ErrorBoundary.tsx:146",
-        "tekst": "Crash diagnostics were sent to the observability pipeline.",
-        "dowod": "en:were,en:the"
-      }
-    ],
-    "K5pl": [
-      {
-        "modul": "14 Admin Panel",
-        "gdzie": "server/src/routes/adminP32.routes.ts:2814",
-        "tekst": "Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:593",
-        "tekst": "Brak dostępu do projektu",
-        "dowod": "diakrytyk:ę,pl:brak"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:625",
-        "tekst": "Nie udało się pobrać folderów",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:675",
-        "tekst": "Brak dostępu do projektu",
-        "dowod": "diakrytyk:ę,pl:brak"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:707",
-        "tekst": "Nie udało się utworzyć folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:736",
-        "tekst": "Nie udało się zaktualizować folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai/agent-plan.routes.ts:759",
-        "tekst": "Nie udało się usunąć folderu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:6930",
-        "tekst": "Nie udało się wygenerować odpowiedzi asystenta",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:9316",
-        "tekst": "Nie udało się utworzyć powiadomienia AI",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "ZZ wspólne",
-        "gdzie": "server/src/routes/ai.routes.ts:1189",
-        "tekst": "Generowanie pytań doprecyzowujących przekroczyło limit czasu",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:168",
+        "tekst": "onboarding.toast.completed = \"Onboarding zakończony!\"",
         "dowod": "diakrytyk:ń"
       },
       {
-        "modul": "02 My Work",
-        "gdzie": "server/src/routes/artifactApprovals.routes.ts:74",
-        "tekst": "Wystąpił błąd serwera",
-        "dowod": "diakrytyk:ą"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:39",
-        "tekst": "Nie znaleziono oceny o podanym identyfikatorze.",
-        "dowod": "pl:nie"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:44",
-        "tekst": "Źródło danych oceny jest chwilowo niedostępne.",
-        "dowod": "diakrytyk:Ź,pl:jest"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:184",
-        "tekst": "Nie udało się wygenerować sugestii",
+        "modul": "15 Settings",
+        "gdzie": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx:171",
+        "tekst": "onboarding.toast.completeError = \"Nie udało się zakończyć onboardingu\"",
         "dowod": "diakrytyk:ł,pl:nie,pl:się"
       },
       {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:210",
-        "tekst": "Nie udało się wygenerować sugestii dowodów",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:240",
-        "tekst": "Nie udało się wygenerować sugestii celu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:271",
-        "tekst": "Nie udało się poprawić tekstu",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:301",
-        "tekst": "Nie udało się uzupełnić automatycznie",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:335",
-        "tekst": "Nie udało się zweryfikować pola",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:365",
-        "tekst": "Nie udało się zweryfikować spójności",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:400",
-        "tekst": "Nie udało się pobrać wskazówek",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:429",
-        "tekst": "Nie udało się wygenerować analizy luk",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:459",
-        "tekst": "Nie udało się wygenerować wniosków",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:485",
-        "tekst": "Nie udało się pobrać pytania doprecyzowującego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
-      },
-      {
-        "modul": "05 Assessment",
-        "gdzie": "server/src/routes/assessment/assessment-ai.routes.ts:524",
-        "tekst": "Nie udało się wygenerować podsumowania zarządczego",
-        "dowod": "diakrytyk:ł,pl:nie,pl:się"
+        "modul": "ZZ wspólne",
+        "gdzie": "src/views/PublicLandingPage.tsx:156",
+        "tekst": "pages.public.cards.tour.description = \"Guided by Dr. Piotr Wiśniewski\"",
+        "dowod": "diakrytyk:ś"
       }
     ],
     "K5en": [
@@ -1260,35 +1255,43 @@
     ]
   },
   "plikiTop": {
-    "server/src/routes/document-studio.routes.ts": 86,
-    "server/src/routes/work-canvas.routes.ts": 61,
-    "src/views/legal/TermsOfServiceView.tsx": 56,
-    "server/src/routes/table-platform.routes.ts": 51,
-    "server/src/routes/knowledge.routes.ts": 48,
-    "server/src/routes/billing/billing.routes.ts": 46,
-    "server/src/routes/settings.routes.ts": 43,
-    "src/views/legal/PrivacyPolicyView.tsx": 42,
-    "server/src/routes/presentations.routes.ts": 42,
-    "server/src/controllers/InterviewController.ts": 39,
-    "server/src/routes/auth.routes.ts": 37,
-    "server/src/routes/assessment-reports.routes.ts": 36,
-    "server/src/routes/workbook.routes.ts": 36,
-    "server/src/routes/v8/finance.routes.ts": 35,
-    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
-    "server/src/routes/ai/ai-settings.routes.ts": 32,
-    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
-    "server/src/controllers/InitiativeController.ts": 30,
-    "server/src/routes/assessment/assessment-ai.routes.ts": 28,
-    "server/src/routes/ai.routes.ts": 26,
-    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": 24,
-    "src/components/CaseWorkspace/RezultatyView.tsx": 24,
-    "server/src/routes/v8/sync.routes.ts": 24,
-    "server/src/routes/finance-statements.routes.ts": 23,
-    "server/src/routes/pmo/initiatives.routes.ts": 23,
-    "server/src/routes/superadmin.routes.ts": 23,
     "server/src/routes/v8/results.routes.ts": 23,
+    "public/locales/pl/translation.json": 38,
+    "server/src/routes/auth.routes.ts": 37,
+    "src/components/Onboarding/EnterpriseOnboardingWizard.tsx": 24,
+    "server/src/routes/ai/ai-settings.routes.ts": 32,
+    "src/views/superadmin/revenue/PartnerSettlementsView.tsx": 34,
+    "src/views/legal/TermsOfServiceView.tsx": 56,
+    "server/src/routes/billing/billing.routes.ts": 46,
+    "src/views/legal/PrivacyPolicyView.tsx": 42,
+    "server/src/controllers/InterviewController.ts": 39,
+    "server/src/routes/superadmin.routes.ts": 23,
     "server/src/routes/report-builder.routes.ts": 22,
+    "server/src/routes/assessment/assessment-workflow.routes.ts": 33,
+    "server/src/routes/pmo/initiatives.routes.ts": 23,
+    "src/components/billing/SubscriptionAnalytics.tsx": 50,
+    "server/src/routes/document-studio.routes.ts": 86,
+    "server/src/routes/assessment/assessment-ai.routes.ts": 28,
+    "server/src/controllers/InitiativeController.ts": 30,
+    "server/src/routes/v8/finance.routes.ts": 35,
+    "server/src/routes/actionDecisions.routes.ts": 20,
+    "server/src/routes/finance-statements.routes.ts": 23,
+    "server/src/routes/presentations.routes.ts": 42,
+    "server/src/routes/assessment-workflow-v2.routes.ts": 31,
+    "server/src/routes/v8/sync.routes.ts": 24,
+    "server/src/routes/table-platform.routes.ts": 51,
+    "server/src/routes/assessment-reports.routes.ts": 36,
+    "src/components/CaseWorkspace/RezultatyView.tsx": 24,
+    "server/src/routes/ai.routes.ts": 26,
+    "server/src/routes/knowledge.routes.ts": 48,
+    "server/src/routes/work-canvas.routes.ts": 61,
     "server/src/routes/ai/ai-operations.routes.ts": 21,
-    "server/src/routes/actionDecisions.routes.ts": 20
+    "server/src/routes/settings.routes.ts": 43,
+    "server/src/routes/workbook.routes.ts": 36
+  },
+  "_meta": {
+    "data": "2026-09-09T00:59:57.307Z",
+    "root": "/Users/piotrwisniewski/Developer/wt/jdog-b",
+    "sha": "879c06db6a6565086088566c1ff2db004203cfe7"
   }
 }

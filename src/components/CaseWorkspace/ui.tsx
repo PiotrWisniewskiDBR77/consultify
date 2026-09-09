@@ -12,6 +12,7 @@
  * jest niebieski (`c-focus`) — CLAUDE.md pułapka #1.
  */
 
+import type { TFunction } from 'i18next';
 import { AlertTriangle, ChevronDown, Lock, SearchX } from 'lucide-react';
 import React, {
   useCallback,
@@ -22,6 +23,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 
@@ -112,18 +114,18 @@ export function formatDateTime(value: string | null | undefined): string {
   return formatListDateTime(value);
 }
 
-/** „3 dni temu" / „za 2 dni" — bez bibliotek, po polsku. */
-export function relativeDays(value: string | null | undefined): string {
+/** "3 days ago" / "in 2 days" — no libraries, locale-aware via `t`. */
+export function relativeDays(value: string | null | undefined, t: TFunction): string {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   const diffMs = date.getTime() - Date.now();
   const days = Math.round(diffMs / 86_400_000);
-  if (days === 0) return 'dzisiaj';
-  if (days === 1) return 'jutro';
-  if (days === -1) return 'wczoraj';
-  if (days > 0) return `za ${days} dni`;
-  return `${Math.abs(days)} dni temu`;
+  if (days === 0) return t('caseWorkspace.ui.relativeDays.today', 'today');
+  if (days === 1) return t('caseWorkspace.ui.relativeDays.tomorrow', 'tomorrow');
+  if (days === -1) return t('caseWorkspace.ui.relativeDays.yesterday', 'yesterday');
+  if (days > 0) return t('caseWorkspace.ui.relativeDays.inDays', 'in {{count}} days', { count: days });
+  return t('caseWorkspace.ui.relativeDays.daysAgo', '{{count}} days ago', { count: Math.abs(days) });
 }
 
 // ── Stany ────────────────────────────────────────────────────────────────────
@@ -151,16 +153,20 @@ export const CaseStateBlock: React.FC<CaseStateBlockProps> = ({
   empty,
   compact,
 }) => {
+  const { t } = useTranslation();
   if (loading) {
-    return <LoadingState template="list" label="Wczytywanie danych zlecenia…" />;
+    return <LoadingState template="list" label={t('caseWorkspace.ui.stateBlock.loading', 'Loading order data…')} />;
   }
   if (failure?.kind === 'blocked') {
     return (
       <ErrorState
-        title="Nie masz dostępu do tego zlecenia"
-        description="Poproś właściciela zlecenia albo administratora organizacji o dodanie Cię do zespołu. Dane pozostają ukryte do czasu nadania uprawnień."
+        title={t('caseWorkspace.ui.stateBlock.blockedTitle', "You don't have access to this order")}
+        description={t(
+          'caseWorkspace.ui.stateBlock.blockedDescription',
+          "Ask the order's owner or your organization admin to add you to the team. Data stays hidden until permissions are granted.",
+        )}
         onBack={onBack}
-        backLabel="Wróć do listy zleceń"
+        backLabel={t('caseWorkspace.ui.stateBlock.backToList', 'Back to order list')}
         compact={compact}
       />
     );
@@ -168,10 +174,13 @@ export const CaseStateBlock: React.FC<CaseStateBlockProps> = ({
   if (failure?.kind === 'notFound') {
     return (
       <ErrorState
-        title="Nie znaleźliśmy tego zlecenia"
-        description="Zlecenie nie istnieje albo nie należy do Twojej organizacji. Sprawdź adres lub wróć do listy."
+        title={t('caseWorkspace.ui.stateBlock.notFoundTitle', "We couldn't find this order")}
+        description={t(
+          'caseWorkspace.ui.stateBlock.notFoundDescription',
+          "The order doesn't exist, or doesn't belong to your organization. Check the address, or go back to the list.",
+        )}
         onBack={onBack}
-        backLabel="Wróć do listy zleceń"
+        backLabel={t('caseWorkspace.ui.stateBlock.backToList', 'Back to order list')}
         compact={compact}
       />
     );
@@ -179,12 +188,15 @@ export const CaseStateBlock: React.FC<CaseStateBlockProps> = ({
   if (failure) {
     return (
       <ErrorState
-        title="Nie udało się wczytać danych"
-        description="Połączenie z serwerem nie doszło do skutku. Spróbuj ponownie — nic nie zostało zmienione."
+        title={t('caseWorkspace.ui.stateBlock.loadErrorTitle', "Couldn't load the data")}
+        description={t(
+          'caseWorkspace.ui.stateBlock.loadErrorDescription',
+          "The connection to the server failed. Try again — nothing has been changed.",
+        )}
         onRetry={onRetry}
-        retryLabel="Spróbuj ponownie"
+        retryLabel={t('caseWorkspace.ui.stateBlock.retry', 'Try again')}
         onBack={onBack}
-        backLabel="Wróć do listy zleceń"
+        backLabel={t('caseWorkspace.ui.stateBlock.backToList', 'Back to order list')}
         compact={compact}
       />
     );
@@ -211,6 +223,7 @@ export const PartialBanner: React.FC<{ sections: string[]; onRetry?: () => void 
   sections,
   onRetry,
 }) => {
+  const { t } = useTranslation();
   if (!sections.length) return null;
   return (
     <div
@@ -219,7 +232,11 @@ export const PartialBanner: React.FC<{ sections: string[]; onRetry?: () => void 
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1">
-        Widok niepełny — nie wczytały się: {sections.join(', ')}. Pozostałe dane są aktualne.
+        {t(
+          'caseWorkspace.ui.partialBanner.notice',
+          'Partial view — failed to load: {{sections}}. The remaining data is current.',
+          { sections: sections.join(', ') },
+        )}
       </span>
       {onRetry ? (
         <button
@@ -227,7 +244,7 @@ export const PartialBanner: React.FC<{ sections: string[]; onRetry?: () => void 
           onClick={onRetry}
           className={`shrink-0 rounded-lg border border-amber-300 px-2 py-1 text-xs font-medium dark:border-amber-500/30 ${FOCUS_RING}`}
         >
-          Wczytaj ponownie
+          {t('caseWorkspace.ui.partialBanner.reload', 'Reload')}
         </button>
       ) : null}
     </div>
@@ -261,6 +278,7 @@ export const CommandBanner: React.FC<{
   onRefresh?: () => void;
   onDismiss?: () => void;
 }> = ({ notice, onRefresh, onDismiss }) => {
+  const { t } = useTranslation();
   if (!notice) return null;
   const toneClass =
     notice.tone === 'critical'
@@ -281,17 +299,17 @@ export const CommandBanner: React.FC<{
           onClick={onRefresh}
           className={`shrink-0 rounded-lg border border-current px-2 py-1 text-xs font-medium ${FOCUS_RING}`}
         >
-          Odśwież dane
+          {t('caseWorkspace.ui.commandBanner.refresh', 'Refresh data')}
         </button>
       ) : null}
       {onDismiss ? (
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Zamknij komunikat"
+          aria-label={t('caseWorkspace.ui.commandBanner.dismissAria', 'Dismiss notice')}
           className={`shrink-0 rounded-lg border border-current px-2 py-1 text-xs font-medium ${FOCUS_RING}`}
         >
-          Zamknij
+          {t('caseWorkspace.ui.commandBanner.dismiss', 'Dismiss')}
         </button>
       ) : null}
     </div>
@@ -330,6 +348,7 @@ export const CommandDialog: React.FC<CommandDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const confirmRef = useRef<HTMLButtonElement | null>(null);
@@ -380,7 +399,9 @@ export const CommandDialog: React.FC<CommandDialogProps> = ({
           <label className="mt-3 block">
             <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
               {reason.label}
-              {reason.required ? ' (wymagany)' : ' (opcjonalny)'}
+              {reason.required
+                ? t('caseWorkspace.ui.dialog.reasonRequired', ' (required)')
+                : t('caseWorkspace.ui.dialog.reasonOptional', ' (optional)')}
             </span>
             <textarea
               ref={inputRef}
@@ -398,7 +419,7 @@ export const CommandDialog: React.FC<CommandDialogProps> = ({
             onClick={onCancel}
             className={`rounded-lg border border-c-border px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
-            Nie teraz
+            {t('caseWorkspace.ui.dialog.cancel', 'Not now')}
           </button>
           <button
             ref={confirmRef}
@@ -407,7 +428,7 @@ export const CommandDialog: React.FC<CommandDialogProps> = ({
             onClick={() => onConfirm(value.trim())}
             className={`rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-sm font-semibold text-c-text hover:bg-c-bg disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
           >
-            {busy ? 'Wysyłam…' : confirmLabel}
+            {busy ? t('caseWorkspace.ui.dialog.sending', 'Sending…') : confirmLabel}
           </button>
         </div>
       </div>
@@ -450,13 +471,15 @@ export const FormDialog: React.FC<FormDialogProps> = ({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Nie teraz',
+  cancelLabel,
   busy,
   confirmDisabled,
   onConfirm,
   onCancel,
   children,
 }) => {
+  const { t } = useTranslation();
+  const resolvedCancelLabel = cancelLabel ?? t('caseWorkspace.ui.dialog.cancel', 'Not now');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
   const descId = useId();
@@ -520,7 +543,7 @@ export const FormDialog: React.FC<FormDialogProps> = ({
             onClick={onCancel}
             className={`rounded-lg border border-c-border px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             type="button"
@@ -528,7 +551,7 @@ export const FormDialog: React.FC<FormDialogProps> = ({
             onClick={onConfirm}
             className={`rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-sm font-semibold text-c-text hover:bg-c-bg disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
           >
-            {busy ? 'Wysyłam…' : confirmLabel}
+            {busy ? t('caseWorkspace.ui.dialog.sending', 'Sending…') : confirmLabel}
           </button>
         </div>
       </div>
@@ -542,16 +565,21 @@ export const FormField: React.FC<{
   required?: boolean;
   helpText?: string;
   children: React.ReactNode;
-}> = ({ label, required, helpText, children }) => (
-  <label className="block">
-    <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
-      {label}
-      {required ? ' (wymagane)' : ' (opcjonalne)'}
-    </span>
-    <div className="mt-1">{children}</div>
-    {helpText ? <span className="mt-1 block text-xs text-c-text-muted">{helpText}</span> : null}
-  </label>
-);
+}> = ({ label, required, helpText, children }) => {
+  const { t } = useTranslation();
+  return (
+    <label className="block">
+      <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
+        {label}
+        {required
+          ? t('caseWorkspace.ui.formField.required', ' (required)')
+          : t('caseWorkspace.ui.formField.optional', ' (optional)')}
+      </span>
+      <div className="mt-1">{children}</div>
+      {helpText ? <span className="mt-1 block text-xs text-c-text-muted">{helpText}</span> : null}
+    </label>
+  );
+};
 
 /** Klasy wspólne dla `<input>`/`<select>`/`<textarea>` wewnątrz `FormDialog`. */
 export const FORM_INPUT_CLASS = `w-full rounded-lg border border-c-border bg-c-bg px-2.5 py-2 text-sm text-c-text ${FOCUS_RING}`;
@@ -603,9 +631,12 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
   items,
   activeId,
   onSelect,
-  label = 'Więcej',
-  ariaLabel = 'Więcej sekcji zlecenia',
+  label,
+  ariaLabel,
 }) => {
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t('caseWorkspace.ui.moreTabs.label', 'More');
+  const resolvedAriaLabel = ariaLabel ?? t('caseWorkspace.ui.moreTabs.ariaLabel', 'More order sections');
   const [open, setOpen] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -703,11 +734,11 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        aria-label={ariaLabel}
+        aria-label={resolvedAriaLabel}
         data-testid="zlecenia-wiecej"
         className={`inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-c-border px-3 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
       >
-        <span>{label}</span>
+        <span>{resolvedLabel}</span>
         <ChevronDown
           size={14}
           aria-hidden
@@ -719,7 +750,7 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
           ref={menuRef}
           id={menuId}
           role="menu"
-          aria-label={ariaLabel}
+          aria-label={resolvedAriaLabel}
           onKeyDown={onMenuKeyDown}
           className="absolute right-0 z-50 mt-1 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-c-border bg-c-surface shadow-lg"
         >
@@ -776,10 +807,11 @@ export const TechnicalId: React.FC<{ value: string | null | undefined; title?: s
   value,
   title,
 }) => {
+  const { t } = useTranslation();
   if (!value) return null;
   return (
     <code
-      title={title ?? 'Identyfikator techniczny (widok ekspercki)'}
+      title={title ?? t('caseWorkspace.ui.technicalId.title', 'Technical identifier (expert view)')}
       className="ml-2 rounded bg-c-surface-raised px-1.5 py-0.5 font-mono text-[11px] text-c-text-muted"
     >
       {value}
