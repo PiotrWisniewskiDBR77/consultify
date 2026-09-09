@@ -610,6 +610,29 @@ export async function domknijDzieci(
   return { zadania, pominiete };
 }
 
+/**
+ * TRIGGERY „APPEND-ONLY" (ROI-E007: `trg_*_deny_delete` na `v8_roi_realization_entries`,
+ * `roi_realized_values`) zabraniają DELETE nawet w sprzątaniu organizacji-śmieci —
+ * zmierzone na stagingu 09.09: cały cykl 2 wycofany. Wyłączamy triggery użytkownika
+ * WYŁĄCZNIE na tabelach kasowanych, wyłącznie wewnątrz transakcji (ROLLBACK je
+ * przywraca sam), a przed COMMIT włączamy z powrotem. Triggery wewnętrzne (FK)
+ * zostają — `DISABLE TRIGGER USER` ich nie dotyka. Wymaga właściciela tabel.
+ */
+async function przelaczTriggeryUzytkownika(c: PoolClient, tabele: string[], stan: 'DISABLE' | 'ENABLE'): Promise<number> {
+  let n = 0;
+  for (const t of Array.from(new Set(tabele))) {
+    const r = await c.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM pg_trigger tr JOIN pg_class cl ON cl.oid = tr.tgrelid
+        WHERE NOT tr.tgisinternal AND cl.relname = $1 AND cl.relnamespace = 'public'::regnamespace`,
+      [t]
+    );
+    if (Number(r.rows[0]?.n ?? 0) === 0) continue;
+    await c.query(`ALTER TABLE ${qi(t)} ${stan} TRIGGER USER`);
+    n++;
+  }
+  return n;
+}
+
 /** Liczy wiersze objęte zadaniem. Zero = zadanie zbędne, odsiewamy je przed kasowaniem. */
 export async function policzZadania(c: PoolClient, zadania: ZadanieKasowania[]): Promise<Map<string, number>> {
   const out = new Map<string, number>();
@@ -968,6 +991,8 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
 
   await c.query('BEGIN');
   try {
+    const zTriggerami = await przelaczTriggeryUzytkownika(c, [...doKasacji.map((t) => t.tabela), 'organizations'], 'DISABLE');
+    if (zTriggerami) console.log(`[d0] Triggery użytkownika wyłączone na czas transakcji: ${zTriggerami} tabel (append-only itp.).`);
     let usuniete = 0;
     let pozostale = [...doKasacji];
     const ostatniBlad = new Map<string, string>();
@@ -1008,6 +1033,7 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
     if (pozostale.length) throw new Error(`Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.`);
 
     const org = await c.query('DELETE FROM organizations WHERE id = ANY($1::text[])', [idyIstniejace]);
+    await przelaczTriggeryUzytkownika(c, [...doKasacji.map((t) => t.tabela), 'organizations'], 'ENABLE');
     await c.query('COMMIT');
     console.log(
       `[d0] APPLY: usunięto ${org.rowCount} organizacji i ${usuniete} wierszy jawnie ` +
@@ -1130,6 +1156,8 @@ async function trybSierotyApply(c: PoolClient, cel: string, opcje: Opcje) {
 
   await c.query('BEGIN');
   try {
+    const zTriggerami = await przelaczTriggeryUzytkownika(c, zadania.map((z) => z.tabela), 'DISABLE');
+    if (zTriggerami) console.log(`[d0] Triggery użytkownika wyłączone na czas transakcji: ${zTriggerami} tabel (append-only itp.).`);
     let usuniete = 0;
     let pozostale = [...zadania];
     for (let przebieg = 1; przebieg <= 10 && pozostale.length; przebieg++) {
@@ -1170,6 +1198,7 @@ async function trybSierotyApply(c: PoolClient, cel: string, opcje: Opcje) {
       throw new Error('Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.');
     }
 
+    await przelaczTriggeryUzytkownika(c, zadania.map((z) => z.tabela), 'ENABLE');
     await c.query('COMMIT');
     console.log(
       `[d0] SIEROTY-APPLY: usunięto ${usuniete} wierszy jawnie ` +
