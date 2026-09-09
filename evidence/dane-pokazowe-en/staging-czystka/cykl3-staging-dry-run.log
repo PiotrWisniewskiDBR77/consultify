@@ -1,0 +1,62 @@
+[d0] Bezpiecznik listy zachowanej: OK (3 chronionych, zero kolizji).
+[d0] Tryb: dry-run · cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] Lista wejściowa: 27 identyfikatorów.
+[d0] Znalezione w bazie: 27. Nieistniejące: 0.
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację, w tym 100 z FK NO ACTION/RESTRICT (kasowane jawnie przed organizacją).
+
+[d0] === RAPORT PER TABELA ===
+[d0] Wierszy do usunięcia: 7965 z 42 tabel (z 1285 sprawdzonych).
+[d0] Top 25 tabel:
+        1. tasks.organization_id: 1269
+        2. initiative_milestones.organization_id: 1053
+        3. decisions.organization_id: 675
+        4. organization_context_claims.organization_id: 648
+        5. initiatives.organization_id: 594
+        6. users.organization_id: 486
+        7. initiative_dependencies.organization_id: 270
+        8. knowledge_docs.organization_id: 270
+        9. custom_prompts.organization_id: 243
+       10. my_idea_maps.organization_id: 216
+       11. my_ideas.organization_id: 216
+       12. projects.organization_id: 189
+       13. status_reports.organization_id: 189
+       14. interview_sessions.organization_id: 135
+       15. notebook_pages.organization_id: 135
+       16. teams.organization_id: 135
+       17. activity_logs.organization_id: 81
+       18. financial_statement_ingest_runs.organization_id: 81
+       19. financial_statements.organization_id: 81
+       20. interview_insight_findings.organization_id: 81
+       21. interview_insight_handoffs.organization_id: 81
+       22. presentation_decks.organization_id: 81
+       23. tool_sessions.organization_id: 81
+       24. closure_delivery_receipts.organization_id: 54
+       25. initiative_benefits.organization_id: 54
+
+[d0] === RAPORT PER ORGANIZACJA (top 15 z 27) ===
+        1. ateliertoys-demo-session-d2b6a31608-mttpzi77 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        2. ateliertoys-demo-session-d2b6a31608-mttpztsq | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        3. ateliertoys-demo-session-d2b6a31608-mttqkzqz | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        4. ateliertoys-demo-session-d2b6a31608-mttqldcj | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        5. ateliertoys-demo-session-d2b6a31608-mttr1zcv | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        6. ateliertoys-demo-session-d2b6a31608-mttrcaiv | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        7. ateliertoys-demo-session-d2b6a31608-mtts9auy | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        8. ateliertoys-demo-session-d2b6a31608-mttsobmg | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        9. ateliertoys-demo-session-d2b6a31608-mtsfbekj | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       10. ateliertoys-demo-session-d2b6a31608-mtsfbsxw | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       11. ateliertoys-demo-session-d2b6a31608-mtsfd8cr | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       12. ateliertoys-demo-session-d2b6a31608-mtshd43m | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       13. ateliertoys-demo-session-d2b6a31608-mtsj2d9c | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       14. ateliertoys-demo-session-d2b6a31608-mtsfbi28 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       15. ateliertoys-demo-session-d2b6a31608-mtsfbvjn | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+
+[d0] CSV per tabela:       /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-tabela-2026-09-09T08-55-49-888Z.csv
+[d0] CSV per organizacja:  /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-organizacja-2026-09-09T08-55-49-891Z.csv
+[d0] Cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] DRY-RUN zakończony. NIC NIE ZOSTAŁO ZMIENIONE.
+[d0] UWAGA: liczba 7965 obejmuje wyłącznie tabele mające kolumnę wskazującą na organizację.
+[d0] Wiersze znikające kaskadą z tabel bez takiej kolumny (np. komentarze zadania) NIE są tu liczone —
+[d0] realna liczba usuniętych wierszy będzie WIĘKSZA. To dolna granica, nie górna.
+

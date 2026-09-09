@@ -1,0 +1,5 @@
+[d0] Bezpiecznik listy zachowanej: OK (3 chronionych, zero kolizji).
+[d0] Tryb: verify · cel: thomas.proxy.rlwy.net:52567/railway
+[d0] VERIFY: organizacji z listy nadal w bazie: 0 (oczekiwane 0 po --apply).
+[d0] VERIFY: wierszy należących do listy: 0 w 0 tabelach (oczekiwane 0).
+[d0] VERIFY: czysto.
