@@ -1,0 +1,62 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Finanse
+Sprawozdania
+Dane
+Model
+James Whitfield
+JW
+Sprawozdania
+Analiza
+Modele
+Predykcja
+Wycena przedsiębiorstw
+Importuj sprawozdanie
+Wszystkie
+1
+Odrzucone importy
+0
+Kolejka naprawcza
+0
+Gotowe sprawozdania
+1
+Analizuj
+AI
+Pokaż panel
+	
+TYP
+	
+NAZWA
+	
+KOMPLETNOŚĆ
+	
+OKRES
+	
+WALUTA
+	
+DOK.
+	
+STATUS
+	
+AKTUALIZACJA
+	
+
+	
+STM
+	
+Northwind Manufacturing Ltd.
+	
+P&L / —BS / —CF
+	
+Q3 FY2025 – Q2 FY2026
+	
+GBP
+	
+4
+	
+Zatwierdzone
+	1 dzień temu	

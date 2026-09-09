@@ -1,0 +1,83 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+My Work
+Decisions
+Data
+Model
+James Whitfield
+JW
+Ideas
+Notebook
+Inbox
+Calendar
+Tasks
+Decisions
+Vaults
+Priority
+New Decision
+All
+6
+My decisions to make
+1
+My requests pending
+5
+AI Decisions
+	
+DECISION
+	
+TYPE
+	
+STATUS
+	
+PRIORITY
+	
+DUE DATE
+	
+PROJECT
+	
+
+	
+Accept the vendor firmware release as a hard dependency
+	
+Risk acceptance
+	
+Pending
+	
+Medium
+	
+Nov 6
+	
+Digital & Automation Roadmap
+	
+
+	
+Pause the skills passport programme until the 2027 budget
+	
+General
+	
+Approved
+	
+High
+	
+40d overdue
+	
+Operational Excellence Programme
+	
+
+	
+Continue the warehouse shuttle pilot into a second aisle
+	
+Execution
+	
+Approved
+	
+High
+	
+26d overdue
+	
+Operational Excellence Programme
+	

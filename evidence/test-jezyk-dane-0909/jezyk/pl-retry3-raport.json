@@ -1,0 +1,97 @@
+{
+ "start": "2026-09-09T16:07:39.102Z",
+ "naprawione": [
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-inbox",
+   "url": "https://staging.consultify.ai/interview?tab=my_assignments"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/interview?tab=sessions"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-assigned",
+   "url": "https://staging.consultify.ai/interview?tab=managed"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-templates",
+   "url": "https://staging.consultify.ai/interview?tab=templates"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/interview?tab=insights"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/interview?tab=initiatives"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=library"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-processes",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=processes"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=outputs"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=reports"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/assessment/overview?tab=initiatives"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-dashboard",
+   "url": "https://staging.consultify.ai/execution?tab=summary&view=table&kokpit=ryzyka"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-deliveries",
+   "url": "https://staging.consultify.ai/execution?tab=list&view=table"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-work",
+   "url": "https://staging.consultify.ai/execution?tab=work&view=table"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-resources",
+   "url": "https://staging.consultify.ai/execution?tab=resources&view=table"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-decisions-risks",
+   "url": "https://staging.consultify.ai/execution?tab=control&view=table"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/execution?tab=reports&view=table"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "02-tab-markets-systems",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale"
+  }
+ ],
+ "dalejNA": [],
+ "koniec": "2026-09-09T16:08:57.136Z"
+}

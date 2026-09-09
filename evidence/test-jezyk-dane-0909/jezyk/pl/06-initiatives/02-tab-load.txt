@@ -1,0 +1,61 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Inicjatywy
+Dane
+Model
+James Whitfield
+JW
+Inicjatywy
+Plan
+Obciążenie
+Status
+Nowa analiza
+Szkice
+0
+Opublikowane
+1
+Z lukami
+0
+NAZWA
+	
+PLAN ŹRÓDŁOWY
+	
+OKRESY
+	
+ROLE
+	
+LUKI
+	
+STATUS
+	
+ZAKTUALIZOWANO
+
+
+Northwind 2027 — Wave 1 capacity analysis
+	
+Northwind 2027 — Wave 1 delivery plan · v2
+	
+8
+	
+2
+	
+brak
+	
+Opublikowany
+	
+08 wrz 2026
+Northwind 2027 — Wave 1 capacity analysis
+Otwórz
+Opublikowany
+SZCZEGÓŁY
+Właściwość	Wartość
+Plan źródłowy	Northwind 2027 — Wave 1 delivery plan · v2
+Okresy	8
+Role	2
+Luki	brak
+POWIĄZANIA
+Brak powiązań

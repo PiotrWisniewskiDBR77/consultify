@@ -1,0 +1,727 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Narzędzia
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Sesje
+Insighty
+Raporty
+Inicjatywy
+Dodaj narzędzie
+Wszystkie
+Strategiczne
+10
+Operacyjne
+10
+Cyfrowe
+10
+Automatyzacja procesów
+1
+Oceny
+5
+Nie wiesz, które wybrać?
+Zaproponuj narzędzie
+A3P
+A3 Problem Solving
+Root cause analysis
+Nieaktywne
+ADMA
+Advanced Digital Maturity Assessment
+Framework assessment
+AID
+AI Discovery
+AI use-case readiness
+Nieaktywne
+AMB
+Ambition Decomposer
+Vision breakdown
+Nieaktywne
+AUT
+Automation Pipeline
+Automation backlog
+Nieaktywne
+CAP
+Capability Mapper
+Skills-to-outcomes
+Nieaktywne
+CMMI
+Capability Maturity Model Integration
+Framework assessment
+CON
+Constraint Control
+Bottleneck management
+Nieaktywne
+CTW
+Control Tower
+Shopfloor visibility
+Nieaktywne
+DAT
+Data Inventory
+Data asset mapping
+Nieaktywne
+DEC
+Decision Engine
+Policy automation
+Nieaktywne
+DRD
+Digital Readiness Diagnosis
+Framework assessment
+DVP
+Digital Value Pool
+Value identification
+Nieaktywne
+DMS
+DMS Builder
+Daily management system
+Nieaktywne
+SWT
+Dynamic SWOT
+AI-driven SWOT analysis
+Aktywne
+FOC
+Focus & Trade-off
+What NOT to do
+Nieaktywne
+ANS
+Growth Paths (Ansoff)
+Market/product expansion
+Nieaktywne
+INT
+Integration Diagnostic
+System integration analysis
+Nieaktywne
+INV
+Inventory Autopilot
+Stock optimization
+Nieaktywne
+LEAN
+Lean 4.0
+Framework assessment
+LEG
+Legacy Analyzer
+Technical debt assessment
+Nieaktywne
+LOG
+Logistics Automation
+Warehouse automation
+Nieaktywne
+PTR
+Market Forces (Porter)
+5 forces competitive analysis
+Nieaktywne
+NAR
+Narrative Engine
+Strategy communication
+Nieaktywne
+SPE
+Pain Explorer
+Problem structuring
+Nieaktywne
+P2S
+Pain-to-Solution
+Solution matching
+Nieaktywne
+BCG
+Portfolio Priority
+Strategic prioritization
+Nieaktywne
+PAI
+Process Automation
+Interactive process workshop
+Nieaktywne
+RSK
+Risk & Uncertainty
+Scenario mapping
+Nieaktywne
+ROB
+Robotics Feasibility
+Robot deployment analysis
+Nieaktywne
+RPA
+RPA Scanner
+Process automation potential
+Nieaktywne
+SIRI
+Smart Industry Readiness Index
+Framework assessment
+SMD
+SMED Planner
+Changeover reduction
+Nieaktywne
+SOP
+SOP Builder
+Standard work creation
+Nieaktywne
+VCH
+Value Chain
+Value leakage finder
+Nieaktywne
+VSM
+VSM Builder
+Value stream mapping
+Nieaktywne
+Wszystkie
+36
+Strategia
+10
+Operacje
+10
+Cyfrowe
+10
+Automatyzacje
+1
+Oceny
+5
+NARZĘDZIE
+	
+KATEGORIA
+	
+TAGI
+	
+LICENCJA
+	
+STATUS
+	
+
+
+Dynamic SWOT
+	
+Strategiczne
+	
+strategy
+swot
+diagnosis
+	
+Darmowe
+	
+Aktywny
+	
+
+
+Market Forces (Porter)
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+porter
+competition
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Growth Paths (Ansoff)
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+ansoff
+growth
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Value Chain Analysis
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+value-chain
+operating-model
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Portfolio Prioritization
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+prioritization
+portfolio
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Risk & Uncertainty
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+risk
+uncertainty
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Capability Mapper
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+capabilities
+roadmap
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Ambition Decomposer
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+targets
+roadmap
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Focus & Trade-offs
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+tradeoffs
+focus
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Narrative & Alignment
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+narrative
+alignment
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+A3 Problem Solving
+Już wkrótce
+	
+Operacyjne
+	
+operations
+a3
+root-cause
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+VSM Builder
+Już wkrótce
+	
+Operacyjne
+	
+operations
+lean
+vsm
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+SOP Builder
+Już wkrótce
+	
+Operacyjne
+	
+operations
+sop
+standard-work
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Constraint Control (TOC)
+Już wkrótce
+	
+Operacyjne
+	
+operations
+toc
+throughput
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Decision Engine
+Już wkrótce
+	
+Operacyjne
+	
+operations
+decision
+prioritization
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Control Tower
+Już wkrótce
+	
+Operacyjne
+	
+operations
+kpi
+governance
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Automation Pipeline
+Już wkrótce
+	
+Operacyjne
+	
+operations
+automation
+pipeline
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+SMED Planner
+Już wkrótce
+	
+Operacyjne
+	
+operations
+smed
+setup
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Daily Management System
+Już wkrótce
+	
+Operacyjne
+	
+operations
+cadence
+kpi
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Inventory Autopilot
+Już wkrótce
+	
+Operacyjne
+	
+operations
+inventory
+policy
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Robotics Feasibility
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+robotics
+automation
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Logistics Automation
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+logistics
+warehouse
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+RPA Scanner
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+rpa
+backoffice
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+AI Discovery
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+ai
+use-cases
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Integration Diagnostic
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+integration
+architecture
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Digital Value Pool
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+value
+economics
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Legacy Analyzer
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+legacy
+modernization
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Data Inventory
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+data
+governance
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Pain-to-Solution Mapper
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+solutions
+mapping
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Pain Explorer
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+discovery
+problems
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Process Automation (Speed Tool)
+Już wkrótce
+	
+Automatyzacja procesów
+	
+automation
+process
+roi
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Digital Readiness Diagnosis
+	
+Oceny
+	
+assessment
+digital
+readiness
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Smart Industry Readiness Index
+	
+Oceny
+	
+assessment
+industry-4.0
+readiness
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Advanced Digital Maturity Assessment
+	
+Oceny
+	
+assessment
+maturity
+digital
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Capability Maturity Model Integration
+Już wkrótce
+	
+Oceny
+	
+assessment
+process
+maturity
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Lean 4.0
+Już wkrótce
+	
+Oceny
+	
+assessment
+lean
+operations
+	
+Licencjonowane
+	
+Aktywny
+	

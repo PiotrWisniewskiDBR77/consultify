@@ -1,0 +1,137 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Risks
+7
+Decisions
+7
+Manager cockpit
+
+Five management questions, one answer at a glance.
+
+HEALTH
+63
+/100
+progress 27%
+ON-TIME
+100%
+4 on-track
+0 at-risk
+0 delayed
+VALUE VS PLAN
+No ROI computed
+UTILIZATION
+13%
+2 over
+9 ppl
+TO RESOLVE
+7
+items
+1 blockers
+3 overdue
+What threatens us — top risks
+
+Highest-scoring risks (P × I).
+
+RISK
+	
+LEVEL (P×I)
+	
+OWNER
+	
+INITIATIVE
+	
+STATUS
+
+
+Works council has not signed the shuttle safety case
+	
+High (12)
+	
+Priya Sharma
+	
+Warehouse Automation Pilot
+	
+Open
+
+
+Line 3 cutover slips past the summer shutdown window
+	
+High (12)
+	
+Laura Novak
+	
+MES Rollout Line 3
+	
+Open
+
+
+Paused upskilling leaves key roles single-deep
+	
+High (9)
+	
+Sarah Mitchell
+	
+Skills Matrix and Upskilling
+	
+Open
+
+
+Downtime reason codes are not agreed between Quality and Operations
+	
+High (9)
+	
+Robert Chen
+	
+MES Rollout Line 3
+	
+Open
+
+
+Spare-parts holding can be cut by fifteen per cent without service impact
+	
+Moderate (6)
+	
+Thomas Baker
+	
+Predictive Maintenance for CNC Line
+	
+Open
+
+
+SCADA bridge depends on the vendor firmware release
+	
+Moderate (6)
+	
+Daniel Osei
+	
+MES Rollout Line 3
+	
+Open
+
+
+False positives erode operator trust in predictive alerts
+	
+Moderate (4)
+	
+Michael Grant
+	
+Predictive Maintenance for CNC Line
+	
+Mitigated
+Next milestones
+No milestones scheduled.

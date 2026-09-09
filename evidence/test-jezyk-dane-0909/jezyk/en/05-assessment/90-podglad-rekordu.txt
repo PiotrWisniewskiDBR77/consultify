@@ -1,0 +1,99 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Assessment
+Data
+Model
+James Whitfield
+JW
+Library
+Processes
+Insights
+Reports
+Initiatives
+METHODOLOGY
+	
+AREA
+	
+STATUS
+	
+ACTIONS
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Digital manufacturing
+	
+Planned
+	
+Start
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Process capability
+	
+Planned
+	
+Start
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Digital transformation
+	
+Method core
+	
+Start
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean and automation
+	
+Planned
+	
+Start
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Smart manufacturing
+	
+Planned
+	
+Start
+	
+Advanced Digital Maturity Assessment
+ADMA
+Planned
+DETAILS
+~62 words
+
+Extended digital maturity model across process dimensions.
+
+• Five-pillar maturity view • Dimension-level assessment structure • Educational framework context
+
+Axes and areas: • Strategy & Organization • Smart Products • Smart Operations • Smart Supply Chain • Data-Driven Services
+
+ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.
+
+Property	Value
+Area	Digital manufacturing
+Access	Knowledge available; execution coming soon
+Commercial terms	Not configured in catalog
+RELATIONS
+No relations

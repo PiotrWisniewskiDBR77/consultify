@@ -1,0 +1,338 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Initiatives
+Plan
+Load
+Priority
+All priorities
+Critical
+High
+Medium
+Low
+Status
+Active
+All
+New initiative
+All
+11
+Pending approval
+1
+In execution
+4
+INITIATIVE
+	
+STATUS
+	
+NEXT GATE
+	
+READINESS
+	
+OWNER
+	
+AREA / AXIS
+	
+NEXT ACTION
+	
+EXPECTED IMPACT
+	
+PLANNED WINDOW
+	
+HEALTH
+	
+UPDATED
+	
+
+
+Skills Matrix and Upskilling
+No single record of machine sign-off; cover for absence is arranged from memory and eleven roles have no backup.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Priya Sharma
+	
+—
+	
+Monitor the execution
+	
+A live skills matrix for 340 production roles, feeding shift planning and closing eleven single points of failure.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+yesterday
+	
+
+
+Warehouse Automation Pilot
+Handling cost per unit rose 11% in two years while order lines grew only 4%; picking walks the full aisle.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Emily Carter
+	
+—
+	
+Monitor the execution
+	
+Goods-to-person shuttle for the 400 fastest-moving SKUs in one Leeds aisle, sized to prove the business case.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+yesterday
+	
+
+
+MES Rollout Line 3
+Line 3 production data reaches the ERP a day late, so schedule adherence cannot be managed within the shift.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Laura Novak
+	
+—
+	
+Monitor the execution
+	
+Extends the existing MES from Lines 1-2 to Rotherham Line 3, replacing paper travellers with live reporting.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+yesterday
+	
+
+
+Predictive Maintenance for CNC Line
+Unplanned CNC stoppages cost 640 production hours in 2025 and are invisible until the machine stops.
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Daniel Osei
+	
+—
+	
+Monitor the execution
+	
+Condition-based maintenance on Leeds CNC cells 1-6, replacing the fixed 12-week service calendar.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+yesterday
+	
+
+
+Shift Handover Digitisation
+The June audit found 30% of open issues were lost at handover because the record is verbal plus a paper logbook.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Michael Grant
+	
+—
+	
+Schedule the execution
+	
+A structured digital shift handover with open-issue carry-forward and a searchable history.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Scrap Reduction Programme
+Scrap at 3.4% of material cost against a 2.1% benchmark is about GBP 640k a year of avoidable loss.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Sarah Mitchell
+	
+—
+	
+Schedule the execution
+	
+A focused programme on the five largest scrap codes, each with an owner, a baseline and a weekly countermeasure review.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Supplier Quality Gate
+Two thirds of 2026 non-conformances come from bought-in castings; goods-in is a visual check with no feedback loop.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Michael Grant
+	
+—
+	
+Schedule the execution
+	
+A documented goods-in quality gate with risk-based sampling and a monthly defect feedback loop to suppliers.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Energy Monitoring and ISO 50001
+14.2 GWh a year is metered at four points only, so no department can be held to an energy budget.
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+Daniel Osei
+	
+—
+	
+Schedule the execution
+	
+Sub-metering of the twelve largest loads, energy per production hour, and ISO 50001 certification.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Cybersecurity Hardening OT
+Segment the OT network, retire unsupported controller firmware and monitor vendor remote access.
+	
+Proposed
+	
+Definition
+	
+Not evaluated
+	
+Robert Chen
+	
+Information Technology
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Customer Portal for Order Tracking
+A self-service portal exposing delivery date, production stage and dispatch tracking for every open order.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Michael Grant
+	
+Commercial
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	
+
+
+Digital Work Instructions
+Tablet-based work instructions served from the current revision, replacing laminated folders at the station.
+	
+Pending approval
+	
+Portfolio
+	
+Not evaluated
+	
+Sarah Mitchell
+	
+Digital Manufacturing
+	
+Prepare the portfolio decision
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+yesterday
+	

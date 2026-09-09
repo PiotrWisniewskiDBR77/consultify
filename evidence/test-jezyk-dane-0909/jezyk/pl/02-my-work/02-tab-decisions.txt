@@ -1,0 +1,83 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Moja Praca
+Decyzje
+Dane
+Model
+James Whitfield
+JW
+Pomysły
+Notatnik
+Skrzynka
+Kalendarz
+Zadania
+Decyzje
+Sejfy
+Priorytet
+Nowa decyzja
+Wszystkie
+6
+Moje do decyzji
+1
+Moje prośby (oczekujące)
+5
+AI Decyzje
+	
+DECYZJA
+	
+TYP
+	
+STATUS
+	
+PRIORYTET
+	
+TERMIN
+	
+PROJEKT
+	
+
+	
+Accept the vendor firmware release as a hard dependency
+	
+Akceptacja ryzyka
+	
+Oczekuje
+	
+Średni
+	
+6 lis
+	
+Digital & Automation Roadmap
+	
+
+	
+Pause the skills passport programme until the 2027 budget
+	
+Ogólna
+	
+Przyjęta
+	
+Wysoki
+	
+40 dni po terminie
+	
+Operational Excellence Programme
+	
+
+	
+Continue the warehouse shuttle pilot into a second aisle
+	
+Wykonawcza
+	
+Przyjęta
+	
+Wysoki
+	
+26 dni po terminie
+	
+Operational Excellence Programme
+	

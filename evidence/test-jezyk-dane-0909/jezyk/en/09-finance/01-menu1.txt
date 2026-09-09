@@ -1,0 +1,61 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Finance
+Statements
+Data
+Model
+James Whitfield
+JW
+Statements
+Analysis
+Models
+Prediction
+Enterprise valuation
+Import statement
+All
+1
+Rejected Imports
+0
+Recovery Queue
+0
+Ready Statements
+1
+Analyze
+AI
+	
+TYPE
+	
+NAME
+	
+COMPLETENESS
+	
+PERIOD
+	
+CURRENCY
+	
+DOCS
+	
+STATUS
+	
+UPDATED
+	
+
+	
+STM
+	
+Northwind Manufacturing Ltd.
+	
+P&L / —BS / —CF
+	
+Q3 FY2025 – Q2 FY2026
+	
+GBP
+	
+4
+	
+Approved
+	1 day ago	

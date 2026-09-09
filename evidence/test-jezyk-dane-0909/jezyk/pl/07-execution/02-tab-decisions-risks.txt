@@ -1,0 +1,163 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Realizacja
+Dane
+Model
+James Whitfield
+JW
+Kokpit
+Realizacje
+Praca
+Zasoby
+Decyzje i ryzyka
+Raporty
+Termin
+Nowa decyzja
+Decyzje
+9
+Ryzyka
+7
+Sygnały
+8
+TYTUŁ
+	
+POTRZEBNA DO DNIA
+	
+DECYDENT
+	
+STATUS
+	
+DNI PO TERMINIE
+	
+ESKALACJA
+	
+
+
+Decide on the third-party training platform proposal
+	
+28/08/2026
+	
+Priya Sharma
+	
+Eskalowana
+	
++11
+	
+Brak
+	
+
+
+Pause the skills passport programme until the 2027 budget
+	
+31/07/2026
+	
+James Whitfield
+	
+Rozstrzygnięta
+	
++39
+	
+Brak
+	
+
+
+Continue the warehouse shuttle pilot into a second aisle
+	
+14/08/2026
+	
+James Whitfield
+	
+Rozstrzygnięta
+	
++25
+	
+Brak
+	
+
+
+Approve the spare-parts holding reduction target
+	
+04/12/2026
+	
+Thomas Baker
+	
+Oczekuje
+	
+—
+	
+Brak
+	
+
+
+Set the predictive alert threshold policy
+	
+02/09/2026
+	
+Daniel Osei
+	
+Eskalowana
+	
++6
+	
+Brak
+	
+
+
+Extend predictive maintenance to cells 3, 4 and 5
+	
+21/08/2026
+	
+Sarah Mitchell
+	
+Rozstrzygnięta
+	
++18
+	
+Brak
+	
+
+
+Accept the vendor firmware release as a hard dependency
+	
+06/11/2026
+	
+James Whitfield
+	
+Oczekuje
+	
+—
+	
+Brak
+	
+
+
+Choose the MES downtime reason-code taxonomy
+	
+04/09/2026
+	
+Robert Chen
+	
+Eskalowana
+	
++4
+	
+Brak
+	
+
+
+Approve the Line 3 cutover date of 26 March 2027
+	
+09/10/2026
+	
+Sarah Mitchell
+	
+Oczekuje
+	
+—
+	
+Brak
+	

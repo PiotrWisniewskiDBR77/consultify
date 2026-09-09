@@ -1,0 +1,61 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+James Whitfield
+JW
+Initiatives
+Plan
+Load
+Status
+New analysis
+Drafts
+0
+Published
+1
+With gaps
+0
+NAME
+	
+SOURCE PLAN
+	
+PERIODS
+	
+ROLES
+	
+GAPS
+	
+STATUS
+	
+UPDATED
+
+
+Northwind 2027 — Wave 1 capacity analysis
+	
+Northwind 2027 — Wave 1 delivery plan · v2
+	
+8
+	
+2
+	
+none
+	
+Published
+	
+Sep 08, 2026
+Northwind 2027 — Wave 1 capacity analysis
+Open
+Published
+DETAILS
+Property	Value
+Source plan	Northwind 2027 — Wave 1 delivery plan · v2
+Periods	8
+Roles	2
+Gaps	none
+RELATIONS
+No relations

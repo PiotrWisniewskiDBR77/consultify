@@ -1,0 +1,81 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Results
+KPI
+Data
+Model
+James Whitfield
+JW
+KPI
+OKR
+ROI
+Management reports
+New report
+REPORT NAME
+	
+SCOPE
+	
+PERIOD
+	
+INDICATORS
+	
+STATUS
+	
+OPEN ACTIONS
+	
+PREPARED BY
+	
+UPDATED
+	
+
+
+Northwind 2027 — monthly performance report
+	
+Northwind Manufacturing Ltd.
+	
+IX 2026
+	
+8
+	
+0
+·
+8
+·
+0
+·
+0
+	
+8
+	
+Sarah Mitchell
+	
+Sep 8, 2026
+	
+Northwind 2027 — monthly performance report
+Open report
+Northwind Manufacturing Ltd.
+IX 2026
+Sep 8, 2026
+DETAILS
+Property	Value
+Description	The monthly operational performance report reviewed at the plant management meeting. It carries the eight transformation measures agreed for 2026: four leading indicators the shift teams can move within a week, and four lagging measures the steering group is held to.
+Edition	—
+Revision date	—
+Prepared by	Sarah Mitchell
+Indicators	8
+Open action cards	8
+Status by area	
+NO AREA
+0
+·
+8
+·
+0
+·
+0
+RELATIONS
+No relations

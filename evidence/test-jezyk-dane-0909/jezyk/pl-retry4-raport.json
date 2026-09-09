@@ -1,0 +1,52 @@
+{
+ "start": "2026-09-09T16:10:11.339Z",
+ "naprawione": [
+  {
+   "modul": "01-chat",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/chat/1211f40f-9dba-48dd-8d3e-6bdf7d617497"
+  },
+  {
+   "modul": "04-tools",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/discovery-tools"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/initiatives"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/results/kpi"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/finance?tab=statements"
+  },
+  {
+   "modul": "10-materials",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/presentations"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "91-tworzenie",
+   "url": "https://staging.consultify.ai/organization/sources/claims-sources"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "90-podglad-rekordu",
+   "url": "https://staging.consultify.ai/initiatives"
+  }
+ ],
+ "dalejNA": [],
+ "koniec": "2026-09-09T16:11:18.491Z"
+}

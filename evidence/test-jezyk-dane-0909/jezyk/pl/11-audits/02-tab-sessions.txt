@@ -1,0 +1,64 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Audyty
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Sesje
+Wnioski
+Raporty
+Inicjatywy
+Etap: Wszystkie
+1
+Nowy audyt
+Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.
+Wszystkie
+1
+Planowanie
+0
+Praca w terenie
+0
+NAZWA
+	
+PAKIET
+	
+ETAP
+	
+POSTĘP
+	
+USTALENIA OTWARTE
+	
+AUDYTOR WIODĄCY
+	
+POCZĄTEK
+	
+TERMIN
+	
+ZAKTUALIZOWANO
+	
+
+
+Line 3 Quality and Safety Audit
+	
+Operational Excellence Audit 2026 v1
+	
+Naprawa
+	
+6/7
+	
+3
+	
+Robert Chen
+	
+06/07/2026
+	
+Po terminie
+	
+08/09/2026
+	

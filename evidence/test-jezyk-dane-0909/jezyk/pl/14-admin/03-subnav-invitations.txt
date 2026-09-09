@@ -1,0 +1,46 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Panel administratora
+Przegląd
+Dane
+Model
+James Whitfield
+JW
+Wstecz
+PANEL ADMINISTRATORA
+
+Dostęp, polityki organizacji, dowody i bezpieczne operacje
+
+ZESPÓŁ I DOSTĘP
+Użytkownicy
+Zaproszenia
+Role i uprawnienia
+Zespoły
+Goście i dostęp zewnętrzny
+Wnioski o dostęp
+Przeglądy dostępów
+Własność
+ROZLICZENIA I PLANY
+STEROWANIE AI
+BEZPIECZEŃSTWO I TOŻSAMOŚĆ
+DZIENNIK AUDYTU
+CENTRUM DOWODZENIA
+STAN SYSTEMU
+Panel administratora
+Zespół i dostęp
+Zaproszenia
+Zaproszenia
+
+Zarządzanie członkostwem, zmiany ról, przekazanie własności i kody zaproszeń zespołu.
+
+Zaproszenia
+
+Odczyt serwerowy dostarczenia, akceptacji, wygaśnięcia i odwołania zaproszeń.
+
+Odśwież
+
+Brak zapisanych zaproszeń dla tej przestrzeni.

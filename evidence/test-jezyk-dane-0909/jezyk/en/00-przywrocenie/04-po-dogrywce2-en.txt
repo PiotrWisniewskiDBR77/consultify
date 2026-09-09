@@ -1,0 +1,59 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Settings
+Language
+Data
+Model
+James Whitfield
+JW
+Settings
+
+Personal preferences
+
+My settings
+Profile
+Avatar & Photo
+Email Signatures
+Working Hours
+Work preferences
+Dashboard
+Work Preferences
+Regional
+Language
+AI & automation
+Notifications
+Security
+Integrations
+Data & privacy
+Billing
+Appearance
+Advanced
+Back to Dashboard
+Settings
+Language
+Language
+
+Choose your preferred language
+
+Language
+
+Select your preferred language for the interface.
+
+Organization language defaults stay read-only here. You can still override the interface language for your own account.
+TENANT DEFAULT LANGUAGE: EN
+🇬🇧
+English
+🇵🇱
+Polski
+🇩🇪
+Deutsch
+🇸🇦
+العربية
+🇯🇵
+日本語
+🇪🇸
+Español

@@ -1,0 +1,57 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Finanse
+Predykcja
+Dane
+Model
+James Whitfield
+JW
+Sprawozdania
+Analiza
+Modele
+Predykcja
+Wycena przedsiębiorstw
++ Nowy scenariusz
+Wszystkie
+1
+Szkic
+1
+Przegląd
+0
+Zatwierdzone
+0
+Analizuj
+AI
+	
+TYP
+	
+PODTYP
+	
+NAZWA
+	
+SCENARIUSZ
+	
+HORYZONT
+	
+STATUS
+	
+AKTUALIZACJA
+	
+
+	
+PRD
+	
+Budżet
+	
+Northwind 2027 Programme Budget — FY2026
+	
+base/opt/cons
+	
+2026-01-01 → 2026-12-31
+	
+Szkic
+	1 dzień temu	

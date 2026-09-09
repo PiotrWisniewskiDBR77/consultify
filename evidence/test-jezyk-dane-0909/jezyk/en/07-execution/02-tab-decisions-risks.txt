@@ -1,0 +1,163 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Due
+New decision
+Decisions
+9
+Risks
+7
+Signals
+8
+TITLE
+	
+NEEDED BY
+	
+DECISION MAKER
+	
+STATUS
+	
+DAYS OVERDUE
+	
+ESCALATION
+	
+
+
+Decide on the third-party training platform proposal
+	
+28/08/2026
+	
+Priya Sharma
+	
+Escalated
+	
++11
+	
+None
+	
+
+
+Pause the skills passport programme until the 2027 budget
+	
+31/07/2026
+	
+James Whitfield
+	
+Decided
+	
++39
+	
+None
+	
+
+
+Continue the warehouse shuttle pilot into a second aisle
+	
+14/08/2026
+	
+James Whitfield
+	
+Decided
+	
++25
+	
+None
+	
+
+
+Approve the spare-parts holding reduction target
+	
+04/12/2026
+	
+Thomas Baker
+	
+Pending
+	
+—
+	
+None
+	
+
+
+Set the predictive alert threshold policy
+	
+02/09/2026
+	
+Daniel Osei
+	
+Escalated
+	
++6
+	
+None
+	
+
+
+Extend predictive maintenance to cells 3, 4 and 5
+	
+21/08/2026
+	
+Sarah Mitchell
+	
+Decided
+	
++18
+	
+None
+	
+
+
+Accept the vendor firmware release as a hard dependency
+	
+06/11/2026
+	
+James Whitfield
+	
+Pending
+	
+—
+	
+None
+	
+
+
+Choose the MES downtime reason-code taxonomy
+	
+04/09/2026
+	
+Robert Chen
+	
+Escalated
+	
++4
+	
+None
+	
+
+
+Approve the Line 3 cutover date of 26 March 2027
+	
+09/10/2026
+	
+Sarah Mitchell
+	
+Pending
+	
+—
+	
+None
+	

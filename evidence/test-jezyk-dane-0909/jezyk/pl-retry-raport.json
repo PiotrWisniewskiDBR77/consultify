@@ -1,0 +1,268 @@
+{
+ "start": "2026-09-09T15:58:39.446Z",
+ "naprawione": [
+  {
+   "modul": "04-tools",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/discovery-tools"
+  },
+  {
+   "modul": "04-tools",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=sessions"
+  },
+  {
+   "modul": "04-tools",
+   "ekran": "02-tab-insights",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=outputs"
+  },
+  {
+   "modul": "04-tools",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=reports"
+  },
+  {
+   "modul": "04-tools",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/discovery-tools?tab=initiatives"
+  },
+  {
+   "modul": "10-materials",
+   "ekran": "02-tab-documents",
+   "url": "https://staging.consultify.ai/presentations?tab=documents"
+  },
+  {
+   "modul": "10-materials",
+   "ekran": "02-tab-presentations",
+   "url": "https://staging.consultify.ai/presentations?tab=presentations"
+  },
+  {
+   "modul": "10-materials",
+   "ekran": "02-tab-sheets",
+   "url": "https://staging.consultify.ai/presentations?tab=sheets"
+  },
+  {
+   "modul": "10-materials",
+   "ekran": "02-tab-template-library",
+   "url": "https://staging.consultify.ai/presentations?tab=templates"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "02-tab-scale",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "02-tab-markets-systems",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale"
+  }
+ ],
+ "dalejNA": [
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-ideas",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-notebook",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-inbox",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-calendar",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-tasks",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-decisions",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-vaults",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=0)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-inbox",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-sessions",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-assigned",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-templates",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-insights",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-initiatives",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-library",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-processes",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-insights",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-reports",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-initiatives",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "02-tab-plan",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=3)"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "02-tab-load",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=3)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-dashboard",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-deliveries",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-work",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-resources",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-decisions-risks",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-reports",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=6)"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-okr",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=4)"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-roi",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=4)"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-management-reports",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=4)"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-analysis",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-models",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-prediction",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-enterprise-valuation",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-library",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-sessions",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-conclusions",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-reports",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-initiatives",
+   "powod": "indeks nieznaleziony (EN kolejność=[], PL liczba zakładek=5)"
+  },
+  {
+   "modul": "14-admin",
+   "ekran": "03-subnav-invitations",
+   "powod": "Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object."
+  },
+  {
+   "modul": "14-admin",
+   "ekran": "03-subnav-roles-permissions",
+   "powod": "Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object."
+  },
+  {
+   "modul": "15-settings",
+   "ekran": "03-subnav-security",
+   "powod": "Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object."
+  }
+ ],
+ "koniec": "2026-09-09T16:00:34.940Z"
+}

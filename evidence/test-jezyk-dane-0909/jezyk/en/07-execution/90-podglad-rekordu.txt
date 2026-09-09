@@ -1,0 +1,130 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Active
+All
+All
+4
+At risk
+0
+Overdue
+1
+	
+INITIATIVE
+	
+LEVEL
+	
+STATUS
+	
+ASSIGNEE
+	
+PLANNED START / END
+	
+VARIANCE (DAYS)
+	
+RAG
+	
+
+	
+Predictive Maintenance for CNC Line
+	
+—
+	
+In execution
+	
+SM
+Sarah Mitchell
+	
+06/04/2026 → 31/03/2027
+	
+—
+	
+On track
+	
+
+	
+MES Rollout Line 3
+	
+—
+	
+In execution
+	
+SM
+Sarah Mitchell
+	
+04/05/2026 → 30/06/2027
+	
+—
+	
+On track
+	
+
+	
+Warehouse Automation Pilot
+	
+—
+	
+In execution
+	
+JW
+James Whitfield
+	
+02/03/2026 → 29/01/2027
+	
+—
+	
+On track
+	
+
+	
+Skills Matrix and Upskilling
+	
+—
+	
+On hold
+	
+JW
+James Whitfield
+	
+02/02/2026 → 18/12/2026
+	
+—
+	
+Blocked
+	
+Predictive Maintenance for CNC Line
+Open
+In execution
+45%
+31/03/2027
+DETAILS
+~22 words
+
+Assignee: Sarah Mitchell Progress: 45% Deadline: 31/03/2027 Tasks: 10
+
+Condition-based maintenance on Leeds CNC cells 1-6, replacing the fixed 12-week service calendar.
+
+INITIATIVE STAGE
+Close initiative
+Cancel initiative
+Put execution on hold
+Close initiative: Open tasks or unresolved decisions block closure.
+AI
+Summarize this initiative in 5 bullets and propose 3 next steps.
+RELATIONS
+No relations
+Copy link

@@ -1,0 +1,53 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Assessment
+Data
+Model
+James Whitfield
+JW
+Library
+Processes
+Insights
+Reports
+Initiatives
+New conclusion
+TYPE
+	
+SCOPE
+	
+MODULE
+	
+VERSION
+	
+FROZEN AT
+	
+
+
+Frozen output
+	
+Sesja 614e5f28-286f-4462-b5e8-a14f31930566 — drd@2.0.0-methodpack.1, zamrożona z event-store.
+	
+Assessment
+	
+v1
+Current
+	
+08/09/2026
+	
+
+
+Session record
+	
+Northwind 2027 — Operational Maturity Assessment
+	
+Assessment
+	
+—
+Session record
+	
+—
+	

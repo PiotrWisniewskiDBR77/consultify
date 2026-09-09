@@ -1,0 +1,206 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Panel administratora
+Przegląd
+Dane
+Model
+James Whitfield
+JW
+Wstecz
+PANEL ADMINISTRATORA
+
+Dostęp, polityki organizacji, dowody i bezpieczne operacje
+
+ZESPÓŁ I DOSTĘP
+Użytkownicy
+Zaproszenia
+Role i uprawnienia
+Zespoły
+Goście i dostęp zewnętrzny
+Wnioski o dostęp
+Przeglądy dostępów
+Własność
+ROZLICZENIA I PLANY
+STEROWANIE AI
+BEZPIECZEŃSTWO I TOŻSAMOŚĆ
+DZIENNIK AUDYTU
+CENTRUM DOWODZENIA
+STAN SYSTEMU
+Panel administratora
+Zespół i dostęp
+Użytkownicy
+Użytkownicy
+
+Zarządzanie członkostwem, zmiany ról, przekazanie własności i kody zaproszeń zespołu.
+
+Właściciel
+
+Pełna kontrola nad przestrzenią, przekazanie własności i zabezpieczenia zarezerwowane dla właściciela.
+
+Tylko właściciel może przypisać lub usunąć innego właściciela.
+
+Administrator
+
+Może zarządzać członkami zespołu, ich rolami i kodami zaproszeń.
+
+Nie może zmienić członkostwa właściciela ani ominąć jego zabezpieczeń.
+
+Członek
+
+Standardowy dostęp do przestrzeni bez uprawnień administracyjnych zespołu.
+
+Nie może otworzyć administracji zespołu ani zmieniać członkostwa.
+
+Gość
+
+Ograniczona rola współpracownika bez dostępu administracyjnego.
+
+Goście nie mają dostępu do narzędzi administracyjnych.
+
+Członkowie i role
+
+Kanoniczna powierzchnia P32 do zarządzania członkostwem, zmianami ról i zabezpieczeniami właściciela.
+
+Rola w zaproszeniu
+Członek
+Administrator
+Gość
+Dodaj członka
+CZŁONEK
+	
+E-MAIL
+	
+ROLA
+	
+STATUS
+	
+
+
+James Whitfield
+	
+james.whitfield@northwind.example
+	
+Rola użytkownika James Whitfield
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Sarah Mitchell
+	
+sarah.mitchell@northwind.example
+	
+Rola użytkownika Sarah Mitchell
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Robert Chen
+	
+robert.chen@northwind.example
+	
+Rola użytkownika Robert Chen
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Emily Carter
+	
+emily.carter@northwind.example
+	
+Rola użytkownika Emily Carter
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Daniel Osei
+	
+daniel.osei@northwind.example
+	
+Rola użytkownika Daniel Osei
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Laura Novak
+	
+laura.novak@northwind.example
+	
+Rola użytkownika Laura Novak
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Michael Grant
+	
+michael.grant@northwind.example
+	
+Rola użytkownika Michael Grant
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Priya Sharma
+	
+priya.sharma@northwind.example
+	
+Rola użytkownika Priya Sharma
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	
+
+
+Thomas Baker
+	
+thomas.baker@northwind.example
+	
+Rola użytkownika Thomas Baker
+Właściciel
+Administrator
+Członek
+Gość
+	
+Aktywne
+	

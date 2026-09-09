@@ -1,0 +1,606 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Narzędzia
+Dane
+Model
+James Whitfield
+JW
+Biblioteka
+Sesje
+Insighty
+Raporty
+Inicjatywy
+Dodaj narzędzie
+Wszystkie
+36
+Strategia
+10
+Operacje
+10
+Cyfrowe
+10
+Automatyzacje
+1
+Oceny
+5
+NARZĘDZIE
+	
+KATEGORIA
+	
+TAGI
+	
+LICENCJA
+	
+STATUS
+	
+
+
+Dynamic SWOT
+	
+Strategiczne
+	
+strategy
+swot
+diagnosis
+	
+Darmowe
+	
+Aktywny
+	
+
+
+Market Forces (Porter)
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+porter
+competition
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Growth Paths (Ansoff)
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+ansoff
+growth
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Value Chain Analysis
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+value-chain
+operating-model
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Portfolio Prioritization
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+prioritization
+portfolio
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Risk & Uncertainty
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+risk
+uncertainty
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Capability Mapper
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+capabilities
+roadmap
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Ambition Decomposer
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+targets
+roadmap
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Focus & Trade-offs
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+tradeoffs
+focus
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Narrative & Alignment
+Już wkrótce
+	
+Strategiczne
+	
+strategy
+narrative
+alignment
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+A3 Problem Solving
+Już wkrótce
+	
+Operacyjne
+	
+operations
+a3
+root-cause
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+VSM Builder
+Już wkrótce
+	
+Operacyjne
+	
+operations
+lean
+vsm
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+SOP Builder
+Już wkrótce
+	
+Operacyjne
+	
+operations
+sop
+standard-work
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Constraint Control (TOC)
+Już wkrótce
+	
+Operacyjne
+	
+operations
+toc
+throughput
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Decision Engine
+Już wkrótce
+	
+Operacyjne
+	
+operations
+decision
+prioritization
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Control Tower
+Już wkrótce
+	
+Operacyjne
+	
+operations
+kpi
+governance
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Automation Pipeline
+Już wkrótce
+	
+Operacyjne
+	
+operations
+automation
+pipeline
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+SMED Planner
+Już wkrótce
+	
+Operacyjne
+	
+operations
+smed
+setup
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Daily Management System
+Już wkrótce
+	
+Operacyjne
+	
+operations
+cadence
+kpi
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Inventory Autopilot
+Już wkrótce
+	
+Operacyjne
+	
+operations
+inventory
+policy
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Robotics Feasibility
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+robotics
+automation
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Logistics Automation
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+logistics
+warehouse
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+RPA Scanner
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+rpa
+backoffice
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+AI Discovery
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+ai
+use-cases
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Integration Diagnostic
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+integration
+architecture
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Digital Value Pool
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+value
+economics
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Legacy Analyzer
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+legacy
+modernization
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Data Inventory
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+data
+governance
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Pain-to-Solution Mapper
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+solutions
+mapping
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Pain Explorer
+Już wkrótce
+	
+Cyfrowe
+	
+digital
+discovery
+problems
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Process Automation (Speed Tool)
+Już wkrótce
+	
+Automatyzacja procesów
+	
+automation
+process
+roi
+	
+Darmowe
+	
+Nieaktywny
+	
+
+
+Digital Readiness Diagnosis
+	
+Oceny
+	
+assessment
+digital
+readiness
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Smart Industry Readiness Index
+	
+Oceny
+	
+assessment
+industry-4.0
+readiness
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Advanced Digital Maturity Assessment
+	
+Oceny
+	
+assessment
+maturity
+digital
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Capability Maturity Model Integration
+Już wkrótce
+	
+Oceny
+	
+assessment
+process
+maturity
+	
+Licencjonowane
+	
+Aktywny
+	
+
+
+Lean 4.0
+Już wkrótce
+	
+Oceny
+	
+assessment
+lean
+operations
+	
+Licencjonowane
+	
+Aktywny
+	
+Dynamic SWOT
+Otwórz
+Strategia
+Darmowe
+Aktywny
+16/03/2026
+SZCZEGÓŁY
+CEL
+Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.
+REZULTAT
+Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.
+ZESPÓŁ
+C-level / właściciele, lider strategii lub dyrektor operacyjny
+ROLA AI
+Moderator sesji, analityk evidence, generator napięć i rekomendacji
+CZAS
+60-90 min
+AI
+Kiedy użyć
+Pierwsze kroki
+Błędy
+POWIĄZANIA
+strategy
+swot
+diagnosis
+Start sesji
+S
+Otwórz
+O
+Czat
+C

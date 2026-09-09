@@ -1,0 +1,37 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Finanse
+Sprawozdania
+Dane
+Model
+James Whitfield
+JW
+BIEŻĄCY DOKUMENT
+Nie wybrano dokumentu
+Wgranie
+1/4
+Finanse
+/
+Import
+Import sprawozdania finansowego
+
+Wgraj dokument, aby odczytać i ustandaryzować dane finansowe
+
+1
+Wgranie
+2
+Wykrywanie
+3
+Mapowanie i korekta
+4
+Potwierdzenie
+
+Upuść plik tutaj lub kliknij, aby go wybrać
+
+Obsługiwane: sprawozdania PDF, Excel (XLSX/XLS) i CSV
+
+Wgraj i analizuj

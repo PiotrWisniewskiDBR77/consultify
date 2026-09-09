@@ -1,0 +1,91 @@
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Finance
+Enterprise valuation
+Data
+Model
+James Whitfield
+JW
+Statements
+Analysis
+Models
+Prediction
+Enterprise valuation
++ New valuation
+All
+0
+Draft
+0
+Review
+0
+Approved
+0
+Analyze
+AI
+Banking value
+Cash forecast
+Driver planner
+Driver tree
+Extended ratios
+Headcount planner
+Investment appraisal
+Rolling forecast
+Valuation visuals
+Value attribution
+Value capture pipeline
+Value ledger
+Value office
+Variance bridge
+Variance narration
+EV basket
+Monte Carlo NPV
+Real options
+Efficient frontier
+What-if sensitivity
+Scenario compute
+Monte Carlo NPV simulation
+
+Simulate NPV outcomes across driver uncertainty ranges.
+
+Driver
+Min
+Mode
+Max
+Weight
+×
+Driver
+Min
+Mode
+Max
+Weight
+×
++ driver
+Iterations
+Seed
+Histogram bins
+Run simulation
+
+Set drivers and run the simulation to see the NPV distribution.
+
+	
+TYPE
+	
+NAME
+	
+SOURCE
+	
+METHOD
+	
+HORIZON
+	
+STATUS
+	
+UPDATED
+	
+
+
+No valuations yet. Create your first valuation.

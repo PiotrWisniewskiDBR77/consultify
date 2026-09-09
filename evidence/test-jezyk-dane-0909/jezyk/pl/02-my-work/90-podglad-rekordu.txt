@@ -1,0 +1,247 @@
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Moja Praca
+Skrzynka
+Dane
+Model
+James Whitfield
+JW
+Pomysły
+Notatnik
+Skrzynka
+Kalendarz
+Zadania
+Decyzje
+Sejfy
+Wszystkie
+8
+Zaległe
+2
+Zapisane
+0
+AI
+0
+Krytyczne
+0
+Wymaga akcji
+8
+Dziś
+0
+Ten tydz.
+0
+Gotowe
+0
+Wstępna klasyfikacja AI
+	
+TYTUŁ
+	
+STATUS
+	
+PILNOŚĆ
+	
+TYP
+	
+SEKCJA
+	
+ŹRÓDŁO
+	
+OTRZYMANO
+	
+SLA
+	
+
+	
+Prepare the restart decision pack for the paused programme
+	
+Otwarte
+	
+Wysoka
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 2d
+	
+
+	
+Sign off Line 3 MES kickoff deck
+	
+Otwarte
+	
+Wysoka
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 7h
+	
+
+	
+Approve Q3 capex request
+	
+Otwarte
+	
+Wysoka
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 15d
+	
+
+	
+Accept the vendor firmware release as a hard dependency
+	
+Otwarte
+	
+Normalna
+	
+Decyzja
+	
+Wymaga Twojej decyzji
+	
+Systemowe
+	
+1 d temu
+	
+L1 58d
+	
+
+	
+Follow up with Rotherham plant manager on downtime log
+	
+Otwarte
+	
+Normalna
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 7d
+	
+
+	
+Review supplier corrective action plan
+	
+Otwarte
+	
+Normalna
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 2d
+	
+
+	
+Draft opening remarks for steering committee
+	
+Otwarte
+	
+Normalna
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 8d
+	
+
+	
+Prepare board pack for October review
+	
+Otwarte
+	
+Niska
+	
+Przypisanie
+	
+Nowe zadania
+	
+Systemowe
+	
+1 d temu
+	
+L1 20d
+	
+Prepare the restart decision pack for the paused programme
+Otwórz
+Zadanie
+Wysoka
+1 d temu
+·
+SLA L1 2d
+Źródło:
+Zadanie
+Zadanie źródłowe:
+541eaaf3…
+Odbiorca:
+James Whitfield
+Organizacja:
+Northwind Manufacturing Ltd.
+Zaktualizowano:
+5 min temu
+Status źródła:
+Do zrobienia
+Inicjatywa:
+4e7a8762-62e6-52b5-985b-536a4d9185aa
+SZCZEGÓŁY
+~18 słów
+
+What it would take to restart in January 2027, and what the pause is costing in cover risk.
+
+AI
+Dlaczego pilne?
+Plan działania
+Kto może pomóc?
+POWIĄZANIA
+Powiązane zadanie
+Dziś
+T
+Tydzień
+W
+Później
+L
+Gotowe
+D
+Zapisz
+S
+Notatka
+N
+Odłóż
+X
+Odłóż na…
+Cofnij ostatnią sugestię AI

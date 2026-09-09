@@ -1,0 +1,223 @@
+{
+ "start": "2026-09-09T16:04:59.309Z",
+ "naprawione": [
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-ideas",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-notebook",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-inbox",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-calendar",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-tasks",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-decisions",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "02-my-work",
+   "ekran": "02-tab-vaults",
+   "url": "https://staging.consultify.ai/my-work"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "02-tab-plan",
+   "url": "https://staging.consultify.ai/initiatives?tab=plan"
+  },
+  {
+   "modul": "06-initiatives",
+   "ekran": "02-tab-load",
+   "url": "https://staging.consultify.ai/initiatives?tab=capacity"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-okr",
+   "url": "https://staging.consultify.ai/results/okr"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-roi",
+   "url": "https://staging.consultify.ai/results/roi"
+  },
+  {
+   "modul": "08-results",
+   "ekran": "02-tab-management-reports",
+   "url": "https://staging.consultify.ai/results/kpi?resultsView=reports"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-analysis",
+   "url": "https://staging.consultify.ai/finance?tab=analysis"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-models",
+   "url": "https://staging.consultify.ai/finance?tab=models"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-prediction",
+   "url": "https://staging.consultify.ai/finance?tab=prediction"
+  },
+  {
+   "modul": "09-finance",
+   "ekran": "02-tab-enterprise-valuation",
+   "url": "https://staging.consultify.ai/finance?tab=valuation"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-library",
+   "url": "https://staging.consultify.ai/audit-programs?tab=library"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-sessions",
+   "url": "https://staging.consultify.ai/audit-programs?tab=processes"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-conclusions",
+   "url": "https://staging.consultify.ai/audit-programs?tab=conclusions"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-reports",
+   "url": "https://staging.consultify.ai/audit-programs?tab=reports"
+  },
+  {
+   "modul": "11-audits",
+   "ekran": "02-tab-initiatives",
+   "url": "https://staging.consultify.ai/audit-programs?tab=initiatives"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "02-tab-scale",
+   "url": "https://staging.consultify.ai/organization/profile/identity-scale"
+  },
+  {
+   "modul": "14-admin",
+   "ekran": "03-subnav-invitations",
+   "url": "https://staging.consultify.ai/admin/team/invitations"
+  },
+  {
+   "modul": "14-admin",
+   "ekran": "03-subnav-roles-permissions",
+   "url": "https://staging.consultify.ai/admin/team/roles-permissions"
+  },
+  {
+   "modul": "15-settings",
+   "ekran": "03-subnav-security",
+   "url": "https://staging.consultify.ai/settings/profile"
+  }
+ ],
+ "dalejNA": [
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-inbox",
+   "powod": "\"Inbox\" brak w EN kolejności []"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-sessions",
+   "powod": "\"Sessions\" brak w EN kolejności []"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-assigned",
+   "powod": "\"Assigned\" brak w EN kolejności []"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-templates",
+   "powod": "\"Templates\" brak w EN kolejności []"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-insights",
+   "powod": "\"Insights\" brak w EN kolejności []"
+  },
+  {
+   "modul": "03-interview",
+   "ekran": "02-tab-initiatives",
+   "powod": "\"Initiatives\" brak w EN kolejności []"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-library",
+   "powod": "\"Library\" brak w EN kolejności []"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-processes",
+   "powod": "\"Processes\" brak w EN kolejności []"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-insights",
+   "powod": "\"Insights\" brak w EN kolejności []"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-reports",
+   "powod": "\"Reports\" brak w EN kolejności []"
+  },
+  {
+   "modul": "05-assessment",
+   "ekran": "02-tab-initiatives",
+   "powod": "\"Initiatives\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-dashboard",
+   "powod": "\"Dashboard\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-deliveries",
+   "powod": "\"Deliveries\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-work",
+   "powod": "\"Work\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-resources",
+   "powod": "\"Resources\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-decisions-risks",
+   "powod": "\"Decisions & risks\" brak w EN kolejności []"
+  },
+  {
+   "modul": "07-execution",
+   "ekran": "02-tab-reports",
+   "powod": "\"Reports\" brak w EN kolejności []"
+  },
+  {
+   "modul": "13-organization",
+   "ekran": "02-tab-markets-systems",
+   "powod": "brak elementu PL o indeksie 2"
+  }
+ ],
+ "koniec": "2026-09-09T16:06:47.547Z"
+}
