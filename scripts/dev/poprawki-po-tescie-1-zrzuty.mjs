@@ -34,8 +34,9 @@ const SCENARIUSZE = [
   { id: 'D-11-audyty-library', route: '/audit-programs?tab=library' },
   { id: 'D-15-inicjatywy-reczne', route: '/initiatives', menu2: true, poMenu: true },
   { id: 'D-07-materialy-podglad', route: '/presentations', wiersz: true },
-  { id: 'D-10-admin-members', route: '/admin', tab: 'Members' },
+  { id: 'D-10-admin-members', route: '/admin', tab: 'Members', klik: 'Members' },
   { id: 'D-12-format-daty', route: '/results/kpi' },
+  { id: 'D-12-finanse-completeness', route: '/finance' },
 ];
 
 async function ustawMotyw(page, motyw) {
@@ -85,6 +86,10 @@ async function main() {
       await page.goto(`${BASE}${s.route}`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
       await page.waitForTimeout(4000);
       await page.keyboard.press('Escape').catch(() => {});
+      if (s.klik) {
+        const l = page.locator(`text=${s.klik}`).first();
+        if (await l.isVisible({ timeout: 2500 }).catch(() => false)) { await l.click({ force: true }).catch(() => {}); await page.waitForTimeout(3500); }
+      }
       if (s.tab) {
         const el = page.getByRole('tab', { name: s.tab, exact: true }).first();
         if (await el.isVisible({ timeout: 2500 }).catch(() => false)) { await el.click({ force: true }).catch(() => {}); await page.waitForTimeout(3000); }

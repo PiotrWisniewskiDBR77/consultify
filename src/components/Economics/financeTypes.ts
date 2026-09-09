@@ -498,3 +498,24 @@ export interface PreviewDataState {
     displayMultiplier: number;
   } | null;
 }
+
+/**
+ * TEST-DANE D-12 (09.09.2026) — etykieta kompletności paczki sprawozdań.
+ *
+ * DLACZEGO WSPÓLNA: dokładnie ten sam wyraz (`—${type}`) był przepisany
+ * w TRZECH miejscach — `FinanceHub.tsx`, `hooks/useFinanceData.ts` oraz
+ * `Finance/FinancialStatementPackWorkspace.tsx` — więc naprawa w jednym
+ * z nich odrosłaby w dwóch pozostałych. Teraz jest jeden dom.
+ *
+ * CO BYŁO ŹLE: myślnik braku sklejał się z nazwą sprawozdania, przez co na
+ * ekranie stało „COMPLETENESS: P&L / —BS / —CF" i czytało się jak literówka,
+ * a nie jak „brak BS". Myślnik zostaje (to ten sam znak braku, którego używają
+ * tabele), dostaje tylko odstęp.
+ */
+export const FINANCE_STATEMENT_TYPES = ['P&L', 'BS', 'CF'] as const;
+
+export function financeCompletenessLabel(
+  isPresent: (statementType: string) => boolean
+): string {
+  return FINANCE_STATEMENT_TYPES.map((type) => (isPresent(type) ? type : `— ${type}`)).join(' / ');
+}

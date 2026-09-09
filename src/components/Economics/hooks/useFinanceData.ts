@@ -28,6 +28,7 @@ import {
   normalizeModelStatus,
   normalizeStatus,
   type PredictionType,
+  financeCompletenessLabel,
 } from '../financeTypes';
 import {
   FINANCE_OWNER_SAMPLE_ANALYSES,
@@ -430,9 +431,7 @@ export function useFinanceData(
         } catch {
           missingStatementTypes = [];
         }
-        const completenessLabel = ['P&L', 'BS', 'CF']
-          .map((type) => (presentTypes.has(type) ? type : `—${type}`))
-          .join(' / ');
+        const completenessLabel = financeCompletenessLabel((type) => presentTypes.has(type));
         return {
           id: String(s.id),
           title: String(

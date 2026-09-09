@@ -36,6 +36,7 @@ import {
   type FinanceStatementRow,
   type FinanceStatementTableRow,
   type FinanceStatementValidation,
+  financeCompletenessLabel,
 } from '../Economics/financeTypes';
 import { CanonicalStatementTable } from './CanonicalStatementTable';
 import { FinancialStatementWorkspace } from './FinancialStatementWorkspace';
@@ -249,11 +250,9 @@ function mapPackDetailToRow(detail: PackDetail): FinanceStatementRow {
     sourceStatementCount: Number(detail.source_statement_count ?? childStatements.length),
     statementIds: childStatements.map((statement) => statement.id),
     missingStatementTypes,
-    completenessLabel: ['P&L', 'BS', 'CF']
-      .map((type) =>
-        childStatements.some((statement) => statement.statementType === type) ? type : `—${type}`
-      )
-      .join(' / '),
+    completenessLabel: financeCompletenessLabel((type) =>
+      childStatements.some((statement) => statement.statementType === type)
+    ),
     childStatements,
     overallConfidence: 0,
     rawStatus: String(detail.pack_status || 'draft'),
