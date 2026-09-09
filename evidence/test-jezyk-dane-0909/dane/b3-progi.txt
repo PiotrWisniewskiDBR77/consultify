@@ -1,0 +1,49 @@
+Pager usage is off.
+=== B3 PROGI ===
+                  k                  | v  
+-------------------------------------+----
+ Inicjatywy: razem                   | 13
+ Inicjatywy: DRAFT                   | 1
+ Inicjatywy: APPROVED                | 4
+ Inicjatywy: IN_EXECUTION            | 4
+ Inicjatywy: on_hold=true            | 1
+ Inicjatywy: CLOSED                  | 1
+ Realizacja: inicjatywy w realizacji | 4
+ Realizacja: zadania                 | 42
+ Realizacja: RAID                    | 7
+ Realizacja: decyzje                 | 9
+ Realizacja: kamienie milowe         | 16
+ Realizacja: raporty statusu         | 2
+ Moja Praca: zadania wlasciciela     | 7
+ Moja Praca: skrzynka                | 8
+ Spotkania: razem                    | 2
+ Spotkania: notatki                  | 2
+ Wywiad: sesje                       | 2
+ Wywiad: pytania odpowiedziane       | 22
+ Wywiad: wnioski                     | 4
+ Ocena: sesje ukonczone              | 1
+ Ocena: raporty                      | 1
+ Narzedzia: sesje                    | 3
+ Narzedzia: typy                     | 3
+ Wyniki: definicje KPI               | 8
+ Wyniki: pomiary KPI                 | 48
+ Wyniki: karty wynikow               | 1
+ Wyniki: OKR cele                    | 3
+ Finanse: budzety                    | 1
+ Finanse: pozycje budzetu            | 15
+ Finanse: sprawy ROI                 | 1
+ Finanse: sprawozdania               | 4
+ Materialy: raporty/dokumenty        | 4
+ Materialy: prezentacje              | 2
+ Materialy: arkusze                  | 1
+ Audyty: programy                    | 1
+ Audyty: ustalenia                   | 3
+ Organizacja: profil                 | 1
+ Organizacja: profile_completeness   | 0
+ Organizacja: strategic_priorities   | []
+ Organizacja: czlonkowie ACTIVE      | 9
+ Admin: uzytkownicy                  | 9
+ Czat: rozmowy                       | 3
+ Czat: wiadomosci                    | 11
+(43 rows)
+
