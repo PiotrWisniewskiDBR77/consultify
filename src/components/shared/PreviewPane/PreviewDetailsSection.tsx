@@ -91,6 +91,21 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const resolvedText = text ?? detailsText?.join('\n') ?? '';
+  /**
+   * TEST-DANE D-07 (09.09.2026): blok DETAILS sklejal wiersze w jedno zdanie —
+   * „Owner: Daniel Osei Slides: 6 Updated: Sep 8, 2026" w Materialach. To nie
+   * byl defekt tamtego ekranu: KAZDY wolacz tego kanonu buduje tresc jako
+   * `['Wlasciciel: X', 'Slajdy: 6', ...].join('\n')`, a tekst leci przez
+   * `ReactMarkdown`, gdzie POJEDYNCZY znak nowej linii jest z definicji
+   * CommonMark „miekkim zlamaniem" i renderuje sie jako SPACJA. Naprawa w
+   * miejscu wspolnym, nie per ekran: pojedyncze zlamania zamieniamy na twarde
+   * (dwie spacje przed nowa linia — zapis markdown dla `<br>`). Puste linie
+   * (akapity) i tekst z blokiem kodu zostaja nietkniete.
+   */
+  const tekstZeZlamaniami = React.useMemo(() => {
+    if (!resolvedText || resolvedText.includes('```')) return resolvedText;
+    return resolvedText.replace(/([^\n ])\n(?!\n)/g, '$1  \n');
+  }, [resolvedText]);
 
   const defaultActions: DetailsAction[] = [
     ...(onExpand
@@ -270,7 +285,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
               ].join(' ')}
               onClick={onToggleExpanded}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolvedText}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{tekstZeZlamaniami}</ReactMarkdown>
             </div>
           ) : !children ? (
             <div
