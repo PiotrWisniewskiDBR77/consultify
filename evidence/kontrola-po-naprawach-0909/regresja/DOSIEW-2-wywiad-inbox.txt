@@ -1,0 +1,88 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Interview
+Inbox
+Data
+Model
+1
+James Whitfield
+JW
+Inbox
+Sessions
+Assigned
+Templates
+Insights
+Initiatives
+Assign
+All
+3
+Answered
+1
+Approved
+1
+Sent back
+0
+	
+TYPE
+	
+NAME
+	
+STATUS
+	
+PROGRESS
+	
+DAYS TO DUE
+	
+ASSIGNEE
+	
+
+	
+Quality, Compliance & Risk
+	
+Quality, Compliance & Risk
+	
+Approved
+	
+100%
+	
+20d overdue
+	
+R
+Robert Chen
+	
+
+	
+Manufacturing Walkthrough
+	
+Manufacturing Walkthrough
+	
+Submitted
+	
+100%
+	
+6d overdue
+	
+S
+Sarah Mitchell
+	
+
+	
+Strategic Direction Discovery
+	
+Strategic Direction Discovery
+	
+Assigned
+	
+0%
+	
+11d left
+	
+J
+James Whitfield
+	

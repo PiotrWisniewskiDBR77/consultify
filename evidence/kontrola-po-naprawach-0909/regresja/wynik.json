@@ -1,0 +1,40 @@
+{
+ "wyniki": [
+  {
+   "id": "D-17-v9-overrides",
+   "route": "/my-work",
+   "bledyKonsoli": 0,
+   "odpowiedzi4xx5xx": [],
+   "dlugoscTekstu": 1646
+  },
+  {
+   "id": "DOSIEW-1-organizacja",
+   "route": "/organization/profile",
+   "bledyKonsoli": 0,
+   "odpowiedzi4xx5xx": [],
+   "dlugoscTekstu": 2051
+  },
+  {
+   "id": "DOSIEW-2-wywiad-inbox",
+   "route": "/interview",
+   "bledyKonsoli": 0,
+   "odpowiedzi4xx5xx": [],
+   "dlugoscTekstu": 635
+  },
+  {
+   "id": "DOSIEW-3-wyniki-migawka",
+   "route": "/results/kpi",
+   "bledyKonsoli": 0,
+   "odpowiedzi4xx5xx": [],
+   "dlugoscTekstu": 414
+  },
+  {
+   "id": "DOSIEW-4-realizacja-zasoby",
+   "route": "/execution?tab=resources",
+   "bledyKonsoli": 0,
+   "odpowiedzi4xx5xx": [],
+   "dlugoscTekstu": 6948
+  }
+ ],
+ "konsola": []
+}

@@ -1,0 +1,223 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Materials
+All
+Data
+Model
+1
+James Whitfield
+JW
+All
+Documents
+Presentations
+Sheets
+Template Library
+Status
+Visibility
+New material
+All
+7
+Document
+4
+Presentation
+2
+Sheet
+1
+	
+PRESENTATION
+	
+TYPE
+	
+FORMAT
+	
+STATUS
+	
+OWNER
+	
+VISIBILITY
+	
+SOURCE
+	
+REVIEW
+	
+EXPORTS
+	
+DATE
+	
+
+	
+Scrap Cost Model
+	
+Sheet (Model)
+	
+XLSX
+	
+Ready
+	
+Thomas Baker
+	
+Organization
+	
+—
+	
+—
+	
+XLSX
+	
+Sep 8, 2026
+	
+
+	
+Line 3 MES Rollout Kick-off
+	
+Presentation
+	
+PPTX
+	
+Ready
+	
+Daniel Osei
+	
+Organization
+	
+Tool
+	
+—
+	
+PPTX
+	
+Sep 8, 2026
+	
+
+	
+Steering Committee — September 2026
+	
+Presentation
+	
+PPTX
+	
+Ready
+	
+James Whitfield
+	
+Organization
+	
+Tool
+	
+—
+	
+PPTX
+	
+Sep 8, 2026
+	
+
+	
+Digital Roadmap 2026–2028
+	
+Document
+	
+DOCX
+	
+Draft
+	
+Daniel Osei
+	
+Organization
+	
+—
+	
+—
+	
+DOCX
+	
+Sep 8, 2026
+	
+
+	
+Supplier Quality Gate Procedure
+	
+Document
+	
+DOCX
+	
+Draft
+	
+Robert Chen
+	
+Organization
+	
+—
+	
+—
+	
+DOCX
+	
+Sep 8, 2026
+	
+
+	
+OEE Baseline Report Q2 2026
+	
+Document
+	
+DOCX
+	
+Draft
+	
+Michael Grant
+	
+Organization
+	
+—
+	
+—
+	
+DOCX
+	
+Sep 8, 2026
+	
+
+	
+Operational Excellence Charter
+	
+Document
+	
+DOCX
+	
+Draft
+	
+James Whitfield
+	
+Organization
+	
+—
+	
+—
+	
+DOCX
+	
+Sep 8, 2026
+	
+AI bundle — generation history
+VISIBLE COLUMNS
+Presentation
+LOCKED
+Type
+Format
+Status
+Owner
+Visibility
+source
+Review
+Exports
+Date
+Actions
+LOCKED
+Reset columns
+Show row description

@@ -1,0 +1,149 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Organization
+Data
+Model
+1
+James Whitfield
+JW
+Back to Dashboard
+Organization
+
+Business context, sources, and decision readiness
+
+ORGANIZATION PROFILE
+Identity & Operating Model
+Direction & Constraints
+GOALS & EXPECTATIONS
+Goals & Metrics
+Scope & Ways of Working
+CHALLENGES
+Challenges & Evidence
+Root Causes & Blockers
+STRATEGIC SYNTHESIS
+Risks & Opportunities
+Scenarios & Brief
+SOURCES & KNOWLEDGE
+Sources & Claims
+Knowledge Graph
+READINESS & GOVERNANCE
+Organization Readiness
+Organization
+Organization Profile
+Identity & Operating Model
+
+Teresa context: 17 claims · updated 5h ago
+
+Teresa is using this context to answer your questions
+
+View knowledge graph
+Identity
+Scale
+Markets & systems
+Add source
+All
+13
+Filled in
+13
+To fill in
+0
+Conflicts
+0
+Identity
+
+The organization type decides what Teresa asks about next.
+
+ORGANIZATION TYPE
+
+Manufacturing
+Professional Services
+Technology
+Public Sector
+Nonprofit / NGO
+Other
+INDUSTRY
+—
+Technology
+Financial Services
+Healthcare
+Manufacturing
+Industrial
+Consumer
+Energy
+Telecommunications
+Real Estate
+Transportation & Logistics
+Education
+Government
+Retail & E-commerce
+Media & Entertainment
+Agriculture
+Construction
+Hospitality
+Professional Services
+Other
+
+Organization profile · not approved 09/09/2026
+
+SUB-INDUSTRY
+INDUSTRY CODE
+ORGANIZATION DESCRIPTION
+
+Organization profile · not approved 09/09/2026
+
+Technical details
+Scale
+COMPANY SIZE
+—
+Startup (< 50)
+SMB (50-250)
+Mid-Market (250-1000)
+Enterprise (1000+)
+
+Organization profile · not approved 09/09/2026
+
+EMPLOYEE COUNT
+ANNUAL REVENUE
+HEADQUARTERS COUNTRY
+FOUNDING YEAR
+Markets & core systems
+PRIMARY MARKETS
+CUSTOMER SEGMENTS
+KEY COMPETITORS
+DATA STATE
+v1
+
+13/13
+
+Fields filled in
+
+17
+
+Approved facts
+
+Data completeness — this is not decision readiness.
+
+SOURCES
+17 claims
+
+Context items
+
+1 source records
+
+OK
+
+Last update
+
+5 h ago
+
+Show field sources
+Save changes
+Publish context version
+
+Publishing creates an immutable version that the other modules read.
