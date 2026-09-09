@@ -10,11 +10,11 @@ fs.mkdirSync(OUT, { recursive: true });
 const PW = fs.readFileSync('/Users/piotrwisniewski/Developer/consultify-secrets/northwind-konta-STAGING.txt', 'utf8').match(/has(?:ł|l)o[^:]*:\s*(\S+)/i)[1];
 const KONTA = ['james.whitfield', 'sarah.mitchell', 'robert.chen', 'emily.carter', 'daniel.osei', 'laura.novak', 'michael.grant', 'priya.sharma', 'thomas.baker'].map(x => `${x}@northwind.example`);
 const wynik = [];
-const b = await chromium.launch();
 for (const email of KONTA) {
-  const r = await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: PW }) });
+  let r; try { r = await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: PW }) }); } catch (e) { console.log(`[KONTO] ${email} BLAD_SIECI ${String(e).slice(0,60)}`); continue; }
   const j = await r.json().catch(() => ({}));
   const rec = { email, httpLogin: r.status, rola: j?.user?.role ?? null, org: j?.user?.organizationId ?? null };
+  const b = await chromium.launch();
   const c = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
   const p = await c.newPage();
   const bledy = []; const net = [];
@@ -29,10 +29,9 @@ for (const email of KONTA) {
   rec.menu = await p.evaluate(() => (document.querySelector('nav')?.innerText || '').split('\n').filter(Boolean)).catch(() => []);
   rec.bledyKonsoli = bledy.length; rec.przykladBledu = bledy[0] || null; rec.net4xx5xx = [...new Set(net)].slice(0, 8);
   await p.screenshot({ path: path.join(OUT, `${email.split('@')[0]}.png`) }).catch(() => {});
-  await c.close();
+  await c.close(); await b.close();
   wynik.push(rec);
   console.log(`[KONTO] ${email.padEnd(35)} login=${rec.httpLogin} rola=${rec.rola} url=${rec.urlPo} tekst=${rec.tekstEkranu} menu=${rec.menu.length} bledy=${rec.bledyKonsoli} net=${rec.net4xx5xx.length}`);
 }
-await b.close();
 fs.writeFileSync(path.join(OUT, 'b7-konta.json'), JSON.stringify(wynik, null, 2));
 console.log('ZAPISANO b7-konta.json');
