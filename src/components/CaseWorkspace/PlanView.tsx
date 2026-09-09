@@ -197,7 +197,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
   onSelectNode,
   onDraftSaved,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   /*
    * ── EDYCJA SZKICU (`updatePlanDraft`) ─────────────────────────────────────
    *
@@ -400,8 +401,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
   const effectivePlanVersion = local?.planVersion ?? planVersion;
 
   const layout = useMemo(
-    () => (effectiveGraph ? layoutGraph(effectiveGraph) : { nodes: [], width: 0, height: 0 }),
-    [effectiveGraph]
+    () => (effectiveGraph ? layoutGraph(effectiveGraph, isPolish) : { nodes: [], width: 0, height: 0 }),
+    [effectiveGraph, isPolish]
   );
 
   const successorsById = useMemo(() => {
@@ -464,13 +465,13 @@ export const PlanView: React.FC<PlanViewProps> = ({
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <StatusTag tone="neutral">
             {t('caseWorkspace.plan.header.closurePrefix', 'Closure: {{type}}', {
-              type: closureTypeLabel(caseItem.contractedClosureType, true),
+              type: closureTypeLabel(caseItem.contractedClosureType, isPolish),
             })}
           </StatusTag>
           {effectivePlanVersion ? (
             <StatusTag tone={effectivePlanVersion.status === 'PUBLISHED' ? 'success' : 'warning'}>
               {t('caseWorkspace.plan.header.planPrefix', 'Plan: {{status}} (version {{number}})', {
-                status: planVersionStatusLabel(effectivePlanVersion.status, true),
+                status: planVersionStatusLabel(effectivePlanVersion.status, isPolish),
                 number: effectivePlanVersion.planNumber,
               })}
             </StatusTag>
@@ -991,7 +992,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
           */}
           <div className="mt-2 grid gap-x-6 sm:grid-cols-2">
             <FactRow label={t('caseWorkspace.plan.expert.who', 'Who does it')}>
-              {planNodeTypeLabel(String(selected.node.type ?? ''), true)}
+              {planNodeTypeLabel(String(selected.node.type ?? ''), isPolish)}
               <TechnicalId value={selected.node.type ? String(selected.node.type) : null} />
             </FactRow>
             <FactRow label={t('caseWorkspace.plan.expert.stepIdLabel', 'Step identifier')}>

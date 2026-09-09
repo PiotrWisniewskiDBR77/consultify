@@ -52229,7 +52229,59 @@
       "closureTypeFieldLabel": "Typ zamknięcia",
       "evidenceFieldLabel": "Dowód / opis pozostałego zakresu",
       "refreshAndRetry": " Odśwież dane i spróbuj ponownie.",
-      "loadingTitle": "Zlecenie"
+      "loadingTitle": "Zlecenie",
+      "tabs": {
+        "planLabel": "Plan",
+        "planDescription": "Co i w jakiej kolejności ma się wydarzyć.",
+        "executionLabel": "Realizacja",
+        "executionDescription": "Co się dzieje teraz i na co czekamy.",
+        "resultsLabel": "Rezultaty",
+        "resultsDescription": "Co powstało i czy efekt został potwierdzony."
+      },
+      "sending": "Wysyłam…",
+      "planActions": {
+        "createDraft": "Utwórz szkic planu",
+        "proposeForReview": "Zaproponuj do przeglądu",
+        "publish": "Publikuj",
+        "requestChanges": "Poproś o zmiany",
+        "withdraw": "Wycofaj plan",
+        "newDraftChange": "Nowy szkic (zmiana planu)",
+        "newDraft": "Nowy szkic planu"
+      },
+      "rightPanel": {
+        "actionsLabel": "Akcje",
+        "propertiesLabel": "Właściwości",
+        "propertiesEmpty": "Dane zlecenia nie zostały jeszcze wczytane.",
+        "relationsLabel": "Powiązania",
+        "reload": "Wczytaj ponownie",
+        "backToList": "Wróć do listy zleceń",
+        "closeOrder": "Zamknij zlecenie",
+        "finishClosingOrder": "Dokończ zamknięcie zlecenia",
+        "historyEmpty": "Przebieg zlecenia jest jeszcze pusty — nic się na nim nie wydarzyło.",
+        "relationsEmpty": "Nic jeszcze nie powiązano. Tu trafiają dokumenty, decyzje i dowody tego zlecenia.",
+        "evidenceLabel": "Źródła i założenia",
+        "evidenceEmpty": "Zlecenie nie wskazuje jeszcze kryteriów odbioru ani polityk, na których się opiera.",
+        "historyLabel": "Historia",
+        "openPrefix": "Otwórz: {{label}}",
+        "staleSuffix": " · nieaktualny"
+      },
+      "properties": {
+        "status": "Stan zlecenia",
+        "profile": "Profil",
+        "governance": "Tryb nadzoru",
+        "autonomy": "Samodzielność",
+        "plan": "Plan",
+        "noPlanVersion": "brak wersji planu",
+        "created": "Założone",
+        "lastChange": "Ostatnia zmiana",
+        "closed": "Zamknięte",
+        "no": "nie",
+        "contractedClosureType": "Kontraktowy typ zamknięcia",
+        "registeredClosureType": "Zarejestrowany typ zamknięcia",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "planVersionValue": "nr {{number}} · {{status}}"
+      }
     },
     "execution": {
       "heading": "Co się teraz dzieje"
@@ -52327,6 +52379,7 @@
         "versionFooter": "Wersja planu {{number}} · ostatnia zmiana {{date}}",
         "graphDigestTitle": "Odcisk grafu planu"
       }
-    }
+    },
+    "breadcrumb": "Zlecenia"
   }
 }

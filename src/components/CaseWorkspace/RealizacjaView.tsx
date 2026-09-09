@@ -459,7 +459,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   expert,
   onReload,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const [selection, setSelectionState] = useState<Selection>(null);
   // DEC-397b (1.1-K6): klik wiersza po zamknięciu panelu (X) ma go ponownie
   // otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
@@ -544,7 +545,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Decyzja zapisana. Sprawa ma teraz status: ${proposalStatusLabel(result.value.proposal.status, true)}.`
+                ? `Decyzja zapisana. Sprawa ma teraz status: ${proposalStatusLabel(result.value.proposal.status, isPolish)}.`
                 : 'Decyzja została przyjęta, ale nie udało się jej potwierdzić ponownym odczytem. Odśwież dane.',
           });
           onReload();
@@ -580,7 +581,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Sprawa wysłana do przeglądu. Ma teraz status: ${proposalStatusLabel(result.value.status, true)}.`
+                ? `Sprawa wysłana do przeglądu. Ma teraz status: ${proposalStatusLabel(result.value.status, isPolish)}.`
                 : 'Sprawa została wysłana do przeglądu, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
           });
           onReload();
@@ -611,7 +612,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tone: 'success',
             text:
               result.readback === 'confirmed'
-                ? `Sprawa ponowiona. Ma teraz status: ${proposalStatusLabel(result.value.status, true)}.`
+                ? `Sprawa ponowiona. Ma teraz status: ${proposalStatusLabel(result.value.status, isPolish)}.`
                 : 'Sprawa została ponowiona, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
           });
           onReload();
@@ -999,8 +1000,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     () =>
       waits.map((wait) => ({
         id: wait.waitId,
-        naCo: caseWaitTypeLabel(wait.waitType, true),
-        stan: caseWaitStatusLabel(wait.status, true),
+        naCo: caseWaitTypeLabel(wait.waitType, isPolish),
+        stan: caseWaitStatusLabel(wait.status, isPolish),
         stanTone: waitTone(wait),
         odKiedy: wait.createdAt,
         termin: wait.timeoutAt || wait.dueAt || '',
@@ -1014,8 +1015,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     () =>
       proposals.map((proposal) => ({
         id: proposal.actionProposalId,
-        czego: effectClassLabel(proposal.effectClass, true),
-        stan: proposalStatusLabel(proposal.status, true),
+        czego: effectClassLabel(proposal.effectClass, isPolish),
+        stan: proposalStatusLabel(proposal.status, isPolish),
         stanTone: proposalTone(proposal.status),
         ktoZglosil:
           proposal.proposerType === 'HUMAN'
@@ -1035,7 +1036,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       runs.map((run, index) => ({
         id: run.runId,
         numer: index + 1,
-        stan: runStatusLabel(run.status, true),
+        stan: runStatusLabel(run.status, isPolish),
         stanTone: runTone(run),
         rozpoczety: run.startedAt || '',
         zaktualizowany: run.updatedAt,
@@ -1376,7 +1377,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             {t('caseWorkspace.execution.heading', "What's happening now")}
           </h2>
           <p className="mt-1 text-sm text-c-text-secondary">
-            Zlecenie jest w stanie „{caseStatusLabel(caseItem.caseStatus, true).toLowerCase()}".{' '}
+            Zlecenie jest w stanie „{caseStatusLabel(caseItem.caseStatus, isPolish).toLowerCase()}".{' '}
             {activeWaits.length
               ? `Czekamy na ${activeWaits.length} ${activeWaits.length === 1 ? 'rzecz' : 'rzeczy'}.`
               : 'Nic nie jest w stanie oczekiwania.'}{' '}
@@ -1544,10 +1545,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           kliknięcie wiersza (warunek właściciela #6). */}
       <JedenPrawyPanel rekord={selectedWait ? (
           <StandardPreview
-            title={caseWaitTypeLabel(selectedWait.waitType, true)}
+            title={caseWaitTypeLabel(selectedWait.waitType, isPolish)}
             onClose={() => setSelection(null)}
             meta={{
-              pills: [{ label: caseWaitStatusLabel(selectedWait.status, true), tone: 'info' }],
+              pills: [{ label: caseWaitStatusLabel(selectedWait.status, isPolish), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
                   {relativeDays(selectedWait.createdAt, t)}
@@ -1631,10 +1632,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           />
       ) : selectedProposal ? (
           <StandardPreview
-            title={effectClassLabel(selectedProposal.effectClass, true)}
+            title={effectClassLabel(selectedProposal.effectClass, isPolish)}
             onClose={() => setSelection(null)}
             meta={{
-              pills: [{ label: proposalStatusLabel(selectedProposal.status, true), tone: 'info' }],
+              pills: [{ label: proposalStatusLabel(selectedProposal.status, isPolish), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
                   {relativeDays(selectedProposal.createdAt, t)}
@@ -1691,7 +1692,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             title={`Przebieg ${runRows.find((r) => r.id === selectedRun.runId)?.numer ?? ''}`}
             onClose={() => setSelection(null)}
             meta={{
-              pills: [{ label: runStatusLabel(selectedRun.status, true), tone: 'info' }],
+              pills: [{ label: runStatusLabel(selectedRun.status, isPolish), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
                   {relativeDays(selectedRun.updatedAt, t)}
@@ -1760,11 +1761,11 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               propertyLabel: 'Właściwość',
               valueLabel: 'Wartość',
               properties: [
-                { id: 'stan', label: 'Stan', value: runStatusLabel(selectedRun.status, true) },
+                { id: 'stan', label: 'Stan', value: runStatusLabel(selectedRun.status, isPolish) },
                 {
                   id: 'wynik',
                   label: 'Ocena wyniku',
-                  value: runOutcomeStatusLabelDisplay(selectedRun.outcomeStatus),
+                  value: runOutcomeStatusLabelDisplay(selectedRun.outcomeStatus, isPolish),
                 },
                 {
                   id: 'wystartowal',
@@ -1806,10 +1807,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 
       <CommandDialog
         open={pending !== null}
-        title={dialogConfig(pending).title}
-        description={dialogConfig(pending).description}
-        confirmLabel={dialogConfig(pending).confirmLabel}
-        reason={dialogConfig(pending).reason}
+        title={dialogConfig(pending, isPolish).title}
+        description={dialogConfig(pending, isPolish).description}
+        confirmLabel={dialogConfig(pending, isPolish).confirmLabel}
+        reason={dialogConfig(pending, isPolish).reason}
         busy={commandBusy}
         onConfirm={(value) => void runPendingCommand(value)}
         onCancel={closeDialog}
@@ -1819,8 +1820,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 };
 
 /** Napis Run.outcomeStatus po polsku — patrz `enumLabels.runOutcomeStatusLabel`. */
-function runOutcomeStatusLabelDisplay(value: CaseRun['outcomeStatus']): string {
-  return runOutcomeStatusLabel(value, true);
+function runOutcomeStatusLabelDisplay(value: CaseRun['outcomeStatus'], isPolish: boolean): string {
+  return runOutcomeStatusLabel(value, isPolish);
 }
 
 /**
@@ -1830,7 +1831,7 @@ function runOutcomeStatusLabelDisplay(value: CaseRun['outcomeStatus']): string {
  * i tak nic nie renderuje) — bez tego `CommandDialog` dostawałby `undefined`
  * i TypeScript wymuszałby siedem osobnych warunków przy każdym propie.
  */
-function dialogConfig(pending: PendingCommand | null): {
+function dialogConfig(pending: PendingCommand | null, isPolish: boolean): {
   title: string;
   description: string;
   confirmLabel: string;
@@ -1849,7 +1850,7 @@ function dialogConfig(pending: PendingCommand | null): {
               : 'Odłożyć';
       return {
         title: `${decisionLabel} tę sprawę?`,
-        description: effectClassLabel(pending.proposal.effectClass, true),
+        description: effectClassLabel(pending.proposal.effectClass, isPolish),
         confirmLabel: decisionLabel,
         reason: {
           label: 'Powód (opcjonalnie)',

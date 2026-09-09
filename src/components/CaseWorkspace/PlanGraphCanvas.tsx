@@ -67,7 +67,10 @@ export function nodeLabel(node: GraphNode): string {
  * Cykle (graf nie musi być drzewem) są przycinane licznikiem odwiedzin, więc
  * funkcja zawsze się kończy, nawet dla planu z pętlą ponowienia.
  */
-export function layoutGraph(graph: CanonicalGraph): {
+export function layoutGraph(
+  graph: CanonicalGraph,
+  isPolish = false
+): {
   nodes: PositionedNode[];
   width: number;
   height: number;
@@ -141,7 +144,7 @@ export function layoutGraph(graph: CanonicalGraph): {
         x: columnIndex * (NODE_W + GAP_X),
         y: offsetY + rowIndex * (NODE_H + GAP_Y),
         label: nodeLabel(node),
-        typeLabel: planNodeTypeLabel(String(node.type ?? ''), true),
+        typeLabel: planNodeTypeLabel(String(node.type ?? ''), isPolish),
       });
     });
   });
@@ -167,7 +170,8 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   onSelectNode,
   runtimeStateByNodeId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 });
@@ -180,7 +184,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   } | null>(null);
   const didInitialFit = useRef(false);
 
-  const layout = useMemo(() => layoutGraph(graph), [graph]);
+  const layout = useMemo(() => layoutGraph(graph, isPolish), [graph, isPolish]);
   const edges: GraphEdge[] = useMemo(
     () => (Array.isArray(graph?.edges) ? graph.edges : []),
     [graph]
@@ -396,7 +400,7 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
                   />
                   {kind !== 'SEQUENCE'
                     ? (() => {
-                        const text = planEdgeTypeLabel(kind, true);
+                        const text = planEdgeTypeLabel(kind, isPolish);
                         // Szerokość liczona z długości napisu (bez pomiaru DOM —
                         // płótno jest w SVG i musi rysować się w jednym przebiegu).
                         const boxW = text.length * 5.9 + 12;

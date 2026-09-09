@@ -51373,7 +51373,59 @@
       "closureTypeFieldLabel": "Closure type",
       "evidenceFieldLabel": "Evidence / description of remaining scope",
       "refreshAndRetry": " Refresh the data and try again.",
-      "loadingTitle": "Order"
+      "loadingTitle": "Order",
+      "tabs": {
+        "planLabel": "Plan",
+        "planDescription": "What should happen, and in what order.",
+        "executionLabel": "Execution",
+        "executionDescription": "What's happening now and what we're waiting for.",
+        "resultsLabel": "Results",
+        "resultsDescription": "What was produced and whether the effect was confirmed."
+      },
+      "sending": "Sending…",
+      "planActions": {
+        "createDraft": "Create plan draft",
+        "proposeForReview": "Propose for review",
+        "publish": "Publish",
+        "requestChanges": "Request changes",
+        "withdraw": "Withdraw plan",
+        "newDraftChange": "New draft (plan change)",
+        "newDraft": "New plan draft"
+      },
+      "rightPanel": {
+        "actionsLabel": "Actions",
+        "propertiesLabel": "Properties",
+        "propertiesEmpty": "The order's data hasn't been loaded yet.",
+        "relationsLabel": "Relations",
+        "reload": "Reload",
+        "backToList": "Back to order list",
+        "closeOrder": "Close order",
+        "finishClosingOrder": "Finish closing the order",
+        "historyEmpty": "This order's activity is still empty — nothing has happened on it yet.",
+        "relationsEmpty": "Nothing linked yet. This order's documents, decisions and evidence land here.",
+        "evidenceLabel": "Sources and assumptions",
+        "evidenceEmpty": "The order doesn't specify acceptance criteria or policies it relies on yet.",
+        "historyLabel": "History",
+        "openPrefix": "Open: {{label}}",
+        "staleSuffix": " · outdated"
+      },
+      "properties": {
+        "status": "Order status",
+        "profile": "Profile",
+        "governance": "Governance mode",
+        "autonomy": "Autonomy",
+        "plan": "Plan",
+        "noPlanVersion": "no plan version",
+        "created": "Created",
+        "lastChange": "Last change",
+        "closed": "Closed",
+        "no": "no",
+        "contractedClosureType": "Contracted closure type",
+        "registeredClosureType": "Registered closure type",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "planVersionValue": "#{{number}} · {{status}}"
+      }
     },
     "execution": {
       "heading": "What's happening now"
@@ -51471,6 +51523,7 @@
         "versionFooter": "Plan version {{number}} · last change {{date}}",
         "graphDigestTitle": "Plan graph fingerprint"
       }
-    }
+    },
+    "breadcrumb": "Orders"
   }
 }

@@ -231,8 +231,8 @@ export function kluczFokusuDowodu(measurementId: string): string {
  * Odwrotna kolejność kazałaby nam mówić „nie znamy typu" o obiekcie, który
  * backend już oznaczył jako niedostępny — czyli mylić własną lukę z faktem.
  */
-export function rozstrzygnijOtwarcie(link: CaseArtifactLink): OtwarcieObiektu {
-  const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+export function rozstrzygnijOtwarcie(link: CaseArtifactLink, isPolish = false): OtwarcieObiektu {
+  const etykietaTypu = linkedTypeLabel(link.artifactType, isPolish) || link.artifactType;
 
   if (link.linkStatus === 'UNAVAILABLE') {
     return {
@@ -327,9 +327,10 @@ export function invalidujOtwarcieBackendu(linkId: string): void {
  */
 function otwarcieZOdpowiedziBackendu(
   link: CaseArtifactLink,
-  resolution: ArtifactLinkOpenResolution
+  resolution: ArtifactLinkOpenResolution,
+  isPolish = false
 ): OtwarcieObiektu {
-  const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+  const etykietaTypu = linkedTypeLabel(link.artifactType, isPolish) || link.artifactType;
 
   if (resolution.state === 'UNAVAILABLE') {
     return {
@@ -503,7 +504,8 @@ export function jestPowiazaniemDokumentu(link: Pick<CaseArtifactLink, 'artifactT
  * nam znany — reszta zostaje uczciwym tekstem.
  */
 export function rozstrzygnijOtwarcieDowodu(
-  evidenceRef: string | null | undefined
+  evidenceRef: string | null | undefined,
+  isPolish = false
 ): OtwarcieObiektu | null {
   const surowy = String(evidenceRef ?? '').trim();
   if (!surowy) return null;
@@ -527,7 +529,7 @@ export function rozstrzygnijOtwarcieDowodu(
   return {
     status: 'otwieralny',
     sciezka: getArtifactPath(typ, ref.id),
-    etykieta: linkedTypeLabel(ref.type, true) || ref.type,
+    etykieta: linkedTypeLabel(ref.type, isPolish) || ref.type,
   };
 }
 
@@ -717,7 +719,8 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   wybor,
   onWybor,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   // Sterowanie z powłoki, gdy powłoka je podaje; własny stan, gdy widok stoi sam
   // (np. w harnessie zrzutowym) — bez tego fallbacku komponent przestałby działać
   // wszędzie poza jednym wywołaniem.
@@ -898,7 +901,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
-                ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, true)}".`
+                ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, isPolish)}".`
                 : 'Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.',
           });
           return;
@@ -1068,7 +1071,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     let anulowano = false;
     artifactLinks
       .filter(jestPowiazaniemDokumentu)
-      .filter((link) => rozstrzygnijOtwarcie(link).status === 'otwieralny')
+      .filter((link) => rozstrzygnijOtwarcie(link, isPolish).status === 'otwieralny')
       .forEach((link) => {
         weryfikujIstnienieDokumentu(link.artifactId).then((istnieje) => {
           if (anulowano || istnieje) return;
@@ -1110,7 +1113,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         link.linkId,
         nadpisaniaWeryfikacji[link.linkId] ??
           nadpisaniaBackendu[link.linkId] ??
-          rozstrzygnijOtwarcie(link)
+          rozstrzygnijOtwarcie(link, isPolish)
       )
     );
     return mapa;
@@ -1124,9 +1127,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         punktWyjscia: formatValue(item.baselineValue, item.baselineUnit),
         cel: formatValue(item.targetValue, item.targetUnit),
         wynik: formatValue(item.actualValue, item.actualUnit),
-        stan: valueMeasurementStatusLabel(item.measurementStatus, true),
+        stan: valueMeasurementStatusLabel(item.measurementStatus, isPolish),
         stanTone: measurementTone(item.measurementStatus),
-        pewnosc: measurementConfidenceLabel(item.confidence, true),
+        pewnosc: measurementConfidenceLabel(item.confidence, isPolish),
         pomiar: item.measurementDate,
       })),
     [measurements]
@@ -1138,9 +1141,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         const otwarcie = otwarciaObiektow.get(link.linkId);
         return {
           id: link.linkId,
-          obiekt: linkedTypeLabel(link.artifactType, true) || link.artifactType,
-          rola: artifactLinkRelationLabel(link.relation, true),
-          stan: link.isStale ? 'Nieaktualny' : artifactLinkStatusLabel(link.linkStatus, true),
+          obiekt: linkedTypeLabel(link.artifactType, isPolish) || link.artifactType,
+          rola: artifactLinkRelationLabel(link.relation, isPolish),
+          stan: link.isStale ? 'Nieaktualny' : artifactLinkStatusLabel(link.linkStatus, isPolish),
           stanTone:
             link.isStale || link.linkStatus === 'UNAVAILABLE'
               ? ('warning' as const)
@@ -1165,7 +1168,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     () =>
       nodeResults.map((item) => ({
         id: item.nodeRunId,
-        krok: planNodeTypeLabel(item.nodeType, true) || item.nodeType,
+        krok: planNodeTypeLabel(item.nodeType, isPolish) || item.nodeType,
         stan: nodeCompletionStateLabel(item.nodeCompletionState),
         akceptacja: resultAcceptanceLabel(item.resultAcceptance),
         akceptacjaTone: resultAcceptanceTone(item.resultAcceptance),
@@ -1264,7 +1267,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           <OpenButton
             otwarcie={otwarcie}
             kluczFokusu={kluczFokusuObiektu(linkId)}
-            etykietaDostepna={`Otwórz obiekt: ${linkedTypeLabel(link.artifactType, true) || link.artifactType}`}
+            etykietaDostepna={`Otwórz obiekt: ${linkedTypeLabel(link.artifactType, isPolish) || link.artifactType}`}
             onOpen={otworz}
           />
         );
@@ -1331,7 +1334,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       : null;
   const selectedLinkOtwarcie = selectedLink ? otwarciaObiektow.get(selectedLink.linkId) : undefined;
   const selectedEvidence = selectedMeasurement
-    ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef)
+    ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef, isPolish)
     : null;
   const selectedNodeResultOtwarcie = selectedNodeResult
     ? rozstrzygnijOtwarcieRezultatuKroku(selectedNodeResult, artifactLinks, otwarciaObiektow)
@@ -1381,7 +1384,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             </h3>
             <span className="text-xs text-c-text-muted">
               {t('caseWorkspace.results.closure.contracted', 'Contracted closure: {{type}}', {
-                type: closureTypeLabel(caseItem.contractedClosureType, true),
+                type: closureTypeLabel(caseItem.contractedClosureType, isPolish),
               })}
             </span>
           </div>
@@ -1392,11 +1395,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2"
               >
                 <div className="text-xs uppercase tracking-wide text-c-text-muted">
-                  {closureAxisLabel(axis.key, true)}
+                  {closureAxisLabel(axis.key, isPolish)}
                 </div>
                 <div className="mt-1">
                   <StatusTag tone={axisTone(axis.status)}>
-                    {closureAxisStatusLabel(axis.status, true)}
+                    {closureAxisStatusLabel(axis.status, isPolish)}
                   </StatusTag>
                 </div>
               </div>
@@ -1406,7 +1409,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             <p className="mt-3 text-sm text-c-text-secondary">
               {t('caseWorkspace.results.closure.closedOn', 'Closed {{date}} as {{type}}.', {
                 date: formatDateTime(caseItem.closedAt),
-                type: closureTypeLabel(caseItem.closureType, true).toLowerCase(),
+                type: closureTypeLabel(caseItem.closureType, isPolish).toLowerCase(),
               })}
             </p>
           ) : null}
@@ -1550,11 +1553,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             meta={{
               pills: [
                 {
-                  label: valueMeasurementStatusLabel(selectedMeasurement.measurementStatus, true),
+                  label: valueMeasurementStatusLabel(selectedMeasurement.measurementStatus, isPolish),
                   tone: 'info',
                 },
                 {
-                  label: measurementConfidenceLabel(selectedMeasurement.confidence, true),
+                  label: measurementConfidenceLabel(selectedMeasurement.confidence, isPolish),
                   tone: 'neutral',
                 },
               ],
@@ -1652,7 +1655,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           </StandardPreview>
       ) : selectedLink ? (
           <StandardPreview
-            title={linkedTypeLabel(selectedLink.artifactType, true) || selectedLink.artifactType}
+            title={linkedTypeLabel(selectedLink.artifactType, isPolish) || selectedLink.artifactType}
             onClose={() => setSelection(null)}
             /* Kanon podglądu: „Otwórz" mieszka w nagłówku podglądu, nie w
                dorobionym przycisku w treści. Podajemy go WYŁĄCZNIE wtedy, gdy
@@ -1713,7 +1716,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             }
             meta={{
               pills: [
-                { label: artifactLinkRelationLabel(selectedLink.relation, true), tone: 'info' },
+                { label: artifactLinkRelationLabel(selectedLink.relation, isPolish), tone: 'info' },
                 ...(selectedLink.isStale
                   ? [{ label: t('caseWorkspace.results.links.preview.stale', 'Outdated'), tone: 'warning' as const }]
                   : []),
@@ -1736,12 +1739,12 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 {
                   id: 'rola',
                   label: t('caseWorkspace.results.links.preview.role', 'Role in the order'),
-                  value: artifactLinkRelationLabel(selectedLink.relation, true),
+                  value: artifactLinkRelationLabel(selectedLink.relation, isPolish),
                 },
                 {
                   id: 'stan',
                   label: t('caseWorkspace.results.links.preview.linkStatus', 'Link status'),
-                  value: artifactLinkStatusLabel(selectedLink.linkStatus, true),
+                  value: artifactLinkStatusLabel(selectedLink.linkStatus, isPolish),
                 },
                 {
                   id: 'dodane',
@@ -1817,7 +1820,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       ) : selectedNodeResult ? (
           <StandardPreview
             title={
-              planNodeTypeLabel(selectedNodeResult.nodeType, true) || selectedNodeResult.nodeType
+              planNodeTypeLabel(selectedNodeResult.nodeType, isPolish) || selectedNodeResult.nodeType
             }
             onClose={() => setSelection(null)}
             /* Ten sam kanon co „Powiązane obiekty" wyżej: „Otwórz" w nagłówku
@@ -2039,7 +2042,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           >
             {LINKOWALNE_TYPY_OBIEKTOW.map((typ) => (
               <option key={typ} value={typ}>
-                {linkedTypeLabel(typ, true) || typ}
+                {linkedTypeLabel(typ, isPolish) || typ}
               </option>
             ))}
           </select>
@@ -2068,7 +2071,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           >
             {RELACJE_POWIAZANIA.map((relacja) => (
               <option key={relacja} value={relacja}>
-                {artifactLinkRelationLabel(relacja, true)}
+                {artifactLinkRelationLabel(relacja, isPolish)}
               </option>
             ))}
           </select>

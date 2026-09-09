@@ -226,7 +226,7 @@ function niepusty(value: string | null | undefined): string | null {
 }
 
 /** Nazwa zlecenia wg kolejności źródeł opisanej wyżej. Nigdy pusta. */
-export function nazwaZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction): string {
+export function nazwaZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction, isPolish = false): string {
   const wlasna = niepusty(item.caseName);
   if (wlasna) return wlasna;
   const cel = niepusty(naming?.goal);
@@ -235,7 +235,7 @@ export function nazwaZlecenia(item: CaseCoreView, naming: CaseNaming | null | un
   if (projekt) return projekt;
   return t('caseWorkspace.list.fallbackName', 'Order {{shortId}} · {{profile}}', {
     shortId: skrotZlecenia(item.caseId),
-    profile: caseProfileLabel(item.caseProfile, true),
+    profile: caseProfileLabel(item.caseProfile, isPolish),
   });
 }
 
@@ -247,8 +247,8 @@ export function nazwaZlecenia(item: CaseCoreView, naming: CaseNaming | null | un
  * pola) i oczekiwany rezultat. Pusty string, gdy nie ma czego napisać —
  * wołający decyduje, co wtedy pokazać.
  */
-export function podtytulZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction): string {
-  const nazwa = nazwaZlecenia(item, naming, t);
+export function podtytulZlecenia(item: CaseCoreView, naming: CaseNaming | null | undefined, t: TFunction, isPolish = false): string {
+  const nazwa = nazwaZlecenia(item, naming, t, isPolish);
   const czesci: string[] = [];
   const projekt = niepusty(naming?.projectName ?? item.projectName);
   if (projekt && projekt !== nazwa)
@@ -274,7 +274,8 @@ function statusTone(
 }
 
 export const CasesListScreen: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -474,7 +475,7 @@ export const CasesListScreen: React.FC = () => {
                     naming[result.value.caseId]?.projectName ??
                     result.value.projectName
                 );
-                const status = caseStatusLabel(result.value.caseStatus, true);
+                const status = caseStatusLabel(result.value.caseStatus, isPolish);
                 return name
                   ? t('caseWorkspace.list.notice.savedNamed', 'Saved. Order “{{name}}” now has status: {{status}}.', {
                       name,
@@ -650,8 +651,8 @@ export const CasesListScreen: React.FC = () => {
       // polach, których lista nigdy nie pokazała.
       const info = naming[item.caseId];
       const haystack = [
-        nazwaZlecenia(item, info, t),
-        podtytulZlecenia(item, info, t),
+        nazwaZlecenia(item, info, t, isPolish),
+        podtytulZlecenia(item, info, t, isPolish),
         item.projectName,
         item.projectDescription,
         item.caseId,
@@ -661,7 +662,7 @@ export const CasesListScreen: React.FC = () => {
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [bySavedView, statusChip, query, naming, t]);
+  }, [bySavedView, statusChip, query, naming, t, isPolish]);
 
   const rows = useMemo(
     () =>
@@ -671,10 +672,10 @@ export const CasesListScreen: React.FC = () => {
         const info = naming[item.caseId];
         return {
           id: item.caseId,
-          nazwa: nazwaZlecenia(item, info, t),
-          rezultat: podtytulZlecenia(item, info, t),
-          rodzaj: caseProfileLabel(item.caseProfile, true),
-          status: caseStatusLabel(item.caseStatus, true),
+          nazwa: nazwaZlecenia(item, info, t, isPolish),
+          rezultat: podtytulZlecenia(item, info, t, isPolish),
+          rodzaj: caseProfileLabel(item.caseProfile, isPolish),
+          status: caseStatusLabel(item.caseStatus, isPolish),
           uwaga: attention.label,
           uwagaTone: attention.tone,
           postep: progress.total
@@ -689,7 +690,7 @@ export const CasesListScreen: React.FC = () => {
           raw: item,
         };
       }),
-    [visible, naming, t]
+    [visible, naming, t, isPolish]
   );
 
   /*
@@ -866,10 +867,10 @@ export const CasesListScreen: React.FC = () => {
   const statusChips = useMemo(
     () => [
       { id: 'wszystkie', label: t('caseWorkspace.list.allChip', 'All'), count: statusCounts.wszystkie ?? 0 },
-      { id: 'ACTIVE', label: caseStatusLabel('ACTIVE', true), count: statusCounts.ACTIVE ?? 0 },
-      { id: 'BLOCKED', label: caseStatusLabel('BLOCKED', true), count: statusCounts.BLOCKED ?? 0 },
-      { id: 'DRAFT', label: caseStatusLabel('DRAFT', true), count: statusCounts.DRAFT ?? 0 },
-      { id: 'CLOSED', label: caseStatusLabel('CLOSED', true), count: statusCounts.CLOSED ?? 0 },
+      { id: 'ACTIVE', label: caseStatusLabel('ACTIVE', isPolish), count: statusCounts.ACTIVE ?? 0 },
+      { id: 'BLOCKED', label: caseStatusLabel('BLOCKED', isPolish), count: statusCounts.BLOCKED ?? 0 },
+      { id: 'DRAFT', label: caseStatusLabel('DRAFT', isPolish), count: statusCounts.DRAFT ?? 0 },
+      { id: 'CLOSED', label: caseStatusLabel('CLOSED', isPolish), count: statusCounts.CLOSED ?? 0 },
     ],
     [statusCounts, t]
   );
@@ -976,37 +977,37 @@ export const CasesListScreen: React.FC = () => {
       {
         id: 'zamkniecie',
         label: t('caseWorkspace.list.preview.closureType', 'Agreed closure method'),
-        value: closureTypeLabel(selected.contractedClosureType, true),
+        value: closureTypeLabel(selected.contractedClosureType, isPolish),
       },
       {
         id: 'nadzor',
         label: t('caseWorkspace.list.preview.governance', 'Governance'),
-        value: governanceTierLabel(selected.governanceTier, true),
+        value: governanceTierLabel(selected.governanceTier, isPolish),
       },
       {
         id: 'samodzielnosc',
         label: t('caseWorkspace.list.preview.autonomy', 'System autonomy'),
-        value: autonomyPolicyLabel(selected.autonomyPolicy, true),
+        value: autonomyPolicyLabel(selected.autonomyPolicy, isPolish),
       },
       {
         id: 'dostarczenie',
         label: t('caseWorkspace.list.preview.delivery', 'Delivery'),
-        value: closureAxisStatusLabel(selected.deliveryStatus, true),
+        value: closureAxisStatusLabel(selected.deliveryStatus, isPolish),
       },
       {
         id: 'decyzja',
         label: t('caseWorkspace.list.preview.decision', 'Decision'),
-        value: closureAxisStatusLabel(selected.decisionStatus, true),
+        value: closureAxisStatusLabel(selected.decisionStatus, isPolish),
       },
       {
         id: 'wdrozenie',
         label: t('caseWorkspace.list.preview.implementation', 'Implementation'),
-        value: closureAxisStatusLabel(selected.implementationStatus, true),
+        value: closureAxisStatusLabel(selected.implementationStatus, isPolish),
       },
       {
         id: 'efekt',
         label: t('caseWorkspace.list.preview.outcome', 'Effect'),
-        value: closureAxisStatusLabel(selected.outcomeStatus, true),
+        value: closureAxisStatusLabel(selected.outcomeStatus, isPolish),
       },
       {
         id: 'zmiana',
@@ -1150,14 +1151,14 @@ export const CasesListScreen: React.FC = () => {
               </div>
               <JedenPrawyPanel rekord={selected ? (
                   <StandardPreview
-                    title={nazwaZlecenia(selected, naming[selected.caseId], t)}
+                    title={nazwaZlecenia(selected, naming[selected.caseId], t, isPolish)}
                     onClose={() => setSelectedId(null)}
                     onOpenFull={() => openCase(selected.caseId)}
                     openLabel={t('caseWorkspace.list.preview.openOrder', 'Open order')}
                     meta={{
                       pills: [
-                        { label: caseStatusLabel(selected.caseStatus, true), tone: 'info' },
-                        { label: caseProfileLabel(selected.caseProfile, true), tone: 'neutral' },
+                        { label: caseStatusLabel(selected.caseStatus, isPolish), tone: 'info' },
+                        { label: caseProfileLabel(selected.caseProfile, isPolish), tone: 'neutral' },
                       ],
                       trailing: (
                         <span className="text-xs text-c-text-muted">
@@ -1168,7 +1169,7 @@ export const CasesListScreen: React.FC = () => {
                     }}
                     details={{
                       text:
-                        podtytulZlecenia(selected, naming[selected.caseId], t) ||
+                        podtytulZlecenia(selected, naming[selected.caseId], t, isPolish) ||
                         t('caseWorkspace.list.preview.goalOutcomeUndescribed', 'Goal and expected outcome were not described.'),
                       showWordCount: false,
                       propertyLabel: t('caseWorkspace.list.preview.propertyLabel', 'Property'),
