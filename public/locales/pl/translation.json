@@ -20046,7 +20046,8 @@
       "unsupportedTitle": "Klucze dostępu nieobsługiwane",
       "unsupportedBody": "Twoja przeglądarka lub urządzenie nie obsługuje kluczy dostępu (WebAuthn). Użyj nowoczesnej przeglądarki: Chrome, Safari, Firefox lub Edge.",
       "renamePlaceholder": "Wpisz nową nazwę",
-      "tipRemoveUnused": "Usuń klucze dostępu z urządzeń, których już nie używasz"
+      "tipRemoveUnused": "Usuń klucze dostępu z urządzeń, których już nie używasz",
+      "whatArePasskeysTitle": "Czym są klucze dostępu?"
     },
     "integrationsMarketplace": {
       "deprecated": "Ten widok zastąpiły Połączone aplikacje w Ustawieniach."

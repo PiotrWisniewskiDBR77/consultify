@@ -20856,7 +20856,8 @@
       "unsupportedTitle": "Passkeys Not Supported",
       "unsupportedBody": "Your browser or device doesn't support passkeys (WebAuthn). Please use a modern browser like Chrome, Safari, Firefox, or Edge.",
       "renamePlaceholder": "Enter new name",
-      "tipRemoveUnused": "Remove passkeys from devices you no longer use"
+      "tipRemoveUnused": "Remove passkeys from devices you no longer use",
+      "whatArePasskeysTitle": "What are passkeys?"
     },
     "integrationsMarketplace": {
       "deprecated": "This view has been replaced by Connected Apps in Settings."
