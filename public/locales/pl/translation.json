@@ -14830,7 +14830,8 @@
       },
       "summary": {
         "decisions": "Rozstrzygnięcia",
-        "risks": "Ryzyka"
+        "risks": "Ryzyka",
+        "toResolve": "Do rozstrzygnięcia"
       }
     },
     "scope": {

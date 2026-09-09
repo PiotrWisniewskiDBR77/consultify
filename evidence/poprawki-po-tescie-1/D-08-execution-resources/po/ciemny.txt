@@ -1,0 +1,661 @@
+3 V9 overrides
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+James Whitfield
+JW
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+All deliveries
+Skills Matrix and Upskilling
+Warehouse Automation Pilot
+MES Rollout Line 3
+Predictive Maintenance for CNC Line
+Add availability
+People
+9
+Overallocated
+2
+With backlog
+5
+
+As of 09/09/2026 · people 9 · demand 360 h · supply 2704 h · utilisation 13 % · overloaded weeks 2 · backlog 73 h across 5 people
+
+PERSON / ROLE
+	
+WEEK
+	
+DEMAND (H)
+	
+SUPPLY (H)
+	
+UTILISATION %
+	
+GAP (H)
+	
+BACKLOG (H)
+	
+
+
+James Whitfield · Operations Director
+	
+from 07/09/2026
+	
+6 h
+	
+40 h
+	
+15 %
+	
++34 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 14/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 21/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 05/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 12/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 19/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+James Whitfield · Operations Director
+	
+from 26/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 07/09/2026
+	
+20 h
+	
+40 h
+	
+50 %
+	
++20 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 14/09/2026
+	
+15 h
+	
+40 h
+	
+38 %
+	
++25 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 21/09/2026
+	
+59 h
+	
+40 h
+	
+148 %
+	
+-19 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 28/09/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 05/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 12/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 19/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Daniel Osei · Automation Engineer
+	
+from 26/10/2026
+	
+0 h
+	
+40 h
+	
+0 %
+	
++40 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 07/09/2026
+	
+48 h
+	
+36 h
+	
+133 %
+	
+-12 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 14/09/2026
+	
+12 h
+	
+36 h
+	
+33 %
+	
++24 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 21/09/2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 28/09/2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 05/10/2026
+	
+13 h
+	
+36 h
+	
+36 %
+	
++23 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 12/10/2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 19/10/2026
+	
+9 h
+	
+36 h
+	
+25 %
+	
++27 h
+	
+—
+	
+
+
+Laura Novak · Controls Engineer
+	
+from 26/10/2026
+	
+0 h
+	
+36 h
+	
+0 %
+	
++36 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 07/09/2026
+	
+14 h
+	
+37 h
+	
+38 %
+	
++23 h
+	
+15 h
+	
+
+
+Emily Carter · Production Planner
+	
+from 14/09/2026
+	
+32 h
+	
+37 h
+	
+86 %
+	
++5 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 21/09/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 28/09/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 05/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 12/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 19/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Emily Carter · Production Planner
+	
+from 26/10/2026
+	
+0 h
+	
+37 h
+	
+0 %
+	
++37 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 07/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+28 h
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 14/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 21/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 28/09/2026
+	
+0 h
+	
+32 h
+	
+0 %
+	
++32 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 05/10/2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+from 12/10/2026
+	
+12 h
+	
+32 h
+	
+38 %
+	
++20 h
+	
+—
+	
+
+
+Priya Sharma · HR Business Partner
+	
+fro

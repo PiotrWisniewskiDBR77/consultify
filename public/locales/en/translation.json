@@ -15647,7 +15647,8 @@
       },
       "summary": {
         "decisions": "Decisions",
-        "risks": "Risks"
+        "risks": "Risks",
+        "toResolve": "To resolve"
       }
     },
     "scope": {

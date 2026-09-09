@@ -665,9 +665,17 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // DEC-426 (1.1-E-1, właściciel 06.09): Kokpit menedżera nie miał Menu 3 —
     // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są
     // teraz JEDNA tabela pełnej szerokości, przełączana tym przyciskiem-chipem.
+    // TEST-DANE D-09 (09.09.2026): chip nazywal sie „Decisions" i pokazywal 7,
+    // a zakladka „Decisions & risks" pokazywala 9 (tyle jest w bazie). Liczba
+    // NIE byla bledna — chip liczy to, co pokazuje panel pod nim, czyli
+    // `blockerDecisions + overdueDecisionItems + pendingDecisionItems`
+    // (zmierzone: 1 zablokowana inicjatywa + 3 po terminie + 3 otwarte = 7),
+    // a wiec pozycje CZEKAJACE NA CIEBIE, nie rejestr decyzji. Klamala sama
+    // etykieta. Kafel nad tabela i naglowek panelu od poczatku mowia
+    // „To resolve" / „Do rozstrzygniecia" — chip mowi teraz to samo.
     summary: [
       ['ryzyka', t('execution.menu3.summary.risks', 'Risks')],
-      ['rozstrzygniecia', t('execution.menu3.summary.decisions', 'Decisions')],
+      ['rozstrzygniecia', t('execution.menu3.summary.toResolve', 'To resolve')],
     ].map(([id, label]) => ({ id, label })),
   };
 }
