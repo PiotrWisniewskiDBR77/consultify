@@ -1,0 +1,26 @@
+[
+ {
+  "lang": "en",
+  "ekran": "02-llm-add-provider",
+  "napisowUi": 82,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 2,
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "en",
+  "ekran": "03-app-pricing",
+  "napisowUi": 25,
+  "polskichUi": 1,
+  "polskie": [
+   "Środowisko LOCAL"
+  ],
+  "angielskichUi": 7,
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ }
+]

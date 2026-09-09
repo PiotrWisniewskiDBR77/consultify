@@ -26115,6 +26115,24 @@
         "required": "wymagany",
         "notRequired": "niewymagany",
         "externalContext": "Kontekst zewnętrzny: {{status}}"
+      },
+      "llmManagement": {
+        "customOption": "↳ custom (wpisz poniżej)",
+        "customModelIdPlaceholder": "lub wpisz własne ID modelu"
+      },
+      "llmHealth": {
+        "unknownDate": "Nieznana data",
+        "retryButton": "Spróbuj ponownie",
+        "total": "Łącznie",
+        "unavailable": "Niedostępne",
+        "action": "Działanie",
+        "providerStatus": "Status Providerów",
+        "checking": "Sprawdzanie...",
+        "refresh": "Odśwież",
+        "recommendedAction": "Zalecane działanie",
+        "lastCheck": "Ostatnie sprawdzenie",
+        "testAgain": "Testuj ponownie",
+        "editConfig": "Edytuj konfigurację"
       }
     },
     "ai": {
@@ -33610,6 +33628,101 @@
     "salesNote": {
       "badge": "Nota sprzedażowa",
       "body": "Budżet AI jest sprzedawany jako budżet, a nie jako publiczna obietnica stawki za token, ponieważ różne akcje zużywają różne zasoby modelu. Anna i Teresa mogą pomóc wyjaśnić, który pakiet i kształt budżetu pasują do obciążenia przed zakupem."
+    },
+    "appView": {
+      "badge": "Cennik",
+      "heading": "AI Strategic Consulting,",
+      "headingAccent": "skalowany dla Ciebie",
+      "subtitle": "Zastąp kosztownych konsultantów strategicznym wsparciem AI. 14-dniowy trial. Bez karty kredytowej.",
+      "billingToggle": {
+        "annual": "Rocznie",
+        "monthly": "Miesięcznie"
+      },
+      "priceNote": {
+        "year": "/rok",
+        "month": "/miesiąc"
+      },
+      "metrics": {
+        "seats": "Stanowiska"
+      },
+      "cancelAnytime": "Anuluj kiedy chcesz",
+      "faqHeading": "Często zadawane pytania",
+      "tiers": {
+        "growth": {
+          "description": "Dla zespołów rozpoczynających transformację cyfrową",
+          "seats": "5 stanowisk",
+          "aiCredits": "5,000 AI Credits/mies.",
+          "extraSeatPrice": "€99/stanowisko",
+          "cta": "Rozpocznij trial"
+        },
+        "scale": {
+          "description": "Dla organizacji realizujących transformację na dużą skalę",
+          "badge": "Najpopularniejszy",
+          "seats": "15 stanowisk",
+          "aiCredits": "20,000 AI Credits/mies.",
+          "extraSeatPrice": "€79/stanowisko",
+          "cta": "Rozpocznij trial"
+        },
+        "enterprise": {
+          "description": "Dla dużych organizacji z kompleksowymi wymaganiami",
+          "monthlyPrice": "od €4,999",
+          "seats": "50+ stanowisk",
+          "aiCredits": "100,000 AI Credits/mies.",
+          "extraSeatPrice": "€59/stanowisko",
+          "cta": "Umów rozmowę"
+        }
+      },
+      "features": {
+        "roadmapGeneration": "Generowanie roadmap",
+        "initiativeManagement": "Zarządzanie inicjatywami",
+        "basicAnalytics": "Podstawowa analityka",
+        "advancedAnalytics": "Zaawansowana analityka",
+        "byok": "BYOK (własne klucze AI)",
+        "dedicatedCsm": "Dedykowany CSM"
+      },
+      "faqs": {
+        "whatAreCredits": {
+          "question": "Czym są AI Credits?",
+          "answer": "AI Credits są wykorzystywane podczas interakcji z funkcjami AI, takimi jak assessmenty, generowanie roadmap i analiza strategiczna. Każda akcja zużywa określoną liczbę kredytów w zależności od złożoności. Niewykorzystane kredyty nie przechodzą na następny miesiąc."
+        },
+        "whatIsByok": {
+          "question": "Co to jest BYOK (Bring Your Own Key)?",
+          "answer": "BYOK pozwala używać własnych kluczy API OpenAI, Anthropic lub Azure. Płacisz dostawcy AI bezpośrednio za tokeny, a my pobieramy niewielką opłatę za orkiestrację (€0.01-0.015/credit) za prompt engineering i zarządzanie kontekstem."
+        },
+        "addSeats": {
+          "question": "Czy mogę dodać więcej stanowisk?",
+          "answer": "Tak! Możesz dodać dodatkowe stanowiska w dowolnym momencie. Ceny: €99/stanowisko (Growth), €79/stanowisko (Scale), €59/stanowisko (Enterprise) miesięcznie."
+        },
+        "overCredits": {
+          "question": "Co się stanie po przekroczeniu AI Credits?",
+          "answer": "Możesz kontynuować korzystanie z funkcji AI - nadwyżka jest rozliczana według stawki planu (€0.03-0.05/credit). Powiadomimy Cię, gdy osiągniesz 80% swojego limitu."
+        },
+        "freeTrial": {
+          "question": "Czy jest darmowy trial?",
+          "answer": "Tak! Wszystkie plany zawierają 14-dniowy bezpłatny trial z pełnym dostępem do funkcji Scale, 2,000 AI Credits i 5 stanowisk. Bez karty kredytowej."
+        },
+        "managedVsByok": {
+          "question": "Jaka jest różnica między Managed AI a BYOK?",
+          "answer": "Z Managed AI wszystkim zarządzamy my - po prostu korzystasz z funkcji. Z BYOK kontrolujesz koszty i compliance używając własnych kluczy API. BYOK jest idealny dla przedsiębiorstw z istniejącymi kontraktami AI lub ścisłymi wymaganiami dotyczącymi danych."
+        }
+      },
+      "creditUsage": {
+        "perPage": "3/strona"
+      },
+      "creditsSection": {
+        "heading": "AI Credits: dwa sposoby płatności",
+        "subtitle": "Wybierz Managed AI dla prostoty lub BYOK dla kontroli. Obie opcje dają pełny dostęp do funkcji AI.",
+        "default": "Domyślnie",
+        "managedDescription": "My zarządzamy wszystkim. Najnowsze modele, zoptymalizowane prompty, automatyczny failover.",
+        "byokDescription": "Używaj własnych kluczy OpenAI/Anthropic/Azure. Płacisz dostawcom bezpośrednio.",
+        "usageHeading": "Co zużywa AI Credits?"
+      },
+      "finalCta": {
+        "heading": "Gotowy na transformację?",
+        "subtitle": "Rozpocznij 14-dniowy trial już dziś. Pełne funkcje Scale, 2,000 AI Credits, 5 stanowisk. Bez karty kredytowej.",
+        "startTrial": "Rozpocznij trial",
+        "bookDemo": "Umów demo"
+      }
     }
   },
   "pages": {

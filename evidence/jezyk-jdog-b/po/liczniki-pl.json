@@ -1,0 +1,49 @@
+[
+ {
+  "lang": "pl",
+  "ekran": "02-llm-add-provider",
+  "napisowUi": 82,
+  "polskichUi": 11,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Otwórz menu profilu użytkownika",
+   "Zmień szerokość kolumny: Name",
+   "Zmień szerokość kolumny: Provider",
+   "Zmień szerokość kolumny: Model ID",
+   "Zmień szerokość kolumny: Kind",
+   "Zmień szerokość kolumny: Tier",
+   "Zmień szerokość kolumny: Visibility",
+   "Zmień szerokość kolumny: Status",
+   "Zmień szerokość kolumny: Config",
+   "lub wpisz własne ID modelu"
+  ],
+  "angielskichUi": 0,
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ },
+ {
+  "lang": "pl",
+  "ekran": "03-app-pricing",
+  "napisowUi": 25,
+  "polskichUi": 14,
+  "polskie": [
+   "Środowisko LOCAL",
+   "Miesięcznie",
+   "Umów rozmowę",
+   "AI Credits: dwa sposoby płatności",
+   "Co zużywa AI Credits?",
+   "Często zadawane pytania",
+   "Czym są AI Credits?",
+   "Co to jest BYOK (Bring Your Own Key)?",
+   "Czy mogę dodać więcej stanowisk?",
+   "Co się stanie po przekroczeniu AI Credits?",
+   "Czy jest darmowy trial?",
+   "Jaka jest różnica między Managed AI a BYOK?",
+   "Gotowy na transformację?",
+   "Umów demo"
+  ],
+  "angielskichUi": 0,
+  "surowychKluczyUi": 0,
+  "surowieKlucze": []
+ }
+]

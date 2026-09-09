@@ -24,6 +24,8 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
@@ -58,144 +60,192 @@ interface FAQ {
 }
 
 // =============================================================================
-// DATA
+// DATA (funkcje przyjmujące `t` — wzór src/utils/enumLabel.ts)
 // =============================================================================
 
 const CALENDAR_URL =
   'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
 
-const getTiers = (billingPeriod: 'annual' | 'monthly'): PricingTier[] => [
+const getTiers = (t: TFunction, billingPeriod: 'annual' | 'monthly'): PricingTier[] => [
   {
     name: 'Growth',
-    description: 'Dla zespołów rozpoczynających transformację cyfrową',
+    description: t(
+      'pricing.appView.tiers.growth.description',
+      'For teams starting digital transformation'
+    ),
     annualPrice: '€7,990',
     monthlyPrice: '€799',
-    priceNote: billingPeriod === 'annual' ? '/rok' : '/miesiąc',
+    priceNote:
+      billingPeriod === 'annual'
+        ? t('pricing.appView.priceNote.year', '/year')
+        : t('pricing.appView.priceNote.month', '/month'),
     icon: Zap,
-    seats: '5 stanowisk',
-    aiCredits: '5,000 AI Credits/mies.',
-    extraSeatPrice: '€99/stanowisko',
+    seats: t('pricing.appView.tiers.growth.seats', '5 seats'),
+    aiCredits: t('pricing.appView.tiers.growth.aiCredits', '5,000 AI Credits/mo.'),
+    extraSeatPrice: t('pricing.appView.tiers.growth.extraSeatPrice', '€99/seat'),
     overagePrice: '€0.05/credit',
     features: [
       { name: 'AI Strategic Assessments', included: true },
-      { name: 'Generowanie roadmap', included: true },
-      { name: 'Zarządzanie inicjatywami', included: true },
+      { name: t('pricing.appView.features.roadmapGeneration', 'Roadmap generation'), included: true },
+      {
+        name: t('pricing.appView.features.initiativeManagement', 'Initiative management'),
+        included: true,
+      },
       { name: 'Basic Stage-Gate', included: true },
       { name: '1 Workspace', included: true },
       { name: 'Email Support (48h)', included: true },
-      { name: 'Podstawowa analityka', included: true },
+      { name: t('pricing.appView.features.basicAnalytics', 'Basic analytics'), included: true },
       { name: 'SSO (Google/Microsoft)', included: false },
       { name: 'API Access', included: false },
-      { name: 'BYOK (własne klucze AI)', included: false },
+      { name: t('pricing.appView.features.byok', 'BYOK (bring your own AI keys)'), included: false },
       { name: 'Custom Dashboards', included: false },
-      { name: 'Dedykowany CSM', included: false },
+      { name: t('pricing.appView.features.dedicatedCsm', 'Dedicated CSM'), included: false },
     ],
-    cta: 'Rozpocznij trial',
+    cta: t('pricing.appView.tiers.growth.cta', 'Start trial'),
     ctaVariant: 'outline',
   },
   {
     name: 'Scale',
-    description: 'Dla organizacji realizujących transformację na dużą skalę',
+    description: t(
+      'pricing.appView.tiers.scale.description',
+      'For organizations running transformation at scale'
+    ),
     annualPrice: '€19,990',
     monthlyPrice: '€1,999',
-    priceNote: billingPeriod === 'annual' ? '/rok' : '/miesiąc',
+    priceNote:
+      billingPeriod === 'annual'
+        ? t('pricing.appView.priceNote.year', '/year')
+        : t('pricing.appView.priceNote.month', '/month'),
     highlight: true,
-    badge: 'Najpopularniejszy',
+    badge: t('pricing.appView.tiers.scale.badge', 'Most popular'),
     icon: Rocket,
-    seats: '15 stanowisk',
-    aiCredits: '20,000 AI Credits/mies.',
-    extraSeatPrice: '€79/stanowisko',
+    seats: t('pricing.appView.tiers.scale.seats', '15 seats'),
+    aiCredits: t('pricing.appView.tiers.scale.aiCredits', '20,000 AI Credits/mo.'),
+    extraSeatPrice: t('pricing.appView.tiers.scale.extraSeatPrice', '€79/seat'),
     overagePrice: '€0.04/credit',
     byokPrice: '€0.015/credit',
     features: [
       { name: 'AI Strategic Assessments', included: true },
-      { name: 'Generowanie roadmap', included: true },
-      { name: 'Zarządzanie inicjatywami', included: true },
+      { name: t('pricing.appView.features.roadmapGeneration', 'Roadmap generation'), included: true },
+      {
+        name: t('pricing.appView.features.initiativeManagement', 'Initiative management'),
+        included: true,
+      },
       { name: 'Full Stage-Gate Governance', included: true },
       { name: '5 Workspaces', included: true },
       { name: 'Priority Support (24h)', included: true },
-      { name: 'Zaawansowana analityka', included: true },
+      {
+        name: t('pricing.appView.features.advancedAnalytics', 'Advanced analytics'),
+        included: true,
+      },
       { name: 'SSO (Google/Microsoft)', included: true },
       { name: 'API Access', included: true },
-      { name: 'BYOK (własne klucze AI)', included: true },
+      { name: t('pricing.appView.features.byok', 'BYOK (bring your own AI keys)'), included: true },
       { name: 'Custom Dashboards', included: true },
-      { name: 'Dedykowany CSM', included: false },
+      { name: t('pricing.appView.features.dedicatedCsm', 'Dedicated CSM'), included: false },
     ],
-    cta: 'Rozpocznij trial',
+    cta: t('pricing.appView.tiers.scale.cta', 'Start trial'),
     ctaVariant: 'primary',
   },
   {
     name: 'Enterprise',
-    description: 'Dla dużych organizacji z kompleksowymi wymaganiami',
+    description: t(
+      'pricing.appView.tiers.enterprise.description',
+      'For large organizations with comprehensive requirements'
+    ),
     annualPrice: 'Custom',
-    monthlyPrice: 'od €4,999',
-    priceNote: '/miesiąc',
+    monthlyPrice: t('pricing.appView.tiers.enterprise.monthlyPrice', 'from €4,999'),
+    priceNote: t('pricing.appView.priceNote.month', '/month'),
     icon: Building2,
-    seats: '50+ stanowisk',
-    aiCredits: '100,000 AI Credits/mies.',
-    extraSeatPrice: '€59/stanowisko',
+    seats: t('pricing.appView.tiers.enterprise.seats', '50+ seats'),
+    aiCredits: t('pricing.appView.tiers.enterprise.aiCredits', '100,000 AI Credits/mo.'),
+    extraSeatPrice: t('pricing.appView.tiers.enterprise.extraSeatPrice', '€59/seat'),
     overagePrice: '€0.03/credit',
     byokPrice: '€0.01/credit',
     features: [
       { name: 'AI Strategic Assessments', included: true },
-      { name: 'Generowanie roadmap', included: true },
-      { name: 'Zarządzanie inicjatywami', included: true },
+      { name: t('pricing.appView.features.roadmapGeneration', 'Roadmap generation'), included: true },
+      {
+        name: t('pricing.appView.features.initiativeManagement', 'Initiative management'),
+        included: true,
+      },
       { name: 'Custom Stage-Gate Workflows', included: true },
       { name: 'Unlimited Workspaces', included: true },
       { name: 'SLA Support (4h)', included: true },
       { name: 'Enterprise Analytics', included: true },
       { name: 'SAML/LDAP/SCIM SSO', included: true },
       { name: 'Full API & Webhooks', included: true },
-      { name: 'BYOK (własne klucze AI)', included: true },
+      { name: t('pricing.appView.features.byok', 'BYOK (bring your own AI keys)'), included: true },
       { name: 'Custom Dashboards', included: true },
-      { name: 'Dedykowany CSM', included: true },
+      { name: t('pricing.appView.features.dedicatedCsm', 'Dedicated CSM'), included: true },
     ],
-    cta: 'Umów rozmowę',
+    cta: t('pricing.appView.tiers.enterprise.cta', 'Book a call'),
     ctaVariant: 'secondary',
   },
 ];
 
-const FAQS: FAQ[] = [
+const getFaqs = (t: TFunction): FAQ[] => [
   {
-    question: 'Czym są AI Credits?',
-    answer:
-      'AI Credits są wykorzystywane podczas interakcji z funkcjami AI, takimi jak assessmenty, generowanie roadmap i analiza strategiczna. Każda akcja zużywa określoną liczbę kredytów w zależności od złożoności. Niewykorzystane kredyty nie przechodzą na następny miesiąc.',
+    question: t('pricing.appView.faqs.whatAreCredits.question', 'What are AI Credits?'),
+    answer: t(
+      'pricing.appView.faqs.whatAreCredits.answer',
+      'AI Credits are used when interacting with AI features, such as assessments, roadmap generation, and strategic analysis. Each action consumes a number of credits depending on complexity. Unused credits do not roll over to the next month.'
+    ),
   },
   {
-    question: 'Co to jest BYOK (Bring Your Own Key)?',
-    answer:
-      'BYOK pozwala używać własnych kluczy API OpenAI, Anthropic lub Azure. Płacisz dostawcy AI bezpośrednio za tokeny, a my pobieramy niewielką opłatę za orkiestrację (€0.01-0.015/credit) za prompt engineering i zarządzanie kontekstem.',
+    question: t('pricing.appView.faqs.whatIsByok.question', 'What is BYOK (Bring Your Own Key)?'),
+    answer: t(
+      'pricing.appView.faqs.whatIsByok.answer',
+      'BYOK lets you use your own OpenAI, Anthropic, or Azure API keys. You pay the AI provider directly for tokens, and we charge a small orchestration fee (€0.01-0.015/credit) for prompt engineering and context management.'
+    ),
   },
   {
-    question: 'Czy mogę dodać więcej stanowisk?',
-    answer:
-      'Tak! Możesz dodać dodatkowe stanowiska w dowolnym momencie. Ceny: €99/stanowisko (Growth), €79/stanowisko (Scale), €59/stanowisko (Enterprise) miesięcznie.',
+    question: t('pricing.appView.faqs.addSeats.question', 'Can I add more seats?'),
+    answer: t(
+      'pricing.appView.faqs.addSeats.answer',
+      'Yes! You can add extra seats at any time. Prices: €99/seat (Growth), €79/seat (Scale), €59/seat (Enterprise) per month.'
+    ),
   },
   {
-    question: 'Co się stanie po przekroczeniu AI Credits?',
-    answer:
-      'Możesz kontynuować korzystanie z funkcji AI - nadwyżka jest rozliczana według stawki planu (€0.03-0.05/credit). Powiadomimy Cię, gdy osiągniesz 80% swojego limitu.',
+    question: t(
+      'pricing.appView.faqs.overCredits.question',
+      'What happens when I exceed AI Credits?'
+    ),
+    answer: t(
+      'pricing.appView.faqs.overCredits.answer',
+      "You can keep using AI features - the overage is billed at the plan's rate (€0.03-0.05/credit). We'll notify you once you reach 80% of your limit."
+    ),
   },
   {
-    question: 'Czy jest darmowy trial?',
-    answer:
-      'Tak! Wszystkie plany zawierają 14-dniowy bezpłatny trial z pełnym dostępem do funkcji Scale, 2,000 AI Credits i 5 stanowisk. Bez karty kredytowej.',
+    question: t('pricing.appView.faqs.freeTrial.question', 'Is there a free trial?'),
+    answer: t(
+      'pricing.appView.faqs.freeTrial.answer',
+      'Yes! All plans include a 14-day free trial with full access to Scale features, 2,000 AI Credits, and 5 seats. No credit card required.'
+    ),
   },
   {
-    question: 'Jaka jest różnica między Managed AI a BYOK?',
-    answer:
-      'Z Managed AI wszystkim zarządzamy my - po prostu korzystasz z funkcji. Z BYOK kontrolujesz koszty i compliance używając własnych kluczy API. BYOK jest idealny dla przedsiębiorstw z istniejącymi kontraktami AI lub ścisłymi wymaganiami dotyczącymi danych.',
+    question: t(
+      'pricing.appView.faqs.managedVsByok.question',
+      'What is the difference between Managed AI and BYOK?'
+    ),
+    answer: t(
+      'pricing.appView.faqs.managedVsByok.answer',
+      'With Managed AI, we manage everything - you just use the features. With BYOK, you control cost and compliance using your own API keys. BYOK is ideal for enterprises with existing AI contracts or strict data requirements.'
+    ),
   },
 ];
 
-const AI_CREDIT_USAGE = [
+const getCreditUsage = (t: TFunction) => [
   { action: 'Assessment Question', credits: '5' },
   { action: 'Initiative Generation', credits: '15' },
   { action: 'Roadmap Generation', credits: '50' },
   { action: 'ROI Calculation', credits: '20' },
   { action: 'Report Generation', credits: '30' },
   { action: 'Chat Message', credits: '2-5' },
-  { action: 'Document Analysis', credits: '3/strona' },
+  {
+    action: 'Document Analysis',
+    credits: t('pricing.appView.creditUsage.perPage', '3/page'),
+  },
   { action: 'Strategic Analysis', credits: '25' },
 ];
 
@@ -204,11 +254,14 @@ const AI_CREDIT_USAGE = [
 // =============================================================================
 
 export const AppPricingView: React.FC = () => {
+  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const [billingPeriod, setBillingPeriod] = useState<'annual' | 'monthly'>('annual');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const tiers = getTiers(billingPeriod);
+  const tiers = getTiers(t, billingPeriod);
+  const faqs = getFaqs(t);
+  const creditUsage = getCreditUsage(t);
 
   const handleCtaClick = (tier: PricingTier) => {
     if (tier.name === 'Enterprise') {
@@ -233,19 +286,21 @@ export const AppPricingView: React.FC = () => {
           >
             <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
               <Sparkles size={16} />
-              Cennik
+              {t('pricing.appView.badge', 'Pricing')}
             </span>
 
             <h1 className="mt-6 text-3xl font-black tracking-tight text-navy-950 dark:text-white md:text-4xl">
-              AI Strategic Consulting,{' '}
+              {t('pricing.appView.heading', 'AI Strategic Consulting,')}{' '}
               <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
-                skalowany dla Ciebie
+                {t('pricing.appView.headingAccent', 'scaled for you')}
               </span>
             </h1>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-c-text-secondary">
-              Zastąp kosztownych konsultantów strategicznym wsparciem AI. 14-dniowy trial. Bez karty
-              kredytowej.
+              {t(
+                'pricing.appView.subtitle',
+                'Replace costly consultants with AI-powered strategic support. 14-day trial. No credit card.'
+              )}
             </p>
 
             {/* Billing Toggle */}
@@ -258,7 +313,7 @@ export const AppPricingView: React.FC = () => {
                     : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
-                Rocznie
+                {t('pricing.appView.billingToggle.annual', 'Annually')}
                 <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   -17%
                 </span>
@@ -271,7 +326,7 @@ export const AppPricingView: React.FC = () => {
                     : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
-                Miesięcznie
+                {t('pricing.appView.billingToggle.monthly', 'Monthly')}
               </button>
             </div>
           </motion.div>
@@ -368,7 +423,7 @@ export const AppPricingView: React.FC = () => {
                           tier.highlight ? 'text-primary-200' : 'text-c-text-muted'
                         }`}
                       >
-                        Stanowiska
+                        {t('pricing.appView.metrics.seats', 'Seats')}
                       </div>
                       <div
                         className={`text-sm font-bold ${
@@ -459,7 +514,7 @@ export const AppPricingView: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Users size={18} className="text-blue-500" />
-              <span>Anuluj kiedy chcesz</span>
+              <span>{t('pricing.appView.cancelAnytime', 'Cancel anytime')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Cpu size={18} className="text-primary-500" />
@@ -474,11 +529,13 @@ export const AppPricingView: React.FC = () => {
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-black text-navy-950 dark:text-white">
-              AI Credits: dwa sposoby płatności
+              {t('pricing.appView.creditsSection.heading', 'AI Credits: two ways to pay')}
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm text-c-text-secondary">
-              Wybierz Managed AI dla prostoty lub BYOK dla kontroli. Obie opcje dają pełny dostęp do
-              funkcji AI.
+              {t(
+                'pricing.appView.creditsSection.subtitle',
+                'Choose Managed AI for simplicity or BYOK for control. Both options give full access to AI features.'
+              )}
             </p>
           </div>
 
@@ -497,13 +554,15 @@ export const AppPricingView: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white">Managed AI</h3>
                   <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                    Domyślnie
+                    {t('pricing.appView.creditsSection.default', 'Default')}
                   </span>
                 </div>
               </div>
               <p className="text-sm text-c-text-secondary mb-4">
-                My zarządzamy wszystkim. Najnowsze modele, zoptymalizowane prompty, automatyczny
-                failover.
+                {t(
+                  'pricing.appView.creditsSection.managedDescription',
+                  'We manage everything. Latest models, optimized prompts, automatic failover.'
+                )}
               </p>
               <div className="space-y-2">
                 {[
@@ -543,7 +602,10 @@ export const AppPricingView: React.FC = () => {
                 </div>
               </div>
               <p className="text-sm text-c-text-secondary mb-4">
-                Używaj własnych kluczy OpenAI/Anthropic/Azure. Płacisz dostawcom bezpośrednio.
+                {t(
+                  'pricing.appView.creditsSection.byokDescription',
+                  'Use your own OpenAI/Anthropic/Azure keys. You pay providers directly.'
+                )}
               </p>
               <div className="space-y-2">
                 {[
@@ -569,10 +631,10 @@ export const AppPricingView: React.FC = () => {
           <div className="mt-8 rounded-xl border border-c-border-subtle bg-c-surface p-6 dark:border-navy-700 dark:bg-navy-900">
             <h3 className="flex items-center gap-2 text-base font-bold text-navy-950 dark:text-white mb-4">
               <Server size={18} className="text-primary-500" />
-              Co zużywa AI Credits?
+              {t('pricing.appView.creditsSection.usageHeading', 'What uses AI Credits?')}
             </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {AI_CREDIT_USAGE.map((item, idx) => (
+              {creditUsage.map((item, idx) => (
                 <div
                   key={idx}
                   className="flex items-center justify-between rounded-xl bg-c-bg p-3 dark:bg-navy-950"
@@ -593,12 +655,12 @@ export const AppPricingView: React.FC = () => {
         <div className="mx-auto max-w-3xl">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-black text-navy-950 dark:text-white">
-              Często zadawane pytania
+              {t('pricing.appView.faqHeading', 'Frequently asked questions')}
             </h2>
           </div>
 
           <div className="space-y-3">
-            {FAQS.map((faq, idx) => (
+            {faqs.map((faq, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 10 }}
@@ -645,17 +707,21 @@ export const AppPricingView: React.FC = () => {
       {/* CTA Section */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-12">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-2xl font-black text-white">Gotowy na transformację?</h2>
+          <h2 className="text-2xl font-black text-white">
+            {t('pricing.appView.finalCta.heading', 'Ready to transform?')}
+          </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-primary-100">
-            Rozpocznij 14-dniowy trial już dziś. Pełne funkcje Scale, 2,000 AI Credits, 5 stanowisk.
-            Bez karty kredytowej.
+            {t(
+              'pricing.appView.finalCta.subtitle',
+              'Start your 14-day trial today. Full Scale features, 2,000 AI Credits, 5 seats. No credit card required.'
+            )}
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               onClick={() => window.open('/trial/start', '_blank')}
               className="inline-flex items-center gap-2 rounded-full bg-c-surface px-6 py-3 text-sm font-bold text-primary-700 shadow-lg transition hover:bg-primary-50"
             >
-              Rozpocznij trial
+              {t('pricing.appView.finalCta.startTrial', 'Start trial')}
               <ArrowRight size={16} />
             </button>
             <button
@@ -663,7 +729,7 @@ export const AppPricingView: React.FC = () => {
               className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-c-surface-raised/40"
             >
               <Calendar size={16} />
-              Umów demo
+              {t('pricing.appView.finalCta.bookDemo', 'Book a demo')}
             </button>
           </div>
         </div>

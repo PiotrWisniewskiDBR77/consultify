@@ -35,6 +35,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDate, formatListNumber } from '../../../utils/listDateFormat';
 import { DegradedState } from '../../Admin/AdminState';
 import { EmptyState, LoadingState } from '../../shared/states';
 
@@ -317,7 +318,7 @@ export const EnterpriseApiManagement: React.FC = () => {
   const formatDate = (value?: string) => {
     if (!value) return 'Never';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : formatListDate(date);
   };
 
   const fetchApiKeys = useCallback(async () => {
@@ -630,7 +631,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                           <span>•</span>
                           <span>{key.rate_limit_per_minute}/min</span>
                           <span>•</span>
-                          <span>{key.usage_count.toLocaleString()} requests</span>
+                          <span>{formatListNumber(key.usage_count)} requests</span>
                           {key.last_used_at && (
                             <>
                               <span>•</span>
@@ -732,7 +733,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <div className="text-sm text-c-text-secondary">Total Requests</div>
                   <div className="text-2xl font-bold text-c-text">
-                    {selectedKeyUsage.usage.totals?.total_requests?.toLocaleString() || 0}
+                    {formatListNumber(selectedKeyUsage.usage.totals?.total_requests ?? 0)}
                   </div>
                 </div>
                 <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
@@ -811,7 +812,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                           <code className="text-sm text-c-text-secondary">{endpoint.endpoint}</code>
                         </div>
                         <span className="text-sm text-c-text-secondary">
-                          {endpoint.count.toLocaleString()}
+                          {formatListNumber(endpoint.count)}
                         </span>
                       </div>
                     ))}

@@ -33,6 +33,7 @@ import toast from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDateTime, formatListNumber, localeListy } from '../../../utils/listDateFormat';
 
 interface SLAMetrics {
   uptimePercentage: number;
@@ -326,14 +327,14 @@ export function SLADashboard() {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return 'Unknown date';
     return timeRange === '24h'
-      ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      ? date.toLocaleTimeString(localeListy(), { hour: '2-digit', minute: '2-digit' })
+      : date.toLocaleDateString(localeListy(), { month: 'short', day: 'numeric' });
   };
 
   const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return 'Unknown date';
-    return date.toLocaleString();
+    return formatListDateTime(date);
   };
 
   const getComplianceStatus = (actual: number, target: number, isLowerBetter: boolean = true) => {
@@ -504,15 +505,15 @@ export function SLADashboard() {
                 Request Statistics
               </h3>
               <div className="space-y-4">
-                <StatRow label="Total Requests" value={metrics.totalRequests.toLocaleString()} />
+                <StatRow label="Total Requests" value={formatListNumber(metrics.totalRequests)} />
                 <StatRow
                   label="Successful"
-                  value={metrics.successfulRequests.toLocaleString()}
+                  value={formatListNumber(metrics.successfulRequests)}
                   color="text-emerald-400"
                 />
                 <StatRow
                   label="Failed"
-                  value={metrics.failedRequests.toLocaleString()}
+                  value={formatListNumber(metrics.failedRequests)}
                   color="text-danger-400"
                 />
                 <StatRow

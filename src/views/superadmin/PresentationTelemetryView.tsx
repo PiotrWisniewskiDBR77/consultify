@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { formatListDate, formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
+
 import {
   fetchPresentationGovernanceCard,
   type GovernanceFetchStatus,
@@ -71,7 +73,7 @@ function formatRelativeTime(iso: string | null): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '—';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return formatListDateTime(ts);
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
@@ -80,12 +82,12 @@ function formatRelativeTime(iso: string | null): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return formatListDate(ts);
 }
 
 function formatNumber(n: number): string {
   if (!Number.isFinite(n)) return '—';
-  return n.toLocaleString();
+  return formatListNumber(n);
 }
 
 function compareStrings(a: string, b: string): number {
@@ -263,7 +265,7 @@ const PresentationTelemetryView: React.FC<PresentationTelemetryViewProps> = ({ d
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
           {rollup && (
             <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
-              Generated {new Date(rollup.generatedAt).toLocaleString()} · deck{' '}
+              Generated {formatListDateTime(rollup.generatedAt)} · deck{' '}
               <code className="font-mono">{rollup.deckId || trimmedDeckId}</code>
               {rollup.lastActivityAt && (
                 <> · last activity {formatRelativeTime(rollup.lastActivityAt)}</>
@@ -585,7 +587,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                         </td>
                         <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
                           {row.lastAt ? (
-                            <span title={new Date(row.lastAt).toLocaleString()}>
+                            <span title={formatListDateTime(row.lastAt)}>
                               {formatRelativeTime(row.lastAt)}
                             </span>
                           ) : (

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
+import { formatListCurrency, formatListDate } from '../../../utils/listDateFormat';
 
 interface RevenueForecast {
   id: string;
@@ -115,12 +116,8 @@ export const RevenueForecastView: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number, currency: string = 'USD') =>
+    formatListCurrency(amount, currency);
 
   const getMethodBadge = (method: string) => {
     const badges: Record<string, { bg: string; text: string; label: string }> = {
@@ -309,8 +306,8 @@ export const RevenueForecastView: React.FC = () => {
                   >
                     <td className="py-3 px-4">
                       <span className="text-slate-900 dark:text-white">
-                        {new Date(forecast.period_start).toLocaleDateString()} -{' '}
-                        {new Date(forecast.period_end).toLocaleDateString()}
+                        {formatListDate(forecast.period_start)} -{' '}
+                        {formatListDate(forecast.period_end)}
                       </span>
                     </td>
                     <td className="py-3 px-4">{getTypeBadge(forecast.forecast_type)}</td>
@@ -342,7 +339,7 @@ export const RevenueForecastView: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">
-                      {new Date(forecast.created_at).toLocaleDateString()}
+                      {formatListDate(forecast.created_at)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button

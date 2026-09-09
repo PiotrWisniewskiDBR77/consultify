@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { formatListDate, formatListDateTime, formatListNumber, formatListTime } from '../../utils/listDateFormat';
+
 import IncidentRunbooksCard from '../../components/SuperAdmin/IncidentRunbooksCard';
 import OperationsHealthDrilldownPanel from '../../components/SuperAdmin/OperationsHealthDrilldownPanel';
 import type { DashboardDeepLink } from '../../services/presentationGovernanceDeepLinks';
@@ -88,7 +90,7 @@ function formatRelativeTime(iso: string | null): string {
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return 'never';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return new Date(ts).toLocaleString();
+  if (diffMs < 0) return formatListDateTime(ts);
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
@@ -97,13 +99,13 @@ function formatRelativeTime(iso: string | null): string {
   if (hr < 24) return `${hr}h ago`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
-  return new Date(ts).toLocaleDateString();
+  return formatListDate(ts);
 }
 
 function formatClockTime(date: Date | null): string {
   if (!date) return '—';
   try {
-    return date.toLocaleTimeString();
+    return formatListTime(date);
   } catch {
     return date.toISOString();
   }
@@ -111,7 +113,7 @@ function formatClockTime(date: Date | null): string {
 
 function formatNumber(n: number): string {
   if (!Number.isFinite(n)) return '—';
-  return n.toLocaleString();
+  return formatListNumber(n);
 }
 
 function statusReason(status: OperationsHealthFetchStatus | null): string | null {
@@ -254,7 +256,7 @@ const PresentationOperationsHealthView: React.FC<PresentationOperationsHealthVie
           </p>
           {data && (
             <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
-              Generated {new Date(data.generatedAt).toLocaleString()} · last {data.windowDays} day
+              Generated {formatListDateTime(data.generatedAt)} · last {data.windowDays} day
               {data.windowDays === 1 ? '' : 's'}
             </p>
           )}
@@ -571,7 +573,7 @@ const JobsStrip: React.FC<JobsStripProps> = ({ jobs }) => {
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span title={job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : ''}>
+                  <span title={job.lastRunAt ? formatListDateTime(job.lastRunAt) : ''}>
                     Last run: {formatRelativeTime(job.lastRunAt)}
                   </span>
                 </div>
