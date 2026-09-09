@@ -106,7 +106,7 @@ export const WZORZEC_BAZY_KOPII = /^consultify_kopia_d[0-9]+$/i;
  * lokalną kopię. Domyślnie `null` = zachowanie z D1-D7 (tylko
  * `consultify_kopia_d<N>` na localhoście).
  */
-export type CelZdalny = { cel: 'staging' } | null;
+export type CelZdalny = { cel: 'staging' | 'demo' } | null;
 
 /** Fragment hosta, który MUSI wystąpić, żeby cel zdalny został uznany za staging. */
 export const HOST_STAGINGU = 'thomas';
@@ -124,15 +124,25 @@ export function zbudujCelZdalny(argv: string[], env: Record<string, string | und
   if (indeks === -1) return null;
   const arg = argv[indeks]!;
   const wartosc = arg.includes('=') ? arg.split('=').slice(1).join('=') : (argv[indeks + 1] ?? '');
-  if (wartosc !== 'staging')
+  if (wartosc !== 'staging' && wartosc !== 'demo')
     throw new Error(
-      `Odmowa: --cel-zdalny przyjmuje WYŁĄCZNIE „staging" (dostał „${wartosc}"). Demo (trolley) i produkcja (centerbeam) NIE MAJĄ trybu zdalnego. STOP.`
+      `Odmowa: --cel-zdalny przyjmuje WYŁĄCZNIE „staging" albo „demo" (dostał „${wartosc}"). Produkcja (centerbeam) NIE MA trybu zdalnego. STOP.`
     );
-  if (env.ALLOW_STAGING_SEED !== '1')
-    throw new Error('Odmowa: --cel-zdalny staging wymaga zmiennej środowiskowej ALLOW_STAGING_SEED=1. STOP.');
-  if (!argv.includes('--rozumiem-staging'))
-    throw new Error('Odmowa: --cel-zdalny staging wymaga jawnego potwierdzenia --rozumiem-staging. STOP.');
-  return { cel: 'staging' };
+  if (wartosc === 'staging') {
+    if (env.ALLOW_STAGING_SEED !== '1')
+      throw new Error('Odmowa: --cel-zdalny staging wymaga zmiennej środowiskowej ALLOW_STAGING_SEED=1. STOP.');
+    if (!argv.includes('--rozumiem-staging'))
+      throw new Error('Odmowa: --cel-zdalny staging wymaga jawnego potwierdzenia --rozumiem-staging. STOP.');
+    return { cel: 'staging' };
+  }
+  // DEMO (trolley) — dopuszczone od 09.09.2026 (decyzja właściciela: demo = kopia stagingu, dosiew D9
+  // ma trafić na oba środowiska). Dwa klucze jak dla stagingu, osobne nazwy, żeby nie dało się
+  // pomylić celu jedną literą.
+  if (env.ALLOW_DEMO_SEED !== '1')
+    throw new Error('Odmowa: --cel-zdalny demo wymaga zmiennej środowiskowej ALLOW_DEMO_SEED=1. STOP.');
+  if (!argv.includes('--rozumiem-demo'))
+    throw new Error('Odmowa: --cel-zdalny demo wymaga jawnego potwierdzenia --rozumiem-demo. STOP.');
+  return { cel: 'demo' };
 }
 
 export function sprawdzCel(url: string, oczekiwanyHost: string, celZdalny: CelZdalny = null): string {
@@ -141,7 +151,15 @@ export function sprawdzCel(url: string, oczekiwanyHost: string, celZdalny: CelZd
   const host = toz.split('/')[0]!;
 
   if (celZdalny !== null) {
-    // TRYB ZDALNY — dopuszczony WYŁĄCZNIE staging (host zawiera „thomas").
+    // TRYB ZDALNY — staging (host zawiera „thomas") albo demo (host zawiera „trolley"); cel musi
+    // zgadzać się z deklaracją co do środowiska, nie tylko co do fragmentu hosta.
+    if (celZdalny.cel === 'demo') {
+      if (!/trolley/i.test(host))
+        throw new Error('Cel zdalny NIE jest demo — host nie zawiera „trolley" (host nie jest pokazywany). STOP.');
+      if (oczekiwanyHost && !host.includes(oczekiwanyHost))
+        throw new Error(`Cel NIE pasuje do deklaracji --oczekiwany-host „${oczekiwanyHost}" (host nie jest pokazywany). STOP.`);
+      return url;
+    }
     if (/trolley/i.test(toz))
       throw new Error('Cel wskazuje DEMO (trolley). Tryb --cel-zdalny staging dopuszcza WYŁĄCZNIE staging. STOP.');
     if (!new RegExp(HOST_STAGINGU, 'i').test(host))
