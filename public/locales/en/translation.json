@@ -17566,6 +17566,12 @@
     "reportCommentPanel": {
       "addACommentToStart": "Add a comment to start the discussion",
       "regenerateSectionWithFeedback": "Regenerate section with feedback"
+    },
+    "gallery": {
+      "sectionCount_one": "{{count}} section",
+      "sectionCount_other": "{{count}} sections",
+      "slideCount_one": "{{count}} slide",
+      "slideCount_other": "{{count}} slides"
     }
   },
   "auth": {

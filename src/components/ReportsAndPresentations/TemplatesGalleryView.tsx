@@ -54,29 +54,18 @@ import {
   type TemplateType,
 } from './types';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Polish plural helper (bloki: sekcje/slajdy) — mirrors the prototype's
-// `jednostkaBlokow`, made grammatically exact (n=1 / 2-4 / 5+ with the
-// 12-14 exception) since it is cheap and this is user-facing copy.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function pluralPl(n: number, one: string, few: string, many: string): string {
-  if (n === 1) return `1 ${one}`;
-  const lastDigit = n % 10;
-  const lastTwo = n % 100;
-  if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return `${n} ${few}`;
-  return `${n} ${many}`;
-}
-
-function blockCountLabel(item: TemplateItem): string | null {
+// Block count label (sections/slides) — through i18next plurals, so EN gets
+// "9 sections" and PL "9 sekcji" (TEST-JEZYK 09.09: the previous helper was
+// hardcoded Polish and leaked 74 Polish strings into the EN gallery).
+function blockCountLabel(item: TemplateItem, t: TFunction): string | null {
   if (item.type === 'report' && typeof item.sectionCount === 'number') {
-    return pluralPl(item.sectionCount, 'sekcja', 'sekcje', 'sekcji');
+    return t('reports.gallery.sectionCount', { count: item.sectionCount, defaultValue: '{{count}} sections' });
   }
   if (item.type === 'presentation' && typeof item.slideCount === 'number') {
-    return pluralPl(item.slideCount, 'slajd', 'slajdy', 'slajdów');
+    return t('reports.gallery.slideCount', { count: item.slideCount, defaultValue: '{{count}} slides' });
   }
   // sheet, or count unknown for this item → omit the metric instead of
-  // fabricating a number (degradacja elegancka).
+  // fabricating a number.
   return null;
 }
 
@@ -237,7 +226,7 @@ const TemplateTile: React.FC<{
       {isPolish ? meta.labelPl : meta.label}
     </span>,
   ];
-  const blockLabel = blockCountLabel(item);
+  const blockLabel = blockCountLabel(item, t);
   if (blockLabel)
     footerParts.push(
       <span key="blocks" className="tabular-nums">

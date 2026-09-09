@@ -16005,7 +16005,7 @@
     "sheet": "Tabela",
     "presentation": "Prezentacja",
     "personal": "Osobisty",
-    "application": "System",
+    "application": "Aplikacja",
     "organization": "Organizacja",
     "active": "Aktywny",
     "deprecated": "Wycofany",
@@ -16756,6 +16756,16 @@
     "reportCommentPanel": {
       "addACommentToStart": "Dodaj komentarz, aby rozpocząć dyskusję",
       "regenerateSectionWithFeedback": "Wygeneruj sekcję ponownie z uwagami"
+    },
+    "gallery": {
+      "sectionCount_one": "{{count}} sekcja",
+      "sectionCount_few": "{{count}} sekcje",
+      "sectionCount_many": "{{count}} sekcji",
+      "sectionCount_other": "{{count}} sekcji",
+      "slideCount_one": "{{count}} slajd",
+      "slideCount_few": "{{count}} slajdy",
+      "slideCount_many": "{{count}} slajdów",
+      "slideCount_other": "{{count}} slajdów"
     }
   },
   "auth": {

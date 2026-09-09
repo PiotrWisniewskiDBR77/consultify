@@ -255,7 +255,8 @@ describe('Materiały — jeden standard Menu 2/3 w 5 zakładkach (DEC-423b/c/d)'
     const opcje = within(dropdown)
       .getAllByRole('option')
       .map((el) => el.textContent || '');
-    expect(opcje.some((o) => o.includes('Robocze'))).toBe(true);
+    // Etykieta idzie przez t() z angielskim defaultem (J10) — atrapa i18n zwraca default.
+    expect(opcje.some((o) => o.includes('Robocze') || o.includes('Draft'))).toBe(true);
   });
 
   it.each(TABS.slice(1, 4))(
