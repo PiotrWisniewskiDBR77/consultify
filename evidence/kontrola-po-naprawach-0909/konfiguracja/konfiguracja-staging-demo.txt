@@ -1,0 +1,22 @@
+===== staging =====
+                  kontrola                  | wierszy | aktywne 
+--------------------------------------------+---------+---------
+ ie_governance_policies (*,PRODUCT,DEFAULT) |       1 |       1
+ document_studio_templates __system__       |      44 |        
+ v8_output_artifacts __system__             |      24 |        
+ v8_artifact_origin_links __system__        |      24 |        
+ security_policies __global__               |       4 |        
+ knowledge_doc_versions pusta org           |     222 |        
+(6 rows)
+
+===== demo =====
+                  kontrola                  | wierszy | aktywne 
+--------------------------------------------+---------+---------
+ ie_governance_policies (*,PRODUCT,DEFAULT) |       1 |       1
+ document_studio_templates __system__       |      44 |        
+ v8_output_artifacts __system__             |      24 |        
+ v8_artifact_origin_links __system__        |      24 |        
+ security_policies __global__               |       4 |        
+ knowledge_doc_versions pusta org           |     222 |        
+(6 rows)
+
