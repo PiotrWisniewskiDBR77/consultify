@@ -1,0 +1,30 @@
+
+### B4 mp :: /my-work -> Tasks
+  zakladka klikneta: true
+  przyciski ekranu: ["3 V9 overrides","?","Feedback","Documents","Expand","Log Out","Open menu","Data","Model","Teresa","James Whitfield","Ideas","Notebook","Inbox","Calendar","Tasks","Decisions","Vaults","New Task","All","Overdue","Today","This Week","Urgent","New","AI Priorities"]
+  kreator z przycisku: New task
+  kreator otwarty: true
+  przyciski kreatora: ["3 V9 overrides","?","Feedback","Documents","Expand","Log Out","Open menu","Data","Model","Teresa","James Whitfield","Ideas","Notebook","Inbox","Calendar","Tasks","Decisions","Vaults","List","New Task","Close: New Task","Back","AI","Start","Sections","Edit"]
+   API[mp-utworz]: (brak wywolan zapisu)
+  widoczny na liscie: false
+
+### B4 re :: /execution -> Decisions & risks
+  zakladka klikneta: false
+  przyciski ekranu: ["3 V9 overrides","?","Feedback","Documents","Expand","Log Out","Open menu","Data","Model","Teresa","James Whitfield","Search","Dashboard","Deliveries","Work","Resources","Decisions & risks","Reports","Active","All","All","At risk","Overdue","Filter Status, no filter applied","View settings","Row actions"]
+  kreator otwarty: false
+   API[re-brak-kreatora]: (brak wywolan zapisu)
+
+### B4 inicjatywy
+  kreator otwarty: true
+  przyciski: ["Close","Source(optional)","2","3","4","5","Fill with AI","Fill with AI","Fill with AI","Fill with AI","Create the first portfolio","Margin / EBITDA","Quality","On-time delivery","Automation","Governance","Risk reduction","90 days","Balanced portfolio","Cancel","Back","Generate AI draft"]
+  projekt opcje: ["Select a project…","Operational Excellence Programme","Digital & Automation Roadmap"]
+   API[in-krok]: (brak wywolan zapisu)
+  tekst kroku 2: AI Initiative Wizard | Source(optional) | Pick interview insights | 2 | Premise | Problem, outcome and scope | 3 | AI draft | Review, edit and similarity | 4 | Approval | Selection, evidence and rules | 5 | Receipt | Save and audit trail | Initiative premise and core |  | Describe the problem 
+
+### B4 materialy: edycja/usuniecie
+  "New presentation" na liscie: true
+  kebab: ["Open","Discuss","Export PPTX","Share","Open preview","Edit","Archive"]
+   API[ma-usun]: (brak wywolan zapisu)
+  po usunieciu nadal na liscie: true
+
+STEMPEL=ZZTESTMTUAPUEP

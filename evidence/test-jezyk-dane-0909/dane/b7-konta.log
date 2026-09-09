@@ -1,0 +1,10 @@
+[KONTO] james.whitfield@northwind.example   login=200 rola=OWNER url=/chat tekst=402 menu=0 bledy=0 net=0
+[KONTO] sarah.mitchell@northwind.example    login=200 rola=ADMIN url=/chat tekst=893 menu=0 bledy=0 net=0
+[KONTO] robert.chen@northwind.example       login=200 rola=ADMIN url=/chat tekst=903 menu=0 bledy=0 net=0
+[KONTO] emily.carter@northwind.example      login=200 rola=MEMBER url=/chat tekst=386 menu=0 bledy=0 net=0
+[KONTO] daniel.osei@northwind.example       login=200 rola=MEMBER url=/chat tekst=883 menu=0 bledy=0 net=0
+[KONTO] laura.novak@northwind.example       login=200 rola=MEMBER url=/chat tekst=891 menu=0 bledy=0 net=0
+[KONTO] michael.grant@northwind.example     login=200 rola=MEMBER url=/chat tekst=879 menu=0 bledy=0 net=0
+[KONTO] priya.sharma@northwind.example      login=200 rola=MEMBER url=/chat tekst=888 menu=0 bledy=0 net=0
+[KONTO] thomas.baker@northwind.example      login=200 rola=MEMBER url=/chat tekst=893 menu=0 bledy=0 net=0
+ZAPISANO b7-konta.json
