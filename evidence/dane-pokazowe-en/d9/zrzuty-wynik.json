@@ -1,0 +1,106 @@
+{
+  "start": "2026-09-09T16:54:15.587Z",
+  "base": "http://127.0.0.1:3228",
+  "ekrany": [
+    {
+      "id": "brak1-organizacja-profil",
+      "brak": "BRAK 1 — profil organizacji",
+      "route": "/organization/profile",
+      "plik": "PO-brak1-organizacja-profil.png",
+      "dlugoscTekstu": 1980,
+      "wierszeTabeli": 0,
+      "myslnikow": 3,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak2-wywiad-inbox",
+      "brak": "BRAK 2 — Wywiad / Inbox",
+      "route": "/interview",
+      "plik": "PO-brak2-wywiad-inbox.png",
+      "dlugoscTekstu": 564,
+      "wierszeTabeli": 3,
+      "myslnikow": 0,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak3-wyniki-karta-kpi",
+      "brak": "BRAK 3 — Wyniki / przeglad karty KPI",
+      "route": "/results/kpi",
+      "plik": "PO-brak3-wyniki-karta-kpi.png",
+      "dlugoscTekstu": 343,
+      "wierszeTabeli": 1,
+      "myslnikow": 1,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak4-realizacja-zasoby",
+      "brak": "BRAK 4 — Realizacja / Resources",
+      "route": "/execution",
+      "plik": "PO-brak4-realizacja-zasoby.png",
+      "dlugoscTekstu": 6877,
+      "wierszeTabeli": 72,
+      "myslnikow": 66,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak5-materialy-lista",
+      "brak": "BRAK 5 — Materialy / kolumny pochodne",
+      "route": "/presentations",
+      "plik": "PO-brak5-materialy-lista.png",
+      "dlugoscTekstu": 470,
+      "wierszeTabeli": 2,
+      "myslnikow": 2,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak5-materialy-all",
+      "brak": "BRAK 5 — Materialy / zakladka All",
+      "route": "/presentations",
+      "plik": "PO-brak5-materialy-all.png",
+      "dlugoscTekstu": 1169,
+      "wierszeTabeli": 7,
+      "myslnikow": 14,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak5-inicjatywy-rejestr",
+      "brak": "BRAK 5 — Inicjatywy / LEVEL·VARIANCE·AREA",
+      "route": "/initiatives",
+      "plik": "PO-brak5-inicjatywy-rejestr.png",
+      "dlugoscTekstu": 4294,
+      "wierszeTabeli": 11,
+      "myslnikow": 22,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak5-realizacja-work",
+      "brak": "BRAK 5 — Realizacja / Work",
+      "route": "/execution",
+      "plik": "PO-brak5-realizacja-work.png",
+      "dlugoscTekstu": 5731,
+      "wierszeTabeli": 45,
+      "myslnikow": 33,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    },
+    {
+      "id": "brak3b-wyniki-przeglad-karty",
+      "brak": "BRAK 3 — Wyniki / otwarta karta KPI (sciezka, ktora dawala 404)",
+      "route": "/results/kpi → otwarcie raportu",
+      "plik": "PO-brak3b-wyniki-przeglad-karty.png",
+      "dlugoscTekstu": 3065,
+      "wierszeTabeli": 13,
+      "myslnikow": 155,
+      "bledyKonsoli": [],
+      "odpowiedzi4xx5xx": []
+    }
+  ],
+  "koniec": "2026-09-09T16:55:11.862Z"
+}

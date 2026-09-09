@@ -1,0 +1,86 @@
+Pager usage is off.
+
+=== BRAK 1 — Organizacja: profil (13 pol UI) ===
+ ma_industry_code | priorytety_strategiczne | ma_misje | ma_dojrzalosc | stos_technologiczny | rynki_glowne | segmenty_klientow | profile_completeness 
+------------------+-------------------------+----------+---------------+---------------------+--------------+-------------------+----------------------
+ f                |                       0 | t        | f             |                   0 |            0 |                 0 |                    0
+(1 row)
+
+
+=== BRAK 2 — Wywiad: przydzialy Northwind (per status) ===
+ status | n 
+--------+---
+(0 rows)
+
+ przydzialy_razem 
+------------------
+                0
+(1 row)
+
+ czlonkowie_przydzialow 
+------------------------
+                      0
+(1 row)
+
+ w_skrzynce_wlasciciela 
+------------------------
+                      0
+(1 row)
+
+
+=== BRAK 3 — Wyniki: migawki przegladu karty KPI ===
+ status | n 
+--------+---
+(0 rows)
+
+ migawki_razem 
+---------------
+             0
+(1 row)
+
+ pomiary_w_migawkach 
+---------------------
+                   0
+(1 row)
+
+
+=== BRAK 4 — Realizacja: rozklad zadan na 8 tygodni od dzis ===
+ zadan_razem | w_oknie_8_tyg | z_estymata | z_pracochlonnoscia | godziny_w_oknie 
+-------------+---------------+------------+--------------------+-----------------
+          42 |            23 |         36 |                 36 |           356.0
+(1 row)
+
+ tygodnie_z_popytem 
+--------------------
+                  8
+(1 row)
+
+  tydzien   | zadan | godzin 
+------------+-------+--------
+ 2026-09-07 |     7 |   86.0
+ 2026-09-14 |     5 |   68.0
+ 2026-09-21 |     4 |   90.0
+ 2026-09-28 |     2 |   20.0
+ 2026-10-05 |     1 |   26.0
+ 2026-10-12 |     2 |   38.0
+ 2026-10-19 |     1 |   18.0
+ 2026-10-26 |     1 |   10.0
+(8 rows)
+
+
+=== BRAK 5 — Pola pochodne ===
+--- Materialy: FORMAT/SOURCE (v8_output_artifacts, bez szablonow) ---
+ artifact_family | n  | ma_template_family_ref | ma_origin_summary 
+-----------------+----+------------------------+-------------------
+ document        |  4 |                      0 |                 0
+ presentation    |  2 |                      0 |                 0
+ sheet           |  1 |                      0 |                 0
+ template        | 90 |                      0 |                90
+(4 rows)
+
+--- KPI: LEVEL/VARIANCE (progi w wersjach definicji) ---
+ wersje_definicji | ma_warning_low | ma_warning_high | ma_critical_low | ma_critical_high | ma_target 
+------------------+----------------+-----------------+-----------------+------------------+-----------
+                8 |              5 |               3 |               5 |                3 |         8
+(1 row)
+
