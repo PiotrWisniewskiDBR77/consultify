@@ -18,6 +18,8 @@
  * pomiarem, zrobionym przy pisaniu tego pliku 2026-08-11).
  */
 
+import { localeListy } from '@/utils/listDateFormat';
+
 // ---------------------------------------------------------------------------
 // AP-00 — semantyka wartości finansowych.
 // Źródło: server/src/types/finance/financeValueSemantics.ts:35-204
@@ -103,7 +105,7 @@ export interface FinanceValueDisplay {
 
 export function formatFinanceValueForDisplay(
   value: Pick<FinanceValue, 'status' | 'valueDecimal'>,
-  formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
+  formatNumber: (n: number) => string = (n) => n.toLocaleString(localeListy())
 ): FinanceValueDisplay {
   if (value.status === 'MISSING' || value.status === 'NA' || value.status === 'NOT_APPLICABLE') {
     return { text: '—', isMissingLikeGlyph: true, status: value.status };
@@ -323,7 +325,7 @@ export function financeUnitLabel(unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BIL
 
 export function formatAnalysisKpiValueForDisplay(
   input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
-  formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
+  formatNumber: (n: number) => string = (n) => n.toLocaleString(localeListy())
 ): FinanceValueDisplay {
   // KOSMETYKA (RAPORT_B3, 2026-09-06): DAYS bez własnego zaokrąglenia
   // dziedziczył domyślny `toLocaleString('pl-PL')` (do 3 miejsc po przecinku)
