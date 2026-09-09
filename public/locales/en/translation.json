@@ -33326,6 +33326,132 @@
       "badge": "Enterprise details",
       "title": "Custom deployment, governance, and commercial setup",
       "body": "Enterprise plans are for organizations that need more than standard packaging: on-premise or dedicated deployment, custom legal flow, procurement support, partner-heavy rollout, licensed tool bundles, or negotiated AI budget structures."
+    },
+    "budget": {
+      "shared": {
+        "title": "Shared AI budget for the organization",
+        "body": "AI usage is pooled at organization level instead of being fragmented per user, which matches how real consulting teams work."
+      },
+      "topUp": {
+        "title": "Monthly top-up packages",
+        "body": "Organizations can buy additional monthly AI budget packages. Unused balance rolls forward and accumulates instead of disappearing."
+      },
+      "payg": {
+        "title": "Automatic pay-as-you-go fallback",
+        "body": "When the included budget is exhausted, AI usage can continue through pay-as-you-go or by switching to a larger package."
+      }
+    },
+    "overLimit": {
+      "items": [
+        "After the AI budget is exhausted, users keep access to existing data, workspaces, and prior outputs.",
+        "What stops is AI assistance: generation, AI-guided support, and token-consuming actions.",
+        "Teams can continue through pay-as-you-go, upgrade the package, or contact sales for a larger commercial setup."
+      ]
+    },
+    "licensedTools": {
+      "items": [
+        "Selected assessments and frameworks such as SIR or DRD can require separate licensing.",
+        "Licensed tools are sold as add-ons or handled as pricing on request, not mixed into the base seat price.",
+        "This keeps the core platform readable while preserving room for specialized enterprise configurations."
+      ]
+    },
+    "salesNote": {
+      "body": "AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase."
+    },
+    "appView": {
+      "badge": "Pricing",
+      "heading": "AI Strategic Consulting,",
+      "headingAccent": "scaled for you",
+      "subtitle": "Replace costly consultants with AI-powered strategic support. 14-day trial. No credit card.",
+      "billingToggle": {
+        "annual": "Annually",
+        "monthly": "Monthly"
+      },
+      "priceNote": {
+        "year": "/year",
+        "month": "/month"
+      },
+      "metrics": {
+        "seats": "Seats"
+      },
+      "cancelAnytime": "Cancel anytime",
+      "faqHeading": "Frequently asked questions",
+      "tiers": {
+        "growth": {
+          "description": "For teams starting digital transformation",
+          "seats": "5 seats",
+          "aiCredits": "5,000 AI Credits/mo.",
+          "extraSeatPrice": "€99/seat",
+          "cta": "Start trial"
+        },
+        "scale": {
+          "description": "For organizations running transformation at scale",
+          "badge": "Most popular",
+          "seats": "15 seats",
+          "aiCredits": "20,000 AI Credits/mo.",
+          "extraSeatPrice": "€79/seat",
+          "cta": "Start trial"
+        },
+        "enterprise": {
+          "description": "For large organizations with comprehensive requirements",
+          "monthlyPrice": "from €4,999",
+          "seats": "50+ seats",
+          "aiCredits": "100,000 AI Credits/mo.",
+          "extraSeatPrice": "€59/seat",
+          "cta": "Book a call"
+        }
+      },
+      "features": {
+        "roadmapGeneration": "Roadmap generation",
+        "initiativeManagement": "Initiative management",
+        "basicAnalytics": "Basic analytics",
+        "advancedAnalytics": "Advanced analytics",
+        "byok": "BYOK (bring your own AI keys)",
+        "dedicatedCsm": "Dedicated CSM"
+      },
+      "faqs": {
+        "whatAreCredits": {
+          "question": "What are AI Credits?",
+          "answer": "AI Credits are used when interacting with AI features, such as assessments, roadmap generation, and strategic analysis. Each action consumes a number of credits depending on complexity. Unused credits do not roll over to the next month."
+        },
+        "whatIsByok": {
+          "question": "What is BYOK (Bring Your Own Key)?",
+          "answer": "BYOK lets you use your own OpenAI, Anthropic, or Azure API keys. You pay the AI provider directly for tokens, and we charge a small orchestration fee (€0.01-0.015/credit) for prompt engineering and context management."
+        },
+        "addSeats": {
+          "question": "Can I add more seats?",
+          "answer": "Yes! You can add extra seats at any time. Prices: €99/seat (Growth), €79/seat (Scale), €59/seat (Enterprise) per month."
+        },
+        "overCredits": {
+          "question": "What happens when I exceed AI Credits?",
+          "answer": "You can keep using AI features - the overage is billed at the plan's rate (€0.03-0.05/credit). We'll notify you once you reach 80% of your limit."
+        },
+        "freeTrial": {
+          "question": "Is there a free trial?",
+          "answer": "Yes! All plans include a 14-day free trial with full access to Scale features, 2,000 AI Credits, and 5 seats. No credit card required."
+        },
+        "managedVsByok": {
+          "question": "What is the difference between Managed AI and BYOK?",
+          "answer": "With Managed AI, we manage everything - you just use the features. With BYOK, you control cost and compliance using your own API keys. BYOK is ideal for enterprises with existing AI contracts or strict data requirements."
+        }
+      },
+      "creditUsage": {
+        "perPage": "3/page"
+      },
+      "creditsSection": {
+        "heading": "AI Credits: two ways to pay",
+        "subtitle": "Choose Managed AI for simplicity or BYOK for control. Both options give full access to AI features.",
+        "default": "Default",
+        "managedDescription": "We manage everything. Latest models, optimized prompts, automatic failover.",
+        "byokDescription": "Use your own OpenAI/Anthropic/Azure keys. You pay providers directly.",
+        "usageHeading": "What uses AI Credits?"
+      },
+      "finalCta": {
+        "heading": "Ready to transform?",
+        "subtitle": "Start your 14-day trial today. Full Scale features, 2,000 AI Credits, 5 seats. No credit card required.",
+        "startTrial": "Start trial",
+        "bookDemo": "Book a demo"
+      }
     }
   },
   "pages": {
@@ -34260,11 +34386,33 @@
       "billingEmailPlaceholder": "e.g. billing@company.com",
       "addressLine2Placeholder": "e.g. Suite 10",
       "cityPlaceholder": "e.g. New York",
-      "statePlaceholder": "e.g. NY"
+      "statePlaceholder": "e.g. NY",
+      "idType": {
+        "eu_vat": "EU VAT Number",
+        "gb_vat": "UK VAT Number",
+        "us_ein": "US EIN",
+        "au_abn": "Australian ABN",
+        "br_cnpj": "Brazilian CNPJ",
+        "ca_bn": "Canadian BN",
+        "ch_vat": "Swiss VAT",
+        "in_gst": "Indian GST",
+        "jp_cn": "Japanese CN",
+        "kr_brn": "Korean BRN",
+        "mx_rfc": "Mexican RFC",
+        "nz_gst": "New Zealand GST",
+        "sg_uen": "Singapore UEN",
+        "other": "Other"
+      }
     },
     "alerts": {
       "saved": "Saved",
-      "month": "month"
+      "month": "month",
+      "storageThreshold80": "Alert at 80% storage usage",
+      "storageThreshold90": "Alert at 90% storage usage",
+      "storageThreshold100": "Alert at 100% storage usage",
+      "tokenThreshold80": "Alert at 80% token usage",
+      "tokenThreshold90": "Alert at 90% token usage",
+      "tokenThreshold100": "Alert at 100% token usage"
     },
     "usage": {
       "resetsOn": "Limit resets on {{date}}"

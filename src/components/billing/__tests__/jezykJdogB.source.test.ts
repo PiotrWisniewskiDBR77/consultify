@@ -1,31 +1,41 @@
 /**
- * BEZPIECZNIK JĘZYKOWY — paczka J-DOG-B (2026-09-09, moduł 14 Admin Panel).
+ * BEZPIECZNIK JĘZYKOWY — paczka J-DOG-B (2026-09-09, moduły 14 Admin Panel
+ * i 09 Finance).
  *
- * DLACZEGO ISTNIEJE. `src/components/Admin/__tests__/jezykAdmina.source.test.ts`
- * broni ekranów panelu administratora ORGANIZACJI (`views/admin`,
- * `components/Admin`) i świadomie pomija `src/views/superadmin/**` oraz
- * `src/components/SuperAdmin/**` — to osobna powierzchnia (rola SUPERADMIN),
- * z własnym długiem językowym opisanym w `evidence/jezyk-j14/README.md`.
+ * DLACZEGO ISTNIEJE. Dwa istniejące bezpieczniki mają zasięg, który
+ * ŚWIADOMIE pomija pliki naprawione w tej paczce:
+ *   - `src/components/Admin/__tests__/jezykAdmina.source.test.ts` broni
+ *     ekranów panelu administratora ORGANIZACJI (`views/admin`,
+ *     `components/Admin`) i pomija `src/views/superadmin/**` oraz
+ *     `src/components/SuperAdmin/**` — osobna powierzchnia (rola
+ *     SUPERADMIN), dług opisany w `evidence/jezyk-j14/README.md`.
+ *   - `src/components/Finance/__tests__/jezykFinansow.source.test.ts` broni
+ *     `components/Finance/**` i `components/Economics/**`, i wprost wypisuje
+ *     `src/views/AppPricingView.tsx` / `src/views/PricingView.tsx` jako POZA
+ *     zasięgiem („treść handlowa, osobna decyzja").
  *
- * Naprawa J-DOG-B (K1def/K1defWID/K3aKLUCZ/K4pl priorytet 1, moduł
- * "14 Admin Panel" wg `scripts/i18n/pomiar-jezyka.mjs`) dotknęła plików z
- * DOKŁADNIE tej pominiętej powierzchni (`components/billing/*`,
- * `views/superadmin/*`) — rozszerzanie `jezykAdmina.source.test.ts` przez
- * dopisanie tych katalogów do jego `KATALOGI` złamałoby udokumentowaną
- * granicę (i natychmiast zaświeciłoby na CAŁYM nienaprawionym długu
- * superadmina — 543 K4en w samym module, poza zakresem tej paczki).
+ * Naprawa J-DOG-B (priorytet 1: K1def/K1defWID/K3aKLUCZ/K4pl w obu modułach
+ * wg `scripts/i18n/pomiar-jezyka.mjs`) dotknęła plików z DOKŁADNIE tych
+ * pominiętych powierzchni (`components/billing/*`, `views/superadmin/*`,
+ * `views/AppPricingView.tsx`) — rozszerzanie KATALOGI żadnego z dwóch
+ * istniejących bezpieczników złamałoby udokumentowaną granicę (i
+ * natychmiast zaświeciłoby na nienaprawionym długu tamtych powierzchni —
+ * 543 K4en w samym superadminie, poza zakresem tej paczki).
  *
  * Dlatego osobny, WĄSKI bezpiecznik: lista KONKRETNYCH plików naprawionych
  * w J-DOG-B (nie cały katalog), też czytający źródło, tymi samymi wzorcami
- * co `jezykAdmina.source.test.ts` (diakrytyki + słownik słów bez ogonków +
- * blokada rozgałęzień językowych + blokada locale przybitego na sztywno).
+ * co `jezykAdmina.source.test.ts`/`jezykFinansow.source.test.ts` (diakrytyki
+ * + słownik słów bez ogonków + blokada rozgałęzień językowych + blokada
+ * locale przybitego na sztywno).
  *
  * MUTACJA (dowód, że to nie dekoracja) — sprawdzone 09.09:
  *   - przywrócenie `t('billing.analytics.loadError', 'Nie udało się...')`
  *     → RED w „nie ma polskiego defaultValue w t()";
  *   - przywrócenie `new Intl.NumberFormat('pl-PL', ...)` w
  *     `UsageAlertsConfig.tsx` → RED w „nie formatuje dat/liczb z locale
- *     przybitym na sztywno".
+ *     przybitym na sztywno";
+ *   - przywrócenie `Rozpocznij trial` jako default w `AppPricingView.tsx`
+ *     → RED w „nie ma polskiego defaultValue w t()".
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -62,6 +72,23 @@ const POLSKIE_SLOWA = new Set([
   'wpisz',
   'ponownie',
   'providerow',
+  // AppPricingView.tsx (09 Finance) — słowa bez ogonka widziane w tym pliku
+  // przed naprawą 09.09, TEN SAM rdzeń co jezykFinansow.source.test.ts.
+  'stanowisko',
+  'stanowiska',
+  'cennik',
+  'anuluj',
+  'domyslnie',
+  'rocznie',
+  'miesiecznie',
+  'rozpocznij',
+  'umow',
+  'zastap',
+  'wybierz',
+  'uzywaj',
+  'zuzywa',
+  'gotowy',
+  'transformacje',
 ]);
 
 function czyPolski(tekst: string): boolean {
@@ -72,9 +99,11 @@ function czyPolski(tekst: string): boolean {
 }
 
 /** Pliki naprawione w J-DOG-B (priorytet 1: K1def/K1defWID/K3aKLUCZ/K4pl,
- * moduł "14 Admin Panel"), niezależnie od tego, że część leży poza zasięgiem
- * jezykAdmina.source.test.ts (patrz komentarz u góry pliku). */
+ * moduły "14 Admin Panel" i "09 Finance"), niezależnie od tego, że część
+ * leży poza zasięgiem jezykAdmina.source.test.ts / jezykFinansow.source.test.ts
+ * (patrz komentarz u góry pliku). */
 const PLIKI_NAPRAWIONE = [
+  // 14 Admin Panel
   'components/billing/SubscriptionAnalytics.tsx',
   'components/billing/TaxSettingsForm.tsx',
   'components/billing/UsageAlertsConfig.tsx',
@@ -82,6 +111,8 @@ const PLIKI_NAPRAWIONE = [
   'views/superadmin/SuperAdminFeedbackView.tsx',
   'views/superadmin/LLMManagementView.tsx',
   'views/superadmin/components/LLMHealthPanel.tsx',
+  // 09 Finance
+  'views/AppPricingView.tsx',
 ];
 
 const ZRODLA = PLIKI_NAPRAWIONE.map((rel) => ({

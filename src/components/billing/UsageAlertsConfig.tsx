@@ -186,7 +186,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     {t(
                       `billing.alerts.tokenThreshold${threshold}`,
-                      `Alert przy wykorzystaniu ${threshold}% tokenów`
+                      `Alert at ${threshold}% token usage`
                     )}
                   </span>
                 </div>
@@ -237,7 +237,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     {t(
                       `billing.alerts.storageThreshold${threshold}`,
-                      `Alert przy wykorzystaniu ${threshold}% pamięci`
+                      `Alert at ${threshold}% storage usage`
                     )}
                   </span>
                 </div>
