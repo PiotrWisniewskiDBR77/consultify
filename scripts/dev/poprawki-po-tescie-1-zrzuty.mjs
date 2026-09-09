@@ -29,10 +29,10 @@ const SCENARIUSZE = [
   { id: 'D-02-ocena-library', route: '/assessment?tab=library', wszystkieWiersze: true },
   { id: 'D-17-v9-overrides', route: '/my-work' },
   { id: 'D-06-mywork-podglad', route: '/my-work', wiersz: true },
-  { id: 'D-08-execution-resources', route: '/execution', tab: 'Resources' },
-  { id: 'D-09-execution-dashboard', route: '/execution' },
-  { id: 'D-11-audyty-library', route: '/audit-programs', tab: 'Library' },
-  { id: 'D-15-inicjatywy-reczne', route: '/initiatives', menu2: true },
+  { id: 'D-08-execution-resources', route: '/execution?tab=resources' },
+  { id: 'D-09-execution-dashboard', route: '/execution?tab=summary' },
+  { id: 'D-11-audyty-library', route: '/audit-programs?tab=library' },
+  { id: 'D-15-inicjatywy-reczne', route: '/initiatives', menu2: true, poMenu: true },
   { id: 'D-07-materialy-podglad', route: '/presentations', wiersz: true },
   { id: 'D-10-admin-members', route: '/admin', tab: 'Members' },
   { id: 'D-12-format-daty', route: '/results/kpi' },
@@ -110,8 +110,9 @@ async function main() {
         else console.log(`  ! brak wiersza na ${s.route}`);
       }
       if (s.menu2) {
-        const b = page.locator('button:has-text("New"), button:has-text("Create")').first();
+        const b = page.locator('button:has-text("New initiative")').first();
         if (await b.isVisible({ timeout: 2500 }).catch(() => false)) { await b.click({ force: true }).catch(() => {}); await page.waitForTimeout(2500); }
+        else console.log('  ! brak CTA New initiative');
       }
       const sufiks = JEZYK === 'en' ? '' : `-${JEZYK}`;
       const plik = path.join(kat, `${motyw === 'light' ? 'jasny' : 'ciemny'}${sufiks}.png`);

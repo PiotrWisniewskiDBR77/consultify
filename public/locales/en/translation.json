@@ -11611,7 +11611,11 @@
       "levelStrategicLabel": "Strategic Program",
       "levelStrategicCardDesc": "Cross-functional program. 3-12 months, multiple teams, executive sponsor.",
       "levelTransformationLabel": "Transformation",
-      "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight."
+      "levelTransformationCardDesc": "Organization-wide change. 6-24 months, full governance, board oversight.",
+      "newInitiativeManual": "Fill in the form",
+      "newInitiativeManualDesc": "Title, axis, level and a short summary — no AI needed.",
+      "newInitiativeAi": "AI initiative wizard",
+      "newInitiativeAiDesc": "Build a draft from a source insight, then review it."
     },
     "axis": {
       "operational": "Operational",

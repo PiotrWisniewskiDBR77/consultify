@@ -10791,7 +10791,11 @@
       "levelStrategicLabel": "Program strategiczny",
       "levelStrategicCardDesc": "Program międzyfunkcyjny. 3-12 miesięcy, wiele zespołów, sponsor zarządczy.",
       "levelTransformationLabel": "Transformacja",
-      "levelTransformationCardDesc": "Zmiana obejmująca całą organizację. 6-24 miesiące, pełny nadzór, nadzór zarządu."
+      "levelTransformationCardDesc": "Zmiana obejmująca całą organizację. 6-24 miesiące, pełny nadzór, nadzór zarządu.",
+      "newInitiativeManual": "Wypełnij formularz",
+      "newInitiativeManualDesc": "Tytuł, oś, poziom i krótkie podsumowanie — bez AI.",
+      "newInitiativeAi": "Kreator inicjatywy AI",
+      "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj."
     },
     "axis": {
       "operational": "Operacyjna",

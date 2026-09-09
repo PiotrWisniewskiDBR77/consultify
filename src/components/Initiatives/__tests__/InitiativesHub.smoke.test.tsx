@@ -76,6 +76,9 @@ vi.mock('@/services/api', () => ({
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
     getUsers: vi.fn(async () => []),
+    // D-15: reczny formularz ma teraz kanoniczny wybor projektu
+    // (`RequiredProjectPicker`), ktory czyta `GET /api/projects`.
+    getProjects: vi.fn(async () => [{ id: 'proj-1', name: 'Northwind 2027' }]),
     generateInitiatives: vi.fn(async () => ({ success: true, id: 'g1', message: 'ok' })),
   },
   shouldAllowDemoData: () => demoModeState.enabled,
@@ -293,6 +296,13 @@ describe('InitiativesHub smoke', () => {
     });
   });
 
+  /**
+   * TEST-DANE D-15 (09.09.2026): CTA „New Initiative" to teraz kanoniczny
+   * wariant z menu (`StandardPrimaryCta.menu`) — pierwsze kliknięcie ROZWIJA
+   * menu, a wybór pozycji wykonuje akcję. Powód: ręczny formularz tworzenia
+   * (`showNewModal`) był w tym pliku od dawna i NIKT go nie wołał, więc
+   * jedyną drogą w interfejsie był kreator AI. Test klika teraz przez menu.
+   */
   it('exposes the canonical "New Initiative" CTA and opens the wizard in default table view', async () => {
     renderHub();
     await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());
@@ -300,15 +310,28 @@ describe('InitiativesHub smoke', () => {
       name: 'New Initiative',
     });
     fireEvent.click(primaryWizardButton);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /AI initiative wizard/i }));
     await waitFor(() => {
       expect(screen.getByTestId('initiative-wizard-modal')).toBeInTheDocument();
     });
+  });
+
+  it('D-15: CTA otwiera też ręczny formularz — okno, które przed 09.09.2026 nie miało wołacza', async () => {
+    renderHub();
+    await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());
+    const [primaryWizardButton] = await screen.findAllByRole('button', {
+      name: 'New Initiative',
+    });
+    fireEvent.click(primaryWizardButton);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Fill in the form/i }));
+    expect(await screen.findByText('initiatives.form.createNew')).toBeInTheDocument();
   });
 
   it('opens a wizard-created draft in the persisted initiative document, not unregistered runtime', async () => {
     renderHub();
     const [primaryWizardButton] = await screen.findAllByRole('button', { name: 'New Initiative' });
     fireEvent.click(primaryWizardButton);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /AI initiative wizard/i }));
     fireEvent.click(await screen.findByRole('button', { name: 'Complete wizard' }));
 
     expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
