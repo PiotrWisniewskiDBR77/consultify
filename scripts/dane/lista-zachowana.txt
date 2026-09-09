@@ -8,11 +8,11 @@
 # liście do usunięcia. Los `atelier`, `nordwind`, `vts` i `dbr77` jest przedmiotem
 # pytań P3/P4 do właściciela (PLAN.md §5) i NIE został rozstrzygnięty w D0.
 #
+# 09.09.2026: decyzja wlasciciela (pelna zgoda) — `atelier`, `nordwind`, `vts` przeniesione do
+# scripts/dane/lista-do-usuniecia-2-org.txt. `dbr77` (druga, pusta organizacja) ZOSTAJE do osobnej decyzji.
+#
 # Format:  <organization_id> | <nazwa> | <liczba członków> | <uwaga>
 
 a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77 | 16 | prawdziwa firma właściciela, prawdziwi ludzie — ZOSTAJE
-atelier | Atelier Toys | 22 | najbogatsza treść po angielsku; los zależy od P3
-nordwind | Nordwind Components GmbH | 0 | 28 sprawozdań finansowych, ZERO użytkowników; los zależy od P3
-vts | VTS Group S.A. | 1 | 1 członek, zero treści; nazwa sugeruje realnego klienta — pytanie P4
 dbr77 | DBR77 Digital Consulting | 2 | druga, pusta organizacja o mylącej nazwie; los zależy od P3
 system | System | 1 | organizacja techniczna wymagana przez runtime — ZOSTAJE ZAWSZE

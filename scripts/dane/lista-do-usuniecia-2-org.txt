@@ -1,0 +1,6 @@
+# Paczka D0b — 09.09.2026, decyzja wlasciciela (pelna zgoda): kasowanie trzech organizacji pokazowych
+# ze starej bazy. Format jak lista-do-usuniecia.txt: <organization_id> | <nazwa> | <uwaga>
+
+atelier | Atelier Toys | 22 czlonkow; tresc EN zastapiona przez Northwind
+nordwind | Nordwind Components GmbH | 0 uzytkownikow, 28 sprawozdan
+vts | VTS Group S.A. | 1 czlonek, zero tresci
