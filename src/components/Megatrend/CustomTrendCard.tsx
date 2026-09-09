@@ -67,13 +67,9 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
               'megatrends.custom.radarWatchBody',
               'I am monitoring news sources for “Carbon Tax Legislation” as it seems relevant to your sector.'
             )}
-            {/* STOP J4 (09.09): tego napisu NIE przenoszę do `t()`. Linia niżej
-                niesie token crimson, a hook `check-triada` liczy każdą NOWO
-                DODANĄ linię z crimsonem jako naruszenie kanonu — naprawa
-                językowa wymagałaby przy okazji zmiany koloru, czyli zmiany
-                WIZUALNEJ poza zakresem paczki językowej (wymaga akceptu
-                właściciela). Zgłoszone w evidence/jezyk-j4/README.md. */}
-            <button className="text-c-accent font-bold ml-1 hover:underline">Add to list?</button>
+            <button className="text-c-info font-bold ml-1 hover:underline">
+              {t('megatrends.custom.addToList', 'Add to the list?')}
+            </button>
           </p>
         </div>
       </div>
