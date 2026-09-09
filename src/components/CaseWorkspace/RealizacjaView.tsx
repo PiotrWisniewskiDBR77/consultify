@@ -26,6 +26,7 @@ import {
   Undo2,
   XCircle,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -331,7 +332,8 @@ function proposalTone(
  */
 function proposalPreviewActions(
   proposal: CaseActionProposal,
-  setPending: (cmd: PendingCommand) => void
+  setPending: (cmd: PendingCommand) => void,
+  t: TFunction
 ): { resolutions: StandardPreviewAction[]; informational?: StandardPreviewAction[] } | undefined {
   if (proposal.status === 'PENDING_REVIEW') {
     return {
@@ -339,14 +341,14 @@ function proposalPreviewActions(
         {
           id: 'zatwierdz',
           variant: 'positive',
-          label: 'Zatwierdź',
+          label: t('caseWorkspace.execution.actions.approve', 'Approve'),
           icon: CheckCircle2,
           onClick: () => setPending({ kind: 'proposal-decision', decision: 'APPROVE', proposal }),
         },
         {
           id: 'odrzuc',
           variant: 'destructive',
-          label: 'Odrzuć',
+          label: t('caseWorkspace.execution.actions.reject', 'Reject'),
           icon: XCircle,
           onClick: () => setPending({ kind: 'proposal-decision', decision: 'REJECT', proposal }),
         },
@@ -355,7 +357,7 @@ function proposalPreviewActions(
         {
           id: 'popros-o-zmiany',
           variant: 'neutral',
-          label: 'Poproś o zmiany',
+          label: t('caseWorkspace.execution.actions.requestChanges', 'Request changes'),
           icon: RotateCcw,
           onClick: () =>
             setPending({ kind: 'proposal-decision', decision: 'REQUEST_CHANGES', proposal }),
@@ -363,7 +365,7 @@ function proposalPreviewActions(
         {
           id: 'odloz',
           variant: 'neutral',
-          label: 'Odłóż',
+          label: t('caseWorkspace.execution.actions.defer', 'Defer'),
           icon: Clock,
           onClick: () => setPending({ kind: 'proposal-decision', decision: 'DEFER', proposal }),
         },
@@ -376,7 +378,7 @@ function proposalPreviewActions(
         {
           id: 'wyslij-do-przegladu',
           variant: 'positive',
-          label: 'Wyślij do przeglądu',
+          label: t('caseWorkspace.execution.actions.sendForReview', 'Send for review'),
           icon: Send,
           onClick: () => setPending({ kind: 'proposal-submit', proposal }),
         },
@@ -389,14 +391,14 @@ function proposalPreviewActions(
         {
           id: 'rozpocznij-wykonanie',
           variant: 'positive',
-          label: 'Rozpocznij wykonanie',
+          label: t('caseWorkspace.execution.actions.startExecution', 'Start execution'),
           icon: Play,
           onClick: () => setPending({ kind: 'proposal-execute', proposal }),
         },
         {
           id: 'cofnij-zatwierdzenie',
           variant: 'destructive',
-          label: 'Cofnij zatwierdzenie',
+          label: t('caseWorkspace.execution.actions.revokeApproval', 'Revoke approval'),
           icon: Undo2,
           onClick: () => setPending({ kind: 'proposal-revoke', proposal }),
         },
@@ -409,7 +411,7 @@ function proposalPreviewActions(
         {
           id: 'ponow',
           variant: 'positive',
-          label: 'Ponów',
+          label: t('caseWorkspace.execution.actions.retry', 'Retry'),
           icon: RefreshCw,
           onClick: () => setPending({ kind: 'proposal-retry', proposal }),
         },
@@ -422,7 +424,7 @@ function proposalPreviewActions(
         {
           id: 'oznacz-jako-nieudane',
           variant: 'destructive',
-          label: 'Oznacz jako nieudane',
+          label: t('caseWorkspace.execution.actions.markAsFailed', 'Mark as failed'),
           icon: AlertTriangle,
           onClick: () => setPending({ kind: 'proposal-mark-failed', proposal }),
         },
@@ -433,18 +435,27 @@ function proposalPreviewActions(
 }
 
 /** Jedno zdanie rekomendacji w karcie meta, per stan propozycji. `null` = brak. */
-function proposalRecommendation(status: CaseActionProposal['status']): string | undefined {
+function proposalRecommendation(status: CaseActionProposal['status'], t: TFunction): string | undefined {
   switch (status) {
     case 'DRAFT':
-      return 'Ta sprawa jest szkicem — wyślij ją do przeglądu, żeby ktoś mógł ją zatwierdzić.';
+      return t(
+        'caseWorkspace.execution.recommendation.draft',
+        'This case is a draft — send it for review so someone can approve it.',
+      );
     case 'PENDING_REVIEW':
-      return 'Ta sprawa czeka na Twoją decyzję.';
+      return t('caseWorkspace.execution.recommendation.pendingReview', 'This case is waiting on your decision.');
     case 'APPROVED':
-      return 'Ta sprawa jest zatwierdzona i czeka na wykonanie przez system.';
+      return t(
+        'caseWorkspace.execution.recommendation.approved',
+        'This case is approved and waiting for the system to execute it.',
+      );
     case 'FAILED':
-      return 'Wykonanie tej sprawy się nie powiodło — możesz spróbować ponownie.';
+      return t(
+        'caseWorkspace.execution.recommendation.failed',
+        "This case's execution didn't succeed — you can retry it.",
+      );
     case 'EXECUTING':
-      return 'Ta sprawa jest właśnie wykonywana.';
+      return t('caseWorkspace.execution.recommendation.executing', 'This case is currently being executed.');
     default:
       return undefined;
   }
@@ -1020,15 +1031,15 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         stanTone: proposalTone(proposal.status),
         ktoZglosil:
           proposal.proposerType === 'HUMAN'
-            ? 'Człowiek'
+            ? t('caseWorkspace.execution.proposalPreview.byHuman', 'Person')
             : proposal.proposerType === 'AGENT'
-              ? 'Asystent AI'
-              : 'System',
+              ? t('caseWorkspace.execution.proposalPreview.byAgent', 'AI assistant')
+              : t('caseWorkspace.execution.proposalPreview.bySystem', 'System'),
         zgloszone: proposal.createdAt,
         wazneDo: proposal.expiresAt || '',
         raw: proposal,
       })),
-    [proposals]
+    [proposals, isPolish, t]
   );
 
   const runRows = useMemo(
@@ -1054,7 +1065,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     pelny: [
       {
         id: 'naCo',
-        label: 'Na co czekamy',
+        label: t('caseWorkspace.execution.columns.waitingOn', "What we're waiting on"),
         width: '250px',
         sortable: true,
         filterable: true,
@@ -1073,7 +1084,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'stan',
-        label: 'Stan',
+        label: t('caseWorkspace.execution.columns.status', 'Status'),
         width: '150px',
         filterable: true,
         render: (row: Record<string, unknown>) => (
@@ -1082,7 +1093,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'odKiedy',
-        label: 'Czeka od',
+        label: t('caseWorkspace.execution.waitPreview.waitingSince', 'Waiting since'),
         width: '150px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
@@ -1096,7 +1107,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'termin',
-        label: 'Termin',
+        label: t('caseWorkspace.execution.waitPreview.deadline', 'Deadline'),
         width: '150px',
         sortable: true,
         render: (row: Record<string, unknown>) =>
@@ -1115,7 +1126,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     sredni: [
       {
         id: 'naCo',
-        label: 'Na co czekamy',
+        label: t('caseWorkspace.execution.columns.waitingOn', "What we're waiting on"),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1130,7 +1141,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'odKiedy',
-        label: 'Od kiedy i do kiedy',
+        label: t('caseWorkspace.execution.columns.fromWhenToWhen', 'From when to when'),
         width: '190px',
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => String(row.odKiedy ?? ''),
@@ -1152,7 +1163,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     waski: [
       {
         id: 'naCo',
-        label: 'Na co czekamy',
+        label: t('caseWorkspace.execution.columns.waitingOn', "What we're waiting on"),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1175,7 +1186,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     pelny: [
       {
         id: 'czego',
-        label: 'Czego dotyczy',
+        label: t('caseWorkspace.execution.columns.whatItConcerns', 'What it concerns'),
         width: '260px',
         sortable: true,
         filterable: true,
@@ -1191,17 +1202,22 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'stan',
-        label: 'Stan',
+        label: t('caseWorkspace.execution.columns.status', 'Status'),
         width: '180px',
         filterable: true,
         render: (row: Record<string, unknown>) => (
           <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
         ),
       },
-      { id: 'ktoZglosil', label: 'Kto zgłosił', width: '140px', filterable: true },
+      {
+        id: 'ktoZglosil',
+        label: t('caseWorkspace.execution.proposalPreview.submittedBy', 'Submitted by'),
+        width: '140px',
+        filterable: true,
+      },
       {
         id: 'zgloszone',
-        label: 'Zgłoszone',
+        label: t('caseWorkspace.execution.proposalPreview.submitted', 'Submitted'),
         width: '150px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
@@ -1214,7 +1230,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     sredni: [
       {
         id: 'czego',
-        label: 'Czego dotyczy',
+        label: t('caseWorkspace.execution.columns.whatItConcerns', 'What it concerns'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1229,7 +1245,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'zgloszone',
-        label: 'Kto i kiedy',
+        label: t('caseWorkspace.execution.columns.whoAndWhen', 'Who and when'),
         width: '180px',
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => String(row.zgloszone ?? ''),
@@ -1244,7 +1260,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     waski: [
       {
         id: 'czego',
-        label: 'Sprawy do zatwierdzenia',
+        label: t('caseWorkspace.execution.tables.approvalHeading', 'Cases for approval'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1255,7 +1271,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             <div className="text-sm font-medium leading-snug text-c-text">{String(row.czego)}</div>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <div className="text-xs text-c-text-muted">
-              Zgłosił: {String(row.ktoZglosil)} · {relativeDays(String(row.zgloszone), t)}
+              {t('caseWorkspace.execution.columns.submittedByPrefix', 'Submitted by: {{who}} · {{when}}', {
+                who: String(row.ktoZglosil),
+                when: relativeDays(String(row.zgloszone), t),
+              })}
             </div>
           </div>
         ),
@@ -1274,7 +1293,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     pelny: [
       {
         id: 'stan',
-        label: 'Przebieg',
+        label: t('caseWorkspace.execution.columns.run', 'Run'),
         width: '280px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
@@ -1292,7 +1311,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       },
       {
         id: 'zaktualizowany',
-        label: 'Ostatnia zmiana',
+        label: t('caseWorkspace.execution.runPreview.lastChange', 'Last change'),
         width: '200px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
@@ -1305,7 +1324,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     sredni: [
       {
         id: 'stan',
-        label: 'Przebieg',
+        label: t('caseWorkspace.execution.columns.run', 'Run'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1327,7 +1346,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     waski: [
       {
         id: 'stan',
-        label: 'Przebiegi',
+        label: t('caseWorkspace.execution.columns.runs', 'Runs'),
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <div
@@ -1377,13 +1396,17 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             {t('caseWorkspace.execution.heading', "What's happening now")}
           </h2>
           <p className="mt-1 text-sm text-c-text-secondary">
-            Zlecenie jest w stanie „{caseStatusLabel(caseItem.caseStatus, isPolish).toLowerCase()}".{' '}
+            {t('caseWorkspace.execution.statusSentence', 'The order is in status "{{status}}".', {
+              status: caseStatusLabel(caseItem.caseStatus, isPolish).toLowerCase(),
+            })}{' '}
             {activeWaits.length
-              ? `Czekamy na ${activeWaits.length} ${activeWaits.length === 1 ? 'rzecz' : 'rzeczy'}.`
-              : 'Nic nie jest w stanie oczekiwania.'}{' '}
+              ? t('caseWorkspace.execution.waitingCount', 'Waiting on {{count}} thing.', { count: activeWaits.length })
+              : t('caseWorkspace.execution.waitingNone', 'Nothing is in a waiting state.')}{' '}
             {pendingProposals.length
-              ? `${pendingProposals.length} ${pendingProposals.length === 1 ? 'sprawa czeka' : 'sprawy czekają'} na Twoją decyzję.`
-              : 'Nic nie czeka na Twoją decyzję.'}{' '}
+              ? t('caseWorkspace.execution.pendingDecisionCount', '{{count}} case is waiting on your decision.', {
+                  count: pendingProposals.length,
+                })
+              : t('caseWorkspace.execution.pendingDecisionNone', 'Nothing is waiting on your decision.')}{' '}
             {/*
              * ★ „Częściowo zakończone" tylko z JAWNEGO `resultAcceptance='PARTIAL'`
              * zapisanego dla kroku (`case_workspace_node_result_acceptances`),
@@ -1396,20 +1419,22 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             {wynikiKrokow && (wynikiKrokow.partial > 0 || wynikiKrokow.rejected > 0)
               ? `${
                   wynikiKrokow.partial > 0
-                    ? `${wynikiKrokow.partial} ${wynikiKrokow.partial === 1 ? 'krok zakończony częściowo' : 'kroki zakończone częściowo'}`
+                    ? t('caseWorkspace.execution.partialCount', '{{count}} step completed partially', {
+                        count: wynikiKrokow.partial,
+                      })
                     : ''
                 }${wynikiKrokow.partial > 0 && wynikiKrokow.rejected > 0 ? ', ' : ''}${
                   wynikiKrokow.rejected > 0
-                    ? `${wynikiKrokow.rejected} ${wynikiKrokow.rejected === 1 ? 'odrzucony' : 'odrzucone'}`
+                    ? t('caseWorkspace.execution.rejectedCount', '{{count}} rejected', { count: wynikiKrokow.rejected })
                     : ''
-                } — szczegóły w zakładce Rezultaty.`
+                }${t('caseWorkspace.execution.detailsInResults', ' — details in the Results tab.')}`
               : null}
           </p>
         </div>
 
         <section aria-labelledby="zlecenia-oczekiwania" className="min-w-0">
           <h3 id="zlecenia-oczekiwania" className="mb-2 text-sm font-semibold text-c-text">
-            Na co czekamy
+            {t('caseWorkspace.execution.waitingOnHeading', 'What we are waiting on')}
           </h3>
           <div
             ref={waitsCardRef}
@@ -1444,8 +1469,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               minTableWidth={waitTier === 'pelny' ? WAITS_FULL_WIDTH : 'columns'}
               empty={{
                 icon: Clock,
-                title: 'Nic nie czeka',
-                description: 'Żaden krok zlecenia nie jest w tej chwili wstrzymany.',
+                title: t('caseWorkspace.execution.tables.waitsEmptyTitle', 'Nothing waiting'),
+                description: t('caseWorkspace.execution.tables.waitsEmptyDescription', 'No order step is currently paused.'),
               }}
             />
           </div>
@@ -1453,7 +1478,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 
         <section aria-labelledby="zlecenia-decyzje" className="min-w-0">
           <h3 id="zlecenia-decyzje" className="mb-2 text-sm font-semibold text-c-text">
-            Sprawy do zatwierdzenia
+            {t('caseWorkspace.execution.tables.approvalHeading', 'Cases for approval')}
           </h3>
           <div
             ref={proposalsCardRef}
@@ -1471,8 +1496,11 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               minTableWidth={proposalTier === 'pelny' ? PROPOSALS_FULL_WIDTH : 'columns'}
               empty={{
                 icon: Inbox,
-                title: 'Nic nie czeka na decyzję',
-                description: 'Gdy system będzie chciał coś zrobić w Twoim imieniu, zapyta tutaj.',
+                title: t('caseWorkspace.execution.tables.approvalEmptyTitle', 'Nothing waiting on a decision'),
+                description: t(
+                  'caseWorkspace.execution.tables.approvalEmptyDescription',
+                  'When the system wants to do something on your behalf, it will ask here.',
+                ),
               }}
             />
           </div>
@@ -1492,7 +1520,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         {runs.length ? (
           <section aria-labelledby="zlecenia-runs" className="min-w-0">
             <h3 id="zlecenia-runs" className="mb-2 text-sm font-semibold text-c-text">
-              Przebiegi wykonania
+              {t('caseWorkspace.execution.tables.runsHeading', 'Execution runs')}
             </h3>
             <div
               ref={runsCardRef}
@@ -1510,8 +1538,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                 minTableWidth={runTier === 'pelny' ? RUNS_FULL_WIDTH : 'columns'}
                 empty={{
                   icon: RunIcon,
-                  title: 'Brak przebiegów',
-                  description: 'Ten Run nie ma jeszcze żadnego przebiegu.',
+                  title: t('caseWorkspace.execution.tables.runsEmptyTitle', 'No runs'),
+                  description: t('caseWorkspace.execution.tables.runsEmptyDescription', "This run doesn't have any execution yet."),
                 }}
               />
             </div>
@@ -1521,7 +1549,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         {history.length ? (
           <section aria-labelledby="zlecenia-przebieg" className="min-w-0">
             <h3 id="zlecenia-przebieg" className="mb-2 text-sm font-semibold text-c-text">
-              Przebieg zlecenia
+              {t('caseWorkspace.execution.tables.historyHeading', 'Order activity')}
             </h3>
             <ol className="space-y-1.5">
               {history.slice(0, 12).map((event) => (
@@ -1573,7 +1601,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                             {
                               id: 'podaj-dane',
                               variant: 'positive',
-                              label: 'Podaj dane',
+                              label: t('caseWorkspace.execution.waitPreview.provideDataAction', 'Provide data'),
                               icon: CheckCircle2,
                               onClick: () =>
                                 setPending({ kind: 'wait-provide-input', wait: selectedWait }),
@@ -1583,7 +1611,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                       {
                         id: 'anuluj-oczekiwanie',
                         variant: 'destructive',
-                        label: 'Anuluj oczekiwanie',
+                        label: t('caseWorkspace.execution.waitPreview.cancelWaitAction', 'Cancel wait'),
                         icon: XCircle,
                         onClick: () => setPending({ kind: 'wait-cancel', wait: selectedWait }),
                       },
@@ -1592,40 +1620,43 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                 : undefined
             }
             details={{
-              text: 'Ten krok zlecenia jest wstrzymany do czasu, aż nadejdzie opisany niżej sygnał.',
+              text: t(
+                'caseWorkspace.execution.waitPreview.detailsText',
+                'This order step is paused until the signal described below arrives.',
+              ),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.execution.waitPreview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.execution.waitPreview.valueLabel', 'Value'),
               properties: [
                 {
                   id: 'czeka-od',
-                  label: 'Czeka od',
+                  label: t('caseWorkspace.execution.waitPreview.waitingSince', 'Waiting since'),
                   value: formatDateTime(selectedWait.createdAt),
                 },
                 {
                   id: 'termin',
-                  label: 'Termin',
+                  label: t('caseWorkspace.execution.waitPreview.deadline', 'Deadline'),
                   value: selectedWait.timeoutAt
                     ? formatDateTime(selectedWait.timeoutAt)
                     : selectedWait.dueAt
                       ? formatDateTime(selectedWait.dueAt)
-                      : 'bez terminu',
+                      : t('caseWorkspace.execution.waitPreview.noDeadline', 'no deadline'),
                 },
                 {
                   id: 'sygnal',
-                  label: 'Oczekiwany sygnał',
+                  label: t('caseWorkspace.execution.waitPreview.expectedSignal', 'Expected signal'),
                   value: selectedWait.expectedEventType
                     ? expert
                       ? selectedWait.expectedEventType
-                      : 'zdarzenie w systemie'
-                    : 'brak — czekamy na człowieka',
+                      : t('caseWorkspace.execution.waitPreview.systemEvent', 'system event')
+                    : t('caseWorkspace.execution.waitPreview.noneWaitingOnHuman', 'none — waiting on a person'),
                 },
                 {
                   id: 'rozwiazane',
-                  label: 'Doczekało się',
+                  label: t('caseWorkspace.execution.waitPreview.resolvedAt', 'Resolved'),
                   value: selectedWait.satisfiedAt
                     ? formatDateTime(selectedWait.satisfiedAt)
-                    : 'jeszcze nie',
+                    : t('caseWorkspace.execution.waitPreview.notYet', 'not yet'),
                 },
               ],
             }}
@@ -1641,7 +1672,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                   {relativeDays(selectedProposal.createdAt, t)}
                 </span>
               ),
-              recommendation: proposalRecommendation(selectedProposal.status),
+              recommendation: proposalRecommendation(selectedProposal.status, t),
             }}
             /*
              * Osiem przejść, DWIE trasy backendu: decyzja (`POST
@@ -1655,41 +1686,43 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
              * REQUESTED_CHANGES/REVOKED) zwraca `undefined` i blok akcji po
              * prostu znika (`StandardPreview` renderuje go warunkowo).
              */
-            actions={proposalPreviewActions(selectedProposal, setPending)}
+            actions={proposalPreviewActions(selectedProposal, setPending, t)}
             details={{
-              text: 'Propozycja czynności zgłoszona w ramach tego zlecenia.',
+              text: t('caseWorkspace.execution.proposalPreview.detailsText', 'Action proposal submitted as part of this order.'),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.execution.proposalPreview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.execution.proposalPreview.valueLabel', 'Value'),
               properties: [
                 {
                   id: 'kto',
-                  label: 'Kto zgłosił',
+                  label: t('caseWorkspace.execution.proposalPreview.submittedBy', 'Submitted by'),
                   value:
                     selectedProposal.proposerType === 'HUMAN'
-                      ? 'Człowiek'
+                      ? t('caseWorkspace.execution.proposalPreview.byHuman', 'Person')
                       : selectedProposal.proposerType === 'AGENT'
-                        ? 'Asystent AI'
-                        : 'System',
+                        ? t('caseWorkspace.execution.proposalPreview.byAgent', 'AI assistant')
+                        : t('caseWorkspace.execution.proposalPreview.bySystem', 'System'),
                 },
                 {
                   id: 'zgloszone',
-                  label: 'Zgłoszone',
+                  label: t('caseWorkspace.execution.proposalPreview.submitted', 'Submitted'),
                   value: formatDateTime(selectedProposal.createdAt),
                 },
                 {
                   id: 'wazne',
-                  label: 'Ważne do',
+                  label: t('caseWorkspace.execution.proposalPreview.validUntil', 'Valid until'),
                   value: selectedProposal.expiresAt
                     ? formatDateTime(selectedProposal.expiresAt)
-                    : 'bezterminowo',
+                    : t('caseWorkspace.execution.proposalPreview.noExpiry', 'no expiry'),
                 },
               ],
             }}
           />
       ) : selectedRun ? (
           <StandardPreview
-            title={`Przebieg ${runRows.find((r) => r.id === selectedRun.runId)?.numer ?? ''}`}
+            title={t('caseWorkspace.execution.runPreview.title', 'Run {{number}}', {
+              number: runRows.find((r) => r.id === selectedRun.runId)?.numer ?? '',
+            })}
             onClose={() => setSelection(null)}
             meta={{
               pills: [{ label: runStatusLabel(selectedRun.status, isPolish), tone: 'info' }],
@@ -1714,7 +1747,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                       {
                         id: 'uruchom',
                         variant: 'positive',
-                        label: 'Uruchom',
+                        label: t('caseWorkspace.execution.actions.start', 'Start'),
                         icon: Play,
                         onClick: () => setPending({ kind: 'run-start', run: selectedRun }),
                       },
@@ -1725,7 +1758,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                       {
                         id: 'wstrzymaj',
                         variant: 'warning',
-                        label: 'Wstrzymaj',
+                        label: t('caseWorkspace.execution.actions.pause', 'Pause'),
                         icon: Pause,
                         onClick: () => setPending({ kind: 'run-pause', run: selectedRun }),
                       },
@@ -1736,7 +1769,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                       {
                         id: 'wznow',
                         variant: 'positive',
-                        label: 'Wznów',
+                        label: t('caseWorkspace.execution.actions.resume', 'Resume'),
                         icon: Play,
                         onClick: () => setPending({ kind: 'run-resume', run: selectedRun }),
                       },
@@ -1747,7 +1780,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                       {
                         id: 'anuluj-przebieg',
                         variant: 'destructive',
-                        label: 'Anuluj przebieg',
+                        label: t('caseWorkspace.execution.actions.cancelRun', 'Cancel run'),
                         icon: Ban,
                         onClick: () => setPending({ kind: 'run-cancel', run: selectedRun }),
                       },
@@ -1756,46 +1789,53 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               ],
             }}
             details={{
-              text: 'Przebieg wykonania planu tego zlecenia — konkretna próba wykonania kroków w kolejności grafu.',
+              text: t(
+                'caseWorkspace.execution.runPreview.detailsText',
+                "A run of this order's plan execution — a specific attempt at performing the steps in graph order.",
+              ),
               showWordCount: false,
-              propertyLabel: 'Właściwość',
-              valueLabel: 'Wartość',
+              propertyLabel: t('caseWorkspace.execution.runPreview.propertyLabel', 'Property'),
+              valueLabel: t('caseWorkspace.execution.runPreview.valueLabel', 'Value'),
               properties: [
-                { id: 'stan', label: 'Stan', value: runStatusLabel(selectedRun.status, isPolish) },
+                {
+                  id: 'stan',
+                  label: t('caseWorkspace.execution.runPreview.status', 'Status'),
+                  value: runStatusLabel(selectedRun.status, isPolish),
+                },
                 {
                   id: 'wynik',
-                  label: 'Ocena wyniku',
+                  label: t('caseWorkspace.execution.runPreview.outcomeAssessment', 'Outcome assessment'),
                   value: runOutcomeStatusLabelDisplay(selectedRun.outcomeStatus, isPolish),
                 },
                 {
                   id: 'wystartowal',
-                  label: 'Wystartował',
+                  label: t('caseWorkspace.execution.runPreview.started', 'Started'),
                   value: selectedRun.startedAt
                     ? formatDateTime(selectedRun.startedAt)
-                    : 'jeszcze nie',
+                    : t('caseWorkspace.execution.runPreview.notYet', 'not yet'),
                 },
                 {
                   id: 'zakonczony',
-                  label: 'Zakończony',
+                  label: t('caseWorkspace.execution.runPreview.completed', 'Completed'),
                   value: selectedRun.completedAt
                     ? formatDateTime(selectedRun.completedAt)
-                    : 'jeszcze nie',
+                    : t('caseWorkspace.execution.runPreview.notYet', 'not yet'),
                 },
                 {
                   id: 'zmieniony',
-                  label: 'Ostatnia zmiana',
+                  label: t('caseWorkspace.execution.runPreview.lastChange', 'Last change'),
                   value: formatDateTime(selectedRun.updatedAt),
                 },
                 ...(expert
                   ? [
                       {
                         id: 'run-id',
-                        label: 'Identyfikator Run',
+                        label: t('caseWorkspace.execution.runPreview.runId', 'Run identifier'),
                         value: <TechnicalId value={selectedRun.runId} title="runId" />,
                       },
                       {
                         id: 'graph-digest',
-                        label: 'Odcisk grafu',
+                        label: t('caseWorkspace.execution.runPreview.graphDigest', 'Graph fingerprint'),
                         value: <TechnicalId value={selectedRun.graphDigest} title="graphDigest" />,
                       },
                     ]
@@ -1807,10 +1847,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 
       <CommandDialog
         open={pending !== null}
-        title={dialogConfig(pending, isPolish).title}
-        description={dialogConfig(pending, isPolish).description}
-        confirmLabel={dialogConfig(pending, isPolish).confirmLabel}
-        reason={dialogConfig(pending, isPolish).reason}
+        title={dialogConfig(pending, isPolish, t).title}
+        description={dialogConfig(pending, isPolish, t).description}
+        confirmLabel={dialogConfig(pending, isPolish, t).confirmLabel}
+        reason={dialogConfig(pending, isPolish, t).reason}
         busy={commandBusy}
         onConfirm={(value) => void runPendingCommand(value)}
         onCancel={closeDialog}
@@ -1831,7 +1871,11 @@ function runOutcomeStatusLabelDisplay(value: CaseRun['outcomeStatus'], isPolish:
  * i tak nic nie renderuje) — bez tego `CommandDialog` dostawałby `undefined`
  * i TypeScript wymuszałby siedem osobnych warunków przy każdym propie.
  */
-function dialogConfig(pending: PendingCommand | null, isPolish: boolean): {
+function dialogConfig(
+  pending: PendingCommand | null,
+  isPolish: boolean,
+  t: TFunction
+): {
   title: string;
   description: string;
   confirmLabel: string;
@@ -1842,116 +1886,144 @@ function dialogConfig(pending: PendingCommand | null, isPolish: boolean): {
     case 'proposal-decision': {
       const decisionLabel =
         pending.decision === 'APPROVE'
-          ? 'Zatwierdzić'
+          ? t('caseWorkspace.execution.decisionLabels.approve', 'Approve')
           : pending.decision === 'REJECT'
-            ? 'Odrzucić'
+            ? t('caseWorkspace.execution.decisionLabels.reject', 'Reject')
             : pending.decision === 'REQUEST_CHANGES'
-              ? 'Odesłać do poprawy'
-              : 'Odłożyć';
+              ? t('caseWorkspace.execution.decisionLabels.requestChanges', 'Send back for changes')
+              : t('caseWorkspace.execution.decisionLabels.defer', 'Defer');
       return {
-        title: `${decisionLabel} tę sprawę?`,
+        title: t('caseWorkspace.execution.dialog.decisionTitle', '{{decision}} this case?', {
+          decision: decisionLabel,
+        }),
         description: effectClassLabel(pending.proposal.effectClass, isPolish),
         confirmLabel: decisionLabel,
         reason: {
-          label: 'Powód (opcjonalnie)',
+          label: t('caseWorkspace.execution.dialog.reasonOptional', 'Reason (optional)'),
           required: false,
-          placeholder: 'Krótkie uzasadnienie decyzji…',
+          placeholder: t('caseWorkspace.execution.dialog.reasonOptionalPlaceholder', 'Short justification for the decision…'),
         },
       };
     }
     case 'proposal-submit':
       return {
-        title: 'Wysłać tę sprawę do przeglądu?',
-        description:
-          'Sprawa przejdzie ze szkicu do kolejki „Sprawy do zatwierdzenia" — Ty albo inna uprawniona osoba będzie mógł ją zatwierdzić, odrzucić albo odesłać do poprawy.',
-        confirmLabel: 'Wyślij do przeglądu',
+        title: t('caseWorkspace.execution.dialog.submitTitle', 'Send this case to review?'),
+        description: t(
+          'caseWorkspace.execution.dialog.submitDescription',
+          'The case moves from draft to the "Cases for approval" queue — you or another authorized person will be able to approve it, reject it, or send it back for changes.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.submitConfirm', 'Send for review'),
       };
     case 'proposal-retry':
       return {
-        title: 'Ponowić tę sprawę?',
-        description:
-          'Sprawa wraca do stanu zatwierdzonej i system spróbuje wykonać czynność jeszcze raz. Cel zostanie sprawdzony ponownie — jeśli w międzyczasie zwietrzał, ponowienie zostanie odrzucone.',
-        confirmLabel: 'Ponów',
+        title: t('caseWorkspace.execution.dialog.retryTitle', 'Retry this case?'),
+        description: t(
+          'caseWorkspace.execution.dialog.retryDescription',
+          'The case returns to the approved state and the system will try to perform the action again. The target will be re-checked — if it has gone stale in the meantime, the retry will be rejected.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.retryConfirm', 'Retry'),
       };
     case 'proposal-revoke':
       return {
-        title: 'Cofnąć zatwierdzenie tej sprawy?',
-        description:
-          'Zatwierdzenie przestanie obowiązywać i czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie. Tej operacji nie da się cofnąć.',
-        confirmLabel: 'Cofnij zatwierdzenie',
+        title: t('caseWorkspace.execution.dialog.revokeTitle', 'Revoke approval of this case?'),
+        description: t(
+          'caseWorkspace.execution.dialog.revokeDescription',
+          "The approval stops being valid and the action will NOT be performed until someone approves it again. This operation can't be undone.",
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.revokeConfirm', 'Revoke approval'),
         reason: {
-          label: 'Powód cofnięcia',
+          label: t('caseWorkspace.execution.dialog.revokeReasonLabel', 'Reason for revoking'),
           required: true,
-          placeholder: 'Dlaczego cofasz to zatwierdzenie?',
+          placeholder: t('caseWorkspace.execution.dialog.revokeReasonPlaceholder', 'Why are you revoking this approval?'),
         },
       };
     case 'proposal-execute':
       return {
-        title: 'Rozpocząć wykonanie tej sprawy?',
-        description:
-          'Zatwierdzona czynność przejdzie do wykonania. Stan zostanie pokazany dopiero po potwierdzającym odczycie z serwera.',
-        confirmLabel: 'Rozpocznij wykonanie',
+        title: t('caseWorkspace.execution.dialog.executeTitle', 'Start executing this case?'),
+        description: t(
+          'caseWorkspace.execution.dialog.executeDescription',
+          'The approved action moves to execution. The state will only be shown after a confirming read from the server.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.executeConfirm', 'Start execution'),
       };
     case 'proposal-mark-failed':
       return {
-        title: 'Oznaczyć tę sprawę jako nieudaną?',
-        description:
-          'Wykonywana właśnie czynność zostanie zapisana jako nieudana. Będzie można ją potem ponowić przyciskiem „Ponów".',
-        confirmLabel: 'Oznacz jako nieudane',
-        reason: { label: 'Powód niepowodzenia', required: true, placeholder: 'Co poszło nie tak?' },
+        title: t('caseWorkspace.execution.dialog.markFailedTitle', 'Mark this case as failed?'),
+        description: t(
+          'caseWorkspace.execution.dialog.markFailedDescription',
+          'The action currently being executed will be recorded as failed. You will be able to retry it later with the "Retry" button.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.markFailedConfirm', 'Mark as failed'),
+        reason: {
+          label: t('caseWorkspace.execution.dialog.failureReasonLabel', 'Reason for failure'),
+          required: true,
+          placeholder: t('caseWorkspace.execution.dialog.failureReasonPlaceholder', 'What went wrong?'),
+        },
       };
     case 'wait-provide-input':
       return {
-        title: 'Podaj dane',
-        description:
-          'System czeka na dane od człowieka, żeby ruszyć dalej z tym krokiem. Wpisz treść, która ma zostać przekazana.',
-        confirmLabel: 'Wyślij dane',
+        title: t('caseWorkspace.execution.dialog.provideInputTitle', 'Provide data'),
+        description: t(
+          'caseWorkspace.execution.dialog.provideInputDescription',
+          'The system is waiting for input from a person to move forward with this step. Enter the content that should be provided.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.provideInputConfirm', 'Send data'),
         reason: {
-          label: 'Treść danych',
+          label: t('caseWorkspace.execution.dialog.inputContentLabel', 'Input content'),
           required: true,
-          placeholder: 'Np. decyzja, liczba, link do dokumentu…',
+          placeholder: t('caseWorkspace.execution.dialog.inputContentPlaceholder', 'E.g. a decision, a number, a link to a document…'),
         },
       };
     case 'wait-cancel':
       return {
-        title: 'Anulować to oczekiwanie?',
-        description: 'Krok przestanie czekać na ten sygnał. Tej operacji nie da się cofnąć.',
-        confirmLabel: 'Anuluj oczekiwanie',
+        title: t('caseWorkspace.execution.dialog.waitCancelTitle', 'Cancel this wait?'),
+        description: t(
+          'caseWorkspace.execution.dialog.waitCancelDescription',
+          "The step will stop waiting for this signal. This operation can't be undone.",
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.waitCancelConfirm', 'Cancel wait'),
         reason: {
-          label: 'Powód anulowania',
+          label: t('caseWorkspace.execution.dialog.waitCancelReasonLabel', 'Reason for cancelling'),
           required: true,
-          placeholder: 'Dlaczego anulujesz to oczekiwanie?',
+          placeholder: t('caseWorkspace.execution.dialog.waitCancelReasonPlaceholder', 'Why are you cancelling this wait?'),
         },
       };
     case 'run-start':
       return {
-        title: 'Uruchomić ten przebieg?',
-        description:
-          'Zostaną utworzone kroki wejściowe planu i przebieg przejdzie w stan „W toku". Tej operacji nie da się cofnąć.',
-        confirmLabel: 'Uruchom',
+        title: t('caseWorkspace.execution.dialog.runStartTitle', 'Start this run?'),
+        description: t(
+          'caseWorkspace.execution.dialog.runStartDescription',
+          'The plan\'s entry steps will be created and the run will move to "Active". This operation can\'t be undone.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.runStartConfirm', 'Start'),
       };
     case 'run-pause':
       return {
-        title: 'Wstrzymać ten przebieg?',
-        description: 'Przebieg przestanie automatycznie ruszać dalej, dopóki go nie wznowisz.',
-        confirmLabel: 'Wstrzymaj',
+        title: t('caseWorkspace.execution.dialog.runPauseTitle', 'Pause this run?'),
+        description: t(
+          'caseWorkspace.execution.dialog.runPauseDescription',
+          'The run will stop advancing automatically until you resume it.',
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.runPauseConfirm', 'Pause'),
       };
     case 'run-resume':
       return {
-        title: 'Wznowić ten przebieg?',
-        description: 'Przebieg wróci do stanu „W toku".',
-        confirmLabel: 'Wznów',
+        title: t('caseWorkspace.execution.dialog.runResumeTitle', 'Resume this run?'),
+        description: t('caseWorkspace.execution.dialog.runResumeDescription', 'The run will return to "Active".'),
+        confirmLabel: t('caseWorkspace.execution.dialog.runResumeConfirm', 'Resume'),
       };
     case 'run-cancel':
       return {
-        title: 'Anulować ten przebieg?',
-        description:
-          'Wszystkie oczekujące kroki tego przebiegu zostaną anulowane razem z nim. Tej operacji nie da się cofnąć.',
-        confirmLabel: 'Anuluj przebieg',
+        title: t('caseWorkspace.execution.dialog.runCancelTitle', 'Cancel this run?'),
+        description: t(
+          'caseWorkspace.execution.dialog.runCancelDescription',
+          "All pending steps of this run will be cancelled along with it. This operation can't be undone.",
+        ),
+        confirmLabel: t('caseWorkspace.execution.dialog.runCancelConfirm', 'Cancel run'),
         reason: {
-          label: 'Powód anulowania',
+          label: t('caseWorkspace.execution.dialog.runCancelReasonLabel', 'Reason for cancelling'),
           required: false,
-          placeholder: 'Dlaczego anulujesz ten przebieg?',
+          placeholder: t('caseWorkspace.execution.dialog.runCancelReasonPlaceholder', 'Why are you cancelling this run?'),
         },
       };
   }
