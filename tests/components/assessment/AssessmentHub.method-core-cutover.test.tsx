@@ -137,6 +137,67 @@ describe('AssessmentHub Method Core DRD cutover', () => {
     ).toBeInTheDocument();
   });
 
+  /**
+   * TEST-DANE D-01 (09.09.2026). Live Processes tab showed „DRD · 614e5f28"
+   * with „—" in SCORE and CONFIDENCE while the legacy twin of the very same
+   * diagnosis held the name, overall_score 3 and confidence_avg 3.6.
+   * MUTATION: drop the `legacyTwin` argument in `methodSessionToAssessment`
+   * (or the projectId map in `loadAssessmentListCore`) -> first case RED.
+   */
+  it('D-01: canonical DRD borrows name, score and confidence from its legacy twin (same projectId)', async () => {
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{ ...canonicalSession, state: 'frozen', projectId: 'project-1' }],
+      total: 1,
+    });
+    apiMock.listAssessments.mockResolvedValue({
+      items: [
+        {
+          id: 'legacy-drd-id',
+          project_id: 'project-1',
+          name: 'Northwind 2027 — Operational Maturity Assessment',
+          type: 'DRD',
+          status: 'APPROVED',
+          overall_score: 3,
+          confidence_avg: 3.6,
+          completion_percent: '100',
+        },
+      ],
+    });
+    renderHub();
+
+    expect(
+      await screen.findByText('Northwind 2027 — Operational Maturity Assessment')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('DRD · method-s')).not.toBeInTheDocument();
+    expect(screen.getByText('3.0')).toBeInTheDocument();
+    // 1–5 domain (server validator: min(1).max(5)) normalised to the approved
+    // percentage view: 3.6 / 5 = 72%. The old code printed „4%".
+    expect(screen.getByText('72%')).toBeInTheDocument();
+  });
+
+  it('D-01: keeps the id-based fallback label when no legacy twin shares the project', async () => {
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{ ...canonicalSession, projectId: 'project-1' }],
+      total: 1,
+    });
+    apiMock.listAssessments.mockResolvedValue({
+      items: [
+        {
+          id: 'legacy-drd-id',
+          project_id: 'other-project',
+          name: 'Someone else DRD',
+          type: 'DRD',
+          status: 'APPROVED',
+          overall_score: 4,
+        },
+      ],
+    });
+    renderHub();
+
+    expect(await screen.findByText('DRD · method-s')).toBeInTheDocument();
+    expect(screen.queryByText('Someone else DRD')).not.toBeInTheDocument();
+  });
+
   it('fails closed when Method Core cannot load and does not restore cached legacy DRD', async () => {
     sessionStorage.setItem(
       'assessment.hub.cached-list.v1',
