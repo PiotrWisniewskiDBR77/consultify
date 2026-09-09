@@ -51192,6 +51192,198 @@
         "reasonLabel": "Reason for unlinking",
         "reasonPlaceholder": "e.g. linked by mistake / superseded by a newer document"
       }
+    },
+    "ui": {
+      "relativeDays": {
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "yesterday": "yesterday",
+        "inDays": "in {{count}} days",
+        "daysAgo": "{{count}} days ago"
+      },
+      "stateBlock": {
+        "loading": "Loading order data…",
+        "blockedTitle": "You don't have access to this order",
+        "blockedDescription": "Ask the order's owner or your organization admin to add you to the team. Data stays hidden until permissions are granted.",
+        "notFoundTitle": "We couldn't find this order",
+        "notFoundDescription": "The order doesn't exist, or doesn't belong to your organization. Check the address, or go back to the list.",
+        "backToList": "Back to order list",
+        "loadErrorTitle": "Couldn't load the data",
+        "loadErrorDescription": "The connection to the server failed. Try again — nothing has been changed.",
+        "retry": "Try again"
+      },
+      "partialBanner": {
+        "notice": "Partial view — failed to load: {{sections}}. The remaining data is current.",
+        "reload": "Reload"
+      },
+      "commandBanner": {
+        "refresh": "Refresh data",
+        "dismissAria": "Dismiss notice",
+        "dismiss": "Dismiss"
+      },
+      "dialog": {
+        "reasonRequired": " (required)",
+        "reasonOptional": " (optional)",
+        "cancel": "Not now",
+        "sending": "Sending…"
+      },
+      "formField": {
+        "required": " (required)",
+        "optional": " (optional)"
+      },
+      "technicalId": {
+        "title": "Technical identifier (expert view)"
+      },
+      "moreTabs": {
+        "label": "More",
+        "ariaLabel": "More order sections"
+      }
+    },
+    "list": {
+      "savedViews": {
+        "allLabel": "All orders",
+        "allDescription": "Full list of your organization's orders.",
+        "attentionLabel": "Needs attention",
+        "attentionDescription": "Orders that are blocked, failed, or have an unapproved plan.",
+        "closedLabel": "Closed",
+        "closedDescription": "Orders that are closed, cancelled, or partially closed."
+      },
+      "attention": {
+        "blocked": "Blocked — decision needed",
+        "failed": "Failed — needs a response",
+        "draft": "Plan not yet approved",
+        "none": "Nothing waiting on you"
+      },
+      "nextAction": {
+        "draft": "Agree and approve the plan",
+        "active": "Check progress",
+        "blocked": "Remove the blocker",
+        "failed": "Decide whether to retry",
+        "closed": "Review results",
+        "cancelled": "None — order cancelled",
+        "default": "—"
+      },
+      "fallbackName": "Order {{shortId}} · {{profile}}",
+      "subtitle": {
+        "project": "Project: {{value}}",
+        "goal": "Goal: {{value}}",
+        "outcome": "Expected outcome: {{value}}"
+      },
+      "notice": {
+        "savedNamed": "Saved. Order “{{name}}” now has status: {{status}}.",
+        "savedUnnamed": "Saved. Order now has status: {{status}}.",
+        "unconfirmed": "The operation was accepted by the server, but the follow-up check couldn't confirm the state. Refresh the data to see what's really going on."
+      },
+      "commandDialog": {
+        "subjectNamed": "Order “{{name}}”",
+        "subjectUnnamed": "This order",
+        "start": {
+          "title": "Start the order?",
+          "description": "{{subject}} will move from draft to execution.",
+          "confirm": "Start",
+          "reasonLabel": "Reason",
+          "reasonPlaceholder": "e.g. plan agreed with the client"
+        },
+        "pause": {
+          "title": "Pause the order?",
+          "description": "{{subject}} will be blocked until the cause is resolved.",
+          "confirm": "Pause",
+          "reasonLabel": "Reason for pausing",
+          "reasonPlaceholder": "e.g. waiting for data from the client"
+        },
+        "resume": {
+          "title": "Resume the order?",
+          "description": "{{subject}} will return to execution.",
+          "confirm": "Resume",
+          "reasonLabel": "Reason",
+          "reasonPlaceholder": "e.g. blocker removed"
+        },
+        "cancel": {
+          "title": "Cancel the order?",
+          "description": "{{subject}} will be closed as cancelled. This change can't be undone — cancelled is a final status.",
+          "confirm": "Cancel order",
+          "reasonLabel": "Reason for cancelling",
+          "reasonPlaceholder": "e.g. client withdrew the request"
+        }
+      },
+      "columns": {
+        "orderMobile": "Order",
+        "nextActionInline": "Next action: {{action}} · {{when}}",
+        "orderAndOutcome": "Order and expected outcome",
+        "goalOutcomeUndescribed": "Goal and outcome not described",
+        "type": "Type",
+        "status": "Status",
+        "attention": "Attention",
+        "progress": "Progress toward outcome",
+        "progressNotApplicable": "not applicable",
+        "nextAction": "Next action",
+        "lastActivity": "Last activity",
+        "progressOfTotal": "{{done}} of {{total}}"
+      },
+      "moreViews": {
+        "label": "More",
+        "ariaLabel": "More order list views"
+      },
+      "rowMenu": {
+        "start": "Start order",
+        "pause": "Pause order",
+        "resume": "Resume order",
+        "open": "Open order",
+        "cancel": "Cancel order"
+      },
+      "empty": {
+        "noOrdersTitle": "You don't have any orders yet",
+        "noOrdersDescription": "An order is created from a project — once the first one starts, it appears here together with its plan, execution and results.",
+        "noMatchTitle": "No order matches the filters",
+        "noMatchDescription": "Change the tab, status, or clear the search.",
+        "tableEmptyTitle": "No orders in this view",
+        "tableEmptyDescription": "Change the tab or clear the filters."
+      },
+      "preview": {
+        "openOrder": "Open order",
+        "propertyLabel": "Property",
+        "valueLabel": "Value",
+        "closureType": "Agreed closure method",
+        "governance": "Governance",
+        "autonomy": "System autonomy",
+        "delivery": "Delivery",
+        "decision": "Decision",
+        "implementation": "Implementation",
+        "outcome": "Effect",
+        "lastChange": "Last change",
+        "whatsNextLabel": "What's next",
+        "whatsNextNote": "Opens the order on the selected tab.",
+        "plan": "Plan",
+        "execution": "Execution",
+        "results": "Results",
+        "goalOutcomeUndescribed": "Goal and expected outcome were not described."
+      },
+      "allChip": "All"
+    },
+    "detail": {
+      "projectionRadioLabel": "How to show the order",
+      "lightNotStarted": "The LIGHT order was not started.",
+      "planBlockedNotice": "This plan has unresolved validation blockers — publishing isn't available until they are fixed. The list of blockers is on the “Plan” tab.",
+      "noLinksAccess": "You don't have permission to view objects linked to this order. The rest of the order is visible — ask the order's owner for access.",
+      "closureAxesLabel": "Closure levels (CW-00-016/017 — independent, one does not replace another)",
+      "closureTypeFieldLabel": "Closure type",
+      "evidenceFieldLabel": "Evidence / description of remaining scope",
+      "refreshAndRetry": " Refresh the data and try again.",
+      "loadingTitle": "Order"
+    },
+    "execution": {
+      "heading": "What's happening now"
+    },
+    "planCanvas": {
+      "emptyNoSteps": "This plan doesn't have any steps yet.",
+      "canvasAriaLabel": "Order plan — flow canvas. Drag with the mouse, zoom with the wheel, keys: arrows pan, plus and minus zoom, zero fits the view.",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "fitToView": "Fit to view",
+      "fitShort": "Fit",
+      "resetZoom": "Set zoom to one hundred percent",
+      "hintMobile": "Drag to pan. Wheel zooms.",
+      "hintDesktop": "Drag to pan. Mouse wheel zooms. The arrow shows step order."
     }
   }
 }

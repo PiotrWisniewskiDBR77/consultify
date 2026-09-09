@@ -60,6 +60,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { NModeToolbar } from '@/components/shared/NModeLayout/NModeToolbar';
@@ -585,6 +586,7 @@ function closureAxisValue(
 const ZLECENIE_TERMINALNE = new Set(['CLOSED', 'FAILED', 'CANCELLED']);
 
 export const CaseDetailScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -2013,7 +2015,7 @@ export const CaseDetailScreen: React.FC = () => {
           {lightStart.status === 'refused' ? (
             <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
               <span className="font-medium text-c-text">
-                Zlecenie LIGHT nie zostało uruchomione.
+                {t('caseWorkspace.detail.lightNotStarted', 'The LIGHT order was not started.')}
               </span>{' '}
               {lightStart.reasonDetail}
             </div>
@@ -2021,13 +2023,17 @@ export const CaseDetailScreen: React.FC = () => {
           {lightStart.status === 'error' ? (
             <div className="mt-2 rounded-lg border border-danger-300/40 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200">
               {lightStart.message}
-              {lightStart.refreshSuggested ? ' Odśwież dane i spróbuj ponownie.' : ''}
+              {lightStart.refreshSuggested
+                ? t('caseWorkspace.detail.refreshAndRetry', ' Refresh the data and try again.')
+                : ''}
             </div>
           ) : null}
           {planPublishBlokowany && currentPlanVersion?.status === 'IN_REVIEW' ? (
             <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-              Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie
-              zostaną poprawione. Lista blokerów jest w zakładce „Plan".
+              {t(
+                'caseWorkspace.detail.planBlockedNotice',
+                'This plan has unresolved validation blockers — publishing isn\'t available until they are fixed. The list of blockers is on the “Plan” tab.',
+              )}
             </div>
           ) : null}
           <CommandBanner
@@ -2070,8 +2076,10 @@ export const CaseDetailScreen: React.FC = () => {
         <div className="flex items-start gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
           <Lock className="mt-0.5 h-4 w-4 shrink-0 text-c-text-muted" aria-hidden />
           <p className="min-w-0 text-xs text-c-text-secondary">
-            Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest
-            widoczna — poproś właściciela zlecenia o dostęp.
+            {t(
+              'caseWorkspace.detail.noLinksAccess',
+              "You don't have permission to view objects linked to this order. The rest of the order is visible — ask the order's owner for access.",
+            )}
           </p>
         </div>
       ) : (
@@ -2175,7 +2183,7 @@ export const CaseDetailScreen: React.FC = () => {
   const przelacznikProjekcji = (
     <div
       role="radiogroup"
-      aria-label="Sposób pokazania zlecenia"
+      aria-label={t('caseWorkspace.detail.projectionRadioLabel', 'How to show the order')}
       className="flex flex-wrap items-center gap-1 rounded-full border border-c-border p-0.5"
     >
       {PLAN_PROJECTIONS.map((item) => {
@@ -2208,13 +2216,17 @@ export const CaseDetailScreen: React.FC = () => {
    * projektu nazywało się dokładnie tak samo.
    */
   const tytul = bundle
-    ? nazwaZlecenia(bundle.caseItem, {
-        goal: bundle.intake?.goal ?? null,
-        expectedOutcome: bundle.intake?.expectedOutcome ?? null,
-        projectName: bundle.caseItem.projectName,
-        projectDescription: bundle.caseItem.projectDescription,
-      })
-    : 'Zlecenie';
+    ? nazwaZlecenia(
+        bundle.caseItem,
+        {
+          goal: bundle.intake?.goal ?? null,
+          expectedOutcome: bundle.intake?.expectedOutcome ?? null,
+          projectName: bundle.caseItem.projectName,
+          projectDescription: bundle.caseItem.projectDescription,
+        },
+        t,
+      )
+    : t('caseWorkspace.detail.loadingTitle', 'Order');
   const stanZlecenia = bundle?.caseItem.caseStatus;
   const tonStatusu: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
     stanZlecenia === 'BLOCKED' || stanZlecenia === 'FAILED'
@@ -2373,7 +2385,10 @@ export const CaseDetailScreen: React.FC = () => {
           />
           <div>
             <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
-              Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)
+              {t(
+                'caseWorkspace.detail.closureAxesLabel',
+                'Closure levels (CW-00-016/017 — independent, one does not replace another)',
+              )}
             </span>
             <div className="mt-1.5 space-y-1.5">
               {CLOSURE_AXES.map((axis) => {
@@ -2424,7 +2439,7 @@ export const CaseDetailScreen: React.FC = () => {
           ) : (
             <>
               <FormField
-                label="Typ zamknięcia"
+                label={t('caseWorkspace.detail.closureTypeFieldLabel', 'Closure type')}
                 required
                 helpText={
                   closureTypeForm !== 'COMPLETED_PARTIAL'
@@ -2449,7 +2464,7 @@ export const CaseDetailScreen: React.FC = () => {
                 </select>
               </FormField>
               <FormField
-                label="Dowód / opis pozostałego zakresu"
+                label={t('caseWorkspace.detail.evidenceFieldLabel', 'Evidence / description of remaining scope')}
                 required={
                   closureTypeForm === 'COMPLETED_PARTIAL' && !bundle.caseItem.acceptanceCriteriaRef
                 }

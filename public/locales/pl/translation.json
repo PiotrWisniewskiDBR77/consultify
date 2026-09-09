@@ -52048,6 +52048,198 @@
         "reasonLabel": "Powód odpięcia",
         "reasonPlaceholder": "np. powiązano przez pomyłkę / zastąpione nowszym dokumentem"
       }
+    },
+    "ui": {
+      "relativeDays": {
+        "today": "dzisiaj",
+        "tomorrow": "jutro",
+        "yesterday": "wczoraj",
+        "inDays": "za {{count}} dni",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "stateBlock": {
+        "loading": "Wczytywanie danych zlecenia…",
+        "blockedTitle": "Nie masz dostępu do tego zlecenia",
+        "blockedDescription": "Poproś właściciela zlecenia albo administratora organizacji o dodanie Cię do zespołu. Dane pozostają ukryte do czasu nadania uprawnień.",
+        "notFoundTitle": "Nie znaleźliśmy tego zlecenia",
+        "notFoundDescription": "Zlecenie nie istnieje albo nie należy do Twojej organizacji. Sprawdź adres lub wróć do listy.",
+        "backToList": "Wróć do listy zleceń",
+        "loadErrorTitle": "Nie udało się wczytać danych",
+        "loadErrorDescription": "Połączenie z serwerem nie doszło do skutku. Spróbuj ponownie — nic nie zostało zmienione.",
+        "retry": "Spróbuj ponownie"
+      },
+      "partialBanner": {
+        "notice": "Widok niepełny — nie wczytały się: {{sections}}. Pozostałe dane są aktualne.",
+        "reload": "Wczytaj ponownie"
+      },
+      "commandBanner": {
+        "refresh": "Odśwież dane",
+        "dismissAria": "Zamknij komunikat",
+        "dismiss": "Zamknij"
+      },
+      "dialog": {
+        "reasonRequired": " (wymagany)",
+        "reasonOptional": " (opcjonalny)",
+        "cancel": "Nie teraz",
+        "sending": "Wysyłam…"
+      },
+      "formField": {
+        "required": " (wymagane)",
+        "optional": " (opcjonalne)"
+      },
+      "technicalId": {
+        "title": "Identyfikator techniczny (widok ekspercki)"
+      },
+      "moreTabs": {
+        "label": "Więcej",
+        "ariaLabel": "Więcej sekcji zlecenia"
+      }
+    },
+    "list": {
+      "savedViews": {
+        "allLabel": "Wszystkie zlecenia",
+        "allDescription": "Pełna lista zleceń Twojej organizacji.",
+        "attentionLabel": "Wymagają uwagi",
+        "attentionDescription": "Zlecenia zablokowane, nieudane albo z niezatwierdzonym planem.",
+        "closedLabel": "Zakończone",
+        "closedDescription": "Zlecenia zamknięte, anulowane lub domknięte częściowo."
+      },
+      "attention": {
+        "blocked": "Zablokowane — potrzebna decyzja",
+        "failed": "Nieudane — potrzebna reakcja",
+        "draft": "Plan niezatwierdzony",
+        "none": "Nic nie czeka na Ciebie"
+      },
+      "nextAction": {
+        "draft": "Uzgodnij i zatwierdź plan",
+        "active": "Sprawdź realizację",
+        "blocked": "Usuń blokadę",
+        "failed": "Zdecyduj, czy ponawiamy",
+        "closed": "Przejrzyj rezultaty",
+        "cancelled": "Brak — zlecenie anulowane",
+        "default": "—"
+      },
+      "fallbackName": "Zlecenie {{shortId}} · {{profile}}",
+      "subtitle": {
+        "project": "Projekt: {{value}}",
+        "goal": "Cel: {{value}}",
+        "outcome": "Oczekiwany rezultat: {{value}}"
+      },
+      "notice": {
+        "savedNamed": "Zapisane. Zlecenie „{{name}}\" ma teraz status: {{status}}.",
+        "savedUnnamed": "Zapisane. Zlecenie ma teraz status: {{status}}.",
+        "unconfirmed": "Operacja została przyjęta przez serwer, ale nie udało się potwierdzić stanu odczytem kontrolnym. Odśwież dane, żeby zobaczyć, jak jest naprawdę."
+      },
+      "commandDialog": {
+        "subjectNamed": "Zlecenie „{{name}}\"",
+        "subjectUnnamed": "To zlecenie",
+        "start": {
+          "title": "Rozpocząć zlecenie?",
+          "description": "{{subject}} przejdzie ze szkicu do realizacji.",
+          "confirm": "Rozpocznij",
+          "reasonLabel": "Powód",
+          "reasonPlaceholder": "np. plan uzgodniony z klientem"
+        },
+        "pause": {
+          "title": "Wstrzymać zlecenie?",
+          "description": "{{subject}} zostanie zablokowane do czasu usunięcia przyczyny.",
+          "confirm": "Wstrzymaj",
+          "reasonLabel": "Powód wstrzymania",
+          "reasonPlaceholder": "np. czekamy na dane od klienta"
+        },
+        "resume": {
+          "title": "Wznowić zlecenie?",
+          "description": "{{subject}} wróci do realizacji.",
+          "confirm": "Wznów",
+          "reasonLabel": "Powód",
+          "reasonPlaceholder": "np. blokada usunięta"
+        },
+        "cancel": {
+          "title": "Anulować zlecenie?",
+          "description": "{{subject}} zostanie zamknięte jako anulowane. Tej zmiany nie da się cofnąć — status anulowany jest końcowy.",
+          "confirm": "Anuluj zlecenie",
+          "reasonLabel": "Powód anulowania",
+          "reasonPlaceholder": "np. klient wycofał zapotrzebowanie"
+        }
+      },
+      "columns": {
+        "orderMobile": "Zlecenie",
+        "nextActionInline": "Następna akcja: {{action}} · {{when}}",
+        "orderAndOutcome": "Zlecenie i oczekiwany rezultat",
+        "goalOutcomeUndescribed": "Cel i rezultat nieopisane",
+        "type": "Rodzaj",
+        "status": "Status",
+        "attention": "Uwaga",
+        "progress": "Postęp rezultatu",
+        "progressNotApplicable": "nie dotyczy",
+        "nextAction": "Następna akcja",
+        "lastActivity": "Ostatnia aktywność",
+        "progressOfTotal": "{{done}} z {{total}}"
+      },
+      "moreViews": {
+        "label": "Więcej",
+        "ariaLabel": "Więcej widoków listy zleceń"
+      },
+      "rowMenu": {
+        "start": "Rozpocznij zlecenie",
+        "pause": "Wstrzymaj zlecenie",
+        "resume": "Wznów zlecenie",
+        "open": "Otwórz zlecenie",
+        "cancel": "Anuluj zlecenie"
+      },
+      "empty": {
+        "noOrdersTitle": "Nie masz jeszcze żadnych zleceń",
+        "noOrdersDescription": "Zlecenie powstaje z projektu — gdy pierwsze ruszy, pojawi się tutaj razem z planem, realizacją i rezultatami.",
+        "noMatchTitle": "Żadne zlecenie nie pasuje do filtrów",
+        "noMatchDescription": "Zmień zakładkę, status albo wyczyść wyszukiwanie.",
+        "tableEmptyTitle": "Brak zleceń w tym widoku",
+        "tableEmptyDescription": "Zmień zakładkę albo wyczyść filtry."
+      },
+      "preview": {
+        "openOrder": "Otwórz zlecenie",
+        "propertyLabel": "Właściwość",
+        "valueLabel": "Wartość",
+        "closureType": "Umówiony sposób zamknięcia",
+        "governance": "Nadzór",
+        "autonomy": "Samodzielność systemu",
+        "delivery": "Dostarczenie",
+        "decision": "Decyzja",
+        "implementation": "Wdrożenie",
+        "outcome": "Efekt",
+        "lastChange": "Ostatnia zmiana",
+        "whatsNextLabel": "Co dalej",
+        "whatsNextNote": "Otwiera zlecenie na wybranej zakładce.",
+        "plan": "Plan",
+        "execution": "Realizacja",
+        "results": "Rezultaty",
+        "goalOutcomeUndescribed": "Cel i oczekiwany rezultat nie zostały opisane."
+      },
+      "allChip": "Wszystkie"
+    },
+    "detail": {
+      "projectionRadioLabel": "Sposób pokazania zlecenia",
+      "lightNotStarted": "Zlecenie LIGHT nie zostało uruchomione.",
+      "planBlockedNotice": "Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie zostaną poprawione. Lista blokerów jest w zakładce „Plan\".",
+      "noLinksAccess": "Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest widoczna — poproś właściciela zlecenia o dostęp.",
+      "closureAxesLabel": "Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)",
+      "closureTypeFieldLabel": "Typ zamknięcia",
+      "evidenceFieldLabel": "Dowód / opis pozostałego zakresu",
+      "refreshAndRetry": " Odśwież dane i spróbuj ponownie.",
+      "loadingTitle": "Zlecenie"
+    },
+    "execution": {
+      "heading": "Co się teraz dzieje"
+    },
+    "planCanvas": {
+      "emptyNoSteps": "Ten plan nie ma jeszcze żadnych kroków.",
+      "canvasAriaLabel": "Plan zlecenia — płótno przepływu. Przeciągaj myszą, przybliżaj kółkiem, klawisze: strzałki przesuwają, plus i minus przybliżają, zero dopasowuje widok.",
+      "zoomOut": "Oddal plan",
+      "zoomIn": "Przybliż plan",
+      "fitToView": "Dopasuj do ekranu",
+      "fitShort": "Dopasuj",
+      "resetZoom": "Ustaw powiększenie na sto procent",
+      "hintMobile": "Przeciągnij, aby przesunąć. Kółko przybliża.",
+      "hintDesktop": "Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków."
     }
   }
 }

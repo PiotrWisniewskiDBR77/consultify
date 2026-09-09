@@ -27,6 +27,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StandardPreview, type StandardPreviewAction } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
@@ -458,6 +459,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   expert,
   onReload,
 }) => {
+  const { t } = useTranslation();
   const [selection, setSelectionState] = useState<Selection>(null);
   // DEC-397b (1.1-K6): klik wiersza po zamknięciu panelu (X) ma go ponownie
   // otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
@@ -1087,7 +1089,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             className="text-sm text-c-text-secondary"
             title={formatDateTime(String(row.odKiedy))}
           >
-            {relativeDays(String(row.odKiedy))}
+            {relativeDays(String(row.odKiedy), t)}
           </span>
         ),
       },
@@ -1137,7 +1139,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               className="text-sm text-c-text-secondary"
               title={formatDateTime(String(row.odKiedy))}
             >
-              Czeka {relativeDays(String(row.odKiedy))}
+              Czeka {relativeDays(String(row.odKiedy), t)}
             </div>
             <div className="text-xs text-c-text-muted">Termin: {terminText(row)}</div>
           </div>
@@ -1160,7 +1162,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             <div className="text-sm font-medium leading-snug text-c-text">{String(row.naCo)}</div>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <div className="text-xs text-c-text-muted">
-              Czeka {relativeDays(String(row.odKiedy))} · termin: {terminText(row)}
+              Czeka {relativeDays(String(row.odKiedy), t)} · termin: {terminText(row)}
             </div>
           </div>
         ),
@@ -1203,7 +1205,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <span className="text-sm text-c-text-secondary">
-            {relativeDays(String(row.zgloszone))}
+            {relativeDays(String(row.zgloszone), t)}
           </span>
         ),
       },
@@ -1233,7 +1235,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         render: (row: Record<string, unknown>) => (
           <div className="min-w-0 space-y-0.5">
             <div className="text-sm text-c-text-secondary">{String(row.ktoZglosil)}</div>
-            <div className="text-xs text-c-text-muted">{relativeDays(String(row.zgloszone))}</div>
+            <div className="text-xs text-c-text-muted">{relativeDays(String(row.zgloszone), t)}</div>
           </div>
         ),
       },
@@ -1252,7 +1254,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             <div className="text-sm font-medium leading-snug text-c-text">{String(row.czego)}</div>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <div className="text-xs text-c-text-muted">
-              Zgłosił: {String(row.ktoZglosil)} · {relativeDays(String(row.zgloszone))}
+              Zgłosił: {String(row.ktoZglosil)} · {relativeDays(String(row.zgloszone), t)}
             </div>
           </div>
         ),
@@ -1294,7 +1296,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <span className="text-sm text-c-text-secondary">
-            {relativeDays(String(row.zaktualizowany))}
+            {relativeDays(String(row.zaktualizowany), t)}
           </span>
         ),
       },
@@ -1315,7 +1317,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             </span>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <span className="block text-xs text-c-text-muted">
-              zmiana {relativeDays(String(row.zaktualizowany))}
+              zmiana {relativeDays(String(row.zaktualizowany), t)}
             </span>
           </div>
         ),
@@ -1337,7 +1339,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             </span>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <span className="block text-xs text-c-text-muted">
-              zmiana {relativeDays(String(row.zaktualizowany))}
+              zmiana {relativeDays(String(row.zaktualizowany), t)}
             </span>
           </div>
         ),
@@ -1370,7 +1372,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 
         {/* Co się teraz dzieje — jedno zdanie, bez żargonu. */}
         <div className="rounded-xl border border-c-border bg-c-surface p-3 sm:p-4">
-          <h2 className="text-base font-semibold text-c-text">Co się teraz dzieje</h2>
+          <h2 className="text-base font-semibold text-c-text">
+            {t('caseWorkspace.execution.heading', "What's happening now")}
+          </h2>
           <p className="mt-1 text-sm text-c-text-secondary">
             Zlecenie jest w stanie „{caseStatusLabel(caseItem.caseStatus, true).toLowerCase()}".{' '}
             {activeWaits.length
@@ -1546,7 +1550,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               pills: [{ label: caseWaitStatusLabel(selectedWait.status, true), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
-                  {relativeDays(selectedWait.createdAt)}
+                  {relativeDays(selectedWait.createdAt, t)}
                 </span>
               ),
             }}
@@ -1633,7 +1637,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               pills: [{ label: proposalStatusLabel(selectedProposal.status, true), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
-                  {relativeDays(selectedProposal.createdAt)}
+                  {relativeDays(selectedProposal.createdAt, t)}
                 </span>
               ),
               recommendation: proposalRecommendation(selectedProposal.status),
@@ -1690,7 +1694,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               pills: [{ label: runStatusLabel(selectedRun.status, true), tone: 'info' }],
               trailing: (
                 <span className="text-xs text-c-text-muted">
-                  {relativeDays(selectedRun.updatedAt)}
+                  {relativeDays(selectedRun.updatedAt, t)}
                 </span>
               ),
             }}
