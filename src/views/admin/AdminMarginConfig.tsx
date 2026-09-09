@@ -17,6 +17,7 @@ import {
 } from '@/components/shared/states';
 
 import { Api } from '../../services/api';
+import { formatListCurrency } from '../../utils/listDateFormat';
 
 export const AdminMarginConfig = () => {
   const { t } = useTranslation();
@@ -217,7 +218,10 @@ export const AdminMarginConfig = () => {
                       {t('admin.aiControlCenter.marginConfig.baseCostPer1k', 'Base Cost / 1k')}
                     </label>
                     <span className="text-slate-500 dark:text-slate-400 font-mono">
-                      ${parseFloat(margin.base_cost_per_1k).toFixed(4)}
+                      {formatListCurrency(parseFloat(margin.base_cost_per_1k), 'USD', {
+                        maximumFractionDigits: 4,
+                        minimumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                   <div className="relative group">

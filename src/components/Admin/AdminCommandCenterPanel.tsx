@@ -44,7 +44,7 @@ import {
   type RetentionSchedule,
 } from '../../services/enterpriseComplianceApi';
 import { cn } from '../../utils/cn';
-import { formatListDate, formatListDateTime } from '../../utils/listDateFormat';
+import { formatListDate, formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 import type { AdminSettingsSection } from './AdminSettingsSidebar';
 import { CommandCenterAgentTraceTab } from './commandCenter/CommandCenterAgentTraceTab';
@@ -111,7 +111,9 @@ const CommandCenterAttentionQueue: React.FC = () => {
         // danych. Fallback na płaski kształt zostaje (ten sam wzorzec co
         // `health?.summary?.failed ?? health?.failed` kilka linii niżej) na
         // wypadek przyszłej zmiany kontraktu API w drugą stronę.
-        const highRiskCount = Number(risk?.summary?.audit?.highRiskCount ?? risk?.highRiskCount ?? 0);
+        const highRiskCount = Number(
+          risk?.summary?.audit?.highRiskCount ?? risk?.highRiskCount ?? 0
+        );
         next.push({
           id: 'risk',
           type: 'risk',
@@ -460,7 +462,15 @@ const CommandCenterCostCapacity: React.FC = () => {
       {
         id: 'cost',
         label: t('admin.command.cost-capacity.columns.cost'),
-        render: (row) => Number(row.cost ?? 0).toFixed(2),
+        // Kolumna nazywa sie po prostu „Koszt”/„Cost” i odpowiedz API nie niesie
+        // kodu waluty — formatujemy LICZBE (separator z konta), nie dopisujemy
+        // waluty, ktorej w danych nie ma. Brak jednostki przy koszcie zglaszam
+        // jako STOP produktowy, nie zalatuje go zgadywaniem USD.
+        render: (row) =>
+          formatListNumber(Number(row.cost ?? 0), '—', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+          }),
       },
       {
         id: 'messageCount',
@@ -508,12 +518,15 @@ const CommandCenterCostCapacity: React.FC = () => {
         {[
           [
             t('admin.command.cost-capacity.metrics.currentCost'),
-            currentCost.toFixed(2),
+            formatListNumber(currentCost, '—', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
             'billing/summary',
           ],
           [
             t('admin.command.cost-capacity.metrics.forecast'),
-            forecast.toFixed(2),
+            formatListNumber(forecast, '—', { maximumFractionDigits: 2, minimumFractionDigits: 2 }),
             'billing/summary',
           ],
           [
@@ -997,7 +1010,9 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         <p className="mt-1 text-sm text-c-text-secondary">{t('commandCenter.description')}</p>
       </div>
 
-      {activeScreen === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
+      {activeScreen === 'overview' && (
+        <CommandCenterOverviewTab onSectionChange={onSectionChange} />
+      )}
       {activeScreen === 'agent-trace' && <CommandCenterAgentTraceTab />}
       {activeScreen === 'audit' && <CommandCenterAuditTab />}
       {activeScreen === 'dlp' && <CommandCenterDlpTab />}

@@ -2652,7 +2652,7 @@
     "resizeColumn": "Resize {{column}} column",
     "more": "More",
     "save": "Save",
-    "saving": "Saving...",
+    "saving": "Saving…",
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "accept": "Accept",
@@ -2740,7 +2740,7 @@
     "periodStart": "Period start",
     "periodEnd": "Period end",
     "noOrganizations": "No organizations found",
-    "retry": "Try again",
+    "retry": "Retry",
     "pin": "Pin",
     "unpin": "Unpin",
     "pinForComparison": "Pin for comparison",
@@ -2831,8 +2831,8 @@
     "prev": "Prev",
     "selectOrganization": "Select Organization",
     "organizations": "Organizations",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
+    "enabled": "enabled",
+    "disabled": "disabled",
     "adding": "Adding...",
     "exportJson": "Export JSON",
     "on": "On",
@@ -22797,7 +22797,20 @@
           "loaded": "loaded",
           "noData": "no data"
         }
-      }
+      },
+      "orgTitle": "Organization service status",
+      "orgSubtitle": "An aggregate, customer-safe availability readback scoped to this organization.",
+      "source": "Source",
+      "readAt": "Read at",
+      "customerViewNote": "The customer view exposes aggregate safe status only. Probe details and execution belong to the platform operator.",
+      "readbackStatus": "Readback status",
+      "noAggregateEndpoint": "A verified aggregate endpoint without operator details is not connected yet.",
+      "errors": {
+        "load": "Failed to load health probes",
+        "runAll": "Failed to run probes",
+        "runOne": "Failed to run probe"
+      },
+      "allPassing": "All probes passing"
     },
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
@@ -22849,12 +22862,87 @@
       "command": {
         "label": "Command Center",
         "description": "Trust & control posture — SOC2, DLP, residency, retention, AI policy"
+      },
+      "domain": {
+        "team": "Team & Access",
+        "billing": "Billing & Plans",
+        "ai": "AI Control",
+        "security": "Security & Identity",
+        "audit": "Audit Log",
+        "command": "Admin Command Center",
+        "health": "System Health"
+      },
+      "screen": {
+        "members": "Members",
+        "invitations": "Invitations",
+        "roles-permissions": "Roles & Permissions",
+        "teams": "Teams",
+        "guests-external": "Guests & External Access",
+        "access-requests": "Access Requests",
+        "access-reviews": "Access Reviews",
+        "ownership": "Ownership",
+        "overview": "Overview",
+        "plan-limits": "Plan & Limits",
+        "usage-costs": "Usage & Costs",
+        "payment-methods": "Payment Methods",
+        "invoices": "Invoices",
+        "seats-licences": "Seats & Licences",
+        "billing-details": "Billing Details",
+        "budgets-alerts": "Budgets & Alerts",
+        "plan-history": "Plan Change History",
+        "policy-autonomy": "Policy & Autonomy",
+        "personas": "Personas",
+        "models-providers": "Models & Providers",
+        "ai-limits-budgets": "Limits & Budgets",
+        "data-privacy": "Data & Privacy",
+        "quality-evaluations": "Quality Evaluations",
+        "ai-incidents": "AI Incidents",
+        "configuration-versions": "Configuration Versions",
+        "ai-operations": "AI Operations",
+        "ai-audit": "AI Audit",
+        "security-policy": "Security Policy",
+        "sso": "SSO",
+        "scim-lifecycle": "SCIM & Lifecycle",
+        "sessions": "Sessions",
+        "api-access": "API Access",
+        "domains": "Domains",
+        "service-accounts": "Service Accounts",
+        "security-alerts": "Security Alerts",
+        "break-glass": "Break-glass",
+        "risk-summary": "Risk Summary",
+        "events": "Events",
+        "high-risk-changes": "High-risk Changes",
+        "compliance-evidence": "Compliance Evidence",
+        "retention-export": "Retention & Export",
+        "integrity": "Integrity",
+        "legal-hold": "Legal Hold",
+        "export-history": "Export History",
+        "attention-queue": "Attention Queue",
+        "cost-capacity": "Cost & Capacity",
+        "organization-defaults": "Organization Defaults",
+        "agent-trace": "Agent Trace",
+        "audit": "SOC2 Audit",
+        "dlp": "DLP",
+        "residency": "Data Residency",
+        "retention": "Retention",
+        "ai-policy": "AI Policy",
+        "benchmark": "Consulting Benchmark",
+        "service-status": "Service Status",
+        "dependencies": "Dependencies",
+        "diagnostics": "Diagnostics",
+        "incident-history": "Incident History",
+        "queues-jobs": "Queues & Jobs",
+        "sla-slo": "SLA / SLO",
+        "platform-operations": "Platform Operations"
       }
     },
     "shell": {
-      "title": "Team Admin",
+      "title": "ADMIN PANEL",
       "subtitle": "Manage team access and commercial controls for your organization.",
-      "breadcrumb": "Admin panel"
+      "breadcrumb": "Admin panel",
+      "description": "Access, organization policies, evidence, and safe operations",
+      "navigation": "Admin Panel navigation",
+      "moduleName": "Admin Panel"
     },
     "section": {
       "people": {
@@ -22896,7 +22984,14 @@
       },
       "payments": {
         "idRequired": "Enter a payment method id.",
-        "idPlaceholder": "Payment method id"
+        "idPlaceholder": "Payment method id",
+        "added": "Payment method added",
+        "defaultUpdated": "Default payment method updated",
+        "removed": "Payment method removed",
+        "addMethod": "Add method",
+        "empty": "No payment methods added yet.",
+        "cardInfo": "{{brand}} ending in {{last4}}",
+        "expiry": "Expires {{month}}/{{year}}"
       },
       "plan": {
         "title": "Assign plan & limits",
@@ -22988,6 +23083,79 @@
           "title": "No plan change history",
           "description": "No subscription changes have been recorded for this organization yet."
         }
+      },
+      "alerts": {
+        "saveFailed": "Could not save the budget thresholds.",
+        "saved": "Budget thresholds saved",
+        "unavailable": "Budget thresholds are unavailable right now — the settings store is not responding. Nothing was saved, and we do not show values that do not exist.",
+        "empty": "No budget threshold has been set yet.",
+        "title": "Spend alerts",
+        "save": "Save alerts"
+      },
+      "errors": {
+        "loadSummary": "Failed to load billing summary",
+        "planReadback": "Plan request completed, but provider readback did not match the target.",
+        "assignPlan": "Failed to assign plan",
+        "paymentReadback": "Payment request completed, but provider readback did not confirm it.",
+        "addPayment": "Failed to add payment method",
+        "defaultReadback": "Default change was not confirmed by provider readback.",
+        "updateDefault": "Failed to update default payment method",
+        "removeReadback": "Removal request completed, but provider readback still contains the method.",
+        "removePayment": "Failed to remove payment method",
+        "taxReadback": "Tax settings request completed, but durable readback was unavailable.",
+        "updateTax": "Failed to update billing tax settings"
+      },
+      "tax": {
+        "updated": "Billing tax settings updated",
+        "title": "Tax and invoicing",
+        "legalName": "Legal company name",
+        "taxId": "Tax ID",
+        "save": "Save tax settings"
+      },
+      "columns": {
+        "invoice": "Invoice",
+        "status": "Status",
+        "amountDue": "Amount due",
+        "amountPaid": "Amount paid",
+        "dueDate": "Due date",
+        "card": "Card",
+        "default": "Default"
+      },
+      "status": {
+        "paid": "Paid",
+        "open": "Open",
+        "draft": "Draft",
+        "void": "Void",
+        "uncollectible": "Uncollectible"
+      },
+      "actions": {
+        "makeDefault": "Make default",
+        "remove": "Remove"
+      },
+      "summary": {
+        "plan": "Plan",
+        "unknown": "Unknown",
+        "limitsUsage": "Limits & usage",
+        "tokenBalance": "Token balance",
+        "spendPosture": "Spend posture",
+        "overagePosture": "Usage and overage posture",
+        "tokenOverage": "Token overage rate",
+        "storageOverage": "Storage overage rate",
+        "usageRows": "Tracked usage rows",
+        "monthlyCap": "Monthly cost cap",
+        "emailAlerts": "Email alerts"
+      },
+      "invoices": {
+        "empty": "No invoices yet for this workspace.",
+        "unavailable": "Invoices are temporarily unavailable."
+      },
+      "selfServiceOff": {
+        "title": "Self-service checkout is currently disabled.",
+        "body": "Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales."
+      },
+      "header": {
+        "title": "Billing, FinOps, and commercial controls",
+        "subtitle": "Subscriptions, payment methods, invoices, budgets, tax settings, and usage posture as first-class tenant admin capabilities."
       }
     },
     "interviewAssignmentsPanel": {
@@ -23494,7 +23662,7 @@
           "enabled": "Enabled",
           "gracePeriod": "Grace period (days)",
           "errors": {
-            "noEnrolledAccounts": "Two-factor cannot be required: no account in this organisation has it. Set a second factor up on at least one account before enforcing it."
+            "noEnrolledAccounts": "Cannot require a second factor: no account in this organization has one. Set up a second factor on at least one account before turning the requirement on."
           }
         },
         "sso": {
@@ -23688,8 +23856,8 @@
       "unknownMember": "Unknown member",
       "readOnly": "Read-only access. Management controls are available only to active workspace owners and admins.",
       "roleSelectLabel": "Role for {{name}}",
-      "loadErrorTitle": "We could not load this workspace's members.",
-      "loadErrorBody": "This is a read failure, not evidence that the workspace has no members. Details: {{reason}}",
+      "loadErrorTitle": "Could not load the member list for this organization.",
+      "loadErrorBody": "This is a read failure, not a sign that the organization has no members. Details: {{reason}}",
       "loadErrorRetry": "Try again",
       "roles": {
         "owner": "Owner",
@@ -23793,6 +23961,11 @@
         "copyLink": "Copy link",
         "linkCopied": "Registration link copied",
         "copyFailed": "Failed to copy to clipboard"
+      },
+      "errors": {
+        "loadMembers": "Failed to load members",
+        "loadInvitations": "Failed to load invitations",
+        "invitationReadback": "Command completed without exact invitation read-back."
       }
     },
     "operations": {
@@ -24840,6 +25013,116 @@
           "confirmTitle": "Roll back the active configuration?",
           "confirmDescription": "Reason: {{reason}}. This operation will change the organization's runtime and be recorded in Prompt OS history."
         }
+      },
+      "complianceTemplate": {
+        "seed": {
+          "projectGovernance": "Project Governance",
+          "projectGovernanceDesc": "Governance and decision-making processes",
+          "auditTrail": "Audit Trail Enabled",
+          "auditTrailDesc": "All AI actions are logged",
+          "policyDefined": "Policy Defined",
+          "policyDefinedDesc": "AI policy level is configured",
+          "rolesConfigured": "Roles Configured",
+          "rolesConfiguredDesc": "AI roles are assigned",
+          "resourceManagement": "Resource Management",
+          "resourceManagementDesc": "AI resource allocation and limits",
+          "usageLimits": "Usage Limits Set",
+          "usageLimitsDesc": "Token and API limits configured",
+          "budgetControl": "Budget Control Active",
+          "budgetControlDesc": "Monthly budget is defined",
+          "dataProtection": "Data Protection",
+          "dataProtectionDesc": "Personal data protection measures",
+          "piiDetection": "PII Detection",
+          "piiDetectionDesc": "PII detection is enabled",
+          "retentionPolicy": "Data Retention Policy",
+          "retentionPolicyDesc": "Retention periods are defined",
+          "consentManagement": "Consent Management",
+          "consentManagementDesc": "User consent is obtained",
+          "rightsManagement": "Rights Management",
+          "rightsManagementDesc": "Data subject rights",
+          "rightToErasure": "Right to Erasure",
+          "rightToErasureDesc": "Data can be deleted on request",
+          "dataPortability": "Data Portability",
+          "dataPortabilityDesc": "Data export is available",
+          "security": "Security",
+          "securityDesc": "Security controls and measures",
+          "accessControl": "Access Control",
+          "accessControlDesc": "Role-based access is enforced",
+          "encryption": "Encryption",
+          "encryptionDesc": "Data encryption is enabled",
+          "auditLogging": "Audit Logging",
+          "auditLoggingDesc": "Security events are logged",
+          "performanceMonitoring": "Performance Monitoring",
+          "performanceMonitoringDesc": "AI performance measurement",
+          "metricsTracking": "Metrics Tracking",
+          "metricsTrackingDesc": "Performance metrics are collected",
+          "qualityValidation": "Quality Validation",
+          "qualityValidationDesc": "AI output quality is checked",
+          "businessCase": "Business Case",
+          "businessCaseDesc": "AI value and justification",
+          "roiTracking": "ROI Tracking",
+          "roiTrackingDesc": "AI ROI is measured",
+          "changeTheme": "Change Theme",
+          "changeThemeDesc": "Configuration and change management",
+          "versionControl": "Version Control",
+          "versionControlDesc": "Prompt versions are tracked",
+          "changeApproval": "Change Approval",
+          "changeApprovalDesc": "Changes require approval"
+        },
+        "base": {
+          "iso21500": "Project Management guidance",
+          "pmbok7": "Project Management Body of Knowledge",
+          "prince2": "Projects IN Controlled Environments",
+          "gdpr": "General Data Protection Regulation",
+          "soc2": "Service Organization Control",
+          "customDesc": "Start from scratch",
+          "customName": "Blank template"
+        },
+        "newSection": "New section",
+        "newCheckpoint": "New checkpoint",
+        "toast": {
+          "exported": "Template exported",
+          "imported": "Template imported",
+          "invalidFile": "Invalid template file",
+          "nameRequired": "Please enter a template name",
+          "sectionRequired": "Please add at least one section",
+          "saved": "Template saved",
+          "saveFailed": "Failed to save",
+          "saveTemplateFailed": "Failed to save template"
+        },
+        "fields": {
+          "namePlaceholder": "e.g. Custom AI Governance Framework",
+          "descriptionPlaceholder": "Describe the purpose and scope of this compliance framework…",
+          "tagPlaceholder": "Add tag…",
+          "sectionDescriptionPlaceholder": "Section description…",
+          "checkpointNamePlaceholder": "Checkpoint name",
+          "descriptionShort": "Description",
+          "weightTitle": "Weight (1-5)",
+          "version": "Version",
+          "description": "Description"
+        },
+        "chooseBase": "Choose a base template to start from, or create a blank template:",
+        "orImport": "Or import an existing template:",
+        "importJson": "Import JSON",
+        "addCheckpoint": "Add checkpoint",
+        "required": "Required",
+        "createTitle": "Create custom compliance template",
+        "editTitle": "Edit compliance template",
+        "basedOn": "Based on",
+        "export": "Export",
+        "save": "Save template",
+        "add": "Add",
+        "stats": {
+          "sections": "Sections",
+          "totalCheckpoints": "Total checkpoints"
+        },
+        "addSection": "Add section",
+        "validation": {
+          "manual": "Manual",
+          "automatic": "Automatic",
+          "hybrid": "Hybrid"
+        },
+        "noSections": "No sections yet. Use “Add section” to get started."
       }
     },
     "audit": {
@@ -25029,7 +25312,8 @@
           "timezoneLabel": "Time zone",
           "timezoneAria": "Time zone",
           "dateFormatLabel": "Date format",
-          "dateFormatAria": "Date format"
+          "dateFormatAria": "Date format",
+          "saved": "Saved and confirmed by readback."
         },
         "finance": {
           "loadError": "Failed to load financial settings.",
@@ -25264,6 +25548,128 @@
         "invitations": "Send an invitation",
         "domains": "Manage verified domains"
       }
+    },
+    "platformOperations": {
+      "unauthorizedTitle": "Unauthorized",
+      "unauthorizedBody": "Platform operations are outside customer administration and require an explicit Platform Operator capability."
+    },
+    "capability": {
+      "notVerified": "Not verified",
+      "body": "This screen has an approved place in “{{domain}}”, but its independent data, authorization, and durable-readback contract has not been verified. No placeholder form or action is exposed before a real backend connection exists.",
+      "guarantees": "No write, no RBAC change, and no false success message."
+    },
+    "apiKeys": {
+      "permissions": {
+        "read_projects": {
+          "label": "Read projects",
+          "description": "Read project data"
+        },
+        "write_projects": {
+          "label": "Write projects",
+          "description": "Create and modify projects"
+        },
+        "read_tasks": {
+          "label": "Read tasks",
+          "description": "Read task data"
+        },
+        "write_tasks": {
+          "label": "Write tasks",
+          "description": "Create and modify tasks"
+        },
+        "read_calendar": {
+          "label": "Read calendar",
+          "description": "Read calendar sources and items"
+        },
+        "write_calendar": {
+          "label": "Write calendar",
+          "description": "Create and modify calendar sources and items"
+        },
+        "read_integrations": {
+          "label": "Read integrations",
+          "description": "Read integration connections and health"
+        },
+        "write_integrations": {
+          "label": "Write integrations",
+          "description": "Create and modify integration connections"
+        },
+        "read_reports": {
+          "label": "Read reports",
+          "description": "Read reports and analytics"
+        },
+        "write_reports": {
+          "label": "Write reports",
+          "description": "Generate and export reports"
+        },
+        "ai_execute": {
+          "label": "AI execute",
+          "description": "Execute AI actions"
+        },
+        "ai_read": {
+          "label": "AI read",
+          "description": "Read AI insights and recommendations"
+        },
+        "webhooks_manage": {
+          "label": "Webhooks",
+          "description": "Manage webhook configurations"
+        },
+        "full_access": {
+          "label": "Full access",
+          "description": "Full API access"
+        }
+      },
+      "never": "Never",
+      "neverUsed": "Never used",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "errors": {
+        "load": "Failed to load API keys",
+        "nameRequired": "Please enter a name for the API key",
+        "permissionRequired": "Please select at least one permission",
+        "create": "Failed to create API key",
+        "revoke": "Failed to revoke API key"
+      },
+      "created": "API key created successfully",
+      "confirmRevoke": "Are you sure you want to revoke this API key? This action cannot be undone.",
+      "revoked": "API key revoked",
+      "copied": "Copied to clipboard",
+      "unavailableTitle": "API keys unavailable",
+      "listUnavailableTitle": "API key list unavailable",
+      "copyPrefix": "Copy key prefix",
+      "revokeKey": "Revoke key",
+      "namePlaceholder": "e.g. Production Integration",
+      "descriptionPlaceholder": "What is this key used for?",
+      "createButton": "Create API Key",
+      "status": {
+        "expired": "Expired",
+        "revoked": "Revoked",
+        "expiringSoon": "Expiring soon"
+      },
+      "lastUsed": "Last used",
+      "expires": "Expires",
+      "fields": {
+        "name": "Name",
+        "description": "Description (optional)",
+        "expiration": "Expiration",
+        "permissions": "Permissions"
+      },
+      "expiry": {
+        "d30": "30 days",
+        "d90": "90 days",
+        "d180": "180 days",
+        "y1": "1 year",
+        "never": "Never expires"
+      },
+      "createKey": "Create key",
+      "createdTitle": "API key created",
+      "yourKey": "Your API key",
+      "copiedConfirm": "I have copied the key",
+      "noticeTitle": "Keep your API keys secure",
+      "noticeBody": "API keys provide access to your organization’s data. Never share them in public repositories or client-side code.",
+      "emptyTitle": "No API keys",
+      "emptyBody": "Create your first API key to get started with integrations",
+      "shownOnceTitle": "This key will only be shown once!",
+      "shownOnceBody": "Make sure to copy it now. You will not be able to see it again."
     }
   },
   "access": {

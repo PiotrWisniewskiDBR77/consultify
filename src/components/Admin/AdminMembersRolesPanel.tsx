@@ -138,7 +138,7 @@ export const AdminMembersRolesPanel: React.FC<{
       setMembers(rows);
       return rows;
     } catch (error: any) {
-      const message = error?.message || 'Failed to load members';
+      const message = error?.message || t('admin.membersRoles.errors.loadMembers', 'Failed to load members');
       toast.error(message);
       // Świadomie NIE czyścimy listy do pustej — brak danych z powodu awarii to
       // stan degraded, nie „zero członków".
@@ -164,7 +164,7 @@ export const AdminMembersRolesPanel: React.FC<{
       setInvitations(rows);
       return rows;
     } catch (error: any) {
-      setInvitationLoadError(error?.message || 'Failed to load invitations');
+      setInvitationLoadError(error?.message || t('admin.membersRoles.errors.loadInvitations', 'Failed to load invitations'));
       return [];
     } finally {
       setInvitationsLoading(false);
@@ -321,7 +321,7 @@ export const AdminMembersRolesPanel: React.FC<{
         Number(exact?.resend_count ?? exact?.resendCount ?? 0) >
           Number(invitation.resend_count ?? invitation.resendCount ?? 0);
       if (!exact || String(exact.status).toLowerCase() !== expected || !resendAdvanced) {
-        throw new Error('Command completed without exact invitation read-back.');
+        throw new Error(t('admin.membersRoles.errors.invitationReadback', 'Command completed without exact invitation read-back.'));
       }
       sessionStorage.removeItem(storageKey);
       const message =
@@ -886,13 +886,13 @@ export const AdminMembersRolesPanel: React.FC<{
               <div className="text-sm font-semibold text-c-text">
                 {t(
                   'admin.membersRoles.loadErrorTitle',
-                  'Nie udało się wczytać listy członków tej organizacji.'
+                  'Could not load the member list for this organization.'
                 )}
               </div>
               <p className="mt-1 text-sm text-c-text-secondary">
                 {t('admin.membersRoles.loadErrorBody', {
                   defaultValue:
-                    'To awaria odczytu, a nie informacja, że organizacja nie ma członków. Szczegóły: {{reason}}',
+                    'This is a read failure, not a sign that the organization has no members. Details: {{reason}}',
                   reason: loadError,
                 })}
               </p>
@@ -902,7 +902,7 @@ export const AdminMembersRolesPanel: React.FC<{
                 className="mt-4"
                 onClick={() => void loadMembers()}
               >
-                {t('admin.membersRoles.loadErrorRetry', 'Spróbuj ponownie')}
+                {t('admin.membersRoles.loadErrorRetry', 'Try again')}
               </Button>
             </div>
           ) : (

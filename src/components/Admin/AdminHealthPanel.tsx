@@ -36,12 +36,14 @@ interface Summary {
   overall: ProbeStatus;
 }
 
-const STATUS_META: Record<ProbeStatus, { icon: React.ElementType; dotVar: string; label: string }> =
-  {
-    pass: { icon: CheckCircle2, dotVar: 'var(--c-success)', label: 'Passing' },
-    fail: { icon: XCircle, dotVar: 'var(--c-danger)', label: 'Failing' },
-    unknown: { icon: HelpCircle, dotVar: 'var(--c-info)', label: 'Not run' },
-  };
+// Etykiety statusów NIE mieszkają w tej stałej: render bierze je z t()
+// (`admin.health.status.*`). Trzymanie tu drugiego, nietłumaczonego kompletu
+// napisów było pułapką — czekało, aż ktoś je zrenderuje po angielsku w PL.
+const STATUS_META: Record<ProbeStatus, { icon: React.ElementType; dotVar: string }> = {
+  pass: { icon: CheckCircle2, dotVar: 'var(--c-success)' },
+  fail: { icon: XCircle, dotVar: 'var(--c-danger)' },
+  unknown: { icon: HelpCircle, dotVar: 'var(--c-info)' },
+};
 
 function StatusDot({ status }: { status: ProbeStatus }) {
   return (
@@ -64,7 +66,6 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
   canRunDiagnostics = false,
 }) => {
   const { t, i18n } = useTranslation();
-  const isPolish = (i18n.resolvedLanguage || i18n.language || 'pl').toLowerCase().startsWith('pl');
   const [results, setResults] = useState<ProbeResult[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [envAllowed, setEnvAllowed] = useState(true);
@@ -94,7 +95,7 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
       setHasLoaded(true);
       setLoadedAt(new Date().toISOString());
     } catch (error: any) {
-      const message = error?.message || 'Failed to load health probes';
+      const message = error?.message || t('admin.health.errors.load', 'Failed to load health probes');
       setLoadError(message);
       toast.error(message);
     } finally {
@@ -115,9 +116,9 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
       setLoadedAt(new Date().toISOString());
       const failed = Number(data?.summary?.failed || 0);
       if (failed > 0) toast.error(`${failed} probe(s) failing`);
-      else toast.success('All probes passing');
+      else toast.success(t('admin.health.allPassing', 'All probes passing'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to run probes');
+      toast.error(error?.message || t('admin.health.errors.runAll', 'Failed to run probes'));
     } finally {
       setRunningAll(false);
     }
@@ -132,7 +133,7 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
         setResults((prev) => prev.map((r) => (r.probeId === probeId ? { ...r, ...updated } : r)));
       }
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to run probe');
+      toast.error(error?.message || t('admin.health.errors.runOne', 'Failed to run probe'));
     } finally {
       setRunningProbe(null);
     }
@@ -205,9 +206,7 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {canRunDiagnostics
                   ? t('admin.health.title', { defaultValue: 'Health — proof of life' })
-                  : isPolish
-                    ? 'Status usług organizacji'
-                    : 'Organization service status'}
+                  : t('admin.health.orgTitle', 'Organization service status')}
               </h2>
             </div>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -216,13 +215,14 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
                     defaultValue:
                       'Round-trip probes against our own API and database. Each proves a critical flow still works end-to-end.',
                   })
-                : isPolish
-                  ? 'Zbiorczy, bezpieczny dla klienta odczyt dostępności usług w zakresie organizacji.'
-                  : 'An aggregate, customer-safe availability readback scoped to this organization.'}
+                : t(
+                    'admin.health.orgSubtitle',
+                    'An aggregate, customer-safe availability readback scoped to this organization.'
+                  )}
             </p>
             <p className="mt-2 text-xs text-[var(--c-text-muted)]">
-              {isPolish ? 'Źródło' : 'Source'}: tenant-scoped health readback ·{' '}
-              {isPolish ? 'Odczyt' : 'Read at'}: {formatRanAt(loadedAt)}
+              {t('admin.health.source', 'Source')}: tenant-scoped health readback ·{' '}
+              {t('admin.health.readAt', 'Read at')}: {formatRanAt(loadedAt)}
             </p>
           </div>
           {canRunDiagnostics && (
@@ -240,9 +240,10 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
         {!canRunDiagnostics && (
           <div className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-surface-raised)] px-3 py-2 text-sm text-[var(--c-text-secondary)]">
             <HelpCircle className="h-4 w-4" />
-            {isPolish
-              ? 'Widok klienta pokazuje wyłącznie bezpieczny status zbiorczy. Szczegóły i uruchamianie sond należą do operatora platformy.'
-              : 'The customer view exposes aggregate safe status only. Probe details and execution belong to the platform operator.'}
+            {t(
+              'admin.health.customerViewNote',
+              'The customer view exposes aggregate safe status only. Probe details and execution belong to the platform operator.'
+            )}
           </div>
         )}
 
@@ -280,13 +281,14 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
         ) : (
           <div className="mt-4 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface-raised)] px-4 py-3">
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-text-muted)]">
-              {isPolish ? 'Status odczytu' : 'Readback status'}
+              {t('admin.health.readbackStatus', 'Readback status')}
             </span>
             <p className="mt-1 text-sm font-medium text-[var(--c-text)]">UNKNOWN</p>
             <p className="mt-1 text-xs text-[var(--c-text-muted)]">
-              {isPolish
-                ? 'Nie istnieje jeszcze zweryfikowany endpoint zbiorczy bez szczegółów operatora.'
-                : 'A verified aggregate endpoint without operator details is not connected yet.'}
+              {t(
+                'admin.health.noAggregateEndpoint',
+                'A verified aggregate endpoint without operator details is not connected yet.'
+              )}
             </p>
           </div>
         )}

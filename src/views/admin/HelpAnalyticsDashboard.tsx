@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '../../components/ui/primitives';
 import Api from '../../services/api';
+import { formatListDate, formatListDateTime, formatListNumber } from '../../utils/listDateFormat';
 
 interface ContentPerformanceData {
   viewsByContent: {
@@ -100,8 +101,7 @@ interface DashboardData {
 }
 
 export const HelpAnalyticsDashboard: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const { t } = useTranslation();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -240,7 +240,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         />
         <StatCard
           title={t('admin.aiControlCenter.helpAnalytics.totalEvents', 'Total Events')}
-          value={(data.userEngagement?.activeUsers?.total_events || 0).toLocaleString()}
+          value={formatListNumber(data.userEngagement?.activeUsers?.total_events || 0)}
           icon={<MousePointer className="text-c-text" size={24} />}
           color="bg-green-500"
         />
@@ -252,7 +252,10 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         />
         <StatCard
           title={t('admin.aiControlCenter.helpAnalytics.avgRating', 'Avg Rating')}
-          value={(data.feedbackSummary?.overall?.avg_rating || 0).toFixed(1)}
+          value={formatListNumber(data.feedbackSummary?.overall?.avg_rating || 0, '0', {
+            maximumFractionDigits: 1,
+            minimumFractionDigits: 1,
+          })}
           icon={<TrendingUp className="text-c-text" size={24} />}
           color="bg-amber-500"
         />
@@ -495,7 +498,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 </div>
                 <p className="text-sm text-c-text-secondary">{comment.comment}</p>
                 <p className="text-xs text-c-text-secondary mt-1">
-                  {new Date(comment.created_at).toLocaleDateString()}
+                  {formatListDate(comment.created_at)}
                 </p>
               </div>
             </div>
@@ -513,7 +516,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       <div className="text-center text-sm text-c-text-muted">
         <p>
           {t('admin.aiControlCenter.helpAnalytics.lastUpdated', 'Last updated')}:{' '}
-          {new Date(data.generatedAt).toLocaleString(lang === 'pl' ? 'pl-PL' : 'en-US')}
+          {formatListDateTime(data.generatedAt)}
         </p>
       </div>
     </div>

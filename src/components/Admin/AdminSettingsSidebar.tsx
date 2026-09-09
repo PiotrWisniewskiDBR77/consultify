@@ -29,22 +29,16 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   onBack,
   canAccessPlatformOperations = false,
 }) => {
-  const { t, i18n } = useTranslation();
-  const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
-  const isPolish = language.toLowerCase().startsWith('pl');
+  const { t } = useTranslation();
   return (
     <DomainNavigation
-      title={isPolish ? 'PANEL ADMINISTRATORA' : 'ADMIN PANEL'}
-      description={
-        isPolish
-          ? 'Dostęp, polityki organizacji, dowody i bezpieczne operacje'
-          : 'Access, organization policies, evidence, and safe operations'
-      }
-      navigationLabel={t(
-        'admin.shell.navigation',
-        isPolish ? 'Nawigacja panelu administratora' : 'Admin Panel navigation'
+      title={t('admin.shell.title', 'ADMIN PANEL')}
+      description={t(
+        'admin.shell.description',
+        'Access, organization policies, evidence, and safe operations'
       )}
-      modules={getAdminDomains(language).map((domain) =>
+      navigationLabel={t('admin.shell.navigation', 'Admin Panel navigation')}
+      modules={getAdminDomains(t).map((domain) =>
         domain.id === 'health' && !canAccessPlatformOperations
           ? {
               ...domain,
@@ -56,7 +50,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
       activeChild={activeLocation.screen}
       onChildChange={(domain, screen) => onLocationChange({ domain, screen })}
       onBack={onBack}
-      backLabel={t('common.back', isPolish ? 'Wróć' : 'Back')}
+      backLabel={t('common.back', 'Back')}
       className={className}
     />
   );

@@ -33,6 +33,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { SettingsCard, SettingsSlider, SettingsToggle } from '../../AISettings';
 import { SettingsHeaderActionPortal } from '../../settings/SettingsHeaderActions';
+import { formatListCurrency, formatListNumber } from '../../../utils/listDateFormat';
 
 interface UserTierAssignment {
   userId: string;
@@ -323,7 +324,7 @@ export const AccessLimitsTab: React.FC = () => {
                 min={50000}
                 max={10000000}
                 step={50000}
-                formatValue={(v) => `${(v / 1000).toFixed(0)}k`}
+                formatValue={(v) => `${formatListNumber(Math.round(v / 1000))}k`}
                 defaultValue={500000}
               />
             </div>
@@ -505,7 +506,7 @@ export const AccessLimitsTab: React.FC = () => {
               <p className="admin-metric-value">125k</p>
               <p className="admin-metric-subtitle">
                 {t('admin.aiControlCenter.accessLimits.summary.ofLimit', 'of {{limit}}k limit', {
-                  limit: (settings.maxTokensPerMonth / 1000).toFixed(0),
+                  limit: formatListNumber(Math.round(settings.maxTokensPerMonth / 1000)),
                 })}
               </p>
             </div>
@@ -832,11 +833,13 @@ export const AccessLimitsTab: React.FC = () => {
                           'admin.aiControlCenter.accessLimits.userTiers.requestsCount',
                           '{{value}} requests',
                           {
-                            value: user.usage.toLocaleString(),
+                            value: formatListNumber(user.usage),
                           }
                         )}
                       </td>
-                      <td className="px-6 py-4 text-slate-600">${user.cost.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatListCurrency(user.cost, 'USD')}
+                      </td>
                       <td className="px-6 py-4">
                         <button className="text-primary-400 hover:text-primary-300 text-sm">
                           {t(
@@ -962,11 +965,19 @@ export const AccessLimitsTab: React.FC = () => {
                           {item.entityType}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{item.requests.toLocaleString()}</td>
                       <td className="px-6 py-4 text-slate-600">
-                        {(item.tokens / 1000).toFixed(1)}k
+                        {formatListNumber(item.requests)}
                       </td>
-                      <td className="px-6 py-4 text-slate-600">${item.cost.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatListNumber(item.tokens / 1000, '0', {
+                          maximumFractionDigits: 1,
+                          minimumFractionDigits: 1,
+                        })}
+                        k
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {formatListCurrency(item.cost, 'USD')}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 bg-c-surface-raised rounded-full overflow-hidden">

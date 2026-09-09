@@ -19,7 +19,7 @@ import {
   type AuditExportResult,
   getComplianceAuditExport,
 } from '../../../services/enterpriseComplianceApi';
-import { formatListDateTime } from '../../../utils/listDateFormat';
+import { formatListCurrency, formatListDateTime } from '../../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../../standard';
 
 const inputClass =
@@ -127,7 +127,11 @@ export const CommandCenterAuditTab: React.FC = () => {
         width: '100px',
         align: 'right',
         sortable: true,
-        render: (row: TableRow) => `$${Number(row.costUsd || 0).toFixed(4)}`,
+        render: (row: TableRow) =>
+          formatListCurrency(Number(row.costUsd || 0), 'USD', {
+            maximumFractionDigits: 4,
+            minimumFractionDigits: 2,
+          }),
       },
       {
         id: 'latencyMs',
@@ -172,7 +176,10 @@ export const CommandCenterAuditTab: React.FC = () => {
           </div>
           <div className="flex shrink-0 flex-wrap items-end gap-2">
             <div>
-              <label htmlFor="audit-filters-from" className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label
+                htmlFor="audit-filters-from"
+                className="mb-1 block text-xs font-medium text-c-text-secondary"
+              >
                 {t('commandCenter.audit.filters.from', 'From')}
               </label>
               <input
@@ -184,7 +191,10 @@ export const CommandCenterAuditTab: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="audit-filters-to" className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label
+                htmlFor="audit-filters-to"
+                className="mb-1 block text-xs font-medium text-c-text-secondary"
+              >
                 {t('commandCenter.audit.filters.to', 'To')}
               </label>
               <input
@@ -196,7 +206,10 @@ export const CommandCenterAuditTab: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="audit-filters-userId" className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label
+                htmlFor="audit-filters-userId"
+                className="mb-1 block text-xs font-medium text-c-text-secondary"
+              >
                 {t('commandCenter.audit.filters.userId', 'User ID')}
               </label>
               <input
@@ -207,7 +220,10 @@ export const CommandCenterAuditTab: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="audit-filters-eventType" className="mb-1 block text-xs font-medium text-c-text-secondary">
+              <label
+                htmlFor="audit-filters-eventType"
+                className="mb-1 block text-xs font-medium text-c-text-secondary"
+              >
                 {t('commandCenter.audit.filters.eventType', 'Event type')}
               </label>
               <input

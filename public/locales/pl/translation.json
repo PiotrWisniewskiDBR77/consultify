@@ -622,7 +622,7 @@
     "more": "Więcej",
     "optional": "opcjonalnie",
     "save": "Zapisz",
-    "saving": "Zapisywanie...",
+    "saving": "Zapisywanie…",
     "saveChanges": "Zapisz zmiany",
     "cancel": "Anuluj",
     "accept": "Akceptuj",
@@ -800,8 +800,8 @@
     "prev": "Wstecz",
     "selectOrganization": "Wybierz organizację",
     "organizations": "Organizacje",
-    "enabled": "Włączone",
-    "disabled": "Wyłączone",
+    "enabled": "włączone",
+    "disabled": "wyłączone",
     "adding": "Dodawanie...",
     "exportJson": "Eksportuj JSON",
     "on": "Włączone",
@@ -24003,7 +24003,20 @@
           "loaded": "odczytano",
           "noData": "brak danych"
         }
-      }
+      },
+      "orgTitle": "Status usług organizacji",
+      "orgSubtitle": "Zbiorczy, bezpieczny dla klienta odczyt dostępności usług w zakresie organizacji.",
+      "source": "Źródło",
+      "readAt": "Odczyt",
+      "customerViewNote": "Widok klienta pokazuje wyłącznie bezpieczny status zbiorczy. Szczegóły i uruchamianie sond należą do operatora platformy.",
+      "readbackStatus": "Status odczytu",
+      "noAggregateEndpoint": "Nie istnieje jeszcze zweryfikowany endpoint zbiorczy bez szczegółów operatora.",
+      "errors": {
+        "load": "Nie udało się wczytać sond stanu",
+        "runAll": "Nie udało się uruchomić sond",
+        "runOne": "Nie udało się uruchomić sondy"
+      },
+      "allPassing": "Wszystkie sondy przechodzą"
     },
     "strategicProfile": {
       "industryCode": "Kod branżowy ({{system}})",
@@ -24055,12 +24068,87 @@
       "command": {
         "label": "Centrum dowodzenia",
         "description": "Postawa zaufania i kontroli — SOC2, DLP, rezydencja danych, retencja, polityka AI"
+      },
+      "domain": {
+        "team": "Zespół i dostęp",
+        "billing": "Rozliczenia i plany",
+        "ai": "Sterowanie AI",
+        "security": "Bezpieczeństwo i tożsamość",
+        "audit": "Dziennik audytu",
+        "command": "Centrum dowodzenia",
+        "health": "Stan systemu"
+      },
+      "screen": {
+        "members": "Użytkownicy",
+        "invitations": "Zaproszenia",
+        "roles-permissions": "Role i uprawnienia",
+        "teams": "Zespoły",
+        "guests-external": "Goście i dostęp zewnętrzny",
+        "access-requests": "Wnioski o dostęp",
+        "access-reviews": "Przeglądy dostępów",
+        "ownership": "Własność",
+        "overview": "Przegląd",
+        "plan-limits": "Plan i limity",
+        "usage-costs": "Wykorzystanie i koszty",
+        "payment-methods": "Metody płatności",
+        "invoices": "Faktury",
+        "seats-licences": "Miejsca i licencje",
+        "billing-details": "Dane rozliczeniowe",
+        "budgets-alerts": "Budżety i alerty",
+        "plan-history": "Historia zmian planu",
+        "policy-autonomy": "Polityka i autonomia",
+        "personas": "Persony",
+        "models-providers": "Modele i dostawcy",
+        "ai-limits-budgets": "Limity i budżety",
+        "data-privacy": "Dane i prywatność",
+        "quality-evaluations": "Ewaluacje jakości",
+        "ai-incidents": "Incydenty AI",
+        "configuration-versions": "Wersje konfiguracji",
+        "ai-operations": "Operacje AI",
+        "ai-audit": "Audyt AI",
+        "security-policy": "Polityka bezpieczeństwa",
+        "sso": "SSO",
+        "scim-lifecycle": "SCIM i cykl życia",
+        "sessions": "Sesje",
+        "api-access": "Dostęp API",
+        "domains": "Domeny",
+        "service-accounts": "Konta usługowe",
+        "security-alerts": "Alerty bezpieczeństwa",
+        "break-glass": "Break-glass",
+        "risk-summary": "Podsumowanie ryzyka",
+        "events": "Zdarzenia",
+        "high-risk-changes": "Zmiany wysokiego ryzyka",
+        "compliance-evidence": "Dowody zgodności",
+        "retention-export": "Retencja i eksport",
+        "integrity": "Integralność",
+        "legal-hold": "Wstrzymanie prawne",
+        "export-history": "Historia eksportów",
+        "attention-queue": "Kolejka uwagi",
+        "cost-capacity": "Koszt i pojemność",
+        "organization-defaults": "Ustawienia domyślne organizacji",
+        "agent-trace": "Ślad agentów",
+        "audit": "Audyt SOC2",
+        "dlp": "DLP",
+        "residency": "Rezydencja danych",
+        "retention": "Retencja",
+        "ai-policy": "Polityka AI",
+        "benchmark": "Benchmark konsultingowy",
+        "service-status": "Stan usług",
+        "dependencies": "Zależności",
+        "diagnostics": "Diagnostyka",
+        "incident-history": "Historia incydentów",
+        "queues-jobs": "Kolejki i zadania",
+        "sla-slo": "SLA / SLO",
+        "platform-operations": "Operacje platformowe"
       }
     },
     "shell": {
-      "title": "Administracja zespołu",
+      "title": "PANEL ADMINISTRATORA",
       "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji.",
-      "breadcrumb": "Panel administratora"
+      "breadcrumb": "Panel administratora",
+      "description": "Dostęp, polityki organizacji, dowody i bezpieczne operacje",
+      "navigation": "Nawigacja panelu administratora",
+      "moduleName": "Panel administratora"
     },
     "section": {
       "people": {
@@ -24102,7 +24190,14 @@
       },
       "payments": {
         "idRequired": "Podaj identyfikator metody płatności.",
-        "idPlaceholder": "Identyfikator metody płatności"
+        "idPlaceholder": "Identyfikator metody płatności",
+        "added": "Dodano metodę płatności",
+        "defaultUpdated": "Zmieniono domyślną metodę płatności",
+        "removed": "Usunięto metodę płatności",
+        "addMethod": "Dodaj metodę",
+        "empty": "Nie dodano jeszcze żadnej metody płatności.",
+        "cardInfo": "{{brand}} kończąca się na {{last4}}",
+        "expiry": "Ważna do {{month}}/{{year}}"
       },
       "plan": {
         "title": "Przydziel plan i limity",
@@ -24194,6 +24289,79 @@
           "title": "Brak historii zmian planu",
           "description": "Dla tej organizacji nie zapisano jeszcze zmiany subskrypcji."
         }
+      },
+      "alerts": {
+        "saveFailed": "Nie udało się zapisać progów budżetowych.",
+        "saved": "Progi budżetowe zapisane",
+        "unavailable": "Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.",
+        "empty": "Nie ustawiono jeszcze żadnego progu budżetowego.",
+        "title": "Alerty wydatków",
+        "save": "Zapisz alerty"
+      },
+      "errors": {
+        "loadSummary": "Nie udało się wczytać podsumowania rozliczeń",
+        "planReadback": "Żądanie planu wykonane, ale odczyt zwrotny u dostawcy nie zgadza się z celem.",
+        "assignPlan": "Nie udało się przypisać planu",
+        "paymentReadback": "Żądanie płatności wykonane, ale odczyt zwrotny u dostawcy go nie potwierdził.",
+        "addPayment": "Nie udało się dodać metody płatności",
+        "defaultReadback": "Zmiana domyślnej metody nie została potwierdzona odczytem zwrotnym u dostawcy.",
+        "updateDefault": "Nie udało się zmienić domyślnej metody płatności",
+        "removeReadback": "Żądanie usunięcia wykonane, ale odczyt zwrotny u dostawcy nadal zawiera tę metodę.",
+        "removePayment": "Nie udało się usunąć metody płatności",
+        "taxReadback": "Żądanie ustawień podatkowych wykonane, ale trwały odczyt zwrotny był niedostępny.",
+        "updateTax": "Nie udało się zapisać ustawień podatkowych"
+      },
+      "tax": {
+        "updated": "Zapisano ustawienia podatkowe",
+        "title": "Podatki i fakturowanie",
+        "legalName": "Nazwa prawna firmy",
+        "taxId": "NIP / Tax ID",
+        "save": "Zapisz ustawienia podatkowe"
+      },
+      "columns": {
+        "invoice": "Faktura",
+        "status": "Status",
+        "amountDue": "Do zapłaty",
+        "amountPaid": "Zapłacono",
+        "dueDate": "Termin",
+        "card": "Karta",
+        "default": "Domyślna"
+      },
+      "status": {
+        "paid": "Opłacona",
+        "open": "Otwarta",
+        "draft": "Szkic",
+        "void": "Anulowana",
+        "uncollectible": "Nieściągalna"
+      },
+      "actions": {
+        "makeDefault": "Ustaw jako domyślną",
+        "remove": "Usuń"
+      },
+      "summary": {
+        "plan": "Plan",
+        "unknown": "Nieznany",
+        "limitsUsage": "Limity i zużycie",
+        "tokenBalance": "Saldo tokenów",
+        "spendPosture": "Postawa wydatkowa",
+        "overagePosture": "Zużycie i przekroczenia",
+        "tokenOverage": "Stawka za przekroczenie tokenów",
+        "storageOverage": "Stawka za przekroczenie miejsca",
+        "usageRows": "Zapisanych wierszy zużycia",
+        "monthlyCap": "Miesięczny limit kosztów",
+        "emailAlerts": "Alerty e-mail"
+      },
+      "invoices": {
+        "empty": "Brak faktur w tej przestrzeni.",
+        "unavailable": "Faktury są chwilowo niedostępne."
+      },
+      "selfServiceOff": {
+        "title": "Samodzielny zakup jest teraz wyłączony.",
+        "body": "Korzystaj z 7-dniowego okresu próbnego. Aby bezpiecznie włączyć plan enterprise, skontaktuj się z działem sprzedaży."
+      },
+      "header": {
+        "title": "Rozliczenia, FinOps i sterowanie komercyjne",
+        "subtitle": "Subskrypcje, metody płatności, faktury, budżety, ustawienia podatkowe i zużycie — pełnoprawne narzędzia administratora organizacji."
       }
     },
     "interviewAssignmentsPanel": {
@@ -24896,8 +25064,8 @@
       "unknownMember": "Nieznany członek",
       "readOnly": "Dostęp tylko do odczytu. Zarządzanie jest dostępne wyłącznie dla aktywnych właścicieli i administratorów przestrzeni.",
       "roleSelectLabel": "Rola użytkownika {{name}}",
-      "loadErrorTitle": "Nie udało się wczytać członków tej przestrzeni.",
-      "loadErrorBody": "To awaria odczytu, a nie informacja, że przestrzeń nie ma członków. Szczegóły: {{reason}}",
+      "loadErrorTitle": "Nie udało się wczytać listy członków tej organizacji.",
+      "loadErrorBody": "To awaria odczytu, a nie informacja, że organizacja nie ma członków. Szczegóły: {{reason}}",
       "loadErrorRetry": "Spróbuj ponownie",
       "roles": {
         "owner": "Właściciel",
@@ -25001,6 +25169,11 @@
         "copyLink": "Kopiuj link",
         "linkCopied": "Skopiowano link rejestracyjny",
         "copyFailed": "Nie udało się skopiować do schowka"
+      },
+      "errors": {
+        "loadMembers": "Nie udało się wczytać członków",
+        "loadInvitations": "Nie udało się wczytać zaproszeń",
+        "invitationReadback": "Polecenie wykonane, ale bez dokładnego odczytu zwrotnego zaproszenia."
       }
     },
     "operations": {
@@ -26049,6 +26222,116 @@
           "confirmTitle": "Wycofać aktywną konfigurację?",
           "confirmDescription": "Powód: {{reason}}. Operacja zmieni runtime organizacji i zostanie zapisana w historii Prompt OS."
         }
+      },
+      "complianceTemplate": {
+        "seed": {
+          "projectGovernance": "Nadzór nad projektem",
+          "projectGovernanceDesc": "Procesy nadzoru i podejmowania decyzji",
+          "auditTrail": "Włączony ślad audytowy",
+          "auditTrailDesc": "Wszystkie działania AI są zapisywane",
+          "policyDefined": "Zdefiniowana polityka",
+          "policyDefinedDesc": "Poziom polityki AI jest skonfigurowany",
+          "rolesConfigured": "Skonfigurowane role",
+          "rolesConfiguredDesc": "Role AI są przypisane",
+          "resourceManagement": "Zarządzanie zasobami",
+          "resourceManagementDesc": "Przydział zasobów AI i limity",
+          "usageLimits": "Ustawione limity zużycia",
+          "usageLimitsDesc": "Skonfigurowane limity tokenów i API",
+          "budgetControl": "Aktywna kontrola budżetu",
+          "budgetControlDesc": "Zdefiniowany budżet miesięczny",
+          "dataProtection": "Ochrona danych",
+          "dataProtectionDesc": "Środki ochrony danych osobowych",
+          "piiDetection": "Wykrywanie danych osobowych",
+          "piiDetectionDesc": "Wykrywanie danych osobowych jest włączone",
+          "retentionPolicy": "Polityka retencji danych",
+          "retentionPolicyDesc": "Okresy retencji są zdefiniowane",
+          "consentManagement": "Zarządzanie zgodami",
+          "consentManagementDesc": "Zgoda użytkownika jest pozyskiwana",
+          "rightsManagement": "Zarządzanie prawami",
+          "rightsManagementDesc": "Prawa osoby, której dane dotyczą",
+          "rightToErasure": "Prawo do usunięcia danych",
+          "rightToErasureDesc": "Dane można usunąć na żądanie",
+          "dataPortability": "Przenoszalność danych",
+          "dataPortabilityDesc": "Eksport danych jest dostępny",
+          "security": "Bezpieczeństwo",
+          "securityDesc": "Zabezpieczenia i środki kontroli",
+          "accessControl": "Kontrola dostępu",
+          "accessControlDesc": "Wymuszony dostęp oparty na rolach",
+          "encryption": "Szyfrowanie",
+          "encryptionDesc": "Szyfrowanie danych jest włączone",
+          "auditLogging": "Rejestrowanie zdarzeń audytowych",
+          "auditLoggingDesc": "Zdarzenia bezpieczeństwa są zapisywane",
+          "performanceMonitoring": "Monitorowanie wydajności",
+          "performanceMonitoringDesc": "Pomiar wydajności AI",
+          "metricsTracking": "Śledzenie metryk",
+          "metricsTrackingDesc": "Metryki wydajności są zbierane",
+          "qualityValidation": "Walidacja jakości",
+          "qualityValidationDesc": "Jakość wyników AI jest sprawdzana",
+          "businessCase": "Uzasadnienie biznesowe",
+          "businessCaseDesc": "Wartość i uzasadnienie AI",
+          "roiTracking": "Śledzenie ROI",
+          "roiTrackingDesc": "ROI z AI jest mierzone",
+          "changeTheme": "Zarządzanie zmianą",
+          "changeThemeDesc": "Zarządzanie konfiguracją i zmianą",
+          "versionControl": "Kontrola wersji",
+          "versionControlDesc": "Wersje promptów są śledzone",
+          "changeApproval": "Zatwierdzanie zmian",
+          "changeApprovalDesc": "Zmiany wymagają zatwierdzenia"
+        },
+        "base": {
+          "iso21500": "Wytyczne zarządzania projektami",
+          "pmbok7": "Zbiór wiedzy o zarządzaniu projektami",
+          "prince2": "Projekty w środowiskach kontrolowanych",
+          "gdpr": "Ogólne rozporządzenie o ochronie danych",
+          "soc2": "Kontrola organizacji usługowej",
+          "customDesc": "Zacznij od zera",
+          "customName": "Pusty szablon"
+        },
+        "newSection": "Nowa sekcja",
+        "newCheckpoint": "Nowy punkt kontrolny",
+        "toast": {
+          "exported": "Szablon wyeksportowany",
+          "imported": "Szablon zaimportowany",
+          "invalidFile": "Nieprawidłowy plik szablonu",
+          "nameRequired": "Podaj nazwę szablonu",
+          "sectionRequired": "Dodaj co najmniej jedną sekcję",
+          "saved": "Szablon zapisany",
+          "saveFailed": "Nie udało się zapisać",
+          "saveTemplateFailed": "Nie udało się zapisać szablonu"
+        },
+        "fields": {
+          "namePlaceholder": "np. Własne ramy nadzoru nad AI",
+          "descriptionPlaceholder": "Opisz cel i zakres tych ram zgodności…",
+          "tagPlaceholder": "Dodaj etykietę…",
+          "sectionDescriptionPlaceholder": "Opis sekcji…",
+          "checkpointNamePlaceholder": "Nazwa punktu kontrolnego",
+          "descriptionShort": "Opis",
+          "weightTitle": "Waga (1-5)",
+          "version": "Wersja",
+          "description": "Opis"
+        },
+        "chooseBase": "Wybierz szablon bazowy albo utwórz pusty:",
+        "orImport": "Albo zaimportuj istniejący szablon:",
+        "importJson": "Importuj JSON",
+        "addCheckpoint": "Dodaj punkt kontrolny",
+        "required": "Wymagany",
+        "createTitle": "Utwórz własny szablon zgodności",
+        "editTitle": "Edytuj szablon zgodności",
+        "basedOn": "Na podstawie",
+        "export": "Eksportuj",
+        "save": "Zapisz szablon",
+        "add": "Dodaj",
+        "stats": {
+          "sections": "Sekcje",
+          "totalCheckpoints": "Punkty kontrolne"
+        },
+        "addSection": "Dodaj sekcję",
+        "validation": {
+          "manual": "Ręczna",
+          "automatic": "Automatyczna",
+          "hybrid": "Mieszana"
+        },
+        "noSections": "Nie ma jeszcze żadnej sekcji. Zacznij od „Dodaj sekcję”."
       }
     },
     "audit": {
@@ -26244,7 +26527,8 @@
           "timezoneLabel": "Strefa czasowa",
           "timezoneAria": "Strefa czasowa",
           "dateFormatLabel": "Format daty",
-          "dateFormatAria": "Format daty"
+          "dateFormatAria": "Format daty",
+          "saved": "Zapisano i potwierdzono odczytem."
         },
         "finance": {
           "loadError": "Nie udało się pobrać ustawień finansowych.",
@@ -26481,6 +26765,128 @@
         "invitations": "Wyślij zaproszenie",
         "domains": "Zarządzaj zweryfikowanymi domenami"
       }
+    },
+    "platformOperations": {
+      "unauthorizedTitle": "Brak uprawnień",
+      "unauthorizedBody": "Operacje platformowe nie należą do administracji klienta i wymagają jawnej capability operatora platformy."
+    },
+    "capability": {
+      "notVerified": "Niezweryfikowane",
+      "body": "Ten ekran ma zatwierdzone miejsce w domenie „{{domain}}”, ale niezależny kontrakt danych, uprawnień i trwałego odczytu nie został jeszcze potwierdzony. Nie udostępniamy pozornego formularza ani akcji do czasu powiązania z rzeczywistym backendem.",
+      "guarantees": "Brak zapisu, brak zmiany RBAC i brak fałszywego komunikatu sukcesu."
+    },
+    "apiKeys": {
+      "permissions": {
+        "read_projects": {
+          "label": "Odczyt projektów",
+          "description": "Odczyt danych projektów"
+        },
+        "write_projects": {
+          "label": "Zapis projektów",
+          "description": "Tworzenie i zmiana projektów"
+        },
+        "read_tasks": {
+          "label": "Odczyt zadań",
+          "description": "Odczyt danych zadań"
+        },
+        "write_tasks": {
+          "label": "Zapis zadań",
+          "description": "Tworzenie i zmiana zadań"
+        },
+        "read_calendar": {
+          "label": "Odczyt kalendarza",
+          "description": "Odczyt źródeł i wpisów kalendarza"
+        },
+        "write_calendar": {
+          "label": "Zapis kalendarza",
+          "description": "Tworzenie i zmiana źródeł oraz wpisów kalendarza"
+        },
+        "read_integrations": {
+          "label": "Odczyt integracji",
+          "description": "Odczyt połączeń integracji i ich stanu"
+        },
+        "write_integrations": {
+          "label": "Zapis integracji",
+          "description": "Tworzenie i zmiana połączeń integracji"
+        },
+        "read_reports": {
+          "label": "Odczyt raportów",
+          "description": "Odczyt raportów i analityki"
+        },
+        "write_reports": {
+          "label": "Zapis raportów",
+          "description": "Generowanie i eksport raportów"
+        },
+        "ai_execute": {
+          "label": "Uruchamianie AI",
+          "description": "Uruchamianie działań AI"
+        },
+        "ai_read": {
+          "label": "Odczyt AI",
+          "description": "Odczyt wniosków i rekomendacji AI"
+        },
+        "webhooks_manage": {
+          "label": "Webhooki",
+          "description": "Zarządzanie konfiguracją webhooków"
+        },
+        "full_access": {
+          "label": "Pełny dostęp",
+          "description": "Pełny dostęp do API"
+        }
+      },
+      "never": "Nigdy",
+      "neverUsed": "Nieużywany",
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu",
+      "errors": {
+        "load": "Nie udało się wczytać kluczy API",
+        "nameRequired": "Podaj nazwę klucza API",
+        "permissionRequired": "Wybierz co najmniej jedno uprawnienie",
+        "create": "Nie udało się utworzyć klucza API",
+        "revoke": "Nie udało się unieważnić klucza API"
+      },
+      "created": "Klucz API utworzony",
+      "confirmRevoke": "Na pewno unieważnić ten klucz API? Tej operacji nie da się cofnąć.",
+      "revoked": "Klucz API unieważniony",
+      "copied": "Skopiowano do schowka",
+      "unavailableTitle": "Klucze API niedostępne",
+      "listUnavailableTitle": "Lista kluczy API niedostępna",
+      "copyPrefix": "Kopiuj prefiks klucza",
+      "revokeKey": "Unieważnij klucz",
+      "namePlaceholder": "np. Integracja produkcyjna",
+      "descriptionPlaceholder": "Do czego służy ten klucz?",
+      "createButton": "Utwórz klucz API",
+      "status": {
+        "expired": "Wygasł",
+        "revoked": "Unieważniony",
+        "expiringSoon": "Wkrótce wygasa"
+      },
+      "lastUsed": "Ostatnio użyty",
+      "expires": "Wygasa",
+      "fields": {
+        "name": "Nazwa",
+        "description": "Opis (opcjonalnie)",
+        "expiration": "Ważność",
+        "permissions": "Uprawnienia"
+      },
+      "expiry": {
+        "d30": "30 dni",
+        "d90": "90 dni",
+        "d180": "180 dni",
+        "y1": "1 rok",
+        "never": "Bez terminu"
+      },
+      "createKey": "Utwórz klucz",
+      "createdTitle": "Klucz API utworzony",
+      "yourKey": "Twój klucz API",
+      "copiedConfirm": "Skopiowałem klucz",
+      "noticeTitle": "Chroń swoje klucze API",
+      "noticeBody": "Klucze API dają dostęp do danych Twojej organizacji. Nigdy nie umieszczaj ich w publicznych repozytoriach ani w kodzie po stronie przeglądarki.",
+      "emptyTitle": "Brak kluczy API",
+      "emptyBody": "Utwórz pierwszy klucz API, żeby zacząć korzystać z integracji",
+      "shownOnceTitle": "Ten klucz zobaczysz tylko raz!",
+      "shownOnceBody": "Skopiuj go teraz — później nie będzie już widoczny."
     }
   },
   "access": {

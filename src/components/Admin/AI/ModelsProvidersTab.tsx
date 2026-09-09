@@ -95,11 +95,14 @@ interface ModelsProvidersTabProps {
   organizationId?: string;
 }
 
-const TIER_CONFIG: Record<string, { icon: any; color: string; label: string }> = {
-  BUDGET: { icon: Zap, color: 'emerald', label: 'Budget' },
-  STANDARD: { icon: Server, color: 'blue', label: 'Standard' },
-  PREMIUM: { icon: Crown, color: 'violet', label: 'Premium' },
-  REASONING: { icon: Brain, color: 'amber', label: 'Reasoning' },
+// Bez pola `label`: render nigdzie go nie uzywal, a trzymanie czterech
+// nietlumaczonych napisow w stalej to pulapka — czekala, az ktos je wyswietli
+// po angielsku polskiemu administratorowi. Nazwa poziomu idzie z `tier`.
+const TIER_CONFIG: Record<string, { icon: any; color: string }> = {
+  BUDGET: { icon: Zap, color: 'emerald' },
+  STANDARD: { icon: Server, color: 'blue' },
+  PREMIUM: { icon: Crown, color: 'violet' },
+  REASONING: { icon: Brain, color: 'amber' },
 };
 
 interface LLMProviderConfig {

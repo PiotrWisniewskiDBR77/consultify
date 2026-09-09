@@ -38,6 +38,12 @@ import { LoadingState } from '../../components/ui/primitives';
 import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
 import type { LLMProviderConfig } from '../../types';
+import {
+  formatListCurrency,
+  formatListNumber,
+  formatListPercent,
+  formatListTime,
+} from '../../utils/listDateFormat';
 
 // Health Status Types
 interface ProviderStatus {
@@ -573,7 +579,7 @@ export const AdminLLMView: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-c-text mb-1">
-                    {analytics?.total_requests?.toLocaleString() || 0}
+                    {formatListNumber(analytics?.total_requests, '0')}
                   </div>
                   <div className="text-xs text-c-text-secondary">
                     {t('admin.aiControlCenter.llmView.kpi.totalRequests', 'Total Requests')}
@@ -607,7 +613,10 @@ export const AdminLLMView: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-c-text mb-1">
-                    ${(analytics?.total_cost || 0).toFixed(4)}
+                    {formatListCurrency(analytics?.total_cost || 0, 'USD', {
+                      maximumFractionDigits: 4,
+                      minimumFractionDigits: 2,
+                    })}
                   </div>
                   <div className="text-xs text-c-text-secondary">
                     {t('admin.aiControlCenter.llmView.kpi.totalSpend', 'Total Spend')}
@@ -631,7 +640,7 @@ export const AdminLLMView: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-c-text mb-1">
-                    {(analytics?.error_rate * 100).toFixed(1)}%
+                    {formatListPercent(analytics?.error_rate)}
                   </div>
                   <div className="text-xs text-c-text-secondary">
                     {t(
@@ -692,7 +701,7 @@ export const AdminLLMView: React.FC = () => {
                             <EntityStatusChip status={log.status} />
                           </td>
                           <td className="px-4 py-3 text-c-text-secondary font-mono text-xs">
-                            {new Date(log.timestamp).toLocaleTimeString()}
+                            {formatListTime(log.timestamp)}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col">
@@ -704,7 +713,10 @@ export const AdminLLMView: React.FC = () => {
                             {log.latency_ms}ms
                           </td>
                           <td className="px-4 py-3 text-c-text-secondary font-mono text-xs">
-                            ${(log.cost || 0).toFixed(6)}
+                            {formatListCurrency(log.cost || 0, 'USD', {
+                              maximumFractionDigits: 6,
+                              minimumFractionDigits: 2,
+                            })}
                           </td>
                           <td className="px-4 py-3">
                             {log.error_message ? (
@@ -822,7 +834,7 @@ export const AdminLLMView: React.FC = () => {
                       'admin.aiControlCenter.llmView.lastCheckDuration',
                       'Last check: {{time}}({{duration}}ms)',
                       {
-                        time: new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString(),
+                        time: formatListTime(llmStatus.startupValidation.timestamp),
                         duration: llmStatus.startupValidation.duration,
                       }
                     )}

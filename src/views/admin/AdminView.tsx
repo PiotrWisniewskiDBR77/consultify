@@ -4,6 +4,7 @@
  * Provides a stable module shell for admin routes.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { DesktopOnlyGuard } from '@/components/shared/DesktopOnlyGuard';
 import type { AppView, User } from '@/types';
@@ -16,8 +17,9 @@ interface AdminViewProps {
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   return (
-    <DesktopOnlyGuard moduleName="Panel administratora">
+    <DesktopOnlyGuard moduleName={t('admin.shell.moduleName', 'Admin Panel')}>
       <AdminSettingsModule currentUser={currentUser} />
     </DesktopOnlyGuard>
   );

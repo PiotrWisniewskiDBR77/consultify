@@ -112,7 +112,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         setUsageDetails(usageResult?.summary || usageResult);
         setPlanOptions(Array.isArray(plansResult?.plans) ? plansResult.plans : []);
       } catch (error: any) {
-        toast.error(error?.message || 'Failed to load billing summary');
+        toast.error(
+          error?.message || t('admin.billing.errors.loadSummary', 'Failed to load billing summary')
+        );
       }
     };
 
@@ -138,7 +140,12 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const persistedPlan = refreshed?.summary?.plan;
       const expectedPlan = payload.planName || planForm.planName || undefined;
       if (!refreshed?.summary || (expectedPlan && persistedPlan?.name !== expectedPlan)) {
-        throw new Error('Plan request completed, but provider readback did not match the target.');
+        throw new Error(
+          t(
+            'admin.billing.errors.planReadback',
+            'Plan request completed, but provider readback did not match the target.'
+          )
+        );
       }
       setSummary(refreshed);
       toast.success(t('admin.billing.plan.saved', { defaultValue: 'Plan and limits assigned' }));
@@ -147,7 +154,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       if (Array.isArray(validationErrors) && validationErrors.length > 0) {
         toast.error(validationErrors.join('; '));
       } else {
-        toast.error(error?.message || 'Failed to assign plan');
+        toast.error(
+          error?.message || t('admin.billing.errors.assignPlan', 'Failed to assign plan')
+        );
       }
     } finally {
       setSavingPlan(false);
@@ -168,13 +177,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const readback = await Api.getAdminBillingPaymentMethods();
       const persisted = readback?.paymentMethods || [];
       if (!persisted.some((method: any) => method.id === newPaymentMethodId.trim())) {
-        throw new Error('Payment request completed, but provider readback did not confirm it.');
+        throw new Error(
+          t(
+            'admin.billing.errors.paymentReadback',
+            'Payment request completed, but provider readback did not confirm it.'
+          )
+        );
       }
       setPaymentMethods(persisted);
       setNewPaymentMethodId('');
-      toast.success('Payment method added');
+      toast.success(t('admin.billing.payments.added', 'Payment method added'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to add payment method');
+      toast.error(
+        error?.message || t('admin.billing.errors.addPayment', 'Failed to add payment method')
+      );
     }
   };
 
@@ -184,12 +200,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const readback = await Api.getAdminBillingPaymentMethods();
       const persisted = readback?.paymentMethods || [];
       if (!persisted.some((method: any) => method.id === paymentMethodId && method.is_default)) {
-        throw new Error('Default change was not confirmed by provider readback.');
+        throw new Error(
+          t(
+            'admin.billing.errors.defaultReadback',
+            'Default change was not confirmed by provider readback.'
+          )
+        );
       }
       setPaymentMethods(persisted);
-      toast.success('Default payment method updated');
+      toast.success(t('admin.billing.payments.defaultUpdated', 'Default payment method updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update default payment method');
+      toast.error(
+        error?.message ||
+          t('admin.billing.errors.updateDefault', 'Failed to update default payment method')
+      );
     }
   };
 
@@ -200,13 +224,18 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       const persisted = readback?.paymentMethods || [];
       if (persisted.some((method: any) => method.id === paymentMethodId)) {
         throw new Error(
-          'Removal request completed, but provider readback still contains the method.'
+          t(
+            'admin.billing.errors.removeReadback',
+            'Removal request completed, but provider readback still contains the method.'
+          )
         );
       }
       setPaymentMethods(persisted);
-      toast.success('Payment method removed');
+      toast.success(t('admin.billing.payments.removed', 'Payment method removed'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to remove payment method');
+      toast.error(
+        error?.message || t('admin.billing.errors.removePayment', 'Failed to remove payment method')
+      );
     }
   };
 
@@ -222,20 +251,20 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         toast.error(
           result?.message ||
             t('admin.billing.alerts.saveFailed', {
-              defaultValue: 'Nie udało się zapisać progów budżetowych.',
+              defaultValue: 'Could not save the budget thresholds.',
             })
         );
         return;
       }
       if (Array.isArray(result?.alerts)) setAlerts(result.alerts);
       setAlertsAvailable(true);
-      toast.success(t('admin.billing.alerts.saved', { defaultValue: 'Progi budżetowe zapisane' }));
+      toast.success(t('admin.billing.alerts.saved', { defaultValue: 'Budget thresholds saved' }));
     } catch (error: any) {
       setAlertsAvailable(false);
       toast.error(
         error?.message ||
           t('admin.billing.alerts.saveFailed', {
-            defaultValue: 'Nie udało się zapisać progów budżetowych.',
+            defaultValue: 'Could not save the budget thresholds.',
           })
       );
     } finally {
@@ -248,33 +277,41 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       await Api.updateAdminBillingTaxSettings(taxSettings || {});
       const readback = await Api.getAdminBillingTaxSettings();
       if (!readback?.settings && !readback?.tax && !readback?.company) {
-        throw new Error('Tax settings request completed, but durable readback was unavailable.');
+        throw new Error(
+          t(
+            'admin.billing.errors.taxReadback',
+            'Tax settings request completed, but durable readback was unavailable.'
+          )
+        );
       }
       setTaxSettings(readback?.settings || readback);
-      toast.success('Billing tax settings updated');
+      toast.success(t('admin.billing.tax.updated', 'Billing tax settings updated'));
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update billing tax settings');
+      toast.error(
+        error?.message ||
+          t('admin.billing.errors.updateTax', 'Failed to update billing tax settings')
+      );
     }
   };
 
   const invoiceColumns: TableColumn[] = [
     {
       id: 'invoiceNumber',
-      label: 'Invoice',
+      label: t('admin.billing.columns.invoice', 'Invoice'),
       width: '180px',
       render: (row) => <span className="text-slate-900 dark:text-white">{row.invoiceNumber}</span>,
     },
     {
       id: 'invoiceStatus',
-      label: 'Status',
+      label: t('admin.billing.columns.status', 'Status'),
       width: '120px',
       filterable: true,
       filterOptions: [
-        { value: 'paid', label: 'Paid' },
-        { value: 'open', label: 'Open' },
-        { value: 'draft', label: 'Draft' },
-        { value: 'void', label: 'Void' },
-        { value: 'uncollectible', label: 'Uncollectible' },
+        { value: 'paid', label: t('admin.billing.status.paid', 'Paid') },
+        { value: 'open', label: t('admin.billing.status.open', 'Open') },
+        { value: 'draft', label: t('admin.billing.status.draft', 'Draft') },
+        { value: 'void', label: t('admin.billing.status.void', 'Void') },
+        { value: 'uncollectible', label: t('admin.billing.status.uncollectible', 'Uncollectible') },
       ],
       render: (row) => (
         <span className="text-slate-600 dark:text-slate-300">{row.invoiceStatus}</span>
@@ -282,21 +319,21 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
     },
     {
       id: 'amountDue',
-      label: 'Amount due',
+      label: t('admin.billing.columns.amountDue', 'Amount due'),
       width: '140px',
       align: 'right',
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.amountDue}</span>,
     },
     {
       id: 'amountPaid',
-      label: 'Amount paid',
+      label: t('admin.billing.columns.amountPaid', 'Amount paid'),
       width: '140px',
       align: 'right',
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.amountPaid}</span>,
     },
     {
       id: 'dueDate',
-      label: 'Due date',
+      label: t('admin.billing.columns.dueDate', 'Due date'),
       width: '140px',
       render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.dueDate}</span>,
     },
@@ -305,7 +342,7 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
   const paymentColumns: TableColumn[] = [
     {
       id: 'cardInfo',
-      label: 'Card',
+      label: t('admin.billing.columns.card', 'Card'),
       width: '220px',
       render: (row) => (
         <div>
@@ -316,10 +353,12 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
     },
     {
       id: 'isDefault',
-      label: 'Default',
+      label: t('admin.billing.columns.default', 'Default'),
       width: '120px',
       render: (row) => (
-        <span className="text-slate-600 dark:text-slate-300">{row.isDefault ? 'Yes' : '—'}</span>
+        <span className="text-slate-600 dark:text-slate-300">
+          {row.isDefault ? t('common.yes', 'Yes') : '—'}
+        </span>
       ),
     },
   ];
@@ -540,15 +579,23 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
               onClick={() => void addPaymentMethod()}
               className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
-              Add method
+              {t('admin.billing.payments.addMethod', 'Add method')}
             </button>
           </div>
           <FilterableTable
             columns={paymentColumns}
             data={paymentMethods.map((method) => ({
               id: method.id,
-              cardInfo: `${method.brand || 'Card'} ending in ${method.last4}`,
-              expiry: `Expires ${method.exp_month}/${method.exp_year}`,
+              cardInfo: t('admin.billing.payments.cardInfo', {
+                defaultValue: '{{brand}} ending in {{last4}}',
+                brand: method.brand || t('admin.billing.columns.card', 'Card'),
+                last4: method.last4,
+              }),
+              expiry: t('admin.billing.payments.expiry', {
+                defaultValue: 'Expires {{month}}/{{year}}',
+                month: method.exp_month,
+                year: method.exp_year,
+              }),
               isDefault: Boolean(method.is_default),
             }))}
             getRowActions={(row) => {
@@ -557,12 +604,12 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
               return [
                 {
                   id: 'make-default',
-                  label: 'Make default',
+                  label: t('admin.billing.actions.makeDefault', 'Make default'),
                   onClick: () => void setDefaultPaymentMethod(row.id),
                 },
                 {
                   id: 'remove',
-                  label: 'Remove',
+                  label: t('admin.billing.actions.remove', 'Remove'),
                   variant: 'danger' as const,
                   onClick: () => void removePaymentMethod(row.id),
                 },
@@ -570,7 +617,7 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
             }}
             activeFilters={paymentFilters}
             onFilterChange={setPaymentFilters}
-            emptyMessage="No payment methods added yet."
+            emptyMessage={t('admin.billing.payments.empty', 'No payment methods added yet.')}
             persistKey="admin-payments-table"
             canvasClassName=""
           />
@@ -595,8 +642,8 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
           onFilterChange={setInvoiceFilters}
           emptyMessage={
             invoicesAvailable
-              ? 'No invoices yet for this workspace.'
-              : 'Invoices are temporarily unavailable.'
+              ? t('admin.billing.invoices.empty', 'No invoices yet for this workspace.')
+              : t('admin.billing.invoices.unavailable', 'Invoices are temporarily unavailable.')
           }
           persistKey="admin-invoices-table"
           canvasClassName=""
@@ -608,7 +655,9 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       return (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Spend alerts</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t('admin.billing.alerts.title', 'Spend alerts')}
+            </div>
             {!alertsAvailable && (
               <div
                 role="alert"
@@ -617,14 +666,14 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
               >
                 {t('admin.billing.alerts.unavailable', {
                   defaultValue:
-                    'Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.',
+                    'Budget thresholds are unavailable right now — the settings store is not responding. Nothing was saved, and we do not show values that do not exist.',
                 })}
               </div>
             )}
             {alertsAvailable && alerts.length === 0 && (
               <div className="text-sm text-c-text-muted" data-testid="billing-alerts-empty">
                 {t('admin.billing.alerts.empty', {
-                  defaultValue: 'Nie ustawiono jeszcze żadnego progu budżetowego.',
+                  defaultValue: 'No budget threshold has been set yet.',
                 })}
               </div>
             )}
@@ -652,13 +701,13 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
               data-testid="billing-alerts-save"
               className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Save alerts
+              {t('admin.billing.alerts.save', 'Save alerts')}
             </button>
           </div>
 
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Tax and invoicing
+              {t('admin.billing.tax.title', 'Tax and invoicing')}
             </div>
             <input
               type="text"
@@ -669,7 +718,7 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
                   company: { ...(current?.company || {}), legalName: event.target.value },
                 }))
               }
-              placeholder="Legal company name"
+              placeholder={t('admin.billing.tax.legalName', 'Legal company name')}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
             />
             <input
@@ -681,14 +730,14 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
                   tax: { ...(current?.tax || {}), taxId: event.target.value },
                 }))
               }
-              placeholder="Tax ID"
+              placeholder={t('admin.billing.tax.taxId', 'Tax ID')}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
             />
             <button
               onClick={() => void saveTaxSettings()}
               className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
-              Save tax settings
+              {t('admin.billing.tax.save', 'Save tax settings')}
             </button>
           </div>
         </div>
@@ -701,50 +750,64 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
           <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Wallet className="h-4 w-4" />
-              Plan
+              {t('admin.billing.summary.plan', 'Plan')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-              {summary?.summary?.plan?.name || 'Unknown'}
+              {summary?.summary?.plan?.name || t('admin.billing.summary.unknown', 'Unknown')}
             </div>
             <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Status: {summary?.summary?.billing?.status || 'unknown'}
+              {t('admin.billing.columns.status', 'Status')}:{' '}
+              {summary?.summary?.billing?.status || t('admin.billing.summary.unknown', 'Unknown')}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Gauge className="h-4 w-4" />
-              Limits & Usage
+              {t('admin.billing.summary.limitsUsage', 'Limits & usage')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
               {summary?.summary?.usage?.tokensUsed || 0} / {summary?.summary?.plan?.tokenLimit || 0}
             </div>
             <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Token balance: {summary?.summary?.usage?.tokenBalance || 0}
+              {t('admin.billing.summary.tokenBalance', 'Token balance')}:{' '}
+              {summary?.summary?.usage?.tokenBalance || 0}
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Receipt className="h-4 w-4" />
-              Spend posture
+              {t('admin.billing.summary.spendPosture', 'Spend posture')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
               {summary?.summary?.alerts?.costCapMonthly || 0}
             </div>
             <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Monthly cost cap | Email alerts{' '}
-              {summary?.summary?.alerts?.emailNotifications ? 'enabled' : 'disabled'}
+              {t('admin.billing.summary.monthlyCap', 'Monthly cost cap')} |{' '}
+              {t('admin.billing.summary.emailAlerts', 'Email alerts')}{' '}
+              {summary?.summary?.alerts?.emailNotifications
+                ? t('common.enabled', 'enabled')
+                : t('common.disabled', 'disabled')}
             </div>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Usage and overage posture
+            {t('admin.billing.summary.overagePosture', 'Usage and overage posture')}
           </h3>
           <div className="mt-3 grid gap-3 md:grid-cols-3 text-sm text-slate-600 dark:text-slate-300">
-            <div>Token overage rate: {usageDetails?.overageRates?.tokenOverageRate || 0}</div>
-            <div>Storage overage rate: {usageDetails?.overageRates?.storageOverageRate || 0}</div>
-            <div>Tracked usage rows: {usageDetails?.usageRecords?.length || 0}</div>
+            <div>
+              {t('admin.billing.summary.tokenOverage', 'Token overage rate')}:{' '}
+              {usageDetails?.overageRates?.tokenOverageRate || 0}
+            </div>
+            <div>
+              {t('admin.billing.summary.storageOverage', 'Storage overage rate')}:{' '}
+              {usageDetails?.overageRates?.storageOverageRate || 0}
+            </div>
+            <div>
+              {t('admin.billing.summary.usageRows', 'Tracked usage rows')}:{' '}
+              {usageDetails?.usageRecords?.length || 0}
+            </div>
           </div>
         </div>
       </div>
@@ -755,20 +818,30 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
     <div className="space-y-6">
       {!stripeEnabled && (
         <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-          <p className="text-sm font-semibold">Self-service checkout is currently disabled.</p>
+          <p className="text-sm font-semibold">
+            {t(
+              'admin.billing.selfServiceOff.title',
+              'Self-service checkout is currently disabled.'
+            )}
+          </p>
           <p className="mt-1 text-sm">
-            Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.
+            {t(
+              'admin.billing.selfServiceOff.body',
+              'Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.'
+            )}
           </p>
         </div>
       )}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <h2 className="flex items-center gap-2 text-slate-900 dark:text-white">
           <CreditCard className="h-5 w-5 text-primary-500" />
-          Billing, FinOps, and commercial controls
+          {t('admin.billing.header.title', 'Billing, FinOps, and commercial controls')}
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and usage
-          posture as first-class tenant admin capabilities.
+          {t(
+            'admin.billing.header.subtitle',
+            'Subscriptions, payment methods, invoices, budgets, tax settings, and usage posture as first-class tenant admin capabilities.'
+          )}
         </p>
       </div>
       {!screen && (
