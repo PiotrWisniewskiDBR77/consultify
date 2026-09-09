@@ -780,9 +780,9 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             </button>
           ))}
           <label className="flex items-center gap-1 text-xs text-c-text-secondary">
-            <span className="sr-only">Rozmiar czcionki</span>
+            <span className="sr-only">{t('documentStudio.documentTipTapEditor.fontSize', 'Font size')}</span>
             <select
-              aria-label="Rozmiar czcionki"
+              aria-label={t('documentStudio.documentTipTapEditor.fontSize', 'Font size')}
               value={String(editor.getAttributes('textStyle').fontSize ?? '')}
               onChange={(event) => {
                 userEditArmedRef.current = true;
@@ -816,10 +816,10 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             />
           </label>
           <label className="flex items-center gap-1 text-xs text-c-text-secondary">
-            <span>Kolor</span>
+            <span>{t('documentStudio.documentTipTapEditor.color', 'Color')}</span>
             <input
               type="color"
-              aria-label="Kolor tekstu"
+              aria-label={t('documentStudio.documentTipTapEditor.textColor', 'Text color')}
               value={String(editor.getAttributes('textStyle').color ?? '#111827')}
               onChange={(event) => {
                 userEditArmedRef.current = true;

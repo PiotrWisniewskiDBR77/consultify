@@ -209,7 +209,7 @@ export const BrandKitSettings: React.FC = () => {
           label={t('presentations.brandKit.headerText', 'Header text')}
           value={kit.header_text || ''}
           onChange={(v) => updateField('header_text', v || null)}
-          placeholder="Nazwa organizacji"
+          placeholder={t('presentations.brandKitSettings.orgNamePlaceholder', 'Organization name')}
         />
         <TextField
           label={t('presentations.brandKit.footerText', 'Footer text')}
@@ -241,9 +241,9 @@ export const BrandKitSettings: React.FC = () => {
           onChange={(e) => updateField('confidentiality_default', e.target.value)}
           className="w-full max-w-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
         >
-          <option value="confidential">Poufne</option>
+          <option value="confidential">{t('presentations.brandKitSettings.confidential', 'Confidential')}</option>
           <option value="internal">{t('presentations.brandKitSettings.internal', 'Internal')}</option>
-          <option value="public">Publiczne</option>
+          <option value="public">{t('presentations.brandKitSettings.public', 'Public')}</option>
         </select>
       </div>
 

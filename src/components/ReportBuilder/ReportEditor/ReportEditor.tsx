@@ -2445,7 +2445,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         <div className="shrink-0 px-4 py-2">
           <NModeMenu2
             isPolish={isPl}
-            sectionsMenu={<span className="text-xs font-medium text-c-text-secondary">{t('common.sections', 'Sekcje')}</span>}
+            sectionsMenu={<span className="text-xs font-medium text-c-text-secondary">{t('common.sections', 'Sections')}</span>}
             aiButton={
               <PracujZAI
                 isPolish={isPl}

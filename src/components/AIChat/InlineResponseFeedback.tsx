@@ -249,7 +249,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     return (
       <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 py-1">
         <Loader2 size={10} className="animate-spin" />
-        {t('aiChat.feedback.saving', 'Zapisywanie…')}
+        {t('aiChat.feedback.saving', 'Saving…')}
       </div>
     );
   }
@@ -324,16 +324,16 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-500'
                 : 'hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-600 dark:text-slate-500 hover:text-green-500'
             }`}
-            title={t('aiChat.actions.helpful', 'Pomocne')}
-            aria-label={t('aiChat.actions.helpful', 'Pomocne')}
+            title={t('aiChat.actions.helpful', 'Helpful')}
+            aria-label={t('aiChat.actions.helpful', 'Helpful')}
           >
             <ThumbsUp size={12} />
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
             className="p-1 rounded transition-colors hover:bg-danger-50 dark:hover:bg-danger-900/20 text-slate-600 dark:text-slate-500 hover:text-danger-500"
-            title={t('aiChat.actions.notHelpful', 'Niepomocne')}
-            aria-label={t('aiChat.actions.notHelpful', 'Niepomocne')}
+            title={t('aiChat.actions.notHelpful', 'Not helpful')}
+            aria-label={t('aiChat.actions.notHelpful', 'Not helpful')}
           >
             <ThumbsDown size={12} />
           </button>
@@ -435,7 +435,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             onChange={setActionability}
             label={t('aiChat.feedback.actionability', 'Usefulness:')}
             lowLabel={t('aiChat.feedback.notUseful', 'Not useful')}
-            highLabel={t('aiChat.feedback.veryUseful', 'Bardzo')}
+            highLabel={t('aiChat.feedback.veryUseful', 'Very')}
           />
 
           {/* Accuracy rating */}
@@ -443,27 +443,27 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             value={accuracy}
             onChange={setAccuracy}
             label={t('aiChat.feedback.accuracy', 'Accuracy:')}
-            lowLabel={t('aiChat.feedback.inaccurate', 'Nietrafna')}
-            highLabel={t('aiChat.feedback.veryAccurate', 'Trafna')}
+            lowLabel={t('aiChat.feedback.inaccurate', 'Inaccurate')}
+            highLabel={t('aiChat.feedback.veryAccurate', 'Accurate')}
           />
 
           {/* Expected format */}
           <div className="space-y-1">
             <span className="text-[10px] text-slate-500 dark:text-slate-400">
-              {t('aiChat.feedback.preferredFormat', 'Preferowany format:')}
+              {t('aiChat.feedback.preferredFormat', 'Preferred format:')}
             </span>
             <div className="flex flex-wrap gap-1">
               {(
                 [
-                  { value: 'bullets', label: t('aiChat.feedback.formatBullets', 'Punkty') },
-                  { value: 'paragraphs', label: t('aiChat.feedback.formatParagraphs', 'Akapity') },
+                  { value: 'bullets', label: t('aiChat.feedback.formatBullets', 'Bullet points') },
+                  { value: 'paragraphs', label: t('aiChat.feedback.formatParagraphs', 'Paragraphs') },
                   {
                     value: 'structured',
-                    label: t('aiChat.feedback.formatStructured', 'Strukturalny'),
+                    label: t('aiChat.feedback.formatStructured', 'Structured'),
                   },
                   {
                     value: 'conversational',
-                    label: t('aiChat.feedback.formatConversational', 'Swobodny'),
+                    label: t('aiChat.feedback.formatConversational', 'Free-form'),
                   },
                 ] as { value: FormatPreference; label: string }[]
               ).map((opt) => (

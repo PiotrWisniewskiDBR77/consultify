@@ -112,7 +112,7 @@ function FabricationBadge({
           <p className="text-c-text-muted">
             {t(
               'documentStudio.qa.fabrication.hint',
-              'Zweryfikuj te liczby wobec źródeł lub oznacz jako założenie „(założenie)" przed eksportem partnerskim/klientowi.'
+              'Verify these numbers against sources or mark them as an assumption "(assumption)" before partner/client delivery.'
             )}
           </p>
         </div>

@@ -289,7 +289,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         onUpdate({ ...initiative, status: action.targetStatus });
         toast.success(
-          t('initiatives.toast.statusChanged', 'Status zmieniony na {{status}}', {
+          t('initiatives.toast.statusChanged', 'Status changed to {{status}}', {
             status: action.targetStatus,
           })
         );

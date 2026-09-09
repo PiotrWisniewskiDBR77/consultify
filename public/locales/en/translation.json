@@ -2946,7 +2946,9 @@
     "learnMore": "Learn more",
     "undo": "Undo",
     "redo": "Redo",
-    "tableWithPreview": "Table and preview workspace"
+    "tableWithPreview": "Table and preview workspace",
+    "conflict": "Conflict",
+    "sections": "Sections"
   },
   "superadmin": {
     "confirm": {
@@ -9384,7 +9386,8 @@
         "achieved": "Achieved",
         "target": "Target",
         "gap": "Gap",
-        "evidence": "Evidence"
+        "evidence": "Evidence",
+        "none": "none"
       },
       "errors": {
         "load": "The review data could not be loaded",
@@ -9433,7 +9436,12 @@
         "returned": "Sent back"
       },
       "acceptedBy": "Accepted {{date}} by {{who}}",
-      "noAcceptedOutput": "This assessment has no accepted output yet."
+      "noAcceptedOutput": "This assessment has no accepted output yet.",
+      "acceptedOutput": {
+        "heading": "Accepted output",
+        "immutableExists": "An immutable output exists"
+      },
+      "evidenceCoverage": "Evidence coverage"
     },
     "presentation": {
       "methodPack": "Method pack",
@@ -9722,7 +9730,11 @@
       "commonMistakes": "Common Mistakes to Avoid",
       "wasteKnowledge": "Waste Analysis Guide",
       "whatToLookFor": "What to Look For",
-      "typicalEvidence": "Typical Evidence"
+      "typicalEvidence": "Typical Evidence",
+      "form": {
+        "identifiedWastes": "Identified Wastes",
+        "priority": "Priority"
+      }
     },
     "card": {
       "defaultDesc": "No description for this level."
@@ -10060,6 +10072,12 @@
           "noQuestions": "No questions at this level.",
           "whereAreWe": "DRD session, unit {{unit}}, level {{level}}. {{answered}}/{{total}} units touched.",
           "why": "Axis “{{axis}}” needs this unit confirmed to unlock the next levels."
+        },
+        "bootstrap": {
+          "notConfirmedYet": "No confirmed server response yet.",
+          "creatingSession": "Creating session…",
+          "loadingFromServer": "Loading session from server…",
+          "loadingSession": "Loading session…"
         }
       },
       "legacy": {
@@ -10098,10 +10116,18 @@
         "skipHint": ": explicitly mark “not planned” for this level.",
         "howToDecide": "How to decide",
         "tip": "Tip",
-        "tipBody": "If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later."
+        "tipBody": "If you are unsure, add a short comment and attach a quick artifact. You can always change your mind later.",
+        "canonLabel": "Canon: "
       },
       "ownerMatrix": {
         "closeCellDetails": "Close cell details"
+      },
+      "method": {
+        "axisMatrixHeading": "Axis matrix",
+        "testActorLabel": "Test actor",
+        "actorLabel": "Actor:",
+        "reopenHeading": "Reopen — new revision",
+        "reopenButton": "Reopen session (new revision)"
       }
     },
     "glossary": {
@@ -10168,6 +10194,22 @@
         "glossary": {
           "button": "Glossary"
         }
+      },
+      "report": {
+        "executiveSummary": "Executive Summary",
+        "keyGapsPriorities": "Key Gaps — Priorities",
+        "gapAnalysisTopPriorities": "Gap Analysis - Top Priorities",
+        "table": {
+          "dimension": "Dimension",
+          "pillar": "Pillar",
+          "current": "Current",
+          "gap": "Gap"
+        },
+        "transformationRecommendations": "Transformation Recommendations",
+        "gapLabel": "Gap"
+      },
+      "form": {
+        "currentLevel": "Current Level"
       }
     },
     "siri": {
@@ -10202,6 +10244,10 @@
         "glossary": {
           "button": "Glossary"
         }
+      },
+      "report": {
+        "executiveSummary": "Executive Summary",
+        "keyGapsPriorities": "Key Gaps — Priorities"
       }
     },
     "reports": {
@@ -10689,7 +10735,8 @@
         "new": "New",
         "quick": "Quick",
         "wizard": "Wizard (50+)",
-        "needsApprovalTooltip": "Assessment must be approved to generate initiatives"
+        "needsApprovalTooltip": "Assessment must be approved to generate initiatives",
+        "generate": "Generate initiatives"
       },
       "notApproved": {
         "title": "Assessment not approved",
@@ -11019,7 +11066,8 @@
         "legalNoticeA": "is a tool developed by the",
         "legalNoticeB": "in cooperation with",
         "dataGapsHint": "These areas require additional data collection before a complete assessment can be concluded.",
-        "nextStepsBody": "Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment."
+        "nextStepsBody": "Review the findings with stakeholders, prioritise initiatives, create detailed implementation plans and schedule a follow-up assessment.",
+        "legalNoticeC": "Used for educational purposes. Official certification requires an accredited auditor."
       }
     },
     "presentationView": {
@@ -11037,7 +11085,9 @@
       "restored": "Version restored!",
       "restoredHint": "The data has been updated",
       "emptyTitle": "No saved versions",
-      "emptyHint": "History appears once changes are saved"
+      "emptyHint": "History appears once changes are saved",
+      "heading": "Version history",
+      "current": "Current"
     },
     "reportEditor": {
       "notFound": "Report not found",
@@ -11045,7 +11095,12 @@
       "preview": "Report preview",
       "newFindingPlaceholder": "Add a new finding…",
       "newRecommendationPlaceholder": "Add a new recommendation…",
-      "add": "Add"
+      "add": "Add",
+      "unsavedChanges": "Unsaved changes",
+      "gapAnalysisSummary": "Gap Analysis Summary",
+      "executiveSummaryPlaceholder": "Executive summary of the report...",
+      "additionalNotesLabel": "Additional notes",
+      "additionalNotesPlaceholder": "Additional comments and notes..."
     },
     "dbr77Map": {
       "legalNotice": "(Measure-Optimise-Automate) is a proprietary Consultify method combining classic Lean tools with an assessment of automation and AI potential. It supports a full analysis of processes and workstations.",
@@ -11110,6 +11165,40 @@
       },
       "lean": {
         "description": "Lean manufacturing principles integrated with Industry 4.0 technologies"
+      }
+    },
+    "dbr77": {
+      "dimension": {
+        "processes": "Processes",
+        "workstations": "Workstations"
+      },
+      "waste": {
+        "identifiedHeading": "Identified wastes (TIMWOODS)"
+      },
+      "methodSubtitle": "DBR77 method: Measure → Optimize → Automate",
+      "report": {
+        "measure": "MEASURE",
+        "optimize": "OPTIMIZE",
+        "identifiedWastes": "Identified wastes:",
+        "automationPercent": "% to automate:",
+        "recommendedTechnologies": "Recommended technologies:",
+        "methodSubtitle": "DBR77 method: Measure → Optimize → Automate",
+        "executiveSummary": "Executive Summary",
+        "top5AutomationTargets": "Top 5 Automation Targets"
+      }
+    },
+    "cmmi": {
+      "report": {
+        "categoryScore": "Category Score",
+        "table": {
+          "practiceArea": "Practice Area",
+          "category": "Category"
+        },
+        "improvementPlanTopPriorities": "Improvement Plan - Top Priorities",
+        "gapLabel": "Gap"
+      },
+      "form": {
+        "currentLevel": "Current Level"
       }
     }
   },
@@ -14425,7 +14514,8 @@
       },
       "sourcePortfolio": "Source portfolio",
       "publishedOn": "Published",
-      "remainsDraft": "The plan remains a draft."
+      "remainsDraft": "The plan remains a draft.",
+      "publishPlan": "Publish plan"
     },
     "planSolver": {
       "selected": "The solver picked {{period}}: {{dependency}}; the initiative window intersects that period; {{capacity}}. Awaiting human confirmation.",
@@ -15069,7 +15159,11 @@
       },
       "baseline": {
         "empty": "No baselines saved — save the first one.",
-        "loadFailed": "Could not load the baselines"
+        "loadFailed": "Could not load the baselines",
+        "heading": "Plan baseline (rebaseline)",
+        "saving": "Saving…",
+        "saveCta": "Save baseline",
+        "needsProject": "Saving a baseline requires a selected project."
       },
       "benefits": {
         "add": "Add benefit",
@@ -17370,7 +17464,12 @@
         "smallGap01": "Small gap (0-1)",
         "medium12": "Medium (1-2)",
         "largeGap2": "Large gap (2+)",
-        "axis": "Axis"
+        "axis": "Axis",
+        "defaultTitle": "Gap Analysis",
+        "redGreen": "Red-Green",
+        "current": "Current",
+        "gap": "Gap",
+        "visualization": "Visualization"
       },
       "maturityRadar": {
         "chartTitle": "Chart title",
@@ -17381,7 +17480,14 @@
       "metricCard": {
         "value": "Value",
         "editTheCard": "Edit the card",
-        "orange": "Orange"
+        "orange": "Orange",
+        "labelPlaceholder": "Label",
+        "blue": "Blue",
+        "green": "Green",
+        "red": "Red",
+        "neutral": "Neutral",
+        "increase": "Increase",
+        "decrease": "Decrease"
       },
       "recommendationCard": {
         "editTheRecommendation": "Edit the recommendation",
@@ -17395,7 +17501,10 @@
         "effort2": "Effort",
         "medium2": "Medium",
         "medium3": "Medium",
-        "critical": "Critical"
+        "critical": "Critical",
+        "description": "Description",
+        "priority": "Priority",
+        "estimatedRoi": "Estimated ROI"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S to save • \"/\" to insert a block"
@@ -17410,7 +17519,9 @@
         "anExecutiveSummaryWithThe": "An executive summary with the key conclusions",
         "aDetailedAnalysisOfThe": "A detailed analysis of the maturity gaps",
         "theTop10RecommendationsPrioritised": "The top 10 recommendations, prioritised",
-        "aPhasedImplementationPlan": "A phased implementation plan"
+        "aPhasedImplementationPlan": "A phased implementation plan",
+        "title": "AI Assistant",
+        "quickActions": "Quick actions"
       },
       "blockInsertMenu": {
         "searchBlocks": "Search blocks...",
@@ -17435,7 +17546,15 @@
         "alignLeft": "Align left",
         "centre": "Centre",
         "alignRight": "Align right",
-        "insertATable": "Insert a table"
+        "insertATable": "Insert a table",
+        "undoShortcut": "Undo (Ctrl+Z)",
+        "boldShortcut": "Bold (Ctrl+B)",
+        "italicShortcut": "Italic (Ctrl+I)",
+        "bulletList": "Bullet list",
+        "numberedList": "Numbered list",
+        "quote": "Quote",
+        "codeBlock": "Code block",
+        "aiAssistant": "AI Assistant"
       },
       "executiveSummary": {
         "currentMaturity": "Current maturity",
@@ -26571,7 +26690,8 @@
         "media": "Media",
         "activity": "AI activity",
         "relations": "Related items",
-        "evidence": "Sources and assumptions"
+        "evidence": "Sources and assumptions",
+        "artefakt": "Artifact"
       },
       "structure": "Structure",
       "cardToolbar": {
@@ -26649,7 +26769,8 @@
         "pressEnterToOpenTeresa": "Press Enter to open Teresa and continue the conversation.",
         "select": "↵ Select",
         "escClose": "ESC Close",
-        "talkToTeresaToUse": "Talk to Teresa to use the AI"
+        "talkToTeresaToUse": "Talk to Teresa to use the AI",
+        "navigate": "↑↓ Navigate"
       },
       "mediaLibrary": {
         "title": "Media library",
@@ -26736,7 +26857,25 @@
         "stretch": "Stretch",
         "searchThePresentation": "Search the presentation…",
         "searchThePresentation2": "Search the presentation",
-        "rightSide": "Right side"
+        "rightSide": "Right side",
+        "undo": "Undo",
+        "undoShortcut": "Undo (⌘Z)",
+        "text": "Text",
+        "itemsOnePerLine": "Items (one per line)",
+        "csvRowsOnePerLine": "CSV rows (one per line)",
+        "chartType": "Chart type",
+        "line": "Line",
+        "area": "Area",
+        "chartDataJson": "Chart data (JSON)",
+        "changeDirection": "Change direction",
+        "imageUrl": "Image URL",
+        "altText": "Alt text",
+        "fontSize": "Font size",
+        "textColor": "Text color",
+        "italic": "Italic",
+        "left": "Left",
+        "right": "Right",
+        "leftSide": "Left side"
       },
       "deckAuditLogModal": {
         "filterByAction": "Filter by action",
@@ -26784,7 +26923,9 @@
         "onlyYou": "Only you"
       },
       "presentMode": {
-        "nextSlide": "Next slide"
+        "nextSlide": "Next slide",
+        "speakerNotes": "Speaker notes",
+        "noNotesForSlide": "No notes for this slide."
       },
       "presentationReviewPanel": {
         "loading": "Loading…",
@@ -26796,13 +26937,17 @@
         "sendThePresentationAgainOnce": "Send the presentation again once it is fixed.",
         "chooseAPerson": "Choose a person",
         "sendForApproval": "Send for approval",
-        "presentationApproval": "Presentation approval"
+        "presentationApproval": "Presentation approval",
+        "requiredChangesReason": "Reason for requested changes",
+        "reviewerLabel": "Reviewer"
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Embed this deck on external websites:"
       },
       "themeSwitcher": {
-        "readyMadePalettes": "Ready-made palettes"
+        "readyMadePalettes": "Ready-made palettes",
+        "activeTheme": "Active theme",
+        "brandIdentity": "Brand identity"
       },
       "tipTapEditor": {
         "strikethrough": "Strikethrough",
@@ -26810,11 +26955,24 @@
         "alignLeft": "Align left",
         "alignCentre": "Align centre",
         "alignRight": "Align right",
-        "link": "Link"
+        "link": "Link",
+        "bold": "Bold",
+        "italic": "Italic",
+        "bulletList": "Bullet list",
+        "numberedList": "Numbered list"
       },
       "versionHistoryPanel": {
         "nameThisVersion": "Name this version…",
         "noSavedVersionsYet": "No saved versions yet"
+      },
+      "auditLog": {
+        "filterFromDate": "Filter from date",
+        "filterToDate": "Filter to date",
+        "savedViews": "Saved views",
+        "exportFilteredCsv": "Export filtered audit log to CSV"
+      },
+      "qualityGates": {
+        "viewMode": "View mode"
       }
     },
     "governance": {
@@ -27161,7 +27319,13 @@
       "deprecatePublishedTitle": "Deprecate this published template?",
       "deprecateReason": "Reason",
       "deprecateReasonPlaceholder": "Explain why this template is being deprecated.",
-      "errApproveTemplate": "Could not approve and publish the template"
+      "errApproveTemplate": "Could not approve and publish the template",
+      "imageStyleLabel": "Image style",
+      "versionHistory": "Version history",
+      "keyPlaceholder": "key",
+      "labelPlaceholder": "Label",
+      "descriptionPlaceholder": "Description",
+      "optionsCommaSeparated": "Options separated by commas"
     },
     "deckDiffSkippedLocked": "· skipped {{count}} locked slide(s): {{numbers}}",
     "qualitySignal": {
@@ -27333,7 +27497,10 @@
     },
     "brandKitSettings": {
       "confidentialInternalUseOnly": "Confidential — internal use only",
-      "internal": "Internal"
+      "internal": "Internal",
+      "orgNamePlaceholder": "Organization name",
+      "confidential": "Confidential",
+      "public": "Public"
     },
     "presentationTemplateArchitectView": {
       "defaultValue": "Default value",
@@ -30487,7 +30654,9 @@
         "contextItems": "Context items",
         "contextItemsDetail": "{{count}} source records",
         "lastUpdate": "Last update",
-        "conflicts": "Conflicts"
+        "conflicts": "Conflicts",
+        "filesHeading": "Files",
+        "claimsHeading": "Claims, conflicts and publication"
       },
       "sourceType": {
         "document": "Document",
@@ -30576,7 +30745,8 @@
           "culture": "Culture & communication",
           "constraints": "Constraints & risk"
         },
-        "cultureHint": "These settings help Teresa match her communication style to the organization's culture."
+        "cultureHint": "These settings help Teresa match her communication style to the organization's culture.",
+        "loadingProfile": "Loading organization profile…"
       },
       "goalsMetrics": {
         "sections": {
@@ -33158,7 +33328,10 @@
         "report": "Reports",
         "sheet": "Sheets",
         "presentation": "Presentations"
-      }
+      },
+      "viewGallery": "Gallery",
+      "statusApproved": "Approved",
+      "statusPublished": "Published"
     },
     "bundleHistoryPanel": {
       "qualityIsFine": "Quality is fine",
@@ -33182,6 +33355,11 @@
       "noTemplatesAreWaitingFor": "No templates are waiting for provenance.",
       "pickATemplateNothingIs": "Pick a template. Nothing is approved automatically.",
       "approveTheCompleteProvenance": "Approve the complete provenance"
+    },
+    "dataSources": {
+      "connectorLabel": "Connector:",
+      "configJsonLabel": "Configuration (JSON):",
+      "intakeFormIdPlaceholder": "Intake form ID"
     }
   },
   "rbHub": {
@@ -33681,7 +33859,8 @@
       "qualityUnavailable": "N/A",
       "sizeLabel": "Size",
       "workbookQualitySuffix": "Quality: {{quality}}",
-      "rowsColsFormat": "{{rows}} rows × {{cols}} cols"
+      "rowsColsFormat": "{{rows}} rows × {{cols}} cols",
+      "selectAll": "Select all"
     },
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
@@ -34181,7 +34360,8 @@
     "back": "Back",
     "leftRail": {
       "empty": "No presentations yet."
-    }
+    },
+    "moduleLabel": "Tables"
   },
   "contact": {
     "badge": "Get in touch",
@@ -34303,7 +34483,9 @@
         "passed": "Ready",
         "pending": "Pending",
         "failed": "Needs fixing"
-      }
+      },
+      "preflightCheckPending": "Control pending execution",
+      "preflightCheckFailed": "Control needs correction"
     },
     "handoffIntentValue": {
       "unknown": "Not specified",
@@ -34311,7 +34493,12 @@
       "task": "Task",
       "decision": "Decision",
       "analysis": "Analysis"
-    }
+    },
+    "contextSnapshots": "Conversation logs: {{count}}",
+    "contextShortCount": "Context: {{count}}",
+    "searchShortCount": "Searches: {{count}}",
+    "handoffShortCount": "Handoffs: {{count}}",
+    "retrievalPresetConfigured": "Setting matched to conversation"
   },
   "billing": {
     "addCard": {
@@ -34979,7 +35166,9 @@
     "aiHintNextSteps": "Next steps",
     "noSuggestedPlan": "No suggested plan",
     "history": {
-      "noActions": "No saved actions."
+      "noActions": "No saved actions.",
+      "heading": "Change history",
+      "recentActionsCount": "{{count}} recent actions"
     },
     "report": {
       "noItems": "No items."
@@ -35647,7 +35836,8 @@
     "templateResolveFailed": "Couldn't resolve the template. Please try again.",
     "template": {
       "backToLibrary": "Back to Library",
-      "goToProvenance": "Go to Provenance and rights"
+      "goToProvenance": "Go to Provenance and rights",
+      "creating": "Creating a presentation from template…"
     },
     "reopenSummary": "Presentation \"{{title}}\" — {{count}} slides.",
     "kpi": {
@@ -35677,7 +35867,8 @@
     },
     "blank": {
       "retry": "Try again",
-      "title": "New presentation"
+      "title": "New presentation",
+      "creating": "Creating a blank presentation…"
     },
     "blankFailed": "Failed to create a blank presentation.",
     "blankFailedPermanent": "Failed to create a blank presentation. Try again or go back to Materials.",
@@ -35686,8 +35877,16 @@
     "tri": {
       "aiDesc": "Describe the deck — AI will build the slides and the content.",
       "heading": "How do you want to start the presentation?",
-      "subheading": "Choose a mode — all three are equally valid."
-    }
+      "subheading": "Choose a mode — all three are equally valid.",
+      "cleanTitle": "Blank",
+      "templateTitle": "From template",
+      "templateDesc": "Start from a ready-made presentation template."
+    },
+    "moduleLabel": "Presentations",
+    "rightRail": {
+      "artefakt": "Artifact"
+    },
+    "back": "Back to Presentations home"
   },
   "excele": {
     "breadcrumb": {
@@ -35720,7 +35919,8 @@
       "format": "Format",
       "history": "History",
       "sheets": "Sheets",
-      "versionHistory": "Version history"
+      "versionHistory": "Version history",
+      "structure": "Structure"
     },
     "rightRail": {
       "checkpoint": "Create checkpoint",
@@ -35753,7 +35953,8 @@
       "structureRows": "{{count}} rows",
       "structureSubtitle": "The layout of the workbook and its sheets.",
       "structureTitle": "Structure",
-      "versionHistory": "Version history"
+      "versionHistory": "Version history",
+      "artifact": "Artifact"
     },
     "triChooser": {
       "ai": {
@@ -36043,7 +36244,13 @@
     "highRisk": "High risk",
     "executing": "Executing...",
     "executed": "Executed",
-    "dismissed": "dismissed"
+    "dismissed": "dismissed",
+    "fields": {
+      "priority": "Priority:",
+      "dueDate": "Deadline:",
+      "category": "Category:",
+      "estimation": "Estimation:"
+    }
   },
   "artifacts": {
     "next": "next",
@@ -36528,6 +36735,12 @@
         "body": "Someone else saved this document while you were editing. Nothing was overwritten — choose how to continue.",
         "keepMine": "Save my version as a new one",
         "loadTheirs": "Discard my version, load theirs"
+      },
+      "documentProposal": {
+        "inserted": "Teresa's proposal inserted into the document."
+      },
+      "materializedTo": {
+        "heading": "Created from this document"
       }
     },
     "aiStream": {
@@ -36734,7 +36947,8 @@
     "selectSource": "Select sources",
     "projectData": "Project",
     "research": "Research",
-    "webDesc": "Real-time search"
+    "webDesc": "Real-time search",
+    "label": "Mode"
   },
   "trust": {
     "badge": {
@@ -37668,7 +37882,8 @@
       "sourceAttachment": "Attachment id",
       "sourceText": "Text",
       "sourceUrl": "URL",
-      "requiredMarker": "required"
+      "requiredMarker": "required",
+      "sectionFormat": "Format and recipients"
     },
     "outline": {
       "type": "Type",
@@ -37762,7 +37977,8 @@
       "requiredSectionMarker": "Required section",
       "structurePreviewAriaLabel": "Document structure preview, {{count}} sections",
       "validate": "Check",
-      "wordSettings": "Document layout"
+      "wordSettings": "Document layout",
+      "versionHistory": "Version history"
     },
     "view": {
       "templatesLoadFailedWithReason": "Approved templates could not be loaded ({{reason}}). You can still generate without a template.",
@@ -38230,7 +38446,10 @@
       "find": "Find",
       "findInTheDocument": "Find in the document",
       "replace": "Replace",
-      "findAndReplace": "Find and replace"
+      "findAndReplace": "Find and replace",
+      "fontSize": "Font size",
+      "color": "Color",
+      "textColor": "Text color"
     },
     "useManualPrompt": {
       "thisCannotBeUndoneOnce": "This cannot be undone once the session is closed.",
@@ -38245,6 +38464,13 @@
       "cancel": "Cancel",
       "send": "Send",
       "noCommentsYetBeThe": "No comments yet — be the first."
+    },
+    "reader": {
+      "comments": {
+        "sectionLabel": "Comments",
+        "reply": "Reply"
+      },
+      "clientReadingMode": "Client reading mode"
     }
   },
   "priority": {
@@ -46031,7 +46257,8 @@
         "goToProvenanceAndRights": "Go to Provenance and rights",
         "backToTheLibrary": "Back to the library"
       }
-    }
+    },
+    "checkingTemplateFromLibrary": "Checking template from the Library…"
   },
   "discoveryToolsSteps": {
     "contextStep": {
@@ -49304,7 +49531,8 @@
         "hint": "Mail and appointments.",
         "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
       },
-      "soonBadge": "Soon"
+      "soonBadge": "Soon",
+      "approvalBadge": "consent"
     },
     "palette": {
       "ariaLabel": "Agent block palette",
@@ -49354,7 +49582,21 @@
       "moveUp": "Move up",
       "noteHint": "A note on the diagram — the agent does not run it.",
       "removeBlock": "Remove block",
-      "vaultLevelUnset": "— no level selected —"
+      "vaultLevelUnset": "— no level selected —",
+      "empty": "Empty diagram",
+      "blockName": "Block name",
+      "now": "Now",
+      "waitHours": "{{h}} hr",
+      "blockKind": "Block type",
+      "vaultLevel": "Vault level",
+      "waitHoursSuffix": "hr",
+      "end": "End"
+    },
+    "panel": {
+      "processDiagram": "Process diagram",
+      "step": "step",
+      "steps": "steps",
+      "schemaApproved": "diagram approved"
     }
   },
   "views": {

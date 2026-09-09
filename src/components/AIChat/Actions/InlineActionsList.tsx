@@ -85,7 +85,7 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Zap size={12} className="text-amber-500" />
           <span>
-            {t('aiActions.proposedActions', 'Proponowane akcje')} ({pendingActions.length})
+            {t('aiActions.proposedActions', 'Proposed actions')} ({pendingActions.length})
           </span>
         </div>
       )}
@@ -131,13 +131,13 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
           {completedActions.filter((a) => a.status === 'executed').length > 0 && (
             <span className="text-green-500">
               ✓ {completedActions.filter((a) => a.status === 'executed').length}{' '}
-              {t('aiActions.completed', 'wykonane')}
+              {t('aiActions.completed', 'done')}
             </span>
           )}
           {completedActions.filter((a) => a.status === 'dismissed').length > 0 && (
             <span className="ml-2 text-slate-600">
               {completedActions.filter((a) => a.status === 'dismissed').length}{' '}
-              {t('aiActions.dismissed', 'odrzucone')}
+              {t('aiActions.dismissed', 'rejected')}
             </span>
           )}
         </div>

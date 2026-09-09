@@ -275,7 +275,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
         );
       }
       setProfile((previous) => ({ ...previous, ...readback.profile }));
-      toast.success(t('organization.profile.saved', 'Profil zapisany'));
+      toast.success(t('organization.profile.saved', 'Profile saved'));
     } catch (error) {
       toast.error(
         (error as Error)?.message || t('organization.profile.saveFailed', 'Failed to save')
@@ -346,7 +346,7 @@ export const OrganizationDirectionConstraintsScreen: React.FC<{
       aria-live="polite"
       className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-[13px] text-c-text-muted"
     >
-      Wczytywanie profilu organizacji…
+      {t('organization.redesign.direction.loadingProfile', 'Loading organization profile…')}
     </div>
   ) : (
     <>

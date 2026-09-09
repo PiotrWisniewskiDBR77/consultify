@@ -261,13 +261,13 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: t('reports.tabs.schedules', 'Harmonogramy'),
+        label: t('reports.tabs.schedules', 'Schedules'),
         icon: <CalendarClock size={16} />,
         count: schedules.filter((s) => s.isActive).length,
       },
       {
         id: 'automation' as ModuleTab,
-        label: t('reports.tabs.automation', 'Automatyzacja'),
+        label: t('reports.tabs.automation', 'Automation'),
         icon: <Zap size={16} />,
       },
     ],
@@ -409,7 +409,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         {
           // canon §14 + §9.2: Archive slot (soft-delete backend TBD)
           id: 'archive',
-          label: t('rap.actions.archive', 'Archiwizuj'),
+          label: t('rap.actions.archive', 'Archive'),
           icon: Archive,
           disabled: true,
           description: t('common.comingSoon', 'Coming soon'),

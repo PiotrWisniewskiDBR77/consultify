@@ -905,7 +905,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             ) : null}
             {showHistory ? (
               <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
-                <div className="font-semibold text-c-text">Historia wersji</div>
+                <div className="font-semibold text-c-text">{t('documentStudio.templateArchitect.versionHistory', 'Version history')}</div>
                 <ol className="mt-2 space-y-1 text-c-text-secondary">
                   {auditEntries.map((entry) => (
                     <li key={entry.auditId} className="flex items-center justify-between gap-3">

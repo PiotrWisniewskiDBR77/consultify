@@ -30,6 +30,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { znajdzPolskiJsx, znajdzPolskieDefaultValue } from '../../../../tests/unit/i18n/polskiBezOgonkowWspolny';
+
 const KORZEN = path.resolve(__dirname, '../../..'); // src/
 const KATALOGI = [
   'components/DocumentStudio',
@@ -168,6 +170,18 @@ describe('moduł Materiały — konto angielskie nie widzi polskiego', () => {
         for (const m of tekst.matchAll(wzorzec)) trafienia.push(`${nazwa}: ${m[0]}`);
       }
     }
+    expect(trafienia).toEqual([]);
+  });
+
+  // ---------------------------------------------------------------------
+  // ROZSZERZENIE J-DOG-C (2026-09-09): `POLSKIE_SLOWA` powyżej to ręcznie
+  // dopisana lista — nie łapie każdego polskiego bez ogonków spoza niej
+  // (zmierzone przez J-DOG-C: „Kolor", „Priorytet", „Rozmiar czcionki",
+  // „Kursywa" i kilkadziesiąt innych w tym module przechodziły niewidoczne).
+  // Dokłada szerszy detektor `tests/unit/i18n/polskiBezOgonkowWspolny.ts`
+  // (słownik automatyczny z `public/locales/pl` + ręczne rdzenie).
+  it('J-DOG-C: żaden defaultValue ani napis JSX nie jest polski bez ogonków', () => {
+    const trafienia = [...znajdzPolskieDefaultValue(ZRODLA), ...znajdzPolskiJsx(ZRODLA)];
     expect(trafienia).toEqual([]);
   });
 });

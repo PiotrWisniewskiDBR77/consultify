@@ -356,17 +356,21 @@ const ADMAPillarCard: React.FC<{
 /**
  * Legal Notice Banner
  */
-const ADMALegalNotice: React.FC = () => (
-  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
-    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-    <div className="text-sm text-amber-800 dark:text-amber-200">
-      <strong>ADMA (Advanced Digital Maturity Assessment)</strong> jest narzędziem opracowanym przez{' '}
-      <strong>European Commission</strong> w ramach programu{' '}
-      <strong>Digital Innovation Hubs</strong>. Wykorzystanie w Consultify służy{' '}
-      <strong>celom edukacyjnym</strong>.
+const ADMALegalNotice: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+      <div className="text-sm text-amber-800 dark:text-amber-200">
+        <strong>ADMA (Advanced Digital Maturity Assessment)</strong>{' '}
+        {t(
+          'assessment.adma.legalNotice.body',
+          'is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Its use in Consultify serves educational purposes.'
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ============================================
 // MAIN COMPONENT

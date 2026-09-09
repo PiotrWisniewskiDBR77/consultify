@@ -186,7 +186,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
   return (
     <section
       className="mt-10 border-t border-c-border-subtle pt-6"
-      aria-label="Komentarze"
+      aria-label={t('documentStudio.reader.comments.sectionLabel', 'Comments')}
       data-testid="reader-comments-panel"
     >
       <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-c-text">
@@ -259,7 +259,7 @@ export function ReaderCommentsPanel({ token }: { token: string }): React.ReactEl
                   onClick={() => setReplyDraftFor(thread.root.commentId)}
                   className="mt-2 text-xs font-medium text-c-text-secondary hover:text-c-text"
                 >
-                  Odpowiedz
+                  {t('documentStudio.reader.comments.reply', 'Reply')}
                 </button>
               )}
             </li>

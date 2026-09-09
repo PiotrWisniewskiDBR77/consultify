@@ -871,7 +871,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                aria-label="Filtruj od daty"
+                aria-label={t('presentations.builder.auditLog.filterFromDate', 'Filter from date')}
                 className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
               <label
@@ -885,7 +885,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                aria-label="Filtruj do daty"
+                aria-label={t('presentations.builder.auditLog.filterToDate', 'Filter to date')}
                 className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
             </div>
@@ -922,7 +922,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                       }}
                       aria-haspopup="menu"
                       aria-expanded={savedViewsOpen}
-                      aria-label="Zapisane widoki"
+                      aria-label={t('presentations.builder.auditLog.savedViews', 'Saved views')}
                       className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] font-medium text-c-text hover:bg-c-surface-raised"
                     >
                       <Bookmark size={11} />
@@ -1186,7 +1186,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               type="button"
               onClick={handleExportCsv}
               disabled={exportDisabled}
-              aria-label="Eksportuj przefiltrowany dziennik audytu do CSV"
+              aria-label={t('presentations.builder.auditLog.exportFilteredCsv', 'Export filtered audit log to CSV')}
               className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={12} />

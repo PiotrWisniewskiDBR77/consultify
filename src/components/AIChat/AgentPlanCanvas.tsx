@@ -604,7 +604,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
             >
               <Plus size={18} className="mx-auto mb-2 text-c-text-muted" />
               <p className="text-xs font-medium text-c-text">
-                {t('agentPlan.canvas.empty', 'Pusty schemat')}
+                {t('agentPlan.canvas.empty', 'Empty diagram')}
               </p>
               <p className="mt-1 text-xs text-c-text-muted">
                 {t(
@@ -677,7 +677,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             <input
                               value={block.name}
                               onChange={(e) => renameBlock(index, e.target.value)}
-                              aria-label={t('agentPlan.canvas.blockName', 'Nazwa klocka')}
+                              aria-label={t('agentPlan.canvas.blockName', 'Block name')}
                               title={block.name}
                               className="-mx-1 min-w-0 flex-1 truncate rounded bg-transparent px-1 text-sm font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             />
@@ -691,7 +691,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               data-testid="canvas-current-badge"
                               className="shrink-0 rounded-full border border-c-info px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-info"
                             >
-                              {t('agentPlan.canvas.now', 'Teraz')}
+                              {t('agentPlan.canvas.now', 'Now')}
                             </span>
                           ) : null}
                           {chip ? (
@@ -721,7 +721,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   : ''
                               }`
                             : block.kind === 'pauza'
-                              ? ` · ${t('agentPlan.canvas.waitHours', '{{h}} godz.', {
+                              ? ` · ${t('agentPlan.canvas.waitHours', '{{h}} hr', {
                                   h:
                                     typeof block.toolInput?.waitHours === 'number'
                                       ? block.toolInput.waitHours
@@ -746,7 +746,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             <select
                               value={block.kind}
                               onChange={(e) => setBlockKind(index, e.target.value as PlanBlockKind)}
-                              aria-label={t('agentPlan.canvas.blockKind', 'Typ klocka')}
+                              aria-label={t('agentPlan.canvas.blockKind', 'Block type')}
                               className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
                               {ALL_BLOCK_KINDS.map((kind) => (
@@ -769,7 +769,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   );
                                   setBlockVaultSafe(index, safe);
                                 }}
-                                aria-label={t('agentPlan.canvas.vaultLevel', 'Poziom Vault')}
+                                aria-label={t('agentPlan.canvas.vaultLevel', 'Vault level')}
                                 className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <option value="">
@@ -851,11 +851,11 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   onChange={(e) => setBlockWaitHours(index, Number(e.target.value))}
                                   aria-label={t(
                                     'agentPlan.canvas.waitHoursInput',
-                                    'Liczba godzin pauzy'
+                                    'Number of pause hours'
                                   )}
                                   className="h-8 w-16 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                                 />
-                                {t('agentPlan.canvas.waitHoursSuffix', 'godz.')}
+                                {t('agentPlan.canvas.waitHoursSuffix', 'hr')}
                               </label>
                             ) : annotation || block.kind === 'vault-kontekst' ? null : (
                               <select
@@ -931,7 +931,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
           <Connector />
         </div>
         <div className="flex justify-center">
-          <EndCap label={t('agentPlan.canvas.end', 'Koniec')} icon={Flag} />
+          <EndCap label={t('agentPlan.canvas.end', 'End')} icon={Flag} />
         </div>
       </div>
     </div>

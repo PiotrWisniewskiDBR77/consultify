@@ -22,6 +22,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { bezKomentarzy, znajdzPolskiJsx, znajdzPolskieDefaultValue } from '../i18n/polskiBezOgonkowWspolny';
+
 const ROOT = path.resolve(__dirname, '../../..');
 const WYJATKI = JSON.parse(
   fs.readFileSync(path.join(ROOT, 'scripts/i18n/pomiar-jezyka.wyjatki.json'), 'utf8')
@@ -180,5 +182,32 @@ describe('J1 — moduł Czat nie mówi po polsku do konta angielskiego', () => {
     // Domyślka MUSI iść za interfejsem, nie za stałą 'pl'.
     expect(tresc).not.toMatch(/params\.language\s*\|\|\s*'pl'/);
     expect(tresc).toMatch(/params\.language\s*\|\|\s*i18n\.language/);
+  });
+
+  // ---------------------------------------------------------------------
+  // ROZSZERZENIE J-DOG-C (2026-09-09): powyższy `polski()` stoi na
+  // `polskieSilne/Slabe` z `pomiar-jezyka.wyjatki.json` — krótkiej liście,
+  // która NIE łapie polskiego bez ogonków spoza tej listy („Kolor",
+  // „Priorytet", „Rozmiar czcionki" — zmierzone przez J-DOG-C w innych
+  // modułach). Ten blok dokłada szerszy detektor
+  // `tests/unit/i18n/polskiBezOgonkowWspolny.ts` (słownik automatyczny
+  // z `public/locales/pl` + ręczne rdzenie), żeby regresja tej KONKRETNEJ
+  // klasy była też złapana w Czacie.
+  it('J-DOG-C: żaden defaultValue ani napis JSX nie jest polski bez ogonków', () => {
+    const zrodla = PLIKI_MODULU.map((p) => ({
+      nazwa: rel(p),
+      tekst: bezKomentarzy(fs.readFileSync(p, 'utf8')),
+    }));
+    // WYJĄTEK ŚWIADOMY: `V8ContextIndicator.tsx` ma `isPolish ? t(klucz, 'Nie
+    // określono') : angielski_string` — ten `t()` wykonuje się TYLKO gdy
+    // isPolish===true, więc konto angielskie nigdy nie widzi tego
+    // defaultValue (poprawny wzorzec dwujęzyczny, ten sam co
+    // `executionRealData.ts` w bezpieczniku 07 Realizacja).
+    const DOZWOLONE = new Set(['src/components/AIChat/V8ContextIndicator.tsx: „Nie określono"']);
+    const trafienia = [
+      ...znajdzPolskieDefaultValue(zrodla),
+      ...znajdzPolskiJsx(zrodla),
+    ].filter((t) => !DOZWOLONE.has(t));
+    expect(trafienia).toEqual([]);
   });
 });

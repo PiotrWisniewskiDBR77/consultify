@@ -140,11 +140,11 @@ function formatPlanLabel(plan: ArtifactRunPlan | null, t: Translate): string {
   const option = OUTPUT_OPTIONS.find((item) => item.outputType === plan.outputType);
   const outputLabel = t(
     `v8.artifactRun.option.${plan.outputType}`,
-    option?.label ?? 'Materiał'
+    option?.label ?? 'Material'
   );
   const scopeLabel = t(
     `v8.artifactRun.visibility.${plan.visibilityScope}`,
-    'Dostęp zgodny z uprawnieniami'
+    'Access matches permissions'
   );
   return `${outputLabel} · ${scopeLabel}`;
 }
@@ -648,7 +648,7 @@ export function V8ArtifactRunControl({
                       {currentRun.preflight?.state
                         ? t(
                             `v8.artifactRun.preflightState.${currentRun.preflight.state}`,
-                            'Wymaga uwagi'
+                            'Needs attention'
                           )
                         : t('v8.artifactRun.preflightNotRun', 'Not run')}
                     </span>
@@ -665,19 +665,19 @@ export function V8ArtifactRunControl({
                             <div className="truncate font-medium">
                               {t(
                                 `v8.artifactRun.preflightCheck.${check.id}`,
-                                'Kontrola materiału'
+                                'Material check'
                               )}
                             </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
                               {check.status === 'passed'
                                 ? t('v8.artifactRun.preflightCheckPassed', 'Check passed')
                                 : check.status === 'pending'
-                                  ? t('v8.artifactRun.preflightCheckPending', 'Kontrola oczekuje na wykonanie')
-                                  : t('v8.artifactRun.preflightCheckFailed', 'Kontrola wymaga poprawy')}
+                                  ? t('v8.artifactRun.preflightCheckPending', 'Control pending execution')
+                                  : t('v8.artifactRun.preflightCheckFailed', 'Control needs correction')}
                             </div>
                           </div>
                           <div className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                            {t(`v8.artifactRun.checkStatus.${check.status}`, 'Wymaga uwagi')}
+                            {t(`v8.artifactRun.checkStatus.${check.status}`, 'Needs attention')}
                           </div>
                         </div>
                       ))}

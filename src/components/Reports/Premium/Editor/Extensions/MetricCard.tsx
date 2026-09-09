@@ -85,7 +85,7 @@ const MetricCardComponent: React.FC<{
             type="text"
             value={editForm.label}
             onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-            placeholder="Etykieta"
+            placeholder={t('reports.premium.metricCard.labelPlaceholder', 'Label')}
             className="w-full px-2 py-1 border rounded text-sm"
           />
           <select
@@ -95,10 +95,10 @@ const MetricCardComponent: React.FC<{
             }
             className="w-full px-2 py-1 border rounded text-sm"
           >
-            <option value="primary"> Niebieski </option>
-            <option value="success"> Zielony </option>
+            <option value="primary"> {t('reports.premium.metricCard.blue', 'Blue')} </option>
+            <option value="success"> {t('reports.premium.metricCard.green', 'Green')} </option>
             <option value="warning"> {t('reports.premium.metricCard.orange', 'Orange')} </option>
-            <option value="danger"> Czerwony </option>
+            <option value="danger"> {t('reports.premium.metricCard.red', 'Red')} </option>
           </select>
           <select
             value={editForm.trend}
@@ -107,9 +107,9 @@ const MetricCardComponent: React.FC<{
             }
             className="w-full px-2 py-1 border rounded text-sm"
           >
-            <option value="neutral"> Neutralny </option>
-            <option value="up"> Wzrost </option>
-            <option value="down"> Spadek </option>
+            <option value="neutral"> {t('reports.premium.metricCard.neutral', 'Neutral')} </option>
+            <option value="up"> {t('reports.premium.metricCard.increase', 'Increase')} </option>
+            <option value="down"> {t('reports.premium.metricCard.decrease', 'Decrease')} </option>
           </select>
         </div>
       ) : (

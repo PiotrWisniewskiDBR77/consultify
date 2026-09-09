@@ -202,7 +202,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       toast.error(
         t(
           'portfolio.toast.cannotDowngrade',
-          'Nie można obniżyć statusu. Użyj "Anuluj" lub "Archiwizuj".'
+          'Cannot downgrade status. Use Cancel or Archive.'
         )
       );
       return;
@@ -646,7 +646,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                   }
                                 : {
                                     id: 'archive',
-                                    label: t('common.archive', 'Archiwizuj'),
+                                    label: t('common.archive', 'Archive'),
                                     icon: Archive,
                                     disabled:
                                       !onArchive ||

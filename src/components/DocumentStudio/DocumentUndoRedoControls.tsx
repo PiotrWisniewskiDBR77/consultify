@@ -61,7 +61,7 @@ export const DocumentUndoRedoControls: React.FC<DocumentUndoRedoControlsProps> =
         onClick={() => editor?.chain().focus().undo().run()}
         disabled={!editor || !canUndo}
         title={t('documentStudio.panel.undoTooltip', 'Undo the last change (Ctrl/Cmd+Z)')}
-        aria-label={t('documentStudio.panel.undoLabel', 'Cofnij')}
+        aria-label={t('documentStudio.panel.undoLabel', 'Undo')}
         data-testid="document-studio-undo"
       >
         <Undo2 className="h-3.5 w-3.5" aria-hidden="true" />

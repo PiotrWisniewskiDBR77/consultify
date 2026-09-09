@@ -969,7 +969,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     };
     const businessUnitCol: TableColumn = {
       id: 'businessUnit',
-      label: t('assessment.hub.table.businessUnit', 'Jednostka'),
+      label: t('assessment.hub.table.businessUnit', 'Unit'),
       width: '170px',
       sortable: true,
       render: (row) => {
@@ -996,7 +996,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
        trasach listy. Brak wartości rysuje „—" — nigdy atrapy. */
     const scoreCol: TableColumn = {
       id: 'overallScore',
-      label: t('assessment.hub.table.score', 'Wynik'),
+      label: t('assessment.hub.table.score', 'Result'),
       width: '110px',
       dataType: 'number',
       align: 'right',
@@ -1058,7 +1058,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
      */
     const contextCol: TableColumn = {
       id: 'assessmentName',
-      label: t('assessment.hub.table.context', 'Kontekst'),
+      label: t('assessment.hub.table.context', 'Context'),
       width: '220px',
       render: (row) => {
         const label = getReportContextLabel(row);
@@ -1185,7 +1185,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
          regresji tests/components/assessment/AssessmentHub.processes-completion.test.tsx,
          bo mapowanie `completionPercent` na wiersz zostaje nietknięte. */
       { ...progressCol, defaultVisible: false },
-      { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Aktualizacja') },
+      { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Update') },
     ];
   }, [activeTab, t, getAuthorLabel, getReportContextLabel]);
 
@@ -2874,7 +2874,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             title={t('assessment.hub.uploadPdfTooltip', 'Upload a DRD report as PDF')}
           >
             {isUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-            {t('assessment.hub.uploadPdf', 'Wgraj PDF')}
+            {t('assessment.hub.uploadPdf', 'Upload PDF')}
           </button>
         </>
       )}

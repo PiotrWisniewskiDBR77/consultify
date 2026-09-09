@@ -214,7 +214,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     () => [
       {
         id: 'title',
-        label: t('rap.columns.name', 'Nazwa'),
+        label: t('rap.columns.name', 'Name'),
         width: '280px',
         render: (row: TemplateItem) => (
           <div className="flex items-center gap-2 min-w-0">
@@ -292,7 +292,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       },
       {
         id: 'category',
-        label: t('rap.columns.category', 'Kategoria'),
+        label: t('rap.columns.category', 'Category'),
         width: '160px',
         filterable: true,
         filterOptions: [
@@ -364,7 +364,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       },
       {
         id: 'scope',
-        label: t('rap.columns.scope', 'Zakres'),
+        label: t('rap.columns.scope', 'Scope'),
         width: '140px',
         filterable: true,
         filterOptions: [
@@ -385,12 +385,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterOptions: [
           {
             value: 'approved',
-            label: t('rap.templates.statusApproved', 'Zatwierdzony'),
+            label: t('rap.templates.statusApproved', 'Approved'),
             color: 'bg-emerald-400',
           },
           {
             value: 'published',
-            label: t('rap.templates.statusPublished', 'Opublikowany'),
+            label: t('rap.templates.statusPublished', 'Published'),
             color: 'bg-emerald-400',
           },
           { value: 'draft', label: t('reports.draft'), color: 'bg-slate-400' },
@@ -412,7 +412,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       },
       {
         id: 'updatedAt',
-        label: t('rap.columns.updatedAt', 'Ostatnia zmiana'),
+        label: t('rap.columns.updatedAt', 'Last change'),
         width: '150px',
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => {
@@ -473,13 +473,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       })(),
       {
         id: 'clone',
-        label: t('rap.actions.clone', 'Klonuj'),
+        label: t('rap.actions.clone', 'Clone'),
         icon: Copy,
         onClick: () => navigate(resolveTemplateClonePath(row.id, row.type)),
       },
       {
         id: 'ask_ai',
-        label: t('rap.actions.askAI', 'Zapytaj AI'),
+        label: t('rap.actions.askAI', 'Ask AI'),
         icon: MessageSquare,
         onClick: () => {
           openChat({
@@ -567,7 +567,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               {
                 id: 'clone',
                 variant: 'neutral',
-                label: t('rap.actions.clone', 'Klonuj'),
+                label: t('rap.actions.clone', 'Clone'),
                 icon: Copy,
                 onClick: () =>
                   navigate(resolveTemplateClonePath(selectedItem.id, selectedItem.type)),
@@ -575,7 +575,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               {
                 id: 'ask_ai',
                 variant: 'neutral',
-                label: t('rap.actions.askAI', 'Zapytaj AI'),
+                label: t('rap.actions.askAI', 'Ask AI'),
                 icon: MessageSquare,
                 onClick: () => {
                   openChat({
@@ -851,7 +851,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             }}
             details={{
               text: [
-                `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+                `${t('rap.preview.scope', 'Scope')}: ${scopeLabel(selectedItem.scope)}`,
                 // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
                 // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
                 // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
@@ -872,7 +872,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                       ),
                     ]
                   : []),
-                `${t('rap.preview.category', 'Kategoria')}: ${
+                `${t('rap.preview.category', 'Category')}: ${
                   TEMPLATE_CATEGORY_META[selectedItem.category]
                     ? isPolish
                       ? TEMPLATE_CATEGORY_META[selectedItem.category].labelPl
@@ -880,7 +880,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                     : selectedItem.category
                 }`,
                 ...(selectedItem.sectionCount != null
-                  ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
+                  ? [`${t('rap.preview.sections', 'Sections')}: ${selectedItem.sectionCount}`]
                   : []),
                 ...(selectedItem.slideCount != null
                   ? [`${t('rap.preview.slides', 'Slides')}: ${selectedItem.slideCount}`]

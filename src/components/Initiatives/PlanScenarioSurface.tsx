@@ -414,7 +414,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       title: resolveBusinessDisplayLabel({
         displayName: item.name,
         rawId: item.id,
-        fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
+        fallback: `${t('initiatives.plan.unnamed', 'Untitled plan')} · ${formatDate(item.updatedAt)}`,
       }),
       state: item.state,
       version: item.version,
@@ -1588,22 +1588,22 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 properties: [
                   {
                     id: 'portfolio',
-                    label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'),
+                    label: t('initiatives.plan.columns.portfolio', 'Portfolio / version'),
                     value: row.portfolio,
                   },
                   {
                     id: 'horizon',
-                    label: t('initiatives.plan.columns.horizon', 'Horyzont'),
+                    label: t('initiatives.plan.columns.horizon', 'Horizon'),
                     value: `${formatDate(row.earliest)} – ${formatDate(row.latest)}`,
                   },
                   {
                     id: 'initiatives',
-                    label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'),
+                    label: t('initiatives.plan.columns.initiatives', 'Initiatives in plan'),
                     value: String(row.initiativeCount),
                   },
                   {
                     id: 'conflicts',
-                    label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
+                    label: t('initiatives.plan.columns.conflicts', 'Conflicts'),
                     value: row.conflicts ? String(row.conflicts) : t('common.none', 'none'),
                   },
                 ],
@@ -1613,15 +1613,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         >
           <StandardTable
             columns={[
-              { id: 'title', label: t('initiatives.plan.columns.name', 'Nazwa'), sortable: true },
+              { id: 'title', label: t('initiatives.plan.columns.name', 'Name'), sortable: true },
               {
                 id: 'portfolio',
-                label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'),
+                label: t('initiatives.plan.columns.portfolio', 'Portfolio / version'),
                 sortable: true,
               },
               {
                 id: 'earliest',
-                label: t('initiatives.plan.columns.horizon', 'Horyzont'),
+                label: t('initiatives.plan.columns.horizon', 'Horizon'),
                 render: (row) => `${formatDate(row.earliest)} – ${formatDate(row.latest)}`,
               },
               {
@@ -1631,20 +1631,20 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               },
               {
                 id: 'initiativeCount',
-                label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'),
+                label: t('initiatives.plan.columns.initiatives', 'Initiatives in plan'),
                 sortable: true,
               },
               {
                 id: 'conflicts',
-                label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
+                label: t('initiatives.plan.columns.conflicts', 'Conflicts'),
                 render: (row) => (row.conflicts ? row.conflicts : t('common.none', 'none')),
               },
               {
                 id: 'updatedAt',
-                label: t('initiatives.plan.columns.updatedAt', 'Zaktualizowano'),
+                label: t('initiatives.plan.columns.updatedAt', 'Updated'),
                 render: (row) => formatDate(row.updatedAt),
               },
-              { id: 'author', label: t('initiatives.plan.columns.author', 'Autor') },
+              { id: 'author', label: t('initiatives.plan.columns.author', 'Author') },
             ]}
             data={visiblePlans}
             selectedRowId={selectedId}
@@ -1658,7 +1658,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               title: t('initiatives.planCard.listEmptyTitle', 'No plans'),
               description: t(
                 'initiatives.planCard.listEmptyDescription',
-                'Załóż pierwszy plan przyciskiem „Nowy plan" — wybierzesz w nim zatwierdzone inicjatywy i horyzont.'
+                'Start your first plan with the "New plan" button — you will pick approved initiatives and a horizon in it.'
               ),
             }}
           />

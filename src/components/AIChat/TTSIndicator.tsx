@@ -49,7 +49,7 @@ export const TTSIndicator: React.FC = () => {
       <button
         onClick={handleStop}
         className="flex items-center gap-2 px-3 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
-        title={t('aiChat.stopTTS', 'Zatrzymaj czytanie')}
+        title={t('aiChat.stopTTS', 'Stop reading')}
       >
         <Volume2 size={18} className="animate-pulse" />
         <span className="text-sm font-medium">{t('aiChat.speaking', 'Czytam...')}</span>

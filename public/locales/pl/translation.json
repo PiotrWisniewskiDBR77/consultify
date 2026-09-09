@@ -915,7 +915,9 @@
     "learnMore": "Dowiedz się więcej",
     "undo": "Cofnij",
     "redo": "Ponów",
-    "tableWithPreview": "Obszar roboczy tabeli i podglądu"
+    "tableWithPreview": "Obszar roboczy tabeli i podglądu",
+    "conflict": "Konflikt",
+    "sections": "Sekcje"
   },
   "superadmin": {
     "confirm": {
@@ -1738,7 +1740,13 @@
         "appendix": "Załącznik"
       },
       "imageStylePlaceholder": "Np. gradient fuksji, różu i królewskiego błękitu, subtelne światło studyjne",
-      "imageStyleHint": "Te słowa zostaną dopisane do każdego polecenia generowania obrazu AI w tym motywie."
+      "imageStyleHint": "Te słowa zostaną dopisane do każdego polecenia generowania obrazu AI w tym motywie.",
+      "imageStyleLabel": "Styl obrazu",
+      "versionHistory": "Historia wersji",
+      "keyPlaceholder": "klucz",
+      "labelPlaceholder": "Etykieta",
+      "descriptionPlaceholder": "Opis",
+      "optionsCommaSeparated": "Opcje oddzielone przecinkami"
     },
     "brandKit": {
       "title": "Kit marki",
@@ -1849,7 +1857,8 @@
         "media": "Media",
         "activity": "Aktywność AI",
         "relations": "Powiązania",
-        "evidence": "Źródła i założenia"
+        "evidence": "Źródła i założenia",
+        "artefakt": "Artefakt"
       },
       "structure": "Struktura",
       "cardToolbar": {
@@ -2020,7 +2029,8 @@
         "pressEnterToOpenTeresa": "Naciśnij Enter, aby otworzyć Teresę i kontynuować rozmowę.",
         "select": "↵ Wybierz",
         "escClose": "ESC Zamknij",
-        "talkToTeresaToUse": "Porozmawiaj z Teresą, aby użyć AI"
+        "talkToTeresaToUse": "Porozmawiaj z Teresą, aby użyć AI",
+        "navigate": "↑↓ Nawigacja"
       },
       "mediaLibrary": {
         "title": "Biblioteka mediów",
@@ -2174,7 +2184,25 @@
         "stretch": "Rozciągnij",
         "searchThePresentation": "Szukaj w prezentacji…",
         "searchThePresentation2": "Szukaj w prezentacji",
-        "rightSide": "Prawa strona"
+        "rightSide": "Prawa strona",
+        "undo": "Cofnij",
+        "undoShortcut": "Cofnij (⌘Z)",
+        "text": "Tekst",
+        "itemsOnePerLine": "Elementy (po jednym w wierszu)",
+        "csvRowsOnePerLine": "Wiersze CSV (po jednym w wierszu)",
+        "chartType": "Typ wykresu",
+        "line": "Liniowy",
+        "area": "Warstwowy",
+        "chartDataJson": "Dane wykresu (JSON)",
+        "changeDirection": "Kierunek zmiany",
+        "imageUrl": "Adres URL obrazu",
+        "altText": "Tekst alternatywny",
+        "fontSize": "Rozmiar pisma",
+        "textColor": "Kolor tekstu",
+        "italic": "Kursywa",
+        "left": "Do lewej",
+        "right": "Do prawej",
+        "leftSide": "Lewa strona"
       },
       "deckAuditLogModal": {
         "filterByAction": "Filtruj według działania",
@@ -2222,7 +2250,9 @@
         "onlyYou": "Tylko Ty"
       },
       "presentMode": {
-        "nextSlide": "Następny slajd"
+        "nextSlide": "Następny slajd",
+        "speakerNotes": "Notatki prezentera",
+        "noNotesForSlide": "Brak notatek do tego slajdu."
       },
       "presentationReviewPanel": {
         "loading": "Ładowanie…",
@@ -2234,13 +2264,17 @@
         "sendThePresentationAgainOnce": "Po poprawkach wyślij prezentację ponownie.",
         "chooseAPerson": "Wybierz osobę",
         "sendForApproval": "Wyślij do zatwierdzenia",
-        "presentationApproval": "Zatwierdzenie prezentacji"
+        "presentationApproval": "Zatwierdzenie prezentacji",
+        "requiredChangesReason": "Uzasadnienie wymaganych zmian",
+        "reviewerLabel": "Recenzent"
       },
       "shareModal": {
         "embedThisDeckOnExternal": "Osadź tę prezentację na zewnętrznych stronach:"
       },
       "themeSwitcher": {
-        "readyMadePalettes": "Gotowe palety"
+        "readyMadePalettes": "Gotowe palety",
+        "activeTheme": "Aktywny motyw",
+        "brandIdentity": "Identyfikacja marki"
       },
       "tipTapEditor": {
         "strikethrough": "Przekreślenie",
@@ -2248,11 +2282,24 @@
         "alignLeft": "Wyrównaj do lewej",
         "alignCentre": "Wyrównaj do środka",
         "alignRight": "Wyrównaj do prawej",
-        "link": "Odnośnik"
+        "link": "Odnośnik",
+        "bold": "Pogrubienie",
+        "italic": "Kursywa",
+        "bulletList": "Lista punktowana",
+        "numberedList": "Lista numerowana"
       },
       "versionHistoryPanel": {
         "nameThisVersion": "Nadaj nazwę tej wersji…",
         "noSavedVersionsYet": "Nie ma jeszcze zapisanych wersji"
+      },
+      "auditLog": {
+        "filterFromDate": "Filtruj od daty",
+        "filterToDate": "Filtruj do daty",
+        "savedViews": "Zapisane widoki",
+        "exportFilteredCsv": "Eksportuj przefiltrowany dziennik audytu do CSV"
+      },
+      "qualityGates": {
+        "viewMode": "Tryb widoku"
       }
     },
     "agent": {
@@ -2428,7 +2475,10 @@
     },
     "brandKitSettings": {
       "confidentialInternalUseOnly": "Poufne — tylko do użytku wewnętrznego",
-      "internal": "Wewnętrzne"
+      "internal": "Wewnętrzne",
+      "orgNamePlaceholder": "Nazwa organizacji",
+      "confidential": "Poufne",
+      "public": "Publiczne"
     },
     "presentationTemplateArchitectView": {
       "defaultValue": "Wartość domyślna",
@@ -8500,7 +8550,8 @@
         "achieved": "Osiągnięty",
         "target": "Docelowy",
         "gap": "Luka",
-        "evidence": "Dowody"
+        "evidence": "Dowody",
+        "none": "brak"
       },
       "errors": {
         "load": "Nie udało się wczytać danych recenzji",
@@ -8549,7 +8600,12 @@
         "returned": "Odesłano"
       },
       "acceptedBy": "Zaakceptowano {{date}} przez {{who}}",
-      "noAcceptedOutput": "Ten assessment nie ma jeszcze zaakceptowanego outputu."
+      "noAcceptedOutput": "Ten assessment nie ma jeszcze zaakceptowanego outputu.",
+      "acceptedOutput": {
+        "heading": "Zaakceptowany output",
+        "immutableExists": "Niezmienny output istnieje"
+      },
+      "evidenceCoverage": "Pokrycie dowodami"
     },
     "presentation": {
       "methodPack": "Pakiet metodyczny",
@@ -8838,7 +8894,11 @@
       "commonMistakes": "Typowe błędy do uniknięcia",
       "wasteKnowledge": "Przewodnik analizy marnotrawstwa",
       "whatToLookFor": "Na co patrzeć",
-      "typicalEvidence": "Typowe dowody"
+      "typicalEvidence": "Typowe dowody",
+      "form": {
+        "identifiedWastes": "Zidentyfikowane marnotrawstwa",
+        "priority": "Priorytet"
+      }
     },
     "card": {
       "defaultDesc": "Brak opisu dla tego poziomu."
@@ -9176,6 +9236,12 @@
           "noQuestions": "Brak pytań na tym poziomie.",
           "whereAreWe": "Sesja DRD, jednostka {{unit}}, poziom {{level}}. {{answered}}/{{total}} jednostek dotkniętych.",
           "why": "Oś „{{axis}}” wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy."
+        },
+        "bootstrap": {
+          "notConfirmedYet": "Jeszcze bez potwierdzonej odpowiedzi serwera.",
+          "creatingSession": "Tworzenie sesji…",
+          "loadingFromServer": "Wczytywanie sesji z serwera…",
+          "loadingSession": "Wczytywanie sesji…"
         }
       },
       "legacy": {
@@ -9214,10 +9280,18 @@
         "skipHint": ": jawnie oznacz „nieplanowane” dla tego poziomu.",
         "howToDecide": "Jak zdecydować",
         "tip": "Wskazówka",
-        "tipBody": "Jeśli nie masz pewności, dodaj krótki komentarz i dołącz szybki artefakt. Zawsze możesz to później zmienić."
+        "tipBody": "Jeśli nie masz pewności, dodaj krótki komentarz i dołącz szybki artefakt. Zawsze możesz to później zmienić.",
+        "canonLabel": "Kanon: "
       },
       "ownerMatrix": {
         "closeCellDetails": "Zamknij szczegóły komórki"
+      },
+      "method": {
+        "axisMatrixHeading": "Macierz osi",
+        "testActorLabel": "Aktor testowy",
+        "actorLabel": "Aktor:",
+        "reopenHeading": "Reopen — nowa rewizja",
+        "reopenButton": "Reopen sesji (nowa rewizja)"
       }
     },
     "glossary": {
@@ -9284,6 +9358,22 @@
         "glossary": {
           "button": "Słownik"
         }
+      },
+      "report": {
+        "executiveSummary": "Podsumowanie Wykonawcze",
+        "keyGapsPriorities": "Kluczowe Luki — Priorytety",
+        "gapAnalysisTopPriorities": "Analiza Luk - Top Priorytety",
+        "table": {
+          "dimension": "Wymiar",
+          "pillar": "Filar",
+          "current": "Aktualny",
+          "gap": "Luka"
+        },
+        "transformationRecommendations": "Rekomendacje Transformacyjne",
+        "gapLabel": "Luka"
+      },
+      "form": {
+        "currentLevel": "Aktualny poziom"
       }
     },
     "siri": {
@@ -9318,6 +9408,10 @@
         "glossary": {
           "button": "Słownik"
         }
+      },
+      "report": {
+        "executiveSummary": "Podsumowanie Wykonawcze",
+        "keyGapsPriorities": "Kluczowe Luki — Priorytety"
       }
     },
     "reports": {
@@ -9819,7 +9913,8 @@
         "new": "Nowa",
         "quick": "Szybko",
         "wizard": "Kreator (50+)",
-        "needsApprovalTooltip": "Ocena musi być zatwierdzona, aby generować inicjatywy"
+        "needsApprovalTooltip": "Ocena musi być zatwierdzona, aby generować inicjatywy",
+        "generate": "Generuj inicjatywy"
       },
       "notApproved": {
         "title": "Ocena niezatwierdzona",
@@ -10151,7 +10246,8 @@
         "legalNoticeA": "jest narzędziem opracowanym przez",
         "legalNoticeB": "we współpracy z",
         "dataGapsHint": "Te obszary wymagają zebrania dodatkowych danych, zanim ocena będzie kompletna.",
-        "nextStepsBody": "Omów ustalenia z interesariuszami, ustal priorytety inicjatyw, przygotuj szczegółowe plany wdrożenia i zaplanuj kolejną ocenę."
+        "nextStepsBody": "Omów ustalenia z interesariuszami, ustal priorytety inicjatyw, przygotuj szczegółowe plany wdrożenia i zaplanuj kolejną ocenę.",
+        "legalNoticeC": "Wykorzystywane w celach edukacyjnych. Oficjalna certyfikacja wymaga akredytowanego audytora."
       }
     },
     "presentationView": {
@@ -10169,7 +10265,9 @@
       "restored": "Wersja przywrócona!",
       "restoredHint": "Dane zostały zaktualizowane",
       "emptyTitle": "Brak zapisanych wersji",
-      "emptyHint": "Historia pojawi się po zapisaniu zmian"
+      "emptyHint": "Historia pojawi się po zapisaniu zmian",
+      "heading": "Historia Wersji",
+      "current": "Aktualna"
     },
     "reportEditor": {
       "notFound": "Nie znaleziono raportu",
@@ -10177,7 +10275,12 @@
       "preview": "Podgląd raportu",
       "newFindingPlaceholder": "Dodaj nowy wniosek...",
       "newRecommendationPlaceholder": "Dodaj nową rekomendację...",
-      "add": "Dodaj"
+      "add": "Dodaj",
+      "unsavedChanges": "Niezapisane zmiany",
+      "gapAnalysisSummary": "Podsumowanie Gap Analysis",
+      "executiveSummaryPlaceholder": "Podsumowanie wykonawcze raportu...",
+      "additionalNotesLabel": "Notatki dodatkowe",
+      "additionalNotesPlaceholder": "Dodatkowe uwagi i notatki..."
     },
     "dbr77Map": {
       "legalNotice": "(Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI. Metoda pozwala na kompleksową analizę procesów i stanowisk pracy.",
@@ -10242,6 +10345,40 @@
       },
       "lean": {
         "description": "Zasady Lean w produkcji połączone z technologiami Przemysłu 4.0"
+      }
+    },
+    "dbr77": {
+      "dimension": {
+        "processes": "Procesy",
+        "workstations": "Stanowiska"
+      },
+      "waste": {
+        "identifiedHeading": "Zidentyfikowane Marnotrawstwa (TIMWOODS)"
+      },
+      "methodSubtitle": "Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj",
+      "report": {
+        "measure": "POMIERZ",
+        "optimize": "ZOPTYMALIZUJ",
+        "identifiedWastes": "Zidentyfikowane marnotrawstwa:",
+        "automationPercent": "% do automatyzacji:",
+        "recommendedTechnologies": "Rekomendowane technologie:",
+        "methodSubtitle": "Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj",
+        "executiveSummary": "Podsumowanie Wykonawcze",
+        "top5AutomationTargets": "Top 5 Stanowisk do Automatyzacji"
+      }
+    },
+    "cmmi": {
+      "report": {
+        "categoryScore": "Ocena Kategorii",
+        "table": {
+          "practiceArea": "Obszar Praktyk",
+          "category": "Kategoria"
+        },
+        "improvementPlanTopPriorities": "Plan Doskonalenia - Top Priorytety",
+        "gapLabel": "Luka"
+      },
+      "form": {
+        "currentLevel": "Aktualny poziom"
       }
     }
   },
@@ -13565,7 +13702,8 @@
       },
       "sourcePortfolio": "Portfel źródłowy",
       "publishedOn": "Opublikowano",
-      "remainsDraft": "Plan pozostaje szkicem."
+      "remainsDraft": "Plan pozostaje szkicem.",
+      "publishPlan": "Opublikuj plan"
     },
     "planSolver": {
       "selected": "Solver wybrał {{period}}: {{dependency}}; okno inicjatywy obejmuje ten okres; {{capacity}}. Do potwierdzenia przez człowieka.",
@@ -14202,7 +14340,11 @@
       },
       "baseline": {
         "empty": "Brak zapisanych baseline'ów — zapisz pierwszy.",
-        "loadFailed": "Nie udało się wczytać baseline'ów"
+        "loadFailed": "Nie udało się wczytać baseline'ów",
+        "heading": "Baseline planu (rebaseline)",
+        "saving": "Zapisywanie…",
+        "saveCta": "Zapisz baseline",
+        "needsProject": "Zapis baseline wymaga wybranego projektu."
       },
       "benefits": {
         "add": "Dodaj korzyść",
@@ -16512,7 +16654,12 @@
         "smallGap01": "Mała luka (0-1)",
         "medium12": "Średnia (1-2)",
         "largeGap2": "Duża luka (2+)",
-        "axis": "Oś"
+        "axis": "Oś",
+        "defaultTitle": "Analiza Luk",
+        "redGreen": "Czerwono-Zielony",
+        "current": "Obecny",
+        "gap": "Luka",
+        "visualization": "Wizualizacja"
       },
       "maturityRadar": {
         "chartTitle": "Tytuł wykresu",
@@ -16523,7 +16670,14 @@
       "metricCard": {
         "value": "Wartość",
         "editTheCard": "Edytuj kartę",
-        "orange": "Pomarańczowy"
+        "orange": "Pomarańczowy",
+        "labelPlaceholder": "Etykieta",
+        "blue": "Niebieski",
+        "green": "Zielony",
+        "red": "Czerwony",
+        "neutral": "Neutralny",
+        "increase": "Wzrost",
+        "decrease": "Spadek"
       },
       "recommendationCard": {
         "editTheRecommendation": "Edytuj Rekomendację",
@@ -16537,7 +16691,10 @@
         "effort2": "Nakład",
         "medium2": "Średni",
         "medium3": "Średni",
-        "critical": "Krytyczny"
+        "critical": "Krytyczny",
+        "description": "Opis",
+        "priority": "Priorytet",
+        "estimatedRoi": "Szacowany ROI"
       },
       "premiumReportEditor": {
         "ctrlSToSaveTo": "Ctrl+S aby zapisać • \"/\" aby wstawić blok"
@@ -16552,7 +16709,9 @@
         "anExecutiveSummaryWithThe": "Podsumowanie dla zarządu z kluczowymi wnioskami",
         "aDetailedAnalysisOfThe": "Szczegółowa analiza luk w dojrzałości",
         "theTop10RecommendationsPrioritised": "Top 10 rekomendacji z priorytyzacją",
-        "aPhasedImplementationPlan": "Plan wdrożenia w fazach"
+        "aPhasedImplementationPlan": "Plan wdrożenia w fazach",
+        "title": "Asystent AI",
+        "quickActions": "Szybkie akcje"
       },
       "blockInsertMenu": {
         "searchBlocks": "Szukaj bloków...",
@@ -16577,7 +16736,15 @@
         "alignLeft": "Wyrównaj do lewej",
         "centre": "Wyśrodkuj",
         "alignRight": "Wyrównaj do prawej",
-        "insertATable": "Wstaw tabelę"
+        "insertATable": "Wstaw tabelę",
+        "undoShortcut": "Cofnij (Ctrl+Z)",
+        "boldShortcut": "Pogrubienie (Ctrl+B)",
+        "italicShortcut": "Kursywa (Ctrl+I)",
+        "bulletList": "Lista punktowana",
+        "numberedList": "Lista numerowana",
+        "quote": "Cytat",
+        "codeBlock": "Blok kodu",
+        "aiAssistant": "Asystent AI"
       },
       "executiveSummary": {
         "currentMaturity": "Obecna dojrzałość",
@@ -30626,7 +30793,9 @@
         "contextItems": "Elementy kontekstu",
         "contextItemsDetail": "{{count}} pozycji źródłowych",
         "lastUpdate": "Ostatnia aktualizacja",
-        "conflicts": "Konflikty"
+        "conflicts": "Konflikty",
+        "filesHeading": "Pliki",
+        "claimsHeading": "Twierdzenia, konflikty i publikacja"
       },
       "sourceType": {
         "document": "Dokument",
@@ -30715,7 +30884,8 @@
           "culture": "Kultura i komunikacja",
           "constraints": "Ograniczenia i ryzyko"
         },
-        "cultureHint": "Te ustawienia pomagają Teresie dopasować styl komunikacji do kultury organizacji."
+        "cultureHint": "Te ustawienia pomagają Teresie dopasować styl komunikacji do kultury organizacji.",
+        "loadingProfile": "Wczytywanie profilu organizacji…"
       },
       "goalsMetrics": {
         "sections": {
@@ -33444,6 +33614,11 @@
       "noTemplatesAreWaitingFor": "Brak wzorców oczekujących na pochodzenie.",
       "pickATemplateNothingIs": "Wybierz wzorzec. Nic nie zostanie zatwierdzone automatycznie.",
       "approveTheCompleteProvenance": "Zatwierdź kompletne pochodzenie"
+    },
+    "dataSources": {
+      "connectorLabel": "Konektor:",
+      "configJsonLabel": "Konfiguracja (JSON):",
+      "intakeFormIdPlaceholder": "ID formularza intake"
     }
   },
   "rbHub": {
@@ -33952,7 +34127,8 @@
       "qualityUnavailable": "brak",
       "sizeLabel": "Rozmiar",
       "workbookQualitySuffix": "Jakość: {{quality}}",
-      "rowsColsFormat": "{{rows}} wierszy × {{cols}} kolumn"
+      "rowsColsFormat": "{{rows}} wierszy × {{cols}} kolumn",
+      "selectAll": "Zaznacz wszystko"
     },
     "xlsxPreview": "Podgląd arkusza",
     "deckPreview": "Podgląd prezentacji",
@@ -34452,7 +34628,8 @@
     "back": "Wstecz",
     "leftRail": {
       "empty": "Brak prezentacji."
-    }
+    },
+    "moduleLabel": "Tabele"
   },
   "contact": {
     "badge": "Skontaktuj się",
@@ -35789,7 +35966,9 @@
     "aiHintNextSteps": "Następne kroki",
     "noSuggestedPlan": "Brak sugerowanego planu",
     "history": {
-      "noActions": "Brak zapisanych akcji."
+      "noActions": "Brak zapisanych akcji.",
+      "heading": "Historia zmian",
+      "recentActionsCount": "{{count}} ostatnich akcji"
     },
     "report": {
       "noItems": "Brak pozycji."
@@ -36457,7 +36636,8 @@
     "templateResolveFailed": "Nie udało się rozwiązać wzorca. Spróbuj ponownie.",
     "template": {
       "backToLibrary": "Wróć do Biblioteki",
-      "goToProvenance": "Przejdź do Pochodzenie i prawa"
+      "goToProvenance": "Przejdź do Pochodzenie i prawa",
+      "creating": "Tworzenie prezentacji z szablonu…"
     },
     "reopenSummary": "Prezentacja „{{title}}” — {{count}} slajdów.",
     "kpi": {
@@ -36487,7 +36667,8 @@
     },
     "blank": {
       "retry": "Spróbuj ponownie",
-      "title": "Nowa prezentacja"
+      "title": "Nowa prezentacja",
+      "creating": "Tworzenie pustej prezentacji…"
     },
     "blankFailed": "Nie udało się utworzyć pustej prezentacji.",
     "blankFailedPermanent": "Nie udało się utworzyć pustej prezentacji. Spróbuj ponownie albo wróć do Materiałów.",
@@ -36496,8 +36677,16 @@
     "tri": {
       "aiDesc": "Opisz deck — AI zbuduje slajdy i treść.",
       "heading": "Jak chcesz zacząć prezentację?",
-      "subheading": "Wybierz tryb — wszystkie trzy są równorzędne."
-    }
+      "subheading": "Wybierz tryb — wszystkie trzy są równorzędne.",
+      "cleanTitle": "Czysto",
+      "templateTitle": "Z szablonu",
+      "templateDesc": "Zacznij od gotowego szablonu prezentacji."
+    },
+    "moduleLabel": "Prezentacje",
+    "rightRail": {
+      "artefakt": "Artefakt"
+    },
+    "back": "Wróć do widoku głównego Prezentacji"
   },
   "excele": {
     "breadcrumb": {
@@ -36530,7 +36719,8 @@
       "sourceTable": "Tabela źródłowa",
       "versionHistory": "Historia wersji",
       "structureEmpty": "Ten skoroszyt nie ma jeszcze arkuszy — struktura pojawi się po wygenerowaniu.",
-      "structureHint": "Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim."
+      "structureHint": "Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim.",
+      "structure": "Struktura"
     },
     "rightRail": {
       "resize": "Zmień szerokość panelu",
@@ -36563,7 +36753,8 @@
       "structureRows": "{{count}} wierszy",
       "structureSubtitle": "Układ skoroszytu i arkuszy.",
       "structureTitle": "Struktura",
-      "versionHistory": "Historia wersji"
+      "versionHistory": "Historia wersji",
+      "artifact": "Artefakt"
     },
     "shared": {
       "badge": "Udostępniony skoroszyt — tylko do odczytu",
@@ -36853,7 +37044,13 @@
     "highRisk": "Wysokie ryzyko",
     "executing": "Wykonywanie...",
     "executed": "Wykonano",
-    "dismissed": "odrzucone"
+    "dismissed": "odrzucone",
+    "fields": {
+      "priority": "Priorytet:",
+      "dueDate": "Termin:",
+      "category": "Kategoria:",
+      "estimation": "Estymacja:"
+    }
   },
   "artifacts": {
     "next": "następne",
@@ -37338,6 +37535,12 @@
         "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
         "readyPrefix": "Zbiór danych gotowy:",
         "showAnalyses": "Pokaż analizy"
+      },
+      "documentProposal": {
+        "inserted": "Propozycja Teresy wstawiona do dokumentu."
+      },
+      "materializedTo": {
+        "heading": "Utworzone z tego dokumentu"
       }
     },
     "aiStream": {
@@ -37544,7 +37747,8 @@
     "selectSource": "Wybierz źródła",
     "projectData": "Projekt",
     "research": "Analiza",
-    "webDesc": "Wyszukiwanie w czasie rzeczywistym"
+    "webDesc": "Wyszukiwanie w czasie rzeczywistym",
+    "label": "Tryb"
   },
   "trust": {
     "badge": {
@@ -38549,7 +38753,8 @@
       "contextChip": "Kontekst: {{organizationName}}",
       "sectionBrief": "Treść i tytuł",
       "blockedReason": "Aby zaplanować dokument, opisz go w co najmniej 10 znakach.",
-      "requiredMarker": "wymagane"
+      "requiredMarker": "wymagane",
+      "sectionFormat": "Format i odbiorcy"
     },
     "outline": {
       "addSection": "+ Dodaj sekcję",
@@ -38643,7 +38848,8 @@
       "addSection": "Dodaj sekcję",
       "blankTitleHint": "Każda sekcja wymaga tytułu, zanim będzie można zapisać.",
       "structurePreviewHeading": "Podgląd struktury",
-      "structurePreviewEmpty": "Brak sekcji do pokazania."
+      "structurePreviewEmpty": "Brak sekcji do pokazania.",
+      "versionHistory": "Historia wersji"
     },
     "view": {
       "artifactLoadFailedGeneric": "Nie udało się załadować dokumentu. Spróbuj ponownie za chwilę.",
@@ -39064,7 +39270,10 @@
       "find": "Znajdź",
       "findInTheDocument": "Znajdź w dokumencie",
       "replace": "Zamień",
-      "findAndReplace": "Znajdź i zamień"
+      "findAndReplace": "Znajdź i zamień",
+      "fontSize": "Rozmiar czcionki",
+      "color": "Kolor",
+      "textColor": "Kolor tekstu"
     },
     "useManualPrompt": {
       "thisCannotBeUndoneOnce": "Tej operacji nie można cofnąć po zamknięciu sesji.",
@@ -39079,6 +39288,13 @@
       "cancel": "Anuluj",
       "send": "Wyślij",
       "noCommentsYetBeThe": "Brak komentarzy — bądź pierwszy."
+    },
+    "reader": {
+      "comments": {
+        "sectionLabel": "Komentarze",
+        "reply": "Odpowiedz"
+      },
+      "clientReadingMode": "Tryb czytania klienta"
     }
   },
   "priority": {
@@ -46848,7 +47064,8 @@
         "goToProvenanceAndRights": "Przejdź do Pochodzenie i prawa",
         "backToTheLibrary": "Powrót do Biblioteki"
       }
-    }
+    },
+    "checkingTemplateFromLibrary": "Sprawdzam wzorzec z Biblioteki…"
   },
   "discoveryToolsSteps": {
     "contextStep": {
@@ -50121,7 +50338,8 @@
         "hint": "Poczta i terminy.",
         "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
       },
-      "soonBadge": "Wkrótce"
+      "soonBadge": "Wkrótce",
+      "approvalBadge": "zgoda"
     },
     "palette": {
       "ariaLabel": "Paleta klocków agenta",
@@ -50171,7 +50389,21 @@
       "moveUp": "Przesuń w górę",
       "noteHint": "Notatka na schemacie — agent jej nie wykonuje.",
       "removeBlock": "Usuń klocek",
-      "vaultLevelUnset": "— poziom nie wybrany —"
+      "vaultLevelUnset": "— poziom nie wybrany —",
+      "empty": "Pusty schemat",
+      "blockName": "Nazwa klocka",
+      "now": "Teraz",
+      "waitHours": "{{h}} godz.",
+      "blockKind": "Typ klocka",
+      "vaultLevel": "Poziom Vault",
+      "waitHoursSuffix": "godz.",
+      "end": "Koniec"
+    },
+    "panel": {
+      "processDiagram": "Schemat procesu",
+      "step": "krok",
+      "steps": "kroków",
+      "schemaApproved": "schemat zatwierdzony"
     }
   },
   "views": {

@@ -62,7 +62,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       iconColor: 'text-amber-500',
     },
     today: {
-      label: t('aiChat.groups.today', 'Dzisiaj'),
+      label: t('aiChat.groups.today', 'Today'),
       icon: Clock,
       iconColor: 'text-green-500',
     },
@@ -73,10 +73,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       label: t('aiChat.groups.thisMonth', 'This month'),
     },
     older: {
-      label: t('aiChat.groups.older', 'Starsze'),
+      label: t('aiChat.groups.older', 'Older'),
     },
     archived: {
-      label: t('aiChat.groups.archived', 'Archiwum'),
+      label: t('aiChat.groups.archived', 'Archive'),
       icon: Archive,
       iconColor: 'text-slate-600',
     },

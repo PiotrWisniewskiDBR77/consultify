@@ -28,6 +28,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { znajdzPolskiJsx, znajdzPolskieDefaultValue } from '../../../../tests/unit/i18n/polskiBezOgonkowWspolny';
+
 const KATALOG = path.resolve(__dirname, '..');
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 
@@ -162,6 +164,18 @@ describe('J7b — moduł Realizacja mówi po angielsku w kodzie', () => {
         for (const m of tekst.matchAll(wzorzec)) trafienia.push(`${nazwa}: ${m[0]}`);
       }
     }
+    expect(trafienia).toEqual([]);
+  });
+
+  // ---------------------------------------------------------------------
+  // ROZSZERZENIE J-DOG-C (2026-09-09): `POLSKIE_SLOWA` powyżej stoi na
+  // `polskieSilne` z `pomiar-jezyka.wyjatki.json` + garstce ręcznych dopisków
+  // — nie łapie polskiego bez ogonków spoza tej listy („Kolor", „Priorytet").
+  // Dokłada szerszy detektor `tests/unit/i18n/polskiBezOgonkowWspolny.ts`
+  // (słownik automatyczny z `public/locales/pl` + ręczne rdzenie), żeby
+  // regresja tej KONKRETNEJ klasy była też złapana w Realizacji.
+  it('J-DOG-C: żaden defaultValue ani napis JSX nie jest polski bez ogonków', () => {
+    const trafienia = [...znajdzPolskieDefaultValue(ZRODLA), ...znajdzPolskiJsx(ZRODLA)];
     expect(trafienia).toEqual([]);
   });
 });

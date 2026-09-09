@@ -37,6 +37,7 @@
  * w `SIDE_EFFECT_TOOLS`, więc bez tego override'u wykonałyby się bez pytania.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import {
@@ -248,6 +249,7 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   onClose,
   onRunEditedSchema,
 }) => {
+  const { t } = useTranslation();
   const [plan, setPlan] = useState<AgentPlan | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -520,11 +522,11 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
       <div className="flex min-w-0 flex-1 flex-col bg-c-bg">
         <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-c-border-subtle px-6">
           <span className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
-            Schemat procesu
+            {t('agentPlan.panel.processDiagram', 'Process diagram')}
           </span>
           <span className="text-xs text-c-text-muted">
-            {executableCount} {executableCount === 1 ? 'krok' : 'kroków'}
-            {schemaSubmitted ? ' · schemat zatwierdzony' : ''}
+            {executableCount} {executableCount === 1 ? t('agentPlan.panel.step', 'step') : t('agentPlan.panel.steps', 'steps')}
+            {schemaSubmitted ? ` · ${t('agentPlan.panel.schemaApproved', 'diagram approved')}` : ''}
           </span>
         </div>
         <AgentPlanCanvas

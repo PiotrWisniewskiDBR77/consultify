@@ -159,7 +159,7 @@ const PaletteItem: React.FC<{
           <span className="truncate text-xs font-medium text-c-text">{label}</span>
           {entry.approval ? (
             <span className="shrink-0 rounded-full border border-c-warning/40 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-warning">
-              {t('agentPlan.catalog.approvalBadge', 'zgoda')}
+              {t('agentPlan.catalog.approvalBadge', 'consent')}
             </span>
           ) : null}
         </div>
@@ -245,8 +245,8 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Szukaj klocka…"
-              aria-label="Szukaj klocka w palecie"
+              placeholder={t('agentPlan.palette.searchPlaceholder', 'Search blocks…')}
+              aria-label={t('agentPlan.palette.searchAriaLabel', 'Search blocks in the palette')}
               className="h-8 w-full rounded-full border border-c-border-subtle bg-c-surface-raised/40 pl-8 pr-3 text-xs text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             />
           </label>

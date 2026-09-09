@@ -1789,7 +1789,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               czerwonej gwiazdki i neutralnego tekstu — ujednolicone).
             */}
             <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
-              ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+              ({t('interview.insightCreatorModal.requiredMarker', 'required')})
             </span>
           </label>
           <input
@@ -1820,7 +1820,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {t('interview.insightCreatorModal.outputType')}{' '}
               <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
-                ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+                ({t('interview.insightCreatorModal.requiredMarker', 'required')})
               </span>
             </label>
             <span className="text-xs text-c-info">
@@ -2177,7 +2177,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
           {t('interview.insightCreatorModal.selectSourceSessions')}{' '}
           <span className="text-xs font-normal text-slate-600 dark:text-slate-400">
-            ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+            ({t('interview.insightCreatorModal.requiredMarker', 'required')})
           </span>
         </label>
         {filteredSessions.length > 0 && (

@@ -807,7 +807,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             {saveState === 'saving' && (
               <>
                 <Loader2 size={11} className="animate-spin" />
-                {t('kimi.excele.saving', 'Zapisywanie…')}
+                {t('kimi.excele.saving', 'Saving…')}
               </>
             )}
             {saveState === 'saved' && (
@@ -843,7 +843,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                       "text visible to screen readers" — needs real text
                       content, just visually hidden (this corner cell has no
                       visual label by design, it's the row-number gutter). */}
-                  <span className="sr-only">Zaznacz wszystko</span>
+                  <span className="sr-only">{t('kimi.excele.selectAll', 'Select all')}</span>
                 </th>
                 {columns.map((col, ci) => {
                   /*

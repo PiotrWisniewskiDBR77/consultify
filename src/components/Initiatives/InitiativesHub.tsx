@@ -813,7 +813,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         ? [
             {
               id: 'portfolioHealth' as ModuleTab,
-              label: t('initiatives.tabs.portfolioHealth', 'Zdrowie portfela'),
+              label: t('initiatives.tabs.portfolioHealth', 'Portfolio health'),
               icon: <Activity size={16} />,
             },
           ]
@@ -2500,7 +2500,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   data-testid="initiatives-menu3-adopt-classic"
                 >
                   {isAdoptingClassic
-                    ? t('initiatives.bridge.adopting', 'Przejmowanie…')
+                    ? t('initiatives.bridge.adopting', 'Taking over…')
                     : t('initiatives.bridge.action', 'Adopt classic initiative')}
                 </button>
               </div>
@@ -2516,27 +2516,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const canonicalMenu3FullOptions: Record<string, Array<{ id: string; label: string }>> = {
     plan: [
       ['all', t('common.all', 'All')],
-      ['drafts', t('initiatives.plan.filters.drafts', 'Szkice')],
-      ['published', t('initiatives.plan.filters.published', 'Opublikowane')],
+      ['drafts', t('initiatives.plan.filters.drafts', 'Drafts')],
+      ['published', t('initiatives.plan.filters.published', 'Published')],
     ].map(([id, label]) => ({ id, label })),
     capacity: [
       ['all', t('common.all', 'All')],
-      ['drafts', t('initiatives.capacityAnalysis.filters.drafts', 'Szkice')],
-      ['published', t('initiatives.capacityAnalysis.filters.published', 'Opublikowane')],
+      ['drafts', t('initiatives.capacityAnalysis.filters.drafts', 'Drafts')],
+      ['published', t('initiatives.capacityAnalysis.filters.published', 'Published')],
     ].map(([id, label]) => ({ id, label })),
   };
   // Menu 3 (chipy) — ≤3 pozycje o największej wartości decyzyjnej; reszta
   // wyłącznie w dropdownie Menu 2 (`rightControls`, `Menu2PresetDropdown`).
   const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
     plan: [
-      { id: 'drafts', label: t('initiatives.plan.filters.drafts', 'Szkice') },
-      { id: 'published', label: t('initiatives.plan.filters.published', 'Opublikowane') },
-      { id: 'conflicted', label: t('initiatives.plan.filters.conflicted', 'Z konfliktami') },
+      { id: 'drafts', label: t('initiatives.plan.filters.drafts', 'Drafts') },
+      { id: 'published', label: t('initiatives.plan.filters.published', 'Published') },
+      { id: 'conflicted', label: t('initiatives.plan.filters.conflicted', 'With conflicts') },
     ],
     capacity: [
-      { id: 'drafts', label: t('initiatives.capacityAnalysis.filters.drafts', 'Szkice') },
-      { id: 'published', label: t('initiatives.capacityAnalysis.filters.published', 'Opublikowane') },
-      { id: 'gaps', label: t('initiatives.capacityAnalysis.filters.gaps', 'Z lukami') },
+      { id: 'drafts', label: t('initiatives.capacityAnalysis.filters.drafts', 'Drafts') },
+      { id: 'published', label: t('initiatives.capacityAnalysis.filters.published', 'Published') },
+      { id: 'gaps', label: t('initiatives.capacityAnalysis.filters.gaps', 'With gaps') },
     ],
   };
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
@@ -2650,12 +2650,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         primaryCta={
           activeTab === 'plan'
             ? {
-                label: t('initiatives.plan.newPlan', 'Nowy plan'),
+                label: t('initiatives.plan.newPlan', 'New plan'),
                 onClick: () => setPlanCreateRequestId((value) => value + 1),
               }
             : activeTab === 'capacity'
               ? {
-                  label: t('initiatives.capacityAnalysis.newAnalysis', 'Nowa analiza'),
+                  label: t('initiatives.capacityAnalysis.newAnalysis', 'New analysis'),
                   onClick: () => setCapacityCreateRequestId((value) => value + 1),
                 }
               : activeTab !== 'list'

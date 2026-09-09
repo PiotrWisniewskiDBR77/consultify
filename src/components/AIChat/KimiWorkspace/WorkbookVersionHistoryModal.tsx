@@ -107,7 +107,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t('excele.versionHistory.title', 'Historia wersji')}
+      aria-label={t('excele.versionHistory.title', 'Version history')}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
     >
@@ -117,7 +117,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
       >
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-c-text">
-            {t('excele.versionHistory.title', 'Historia wersji')}
+            {t('excele.versionHistory.title', 'Version history')}
           </h2>
           <button
             type="button"
@@ -158,11 +158,11 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
               >
                 <div className="min-w-0">
                   <div className="font-medium text-c-text">
-                    {t('excele.versionHistory.version', 'Wersja')} {v.version}
+                    {t('excele.versionHistory.version', 'Version')} {v.version}
                   </div>
                   <div className="truncate text-c-text-muted">
                     {formatListDateTime(v.created_at)} &middot; {v.sheet_count}{' '}
-                    {t('excele.versionHistory.sheets', 'arkusz(e)')}
+                    {t('excele.versionHistory.sheets', 'sheet(s)')}
                   </div>
                 </div>
                 <button
@@ -209,7 +209,7 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
 
         {restoreState.status === 'restoring' && (
           <p className="mt-3 text-xs text-c-text-muted">
-            {t('excele.versionHistory.restoring', 'Przywracanie...')}
+            {t('excele.versionHistory.restoring', 'Restoring...')}
           </p>
         )}
 

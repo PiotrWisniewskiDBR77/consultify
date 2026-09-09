@@ -792,7 +792,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 </p>
               </div>
               <div className="rounded-xl border border-c-border bg-c-surface p-4">
-                <h3 className="mb-3 text-sm font-semibold text-c-text">Macierz osi</h3>
+                <h3 className="mb-3 text-sm font-semibold text-c-text">{t('assessment.drd.method.axisMatrixHeading', 'Axis matrix')}</h3>
                 <LiveMatrix
                   rows={matrixRows}
                   levels={matrixLevels}
@@ -841,7 +841,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
           documentSourceIndicator={<DrdSourceIndicator source="DEMO_LOCAL" />}
           settingsContent={(
             <label className="inline-flex items-center gap-2 font-medium text-c-text-secondary">
-              Aktor testowy
+              {t('assessment.drd.method.testActorLabel', 'Test actor')}
               <select
                 data-testid="actor-select"
                 value={actorUserId}
@@ -926,7 +926,7 @@ const FrozenOutputView: React.FC<{
           )}
         />
         <span className="ml-auto flex items-center gap-2 text-[11px] text-c-text-secondary">
-          Aktor:
+          {t('assessment.drd.method.actorLabel', 'Actor:')}
           <select value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} className="rounded border border-c-border bg-c-surface px-1.5 py-0.5">
             <option value={OWNER_ACTOR}>Piotr (owner)</option>
             <option value={APPROVER_ACTOR}>Anna (approver)</option>
@@ -1071,7 +1071,7 @@ const FrozenOutputView: React.FC<{
       <section data-testid="reopen-panel" className="rounded-xl border border-c-border bg-c-surface p-4">
         <div className="mb-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-c-text-secondary" />
-          <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
+          <h2 className="text-sm font-semibold text-c-text">{t('assessment.drd.method.reopenHeading', 'Reopen — new revision')}</h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
           {t(
@@ -1085,7 +1085,7 @@ const FrozenOutputView: React.FC<{
           data-testid="reopen-button"
           className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised"
         >
-          Reopen sesji (nowa rewizja)
+          {t('assessment.drd.method.reopenButton', 'Reopen session (new revision)')}
         </button>
       </section>
     </div>

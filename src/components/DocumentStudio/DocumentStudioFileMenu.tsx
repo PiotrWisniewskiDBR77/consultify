@@ -124,7 +124,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
     switch (saveStatus) {
       case 'saving':
         return {
-          label: t('documentStudio.fileMenu.saveStatusSaving', 'Zapisywanie…'),
+          label: t('documentStudio.fileMenu.saveStatusSaving', 'Saving…'),
           icon: (
             <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted" aria-hidden />
           ),
@@ -172,7 +172,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
         aria-expanded={open}
         data-testid="document-file-menu-trigger"
       >
-        <span className="hidden sm:inline">{t('documentStudio.fileMenu.trigger', 'Plik')}</span>
+        <span className="hidden sm:inline">{t('documentStudio.fileMenu.trigger', 'File')}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && typeof document !== 'undefined'
@@ -180,7 +180,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
             <div
               role="menu"
               ref={panelRef}
-              aria-label={t('documentStudio.fileMenu.trigger', 'Plik')}
+              aria-label={t('documentStudio.fileMenu.trigger', 'File')}
               // U4 (odbiór "menu pliku") — kolizja z prawą krawędzią viewportu
               // rozwiązana wcześniej przez `right-0`; dziś robi to samo
               // `useAnchorFixedMenuPosition` (klamruje lewą krawędź do
@@ -199,7 +199,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
                 data-testid="document-file-menu-new"
               >
                 <FilePlus className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
-                <span className="flex-1 truncate">{t('documentStudio.fileMenu.new', 'Nowy')}</span>
+                <span className="flex-1 truncate">{t('documentStudio.fileMenu.new', 'New')}</span>
               </button>
               <button
                 type="button"

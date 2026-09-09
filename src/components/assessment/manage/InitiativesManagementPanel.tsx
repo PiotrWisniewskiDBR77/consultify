@@ -625,7 +625,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   }
                 >
                   <Sparkles size={16} />
-                  {t('assessment.initiativesPanel.actions.generate', 'Generuj inicjatywy')}
+                  {t('assessment.initiativesPanel.actions.generate', 'Generate initiatives')}
                 </button>
               )}
             </div>

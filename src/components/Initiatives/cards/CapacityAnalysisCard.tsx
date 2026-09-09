@@ -87,7 +87,7 @@ const supplySourceLabel = (value: CapacityRoleLine['supplySource']) =>
   })[value];
 const demandSourceLabel = (value: CapacityRoleLine['demandSource']) =>
   ({
-    PLAN: i18n.t('initiatives.capacityAnalysis.demandSource.plan', 'Z planu'),
+    PLAN: i18n.t('initiatives.capacityAnalysis.demandSource.plan', 'From plan'),
     MANUAL: i18n.t('initiatives.capacityAnalysis.demandSource.manual', 'Manual'),
     UNKNOWN: i18n.t(
       'initiatives.capacityAnalysis.demandSource.unknown',
@@ -135,7 +135,7 @@ export function CapacityAnalysisCard({
   const title = resolveBusinessDisplayLabel({
     displayName: scenario.name,
     rawId: scenario.scenarioId,
-    fallback: i18n.t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy'),
+    fallback: i18n.t('initiatives.capacityAnalysis.unnamed', 'Untitled analysis'),
   });
   const roleGaps = useMemo(() => capacityRoleGaps(scenario), [scenario]);
   const gaps = useMemo(() => countCapacityGaps(scenario), [scenario]);
@@ -166,7 +166,7 @@ export function CapacityAnalysisCard({
       <p className="mb-3 text-sm text-c-text-muted">
         {i18n.t(
           'initiatives.capacityAnalysis.worksheetHint',
-          'Popyt pochodzi z „Obciążenia ról" opublikowanego planu, podaż ze stanowisk osób w organizacji (1 FTE = 40 h/tydzień). Podaż możesz poprawić ręcznie.'
+          "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually."
         )}
       </p>
       <table /* §27-exempt: ARKUSZ okres x rola w karcie artefaktu (siatka wartosci
@@ -174,11 +174,11 @@ export function CapacityAnalysisCard({
                modelu komorki edytowalnej per (wiersz, kolumna) */ className="w-full min-w-[720px] border-collapse">
         <thead>
           <tr className="border-b border-c-border-subtle">
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.period', 'Okres')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.role', 'Rola')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.period', 'Period')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.role', 'Role')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demand', 'Demand (FTE)')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}</th>
-            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.gap', 'Luka')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.gap', 'Gap')}</th>
             <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supplySourceShort', 'Supply source')}</th>
           </tr>
         </thead>
@@ -249,7 +249,7 @@ export function CapacityAnalysisCard({
         <div key={p.periodId} className="grid grid-cols-3 border-b border-c-border-subtle py-2">
           <b>{p.periodId}</b>
           <span>
-            {i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}: {num(p.demand.base)}
+            {i18n.t('initiatives.capacityAnalysis.columns.demand', 'Demand (FTE)')}: {num(p.demand.base)}
           </span>
           <span>
             {i18n.t('initiatives.capacityAnalysis.columns.supply', 'Supply (FTE)')}: {num(p.supply.base)}
@@ -305,7 +305,7 @@ export function CapacityAnalysisCard({
             <p className="text-sm text-c-text-muted">
               {i18n.t(
                 'initiatives.capacityAnalysis.needsPublish',
-                'Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje", potem uruchom „Pracuj z AI".'
+                'The advisor computes options for a published analysis. Publish the analysis in "Decisions", then run "Work with AI".'
               )}
             </p>
             {/* P15-K7 pkt 3: K5 dał komunikat po polsku, ale odsyłał do innej
@@ -334,7 +334,7 @@ export function CapacityAnalysisCard({
             {variantOutcome === 'APPLIED'
               ? i18n.t(
                   'initiatives.capacityAnalysis.variantApplied',
-                  'Wybór zapisany. Szczegóły i link do planu znajdziesz w sekcji „Decyzje".'
+                  'Selection saved. Details and the link to the plan are in the "Decisions" section.'
                 )
               : i18n.t(
                   'initiatives.capacityAnalysis.variantNoShift',
@@ -359,12 +359,12 @@ export function CapacityAnalysisCard({
             {decidedComparisons.map((comparison) => (
               <li key={comparison.comparisonId}>
                 <b>
-                  {i18n.t('initiatives.capacityAnalysis.decision.selected', 'Wybrano wariant')}:
+                  {i18n.t('initiatives.capacityAnalysis.decision.selected', 'Variant selected')}:
                 </b>{' '}
                 {comparison.decisionNote ??
                   i18n.t(
                     'initiatives.capacityAnalysis.decision.noteMissing',
-                    'wariant bez zapisanego opisu'
+                    'variant without a saved description'
                   )}
                 {comparison.resultingPlanRef && (
                   <>
@@ -409,11 +409,11 @@ export function CapacityAnalysisCard({
     scenario.status === 'DRAFT'
       ? i18n.t('initiatives.planScenario.status.draft', 'Draft')
       : scenario.status === 'PUBLISHED'
-        ? i18n.t('initiatives.planScenario.status.published', 'Opublikowany')
+        ? i18n.t('initiatives.planScenario.status.published', 'Published')
         : i18n.t('initiatives.planScenario.status.superseded', 'Superseded');
   const right = {
     actions: {
-      label: i18n.t('initiatives.capacityAnalysis.panel.actions', 'Akcje'),
+      label: i18n.t('initiatives.capacityAnalysis.panel.actions', 'Actions'),
       children: (
         <button
           className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -434,7 +434,7 @@ export function CapacityAnalysisCard({
             { id: 'status', label: i18n.t('initiatives.capacityAnalysis.panel.status', 'Status'), value: statusLabel },
             {
               id: 'periods',
-              label: i18n.t('initiatives.capacityAnalysis.columns.periods', 'Okresy'),
+              label: i18n.t('initiatives.capacityAnalysis.columns.periods', 'Periods'),
               value: scenario.periods.length,
               mono: true,
             },
@@ -446,7 +446,7 @@ export function CapacityAnalysisCard({
             },
             {
               id: 'gaps',
-              label: i18n.t('initiatives.capacityAnalysis.columns.gaps', 'Luki'),
+              label: i18n.t('initiatives.capacityAnalysis.columns.gaps', 'Gaps'),
               value: gaps,
               mono: true,
             },
@@ -459,7 +459,7 @@ export function CapacityAnalysisCard({
       children: (
         <p className="text-sm">
           {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Source plan')} ·{' '}
-          {i18n.t('initiatives.capacityAnalysis.version', 'wersja')} {scenario.planScenarioVersion}
+          {i18n.t('initiatives.capacityAnalysis.version', 'version')} {scenario.planScenarioVersion}
         </p>
       ),
     },
@@ -486,10 +486,10 @@ export function CapacityAnalysisCard({
       ),
     },
     history: {
-      label: i18n.t('initiatives.capacityAnalysis.panel.history', 'Historia'),
+      label: i18n.t('initiatives.capacityAnalysis.panel.history', 'History'),
       children: (
         <div>
-          {i18n.t('initiatives.capacityAnalysis.version', 'wersja')} {scenario.scenarioVersion}
+          {i18n.t('initiatives.capacityAnalysis.version', 'version')} {scenario.scenarioVersion}
         </div>
       ),
     },
@@ -540,7 +540,7 @@ export function CapacityAnalysisCard({
               uruchom: onAnalyze,
               opis: i18n.t(
                 'initiatives.capacityAnalysis.aiSection',
-                'Doradca przygotuje propozycje zmian do oceny.'
+                'The advisor will prepare change proposals for review.'
               ),
             },
             uzupelnijDokument: {

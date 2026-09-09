@@ -63,7 +63,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
 
   const defaultName = `${documentTitle || t('documentStudio.createFromArtifact.untitled', 'Untitled document')} ${t(
     'documentStudio.fileMenu.saveAsCopySuffix',
-    '(kopia)'
+    '(copy)'
   )}`;
   const [name, setName] = useState(defaultName);
   // Q1 — pre-checked (= required), matching the pre-Fala-2 "always required" default.
@@ -203,8 +203,8 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                     </label>
                     <span className="shrink-0 text-[11px] text-c-text-muted">
                       {optionalSectionIds.has(section.sectionId)
-                        ? t('documentStudio.createFromArtifact.optional', 'czasami')
-                        : t('documentStudio.createFromArtifact.required', 'zawsze')}
+                        ? t('documentStudio.createFromArtifact.optional', 'sometimes')
+                        : t('documentStudio.createFromArtifact.required', 'always')}
                     </span>
                   </li>
                 ))}
@@ -219,7 +219,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                 'Which data should refresh every time instead of staying as fixed text?'
               )}{' '}
               <span className="text-xs font-normal text-c-text-muted">
-                {t('documentStudio.createFromArtifact.optionalHint', '(opcjonalnie)')}
+                {t('documentStudio.createFromArtifact.optionalHint', '(optional)')}
               </span>
             </span>
             <textarea
@@ -295,7 +295,7 @@ export const CreateTemplateFromArtifactModal: React.FC<CreateTemplateFromArtifac
                 'Is anything in this document specific to this client only and has to be removed before others use it?'
               )}{' '}
               <span className="text-xs font-normal text-c-text-muted">
-                {t('documentStudio.createFromArtifact.optionalHint', '(opcjonalnie)')}
+                {t('documentStudio.createFromArtifact.optionalHint', '(optional)')}
               </span>
             </span>
             <textarea

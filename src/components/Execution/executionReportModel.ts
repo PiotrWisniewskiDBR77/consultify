@@ -292,7 +292,7 @@ export function buildExecutionReportSnapshot(args: {
 
   const taskRow = (task: any) => ({
     title: text(task?.title),
-    owner: personName(task) || t('executionReports.value.unassigned', 'Nieprzypisane'),
+    owner: personName(task) || t('executionReports.value.unassigned', 'Unassigned'),
     due: date(task?.dueDate),
     slip: (() => {
       const days = dayDiff(task?.dueDate, asOf);
@@ -305,7 +305,7 @@ export function buildExecutionReportSnapshot(args: {
 
   const decisionRow = (decision: any) => ({
     title: text(decision?.title),
-    owner: nameOf(decision?.ownerName) || t('executionReports.value.unassigned', 'Nieprzypisane'),
+    owner: nameOf(decision?.ownerName) || t('executionReports.value.unassigned', 'Unassigned'),
     due: date(decision?.dueDate),
     overdue:
       Number(decision?.daysOverdue ?? 0) > 0
@@ -322,18 +322,18 @@ export function buildExecutionReportSnapshot(args: {
   });
 
   const taskColumns = [
-    { id: 'title', label: t('executionReports.col.task', 'Zadanie') },
+    { id: 'title', label: t('executionReports.col.task', 'Task') },
     { id: 'owner', label: t('executionReports.col.owner', 'Owner') },
-    { id: 'due', label: t('executionReports.col.due', 'Termin') },
-    { id: 'slip', label: t('executionReports.col.slip', 'Po terminie') },
+    { id: 'due', label: t('executionReports.col.due', 'Deadline') },
+    { id: 'slip', label: t('executionReports.col.slip', 'Overdue') },
     { id: 'status', label: t('executionReports.col.status', 'Status') },
   ];
   const decisionColumns = [
-    { id: 'title', label: t('executionReports.col.decision', 'Decyzja') },
+    { id: 'title', label: t('executionReports.col.decision', 'Decision') },
     { id: 'owner', label: t('executionReports.col.owner', 'Owner') },
-    { id: 'due', label: t('executionReports.col.due', 'Termin') },
-    { id: 'overdue', label: t('executionReports.col.overdue', 'Po terminie') },
-    { id: 'escalation', label: t('executionReports.col.escalation', 'Eskalacja') },
+    { id: 'due', label: t('executionReports.col.due', 'Deadline') },
+    { id: 'overdue', label: t('executionReports.col.overdue', 'Overdue') },
+    { id: 'escalation', label: t('executionReports.col.escalation', 'Escalation') },
   ];
   const milestoneColumns = [
     { id: 'title', label: t('executionReports.col.initiative', 'Initiative') },
@@ -350,7 +350,7 @@ export function buildExecutionReportSnapshot(args: {
       owner:
         nameOf(initiative?.ownerExecution) ||
         nameOf(initiative?.ownerBusiness) ||
-        t('executionReports.value.unassigned', 'Nieprzypisane'),
+        t('executionReports.value.unassigned', 'Unassigned'),
       deviation:
         deviation != null
           ? t('executionReports.value.days', '{{count}} dni', { count: deviation })
@@ -361,19 +361,19 @@ export function buildExecutionReportSnapshot(args: {
   const metrics = [
     {
       id: 'initiatives',
-      label: t('executionReports.metric.initiatives', 'Inicjatywy w realizacji'),
+      label: t('executionReports.metric.initiatives', 'Initiatives in execution'),
       value: String(d.deliveryInitiatives.length),
       tone: 'NEUTRAL' as const,
     },
     {
       id: 'overdueTasks',
-      label: t('executionReports.metric.overdueTasks', 'Zadania po terminie'),
+      label: t('executionReports.metric.overdueTasks', 'Overdue tasks'),
       value: String(d.overdueTasks.length),
       tone: d.overdueTasks.length ? ('CRIT' as const) : ('OK' as const),
     },
     {
       id: 'blocked',
-      label: t('executionReports.metric.blocked', 'Zadania zablokowane'),
+      label: t('executionReports.metric.blocked', 'Blocked tasks'),
       value: String(d.blockedTasks.length),
       tone: d.blockedTasks.length ? ('WARN' as const) : ('OK' as const),
     },
@@ -381,14 +381,14 @@ export function buildExecutionReportSnapshot(args: {
       id: 'decisions',
       label: t('executionReports.metric.openDecisions', 'Decisions to resolve'),
       value: String(d.openDecisions.length),
-      hint: t('executionReports.metric.overdueDecisions', '{{count}} po terminie', {
+      hint: t('executionReports.metric.overdueDecisions', '{{count}} overdue', {
         count: d.overdueDecisions.length,
       }),
       tone: d.overdueDecisions.length ? ('CRIT' as const) : ('NEUTRAL' as const),
     },
     {
       id: 'onTime',
-      label: t('executionReports.metric.onTime', 'Na czas'),
+      label: t('executionReports.metric.onTime', 'On time'),
       value:
         d.onTimeRatio == null
           ? t('executionReports.value.noData', 'no data')
@@ -397,7 +397,7 @@ export function buildExecutionReportSnapshot(args: {
     },
     {
       id: 'risks',
-      label: t('executionReports.metric.risks', 'Otwarte pozycje RAID'),
+      label: t('executionReports.metric.risks', 'Open RAID items'),
       value: String(d.openRisks.length),
       tone: d.openRisks.length ? ('WARN' as const) : ('OK' as const),
     },
@@ -507,7 +507,7 @@ export function buildExecutionReportSnapshot(args: {
           bullets: d.escalatedDecisions
             .slice(0, 8)
             .map((decision) =>
-              t('executionReports.bullet.escalated', 'Eskalacja: {{title}} ({{owner}})', {
+              t('executionReports.bullet.escalated', 'Escalation: {{title}} ({{owner}})', {
                 title: text(decision?.title),
                 owner: nameOf(decision?.ownerName) || '—',
               })
@@ -556,10 +556,10 @@ export function buildExecutionReportSnapshot(args: {
       { id: 'rag', label: t('executionReports.col.rag', 'RAG') },
     ];
     const ragLabel: Record<ExecutionReportRag, string> = {
-      GREEN: t('executionReports.ragLabel.GREEN', 'Zielony'),
+      GREEN: t('executionReports.ragLabel.GREEN', 'Green'),
       AMBER: t('executionReports.ragLabel.AMBER', 'Amber'),
-      RED: t('executionReports.ragLabel.RED', 'Czerwony'),
-      GREY: t('executionReports.ragLabel.GREY', 'Szary (luka danych)'),
+      RED: t('executionReports.ragLabel.RED', 'Red'),
+      GREY: t('executionReports.ragLabel.GREY', 'Gray (data gap)'),
     };
     const healthRows = d.deliveryInitiatives.slice(0, 30).map((initiative) => {
       const { rag: itemRag, deviation } = initiativeRag(initiative, signalsByEntity);
@@ -592,7 +592,7 @@ export function buildExecutionReportSnapshot(args: {
             .map((signal) =>
               t(
                 'executionReports.bullet.signal',
-                '{{name}} — {{type}}, {{days}} dni odchylenia ({{reason}})',
+                '{{name}} — {{type}}, {{days}} days deviation ({{reason}})',
                 {
                   name: text(signal?.entityName),
                   type: labelFor(t, 'deviation', signal?.deviationType, '—'),
@@ -603,7 +603,7 @@ export function buildExecutionReportSnapshot(args: {
                     asArray(signal?.whySlipReasons)
                       .map((item: any) => labelFor(t, 'slipReason', item?.reason, ''))
                       .filter(Boolean)
-                      .join('; ') || t('executionReports.value.noReason', 'bez uzasadnienia'),
+                      .join('; ') || t('executionReports.value.noReason', 'without justification'),
                 }
               )
             ),
@@ -667,10 +667,10 @@ export function buildExecutionReportSnapshot(args: {
     );
   } else if (definitionKey === 'sponsor-onepager') {
     const riskColumns = [
-      { id: 'title', label: t('executionReports.col.risk', 'Ryzyko / problem') },
+      { id: 'title', label: t('executionReports.col.risk', 'Risk / issue') },
       { id: 'type', label: t('executionReports.col.type', 'Typ') },
-      { id: 'severity', label: t('executionReports.col.severity', 'Waga') },
-      { id: 'score', label: t('executionReports.col.score', 'Wynik') },
+      { id: 'severity', label: t('executionReports.col.severity', 'Weight') },
+      { id: 'score', label: t('executionReports.col.score', 'Result') },
     ];
     sections.push(
       emptyOr(

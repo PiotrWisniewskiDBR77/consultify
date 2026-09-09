@@ -102,7 +102,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
     ? activeSlideId
     : (slides[0]?.slideId ?? null);
 
-  const moduleLbl = moduleLabel ?? t('prezentacje.moduleLabel', 'Prezentacje');
+  const moduleLbl = moduleLabel ?? t('prezentacje.moduleLabel', 'Presentations');
   const title = preview?.title ?? fallbackTitle ?? t('prezentacje.defaultTitle', 'Presentation');
 
   const chips = useMemo(
@@ -139,7 +139,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
       buildPrezentacjeRightRailTools({
         labels: {
           activity: t('prezentacje.rightRail.activity', 'Activity'),
-          artefakt: t('prezentacje.rightRail.artefakt', 'Artefakt'),
+          artefakt: t('prezentacje.rightRail.artefakt', 'Artifact'),
         },
       }),
     [t]
@@ -179,7 +179,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
       title={title}
       onTitleChange={onTitleChange}
       onBack={onBack}
-      backLabel={t('prezentacje.back', 'Back to Prezentacje home')}
+      backLabel={t('prezentacje.back', 'Back to Presentations home')}
       topBarChips={chips}
       leftRailTitle={t('prezentacje.leftRail.title', 'Slides')}
       leftRailBottomSlot={leftRailBottomSlot}

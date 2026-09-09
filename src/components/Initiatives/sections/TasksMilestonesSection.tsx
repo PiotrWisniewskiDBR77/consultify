@@ -1667,7 +1667,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                             )}
                             {t(
                               'initiatives.tasksMilestonesSection.emptyPlanGenerateAi',
-                              'Wygeneruj plan z AI'
+                              'Generate plan with AI'
                             )}
                           </button>
                         </div>

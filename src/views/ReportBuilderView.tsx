@@ -195,7 +195,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
         <div className="w-full max-w-md bg-white dark:bg-navy-900 rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-3 text-center">
           <Loader2 className="w-6 h-6 animate-spin text-slate-500 dark:text-slate-400" />
           <div className="text-sm text-slate-600 dark:text-slate-300">
-            Sprawdzam wzorzec z Biblioteki…
+            {t('reportBuilder.checkingTemplateFromLibrary', 'Checking template from the Library…')}
           </div>
         </div>
       </div>

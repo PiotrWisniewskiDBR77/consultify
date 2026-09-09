@@ -630,8 +630,8 @@ export const ExecutionReportsSurface = ({
         cadence: cadenceLabel(item.key, item.cadence),
         audience: t(`executionReports.definitions.${item.key}.audience`, item.audience || '—'),
         state: item.mvp
-          ? t('executionReports.state.active', 'Aktywna')
-          : t('executionReports.wave2.chip', 'Fala 2'),
+          ? t('executionReports.state.active', 'Active')
+          : t('executionReports.wave2.chip', 'Wave 2'),
         rawState: item.mvp ? 'ACTIVE' : 'WAVE_2',
         kind: 'CATALOG' as const,
         mvp: item.mvp,
@@ -704,7 +704,7 @@ export const ExecutionReportsSurface = ({
       ...catalogRows,
       ...contractDefinitions.map((row) => ({
         ...row,
-        level: row.level ?? t('executionReports.level.CONTRACT', 'Kontrakt runtime'),
+        level: row.level ?? t('executionReports.level.CONTRACT', 'Runtime contract'),
         cadence: row.cadence ?? '—',
         audience: row.audience ?? '—',
         kind: 'CONTRACT' as const,
@@ -718,7 +718,7 @@ export const ExecutionReportsSurface = ({
       ...snapshotRows,
       ...contractRuns.map((row) => ({
         ...row,
-        level: row.level ?? t('executionReports.level.CONTRACT', 'Kontrakt runtime'),
+        level: row.level ?? t('executionReports.level.CONTRACT', 'Runtime contract'),
         author: row.author ?? '—',
       })),
     ],
@@ -1021,7 +1021,7 @@ export const ExecutionReportsSurface = ({
             className={`rounded-full px-3 py-1 text-xs ${registerMode === 'RUNS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
             onClick={() => setRegisterMode('RUNS')}
           >
-            {t('executionReports.tab.runs', 'Raporty')}
+            {t('executionReports.tab.runs', 'Reports')}
           </button>
           <button
             type="button"
@@ -1030,7 +1030,7 @@ export const ExecutionReportsSurface = ({
             className={`rounded-full px-3 py-1 text-xs ${registerMode === 'DEFINITIONS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
             onClick={() => setRegisterMode('DEFINITIONS')}
           >
-            {t('executionReports.tab.definitions', 'Definicje')}
+            {t('executionReports.tab.definitions', 'Definitions')}
           </button>
         </div>
       </div>
@@ -1089,7 +1089,7 @@ export const ExecutionReportsSurface = ({
         actions={[
           {
             id: 'new-definition',
-            label: t('executionReports.action.newDefinition', 'Nowa definicja'),
+            label: t('executionReports.action.newDefinition', 'New definition'),
             onClick: () => {
               setRegisterMode('DEFINITIONS');
               setShowDefinitionEditor(true);
@@ -1099,7 +1099,7 @@ export const ExecutionReportsSurface = ({
             id: 'new-contract-run',
             label: t(
               'executionReports.action.newContractRun',
-              'Kontrakt raportu (zaawansowane)'
+              'Report contract (advanced)'
             ),
             onClick: () => {
               setRegisterMode('RUNS');
@@ -1156,9 +1156,9 @@ export const ExecutionReportsSurface = ({
           </p>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
             <label className="text-xs">
-              {t('executionReports.wizard.definition', 'Definicja raportu')}
+              {t('executionReports.wizard.definition', 'Report definition')}
               <select
-                aria-label={t('executionReports.wizard.definition', 'Definicja raportu')}
+                aria-label={t('executionReports.wizard.definition', 'Report definition')}
                 className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
                 value={wizardKey}
                 onChange={(event) => setWizardKey(event.target.value)}
@@ -1174,10 +1174,10 @@ export const ExecutionReportsSurface = ({
               </select>
             </label>
             <label className="text-xs">
-              {t('executionReports.wizard.periodStart', 'Okres od')}
+              {t('executionReports.wizard.periodStart', 'Period from')}
               <input
                 type="date"
-                aria-label={t('executionReports.wizard.periodStart', 'Okres od')}
+                aria-label={t('executionReports.wizard.periodStart', 'Period from')}
                 className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
                 value={wizardPeriod.start}
                 onChange={(event) =>
@@ -1186,10 +1186,10 @@ export const ExecutionReportsSurface = ({
               />
             </label>
             <label className="text-xs">
-              {t('executionReports.wizard.periodEnd', 'Okres do')}
+              {t('executionReports.wizard.periodEnd', 'Period to')}
               <input
                 type="date"
-                aria-label={t('executionReports.wizard.periodEnd', 'Okres do')}
+                aria-label={t('executionReports.wizard.periodEnd', 'Period to')}
                 className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
                 value={wizardPeriod.end}
                 onChange={(event) =>
@@ -1276,7 +1276,7 @@ export const ExecutionReportsSurface = ({
                           }
                         : undefined
                     }
-                    openLabel={t('executionReports.action.generate', 'Wygeneruj raport')}
+                    openLabel={t('executionReports.action.generate', 'Generate report')}
                     meta={{
                       pills: [
                         {
@@ -1290,7 +1290,7 @@ export const ExecutionReportsSurface = ({
                           )
                         : t(
                             'executionReports.recommendation.wave2',
-                            'Widoczna w katalogu, generowanie w Fali 2.'
+                            'Visible in the catalog, generation in Wave 2.'
                           ),
                     }}
                     details={{
@@ -1302,17 +1302,17 @@ export const ExecutionReportsSurface = ({
                       properties: [
                         {
                           id: 'audience',
-                          label: t('executionReports.col.audience', 'Odbiorcy'),
+                          label: t('executionReports.col.audience', 'Recipients'),
                           value: row.audience ?? '—',
                         },
                         {
                           id: 'cadence',
-                          label: t('executionReports.col.cadence', 'Kadencja'),
+                          label: t('executionReports.col.cadence', 'Cadence'),
                           value: row.cadence ?? '—',
                         },
                         {
                           id: 'formats',
-                          label: t('executionReports.col.formats', 'Formy'),
+                          label: t('executionReports.col.formats', 'Formats'),
                           value: item.formats
                             .map((format) =>
                               t(`executionReports.format.${format}`, format)
@@ -1431,7 +1431,7 @@ export const ExecutionReportsSurface = ({
                       ? [
                           {
                             id: 'generate-report',
-                            label: t('executionReports.action.generate', 'Wygeneruj raport'),
+                            label: t('executionReports.action.generate', 'Generate report'),
                             onClick: () => {
                               setWizardKey(row.catalog!.key);
                               setRegisterMode('RUNS');
@@ -1680,17 +1680,17 @@ export const ExecutionReportsSurface = ({
                   ),
                 }}
                 details={{
-                  label: t('executionReports.preview.scope', 'Zakres raportu'),
+                  label: t('executionReports.preview.scope', 'Report scope'),
                   text: `${r.period} · ${r.asOf}`,
                   properties: [
                     {
                       id: 'definition',
-                      label: t('executionReports.col.definition', 'Definicja'),
+                      label: t('executionReports.col.definition', 'Definition'),
                       value: r.definition,
                     },
                     {
                       id: 'rag',
-                      label: t('executionReports.field.rag', 'Ocena RAG'),
+                      label: t('executionReports.field.rag', 'RAG rating'),
                       value: t(
                         `executionReports.ragLabel.${r.snapshot.rag}`,
                         r.snapshot.rag
@@ -1698,7 +1698,7 @@ export const ExecutionReportsSurface = ({
                     },
                     {
                       id: 'author',
-                      label: t('executionReports.field.author', 'Autor'),
+                      label: t('executionReports.field.author', 'Author'),
                       value: r.author ?? '—',
                     },
                   ],

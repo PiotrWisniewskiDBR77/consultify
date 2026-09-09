@@ -58,7 +58,7 @@ export const GateReadinessPill: React.FC<GateReadinessPillProps> = ({
     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 enabled:hover:bg-emerald-500/15'
     : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 enabled:hover:bg-amber-500/15';
 
-  const degradedLabel = t('initiatives.gateAi.pill.degraded', 'szacunek bez modelu AI');
+  const degradedLabel = t('initiatives.gateAi.pill.degraded', 'estimate without an AI model');
 
   const ariaLabel = [
     isReady

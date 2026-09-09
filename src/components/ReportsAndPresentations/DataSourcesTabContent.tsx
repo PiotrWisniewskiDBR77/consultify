@@ -159,7 +159,7 @@ export const DataSourcesTabContent: React.FC = () => {
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-c-text-muted">Konektor:</label>
+                <label className="text-xs text-c-text-muted">{t('rap.dataSources.connectorLabel', 'Connector:')}</label>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
@@ -187,7 +187,7 @@ export const DataSourcesTabContent: React.FC = () => {
                   Podgląd danych
                 </button>
               </div>
-              <label className="mt-2 block text-xs text-c-text-muted">Konfiguracja (JSON):</label>
+              <label className="mt-2 block text-xs text-c-text-muted">{t('rap.dataSources.configJsonLabel', 'Configuration (JSON):')}</label>
               <textarea
                 value={config}
                 onChange={(e) => setConfig(e.target.value)}
@@ -213,7 +213,7 @@ export const DataSourcesTabContent: React.FC = () => {
             <input
               value={formId}
               onChange={(e) => setFormId(e.target.value)}
-              placeholder="ID formularza intake"
+              placeholder={t('rap.dataSources.intakeFormIdPlaceholder', 'Intake form ID')}
               data-testid="rap-data-form-id"
               className="min-w-[14rem] flex-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
             />

@@ -113,9 +113,9 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Speaker notes */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-[10px] text-c-text-secondary uppercase mb-2">Notatki prezentera</p>
+            <p className="text-[10px] text-c-text-secondary uppercase mb-2">{t('presentations.builder.presentMode.speakerNotes', 'Speaker notes')}</p>
             <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
-              {currentCard.speaker_notes || 'Brak notatek do tego slajdu.'}
+              {currentCard.speaker_notes || t('presentations.builder.presentMode.noNotesForSlide', 'No notes for this slide.')}
             </p>
           </div>
 

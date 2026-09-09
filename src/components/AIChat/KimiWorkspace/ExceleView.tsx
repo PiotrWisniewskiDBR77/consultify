@@ -525,7 +525,7 @@ export const ExceleView: React.FC = () => {
         heading={t('kimi.excele.triChooser.heading', 'How do you want to start the spreadsheet?')}
         subheading={t('kimi.excele.triChooser.subheading', 'Choose a mode — all three are equally valid.')}
         clean={{
-          title: t('kimi.excele.triChooser.clean.title', 'Czysto'),
+          title: t('kimi.excele.triChooser.clean.title', 'Blank'),
           desc: t('kimi.excele.triChooser.clean.desc', 'Empty grid (1 sheet). You fill it in yourself, no AI.'),
         }}
         ai={{
@@ -536,8 +536,8 @@ export const ExceleView: React.FC = () => {
           ),
         }}
         template={{
-          title: t('kimi.excele.triChooser.template.title', 'Z szablonu'),
-          desc: t('kimi.excele.triChooser.template.desc', 'Zacznij od gotowego szablonu arkusza.'),
+          title: t('kimi.excele.triChooser.template.title', 'From template'),
+          desc: t('kimi.excele.triChooser.template.desc', 'Start from a ready-made sheet template.'),
         }}
         onClean={handleCreateEmptyGrid}
         onAi={() => setEntryMode('ai')}
@@ -559,7 +559,7 @@ export const ExceleView: React.FC = () => {
         onCopyLink={() => {
           const href = buildArtifactPermalink('sheet', effectiveWorkbookId);
           void navigator.clipboard.writeText(href);
-          toast.success(t('common.copied', 'Skopiowano'));
+          toast.success(t('common.copied', 'Copied'));
         }}
       />
     );

@@ -106,7 +106,9 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
       data-testid="baseline-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-c-text">Baseline planu (rebaseline)</h3>
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('execution.rollout.baseline.heading', 'Plan baseline (rebaseline)')}
+        </h3>
         <button
           type="button"
           disabled={busy}
@@ -114,12 +116,14 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
           data-testid="baseline-capture-btn"
           className="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
         >
-          {busy ? 'Zapisywanie…' : 'Zapisz baseline'}
+          {busy ? t('execution.rollout.baseline.saving', 'Saving…') : t('execution.rollout.baseline.saveCta', 'Save baseline')}
         </button>
       </div>
 
       {needsProject && (
-        <p className="mb-2 text-xs text-amber-600">Zapis baseline wymaga wybranego projektu.</p>
+        <p className="mb-2 text-xs text-amber-600">
+          {t('execution.rollout.baseline.needsProject', 'Saving a baseline requires a selected project.')}
+        </p>
       )}
       {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
           print the failure as a line ABOVE the list, so a failed load still

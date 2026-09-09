@@ -363,7 +363,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         {/* Footer */}
         <div className="flex items-center gap-3 px-4 py-2 border-t border-c-border-subtle text-[10px] text-c-text-secondary">
-          <span>↑↓ Nawigacja</span>
+          <span>{t('presentations.builder.commandPalette.navigate', '↑↓ Navigate')}</span>
           <span>{t('presentations.builder.commandPalette.select', '↵ Select')}</span>
           <span>{t('presentations.builder.commandPalette.escClose', 'ESC Close')}</span>
           <span className="ml-auto">{t('presentations.builder.commandPalette.talkToTeresaToUse', 'Talk to Teresa to use the AI')}</span>

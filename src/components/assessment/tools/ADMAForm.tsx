@@ -360,7 +360,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             {/* Current Level */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Current Level (Stan Obecny)
+                {t('assessment.adma.form.currentLevel', 'Current Level')}
               </label>
               {renderLevelSelector(dimension, 'current', dimScore.current)}
               {dimScore.current > 0 && (

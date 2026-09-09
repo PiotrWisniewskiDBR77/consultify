@@ -123,14 +123,14 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive('bold')}
             onClick={() => editor.chain().focus().toggleBold().run()}
-            title="Pogrubienie"
+            title={t('presentations.builder.tipTapEditor.bold', 'Bold')}
           >
             <Bold size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('italic')}
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            title="Kursywa"
+            title={t('presentations.builder.tipTapEditor.italic', 'Italic')}
           >
             <Italic size={14} />
           </ToolbarBtn>
@@ -152,14 +152,14 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive('bulletList')}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            title="Lista punktowana"
+            title={t('presentations.builder.tipTapEditor.bulletList', 'Bullet list')}
           >
             <List size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('orderedList')}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            title="Lista numerowana"
+            title={t('presentations.builder.tipTapEditor.numberedList', 'Numbered list')}
           >
             <ListOrdered size={14} />
           </ToolbarBtn>

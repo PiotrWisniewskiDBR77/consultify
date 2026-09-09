@@ -158,7 +158,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
       {status === 'loading' && (
         <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-c-text-secondary">
           <Loader2 size={14} className="animate-spin text-c-accent" />
-          <span>{t('documentStudio.inlineAi.working', 'Teresa pracuje…')}</span>
+          <span>{t('documentStudio.inlineAi.working', 'Teresa is working…')}</span>
         </div>
       )}
 
@@ -205,7 +205,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
               onClick={() => setShowActions(true)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised/[0.06] transition-colors w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              <span>{t('documentStudio.inlineAi.trigger', 'Popraw z Teresa')}</span>
+              <span>{t('documentStudio.inlineAi.trigger', 'Improve with Teresa')}</span>
               <ChevronDown size={12} />
             </button>
           ) : (

@@ -204,7 +204,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-ai-editor-panel"
-      aria-label={t('kimi.tabeleShell.aiEditor.ariaLabel', 'Tabele AI Editor')}
+      aria-label={t('kimi.tabeleShell.aiEditor.ariaLabel', 'Tables AI Editor')}
     >
       <header className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-c-text">

@@ -120,7 +120,7 @@ const WorkstationPage: React.FC<{
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <Ruler className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-blue-900 dark:text-blue-300">POMIERZ</h3>
+            <h3 className="font-bold text-blue-900 dark:text-blue-300">{t('assessment.dbr77.report.measure', 'MEASURE')}</h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -160,7 +160,7 @@ const WorkstationPage: React.FC<{
         <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-5 h-5 text-green-600" />
-            <h3 className="font-bold text-green-900 dark:text-green-300">ZOPTYMALIZUJ</h3>
+            <h3 className="font-bold text-green-900 dark:text-green-300">{t('assessment.dbr77.report.optimize', 'OPTIMIZE')}</h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -193,7 +193,7 @@ const WorkstationPage: React.FC<{
           {workstation.leanAssessment.wasteInRole.length > 0 && (
             <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                Zidentyfikowane marnotrawstwa:
+                {t('assessment.dbr77.report.identifiedWastes', 'Identified wastes:')}
               </p>
               <div className="flex flex-wrap gap-1">
                 {workstation.leanAssessment.wasteInRole.map((wasteId) => {
@@ -220,7 +220,7 @@ const WorkstationPage: React.FC<{
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">% do automatyzacji:</span>
+              <span className="text-slate-600 dark:text-slate-400">{t('assessment.dbr77.report.automationPercent', '% to automate:')}</span>
               <span className="font-bold text-primary-600">
                 {workstation.automationPotential.taskAutomationPercent}%
               </span>
@@ -253,7 +253,7 @@ const WorkstationPage: React.FC<{
           {workstation.automationPotential.recommendedTechnologies?.length > 0 && (
             <div className="mt-3 pt-3 border-t border-primary-200 dark:border-primary-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                Rekomendowane technologie:
+                {t('assessment.dbr77.report.recommendedTechnologies', 'Recommended technologies:')}
               </p>
               <div className="flex flex-wrap gap-1">
                 {workstation.automationPotential.recommendedTechnologies.map((techId) => {
@@ -346,7 +346,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             Lean 4.0 Assessment Report
           </h1>
           <p className="text-xl text-slate-500 dark:text-slate-400 mb-2">
-            Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj
+            {t('assessment.dbr77.report.methodSubtitle', 'DBR77 method: Measure → Optimize → Automate')}
           </p>
           <p className="text-lg text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {organizationName}
@@ -372,7 +372,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
       <div className="p-8 min-h-screen">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
           <Target size={24} />
-          Podsumowanie Wykonawcze
+          {t('assessment.dbr77.report.executiveSummary', 'Executive Summary')}
         </h2>
 
         <div className="grid grid-cols-4 gap-4 mb-8">
@@ -408,7 +408,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         {/* Top 5 Automation Targets */}
         <div className="mb-8">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
-            Top 5 Stanowisk do Automatyzacji
+            {t('assessment.dbr77.report.top5AutomationTargets', 'Top 5 Automation Targets')}
           </h3>
           <div className="space-y-3">
             {data.workstations

@@ -2152,7 +2152,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     {g.data.levelInterpretation}
                                   </p>
                                   <p className="text-slate-600 dark:text-slate-400 text-xs">
-                                    <span className="font-semibold">Kanon: </span>
+                                    <span className="font-semibold">{t('assessment.drd.editor.canonLabel', 'Canon: ')}</span>
                                     {g.data.canonContext}
                                   </p>
                                   {g.data.pitfalls.length > 0 && (

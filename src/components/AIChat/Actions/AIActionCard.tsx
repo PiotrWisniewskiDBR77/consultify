@@ -160,7 +160,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     if (payload.report) {
       return (
         <div className="text-xs text-slate-600 dark:text-slate-400">
-          {t('aiActions.report', 'Raport')}: {payload.report.type}
+          {t('aiActions.report', 'Report')}: {payload.report.type}
         </div>
       );
     }
@@ -263,7 +263,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                                 }`}
               >
                 {action.risk === 'high'
-                  ? t('aiActions.highRisk', 'Wysokie ryzyko')
+                  ? t('aiActions.highRisk', 'High risk')
                   : t('aiActions.mediumRisk', 'Medium risk')}
               </span>
             )}
@@ -340,7 +340,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
           {isCompleted ? (
             <>
               <Check size={12} />
-              {t('aiActions.executed', 'Wykonano')}
+              {t('aiActions.executed', 'Done')}
               {action.result?.createdId && (
                 <span className="text-slate-500">• ID: {action.result.createdId}</span>
               )}

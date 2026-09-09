@@ -224,7 +224,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               type="text"
-              placeholder={t('common.search', 'Szukaj...')}
+              placeholder={t('common.search', 'Search...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-navy-700 border-0 rounded-lg focus-visible:ring-2 focus-visible:ring-c-focus text-slate-800 dark:text-slate-200 placeholder-slate-400"

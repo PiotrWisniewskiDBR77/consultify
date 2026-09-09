@@ -2446,7 +2446,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               status={String(row.status)}
               label={
                 row.onHold === true
-                  ? t('initiatives.status.ON_HOLD', 'Wstrzymana')
+                  ? t('initiatives.status.ON_HOLD', 'On hold')
                   : getLocalizedStatusLabel(status, t)
               }
               tone={getInitiativeStatusChipTone(status, { onHold: row.onHold })}
@@ -2523,7 +2523,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
          * a nie „liczba różna od zera". `null` = brak baseline'u → „—", nie zero.
          */
         id: 'deviation',
-        label: t('execution.table.deviation', 'Odchylenie (dni)'),
+        label: t('execution.table.deviation', 'Deviation (days)'),
         width: '130px',
         render: (row) => {
           const dni = initiativeDeviationDays(row as any);
@@ -2573,9 +2573,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const zablokowana = isBlockedInitiative(row as any);
           const rag = zablokowana ? 'red' : initiativeRag(row as any);
           const opis = zablokowana
-            ? t('execution.rag.blocked', 'Zablokowana')
+            ? t('execution.rag.blocked', 'Blocked')
             : rag === 'red'
-              ? t('execution.rag.late', 'Po terminie')
+              ? t('execution.rag.late', 'Overdue')
               : rag === 'amber'
                 ? t('execution.rag.atRisk', 'At risk')
                 : rag === 'green'
@@ -3445,7 +3445,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       dueDate: (i as any).plannedEndDate ?? null,
       initiativeId: i.id,
       initiativeName: i.name ?? null,
-      context: t('execution.summary.blockedInitiative', 'Zablokowana inicjatywa'),
+      context: t('execution.summary.blockedInitiative', 'Blocked initiative'),
     }));
     const overdueDecisionItems = actionCenter.overdueDecisions.map((d) => {
       const relId =
@@ -5469,7 +5469,7 @@ Please return:
                         ...((selectedRow as { onHold?: boolean }).onHold
                           ? [
                               {
-                                label: t('initiatives.status.ON_HOLD', 'Wstrzymana'),
+                                label: t('initiatives.status.ON_HOLD', 'On hold'),
                                 tone: 'warning' as const,
                               },
                             ]
@@ -5534,7 +5534,7 @@ Please return:
                     <InitiativeLifecycleActions
                       initiativeId={selectedRow.id}
                       density="full"
-                      heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
+                      heading={t('initiatives.lifecycle.heading', 'Initiative stage')}
                       className="mt-4"
                     />
                   </StandardPreview>

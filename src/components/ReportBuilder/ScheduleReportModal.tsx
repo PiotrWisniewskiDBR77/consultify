@@ -114,7 +114,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
 
       const res = await Api.post('/api/report-builder/schedule', body);
 
-      toast.success(t('scheduleModal.created', 'Harmonogram utworzony'));
+      toast.success(t('scheduleModal.created', 'Schedule created'));
       onScheduleCreated?.(res.data?.data || res.data || {});
       resetForm();
       onClose();
@@ -154,10 +154,10 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div>
             <h2 className="text-lg font-semibold text-c-text">
-              {t('scheduleModal.title', 'Zaplanuj raport')}
+              {t('scheduleModal.title', 'Schedule report')}
             </h2>
             <p className="text-xs text-c-text-secondary mt-0.5">
-              {t('scheduleModal.fromTemplate', 'Na podstawie szablonu')}: {templateName}
+              {t('scheduleModal.fromTemplate', 'Based on template')}: {templateName}
             </p>
           </div>
           <button
@@ -173,7 +173,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {/* Schedule Name */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-1.5">
-              {t('scheduleModal.nameLabel', 'Nazwa harmonogramu')}
+              {t('scheduleModal.nameLabel', 'Schedule name')}
             </label>
             <input
               type="text"
@@ -254,7 +254,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-c-text mb-1.5">
               <Clock size={14} className="inline mr-1.5 -mt-0.5" />
-              {t('scheduleModal.timeLabel', 'Godzina')}
+              {t('scheduleModal.timeLabel', 'Time')}
             </label>
             <input
               type="time"
@@ -267,7 +267,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {/* Delivery Methods */}
           <div>
             <label className="block text-sm font-medium text-c-text mb-2">
-              {t('scheduleModal.deliveryLabel', 'Metoda dostarczania')}
+              {t('scheduleModal.deliveryLabel', 'Delivery method')}
             </label>
             <div className="space-y-2">
               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-c-border-subtle hover:opacity-90/[0.03] cursor-pointer transition-colors">
@@ -291,7 +291,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                 />
                 <Bell size={16} className="text-c-text-secondary" />
                 <span className="text-sm text-c-text">
-                  {t('scheduleModal.deliveryDashboard', 'Powiadomienie w aplikacji')}
+                  {t('scheduleModal.deliveryDashboard', 'In-app notification')}
                 </span>
               </label>
             </div>
@@ -315,7 +315,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
             {isSubmitting ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
-                {t('common.creating', 'Tworzenie...')}
+                {t('common.creating', 'Creating...')}
               </>
             ) : (
               <>

@@ -92,7 +92,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={Undo}
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title="Cofnij (Ctrl+Z)"
+        title={t('reports.premium.editorToolbar.undoShortcut', 'Undo (Ctrl+Z)')}
       />
       <ToolbarButton
         icon={Redo}
@@ -108,13 +108,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={Bold}
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title="Pogrubienie (Ctrl+B)"
+        title={t('reports.premium.editorToolbar.boldShortcut', 'Bold (Ctrl+B)')}
       />
       <ToolbarButton
         icon={Italic}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title="Kursywa (Ctrl+I)"
+        title={t('reports.premium.editorToolbar.italicShortcut', 'Italic (Ctrl+I)')}
       />
       <ToolbarButton
         icon={UnderlineIcon}
@@ -164,13 +164,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={List}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
-        title="Lista punktowana"
+        title={t('reports.premium.editorToolbar.bulletList', 'Bullet list')}
       />
       <ToolbarButton
         icon={ListOrdered}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
-        title="Lista numerowana"
+        title={t('reports.premium.editorToolbar.numberedList', 'Numbered list')}
       />
 
       <ToolbarDivider />
@@ -209,13 +209,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         icon={Quote}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
-        title="Cytat"
+        title={t('reports.premium.editorToolbar.quote', 'Quote')}
       />
       <ToolbarButton
         icon={Code}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         isActive={editor.isActive('codeBlock')}
-        title="Blok kodu"
+        title={t('reports.premium.editorToolbar.codeBlock', 'Code block')}
       />
 
       {/* Spacer */}
@@ -227,7 +227,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-blue-600 text-white rounded-lg hover:from-primary-700 hover:to-blue-700 transition-all text-sm font-medium"
       >
         <Sparkles className="w-4 h-4" />
-        Asystent AI
+        {t('reports.premium.editorToolbar.aiAssistant', 'AI Assistant')}
       </button>
 
       {/* Save */}

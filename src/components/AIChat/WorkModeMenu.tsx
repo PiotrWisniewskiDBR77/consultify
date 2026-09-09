@@ -179,7 +179,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
   };
 
   const active = PRESETS.find((p) => p.id === activePreset);
-  const activeLabel = active?.label || t('aiChat.workMode.default', 'Tryb pracy');
+  const activeLabel = active?.label || t('aiChat.workMode.default', 'Work mode');
 
   return (
     <div className="relative" ref={menuRef}>

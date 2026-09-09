@@ -178,7 +178,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       ? [
           {
             id: 'artefakt',
-            label: t('excele.rightRail.artifact', 'Artefakt'),
+            label: t('excele.rightRail.artifact', 'Artifact'),
             icon: LayoutGrid,
           } satisfies RightRailToolDescriptor,
         ]
@@ -191,7 +191,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
     },
     {
       id: 'structure',
-      label: t('excele.rightRail.structure', 'Struktura'),
+      label: t('excele.rightRail.structure', 'Structure'),
       icon: ListTree,
       disabled: sheetCount === 0,
       disabledReason: t(
@@ -201,12 +201,12 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
     },
     {
       id: 'selected',
-      label: t('excele.rightRail.selected', 'Wybrane'),
+      label: t('excele.rightRail.selected', 'Selected'),
       icon: SlidersHorizontal,
     },
     {
       id: 'history',
-      label: t('excele.rightRail.history', 'Historia i wydania'),
+      label: t('excele.rightRail.history', 'History and releases'),
       icon: HistoryIcon,
       dotTone: isFailed ? 'danger' : null,
     },
@@ -242,7 +242,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   const renderStructure = (): React.ReactElement => (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       {PANEL_HEADER(
-        t('excele.rightRail.structureTitle', 'Struktura'),
+        t('excele.rightRail.structureTitle', 'Structure'),
         t('excele.rightRail.structureSubtitle', {
           defaultValue: '{{count}} arkuszy w tym skoroszycie',
           count: sheetCount,
@@ -283,7 +283,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   const renderSelected = (): React.ReactElement => (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       {PANEL_HEADER(
-        t('excele.rightRail.selectedTitle', 'Wybrane'),
+        t('excele.rightRail.selectedTitle', 'Selected'),
         t(
           'excele.rightRail.selectedSubtitle',
           'Nothing is selected — properties of the whole document.'
@@ -295,7 +295,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
           <dd className="text-c-text font-medium">XLSX</dd>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <dt className="text-c-text-muted">{t('excele.rightRail.sheets', 'Arkusze')}</dt>
+          <dt className="text-c-text-muted">{t('excele.rightRail.sheets', 'Sheets')}</dt>
           <dd className="text-c-text font-medium tabular-nums">{sheetCount || '—'}</dd>
         </div>
         {typeof qualityScore === 'number' && (
@@ -308,7 +308,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         )}
         {preview?.fileName && (
           <div className="flex items-center justify-between gap-2">
-            <dt className="text-c-text-muted">{t('excele.rightRail.fileName', 'Plik')}</dt>
+            <dt className="text-c-text-muted">{t('excele.rightRail.fileName', 'File')}</dt>
             <dd className="text-c-text font-medium truncate max-w-[180px]" title={preview.fileName}>
               {preview.fileName}
             </dd>
@@ -321,8 +321,8 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   const renderHistory = (): React.ReactElement => (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       {PANEL_HEADER(
-        t('excele.rightRail.historyTitle', 'Historia i wydania'),
-        t('excele.rightRail.historySubtitle', 'Kroki generowania tego arkusza.')
+        t('excele.rightRail.historyTitle', 'History and releases'),
+        t('excele.rightRail.historySubtitle', 'Steps for generating this sheet.')
       )}
       {taskSteps.length > 0 ? (
         <ol className="space-y-1.5 flex-1">
@@ -354,7 +354,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         <PreviewActionButton
           variant="neutral"
           icon={Download}
-          label={t('excele.rightRail.download', 'Pobierz XLSX')}
+          label={t('excele.rightRail.download', 'Download XLSX')}
           onClick={() => onDownload?.()}
           disabled={!onDownload || isGenerating || (!workbookId && !preview)}
         />
@@ -362,7 +362,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         <PreviewActionButton
           variant="neutral"
           icon={HistoryIcon}
-          label={t('excele.rightRail.versionHistory', 'Historia wersji')}
+          label={t('excele.rightRail.versionHistory', 'Version history')}
           onClick={() => onOpenVersionHistory?.()}
           disabled={!onOpenVersionHistory || !workbookId}
         />
@@ -393,7 +393,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
         <PreviewActionButton
           variant="neutral"
           icon={FileSpreadsheet}
-          label={t('excele.rightRail.exportCsv', 'Eksportuj CSV')}
+          label={t('excele.rightRail.exportCsv', 'Export CSV')}
           onClick={() => onExportCsv?.()}
           disabled={!onExportCsv || !workbookId}
         />

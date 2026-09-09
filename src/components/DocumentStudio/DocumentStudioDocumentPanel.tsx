@@ -1746,7 +1746,7 @@ function DocumentReviewPanel({ artifactId }: { artifactId: string }): React.Reac
       <div
         className="flex shrink-0 gap-1 border-b border-c-border-subtle p-2"
         role="tablist"
-        aria-label={t('documentStudio.panel.reviewTabs', 'QA i zatwierdzanie')}
+        aria-label={t('documentStudio.panel.reviewTabs', 'QA and approval')}
       >
         <button
           type="button"
@@ -1775,7 +1775,7 @@ function DocumentReviewPanel({ artifactId }: { artifactId: string }): React.Reac
               : 'text-c-text-secondary hover:bg-c-surface-hover'
           }`}
         >
-          {t('documentStudio.panel.approvalTab', 'Zatwierdzenie')}
+          {t('documentStudio.panel.approvalTab', 'Approval')}
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
@@ -2291,8 +2291,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const handleAddSection = useCallback(async (): Promise<void> => {
     const title = await requestText(
-      t('documentStudio.outline.newSectionPrompt', 'Nazwa nowej sekcji'),
-      t('documentStudio.outline.newSectionDefault', 'Nowa sekcja')
+      t('documentStudio.outline.newSectionPrompt', 'New section name'),
+      t('documentStudio.outline.newSectionDefault', 'New section')
     );
     const trimmed = title?.trim();
     if (!trimmed) return;
@@ -2574,7 +2574,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     setSavingAs(true);
     setSaveAsError(null);
     try {
-      const copyTitle = `${schema.title} ${t('documentStudio.fileMenu.saveAsCopySuffix', '(kopia)')}`;
+      const copyTitle = `${schema.title} ${t('documentStudio.fileMenu.saveAsCopySuffix', '(copy)')}`;
       const placeholderOutline: DocumentOutline = {
         documentType: schema.documentType,
         title: copyTitle,
@@ -3321,7 +3321,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 >
                   {mode === 'report'
                     ? t('documentStudio.panel.viewReport', 'Report')
-                    : t('documentStudio.panel.viewEditor', 'Edytor')}
+                    : t('documentStudio.panel.viewEditor', 'Editor')}
                 </button>
               );
             })}
@@ -3409,11 +3409,11 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           >
             <span className="whitespace-nowrap">
               {autosaveStatus === 'saving'
-                ? t('common.saving', 'Zapisywanie…')
+                ? t('common.saving', 'Saving…')
                 : autosaveStatus === 'error'
                   ? t('common.saveError', 'Save failed')
                   : autosaveStatus === 'conflict'
-                    ? t('common.conflict', 'Konflikt')
+                    ? t('common.conflict', 'Conflict')
                     : t('common.saved', 'Saved')}
             </span>
             <span className="rounded-md border border-c-border px-2 py-1 whitespace-nowrap">
@@ -3460,7 +3460,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               {[
                 {
                   id: null,
-                  label: t('documentStudio.panel.outlineTitle', 'Struktura'),
+                  label: t('documentStudio.panel.outlineTitle', 'Structure'),
                   icon: ListTree,
                 },
                 {
@@ -3470,7 +3470,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'comments',
-                  label: t('documentStudio.panel.toolComments', 'Komentarze'),
+                  label: t('documentStudio.panel.toolComments', 'Comments'),
                   icon: MessageSquare,
                 },
                 {
@@ -3480,7 +3480,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 },
                 {
                   id: 'more',
-                  label: t('documentStudio.panel.toolHistory', 'Historia'),
+                  label: t('documentStudio.panel.toolHistory', 'History'),
                   icon: History,
                 },
               ].map((item) => {
@@ -3561,7 +3561,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               defaultValue: '{{count}} sekcji',
               count: schema.sections.length,
             })}
-            center={autosaveStatus === 'conflict' ? t('common.conflict', 'Konflikt') : undefined}
+            center={autosaveStatus === 'conflict' ? t('common.conflict', 'Conflict') : undefined}
           />
         ) : undefined
       }

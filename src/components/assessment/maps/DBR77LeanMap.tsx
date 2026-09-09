@@ -127,7 +127,9 @@ const DBR77DimensionToggle: React.FC<{
   onDimensionChange: (dim: DBR77Dimension) => void;
   processCount: number;
   workstationCount: number;
-}> = ({ activeDimension, onDimensionChange, processCount, workstationCount }) => (
+}> = ({ activeDimension, onDimensionChange, processCount, workstationCount }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex gap-2">
     <button
       onClick={() => onDimensionChange('PROCESSES')}
@@ -138,7 +140,7 @@ const DBR77DimensionToggle: React.FC<{
       }`}
     >
       <Settings size={18} />
-      <span>Procesy</span>
+      <span>{t('assessment.dbr77.dimension.processes', 'Processes')}</span>
       <span className="px-2 py-0.5 rounded bg-white/20 text-xs">{processCount}</span>
     </button>
     <button
@@ -150,11 +152,12 @@ const DBR77DimensionToggle: React.FC<{
       }`}
     >
       <Users size={18} />
-      <span>Stanowiska</span>
+      <span>{t('assessment.dbr77.dimension.workstations', 'Workstations')}</span>
       <span className="px-2 py-0.5 rounded bg-white/20 text-xs">{workstationCount}</span>
     </button>
   </div>
-);
+  );
+};
 
 /**
  * Waste Selector (8 wastes - TIMWOODS)
@@ -165,6 +168,7 @@ const WasteSelector: React.FC<{
   onChange: (wastes: WasteType[], impact: Partial<Record<WasteType, number>>) => void;
   readOnly?: boolean;
 }> = ({ selectedWastes, wasteImpact, onChange, readOnly }) => {
+  const { t } = useTranslation();
   const IconMap: Record<string, React.FC<{ className?: string; size?: number }>> = {
     Truck: Truck,
     Package: Package,
@@ -201,7 +205,7 @@ const WasteSelector: React.FC<{
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-slate-600 dark:text-slate-400">
-        Zidentyfikowane Marnotrawstwa (TIMWOODS)
+        {t('assessment.dbr77.waste.identifiedHeading', 'Identified wastes (TIMWOODS)')}
       </label>
       <div className="grid grid-cols-4 gap-2">
         {DBR77_WASTES.map((waste) => {
@@ -1178,7 +1182,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
               Lean 4.0 Assessment
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj
+              {t('assessment.dbr77.methodSubtitle', 'DBR77 method: Measure → Optimize → Automate')}
             </p>
           </div>
           <div className="flex items-center gap-4">

@@ -106,7 +106,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       await navigator.clipboard.writeText(window.location.origin + shareUrl);
       setCopied(true);
-      toast.success(t('reports.export.linkCopied', 'Link skopiowany do schowka'));
+      toast.success(t('reports.export.linkCopied', 'Link copied to clipboard'));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error(t('reports.export.copyError', 'Could not copy the link'));

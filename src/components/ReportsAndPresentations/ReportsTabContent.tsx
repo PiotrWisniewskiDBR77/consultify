@@ -186,7 +186,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
       {
         id: 'period',
-        label: t('rap.columns.period', 'Okres'),
+        label: t('rap.columns.period', 'Period'),
         width: '160px',
         render: (row: ReportItem) => {
           if (!row.periodFrom) return <span className="text-sm text-c-text-muted">—</span>;
@@ -228,7 +228,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
       {
         id: 'exportFormats',
-        label: t('rap.columns.exports', 'Eksporty'),
+        label: t('rap.columns.exports', 'Exports'),
         width: '140px',
         render: (row: ReportItem) => {
           if (!row.exportFormats?.length)
@@ -287,7 +287,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
       {
         id: 'export',
-        label: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+        label: t('rap.actions.exportPdf', 'Export PDF'),
         icon: Download,
         onClick: () => actions.exportReportPdf(row),
       },
@@ -568,7 +568,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               showWordCount: false,
               text: [
                 `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
-                `${t('rap.columns.exports', 'Eksporty')}: ${
+                `${t('rap.columns.exports', 'Exports')}: ${
                   previewItem.exportFormats?.length
                     ? previewItem.exportFormats.join(', ').toUpperCase()
                     : '—'
@@ -581,7 +581,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               },
               // canon A7.3: eksporty TYLKO w Details kebab (nie w gridzie akcji).
               onExport: () => actions.exportReportPdf(previewItem),
-              exportLabel: t('rap.actions.exportPdf', 'Eksportuj PDF'),
+              exportLabel: t('rap.actions.exportPdf', 'Export PDF'),
             }}
             ai={{
               hints: [
