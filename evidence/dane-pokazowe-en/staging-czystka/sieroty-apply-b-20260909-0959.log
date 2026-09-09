@@ -1,0 +1,50 @@
+[d0] Tryb bez listy identyfikatorów (sieroty nie należą do żadnej organizacji).
+[d0] Tryb: sieroty-apply · cel: thomas.proxy.rlwy.net:52567/railway
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację.
+[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…
+[d0] SIEROTY do usunięcia: 39227 wierszy w 44 tabelach.
+        1. organization_context_claims.organization_id: 34210
+        2. organization_context_items.organization_id: 1522
+        3. organization_context_snapshots.organization_id: 1434
+        4. api_logs.organization_id: 567
+        5. knowledge_doc_versions.organization_id: 222
+        6. wave6_context_ledger.organization_id: 143
+        7. ie_aggregate_state.organization_id: 123
+        8. project_role_templates.organization_id: 120
+        9. my_ideas.organization_id: 102
+       10. ie_audit_events.organization_id: 81
+       11. ie_command_receipts.organization_id: 80
+       12. partner_commission_transactions.organization_id: 80
+       13. ie_outbox_events.organization_id: 79
+       14. partner_attributions.organization_id: 48
+       15. conversion_events.organization_id: 44
+       16. document_studio_templates.organization_id: 44
+       17. ie_aggregate_relations.organization_id: 39
+       18. ai_chat_runs.organization_id: 31
+       19. wave6_context_snapshots.organization_id: 29
+       20. conversations.organization_id: 27
+       21. ai_cost_usage.organization_id: 25
+       22. ai_quality_metrics.organization_id: 25
+       23. v8_artifact_origin_links.organization_id: 24
+       24. v8_output_artifacts.organization_id: 24
+       25. my_idea_maps.organization_id: 21
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read ETIMEDOUT
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+Emitted 'error' event on Client instance at:
+    at Client._handleErrorEvent (/Users/piotrwisniewski/Developer/Consultify/node_modules/pg/lib/client.js:350:10)
+    at Connection.emit (node:events:508:28)
+    at Socket.reportStreamError (/Users/piotrwisniewski/Developer/Consultify/node_modules/pg/lib/connection.js:57:12)
+    at Socket.emit (node:events:508:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -60,
+  code: 'ETIMEDOUT',
+  syscall: 'read'
+}
+
+Node.js v24.12.0

@@ -1,0 +1,62 @@
+[d0] Bezpiecznik listy zachowanej: OK (6 chronionych, zero kolizji).
+[d0] Tryb: dry-run · cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] Lista wejściowa: 325 identyfikatorów.
+[d0] Znalezione w bazie: 325. Nieistniejące: 0.
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację, w tym 100 z FK NO ACTION/RESTRICT (kasowane jawnie przed organizacją).
+
+[d0] === RAPORT PER TABELA ===
+[d0] Wierszy do usunięcia: 38380 z 108 tabel (z 1285 sprawdzonych).
+[d0] Top 25 tabel:
+        1. collab_sessions.organization_id: 4800
+        2. api_logs.organization_id: 4161
+        3. audit_events.org_id: 3521
+        4. v8_consumer_tool_policies.organization_id: 3384
+        5. v8_tool_catalog.organization_id: 3384
+        6. tool_session_presence.organization_id: 1743
+        7. organization_context_claims.organization_id: 1681
+        8. organization_context_items.organization_id: 1660
+        9. my_ideas.organization_id: 1631
+       10. organization_members.organization_id: 1403
+       11. users.organization_id: 1395
+       12. v8_output_artifacts.organization_id: 1342
+       13. v8_artifact_origin_links.organization_id: 1323
+       14. activity_logs.organization_id: 1173
+       15. conversion_events.organization_id: 1062
+       16. audit_log.organization_id: 902
+       17. my_idea_maps.organization_id: 764
+       18. test_support_runs.organization_id: 260
+       19. conversations.organization_id: 251
+       20. work_canvas_drafts.organization_id: 214
+       21. canonical_inbox_items.organization_id: 206
+       22. tasks.organization_id: 206
+       23. my_idea_map_snapshots.organization_id: 186
+       24. project_role_templates.organization_id: 168
+       25. document_studio_editor_audit.organization_id: 112
+
+[d0] === RAPORT PER ORGANIZACJA (top 15 z 325) ===
+        1. demo-org | Demo Organization | członków=1061 | wierszy=17943 | tabel=36
+        2. 15f69780-675c-4f32-9230-82a4646f15d8 | PM Test GmbH | członków=2 | wierszy=3944 | tabel=43
+        3. 66b9bf21-f927-40d1-9a87-cd702e3eb2fb | E2E Tenant (m07-live-2) | członków=1 | wierszy=673 | tabel=13
+        4. 20e49bc6-f69f-4519-b232-824cd3facb87 | E2E Tenant (m06-mqrjpenp-ac5s) | członków=1 | wierszy=362 | tabel=25
+        5. demo-org-session-d1538cccff-msarpqu3 | Atelier Toys | członków=18 | wierszy=354 | tabel=38
+        6. b281c19a-9b97-4753-947a-7e47fed149aa | Antigravity QA 1714715040Antigravity QA | członków=1 | wierszy=322 | tabel=11
+        7. 164d33a4-4dfb-4447-8843-36dec25df32c | Antygravity Audit | członków=1 | wierszy=290 | tabel=24
+        8. 16ce8aed-7810-4a19-be1c-20f266a9f75a | Retest Corp | członków=1 | wierszy=277 | tabel=11
+        9. 9c57c059-2637-4aba-8002-ef40c3a40496 | My Company | członków=1 | wierszy=250 | tabel=18
+       10. 561745ea-e450-49d7-8392-1ec08e043dcc | E2E Tenant (work-canvas-owner-msav44b5-pp8utnrb) | członków=1 | wierszy=225 | tabel=11
+       11. fdf2eb19-b418-4501-9ca6-68e89666cd9a | E2E Tenant (work-canvas-owner-msav52xn-595g1dr1) | członków=1 | wierszy=225 | tabel=11
+       12. d2efe0a9-bf9f-49b9-bfcb-be8f13981889 | E2E Tenant (deck-e2e-msldhn9g-sfomwn) | członków=1 | wierszy=190 | tabel=10
+       13. b9f798e2-76dc-4bcb-94a9-7cf5408835f0 | E2E Tenant (deck-e2e-msldp4wy-frl6fm) | członków=1 | wierszy=190 | tabel=10
+       14. b63cfc43-63dd-4927-bfe1-71890df4f1d3 | E2E Tenant (deck-e2e-msldwfs8-vfa1ot) | członków=1 | wierszy=190 | tabel=10
+       15. 0b1a3afa-d138-4196-a2c5-2a698f2395a3 | E2E Tenant (deck-e2e-msldyjcu-sd055s) | członków=1 | wierszy=190 | tabel=10
+
+[d0] CSV per tabela:       /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-tabela-2026-09-09T04-42-24-563Z.csv
+[d0] CSV per organizacja:  /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-organizacja-2026-09-09T04-42-24-564Z.csv
+[d0] Cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] DRY-RUN zakończony. NIC NIE ZOSTAŁO ZMIENIONE.
+[d0] UWAGA: liczba 38380 obejmuje wyłącznie tabele mające kolumnę wskazującą na organizację.
+[d0] Wiersze znikające kaskadą z tabel bez takiej kolumny (np. komentarze zadania) NIE są tu liczone —
+[d0] realna liczba usuniętych wierszy będzie WIĘKSZA. To dolna granica, nie górna.
+

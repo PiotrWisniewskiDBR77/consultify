@@ -1,0 +1,50 @@
+[d0] Bezpiecznik listy zachowanej: OK (3 chronionych, zero kolizji).
+[d0] Tryb: dry-run · cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] Lista wejściowa: 3 identyfikatorów.
+[d0] Znalezione w bazie: 3. Nieistniejące: 0.
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację, w tym 100 z FK NO ACTION/RESTRICT (kasowane jawnie przed organizacją).
+
+[d0] === RAPORT PER TABELA ===
+[d0] Wierszy do usunięcia: 13608 z 125 tabel (z 1285 sprawdzonych).
+[d0] Top 25 tabel:
+        1. api_logs.organization_id: 9428
+        2. activity_logs.organization_id: 1102
+        3. audit_events.org_id: 483
+        4. audit_log.organization_id: 252
+        5. organization_context_claims.organization_id: 222
+        6. knowledge_chunks.organization_id: 199
+        7. wave6_context_ledger.organization_id: 184
+        8. financial_statement_line_aliases.organization_id: 165
+        9. v8_output_artifacts.organization_id: 155
+       10. conversion_events.organization_id: 125
+       11. v8_artifact_origin_links.organization_id: 103
+       12. organization_context_items.organization_id: 70
+       13. v8_consumer_tool_policies.organization_id: 54
+       14. v8_tool_catalog.organization_id: 54
+       15. my_ideas.organization_id: 53
+       16. tasks.organization_id: 50
+       17. interview_questions.organization_id: 40
+       18. initiative_milestones.organization_id: 39
+       19. conversations.organization_id: 36
+       20. initiatives.organization_id: 36
+       21. ai_chat_runs.organization_id: 35
+       22. ai_cost_usage.organization_id: 35
+       23. ai_quality_metrics.organization_id: 35
+       24. wave6_context_snapshots.organization_id: 34
+       25. my_idea_maps.organization_id: 31
+
+[d0] === RAPORT PER ORGANIZACJA (top 15 z 3) ===
+        1. atelier | Atelier Toys | członków=22 | wierszy=13396 | tabel=118
+        2. nordwind | Nordwind Components GmbH | członków=0 | wierszy=173 | tabel=13
+        3. vts | VTS Group S.A. | członków=1 | wierszy=39 | tabel=5
+
+[d0] CSV per tabela:       /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-tabela-2026-09-09T05-10-16-002Z.csv
+[d0] CSV per organizacja:  /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/dry-run-per-organizacja-2026-09-09T05-10-16-004Z.csv
+[d0] Cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] DRY-RUN zakończony. NIC NIE ZOSTAŁO ZMIENIONE.
+[d0] UWAGA: liczba 13608 obejmuje wyłącznie tabele mające kolumnę wskazującą na organizację.
+[d0] Wiersze znikające kaskadą z tabel bez takiej kolumny (np. komentarze zadania) NIE są tu liczone —
+[d0] realna liczba usuniętych wierszy będzie WIĘKSZA. To dolna granica, nie górna.
+

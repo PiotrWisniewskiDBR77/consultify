@@ -1,0 +1,11 @@
+[d0] Bezpiecznik listy zachowanej: OK (3 chronionych, zero kolizji).
+[d0] Tryb: apply · cel: thomas.proxy.rlwy.net:52567/railway
+[d0] Manifest „przed" zapisany: /Users/piotrwisniewski/Developer/wt/fable-inicjatywy/evidence/dane-pokazowe-en/usun-organizacje-2026-09-09T04-48-22-383Z-manifest.json (38705 wierszy).
+[d0] GRANICA ROLLBACKU: manifest obejmuje wyłącznie tabele ze wskaźnikiem na organizację. Wiersze kasowane kaskadą z tabel BEZ takiego wskaźnika przywróci tylko pg_dump zrobiony przed operacją.
+[d0] Do wyczyszczenia jawnie: 108 tabel (z 100 blokującymi w tej liczbie).
+[d0] kasowanie przebieg 1: usunięto łącznie 35982, tabel z problemem 3
+[d0] kasowanie przebieg 2: usunięto łącznie 37377, tabel z problemem 2
+[d0] kasowanie przebieg 3: usunięto łącznie 37377, tabel z problemem 2
+[d0] UTKNĘŁO ai_chat_runs.organization_id: update or delete on table "ai_chat_runs" violates foreign key constraint "ai_chat_run_events_run_id_fkey" on table "ai_chat_run_events"
+[d0] UTKNĘŁO teresa_proposals.organization_id: update or delete on table "teresa_proposals" violates foreign key constraint "teresa_audit_log_proposal_id_fkey" on table "teresa_audit_log"
+[d0] Kasowanie utknęło na 2 tabelach. Transakcja wycofana.

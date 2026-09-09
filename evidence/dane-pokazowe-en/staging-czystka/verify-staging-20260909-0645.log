@@ -1,0 +1,25 @@
+[d0] Bezpiecznik listy zachowanej: OK (3 chronionych, zero kolizji).
+[d0] Tryb: verify · cel: thomas.proxy.rlwy.net:52567/railway
+[d0] VERIFY: organizacji z listy nadal w bazie: 325 (oczekiwane 0 po --apply).
+[d0] VERIFY: wierszy należących do listy: 38380 w 108 tabelach (oczekiwane 0).
+      - collab_sessions.organization_id: 4800
+      - api_logs.organization_id: 4161
+      - audit_events.org_id: 3521
+      - v8_consumer_tool_policies.organization_id: 3384
+      - v8_tool_catalog.organization_id: 3384
+      - tool_session_presence.organization_id: 1743
+      - organization_context_claims.organization_id: 1681
+      - organization_context_items.organization_id: 1660
+      - my_ideas.organization_id: 1631
+      - organization_members.organization_id: 1403
+      - users.organization_id: 1395
+      - v8_output_artifacts.organization_id: 1342
+      - v8_artifact_origin_links.organization_id: 1323
+      - activity_logs.organization_id: 1173
+      - conversion_events.organization_id: 1062
+      - audit_log.organization_id: 902
+      - my_idea_maps.organization_id: 764
+      - test_support_runs.organization_id: 260
+      - conversations.organization_id: 251
+      - work_canvas_drafts.organization_id: 214
+[d0] VERIFY: NIEZEROWE. To nie jest błąd przed --apply — przed kasowaniem tak ma być.
