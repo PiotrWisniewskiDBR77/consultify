@@ -109,9 +109,6 @@ vi.mock('../../../src/components/Organization/OrgContextSummaryBanner', () => ({
   ),
 }));
 
-vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
-  CompanyProfileModule: () => <div data-testid="module-profile" />,
-}));
 vi.mock('../../../src/views/ContextBuilder/modules/OrganizationProfileModule', () => ({
   OrganizationProfileModule: () => <div data-testid="module-profile" />,
 }));

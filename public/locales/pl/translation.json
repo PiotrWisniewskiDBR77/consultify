@@ -853,7 +853,6 @@
     "resolved": "Rozwiązane",
     "batchOperations": "Operacje wsadowe",
     "dragToMove": "Przeciągnij, aby przenieść do innej kolumny",
-    "backToDashboard": "Powrót do panelu",
     "saveProfile": "Zapisz profil",
     "exitFullscreen": "Wyjdź z pełnego ekranu",
     "fullscreen": "Pełny ekran",
@@ -2535,13 +2534,6 @@
     "tabele": "Tabele Studio",
     "meeting": "Spotkania",
     "assessmentDRD": "Diagnoza DRD",
-    "context": {
-      "challenges": "Wyzwania",
-      "goals": "Cele",
-      "megatrends": "Megatrendy",
-      "profile": "Profil",
-      "strategy": "Strategia"
-    },
     "realization": "Realizacja",
     "expand": "Rozwiń",
     "finance": "Finanse",
