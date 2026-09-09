@@ -1,0 +1,110 @@
+[
+  {
+    "email": "james.whitfield@northwind.example",
+    "httpLogin": 200,
+    "rola": "OWNER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 402,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "sarah.mitchell@northwind.example",
+    "httpLogin": 200,
+    "rola": "ADMIN",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 893,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "robert.chen@northwind.example",
+    "httpLogin": 200,
+    "rola": "ADMIN",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 903,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "emily.carter@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 386,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "daniel.osei@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 883,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "laura.novak@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 891,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "michael.grant@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 879,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "priya.sharma@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 888,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  },
+  {
+    "email": "thomas.baker@northwind.example",
+    "httpLogin": 200,
+    "rola": "MEMBER",
+    "org": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+    "urlPo": "/chat",
+    "tekstEkranu": 893,
+    "menu": [],
+    "bledyKonsoli": 0,
+    "przykladBledu": null,
+    "net4xx5xx": []
+  }
+]

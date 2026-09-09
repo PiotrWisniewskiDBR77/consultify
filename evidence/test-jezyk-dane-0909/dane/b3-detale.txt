@@ -1,0 +1,223 @@
+Pager usage is off.
+=== INITIATIVES status
+      status      | count 
+------------------+-------
+ IN_EXECUTION     |     4
+ APPROVED         |     4
+ DRAFT            |     1
+ PROPOSED         |     1
+ CLOSED           |     1
+ REJECTED         |     1
+ PENDING_APPROVAL |     1
+(7 rows)
+
+=== INITIATIVES stage/current_stage
+ current_stage | stage | count 
+---------------+-------+-------
+               |       |    13
+(1 row)
+
+=== TRANSFORMATION_CASES
+=== TASKS status
+ERROR:  column "id" does not exist
+LINE 1: select id, title, status from transformation_cases where org...
+               ^
+   status    | count 
+-------------+-------
+ todo        |    28
+ in_progress |     7
+ done        |     5
+ blocked     |     2
+(4 rows)
+
+=== TASKS per assignee
+               email               | count 
+-----------------------------------+-------
+ james.whitfield@northwind.example |     7
+ laura.novak@northwind.example     |     6
+ daniel.osei@northwind.example     |     6
+ priya.sharma@northwind.example    |     5
+ emily.carter@northwind.example    |     5
+ michael.grant@northwind.example   |     4
+ thomas.baker@northwind.example    |     4
+ sarah.mitchell@northwind.example  |     3
+ robert.chen@northwind.example     |     2
+(9 rows)
+
+=== INBOX per user
+               user_id                | count 
+--------------------------------------+-------
+ 08c54d75-5260-57b1-9db6-a30aed89a587 |     8
+(1 row)
+
+=== MEETINGS
+                  id                  |       title        |  status   |         start_at         
+--------------------------------------+--------------------+-----------+--------------------------
+ 2e124a9f-30cd-5ea8-bf77-49441a1861bf | Weekly PMO Review  | completed | 2026-09-02T09:00:00.000Z
+ eed798b1-9368-50ab-9847-6c3385749d74 | Steering Committee | completed | 2026-09-04T14:00:00.000Z
+(2 rows)
+
+=== INTERVIEW SESSIONS
+                  id                  |  status   |          created_at           
+--------------------------------------+-----------+-------------------------------
+ b4c7d100-2c19-5f3f-bb10-52d9142effe3 | completed | 2026-09-08 14:46:54.553584+00
+ 9e373188-0bfc-5951-8e17-e49203496daf | completed | 2026-09-08 14:46:55.281349+00
+(2 rows)
+
+=== INTERVIEW ANSWERS count per session
+              session_id              | count 
+--------------------------------------+-------
+ 9e373188-0bfc-5951-8e17-e49203496daf |     1
+ b4c7d100-2c19-5f3f-bb10-52d9142effe3 |     1
+(2 rows)
+
+=== ASSESSMENTS
+                  id                  |                       name                       |  status  | completion_percent | overall_score 
+--------------------------------------+--------------------------------------------------+----------+--------------------+---------------
+ b2de5832-0a42-5639-8e46-6ecff2db82e5 | Northwind 2027 — Operational Maturity Assessment | APPROVED | 100                |             3
+(1 row)
+
+=== TOOL_SESSIONS
+ERROR:  column "title" does not exist
+LINE 1: select id, tool_type, title, status from tool_sessions where...
+                              ^
+=== KPI
+ERROR:  column "id" does not exist
+LINE 1: select id, name, current_value, target_value, unit from rvn_...
+               ^
+=== BUDGETS
+                  id                  |                  title                   | status | planned_amount | actual_amount | currency 
+--------------------------------------+------------------------------------------+--------+----------------+---------------+----------
+ 12233514-7a3a-4c50-b6cc-bc32ced34ad4 | Northwind 2027 Programme Budget — FY2026 | DRAFT  |              0 |             0 | GBP
+(1 row)
+
+=== ROI
+ERROR:  column "id" does not exist
+LINE 1: select id, title, status from rvn_roi_cases where organizati...
+               ^
+=== PRESENTATION DECKS
+                  id                  |                title                | status 
+--------------------------------------+-------------------------------------+--------
+ 56ba0108-856b-54a6-9a96-76292797342b | Steering Committee — September 2026 | ready
+ a9d9f3b3-9012-5d87-89ce-31a8878a38d2 | Line 3 MES Rollout Kick-off         | ready
+(2 rows)
+
+=== AUDITS
+=== ORG PROFILE
+ERROR:  column "title" does not exist
+LINE 1: select id, title, status from audit_programs where organizat...
+                   ^
+                  id                  |           organization_id            |         industry         | industry_code |  industry_subsector  | company_size | employee_count | annual_revenue | founding_year | headquarters_country | strategic_priorities | competitive_position | growth_stage |                                                               mission_statement                                                               |                                                vision_statement                                                | digital_maturity_overall | technology_stack | digital_budget_percent | cloud_adoption_level | primary_markets | customer_segments | key_competitors | market_share_estimate | regulatory_environment | risk_appetite | budget_constraints | timeline_constraints | preferred_language | communication_style | industry_jargon_level | last_assessment_date | profile_completeness |          created_at           |          updated_at           | created_by | updated_by | organization_type | revenue_model | delivery_model | core_systems | currency | production_archetype | shift_pattern | automation_level 
+--------------------------------------+--------------------------------------+--------------------------+---------------+----------------------+--------------+----------------+----------------+---------------+----------------------+----------------------+----------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+--------------------------+------------------+------------------------+----------------------+-----------------+-------------------+-----------------+-----------------------+------------------------+---------------+--------------------+----------------------+--------------------+---------------------+-----------------------+----------------------+----------------------+-------------------------------+-------------------------------+------------+------------+-------------------+---------------+----------------+--------------+----------+----------------------+---------------+------------------
+ e7e10567-bc7e-52e9-811b-de02dfad7734 | 468b234c-66c4-54e1-b626-5e0fb3a92f6a | Industrial Manufacturing |               | Precision Components | MID_MARKET   |            340 |        4.8e+07 |          1987 | United Kingdom       | []                   | CHALLENGER           | MATURE       | Engineer and manufacture precision industrial components that keep our customers’ production lines running, safely and reliably, every shift. | To be the UK’s most trusted precision manufacturing partner through digitally-enabled, zero-defect operations. |                          | []               |                        |                      | []              | []                | []              |                       | []                     | MODERATE      |                    |                      | en                 | PROFESSIONAL        | MEDIUM                |                      |                    0 | 2026-09-08 14:46:45.821584+00 | 2026-09-08 14:46:45.821584+00 |            |            | OTHER             |               |                |              | GBP      |                      |               | 
+(1 row)
+
+=== CONVERSATIONS
+                  id                  |                    title                    | message_count | language 
+--------------------------------------+---------------------------------------------+---------------+----------
+ 017b0fd4-655e-5072-8454-36b4c6817ef1 | Where are we losing OEE on Line 3?          |             4 | en
+ b7edf206-fe72-595f-b7c5-f5b16b3443af | Supplier defect trend — St Albans Fasteners |             4 | en
+ b510cdd1-86fa-5d95-97a1-9091f2e75032 | Shift handover notes — weekend coverage     |             3 | en
+(3 rows)
+
+=== RAID
+                  id                  |    type    |                                   title                                   |  status   
+--------------------------------------+------------+---------------------------------------------------------------------------+-----------
+ 7d29c0ca-28ce-5a93-97d5-d5b05ceab2b7 | RISK       | Line 3 cutover slips past the summer shutdown window                      | OPEN
+ f9a8d671-63cc-575c-81f3-0f5168525b96 | ISSUE      | Downtime reason codes are not agreed between Quality and Operations       | OPEN
+ 085c98d0-69fd-5445-9355-16bb04d37442 | DEPENDENCY | SCADA bridge depends on the vendor firmware release                       | OPEN
+ 6cb3f144-65b7-5061-8ad1-b05708b82837 | RISK       | False positives erode operator trust in predictive alerts                 | MITIGATED
+ bdfa1d94-3724-5300-923b-4243c9bec47d | ASSUMPTION | Spare-parts holding can be cut by fifteen per cent without service impact | OPEN
+ 53dad916-8167-52d9-825d-6da05d694cda | ISSUE      | Works council has not signed the shuttle safety case                      | OPEN
+ c87a0212-1307-5f2a-9e84-fe333331fcc3 | RISK       | Paused upskilling leaves key roles single-deep                            | OPEN
+(7 rows)
+
+=== DECISIONS
+                  id                  |                           title                           |  status   
+--------------------------------------+-----------------------------------------------------------+-----------
+ 48e9583c-c48f-4456-b519-180f353e6aff | Approve the Line 3 cutover date of 26 March 2027          | pending
+ 5c279db2-6791-4116-a103-de270bf12b82 | Accept the vendor firmware release as a hard dependency   | pending
+ bb50d342-9da2-4fe5-a9b0-ea00d1acefdb | Approve the spare-parts holding reduction target          | pending
+ 6a90d445-544e-45c8-98fa-5e12d0efb096 | Set the predictive alert threshold policy                 | escalated
+ 870d50ea-8e8d-4aad-9762-9c33229a4c33 | Decide on the third-party training platform proposal      | escalated
+ 20bc829c-18f9-413c-a039-2781391578c2 | Pause the skills passport programme until the 2027 budget | approved
+ 57b3e0d4-0fd7-42a6-a921-3a8bdd51842d | Choose the MES downtime reason-code taxonomy              | escalated
+ db7a1213-b543-4741-9bc9-51c82a335a35 | Extend predictive maintenance to cells 3, 4 and 5         | approved
+ cb453133-c0b6-4f4c-850a-7219f6849155 | Continue the warehouse shuttle pilot into a second aisle  | approved
+(9 rows)
+
+=== MILESTONES
+ count 
+-------
+    16
+(1 row)
+
+=== STATUS REPORTS
+                  id                  |                          title                           |  status   
+--------------------------------------+----------------------------------------------------------+-----------
+ daf424aa-8851-5bd8-960b-db865742eb28 | MES Rollout Line 3 — weekly status, week 36              | PUBLISHED
+ d3778b6d-ecc1-5eea-9a1a-2a8a4e60868d | Warehouse Automation Pilot — monthly status, August 2026 | PUBLISHED
+(2 rows)
+
+Pager usage is off.
+=== TRANSFORMATION_CASES
+        transformation_case_id        | status |  lifecycle_stage   |                             left                             
+--------------------------------------+--------+--------------------+--------------------------------------------------------------
+ 565fa3f3-5cd3-5589-889b-9fcec0c5cd28 | active | portfolio_decision | Northwind 2027: reduce unplanned downtime, cut handling cost
+(1 row)
+
+=== TOOL_SESSIONS
+                  id                  |     tool_type     |                    name                     |  status  | completion_percent 
+--------------------------------------+-------------------+---------------------------------------------+----------+--------------------
+ 3c7b0df4-b4bf-52b5-8630-2617e0e9ee74 | vsm-builder       | Warehouse Outbound Value Stream Map — Leeds | APPROVED |                100
+ c508ace8-6ef2-5d06-86ce-d82a56f54633 | dynamic-swot      | Northwind 2027 Strategic SWOT               | APPROVED |                100
+ 0fcc75ff-3cd5-56c4-a232-dafca7db23b2 | capability-mapper | Digital & Automation Capability Map         | APPROVED |                100
+(3 rows)
+
+=== KPI defs + latest version name
+ERROR:  column v.kpi_definition_version_id does not exist
+LINE 1: ...ions d left join rvn_kpi_definition_versions v on v.kpi_defi...
+                                                             ^
+=== ROI cases
+               case_id                |                title                 |  status  | currency 
+--------------------------------------+--------------------------------------+----------+----------
+ 880ad96a-fa38-4357-8418-0187f1aa5736 | MES Rollout Line 3 — investment case | modeling | GBP
+(1 row)
+
+=== AUDIT programs
+                  id                  |              name               | status | lifecycle_state 
+--------------------------------------+---------------------------------+--------+-----------------
+ e726e659-fec9-57a7-bfc9-4b32311ab067 | Line 3 Quality and Safety Audit | active | remediation
+(1 row)
+
+=== REPORT BUILDER
+ERROR:  column "name" does not exist
+LINE 1: select id, name, status from report_builder_reports where or...
+                   ^
+=== GENERATED WORKBOOKS
+                  id                  |           organization_id            
+--------------------------------------+--------------------------------------
+ 2352986d-4d0a-5f43-afa3-0c721c302a53 | 468b234c-66c4-54e1-b626-5e0fb3a92f6a
+(1 row)
+
+=== INBOX user
+               email               | count 
+-----------------------------------+-------
+ james.whitfield@northwind.example |     8
+(1 row)
+
+=== MEETING NOTES
+=== V8 OUTPUT ARTIFACTS types
+ERROR:  column "content" does not exist
+LINE 1: select id, meeting_id, left(content,80) from meeting_notes w...
+                                    ^
+=== PROJECTS
+ERROR:  column "artifact_type" does not exist
+LINE 1: select artifact_type, count(*) from v8_output_artifacts wher...
+               ^
+                  id                  |               name               | status 
+--------------------------------------+----------------------------------+--------
+ 6174636d-c4f2-552d-9a5a-d2695738f9bc | Operational Excellence Programme | active
+ ae6cfbae-1ba8-5328-9048-d86f2a52a09e | Digital & Automation Roadmap     | active
+(2 rows)
+
