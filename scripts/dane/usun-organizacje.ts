@@ -659,6 +659,7 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
   try {
     let usuniete = 0;
     let pozostale = [...doKasacji];
+    const ostatniBlad = new Map<string, string>();
     for (let przebieg = 1; przebieg <= 10 && pozostale.length; przebieg++) {
       const nieudane: typeof pozostale = [];
       let wTymPrzebiegu = 0;
@@ -679,13 +680,17 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
           // eslint-disable-next-line no-await-in-loop
           await c.query('ROLLBACK TO SAVEPOINT k');
           nieudane.push(t);
+          ostatniBlad.set(`${t.tabela}.${t.kolumna}`, (e as Error).message);
           if (przebieg >= 9) console.error(`[d0] ${t.tabela}: ${(e as Error).message}`);
         }
       }
       pozostale = nieudane;
       console.log(`[d0] kasowanie przebieg ${przebieg}: usunięto łącznie ${usuniete}, tabel z problemem ${pozostale.length}`);
-      if (pozostale.length && !wTymPrzebiegu)
+      if (pozostale.length && !wTymPrzebiegu) {
+        for (const t of pozostale)
+          console.error(`[d0] UTKNĘŁO ${t.tabela}.${t.kolumna}: ${ostatniBlad.get(`${t.tabela}.${t.kolumna}`) ?? '(brak komunikatu)'}`);
         throw new Error(`Kasowanie utknęło na ${pozostale.length} tabelach. Transakcja wycofana.`);
+      }
     }
     if (pozostale.length) throw new Error(`Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.`);
 
