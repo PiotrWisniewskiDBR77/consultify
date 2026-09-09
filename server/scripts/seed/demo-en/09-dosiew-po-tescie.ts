@@ -338,27 +338,27 @@ export type PlanZadania = { tytul: string; godziny: number; startPrzed: number }
 /** Zadania w oknie osmiu tygodni — popyt zakladki Zasoby. */
 export const PLAN_POPYTU: PlanZadania[] = [
   // tydzien 1 (termin 11.09)
-  { tytul: 'Validate barcode traceability at the packing station', godziny: 72, startPrzed: 21 },
+  { tytul: 'Validate barcode traceability at the packing station', godziny: 80, startPrzed: 21 },
   { tytul: 'Tune alert thresholds against the 2026 failure history', godziny: 40, startPrzed: 14 },
   { tytul: 'Connect the condition-monitoring gateway to the historian', godziny: 64, startPrzed: 21 },
-  { tytul: 'Prepare the restart decision pack for the paused workstream', godziny: 20, startPrzed: 7 },
-  { tytul: 'Configure the MES work-order interface to ERP', godziny: 80, startPrzed: 28 },
+  { tytul: 'Prepare the restart decision pack for the paused programme', godziny: 20, startPrzed: 7 },
+  { tytul: 'Configure the MES work-order interface to ERP', godziny: 96, startPrzed: 28 },
   // tydzien 2 (termin 18.09)
   { tytul: 'Define the OEE calculation rules with Quality', godziny: 36, startPrzed: 14 },
-  { tytul: 'Migrate paper travellers for the top twenty parts', godziny: 96, startPrzed: 28 },
-  { tytul: 'Re-slot the pilot aisle by pick frequency', godziny: 60, startPrzed: 21 },
+  { tytul: 'Migrate paper travellers for the top twenty part numbers', godziny: 112, startPrzed: 28 },
+  { tytul: 'Re-slot the pilot aisle by pick frequency', godziny: 72, startPrzed: 21 },
   { tytul: 'Write the Line 3 cutover runbook', godziny: 40, startPrzed: 14 },
   // tydzien 3 (termin 25.09)
-  { tytul: 'Extend sensors to cells 3, 4 and 5', godziny: 76, startPrzed: 21 },
-  { tytul: 'Run the false-positive review with the shift engineers', godziny: 48, startPrzed: 14 },
-  { tytul: 'Refresh the training records interface with the LMS', godziny: 52, startPrzed: 21 },
-  { tytul: 'Commission the MES-to-SCADA data bridge', godziny: 104, startPrzed: 28 },
+  { tytul: 'Extend sensors to cells 3, 4 and 5', godziny: 84, startPrzed: 21 },
+  { tytul: 'Run the false-positive review with the shift leads', godziny: 48, startPrzed: 14 },
+  { tytul: 'Refresh the training records interface with HR', godziny: 52, startPrzed: 21 },
+  { tytul: 'Commission the MES-to-SCADA data bridge', godziny: 120, startPrzed: 28 },
   // tydzien 4-8 (terminy 02.10 - 30.10)
   { tytul: 'Measure pick rate before and after re-slotting', godziny: 44, startPrzed: 21 },
-  { tytul: 'Integrate the shuttle controller with the warehouse host', godziny: 88, startPrzed: 28 },
+  { tytul: 'Integrate the shuttle controller with the warehouse system', godziny: 104, startPrzed: 28 },
   { tytul: 'Quantify the labour saving per shift', godziny: 32, startPrzed: 21 },
-  { tytul: 'Train Line 3 operators on the MES terminal', godziny: 80, startPrzed: 28 },
-  { tytul: 'Document the predictive maintenance standard', godziny: 48, startPrzed: 21 },
+  { tytul: 'Train Line 3 operators on the MES terminal', godziny: 88, startPrzed: 28 },
+  { tytul: 'Document the predictive maintenance standard operating procedure', godziny: 48, startPrzed: 21 },
   { tytul: 'Cost the upskilling programme for 2027', godziny: 28, startPrzed: 14 },
 ];
 
@@ -375,7 +375,7 @@ export const PLAN_ZALEGLOSCI: Array<{ tytul: string; godziny: number; wykonane: 
   { tytul: 'Cost the spare-parts holding reduction', godziny: 28, wykonane: 8 },
   { tytul: 'Agree the cross-training rota with the shift leads', godziny: 32, wykonane: 14 },
   { tytul: 'Retrain the goods-out team on the new pick path', godziny: 30, wykonane: 12 },
-  { tytul: 'Agree the maintenance work-order trigger with Maintenance', godziny: 26, wykonane: 6 },
+  { tytul: 'Agree the maintenance work-order trigger with Planning', godziny: 26, wykonane: 6 },
   { tytul: 'Identify single points of failure per line', godziny: 44, wykonane: 20 },
 ];
 
@@ -386,7 +386,7 @@ export const PLAN_ZALEGLOSCI: Array<{ tytul: string; godziny: number; wykonane: 
  */
 export const PLAN_OSOBISTYCH: Array<{ tytul: string; godziny: number }> = [
   { tytul: 'Approve Q3 capex request', godziny: 4 },
-  { tytul: 'Follow up with Rotherham plant manager on downtime data', godziny: 3 },
+  { tytul: 'Follow up with Rotherham plant manager on downtime log', godziny: 3 },
   { tytul: 'Sign off Line 3 MES kickoff deck', godziny: 3 },
   { tytul: 'Review supplier corrective action plan', godziny: 4 },
   { tytul: 'Draft opening remarks for steering committee', godziny: 3 },
