@@ -128,6 +128,16 @@ export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({
 })
   .partial()
   .extend({
+    /**
+     * POMIAR 09.09.2026 (kontrola po naprawach): ekran-artefakt inicjatywy autozapisuje
+     * co 1,5 s samo `summary`/`description`. Baza schematu ma `status ... .default('DRAFT')`,
+     * a `validateBody` podmienia `req.body` na obiekt PO parsowaniu — więc do kontrolera
+     * trafiał `status: 'DRAFT'`, którego klient nigdy nie wysłał. Bramka M13 słusznie
+     * odrzucała to jako przejście statusu: 400 STATUS_TRANSITION_REQUIRES_GATE dla 12 z 13
+     * inicjatyw i stała plakietka „Unsaved" na ekranie. Przy EDYCJI status jest polem
+     * opcjonalnym BEZ wartości domyślnej — zmiana statusu ma własną trasę i własną bramkę.
+     */
+    status: InitiativeStatusEnum.optional(),
     // Mark Complete (AI signal) — map of sectionId → completed. Persisted as a
     // JSON string in the lazy-ALTER'd `section_completions` TEXT column.
     sectionCompletions: z.record(z.string(), z.boolean()).optional(),
