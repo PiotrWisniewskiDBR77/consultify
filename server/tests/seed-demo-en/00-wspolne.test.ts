@@ -190,10 +190,18 @@ describe('00-wspolne — tryb zdalny --cel-zdalny staging (paczka D8)', () => {
     expect(zbudujCelZdalny(['--cel-zdalny=staging', '--rozumiem-staging'], ENV_OK)).toEqual({ cel: 'staging' });
   });
 
-  it('WARUNEK 1 — brak/inna wartość --cel-zdalny: odmowa (demo i produkcja nie mają trybu zdalnego)', () => {
-    expect(() => zbudujCelZdalny(['--cel-zdalny', 'demo', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
-    expect(() => zbudujCelZdalny(['--cel-zdalny', 'produkcja', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
-    expect(() => zbudujCelZdalny(['--cel-zdalny', '', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging"/);
+  it('WARUNEK 1 — inna wartość --cel-zdalny niż staging/demo: odmowa (produkcja nie ma trybu zdalnego)', () => {
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'produkcja', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging" albo „demo"/);
+    expect(() => zbudujCelZdalny(['--cel-zdalny', '', '--rozumiem-staging'], ENV_OK)).toThrow(/WYŁĄCZNIE „staging" albo „demo"/);
+  });
+
+  it('DEMO (od 09.09.2026) — dwa własne klucze: ALLOW_DEMO_SEED=1 i --rozumiem-demo; klucze stagingu NIE otwierają demo', () => {
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'demo', '--rozumiem-staging'], ENV_OK)).toThrow(/ALLOW_DEMO_SEED=1/);
+    expect(() => zbudujCelZdalny(['--cel-zdalny', 'demo', '--rozumiem-staging'], { ALLOW_DEMO_SEED: '1' })).toThrow(/--rozumiem-demo/);
+    expect(zbudujCelZdalny(['--cel-zdalny', 'demo', '--rozumiem-demo'], { ALLOW_DEMO_SEED: '1' })).toEqual({ cel: 'demo' });
+    expect(() => sprawdzCel('postgresql://u:p@thomas.proxy.rlwy.net:5432/railway', 'thomas', { cel: 'demo' })).toThrow(/trolley/);
+    expect(() => sprawdzCel('postgresql://u:p@centerbeam.proxy.rlwy.net:5432/railway', 'centerbeam', { cel: 'demo' })).toThrow(/PRODUKCJĘ/);
+    expect(sprawdzCel('postgresql://u:p@trolley.proxy.rlwy.net:5432/railway', 'trolley', { cel: 'demo' })).toContain('trolley');
   });
 
   it('WARUNEK 2 — brak ALLOW_STAGING_SEED=1: odmowa', () => {
