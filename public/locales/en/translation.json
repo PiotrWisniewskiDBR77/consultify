@@ -51477,7 +51477,8 @@
         "closed": "Order closed.",
         "failed": "Order ended in failure.",
         "cancelled": "Order cancelled."
-      }
+      },
+      "panelAriaLabel": "Order details"
     },
     "execution": {
       "heading": "What's happening now",

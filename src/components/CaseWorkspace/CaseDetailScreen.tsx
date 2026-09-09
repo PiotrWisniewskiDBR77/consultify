@@ -2370,7 +2370,7 @@ export const CaseDetailScreen: React.FC = () => {
             visibleActionCount={planProjections.length}
           />
         }
-        panelAriaLabel="Szczegóły zlecenia"
+        panelAriaLabel={t('caseWorkspace.detail.panelAriaLabel', 'Order details')}
         loading={false}
       />
       {planPending ? (

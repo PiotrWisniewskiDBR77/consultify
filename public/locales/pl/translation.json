@@ -52333,7 +52333,8 @@
         "closed": "Zlecenie zamknięte.",
         "failed": "Zlecenie zakończone niepowodzeniem.",
         "cancelled": "Zlecenie anulowane."
-      }
+      },
+      "panelAriaLabel": "Szczegóły zlecenia"
     },
     "execution": {
       "heading": "Co się teraz dzieje",
