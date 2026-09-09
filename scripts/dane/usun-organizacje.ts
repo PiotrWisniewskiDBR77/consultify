@@ -69,7 +69,18 @@
  *       --oczekiwany-host 127.0.0.1 --lista-id … --verify
  *
  *   # 5) Dopisz --sieroty do --dry-run, żeby policzyć wiersze wskazujące na
- *   #    nieistniejące organizacje (ten skrypt ich NIE usuwa).
+ *   #    nieistniejące organizacje (SIEROTY).
+ *
+ *   # 6) SIEROTY-APPLY — kasuje wiersze-sieroty (osobna operacja, osobna decyzja
+ *   #    właściciela, osobny dump). Dwa klucze, jak --apply:
+ *   DATABASE_URL=… FORCE_PURGE=true npx tsx scripts/dane/usun-organizacje.ts \
+ *       --oczekiwany-host 127.0.0.1 --sieroty-apply
+ *   #    Manifest ląduje w evidence/dane-pokazowe-en/sieroty/manifest-<data>.json
+ *   #    (albo w katalogu podanym przez --manifest-dir).
+ *
+ *   # 7) VERIFY sierot — ile ich zostało (oczekiwane 0 po --sieroty-apply):
+ *   DATABASE_URL=… npx tsx scripts/dane/usun-organizacje.ts \
+ *       --oczekiwany-host 127.0.0.1 --verify --sieroty
  *
  * Ten skrypt NIE jest podpięty pod żaden autorun. To narzędzie operatora.
  */
@@ -85,6 +96,7 @@ import { Pool, type PoolClient } from 'pg';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..');
 export const KATALOG_DOWODOW = path.join(REPO_ROOT, 'evidence', 'dane-pokazowe-en');
+export const KATALOG_SIEROT = path.join(KATALOG_DOWODOW, 'sieroty');
 export const PLIK_LISTY_ZACHOWANEJ_DOMYSLNY = path.join(HERE, 'lista-zachowana.txt');
 
 /** Hosty zdalne, na które wolno celować, i to tylko przy `ALLOW_REMOTE_PURGE=1`. */
@@ -93,7 +105,7 @@ export const HOSTY_ZDALNE_DOZWOLONE = ['thomas.proxy.rlwy.net', 'trolley.proxy.r
 /** Hosty lokalne — jedyne dopuszczone bez dodatkowych zmiennych środowiskowych. */
 export const HOSTY_LOKALNE = ['127.0.0.1', 'localhost', '::1', '0.0.0.0'];
 
-export type Tryb = 'dry-run' | 'apply' | 'rollback' | 'verify';
+export type Tryb = 'dry-run' | 'apply' | 'sieroty-apply' | 'rollback' | 'verify';
 
 export type Opcje = {
   tryb: Tryb;
@@ -103,6 +115,8 @@ export type Opcje = {
   plikManifestu: string;
   limitTabelWRaporcie: number;
   policzSieroty: boolean;
+  /** Katalog, do ktorego trafia manifest. Pusty = domyslny dla trybu. */
+  katalogManifestu: string;
 };
 
 // ============================================================================
@@ -228,10 +242,11 @@ export function sprawdzCel(
 // ============================================================================
 
 export function wymagajForcePurge(tryb: Tryb, env: Record<string, string | undefined> = process.env): void {
-  if (tryb !== 'apply') return;
+  if (tryb !== 'apply' && tryb !== 'sieroty-apply') return;
+  const flaga = tryb === 'apply' ? '--apply' : '--sieroty-apply';
   if (env.FORCE_PURGE !== 'true')
     throw new Error(
-      '--apply wymaga FORCE_PURGE=true (dwa klucze). Uruchom ponownie z FORCE_PURGE=true, ' +
+      flaga + ' wymaga FORCE_PURGE=true (dwa klucze). Uruchom ponownie z FORCE_PURGE=true, ' +
         'ale dopiero gdy raport dry-run jest zaakceptowany przez właściciela. STOP.'
     );
 }
@@ -248,6 +263,7 @@ export function parsujCli(argv: string[]): Opcje {
   let plikManifestu = '';
   let limitTabelWRaporcie = 25;
   let policzSieroty = false;
+  let katalogManifestu = '';
 
   /**
    * Odczyt wartości opcji. Postać „--klucz=wartość" jest jednoznaczna; postać
@@ -269,6 +285,7 @@ export function parsujCli(argv: string[]): Opcje {
     const a = argv[idx.v]!;
     if (a === '--dry-run') tryb = 'dry-run';
     else if (a === '--apply') tryb = 'apply';
+    else if (a === '--sieroty-apply') tryb = 'sieroty-apply';
     else if (a === '--verify') tryb = 'verify';
     else if (a === '--rollback' || a.startsWith('--rollback=')) {
       tryb = 'rollback';
@@ -279,6 +296,8 @@ export function parsujCli(argv: string[]): Opcje {
     else if (a === '--oczekiwany-host' || a.startsWith('--oczekiwany-host='))
       odcisk = wartosc(a, '--oczekiwany-host', idx);
     else if (a === '--sieroty') policzSieroty = true;
+    else if (a === '--manifest-dir' || a.startsWith('--manifest-dir='))
+      katalogManifestu = wartosc(a, '--manifest-dir', idx);
     else if (a === '--tabel-w-raporcie' || a.startsWith('--tabel-w-raporcie='))
       limitTabelWRaporcie = Number(wartosc(a, '--tabel-w-raporcie', idx)) || 25;
     else throw new Error(`Nieznany argument: ${a}`);
@@ -286,17 +305,30 @@ export function parsujCli(argv: string[]): Opcje {
 
   if (!tryb)
     throw new Error(
-      'Podaj dokładnie jeden tryb: --dry-run | --apply | --rollback=<manifest.json> | --verify. ' +
+      'Podaj dokładnie jeden tryb: --dry-run | --apply | --sieroty-apply | --rollback=<manifest.json> | --verify. ' +
         'Domyślnego trybu celowo nie ma.'
     );
   if (!odcisk)
     throw new Error('Brak --oczekiwany-host. Podaj fragment hosta bazy (np. 127.0.0.1). STOP.');
   if (tryb === 'rollback' && !plikManifestu)
     throw new Error('--rollback wymaga ścieżki do manifestu: --rollback=<plik.json>.');
-  if (tryb !== 'rollback' && !plikListy)
+  // Sieroty nie należą do żadnej organizacji, więc lista identyfikatorów ich nie opisuje.
+  // `--sieroty-apply` oraz `--verify --sieroty` działają bez listy; każdy inny tryb jej wymaga.
+  const listaZbedna =
+    tryb === 'rollback' || tryb === 'sieroty-apply' || (tryb === 'verify' && policzSieroty);
+  if (!listaZbedna && !plikListy)
     throw new Error('Brak --lista-id <plik.txt>. Skrypt nigdy nie dobiera organizacji sam. STOP.');
 
-  return { tryb, odcisk, plikListy, plikZachowanych, plikManifestu, limitTabelWRaporcie, policzSieroty };
+  return {
+    tryb,
+    odcisk,
+    plikListy,
+    plikZachowanych,
+    plikManifestu,
+    limitTabelWRaporcie,
+    policzSieroty,
+    katalogManifestu,
+  };
 }
 
 // ============================================================================
@@ -379,13 +411,101 @@ export async function policzWierszePerTabela(
   return wynik.sort((a, b) => b.wierszy - a.wierszy);
 }
 
+/**
+ * Liczy SIEROTY per tabela/kolumna: wiersze, których wskaźnik na organizację nie
+ * jest NULL, a wskazywanej organizacji w `organizations` już nie ma.
+ *
+ * `NOT EXISTS` zamiast `NOT IN` — `NOT IN` z NULL-em w podzapytaniu daje pustkę
+ * dla wszystkich wierszy i po cichu zaniża wynik do zera.
+ */
+export async function policzSierotyPerTabela(
+  c: PoolClient,
+  kolumny: KolumnaOrg[]
+): Promise<LiczbaWTabeli[]> {
+  const wynik: LiczbaWTabeli[] = [];
+  for (const k of kolumny) {
+    // eslint-disable-next-line no-await-in-loop
+    const r = await c.query<{ n: string }>(
+      `SELECT count(*)::bigint AS n FROM ${qi(k.tabela)} t
+        WHERE t.${qi(k.kolumna)} IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = t.${qi(k.kolumna)}::text)`
+    );
+    const n = Number(r.rows[0]?.n ?? 0);
+    if (n > 0) wynik.push({ tabela: k.tabela, kolumna: k.kolumna, wierszy: n });
+  }
+  return wynik.sort((a, b) => b.wierszy - a.wierszy);
+}
+
+/**
+ * Suma wierszy CAŁEJ bazy (wszystkie tabele bazowe schematu `public`).
+ * To jest przyrząd do zmierzenia GRANICY ROLLBACKU: różnica „przed” minus
+ * „po apply+rollback” pokazuje wiersze zdjęte kaskadą z tabel, których manifest
+ * nie obejmuje, bo nie mają wskaźnika na organizację.
+ *
+ * `query_to_xml` zamiast `n_live_tup` — statystyki planisty są przybliżone
+ * i po masowym DELETE kłamią aż do ANALYZE. Tu potrzebny jest dokładny `count(*)`.
+ */
+export async function sumaWierszyBazy(c: PoolClient): Promise<number> {
+  const r = await c.query<{ n: string | null }>(`
+    SELECT sum((xpath('/row/c/text()',
+             query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name),
+                          false, true, '')))[1]::text::bigint)::bigint AS n
+      FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`);
+  return Number(r.rows[0]?.n ?? 0);
+}
+
+/**
+ * Zbiera PEŁNE wiersze-sieroty do manifestu.
+ *
+ * Deduplikacja jest konieczna: trzy tabele (`demo_sessions`, `demo_session_tenants`,
+ * `organization_switch_log`) mają DWIE kolumny wskazujące na organizację, więc ten
+ * sam wiersz potrafi być sierotą po obu naraz. Bez klucza wszedłby do manifestu
+ * dwa razy i rollback próbowałby go wstawić dwukrotnie.
+ */
+export async function zbierzSieroty(
+  c: PoolClient,
+  kolumny: Array<{ tabela: string; kolumna: string }>
+): Promise<Record<string, Record<string, unknown>[]>> {
+  const out: Record<string, Record<string, unknown>[]> = {};
+  const widziane = new Map<string, Set<string>>();
+  for (const k of kolumny) {
+    // eslint-disable-next-line no-await-in-loop
+    const r = await c.query(
+      `SELECT * FROM ${qi(k.tabela)} t
+        WHERE t.${qi(k.kolumna)} IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = t.${qi(k.kolumna)}::text)`
+    );
+    if (!r.rows.length) continue;
+    const klucze = widziane.get(k.tabela) ?? new Set<string>();
+    const lista = out[k.tabela] ?? [];
+    for (const w of r.rows as Record<string, unknown>[]) {
+      const klucz = JSON.stringify(w);
+      if (klucze.has(klucz)) continue;
+      klucze.add(klucz);
+      lista.push(w);
+    }
+    widziane.set(k.tabela, klucze);
+    out[k.tabela] = lista;
+  }
+  return out;
+}
+
 // ============================================================================
 // 7. Manifest — snapshot „przed” i podstawa rollbacku
 // ============================================================================
 
+export type RodzajManifestu = 'organizacje' | 'sieroty';
+
 export type Manifest = {
   wersja: 1;
   skrypt: 'usun-organizacje';
+  /**
+   * Co ten manifest opisuje. Manifesty sprzed dopisania trybu sierot tego pola
+   * nie mają — brak pola czytamy jako 'organizacje', żeby stare manifesty dalej
+   * dawały się odtworzyć. Rollback nie zgaduje po zawartości.
+   */
+  rodzaj?: RodzajManifestu;
   utworzono: string;
   cel: string;
   organizacje: Array<{ id: string; nazwa: string | null }>;
@@ -393,11 +513,22 @@ export type Manifest = {
   wiersze: Record<string, Record<string, unknown>[]>;
   /** Kolejność, w jakiej tabele były kasowane (rollback idzie odwrotnie). */
   kolejnoscKasowania: string[];
+  /** Tylko dla rodzaju 'sieroty': rozbicie per tabela/kolumna zmierzone przed kasowaniem. */
+  sieroty?: LiczbaWTabeli[];
+  /** Tylko dla rodzaju 'sieroty': suma wierszy CAŁEJ bazy przed kasowaniem (granica rollbacku). */
+  sumaWierszyBazyPrzed?: number;
 };
 
-export function zapiszManifest(m: Manifest, katalog = KATALOG_DOWODOW): string {
-  fs.mkdirSync(katalog, { recursive: true });
-  const p = path.join(katalog, `usun-organizacje-${stempel()}-manifest.json`);
+export function rodzajManifestu(m: Manifest): RodzajManifestu {
+  return m.rodzaj ?? 'organizacje';
+}
+
+export function zapiszManifest(m: Manifest, katalog?: string): string {
+  const sieroty = rodzajManifestu(m) === 'sieroty';
+  const dokad = katalog || (sieroty ? KATALOG_SIEROT : KATALOG_DOWODOW);
+  fs.mkdirSync(dokad, { recursive: true });
+  const nazwa = sieroty ? `manifest-${stempel()}.json` : `usun-organizacje-${stempel()}-manifest.json`;
+  const p = path.join(dokad, nazwa);
   fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n');
   return p;
 }
@@ -406,6 +537,9 @@ export function wczytajManifest(p: string): Manifest {
   const m = JSON.parse(fs.readFileSync(path.resolve(p), 'utf8')) as Manifest;
   if (m.wersja !== 1 || m.skrypt !== 'usun-organizacje')
     throw new Error('Manifest nie pochodzi z tego skryptu (oczekiwano wersja=1, skrypt="usun-organizacje").');
+  const r = m.rodzaj ?? 'organizacje';
+  if (r !== 'organizacje' && r !== 'sieroty')
+    throw new Error(`Manifest ma nieznany rodzaj „${String(r)}”. Obsługiwane: organizacje, sieroty. STOP.`);
   return m;
 }
 
@@ -537,20 +671,9 @@ async function trybDryRun(c: PoolClient, idy: string[], cel: string, opcje: Opcj
     // co wrzuciło sieroty do jednego worka z danymi żywych organizacji testowych.
     // ------------------------------------------------------------------------
     console.log('\n[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…');
-    const sieroty: Array<{ tabela: string; kolumna: string; wierszy: number }> = [];
-    for (const k of kolumny) {
-      // eslint-disable-next-line no-await-in-loop
-      const r = await c.query<{ n: string }>(
-        `SELECT count(*)::bigint AS n FROM ${qi(k.tabela)} t
-          WHERE t.${qi(k.kolumna)} IS NOT NULL
-            AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = t.${qi(k.kolumna)}::text)`
-      );
-      const n = Number(r.rows[0]?.n ?? 0);
-      if (n > 0) sieroty.push({ tabela: k.tabela, kolumna: k.kolumna, wierszy: n });
-    }
-    sieroty.sort((a, b) => b.wierszy - a.wierszy);
+    const sieroty = await policzSierotyPerTabela(c, kolumny);
     const sumaSierot = sieroty.reduce((s, x) => s + x.wierszy, 0);
-    console.log(`[d0] SIEROTY: ${sumaSierot} wierszy w ${sieroty.length} tabelach — TEN SKRYPT ICH NIE USUWA.`);
+    console.log(`[d0] SIEROTY: ${sumaSierot} wierszy w ${sieroty.length} tabelach — usuwa je tryb --sieroty-apply.`);
     sieroty.slice(0, 10).forEach((s, i) => console.log(`      ${i + 1}. ${s.tabela}.${s.kolumna}: ${s.wierszy}`));
     const csvSieroty = zapiszCsv(
       'sieroty-per-tabela',
@@ -703,12 +826,148 @@ async function trybApply(c: PoolClient, idy: string[], cel: string) {
 }
 
 /**
+ * SIEROTY-APPLY — kasowanie wierszy, których wskaźnik na organizację pokazuje na
+ * organizację nieistniejącą w `organizations`.
+ *
+ * To jest OSOBNA operacja od purge organizacji (D0-RAPORT.md §6 STOP nr 3):
+ * te wiersze nie należą do żadnej organizacji z listy, więc `--apply` ich nie
+ * dotyka, a kaskada ich nie widzi — nie mają FK (zmierzone: żadna z 45 tabel
+ * z sierotami nie ma klucza obcego na `organizations.id`; gdyby miała, sierota
+ * nie mogłaby w niej powstać).
+ *
+ * Zbiór sierot jest STABILNY w trakcie kasowania: przynależność zależy wyłącznie
+ * od zawartości `organizations`, której ten tryb nie tyka. Dlatego snapshot
+ * zrobiony przed transakcją opisuje dokładnie ten sam zbiór, który potem znika.
+ * Pętla zbieżna jest tu potrzebna z innego powodu niż w trybie organizacji: sierota
+ * może mieć własne dzieci przez FK `NO ACTION` i pierwszy przebieg na takiej tabeli
+ * odmówi, dopóki nie zniknie tabela-dziecko.
+ */
+async function trybSierotyApply(c: PoolClient, cel: string, opcje: Opcje) {
+  const kolumny = await kolumnyOrganizacji(c);
+  console.log(`[d0] Topologia odczytana z bazy: ${kolumny.length} kolumn wskazujących na organizację.`);
+  console.log('[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…');
+
+  const przed = await policzSierotyPerTabela(c, kolumny);
+  const sumaPrzed = przed.reduce((s, x) => s + x.wierszy, 0);
+  if (!sumaPrzed) {
+    console.log('[d0] Zero sierot. Nic do zrobienia — baza jest w tym wymiarze czysta.');
+    return;
+  }
+  console.log(`[d0] SIEROTY do usunięcia: ${sumaPrzed} wierszy w ${przed.length} tabelach.`);
+  przed.slice(0, opcje.limitTabelWRaporcie).forEach((t, i) => {
+    console.log(`      ${String(i + 1).padStart(3)}. ${t.tabela}.${t.kolumna}: ${t.wierszy}`);
+  });
+
+  const sumaBazyPrzed = await sumaWierszyBazy(c);
+  console.log(`[d0] Suma wierszy CAŁEJ bazy PRZED: ${sumaBazyPrzed}.`);
+
+  // Manifest powstaje PRZED transakcją i PRZED pierwszym DELETE. Gdyby powstawał
+  // po kasowaniu, awaria w połowie zostawiłaby operację bez ścieżki powrotu.
+  const wiersze = await zbierzSieroty(c, przed);
+  const wierszyWManifescie = Object.values(wiersze).reduce((s, x) => s + x.length, 0);
+  const manifest: Manifest = {
+    wersja: 1,
+    skrypt: 'usun-organizacje',
+    rodzaj: 'sieroty',
+    utworzono: new Date().toISOString(),
+    cel,
+    organizacje: [],
+    wiersze,
+    kolejnoscKasowania: przed.map((t) => t.tabela),
+    sieroty: przed,
+    sumaWierszyBazyPrzed: sumaBazyPrzed,
+  };
+  const sciezkaManifestu = zapiszManifest(manifest, opcje.katalogManifestu || undefined);
+  console.log(`[d0] Manifest „przed” zapisany: ${sciezkaManifestu} (${wierszyWManifescie} wierszy).`);
+  if (wierszyWManifescie !== sumaPrzed)
+    console.log(
+      `[d0] UWAGA: manifest ma ${wierszyWManifescie} wierszy przy ${sumaPrzed} policzonych — ` +
+        'różnica to wiersze będące sierotą po DWÓCH kolumnach naraz (zdeduplikowane).'
+    );
+  console.log(
+    '[d0] GRANICA ROLLBACKU: manifest obejmuje wyłącznie wiersze-sieroty z tabel ze wskaźnikiem ' +
+      'na organizację. Wiersze zdjęte kaskadą z tabel BEZ takiego wskaźnika (dziecko ginie razem ' +
+      'z rodzicem) do manifestu NIE wchodzą i --rollback ich NIE przywróci — dla nich jedynym ' +
+      'zabezpieczeniem jest pg_dump zrobiony przed operacją.'
+  );
+
+  const doKasacji = przed.map((t) => ({ tabela: t.tabela, kolumna: t.kolumna }));
+  const usunietePerTabela = new Map<string, number>();
+
+  await c.query('BEGIN');
+  try {
+    let usuniete = 0;
+    let pozostale = [...doKasacji];
+    for (let przebieg = 1; przebieg <= 10 && pozostale.length; przebieg++) {
+      const nieudane: typeof pozostale = [];
+      let wTymPrzebiegu = 0;
+      for (const t of pozostale) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await c.query('SAVEPOINT k');
+          // eslint-disable-next-line no-await-in-loop
+          const r = await c.query(
+            `DELETE FROM ${qi(t.tabela)} t
+              WHERE t.${qi(t.kolumna)} IS NOT NULL
+                AND NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = t.${qi(t.kolumna)}::text)`
+          );
+          // eslint-disable-next-line no-await-in-loop
+          await c.query('RELEASE SAVEPOINT k');
+          const n = r.rowCount ?? 0;
+          usuniete += n;
+          wTymPrzebiegu += n;
+          usunietePerTabela.set(`${t.tabela}.${t.kolumna}`, n);
+        } catch (e) {
+          // eslint-disable-next-line no-await-in-loop
+          await c.query('ROLLBACK TO SAVEPOINT k');
+          nieudane.push(t);
+          if (przebieg >= 9) console.error(`[d0] ${t.tabela}: ${(e as Error).message}`);
+        }
+      }
+      pozostale = nieudane;
+      console.log(
+        `[d0] kasowanie sierot przebieg ${przebieg}: usunięto łącznie ${usuniete}, tabel z problemem ${pozostale.length}`
+      );
+      if (pozostale.length && !wTymPrzebiegu)
+        throw new Error(`Kasowanie utknęło na ${pozostale.length} tabelach. Transakcja wycofana.`);
+    }
+    if (pozostale.length) throw new Error('Kasowanie nie zbiegło się w 10 przebiegach. Transakcja wycofana.');
+
+    await c.query('COMMIT');
+    console.log(`[d0] SIEROTY-APPLY: usunięto ${usuniete} wierszy (naliczono przed kasowaniem ${sumaPrzed}).`);
+  } catch (e) {
+    await c.query('ROLLBACK');
+    throw e;
+  }
+
+  console.log('\n[d0] === RAPORT PER TABELA (usunięte) ===');
+  [...usunietePerTabela.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([klucz, n], i) => console.log(`      ${String(i + 1).padStart(3)}. ${klucz}: ${n}`));
+
+  const sumaBazyPo = await sumaWierszyBazy(c);
+  const roznica = sumaBazyPrzed - sumaBazyPo;
+  const jawnie = przed.reduce((s, x) => s + x.wierszy, 0);
+  console.log(
+    `\n[d0] Suma wierszy CAŁEJ bazy: PRZED ${sumaBazyPrzed} → PO ${sumaBazyPo}. Różnica ${roznica}.`
+  );
+  console.log(
+    `[d0] Z tego jawnie zaplanowane (i objęte manifestem): ${jawnie}. ` +
+      `Kaskadą, POZA manifestem: ${roznica - jawnie}.`
+  );
+  console.log(`[d0] Rollback: --rollback=${sciezkaManifestu}`);
+}
+
+/**
  * Rollback: wstawia wiersze z manifestu z powrotem. Kolejność wstawiania jest
  * odwrotna do kasowania (`organizations` najpierw), a dodatkowo powtarzamy
  * przebiegi dopóki którykolwiek wiersz wchodzi — to znosi zależności między
  * tabelami bez potrzeby sortowania topologicznego.
  */
 async function trybRollback(c: PoolClient, manifest: Manifest) {
+  const rodzaj = rodzajManifestu(manifest);
+  const doWstawienia = Object.values(manifest.wiersze).reduce((s, x) => s + x.length, 0);
+  console.log(`[d0] ROLLBACK z manifestu rodzaju „${rodzaj}”: ${doWstawienia} wierszy do przywrócenia.`);
   // `organizations` musi wejść pierwsze — wszystko inne na nie wskazuje.
   // Reszta idzie w dowolnej kolejności, bo pętla zbieżna i tak powtarza przebiegi,
   // dopóki cokolwiek wchodzi.
@@ -784,9 +1043,23 @@ async function trybRollback(c: PoolClient, manifest: Manifest) {
   }
 }
 
-async function trybVerify(c: PoolClient, idy: string[]) {
-  const istniejace = await nazwyOrganizacji(c, idy);
+async function trybVerify(c: PoolClient, idy: string[], opcje: Opcje) {
   const kolumny = await kolumnyOrganizacji(c);
+
+  if (opcje.policzSieroty) {
+    console.log('[d0] Liczę sieroty (to trwa — pełny skan tabel z kolumną organizacji)…');
+    const sieroty = await policzSierotyPerTabela(c, kolumny);
+    const sumaSierot = sieroty.reduce((s, x) => s + x.wierszy, 0);
+    console.log(
+      `[d0] VERIFY --sieroty: ${sumaSierot} wierszy-sierot w ${sieroty.length} tabelach (oczekiwane 0 po --sieroty-apply).`
+    );
+    sieroty.slice(0, 20).forEach((t) => console.log(`      - ${t.tabela}.${t.kolumna}: ${t.wierszy}`));
+    console.log(sumaSierot ? '[d0] VERIFY sierot: NIEZEROWE.' : '[d0] VERIFY sierot: czysto (0).');
+    // Bez listy identyfikatorów nie ma czego weryfikować po stronie organizacji.
+    if (!idy.length) return;
+  }
+
+  const istniejace = await nazwyOrganizacji(c, idy);
   const perTabela = await policzWierszePerTabela(c, kolumny, idy);
   const suma = perTabela.reduce((s, x) => s + x.wierszy, 0);
   console.log(`[d0] VERIFY: organizacji z listy nadal w bazie: ${istniejace.length} (oczekiwane 0 po --apply).`);
@@ -813,11 +1086,17 @@ async function main() {
   if (opcje.tryb === 'rollback') {
     manifest = wczytajManifest(opcje.plikManifestu);
     idy = manifest.organizacje.map((o) => o.id);
-  } else {
+    console.log(`[d0] Manifest rodzaju: ${rodzajManifestu(manifest)}.`);
+  } else if (opcje.plikListy) {
     idy = parsujListe(fs.readFileSync(path.resolve(opcje.plikListy), 'utf8'), opcje.plikListy);
     const zachowane = parsujListe(fs.readFileSync(path.resolve(opcje.plikZachowanych), 'utf8'), opcje.plikZachowanych);
     sprawdzKolizjeZZachowanymi(idy, zachowane);
     console.log(`[d0] Bezpiecznik listy zachowanej: OK (${zachowane.length} chronionych, zero kolizji).`);
+  } else {
+    // Sieroty nie należą do żadnej organizacji — lista zachowana ich nie chroni
+    // i chronić nie może, bo nie ma czego z czym porównać. To nie luka: wiersz
+    // wskazujący na organizację, której nie ma, nie jest cudzą własnością.
+    console.log('[d0] Tryb bez listy identyfikatorów (sieroty nie należą do żadnej organizacji).');
   }
 
   console.log(`[d0] Tryb: ${opcje.tryb} · cel: ${cel}`);
@@ -827,8 +1106,9 @@ async function main() {
   try {
     if (opcje.tryb === 'dry-run') await trybDryRun(c, idy, cel, opcje);
     else if (opcje.tryb === 'apply') await trybApply(c, idy, cel);
+    else if (opcje.tryb === 'sieroty-apply') await trybSierotyApply(c, cel, opcje);
     else if (opcje.tryb === 'rollback') await trybRollback(c, manifest!);
-    else await trybVerify(c, idy);
+    else await trybVerify(c, idy, opcje);
   } finally {
     c.release();
     await p.end();
