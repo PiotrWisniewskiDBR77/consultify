@@ -8,6 +8,8 @@
  *
  * Po `01-rdzen.ts --reset` to samo polecenie musi zwrócić WSZYSTKIE liczby = 0.
  */
+import { verifyD9 } from './09-dosiew-po-tescie';
+
 import { ORG_ID, ORG_NAZWA, czytajWspolneArgumenty, otworzPool, sprawdzCel, wymaganyUrl } from './00-wspolne';
 
 type Asercja = { nazwa: string; oczekiwane: number; rzeczywiste: number };
@@ -128,6 +130,28 @@ async function main() {
       [ORG_ID]
     );
     zestaw.push({ nazwa: 'wiersze flag V8 organizacji (łącznie z wyłączonymi)', oczekiwane: 9, rzeczywiste: flagiWszystkie.rows[0].n });
+
+    // ========================================================================
+    // D9 — PIEC KONTROLI DOSIEWU PO TESCIE (RAPORT_DANE.md §5).
+    // Progi zyja w `09-dosiew-po-tescie.ts:verifyD9` — jedno zrodlo prawdy,
+    // zeby `99-verify` i `09 --verify` nie mogly sie rozjechac.
+    // Etapy D9 sa OPCJONALNE dla D1: gdy dosiewu jeszcze nie bylo (0 przydzialow
+    // i 0 migawek), pomijamy je zamiast zglaszac falszywy FAIL na samym D1.
+    // ========================================================================
+    const d9Dosiany = await c.query<{ n: number }>(
+      `SELECT (
+         (SELECT COUNT(*) FROM interview_assignments WHERE organization_id = $1)
+       + (SELECT COUNT(*) FROM rvn_kpi_scorecard_review_snapshots WHERE organization_id = $1)
+       )::int AS n`,
+      [ORG_ID]
+    );
+    if (Number(d9Dosiany.rows[0]?.n ?? 0) > 0) {
+      const d9 = await verifyD9(c);
+      console.log(`[verify] --- D9 (dosiew po tescie): ${d9.length} kontroli ---`);
+      for (const a of d9) zestaw.push({ nazwa: `D9 · ${a.nazwa}`, oczekiwane: a.ok ? a.rzeczywiste : a.oczekiwane, rzeczywiste: a.rzeczywiste });
+    } else {
+      console.log('[verify] --- D9 (dosiew po tescie): POMINIETY (etap 09 jeszcze nie uruchomiony) ---');
+    }
 
     console.log(`[verify] organizacja: ${ORG_NAZWA}`);
     wypiszIZakoncz(zestaw);

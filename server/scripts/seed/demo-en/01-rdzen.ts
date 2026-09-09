@@ -160,7 +160,17 @@ const PROJEKTY: Projekt[] = [
 // Profil organizacji
 // ============================================================================
 const PROFIL = {
-  industry: 'Industrial Manufacturing',
+  // ★ POPRAWKA D9 (TEST-DANE 09.09, defekt D-03). Bylo: 'Industrial Manufacturing'.
+  // Ekran Organizacja → Identity rysuje to pole natywnym `<select>`
+  // (`OrganizationCardPrimitives.tsx:300-326`), ktorego opcje pochodza WYLACZNIE
+  // ze slownika `INDUSTRIES` (`organizationProfileTaxonomy.tsx:164-183`).
+  // „Industrial Manufacturing" w tym slowniku NIE WYSTEPUJE, wiec `<select>` nie
+  // mial pasujacej opcji i pokazywal `emptyLabel = '—'` mimo poprawnej wartosci
+  // w bazie. Wartosc MUSI nalezec do slownika. Doprecyzowanie branzy niesie
+  // `industry_subsector` (i `industry_code` dosiewane przez D9).
+  // Ta stala musi zostac zgodna z `BRANZA_ZE_SLOWNIKA` w 09-dosiew-po-tescie.ts —
+  // inaczej ponowny `01 --apply` cofalby poprawke przez ON CONFLICT DO UPDATE.
+  industry: 'Manufacturing',
   industry_subsector: 'Precision Components',
   company_size: 'MID_MARKET',
   employee_count: 340,
