@@ -1,0 +1,141 @@
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Results
+Data
+Model
+Audyt C1
+AC
+KPI
+OKR
+ROI
+Management reports
+Select…
+All (5)
+In progress (5)
+In review (0)
+Active (0)
+Closed / rejected (0)
+New ROI case
+NAME
+	
+SUBJECT
+	
+OPTION
+	
+CAPEX
+	
+ANNUAL BENEFIT
+	
+ROI
+	
+PAYBACK
+	
+RECOMMENDATION
+	
+PHASE
+	
+
+
+Robotyzacja gniazda spawalniczego
+	
+—
+	
+—
+	
+PLN 1,000,000
+	
+PLN 400,000
+	
+ROI 5Y 100 %
+	
+2.5 yrs
+	
+—
+	
+Calculations
+	
+
+
+System wizyjny kontroli jakości
+	
+—
+	
+—
+	
+PLN 620,000
+	
+PLN 238,000
+	
+ROI 3Y 15 %
+	
+2.6 yrs
+	
+—
+	
+Calculations
+	
+
+
+Automatyzacja magazynu WIP
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+Assumptions
+	
+
+
+[ACCEPTANCE] ROI baseline to PIR
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+—
+	
+Realization
+	
+
+
+Program poprawy realizacji korzyści
+	
+—
+	
+—
+	
+PLN 500,000
+	
+PLN 900,000
+	
+ROI 1Y 95 %
+	
+7.8 yrs
+	
+—
+	
+Realization
+	

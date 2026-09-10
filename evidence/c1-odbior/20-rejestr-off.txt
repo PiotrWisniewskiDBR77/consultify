@@ -1,0 +1,2653 @@
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Initiatives
+Data
+Model
+Audyt C1
+AC
+Initiatives
+Plan
+Load
+Priority
+All priorities
+Critical
+High
+Medium
+Low
+Status
+Active
+All
+New initiative
+All
+100
+Pending approval
+5
+In execution
+12
+INITIATIVE
+	
+STATUS
+	
+NEXT GATE
+	
+READINESS
+	
+OWNER
+	
+AREA / AXIS
+	
+NEXT ACTION
+	
+EXPECTED IMPACT
+	
+PLANNED WINDOW
+	
+HEALTH
+	
+UPDATED
+	
+
+
+C1 ODBIOR test 164445
+C1 ODBIOR test 164445
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Audyt C1
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 minutes ago
+	
+
+
+Wdrożenie sieci czujników IoT
+No problem description
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+—
+	
+—
+	
+Schedule the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+Program wzmocnienia cyberbezpieczeństwa
+No problem description
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+—
+	
+—
+	
+Schedule the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+Migracja do chmury — Faza 2
+No problem description
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+—
+	
+—
+	
+Schedule the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+Wdrożenie RPA
+No problem description
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+—
+	
+—
+	
+Schedule the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+Customer Portal Redesign
+No problem description
+	
+Approved
+	
+Schedule
+	
+Not evaluated
+	
+—
+	
+—
+	
+Schedule the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+co dalej mogę zrobić? (Fork)
+W obecnej sytuacji, w której przeglądasz inicjatywy, możesz: 1. **Przeanalizować status obecnych inicjatyw**: Sprawdź, jakie inicjatywy są w trakcie realizacji, zatwierdzone, w fa…
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+co dalej mogę zrobić?
+W obecnej sytuacji, w której przeglądasz inicjatywy, możesz: 1. **Przeanalizować status obecnych inicjatyw**: Sprawdź, jakie inicjatywy są w trakcie realizacji, zatwierdzone, w fa…
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 days ago
+	
+
+
+Przeprojektowanie uprawnień decyzyjnych dla wyjątków
+Przebudowa praw decyzyjnych dla wyjątków operacyjnych: kto decyduje, kiedy eskalujemy i jaki jest audyt decyzji.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+Automatyzacja magazynu WIP
+Inicjatywa powiązana z analizą ROI „Automatyzacja magazynu WIP".
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Marek Nowak
+	
+Automatyzacja
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+System wizyjny kontroli jakości
+Inicjatywa powiązana z analizą ROI „System wizyjny kontroli jakości".
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+—
+	
+Automatyzacja
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+Robotyzacja gniazda spawalniczego
+Inicjatywa powiązana z analizą ROI „Robotyzacja gniazda spawalniczego".
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+Tomasz Jankowski
+	
+Automatyzacja
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+Program wzmocnienia cyberbezpieczeństwa (kopia)
+No problem description
+	
+Pending approval
+	
+Portfolio
+	
+Not evaluated
+	
+—
+	
+Strategic
+	
+Prepare the portfolio decision
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+Transformacja DevOps
+No problem description
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+System zarządzania jakością 4.0
+No problem description
+	
+On hold
+	
+Delivery
+	
+Not evaluated
+	
+—
+	
+Operational
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+Platforma analityki danych
+No problem description
+	
+Pending approval
+	
+Portfolio
+	
+Not evaluated
+	
+—
+	
+—
+	
+Prepare the portfolio decision
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+[ACCEPTANCE] Benefits realization
+No problem description
+	
+In execution
+	
+Delivery
+	
+Not evaluated
+	
+—
+	
+—
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+New Idea
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+F1-26 from assessment
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+Process Automation — RPA
+No problem description
+	
+On hold
+	
+Delivery
+	
+Not evaluated
+	
+Jan Zieliński
+	
+—
+	
+Monitor the execution
+	
+—
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+4 days ago
+	
+
+
+Automatyzacja procesów
+Sprzedaż i produkcja pracują na różnych prognozach.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 days ago
+	
+
+
+Pełna identyfikowalność partii
+Dane partii są rozproszone pomiędzy systemami i arkuszami.
+	
+In execution
+	
+Delivery
+	
+Ready
+	
+—
+	
+—
+	
+Monitor the execution
+	
+Identyfikacja źródła niezgodności w czasie krótszym niż 10 minut.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+2 weeks ago
+	
+
+
+Akademia liderów transformacji
+Zespoły wdrożeniowe nie mają wspólnego standardu prowadzenia zmian.
+	
+Approved
+	
+Handoff
+	
+Ready
+	
+—
+	
+—
+	
+Hand over to execution
+	
+Przygotowanie 24 liderów do samodzielnego prowadzenia inicjatyw.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 weeks ago
+	
+
+
+S&OP oparty na jednym źródle danych
+Sprzedaż i produkcja pracują na różnych prognozach.
+	
+In execution
+	
+Delivery
+	
+Ready
+	
+—
+	
+—
+	
+Monitor the execution
+	
+Osiągnięcie dokładności prognozy 85% i wspólnego planu miesięcznego.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+2 weeks ago
+	
+
+
+Cyfrowe planowanie produkcji
+Zmiany planu są przekazywane ręcznie i powodują przestoje.
+	
+Pending approval
+	
+Portfolio
+	
+Ready
+	
+—
+	
+—
+	
+Prepare the portfolio decision
+	
+Wzrost terminowości realizacji zleceń do 94%.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 weeks ago
+	
+
+
+Program poprawy OEE linii montażowej
+Mikroprzestoje i brak standardu reakcji obniżają OEE.
+	
+In execution
+	
+Delivery
+	
+Ready
+	
+—
+	
+—
+	
+Monitor the execution
+	
+Wzrost OEE z 67% do 78%.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+2 weeks ago
+	
+
+
+Predykcyjne utrzymanie ruchu
+Awarie krytycznych maszyn są diagnozowane dopiero po zatrzymaniu.
+	
+Approved
+	
+Schedule
+	
+Ready
+	
+—
+	
+—
+	
+Schedule the execution
+	
+Redukcja nieplanowanych przestojów o 25%.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 weeks ago
+	
+
+
+Optymalizacja zapasów komponentów
+Nadmierny zapas wiąże kapitał, a braki zatrzymują produkcję.
+	
+In execution
+	
+Delivery
+	
+Ready
+	
+—
+	
+—
+	
+Monitor the execution
+	
+Redukcja zapasu o 18% bez pogorszenia dostępności.
+Confidence: Unknown
+	
+—
+	
+Unknown
+	
+2 weeks ago
+	
+
+
+Redukcja zużycia energii w zakładzie
+Wysokie koszty energii i brak bieżącej widoczności strat.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+Obniżenie zużycia energii o 12% w ciągu 9 miesięcy.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 weeks ago
+	
+
+
+Automatyzacja kontroli jakości
+Kontrola manualna ogranicza przepustowość i wykrywa wady z opóźnieniem.
+	
+Draft
+	
+Analysis
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the analysis
+	
+Skrócenie czasu kontroli o 40% i redukcja reklamacji o 20%.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 weeks ago
+	
+
+
+Poprawa realizacji korzyści programu
+Realizacja korzyści pozostaje poniżej celu i wymaga skoordynowanego planu naprawczego.
+	
+In execution
+	
+—
+	
+Not evaluated
+	
+—
+	
+—
+	
+Review the history
+	
+Osiągnąć i utrzymać 90% zweryfikowanej realizacji korzyści.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 weeks ago
+	
+
+
+Energy Reduction Programme
+Energy consumption varies without an accepted operating baseline.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+Establish a measurable reduction programme.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Automated Changeover Optimization — decision candidate
+Median changeover is 95 minutes and constrains Line 4 throughput.
+	
+Pending approval
+	
+Portfolio
+	
+Ready
+	
+—
+	
+—
+	
+Prepare the portfolio decision
+	
+Reduce median changeover to 60 minutes with governed evidence.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Energy Reduction Programme
+Energy consumption varies without an accepted operating baseline.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Manual Energy Draft Owner
+	
+—
+	
+Complete the definition
+	
+Establish a measurable reduction programme.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Automated Changeover Optimization — decision candidate
+Median changeover is 95 minutes and constrains Line 4 throughput.
+	
+Pending approval
+	
+Portfolio
+	
+Ready
+	
+Manual Aco Ready Owner
+	
+—
+	
+Prepare the portfolio decision
+	
+Reduce median changeover to 60 minutes with governed evidence.
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Portfel inicjatyw AI — priorytetyzacja
+Mamy 10 pomysłów na AI i budżet na 3. Zestawiamy je w jednej tabeli: koszt, oszczędność, czas wdrożenia, ryzyko i właściciel — żeby wybór był rozmową o liczbach, nie o sympatiach.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformacja
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Wejście na rynek DACH — mapa decyzji
+Chcemy wejść na rynek niemieckojęzyczny w 12 miesięcy. Zanim wydamy budżet, musimy rozłożyć decyzję na czynniki: segment, dopasowanie produktu, kanały, ryzyka i ludzi — i zobaczyć, gdzie mamy dowody, a gdzie tylko przekonania.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Strategia
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Automatyzacja optymalizacji przezbrojeń
+Automate and standardize key handover activities to reduce cycle time and improve quality.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Zarządzanie wydajnością cyfrową
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+last month
+	
+
+
+Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse
+Concentrate the organization's key strengths on the most promising market opportunities. Build a dedicated action plan with 90-day milestones.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia
+Identify weaknesses directly exposed to existing threats and launch a remediation program. Priority: most frequently occurring weaknesses in the context of major threats.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Konwersja: usuń słabości, aby odblokować szanse
+Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
+Map which strengths can neutralize which threats. Create a "defense matrix" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
+Map which strengths can neutralize which threats. Create a "defense matrix" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Konwersja: usuń słabości, aby odblokować szanse
+Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
+Map which strengths can neutralize which threats. Create a "defense matrix" — for each threat, identify the strength that weakens it. Where coverage gaps exist, plan to build new capabilities.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Konwersja: usuń słabości, aby odblokować szanse
+Assess which weaknesses directly block opportunity capture. For each weakness-opportunity pair, determine: repair time vs. opportunity duration. If repair takes longer — consider partnerships, outsourcing, or acquisitions.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia
+Identify weaknesses directly exposed to existing threats and launch a remediation program. Priority: most frequently occurring weaknesses in the context of major threats.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse
+Concentrate the organization's key strengths on the most promising market opportunities. Build a dedicated action plan with 90-day milestones.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Notatki ze spotkania
+Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Ekspansja na Rynek DACH
+Meridian ColdChain Group potrzebuje wejścia na niemiecki rynek chłodniczy (segment rośnie 6.4% rocznie) poprzez utworzenie nowego hubu w regionie Lipsk/Drezno. Budżet 1.3M EUR, cel 8M EUR nowego przychodu w 24 miesiące.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Usługi Dodane o Wyższej Marży
+Meridian ColdChain Group potrzebuje podniesienia marży per-paletę o 340 bps poprzez wprowadzenie usług o wyższej wartości dodanej: cross-dock, co-packing i kontrola jakości dla sieci detalicznych. Budżet: 2.1M EUR.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Talent i Retencja Kierowców
+Wysoka rotacja kierowców (34% rocznie) w Meridian ColdChain Group generuje koszty rekrutacji, szkoleń i zakłóceń operacyjnych. Program ma obniżyć rotację do 20% przez premie retencyjne, akademię szkoleniową i elastyczne grafiki (pilotaż 4-dniowego tygodnia pracy). Budżet: 1.4M EUR/rok.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Modernizacja i Dekarbonizacja Floty
+Flota 214 pojazdów ze średnim wiekiem 8.4 roku generuje wysokie emisje CO2 i koszty paliwa. Wymiana 60 najstarszych jednostek na Euro7/LNG/EV-hybrid z optymalizacją tras ma zredukować emisje o 32% i koszty paliwa o 18% przy budżecie 5.6M EUR capex.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Widoczność i Cyfrowa Dyspozytornia
+Ryzyko utraty kluczowego klienta Nordic Fresh Retail z powodu braku real-time visibility w łańcuchu dostaw. Obecny system nie zapewnia pełnej integracji TMS z telematyką floty 214 pojazdów ani compliance z HACCP w czasie rzeczywistym.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+MCG-2026: Widoczność i Cyfrowa Dyspozytornia
+Obecna dyspozytornia oparta na telefonie i Excelu nie zapewnia odpowiedniej widoczności operacyjnej i satysfakcji klientów. Brak automatyzacji, telemetrii IoT i portalu self-service ogranicza efektywność operacyjną i doświadczenie klientów.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77
+Potrzeba optymalizacji kosztów utrzymania ruchu i minimalizacji nieplanowanych przestojów poprzez przejście z reaktywnego na predykcyjne utrzymanie ruchu dla kluczowych maszyn produkcyjnych
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77
+Potrzeba optymalizacji kosztów utrzymania ruchu i zwiększenia dostępności krytycznych maszyn poprzez przejście z utrzymania reaktywnego/planowego na predykcyjne z wykorzystaniem IoT i ML
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77
+Potrzeba optymalizacji utrzymania ruchu poprzez przejście z reaktywnego na predykcyjne podejście dla kluczowych maszyn produkcyjnych, co pozwoli zredukować nieplanowane przestoje i koszty eksploatacji
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie predykcyjnego utrzymania ruchu PdM dla 3 maszyn DBR77
+Konieczność przejścia z reaktywnego na predykcyjne utrzymanie ruchu dla zwiększenia OEE i redukcji kosztów przestojów w kluczowych maszynach produkcyjnych
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Ekspansja DACH
+Ekspansja na rynek DACH po osiągnięciu GA produktu. Wymaga lokalizacji, compliance (BDSG/ISO) i silnika popytu w Niemczech przed wejściem. Cel: 5 klientów DACH, €300K ARR w roku 3.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Growth Machine PL + Silnik Popytu DE
+Potrzeba skalowania popytu na Industrial Intelligence w dwóch kluczowych rynkach: PL (The Plant+newsletter) i DE (zlokalizowany content+ABM Mittelstand+targi VDMA). Cel: pipeline 3× targetu, CAC payback <12 miesięcy, spójny CAC per rynek z jawnym ROI i budżetem w PLN.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Delivery Excellence + model partnerski
+Obecny model wdrożeń jest w 100% oparty na zasobach własnych, co ogranicza skalowalność i marżowość. Brak standardowych playbook'ów i sieci partnerskiej w regionie DACH blokuje ekspansję przy zachowaniu rentowności ≥45%.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Produkt SaaS + Moat + Retencja
+Potrzeba skalowania produktu SaaS Industrial Intelligence z budową trwałej przewagi konkurencyjnej opartej na domenowych modelach diagnostyki, danych z wdrożeń i playbookach. Cel: GA w +15 miesięcy, 10 logo, time-to-value <14 dni, net revenue retention ≥100%.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Talent i Organizacja
+Wąskie gardło talentowe blokuje skalowanie - rynek dostarcza <50 senior AI/ML specjalistów rocznie w Polsce. Kluczowa potrzeba obsady: Head of Product, DACH Lead i 3× Delivery Specialists w ciągu 9 miesięcy z szybkim wdrożeniem i wysoką retencją.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up (plan v2): Kapitał i Finansowanie
+Nakłady programu ~4M PLN przy EBITDA 640K PLN uniemożliwiają self-funding. Wymaga zabezpieczenia 3.5-4M PLN finansowania zewnętrznego w 12 miesięcy dla runway 24 miesięcy.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Program kompetencji AI×przemysł — onboarding i ścieżki rozwoju
+Brak ustrukturyzowanych kompetencji AI w kontekście przemysłowym blokuje adopcję technologii i ROI z inwestycji cyfrowych
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Przeprojektowanie struktury organizacyjnej na model produkt+usługa
+Obecna struktura funkcjonalna nie wspiera efektywnego dostarczania zintegrowanych rozwiązań produkt+usługa. Brak jasnego ownership produktów końcowych i customer journey.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up 2026: Struktura organizacyjna i hiring plan
+Brak struktury organizacyjnej i kluczowych kompetencji AI×przemysł niezbędnych do realizacji 3× wzrostu w segmencie Industrial Intelligence. Obecny stan: brak Head of Product, DACH Lead oraz zespołu Delivery, co blokuje ekspansję i skalowanie operacji do Q1 2027.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie systemu delivery metrics z progami alertów
+Brak systematycznego monitoringu marży, czasu realizacji i jakości projektów uniemożliwia proaktywne zarządzanie performance i identyfikację problemów przed eskalacją
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Program certyfikacji partnerów - pilot z 3 partnerami
+Brak ustrukturyzowanego systemu certyfikacji partnerów, co może wpływać na jakość współpracy, standardy świadczenia usług i kontrolę nad ekosystemem partnerskim
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up 2026: Skalowalny Model Dostarczania
+Obecny model dostarczania wymaga liniowego zatrudnienia — każde nowe wdrożenie potrzebuje dedykowanych zasobów eksperckich, co ogranicza skalowalność i marżowość. Brak standaryzacji procesów delivery i sieci partnerów blokuje wzrost przy zachowaniu rentowności.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Lejek MQL→SQL z lead scoringiem i atrybucją
+Brak ustrukturyzowanego procesu kwalifikacji leadów prowadzi do niskiej konwersji MQL→SQL i utraty potencjalnych klientów. Potrzebujemy automatycznego lead scoringu, jasnych kryteriów przekazania i śledzenia atrybucji źródeł.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Uruchomienie silnika treści (The Plant + newsletter)
+Brak systematycznego procesu tworzenia i dystrybucji treści marketingowych. Potrzeba zbudowania kalendarza redakcyjnego i systemu metryk dla The Plant i newslettera do końca stycznia 2026.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Newsletter Industrial Intelligence — lejek zorientowany na wartość
+Obecny model akwizycji oparty na ad-hoc referrals generuje nieprzewidywalny pipeline z wysokim CAC i długim payback period. Brak systematycznego nurturing qualified leads w segmencie Industrial Intelligence + The Plant prowadzi do niskiej konwersji i wysokich kosztów sprzedaży.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Lokalizacja produktu DE - kompleksowa implementacja
+Brak zlokalizowanej wersji produktu na rynek niemiecki obejmującej adaptację produktu, materiały sprzedażowe oraz pełną zgodność z niemieckimi i unijnymi wymogami prawnymi
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up 2026: Ekspansja na rynek niemiecki (Mittelstand)
+Brak obecności na strategicznym rynku DACH (szczególnie niemiecki Mittelstand) ogranicza skalowanie rozwiązań Industrial Intelligence. Niezbędna lokalizacja produktu, zgodność z RODO/BDSG/ISO oraz budowa bazy referencyjnej dla dalszej ekspansji w regionie o wartości €3.2B w segmencie Industry 4.0.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+DBR77 Industrial Intelligence Scale-Up 2026: Produktyzacja AI Engine do SaaS
+Sufit przychodu na osobę w modelu projektowym bespoke-konsultingu — niemożliwość skalowania bez proporcjonalnego wzrostu zespołu. Obecny model wymaga dedykowanych konsultantów na każdy projekt PdM/OEE/diagnostyki AI, co ogranicza wzrost marży i ekspansję.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Optymalizacja OEE linii montażowej DBR77 przez PdM
+Niska efektywność linii montażowej DBR77 - OEE poniżej standardów branżowych, nieplanowane przestoje, brak predykcyjnego utrzymania ruchu. Potrzeba wdrożenia Predictive Maintenance dla zwiększenia dostępności i wydajności produkcji.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Automatyzacja raportowania produkcyjnego
+Manualne procesy raportowania produkcyjnego w DBR77 generują opóźnienia, błędy i wysokie koszty operacyjne, ograniczając zdolność do szybkiego podejmowania decyzji biznesowych
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Wdrożenie Predyktywnego Utrzymania Ruchu (PdM)
+Marża EBITDA spadła z 18% do 11% w 2 lata z powodu: (1) kosztów energii wzrosłych o 40%, (2) nieplanowanych przestojów stanowiących 12% czasu produkcyjnego. Straty szacunkowe: 2.4M PLN rocznie z przestojów + 1.8M PLN nadmiarowych kosztów energii. Brak systemowego podejścia do utrzymania ruchu - działania reaktywne, brak danych predykcyjnych.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Zbudować jedno źródło prawdy dla priorytetów transformacji (Fork)
+AI and Automation — Leveraging AI for automation presents a high-impact opportunity to improve efficiency. Market Expansion — Expanding into new markets is an identified strategic goal with potential for significant revenue growth.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Zbudować jedno źródło prawdy dla priorytetów transformacji
+AI and Automation — Leveraging AI for automation presents a high-impact opportunity to improve efficiency. Market Expansion — Expanding into new markets is an identified strategic goal with potential for significant revenue growth.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Optymalizacja kosztów logistyki magazynu — automatyzacja planowania tras i redukcja OPEX
+Wysokie koszty operacyjne związane z logistyką magazynową oraz nieefektywne planowanie tras.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Optymalizacja kosztów logistyki magazynu
+Automatyzacja planowania tras i redukcja OPEX
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Notatki ze spotkania
+Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+Strategia Q2 — plan ekspansji rynkowej
+Toggle
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+2 months ago
+	
+
+
+F3 Rich Card Initiative
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+3 months ago
+	
+
+
+Priorytety tygodnia — obszary skupienia Sprintu 14
+Test notatki
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+3 months ago
+	
+
+
+Pilotaż SMED na Linii 3
+Pilotaż skracania przezbrojeń na linii 3, obejmujący standard pracy, pomiar baseline i szybkie usprawnienia.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+Automatyzacja przekazania z planowania do realizacji
+Automatyzacja przekazań między planowaniem a wykonaniem, ograniczająca ręczne eksporty, Excel i opóźnienia decyzyjne.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+Kontrakt KPI i odpowiedzialność za mierniki
+Uzgodnienie definicji KPI oraz właścicieli metryk, tak aby Ops i Finance pracowały na jednym źródle prawdy.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+SLA zatwierdzania i zarządzanie eskalacją
+Wprowadzenie SLA zatwierdzeń między planowaniem, operacjami i finansami, z jasną ścieżką eskalacji i właścicielem decyzji.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Transformational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+Pogłębiony audyt AI — wersja 1
+Comprehensive AI Chat audit for scientific research and consulting purposes.
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Operational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+Transformacja cyfrowa w obszarze sprzedaży
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Operational
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+4 months ago
+	
+
+
+Security Hardening
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Ewa Nowicka
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+5 months ago
+	
+
+
+API Gateway v2
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Katarzyna Wójcik
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+5 months ago
+	
+
+
+Data Platform — Lakehouse
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Marek Nowak
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+5 months ago
+	
+
+
+Cloud Migration — Azure
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+Anna Kowalska
+	
+—
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+5 months ago
+	
+
+
+Modernizacja systemu ERP
+No problem description
+	
+Draft
+	
+Definition
+	
+Not evaluated
+	
+—
+	
+Strategic
+	
+Complete the definition
+	
+—
+Confidence: Unknown
+	
+—
+	
+Not applicable
+	
+6 months ago
+	

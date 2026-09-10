@@ -1,0 +1,8 @@
+[off] [InitiativesHub] Fetch error: TypeError: Failed to fetch
+    at window.fetch (http://127.0.0.1:3257/src/services/globalAuthFetchGuard.ts:34:28)
+    at window.fetch (http://127.0.0.1:3257/src/services/
+[off] Failed to load resource: the server responded with a status of 404 (Not Found)
+[off] Failed to load resource: the server responded with a status of 404 (Not Found)
+[off] Failed to load resource: the server responded with a status of 404 (Not Found)
+[off] Failed to load resource: the server responded with a status of 404 (Not Found)
+[off] Failed to load resource: the server responded with a status of 404 (Not Found)

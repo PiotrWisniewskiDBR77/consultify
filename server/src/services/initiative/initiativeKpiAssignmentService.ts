@@ -3,6 +3,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
+import {
   archiveDefinition,
   createDefinition,
   getCurrentDefinition,
@@ -248,6 +252,12 @@ function computeProgressPercentage(params: {
 }
 
 async function assertInitiativeBelongsToOrg(initiativeId: string, organizationId: string) {
+  if (isInitiativeUnifiedReadEnabled()) {
+    if (!(await initiativeExists(organizationId, initiativeId))) {
+      throw new Error('Initiative not found');
+    }
+    return;
+  }
   const initiative = await queryHelpers.queryOne<{ id: string }>(
     'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
     [initiativeId, organizationId]
