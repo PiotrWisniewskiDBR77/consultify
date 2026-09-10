@@ -201,13 +201,36 @@ export const validateTask = async (
     return;
   }
 
-  // Verify initiative exists
+  // N4 (odbiór adwersaryjny 20260910, BEZPIECZEŃSTWO) — jedyna z bramek PMO
+  // sprawdzających istnienie inicjatywy bez zawężenia do organizacji wołającego
+  // (wzorzec `ProjectController.assertProjectInCallerOrg`: cudzy wiersz musi
+  // być NIEODRÓŻNIALNY od nieistniejącego — 404, nigdy 403, żeby nie
+  // potwierdzać istnienia obcego rekordu). Bez `AND organization_id = ?`
+  // dowolna zalogowana osoba mogła założyć zadanie wskazujące na
+  // initiativeId z CUDZEJ organizacji — bramka odpowiadała "istnieje".
+  //
+  // UWAGA DLA NADZORCY: `grep -rl "pmoValidation" server/src` (poza tym
+  // plikiem i archiwalnym `_backup/ts-js-collisions/...js`) zwraca ZERO
+  // wyników — `validateTask` nie jest dziś wpięty w ŻADNĄ trasę, więc ta
+  // naprawa nie zamyka żadnej AKTYWNIE osiągalnej dziury (żadne realne
+  // żądanie nie przechodzi dziś przez ten kod). Naprawiony zgodnie z
+  // zadaniem, ale premisa „to jest jedna z 50 aktywnych bramek" jest
+  // FAŁSZYWA na tym stanowisku — middleware jest martwym kodem. Wpięcie
+  // (lub usunięcie) zostaje do decyzji CTO, poza zakresem tej naprawy.
+  const organizationId = normalizeEntityId(safeRead(() => req.organizationId, undefined));
+  if (!organizationId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  // Verify initiative exists IN THE CALLER'S ORGANIZATION
   try {
-    const row = await DbPromise.get<{ id: string }>(`SELECT id FROM initiatives WHERE id = ?`, [
-      initId,
-    ]);
+    const row = await DbPromise.get<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initId, organizationId]
+    );
     if (!row) {
-      res.status(400).json({
+      res.status(404).json({
         error: 'Initiative not found',
         rule: 'TASK_INITIATIVE_REQUIRED',
       });
