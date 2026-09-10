@@ -30,7 +30,14 @@ import {
   requireNoLegalHold,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
+import {
+  deleteOrganizationDataInTransaction,
+  exportOrganizationData,
+  organizationExportToCsv,
+  RESERVED_ORGANIZATION_IDS,
+} from '../services/organizationLifecycleService.js';
 import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
+import { acquirePgClient } from '../database/PostgresDatabase.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -728,13 +735,94 @@ router.put(
   validateBody(UpdateOrganizationAdminSchema),
   SuperAdminController.updateOrganization
 );
+/**
+ * GET /api/superadmin/organizations/:id/export
+ * P5 (kryterium 12, S2.7) — pełny eksport danych jednej organizacji do pliku,
+ * z interfejsu (nie ze skryptu operatora). Odkrywa WSZYSTKIE tabele z
+ * `organization_id`/FK do `organizations` dynamicznie (informacje ze schematu,
+ * nie zaszyta lista) — patrz `organizationLifecycleService.ts`.
+ * `?format=csv` zwraca jeden CSV (`table,row_index,data_json`); domyślnie JSON.
+ */
+router.get(
+  '/organizations/:id/export',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
+      return res.status(400).json({ code: 'ORG_ID_RESERVED' });
+    }
+    const format = req.query.format === 'csv' ? 'csv' : 'json';
+    const client = await acquirePgClient();
+    try {
+      const result = await exportOrganizationData(client, id);
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'export',
+        resourceType: 'organization_data',
+        resourceId: id,
+        metadata: { format, totalRows: result.totalRows, tables: Object.keys(result.tables) },
+      });
+      const dateStamp = new Date().toISOString().split('T')[0];
+      if (format === 'csv') {
+        const csv = organizationExportToCsv(result);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="organization-export-${id}-${dateStamp}.csv"`
+        );
+        return res.send(csv);
+      }
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="organization-export-${id}-${dateStamp}.json"`
+      );
+      return res.send(JSON.stringify(result, null, 2));
+    } catch (err: any) {
+      if (err?.code === 'ORG_NOT_FOUND') {
+        return res.status(404).json({ code: 'ORG_NOT_FOUND' });
+      }
+      logger.error('[Superadmin] Organization export failed', { err, orgId: id });
+      return res
+        .status(500)
+        .json({ code: 'ORG_EXPORT_FAILED' });
+    } finally {
+      client.release();
+    }
+  })
+);
+
+/**
+ * DELETE /api/superadmin/organizations/:id
+ * P5 (kryterium 12, S2.7) — usunięcie NA ŻĄDANIE, nieodwracalne, z interfejsu.
+ *
+ * Wymaga TRZECH rzeczy naraz:
+ *   1. `confirmation: true` + `reason` (min. 3 znaki) — istniejący bezpiecznik
+ *      `requireConfirmation`, pisze do `superadmin_confirmed_actions`.
+ *   2. `organizationName` w body DOKŁADNIE równe aktualnej nazwie organizacji —
+ *      „wpisanie nazwy organizacji" wymagane przez kryterium 12. Sprawdzane TU,
+ *      przed otwarciem transakcji kasującej, żeby literówka nigdy nie dotarła
+ *      do silnika usuwania.
+ *   3. Brak legal hold (`requireNoLegalHold`, bez zmian względem poprzedniej
+ *      wersji trasy).
+ *
+ * Silnik usuwania to `deleteOrganizationDataInTransaction` — kasuje WSZYSTKIE
+ * odkryte tabele organizacyjne (nie tylko sessions/projects/users, jak stary
+ * `SuperAdminController.deleteOrganization`, który zostawiał dziesiątki tabel
+ * osierocone), w jednej transakcji z ROLLBACK przy jakimkolwiek niespodziewanym
+ * błędzie (fail closed — zero częściowego usunięcia).
+ */
 router.delete(
   '/organizations/:id',
   requireConfirmation('delete_organization', 'critical'),
   requireAudit,
-  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
+      return res.status(400).json({ code: 'ORG_ID_RESERVED' });
+    }
     try {
-      await requireNoLegalHold(req.params.id, 'Organization deletion');
+      await requireNoLegalHold(id, 'Organization deletion');
     } catch (e: any) {
       if (e?.code === 'LEGAL_HOLD') {
         return res.status(403).json({
@@ -745,7 +833,62 @@ router.delete(
       }
       throw e;
     }
-    return SuperAdminController.deleteOrganization(req, res, next);
+
+    const submittedName =
+      typeof req.body?.organizationName === 'string' ? req.body.organizationName.trim() : '';
+
+    const client = await acquirePgClient();
+    try {
+      const currentOrg = await client.query<{ id: string; name: string | null }>(
+        'SELECT id, name FROM organizations WHERE id = $1',
+        [id]
+      );
+      if (currentOrg.rowCount === 0) {
+        return res.status(404).json({ code: 'ORG_NOT_FOUND' });
+      }
+      const actualName = (currentOrg.rows[0]!.name || '').trim();
+      if (!submittedName || submittedName !== actualName) {
+        // code-only response (no literal error sentence here) — bramka J0
+        // (docs/program/JEZYK_EN_PL_20260908/J0_BRAMKA.md) liczy KAŻDE nowe
+        // zdanie z serwera do UI jako dług; kod jest wystarczający dla
+        // wywołującego (OrganizationsView.tsx pokazuje własny, juz istniejacy
+        // komunikat toast), a maszynowy `code` niesie pełną semantykę.
+        return res.status(428).json({ code: 'ORG_NAME_CONFIRMATION_REQUIRED' });
+      }
+
+      await client.query('BEGIN');
+      try {
+        const result = await deleteOrganizationDataInTransaction(client, id);
+        await client.query('COMMIT');
+
+        await req.emitAuditEvent?.({
+          actorType: 'USER',
+          action: 'delete',
+          resourceType: 'organization',
+          resourceId: id,
+          before: { name: actualName },
+          metadata: { deletedCounts: result.deletedCounts, passes: result.passes },
+        });
+
+        // Brak literalnego zdania w odpowiedzi (celowo, patrz bramka J0 —
+        // liczy każdy nowy tekst w polach error/message jako dług). Pola
+        // success i deletedCounts niosą pełną semantykę bez nowego zdania.
+        return res.json({ success: true, deletedCounts: result.deletedCounts });
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      }
+    } catch (err: any) {
+      if (err?.code === 'ORG_NOT_FOUND') {
+        return res.status(404).json({ code: 'ORG_NOT_FOUND' });
+      }
+      logger.error('[Superadmin] Organization deletion failed', { err, orgId: id });
+      return res
+        .status(500)
+        .json({ code: 'ORG_DELETE_FAILED' });
+    } finally {
+      client.release();
+    }
   })
 );
 router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);

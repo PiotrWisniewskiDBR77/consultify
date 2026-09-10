@@ -3144,12 +3144,44 @@ export const Api = {
     if (!res.ok) throw new Error((data as any)?.error || 'Failed to update organization');
   },
 
-  deleteOrganization: async (id: string): Promise<void> => {
+  deleteOrganization: async (
+    id: string,
+    confirmation: { organizationName: string; reason: string }
+  ): Promise<void> => {
+    // P5 (kryterium 12, S2.7): deletion is irreversible, so the backend
+    // (server/src/routes/superadmin.routes.ts DELETE /organizations/:id)
+    // requires confirmation:true + reason + the exact current organization
+    // name — a request without these always returned 428 before this fix,
+    // meaning the existing Delete button in OrganizationsView.tsx never
+    // actually worked. See ODMROZENIE note at the call site.
     const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
+      body: JSON.stringify({
+        confirmation: true,
+        reason: confirmation.reason,
+        organizationName: confirmation.organizationName,
+      }),
     });
-    if (!res.ok) throw new Error('Failed to delete organization');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to delete organization');
+  },
+
+  /**
+   * P5 (kryterium 12, S2.7) — pełny eksport danych organizacji do pliku
+   * (`GET /api/superadmin/organizations/:id/export`, server/src/routes/superadmin.routes.ts).
+   * Backend jest gotowy i przetestowany na realnym Postgresie
+   * (server/src/routes/__tests__/organizationLifecycle-superadmin.http.pg.test.ts);
+   * NIE jest jeszcze wołany z żadnego ekranu — 14_ADMIN/15_SETTINGS są
+   * zamrożone jako MVP final i dodanie nowego przycisku eksportu wymaga
+   * osobnego numeru odmrożenia (poza wąskim zakresem DEC-457 tej paczki).
+   */
+  exportOrganizationData: async (id: string, format: 'json' | 'csv' = 'json'): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/superadmin/organizations/${id}/export?format=${format}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to export organization data');
+    return res.blob();
   },
 
   getOrganizationBillingDetails: async (orgId: string): Promise<any> => {

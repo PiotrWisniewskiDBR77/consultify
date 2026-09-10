@@ -246,17 +246,29 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   };
 
   // Organization Actions
+  // [ODMROZENIE 14_ADMIN DEC-457] Podpiecie istniejacego handlera: backend
+  // (DELETE /api/superadmin/organizations/:id) juz wymagal confirmation+reason
+  // (requireConfirmation('delete_organization','critical')) — ten handler ich
+  // nigdy nie wysylal, wiec kazde kliknieccie Delete konczylo sie 428 i
+  // przycisk faktycznie nigdy nie dzialal. P5 (kryterium 12, S2.7) wymaga
+  // dodatkowo wpisania nazwy organizacji jako potwierdzenia nieodwracalnej
+  // operacji — window.prompt zamiast window.confirm, bez nowego ekranu.
   const handleDeleteOrg = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}" and all its users? This cannot be undone.`
-      )
-    )
+    const typedName = window.prompt(
+      `This will PERMANENTLY delete "${name}" and ALL of its data (users, projects, initiatives, tasks — everything). This cannot be undone.\n\nType the exact organization name to confirm:`
+    );
+    if (typedName === null) return;
+    if (typedName.trim() !== name) {
+      toast.error('Organization name did not match — deletion cancelled.');
       return;
+    }
     setProcessingId(id);
     try {
       setActionError(null);
-      await Api.deleteOrganization(id);
+      await Api.deleteOrganization(id, {
+        organizationName: name,
+        reason: 'Superadmin console deletion, confirmed by typing the organization name',
+      });
       const refreshedOrganizations = await Api.getOrganizations();
       if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
         throw new Error('Organization deletion could not be confirmed by read-back');
