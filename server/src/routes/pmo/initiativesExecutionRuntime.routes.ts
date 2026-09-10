@@ -178,6 +178,7 @@ import {
 } from '../../domain/initiatives-execution/scheduleDecision.js';
 import { submitSourceProposal } from '../../domain/initiatives-execution/submitSourceProposal.js';
 import {
+  evaluateEffectiveCapability,
   hasEffectiveCapability,
   resolveEffectiveAccess,
 } from '../../services/effectiveAccessService.js';
@@ -1375,10 +1376,40 @@ export type RuntimeAuthorize = (
   capability: 'initiative.create' | 'initiative.view' | 'initiative.update' | 'initiative.review'
 ) => Promise<boolean>;
 
+/**
+ * ZAKRES OBIEKTOWY W RUNTIME-V1 [ODMROZENIE 05_INITIATIVES DEC-453].
+ *
+ * `RuntimeAuthorize` pyta wylacznie o PROJEKT. Zmierzone 2026-09-10 na kopii
+ * `consultify_kopia_e2b`: rola INITIATIVE_OWNER trzyma `initiative.update.own`,
+ * a `hasEffectiveCapability` uznaje sufiks `.own` za spelnienie zdolnosci bez
+ * jednego pytania o obiekt — wiec wlasciciel JEDNEJ inicjatywy przechodzil
+ * bramke `PATCH /runtime-v1/initiatives/:id/metadata` na KAZDEJ inicjatywie w
+ * tym samym projekcie (pomiar: 403 dla MEMBER-a, ale przejscie bramki dla
+ * wlasciciela cudzej inicjatywy — odmowa padala dopiero pietro nizej, w
+ * `resolvePolicy`).
+ *
+ * Ten wariant dostaje dodatkowo LISTE WLASCICIELI konkretnego obiektu i przy
+ * sufiksie wlasnosci wymaga, zeby wolajacy byl na tej liscie. Zdolnosc bez
+ * sufiksu (PROJECT_LEADER, PMO) i pasmo admina (`*` / sentinel) decyduja jak
+ * dotad — sciezka jest wiec wylacznie ZAWEZAJACA.
+ */
+export type RuntimeAuthorizeObject = (
+  actor: RuntimeActor,
+  projectId: string,
+  capability: 'initiative.update',
+  wlasciciele: ReadonlyArray<string | null | undefined>
+) => Promise<boolean>;
+
 export interface InitiativesExecutionRuntimeDependencies {
   unitOfWork: PostgresMaterialCommandUnitOfWork;
   reader: PostgresInitiativeReader;
   authorize: RuntimeAuthorize;
+  /**
+   * Opcjonalna, zawezajaca wersja `authorize` dla ZAPISOW do konkretnej
+   * inicjatywy. Gdy nie podana (atrapy w testach), zapisy zachowuja dokladnie
+   * dzisiejsza decyzje `authorize`.
+   */
+  authorizeInitiativeObject?: RuntimeAuthorizeObject;
   resolvePolicy: (
     organizationId: string,
     projectId: string,
@@ -1468,6 +1499,21 @@ export function createInitiativesExecutionRuntimeRouter(
         )
       )
     );
+  /**
+   * Autoryzacja ZAPISU do konkretnej inicjatywy: zdolnosc + zakres obiektu.
+   * Bez `deps.authorizeInitiativeObject` (atrapy testowe) spada do dzisiejszej
+   * decyzji `deps.authorize`, wiec zaden istniejacy test nie zmienia wyniku.
+   */
+  const autoryzujZapisInicjatywy = async (
+    actor: RuntimeActor,
+    znaleziona: { initiative: { projectId: string; initiativeOwnerId?: string | null } }
+  ): Promise<boolean> =>
+    deps.authorizeInitiativeObject
+      ? deps.authorizeInitiativeObject(actor, znaleziona.initiative.projectId, 'initiative.update', [
+          znaleziona.initiative.initiativeOwnerId,
+        ])
+      : deps.authorize(actor, znaleziona.initiative.projectId, 'initiative.update');
+
   const projectsForInitiative = async (actor: RuntimeActor, initiativeId: unknown) =>
     typeof initiativeId === 'string'
       ? deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId)
@@ -2162,7 +2208,7 @@ export function createInitiativesExecutionRuntimeRouter(
       const initiativeId = firstParam(req.params.initiativeId);
       const found = await deps.reader.findById(actor.organizationId, initiativeId);
       if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
-      if (!(await deps.authorize(actor, found.initiative.projectId, 'initiative.update')))
+      if (!(await autoryzujZapisInicjatywy(actor, found)))
         return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
       if (
         parsed.data.initiativeOwnerId !== undefined &&
@@ -2210,7 +2256,7 @@ export function createInitiativesExecutionRuntimeRouter(
       const initiativeId = firstParam(req.params.initiativeId);
       const found = await deps.reader.findById(actor.organizationId, initiativeId);
       if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
-      if (!(await deps.authorize(actor, found.initiative.projectId, 'initiative.update')))
+      if (!(await autoryzujZapisInicjatywy(actor, found)))
         return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
       const policy = await deps.resolvePolicy(
         actor.organizationId,
@@ -7555,6 +7601,28 @@ const runtimeDependencies: InitiativesExecutionRuntimeDependencies = {
       isImpersonating: actor.isImpersonating,
     });
     return hasEffectiveCapability(access, capability);
+  },
+  // Zapisy do konkretnej inicjatywy: ta sama zdolnosc, ale sufiks wlasnosci
+  // (`.own`) spelnia bramke TYLKO dla wlasciciela TEGO obiektu. Brak predykatu
+  // przy sufiksie wlasnosci = odmowa (fail-closed) — patrz
+  // `evaluateEffectiveCapability` w `effectiveAccessService`.
+  authorizeInitiativeObject: async (actor, projectId, capability, wlasciciele) => {
+    const access = await resolveEffectiveAccess({
+      userId: actor.userId,
+      organizationId: actor.organizationId,
+      applicationRole: actor.applicationRole,
+      projectId,
+      isImpersonating: actor.isImpersonating,
+    });
+    const decyzja = await evaluateEffectiveCapability(access, capability, {
+      requireOwnership: true,
+      ownerPredicate: () =>
+        wlasciciele.some(
+          (wartosc) =>
+            typeof wartosc === 'string' && wartosc.trim() !== '' && wartosc === actor.userId
+        ),
+    });
+    return decyzja.allowed;
   },
 };
 

@@ -16,7 +16,10 @@ import { StaffingPlanController } from '../../controllers/StaffingPlanController
 import { validateOrgMembership, verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { requireCanonicalInitiativeExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
-import { requireInitiativeCapability } from '../../middleware/effectiveCapability.middleware.js';
+import {
+  isInitiativeOwnedByCaller,
+  requireInitiativeCapability,
+} from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -82,13 +85,38 @@ import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
 const router = Router();
 
-// INI-MVP-PROFILE-001: Initiative routes have completed their shadow period.
-// Preserve per-route project resolution/allowWithoutProject options, but never
-// allow an individual caller to silently return to log-only authorization.
+/**
+ * STAN FAKTYCZNY BRAMEK INICJATYW — zmierzony 2026-09-10 na realnym Postgresie
+ * (kopia `consultify_kopia_e2b`), NIE odczytany z docstringa.
+ *
+ * Poprzedni komentarz w tym miejscu glosil, ze trasy inicjatyw „zakonczyly okres
+ * shadow" i ze zaden wolajacy nie moze wrocic do autoryzacji log-only. To bylo
+ * NIEPRAWDA w runtime i kosztowalo pelna dziure: `shadow: false` kieruje bramke
+ * na stara sciezke `requireProjectCapability`, a ta (patrz
+ * `effectiveCapability.middleware.ts`, warunek `!shouldEnforceEffectiveAccess()
+ * && !shouldShadowEffectiveAccess()`) wola `next()` BEZ zadnego sprawdzenia,
+ * dopoki `EFFECTIVE_ACCESS_ENFORCE` / `EFFECTIVE_ACCESS_SHADOW` sa nieustawione
+ * — a nie ma ich ani w `server.env`, ani na staging/demo/produkcji. Pomiar:
+ * MEMBER `PUT /api/initiatives/<cudza>` = 200 i NADPISANY tytul w bazie,
+ * identycznie przy `CAPABILITY_ENFORCE=shadow` i `=enforce`.
+ *
+ * Bramka dziala WIEC tylko na dwa sposoby:
+ *   1. `enforceMode: 'enforce'` PER TRASA (ponizej) — realne 403 tu i teraz,
+ *      bez ruszania pozostalych ~80 bramek tego pliku;
+ *   2. globalna zmienna `EFFECTIVE_ACCESS_ENFORCE=true` — przelacza 88 bramek
+ *      NARAZ, czego zakazuje regula 9 CLAUDE.md.
+ *
+ * Trasa, ktora deklaruje `enforceMode`, wchodzi na sciezke per-bramka
+ * (`shadow: true` + tryb z opcji). Kazda pozostala zachowuje dokladnie
+ * dzisiejsza decyzje (`shadow: false`).
+ */
 const requireGovernedInitiativeCapability = (
   capability: string,
   options: Parameters<typeof requireInitiativeCapability>[1] = {}
-) => requireInitiativeCapability(capability, { ...options, shadow: false });
+) =>
+  options?.enforceMode
+    ? requireInitiativeCapability(capability, { ...options, shadow: true })
+    : requireInitiativeCapability(capability, { ...options, shadow: false });
 
 function resolvePmoInitiativesCorrelationId(req: any): string | null {
   return req?.correlationId || req?.get?.('X-Correlation-ID') || null;
@@ -3100,7 +3128,13 @@ router.put('/:id/profile', requireOrgRole('OWNER', 'ADMIN'), async (req: any, re
  */
 router.put(
   '/:id',
-  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerGrantsAccess: true,
+    ownerPredicate: isInitiativeOwnedByCaller,
+  }),
   validateBody(UpdateInitiativeSchema),
   InitiativeController.updateInitiative
 );
@@ -3111,7 +3145,13 @@ router.put(
  */
 router.patch(
   '/:id/status',
-  requireGovernedInitiativeCapability('initiative.status.change', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.status.change', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerGrantsAccess: true,
+    ownerPredicate: isInitiativeOwnedByCaller,
+  }),
   validateBody(UpdateInitiativeStatusSchema),
   InitiativeController.updateInitiativeStatus
 );
@@ -3137,7 +3177,13 @@ router.patch(
  */
 router.patch(
   '/:id',
-  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerGrantsAccess: true,
+    ownerPredicate: isInitiativeOwnedByCaller,
+  }),
   (req, res, next) => {
     const body = (req as any)?.body || {};
     const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
@@ -3165,7 +3211,13 @@ router.patch(
 router.delete(
   '/:id',
   requireOrgRole('user'),
-  requireGovernedInitiativeCapability('initiative.delete', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.delete', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerGrantsAccess: true,
+    ownerPredicate: isInitiativeOwnedByCaller,
+  }),
   requireInitiativeWriteAccess(),
   InitiativeController.deleteInitiative
 );
