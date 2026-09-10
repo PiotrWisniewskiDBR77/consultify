@@ -127,12 +127,17 @@ async function sendVerificationEmail(
 
   await EmailService.send({
     to: email,
-    subject: 'Verify your email',
+    subject: 'Potwierdź swój adres e-mail',
     html: `
-      <p>Hi ${firstName || 'there'},</p>
-      <p>Please verify your email by clicking this link:</p>
+      <p>Cześć ${firstName || ''},</p>
+      <p>Potwierdź swój adres e-mail, klikając poniższy link:</p>
       <p><a href="${verifyLink}">${verifyLink}</a></p>
+      <p>Jeśli to nie Ty zakładałeś konto w Consultify, zignoruj tę wiadomość.</p>
     `,
+    text:
+      `Cześć ${firstName || ''},\n\n` +
+      `Potwierdź swój adres e-mail, otwierając poniższy adres:\n${verifyLink}\n\n` +
+      'Jeśli to nie Ty zakładałeś konto w Consultify, zignoruj tę wiadomość.\n',
   });
 }
 

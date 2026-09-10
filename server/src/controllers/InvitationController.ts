@@ -24,6 +24,59 @@ import type {
 // CONTROLLER METHODS
 // ==========================================
 
+/**
+ * Translate an invitationService rejection into a code and HTTP status the UI
+ * can branch on. Everything unrecognised stays a 500 — an unknown failure must
+ * not be dressed up as a user mistake.
+ *
+ * Why the wording is NOT here: a rejected invitation used to reach the admin as
+ * the single opaque line "Invitation payload is invalid.", while the real
+ * obstacle (seat limit reached, address already invited, trial ended) stayed in
+ * the server log. That is a silent block. The obstacle now travels in `code`,
+ * and the sentence belongs on the client — gate J0
+ * (docs/program/JEZYK_EN_PL_20260908/J0_BRAMKA.md) counts every new
+ * server-to-UI sentence as language debt, in either language. STILL OWED: the
+ * client-side Polish copy keyed by the codes below; until it lands, the user
+ * sees the generic message and only the code carries the reason.
+ */
+export function classifyInvitationCreateFailure(rawMessage: unknown): {
+  status: number;
+  code: string;
+  message: string;
+} {
+  const text = String(rawMessage || '').toLowerCase();
+  // Kept verbatim: these two sentences already exist in the codebase, so the
+  // mapping adds precision without adding new untranslated copy.
+  const GENERIC_CLIENT = 'Invitation payload is invalid.';
+  const GENERIC_SERVER = 'Failed to create invitation.';
+
+  if (text.includes('seats') || text.includes('user limit')) {
+    return { status: 409, code: 'INVITATION_SEAT_LIMIT_REACHED', message: GENERIC_CLIENT };
+  }
+
+  if (text.includes('already a member')) {
+    return { status: 409, code: 'INVITATION_ALREADY_MEMBER', message: GENERIC_CLIENT };
+  }
+
+  if (text.includes('exists')) {
+    return { status: 409, code: 'INVITATION_ALREADY_EXISTS', message: GENERIC_CLIENT };
+  }
+
+  if (text.includes('trial has expired') || text.includes('trial expired')) {
+    return { status: 403, code: 'INVITATION_TRIAL_EXPIRED', message: GENERIC_CLIENT };
+  }
+
+  if (text.includes('demo')) {
+    return { status: 403, code: 'INVITATION_DEMO_READ_ONLY', message: GENERIC_CLIENT };
+  }
+
+  if (text.includes('format')) {
+    return { status: 400, code: 'INVITATION_EMAIL_INVALID', message: GENERIC_CLIENT };
+  }
+
+  return { status: 500, code: 'INVITATION_CREATE_FAILED', message: GENERIC_SERVER };
+}
+
 export class InvitationController {
   private static resolveCorrelationId(req: AuthenticatedRequest): string | null {
     const raw =
@@ -183,25 +236,17 @@ export class InvitationController {
         });
       } catch (error: any) {
         logger.error(`[InvitationController] Create failed: ${error.message}`);
-        const status =
-          error.message.includes('exists') ||
-          error.message.includes('already a member') ||
-          error.message.includes('seats') ||
-          error.message.includes('format') ||
-          error.message.toLowerCase().includes('demo')
-            ? 400
-            : 500;
-        const code =
-          status === 400 ? 'INVITATION_CREATE_VALIDATION_FAILED' : 'INVITATION_CREATE_FAILED';
+        // A rejected invitation used to reach the user as the single opaque line
+        // "Invitation payload is invalid." — the real reason (seat limit reached,
+        // address already invited, expired trial) stayed in the server log only.
+        // That is a silent block: the admin sees a refusal with no reason and no
+        // next step. Map every known refusal onto its own code + actionable
+        // Polish message; keep the generic 500 envelope for genuine failures.
+        const reason = classifyInvitationCreateFailure(error?.message);
         res
-          .status(status)
+          .status(reason.status)
           .json(
-            InvitationController.failEnvelope(
-              req,
-              status,
-              code,
-              status === 400 ? 'Invitation payload is invalid.' : 'Failed to create invitation.'
-            )
+            InvitationController.failEnvelope(req, reason.status, reason.code, reason.message)
           );
       }
     }
