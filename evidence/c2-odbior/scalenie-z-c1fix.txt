@@ -1,0 +1,30 @@
+C2-ODBIÓR — próba scalenia dostawy C2 z C1-FIX 1-8, 2026-09-10
+==============================================================
+git checkout -b tmp/c2-merge-probe b5201f1c03
+git merge a25dec1083 --no-edit     -> BEZ KONFLIKTÓW (e5029f7d6c)
+
+Pliki C1-FIX (a25dec1083):
+  server/src/controllers/InitiativeController.ts                          32 +-
+  server/src/domain/initiatives-execution/__tests__/dwaMagazynyRozjazd.pg.test.ts   83 +-
+  server/src/domain/initiatives-execution/__tests__/statusDictionaryParity.test.ts  70 +
+  server/src/domain/initiatives-execution/initiativeUnifiedReader.ts     228 +-
+Pliki C2 (49cd114773..b5201f1c03):
+  docs/.../98_RAPORT.md
+  scripts/dane/migruj-inicjatywy-do-kanonu.ts                            (NOWY)
+  server/src/domain/initiatives-execution/__tests__/nowyRekordSiedemPowierzchni.pg.test.ts (NOWY)
+PRZECIĘCIE ZBIORÓW: PUSTE.
+
+E5 PO SCALENIU (realny PG, kopia stagingu, --retry=0):
+  ON  -> 2 passed, macierz: lista TAK, karta TAK, KPI TAK(slabe), 4/5/6/7 NIE   = 3/7
+  OFF -> 2 passed, macierz: wszystkie NIE                                        = 0/7
+  => IDENTYCZNIE jak przed scaleniem, mimo przepisania 228 linii czytnika przez FIX-1.
+
+CAŁY KATALOG server/src/domain/initiatives-execution/__tests__/ PO SCALENIU:
+  flaga ON : Test Files  1 failed | 16 passed (17)
+  flaga OFF: Test Files  1 failed | 16 passed (17)
+  Jedyna porażka: initiativeOwnerEligibility.swiezyProjekt.realdb.test.ts:59
+    error: null value in column "id" of relation "organization_members" violates not-null constraint
+    -> defekt testu wobec schematu zrzutu stagingu, NIEZWIĄZANY z dostawą C2 ani z C1-FIX
+       (żaden z tych commitów nie dotyka tego pliku).
+
+WNIOSEK: scalenie C2 z C1-FIX jest bezpieczne i niczego nie zmienia w wynikach E3/E5.

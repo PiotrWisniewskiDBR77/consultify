@@ -1,0 +1,58 @@
+[
+  {
+    "surface": "lista",
+    "route": "/api/initiatives",
+    "status": 200,
+    "containsId": false,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "karta",
+    "route": "/api/initiatives/initiative-3e247ac5-7ffc-4bc7-aff7-f127d84ec7e0",
+    "status": 404,
+    "containsId": false,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "KPI",
+    "route": "/api/initiatives/initiative-3e247ac5-7ffc-4bc7-aff7-f127d84ec7e0/kpis",
+    "status": 404,
+    "containsId": false,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "kokpit Realizacji",
+    "route": "/api/v8/execution-control/capacity/timeline?initiativeId=initiative-3e247ac5-7ffc-4bc7-aff7-f127d84ec7e0",
+    "status": 404,
+    "containsId": true,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "Moja Praca",
+    "route": "/api/my-work/executive-analytics",
+    "status": 200,
+    "containsId": false,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "Wyniki",
+    "route": "/api/v8/results/dashboard?initiativeId=initiative-3e247ac5-7ffc-4bc7-aff7-f127d84ec7e0",
+    "status": 404,
+    "containsId": true,
+    "containsTitle": false,
+    "visible": false
+  },
+  {
+    "surface": "raporty",
+    "route": "/api/report-builder/backlinks/initiative/initiative-3e247ac5-7ffc-4bc7-aff7-f127d84ec7e0",
+    "status": 200,
+    "containsId": true,
+    "containsTitle": false,
+    "visible": false
+  }
+]

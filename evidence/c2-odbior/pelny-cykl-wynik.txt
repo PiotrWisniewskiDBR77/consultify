@@ -1,0 +1,22 @@
+TWORZENIE: proposal=201 registration=201
+SQL: {"kanon":1,"zastany":0}
+
+### ON (4231) ###
+1 lista              200  tytul=TAK id=TAK  WIDOCZNY=TAK  [{"id":"initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23","organizationId":"fdab9756-4cef-4
+2 karta              200  tytul=TAK id=TAK  WIDOCZNY=TAK  {"id":"initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23","organization_id":"fdab9756-4cef-4
+3 KPI                200  tytul=NIE  id=NIE   WIDOCZNY=TAK  {"kpis":[]}
+4 kokpit Realizacji  404  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"error":"Initiative initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23 not found","code":"IN
+5 Moja Praca         200  tytul=NIE  id=NIE   WIDOCZNY=NIE  {"projectId":null,"capacity":{"totalTeamCapacityHours":0,"totalRequiredHours":0,"totalBack
+6 Wyniki             404  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"error":"Initiative initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23 not found","code":"IN
+7 raporty            200  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"artifactType":"initiative","artifactId":"initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23
+
+### OFF (4241) ###
+1 lista              200  tytul=NIE  id=NIE   WIDOCZNY=NIE  []
+2 karta              404  tytul=NIE  id=NIE   WIDOCZNY=NIE  {"error":"Initiative not found","code":"INITIATIVE_NOT_FOUND"}
+3 KPI                404  tytul=NIE  id=NIE   WIDOCZNY=NIE  {"error":"Initiative not found"}
+4 kokpit Realizacji  404  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"error":"Initiative initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23 not found","code":"IN
+5 Moja Praca         200  tytul=NIE  id=NIE   WIDOCZNY=NIE  {"projectId":null,"capacity":{"totalTeamCapacityHours":0,"totalRequiredHours":0,"totalBack
+6 Wyniki             404  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"error":"Initiative initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23 not found","code":"IN
+7 raporty            200  tytul=NIE  id=TAK  WIDOCZNY=NIE  {"artifactType":"initiative","artifactId":"initiative-a8cfd24a-f520-42fa-9d38-2a0932f60b23
+
+SPRZATNIETE
