@@ -1,0 +1,62 @@
+[d0] Bezpiecznik listy zachowanej: OK (8 chronionych, zero kolizji).
+[d0] Tryb: dry-run · cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] Lista wejściowa: 15 identyfikatorów.
+[d0] Znalezione w bazie: 15. Nieistniejące: 0.
+[d0] Topologia odczytana z bazy: 1285 kolumn wskazujących na organizację, w tym 100 z FK NO ACTION/RESTRICT (kasowane jawnie przed organizacją).
+
+[d0] === RAPORT PER TABELA ===
+[d0] Wierszy do usunięcia: 3281 z 48 tabel (z 1285 sprawdzonych).
+[d0] Top 25 tabel:
+        1. tasks.organization_id: 517
+        2. initiative_milestones.organization_id: 429
+        3. decisions.organization_id: 275
+        4. organization_context_claims.organization_id: 264
+        5. initiatives.organization_id: 242
+        6. users.organization_id: 202
+        7. initiative_dependencies.organization_id: 110
+        8. knowledge_docs.organization_id: 110
+        9. custom_prompts.organization_id: 99
+       10. my_idea_maps.organization_id: 88
+       11. my_ideas.organization_id: 88
+       12. projects.organization_id: 77
+       13. status_reports.organization_id: 77
+       14. interview_sessions.organization_id: 55
+       15. notebook_pages.organization_id: 55
+       16. teams.organization_id: 55
+       17. activity_logs.organization_id: 37
+       18. financial_statement_ingest_runs.organization_id: 33
+       19. financial_statements.organization_id: 33
+       20. interview_insight_findings.organization_id: 33
+       21. interview_insight_handoffs.organization_id: 33
+       22. presentation_decks.organization_id: 33
+       23. tool_sessions.organization_id: 33
+       24. closure_delivery_receipts.organization_id: 22
+       25. initiative_benefits.organization_id: 22
+
+[d0] === RAPORT PER ORGANIZACJA (top 15 z 15) ===
+        1. ateliertoys-demo-session-f786e8f37a-mtv7frip | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        2. ateliertoys-demo-session-f786e8f37a-mtv7i250 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        3. ateliertoys-demo-session-f786e8f37a-mtv4kwa4 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        4. ateliertoys-demo-session-f786e8f37a-mtvctbn1 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        5. ateliertoys-demo-session-f786e8f37a-mtvcwt6h | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        6. ateliertoys-demo-session-f786e8f37a-mtvdxiai | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        7. ateliertoys-demo-session-f786e8f37a-mtvaakx6 | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        8. ateliertoys-demo-session-f786e8f37a-mtvaanht | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+        9. ateliertoys-demo-session-f786e8f37a-mtvagl9z | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       10. ateliertoys-demo-session-f786e8f37a-mtvaikcr | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       11. ateliertoys-demo-session-f786e8f37a-mtvcp31j | Atelier Toys | członków=0 | wierszy=295 | tabel=42
+       12. b8bb7593-c48a-403d-a7af-f5637e93b955 | P2A Reload Test 4 | członków=1 | wierszy=11 | tabel=8
+       13. 6175b332-3560-4055-a9a1-927d99f1c3c5 | P2A Reload Test 2 | członków=1 | wierszy=9 | tabel=8
+       14. c240672e-24bb-4b3f-b129-df2802bc7daf | P2A Reload Test | członków=1 | wierszy=8 | tabel=7
+       15. 196835dd-b867-450e-a9d3-c796452554fe | P2A Reload Test 3 | członków=1 | wierszy=8 | tabel=7
+
+[d0] CSV per tabela:       /Users/piotrwisniewski/Developer/wt/w1a-sprzatanie/evidence/dane-pokazowe-en/dry-run-per-tabela-2026-09-10T11-14-19-374Z.csv
+[d0] CSV per organizacja:  /Users/piotrwisniewski/Developer/wt/w1a-sprzatanie/evidence/dane-pokazowe-en/dry-run-per-organizacja-2026-09-10T11-14-19-376Z.csv
+[d0] Cel: thomas.proxy.rlwy.net:52567/railway
+
+[d0] DRY-RUN zakończony. NIC NIE ZOSTAŁO ZMIENIONE.
+[d0] UWAGA: liczba 3281 obejmuje wyłącznie tabele mające kolumnę wskazującą na organizację.
+[d0] Wiersze znikające kaskadą z tabel bez takiej kolumny (np. komentarze zadania) NIE są tu liczone —
+[d0] realna liczba usuniętych wierszy będzie WIĘKSZA. To dolna granica, nie górna.
+
