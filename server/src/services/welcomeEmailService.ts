@@ -21,7 +21,7 @@ async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
 
     await EmailService.send({
       to: data.email,
-      subject: `Welcome to Consultify${data.isDemo ? ' (Demo Account)' : ''} 🎉`,
+      subject: `Witamy w Consultify${data.isDemo ? ' (konto pokazowe)' : ''} 🎉`,
       html: generateWelcomeEmailHtml(data),
     });
 
@@ -40,7 +40,7 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
 
   return `
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
     <meta charset="utf-8">
     <style>
@@ -64,78 +64,78 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Welcome to Consultify! 🎉</h1>
-            <p>Your AI-powered consulting platform is ready</p>
-            ${data.isDemo ? '<span class="demo-badge">Demo Account</span>' : ''}
+            <h1>Witamy w Consultify! 🎉</h1>
+            <p>Twoja platforma doradcza z AI jest gotowa</p>
+            ${data.isDemo ? '<span class="demo-badge">Konto pokazowe</span>' : ''}
         </div>
         
         <div class="content">
-            <p>Hi ${data.firstName},</p>
+            <p>Cześć ${data.firstName},</p>
             
-            <p>Thank you for joining Consultify! We're excited to have <strong>${data.companyName}</strong> on board.</p>
+            <p>Dziękujemy za dołączenie do Consultify. Cieszymy się, że jest z nami <strong>${data.companyName}</strong>.</p>
             
             ${
               data.isDemo
                 ? `
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                <strong>🧪 Demo Account</strong><br>
-                <p style="margin: 10px 0 0; font-size: 14px;">You're using a demo account with sample data. Explore freely - all features are available!</p>
+                <strong>🧪 Konto pokazowe</strong><br>
+                <p style="margin: 10px 0 0; font-size: 14px;">Korzystasz z konta pokazowego z przykładowymi danymi. Klikaj swobodnie — wszystkie funkcje są dostępne.</p>
             </div>
             `
                 : ''
             }
             
-            <h2 style="color: #1f2937;">Here's what you can do:</h2>
+            <h2 style="color: #1f2937;">Co możesz tu zrobić:</h2>
             
             <div class="feature-grid">
                 <div class="feature">
                     <div class="feature-icon">📊</div>
-                    <h3>Run Assessments</h3>
-                    <p>Evaluate projects, teams, and processes with AI-powered analysis</p>
+                    <h3>Prowadź oceny</h3>
+                    <p>Oceniaj projekty, zespoły i procesy z pomocą analizy AI</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">🤖</div>
-                    <h3>AI Assistant</h3>
-                    <p>Get instant insights and recommendations from your AI consultant</p>
+                    <h3>Asystent AI</h3>
+                    <p>Otrzymuj wnioski i rekomendacje od swojego doradcy AI</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">📈</div>
-                    <h3>Analytics Dashboard</h3>
-                    <p>Track progress and measure impact across your organization</p>
+                    <h3>Pulpit analityczny</h3>
+                    <p>Śledź postęp i mierz efekty w całej organizacji</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">👥</div>
-                    <h3>Team Collaboration</h3>
-                    <p>Work together with your team on initiatives and decisions</p>
+                    <h3>Praca zespołowa</h3>
+                    <p>Pracujcie razem nad inicjatywami i decyzjami</p>
                 </div>
             </div>
             
             <div style="text-align: center;">
-                <a href="${appUrl}/dashboard" class="cta-button">Go to Dashboard →</a>
+                <a href="${appUrl}/dashboard" class="cta-button">Przejdź do pulpitu →</a>
             </div>
             
-            <h2 style="color: #1f2937; margin-top: 40px;">Need help getting started?</h2>
+            <h2 style="color: #1f2937; margin-top: 40px;">Potrzebujesz pomocy na start?</h2>
             <ul style="padding-left: 20px;">
-                <li><a href="${appUrl}/help">Visit our Help Center</a></li>
-                <li><a href="${appUrl}/settings/team">Invite your team members</a></li>
-                <li><a href="mailto:support@consultify.com">Contact our support team</a></li>
+                <li><a href="${appUrl}/help">Zajrzyj do Centrum pomocy</a></li>
+                <li><a href="${appUrl}/settings/team">Zaproś osoby ze swojego zespołu</a></li>
+                <li><a href="mailto:support@consultify.com">Napisz do naszego wsparcia</a></li>
             </ul>
             
-            <p style="margin-top: 30px;">We're here to help you succeed!</p>
+            <p style="margin-top: 30px;">Jesteśmy po to, żeby Ci pomóc.</p>
             
-            <p>Best regards,<br>
-            <strong>The Consultify Team</strong></p>
+            <p>Pozdrawiamy,<br>
+            <strong>Zespół Consultify</strong></p>
         </div>
         
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultify. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Consultify. Wszelkie prawa zastrzeżone.</p>
             <p>
-                <a href="${appUrl}/settings">Settings</a> • 
-                <a href="${appUrl}/help">Help</a> • 
-                <a href="mailto:support@consultify.com">Contact Us</a>
+                <a href="${appUrl}/settings">Ustawienia</a> • 
+                <a href="${appUrl}/help">Pomoc</a> • 
+                <a href="mailto:support@consultify.com">Kontakt</a>
             </p>
             <p style="font-size: 12px; color: #9ca3af;">
-                DBR77 Consultify Sp. z o.o. | Warsaw, Poland
+                DBR77 Consultify Sp. z o.o. | Warszawa, Polska
             </p>
         </div>
     </div>

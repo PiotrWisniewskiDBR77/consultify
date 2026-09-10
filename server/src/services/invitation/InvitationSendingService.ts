@@ -81,14 +81,16 @@ export class InvitationSendingService {
     try {
       const sent = await this.emailSender({
         to: email,
-        subject: resent ? 'Your Consultify invitation (resent)' : 'You have been invited to Consultify',
+        subject: resent
+          ? 'Twoje zaproszenie do Consultify (ponownie)'
+          : 'Zaproszenie do Consultify',
         html: this.buildInviteHtml({
-          heading: resent ? 'Your invitation to Consultify' : 'Join your team on Consultify',
+          heading: resent ? 'Twoje zaproszenie do Consultify' : 'Dołącz do zespołu w Consultify',
           intro: resent
-            ? 'Here is your invitation link again.'
-            : 'You have been invited to collaborate on Consultify.',
+            ? 'Wysyłamy Twój link z zaproszeniem jeszcze raz.'
+            : 'Zaproszono Cię do wspólnej pracy w Consultify.',
           inviteLink,
-          cta: 'Accept invitation',
+          cta: 'Przyjmij zaproszenie',
         }),
         requireDelivery: true,
       });
