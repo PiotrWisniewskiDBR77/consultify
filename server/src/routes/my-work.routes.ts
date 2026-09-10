@@ -1413,6 +1413,11 @@ router.get(
     // (DatabaseInitializer — kolumna gwarantowana) i jest zapisywane przez
     // generator AI, ale detal personal-task go NIE ZWRACAŁ, a PUT go nie
     // przyjmował. Karta zawsze renderowała pusty „Oczekiwany rezultat".
+    // HOTFIX (2026-09-11): ten SELECT też nie zwracał assignee_id/owner_id —
+    // karta ładowała pusty stan, a PUT innego pola (np. tytułu) zerował
+    // przypisanie (patrz komentarz P8 przy PUT niżej). Zadanie znikało
+    // właścicielowi po odświeżeniu, bo scope „moje zadania" filtruje po
+    // assignee_id.
     const row = await queryHelpers.queryOne<any>(
       `
       SELECT
@@ -1427,7 +1432,9 @@ router.get(
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
         CAST(t.updated_at AS TEXT) as "versionToken",
-        t.completed_at as "completedAt"
+        t.completed_at as "completedAt",
+        t.assignee_id as "assigneeId",
+        t.owner_id as "ownerId"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
       LIMIT 1
@@ -1540,13 +1547,21 @@ router.put(
       const raw = req.body.checklist;
       setIf('checklist', raw === null ? null : typeof raw === 'string' ? raw : JSON.stringify(raw));
     }
+    // HOTFIX (2026-09-11): `''` z frontu znaczyło „nie wiem" (GET detalu nie
+    // zwracał assignee_id/owner_id, więc formularz startował pusty), a tu było
+    // traktowane jak jawne odpięcie — każdy zapis innego pola zerował
+    // przypisanie i zadanie znikało właścicielowi (scope filtruje po
+    // assignee_id). Teraz: '' = brak zmiany (pomiń), null = jawne odpięcie,
+    // niepusty ciąg = przypisanie.
     if (req.body?.assigneeId !== undefined) {
-      const a = req.body.assigneeId ? String(req.body.assigneeId).trim() : null;
-      setIf('assignee_id', a);
+      const raw = req.body.assigneeId;
+      if (raw === null) setIf('assignee_id', null);
+      else if (typeof raw !== 'string' || raw.trim() !== '') setIf('assignee_id', String(raw).trim());
     }
     if (req.body?.ownerId !== undefined) {
-      const o = req.body.ownerId ? String(req.body.ownerId).trim() : null;
-      setIf('owner_id', o);
+      const raw = req.body.ownerId;
+      if (raw === null) setIf('owner_id', null);
+      else if (typeof raw !== 'string' || raw.trim() !== '') setIf('owner_id', String(raw).trim());
     }
 
     let nextStatus: string | null = null;
