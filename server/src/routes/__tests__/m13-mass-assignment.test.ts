@@ -68,6 +68,9 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 
 vi.mock('../../middleware/effectiveCapability.middleware.js', () => ({
   requireInitiativeCapability: () => (_req: any, _res: any, next: () => void) => next(),
+  // E2b: trasy inicjatyw deklaruja predykat wlasnosci obiektu; atrapa musi go
+  // eksportowac, inaczej import samego routera wywraca caly plik testowy.
+  isInitiativeOwnedByCaller: async () => true,
 }));
 
 vi.mock('../../services/initiative/initiativeTransitionService.js', async (importOriginal) => {
