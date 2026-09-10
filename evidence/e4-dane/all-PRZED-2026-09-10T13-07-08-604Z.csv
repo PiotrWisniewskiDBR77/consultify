@@ -1,0 +1,37 @@
+op,element,pole,przed,po
+all,initiatives.dbr77--acceptance--initiative,archived,true,
+all,initiatives.dbr77--acceptance--initiative,archived_at,"""2026-09-10T11:04:03.319Z""",
+all,rvn_roi_cases.c3b0f15c-b2ce-4a9d-a7d3-d5f8e7b17687,archived_at,"""2026-09-10T13:04:03.319Z""",
+all,decisions.dc34768a-1e72-498b-9beb-9b2bf0c66b92,status,cancelled,
+all,initiatives.9825ac24-bf6c-4d3d-991e-1cbc97312a1f,archived,true,
+all,initiatives.bafcb088-5453-4345-9500-5723d883fe2c,archived,true,
+all,raid_items.172bace5-b4df-4f8b-b4ae-294393e0cbe0,status,CLOSED,
+all,raid_items.e3f56e8c-d65a-4c98-ab85-6cec772e801d,status,CLOSED,
+all,raid_items.e1318dc7-4bc2-45d6-9b63-33c50d54c105,status,CLOSED,
+all,tasks.58dc7726-3041-4cf6-a8a7-712c52075006,status,archived,
+all,tasks.583726e0-85b1-4229-8c13-9ff9d2d592f3,status,archived,
+all,tasks.6dc98550-9ccb-4548-b2bd-0e2691950b58,status,archived,
+all,tasks.d35897b5-6ea6-45c6-9f09-1226e46c7692,status,archived,
+all,tasks.9f4d8c6e-7ce0-4455-9aa4-a03abb632cda,status,archived,
+all,tasks.3f167e3d-336f-4089-89db-872bea02595d,status,archived,
+all,tasks.3a6f9beb-0220-48e6-890c-956b2a6813a8,status,archived,
+all,tasks.016851b5-7a43-4b08-b5a8-5a8cd9774e8a,status,archived,
+all,tasks.3eda96ba-02a9-4613-8238-c0e226a42d78,status,archived,
+all,tasks.f47460ae-76ca-4e2c-b770-d34852f2d190,status,archived,
+all,tasks.4f3342f6-ba44-4297-872b-3dea6dae4da8,status,archived,
+all,tasks.fe570b3c-d408-41aa-a592-3f0f9d636708,status,archived,
+all,tasks.1717f3ef-b267-4c5f-9aff-bcde4f33ce96,status,archived,
+all,tasks.9acf6eaf-d399-41be-b907-5a9341220ff3,status,archived,
+all,decisions.dc34768a-1e72-498b-9beb-9b2bf0c66b92,status (zależność Fork),cancelled,
+all,projects.project-dbr77-001,pomiar,DBR77 Transformation Program|ini=7|task=16|created=Tue Dec 23 2025 18:26:46 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.2fbb1e31-6c71-4228-b775-05aae98690d6,pomiar,DBR77 Transformation Program|ini=7|task=19|created=Tue Dec 23 2025 18:26:46 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.f992cfae-9b03-473f-a685-a5f58b5a5119,pomiar,DBR77 Transformation Program|ini=7|task=16|created=Tue Dec 23 2025 18:26:46 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.5061af12-91d7-54b1-b424-9b5d9a715496,pomiar,DBR77 Transformation Program|ini=1|task=0|created=Mon Feb 16 2026 21:37:36 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.655bb4b2-e757-480c-8d8d-df37a552c5bb,pomiar,DBR77 Transformation Program|ini=1|task=1|created=Mon Feb 16 2026 21:37:36 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.b4695c7c-0434-46ac-9cc1-3cd89afc463a,pomiar,DBR77 Transformation Program|ini=1|task=0|created=Mon Feb 16 2026 21:37:36 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.project-dbr77-demo-all-modules,pomiar,DBR77 Demo — All Modules|ini=0|task=0|created=Sun Feb 22 2026 11:29:11 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.6be9d39f-2c73-4ac2-8e1d-e54870d4e872,pomiar,DBR77 Demo — All Modules|ini=0|task=0|created=Sun Feb 22 2026 11:29:11 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.ff83a6dd-b1f0-49e8-8edb-d06a3fc18241,pomiar,DBR77 Demo — All Modules|ini=0|task=1|created=Sun Feb 22 2026 11:29:11 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.04366332-e4b5-4189-b656-72f8298665cf,pomiar,Automated Changeover Optimization|ini=0|task=1|created=Sun Feb 15 2026 17:52:27 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.21e06b0c-cf37-4c97-ae81-256a6950d691,pomiar,Automated Changeover Optimization|ini=1|task=1|created=Sun Feb 15 2026 17:52:27 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
+all,projects.923bc369-e684-4aa6-a598-f69746fe719a,pomiar,Automated Changeover Optimization|ini=0|task=0|created=Sun Feb 15 2026 17:52:27 GMT+0100 (Central European Standard Time),(tylko pomiar — decyzja właściciela)
