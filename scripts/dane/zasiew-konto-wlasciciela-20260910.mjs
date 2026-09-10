@@ -1393,12 +1393,292 @@ async function dosiej(c, apply, manifest, log) {
 }
 
 // ---------------------------------------------------------------------------
+// WIDMO-CAŁOŚĆ — zadanie S-2 (Tokio, 2026-09-10).
+// ---------------------------------------------------------------------------
+// KROK 0 (skan information_schema, 2026-09-10, host thomas) pokazał, że
+// d2b6a316 (widmo) jest kolumną właściciela/aktora w ~260 kombinacjach
+// tabela.kolumna w PRAWIE CAŁYM schemacie — nie tylko w 8 modułach MVP, które
+// zmierzyło i częściowo przepięło S-1. Zdecydowana większość to telemetria/
+// audyt/koszt AI/lineage/prezencja (ai_cost_usage 995, ai_quality_metrics 996,
+// collab_sessions 2633, wave6_context_ledger 2788, tool_session_presence 1901,
+// organization_context_items 1690, audit_log 6076, v8_artifact_run_audit_log
+// 521, finance_*/financial_* dziesiątki tabel...). Przepisanie TYCH kolumn na
+// nowe konto zafałszowałoby historię (kto naprawdę wykonał/kosztował daną
+// akcję) — to nie jest "własność biznesowa", to log. CLAUDE.md (higiena danych
+// demo, zakaz masowego działania) i zasada „nie rób nieodwracalnych rzeczy bez
+// wyraźnej potrzeby" każą tu STANĄĆ, nie przepinać automatycznie.
+//
+// APLIKUJEMY WYŁĄCZNIE dokończenie modułów MVP, które S-1 już zmierzyło,
+// zweryfikowało czytelnikami i częściowo przepięło kwotowo — teraz BEZ LIMITU
+// KWOTY (transfer całej pozostałej, jakościowo przefiltrowanej puli) + 4 nowe
+// kolumny czytelnikowe znalezione w skanie, których S-1 nie objęło:
+//   initiatives.created_by/updated_by, my_ideas.user_id,
+//   meeting_participants.user_id, interview_assignments.assignee_user_id +
+//   .created_by.
+// Wszystko INNE ze skanu KROK 0 zostaje NIETKNIĘTE i wypisane jako WYJĄTEK
+// „poza zakresem S-2 — wymaga osobnej decyzji" w manifeście/logu.
+// ---------------------------------------------------------------------------
+
+// ★ ZŁAPANE W DRY-RUN (2026-09-10): kwota=999999 = domknięcie CAŁEJ puli, nie
+// tylko ręcznie wybranych 8-10 "ładnych" wierszy jak w S-1 — więc pule bez
+// filtra BEZ_TESTOWYCH zaczynają wciągać rekordy testowe, których S-1 unikało
+// przez dobór kolejności/kwoty. Znalezione na tym przebiegu:
+//  `notatnik-strony`: '[ARCHIVED-TEST] DBR77 Scale-Up - Notatka Robocza',
+//  `czat-rozmowy-EN` (i jej domknięcie): 'QA MOCK RESPONSE...'.
+// CLAUDE.md: "Dane demo = twarz produktu... zero rekordów testowych" —
+// dokładamy BEZ_TESTOWYCH tam, gdzie oryginalna pula S-1 (kwota mała, dobór
+// ręczny) go nie miała, żeby domknięcie „widmo-całość" nie przemyciło ich na
+// konto właściciela.
+const DOLOZ_BEZ_TESTOWYCH = new Set(['notatnik-strony', 'czat-rozmowy-EN']);
+const A2_PULE_CALOSC = A2_PULE.map((p) => ({
+  ...p,
+  kwota: 999999,
+  filtr: DOLOZ_BEZ_TESTOWYCH.has(p.nazwa) ? `${p.filtr} AND ${BEZ_TESTOWYCH}` : p.filtr,
+}));
+A2_PULE_CALOSC.push(
+  {
+    nazwa: 'skrzynka-reszta',
+    tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
+    kolumna: 'user_id',
+    filtr: `organization_id = '${ORG}' AND ${BEZ_TESTOWYCH}`,
+    kolejnosc: `created_at DESC, id`,
+    kwota: 999999,
+  },
+  {
+    nazwa: 'czat-reszta',
+    tabela: 'conversations',
+    kolumna: 'user_id',
+    filtr: `organization_id = '${ORG}' AND deleted_at IS NULL AND ${BEZ_TESTOWYCH}`,
+    kolejnosc: `message_count DESC, last_message_at DESC NULLS LAST, id`,
+    kwota: 999999,
+    dedupPo: ['title'],
+    takze: ['created_by'],
+  }
+);
+
+// Proste przepięcia całości (bez konfliktu unikalności) — org-scoped.
+// ★ DRUGI PRZEBIEG (ten sam dzień): po pierwszym apply doszły 4 kolumny tej
+// samej kategorii („kto to stworzył/do kogo należy" na tabeli biznesowej),
+// pominięte w pierwszym cięciu przez przeoczenie, nie przez celową decyzję:
+// tasks.created_by/owner_id (analogiczne do już przepiętych
+// initiatives.created_by/updated_by), my_idea_maps.user_id (siostrzana
+// tabela my_ideas, już przepiętej), audit_programs.created_by (audit_programs
+// .program_owner_id miało 0 kandydatów — to inna kolumna tej samej tabeli).
+// NIE dodaję my_idea_maps.last_editor_user_id ani assessments.updated_by —
+// to pola „kto ostatnio dotknął", bliższe audytowi niż własności; zostają
+// przy widmie i są wypisane jako wyjątek.
+const WIDMO_PROSTE = [
+  { tabela: 'initiatives', kolumna: 'created_by' },
+  { tabela: 'initiatives', kolumna: 'updated_by' },
+  { tabela: 'my_ideas', kolumna: 'user_id' },
+  { tabela: 'tasks', kolumna: 'created_by' },
+  { tabela: 'tasks', kolumna: 'owner_id' },
+  { tabela: 'audit_programs', kolumna: 'created_by' },
+];
+
+async function przepnijProste(c, apply, manifest, log) {
+  for (const { tabela, kolumna } of WIDMO_PROSTE) {
+    if (!(await tabelaIstnieje(c, tabela))) {
+      log.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, wynik: 'POMINIĘTE — brak tabeli' });
+      continue;
+    }
+    const cols = await kolumny(c, tabela);
+    if (!cols.has(kolumna)) {
+      log.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, wynik: 'POMINIĘTE — brak kolumny' });
+      continue;
+    }
+    const przed = await c.query(
+      `SELECT * FROM ${tabela} WHERE ${kolumna} = $1 AND organization_id = $2`,
+      [WIDMO, ORG]
+    );
+    if (przed.rowCount === 0) {
+      log.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, wierszy: 0, wynik: 'nic do przepięcia' });
+      continue;
+    }
+    manifest.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, z: WIDMO, na: NOWY, wiersze: przed.rows });
+    if (apply) {
+      const r = await c.query(
+        `UPDATE ${tabela} SET ${kolumna} = $1 WHERE ${kolumna} = $2 AND organization_id = $3`,
+        [NOWY, WIDMO, ORG]
+      );
+      log.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, wierszy: r.rowCount, wynik: 'PRZEPIĘTE' });
+    } else {
+      log.push({ etap: 'WIDMO-PROSTE', tabela, kolumna, wierszy: przed.rowCount, wynik: 'dry-run' });
+    }
+  }
+}
+
+// meeting_participants.user_id — konflikt: uq_meeting_participant_user
+// (meeting_id, user_id) WHERE user_id IS NOT NULL. Wiersz, dla którego NOWY
+// już jest uczestnikiem TEGO SAMEGO spotkania, zostaje przy widmie (wypisany).
+async function przepnijUczestnikowSpotkan(c, apply, manifest, log) {
+  const tabela = 'meeting_participants';
+  if (!(await tabelaIstnieje(c, tabela))) {
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wynik: 'POMINIĘTE — brak tabeli' });
+    return;
+  }
+  const kandydaci = await c.query(
+    `SELECT mp.* FROM meeting_participants mp
+     JOIN meetings m ON m.id = mp.meeting_id
+     WHERE mp.user_id = $1 AND m.organization_id = $2`,
+    [WIDMO, ORG]
+  );
+  if (kandydaci.rowCount === 0) {
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wierszy: 0, wynik: 'nic do przepięcia' });
+    return;
+  }
+  const konfliktRes = await c.query(
+    `SELECT meeting_id FROM meeting_participants WHERE user_id = $1`,
+    [NOWY]
+  );
+  const zajete = new Set(konfliktRes.rows.map((r) => String(r.meeting_id)));
+  const mozna = kandydaci.rows.filter((r) => !zajete.has(String(r.meeting_id)));
+  const konflikt = kandydaci.rows.filter((r) => zajete.has(String(r.meeting_id)));
+  if (konflikt.length) {
+    manifest.push({ etap: 'WIDMO-UCZESTNICY', tabela, przywracam: 'ZOSTAJE PRZY WIDMIE (konflikt uq_meeting_participant_user)', wiersze: konflikt });
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wierszy: konflikt.length, wynik: 'WYJĄTEK — NOWY już uczestnikiem tego spotkania' });
+  }
+  if (mozna.length === 0) {
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wierszy: 0, wynik: 'brak bezkonfliktowych' });
+    return;
+  }
+  manifest.push({ etap: 'WIDMO-UCZESTNICY', tabela, z: WIDMO, na: NOWY, wiersze: mozna });
+  if (apply) {
+    const r = await c.query(
+      `UPDATE meeting_participants SET user_id = $1 WHERE id::text = ANY($2::text[])`,
+      [NOWY, mozna.map((x) => String(x.id))]
+    );
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wierszy: r.rowCount, wynik: 'PRZEPIĘTE' });
+  } else {
+    log.push({ etap: 'WIDMO-UCZESTNICY', tabela, wierszy: mozna.length, wynik: 'dry-run' });
+  }
+}
+
+// interview_assignments — assignee_user_id (bez ryzyka konfliktu) +
+// created_by (konflikt: ux_interview_assignment_create_request
+// (organization_id, created_by, create_request_key) WHERE create_request_key
+// IS NOT NULL).
+async function przepnijWywiadPrzypisania(c, apply, manifest, log) {
+  const tabela = 'interview_assignments';
+  if (!(await tabelaIstnieje(c, tabela))) {
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, wynik: 'POMINIĘTE — brak tabeli' });
+    return;
+  }
+
+  // assignee_user_id — proste
+  const przedAssignee = await c.query(
+    `SELECT * FROM interview_assignments WHERE assignee_user_id = $1 AND organization_id = $2`,
+    [WIDMO, ORG]
+  );
+  if (przedAssignee.rowCount > 0) {
+    manifest.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'assignee_user_id', z: WIDMO, na: NOWY, wiersze: przedAssignee.rows });
+    if (apply) {
+      const r = await c.query(
+        `UPDATE interview_assignments SET assignee_user_id = $1 WHERE assignee_user_id = $2 AND organization_id = $3`,
+        [NOWY, WIDMO, ORG]
+      );
+      log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'assignee_user_id', wierszy: r.rowCount, wynik: 'PRZEPIĘTE' });
+    } else {
+      log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'assignee_user_id', wierszy: przedAssignee.rowCount, wynik: 'dry-run' });
+    }
+  } else {
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'assignee_user_id', wierszy: 0, wynik: 'nic do przepięcia' });
+  }
+
+  // created_by — z kontrolą konfliktu na create_request_key
+  const kandydaci = await c.query(
+    `SELECT * FROM interview_assignments WHERE created_by = $1 AND organization_id = $2`,
+    [WIDMO, ORG]
+  );
+  if (kandydaci.rowCount === 0) {
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', wierszy: 0, wynik: 'nic do przepięcia' });
+    return;
+  }
+  const kluczeRes = await c.query(
+    `SELECT create_request_key FROM interview_assignments
+     WHERE created_by = $1 AND organization_id = $2 AND create_request_key IS NOT NULL`,
+    [NOWY, ORG]
+  );
+  const zajeteKlucze = new Set(kluczeRes.rows.map((r) => r.create_request_key));
+  const mozna = kandydaci.rows.filter((r) => !(r.create_request_key && zajeteKlucze.has(r.create_request_key)));
+  const konflikt = kandydaci.rows.filter((r) => r.create_request_key && zajeteKlucze.has(r.create_request_key));
+  if (konflikt.length) {
+    manifest.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', przywracam: 'ZOSTAJE PRZY WIDMIE (konflikt ux_interview_assignment_create_request)', wiersze: konflikt });
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', wierszy: konflikt.length, wynik: 'WYJĄTEK — konflikt create_request_key' });
+  }
+  if (mozna.length === 0) {
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', wierszy: 0, wynik: 'brak bezkonfliktowych' });
+    return;
+  }
+  manifest.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', z: WIDMO, na: NOWY, wiersze: mozna });
+  if (apply) {
+    const r = await c.query(
+      `UPDATE interview_assignments SET created_by = $1 WHERE id::text = ANY($2::text[])`,
+      [NOWY, mozna.map((x) => String(x.id))]
+    );
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', wierszy: r.rowCount, wynik: 'PRZEPIĘTE' });
+  } else {
+    log.push({ etap: 'WIDMO-WYWIAD', tabela, kolumna: 'created_by', wierszy: mozna.length, wynik: 'dry-run' });
+  }
+}
+
+// my_idea_maps.user_id — konflikt: ux_my_idea_maps_user_idea (user_id,
+// idea_id). Wiersz, dla którego NOWY już ma mapę dla TEGO SAMEGO pomysłu,
+// zostaje przy widmie (wypisany).
+async function przepnijMapyPomyslow(c, apply, manifest, log) {
+  const tabela = 'my_idea_maps';
+  if (!(await tabelaIstnieje(c, tabela))) {
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wynik: 'POMINIĘTE — brak tabeli' });
+    return;
+  }
+  const kandydaci = await c.query(
+    `SELECT * FROM my_idea_maps WHERE user_id = $1 AND organization_id = $2`,
+    [WIDMO, ORG]
+  );
+  if (kandydaci.rowCount === 0) {
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wierszy: 0, wynik: 'nic do przepięcia' });
+    return;
+  }
+  const konfliktRes = await c.query(`SELECT idea_id FROM my_idea_maps WHERE user_id = $1`, [NOWY]);
+  const zajete = new Set(konfliktRes.rows.map((r) => String(r.idea_id)));
+  const mozna = kandydaci.rows.filter((r) => !zajete.has(String(r.idea_id)));
+  const konflikt = kandydaci.rows.filter((r) => zajete.has(String(r.idea_id)));
+  if (konflikt.length) {
+    manifest.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, przywracam: 'ZOSTAJE PRZY WIDMIE (konflikt ux_my_idea_maps_user_idea)', wiersze: konflikt });
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wierszy: konflikt.length, wynik: 'WYJĄTEK — NOWY już ma mapę tego pomysłu' });
+  }
+  if (mozna.length === 0) {
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wierszy: 0, wynik: 'brak bezkonfliktowych' });
+    return;
+  }
+  manifest.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, z: WIDMO, na: NOWY, wiersze: mozna });
+  if (apply) {
+    const r = await c.query(
+      `UPDATE my_idea_maps SET user_id = $1 WHERE id::text = ANY($2::text[])`,
+      [NOWY, mozna.map((x) => String(x.id))]
+    );
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wierszy: r.rowCount, wynik: 'PRZEPIĘTE' });
+  } else {
+    log.push({ etap: 'WIDMO-MAPY-POMYSLOW', tabela, wierszy: mozna.length, wynik: 'dry-run' });
+  }
+}
+
+async function widmoCalosc(c, apply, manifest, log) {
+  await przepnijPule(c, A2_PULE_CALOSC, 'WIDMO', 'A2-CALOSC', apply, manifest, log);
+  await przepnijProste(c, apply, manifest, log);
+  await przepnijUczestnikowSpotkan(c, apply, manifest, log);
+  await przepnijWywiadPrzypisania(c, apply, manifest, log);
+  await przepnijMapyPomyslow(c, apply, manifest, log);
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 async function main() {
   const argv = process.argv.slice(2);
   const op = (argv.find((a) => a.startsWith('--op=')) || '--op=measure').split('=')[1];
-  // op: measure | all | przepiecie | dosiew | korekta | higiena
+  // op: measure | all | przepiecie | dosiew | korekta | higiena | widmo-calosc
   const apply = argv.includes('--apply');
   if (apply && process.env.FORCE_S1 !== 'true') {
     throw new Error('--apply wymaga FORCE_S1=true');
@@ -1438,6 +1718,9 @@ async function main() {
     }
     if (op === 'higiena') {
       await higiena(c, apply, manifest, log);
+    }
+    if (op === 'widmo-calosc') {
+      await widmoCalosc(c, apply, manifest, log);
     }
 
     const po = await zmierz(c, NOWY);

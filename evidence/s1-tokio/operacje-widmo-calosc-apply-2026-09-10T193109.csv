@@ -1,0 +1,24 @@
+etap,tabela,kolumna,pula,co,posiadane,kwota,wierszy,planowane,dodane,wynik
+A2-CALOSC,,,skrzynka-zadania,,14,999999,42,,,PRZEPIĘTE
+A2-CALOSC,,,skrzynka-akceptacje,,8,999999,24,,,PRZEPIĘTE
+A2-CALOSC,,,skrzynka-decyzje,,3,999999,,,,brak kandydatów
+A2-CALOSC,,,skrzynka-eskalacje,,1,999999,,,,brak kandydatów
+A2-CALOSC,,,skrzynka-kpi-i-sygnaly,,7,999999,15,,,PRZEPIĘTE
+A2-CALOSC,,,czat-rozmowy-EN,,8,999999,115,,,PRZEPIĘTE
+A2-CALOSC,,,notatnik-notatniki,,2,999999,,,,brak kandydatów
+A2-CALOSC,,,notatnik-strony,,12,999999,22,,,PRZEPIĘTE
+A2-CALOSC,,,materialy,,5,999999,2,,,PRZEPIĘTE
+A2-CALOSC,,,kpi-definicje,,5,999999,20,,,PRZEPIĘTE
+A2-CALOSC,,,kpi-karty-wynikow,,2,999999,1,,,PRZEPIĘTE
+A2-CALOSC,,,okr-kluczowe-rezultaty,,4,999999,2,,,PRZEPIĘTE
+A2-CALOSC,,,spotkania-widmo,,11,999999,7,,,PRZEPIĘTE
+A2-CALOSC,,,audyty-programy,,1,999999,,,,brak kandydatów
+A2-CALOSC,,,oceny,,1,999999,,,,brak kandydatów
+A2-CALOSC,,,skrzynka-reszta,,114,999999,53,,,PRZEPIĘTE
+A2-CALOSC,,,czat-reszta,,129,999999,47,,,PRZEPIĘTE
+WIDMO-PROSTE,initiatives,created_by,,,,,31,,,PRZEPIĘTE
+WIDMO-PROSTE,initiatives,updated_by,,,,,1,,,PRZEPIĘTE
+WIDMO-PROSTE,my_ideas,user_id,,,,,14,,,PRZEPIĘTE
+WIDMO-UCZESTNICY,meeting_participants,,,,,,10,,,PRZEPIĘTE
+WIDMO-WYWIAD,interview_assignments,assignee_user_id,,,,,6,,,PRZEPIĘTE
+WIDMO-WYWIAD,interview_assignments,created_by,,,,,112,,,PRZEPIĘTE
