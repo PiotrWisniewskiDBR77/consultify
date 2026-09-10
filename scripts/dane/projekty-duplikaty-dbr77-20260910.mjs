@@ -58,10 +58,53 @@
  *   NIE jest tu zmieniane (żadnego rename). Wymagana decyzja właściciela/CTO
  *   co do reguły remisu przed dalszym działaniem — patrz MELDUNEK.
  *
- * UŻYCIE:
+ * UŻYCIE (--op=archive, DOMYŚLNE — zachowanie jak wyżej):
  *   DATABASE_URL=<staging thomas, bez SSL> node scripts/dane/projekty-duplikaty-dbr77-20260910.mjs --dry-run
  *   DATABASE_URL=… FORCE_PROJEKTY_DUPLIKATY=true node scripts/dane/projekty-duplikaty-dbr77-20260910.mjs --apply
  *   DATABASE_URL=… node scripts/dane/projekty-duplikaty-dbr77-20260910.mjs --verify
+ *
+ * ============================================================================
+ * D-C2 (dokończenie po STOP-ie D-C, DECYZJA CTO 2026-09-10):
+ * ============================================================================
+ * CTO rozstrzygnął STOP powyżej: zamiast sufiksu daty (nierozróżnialny —
+ * duplikaty w każdej grupie mają created_at identyczny co do mikrosekundy),
+ * pozostałe 10 duplikatów TREŚCIOWYCH dostaje sufiks PORZĄDKOWY `(copy N)`.
+ *
+ * REGUŁA (per grupa o tej samej nazwie, wyłącznie wśród AKTYWNYCH — archived
+ * pomijane, ich nazwa zostaje bez zmian):
+ *   1. "zawartość" = suma wierszy we WSZYSTKICH tabelach z project_id (poza
+ *      project_members/project_ai_settings/project_notification_settings),
+ *      liczona NA ŻYWO z bazy (nie z hardkodowanych liczb w tym komentarzu).
+ *   2. Sortuj malejąco wg zawartości. Przy remisie: czytelne id (nie-UUID,
+ *      np. `project-dbr77-001`) wygrywa nad UUID; jeśli nadal remis — najniższe
+ *      id leksykalnie.
+ *   3. Pierwszy w kolejności = GŁÓWNY → nazwa BEZ zmian (bez sufiksu).
+ *   4. Pozostali dostają `<Name> (copy 2)`, `<Name> (copy 3)`… w tej kolejności.
+ *
+ * Zmierzone na żywo 2026-09-10 (potwierdza krok0-pomiar-20260910.txt):
+ *   Automated Changeover Optimization (2 aktywne — trzeci już zarchiwizowany):
+ *     21e06b0c…  treść=2  → GŁÓWNY (bez sufiksu)
+ *     04366332…  treść=1  → (copy 2)
+ *   DBR77 Demo — All Modules (2 aktywne — trzeci już zarchiwizowany):
+ *     ff83a6dd…              treść=12 → GŁÓWNY (bez sufiksu)
+ *     project-dbr77-demo-all-modules  treść=1  → (copy 2)
+ *   DBR77 Transformation Program (6 aktywnych):
+ *     project-dbr77-001  treść=26 → GŁÓWNY (remis z 2fbb1e31 przy 26 — czytelne id wygrywa)
+ *     2fbb1e31…          treść=26 → (copy 2)
+ *     f992cfae…          treść=24 → (copy 3)
+ *     655bb4b2…          treść=2  → (copy 4)
+ *     5061af12…          treść=1  → (copy 5) (remis z b4695c7c przy 1 — '5'<'b' leksykalnie)
+ *     b4695c7c…          treść=1  → (copy 6)
+ *
+ * TYLKO `name` jest zmieniane (mechanizm identyczny z `updateProject` w
+ * server/src/controllers/ProjectController.ts: `UPDATE projects SET name=…
+ * WHERE id=… AND organization_id=…`). id/status/archived_at/relacje — bez zmian.
+ *
+ * UŻYCIE (--op=rename):
+ *   DATABASE_URL=… node scripts/dane/projekty-duplikaty-dbr77-20260910.mjs --op=rename --dry-run
+ *   DATABASE_URL=… FORCE_PROJEKTY_DUPLIKATY=true node …/projekty-duplikaty-dbr77-20260910.mjs --op=rename --apply
+ *   DATABASE_URL=… node scripts/dane/projekty-duplikaty-dbr77-20260910.mjs --op=rename --verify
+ *   (po --apply uruchom drugi raz --op=rename --dry-run — plan musi wyjść PUSTY: 0 zmian, idempotencja)
  *
  * Bezpieczniki: produkcja (centerbeam) odrzucana zawsze; host musi zawierać
  * fragment podany w --oczekiwany-host (domyślnie „thomas" — staging); --apply
@@ -108,8 +151,84 @@ const TRESCIOWE_STOP = [
   'b4695c7c-0434-46ac-9cc1-3cd89afc463a',
 ];
 
+/** Tabele z project_id wyłączone z liczenia "zawartości" (członkostwo/ustawienia, nie treść). */
+const WYLACZONE_Z_ZAWARTOSCI = ['project_members', 'project_ai_settings', 'project_notification_settings'];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function stempel() {
   return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+/** Suma wierszy per project_id, na żywo, we wszystkich tabelach z kolumną project_id (poza WYLACZONE_Z_ZAWARTOSCI). */
+async function policzZawartosc(c, ids) {
+  const tabl = await c.query(
+    `SELECT table_name FROM information_schema.columns
+       WHERE column_name = 'project_id' AND table_schema = 'public'
+         AND table_name <> ALL($1::text[])
+       ORDER BY table_name`,
+    [WYLACZONE_Z_ZAWARTOSCI]
+  );
+  const suma = new Map(ids.map((id) => [id, 0]));
+  for (const { table_name: t } of tabl.rows) {
+    try {
+      const r = await c.query(
+        `SELECT project_id::text AS pid, COUNT(*)::int AS n FROM "${t}" WHERE project_id::text = ANY($1) GROUP BY project_id`,
+        [ids]
+      );
+      for (const row of r.rows) {
+        if (suma.has(row.pid)) suma.set(row.pid, suma.get(row.pid) + row.n);
+      }
+    } catch {
+      // kolumna project_id o niekompatybilnym typie/cast w tej tabeli — pomiń (nie dotyczy naszych id)
+    }
+  }
+  return suma;
+}
+
+/** Porządek: zawartość malejąco; remis → czytelne id (nie-UUID) przed UUID; dalszy remis → id rosnąco leksykalnie. */
+function porownajKandydatow(a, b) {
+  if (b.zawartosc !== a.zawartosc) return b.zawartosc - a.zawartosc;
+  const aCzytelne = !UUID_RE.test(a.id);
+  const bCzytelne = !UUID_RE.test(b.id);
+  if (aCzytelne !== bCzytelne) return aCzytelne ? -1 : 1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/** Zbuduj plan zmiany nazw dla wszystkich grup (nazwa, >=2 aktywnych) w organizacji DBR77 — liczone NA ŻYWO. */
+async function zbudujPlanRename(c) {
+  const aktywne = await c.query(
+    `SELECT id, name, status, created_at FROM projects WHERE organization_id = $1 AND status <> 'archived' ORDER BY name, id`,
+    [ORG_DBR77]
+  );
+  const grupy = new Map();
+  for (const row of aktywne.rows) {
+    if (!grupy.has(row.name)) grupy.set(row.name, []);
+    grupy.get(row.name).push(row);
+  }
+  const duplikaty = [...grupy.entries()].filter(([, rows]) => rows.length > 1);
+  const wszystkieIdy = duplikaty.flatMap(([, rows]) => rows.map((r) => r.id));
+  const zawartosc = wszystkieIdy.length ? await policzZawartosc(c, wszystkieIdy) : new Map();
+
+  const plan = [];
+  for (const [nazwa, rows] of duplikaty) {
+    const kandydaci = rows
+      .map((r) => ({ id: r.id, nazwaObecna: r.name, zawartosc: zawartosc.get(r.id) ?? 0 }))
+      .sort(porownajKandydatow);
+    kandydaci.forEach((k, idx) => {
+      const nazwaDocelowa = idx === 0 ? nazwa : `${nazwa} (copy ${idx + 1})`;
+      plan.push({
+        grupa: nazwa,
+        id: k.id,
+        zawartosc: k.zawartosc,
+        rola: idx === 0 ? 'GŁÓWNY' : `copy ${idx + 1}`,
+        nazwa_przed: k.nazwaObecna,
+        nazwa_po: nazwaDocelowa,
+        zmiana: k.nazwaObecna !== nazwaDocelowa,
+      });
+    });
+  }
+  return plan;
 }
 
 function sprawdzCel(url, oczekiwanyHost) {
@@ -146,9 +265,79 @@ function toCsv(rows) {
   return [head, ...lines].join('\n') + '\n';
 }
 
+/** --op=rename: dry-run/verify/apply oparte na zbudujPlanRename() (na żywo z bazy, idempotentne). */
+async function runRename(c, tryb, czasStempla) {
+  const planPrzed = await zbudujPlanRename(c);
+  fs.writeFileSync(
+    path.join(KATALOG_DOWODOW, `rename-PRZED-${czasStempla}.json`),
+    JSON.stringify(planPrzed, null, 2)
+  );
+
+  if (tryb === 'verify') {
+    console.log('\n=== VERIFY (rename): grupy duplikatów aktywnych + plan wg reguły treść→czytelne id→leksykalnie ===');
+    for (const p of planPrzed) {
+      console.log(`  [${p.grupa}] ${p.id} | zawartość=${p.zawartosc} | rola=${p.rola} | "${p.nazwa_przed}" → "${p.nazwa_po}"${p.zmiana ? '' : '  (bez zmian)'}`);
+    }
+    return;
+  }
+
+  const doZmiany = planPrzed.filter((p) => p.zmiana);
+  console.log(`\n=== ${tryb === 'apply' ? 'APPLY' : 'DRY-RUN'} (rename): plan (${planPrzed.length} wierszy, ${doZmiany.length} do zmiany) ===`);
+  for (const p of planPrzed) {
+    console.log(`  [${p.grupa}] ${p.id} | zawartość=${p.zawartosc} | rola=${p.rola} | "${p.nazwa_przed}" → "${p.nazwa_po}"${p.zmiana ? '' : '  (bez zmian — idempotencja)'}`);
+  }
+
+  const manifestPath = path.join(KATALOG_DOWODOW, `rename-manifest-${czasStempla}.json`);
+  fs.writeFileSync(
+    manifestPath,
+    JSON.stringify({ wykonano: new Date().toISOString(), tryb, organizacja: ORG_DBR77, plan: planPrzed }, null, 2)
+  );
+  console.log(`\nManifest: ${manifestPath}`);
+
+  if (tryb === 'apply' && doZmiany.length) {
+    await c.query('BEGIN');
+    try {
+      for (const p of doZmiany) {
+        // Mechanizm identyczny z updateProject (server/src/controllers/ProjectController.ts):
+        // zmieniamy WYŁĄCZNIE name; id/status/archived_at/relacje bez zmian.
+        const res = await c.query(
+          `UPDATE projects SET name = $1 WHERE id = $2 AND organization_id = $3 AND status <> 'archived'`,
+          [p.nazwa_po, p.id, ORG_DBR77]
+        );
+        console.log(`  UPDATE ${p.id}: ${res.rowCount} wiersz(y) — "${p.nazwa_przed}" → "${p.nazwa_po}"`);
+      }
+      await c.query('COMMIT');
+    } catch (e) {
+      await c.query('ROLLBACK');
+      throw e;
+    }
+
+    const planPo = await zbudujPlanRename(c);
+    fs.writeFileSync(
+      path.join(KATALOG_DOWODOW, `rename-PO-${czasStempla}.json`),
+      JSON.stringify(planPo, null, 2)
+    );
+    console.log('\n=== PO rename (odczyt kontrolny) ===');
+    for (const p of planPo) {
+      console.log(`  [${p.grupa}] ${p.id} | "${p.nazwa_po}"${p.zmiana ? '  ⚠ NADAL WYMAGA ZMIANY' : ''}`);
+    }
+    const resztki = planPo.filter((p) => p.zmiana);
+    if (resztki.length) {
+      throw new Error(`Po --apply nadal ${resztki.length} wierszy wymaga zmiany — sprawdź ręcznie. STOP.`);
+    }
+  }
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const tryb = argv.includes('--apply') ? 'apply' : argv.includes('--verify') ? 'verify' : 'dry-run';
+  const idxOp = argv.findIndex((a) => a === '--op' || a.startsWith('--op='));
+  let op = 'archive';
+  if (idxOp !== -1) {
+    const a = argv[idxOp];
+    op = a.includes('=') ? a.split('=')[1] : argv[idxOp + 1];
+  }
+  if (!['archive', 'rename'].includes(op)) throw new Error(`Nieznane --op=${op}. STOP.`);
   const idxHost = argv.findIndex((a) => a === '--oczekiwany-host' || a.startsWith('--oczekiwany-host='));
   let oczekiwanyHost = 'thomas';
   if (idxHost !== -1) {
@@ -168,6 +357,18 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
   const c = await pool.connect();
+
+  if (op === 'rename') {
+    console.log(`[projekty-duplikaty] op=rename cel=${cel} tryb=${tryb}`);
+    try {
+      await runRename(c, tryb, stempel());
+    } finally {
+      c.release();
+      await pool.end();
+    }
+    return;
+  }
+
   const idyPuste = PUSTE_DO_ARCHIWIZACJI.map((p) => p.id);
   const idyWszystkie = [...idyPuste, ...TRESCIOWE_STOP];
 
