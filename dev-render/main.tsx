@@ -114,6 +114,9 @@ const PrawyPasJednaFormulaScreen = React.lazy(
 const P6PrzewodnikJakZaczacScreen = React.lazy(
   () => import('./screens/p6-przewodnik-jak-zaczac')
 );
+const P13EksportOrganizacjeScreen = React.lazy(
+  () => import('./screens/p13-eksport-organizacje')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -1703,6 +1706,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
     render: () => <SuperadminPlatformOperationsDay15Screen />,
+  },
+  'p13-eksport-organizacje': {
+    label:
+      'P13 (DEC-460) — REALNY <OrganizationsView>, przycisk "Export Data" w kebabie wiersza organizacji; fixture 2 organizacje',
+    render: () => <P13EksportOrganizacjeScreen />,
   },
   'agent-plan-view': {
     label:

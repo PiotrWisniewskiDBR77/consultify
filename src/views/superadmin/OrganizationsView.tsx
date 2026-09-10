@@ -5,6 +5,7 @@ import {
   CheckCircle,
   Clock,
   Copy,
+  Download,
   Edit2,
   Eye,
   Key,
@@ -282,6 +283,33 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       toast.success('Organization deleted');
     } catch (err) {
       const message = normalizeApiErrorMessage(err, 'Failed to delete organization');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // [ODMROZENIE 14_ADMIN DEC-460] Podpiecie gotowego klienta Api.exportOrganizationData
+  // (backend juz gotowy i przetestowany przez P5, evidence/p5-eksport-20260910/) pod
+  // jeden nowy przycisk kebaba — zero zmian ukladu tabeli, zero zmian innych akcji.
+  const handleExportOrg = async (id: string, name: string) => {
+    setProcessingId(id);
+    try {
+      setActionError(null);
+      const blob = await Api.exportOrganizationData(id, 'json');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeName = name.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || id;
+      link.href = url;
+      link.download = `organization-export-${safeName}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Organization data exported');
+    } catch (err) {
+      const message = normalizeApiErrorMessage(err, 'Failed to export organization data');
       setActionError(message);
       toast.error(message);
     } finally {
@@ -766,6 +794,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           label: 'View Details',
           icon: Eye,
           onClick: () => setSelectedOrg(org),
+        },
+        {
+          id: 'export-data',
+          label: 'Export Data',
+          icon: Download,
+          disabled: processingId === org.id,
+          onClick: () => handleExportOrg(org.id, getOrgName(org)),
         },
       ],
       universalHandlers: {
