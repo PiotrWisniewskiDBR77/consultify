@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { createDebouncedLocalStorage } from './debouncedLocalStorage';
 import { AuthSlice, createAuthSlice } from './slices/authSlice';
 import { ChatSlice, createChatSlice } from './slices/chatSlice';
 import { createDemoSlice, DemoSlice } from './slices/demoSlice';
@@ -40,74 +41,20 @@ export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice & DemoSlic
 
 // Perf: this store updates very frequently (chat streaming, UI state, etc.).
 // Persisting large blobs on every update can freeze the UI (localStorage + JSON stringify are sync).
-// We (a) persist only the minimal state needed across reloads and (b) debounce/skip redundant writes.
+// We (a) persist only the minimal state needed across reloads and (b) debounce/skip redundant writes
+// (see ./debouncedLocalStorage.ts).
+//
+// F3a (pomiar A2, POMIAR_S1_5_JEDEN_PANEL_20260910.md §4 defekt 2): the debounce in
+// createDebouncedLocalStorage coalesces fast updates, but it also means a write can be sitting
+// unflushed when the tab reloads or closes. `isChatCollapsed` (the one global Teresa dock,
+// DEC-404) is exactly this shape — closing the dock's X calls `toggleChatCollapse()` once; if the
+// user reloads inside the debounce window, the pending "collapsed:true" write used to be
+// discarded and localStorage still held the OLD "collapsed:false" — so the dock silently reopened
+// on reload, looking like the close never happened. createDebouncedLocalStorage now flushes any
+// pending write synchronously on `pagehide`/`visibilitychange:hidden`, so a reload or tab-close
+// never loses the last toggle. Pure persistence-layer fix — no layout/visual change.
 const APP_STORE_KEY = 'consultify-storage';
-const appStoreStorage = createJSONStorage(() => {
-  const pending = new Map<string, string>();
-  const timers = new Map<string, number>();
-  const lastWritten = new Map<string, string | null>();
-
-  const scheduleWrite = (key: string) => {
-    const existingTimer = timers.get(key);
-    if (existingTimer) window.clearTimeout(existingTimer);
-
-    const t = window.setTimeout(() => {
-      timers.delete(key);
-      const value = pending.get(key);
-      if (typeof value !== 'string') return;
-
-      // Skip no-op writes (common when state changes don't affect partialized subset)
-      if (lastWritten.get(key) === value) return;
-      try {
-        localStorage.setItem(key, value);
-        lastWritten.set(key, value);
-      } catch {
-        // ignore quota/security errors
-      } finally {
-        pending.delete(key);
-      }
-    }, 300);
-    timers.set(key, t);
-  };
-
-  return {
-    getItem: (name: string) => {
-      try {
-        const raw = localStorage.getItem(name);
-        // Safety/perf: if an old build persisted huge blobs (chat logs, sessions),
-        // rehydrating can freeze the UI. Drop obviously-too-large payloads.
-        if (typeof raw === 'string' && raw.length > 2_000_000) {
-          try {
-            localStorage.removeItem(name);
-          } catch {
-            // ignore
-          }
-          return null;
-        }
-        return raw;
-      } catch {
-        return null;
-      }
-    },
-    setItem: (name: string, value: string) => {
-      // Coalesce fast updates
-      pending.set(name, value);
-      scheduleWrite(name);
-    },
-    removeItem: (name: string) => {
-      const t = timers.get(name);
-      if (t) window.clearTimeout(t);
-      timers.delete(name);
-      pending.delete(name);
-      lastWritten.delete(name);
-      try {
-        localStorage.removeItem(name);
-      } catch {
-        // ignore
-      }
-    },
-  };
-});
+const appStoreStorage = createJSONStorage(() => createDebouncedLocalStorage());
 
 export const useAppStore = create<AppState>()(
   persist(
