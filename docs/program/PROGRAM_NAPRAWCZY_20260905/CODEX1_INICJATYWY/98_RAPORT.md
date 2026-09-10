@@ -64,7 +64,7 @@ NIEZROBIONY. Świeża baza po migracjach ma 0/0 rekordów, a instrukcja nie poda
 
 ### E4
 
-Werdykt pomiarowy: sześć z sześciu ścieżek ma żywych wołaczy. Runtime-v1 nie ma równoważnych komend do tego samego modelu odczytu. `execution-cases/:id/milestones` zapisuje inny agregat/model niż `initiative_milestones`; `resource-commitments` nie jest następcą `initiative_resources`; staffing-plans, budget-items, gate-roles i move nie mają trafień tras równoważnych. Zgodnie z nadrzędną regułą E4 żadnej ścieżki nie wycofano. Pułapka (e) nie była używana jako dowód; nie wykonano asercji 409. Etap PARTIAL jako pomiar + brief, bez commita kodu.
+Decyzja CTO z 2026-09-10 18:05 uznała STOP i zamknęła zakres tego etapu: sześć pisarzy legacy (`milestones`, `resources`, `staffing-plans`, `budget-items`, `gate-roles`, `move`) **zostaje bez zmian**. Nie projektowano następców. Tabela dowodowa z `e4-szesc-sciezek.txt` pozostaje wejściem do osobnego bloku domenowego; żadnej ścieżki nie wycofano i nie dodano asercji `409`.
 
 ### E5
 
@@ -123,16 +123,16 @@ Manifest: NIE POWSTAŁ. E3 nie został uruchomiony bez kopii danych. Nie ma `--a
 - Stan: NIE ZACOMMITOWANO E3.
 - Czy kontynuowałem pozostałe etapy: TAK.
 
-### STOP — E4
+### ROZSTRZYGNIĘTY STOP — E4
 
 - Rodzaj: MERYTORYCZNY
 - Powód: sześć żywych ścieżek nie ma równoważnego następcy runtime-v1 zapisującego ten sam read model.
 - Licencja, którą sprawdziłem: wąska licencja na dodanie komend w `initiativesExecutionRuntime.routes.ts` i nadrzędna reguła „nie wycofuj bez tego samego modelu odczytu”.
 - Dowód: `e4-szesc-sciezek.txt`; callers TAK, równoważni następcy NIE.
 - Co dostarczyłem ZAMIAST zmiany: tabela dowodowa sześciu ścieżek i werdykt „zostają”.
-- Co zrobiłbym po decyzji X: zaprojektowałbym sześć komend i projekcji, każdą z real-PG write→same-reader testem.
-- Rekomendacja dla nadzorcy: osobny blok domenowy zamiast mechanicznego 409.
-- Stan: NIE ZACOMMITOWANO kodu E4.
+- Decyzja X: sześć pisarzy zostaje bez zmian; nie projektować następców w tym bloku.
+- Rekomendacja dla nadzorcy: użyć tabeli dowodowej jako wejścia do osobnego bloku domenowego.
+- Stan: brak zmiany kodu zgodnie z decyzją; rozstrzygnięcie zacommitowane wyłącznie w raporcie.
 - Czy kontynuowałem pozostałe etapy: TAK.
 
 ## 10. TWIERDZENIA NIEZWERYFIKOWANE
