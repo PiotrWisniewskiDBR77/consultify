@@ -53,3 +53,31 @@ Odmrażam ten jeden plik w zakresie: **przywrócenie pierwszeństwa tłumaczenia
 Zero zmian układu modala. Znacznik: `[ODMROZENIE 07_MY_WORK_AGENT DEC-458]`.
 
 Warunek ten sam: zrzut PRZED i PO, akcept właściciela przed demo.
+
+---
+
+# DEC-459 — odmrożenie: przewodnik „jak zacząć" (mapa pracy)
+
+**Moduł:** `15_SETTINGS` · **Pliki:** `src/views/AppIntroView.tsx`, `src/components/Onboarding/FirstRunOnboarding.tsx`
+**Zakres koszyka 2:** pozycja 2.7, kryterium 7, lista S2.11
+
+Ekran `/app-intro` istnieje i jest podpięty z Pomocy. Zamrożony 05.09. Robotnik P6 zmierzył na nim
+dwie rzeczy, które trzeba naprawić przed jutrzejszym pilotażem:
+1. **Naruszenie kanonu crimson** — odznaka, ikony kroków i akcent używały `primary-*`, czyli #85182F.
+   To jest złamanie `CLAUDE.md` §3: czerwień wyłącznie dla semantyki krytycznej. Przewodnik nią nie jest.
+2. **Brakował krok „kontekst organizacji"** — mapa pokazywała 5 etapów zamiast 6, a kroki nie miały
+   linków, czasu ani wymagania wejścia.
+
+Nadzorca obejrzał zrzut `evidence/p6-przewodnik-20260910/01-pl-light.png` i znalazł **trzeci defekt,
+którego robotnik nie zgłosił**: w polskim interfejsie sześć nazw jest po angielsku — „Przejdź do
+Interview", „My Work", „Ideas / Workplace / Notes", „Finance", „Reports / Presentations", „Help
+wyjaśnia pracę", „Jak działa Help". To dokładnie ekran, który jutro rano zobaczy czworo polskich
+testerów jako pierwszy.
+
+**Odmrażam te dwa pliki** w zakresie: struktura mapy pracy, tokeny kolorów, tłumaczenia nazw modułów,
+odsyłacz z kreatora. Znacznik: `[ODMROZENIE 15_SETTINGS DEC-459]`.
+
+**Dodatkowo:** z listy modułów wspierających znika **Finanse** — moduł nie ma pozycji w menu głównym,
+więc przewodnik nie może go obiecywać.
+
+Warunek ten sam co przy DEC-457: zrzut PRZED i PO, akcept właściciela przed promocją na demo.
