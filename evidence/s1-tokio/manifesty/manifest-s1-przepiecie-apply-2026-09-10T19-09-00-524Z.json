@@ -1,0 +1,624 @@
+{
+  "zadanie": "S-1 Tokio",
+  "op": "przepiecie",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T19:09:00.522Z",
+  "punktCofniecia": "~/Developer/consultify-dumps/staging-thomas-przed-tokio-20260910-2040.dump",
+  "org": "a3e05d4a-5397-419d-b486-8e44366c0063",
+  "kontoDocelowe": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+  "zrodla": {
+    "stareKontoWlasciciela": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+    "uzytkownikWidmo": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2"
+  },
+  "operacje": [
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "assignee_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "owner_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "reporter_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "decisions",
+      "kolumna": "decision_maker_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "decisions",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_ideas",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_idea_maps",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "meetings",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "meeting_participants",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "conversations",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "conversations",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "projects",
+      "kolumna": "owner_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "initiative_resources",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_work_session_context",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_bases",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_tables",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_views",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_records",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_base_members",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-zadania",
+      "posiadane": 14,
+      "kwota": 14,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-akceptacje",
+      "posiadane": 8,
+      "kwota": 8,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-decyzje",
+      "posiadane": 4,
+      "kwota": 4,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-eskalacje",
+      "posiadane": 1,
+      "kwota": 2,
+      "wynik": "brak kandydatów"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-kpi-i-sygnaly",
+      "posiadane": 7,
+      "kwota": 7,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "czat-rozmowy-EN",
+      "posiadane": 2,
+      "kwota": 8,
+      "wierszy": 6,
+      "wynik": "PRZEPIĘTE"
+    },
+    {
+      "etap": "A2",
+      "pula": "notatnik-notatniki",
+      "posiadane": 2,
+      "kwota": 2,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "notatnik-strony",
+      "posiadane": 13,
+      "kwota": 10,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "materialy",
+      "posiadane": 5,
+      "kwota": 5,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "kpi-definicje",
+      "posiadane": 5,
+      "kwota": 5,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "kpi-karty-wynikow",
+      "posiadane": 2,
+      "kwota": 2,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "okr-kluczowe-rezultaty",
+      "posiadane": 4,
+      "kwota": 4,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "spotkania-widmo",
+      "posiadane": 11,
+      "kwota": 8,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "audyty-programy",
+      "posiadane": 1,
+      "kwota": 1,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "oceny",
+      "posiadane": 1,
+      "kwota": 1,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "zadania-nieprzypisane-otwarte",
+      "posiadane": 21,
+      "kwota": 10,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "decyzje-bez-decydenta",
+      "posiadane": 6,
+      "kwota": 6,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "inicjatywy-wlasciciel-realizacji",
+      "posiadane": 6,
+      "kwota": 6,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "inicjatywy-sponsor",
+      "posiadane": 3,
+      "kwota": 3,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "wywiad-przypisania-sieroce",
+      "posiadane": 9,
+      "kwota": 3,
+      "wynik": "kwota osiągnięta"
+    }
+  ],
+  "czytelnicyPrzedPo": [
+    {
+      "ekran": "Moja Praca → Zadania (GET /api/my-work/tasks)",
+      "zrodlo": "my-work.routes.ts:1134",
+      "przed": 21,
+      "po": 21
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: zaległe zadania",
+      "zrodlo": "my-work.routes.ts:1727",
+      "przed": 12,
+      "po": 12
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: otwarte zadania (nie zaległe)",
+      "zrodlo": "my-work.routes.ts:1779",
+      "przed": 9,
+      "po": 9
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka kanoniczna (GET /inbox/canonical)",
+      "zrodlo": "inboxService.ts:359-390",
+      "przed": 34,
+      "po": 34
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka kanoniczna: nierozliczone (pending)",
+      "zrodlo": "inboxService.ts:589",
+      "przed": 34,
+      "po": 34
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: nieprzeczytane powiadomienia",
+      "zrodlo": "my-work.routes.ts:1856",
+      "przed": 4,
+      "po": 4
+    },
+    {
+      "ekran": "Decyzje do mojej akceptacji (pending/escalated)",
+      "zrodlo": "my-work/decisions.routes.ts:93",
+      "przed": 13,
+      "po": 13
+    },
+    {
+      "ekran": "Decyzje — wszystkie moje (decydent lub wnioskodawca)",
+      "zrodlo": "my-work/stats.routes.ts:246",
+      "przed": 18,
+      "po": 18
+    },
+    {
+      "ekran": "Inicjatywy — moje (owner/sponsor/autor)",
+      "zrodlo": "v8/my-work.routes.ts:2395-2398",
+      "przed": 8,
+      "po": 8
+    },
+    {
+      "ekran": "Realizacja — inicjatywy z właścicielem realizacji = ja",
+      "zrodlo": "v8/execution-control.routes.ts:1129",
+      "przed": 6,
+      "po": 6
+    },
+    {
+      "ekran": "Kalendarz → spotkania (organizator lub uczestnik)",
+      "zrodlo": "my-work/calendar.routes.ts:609-618",
+      "przed": 11,
+      "po": 11
+    },
+    {
+      "ekran": "Kalendarz → spotkania PRZYSZŁE (moje)",
+      "zrodlo": "my-work/calendar.routes.ts:621",
+      "przed": 3,
+      "po": 3
+    },
+    {
+      "ekran": "Moje pomysły (GET /my-ideas)",
+      "zrodlo": "my-work.routes.ts:2777",
+      "przed": 8,
+      "po": 8
+    },
+    {
+      "ekran": "Wywiad → moje przypisania",
+      "zrodlo": "InterviewController.ts:4190",
+      "przed": 9,
+      "po": 9
+    },
+    {
+      "ekran": "Notatnik → moje strony",
+      "zrodlo": "v8/my-work.routes.ts:1025 + canAccessNotebookRow:369",
+      "przed": 13,
+      "po": 13
+    },
+    {
+      "ekran": "Notatnik → moje notatniki",
+      "zrodlo": "notebooks.owner_user_id",
+      "przed": 2,
+      "po": 2
+    },
+    {
+      "ekran": "Materiały → moje dokumenty",
+      "zrodlo": "knowledge_docs.owner_id",
+      "przed": 5,
+      "po": 5
+    },
+    {
+      "ekran": "Wyniki → KPI, których jestem właścicielem",
+      "zrodlo": "rvn_kpi_definitions.owner_user_id",
+      "przed": 5,
+      "po": 5
+    },
+    {
+      "ekran": "Wyniki → karty wyników (scorecards) moje",
+      "zrodlo": "rvn_kpi_scorecards.owner_user_id",
+      "przed": 2,
+      "po": 2
+    },
+    {
+      "ekran": "Wyniki → kluczowe rezultaty (OKR) moje",
+      "zrodlo": "okr_vnext_key_results.owner_user_id",
+      "przed": 4,
+      "po": 4
+    },
+    {
+      "ekran": "Audyty → programy, których jestem właścicielem",
+      "zrodlo": "audit_programs.program_owner_id",
+      "przed": 1,
+      "po": 1
+    },
+    {
+      "ekran": "Ocena → sesje, które prowadzę",
+      "zrodlo": "assessments.created_by",
+      "przed": 1,
+      "po": 1
+    },
+    {
+      "ekran": "Czat (Teresa) → moje rozmowy",
+      "zrodlo": "conversations.routes.ts:274",
+      "przed": 8,
+      "po": 14
+    },
+    {
+      "ekran": "Czat → wiadomości w moich rozmowach",
+      "zrodlo": "conversation_messages przez conversation_id",
+      "przed": 6,
+      "po": 109
+    },
+    {
+      "ekran": "Projekty, których jestem właścicielem",
+      "zrodlo": "projects.owner_id",
+      "przed": 1,
+      "po": 1
+    }
+  ],
+  "wierszePrzedZmiana": [
+    {
+      "etap": "A2",
+      "pula": "czat-rozmowy-EN",
+      "tabela": "conversations",
+      "kolumna": "user_id",
+      "takze": [
+        "created_by"
+      ],
+      "na": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+      "klucz": "id",
+      "wiersze": [
+        {
+          "id": "02ef40c5-c930-4c46-8f0b-c3a74caee32f",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "Sales Process Analysis & Optimization",
+          "title_source": "auto",
+          "pmo_context": "{}",
+          "language": "pl",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 44,
+          "last_message_preview": "Rozumiem — to test funkcjonalności, nie produkcyjny proces. \n\nProcess Flow pozostaje w obecnej formie dla celów testowych.\n\nCzy chcesz przetestować coś innego w module **Pomysły**, czy przejść do test",
+          "last_message_at": "2026-07-29T10:07:58.445Z",
+          "created_at": "2026-07-29T07:44:18.206Z",
+          "updated_at": "2026-07-29T10:07:58.445Z",
+          "deleted_at": null,
+          "search_vector": "'analysis':3A 'celów':19B 'chcesz':22B 'coś':24B 'czy':21B,29B 'dla':18B 'do':31B 'flow':13B 'formie':17B 'funkcjonalności':8B 'innego':25B 'module':27B 'nie':9B 'obecnej':16B 'optimization':4A 'pomysły':28B 'pozostaje':14B 'proces':11B 'process':2A,12B 'produkcyjny':10B 'przejść':30B 'przetestować':23B 'rozumiem':5B 'sales':1A 'test':7B,32B 'testowych':20B 'to':6B 'w':15B,26B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        },
+        {
+          "id": "a196ee85-b59b-406e-9084-2640fb048022",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "Cost Reduction Strategies without Quality Loss",
+          "title_source": "auto",
+          "pmo_context": "{}",
+          "language": "pl",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 30,
+          "last_message_preview": "Poniżej przedstawiam zarys planu strategicznego dotyczącego optymalizacji kosztów bez utraty jakości. Jest to ogólna struktura, którą można dostosować do specyficznych potrzeb organizacji:\n\n### Zarys ",
+          "last_message_at": "2026-09-06T07:40:19.403Z",
+          "created_at": "2026-09-06T07:26:10.144Z",
+          "updated_at": "2026-09-06T07:40:19.413Z",
+          "deleted_at": null,
+          "search_vector": "'bez':15B 'cost':1A 'do':25B 'dostosować':24B 'dotyczącego':12B 'jakości':17B 'jest':18B 'kosztów':14B 'którą':22B 'loss':6A 'można':23B 'ogólna':20B 'optymalizacji':13B 'organizacji':28B 'planu':10B 'poniżej':7B 'potrzeb':27B 'przedstawiam':8B 'quality':5A 'reduction':2A 'specyficznych':26B 'strategicznego':11B 'strategies':3A 'struktura':21B 'to':19B 'utraty':16B 'without':4A 'zarys':9B,29B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        },
+        {
+          "id": "2d394487-2525-47f9-85f2-0823fe953aba",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "DBR77 Restructuring Plan Development",
+          "title_source": "auto",
+          "pmo_context": "{}",
+          "language": "pl",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 16,
+          "last_message_preview": "Aby zaplanować mapę myśli dla spotkania z zespołem na temat strategii, możemy zacząć od kilku kluczowych obszarów, które powinny być omówione. Poniżej znajduje się propozycja struktury mapy myśli, któ",
+          "last_message_at": "2026-09-08T03:29:31.992Z",
+          "created_at": "2026-09-08T03:26:42.166Z",
+          "updated_at": "2026-09-08T03:29:32.005Z",
+          "deleted_at": null,
+          "search_vector": "'aby':5B 'być':24B 'dbr77':1A 'development':4A 'dla':9B 'kilku':19B 'kluczowych':20B 'któ':33B 'które':22B 'mapy':31B 'mapę':7B 'możemy':16B 'myśli':8B,32B 'na':13B 'obszarów':21B 'od':18B 'omówione':25B 'plan':3A 'poniżej':26B 'powinny':23B 'propozycja':29B 'restructuring':2A 'się':28B 'spotkania':10B 'strategii':15B 'struktury':30B 'temat':14B 'z':11B 'zacząć':17B 'zaplanować':6B 'zespołem':12B 'znajduje':27B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        },
+        {
+          "id": "a10952db-9f6c-49b2-b012-4debad76f4d8",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "Cost Reduction Strategies without Quality Loss (Branch)",
+          "title_source": "auto",
+          "pmo_context": "{}",
+          "language": "pl",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 13,
+          "last_message_preview": "Słuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda normalnie plan strategiczny w tym zakresie bez głębszej analizy",
+          "last_message_at": "2026-09-06T07:35:23.709Z",
+          "created_at": "2026-09-06T07:39:37.325Z",
+          "updated_at": "2026-09-06T07:39:37.386Z",
+          "deleted_at": null,
+          "search_vector": "'analizy':30B 'bez':28B 'branch':7A 'chodzi':11B 'co':10B 'cost':1A 'głębszej':29B 'jak':20B 'krótką':18B 'loss':6A 'mi':12B 'normalnie':22B 'o':13B 'plan':23B 'quality':5A 'reduction':2A 'strategiczny':24B 'strategies':3A 'słuchaj':8B 'taką':17B 'to':14B 'tym':26B 'w':25B 'wiesz':9B 'without':4A 'wygląda':21B 'zajawkę':19B 'zakresie':27B 'zrobiła':16B 'żebyś':15B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        },
+        {
+          "id": "b3d84056-da51-4a0c-8d4b-82fab1f3be4b",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "Consulting Guidance on Digital Transformation",
+          "title_source": "auto",
+          "pmo_context": "{}",
+          "language": "en",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 12,
+          "last_message_preview": "I understand that you would like to apply the changes to the table, but I cannot execute any modifications directly within the platform. You will need to follow the outlined process using Consultify&#",
+          "last_message_at": "2026-05-09T04:20:29.536Z",
+          "created_at": "2026-05-09T04:11:11.423Z",
+          "updated_at": "2026-05-09T04:20:29.536Z",
+          "deleted_at": null,
+          "search_vector": "'any':23B 'apply':13B 'but':19B 'cannot':21B 'changes':15B 'consultify':38B 'consulting':1A 'digital':4A 'directly':25B 'execute':22B 'follow':33B 'guidance':2A 'i':6B,20B 'like':11B 'modifications':24B 'need':31B 'on':3A 'outlined':35B 'platform':28B 'process':36B 'table':18B 'that':8B 'the':14B,17B,27B,34B 'to':12B,16B,32B 'transformation':5A 'understand':7B 'using':37B 'will':30B 'within':26B 'would':10B 'you':9B,29B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        },
+        {
+          "id": "96e5205e-2f54-45ca-b801-d56924101994",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "project_id": null,
+          "chat_project_id": null,
+          "created_by": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "title": "Transformation_signal: The system looks collaborative enough to push one strong storyline forward.",
+          "title_source": "user",
+          "pmo_context": "{}",
+          "language": "en",
+          "starred": false,
+          "archived": false,
+          "tags": "[]",
+          "message_count": 11,
+          "last_message_preview": "Jestem tutaj, aby wspierać Cię w kwestiach związanych z transformacją cyfrową i zarządzaniem projektami. Moim zadaniem jest pomoc w rozwoju biznesu i efektywności operacyjnej. W sprawach osobistych, t",
+          "last_message_at": "2026-03-16T20:15:48.586Z",
+          "created_at": "2026-03-16T17:06:15.738Z",
+          "updated_at": "2026-03-16T20:15:48.586Z",
+          "deleted_at": null,
+          "search_vector": "'aby':16B 'biznesu':34B 'cię':18B 'collaborative':6A 'cyfrową':24B 'efektywności':36B 'enough':7A 'forward':13A 'i':25B,35B 'jest':30B 'jestem':14B 'kwestiach':20B 'looks':5A 'moim':28B 'one':10A 'operacyjnej':37B 'osobistych':40B 'pomoc':31B 'projektami':27B 'push':9A 'rozwoju':33B 'signal':2A 'sprawach':39B 'storyline':12A 'strong':11A 'system':4A 't':41B 'the':3A 'to':8A 'transformacją':23B 'transformation':1A 'tutaj':15B 'w':19B,32B,38B 'wspierać':17B 'z':22B 'zadaniem':29B 'zarządzaniem':26B 'związanych':21B",
+          "shared_to_project": false,
+          "visibility_scope": "private",
+          "access_policy_version": null,
+          "client_info": null,
+          "retention_policy": null,
+          "version": 1
+        }
+      ]
+    }
+  ]
+}

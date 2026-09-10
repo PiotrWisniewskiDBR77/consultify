@@ -1,0 +1,678 @@
+{
+  "zadanie": "S-1 Tokio",
+  "op": "przepiecie",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T19:10:57.075Z",
+  "punktCofniecia": "~/Developer/consultify-dumps/staging-thomas-przed-tokio-20260910-2040.dump",
+  "org": "a3e05d4a-5397-419d-b486-8e44366c0063",
+  "kontoDocelowe": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+  "zrodla": {
+    "stareKontoWlasciciela": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+    "uzytkownikWidmo": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2"
+  },
+  "operacje": [
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "assignee_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "owner_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tasks",
+      "kolumna": "reporter_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "decisions",
+      "kolumna": "decision_maker_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "decisions",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_ideas",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_idea_maps",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "meetings",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "meeting_participants",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "conversations",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "conversations",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "projects",
+      "kolumna": "owner_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "initiative_resources",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "my_work_session_context",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_bases",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_tables",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_views",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_records",
+      "kolumna": "created_by",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A1",
+      "tabela": "tp_base_members",
+      "kolumna": "user_id",
+      "wierszy": 0,
+      "wynik": "nic do przepięcia"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-zadania",
+      "posiadane": 14,
+      "kwota": 14,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-akceptacje",
+      "posiadane": 3,
+      "kwota": 8,
+      "wierszy": 5,
+      "wynik": "PRZEPIĘTE"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-decyzje",
+      "posiadane": 1,
+      "kwota": 4,
+      "wierszy": 2,
+      "wynik": "PRZEPIĘTE"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-eskalacje",
+      "posiadane": 1,
+      "kwota": 2,
+      "wynik": "brak kandydatów"
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-kpi-i-sygnaly",
+      "posiadane": 6,
+      "kwota": 7,
+      "wierszy": 1,
+      "wynik": "PRZEPIĘTE"
+    },
+    {
+      "etap": "A2",
+      "pula": "czat-rozmowy-EN",
+      "posiadane": 8,
+      "kwota": 8,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "notatnik-notatniki",
+      "posiadane": 2,
+      "kwota": 2,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "notatnik-strony",
+      "posiadane": 13,
+      "kwota": 10,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "materialy",
+      "posiadane": 5,
+      "kwota": 5,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "kpi-definicje",
+      "posiadane": 5,
+      "kwota": 5,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "kpi-karty-wynikow",
+      "posiadane": 2,
+      "kwota": 2,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "okr-kluczowe-rezultaty",
+      "posiadane": 4,
+      "kwota": 4,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "spotkania-widmo",
+      "posiadane": 11,
+      "kwota": 8,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "audyty-programy",
+      "posiadane": 1,
+      "kwota": 1,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A2",
+      "pula": "oceny",
+      "posiadane": 1,
+      "kwota": 1,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "zadania-nieprzypisane-otwarte",
+      "posiadane": 18,
+      "kwota": 10,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "decyzje-bez-decydenta",
+      "posiadane": 6,
+      "kwota": 6,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "inicjatywy-wlasciciel-realizacji",
+      "posiadane": 6,
+      "kwota": 6,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "inicjatywy-sponsor",
+      "posiadane": 3,
+      "kwota": 3,
+      "wynik": "kwota osiągnięta"
+    },
+    {
+      "etap": "A3",
+      "pula": "wywiad-przypisania-sieroce",
+      "posiadane": 9,
+      "kwota": 3,
+      "wynik": "kwota osiągnięta"
+    }
+  ],
+  "czytelnicyPrzedPo": [
+    {
+      "ekran": "Moja Praca → Zadania (GET /api/my-work/tasks)",
+      "zrodlo": "my-work.routes.ts:1134",
+      "przed": 18,
+      "po": 18
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: zaległe zadania",
+      "zrodlo": "my-work.routes.ts:1727",
+      "przed": 9,
+      "po": 9
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: otwarte zadania (nie zaległe)",
+      "zrodlo": "my-work.routes.ts:1779",
+      "przed": 9,
+      "po": 9
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka kanoniczna (GET /inbox/canonical)",
+      "zrodlo": "inboxService.ts:359-390",
+      "przed": 25,
+      "po": 33
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka kanoniczna: nierozliczone (pending)",
+      "zrodlo": "inboxService.ts:589",
+      "przed": 25,
+      "po": 33
+    },
+    {
+      "ekran": "Moja Praca → Skrzynka: nieprzeczytane powiadomienia",
+      "zrodlo": "my-work.routes.ts:1856",
+      "przed": 4,
+      "po": 4
+    },
+    {
+      "ekran": "Decyzje do mojej akceptacji (pending/escalated)",
+      "zrodlo": "my-work/decisions.routes.ts:93",
+      "przed": 13,
+      "po": 13
+    },
+    {
+      "ekran": "Decyzje — wszystkie moje (decydent lub wnioskodawca)",
+      "zrodlo": "my-work/stats.routes.ts:246",
+      "przed": 18,
+      "po": 18
+    },
+    {
+      "ekran": "Inicjatywy — moje (owner/sponsor/autor)",
+      "zrodlo": "v8/my-work.routes.ts:2395-2398",
+      "przed": 8,
+      "po": 8
+    },
+    {
+      "ekran": "Realizacja — inicjatywy z właścicielem realizacji = ja",
+      "zrodlo": "v8/execution-control.routes.ts:1129",
+      "przed": 6,
+      "po": 6
+    },
+    {
+      "ekran": "Kalendarz → spotkania (organizator lub uczestnik)",
+      "zrodlo": "my-work/calendar.routes.ts:609-618",
+      "przed": 11,
+      "po": 11
+    },
+    {
+      "ekran": "Kalendarz → spotkania PRZYSZŁE (moje)",
+      "zrodlo": "my-work/calendar.routes.ts:621",
+      "przed": 3,
+      "po": 3
+    },
+    {
+      "ekran": "Moje pomysły (GET /my-ideas)",
+      "zrodlo": "my-work.routes.ts:2777",
+      "przed": 8,
+      "po": 8
+    },
+    {
+      "ekran": "Wywiad → moje przypisania",
+      "zrodlo": "InterviewController.ts:4190",
+      "przed": 9,
+      "po": 9
+    },
+    {
+      "ekran": "Notatnik → moje strony",
+      "zrodlo": "v8/my-work.routes.ts:1025 + canAccessNotebookRow:369",
+      "przed": 13,
+      "po": 13
+    },
+    {
+      "ekran": "Notatnik → moje notatniki",
+      "zrodlo": "notebooks.owner_user_id",
+      "przed": 2,
+      "po": 2
+    },
+    {
+      "ekran": "Materiały → moje dokumenty",
+      "zrodlo": "knowledge_docs.owner_id",
+      "przed": 5,
+      "po": 5
+    },
+    {
+      "ekran": "Wyniki → KPI, których jestem właścicielem",
+      "zrodlo": "rvn_kpi_definitions.owner_user_id",
+      "przed": 5,
+      "po": 5
+    },
+    {
+      "ekran": "Wyniki → karty wyników (scorecards) moje",
+      "zrodlo": "rvn_kpi_scorecards.owner_user_id",
+      "przed": 2,
+      "po": 2
+    },
+    {
+      "ekran": "Wyniki → kluczowe rezultaty (OKR) moje",
+      "zrodlo": "okr_vnext_key_results.owner_user_id",
+      "przed": 4,
+      "po": 4
+    },
+    {
+      "ekran": "Audyty → programy, których jestem właścicielem",
+      "zrodlo": "audit_programs.program_owner_id",
+      "przed": 1,
+      "po": 1
+    },
+    {
+      "ekran": "Ocena → sesje, które prowadzę",
+      "zrodlo": "assessments.created_by",
+      "przed": 1,
+      "po": 1
+    },
+    {
+      "ekran": "Czat (Teresa) → moje rozmowy",
+      "zrodlo": "conversations.routes.ts:274",
+      "przed": 14,
+      "po": 14
+    },
+    {
+      "ekran": "Czat → wiadomości w moich rozmowach",
+      "zrodlo": "conversation_messages przez conversation_id",
+      "przed": 109,
+      "po": 109
+    },
+    {
+      "ekran": "Projekty, których jestem właścicielem",
+      "zrodlo": "projects.owner_id",
+      "przed": 1,
+      "po": 1
+    }
+  ],
+  "wierszePrzedZmiana": [
+    {
+      "etap": "A2",
+      "pula": "skrzynka-akceptacje",
+      "tabela": "canonical_inbox_items",
+      "kolumna": "user_id",
+      "takze": [],
+      "na": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+      "klucz": "id",
+      "wiersze": [
+        {
+          "id": "0d1021b5-8631-4376-9bcd-62e4bb60f03b",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "approval",
+          "source_entity_type": "decision",
+          "source_entity_id": "fd00076f-8245-45b7-bb18-15b6b817c425",
+          "title": "Wybór technologii napędu - Euro7 diesel vs LNG vs EV-hybrid (GO_NO_GO)",
+          "description": "Decyzja strategiczna w ramach inicjatywy MCG-2026 Modernizacja i Dekarbonizacja Floty (Meridian ColdChain Group). Porównanie trzech opcji technologicznych: Euro 7 diesel, LNG oraz EV-hybrid pod kątem zgodności z regulacjami emisji, kosztów TCO, wpływu na operacje cold chain oraz harmonogramu wdrożenia do 2030 roku.",
+          "priority": "normal",
+          "section": "approvals_gates",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-07-09T04:15:49.684Z",
+          "updated_at": "2026-09-08T11:52:14.003Z",
+          "resolved_at": null,
+          "source_status": "pending",
+          "initiative_id": null
+        },
+        {
+          "id": "0e6d5074-3d2c-4159-9a6e-007efb712609",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "approval",
+          "source_entity_type": "decision",
+          "source_entity_id": "b3c2a7f0-6b75-467e-b9be-ff91adbca7f9",
+          "title": "Kolejność wymiany floty - najstarsze pojazdy najpierw vs najwyższa emisja najpierw",
+          "description": "W ramach inicjatywy MCG-2026 Modernizacja i Dekarbonizacja Floty (Meridian ColdChain Group) konieczne jest określenie strategii priorytetyzacji wymiany pojazdów. Opcje do rozważenia:\n\nOPCJA A: Najstarsze pojazdy najpierw\n- Standardowe podejście fleet management\n- Korelacja wieku z kosztami utrzymania\n- Przewidywalność planowania budżetu\n\nOPCJA B: Najwyższa emisja najpierw  \n- Maksymalizacja wpływu na dekarbonizację\n- Zgodność z celami ESG i regulacjami EU\n- Potencjalnie wyższy ROI z tytułu oszczędności paliwa\n\nKryteria oceny: wpływ na emisje CO2, koszty operacyjne, dostępność technologii, harmonogram budżetowy, compliance z MCG-2026.",
+          "priority": "normal",
+          "section": "approvals_gates",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-07-09T04:15:49.684Z",
+          "updated_at": "2026-09-08T11:52:14.003Z",
+          "resolved_at": null,
+          "source_status": "pending",
+          "initiative_id": null
+        },
+        {
+          "id": "1f417737-809a-433e-87c9-bee9ad36cafa",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "approval",
+          "source_entity_type": "decision",
+          "source_entity_id": "1e749e1e-aaa1-4836-ae2d-a3a473ca3c85",
+          "title": "Uzyskanie niemieckich licencji transportowych - czy zatrudnić lokalnego doradcę prawnego czy prowadzić proces przez centralę w Poznaniu",
+          "description": "Decyzja dotycząca alokacji zasobów w ramach inicjatywy MCG-2026 Ekspansja na Rynek DACH. Kluczowe opcje: (1) zatrudnienie lokalnego doradcy prawnego w Niemczech vs (2) prowadzenie procesu licencyjnego przez centralę w Poznaniu. \n\nKontekst: Licencja transportowa w Niemczech wymaga spełnienia trzech warunków - zdolności finansowej (9k EUR na pierwszy pojazd, 5k EUR na kolejny), kompetencji zawodowych (certyfikat kierownika transportu) oraz wymagań prawnych. Proces może być prowadzony w różnych krajach związkowych Niemiec.\n\nCzynniki do rozważenia:\n- Koszt usług lokalnych vs wewnętrznych\n- Znajomość lokalnych przepisów i procedur\n- Czas realizacji procesu\n- Ryzyko błędów i opóźnień\n- Budowanie długoterminowych relacji na rynku DACH",
+          "priority": "normal",
+          "section": "approvals_gates",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-07-09T04:15:49.684Z",
+          "updated_at": "2026-09-08T11:52:14.003Z",
+          "resolved_at": null,
+          "source_status": "pending",
+          "initiative_id": "d1b3751e-d2aa-4957-8967-10254e7628c3"
+        },
+        {
+          "id": "295b40f2-ac9a-41bd-a74b-5db8daed9b8f",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "approval",
+          "source_entity_type": "decision",
+          "source_entity_id": "5051db01-2f5d-4abd-a53d-0f2130e751af",
+          "title": "Model wejścia na rynek DACH dla inicjatywy Ekspansja DACH (DBR77 Industrial Intelligence Scale-Up 2026)",
+          "description": "Wybór strategii go-to-market: direct sales vs partner/reseller vs JV z lokalnym integratorem. Kryteria oceny: szybkość wejścia, CAC, kontrola marki, ryzyko operacyjne. Analiza MECE z macierzą ryzyko/wpływ i konsekwencjami zaniechania.",
+          "priority": "normal",
+          "section": "approvals_gates",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-07-09T04:15:49.684Z",
+          "updated_at": "2026-09-08T11:52:14.003Z",
+          "resolved_at": null,
+          "source_status": "pending",
+          "initiative_id": null
+        },
+        {
+          "id": "2e5f895a-7838-4b00-ab2f-b9fac2b92a58",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "approval",
+          "source_entity_type": "decision",
+          "source_entity_id": "121b69a0-2100-43f0-950c-bf34824cdcb6",
+          "title": "Model cenowy usług dodanych - per-paleta vs abonament miesięczny",
+          "description": "W ramach inicjatywy MCG-2026 Usługi Dodane o Wyższej Marży (Meridian ColdChain Group) należy wybrać optymalny model cenowy dla usług dodanych. Opcje: (1) Model per-paleta - opłata za każdą paletę z usługami dodatkowymi, (2) Abonament miesięczny - stała opłata miesięczna za dostęp do pełnego pakietu usług dodanych, (3) Model hybrydowy - kombinacja obu podejść. Decyzja wpływa na elastyczność cenową, przewidywalność przychodów i atrakcyjność oferty dla różnych segmentów klientów.",
+          "priority": "normal",
+          "section": "approvals_gates",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-07-09T04:15:49.684Z",
+          "updated_at": "2026-07-20T14:29:23.140Z",
+          "resolved_at": null,
+          "source_status": null,
+          "initiative_id": null
+        }
+      ]
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-decyzje",
+      "tabela": "canonical_inbox_items",
+      "kolumna": "user_id",
+      "takze": [],
+      "na": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+      "klucz": "id",
+      "wiersze": [
+        {
+          "id": "93553ff0-101d-4f5e-b11f-4a9d07e1e997",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "decision",
+          "source_entity_type": "decision",
+          "source_entity_id": "31c1fcc9-5faf-471c-b91a-5f41bbb6060a",
+          "title": "Migration strategy — Big bang vs phased rollout",
+          "description": "Decide on migration approach for the platform cutover. Phased is safer but extends timeline by 3 weeks.",
+          "priority": "high",
+          "section": "decisions_required",
+          "status": "pending",
+          "sla_deadline": "2026-03-21T07:00:39.856Z",
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-04-24T07:10:33.368Z",
+          "updated_at": "2026-06-23T16:54:49.850Z",
+          "resolved_at": null,
+          "source_status": null,
+          "initiative_id": null
+        },
+        {
+          "id": "07a2cb47-6775-4bfc-bb52-89ac9401ae81",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "decision",
+          "source_entity_type": "decision",
+          "source_entity_id": "38d9c631-7a73-477d-be79-07eb2050a903",
+          "title": "Adopt multi-provider LLM strategy to reduce vendor risk",
+          "description": "Abstract LLM layer to support 2+ providers. Route by task complexity and cost.",
+          "priority": "normal",
+          "section": "decisions_required",
+          "status": "pending",
+          "sla_deadline": "2026-03-28T07:00:39.856Z",
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-03-18T09:34:55.373Z",
+          "updated_at": "2026-03-19T21:29:57.444Z",
+          "resolved_at": null,
+          "source_status": null,
+          "initiative_id": null
+        }
+      ]
+    },
+    {
+      "etap": "A2",
+      "pula": "skrzynka-kpi-i-sygnaly",
+      "tabela": "canonical_inbox_items",
+      "kolumna": "user_id",
+      "takze": [],
+      "na": "1bd98637-14ad-45d5-a120-b92ff0d4dfcd",
+      "klucz": "id",
+      "wiersze": [
+        {
+          "id": "afc524d5-f277-45ef-8814-fb3bd0cb21bb",
+          "user_id": "d2b6a316-08c5-47cf-9bf7-4ba50311d5a2",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "item_type": "signal",
+          "source_entity_type": "notification",
+          "source_entity_id": "9ac67589-0614-434d-af04-3ccd5f65ed06",
+          "title": "Overdue task: Ship notebook export to PDF",
+          "description": "This task is 3 days overdue. Consider escalating or reassigning.",
+          "priority": "normal",
+          "section": "ai_insights",
+          "status": "pending",
+          "sla_deadline": null,
+          "sla_status": "on_track",
+          "delegated_to": null,
+          "delegated_at": null,
+          "delegated_by": null,
+          "delegation_notes": null,
+          "metadata_json": "{}",
+          "created_at": "2026-03-18T12:38:10.067Z",
+          "updated_at": "2026-09-08T11:52:14.003Z",
+          "resolved_at": null,
+          "source_status": null,
+          "initiative_id": null
+        }
+      ]
+    }
+  ]
+}

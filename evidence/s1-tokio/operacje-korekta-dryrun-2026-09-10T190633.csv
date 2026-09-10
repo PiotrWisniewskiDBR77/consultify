@@ -1,0 +1,5 @@
+etap,tabela,kolumna,pula,co,posiadane,kwota,wierszy,planowane,dodane,wynik
+KOREKTA,tasks,assignee_id,,,,,20,,,dry-run
+KOREKTA,decisions,decision_maker_id,,,,,12,,,dry-run
+KOREKTA,initiatives,owner_execution_id,,,,,4,,,dry-run
+KOREKTA,initiatives,sponsor_id,,,,,6,,,dry-run

@@ -403,6 +403,11 @@ const A1_TABELE = [
 //   `kwota` to docelowa liczba wierszy właściciela w TEJ SAMEJ puli.
 // ---------------------------------------------------------------------------
 const BEZ_POLSKICH = `title !~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]'`;
+// Dane demo = twarz produktu (CLAUDE.md): zero rekordów testowych na koncie
+// właściciela. POMIAR: pula `approvals_gates` zawierała 5 artefaktów testowych
+// („E2E Bulk BULK-q0y5wf", „E2E ToDecision-…", „TEST P0 link 178149…"),
+// które pierwszy przebieg wciągnął do skrzynki.
+const BEZ_TESTOWYCH = `title !~* '(^|[^a-z])(e2e|test|smoke|probe|qa[ -]|\\[m13seed\\]|BULK-|__)'`;
 
 const A2_PULE = [
   {
@@ -410,7 +415,7 @@ const A2_PULE = [
     tabela: 'canonical_inbox_items',
     dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND status='pending' AND section='assigned_tasks' AND ${BEZ_POLSKICH}`,
+    filtr: `organization_id = '${ORG}' AND status='pending' AND ${BEZ_TESTOWYCH} AND section='assigned_tasks' AND ${BEZ_POLSKICH}`,
     kolejnosc: `CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END, created_at DESC, id`,
     kwota: 14,
   },
@@ -419,7 +424,7 @@ const A2_PULE = [
     tabela: 'canonical_inbox_items',
     dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND status='pending' AND section='approvals_gates'`,
+    filtr: `organization_id = '${ORG}' AND status='pending' AND ${BEZ_TESTOWYCH} AND section='approvals_gates'`,
     kolejnosc: `CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END, created_at DESC, id`,
     kwota: 8,
   },
@@ -428,7 +433,7 @@ const A2_PULE = [
     tabela: 'canonical_inbox_items',
     dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND status='pending' AND section='decisions_required'`,
+    filtr: `organization_id = '${ORG}' AND status='pending' AND ${BEZ_TESTOWYCH} AND section='decisions_required'`,
     kolejnosc: `created_at DESC, id`,
     kwota: 4,
   },
@@ -437,7 +442,7 @@ const A2_PULE = [
     tabela: 'canonical_inbox_items',
     dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND status='pending' AND section='blocked_escalations'`,
+    filtr: `organization_id = '${ORG}' AND status='pending' AND ${BEZ_TESTOWYCH} AND section='blocked_escalations'`,
     kolejnosc: `created_at DESC, id`,
     // POMIAR: w puli `blocked_escalations` (77 pending) WSZYSTKIE wiersze mają
     // ten sam tytuł „Interview Assignment Overdue" — po odsiewie zostaje 1.
@@ -450,7 +455,7 @@ const A2_PULE = [
     tabela: 'canonical_inbox_items',
     dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND status='pending' AND section IN ('ai_insights','fyi_system','fyi_mentions')`,
+    filtr: `organization_id = '${ORG}' AND status='pending' AND ${BEZ_TESTOWYCH} AND section IN ('ai_insights','fyi_system','fyi_mentions')`,
     kolejnosc: `CASE section WHEN 'ai_insights' THEN 0 WHEN 'fyi_mentions' THEN 1 ELSE 2 END, created_at DESC, id`,
     kwota: 7,
   },
@@ -458,9 +463,14 @@ const A2_PULE = [
     nazwa: 'czat-rozmowy-EN',
     tabela: 'conversations',
     kolumna: 'user_id',
-    filtr: `organization_id = '${ORG}' AND deleted_at IS NULL AND message_count >= 4 AND ${BEZ_POLSKICH}`,
-    kolejnosc: `last_message_at DESC NULLS LAST, id`,
-    kwota: 5,
+    // ★ POMIAR: `conversations.message_count` KŁAMIE — 6 rozmów przeniesionych ze
+    // starego konta właściciela ma licznik 7-20, a w `conversation_messages`
+    // ZERO wierszy (otwierają się puste). Warunek `EXISTS` liczy tylko rozmowy z
+    // PRAWDZIWĄ historią, więc kwota nie zapełnia się pustymi kartami.
+    filtr: `organization_id = '${ORG}' AND deleted_at IS NULL AND ${BEZ_POLSKICH}
+            AND EXISTS (SELECT 1 FROM conversation_messages cm WHERE cm.conversation_id = conversations.id)`,
+    kolejnosc: `message_count DESC, last_message_at DESC NULLS LAST, id`,
+    kwota: 8,
     dedupPo: ['title'],
     takze: ['created_by'],
   },
@@ -550,12 +560,14 @@ const A3_PULE = [
     tabela: 'tasks',
     kolumna: 'assignee_id',
     zrodloWartosc: null, // NULL
+    pula: `organization_id = '${ORG}' AND lower(coalesce(status,'')) IN ('todo','in_progress')`,
     filtr: `organization_id = '${ORG}' AND assignee_id IS NULL
             AND lower(coalesce(status,'')) IN ('todo','in_progress')`,
     kolejnosc: `(CASE WHEN title ~ '[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]' THEN 1 ELSE 0 END),
                 CASE lower(coalesce(priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
                 due_date ASC NULLS LAST, id`,
     kwota: 10,
+    dedupPo: ['title'], // POMIAR: pula zawiera 4× ten sam „Audyt 3 maszyn krytycznych pod PdM"
     takze: ['owner_id'],
   },
   {
@@ -563,6 +575,7 @@ const A3_PULE = [
     tabela: 'decisions',
     kolumna: 'decision_maker_id',
     zrodloWartosc: null,
+    pula: `organization_id = '${ORG}' AND lower(coalesce(status,'')) = 'pending'`,
     filtr: `organization_id = '${ORG}' AND decision_maker_id IS NULL
             AND lower(coalesce(status,'')) = 'pending'`,
     kolejnosc: `deadline ASC NULLS LAST, created_at DESC, id`,
@@ -573,6 +586,9 @@ const A3_PULE = [
     tabela: 'initiatives',
     kolumna: 'owner_execution_id',
     zrodloWartosc: null,
+    pula: `organization_id = '${ORG}'
+            AND upper(coalesce(status,'')) IN ('IN_EXECUTION','APPROVED','PENDING_APPROVAL')
+            AND id NOT LIKE '%acceptance%' AND name NOT LIKE '%(kopia)%'`,
     filtr: `organization_id = '${ORG}' AND owner_execution_id IS NULL
             AND upper(coalesce(status,'')) IN ('IN_EXECUTION','APPROVED','PENDING_APPROVAL')
             AND id NOT LIKE '%acceptance%' AND name NOT LIKE '%(kopia)%'`,
@@ -584,6 +600,9 @@ const A3_PULE = [
     tabela: 'initiatives',
     kolumna: 'sponsor_id',
     zrodloWartosc: null,
+    pula: `organization_id = '${ORG}'
+            AND upper(coalesce(status,'')) IN ('IN_EXECUTION','APPROVED','PENDING_APPROVAL')
+            AND id NOT LIKE '%acceptance%' AND name NOT LIKE '%(kopia)%'`,
     filtr: `organization_id = '${ORG}' AND sponsor_id IS NULL
             AND upper(coalesce(status,'')) IN ('IN_EXECUTION','APPROVED','PENDING_APPROVAL')
             AND id NOT LIKE '%acceptance%' AND name NOT LIKE '%(kopia)%'`,
@@ -595,6 +614,7 @@ const A3_PULE = [
     tabela: 'interview_assignments',
     kolumna: 'assignee_user_id',
     zrodloWartosc: 'SIEROTA',
+    pula: `organization_id = '${ORG}' AND status = 'assigned'`,
     filtr: `organization_id = '${ORG}' AND status = 'assigned'
             AND assignee_user_id NOT IN (SELECT id::text FROM users)`,
     kolejnosc: `created_at DESC, id`,
@@ -783,6 +803,190 @@ const B_POWIADOMIENIA = [
   },
 ];
 
+
+// ---------------------------------------------------------------------------
+// KOREKTA — cofnięcie NADMIAROWEGO przepięcia A3 (incydent 2026-09-10)
+// ---------------------------------------------------------------------------
+// CO SIĘ STAŁO: pierwsze trzy uruchomienia `--apply` przerwały się na błędach
+// schematu (uuid=text, participant_kind NOT NULL, pinned INTEGER) już PO
+// wykonaniu etapu A3, a manifest zapisywał się dopiero na końcu — więc te
+// przebiegi nie zostawiły manifestu. Do tego licznik `posiadane` w A3 liczył po
+// filtrze zawierającym warunek źródła (`... IS NULL`), więc zawsze zwracał 0 i
+// każdy przebieg dobierał kolejną PEŁNĄ kwotę. Efekt: A3 wykonało się 3×.
+//
+// CO NAPRAWIA TA OPERACJA: zbiór DOCELOWY jest znany dokładnie — pochodzi z
+// manifestu DRY-RUN sprzed pierwszego `--apply` (evidence/s1-tokio/manifesty/
+// manifest-s1-all-dryrun-2026-09-10T18-59-42-356Z.json). Wszystko, co dziś
+// wskazuje na właściciela w populacjach A3, a NIE należy do tego zbioru (ani do
+// A1, ani do dosiewu), wraca do wartości pierwotnej = NULL.
+//
+// ★ NIEODWRACALNE: `interview_assignments.assignee_user_id`. Pierwotne wartości
+// to były identyfikatory NIEISTNIEJĄCYCH użytkowników (sieroty — potwierdzone:
+// 0 wierszy w `users`, 0 członków, 0 zdarzeń, brak sesji). Manifest ma tylko 3
+// z 9; pozostałych 6 nie da się odtworzyć, a kolumna nie przyjmuje NULL bez
+// ryzyka dla czytelnika. Zostają przypisane właścicielowi — zgłoszone jako STOP.
+const KOREKTA = [
+  {
+    tabela: 'tasks',
+    kolumna: 'assignee_id',
+    takze: ['owner_id'],
+    populacja: `organization_id = '${ORG}' AND lower(coalesce(status,'')) IN ('todo','in_progress')`,
+    zostaw: [
+      // A1 — ze starego konta właściciela (ten sam człowiek)
+      'task-dbr77-load-030', '4b9c9ad3-307a-44e2-9821-ce94dbedcf16',
+      'task-dbr77-load-029', '4d63149c-9dcf-4f0b-b2b7-6d450b81f1da',
+      // A3 — pierwsza (jedyna zamierzona) partia z puli nieprzypisanych
+      '9cd03a9a-360c-45b0-a733-6f6bdeac626c', 'f8df57ed-3f2e-421e-89cd-1911d4c39984',
+      '6d88220c-a40b-40eb-a52c-95c286f515f4', 'bdda17a7-fa6a-428a-9cc8-8d09fbaec1df',
+      '4ad5b26a-7acb-4a45-b493-9c0f6af3e9fe', '83b929e4-b567-4f34-a7e2-34469cb0a207',
+      '7795c3b1-2e86-4a8b-82fc-fef33bb3b9eb', '5d13b4ae-a457-442c-865c-7052628cf371',
+      '0732411e-a663-4806-bd16-317aeaf91654', 'b0d14d36-e313-44ea-b8c4-8b6e6cbd1d4b',
+      // B — dosiew (nowe zadania EN)
+      ...B_ZADANIA.map((t) => t.id),
+    ],
+  },
+  {
+    tabela: 'decisions',
+    kolumna: 'decision_maker_id',
+    populacja: `organization_id = '${ORG}' AND lower(coalesce(status,'')) = 'pending'`,
+    zostaw: [
+      // A1 (12 decyzji ze starego konta — część ma status pending)
+      'c1c8cac3-7ebe-4934-8732-a3bb8d6786aa', '12682911-847c-48d4-b6f4-012439c74b4f',
+      'ce6d80a7-047a-42dd-8230-6c086581d3cf', 'dd76d480-d3b1-439c-8b8a-0f24b9321c32',
+      '5cd13199-b44e-472e-a071-585b2296f2d0', 'a37a359f-26a1-4da9-a537-cacdb38b91cc',
+      'ec425792-3ee8-48e8-98dc-41076a730d0b', 'ff916b26-3396-4842-a590-ff97eb8d946d',
+      'ad544506-cd18-4c11-afc6-6d5c6e33009c', 'ed9f6dbc-70bb-41ad-9ff0-e5170cf35a99',
+      '728f62da-7d44-4e45-b331-5e3e859405a8', '93736e7b-798e-4d94-9eaf-54c87cdef77f',
+      // A3 — zamierzona partia 6 decyzji bez decydenta
+      'c13de36b-7c9f-4075-a30c-82c873dee6cd', '1e749e1e-aaa1-4836-ae2d-a3a473ca3c85',
+      '483a0bdd-bc28-4cb9-8f14-de594fa4e588', '56736322-a685-4b17-b731-698f926abd38',
+      '02556b45-329e-4ee9-87c9-87c901a683cb', 'b3c2a7f0-6b75-467e-b9be-ff91adbca7f9',
+    ],
+  },
+  {
+    tabela: 'initiatives',
+    kolumna: 'owner_execution_id',
+    populacja: `organization_id = '${ORG}'`,
+    zostaw: [
+      '5317c99f-1710-4e92-a65f-c56e5c38b3dd', 'e3b0a66a-dc86-4730-84e0-cdffb66cbed6',
+      '7eb944f9-c5b9-4162-8bff-23b0d620f9f3', 'b8f28cea-36b4-4f12-802e-634bf10c4d5a',
+      'd3bc32b2-ca68-456f-8af9-a432d6f10442', 'bb9038c3-d5e0-41e4-8d3d-f695d9c045f9',
+    ],
+  },
+  {
+    tabela: 'initiatives',
+    kolumna: 'sponsor_id',
+    populacja: `organization_id = '${ORG}'`,
+    zostaw: [
+      '84baaa08-5249-42e4-a292-3921e67d29d1', 'c55f3b10-e04e-44dd-a2e0-178046902520',
+      '5317c99f-1710-4e92-a65f-c56e5c38b3dd',
+    ],
+  },
+];
+
+async function korekta(c, apply, manifest, log) {
+  for (const k of KOREKTA) {
+    const cols = await kolumny(c, k.tabela);
+    const nadmiar = await c.query(
+      `SELECT * FROM ${k.tabela}
+       WHERE ${k.populacja} AND ${k.kolumna} = $1 AND NOT (id::text = ANY($2::text[]))`,
+      [NOWY, k.zostaw]
+    );
+    if (nadmiar.rowCount === 0) {
+      log.push({ etap: 'KOREKTA', tabela: k.tabela, kolumna: k.kolumna, wierszy: 0, wynik: 'brak nadmiaru' });
+      continue;
+    }
+    manifest.push({
+      etap: 'KOREKTA',
+      tabela: k.tabela,
+      kolumna: k.kolumna,
+      takze: k.takze || [],
+      przywracam: null,
+      wiersze: nadmiar.rows,
+    });
+    if (apply) {
+      const sety = [k.kolumna, ...(k.takze || []).filter((x) => cols.has(x))]
+        .map((kol) => `${kol} = NULL`)
+        .join(', ');
+      const r = await c.query(
+        `UPDATE ${k.tabela} SET ${sety}
+         WHERE ${k.populacja} AND ${k.kolumna} = $1 AND NOT (id::text = ANY($2::text[]))`,
+        [NOWY, k.zostaw]
+      );
+      log.push({ etap: 'KOREKTA', tabela: k.tabela, kolumna: k.kolumna, wierszy: r.rowCount, wynik: 'COFNIĘTE do NULL' });
+    } else {
+      log.push({ etap: 'KOREKTA', tabela: k.tabela, kolumna: k.kolumna, wierszy: nadmiar.rowCount, wynik: 'dry-run' });
+    }
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// HIGIENA — cofnięcie rekordów testowych i duplikatów wciągniętych do skrzynki
+// i do zadań przez pierwszy (jeszcze nieodsiany) przebieg.
+// Pozycje skrzynki wracają do pierwotnego właściciela (użytkownik-widmo),
+// zduplikowane zadania — do wartości pierwotnej NULL.
+// ---------------------------------------------------------------------------
+async function higiena(c, apply, manifest, log) {
+  const testowe = await c.query(
+    `SELECT * FROM canonical_inbox_items
+     WHERE user_id = $1 AND organization_id = $2 AND NOT (${BEZ_TESTOWYCH})`,
+    [NOWY, ORG]
+  );
+  if (testowe.rowCount > 0) {
+    manifest.push({ etap: 'HIGIENA', tabela: 'canonical_inbox_items', przywracam: WIDMO, wiersze: testowe.rows });
+    if (apply) {
+      const r = await c.query(
+        `UPDATE canonical_inbox_items SET user_id = $3
+         WHERE user_id = $1 AND organization_id = $2 AND NOT (${BEZ_TESTOWYCH})`,
+        [NOWY, ORG, WIDMO]
+      );
+      log.push({ etap: 'HIGIENA', tabela: 'canonical_inbox_items', wierszy: r.rowCount, wynik: 'ODDANE widmu (rekordy testowe)' });
+    } else {
+      log.push({ etap: 'HIGIENA', tabela: 'canonical_inbox_items', wierszy: testowe.rowCount, wynik: 'dry-run' });
+    }
+  } else {
+    log.push({ etap: 'HIGIENA', tabela: 'canonical_inbox_items', wierszy: 0, wynik: 'brak rekordów testowych' });
+  }
+
+  // Duplikaty tytułów wśród zadań przepiętych z puli „niczyich" (A1 i dosiew
+  // zostawiamy nietknięte — mają własne, jawne identyfikatory).
+  // Chronione = TYLKO zadania ze starego konta właściciela (A1). Zadania z
+  // dosiewu mają prefiks `s1-tokio-` i są wyłączone osobno. Partia A3 CELOWO
+  // wchodzi do skanu — to w niej wylądowały 4 kopie „Audyt 3 maszyn
+  // krytycznych pod PdM"; nadmiarowe wracają do NULL, a kolejny przebieg
+  // `--op=przepiecie` dobierze zamienniki (pula ma teraz odsiew po tytule).
+  const chronione = [
+    'task-dbr77-load-030', '4b9c9ad3-307a-44e2-9821-ce94dbedcf16',
+    'task-dbr77-load-029', '4d63149c-9dcf-4f0b-b2b7-6d450b81f1da',
+  ];
+  const dupl = await c.query(
+    `SELECT * FROM (
+       SELECT *, row_number() OVER (PARTITION BY title ORDER BY due_date NULLS LAST, id) rn
+       FROM tasks
+       WHERE organization_id = $1 AND assignee_id = $2
+         AND lower(coalesce(status,'')) IN ('todo','in_progress')
+         AND id NOT LIKE 's1-tokio-%'
+         AND NOT (id::text = ANY($3::text[]))
+     ) q WHERE rn > 1`,
+    [ORG, NOWY, chronione]
+  );
+  if (dupl.rowCount > 0) {
+    manifest.push({ etap: 'HIGIENA', tabela: 'tasks', przywracam: null, wiersze: dupl.rows });
+    if (apply) {
+      const r = await c.query(
+        `UPDATE tasks SET assignee_id = NULL, owner_id = NULL WHERE id::text = ANY($1::text[])`,
+        [dupl.rows.map((x) => String(x.id))]
+      );
+      log.push({ etap: 'HIGIENA', tabela: 'tasks', wierszy: r.rowCount, wynik: 'COFNIĘTE do NULL (duplikaty tytułów)' });
+    } else {
+      log.push({ etap: 'HIGIENA', tabela: 'tasks', wierszy: dupl.rowCount, wynik: 'dry-run' });
+    }
+  } else {
+    log.push({ etap: 'HIGIENA', tabela: 'tasks', wierszy: 0, wynik: 'brak duplikatów' });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Wykonanie
 // ---------------------------------------------------------------------------
@@ -849,8 +1053,14 @@ async function przepnijPule(c, pule, zrodlo, etap, apply, manifest, log) {
     const klucz = p.klucz || 'id';
 
     // ile właściciel JUŻ ma w tej samej puli → idempotencja przez zbieżność do kwoty
+    // ★ BŁĄD ZŁAPANY 2026-09-10 (3 nadmiarowe przebiegi na ŻYWEJ bazie):
+    // licznik „ile właściciel już ma" MUSI liczyć po POPULACJI, nie po filtrze
+    // kandydatów. W pulach A3 filtr zawiera warunek źródła (`... IS NULL`),
+    // więc `posiadane` zawsze wychodziło 0 i każdy kolejny przebieg dobierał
+    // kolejną pełną kwotę. `pula` (bez warunku źródła) naprawia idempotencję.
+    const populacja = p.pula || p.filtr;
     const posiadane = await c.query(
-      `SELECT count(*) n FROM ${p.tabela} WHERE ${p.filtr} AND ${p.kolumna} = $1`,
+      `SELECT count(*) n FROM ${p.tabela} WHERE ${populacja} AND ${p.kolumna} = $1`,
       [NOWY]
     );
     const juz = Number(posiadane.rows[0].n);
@@ -890,7 +1100,7 @@ async function przepnijPule(c, pule, zrodlo, etap, apply, manifest, log) {
     // Overdue") zamiast zameldować „nic do zrobienia".
     if (dedup.length) {
       const posiadaneWiersze = await c.query(
-        `SELECT * FROM ${p.tabela} WHERE ${p.filtr} AND ${p.kolumna} = $1`,
+        `SELECT * FROM ${p.tabela} WHERE ${populacja} AND ${p.kolumna} = $1`,
         [NOWY]
       );
       for (const w of posiadaneWiersze.rows) {
@@ -936,7 +1146,7 @@ async function przepnijPule(c, pule, zrodlo, etap, apply, manifest, log) {
         .map((kol) => `${kol} = $1`)
         .join(', ');
       const r = await c.query(
-        `UPDATE ${p.tabela} SET ${sety} WHERE ${klucz} = ANY($2::text[])`,
+        `UPDATE ${p.tabela} SET ${sety} WHERE ${klucz}::text = ANY($2::text[])`,
         [NOWY, ids.map(String)]
       );
       log.push({
@@ -1077,11 +1287,14 @@ async function dosiej(c, apply, manifest, log) {
             id: `${m.id}-p${n + 1}`,
             meeting_id: m.id,
             organization_id: ORG,
+            participant_kind: 'user', // NOT NULL — zmierzone w schemacie stagingu
             user_id: u.id,
             email: u.email,
             display_name: u.nm,
             role: u.rola,
-            response_status: n === 0 ? 'accepted' : 'needs_action',
+            invitation_status: n === 0 ? 'accepted' : 'invited',
+            delivery_status: 'pending',
+            invited_by: NOWY,
             created_at: teraz,
             updated_at: teraz,
           };
@@ -1124,7 +1337,7 @@ async function dosiej(c, apply, manifest, log) {
       tags_json: JSON.stringify(['tokyo', 'transformation']),
       status: 'active',
       maturity: 'draft',
-      pinned: false,
+      pinned: 0, // kolumna INTEGER NOT NULL na stagingu (nie boolean)
       capture_source: 'manual',
       created_at: teraz,
       updated_at: teraz,
@@ -1185,6 +1398,7 @@ async function dosiej(c, apply, manifest, log) {
 async function main() {
   const argv = process.argv.slice(2);
   const op = (argv.find((a) => a.startsWith('--op=')) || '--op=measure').split('=')[1];
+  // op: measure | all | przepiecie | dosiew | korekta | higiena
   const apply = argv.includes('--apply');
   if (apply && process.env.FORCE_S1 !== 'true') {
     throw new Error('--apply wymaga FORCE_S1=true');
@@ -1218,6 +1432,12 @@ async function main() {
     }
     if (op === 'all' || op === 'dosiew') {
       await dosiej(c, apply, manifest, log);
+    }
+    if (op === 'korekta') {
+      await korekta(c, apply, manifest, log);
+    }
+    if (op === 'higiena') {
+      await higiena(c, apply, manifest, log);
     }
 
     const po = await zmierz(c, NOWY);

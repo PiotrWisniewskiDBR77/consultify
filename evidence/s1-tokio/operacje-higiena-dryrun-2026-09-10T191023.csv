@@ -1,0 +1,3 @@
+etap,tabela,kolumna,pula,co,posiadane,kwota,wierszy,planowane,dodane,wynik
+HIGIENA,canonical_inbox_items,,,,,,9,,,dry-run
+HIGIENA,tasks,,,,,,0,,,brak duplikatów
