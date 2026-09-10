@@ -310,6 +310,33 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
             className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
           >
             <div className="p-4">
+              {/* F4c (znalezisko E1a N5, [ODMROZENIE 07_MY_WORK_AGENT DEC-453]):
+                  `isAddingLink`/`isAddingExternal` sterują panelami niżej
+                  (wyszukiwanie / ręczny link zewnętrzny), ale nigdzie w
+                  komponencie nie były ustawiane na `true` — oba panele
+                  istniały w kodzie, lecz nie było przycisku, który je otwiera
+                  ("wołacz istnieje ≠ podłączony"). Minimalny przycisk wg
+                  wzorca z `DependenciesSection.tsx` ("Add dependency") — bez
+                  nowych stylów, tylko trigger dla istniejących paneli. */}
+              {!readOnly && onAdd && !isAddingLink && !isAddingExternal && (
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    onClick={() => setIsAddingLink(true)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <Plus size={12} />
+                    {t('myWork.linkedItems.addLink', 'Add Link')}
+                  </button>
+                  <button
+                    onClick={() => setIsAddingExternal(true)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <Plus size={12} />
+                    {t('myWork.linkedItems.addExternalLink', 'Add External Link')}
+                  </button>
+                </div>
+              )}
+
               {/* Add Link Panel */}
               <AnimatePresence>
                 {isAddingLink && (
@@ -320,6 +347,25 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                     className="mb-4 overflow-hidden"
                   >
                     <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
+                      {/* F4c: skoro panel jest teraz osiągalny, potrzebuje
+                          też sposobu na zamknięcie bez dodawania (wcześniej
+                          jedyne wyjście to udany `handleAddItem`). */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                          {t('myWork.linkedItems.addLink', 'Add Link')}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setIsAddingLink(false);
+                            setSearchQuery('');
+                            setSearchResults([]);
+                          }}
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                          title={t('myWork.linkedItems.cancel', 'Cancel')}
+                        >
+                          <X size={14} className="text-slate-500 dark:text-slate-400" />
+                        </button>
+                      </div>
                       {/* Type Filter */}
                       <div className="flex gap-2 mb-3 flex-wrap">
                         <button
