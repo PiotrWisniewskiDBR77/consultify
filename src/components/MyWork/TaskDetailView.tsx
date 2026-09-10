@@ -535,6 +535,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // People
   const [ownerId, setOwnerId] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  // HOTFIX (2026-09-11): GET detalu nie zwracał assignee_id/owner_id, więc te
+  // dwa stany zawsze startowały jako '' — a personalPayload wysyłał '' jako
+  // `null` (jawne odpięcie) nawet gdy użytkownik nic nie dotknął. Serwer
+  // zerował przypisanie przy zapisie dowolnego innego pola. Te flagi
+  // rozróżniają "nieznane/niewczytane" od "user faktycznie zmienił" — patrz
+  // użycie w `personalPayload` niżej.
+  const [assigneeTouched, setAssigneeTouched] = useState(false);
+  const [ownerTouched, setOwnerTouched] = useState(false);
   const [users, setUsers] = useState<
     { id: string; firstName: string; lastName: string; email?: string }[]
   >([]);
@@ -1138,6 +1146,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setBlockedReason(task.blockedReason || '');
       setOwnerId(task.ownerId || task.assigneeId || '');
       setAssigneeId(task.assigneeId || '');
+      setOwnerTouched(false);
+      setAssigneeTouched(false);
       setInitiativeId(task.initiativeId || null);
       setProjectId(task.projectId || '');
       setProjectName(task.projectName || '');
@@ -1273,6 +1283,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setBlockedReason('');
     setOwnerId('');
     setAssigneeId('');
+    setOwnerTouched(false);
+    setAssigneeTouched(false);
     setInitiativeId(null);
     setInitiativeName(null);
     setProjectId('');
@@ -1331,8 +1343,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         // system twierdzi, że zapisał.
         // Druga warstwa naprawy jest w `my-work.routes.ts` (PUT czytał tylko 7 pól).
         checklist,
-        assigneeId: assigneeId || null,
-        ownerId: ownerId || null,
+        // HOTFIX (2026-09-11): jeśli pole nie zostało dotknięte w tej sesji
+        // edycji, nie wysyłaj klucza wcale (JSON.stringify usuwa `undefined`) —
+        // nawet stary serwer (który traktuje '' jak jawne odpięcie) nie zeruje
+        // wtedy przypisania z bazy. Patrz `assigneeTouched`/`ownerTouched` wyżej.
+        assigneeId: assigneeTouched ? assigneeId || null : undefined,
+        ownerId: ownerTouched ? ownerId || null : undefined,
       };
 
       // Always persist a local draft before attempting network save (offline safety net)
@@ -8661,7 +8677,10 @@ Return ONLY the final comment text.`;
                           </label>
                           <select
                             value={ownerId}
-                            onChange={(e) => setOwnerId(e.target.value)}
+                            onChange={(e) => {
+                              setOwnerId(e.target.value);
+                              setOwnerTouched(true);
+                            }}
                             className="w-full h-[42px] px-3 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-sm text-c-text dark:text-c-text focus:outline-none focus:border-blue-400"
                           >
                             <option value="">{t('myWork.taskDetail.select2', 'Select')}</option>
@@ -8684,7 +8703,10 @@ Return ONLY the final comment text.`;
                           >
                             <select
                               value={assigneeId}
-                              onChange={(e) => setAssigneeId(e.target.value)}
+                              onChange={(e) => {
+                                setAssigneeId(e.target.value);
+                                setAssigneeTouched(true);
+                              }}
                               className="w-full h-[42px] px-3 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border text-sm text-c-text dark:text-c-text focus:outline-none focus:border-blue-400"
                             >
                               <option value="">{t('myWork.taskDetail.select3', 'Select')}</option>
