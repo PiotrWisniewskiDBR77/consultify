@@ -18,6 +18,12 @@ import {
   type RebaselineDecisionInput,
 } from '../domain/initiatives-execution/scheduleBaseline.js';
 import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+  listInitiativeHeaders,
+  readInitiativeHeader,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
+import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
@@ -437,6 +443,29 @@ export class InitiativeController {
         archived: Boolean((i as any).archived),
       }));
 
+      if (isInitiativeUnifiedReadEnabled()) {
+        const headers = await listInitiativeHeaders(orgId, {
+          projectId: projectId && projectId !== 'unassigned' ? projectId : undefined,
+          status,
+          search,
+        });
+        const present = new Set(initiatives.map((initiative) => String(initiative.id)));
+        for (const header of headers) {
+          if (present.has(header.id)) continue;
+          initiatives.push({
+            id: header.id,
+            organizationId: orgId,
+            projectId: header.projectId,
+            name: header.title,
+            status: header.lifecycleState,
+            priority: 'medium',
+            progress: 0,
+            ownerBusiness: header.ownerId ? { id: header.ownerId } : null,
+            sourceType: header.source,
+          } as (typeof initiatives)[number]);
+        }
+      }
+
       res.json(initiatives);
     }
   );
@@ -461,7 +490,25 @@ export class InitiativeController {
       const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
       const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-      const initiative = await getInitiativeDetailRead(id, orgId, lang);
+      let initiative = await getInitiativeDetailRead(id, orgId, lang);
+      if (!initiative && isInitiativeUnifiedReadEnabled()) {
+        const header = await readInitiativeHeader(orgId, id);
+        if (header) {
+          initiative = {
+            id: header.id,
+            organization_id: orgId,
+            organizationId: orgId,
+            project_id: header.projectId,
+            projectId: header.projectId,
+            name: header.title,
+            title: header.title,
+            status: header.lifecycleState,
+            lifecycleState: header.lifecycleState,
+            ownerId: header.ownerId,
+            source: header.source,
+          };
+        }
+      }
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found', code: 'INITIATIVE_NOT_FOUND' });
         return;
@@ -2269,11 +2316,17 @@ export class InitiativeController {
       }
 
       const result = await executeInitiativeTransition({
-        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
-        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
-        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        orgId,
+        initiativeId,
+        actorId: userId,
+        actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null,
+        actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null,
+        requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'PENDING_APPROVAL', expectedCurrentStatus: 'DRAFT',
+        nextStatusInput: 'PENDING_APPROVAL',
+        expectedCurrentStatus: 'DRAFT',
       });
       if (!result.ok) {
         res.status(result.statusCode).json({ ...result.body, initiativeId });
@@ -2528,12 +2581,19 @@ export class InitiativeController {
       }
 
       const result = await executeInitiativeTransition({
-        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
-        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
-        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        orgId,
+        initiativeId,
+        actorId: userId,
+        actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null,
+        actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null,
+        requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'IN_EXECUTION', expectedCurrentStatus: 'IN_EXECUTION',
-        flagOperation: 'HOLD', reason: reason ? String(reason) : null,
+        nextStatusInput: 'IN_EXECUTION',
+        expectedCurrentStatus: 'IN_EXECUTION',
+        flagOperation: 'HOLD',
+        reason: reason ? String(reason) : null,
       });
       if (!result.ok) {
         res.status(result.statusCode).json({ ...result.body, initiativeId });
@@ -2923,11 +2983,17 @@ export class InitiativeController {
       }
 
       const result = await executeInitiativeTransition({
-        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
-        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
-        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        orgId,
+        initiativeId,
+        actorId: userId,
+        actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null,
+        actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null,
+        requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'CLOSED', flagOperation: 'ARCHIVE',
+        nextStatusInput: 'CLOSED',
+        flagOperation: 'ARCHIVE',
       });
       if (!result.ok) {
         res.status(result.statusCode).json({ ...result.body, initiativeId });
@@ -3177,10 +3243,12 @@ export class InitiativeController {
       }
 
       // Verify initiative belongs to org
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId]
+          );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
@@ -3442,8 +3510,8 @@ export class InitiativeController {
           ...m,
           isGate: Boolean(m.isGate),
           baselineDate: hasMilestoneBaseline ? (m.baselineDate ?? null) : null,
-          baselineVersion: hasMilestoneBaseline ? (Number(m.baselineVersion ?? 0) || 0) : null,
-          scheduleShiftCount: hasMilestoneBaseline ? (Number(m.scheduleShiftCount ?? 0) || 0) : 0,
+          baselineVersion: hasMilestoneBaseline ? Number(m.baselineVersion ?? 0) || 0 : null,
+          scheduleShiftCount: hasMilestoneBaseline ? Number(m.scheduleShiftCount ?? 0) || 0 : 0,
           // Liczba, a nie surowe daty: żeby raport i tabela nie liczyły jej
           // każde po swojemu (to jest ten sam wzór, co w kolumnie Realizacji).
           deviationDays: hasMilestoneBaseline

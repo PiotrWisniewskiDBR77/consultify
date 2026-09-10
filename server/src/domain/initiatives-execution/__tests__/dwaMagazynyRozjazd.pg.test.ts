@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../../config/Config.js';
 import { ApiGateway } from '../../../Gateway.js';
+import { initiativeExists, readInitiativeHeader } from '../initiativeUnifiedReader.js';
 
 const NO_RETRY = { retry: 0 } as const;
 
@@ -150,7 +151,11 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
   it('CHARAKTERYSTYKA PRZED E2 — lista zastana nie widzi rekordu', async () => {
     const response = await request(app).get('/api/initiatives').set('Authorization', authorization);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
-    expect(JSON.stringify(response.body)).not.toContain(initiativeId);
+    if (process.env.ENABLE_INITIATIVE_UNIFIED_READ === 'true') {
+      expect(JSON.stringify(response.body)).toContain(initiativeId);
+    } else {
+      expect(JSON.stringify(response.body)).not.toContain(initiativeId);
+    }
   });
 
   it('CHARAKTERYSTYKA PRZED E2 — tabela zastana nie zawiera rekordu', async () => {
@@ -164,14 +169,21 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
     const response = await request(app)
       .get(`/api/initiatives/${initiativeId}`)
       .set('Authorization', authorization);
-    expect(response.status, JSON.stringify(response.body)).toBe(404);
+    expect(response.status, JSON.stringify(response.body)).toBe(
+      process.env.ENABLE_INITIATIVE_UNIFIED_READ === 'true' ? 200 : 404
+    );
+    if (process.env.ENABLE_INITIATIVE_UNIFIED_READ === 'true') {
+      expect(JSON.stringify(response.body)).toContain(title);
+    }
   });
 
   it('CHARAKTERYSTYKA PRZED E2 — KPI zastane zwracaja 404', async () => {
     const response = await request(app)
       .get(`/api/initiatives/${initiativeId}/kpis`)
       .set('Authorization', authorization);
-    expect(response.status, JSON.stringify(response.body)).toBe(404);
+    expect(response.status, JSON.stringify(response.body)).toBe(
+      process.env.ENABLE_INITIATIVE_UNIFIED_READ === 'true' ? 200 : 404
+    );
   });
 
   it('CHARAKTERYSTYKA PRZED E2 — kamienie korzystaja z istniejacego fallbacku', async () => {
@@ -179,5 +191,14 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
       .get(`/api/initiatives/${initiativeId}/milestones`)
       .set('Authorization', authorization);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
+  });
+
+  it('E2 — projekcja nie przekracza granicy organizacji', async () => {
+    expect(await initiativeExists(randomUUID(), initiativeId)).toBe(false);
+  });
+
+  it('E2 — przy kolizji zrodlem rozstrzygajacym jest kanon', async () => {
+    const header = await readInitiativeHeader(organizationId, initiativeId);
+    expect(header).toMatchObject({ id: initiativeId, title, source: 'CANONICAL' });
   });
 });
