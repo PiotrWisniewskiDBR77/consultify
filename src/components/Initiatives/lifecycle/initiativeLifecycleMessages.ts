@@ -68,6 +68,24 @@ export const INITIATIVE_RULE_MESSAGE_KEYS: Record<string, { key: string; pl: str
     key: 'initiatives.lifecycle.blocked.UNSUPPORTED_FLAG_OPERATION',
     pl: 'Unsupported lifecycle flag operation.',
   },
+  // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnien
+  // (`effectiveCapability.middleware.ts`). `readInitiativeFailureRule`
+  // (lifecycleApi.ts) czyta je jako fallback, gdy `data.rule` nie przyszlo —
+  // odpowiedz bramki niesie `code`, nie `rule`. Jedno, uczciwe zdanie dla
+  // wszystkich trzech: rozroznienie jest techniczne dla serwera, nie dla
+  // uzytkownika.
+  CAPABILITY_OBJECT_OWNERSHIP_REQUIRED: {
+    key: 'initiatives.lifecycle.blocked.CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+    pl: 'You can only change the status of initiatives you own or created.',
+  },
+  CAPABILITY_OWNERSHIP_PREDICATE_MISSING: {
+    key: 'initiatives.lifecycle.blocked.CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+    pl: 'You can only change the status of initiatives you own or created.',
+  },
+  CAPABILITY_OWNERSHIP_CHECK_FAILED: {
+    key: 'initiatives.lifecycle.blocked.CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+    pl: 'You can only change the status of initiatives you own or created.',
+  },
 };
 
 export const INITIATIVE_RULE_FALLBACK = {

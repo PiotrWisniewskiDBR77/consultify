@@ -119,6 +119,7 @@ import {
 } from '@/services/initiatives/suggestedChanges';
 import {
   getInitiativeStatusPreflightTruth,
+  opiszOdmoweTworzeniaInicjatywy,
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
@@ -3400,8 +3401,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.success(t('initiatives.saved2'));
       }
     } catch (e: any) {
+      // E1c/F2: `amend` (parametr `amendRegisteredInitiative`) rzuca
+      // `RuntimeApiError`, ktorego `.message` NIESIE SUROWY KOD (klasa ta
+      // ustawia `message = code`, patrz `runtimeApi.ts`) — bez tego
+      // przepuszczenia MEMBER edytujacy cudza inicjatywe widzial toast
+      // `CAPABILITY_OBJECT_OWNERSHIP_REQUIRED` zamiast zdania po polsku.
+      // `opiszOdmoweTworzeniaInicjatywy` tlumaczy znane kody (nazwa historyczna —
+      // funkcja jest generyczna, patrz KLUCZE_ODMOWY) i zwraca oryginal, gdy
+      // kod jest nieznany.
+      const przetlumaczony = opiszOdmoweTworzeniaInicjatywy(e);
       if (!silent) {
-        toast.error(e?.message || t('initiatives.toast.saveError', 'Failed to save'));
+        toast.error(przetlumaczony?.message || t('initiatives.toast.saveError', 'Failed to save'));
       }
     } finally {
       setIsMutating(false);

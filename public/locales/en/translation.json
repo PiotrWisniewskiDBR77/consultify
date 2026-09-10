@@ -11620,7 +11620,8 @@
       "newInitiativeAi": "AI initiative wizard",
       "newInitiativeAiDesc": "Build a draft from a source insight, then review it.",
       "errorOwnerIneligible": "That person cannot own an initiative in this project. Add them to the project team (Project > Team) or pick someone who already belongs to it.",
-      "errorCapabilityRequired": "You do not have permission to create an initiative in this project. Ask the organization owner or an administrator for access to it."
+      "errorCapabilityRequired": "You do not have permission to create an initiative in this project. Ask the organization owner or an administrator for access to it.",
+      "errorOwnershipRequired": "You can only edit initiatives you own or created."
     },
     "axis": {
       "operational": "Operational",
@@ -14433,6 +14434,7 @@
         "MISSING_TRANSITION_GATE": "This transition has no governed gate and cannot run.",
         "INVALID_FLAG_OPERATION": "This operation is not allowed in the initiative's current state.",
         "UNSUPPORTED_FLAG_OPERATION": "Unsupported lifecycle flag operation.",
+        "CAPABILITY_OBJECT_OWNERSHIP_REQUIRED": "You can only change the status of initiatives you own or created.",
         "UNKNOWN": "The action could not be completed. Refresh the view and try again."
       },
       "heading": "Initiative stage",
@@ -16125,7 +16127,8 @@
         "blockedReasonRequired": "Status \"Blocked\" requires a blocking reason.",
         "alreadyClosed": "The task is already closed.",
         "dictionaryMissing": "The status dictionary has not loaded yet.",
-        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first."
+        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first.",
+        "ownershipRequired": "You can only edit tasks you own or are assigned to."
       },
       "create": {
         "title": "New task",

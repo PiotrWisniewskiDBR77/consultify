@@ -72,13 +72,33 @@ export async function fetchInitiativeTransitionPreflight(
 }
 
 /**
+ * E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnień
+ * (`effectiveCapability.middleware.ts`) — koperta 403 tej bramki niesie
+ * `code` (`CAPABILITY_OBJECT_OWNERSHIP_REQUIRED` / `_PREDICATE_MISSING` /
+ * `_CHECK_FAILED`), NIGDY `rule`. Bez tego zestawu `readInitiativeFailureRule`
+ * zwracał `null` dla takiej odmowy, a `useInitiativeLifecycle.run` pokazywał
+ * `error.message` — generyczny angielski „Capability required" zamiast
+ * polskiego zdania o właścicielu inicjatywy.
+ */
+const KODY_ODMOWY_WLASNOSCI = new Set([
+  'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+  'CAPABILITY_OWNERSHIP_PREDICATE_MISSING',
+  'CAPABILITY_OWNERSHIP_CHECK_FAILED',
+]);
+
+/**
  * Kod reguły z odrzuconego zapisu. `ApiError.data` niesie pełną kopertę serwera,
  * więc powód („brak powodu", „otwarte zadania") nie ginie za ogólnikiem.
  */
 export const readInitiativeFailureRule = (error: unknown): string | null => {
-  const data = (error as { data?: { rule?: unknown } } | null)?.data;
+  const data = (error as { data?: { rule?: unknown; code?: unknown } } | null)?.data;
   const rule = data && typeof data === 'object' ? (data as { rule?: unknown }).rule : null;
-  return rule ? String(rule) : null;
+  if (rule) return String(rule);
+  const code = data && typeof data === 'object' ? (data as { code?: unknown }).code : null;
+  const normalizedCode = code ? String(code).toUpperCase() : '';
+  return KODY_ODMOWY_WLASNOSCI.has(normalizedCode)
+    ? 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED'
+    : null;
 };
 
 export async function applyInitiativeTransition(

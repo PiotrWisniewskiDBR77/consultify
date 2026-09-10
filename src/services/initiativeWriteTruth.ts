@@ -168,6 +168,17 @@ const stableCommandId = (prefix: string, value: unknown) => {
 const KLUCZE_ODMOWY: Record<string, string> = {
   INITIATIVE_OWNER_INELIGIBLE: 'initiatives.form.errorOwnerIneligible',
   CAPABILITY_REQUIRED: 'initiatives.form.errorCapabilityRequired',
+  // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnień
+  // (`effectiveCapability.middleware.ts` — CAPABILITY_OBJECT_OWNERSHIP_REQUIRED /
+  // _PREDICATE_MISSING / _CHECK_FAILED). Bez wpisu tutaj `RuntimeApiError.message`
+  // niesie SUROWY KOD (ta klasa niesie kod jako `message` — patrz
+  // `RuntimeApiError` w `runtimeApi.ts`), a `InitiativeDocumentView`/kreator
+  // pokazuja `e?.message` wprost. Wszystkie trzy dostają jedno, uczciwe zdanie —
+  // rozróżnienie (brak właściciela / brak predykatu / błąd sprawdzenia) jest
+  // techniczne dla serwera, nie dla użytkownika.
+  CAPABILITY_OBJECT_OWNERSHIP_REQUIRED: 'initiatives.form.errorOwnershipRequired',
+  CAPABILITY_OWNERSHIP_PREDICATE_MISSING: 'initiatives.form.errorOwnershipRequired',
+  CAPABILITY_OWNERSHIP_CHECK_FAILED: 'initiatives.form.errorOwnershipRequired',
 };
 
 export function opiszOdmoweTworzeniaInicjatywy(error: unknown): Error {
