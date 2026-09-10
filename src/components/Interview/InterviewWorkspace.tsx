@@ -62,6 +62,7 @@ import {
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { sekcjeZKontraktu } from '@/components/standard/contractSections';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -93,7 +94,7 @@ import { loadInterviewV8Capability } from './interviewBackendRouting';
 // MIGRACJA (D-8): kompozycja kart Interview wyprowadzona z WIĄŻĄCEGO kontraktu
 // karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
 // patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
-import { INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
+import { INTERVIEW_CARDS, INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
@@ -2398,7 +2399,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   ];
 
-  const sections: NModeSection[] = (() => {
+  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
         {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
@@ -3122,8 +3123,31 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
     }
 
-    return base;
+    return Object.fromEntries(base.map((section) => [section.id, section]));
   })();
+
+  // DEC-432: kontrakt jest jedynym źródłem członkostwa, nazw, ikon i kolejności.
+  // Lokalnie zostaje wyłącznie treść oraz widoczność wynikająca z realnych danych.
+  const sections: NModeSection[] = sekcjeZKontraktu(
+    INTERVIEW_CARDS,
+    'interview',
+    (id) => {
+      if (id === 'notes') return notes.length > 0;
+      if (id === 'evidence') return evidence.length > 0;
+      if (id === 'stakeholders') return stakeholders.length > 0;
+      if (id === 'open-gaps') return openGaps.length > 0;
+      if (id === 'company-facts') return Boolean(companyProfile.name || companyProfile.industry || companyProfile.location);
+      if (id === 'summary') return !isAssignmentMode && summaryData.facts.length > 0;
+      return true;
+    }
+  ).map((contractSection) => ({
+    ...contractSection,
+    ...Object.fromEntries(
+      Object.entries(sectionContentById[contractSection.id] ?? {}).filter(
+        ([key]) => !['id', 'label', 'icon'].includes(key)
+      )
+    ),
+  }));
 
   // ── KONTRAKT AI PER SEKCJA (SPEC-N §2.5) ───────────────────────────────────
   //

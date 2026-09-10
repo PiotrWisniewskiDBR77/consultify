@@ -124,13 +124,14 @@ const IKONY: Record<string, LucideIcon> = {
 export function sekcjeZKontraktu(
   katalog: readonly KanonicznaKarta[],
   artefakt: KartaNKey,
-  widoczna: (id: string) => boolean = () => true
+  widoczna: (id: string) => boolean = () => true,
+  idDlaKarty?: (karta: KanonicznaKarta) => string
 ): NModeSection[] {
   return katalog
     .flatMap((karta) => {
       const membership = karta.kompozycja.find((entry) => entry.artefakt === artefakt);
       if (!membership || membership.kolumna === 'right') return [];
-      const id = membership.idWArtefakcie ?? karta.id;
+      const id = idDlaKarty?.(karta) ?? membership.idWArtefakcie ?? karta.id;
       if (!widoczna(id)) return [];
       const icon = IKONY[karta.ikona];
       if (!icon) throw new Error(`Brak ikony kontraktu: ${karta.ikona} (${artefakt}/${id})`);
@@ -144,4 +145,16 @@ export function sekcjeZKontraktu(
     })
     .sort((a, b) => a.__kolejnosc - b.__kolejnosc)
     .map(({ __kolejnosc: _kolejnosc, ...section }) => section);
+}
+
+/** Bramka DEC-432: ekran nie może dodać ani zgubić sekcji poza kontraktem. */
+export function wymagajSekcjiZKontraktu(
+  ekran: readonly Pick<NModeSection, 'id'>[],
+  kontrakt: readonly Pick<NModeSection, 'id'>[]
+): void {
+  const ekranIds = ekran.map(({ id }) => id);
+  const kontraktIds = kontrakt.map(({ id }) => id);
+  if (JSON.stringify(ekranIds) !== JSON.stringify(kontraktIds)) {
+    throw new Error(`SEKCJE_POZA_KONTRAKTEM: ekran=${ekranIds.join(',')} kontrakt=${kontraktIds.join(',')}`);
+  }
 }
