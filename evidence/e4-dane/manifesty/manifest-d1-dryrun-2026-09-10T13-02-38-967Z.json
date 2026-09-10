@@ -1,0 +1,30 @@
+{
+  "op": "d1",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T13:02:38.787Z",
+  "d1": {
+    "przed": {
+      "initiative": {
+        "id": "dbr77--acceptance--initiative",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "name": "[ACCEPTANCE] Benefits realization",
+        "status": "IN_EXECUTION",
+        "archived": false,
+        "archived_at": null
+      },
+      "roiCase": {
+        "case_id": "c3b0f15c-b2ce-4a9d-a7d3-d5f8e7b17687",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "initiative_id": "dbr77--acceptance--initiative",
+        "title": "[ACCEPTANCE] ROI baseline to PIR",
+        "status": "draft",
+        "archived_at": null
+      }
+    },
+    "planowane": [
+      "initiatives.archived=TRUE,archived_at=now()",
+      "rvn_roi_cases.archived_at=now()"
+    ],
+    "po": null
+  }
+}

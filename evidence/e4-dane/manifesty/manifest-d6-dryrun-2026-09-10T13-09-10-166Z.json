@@ -1,0 +1,18 @@
+{
+  "op": "d6",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T13:09:09.328Z",
+  "d6": {
+    "przed": {
+      "ie_aggregate_relations": [],
+      "ie_aggregate_state": [],
+      "ie_audit_events": [],
+      "ie_command_receipts": [],
+      "ie_outbox_events": [],
+      "initiative_candidates": [],
+      "initiatives_kanon_stary": []
+    },
+    "plan": [],
+    "po": null
+  }
+}

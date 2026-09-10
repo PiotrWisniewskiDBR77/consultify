@@ -1,0 +1,295 @@
+{
+  "op": "d4",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T13:04:11.846Z",
+  "d4": {
+    "przed": {
+      "initiatives": [
+        {
+          "id": "9825ac24-bf6c-4d3d-991e-1cbc97312a1f",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić?",
+          "status": "DRAFT",
+          "archived": false,
+          "archived_at": null
+        },
+        {
+          "id": "bafcb088-5453-4345-9500-5723d883fe2c",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić? (Fork)",
+          "status": "DRAFT",
+          "archived": false,
+          "archived_at": null
+        }
+      ],
+      "raid": [
+        {
+          "id": "172bace5-b4df-4f8b-b4ae-294393e0cbe0",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Unclear Initiative Scope",
+          "status": "OPEN"
+        },
+        {
+          "id": "e3f56e8c-d65a-4c98-ab85-6cec772e801d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Stakeholder Identification Dependency",
+          "status": "OPEN"
+        },
+        {
+          "id": "e1318dc7-4bc2-45d6-9b63-33c50d54c105",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Pending Decision on Key Initiative Details",
+          "status": "OPEN"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "3eda96ba-02a9-4613-8238-c0e226a42d78",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Create Initiative Roadmap",
+          "status": "todo"
+        },
+        {
+          "id": "f47460ae-76ca-4e2c-b770-d34852f2d190",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Define Initiative Scope",
+          "status": "todo"
+        },
+        {
+          "id": "4f3342f6-ba44-4297-872b-3dea6dae4da8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Refine Solution Based on Feedback",
+          "status": "todo"
+        },
+        {
+          "id": "fe570b3c-d408-41aa-a592-3f0f9d636708",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Develop Initial Prototype",
+          "status": "todo"
+        },
+        {
+          "id": "58dc7726-3041-4cf6-a8a7-712c52075006",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Full Rollout",
+          "status": "todo"
+        },
+        {
+          "id": "583726e0-85b1-4229-8c13-9ff9d2d592f3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Identify Stakeholders",
+          "status": "todo"
+        },
+        {
+          "id": "6dc98550-9ccb-4548-b2bd-0e2691950b58",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Initiative Discovery",
+          "status": "todo"
+        },
+        {
+          "id": "1717f3ef-b267-4c5f-9aff-bcde4f33ce96",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Analyze Pilot Results",
+          "status": "todo"
+        },
+        {
+          "id": "9acf6eaf-d399-41be-b907-5a9341220ff3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Design Solution Architecture",
+          "status": "todo"
+        },
+        {
+          "id": "d35897b5-6ea6-45c6-9f09-1226e46c7692",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct User Testing",
+          "status": "todo"
+        },
+        {
+          "id": "9f4d8c6e-7ce0-4455-9aa4-a03abb632cda",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Execute Pilot Deployment",
+          "status": "todo"
+        },
+        {
+          "id": "3f167e3d-336f-4089-89db-872bea02595d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Pilot Deployment",
+          "status": "todo"
+        },
+        {
+          "id": "3a6f9beb-0220-48e6-890c-956b2a6813a8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Establish Monitoring Mechanisms",
+          "status": "todo"
+        },
+        {
+          "id": "016851b5-7a43-4b08-b5a8-5a8cd9774e8a",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Team Training",
+          "status": "todo"
+        }
+      ],
+      "decyzjaForkaZaleznosc": {
+        "id": "dc34768a-1e72-498b-9beb-9b2bf0c66b92",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "initiative_id": "bafcb088-5453-4345-9500-5723d883fe2c",
+        "title": "zdfsf",
+        "status": "cancelled"
+      }
+    },
+    "plan": [
+      "initiatives(9825ac24-bf6c-4d3d-991e-1cbc97312a1f).archived=TRUE",
+      "initiatives(bafcb088-5453-4345-9500-5723d883fe2c).archived=TRUE",
+      "raid_items(172bace5-b4df-4f8b-b4ae-294393e0cbe0).status=CLOSED",
+      "raid_items(e3f56e8c-d65a-4c98-ab85-6cec772e801d).status=CLOSED",
+      "raid_items(e1318dc7-4bc2-45d6-9b63-33c50d54c105).status=CLOSED",
+      "tasks(3eda96ba-02a9-4613-8238-c0e226a42d78).status=archived",
+      "tasks(f47460ae-76ca-4e2c-b770-d34852f2d190).status=archived",
+      "tasks(4f3342f6-ba44-4297-872b-3dea6dae4da8).status=archived",
+      "tasks(fe570b3c-d408-41aa-a592-3f0f9d636708).status=archived",
+      "tasks(58dc7726-3041-4cf6-a8a7-712c52075006).status=archived",
+      "tasks(583726e0-85b1-4229-8c13-9ff9d2d592f3).status=archived",
+      "tasks(6dc98550-9ccb-4548-b2bd-0e2691950b58).status=archived",
+      "tasks(1717f3ef-b267-4c5f-9aff-bcde4f33ce96).status=archived",
+      "tasks(9acf6eaf-d399-41be-b907-5a9341220ff3).status=archived",
+      "tasks(d35897b5-6ea6-45c6-9f09-1226e46c7692).status=archived",
+      "tasks(9f4d8c6e-7ce0-4455-9aa4-a03abb632cda).status=archived",
+      "tasks(3f167e3d-336f-4089-89db-872bea02595d).status=archived",
+      "tasks(3a6f9beb-0220-48e6-890c-956b2a6813a8).status=archived",
+      "tasks(016851b5-7a43-4b08-b5a8-5a8cd9774e8a).status=archived"
+    ],
+    "po": {
+      "initiatives": [
+        {
+          "id": "9825ac24-bf6c-4d3d-991e-1cbc97312a1f",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić?",
+          "status": "DRAFT",
+          "archived": true,
+          "archived_at": "2026-09-10T11:04:11.908Z"
+        },
+        {
+          "id": "bafcb088-5453-4345-9500-5723d883fe2c",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić? (Fork)",
+          "status": "DRAFT",
+          "archived": true,
+          "archived_at": "2026-09-10T11:04:11.908Z"
+        }
+      ],
+      "raid": [
+        {
+          "id": "172bace5-b4df-4f8b-b4ae-294393e0cbe0",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Unclear Initiative Scope",
+          "status": "CLOSED"
+        },
+        {
+          "id": "e3f56e8c-d65a-4c98-ab85-6cec772e801d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Stakeholder Identification Dependency",
+          "status": "CLOSED"
+        },
+        {
+          "id": "e1318dc7-4bc2-45d6-9b63-33c50d54c105",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Pending Decision on Key Initiative Details",
+          "status": "CLOSED"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "58dc7726-3041-4cf6-a8a7-712c52075006",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Full Rollout",
+          "status": "archived"
+        },
+        {
+          "id": "583726e0-85b1-4229-8c13-9ff9d2d592f3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Identify Stakeholders",
+          "status": "archived"
+        },
+        {
+          "id": "6dc98550-9ccb-4548-b2bd-0e2691950b58",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Initiative Discovery",
+          "status": "archived"
+        },
+        {
+          "id": "d35897b5-6ea6-45c6-9f09-1226e46c7692",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct User Testing",
+          "status": "archived"
+        },
+        {
+          "id": "9f4d8c6e-7ce0-4455-9aa4-a03abb632cda",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Execute Pilot Deployment",
+          "status": "archived"
+        },
+        {
+          "id": "3f167e3d-336f-4089-89db-872bea02595d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Pilot Deployment",
+          "status": "archived"
+        },
+        {
+          "id": "3a6f9beb-0220-48e6-890c-956b2a6813a8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Establish Monitoring Mechanisms",
+          "status": "archived"
+        },
+        {
+          "id": "016851b5-7a43-4b08-b5a8-5a8cd9774e8a",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Team Training",
+          "status": "archived"
+        },
+        {
+          "id": "3eda96ba-02a9-4613-8238-c0e226a42d78",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Create Initiative Roadmap",
+          "status": "archived"
+        },
+        {
+          "id": "f47460ae-76ca-4e2c-b770-d34852f2d190",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Define Initiative Scope",
+          "status": "archived"
+        },
+        {
+          "id": "4f3342f6-ba44-4297-872b-3dea6dae4da8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Refine Solution Based on Feedback",
+          "status": "archived"
+        },
+        {
+          "id": "fe570b3c-d408-41aa-a592-3f0f9d636708",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Develop Initial Prototype",
+          "status": "archived"
+        },
+        {
+          "id": "1717f3ef-b267-4c5f-9aff-bcde4f33ce96",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Analyze Pilot Results",
+          "status": "archived"
+        },
+        {
+          "id": "9acf6eaf-d399-41be-b907-5a9341220ff3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Design Solution Architecture",
+          "status": "archived"
+        }
+      ],
+      "decyzjaForkaZaleznosc": {
+        "id": "dc34768a-1e72-498b-9beb-9b2bf0c66b92",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "initiative_id": "bafcb088-5453-4345-9500-5723d883fe2c",
+        "title": "zdfsf",
+        "status": "cancelled"
+      }
+    },
+    "uwaga": "initiative_milestones (1 wiersz) i initiative_history (2 wiersze, log audytowy) NIE ruszane — brak kolumny archiwizacji / to log przeszłych edycji."
+  }
+}

@@ -1,0 +1,656 @@
+{
+  "op": "d6",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T13:06:07.823Z",
+  "d6": {
+    "przed": {
+      "ie_aggregate_relations": [
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "relation_type": "SOURCE_REGISTRATION",
+          "source_type": "MANUAL_HUB",
+          "source_id": "manual-hub-w1a-probe-1789040489735",
+          "source_version": 1,
+          "target_type": "initiative",
+          "target_id": "initiative-w1a-probe-1789040489735",
+          "payload_json": {
+            "proposalId": "proposal-w1a-probe-1789040489735",
+            "disposition": "REGISTER",
+            "proposalVersion": 1
+          },
+          "created_at": "2026-09-10T11:41:29.975Z"
+        }
+      ],
+      "ie_aggregate_state": [
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "source_proposal",
+          "aggregate_id": "proposal-w1a-probe-1789040489735",
+          "version": 1,
+          "payload_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia",
+            "policy": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "status": "pending",
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "sourceId": "manual-hub-w1a-probe-1789040489735",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "proposalId": "proposal-w1a-probe-1789040489735",
+            "provenance": {
+              "system": "consultify.initiatives-hub",
+              "capturedAt": "2026-09-10T11:41:29.735Z",
+              "recordType": "manual-initiative-proposal",
+              "evidenceRefs": [
+                "consultify://initiatives/source-proposals/proposal-w1a-probe-1789040489735"
+              ]
+            },
+            "sourceType": "MANUAL_HUB",
+            "visibility": "PROJECT",
+            "submittedAt": "2026-09-10T11:41:29.886Z",
+            "submittedBy": "08c54d75-5260-57b1-9db6-a30aed89a587",
+            "evidenceState": "READY",
+            "sourceVersion": 1,
+            "duplicateState": "CLEAR",
+            "proposalVersion": 1,
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "updated_at": "2026-09-10T11:41:29.886Z"
+        },
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "version": 3,
+          "payload_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+            "source": {
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "freshness": "CURRENT",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "sourceType": "MANUAL_HUB",
+              "refreshedAt": "2026-09-10T11:41:29.974Z",
+              "sourceVersion": 1,
+              "proposalVersion": 2
+            },
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "readiness": "NOT_EVALUATED",
+            "governance": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "visibility": "PROJECT",
+            "cancellation": {
+              "reason": "w1a-sprzatanie: proba dowodu zapisu, do usuniecia",
+              "cancelledAt": "2026-09-10T11:41:30.446Z",
+              "cancelledBy": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "initiativeId": "initiative-w1a-probe-1789040489735",
+            "lifecycleState": "CANCELLED",
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "updated_at": "2026-09-10T11:41:30.446Z"
+        }
+      ],
+      "ie_audit_events": [
+        {
+          "id": "709",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "actor_id": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "aggregate_type": "source_proposal",
+          "aggregate_id": "proposal-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "command_type": "source-proposal.submit",
+          "client_request_id": "w1a-probe-1789040489735",
+          "correlation_id": "source-submit-w1a-probe-1789040489735",
+          "policy_id": "consultify-standard",
+          "policy_version": 1,
+          "payload_json": {
+            "after": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia",
+              "policy": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "status": "pending",
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "provenance": {
+                "system": "consultify.initiatives-hub",
+                "capturedAt": "2026-09-10T11:41:29.735Z",
+                "recordType": "manual-initiative-proposal",
+                "evidenceRefs": [
+                  "consultify://initiatives/source-proposals/proposal-w1a-probe-1789040489735"
+                ]
+              },
+              "sourceType": "MANUAL_HUB",
+              "visibility": "PROJECT",
+              "submittedAt": "2026-09-10T11:41:29.886Z",
+              "submittedBy": "08c54d75-5260-57b1-9db6-a30aed89a587",
+              "evidenceState": "READY",
+              "sourceVersion": 1,
+              "duplicateState": "CLEAR",
+              "proposalVersion": 1,
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "before": null
+          },
+          "created_at": "2026-09-10T11:41:29.886Z"
+        },
+        {
+          "id": "710",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "actor_id": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "command_type": "initiative.register",
+          "client_request_id": "reg-w1a-probe-1789040489735",
+          "correlation_id": "adf6e65b-0fe8-47f7-9bc6-ab9a9a35963f",
+          "policy_id": "consultify-standard",
+          "policy_version": 1,
+          "payload_json": {
+            "after": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia",
+              "source": {
+                "sourceId": "manual-hub-w1a-probe-1789040489735",
+                "freshness": "CURRENT",
+                "proposalId": "proposal-w1a-probe-1789040489735",
+                "sourceType": "MANUAL_HUB",
+                "refreshedAt": "2026-09-10T11:41:29.974Z",
+                "sourceVersion": 1,
+                "proposalVersion": 2
+              },
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "readiness": "NOT_EVALUATED",
+              "governance": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "visibility": "PROJECT",
+              "initiativeId": "initiative-w1a-probe-1789040489735",
+              "lifecycleState": "REGISTERED_DRAFT",
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "before": null,
+            "disposition": "REGISTER"
+          },
+          "created_at": "2026-09-10T11:41:29.975Z"
+        },
+        {
+          "id": "711",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "actor_id": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 2,
+          "command_type": "initiative.metadata.amend",
+          "client_request_id": "amend-w1a-probe-1789040489735",
+          "correlation_id": "initiative-amend-amend-w1a-probe-1789040489735",
+          "policy_id": "consultify-standard",
+          "policy_version": 1,
+          "payload_json": {
+            "after": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+              "source": {
+                "sourceId": "manual-hub-w1a-probe-1789040489735",
+                "freshness": "CURRENT",
+                "proposalId": "proposal-w1a-probe-1789040489735",
+                "sourceType": "MANUAL_HUB",
+                "refreshedAt": "2026-09-10T11:41:29.974Z",
+                "sourceVersion": 1,
+                "proposalVersion": 2
+              },
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "readiness": "NOT_EVALUATED",
+              "governance": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "visibility": "PROJECT",
+              "initiativeId": "initiative-w1a-probe-1789040489735",
+              "lifecycleState": "REGISTERED_DRAFT",
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "before": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia",
+              "source": {
+                "sourceId": "manual-hub-w1a-probe-1789040489735",
+                "freshness": "CURRENT",
+                "proposalId": "proposal-w1a-probe-1789040489735",
+                "sourceType": "MANUAL_HUB",
+                "refreshedAt": "2026-09-10T11:41:29.974Z",
+                "sourceVersion": 1,
+                "proposalVersion": 2
+              },
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "readiness": "NOT_EVALUATED",
+              "governance": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "visibility": "PROJECT",
+              "initiativeId": "initiative-w1a-probe-1789040489735",
+              "lifecycleState": "REGISTERED_DRAFT",
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            }
+          },
+          "created_at": "2026-09-10T11:41:30.090Z"
+        },
+        {
+          "id": "712",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "actor_id": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 3,
+          "command_type": "initiative.cancel",
+          "client_request_id": "cancel-w1a-probe-1789040489735",
+          "correlation_id": "initiative-cancel-cancel-w1a-probe-1789040489735",
+          "policy_id": "consultify-standard",
+          "policy_version": 1,
+          "payload_json": {
+            "after": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+              "source": {
+                "sourceId": "manual-hub-w1a-probe-1789040489735",
+                "freshness": "CURRENT",
+                "proposalId": "proposal-w1a-probe-1789040489735",
+                "sourceType": "MANUAL_HUB",
+                "refreshedAt": "2026-09-10T11:41:29.974Z",
+                "sourceVersion": 1,
+                "proposalVersion": 2
+              },
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "readiness": "NOT_EVALUATED",
+              "governance": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "visibility": "PROJECT",
+              "cancellation": {
+                "reason": "w1a-sprzatanie: proba dowodu zapisu, do usuniecia",
+                "cancelledAt": "2026-09-10T11:41:30.446Z",
+                "cancelledBy": "08c54d75-5260-57b1-9db6-a30aed89a587"
+              },
+              "initiativeId": "initiative-w1a-probe-1789040489735",
+              "lifecycleState": "CANCELLED",
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "before": {
+              "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+              "source": {
+                "sourceId": "manual-hub-w1a-probe-1789040489735",
+                "freshness": "CURRENT",
+                "proposalId": "proposal-w1a-probe-1789040489735",
+                "sourceType": "MANUAL_HUB",
+                "refreshedAt": "2026-09-10T11:41:29.974Z",
+                "sourceVersion": 1,
+                "proposalVersion": 2
+              },
+              "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+              "priority": "MEDIUM",
+              "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+              "readiness": "NOT_EVALUATED",
+              "governance": {
+                "policyId": "consultify-standard",
+                "policyVersion": 1
+              },
+              "visibility": "PROJECT",
+              "initiativeId": "initiative-w1a-probe-1789040489735",
+              "lifecycleState": "REGISTERED_DRAFT",
+              "proposedOutcome": null,
+              "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            }
+          },
+          "created_at": "2026-09-10T11:41:30.446Z"
+        }
+      ],
+      "ie_command_receipts": [
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "client_request_id": "w1a-probe-1789040489735",
+          "command_type": "source-proposal.submit",
+          "aggregate_type": "source_proposal",
+          "aggregate_id": "proposal-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "correlation_id": "source-submit-w1a-probe-1789040489735",
+          "request_fingerprint": "6646883d90edae441fa6a6e848b3b9d368c7d89dff8e03d1a86970d21ec3ed1b",
+          "response_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia",
+            "policy": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "status": "pending",
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "sourceId": "manual-hub-w1a-probe-1789040489735",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "proposalId": "proposal-w1a-probe-1789040489735",
+            "provenance": {
+              "system": "consultify.initiatives-hub",
+              "capturedAt": "2026-09-10T11:41:29.735Z",
+              "recordType": "manual-initiative-proposal",
+              "evidenceRefs": [
+                "consultify://initiatives/source-proposals/proposal-w1a-probe-1789040489735"
+              ]
+            },
+            "sourceType": "MANUAL_HUB",
+            "visibility": "PROJECT",
+            "submittedAt": "2026-09-10T11:41:29.886Z",
+            "submittedBy": "08c54d75-5260-57b1-9db6-a30aed89a587",
+            "evidenceState": "READY",
+            "sourceVersion": 1,
+            "duplicateState": "CLEAR",
+            "proposalVersion": 1,
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "created_at": "2026-09-10T11:41:29.886Z"
+        },
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "client_request_id": "reg-w1a-probe-1789040489735",
+          "command_type": "initiative.register",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "correlation_id": "adf6e65b-0fe8-47f7-9bc6-ab9a9a35963f",
+          "request_fingerprint": "17c460b3806048469eb351b92b37ae3116109e3358c0a3d8bad9548ef97c49d8",
+          "response_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia",
+            "source": {
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "freshness": "CURRENT",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "sourceType": "MANUAL_HUB",
+              "refreshedAt": "2026-09-10T11:41:29.974Z",
+              "sourceVersion": 1,
+              "proposalVersion": 2
+            },
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "readiness": "NOT_EVALUATED",
+            "governance": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "visibility": "PROJECT",
+            "initiativeId": "initiative-w1a-probe-1789040489735",
+            "lifecycleState": "REGISTERED_DRAFT",
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "created_at": "2026-09-10T11:41:29.975Z"
+        },
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "client_request_id": "amend-w1a-probe-1789040489735",
+          "command_type": "initiative.metadata.amend",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 2,
+          "correlation_id": "initiative-amend-amend-w1a-probe-1789040489735",
+          "request_fingerprint": "2493a5ca2e7125a4c59a29c24b9adc0ed13c49531254763df7e9190b77196a06",
+          "response_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+            "source": {
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "freshness": "CURRENT",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "sourceType": "MANUAL_HUB",
+              "refreshedAt": "2026-09-10T11:41:29.974Z",
+              "sourceVersion": 1,
+              "proposalVersion": 2
+            },
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "readiness": "NOT_EVALUATED",
+            "governance": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "visibility": "PROJECT",
+            "initiativeId": "initiative-w1a-probe-1789040489735",
+            "lifecycleState": "REGISTERED_DRAFT",
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "created_at": "2026-09-10T11:41:30.090Z"
+        },
+        {
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "client_request_id": "cancel-w1a-probe-1789040489735",
+          "command_type": "initiative.cancel",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 3,
+          "correlation_id": "initiative-cancel-cancel-w1a-probe-1789040489735",
+          "request_fingerprint": "25dd741331d1358a5a3ec7f9eecc382d737c3584f235e53b5ffe5c343c07085c",
+          "response_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+            "source": {
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "freshness": "CURRENT",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "sourceType": "MANUAL_HUB",
+              "refreshedAt": "2026-09-10T11:41:29.974Z",
+              "sourceVersion": 1,
+              "proposalVersion": 2
+            },
+            "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+            "priority": "MEDIUM",
+            "projectId": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+            "readiness": "NOT_EVALUATED",
+            "governance": {
+              "policyId": "consultify-standard",
+              "policyVersion": 1
+            },
+            "visibility": "PROJECT",
+            "cancellation": {
+              "reason": "w1a-sprzatanie: proba dowodu zapisu, do usuniecia",
+              "cancelledAt": "2026-09-10T11:41:30.446Z",
+              "cancelledBy": "08c54d75-5260-57b1-9db6-a30aed89a587"
+            },
+            "initiativeId": "initiative-w1a-probe-1789040489735",
+            "lifecycleState": "CANCELLED",
+            "proposedOutcome": null,
+            "initiativeOwnerId": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "created_at": "2026-09-10T11:41:30.446Z"
+        }
+      ],
+      "ie_outbox_events": [
+        {
+          "id": "706",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "source_proposal",
+          "aggregate_id": "proposal-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "event_type": "source_proposal.submitted",
+          "correlation_id": "source-submit-w1a-probe-1789040489735",
+          "causation_id": "w1a-probe-1789040489735",
+          "payload_json": {
+            "source": {
+              "id": "manual-hub-w1a-probe-1789040489735",
+              "type": "MANUAL_HUB",
+              "version": 1
+            },
+            "proposalId": "proposal-w1a-probe-1789040489735"
+          },
+          "attempt_count": 0,
+          "available_at": "2026-09-10T11:41:29.886Z",
+          "processed_at": null,
+          "last_error": null,
+          "created_at": "2026-09-10T11:41:29.886Z",
+          "payload_version": 1,
+          "max_attempts": 5,
+          "processing_started_at": null,
+          "dead_lettered_at": null
+        },
+        {
+          "id": "707",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 1,
+          "event_type": "initiative.registered",
+          "correlation_id": "adf6e65b-0fe8-47f7-9bc6-ab9a9a35963f",
+          "causation_id": "reg-w1a-probe-1789040489735",
+          "payload_json": {
+            "source": {
+              "sourceId": "manual-hub-w1a-probe-1789040489735",
+              "freshness": "CURRENT",
+              "proposalId": "proposal-w1a-probe-1789040489735",
+              "sourceType": "MANUAL_HUB",
+              "refreshedAt": "2026-09-10T11:41:29.974Z",
+              "sourceVersion": 1,
+              "proposalVersion": 2
+            },
+            "initiativeId": "initiative-w1a-probe-1789040489735",
+            "lifecycleState": "REGISTERED_DRAFT"
+          },
+          "attempt_count": 0,
+          "available_at": "2026-09-10T11:41:29.975Z",
+          "processed_at": null,
+          "last_error": null,
+          "created_at": "2026-09-10T11:41:29.975Z",
+          "payload_version": 1,
+          "max_attempts": 5,
+          "processing_started_at": null,
+          "dead_lettered_at": null
+        },
+        {
+          "id": "708",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 2,
+          "event_type": "initiative.metadata.amended",
+          "correlation_id": "initiative-amend-amend-w1a-probe-1789040489735",
+          "causation_id": "amend-w1a-probe-1789040489735",
+          "payload_json": {
+            "title": "PROBE W1A 2026-09-10 — do usunięcia (edytowano)",
+            "clientRequestId": "amend-w1a-probe-1789040489735",
+            "expectedVersion": 1
+          },
+          "attempt_count": 0,
+          "available_at": "2026-09-10T11:41:30.090Z",
+          "processed_at": null,
+          "last_error": null,
+          "created_at": "2026-09-10T11:41:30.090Z",
+          "payload_version": 1,
+          "max_attempts": 5,
+          "processing_started_at": null,
+          "dead_lettered_at": null
+        },
+        {
+          "id": "709",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "aggregate_type": "initiative",
+          "aggregate_id": "initiative-w1a-probe-1789040489735",
+          "aggregate_version": 3,
+          "event_type": "initiative.cancelled",
+          "correlation_id": "initiative-cancel-cancel-w1a-probe-1789040489735",
+          "causation_id": "cancel-w1a-probe-1789040489735",
+          "payload_json": {
+            "reason": "w1a-sprzatanie: proba dowodu zapisu, do usuniecia",
+            "cancelledAt": "2026-09-10T11:41:30.446Z",
+            "cancelledBy": "08c54d75-5260-57b1-9db6-a30aed89a587"
+          },
+          "attempt_count": 0,
+          "available_at": "2026-09-10T11:41:30.446Z",
+          "processed_at": null,
+          "last_error": null,
+          "created_at": "2026-09-10T11:41:30.446Z",
+          "payload_version": 1,
+          "max_attempts": 5,
+          "processing_started_at": null,
+          "dead_lettered_at": null
+        }
+      ],
+      "initiative_candidates": [
+        {
+          "id": "proposal-w1a-probe-1789040489735",
+          "organization_id": "468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+          "source_type": "MANUAL_HUB",
+          "source_id": "manual-hub-w1a-probe-1789040489735",
+          "title": "PROBE W1A 2026-09-10 — do usunięcia",
+          "rationale": null,
+          "fit_score": null,
+          "status": "accepted",
+          "created_at": "2026-09-10T11:41:29.886Z",
+          "created_by": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "initiative_id": null,
+          "duplicate_of_initiative_id": null,
+          "accepted_at": null,
+          "version": 2,
+          "source_version": 1,
+          "problem": "PROBE W1A 2026-09-10 — do usunięcia",
+          "proposed_outcome": null,
+          "project_id": "6174636d-c4f2-552d-9a5a-d2695738f9bc",
+          "initiative_owner_id": "08c54d75-5260-57b1-9db6-a30aed89a587",
+          "visibility": "PROJECT",
+          "evidence_state": "READY",
+          "duplicate_state": "CLEAR",
+          "provenance_json": {
+            "system": "consultify.initiatives-hub",
+            "capturedAt": "2026-09-10T11:41:29.735Z",
+            "recordType": "manual-initiative-proposal",
+            "evidenceRefs": [
+              "consultify://initiatives/source-proposals/proposal-w1a-probe-1789040489735"
+            ]
+          },
+          "policy_id": "consultify-standard",
+          "policy_version": 1,
+          "disposition": "REGISTER",
+          "registered_initiative_id": "initiative-w1a-probe-1789040489735",
+          "updated_at": "2026-09-10T11:41:29.975Z"
+        }
+      ],
+      "initiatives_kanon_stary": []
+    },
+    "plan": [
+      "ie_aggregate_relations: usuń 1 wiersz(y)",
+      "ie_audit_events: usuń 4 wiersz(y)",
+      "ie_command_receipts: usuń 4 wiersz(y)",
+      "ie_outbox_events: usuń 4 wiersz(y)",
+      "ie_aggregate_state: usuń 2 wiersz(y)",
+      "initiative_candidates: usuń 1 wiersz(y)"
+    ],
+    "po": {
+      "ie_aggregate_relations": [],
+      "ie_aggregate_state": [],
+      "ie_audit_events": [],
+      "ie_command_receipts": [],
+      "ie_outbox_events": [],
+      "initiative_candidates": [],
+      "initiatives_kanon_stary": []
+    }
+  }
+}
