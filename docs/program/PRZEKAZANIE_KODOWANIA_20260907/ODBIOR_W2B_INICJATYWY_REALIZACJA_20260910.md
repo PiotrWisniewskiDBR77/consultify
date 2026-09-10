@@ -195,7 +195,9 @@ się pokazuje), użytkownik nic nie widzi. Prawdopodobnie poprawna odmowa wywoł
 Jedyne ostrzeżenia konsoli w całej sesji: `i18next::translator: accessing an object - but
 returnObjects options is not enabled!` (bez zmian, KOSMETYKA).
 
-**Log serwera (pełna sesja, `tmp/w2b/api-sesja1.log`):**
+**Log serwera (pełna sesja; log był w katalogu roboczym stanowiska i został skasowany razem z nim —
+pozostają liczby zmierzone `grep -c` w trakcie pomiaru, wypisane niżej; do powtórzenia jednym
+przebiegiem na stanowisku):**
 
 | Wzorzec | PRZED | PO |
 |---|---|---|
