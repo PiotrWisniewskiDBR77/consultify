@@ -1,0 +1,33 @@
+DECYZJA NADZORCY (CTO) po STOP-ach E3 i E4 — CODEX1 „Inicjatywy: jeden magazyn danych" — 2026-09-10 18:05
+
+Kontynuujesz NA TEJ SAMEJ gałęzi `codex/inicjatywy-jeden-magazyn-20260910`, w tym samym worktree
+`/Users/piotrwisniewski/Developer/codex-wt/codex1-inicjatywy`, od `49cd114773`. Marker bez zmian (`4630b1ee4c`).
+Wszystkie zakazy Z1–Z40 obowiązują. Nadal: zero połączeń do Railway/staging/demo/produkcji, zero pushy.
+
+E3 — STOP UZNANY, DECYZJA X: dostajesz lokalny zrzut ŻYWEJ bazy stagingu (pełny, z danymi właściciela):
+  ścieżka:  /Users/piotrwisniewski/Developer/consultify-dumps/e4-dane-przed-20260910-1447.dump
+  format:   pg_dump -Fc (custom), rozmiar 235 622 708 B
+  sha256:   ae743d287395cb0611bfc146fe58d47f482d50913d4198b2bdfc7d43664fc711
+  Sprawdź sumę PRZED importem (`shasum -a 256`), zapisz wynik w raporcie. Importujesz WYŁĄCZNIE do własnego
+  kontenera `cx-codex1-inicjatywy-pg` (`pg_restore --no-owner --no-privileges`), do bazy o nazwie
+  `codex1_staging_1009`. Zrzutu nie kopiujesz nigdzie indziej i nie modyfikujesz. Na tej bazie: inwentarz
+  liczb (zweryfikuj 713/29/699/15 oraz 78/104 — TWOJE liczby zastępują moje), skrypt migracji z dry-run,
+  manifestem i przywracaniem, apply ×2 (idempotencja), rollback, verify. Wiersze bez `project_id` albo bez
+  `owner_business_id` NIE migrują — trafiają do osobnego manifestu „do decyzji właściciela" z pełnymi
+  wierszami; niczego nie zgadujesz. Migracja jest addytywna (Z40): zero DROP/RENAME/DELETE/TRUNCATE na
+  `initiatives*`.
+
+E4 — STOP UZNANY, DECYZJA: sześć pisarzy legacy (milestones, resources, staffing-plans, budget-items,
+  gate-roles, move) ZOSTAJE bez zmian. Nie projektujesz następców w tym bloku. W raporcie zostaw tabelę
+  dowodową jako wejście do osobnego bloku domenowego.
+
+E5 — wykonaj na zaimportowanej bazie: test HTTP+SQL „nowy rekord z UI widać wszędzie" dla 7 powierzchni
+  przez API (lista, karta, KPI, kokpit Realizacji, Moja Praca, Wyniki, raporty — trasy zmierz sam), z flagą
+  `ENABLE_INITIATIVE_UNIFIED_READ=true` i `=false` (oba wyniki w raporcie). Playwright na 5591 tylko jeśli
+  harness startuje; jeśli nie — STOP z pomiarem, nie zastępuj zrzutem.
+
+E2 — rollout: NIE przełączasz pozostałych 47 bramek. Zostają trzy podłączone powierzchnie za flagą OFF.
+
+Wynik: zaktualizowany `98_RAPORT.md` (te same 14 sekcji; sekcja 10 ma zmaleć o liczby, które teraz
+zmierzysz), commity per etap ze znacznikami `[ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]`.
+Jeżeli cokolwiek tu różni się od instrukcji — WIĄŻĄCA JEST TA DECYZJA w zakresie E3/E4/E5, reszta wg instrukcji.
