@@ -1,0 +1,26 @@
+task_id,title,due_date,estimated_hours,przypisano_do
+task-rich-001,Przegląd raportu budżetowego za Q4,2026-02-07T16:29:24.000Z,8,julia.lewandowska@dbr77.com
+8ef8640d-de2d-4935-be13-3d2c90fc13e8,Złożenie dokumentacji zgodności,2026-02-08T23:00:00.000Z,16,justyna.laskowska@dbr77.com
+task-rich-003,Naprawa krytycznego błędu produkcyjnego,2026-02-10T23:00:00.000Z,6,krzysztof.zielinski@dbr77.com
+task-rich-005,Przegląd pull requestów,2026-02-12T16:29:24.000Z,4,pawel.mroczkowski@dbr77.com
+4b9c9ad3-307a-44e2-9821-ce94dbedcf16,Prezentacja na standupie zespołu,2026-02-12T16:29:24.000Z,2,piotr@dbr77.com
+bd990ade-4bfc-4867-a49a-b846fb716884,Aktualizacja dokumentacji projektu,2026-02-14T16:29:24.000Z,10,tomasz.jankowski@dbr77.com
+d3a43e93-8885-473f-88fb-96391dab4f91,Przygotowanie demo dla interesariuszy,2026-02-15T16:29:24.000Z,12,admin@dbr77.com
+fd267f99-4666-42a8-981e-f362223b0cff,Sesja przeglądu architektury,2026-02-16T16:29:24.000Z,3,anna.kowalska@dbr77.com
+85332018-9b7b-4a58-b2a1-969f274ad02e,Planowanie infrastruktury chmurowej,2026-02-17T16:29:24.000Z,20,ewa.nowicka@dbr77.com
+task-rich-009,Planowanie infrastruktury chmurowej,2026-02-17T16:29:24.000Z,20,jan.kowalski@dbr77.com
+ef7c1347-9525-4db4-9d72-f11cff4446d4,Planowanie infrastruktury chmurowej,2026-02-17T16:29:24.000Z,20,jan.zielinski@dbr77.com
+29e3150f-f25f-4d71-9c55-de123dfba947,Roczne oceny pracownicze,2026-02-26T16:29:24.000Z,24,katarzyna.wojcik@dbr77.com
+fd1210ec-6dfa-410f-93fc-9e954af8d50f,Konfiguracja środowiska pilotażowego i integracji,2026-03-01T17:31:27.991Z,16,marek.nowak@dbr77.com
+task-rich-011,Ocena stosu technologicznego,2026-03-14T16:29:24.000Z,32,tomasz.lewandowski@dbr77.com
+e74b426b-ff06-481c-a870-e1f2398e78b4,Ocena stosu technologicznego,2026-03-14T16:29:24.000Z,32,julia.lewandowska@dbr77.com
+3a4d9bb9-c839-43c2-89fd-8e64e8e9b581,Ocena stosu technologicznego,2026-03-14T16:29:24.000Z,32,justyna.laskowska@dbr77.com
+1cae44c8-7ea7-4e11-a89d-8c3f5bdb997f,Przygotowanie prezentacji dla zarządu — wyniki dojrzałości cyfrowej,2026-03-18T19:34:27.821Z,17,krzysztof.zielinski@dbr77.com
+6dc6f1c3-9128-405e-933d-6b5f84f7eb5e,Finalizacja mapy drogowej transformacji Q2,2026-03-19T19:34:27.567Z,10,pawel.mroczkowski@dbr77.com
+4d63149c-9dcf-4f0b-b2b7-6d450b81f1da,Planowanie zasobów zespołu — Sprint 15,2026-03-24T19:34:28.014Z,4,piotr@dbr77.com
+2b5e0e21-119e-46d3-916a-5cdfc8f2f7eb,Pilotaż RPA — automatyzacja przetwarzania faktur,2026-03-26T19:34:28.095Z,9,tomasz.jankowski@dbr77.com
+3280a33c-9c04-471b-b620-658423cbc96b,Zarządzanie jakością 4.0 — MVP pulpitu SPC,2026-03-29T18:34:28.133Z,16,admin@dbr77.com
+549cbab0-5fc6-42b8-9c6f-0bf30b9f8dc3,DevOps — utwardzenie pipeline'u CI/CD,2026-04-02T18:34:28.172Z,10,anna.kowalska@dbr77.com
+e1fa9e27-222f-421f-8774-a6a37b76029a,DevOps — utwardzenie pipeline'u CI/CD,2026-04-02T18:34:28.172Z,10,ewa.nowicka@dbr77.com
+b7342823-6286-48ab-814e-489be96d7c8b,DevOps — utwardzenie pipeline'u CI/CD,2026-04-02T18:34:28.172Z,10,jan.kowalski@dbr77.com
+e48cc142-e09f-46ae-8a57-234aeeb3fa09,Krótka lista dostawców platformy IoT (IRIS),2026-03-22T19:34:27.859Z,14,jan.zielinski@dbr77.com

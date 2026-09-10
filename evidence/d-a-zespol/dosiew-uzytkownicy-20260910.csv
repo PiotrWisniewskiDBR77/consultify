@@ -1,0 +1,16 @@
+email,job_title,weekly_capacity_hours,availability_percent,uwaga
+acceptance.owner@consultify.local,QA Acceptance Owner,40,100,test/system account — wylaczone z operacji tasks
+admin@dbr77.com,Tenant Admin,40,100,"job_title juz istnial, ustawiona pelna dostepnosc"
+anna.kowalska@dbr77.com,Senior Data Engineer,32,60,celowo niska podaz
+ewa.nowicka@dbr77.com,Operations Manager,36,75,
+jan.kowalski@dbr77.com,Business Analyst,40,90,
+jan.zielinski@dbr77.com,Data Engineer,32,60,celowo niska podaz
+julia.lewandowska@dbr77.com,UX Designer,36,80,
+justyna.laskowska@dbr77.com,Managing Partner,40,100,OWNER
+katarzyna.wojcik@dbr77.com,Quality Specialist,34,70,
+krzysztof.zielinski@dbr77.com,DevOps Engineer,36,80,
+marek.nowak@dbr77.com,Product Manager,38,85,
+pawel.mroczkowski@dbr77.com,Managing Partner,40,100,OWNER
+piotr@dbr77.com,Program Director,38,90,"first/last name = Piotr Wisniewski -- MOZE byc konto wlasciciela pod innym mailem, do potwierdzenia"
+tomasz.jankowski@dbr77.com,R&D Specialist,36,75,naprawiony typo 'R&D Specjalist'->'R&D Specialist'
+tomasz.lewandowski@dbr77.com,Managing Partner,40,100,OWNER

@@ -1,0 +1,357 @@
+{
+  "op": "users",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T17:27:44.126Z",
+  "users": {
+    "przed": [
+      {
+        "id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "email": "pawel.mroczkowski@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "acceptance-owner-rehearsal-20260813",
+        "email": "acceptance.owner@consultify.local",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "email": "marek.nowak@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "email": "krzysztof.zielinski@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "email": "julia.lewandowska@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "email": "anna.kowalska@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "email": "tomasz.jankowski@dbr77.com",
+        "job_title": "R&D Specjalist",
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "60887056-371a-4404-b85c-61c920852579",
+        "email": "justyna.laskowska@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "email": "jan.kowalski@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "email": "tomasz.lewandowski@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "email": "jan.zielinski@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "email": "katarzyna.wojcik@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "email": "piotr@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "email": "admin@dbr77.com",
+        "job_title": "Tenant Admin",
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      },
+      {
+        "id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "email": "ewa.nowicka@dbr77.com",
+        "job_title": null,
+        "weekly_capacity_hours": null,
+        "availability_percent": null
+      }
+    ],
+    "plan": [
+      {
+        "email": "acceptance.owner@consultify.local",
+        "id": "acceptance-owner-rehearsal-20260813",
+        "zmiany": {
+          "job_title": "QA Acceptance Owner",
+          "weekly_capacity_hours": 40,
+          "availability_percent": 100
+        }
+      },
+      {
+        "email": "admin@dbr77.com",
+        "id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "zmiany": {
+          "weekly_capacity_hours": 40,
+          "availability_percent": 100
+        }
+      },
+      {
+        "email": "anna.kowalska@dbr77.com",
+        "id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "zmiany": {
+          "job_title": "Senior Data Engineer",
+          "weekly_capacity_hours": 32,
+          "availability_percent": 60
+        }
+      },
+      {
+        "email": "ewa.nowicka@dbr77.com",
+        "id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "zmiany": {
+          "job_title": "Operations Manager",
+          "weekly_capacity_hours": 36,
+          "availability_percent": 75
+        }
+      },
+      {
+        "email": "jan.kowalski@dbr77.com",
+        "id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "zmiany": {
+          "job_title": "Business Analyst",
+          "weekly_capacity_hours": 40,
+          "availability_percent": 90
+        }
+      },
+      {
+        "email": "jan.zielinski@dbr77.com",
+        "id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "zmiany": {
+          "job_title": "Data Engineer",
+          "weekly_capacity_hours": 32,
+          "availability_percent": 60
+        }
+      },
+      {
+        "email": "julia.lewandowska@dbr77.com",
+        "id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "zmiany": {
+          "job_title": "UX Designer",
+          "weekly_capacity_hours": 36,
+          "availability_percent": 80
+        }
+      },
+      {
+        "email": "justyna.laskowska@dbr77.com",
+        "id": "60887056-371a-4404-b85c-61c920852579",
+        "zmiany": {
+          "job_title": "Managing Partner",
+          "weekly_capacity_hours": 40,
+          "availability_percent": 100
+        }
+      },
+      {
+        "email": "katarzyna.wojcik@dbr77.com",
+        "id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "zmiany": {
+          "job_title": "Quality Specialist",
+          "weekly_capacity_hours": 34,
+          "availability_percent": 70
+        }
+      },
+      {
+        "email": "krzysztof.zielinski@dbr77.com",
+        "id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "zmiany": {
+          "job_title": "DevOps Engineer",
+          "weekly_capacity_hours": 36,
+          "availability_percent": 80
+        }
+      },
+      {
+        "email": "marek.nowak@dbr77.com",
+        "id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "zmiany": {
+          "job_title": "Product Manager",
+          "weekly_capacity_hours": 38,
+          "availability_percent": 85
+        }
+      },
+      {
+        "email": "pawel.mroczkowski@dbr77.com",
+        "id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "zmiany": {
+          "job_title": "Managing Partner",
+          "weekly_capacity_hours": 40,
+          "availability_percent": 100
+        }
+      },
+      {
+        "email": "piotr@dbr77.com",
+        "id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "zmiany": {
+          "job_title": "Program Director",
+          "weekly_capacity_hours": 38,
+          "availability_percent": 90
+        }
+      },
+      {
+        "email": "tomasz.jankowski@dbr77.com",
+        "id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "zmiany": {
+          "job_title": "R&D Specialist",
+          "weekly_capacity_hours": 36,
+          "availability_percent": 75
+        }
+      },
+      {
+        "email": "tomasz.lewandowski@dbr77.com",
+        "id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "zmiany": {
+          "job_title": "Managing Partner",
+          "weekly_capacity_hours": 40,
+          "availability_percent": 100
+        }
+      }
+    ],
+    "po": [
+      {
+        "id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "email": "krzysztof.zielinski@dbr77.com",
+        "job_title": "DevOps Engineer",
+        "weekly_capacity_hours": "36.00",
+        "availability_percent": 80
+      },
+      {
+        "id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "email": "anna.kowalska@dbr77.com",
+        "job_title": "Senior Data Engineer",
+        "weekly_capacity_hours": "32.00",
+        "availability_percent": 60
+      },
+      {
+        "id": "60887056-371a-4404-b85c-61c920852579",
+        "email": "justyna.laskowska@dbr77.com",
+        "job_title": "Managing Partner",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 100
+      },
+      {
+        "id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "email": "tomasz.jankowski@dbr77.com",
+        "job_title": "R&D Specialist",
+        "weekly_capacity_hours": "36.00",
+        "availability_percent": 75
+      },
+      {
+        "id": "acceptance-owner-rehearsal-20260813",
+        "email": "acceptance.owner@consultify.local",
+        "job_title": "QA Acceptance Owner",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 100
+      },
+      {
+        "id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "email": "julia.lewandowska@dbr77.com",
+        "job_title": "UX Designer",
+        "weekly_capacity_hours": "36.00",
+        "availability_percent": 80
+      },
+      {
+        "id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "email": "marek.nowak@dbr77.com",
+        "job_title": "Product Manager",
+        "weekly_capacity_hours": "38.00",
+        "availability_percent": 85
+      },
+      {
+        "id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "email": "pawel.mroczkowski@dbr77.com",
+        "job_title": "Managing Partner",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 100
+      },
+      {
+        "id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "email": "jan.kowalski@dbr77.com",
+        "job_title": "Business Analyst",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 90
+      },
+      {
+        "id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "email": "jan.zielinski@dbr77.com",
+        "job_title": "Data Engineer",
+        "weekly_capacity_hours": "32.00",
+        "availability_percent": 60
+      },
+      {
+        "id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "email": "katarzyna.wojcik@dbr77.com",
+        "job_title": "Quality Specialist",
+        "weekly_capacity_hours": "34.00",
+        "availability_percent": 70
+      },
+      {
+        "id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "email": "piotr@dbr77.com",
+        "job_title": "Program Director",
+        "weekly_capacity_hours": "38.00",
+        "availability_percent": 90
+      },
+      {
+        "id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "email": "tomasz.lewandowski@dbr77.com",
+        "job_title": "Managing Partner",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 100
+      },
+      {
+        "id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "email": "admin@dbr77.com",
+        "job_title": "Tenant Admin",
+        "weekly_capacity_hours": "40.00",
+        "availability_percent": 100
+      },
+      {
+        "id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "email": "ewa.nowicka@dbr77.com",
+        "job_title": "Operations Manager",
+        "weekly_capacity_hours": "36.00",
+        "availability_percent": 75
+      }
+    ]
+  }
+}

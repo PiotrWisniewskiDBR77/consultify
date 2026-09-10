@@ -1,0 +1,10 @@
+metryka,PRZED,PO
+peopleCount,7,14
+demandHours,0,0
+supplyHours,280,3490.4
+gapHours,280,3490.4
+utilizationPercent,0,0
+overloadedCount,0,0
+peopleWithoutProfileSupply,7,0
+backlogHoursTotal,492,849
+backlogPeople,6,14
