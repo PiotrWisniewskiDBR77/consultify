@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
-type ProjectOption = { id: string; name: string };
+type ProjectOption = { id: string; name: string; status: string };
 
 export function RequiredProjectPicker({
   value,
@@ -24,11 +25,28 @@ export function RequiredProjectPicker({
   language?: 'en' | 'pl';
   optional?: boolean;
 }) {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
+
+  // D-C2/DEC-464: selektor projektu przy WYBORZE (nie przeglądzie) ukrywa
+  // projekty status='archived' — poza tym, który jest aktualnie wybrany
+  // (`value`), żeby formularz edycji istniejącego rekordu nie tracił nazwy
+  // swojego (już zarchiwizowanego) projektu. Ten wybrany archiwalny wpis
+  // dostaje dopisek "(archived)"/"(zarchiwizowany)" (i18n:
+  // shared.project.archivedSuffix — dzielony z innymi selektorami projektu,
+  // np. StudioLinkModal).
+  const archivedSuffix = t('shared.project.archivedSuffix', {
+    lng: language,
+    defaultValue: language === 'pl' ? '(zarchiwizowany)' : '(archived)',
+  });
+  const visibleProjects = useMemo(
+    () => projects.filter((project) => project.status !== 'archived' || project.id === value),
+    [projects, value]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +59,7 @@ export function RequiredProjectPicker({
             .map((project: any) => ({
               id: String(project?.id || '').trim(),
               name: String(project?.name || project?.title || '').trim(),
+              status: String(project?.status || '').trim().toLowerCase(),
             }))
             .filter((project) => project.id && project.name)
         );
@@ -66,7 +85,11 @@ export function RequiredProjectPicker({
     try {
       const response = await Api.createProject({ name });
       const raw = response?.project || response?.data || response;
-      const created = { id: String(raw?.id || '').trim(), name: String(raw?.name || name).trim() };
+      const created = {
+        id: String(raw?.id || '').trim(),
+        name: String(raw?.name || name).trim(),
+        status: String(raw?.status || 'active').trim().toLowerCase(),
+      };
       if (!created.id) throw new Error('Project create response did not include an id');
       setProjects((current) => [
         ...current.filter((project) => project.id !== created.id),
@@ -117,13 +140,13 @@ export function RequiredProjectPicker({
               ? 'Wybierz projekt…'
               : 'Select a project…'}
         </option>
-        {projects.map((project) => (
+        {visibleProjects.map((project) => (
           <option key={project.id} value={project.id}>
-            {project.name}
+            {project.status === 'archived' ? `${project.name} ${archivedSuffix}` : project.name}
           </option>
         ))}
       </select>
-      {!loading && projects.length === 0 && (
+      {!loading && visibleProjects.length === 0 && (
         <div className="flex gap-2">
           <input
             aria-label={language === 'pl' ? 'Nazwa nowego projektu' : 'New project name'}

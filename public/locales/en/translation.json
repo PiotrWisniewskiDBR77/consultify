@@ -49927,6 +49927,9 @@
   "shared": {
     "executiveModuleShell": {
       "resizeElementInspector": "Resize element inspector"
+    },
+    "project": {
+      "archivedSuffix": "(archived)"
     }
   },
   "vault": {

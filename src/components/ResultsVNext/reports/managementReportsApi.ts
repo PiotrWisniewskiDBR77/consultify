@@ -48,6 +48,7 @@ export interface ManagementReportHistoryPage {
 export interface ManagementReportProject {
   id: string;
   name: string;
+  status: string;
 }
 
 /**
@@ -55,6 +56,10 @@ export interface ManagementReportProject {
  * `ManagementReportsView.normalizeManagementReportProjects`. Powtórzona tu
  * lokalnie, bo import z tamtej sekcji ściągnąłby do bundla Wyników cały
  * widok raportów (lazy chunki, PDF, harmonogramy).
+ *
+ * D-C2/DEC-464: `status` jest tu zwracany (nie filtrowany) — konsument
+ * (ResultsReportGeneratorDrawer, formularz raportu = WYBÓR projektu) filtruje
+ * archived sam, żeby móc zrobić wyjątek dla aktualnie wybranego projektu.
  */
 export function normalizeProjects(response: unknown): ManagementReportProject[] {
   const payload = response as any;
@@ -70,6 +75,9 @@ export function normalizeProjects(response: unknown): ManagementReportProject[] 
     .map((project: any) => ({
       id: String(project?.id || '').trim(),
       name: String(project?.name || '').trim(),
+      status: String(project?.status || '')
+        .trim()
+        .toLowerCase(),
     }))
     .filter((project: ManagementReportProject) => project.id && project.name);
 }

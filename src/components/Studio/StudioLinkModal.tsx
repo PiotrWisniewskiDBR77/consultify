@@ -5,6 +5,7 @@
 import { Check, CheckSquare, FolderKanban, Link2, Loader2, Rocket, Search, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -27,6 +28,7 @@ interface LinkableItem {
   id: string;
   name: string;
   type: 'task' | 'project' | 'initiative';
+  status?: string;
 }
 
 export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
@@ -42,6 +44,11 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
   const [selectedTaskId, setSelectedTaskId] = useState(currentLinks.taskId);
   const [selectedProjectId, setSelectedProjectId] = useState(currentLinks.projectId);
   const [selectedInitiativeId, setSelectedInitiativeId] = useState(currentLinks.initiativeId);
+  const { t } = useTranslation();
+  // D-C2/DEC-464: rodzina RequiredProjectPicker — zakładka "project" tego
+  // modala to też WYBÓR (link diagramu do projektu), więc dostaje tę samą
+  // regułę: archived ukryty, poza aktualnie podlinkowanym.
+  const archivedSuffix = t('shared.project.archivedSuffix', { defaultValue: '(archived)' });
 
   // Load items based on active tab
   useEffect(() => {
@@ -61,11 +68,20 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
         } else if (activeTab === 'project') {
           response = await Api.get('/api/projects');
           setItems(
-            (response.data || response || []).map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              type: 'project' as const,
-            }))
+            (response.data || response || [])
+              .map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                type: 'project' as const,
+                status: String(p?.status || '')
+                  .trim()
+                  .toLowerCase(),
+              }))
+              // D-C2/DEC-464: lista służy do WYBORU — ukryj archived, chyba
+              // że to projekt aktualnie podlinkowany (currentLinks.projectId).
+              .filter(
+                (p: LinkableItem) => p.status !== 'archived' || p.id === currentLinks.projectId
+              )
           );
         } else {
           response = await Api.get('/api/initiatives');
@@ -218,7 +234,9 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
                 >
                   {getSelectedId() === item.id && <Check size={12} className="text-c-surface" />}
                 </div>
-                <span className="text-sm text-c-text truncate flex-1">{item.name}</span>
+                <span className="text-sm text-c-text truncate flex-1">
+                  {item.status === 'archived' ? `${item.name} ${archivedSuffix}` : item.name}
+                </span>
               </button>
             ))
           )}

@@ -50740,6 +50740,9 @@
       "resizeElementInspector": "Zmień szerokość panelu inspektora",
       "expandElementInspector": "Rozwiń panel inspektora",
       "collapseElementInspector": "Zwiń panel inspektora"
+    },
+    "project": {
+      "archivedSuffix": "(zarchiwizowany)"
     }
   },
   "vault": {
