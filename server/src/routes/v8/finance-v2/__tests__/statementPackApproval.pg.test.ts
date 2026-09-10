@@ -6,6 +6,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Client } from 'pg';
 import request from 'supertest';
+import type { TestContext } from 'vitest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { assertRealPostgresTestEnvironment } from '../../../../../../tests/integration/_helpers/assertRealPostgres.js';
@@ -107,6 +108,37 @@ describe.skipIf(!realPg)('CODEX3 E2 — statement-pack approval through real Api
     return result.rows[0];
   }
 
+  // FIX-4 (odbiór W1/W2, 97_ODBIOR_W1_W2.md §8): `it.fails('rejects a viewer …')`
+  // was inverted — it.fails reports PASS exactly when the test body throws, and
+  // the body throws TODAY because `createInReviewPack()` itself fails on
+  // `POST /artifacts` as FINANCE_ADMIN → 403 BETA_LOCKED (§6 STOP 2), before the
+  // security assertion is ever reached. If BetaGate is opened later AND a real
+  // hole lets `viewer` approve, `createInReviewPack()` would then succeed, the
+  // assertion `expect(response.status).toBe(403)` would fail, and `it.fails`
+  // would keep reporting PASS — "the bigger the hole, the easier it is to pass"
+  // (the exact shape this FIX removes).
+  //
+  // Fix shape: fixture-building lives in its OWN plain `it`, which has every
+  // right to be honestly RED today (`'creates a STATEMENT_PACK …'` below). The
+  // security/behavior assertions are plain `it`s — never `it.fails` — each
+  // guarded by a DYNAMIC `ctx.skip(...)` when today's fixture cannot be built,
+  // so they report SKIPPED (not a false green, not a spurious red for an
+  // unrelated fixture problem) until the fixture actually works. The moment it
+  // does, these become real, defended assertions again.
+  async function createInReviewPackOrSkip(
+    ctx: TestContext
+  ): Promise<{ artifactId: string; businessVersionId: string; version: number }> {
+    try {
+      return await createInReviewPack();
+    } catch (error) {
+      ctx.skip(
+        `fixture unavailable — cannot create/advance a STATEMENT_PACK to IN_REVIEW today: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
   it('uses PostgreSQL with the test-auth bypass disabled', () => {
     expect(process.env.DB_TYPE).toBe('postgres');
     expect(process.env.ENABLE_TEST_AUTH_BYPASS).toBe('false');
@@ -117,18 +149,16 @@ describe.skipIf(!realPg)('CODEX3 E2 — statement-pack approval through real Api
     expect(response.status).toBe(401);
   });
 
-  it.fails('creates a STATEMENT_PACK through the mounted ApiGateway', async () => {
-    const state = await createInReviewPack();
-    expect((await coldRead(state.businessVersionId)).status).toBe('IN_REVIEW');
-  });
-
-  it.fails('drives DRAFT through submit_for_review and start_review to IN_REVIEW', async () => {
+  // Dedicated fixture test — plain `it`, allowed to be honestly red (see comment
+  // above). Today: RED, "CREATE_STATEMENT_PACK_FAILED … BETA_LOCKED" (§6 STOP 2:
+  // no role maps to both "passes BetaGate" and "may submit_for_review").
+  it('creates a STATEMENT_PACK through the mounted ApiGateway and drives DRAFT to IN_REVIEW', async () => {
     const state = await createInReviewPack();
     expect(await coldRead(state.businessVersionId)).toMatchObject({ status: 'IN_REVIEW', version: state.version });
   });
 
-  it.fails('rejects a viewer with 403 and leaves the row unchanged', async () => {
-    const state = await createInReviewPack();
+  it('rejects a viewer with 403 and leaves the row unchanged', async (ctx) => {
+    const state = await createInReviewPackOrSkip(ctx);
     const before = await coldRead(state.businessVersionId);
     const response = await request(app)
       .post(`/api/v8/finance-v2/models/${state.artifactId}/approve`)
@@ -139,8 +169,8 @@ describe.skipIf(!realPg)('CODEX3 E2 — statement-pack approval through real Api
     expect(await coldRead(state.businessVersionId)).toEqual(before);
   });
 
-  it.fails('allows an owner and persists APPROVED for a separate pg client', async () => {
-    const state = await createInReviewPack();
+  it('allows an owner and persists APPROVED for a separate pg client', async (ctx) => {
+    const state = await createInReviewPackOrSkip(ctx);
     const response = await request(app)
       .post(`/api/v8/finance-v2/models/${state.artifactId}/approve`)
       .set(auth(approverId, 'OWNER'))
@@ -150,8 +180,8 @@ describe.skipIf(!realPg)('CODEX3 E2 — statement-pack approval through real Api
     expect(await coldRead(state.businessVersionId)).toMatchObject({ status: 'APPROVED', approved_by: approverId });
   });
 
-  it.fails('returns 409 for a stale expectedVersion without mutating the row', async () => {
-    const state = await createInReviewPack();
+  it('returns 409 for a stale expectedVersion without mutating the row', async (ctx) => {
+    const state = await createInReviewPackOrSkip(ctx);
     const before = await coldRead(state.businessVersionId);
     const response = await request(app)
       .post(`/api/v8/finance-v2/models/${state.artifactId}/approve`)
@@ -163,8 +193,8 @@ describe.skipIf(!realPg)('CODEX3 E2 — statement-pack approval through real Api
     expect(await coldRead(state.businessVersionId)).toEqual(before);
   });
 
-  it.fails('allows exactly one of two concurrent approvals with the same expectedVersion', async () => {
-    const state = await createInReviewPack();
+  it('allows exactly one of two concurrent approvals with the same expectedVersion', async (ctx) => {
+    const state = await createInReviewPackOrSkip(ctx);
     const approve = () => request(app)
       .post(`/api/v8/finance-v2/models/${state.artifactId}/approve`)
       .set(auth(approverId, 'OWNER'))
