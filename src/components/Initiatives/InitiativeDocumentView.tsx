@@ -75,6 +75,7 @@ import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NMo
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { sekcjeZKontraktu } from '@/components/standard/contractSections';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
@@ -241,11 +242,11 @@ import {
 // MIGRACJA (D-8): kompozycja kart Initiative wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) — patrz sections/initiativeCardContract.ts. Za flagą (default OFF).
 import {
+  INITIATIVE_BOARD_DESCRIPTOR_BY_ID,
   INITIATIVE_CARD_RENDER_IDS,
   INITIATIVE_CONTRACT_HIDDEN_SEED,
   INITIATIVE_CORE_BOARD_IDS,
   INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS,
-  isInitiativeCardContractEnabled,
   sekcjeBoarduPozaKontraktem,
   uporzadkujSekcjeBoarduInicjatywy,
   wybierzDostepneSekcjeBoarduInicjatywy,
@@ -340,7 +341,7 @@ const INITIATIVE_STATUS_TONE: Record<InitiativeStatus, NModeStatusTone> = {
 // NModeCardState). Ograniczone do sekcji z REALNYM generatorem AI w runSectionAi
 // (nie no-op). Overview + Problem + Scope + Kill Criteria są scalone w
 // initiative-definition / target-state-scope w tym widoku (13 kart §1 BCG →
-// zestaw poniżej). Mapowanie ids = ids z initiativeNSections.
+// zestaw poniżej). Mapowanie ids = ids z initiativeContractSections.
 // Sekcje, których section-AI dispatch spada na handleGenerateAI (no-op toast,
 // nic nie zapisuje) — dla nich NIE pokazujemy „Regeneruj". Zsynchronizowane z
 // realnymi case'ami w runSectionAi. (Hoisted na moduł: statyczne + używane w
@@ -798,7 +799,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // MIGRACJA (D-8): flaga kontraktu karty Initiative (default OFF; CLAUDE.md #7/#9).
   // Wartość stała per-montaż (URL/localStorage/env), więc liczymy raz. Pod flagą:
   // RDZEŃ (overview→board `initiative-definition`) staje się NIEUSUWALNY w pickerze „Sekcje".
-  const initiativeCardContractEnabled = useMemo(() => isInitiativeCardContractEnabled(), []);
   // Wzorzec N (§3) — per-section AI-draft state map. Sekcje generowane AI dostają
   // badge stanu (AI-draft/Edytowane/Gotowe) + pasek Regeneruj·Edytuj·Zaakceptuj.
   // Stan trzymany LOKALNIE (brak persystencji regenerateCount w backendzie sekcji);
@@ -2274,7 +2274,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // aliasem. Nie blokuje renderu; ostrzega, gdyby klucz kod↔katalog się rozjechał.
   // Tylko dev + flaga (żeby nie hałasować w produkcie ani przy OFF).
   useEffect(() => {
-    if (!import.meta.env.DEV || !initiativeCardContractEnabled) return;
+    if (!import.meta.env.DEV || !true) return;
     const known = new Set<string>(INITIATIVE_CARD_RENDER_IDS);
     const deadAliases = new Set(['initiativeTeam', 'linkedItems']);
     const missing = [...leftSections, ...rightSections]
@@ -2287,7 +2287,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         missing
       );
     }
-  }, [initiativeCardContractEnabled, leftSections, rightSections]);
+  }, [true, leftSections, rightSections]);
 
   // ── Suggested changes (Faza 4) — load + accept/reject (mini-gate) ──────────
   const loadSuggestedChanges = useCallback(async () => {
@@ -5629,8 +5629,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     []
   );
 
-  const initiativeNSections: NModeSection[] = useMemo(() => {
-    const allSections: NModeSection[] = [
+  const initiativeContractSections: NModeSection[] = useMemo(() => {
+    // Dane prezentacyjne nie definiują członkostwa karty. Id, nazwa, ikona i
+    // kolejność poniżej są nadpisywane przez wiążący kontrakt (DEC-432).
+    const sectionPresentation: NModeSection[] = [
       // --- Definition (always at top) ---
       {
         id: 'initiative-definition',
@@ -5882,9 +5884,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         group: groupLabels[groupIndexById[section.id] ?? 4],
       }));
 
+    const boardEntries = Object.entries(INITIATIVE_BOARD_DESCRIPTOR_BY_ID);
+    const contractSections = sekcjeZKontraktu(
+      boardEntries.map(([, descriptor]) => descriptor),
+      'initiative',
+      () => true,
+      (descriptor) => boardEntries.find(([, candidate]) => candidate === descriptor)?.[0] ?? descriptor.id
+    ).map((contractSection) => ({
+      ...contractSection,
+      ...Object.fromEntries(
+        Object.entries(sectionPresentation.find((item) => item.id === contractSection.id) ?? {}).filter(
+          ([key]) => !['id', 'label', 'icon'].includes(key)
+        )
+      ),
+    }));
+
     return withGroup(
       wybierzDostepneSekcjeBoarduInicjatywy(
-        allSections,
+        contractSections,
         enabledNModeSectionIds,
         initiativeSectionsCompleteEnabled
       )
@@ -6889,7 +6906,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // procesu, nie powodem do wywalenia karty użytkownikowi.
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
-    const bez = initiativeNSections
+    const bez = initiativeContractSections
       .map((sec) => sec.id)
       .filter((id) => !(id in SECTION_AI_CONTRACT));
     if (bez.length > 0) {
@@ -6899,10 +6916,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           'Dopisz je do SECTION_AI_CONTRACT ({ ai: true } albo { none: true, reason }).'
       );
     }
-  }, [initiativeNSections]);
+  }, [initiativeContractSections]);
 
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
-    return initiativeNSections.map((section) => {
+    return initiativeContractSections.map((section) => {
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -9167,7 +9184,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canUseAi,
     canEditCards,
     setActiveNSection,
-    initiativeNSections,
+    initiativeContractSections,
     initiative,
     sectionCompletions,
     isPolish,
@@ -9336,10 +9353,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Efekt zostaje, żeby powrót do ukrywania wymagał zmiany stałej, a nie cichego
   // dopisania id w komponencie; przy pustej stałej jest to no-op.
   useEffect(() => {
-    if (!initiativeCardContractEnabled) return; // OFF => zero zmian (jak dotąd)
+    if (!true) return; // OFF => zero zmian (jak dotąd)
     if (INITIATIVE_CONTRACT_HIDDEN_SEED.length === 0) return; // DEC-387: nic nie chowamy
     setHiddenSectionIds(new Set(INITIATIVE_CONTRACT_HIDDEN_SEED));
-  }, [initiativeCardContractEnabled]);
+  }, [true]);
 
   // DEC-387 — ostrzeżenie DEV: sekcja boardu, której kontrakt nie nazywa, jest
   // długiem kontraktu (renderuje się dalej, na końcu listy — nie znika).
@@ -9365,7 +9382,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // NIEZMIENIONA (funkcja zwraca permutację wejścia — asercja w kontrakcie
         // i w teście kompletności). Wyprowadzenie, nie ziarno stanu: ziarno
         // przegrywało wyścig z efektem czytającym localStorage.
-        if (!initiativeCardContractEnabled) return nModeSectionsWithContent;
+        if (!true) return nModeSectionsWithContent;
         const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(
           nModeSectionsWithContent.map((s) => s.id)
         );
@@ -9395,7 +9412,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     nModeSectionsWithContent,
     nModeSectionOrder,
     hiddenSectionIds,
-    initiativeCardContractEnabled,
+    true,
   ]);
 
   useEffect(() => {
@@ -11851,7 +11868,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
                                         Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
                                         (tokeny c-*, bez akcentu semantyki krytycznej). */}
-                                        {initiativeCardContractEnabled &&
+                                        {true &&
                                           (() => {
                                             const isRdzenActive =
                                               hiddenSectionIds.size > 0 &&
@@ -11918,7 +11935,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                               // z rdzenia kontraktu (overview→`initiative-definition`) nie
                                               // daje się ukryć; poza flagą zachowanie bez zmian.
                                               const isCore =
-                                                initiativeCardContractEnabled &&
+                                                true &&
                                                 INITIATIVE_CORE_BOARD_IDS.has(s.id);
                                               const isVisible =
                                                 isCore || !hiddenSectionIds.has(s.id);

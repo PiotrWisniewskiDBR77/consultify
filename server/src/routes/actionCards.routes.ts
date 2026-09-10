@@ -44,6 +44,12 @@ router.post('/', asyncHandler(async (req: AuthRequest, res: Response) => {
   res.status(201).json({ ok: true, card });
 }));
 
+router.get('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const card = await getActionCard(scope(req), req.params.id);
+  if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
+  res.json({ ok: true, card });
+}));
+
 router.patch('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
   const card = await updateActionCard(scope(req), req.params.id, req.body);
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });

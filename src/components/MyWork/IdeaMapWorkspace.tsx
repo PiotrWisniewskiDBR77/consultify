@@ -29,6 +29,7 @@ import { ErrorState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import type { ArtifactRailTeresaCommand } from '@/components/standard/ArtifactRightRail';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -4640,6 +4641,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                zapisu żyje tylko w stanie krytycznym (konflikt → alert
                `handleGraphConflict`, błąd zapisu → toast `handleGraphSaveError`). */
             primaryActionSlot={
+              <div className="flex items-center gap-2">
               <IdeaCornerActions
                 panelOpen={!panelZamkniety}
                 onTogglePanel={() => {
@@ -4651,10 +4653,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   // (ten sam warunek co „X" w `IdeaElementInspector`).
                   if (nastepny && !isChatCollapsed) toggleChatCollapse();
                 }}
-                onOpenAi={() => ustawZakladkePanelu('teresa')}
                 panelLabel={t('mindmap.cornerPanel', 'Panel')}
-                aiLabel={t('mindmap.cornerAi', 'AI')}
               />
+              <PracujZAI
+                isPolish={Boolean(isPolish)}
+                onAnalizuj={() => void handleGenerateCanvasAI('canvas_analysis')}
+                aktywnaSekcja={activeTool}
+                kontekstArtefaktu={{ title: title || seedText, status: stage, type: 'idea' }}
+                moznaEdytowac
+                uzupelnijSekcje={{ rodzaj: 'wlasnaPropozycja', uruchom: () => handleGenerateCanvasAI('active_canvas'), opis: 'Propozycje dla aktywnego centrum pojawią się do zatwierdzenia.' }}
+                uzupelnijDokument={{ rodzaj: 'wlasnaPropozycja', uruchom: () => handleGenerateCanvasAI('whole_idea'), opis: 'Propozycje dla całego pomysłu pojawią się do zatwierdzenia.' }}
+              />
+              </div>
             }
             secondBar={
               ideaTopBarOneLine ? undefined : (
@@ -4693,9 +4703,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 ideaRightPanelNode
               ) : ideaInspectorRightRail ? (
                 <IdeaElementInspector
-                  teresaContent={teresaPanelNode}
-                  activeTab={zakladkaPanelu}
-                  onTabChange={ustawZakladkePanelu}
+                  activeTab="element"
                   showCanvasAnalysis
                   // ★ NAPRAWA (odbiór CTO 05.09): tożsamość IDEI dla stanu panelu
                   // bez zaznaczenia (patrz komentarz w IdeaElementInspector.tsx
@@ -5480,7 +5488,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <IdeaRightPanel
         isPolish={isPolish}
         title={title}
-        activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'}
+        activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'properties'}
         onExport={() => setExportMenuOpen(true)}
         onConvert={() => handlePanelChange('tools')}
         // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
@@ -5504,15 +5512,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             onClose={() => handlePanelChange(null)}
           />
         }
-        teresaContent={
-          <IdeaTeresaSection
-            isPolish={isPolish}
-            aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
-            onDiscuss={handleTeresaDiscuss}
-          />
-        }
-        onDiscussWithTeresa={handleTeresaDiscuss}
-        teresaCommands={teresaCommands}
         aiSuggestionsContent={
           <IdeaAISuggestionsPanel
             {...ideaAISuggestionsPanelSharedProps}

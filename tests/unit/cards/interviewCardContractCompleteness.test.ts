@@ -7,5 +7,9 @@ describe('DEC-387 — kontrakt karty Interview zachowuje komplet sekcji', () => 
   it('M1: katalog pokrywa wszystkie renderowane sekcje', () => expect(INTERVIEW_CARD_SPEC.catalog.map((c) => c.id).sort()).toEqual([...INTERVIEW_CARD_RENDER_IDS].sort()));
   it('M2: domyślny zestaw jest permutacją renderowanych sekcji', () => expect([...INTERVIEW_CARD_SPEC.sets[0].cards].sort()).toEqual([...INTERVIEW_CARD_RENDER_IDS].sort()));
   it('M3: domyślny zestaw nie ma duplikatów', () => expect(new Set(INTERVIEW_CARD_SPEC.sets[0].cards).size).toBe(INTERVIEW_CARD_SPEC.sets[0].cards.length));
-  it('M4: realny widok przekazuje kontrakt do useCardLayout', () => expect(fs.readFileSync(path.resolve(__dirname, '../../../src/components/Interview/InterviewWorkspace.tsx'), 'utf8')).toMatch(/spec: interviewCardContractEnabled \? INTERVIEW_CARD_SPEC : undefined/));
+  it('M4: realny widok stale przekazuje kontrakt do useCardLayout', () => {
+    const source = fs.readFileSync(path.resolve(__dirname, '../../../src/components/Interview/InterviewWorkspace.tsx'), 'utf8');
+    expect(source).toMatch(/spec: INTERVIEW_CARD_SPEC/);
+    expect(source).not.toContain('VITE_VF1_INTERVIEW_CARD_CONTRACT');
+  });
 });

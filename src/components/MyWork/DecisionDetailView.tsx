@@ -107,6 +107,7 @@ import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { PracujZAI } from '../standard/PracujZAI';
 import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { pilnujSekcjiZKontraktu, sekcjeZKontraktu } from '../standard/contractSections';
 import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
 import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // SPEC-N §2.4: jedyna dozwolona droga budowy toolbara karty.
@@ -132,7 +133,20 @@ import { RiskCanvas } from '../shared/NModeSections/RiskCanvas';
 import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 // POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
-import { DECISION_CARD_RENDER_IDS, DECISION_CARD_SPEC } from './decisionCardContract';
+import { DECISION_CARDS, DECISION_CARD_SPEC } from './decisionCardContract';
+
+// Id-ki lewej kolumny kontraktu Decision, dla których TEN plik ma realny blok
+// centrum (`activeNotionSection === '<id>'`, patrz grep niżej) — SSOT „ekranu"
+// dla `pilnujSekcjiZKontraktu` w `decisionContractSections`. Utrzymuj ręcznie w
+// parze z: `grep -n "activeNotionSection === '" DecisionDetailView.tsx`.
+export const DECISION_SECTIONS_Z_RENDEREM = [
+  'context-problem',
+  'options-tradeoffs',
+  'risk-impact',
+  'consequences',
+  'governance-escalation',
+  'resources-links',
+] as const;
 import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
@@ -503,35 +517,6 @@ const VF1_DECISION_SPECA = import.meta.env.VITE_VF1_DECISION_SPECA === 'true';
 // POC — kompozycja kart Decision przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
 // Default OFF (zero regresji na demo); w dev/harnessie włącza URL `?cardContract=1`
 // (Piotr nie jest pierwszym testerem wizualnym — reguła #7; ja renderuję zrzut sam).
-function useDecisionCardContractEnabled(): boolean {
-  return useMemo(() => {
-    if (typeof window !== 'undefined' && window.location) {
-      try {
-        const query = new URLSearchParams(window.location.search).get('cardContract');
-        if (query === '1' || query === '0') {
-          try {
-            window.localStorage.setItem('ff.cardContract', query);
-          } catch {
-            /* storage may be unavailable; the explicit query still wins */
-          }
-          return query === '1';
-        }
-      } catch {
-        /* malformed/unavailable location falls through to storage and env */
-      }
-      try {
-        const stored = window.localStorage.getItem('ff.cardContract');
-        if (stored === '1' || stored === 'true' || stored === 'on') return true;
-        if (stored === '0' || stored === 'false' || stored === 'off') return false;
-      } catch {
-        /* storage may be unavailable; fall through to env */
-      }
-    }
-    if (import.meta.env.VITE_VF1_DECISION_CARD_CONTRACT === 'true') return true;
-    return false;
-  }, []);
-}
-
 type ConsequenceTimeline = {
   d7: string;
   d30: string;
@@ -1607,41 +1592,20 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // zostaje to, co widoczne ZAWSZE, czyli prawy panel; sekcje znikaja z lewej
   // nawigacji, a PELNA tresc (CommentsCanvas / ActivityLogCanvas) przenosi sie
   // do panelu — patrz `rightPanelSections` nizej.
-  const notionSections: Array<{
-    id: string;
-    label: { en: string; pl: string };
-    icon: React.FC<{ size?: number; className?: string }>;
-  }> = useMemo(
-    () => [
-      {
-        id: 'context-problem',
-        label: { en: 'Decision Scope', pl: 'Zakres decyzji' },
-        icon: FileText,
-      },
-      {
-        id: 'options-tradeoffs',
-        label: { en: 'Options & Trade-offs', pl: 'Opcje i trade-offy' },
-        icon: Lightbulb,
-      },
-      {
-        id: 'risk-impact',
-        label: { en: 'Risk & Impact', pl: 'Ryzyko i wpływ' },
-        icon: AlertTriangle,
-      },
-      { id: 'consequences', label: { en: 'Consequences', pl: 'Konsekwencje' }, icon: Clock },
-      {
-        id: 'governance-escalation',
-        label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
-        icon: Users,
-      },
-      {
-        id: 'resources-links',
-        label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
-        icon: FolderOpen,
-      },
-    ],
-    []
-  );
+  const decisionContractSections = useMemo(() => {
+    const sections = sekcjeZKontraktu(DECISION_CARDS, 'decision');
+    // W1-A (odbiór A1, 2026-09-10): `wymagajSekcjiZKontraktu` miała 0 wołaczy
+    // produkcyjnych — dokładnie ta klasa defektu ujawniła R1 w Insight (sekcja
+    // w kontrakcie bez case'a w centrum = puste centrum). Decision renderuje
+    // centrum PER-ID (`activeNotionSection === '<id>'`, nie tablicą komponentów
+    // jak Insight/Notification), więc „ekran" to statyczna lista id-ków, dla
+    // których w tym pliku istnieje realny blok JSX — utrzymywana ręcznie obok
+    // grepa `activeNotionSection ===`, żeby dopisanie karty do katalogu bez
+    // dopisania renderu (albo odwrotnie) zaczerwieniło testy, zamiast cicho
+    // wyrenderować pustkę.
+    pilnujSekcjiZKontraktu(DECISION_SECTIONS_Z_RENDEREM.map((id) => ({ id })), sections);
+    return sections;
+  }, []);
 
   // ── Kontrakt AI per sekcja (SPEC-N §2.5) ──────────────────────────────────
   // Wymog: KAZDA sekcja deklaruje kontrakt AI albo jawne wykluczenie
@@ -1698,15 +1662,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // existing NModeLeftNav + single-active-section canvas (`activeNotionSection`
   // conditionals below) instead of replacing it. Decision's canvas renders
   // content per-id via direct `activeNotionSection === '<id>'` checks (no
-  // `sections[]` array like Task/Insight), so only `notionSections` (the nav
+  // `sections[]` array like Task/Insight), so only `decisionContractSections` (the nav
   // list) needs to be filtered/ordered — the content blocks stay untouched.
   // POC (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
   // domyślny), więc namespace klucza jest osobny — stary 8-kartowy layout nie
   // hydratuje się nad węższy domyślny, a wyłączenie flagi wraca do 'v1' bez utraty.
-  const decisionCardContractEnabled = useDecisionCardContractEnabled();
-  const decisionCardLayoutStorageKey = `decision:nmode:card-layout:${
-    decisionCardContractEnabled ? 'v2-contract' : 'v1'
-  }:${decisionId ?? 'new'}`;
+  const decisionCardLayoutStorageKey = `decision:nmode:card-layout:v2-contract:${decisionId ?? 'new'}`;
   const initialDecisionCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(decisionCardLayoutStorageKey);
@@ -1744,7 +1705,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     // POC: gdy flaga ON, katalog + zestawy płyną z kontraktu kanonicznego
     // (DECISION_CARD_SPEC — stała moduł-const, stabilna referencja); gdy OFF,
     // `undefined` ⇒ useCardLayout czyta DEFAULT_CARD_SETS['decision'] jak dotąd.
-    spec: decisionCardContractEnabled ? DECISION_CARD_SPEC : undefined,
+    spec: DECISION_CARD_SPEC,
     initialLayout: initialDecisionCardLayout,
     onLayoutChange: persistDecisionCardLayout,
   });
@@ -1752,20 +1713,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // R2 (KONTRAKT §9): każda sekcja renderowana przez Decision ma wpis w katalogu
   // kanonicznym i odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog —
   // nie blokuje renderu, ale ostrzega, gdyby alias został źle zmapowany.
-  useEffect(() => {
-    if (!import.meta.env.DEV || !decisionCardContractEnabled) return;
-    const missing = notionSections
-      .map((s) => s.id)
-      .filter((id) => !DECISION_CARD_RENDER_IDS.includes(id));
-    if (missing.length > 0) {
-      // eslint-disable-next-line no-console
-      console.warn('[decisionCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
-    }
-  }, [decisionCardContractEnabled, notionSections]);
-
   const orderedNotionSections = useMemo(
-    () => decisionCardLayout.applyToSections(notionSections),
-    [decisionCardLayout, notionSections]
+    () => decisionCardLayout.applyToSections(decisionContractSections),
+    [decisionCardLayout, decisionContractSections]
   );
 
   useEffect(() => {
@@ -1959,10 +1909,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (presentationMode !== 'n') return;
 
     const onScroll = () => {
-      let bestId = notionSections[0]?.id ?? 'context-problem';
+      let bestId = decisionContractSections[0]?.id ?? 'context-problem';
       let bestDistance = Number.POSITIVE_INFINITY;
 
-      for (const section of notionSections) {
+      for (const section of decisionContractSections) {
         const el = document.getElementById(section.id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
@@ -1979,7 +1929,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [notionSections, presentationMode]);
+  }, [decisionContractSections, presentationMode]);
 
   const loadUsers = async () => {
     try {
@@ -6091,12 +6041,12 @@ Use userId only from this list:
   const zrodlaPracujZAI = useMemo(
     () =>
       zbudujZrodlaPracujZAI({
-        sekcje: notionSections,
+        sekcje: decisionContractSections,
         polaSekcji: decisionPolaSekcji,
         applyChange: applyDecisionAnalysisChange,
         isPolish,
       }),
-    [notionSections, decisionPolaSekcji, applyDecisionAnalysisChange, isPolish]
+    [decisionContractSections, decisionPolaSekcji, applyDecisionAnalysisChange, isPolish]
   );
 
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────

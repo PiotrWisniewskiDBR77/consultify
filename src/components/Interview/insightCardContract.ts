@@ -121,7 +121,17 @@ const ARTIFACT_ACTIONS = definiujKarteKanoniczna({
     kluczPromptu: 'insight.artifact-actions',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'rdzen', klasa: 'L', kolumna: 'left', kolejnosc: 0 }],
+  // 2026-09-10 (odbiór A1, R1 — defekt BLOKUJĄCY): `kolumna` NAPRAWIONE z 'left'
+  // na 'right'. Komentarz przy `INSIGHT_CONTRACT_SECTIONS` (InsightViewer.tsx)
+  // twierdzi, że ta karta „ZNIKA z centrum" od 2026-07-23, ale kompozycja dalej
+  // deklarowała ją `kolumna:'left'` — `sekcjeZKontraktu` filtruje WYŁĄCZNIE
+  // `kolumna==='right'`, więc `artifact-actions` i tak lądowała jako sekcja #0
+  // lewej nawigacji, bez komponentu centrum (białe centrum na starcie karty).
+  // `kolumna:'right'` usuwa ją z `sekcjeZKontraktu(...,'insight')` u ŹRÓDŁA —
+  // „Rezultaty" żyją wyłącznie w prawym panelu (`resultTilesNode`), zgodnie z
+  // regułą właściciela „nie dubluj: jeśli kafel idzie do Rezultatów, znika z
+  // centrum". Rola `rdzen` (nieusuwalna) zostaje bez zmian.
+  kompozycja: [{ artefakt: 'insight', rola: 'rdzen', klasa: 'L', kolumna: 'right', kolejnosc: 0 }],
   statusKanonu: { stan: 'czysta' },
 });
 
