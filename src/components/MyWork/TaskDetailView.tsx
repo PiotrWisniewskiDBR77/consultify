@@ -171,6 +171,29 @@ interface TaskDetailViewProps {
   onClose: () => void;
   onSaved?: (data: any) => void;
   onOpenDecision?: (decisionId: string) => void;
+  /**
+   * E1c/F1 (rodzina po E1b, 2026-09-10): `loadTask` domyślnie czyta przez
+   * `Api.getPersonalTask` → `GET /api/my-work/personal-tasks/:id`, który
+   * filtruje PO WŁAŚCICIELU (`buildPersonalTaskOwnerScope`) — zawsze 404 dla
+   * zadania nieprzypisanego do oglądającego. To jest właściwe dla „Moja
+   * Praca" (zadania są zawsze własne), ale ten sam komponent jest też
+   * osadzany w kartach modułowych (Inicjatywy → karta → Zadania, Assessment →
+   * karta inicjatywy → Zadania), gdzie oglądający zwykle NIE jest
+   * właścicielem zadania. ZMIERZONE na kopii (`consultify_kopia_e1c`):
+   * zadanie `2a4d39f7-…` przypisane do Katarzyny Wójcik → jako
+   * `audyt@dbr77.local` (ADMIN, nie assignee) `GET
+   * /api/my-work/personal-tasks/:id` → 404 `TASK_NOT_FOUND`, a kanoniczne
+   * `GET /api/tasks/:id` → 200 (bez filtra właściciela) — dokładnie ta sama
+   * rodzina defektu co `ExecutionWorkSurface.openWorkspace` naprawiony w
+   * E1b (commit 2b880c043c).
+   *
+   * `ownerScoped=false` przełącza `loadTask` na `Api.getTask` (kanoniczny,
+   * org-scoped, zero filtra właściciela). Domyślnie `true`, żeby zachować
+   * bieżące zachowanie „Mojej Pracy" bit-for-bit. Dotyczy WYŁĄCZNIE odczytu
+   * (otwarcia) — zapis nadal idzie przez `Api.updatePersonalTask` (poza
+   * zakresem tej naprawy; zgłoszone w meldunku E1c jako STOP).
+   */
+  ownerScoped?: boolean;
 }
 
 export const mapTaskServerComment = (comment: any): Comment => ({
@@ -467,6 +490,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   onClose,
   onSaved,
   onOpenDecision,
+  ownerScoped = true,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -1098,7 +1122,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     try {
       setLoading(true);
       setNotFound(false);
-      const task = await Api.getPersonalTask(id);
+      // E1c/F1: patrz komentarz przy `ownerScoped` w `TaskDetailViewProps`.
+      const task = ownerScoped ? await Api.getPersonalTask(id) : await Api.getTask(id);
       setTitle(task.title || '');
       setDescription(task.description || '');
       // R2/defekt #1 (2026-07-23): `expectedOutcome` NIE był mapowany przy
@@ -1143,9 +1168,29 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         setAlternatives([]);
         riskAlternativesBaselineRef.current = JSON.stringify({ risks: [], alternatives: [] });
       }
-      setAttachments(await loadTaskAttachments(Api, id));
-      const serverComments = await Api.getTaskComments(id);
-      setComments(serverComments.map(mapTaskServerComment));
+      // E1c/F1: `object-attachments/task/:id` jest CELOWO ograniczone do
+      // uczestników zadania (assignee/reporter — `objectAttachmentService.
+      // requireObjectAccess`, 403 dla reszty; komentarz w tym pliku jasno
+      // odróżnia to od zakresu inicjatyw). To NIE jest ta sama rodzina co
+      // 404 na otwarciu (właściwe ograniczenie, nie błąd) — ale ZMIERZONE
+      // po odblokowaniu odczytu zadania (`ownerScoped=false`): rzucało z
+      // TEGO `try`, więc administrator/nie-uczestnik widział poprawnie
+      // wczytaną kartę zadania i JEDNOCZEŚNIE toast „Failed to load task"
+      // (mylące — zadanie się wczytało, tylko załączniki są zastrzeżone).
+      // Własny catch, jak already dla Risk & Alternatives powyżej.
+      try {
+        setAttachments(await loadTaskAttachments(Api, id));
+      } catch (error) {
+        console.warn('[TaskDetailView] Failed to load attachments', error);
+        setAttachments([]);
+      }
+      try {
+        const serverComments = await Api.getTaskComments(id);
+        setComments(serverComments.map(mapTaskServerComment));
+      } catch (error) {
+        console.warn('[TaskDetailView] Failed to load comments', error);
+        setComments([]);
+      }
       setLinkedItems(task.linkedItems || []);
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);

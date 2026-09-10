@@ -10800,7 +10800,8 @@
       "newInitiativeAi": "Kreator inicjatywy AI",
       "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj.",
       "errorOwnerIneligible": "Wskazana osoba nie może być właścicielem inicjatywy w tym projekcie. Dodaj ją do zespołu projektu albo wybierz osobę, która już w nim jest.",
-      "errorCapabilityRequired": "Nie masz uprawnień, żeby utworzyć inicjatywę w tym projekcie. Poproś właściciela lub administratora organizacji o dostęp do tego projektu."
+      "errorCapabilityRequired": "Nie masz uprawnień, żeby utworzyć inicjatywę w tym projekcie. Poproś właściciela lub administratora organizacji o dostęp do tego projektu.",
+      "errorOwnershipRequired": "Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą."
     },
     "axis": {
       "operational": "Operacyjna",
@@ -13621,7 +13622,8 @@
         "MISSING_TRANSITION_GATE": "To przejście nie ma zdefiniowanej bramki i nie może zostać wykonane.",
         "INVALID_FLAG_OPERATION": "Ta operacja nie jest dozwolona w bieżącym stanie inicjatywy.",
         "UNSUPPORTED_FLAG_OPERATION": "Nieobsługiwana operacja flagi cyklu życia.",
-        "UNKNOWN": "Nie udało się wykonać działania. Odśwież widok i spróbuj ponownie."
+        "UNKNOWN": "Nie udało się wykonać działania. Odśwież widok i spróbuj ponownie.",
+        "CAPABILITY_OBJECT_OWNERSHIP_REQUIRED": "Możesz zmieniać status tylko inicjatyw, których jesteś właścicielem lub twórcą."
       },
       "heading": "Etap inicjatywy",
       "loading": "Sprawdzam dostępne działania…",
@@ -15382,7 +15384,8 @@
         "dictionaryMissing": "Słownik statusów jeszcze się nie wczytał.",
         "closeBlocked": "Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”.",
         "deleted": "Zadanie usunięte",
-        "deleteForbidden": "Usunąć możesz tylko zadanie, które sam(a) utworzyłeś(-aś)."
+        "deleteForbidden": "Usunąć możesz tylko zadanie, które sam(a) utworzyłeś(-aś).",
+        "ownershipRequired": "Możesz edytować tylko zadania własne lub przypisane do Ciebie."
       },
       "create": {
         "title": "Nowe zadanie",

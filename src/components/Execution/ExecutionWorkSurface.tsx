@@ -884,6 +884,27 @@ export const ExecutionWorkSurface = ({
    */
   const komunikatBledu = useCallback(
     (error: unknown): string => {
+      // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnień
+      // (`effectiveCapability.middleware.ts`) na `PUT /api/tasks/:id`. Serwer
+      // odsyła `{error: 'Capability required', code: 'CAPABILITY_...'}` —
+      // `error.message` (z `Api.updateTask` → `ApiError`) niesie WYŁĄCZNIE
+      // ogólnikowe angielskie „Capability required" (bramka jezykowa J0:
+      // serwer nie tłumaczy), a maszynowy kod siedzi w `.errorCode`. Bez tej
+      // gałęzi zapis cudzego zadania kończył się nieprzetłumaczonym,
+      // niepomocnym komunikatem zamiast zdaniem „możesz edytować tylko…".
+      const kodZdolnosci = String((error as { errorCode?: unknown } | null)?.errorCode || '')
+        .trim()
+        .toUpperCase();
+      if (
+        kodZdolnosci === 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED' ||
+        kodZdolnosci === 'CAPABILITY_OWNERSHIP_PREDICATE_MISSING' ||
+        kodZdolnosci === 'CAPABILITY_OWNERSHIP_CHECK_FAILED'
+      ) {
+        return t(
+          'execution.work.edit.ownershipRequired',
+          'You can only edit tasks you own or are assigned to.'
+        );
+      }
       const surowy = error instanceof Error ? error.message : String(error ?? '');
       const przejscie = /Cannot transition from ([a-z_]+) to ([a-z_]+)/i.exec(surowy);
       if (przejscie) {

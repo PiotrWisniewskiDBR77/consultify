@@ -50,6 +50,23 @@ describe('opiszOdmoweTworzeniaInicjatywy — powod odmowy po polsku', () => {
     expect(opis.message).toMatch(/uprawnień/);
   });
 
+  // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnien
+  // (`effectiveCapability.middleware.ts`) — `RuntimeApiError.message` niesie
+  // SUROWY KOD (klasa ustawia `message = code`), a `InitiativeDocumentView`
+  // (amend) i kreatory pokazuja `e?.message` wprost. Dowod mutacyjny: usuniecie
+  // ktoregokolwiek z trzech wpisow z `KLUCZE_ODMOWY` czerwieni ten blok.
+  it.each([
+    'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+    'CAPABILITY_OWNERSHIP_PREDICATE_MISSING',
+    'CAPABILITY_OWNERSHIP_CHECK_FAILED',
+  ])('kod %s tlumaczy sie na polskie zdanie o wlascicielu, nie surowy kod', (kod) => {
+    const opis = opiszOdmoweTworzeniaInicjatywy(new RuntimeApiError(403, kod));
+    expect(opis.message).not.toMatch(/CAPABILITY_/);
+    expect(opis.message).toBe(
+      'Możesz edytować tylko inicjatywy, których jesteś właścicielem lub twórcą.'
+    );
+  });
+
   it('nieznany kod runtime zostaje bez zmian (nie udajemy, ze wiemy co sie stalo)', () => {
     const zrodlo = new RuntimeApiError(500, 'INITIATIVES_EXECUTION_RUNTIME_FAILED');
     expect(opiszOdmoweTworzeniaInicjatywy(zrodlo)).toBe(zrodlo);

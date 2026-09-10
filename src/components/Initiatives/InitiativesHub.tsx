@@ -1859,6 +1859,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             onClose={handleShowList}
             onSaved={() => fetchData(true)}
             onOpenDecision={handleOpenDecision}
+            // E1c/F1 (rodzina po E1b, [ODMROZENIE 05_INITIATIVES DEC-453]):
+            // `handleOpenTask` już czyta przez kanoniczne `GET /api/tasks/:id`
+            // (żeby zbudować etykietę zakładki), ale samo `TaskDetailView`
+            // domyślnie doczytuje przez `Api.getPersonalTask` →
+            // `GET /api/my-work/personal-tasks/:id`, filtrowane po
+            // WŁAŚCICIELU — 404 dla każdego zadania z karty inicjatywy
+            // nieprzypisanego do oglądającego (ta sama rodzina co
+            // `ExecutionWorkSurface.openWorkspace`, naprawiona w E1b
+            // 2b880c043c). `ownerScoped={false}` przełącza na
+            // `Api.getTask` (org-scoped, zero filtra właściciela).
+            ownerScoped={false}
           />
         );
       }

@@ -298,6 +298,36 @@ describe('P16-R2 (b) — błąd serwera nie może być ciszą', () => {
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledTimes(1));
     expect(toastError).not.toHaveBeenCalled();
   });
+
+  // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnień
+  // (`effectiveCapability.middleware.ts`) na `PUT /api/tasks/:id`. PRZED tej
+  // naprawy `komunikatBledu` czytał wyłącznie `error.message`, a dla tej
+  // bramki to zawsze ogólnikowe angielskie "Capability required" — użytkownik
+  // (MEMBER edytujący cudze zadanie) nie dostawał ani polskiego zdania, ani
+  // konkretnego powodu. Test broni MAPOWANIA `errorCode` -> klucz i18n dla
+  // wszystkich trzech kodów.
+  it.each([
+    'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+    'CAPABILITY_OWNERSHIP_PREDICATE_MISSING',
+    'CAPABILITY_OWNERSHIP_CHECK_FAILED',
+  ])('kod odmowy %s daje polskie zdanie o własności zadania, nie surowy kod', async (kod) => {
+    updateTask.mockRejectedValue(Object.assign(new Error('Capability required'), { errorCode: kod }));
+    zamontuj();
+    await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
+
+    const komorka = within(wiersz('Zadanie z inicjatywa')).getByText('Anna Kowalska');
+    fireEvent.doubleClick(komorka);
+    const edytor = await screen.findByLabelText('Change assignee');
+    fireEvent.change(edytor, { target: { value: 'osoba-2' } });
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
+    const komunikat = String(toastError.mock.calls[0][0]);
+    expect(komunikat).toBe('You can only edit tasks you own or are assigned to.');
+    expect(komunikat).not.toContain('CAPABILITY_');
+    expect(komunikat).not.toContain('Capability required');
+    expect(toastSuccess).not.toHaveBeenCalled();
+    toastError.mockClear();
+  });
 });
 
 describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {

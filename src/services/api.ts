@@ -4818,7 +4818,15 @@ export const Api = {
 
   getTask: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/tasks/${id}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch task');
+    if (!res.ok) {
+      // E1c/F1: attach `.status` like `getPersonalTask` already does — the
+      // one caller that branches on it (`TaskDetailView.loadTask`, when
+      // `ownerScoped=false`) needs to tell a real 404 apart from any other
+      // failure to render the "not found" state instead of a generic toast.
+      const err = new Error('Failed to fetch task') as Error & { status?: number };
+      err.status = res.status;
+      throw err;
+    }
     return res.json();
   },
 
