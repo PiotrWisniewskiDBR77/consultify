@@ -158,8 +158,19 @@ export class ApiError extends Error {
     // błąd lądował jako `INTERNAL` i ekran nie miał po czym rozpoznać reguły —
     // został tylko angielski tekst serwera. Kolejność (errorCode → code) jest
     // addytywna: gdzie `errorCode` jest, zachowanie bez zmian.
+    // E3/P1 (2026-09-10): ta sama historia, trzecia nazwa pola. Silnik przejść
+    // inicjatywy (`initiativeTransitionConditions.ts` → `INITIATIVE_CONDITION_RULES`)
+    // odsyła maszynową przyczynę w polu `rule`, nie w `code` ani `errorCode`.
+    // ZMIERZONE na własnym API 4223 (kopia `consultify_kopia_e3`):
+    //   PATCH /api/initiatives/:id/status  {"status":"APPROVED"}
+    //   → 400 {"error":"A current GO decision is required","rule":"GATE_DECISION_REQUIRED"}
+    // Bez tego odczytu `errorCode` był `INTERNAL`, ekran nie miał po czym
+    // rozpoznać reguły i pokazywał użytkownikowi ANGIELSKIE zdanie serwera —
+    // mimo że polskie tłumaczenie dla `GATE_DECISION_REQUIRED` od dawna leży
+    // w `initiativeLifecycleMessages.ts` i w `public/locales/pl`. Dopisek jest
+    // addytywny: gdzie `errorCode`/`code` są, zachowanie bez zmian.
     this.errorCode =
-      String(envelope.errorCode ?? envelope.code ?? 'INTERNAL')
+      String(envelope.errorCode ?? envelope.code ?? envelope.rule ?? 'INTERNAL')
         .trim()
         .toUpperCase() || 'INTERNAL';
     this.correlationId = String(envelope.correlationId ?? '').trim() || null;

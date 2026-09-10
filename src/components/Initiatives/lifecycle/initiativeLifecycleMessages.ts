@@ -120,6 +120,34 @@ export function initiativeRuleMessage(
 }
 
 /**
+ * ODMOWA ZMIANY STATUSU MUSI DOJŚĆ DO CZŁOWIEKA PO POLSKU — E3/P1 (10.09).
+ *
+ * Zmierzone na własnym API (kopia `consultify_kopia_e3`, konto ADMIN DBR77):
+ *   `PATCH /api/initiatives/:id/status` `{"status":"APPROVED"}`
+ *   → 400 `{"error":"A current GO decision is required","rule":"GATE_DECISION_REQUIRED"}`
+ *
+ * Wszystkie trzy powierzchnie zmiany statusu (`InitiativeDocumentView`,
+ * `InitiativesHub`, `InitiativeCompactPanel`) pokazywały `e?.message` wprost,
+ * czyli ANGIELSKIE zdanie serwera — mimo że polski komunikat dla tej reguły
+ * leży w `INITIATIVE_RULE_MESSAGE_KEYS` powyżej i w `public/locales/pl`.
+ * Klasyczna „biblioteka bez wywołania": słownik istniał, nikt go nie wołał.
+ *
+ * Tłumaczenie siedzi TU, w jednym lejku dla trzech ekranów. Kodu, którego
+ * słownik nie zna, NIE chowamy — wraca oryginalny błąd, bo cisza jest gorsza
+ * niż obcy język.
+ */
+export function opiszOdmoweZmianyStatusu(error: unknown, t: TranslateFn): Error {
+  // `ApiError.errorCode` czyta kolejno `errorCode` → `code` → `rule`
+  // (`src/services/api.ts`). Odczyt jest strukturalny, żeby słownik komunikatów
+  // nie musiał zaciągać całego modułu API.
+  const kod = String(
+    (error as { errorCode?: unknown } | null | undefined)?.errorCode ?? ''
+  ).trim();
+  if (!kod || !INITIATIVE_RULE_MESSAGE_KEYS[kod]) return error as Error;
+  return new Error(initiativeRuleMessage(kod, t));
+}
+
+/**
  * Etykieta akcji per bramka — słownictwo z tablicy DEC-424.
  *
  * J17: jedno źródło etykiet enumów (`src/utils/enumLabel.ts`, domena

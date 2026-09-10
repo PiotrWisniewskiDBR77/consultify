@@ -61,6 +61,7 @@ import {
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
 import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
+import { opiszOdmoweZmianyStatusu } from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -1269,8 +1270,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // reason). `error.response.data.error` is an axios shape this client
         // never produces, so it was always undefined and silently hid the
         // real reason behind a generic toast.
+        // E3/P1: odmowa reguły (`rule` w ciele 400, np. GATE_DECISION_REQUIRED)
+        // przechodzi przez wspólny lejek i dociera po polsku; kod nieznany
+        // słownikowi zostaje bez zmian, żeby przyczyny nie zgubić.
+        const odmowa = opiszOdmoweZmianyStatusu(error, (klucz, zapas) =>
+          String(t(klucz, zapas))
+        );
         toast.error(
-          error?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
+          odmowa?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }
     },

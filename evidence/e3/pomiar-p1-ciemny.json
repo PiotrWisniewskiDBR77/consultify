@@ -1,0 +1,16 @@
+{
+  "modal": "Usuń zadanie | Usunąć „Złożenie dokumentacji zgodności”? Tej operacji nie można cofnąć. | Anuluj | Usuń",
+  "klikCta": true,
+  "toast": [
+    "LOCAL @996d9145910b",
+    "Przejdź do głównej treści",
+    "Brakuje aktualnej decyzji GO komitetu.",
+    "Brakuje aktualnej decyzji GO komitetu."
+  ],
+  "patch": [
+    "400 http://localhost:3243/api/initiatives/84baaa08-5249-42e4-a292-3921e67d29d1/status"
+  ],
+  "bledy": [
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+  ]
+}

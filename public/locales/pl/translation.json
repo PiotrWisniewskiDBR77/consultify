@@ -15332,7 +15332,9 @@
         "blockedReasonRequired": "Status „Zablokowane” wymaga podania powodu blokady.",
         "alreadyClosed": "Zadanie jest już zamknięte.",
         "dictionaryMissing": "Słownik statusów jeszcze się nie wczytał.",
-        "closeBlocked": "Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”."
+        "closeBlocked": "Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”.",
+        "deleted": "Zadanie usunięte",
+        "deleteForbidden": "Usunąć możesz tylko zadanie, które sam(a) utworzyłeś(-aś)."
       },
       "create": {
         "title": "Nowe zadanie",
@@ -15342,7 +15344,10 @@
         "titleRequired": "Podaj tytuł zadania."
       },
       "menu": {
-        "openTask": "Otwórz zadanie"
+        "openTask": "Otwórz zadanie",
+        "assignPerson": "Przypisz osobę",
+        "setStatus": "Ustaw status: {{status}}",
+        "noTransitions": "Ze statusu „{{z}}” nie ma dalszych przejść."
       },
       "archiveNote": "Elementy pracy podlegają retencji Execution Case.",
       "baselineVersion": "zaakceptowana wersja bazowa",
@@ -15403,6 +15408,10 @@
       "kind": {
         "task": "Zadanie",
         "decision": "Decyzja"
+      },
+      "delete": {
+        "title": "Usuń zadanie",
+        "message": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
       }
     },
     "resources": {

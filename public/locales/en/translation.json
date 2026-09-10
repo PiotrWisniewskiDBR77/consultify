@@ -16123,7 +16123,9 @@
         "blockedReasonRequired": "Status \"Blocked\" requires a blocking reason.",
         "alreadyClosed": "The task is already closed.",
         "dictionaryMissing": "The status dictionary has not loaded yet.",
-        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first."
+        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first.",
+        "deleted": "Task deleted",
+        "deleteForbidden": "You can only delete tasks that you created yourself."
       },
       "create": {
         "title": "New task",
@@ -16133,7 +16135,10 @@
         "titleRequired": "Enter a task title."
       },
       "menu": {
-        "openTask": "Open task"
+        "openTask": "Open task",
+        "assignPerson": "Assign person",
+        "setStatus": "Set status: {{status}}",
+        "noTransitions": "Status \"{{z}}\" has no further transitions available."
       },
       "archiveNote": "Work items follow the Execution Case retention policy.",
       "baselineVersion": "accepted baseline",
@@ -16194,6 +16199,10 @@
       "kind": {
         "task": "Task",
         "decision": "Decision"
+      },
+      "delete": {
+        "title": "Delete task",
+        "message": "Delete \"{{title}}\"? This action cannot be undone."
       }
     },
     "resources": {

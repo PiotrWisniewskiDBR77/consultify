@@ -1,0 +1,42 @@
+{
+  "wiersz": {
+    "i": 10,
+    "tytul": "Przygotowanie demo dla interesariuszy",
+    "status": "Do zrobienia"
+  },
+  "kebabPrzed": [
+    "Otwórz zadanie",
+    "Przypisz osobę",
+    "Ustaw status: Do zaplanowania",
+    "Ustaw status: W toku",
+    "Ustaw status: W przeglądzie",
+    "Ustaw status: Zablokowane",
+    "Ustaw status: Anulowane",
+    "Otwórz podgląd",
+    "Usuń"
+  ],
+  "opcjeSelecta": [
+    "todo=Do zrobienia",
+    "backlog=Do zaplanowania",
+    "in_progress=W toku",
+    "review=W przeglądzie",
+    "blocked=Zablokowane",
+    "cancelled=Anulowane"
+  ],
+  "kebabPo": [
+    "Otwórz zadanie",
+    "Przypisz osobę",
+    "Ustaw status: Do zaplanowania",
+    "Ustaw status: Do zrobienia",
+    "Ustaw status: W przeglądzie",
+    "Ustaw status: Zablokowane",
+    "Ustaw status: Wstrzymane",
+    "Ustaw status: Wykonane",
+    "Ustaw status: Anulowane",
+    "Otwórz podgląd",
+    "Usuń"
+  ],
+  "poReload1": "W toku",
+  "poReload2": "Wykonane",
+  "bledyKonsoli": []
+}

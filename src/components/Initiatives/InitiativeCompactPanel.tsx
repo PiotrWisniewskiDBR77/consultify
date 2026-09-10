@@ -53,6 +53,7 @@ import {
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import { opiszOdmoweZmianyStatusu } from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
@@ -462,7 +463,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       onUpdate?.(updated);
       fetchData();
     } catch (e: any) {
-      toast.error(e?.message || t('initiatives.toast.statusChangeFailed', 'Status change failed'));
+      // E3/P1 — ten sam lejek co karta i rejestr: odmowa reguły po polsku.
+      const odmowa = opiszOdmoweZmianyStatusu(e, (klucz, zapas) => String(t(klucz, zapas)));
+      toast.error(
+        odmowa?.message || t('initiatives.toast.statusChangeFailed', 'Status change failed')
+      );
     } finally {
       setIsChangingStatus(false);
     }
