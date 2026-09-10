@@ -1,0 +1,200 @@
+=== Tabele z project_id ===
+adkar_assessments
+agent_folders
+ai_actions
+ai_actions_config
+ai_audit_logs
+ai_authoring_audit
+ai_conversations
+ai_doc_usage_log
+ai_project_memory
+ai_run_ledger
+ai_usage_stats
+artifact_conversions
+assessment_reports
+assessment_workflows
+assessments
+audit_log
+audit_programs
+audits
+budget_entries
+budget_overspend_signals
+budgets
+case_core
+case_workspace_action_proposals
+case_workspace_artifact_links
+case_workspace_event_inbox
+case_workspace_event_outbox
+case_workspace_gateway_evaluations
+case_workspace_history_events
+case_workspace_node_result_acceptances
+case_workspace_node_runs
+case_workspace_runs
+case_workspace_value_measurements
+case_workspace_waits
+change_feedback
+change_pulse_checkins
+change_requests
+change_resistance_alerts
+change_sentiment_snapshots
+chat_project_members
+conclusion_source_packs
+conclusions
+consultant_project_access
+conversations
+decisions
+delay_signals
+digitization_analyses
+execution_case_links
+executive_aggregate_cache
+executive_insights_cache
+external_digital_assessments
+financial_analyses
+financial_models
+flow_accepted_classic_runtime_adoptions
+flow_teresa_chat_draft_adoptions
+generic_assessment_reports
+ideas
+ie_governance_role_bindings
+imported_reports
+initiative_benefits
+initiative_candidates
+initiative_dependencies
+initiative_wizard_sessions
+initiatives
+insight_source_baskets
+interview_assignments
+interview_inference_runs
+interview_sessions
+invitations
+knowledge_docs
+knowledge_documents
+management_report_schedules
+management_reports
+maturity_assessments
+meetings
+method_sessions
+multi_framework_assessments
+multi_framework_initiatives
+multi_framework_reports
+notebook_pages
+notifications
+okr_objectives
+organization_context_processing_jobs
+organization_context_storage_events
+partner_projects
+pdf_imports
+plan_baselines
+pmo_audit_trail
+presentation_decks
+project_ai_settings
+project_budgets
+project_insights
+project_knowledge
+project_kpis
+project_members
+project_notification_settings
+project_role_assignments
+project_role_overrides
+project_steering_board
+project_steering_board_members
+project_team_members
+project_users
+rapid_lean_assessments
+report_builder_reports
+reports
+research_sessions
+risk_register
+roadmap_waves
+role_change_audit_events
+rollout_changes
+rollout_closures
+rollout_kpis
+rollout_risks
+rollout_stages
+sandbox_projects
+scheduled_events
+scim_group_mappings
+sessions
+stakeholder_engagements
+status_reports
+task_baseline_snapshots
+task_escalations
+task_labels
+tasks
+tool_outputs
+tool_reports
+tool_sessions
+tool_works
+transformation_cases
+transformation_planning_intakes
+transformation_project_team_blueprints
+trigger_fire_log
+user_activity
+v8_agent_admin_audit_events
+v8_agent_resource_policies
+v8_agent_resource_reservations
+v8_agent_tenant_activation_receipts
+v8_agent_tenant_settings
+v8_consumer_tool_policies
+v8_context_snapshots
+v8_output_artifacts
+v_multi_framework_assessment_summary
+valuations
+vault_folders
+wave5_artifacts
+wave6_context_ledger
+wave6_context_snapshots
+wave6_memory_candidates
+wave7_connector_runs
+wave8_agent_runs
+wave8_agent_schedules
+wave8_agent_tool_governance_events
+work_canvas_drafts
+work_canvas_ideas
+work_signals
+workstreams
+z139_backup_919_decisions
+z139_backup_919_initiatives
+z139_backup_919_notebook_pages
+z139_backup_919_tasks
+z139_backup_919_work_canvas_drafts
+
+=== Projekty DBR77 (PRZED) ===
+21e06b0c-cf37-4c97-ae81-256a6950d691 | Automated Changeover Optimization | status=active | archived_at=null | owner=null | created=2026-02-15T16:52:27.000Z
+04366332-e4b5-4189-b656-72f8298665cf | Automated Changeover Optimization | status=active | archived_at=null | owner=null | created=2026-02-15T16:52:27.000Z
+923bc369-e684-4aa6-a598-f69746fe719a | Automated Changeover Optimization | status=active | archived_at=null | owner=null | created=2026-02-15T16:52:27.000Z
+6be9d39f-2c73-4ac2-8e1d-e54870d4e872 | DBR77 Demo — All Modules | status=active | archived_at=null | owner=null | created=2026-02-22T10:29:11.506Z
+ff83a6dd-b1f0-49e8-8edb-d06a3fc18241 | DBR77 Demo — All Modules | status=active | archived_at=null | owner=null | created=2026-02-22T10:29:11.506Z
+project-dbr77-demo-all-modules | DBR77 Demo — All Modules | status=active | archived_at=null | owner=null | created=2026-02-22T10:29:11.506Z
+dbr77-project-main | DBR77 Digital Transformation | status=active | archived_at=null | owner=null | created=2026-03-16T17:40:36.996Z
+2fbb1e31-6c71-4228-b775-05aae98690d6 | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2025-12-23T17:26:46.000Z
+f992cfae-9b03-473f-a685-a5f58b5a5119 | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2025-12-23T17:26:46.000Z
+project-dbr77-001 | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2025-12-23T17:26:46.000Z
+655bb4b2-e757-480c-8d8d-df37a552c5bb | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2026-02-16T20:37:36.154Z
+5061af12-91d7-54b1-b424-9b5d9a715496 | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2026-02-16T20:37:36.154Z
+b4695c7c-0434-46ac-9cc1-3cd89afc463a | DBR77 Transformation Program | status=active | archived_at=null | owner=null | created=2026-02-16T20:37:36.154Z
+c73ee0e2-03d7-4202-baa1-e8ff63399a9b | Portfel — inicjatywy bezpośrednie | status=active | archived_at=null | owner=null | created=2026-09-06T07:28:10.546Z
+a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--case-project | Program poprawy realizacji korzyści | status=active | archived_at=null | owner=null | created=2026-08-13T09:15:16.409Z
+6d8ae9ba-3840-46ea-9068-10cdf55d5a76 | Transformacja Cyfrowa Q2 2026 | status=active | archived_at=null | owner=bf0f01a2-9ada-4cb8-a331-4dce1930e4f3 | created=2026-04-09T02:50:29.530Z
+
+=== Zawartosc per projekt per tabela (tylko >0) ===
+21e06b0c-cf37-4c97-ae81-256a6950d691 (Automated Changeover Optimization, created=2026-02-15T16:52:27.000Z): total_non_member=2 :: initiatives=1, tasks=1
+04366332-e4b5-4189-b656-72f8298665cf (Automated Changeover Optimization, created=2026-02-15T16:52:27.000Z): total_non_member=1 :: tasks=1
+923bc369-e684-4aa6-a598-f69746fe719a (Automated Changeover Optimization, created=2026-02-15T16:52:27.000Z): total_non_member=0 :: (brak)
+6be9d39f-2c73-4ac2-8e1d-e54870d4e872 (DBR77 Demo — All Modules, created=2026-02-22T10:29:11.506Z): total_non_member=0 :: (brak)
+ff83a6dd-b1f0-49e8-8edb-d06a3fc18241 (DBR77 Demo — All Modules, created=2026-02-22T10:29:11.506Z): total_non_member=12 :: ie_governance_role_bindings=6, initiative_candidates=5, tasks=1
+project-dbr77-demo-all-modules (DBR77 Demo — All Modules, created=2026-02-22T10:29:11.506Z): total_non_member=1 :: initiative_wizard_sessions=1
+dbr77-project-main (DBR77 Digital Transformation, created=2026-03-16T17:40:36.996Z): total_non_member=124 :: ai_doc_usage_log=9, assessments=2, conclusion_source_packs=6, conclusions=6, decisions=7, executive_aggregate_cache=1, executive_insights_cache=1, interview_assignments=7, interview_sessions=5, knowledge_docs=6, tasks=2, tool_sessions=6, wave6_context_ledger=57, wave6_context_snapshots=9
+   project_members=5
+2fbb1e31-6c71-4228-b775-05aae98690d6 (DBR77 Transformation Program, created=2025-12-23T17:26:46.000Z): total_non_member=26 :: initiatives=7, tasks=19
+f992cfae-9b03-473f-a685-a5f58b5a5119 (DBR77 Transformation Program, created=2025-12-23T17:26:46.000Z): total_non_member=24 :: initiative_dependencies=1, initiatives=7, tasks=16
+project-dbr77-001 (DBR77 Transformation Program, created=2025-12-23T17:26:46.000Z): total_non_member=26 :: initiatives=7, interview_sessions=3, tasks=16
+655bb4b2-e757-480c-8d8d-df37a552c5bb (DBR77 Transformation Program, created=2026-02-16T20:37:36.154Z): total_non_member=2 :: initiatives=1, tasks=1
+5061af12-91d7-54b1-b424-9b5d9a715496 (DBR77 Transformation Program, created=2026-02-16T20:37:36.154Z): total_non_member=1 :: initiatives=1
+b4695c7c-0434-46ac-9cc1-3cd89afc463a (DBR77 Transformation Program, created=2026-02-16T20:37:36.154Z): total_non_member=1 :: initiatives=1
+c73ee0e2-03d7-4202-baa1-e8ff63399a9b (Portfel — inicjatywy bezpośrednie, created=2026-09-06T07:28:10.546Z): total_non_member=50 :: ai_doc_usage_log=1, executive_aggregate_cache=1, executive_insights_cache=1, initiative_wizard_sessions=4, initiatives=2, pmo_audit_trail=14, tasks=14, wave6_context_ledger=12, wave6_context_snapshots=1
+a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--case-project (Program poprawy realizacji korzyści, created=2026-08-13T09:15:16.409Z): total_non_member=4 :: case_core=1, interview_assignments=1, interview_sessions=1, presentation_decks=1
+6d8ae9ba-3840-46ea-9068-10cdf55d5a76 (Transformacja Cyfrowa Q2 2026, created=2026-04-09T02:50:29.530Z): total_non_member=74 :: decisions=12, initiative_dependencies=1, initiatives=6, interview_sessions=2, meetings=5, tasks=45, transformation_cases=1, v8_context_snapshots=1, wave8_agent_tool_governance_events=1
+
+=== Wskazniki domyslnego/biezacego projektu ===
