@@ -208,7 +208,23 @@ function checkThresholds(config: WatchdogConfig): void {
 async function notifyAlert(type: string, message: string): Promise<void> {
   try {
     const emailService = await import('../services/emailService.js').then((m) => m.default || m);
-    const alertEmail = process.env.ALERT_EMAIL || process.env.ADMIN_EMAIL || '';
+    // P3 (S2.5, 2026-09-10): this used to read ONLY `ALERT_EMAIL`/`ADMIN_EMAIL`, a
+    // different pair of names than the ones every other alert path in this codebase
+    // uses (`AlertEmailService.ts`, `HealthCheckJob.ts`) — `ALERT_EMAIL_RECIPIENTS`
+    // (per-env: `ALERT_EMAIL_RECIPIENTS_<ENV>`). Measured on staging 2026-09-10:
+    // `ALERT_EMAIL_RECIPIENTS=piotr.wisniewski@dbr77.com` is set, `ALERT_EMAIL` is
+    // NOT — so a 5xx spike on staging silently sent NO email (this `if` below was
+    // simply false), even though the identical-looking health-check-down alert DID
+    // reach Piotr, because that job reads the right variable. Recipients take the
+    // first non-empty comma-separated address (sendEmail below expects one `to`).
+    const alertEmail =
+      String(process.env.ALERT_EMAIL_RECIPIENTS || '')
+        .split(',')
+        .map((s) => s.trim())
+        .find(Boolean) ||
+      process.env.ALERT_EMAIL ||
+      process.env.ADMIN_EMAIL ||
+      '';
     if (alertEmail && emailService?.sendEmail) {
       const safeType = escapeHtml(type);
       const safeMessage = escapeHtml(message).slice(0, MAX_STRINGIFIED_ALERT_PAYLOAD);

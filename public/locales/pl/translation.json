@@ -262,6 +262,7 @@
     "REPORT_BUILDER_PUBLIC_GENERATE_DOCX_FAILED": "Nie udało się wygenerować DOCX.",
     "REPORT_BUILDER_PUBLIC_GENERATE_PDF_FAILED": "Nie udało się wygenerować PDF.",
     "REPORT_BUILDER_PUBLIC_GENERATE_PPTX_FAILED": "Nie udało się wygenerować PPTX.",
+    "RATE_LIMIT_EXCEEDED": "Zbyt wiele zapytań do AI w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.",
     "SETTINGS_AI_PROVIDERS_UPDATE_FAILED": "Nie udało się zapisać dostawców AI.",
     "SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED": "Nie udało się zapisać preferencji pulpitu.",
     "SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED": "Nie udało się zapisać podsumowania powiadomień.",

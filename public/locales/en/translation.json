@@ -262,6 +262,7 @@
     "REPORT_BUILDER_PUBLIC_GENERATE_DOCX_FAILED": "The DOCX file could not be generated.",
     "REPORT_BUILDER_PUBLIC_GENERATE_PDF_FAILED": "The PDF file could not be generated.",
     "REPORT_BUILDER_PUBLIC_GENERATE_PPTX_FAILED": "The PPTX file could not be generated.",
+    "RATE_LIMIT_EXCEEDED": "Too many AI requests in a short time. Please wait a moment and try again.",
     "SETTINGS_AI_PROVIDERS_UPDATE_FAILED": "The AI providers could not be saved.",
     "SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED": "The dashboard preferences could not be saved.",
     "SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED": "The notification digest could not be saved.",
