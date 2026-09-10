@@ -608,12 +608,12 @@ router.get(
         ? await initiativeExists(organizationId, initiativeId)
         : Boolean(
             (
-              await dbGet<{ id: string }>(
-                `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              await dbGet<{ found: number }>(
+                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
                 [initiativeId, organizationId],
                 { fallback: true }
               )
-            )?.id
+            )?.found
           );
       if (!exists) {
         return res.status(404).json({
