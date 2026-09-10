@@ -167,7 +167,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   commandRowContent,
   commandRowRightContent,
   onNewItem,
-  newItemLabel = 'New Item',
+  newItemLabel,
   newItemTestId,
   primaryCta,
   categoryButtons,
@@ -537,7 +537,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 transition-colors duration-150
               "
             >
-              <span>{newItemLabel}</span>
+              {/* [ODMROZENIE STANDARD_TABLE DEC-457] Default parametru 'New
+                  Item' był zawsze prawdziwy — moduł bez własnej etykiety
+                  pokazywał angielski tekst w polskim interfejsie. */}
+              <span>{newItemLabel || t('sharedComponents.gridView.newItemDefault')}</span>
             </button>
           ) : null}
 

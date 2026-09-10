@@ -825,8 +825,41 @@ export const StandardTable: React.FC<StandardTableProps> = ({
         </div>
       )}
     </div>
+  ) : data.length === 0 && filters.length > 0 && !emptyMessage ? (
+    /**
+     * [ODMROZENIE STANDARD_TABLE DEC-457]
+     *
+     * Defekt zmierzony 2026-09-10 (P12) na Outputach zbiorczych: czip Menu 3
+     * ("Dokument") trafia do tego samego `activeFilters`/`filters`, który
+     * moduł przekazuje jako `data` już przefiltrowane na zero. Gałąź powyżej
+     * (branded `EmptyState` z `empty.title`) wymaga `filters.length === 0`,
+     * więc przy aktywnym filtrze omijała ją i lądowała w `emptyMessage` —
+     * które prawie żaden ekran nie podaje osobno (podają tylko `empty`).
+     * `emptyMessage` było wtedy `undefined`, a `FilterableTable` miało własny
+     * angielski default 'No items found' wpisany na sztywno w wartości
+     * domyślnej parametru — więc polski ekran pokazywał angielski tekst.
+     *
+     * Naprawa: gdy filtr jest aktywny i ekran nie podał własnego
+     * `emptyMessage`, pokaż przetłumaczony tekst (tytuł `empty`, jeśli moduł
+     * go zadeklarował, inaczej generyczny „brak wyników filtra") + istniejący
+     * handler czyszczenia filtrów (`handleFilterChange([])`, ten sam, którego
+     * już używa wewnętrzny popover kolumn FilterableTable).
+     */
+    <div
+      data-testid="standard-table-empty-filtered"
+      className="flex flex-col items-center gap-3 py-10 text-center text-sm text-[var(--c-text-muted)]"
+    >
+      <span>{empty?.title ?? t('common.noFilterResults', 'No items match the active filters')}</span>
+      <button
+        type="button"
+        onClick={() => handleFilterChange([])}
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-xs font-medium text-c-text transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+      >
+        {t('common.clearFilters', 'Clear filters')}
+      </button>
+    </div>
   ) : (
-    emptyMessage
+    emptyMessage ?? t('common.noItemsFound', 'No items found')
   );
 
   // Podczas ładowania `tbody` nie pokazuje starych wierszy — nagłówek zostaje.
