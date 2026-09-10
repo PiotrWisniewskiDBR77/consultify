@@ -1588,12 +1588,12 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         icon={<CheckCircle2 />}
         title={
           viewMode === 'my'
-            ? 'No decisions awaiting your action'
+            ? t('decisions.noMyDecisions', 'No decisions awaiting your action')
             : viewMode === 'awaiting'
-              ? 'No requests pending'
-              : 'No decisions'
+              ? t('decisions.noRequestsPending', 'No requests pending')
+              : t('decisions.noDecisions', 'No decisions')
         }
-        description="All caught up!"
+        description={t('decisions.allCaughtUp', 'All caught up!')}
         className="h-full"
       />
     );
