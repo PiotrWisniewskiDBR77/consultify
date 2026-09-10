@@ -826,7 +826,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   hideRowActions = false,
   activeFilters,
   onFilterChange,
-  emptyMessage = 'No items found',
+  emptyMessage,
   emptyFilteredMessage,
   canvasClassName = 'p-4',
   density = 'comfortable',
@@ -868,6 +868,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, []);
 
   const { t } = useTranslation();
+  // [ODMROZENIE STANDARD_TABLE DEC-457] `emptyMessage` domyślne 'No items
+  // found' było wpisane na sztywno w wartości domyślnej parametru — w
+  // polskim interfejsie leciało nieprzetłumaczone (P12, 2026-09-10, zmierzone
+  // na ekranie Outputów zbiorczych z aktywnym czipem filtra Menu 3 = 0
+  // trafień). Klucz `common.noItemsFound` istnieje już w obu locale.
+  const resolvedEmptyMessage = emptyMessage ?? t('common.noItemsFound', 'No items found');
   /**
    * ── R04-2A · wysokość rejestru ────────────────────────────────────────────
    *
@@ -1958,7 +1964,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       }
                     >
                       {data.length === 0 ? (
-                        emptyMessage
+                        resolvedEmptyMessage
                       ) : (
                         <div className="flex flex-col items-center gap-3">
                           <span>

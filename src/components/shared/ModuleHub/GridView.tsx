@@ -134,12 +134,17 @@ export const GridView: React.FC<GridViewProps> = ({
   onItemClick,
   onItemAction,
   onNewItem,
-  newItemLabel = 'New Item',
-  emptyMessage = 'No items found',
+  newItemLabel,
+  emptyMessage,
   extraCardActions,
 }) => {
   const { t } = useTranslation();
 
+  // [ODMROZENIE STANDARD_TABLE DEC-457] Domyślne wartości parametrów 'New
+  // Item'/'No items found' były zawsze prawdziwe (truthy), więc fallback
+  // `|| t(...)` niżej nigdy się nie uruchamiał — martwy kod i18n, angielski
+  // napis leciał w polskim interfejsie nawet gdy klucz tłumaczenia istniał
+  // i był poprawnie przetłumaczony (P12, 2026-09-10).
   const labels = useMemo(
     () => ({
       open: t('sharedComponents.gridView.open'),

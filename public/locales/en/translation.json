@@ -2827,6 +2827,8 @@
     "untitled": "Untitled",
     "source": "Source",
     "clearFilters": "Clear filters",
+    "noItemsFound": "No items found",
+    "filtersLabel": "Filters:",
     "comingSoonPrep": "Coming soon",
     "show": "Show",
     "muted": "Muted",

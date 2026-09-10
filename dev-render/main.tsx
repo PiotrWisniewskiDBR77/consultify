@@ -28,6 +28,9 @@ const PrototypeHarness = ({ context, legacy }: { context: 'idea' | 'notebook'; l
   return <>{legacy}</>;
 };
 const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
+const P12TabelaI18nMenu3EmptyScreen = React.lazy(
+  () => import('./screens/p12-tabela-i18n-menu3-empty')
+);
 const Day235MaterialyDokumentyScreen = React.lazy(
   () => import('./screens/day235-materialy-dokumenty')
 );
@@ -723,6 +726,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'I18N — REALNY <MonteCarloNpvPanel> (Driver -> Czynnik, ziarna Revenue/Cost -> Przychody/Koszty) + REALNY <EditableSpreadsheetGrid> z 250 wierszami (stopka rowCap: brakujące kimi.showingAllRows/showAllRows, showingRows kłamał "25"). &theme=light|dark &rows=<n>',
     render: () => <AngielskieResztkiI18nScreen />,
+  },
+  'p12-tabela-i18n-menu3-empty': {
+    label:
+      'P12 (09-10) — REALNY <StandardTable> pusty przez aktywny czip filtra Menu 3 (jak Outputy zbiorcze / "Dokument" = 0 trafień): przed naprawą angielskie "No items found", po naprawie polski tytuł empty + "Wyczyść filtry". &lang=pl|en &theme=light|dark',
+    render: () => <P12TabelaI18nMenu3EmptyScreen />,
   },
   'calendar-sync-settings': {
     label:

@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const url = 'http://127.0.0.1:3123/?screen=p12-tabela-i18n-menu3-empty&lang=pl&theme=light';
+const errors = [];
+page.on('pageerror', (e) => errors.push(String(e)));
+page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+await new Promise((r) => setTimeout(r, 500));
+await page.screenshot({ path: process.argv[2] || '/tmp/p12-after.png', fullPage: true });
+console.log('ERRORS:', JSON.stringify(errors));
+await browser.close();
