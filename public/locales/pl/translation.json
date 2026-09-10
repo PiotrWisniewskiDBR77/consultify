@@ -583,6 +583,7 @@
         "okr": "OKR"
       },
       "page": {
+        "actionCard": "Karta działania",
         "reports": "Raporty",
         "statement": "Sprawozdanie",
         "model": "Model",
@@ -7351,6 +7352,7 @@
       "addFirstQuestion": "Dodaj pierwsze pytanie",
       "aiChangeProposal": "Propozycje zmian od AI",
       "aiReviewedTheSurveyAnd": "AI przejrzało ankietę i przygotowało zmiany do zatwierdzenia.",
+      "aiReviewedYourTemplate": "AI sprawdziło Twój wzorzec",
       "updatesToExistingQuestions": "Zmiany w istniejących pytaniach",
       "current": "Teraz",
       "aiProposal": "Propozycja AI",
@@ -7444,7 +7446,17 @@
         "one_question_per_screen": "Jedno pytanie na ekran",
         "task_list": "Lista pytań"
       },
-      "upload": "Prześlij"
+      "upload": "Prześlij",
+      "versionFieldLabel": "Wersja",
+      "evidenceSectionLabel": "Źródła i założenia",
+      "evidenceAttachedNotice": "Materiał źródłowy został dołączony.",
+      "evidenceMissingReason": "Nie dołączono materiału źródłowego.",
+      "historyVersionValue": "Wersja {{version}}",
+      "defaultTitle": "Wzorzec wywiadu",
+      "documentPanelAriaLabel": "Szczegóły wzorca wywiadu",
+      "applicationTemplateReadOnlyReason": "Wzorzec aplikacyjny jest tylko do odczytu.",
+      "proposeChangesPreviewNotice": "Propozycje zmian pojawią się w podglądzie do zatwierdzenia.",
+      "generateWholeTemplatePreviewNotice": "Projekt całego wzorca pojawi się przed zapisem."
     },
     "workspace": {
       "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi",
@@ -7499,6 +7511,7 @@
       "dataLoadingError": "Błąd pobierania danych",
       "locked": "Zablokowane",
       "active": "Aktywne",
+      "sessionClosedReadOnlyReason": "sesja zamknięta",
       "enUs": "pl-PL",
       "status": "Stan:",
       "complete": "ukończone",
@@ -51425,6 +51438,46 @@
       "nicNiewybrane": "Nie wybrano żadnej propozycji.",
       "zgodaTytul": "Uruchomić AI?",
       "postep": "Pole {{i}} z {{n}}"
+    },
+    "akcja": {
+      "wczytywanie": "Wczytywanie karty działania…",
+      "nieZnaleziono": "Nie znaleziono karty działania.",
+      "domyslnyTytul": "Karta działania",
+      "wrocDoListy": "Wróć do listy",
+      "statusOtwarta": "Otwarta",
+      "statusZamknieta": "Zamknięta",
+      "problem": "Problem",
+      "glownaPrzyczyna": "Główna przyczyna",
+      "dzialanie": "Działanie",
+      "zrodlo": "Źródło",
+      "wlasciciel": "Właściciel",
+      "termin": "Termin",
+      "okres": "Okres",
+      "komentarz": "Komentarz",
+      "akcje": "Akcje",
+      "wlasciwosci": "Właściwości",
+      "wlasciwosc": "Właściwość",
+      "wartosc": "Wartość",
+      "powiazania": "Powiązania",
+      "powiazanieZrodlem": "Powiązana ze źródłem działania.",
+      "zrodlaZalozenia": "Źródła i założenia",
+      "pomiarZeZrodla": "Pomiar i próg pochodzą z rekordu źródłowego.",
+      "komentarze": "Komentarze",
+      "historia": "Historia",
+      "biezacyStan": "Bieżący stan: {{status}}.",
+      "status": "Status",
+      "sekcjaOpis": "Opis",
+      "sekcjaWlascicielTermin": "Właściciel i termin",
+      "tylkoOdczytZamknieta": "Karta jest zamknięta.",
+      "panelAriaLabel": "Szczegóły karty działania",
+      "paskModulu": "Skrzynka",
+      "sourceKind": {
+        "kpi_deviation": "Odchylenie KPI",
+        "execution_delay": "Opóźnienie realizacji",
+        "audit_finding": "Ustalenie audytowe",
+        "finance_variance": "Odchylenie finansowe",
+        "meeting_action": "Działanie ze spotkania"
+      }
     }
   },
   "executionReports": {

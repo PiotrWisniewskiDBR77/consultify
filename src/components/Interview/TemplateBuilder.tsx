@@ -2576,7 +2576,7 @@ ${sourceText || '(none)'}`;
                 </span>
                 <div>
                   <div className="text-sm font-semibold text-c-text">
-                    {t('interview.templateBuilder.aiReviewedYourTemplate', 'AI sprawdziło Twój wzorzec')}
+                    {t('interview.templateBuilder.aiReviewedYourTemplate', 'AI reviewed your template')}
                   </div>
                   <div className="text-xs text-c-text-muted">
                     {t('interview.templateBuilder.itemsToConsider', {
@@ -2700,6 +2700,14 @@ ${sourceText || '(none)'}`;
 
   if (!isDocumentMode) return builderContent;
 
+  // DEC-461 / F7 (odbiór P13-A): literały polskie na sztywno zamienione na
+  // `t()` z domyślną wartością EN. Statusy „Szkic"/„Opublikowany" biorą TE
+  // SAME klucze, których builder trybu nie-dokumentowego już używa wyżej
+  // (`interview.templateBuilder.draft`/`published`) — poprzednio ten sam
+  // status miał dwa różne polskie słowa („Szkic" tu, „Roboczy" w panelu).
+  const templateStatusLabel = template.status === 'draft'
+    ? t('interview.templateBuilder.draft', 'Draft')
+    : t('interview.templateBuilder.published', 'Published');
   const sections: StandardSekcjaDef[] = [
     {
       id: 'template-content',
@@ -2710,15 +2718,110 @@ ${sourceText || '(none)'}`;
     },
   ];
   const rightPanel = {
-    actions: { label: 'Akcje', children: <div className="space-y-2"><Button variant="outline" size="sm" onClick={() => handleSave(false)} disabled={isSaving || isApplicationTemplate}>Zapisz wersję roboczą</Button><Button variant="primary" size="sm" onClick={() => handleSave(true)} disabled={isSaving || isApplicationTemplate}>Opublikuj</Button></div>, actionIds: ['save-draft', 'publish'] },
-    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'status', label: 'Status', value: template.status === 'draft' ? 'Roboczy' : 'Opublikowany' }, { id: 'version', label: 'Wersja', value: String(template.version || 1) }, { id: 'questions', label: 'Liczba pytań', value: String(questions.length) }]} /> },
+    // F7: duplikat „Opublikuj" USUNIĘTY — primary CTA tej akcji mieszka
+    // wyłącznie w Menu 1 (header.primaryAction niżej), §2.6 zakazuje dwóch
+    // wejść do tej samej akcji (walidujKontrakt złapałby to jako duplikat
+    // id „publish" w nagłówku i w panelu).
+    actions: {
+      label: t('common.actions', 'Actions'),
+      children: (
+        <Button variant="outline" size="sm" onClick={() => handleSave(false)} disabled={isSaving || isApplicationTemplate}>
+          {t('interview.templateBuilder.saveDraft', 'Save Draft')}
+        </Button>
+      ),
+      actionIds: ['save-draft'],
+    },
+    properties: {
+      label: t('interview.workspace.properties', 'Properties'),
+      children: (
+        <ArtifactPropertiesTable
+          propertyLabel={t('interview.workspace.property', 'Property')}
+          valueLabel={t('interview.workspace.value', 'Value')}
+          rows={[
+            { id: 'status', label: t('common.status', 'Status'), value: templateStatusLabel },
+            { id: 'version', label: t('interview.templateBuilder.versionFieldLabel', 'Version'), value: String(template.version || 1) },
+            { id: 'questions', label: t('interview.templateBuilder.questionCount', 'Question count'), value: String(questions.length) },
+          ]}
+        />
+      ),
+    },
     relations: { pominieta: true as const, reason: 'Wzorzec nie ma jeszcze zapisanych powiązań.' },
-    evidence: importedSourceText.trim() ? { label: 'Źródła i założenia', children: <div className="text-sm">Materiał źródłowy został dołączony.</div> } : { pominieta: true as const, reason: 'Nie dołączono materiału źródłowego.' },
+    evidence: importedSourceText.trim()
+      ? {
+          label: t('interview.templateBuilder.evidenceSectionLabel', 'Sources & assumptions'),
+          children: (
+            <div className="text-sm">{t('interview.templateBuilder.evidenceAttachedNotice', 'Source material has been attached.')}</div>
+          ),
+        }
+      : { pominieta: true as const, reason: 'Nie dołączono materiału źródłowego.' },
     comments: { pominieta: true as const, reason: 'Wzorzec nie ma osobnego wątku komentarzy.' },
-    history: { label: 'Historia', children: <div className="text-sm">Wersja {template.version || 1}</div> },
+    history: {
+      label: t('interview.workspace.history', 'History'),
+      children: (
+        <div className="text-sm">
+          {t('interview.templateBuilder.historyVersionValue', 'Version {{version}}', { version: template.version || 1 })}
+        </div>
+      ),
+    },
   };
-  const ai = <PracujZAI isPolish={isPolish} onAnalizuj={handleCheckQuality} analizaWToku={isCheckingQuality} aktywnaSekcja="template-content" kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }} moznaEdytowac={!isApplicationTemplate} powodTylkoOdczyt="Wzorzec aplikacyjny jest tylko do odczytu." uzupelnijSekcje={{ rodzaj: 'wlasnaPropozycja', uruchom: () => proposeQuestionImprovementsWithAI(), opis: 'Propozycje zmian pojawią się w podglądzie do zatwierdzenia.' }} uzupelnijDokument={{ rodzaj: 'wlasnaPropozycja', uruchom: handleGenerateWithAI, opis: 'Projekt całego wzorca pojawi się przed zapisem.' }} />;
-  return <StandardArtifactShell karta="interview_template" klasa="L" header={{ title: template.name || 'Wzorzec wywiadu', titleReadOnly: isApplicationTemplate, onTitleChange: (name) => setTemplate((current) => ({ ...current, name })), artifactType: 'tool', artifactId: template.id, onSave: () => handleSave(false), saving: isSaving, onClose, statusLabel: template.status === 'draft' ? 'Roboczy' : 'Opublikowany', statusTone: template.status === 'draft' ? 'draft' : 'approved' }} primaryAction={{ id: 'publish', label: { pl: 'Opublikuj', en: 'Publish' }, onClick: () => handleSave(true) }} sections={sections} rightPanel={rightPanel} activeSection="template-content" onSectionChange={() => undefined} densityMode="n" onDensityModeChange={() => undefined} toolbar={<NModeToolbar activeSectionLabel="Treść wzorca" isPolish={isPolish} aiArtifactButton={ai} />} panelAriaLabel="Szczegóły wzorca wywiadu" />;
+  const ai = (
+    <PracujZAI
+      isPolish={isPolish}
+      onAnalizuj={handleCheckQuality}
+      analizaWToku={isCheckingQuality}
+      aktywnaSekcja="template-content"
+      kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }}
+      moznaEdytowac={!isApplicationTemplate}
+      powodTylkoOdczyt={t('interview.templateBuilder.applicationTemplateReadOnlyReason', 'This is a system template — read-only.')}
+      uzupelnijSekcje={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => proposeQuestionImprovementsWithAI(),
+        opis: t('interview.templateBuilder.proposeChangesPreviewNotice', 'Proposed changes will appear in a preview to approve.'),
+      }}
+      uzupelnijDokument={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: handleGenerateWithAI,
+        opis: t('interview.templateBuilder.generateWholeTemplatePreviewNotice', 'A draft of the whole template will appear before saving.'),
+      }}
+    />
+  );
+  return (
+    <StandardArtifactShell
+      karta="interview_template"
+      klasa="L"
+      header={{
+        title: template.name || t('interview.templateBuilder.defaultTitle', 'Interview template'),
+        titleReadOnly: isApplicationTemplate,
+        onTitleChange: (name) => setTemplate((current) => ({ ...current, name })),
+        artifactType: 'tool',
+        artifactId: template.id,
+        onSave: () => handleSave(false),
+        saving: isSaving,
+        onClose,
+        statusLabel: templateStatusLabel,
+        statusTone: template.status === 'draft' ? 'draft' : 'approved',
+      }}
+      primaryAction={{
+        id: 'publish',
+        label: { pl: 'Opublikuj', en: 'Publish' },
+        onClick: () => handleSave(true),
+      }}
+      sections={sections}
+      rightPanel={rightPanel}
+      activeSection="template-content"
+      onSectionChange={() => undefined}
+      densityMode="n"
+      onDensityModeChange={() => undefined}
+      toolbar={
+        <NModeToolbar
+          activeSectionLabel={isPolish ? sections[0].label.pl : sections[0].label.en}
+          isPolish={isPolish}
+          aiArtifactButton={ai}
+        />
+      }
+      panelAriaLabel={t('interview.templateBuilder.documentPanelAriaLabel', 'Interview template details')}
+    />
+  );
 };
 
 // Question Card Component

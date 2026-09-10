@@ -1662,7 +1662,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/action-cards/:id"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), 'Karta działania']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), t('layout.breadcrumb.page.actionCard', 'Action card')]}>
               <RouteErrorBoundary><ActionCardPage /></RouteErrorBoundary>
             </MainLayout>
           }
