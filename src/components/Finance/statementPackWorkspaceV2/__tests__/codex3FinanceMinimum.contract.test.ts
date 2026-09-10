@@ -3,10 +3,15 @@
 // domknięcia odpowiadającego mu etapu E2–E5.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-const repoRoot = process.cwd();
+// FIX-5 (odbiór W1/W2 §8): `process.cwd()` zależy od katalogu, z którego ktoś
+// odpalił vitest (z korzenia repo działa, z `server/` rozsypuje się na ENOENT —
+// ta sama pułapka co runner z §5 raportu odbioru). Korzeń liczony od
+// `import.meta.url` jest niezależny od katalogu uruchomienia.
+const repoRoot = path.resolve(fileURLToPath(import.meta.url), '../../../../../..');
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('CODEX3 Finance MINIMUM contracts', () => {
