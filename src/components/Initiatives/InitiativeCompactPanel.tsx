@@ -53,7 +53,10 @@ import {
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
-import { opiszOdmoweZmianyStatusu } from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
+import {
+  initiativeReadinessCheckLabel,
+  opiszOdmoweZmianyStatusu,
+} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
@@ -432,7 +435,15 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           t(
             'initiatives.toast.cannotApprove',
             'Cannot approve — required fields are missing:\n• {{errors}}',
-            { errors: blockingItems.join('\n• ') }
+            {
+              errors: blockingItems
+                .map((item) =>
+                  initiativeReadinessCheckLabel(item.key, item.label, (klucz, zapas) =>
+                    String(t(klucz, zapas))
+                  )
+                )
+                .join('\n• '),
+            }
           ),
           { duration: 6000 }
         );
@@ -600,7 +611,17 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               )}
             </div>
           </div>
-          {/* Blocking items — max 3 */}
+          {/*
+            Blocking items — max 3.
+
+            E3b (10.09), 18. kształt: `gate-readiness-check` odsyła `label` PO
+            ANGIELSKU („Owner assigned"), a ta plakietka malowała go wprost —
+            jedyna powierzchnia, na której użytkownik realnie te napisy widzi
+            (karta inicjatywy renderuje `InitiativeGatesWorkflowTable`, która ma
+            własne, dwujęzyczne etykiety). Tłumaczy JEDEN lejek w
+            `initiativeLifecycleMessages`; klucz spoza słownika oddaje oryginał
+            serwera zamiast pustki.
+          */}
           {blockingItems.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {blockingItems.slice(0, 3).map((item: any) => (
@@ -609,7 +630,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-danger-100 dark:bg-danger-500/15 text-danger-600 dark:text-danger-400"
                 >
                   <AlertTriangle size={10} />
-                  {item.label || item.key}
+                  {initiativeReadinessCheckLabel(
+                    item.key,
+                    String(item.label || item.key || ''),
+                    (klucz, zapas) => String(t(klucz, zapas))
+                  )}
                 </span>
               ))}
               {blockingItems.length > 3 && (

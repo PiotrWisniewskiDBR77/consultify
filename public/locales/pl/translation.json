@@ -13642,6 +13642,52 @@
         "benefits_owner": "właściciel biznesowy korzyści",
         "benefits_kpis": "wskaźniki KPI",
         "unknown": "wymagania bramki"
+      },
+      "readinessCheck": {
+        "title": "Tytuł uzupełniony",
+        "owner": "Właściciel przypisany",
+        "summary": "Streszczenie / opis problemu",
+        "sponsor": "Sponsor przypisany",
+        "timeline_dates": "Planowane daty ustawione (start + koniec)",
+        "schedule_milestones": "Kamienie milowe zdefiniowane",
+        "schedule_milestones_schema": "Magazyn kamieni milowych dostępny",
+        "timeline": "Harmonogram ustawiony",
+        "baseline": "Bazowy harmonogram zablokowany",
+        "scope": "Zakres zdefiniowany",
+        "risks": "Ryzyka zidentyfikowane",
+        "tasks": "Zadania utworzone",
+        "benefits_owner": "Właściciel biznesowy korzyści przypisany",
+        "benefits_kpis": "Wskaźniki KPI zdefiniowane",
+        "benefits_kpi_targets": "Cele i jednostki KPI zdefiniowane",
+        "gate_role": "Zatwierdzający bramki {{gate}} przypisany: {{roles}}"
+      },
+      "readinessAction": {
+        "title": "Dodaj zwięzły tytuł inicjatywy, który jasno opisuje zmianę.",
+        "owner": "Przypisz właściciela biznesowego lub wykonawczego, który weźmie odpowiedzialność.",
+        "summary": "Napisz 2-3 zdania streszczenia wyjaśniające problem biznesowy, który rozwiązuje ta inicjatywa.",
+        "sponsor": "Wskaż osobę decyzyjną, która obejmie patronat i finansowanie tej inicjatywy.",
+        "timeline_dates": "Ustaw planowaną datę startu i końca przed harmonogramowaniem (blokada bazowa).",
+        "schedule_milestones": "Dodaj co najmniej jeden kamień milowy, żeby zablokować bazowy harmonogram.",
+        "schedule_milestones_schema": "Brak tabeli kamieni milowych. Uruchom migracje (initiative_milestones).",
+        "timeline": "Ustaw planowaną datę startu i końca dla harmonogramu bazowego.",
+        "baseline": "Utwórz migawkę bazowego harmonogramu (ponowne harmonogramowanie), żeby śledzić odchylenia.",
+        "scope": "Zdefiniuj zakres lub cele, żeby recenzenci znali granice inicjatywy.",
+        "risks": "Zidentyfikuj co najmniej jedno ryzyko i sposób jego ograniczenia.",
+        "tasks": "Rozpisz inicjatywę na wykonalne zadania.",
+        "benefits_owner": "Przypisz właściciela biznesowego, który będzie śledził zrealizowane korzyści.",
+        "benefits_kpis": "Zdefiniuj mierzalne wskaźniki KPI, które udowodnią wartość biznesową.",
+        "benefits_kpi_targets": "Ustaw wartości docelowe i jednostki dla każdego KPI.",
+        "gate_role": "Przypisz osoby do ról: {{roles}}, żeby bramka mogła zostać zatwierdzona."
+      },
+      "readinessActor": {
+        "initiativeOwner": "Właściciel inicjatywy",
+        "pmo": "PMO",
+        "projectManager": "Kierownik projektu",
+        "portfolioOwner": "Właściciel portfela",
+        "platformAdmin": "Administrator platformy",
+        "riskManager": "Menedżer ryzyka",
+        "sponsor": "Sponsor",
+        "businessOwner": "Właściciel biznesowy"
       }
     },
     "planGenerator": {

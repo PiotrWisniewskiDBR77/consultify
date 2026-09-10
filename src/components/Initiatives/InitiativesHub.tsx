@@ -61,7 +61,10 @@ import {
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
 import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
-import { opiszOdmoweZmianyStatusu } from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
+import {
+  initiativeReadinessCheckLabel,
+  opiszOdmoweZmianyStatusu,
+} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -1218,7 +1221,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return;
         }
         if (blockingItems.length > 0) {
-          const list = blockingItems.slice(0, 5).join('\n• ');
+          const list = blockingItems
+            .slice(0, 5)
+            .map((item) =>
+              initiativeReadinessCheckLabel(item.key, item.label, (klucz, zapas) =>
+                String(t(klucz, zapas))
+              )
+            )
+            .join('\n• ');
           toast.error(
             t(
               'initiatives.toast.gateBlockedHub',
