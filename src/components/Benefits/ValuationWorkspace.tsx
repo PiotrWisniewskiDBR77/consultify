@@ -868,7 +868,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             }
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           >
-                            <option value="gordon">{t('valuation.assumptions.gordonGrowth', 'Wzrost Gordona')}</option>
+                            <option value="gordon">{t('valuation.assumptions.gordonGrowth', 'Gordon growth rate')}</option>
                             <option value="exit_multiple">{t('valuation.assumptions.exitMultiple', 'Exit multiple')}</option>
                           </select>
                         </div>

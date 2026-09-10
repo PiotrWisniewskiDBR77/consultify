@@ -16615,6 +16615,9 @@
     },
     "workload": {
       "noAllocations": "No allocations this period"
+    },
+    "list": {
+      "deleteDisabledNote": "Only draft or rejected initiatives can be deleted. Cancel this initiative through its lifecycle first."
     }
   },
   "benefits": {

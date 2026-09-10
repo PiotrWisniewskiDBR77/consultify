@@ -1142,12 +1142,36 @@ export const ExecutionWorkSurface = ({
     };
   };
   const openWorkspace = async (row: Row) => {
-    // 1.12-R1 (B): wiersz z tabeli zastanej NIE MA warsztatu `runtime-v1`
-    // (ani wersji, ani realizacji), więc „Otwórz" prowadzi do karty zadania
-    // w Mojej Pracy — trasa zmierzona: `getArtifactPath('task', id)` →
-    // `/my-work?artifact=task:<id>&code=TASK-…` (src/utils/artifactLinks.ts).
+    // E1b/R1 (2026-09-10): wiersz z tabeli zastanej NIE MA warsztatu
+    // `runtime-v1` (ani wersji, ani realizacji), więc poprzednio „Otwórz
+    // zadanie" prowadził do `getArtifactPath('task', id)` →
+    // `/my-work?artifact=task:<id>` → `TaskDetailView` → `GET
+    // /api/my-work/personal-tasks/:id`. Ta trasa filtruje PO WŁAŚCICIELU
+    // (`assignee_id = wołający` — `server/src/routes/my-work.routes.ts`,
+    // `buildPersonalTaskOwnerScope`): zawsze 404 dla zadania nieprzypisanego
+    // do oglądającego. ZMIERZONE na kopii (`consultify_kopia_e1b`): zadanie
+    // `t_interview_c724711d-…` przypisane do Anny Kowalskiej → jako
+    // `audyt@dbr77.local` (ADMIN, nie assignee) `GET
+    // /api/my-work/personal-tasks/:id` → 404 `TASK_NOT_FOUND`, a kanoniczne
+    // `GET /api/tasks/:id` → 200 (bez filtra właściciela). Ten sam defekt
+    // (poprzez współdzielony `TaskDetailView.loadTask` → `Api.getPersonalTask`)
+    // dotyka karty inicjatywy → Zadania → „Otwórz zadanie"
+    // (`InitiativesHub.handleOpenTask`) dla każdego zadania nieprzypisanego
+    // do oglądającego — to jest RODZINA tego błędu, nienaprawiona tutaj
+    // (poza zakresem R1: zmiana `TaskDetailView`/`personal-tasks` dotyka
+    // zapisu i innych modułów; zgłoszone w meldunku E1b).
+    //
+    // Naprawa w zakresie R1: dla wiersza z `/api/tasks` „Otwórz zadanie"
+    // (i „Otwórz podgląd", i podwójny klik — to ten sam handler) zostaje W
+    // MODULE `/execution` i otwiera WBUDOWANY panel podglądu wiersza, który
+    // już działa (czyta/zapisuje przez kanoniczne `GET`/`PUT /api/tasks/:id`,
+    // zero filtra właściciela — patrz `zapiszPoleZadania` w tym pliku).
+    // Zero nowego ekranu, zero nowego przycisku — ten sam podgląd, który
+    // otwiera wiersz jednym kliknięciem.
     if (row.origin === 'tasks') {
-      navigate(getArtifactPath('task', row.id));
+      setSelectedId(row.id);
+      setShowWorkspace(false);
+      setEdycjaPodgladu(null);
       return;
     }
     if (onOpenDocument && !documentId) {

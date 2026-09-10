@@ -15805,6 +15805,9 @@
     },
     "workload": {
       "noAllocations": "Brak przydziałów w tym okresie"
+    },
+    "list": {
+      "deleteDisabledNote": "Usunąć można tylko inicjatywę w statusie „Szkic” lub „Odrzucona”. Tę inicjatywę trzeba najpierw anulować w cyklu życia."
     }
   },
   "benefits": {

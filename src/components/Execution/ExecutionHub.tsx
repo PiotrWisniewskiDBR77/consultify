@@ -14,7 +14,6 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
-  ChevronRight,
   ClipboardList,
   Clock,
   ExternalLink,
@@ -3008,21 +3007,32 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Triada standard (docs/ui-standards/TRIADA_KANON.md A6): kebab contract for
   // initiative rows. Module declares blocks 1-3 only; StandardTable auto-adds
   // block 4 (Open preview · Edit · Archive) and block 5 (Delete, danger,
-  // always last). Archive/Delete have no execution-side endpoint yet → left
-  // undeclared so StandardTable renders them disabled with "Coming soon
-  // (backend)", never silently omitted.
+  // always last).
+  //
+  // E1b/R2 (2026-09-10): POMIAR — `primary` deklarował RĘCZNIE pozycję
+  // „open_preview" (`t('common.openPreview', 'Open preview')`), a
+  // `universalHandlers.preview` generuje DOKŁADNIE tę samą pozycję (ten sam
+  // klucz i18n `common.openPreview` — `StandardTable.tsx:rowMenuToSections`,
+  // blok „manage"). Efekt zmierzony na żywo: kebab „Realizacje" pokazywał
+  // „Otwórz podgląd" DWA razy — pierwsza wersja (bez `jedenPanel.otworz()`)
+  // była niekompletna, druga (universal) poprawna. Usunięty duplikat —
+  // zostaje WYŁĄCZNIE `universalHandlers.preview` (pełne zachowanie).
+  //
+  // „Usuń" — POMIAR: `DELETE /api/initiatives/:id` ISTNIEJE
+  // (`InitiativeController.deleteInitiative`), ale zwraca 409
+  // `INITIATIVE_DELETE_INVALID_STATE` dla każdego statusu poza DRAFT/REJECTED
+  // — a `dashboardBaseInitiatives` (źródło tej listy) w scope „Active" pokazuje
+  // wyłącznie `IN_EXECUTION` (`ACTIVE_EXECUTION_STATUSES`), w scope „All"
+  // dokłada Done/Cancelled/Archived — ŻADEN wiersz tej listy nigdy nie jest
+  // DRAFT ani REJECTED. Podłączenie zawsze kończyłoby się 409 — gorsze niż
+  // wyłączony przycisk. Zostaje wyłączony, z UCZCIWYM podpisem (poprzednia
+  // wersja komentarza twierdziła, że „StandardTable dokłada notę sama" — to
+  // było fałszywe: bez jawnego `note`/`archiveNote` obie pozycje renderowały
+  // się BEZ ŻADNEGO wyjaśnienia, patrz `rowMenuToSections`).
   const buildInitiativeRowMenu = useCallback(
     (init: FullInitiative): StandardRowMenu => {
       const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
       return {
-        primary: [
-          {
-            id: 'open_preview',
-            label: t('common.openPreview', 'Open preview'),
-            icon: ChevronRight,
-            onClick: () => setSummaryPreviewInitiativeId(init.id),
-          },
-        ],
         statusTransitions: [],
         timeActions: hasDue
           ? [
@@ -3045,8 +3055,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // (StandardTable dokłada ją sama, canon A6 blok 4).
         },
         destructive: {
-          // Brak endpointu usuwania inicjatywy — disabled z notą (StandardTable
-          // dokłada ją sama, canon A6 blok 5).
+          note: t(
+            'execution.list.deleteDisabledNote',
+            'Only draft or rejected initiatives can be deleted. Cancel this initiative through its lifecycle first.'
+          ),
         },
       };
     },
