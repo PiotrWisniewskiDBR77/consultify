@@ -13,7 +13,10 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
+import {
+  isTaskOwnedByCaller,
+  requireTaskCapability,
+} from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireAudit } from '../../middleware/requireAudit.middleware.js';
@@ -1167,7 +1170,20 @@ router.get('/:id', TaskController.getTaskById);
 router.put(
   '/:id',
   requireAudit,
-  requireTaskCapability('task.update', { shadow: true }),
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-453] Bramka obiektowa TYLKO na tej trasie:
+  // `enforceMode: 'enforce'` nie rusza globalnego `CAPABILITY_ENFORCE`, a
+  // `ownerPredicate` sprawia, ze `task.update.assigned` przepuszcza WYLACZNIE
+  // zadanie zwiazane z wolajacym. Pomiar przed naprawa: MEMBER nadpisywal
+  // cudze zadanie z kodem 200 (evidence/e2-uprawnienia/k0-*.txt).
+  requireTaskCapability('task.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    // `objectScoped` osobno od predykatu CELOWO: samo skasowanie linii z
+    // predykatem konczy sie wtedy odmowa (fail-closed), a nie cichym powrotem
+    // dziury. Mutacja sprawdzona 2026-09-10.
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   validateBody(UpdateTaskSchema),
   TaskController.updateTask
 );
@@ -1179,7 +1195,12 @@ router.put(
 router.delete(
   '/:id',
   requireAudit,
-  requireTaskCapability('task.delete', { shadow: true }),
+  requireTaskCapability('task.delete', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   TaskController.deleteTask
 );
 
@@ -1245,7 +1266,15 @@ router.post(
 router.post(
   '/:id/unassign',
   requireAudit,
-  requireTaskCapability('task.unassign', { shadow: true }),
+  // Rodzenstwo z PUT /:id (K4). Pomiar 2026-09-10: MEMBER zdjal przypisanie z
+  // CUDZEGO zadania (assignee_id -> NULL) i dostal 200. Ten sam mechanizm, ten
+  // sam predykat.
+  requireTaskCapability('task.unassign', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   TaskController.unassignTask
 );
 
@@ -1316,7 +1345,14 @@ router.get('/my-workload', TaskController.getMyWorkload);
 router.post(
   '/:id/block',
   requireAudit,
-  requireTaskCapability('task.status.update', { shadow: true }),
+  // Rodzenstwo z PUT /:id (K4). Pomiar 2026-09-10: MEMBER zablokowal CUDZE
+  // zadanie (status -> 'blocked') i dostal 200.
+  requireTaskCapability('task.status.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   validateBody(BlockTaskSchema),
   TaskController.blockTask
 );

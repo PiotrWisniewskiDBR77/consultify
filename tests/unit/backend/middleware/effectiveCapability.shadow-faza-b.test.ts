@@ -21,6 +21,18 @@ const { mockResolveEffectiveAccess, mockHasEffectiveCapability, mockQueryOne, mo
 vi.mock('../../../../server/src/services/effectiveAccessService.js', () => ({
   resolveEffectiveAccess: mockResolveEffectiveAccess,
   hasEffectiveCapability: mockHasEffectiveCapability,
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-453] Bramka woła od 2026-09-10 wariant
+  // świadomy obiektu. Te przypadki nie deklarują predykatu własności, więc
+  // wariant sprowadza się do starej decyzji `hasEffectiveCapability` — atrapa
+  // odwzorowuje to jeden do jednego, żeby nie zmieniać sensu testu.
+  evaluateEffectiveCapability: (...argumenty: unknown[]) => {
+    const dozwolone = mockHasEffectiveCapability(...(argumenty as [unknown, string]));
+    return Promise.resolve({
+      allowed: dozwolone === true,
+      reason: dozwolone === true ? 'exact' : 'missing',
+      matched: dozwolone === true ? (argumenty[1] as string) : null,
+    });
+  },
 }));
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({

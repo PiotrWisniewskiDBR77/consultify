@@ -1012,18 +1012,123 @@ async function resolveEffectiveAccessNiepamietane(params: {
   };
 }
 
+/**
+ * SUFIKSY ZAKRESU vs SUFIKSY WLASNOSCI [ODMROZENIE 07_MY_WORK_AGENT DEC-453]
+ *
+ * Pomiar 2026-09-10 (kopia `consultify_kopia_e2`, dwa konta jednej organizacji):
+ * MEMBER o roli projektowej TASK_ASSIGNEE trzyma `task.update.assigned`.
+ * Stara wersja `hasEffectiveCapability` uznawala KAZDY z sufiksow
+ * `.scoped/.own/.assigned/.delegated` za spelnienie zadanej zdolnosci — bez
+ * jednego pytania o to, czy obiekt nalezy do wolajacego. Skutek zmierzony:
+ * `PUT /api/tasks/<cudze-zadanie>` = HTTP 200 i nadpisany tytul w bazie,
+ * zarowno w trybie `shadow`, jak i przy `CAPABILITY_ENFORCE=enforce`.
+ *
+ * Rozdzielamy wiec dwie rodziny sufiksow:
+ *  - `.scoped` = zakres PROJEKTU. Kontekst projektu jest juz rozwiazany przez
+ *    wolajacego (rola projektowa pochodzi z tego wlasnie projektu), wiec ten
+ *    sufiks spelnia zdolnosc bez dodatkowych pytan — tak jak dotad.
+ *  - `.own` / `.assigned` / `.delegated` = zakres OBIEKTU. Spelniaja zdolnosc
+ *    TYLKO wtedy, gdy predykat wlasnosci potwierdzi zwiazek wolajacego z tym
+ *    konkretnym obiektem. Brak predykatu przy takim sufiksie = ODMOWA
+ *    (fail-closed), nie milczaca zgoda.
+ *
+ * Sprawdzanie wlasnosci jest OPT-IN per bramka (`requireOwnership`), zeby nie
+ * przelaczac naraz 142 bramek w 8 plikach (zakaz masowego wlaczania, CLAUDE.md
+ * regula 9). `hasEffectiveCapability` zachowuje SLOWO W SLOWO stara semantyke.
+ */
+const SCOPE_SUFFIXES = ['.scoped'] as const;
+const OWNERSHIP_SUFFIXES = ['.own', '.assigned', '.delegated'] as const;
+
+export type CapabilityDecisionReason =
+  | 'superadmin'
+  | 'wildcard'
+  | 'exact'
+  | 'admin_unrestricted'
+  | 'scope_suffix'
+  | 'ownership_confirmed'
+  | 'ownership_denied'
+  | 'ownership_predicate_missing'
+  | 'ownership_check_failed'
+  | 'missing';
+
+export interface CapabilityDecision {
+  allowed: boolean;
+  reason: CapabilityDecisionReason;
+  /** Zdolnosc, ktora faktycznie zadecydowala (np. `task.update.assigned`). */
+  matched: string | null;
+}
+
+export type OwnershipPredicate = () => boolean | Promise<boolean>;
+
+type CapabilityMatch =
+  | { kind: 'allow'; reason: CapabilityDecisionReason; matched: string | null }
+  | { kind: 'ownership'; matched: string }
+  | { kind: 'missing' };
+
+function matchEffectiveCapability(
+  access: Pick<AccessContext, 'capabilities' | 'platformRole'>,
+  capability: string
+): CapabilityMatch {
+  if (access.platformRole === 'SUPERADMIN')
+    return { kind: 'allow', reason: 'superadmin', matched: null };
+  const capabilities = new Set(access.capabilities);
+  if (capabilities.has('*')) return { kind: 'allow', reason: 'wildcard', matched: '*' };
+  if (capabilities.has(capability))
+    return { kind: 'allow', reason: 'exact', matched: capability };
+  if (capabilities.has(ADMIN_UNRESTRICTED_SENTINEL) && !OWNER_ONLY_CAPABILITIES.has(capability))
+    return { kind: 'allow', reason: 'admin_unrestricted', matched: ADMIN_UNRESTRICTED_SENTINEL };
+  for (const suffix of SCOPE_SUFFIXES) {
+    if (capabilities.has(`${capability}${suffix}`))
+      return { kind: 'allow', reason: 'scope_suffix', matched: `${capability}${suffix}` };
+  }
+  for (const suffix of OWNERSHIP_SUFFIXES) {
+    if (capabilities.has(`${capability}${suffix}`))
+      return { kind: 'ownership', matched: `${capability}${suffix}` };
+  }
+  return { kind: 'missing' };
+}
+
 export function hasEffectiveCapability(
   access: Pick<AccessContext, 'capabilities' | 'platformRole'>,
   capability: string
 ): boolean {
-  if (access.platformRole === 'SUPERADMIN') return true;
-  const capabilities = new Set(access.capabilities);
-  if (capabilities.has('*') || capabilities.has(capability)) return true;
-  if (capabilities.has(ADMIN_UNRESTRICTED_SENTINEL) && !OWNER_ONLY_CAPABILITIES.has(capability))
-    return true;
-  return ['.scoped', '.own', '.assigned', '.delegated'].some((suffix) =>
-    capabilities.has(`${capability}${suffix}`)
-  );
+  return matchEffectiveCapability(access, capability).kind !== 'missing';
+}
+
+/**
+ * Wariant SWIADOMY OBIEKTU. Zwraca decyzje wraz z powodem, zeby bramka mogla
+ * oddac wolajacemu jasny kod bledu zamiast bezimiennego 403.
+ *
+ * `requireOwnership: false` (domyslnie) = dokladnie stara semantyka
+ * `hasEffectiveCapability`, tylko z powodem w odpowiedzi.
+ */
+export async function evaluateEffectiveCapability(
+  access: Pick<AccessContext, 'capabilities' | 'platformRole'>,
+  capability: string,
+  options: { requireOwnership?: boolean; ownerPredicate?: OwnershipPredicate } = {}
+): Promise<CapabilityDecision> {
+  const match = matchEffectiveCapability(access, capability);
+  if (match.kind === 'allow')
+    return { allowed: true, reason: match.reason, matched: match.matched };
+  if (match.kind === 'missing') return { allowed: false, reason: 'missing', matched: null };
+
+  if (!options.requireOwnership)
+    return { allowed: true, reason: 'ownership_confirmed', matched: match.matched };
+
+  if (typeof options.ownerPredicate !== 'function')
+    return { allowed: false, reason: 'ownership_predicate_missing', matched: match.matched };
+
+  let owned: boolean;
+  try {
+    owned = (await options.ownerPredicate()) === true;
+  } catch {
+    // Nie da sie sprawdzic wlasnosci => nie wolno przepuscic. Brak pomiaru nie
+    // jest wynikiem pozytywnym.
+    return { allowed: false, reason: 'ownership_check_failed', matched: match.matched };
+  }
+  return owned
+    ? { allowed: true, reason: 'ownership_confirmed', matched: match.matched }
+    : { allowed: false, reason: 'ownership_denied', matched: match.matched };
 }
 
 export function mapLegacyPermissionToCapability(permissionKey: string): string {
@@ -1061,5 +1166,6 @@ export default {
   seedFactoryRoleTemplates,
   resolveEffectiveAccess,
   hasEffectiveCapability,
+  evaluateEffectiveCapability,
   FACTORY_ROLE_TEMPLATES,
 };

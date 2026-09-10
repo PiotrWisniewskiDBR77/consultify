@@ -1,8 +1,10 @@
 import type { NextFunction, Response } from 'express';
 
 import {
+  evaluateEffectiveCapability,
   hasEffectiveCapability,
   resolveEffectiveAccess,
+  type CapabilityDecisionReason,
 } from '../services/effectiveAccessService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -30,7 +32,34 @@ type CapabilityOptions = {
    * flags are untouched (kept for the pre-existing, still-unwired callers).
    */
   shadow?: boolean;
+  /**
+   * TRYB PER BRAMKA [ODMROZENIE 07_MY_WORK_AGENT DEC-453]. Globalne
+   * `CAPABILITY_ENFORCE` przelacza NARAZ 142 bramki w 8 plikach — masowe
+   * wlaczanie jest zakazane (CLAUDE.md regula 9). Ta opcja pozwala postawic
+   * JEDNA trase na realne 403, nie ruszajac pozostalych.
+   */
+  enforceMode?: 'shadow' | 'enforce';
+  /**
+   * PREDYKAT WLASNOSCI. Gdy podany (albo gdy `objectScoped: true`), zdolnosci
+   * z sufiksem `.own/.assigned/.delegated` spelniaja bramke TYLKO wtedy, gdy
+   * predykat potwierdzi zwiazek wolajacego z tym konkretnym obiektem. Brak
+   * predykatu przy takim sufiksie = odmowa (fail-closed).
+   */
+  ownerPredicate?: OwnerPredicate;
+  /** Wymusza sprawdzanie wlasnosci nawet bez predykatu (= fail-closed). */
+  objectScoped?: boolean;
 };
+
+export type OwnerPredicateContext = {
+  userId: string;
+  organizationId: string;
+  projectId: string | null;
+};
+
+export type OwnerPredicate = (
+  req: AuthRequest,
+  ctx: OwnerPredicateContext
+) => boolean | Promise<boolean>;
 
 const shouldEnforceEffectiveAccess = () =>
   (process.env.EFFECTIVE_ACCESS_ENFORCE ?? '').trim().toLowerCase() === 'true';
@@ -52,6 +81,7 @@ type ShadowVerdict =
   | {
       status: 'evaluated';
       wouldAllow: boolean;
+      reason: CapabilityDecisionReason;
       projectId: string | null;
       projectRole: string | null;
     };
@@ -88,10 +118,35 @@ async function runCapabilityShadow(
       projectId,
       isImpersonating,
     });
-    const wouldAllow = capabilities.some((cap) => hasEffectiveCapability(access, cap));
+    // Sprawdzanie wlasnosci jest OPT-IN: bez `ownerPredicate`/`objectScoped`
+    // decyzja jest identyczna z `hasEffectiveCapability`, wiec telemetria
+    // pozostalych 141 bramek nie zmienia ani jednej wartosci `wouldAllow`.
+    const requireOwnership =
+      options.objectScoped === true || typeof options.ownerPredicate === 'function';
+    const ownerPredicate =
+      typeof options.ownerPredicate === 'function'
+        ? () => options.ownerPredicate!(req, { userId, organizationId, projectId })
+        : undefined;
+
+    let wouldAllow = false;
+    let reason: CapabilityDecisionReason = 'missing';
+    for (const cap of capabilities) {
+      const decision = await evaluateEffectiveCapability(access, cap, {
+        requireOwnership,
+        ownerPredicate,
+      });
+      if (decision.allowed) {
+        wouldAllow = true;
+        reason = decision.reason;
+        break;
+      }
+      reason = mocniejszyPowod(reason, decision.reason);
+    }
+
     return {
       status: 'evaluated',
       wouldAllow,
+      reason,
       projectId,
       projectRole: (access as { projectRole?: string | null }).projectRole ?? null,
     };
@@ -116,7 +171,7 @@ async function handleShadowCapability(
   resolveProjectId: ProjectResolver,
   options: CapabilityOptions
 ): Promise<void> {
-  const mode = capabilityEnforceMode();
+  const mode = options.enforceMode ?? capabilityEnforceMode();
   const verdict = await runCapabilityShadow(req, capabilities, resolveProjectId, options);
   const capLabel = capabilities.length === 1 ? capabilities[0] : capabilities;
   const route = safePath(req);
@@ -138,6 +193,7 @@ async function handleShadowCapability(
     userId,
     status: verdict.status,
     wouldAllow: verdict.status === 'evaluated' ? verdict.wouldAllow : null,
+    reason: verdict.status === 'evaluated' ? verdict.reason : null,
     projectId: verdict.status === 'evaluated' ? verdict.projectId : null,
     projectRole: verdict.status === 'evaluated' ? verdict.projectRole : null,
   });
@@ -190,18 +246,68 @@ async function handleShadowCapability(
       403,
       {
         error: 'Capability required',
-        code: 'CAPABILITY_REQUIRED',
+        code: kodOdmowy(verdict.reason),
         required: capLabel,
         projectId: verdict.projectId,
-        reason: options.reason || 'missing_capability_or_scope',
+        reason: options.reason || powodOdmowy(verdict.reason),
       },
       'deny',
-      { capability: capLabel, path: route }
+      { capability: capLabel, path: route, verdictReason: verdict.reason }
     );
     return;
   }
   (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = undefined;
   safeNext(next, 'allow', capLabel);
+}
+
+/**
+ * Powod odmowy dla wielu zdolnosci (wariant "any-of"): najbardziej konkretny
+ * wygrywa, zeby wolajacy dostal kod mowiacy CO poszlo nie tak, a nie zawsze
+ * najogolniejsze "brak zdolnosci".
+ */
+const RANGA_POWODU: Record<string, number> = {
+  missing: 0,
+  ownership_predicate_missing: 1,
+  ownership_check_failed: 2,
+  ownership_denied: 3,
+};
+
+function mocniejszyPowod(
+  a: CapabilityDecisionReason,
+  b: CapabilityDecisionReason
+): CapabilityDecisionReason {
+  return (RANGA_POWODU[b] ?? 0) > (RANGA_POWODU[a] ?? 0) ? b : a;
+}
+
+/**
+ * Rozroznienie niesie KOD (maszynowy, tlumaczony we froncie), nie tresc.
+ * Zdanie w odpowiedzi zostaje jedno i to samo, zeby nie dokladac angielskich
+ * napisow do interfejsu (bramka jezykowa J0).
+ */
+function kodOdmowy(powod: CapabilityDecisionReason): string {
+  switch (powod) {
+    case 'ownership_denied':
+      return 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED';
+    case 'ownership_predicate_missing':
+      return 'CAPABILITY_OWNERSHIP_PREDICATE_MISSING';
+    case 'ownership_check_failed':
+      return 'CAPABILITY_OWNERSHIP_CHECK_FAILED';
+    default:
+      return 'CAPABILITY_REQUIRED';
+  }
+}
+
+function powodOdmowy(powod: CapabilityDecisionReason): string {
+  switch (powod) {
+    case 'ownership_denied':
+      return 'object_not_owned_by_caller';
+    case 'ownership_predicate_missing':
+      return 'ownership_predicate_missing';
+    case 'ownership_check_failed':
+      return 'ownership_check_failed';
+    default:
+      return 'missing_capability_or_scope';
+  }
 }
 
 function firstString(...values: unknown[]): string | null {
@@ -328,6 +434,50 @@ export async function resolveTaskProjectId(req: AuthRequest): Promise<string | n
     }>(`SELECT project_id FROM tasks WHERE id = ? LIMIT 1`, [taskId])
     .catch(() => null);
   return firstString(row?.project_id, await resolveProjectIdFromRequest(req));
+}
+
+/**
+ * PREDYKAT WLASNOSCI ZADANIA [ODMROZENIE 07_MY_WORK_AGENT DEC-453].
+ *
+ * Kolumny zmierzone na kopii `consultify_kopia_e2` (2026-09-10) — tabela
+ * `tasks` ma `assignee_id`, `owner_id`, `created_by`, `reporter_id`. Kazda z
+ * nich opisuje realny zwiazek czlowieka z zadaniem, wiec kazda spelnia sufiks
+ * `.assigned/.own/.delegated`. Wszystko inne = cudze zadanie.
+ *
+ * FAIL-CLOSED: brak identyfikatora, brak wiersza, obca organizacja albo blad
+ * odczytu => `false`. Brak pomiaru nie jest wynikiem pozytywnym.
+ */
+export async function isTaskOwnedByCaller(
+  req: AuthRequest,
+  ctx: OwnerPredicateContext
+): Promise<boolean> {
+  const taskId = firstString(
+    req.params?.taskId,
+    req.params?.id,
+    req.body?.taskId,
+    req.body?.task_id
+  );
+  if (!taskId || taskId.length > 128) return false;
+  if (!ctx.userId) return false;
+
+  const row = await queryHelpers.queryOne<{
+    assignee_id?: string | null;
+    owner_id?: string | null;
+    created_by?: string | null;
+    reporter_id?: string | null;
+    organization_id?: string | null;
+  }>(
+    `SELECT assignee_id, owner_id, created_by, reporter_id, organization_id
+       FROM tasks WHERE id = ? LIMIT 1`,
+    [taskId]
+  );
+  if (!row) return false;
+  if (row.organization_id && ctx.organizationId && row.organization_id !== ctx.organizationId)
+    return false;
+
+  return [row.assignee_id, row.owner_id, row.created_by, row.reporter_id].some(
+    (wartosc) => typeof wartosc === 'string' && wartosc.trim() !== '' && wartosc === ctx.userId
+  );
 }
 
 export async function resolveInitiativeProjectId(req: AuthRequest): Promise<string | null> {
