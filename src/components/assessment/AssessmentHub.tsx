@@ -2328,6 +2328,20 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             taskId={doc.id}
             onClose={() => handleCloseDocument(doc.id)}
             onSaved={() => refreshData()}
+            // F4a (rodzina po E1b/E1c, [ODMROZENIE 04_ASSESSMENT DEC-453]):
+            // `handleOpenTaskFromInitiative` otwiera zadanie z karty inicjatywy
+            // (Ocena → Inicjatywy → karta → Zadania → „Otwórz zadanie"), gdzie
+            // oglądający zwykle NIE jest właścicielem zadania. `TaskDetailView`
+            // domyślnie doczytuje przez `Api.getPersonalTask` →
+            // `GET /api/my-work/personal-tasks/:id`, filtrowane po
+            // WŁAŚCICIELU — 404 dla każdego takiego zadania. Ta sama rodzina co
+            // `InitiativesHub` (naprawiona w E1c, 93517a117d) — tam
+            // `AssessmentHub.tsx` był jawnie zgłoszony jako NIE naprawiony,
+            // bo 04_ASSESSMENT nie było wtedy w zakresie DEC-453.
+            // `ownerScoped={false}` przełącza na kanoniczne `Api.getTask`
+            // (org-scoped, zero filtra właściciela) — identycznie jak
+            // `InitiativesHub.tsx`.
+            ownerScoped={false}
           />
         );
       }
