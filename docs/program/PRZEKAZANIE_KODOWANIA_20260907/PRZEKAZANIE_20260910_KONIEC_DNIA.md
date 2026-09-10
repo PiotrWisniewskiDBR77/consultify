@@ -389,3 +389,26 @@ Meldunek = ostatni wpis `assistant` w pliku JSONL (nie czytaj całości). Po mel
 **Rano, przed wylotem właściciela — karta (jedna strona):** co jest na stagingu i demo, co czeka na wdrożenie po Tokio, decyzje: (1) inicjatywa bez projektu — projekt-skrzynka per organizacja czy `projectId=null` (105 rekordów), (2) pozycja Finansów w menu (`betaMenuStatus.ts:51` `MODULE_ECONOMICS:'closed'`), (3) SMTP Hostinger („Outbound sending is disabled") — panel Hostingera, (4) pilotaż na demo czy stagingu, (5) dwa Postgresy — sprzątnąć martwy `Postgres` i zmienne `DB_*`.
 
 **Zakazy nocy:** żadnych wdrożeń/zmiennych/danych na stagingu poza hotfixem; produkcja nietykalna; `--skip-deploys` przy każdej zmiennej; robotnicy nie logują się hasłem — dowody zapisu robi nadzorca skryptem; nie kasuj cudzych worktree (Codex `codex-wt/`, Szampan `wt/p11-*`, `audyt-p1`, `j9-tmp`).
+
+## 11. Stan po nocy 10/11.09 (druga sesja CTO, od 22:50 CEST — zegar systemowy; §10 był pisany ~3 h do przodu)
+
+| | wartość (zmierzona) |
+|---|---|
+| staging (health 23:03:50, tag `staging-deployed`) | **`e25b7cd5d0`** = `ff3ae0dbde` + hotfix assignee — **ZAMROŻONY do końca pokazu w Tokio** |
+| demo (health 23:14:35) | **`e25b7cd5d0`** (promocja run 34530157001; 0 migracji między `691e2d3b0f` a hotfixem) — **NIETYKALNE** |
+| punkty cofnięcia | `staging-safe-20260910-2258` = `ff3ae0dbde`; `demo-safe-20260910-2300` = `691e2d3b0f` + `~/Developer/consultify-dumps/demo-trolley-przed-promocja-20260910-2300.dump` (sha256 `74c253f1…`) |
+| dowody po hotfixie | ogólny (w1a, Northwind) 0×5xx + sonda D6 usunięta; celowany (skrypt CTO): PUT tytułu → `assigneeId` zachowane; log w scratchpadzie sesji |
+| linia integracyjna `mvp/inicjatywy-lancuch-20260907` | hotfix `b84dd79ff2` · F3 `e9e9a36c81` · N1 `f2f06705f2` · N2 `db076288f4` · F4 `4e85827280` · F5 · blok Codexa 1 OFF · rejestr · `KARTA_PORANNA_20260911.md` — **NIE wdrożona**; bramka 4-krokowa Sonnet w toku (worktree `wt/bramka-20260911`) |
+| Codex 3 Finanse | dostawa `39ea4ce7f2` (E1–E4; E5/E6 nie) → odbiór Opus `mvp/c5-odbior-codex3-20260911` = `8e74f50f5f` (`97_ODBIOR_W1_W2.md`) → FIX-1…5 Sonnet `mvp/c5-fix-codex3-20260911` w toku → scalenie na linię OFF |
+| Codex 2 | wklejka w karcie porannej §5; worktree `codex-wt/codex2-jeden-magazyn-2` na markerze `19440011e9` istnieje |
+
+**Pułapki nocy (do pamięci):** (1) dwie sesje CTO na jednej linii — stara sesja scaliła hotfix i N1 po przekazaniu, uruchomiła
+bliźniaczy run (anulowany); podział wysłany przez send_message. (2) Kod Codexa P13-A niósł 8 polskich napisów; hook w trybie
+szybkim (commit bez słowników) go przepuścił, a pełny skan (każdy commit dotykający `public/locales`) blokował kolejne
+scalenia — dług zdjął N2. (3) Hook commit-msg żąda znaczników odmrożenia także na commitach scalających (`[ODMROZENIE
+<MODUL> DEC-<nr>]` per moduł dotknięty). (4) Dysk: 71→31 GB w 40 min (worktree po 3,9 GB + sesje FizzUp); usunięte scalone
+worktree n1/a1/c3/hotfix/w1c/w1e → 54 GB. (5) Odbiorca Codexa 3 znalazł defekt produktu: BetaGate × mapowanie ról = zbiór pusty
+→ żadna rola nie wyprowadzi wersji finansowej z DRAFT przez API (rejestr, 23:36).
+
+**Po Tokio (kolejność):** zielona bramka linii → scalenie c5-fix → `git push origin HEAD:staging` + workflow staging → health →
+dowód zapisu → tag → promocja demo → ponowny odbiór adwersaryjny kart N i Oceny na stagingu → decyzje właściciela z karty porannej.

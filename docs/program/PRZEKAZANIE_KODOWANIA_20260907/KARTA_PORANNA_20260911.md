@@ -29,10 +29,11 @@ nikt jeszcze nie obejrzał — to zadanie przed pilotażem.
 - Panel Teresy nie wraca sam po odświeżeniu strony; megatrendy liczone wg branży organizacji,
   a nie zawsze „automotive" (F3 — gotowe).
 - Ocena: „Otwórz zadanie" z karty inicjatywy nie daje „nie znaleziono"; przycisk „dodaj powiązanie"
-  jest osiągalny (F4 — gotowe, czeka na scalenie).
+  jest osiągalny (F4 — gotowe, scalone).
 - Karty N od Codexa (Wniosek, Decyzja, Powiadomienie, Sesja wywiadu, Wzorzec, Karta działania)
-  z poprawkami po odbiorze (N1 scalone, N2 kończy). Kod Codexa wniósł 8 polskich napisów wbrew
-  zasadzie „wszystko po angielsku" — poprawiam przed wdrożeniem.
+  z poprawkami po odbiorze (N1 i N2 scalone). Kod Codexa wniósł 8 polskich napisów wbrew zasadzie
+  „wszystko po angielsku" — usunięte przy poprawkach N2. W karcie działania naprawiony błąd, który
+  wywracał kartę przy każdym otwarciu.
 - Historia zadania: brakująca tabela w bazie dodana (F5 — gotowe).
 - Blok Codexa nr 1 „jeden magazyn inicjatyw" — za wyłączoną flagą (nic nie widać, nic nie ryzykuje).
 - Blok Codexa nr 3 „Finanse minimum": dostarczył 4 z 6 paczek (testy, zatwierdzanie pakietu,
