@@ -3219,7 +3219,11 @@ const EXPORT_FORMAT_CONFIG: Record<
   },
 };
 
-const ReportSlideOverContent: React.FC<{
+// F4b: exportowane wyłącznie do testu (`AssessmentHub.exportsFetchGuard.test.tsx`) —
+// pozwala zmontować ten podkomponent w izolacji i zmierzyć, że fetch exportów
+// jest pomijany, gdy nie ma prawdziwego `builderReportId` (patrz komentarz
+// przy efekcie "Fetch export records" powyżej).
+export const ReportSlideOverContent: React.FC<{
   assessmentReportId: string;
   builderReportId?: string;
   onOpenFull: () => void;
@@ -3252,12 +3256,30 @@ const ReportSlideOverContent: React.FC<{
   }, [assessmentReportId]);
 
   // Fetch export records
+  //
+  // F4b (pomiar A2 §4 defekt 3, KROK 0 zmierzone na kopii `consultify_kopia_f4`):
+  // 404 na `GET /api/report-builder/:id/exports` przy KAŻDYM otwarciu podglądu
+  // raportu bez zmaterializowanego builder-reportu — nie "zła trasa" (trasa
+  // istnieje i działa, `server/src/routes/report-builder.routes.ts:4654`) ani
+  // "zła ścieżka" w rozumieniu adresu, tylko zły PARAMETR: `builderReportId`
+  // bywa `null` (raport oceny nigdy nie przeszedł przez Report Builder —
+  // legalny stan, nie błąd), a poprzedni fallback `|| assessmentReportId`
+  // wysyłał wtedy `GET /report-builder/<id oceny>/exports` — `assessment_reports.id`
+  // i `report_builder_reports.id` to ROZŁĄCZNE przestrzenie identyfikatorów,
+  // więc to zapytanie było SKAZANE na 404 z definicji, za każdym razem (stąd
+  // "reprodukowalne 3/3"). Naprawa: pomiń fetch, gdy nie ma prawdziwego
+  // `builderReportId` — panel i tak poprawnie pokazuje „No exports yet"
+  // (front już traktował 404 bez toastu/błędu; teraz nie wysyła zapytania,
+  // które i tak nie mogło się powieść).
   React.useEffect(() => {
-    const reportId = builderReportId || assessmentReportId;
-    if (!reportId) return;
+    if (!builderReportId) {
+      setExports([]);
+      setExportsLoading(false);
+      return;
+    }
     let cancelled = false;
     setExportsLoading(true);
-    Api.get(`/report-builder/${reportId}/exports`)
+    Api.get(`/report-builder/${builderReportId}/exports`)
       .then((data: any) => {
         if (!cancelled) setExports(data?.exports || []);
       })
@@ -3270,7 +3292,7 @@ const ReportSlideOverContent: React.FC<{
     return () => {
       cancelled = true;
     };
-  }, [builderReportId, assessmentReportId]);
+  }, [builderReportId]);
 
   // Download an export file
   const handleDownloadExport = React.useCallback(
