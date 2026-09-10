@@ -75,6 +75,7 @@ import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NMo
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { sekcjeZKontraktu } from '@/components/standard/contractSections';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
@@ -221,6 +222,7 @@ import {
 // MIGRACJA (D-8): kompozycja kart Initiative wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) — patrz sections/initiativeCardContract.ts. Za flagą (default OFF).
 import {
+  INITIATIVE_BOARD_DESCRIPTOR_BY_ID,
   INITIATIVE_CARD_RENDER_IDS,
   INITIATIVE_CONTRACT_HIDDEN_SEED,
   INITIATIVE_CORE_BOARD_IDS,
@@ -5391,7 +5393,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const initiativeContractSections: NModeSection[] = useMemo(() => {
-    const allSections: NModeSection[] = [
+    // Dane prezentacyjne nie definiują członkostwa karty. Id, nazwa, ikona i
+    // kolejność poniżej są nadpisywane przez wiążący kontrakt (DEC-432).
+    const sectionPresentation: NModeSection[] = [
       // --- Definition (always at top) ---
       {
         id: 'initiative-definition',
@@ -5643,9 +5647,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         group: groupLabels[groupIndexById[section.id] ?? 4],
       }));
 
+    const boardEntries = Object.entries(INITIATIVE_BOARD_DESCRIPTOR_BY_ID);
+    const contractSections = sekcjeZKontraktu(
+      boardEntries.map(([, descriptor]) => descriptor),
+      'initiative',
+      () => true,
+      (descriptor) => boardEntries.find(([, candidate]) => candidate === descriptor)?.[0] ?? descriptor.id
+    ).map((contractSection) => ({
+      ...contractSection,
+      ...Object.fromEntries(
+        Object.entries(sectionPresentation.find((item) => item.id === contractSection.id) ?? {}).filter(
+          ([key]) => !['id', 'label', 'icon'].includes(key)
+        )
+      ),
+    }));
+
     return withGroup(
       wybierzDostepneSekcjeBoarduInicjatywy(
-        allSections,
+        contractSections,
         enabledNModeSectionIds,
         initiativeSectionsCompleteEnabled
       )
