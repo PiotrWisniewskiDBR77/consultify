@@ -7,9 +7,15 @@
  */
 
 import type { Response } from 'express';
+import { Pool, type PoolConfig } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
+import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
+import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
+import { PostgresGovernancePolicyResolver } from '../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
+import { PostgresInitiativeReader } from '../domain/initiatives-execution/postgresInitiativeReader.js';
+import { PostgresMaterialCommandUnitOfWork } from '../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 // R3 (plan 1.12 §C4) — reguła re-baseline i odchylenie od baseline'u.
 import {
   deviationDaysFromBaseline,
@@ -82,6 +88,10 @@ import {
 import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
 import notificationService from '../services/notificationService.js';
 import {
+  evaluateEffectiveCapability,
+  resolveEffectiveAccess,
+} from '../services/effectiveAccessService.js';
+import {
   calculateRiskScore,
   categorizeScore,
   DEFAULT_THRESHOLDS,
@@ -106,6 +116,27 @@ import type {
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
+
+const canonicalInitiativeWritePool = new Pool(
+  databaseConfig.postgres as PoolConfig | undefined
+);
+const canonicalInitiativeWriteReader = new PostgresInitiativeReader(
+  canonicalInitiativeWritePool
+);
+const canonicalInitiativeWriteUnitOfWork = new PostgresMaterialCommandUnitOfWork(
+  canonicalInitiativeWritePool
+);
+const canonicalInitiativeWritePolicyResolver = new PostgresGovernancePolicyResolver(
+  canonicalInitiativeWritePool
+);
+
+const isInitiativeUnifiedWriteEnabled = (): boolean =>
+  process.env.ENABLE_INITIATIVE_UNIFIED_WRITE === 'true';
+
+// `sourceType` is injected by the existing request pipeline and is not a card
+// mutation. Ignore it when deciding whether the user's payload is supported.
+const CANONICAL_PUT_FIELDS = new Set(['title', 'summary', 'description', 'ownerId', 'sourceType']);
+const INITIATIVE_UPDATED_MESSAGE = 'Initiative updated';
 
 const safeJsonParse = <T = unknown>(
   str: string | null | undefined,
@@ -851,6 +882,87 @@ export class InitiativeController {
         [id, orgId]
       );
       if (!existing) {
+        if (isInitiativeUnifiedWriteEnabled()) {
+          const canonical = await canonicalInitiativeWriteReader.findById(orgId, id);
+          if (canonical) {
+            const body = req.body as Record<string, unknown>;
+            const unsupportedFields = Object.keys(body).filter(
+              (field) => body[field] !== undefined && !CANONICAL_PUT_FIELDS.has(field)
+            );
+            if (unsupportedFields.length > 0) {
+              res.status(409).json({
+                code: 'INITIATIVE_CANONICAL_WRITE_REQUIRED',
+                unsupportedFields,
+                canonicalWriter: '/api/initiatives/runtime-v1',
+              });
+              return;
+            }
+
+            if (!userId) {
+              res.status(401).json({ error: 'Unauthorized' });
+              return;
+            }
+            const access = await resolveEffectiveAccess({
+              userId,
+              organizationId: orgId,
+              applicationRole: req.user?.role,
+              projectId: canonical.initiative.projectId,
+              isImpersonating: Boolean((req.user as any)?.isImpersonating),
+            });
+            const authorization = await evaluateEffectiveCapability(access, 'initiative.update', {
+              requireOwnership: true,
+              ownerPredicate: () => canonical.initiative.initiativeOwnerId === userId,
+            });
+            if (!authorization.allowed) {
+              res.status(403).json({ code: 'CAPABILITY_REQUIRED' });
+              return;
+            }
+            const requestedOwner =
+              typeof body.ownerId === 'string' ? body.ownerId.trim() : undefined;
+            if (
+              requestedOwner !== undefined &&
+              !(await canonicalInitiativeWriteReader.isEligibleInitiativeOwner(
+                orgId,
+                canonical.initiative.projectId,
+                requestedOwner
+              ))
+            ) {
+              res.status(422).json({ code: 'INITIATIVE_OWNER_INELIGIBLE' });
+              return;
+            }
+            const policy = await canonicalInitiativeWritePolicyResolver.resolve(
+              orgId,
+              canonical.initiative.projectId,
+              id
+            );
+            const result = await amendInitiativeMetadata(canonicalInitiativeWriteUnitOfWork, {
+              organizationId: orgId,
+              actorId: userId,
+              aggregateType: 'initiative',
+              aggregateId: id,
+              expectedVersion: canonical.version,
+              clientRequestId: `legacy-put-${uuidv4()}`,
+              correlationId: req.get('X-Correlation-ID') || `legacy-put-${uuidv4()}`,
+              policyId: policy.policyId,
+              policyVersion: policy.version,
+              commandType: 'initiative.metadata.amend',
+              payload: {
+                ...(typeof body.title === 'string' ? { title: body.title } : {}),
+                ...(typeof body.description === 'string' ? { problem: body.description } : {}),
+                ...(typeof body.summary === 'string' ? { proposedOutcome: body.summary } : {}),
+                ...(requestedOwner !== undefined ? { initiativeOwnerId: requestedOwner } : {}),
+              },
+            });
+            const readBack = await canonicalInitiativeWriteReader.findById(orgId, id);
+            res.json({
+              id,
+              message: INITIATIVE_UPDATED_MESSAGE,
+              changesCount: Object.keys(result.response || {}).length,
+              initiative: readBack,
+            });
+            return;
+          }
+        }
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
@@ -1422,7 +1534,7 @@ export class InitiativeController {
       }
       res.json({
         id,
-        message: 'Initiative updated',
+        message: INITIATIVE_UPDATED_MESSAGE,
         changesCount: changes.length,
         initiative: updated,
       });

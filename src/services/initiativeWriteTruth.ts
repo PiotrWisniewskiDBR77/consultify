@@ -176,6 +176,7 @@ const stableCommandId = (prefix: string, value: unknown) => {
  */
 const KLUCZE_ODMOWY: Record<string, string> = {
   INITIATIVE_OWNER_INELIGIBLE: 'initiatives.form.errorOwnerIneligible',
+  INITIATIVE_CANONICAL_WRITE_REQUIRED: 'initiatives.runtimeOnlyEditBlocked',
   CAPABILITY_REQUIRED: 'initiatives.form.errorCapabilityRequired',
   // E1c/F2 (10.09, po E2/E2b): trzy nowe kody odmowy z bramki uprawnień
   // (`effectiveCapability.middleware.ts` — CAPABILITY_OBJECT_OWNERSHIP_REQUIRED /

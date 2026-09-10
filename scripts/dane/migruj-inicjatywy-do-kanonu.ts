@@ -86,12 +86,9 @@ const mode: Mode = rollbackPath
  * także dla hostów lokalnych, żeby literówka w `DATABASE_URL` nigdy nie
  * przeszła cicho.
  */
-const FORBIDDEN_DB_HOSTS_HARD = new Set([
+const FORBIDDEN_DB_HOSTS = new Set([
   'centerbeam.proxy.rlwy.net', // Production (DEC-2026-08-28-165).
   'trolley.proxy.rlwy.net', // Demo pgvector (DEC-165/DEC-172).
-]);
-
-const FORBIDDEN_DB_HOSTS_SOFT = new Set([
   'sakura.proxy.rlwy.net', // Staging release-gate migration target.
   'thomas.proxy.rlwy.net', // Staging Postgres service.
   'caboose.proxy.rlwy.net', // Origin unresolved; retained defensively.
@@ -105,14 +102,11 @@ function target(): { url: string; host: string; database: string } {
   const host = parsed.hostname.toLowerCase();
   const database = decodeURIComponent(parsed.pathname.slice(1));
 
-  if (FORBIDDEN_DB_HOSTS_HARD.has(host)) {
-    throw new Error(`ODMOWA: host ${host} to produkcja/demo — migracja NIGDY nie może tam biec, bez wyjątku.`);
+  if (FORBIDDEN_DB_HOSTS.has(host)) {
+    throw new Error(`ODMOWA: host ${host} to produkcja/demo/staging — migracja NIGDY nie może tam biec, bez wyjątku.`);
   }
   if (!expectedHost || expectedHost !== host) {
     throw new Error(`ODMOWA: wymagane --oczekiwany-host=${host || '<host z DATABASE_URL>'} (jawne potwierdzenie hosta).`);
-  }
-  if (FORBIDDEN_DB_HOSTS_SOFT.has(host)) {
-    console.error(`OSTRZEŻENIE: migracja biegnie na hoście stagingowym "${host}" — jawnie potwierdzone --oczekiwany-host.`);
   }
   if (!expectedDatabase) {
     throw new Error('ODMOWA: wymagany jawny --baza=<nazwa bazy> — nazwa bazy nie jest już przybita w kodzie.');
@@ -158,7 +152,7 @@ function reason(row: LegacyRow): string[] {
   if (!row.project_id) reasons.push('BRAK_PROJECT_ID');
   if (!row.owner_business_id) reasons.push('BRAK_OWNER_BUSINESS_ID');
   const rawStatus = String(row.status || 'DRAFT').toUpperCase();
-  if (!STATUS[rawStatus]) reasons.push('NIEZNANY_STATUS');
+  if (!STATUS[rawStatus]) reasons.push('UNKNOWN_STATUS');
   return reasons;
 }
 
@@ -290,10 +284,10 @@ async function main(): Promise<void> {
     const rows = (await client.query<LegacyRow>(`SELECT i.* FROM initiatives i WHERE NOT EXISTS (SELECT 1 FROM ie_aggregate_state s WHERE s.aggregate_type='initiative' AND s.aggregate_id=i.id) ORDER BY i.id`)).rows;
     const eligible = rows.filter((row) => reason(row).length === 0);
     const skipped = rows.filter((row) => reason(row).length > 0);
-    const skippedNieznanyStatus = skipped.filter((row) => reason(row).includes('NIEZNANY_STATUS'));
+    const skippedNieznanyStatus = skipped.filter((row) => reason(row).includes('UNKNOWN_STATUS'));
     if (skippedNieznanyStatus.length > 0) {
       console.error(
-        `OSTRZEŻENIE: ${skippedNieznanyStatus.length} wierszy pominiętych z powodu NIEZNANY_STATUS (fail-closed, zero zgadywania) — id: ${skippedNieznanyStatus.slice(0, 5).map((r) => r.id).join(', ')}${skippedNieznanyStatus.length > 5 ? '…' : ''}`
+        `OSTRZEŻENIE: ${skippedNieznanyStatus.length} wierszy pominiętych z powodu UNKNOWN_STATUS (fail-closed, zero zgadywania) — id: ${skippedNieznanyStatus.slice(0, 5).map((r) => r.id).join(', ')}${skippedNieznanyStatus.length > 5 ? '…' : ''}`
       );
     }
     const legacyBefore = await scalar(client, 'SELECT count(*) FROM initiatives');
@@ -318,7 +312,6 @@ async function main(): Promise<void> {
     const initiativesMd5After = await initiativesMd5(client);
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const targetManifestDir = manifestDir || process.cwd();
-    fs.mkdirSync(targetManifestDir, { recursive: true });
     const base = `inicjatywy-kanon-${mode}-${stamp}`;
     const manifestPath = path.join(targetManifestDir, `${base}.json`);
 
@@ -351,7 +344,10 @@ async function main(): Promise<void> {
       initiativesMd5Before,
       initiativesMd5After,
     };
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', { mode: 0o600 });
+    if (mode === 'apply' || zapiszManifestDryRun) {
+      fs.mkdirSync(targetManifestDir, { recursive: true });
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', { mode: 0o600 });
+    }
 
     // Bez pliku pełnego (dry-run bez --zapisz-manifest): tylko liczby i id w
     // konsoli (bez PII wiersza — reasons + id wystarczą do decyzji właściciela
@@ -360,7 +356,12 @@ async function main(): Promise<void> {
       ? undefined
       : skipped.map((row) => ({ id: row.id, organizationId: row.organization_id, reasons: reason(row) }));
 
-    console.log(JSON.stringify({ ...manifest, manifestPath, examples: eligible.slice(0, 3).map(payload), skippedSummary }));
+    console.log(JSON.stringify({
+      ...manifest,
+      manifestPath: mode === 'apply' || zapiszManifestDryRun ? manifestPath : null,
+      examples: eligible.slice(0, 3).map(payload),
+      skippedSummary,
+    }));
   } finally {
     client.release();
     await pool.end();

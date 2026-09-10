@@ -77,7 +77,7 @@ export const toInitiativeDocumentFromRegistration = (
  */
 export async function saveRuntimeOnlyInitiativeDocumentMetadata(
   initiativeId: string,
-  updates: { title?: string; summary?: string; description?: string },
+  updates: { title?: string; summary?: string; description?: string; ownerId?: string },
   expectedVersion: number,
   amend: (
     initiativeId: string,
@@ -87,6 +87,7 @@ export async function saveRuntimeOnlyInitiativeDocumentMetadata(
       title?: string;
       problem?: string;
       proposedOutcome?: string | null;
+      initiativeOwnerId?: string;
     }
   ) => Promise<{ initiative: RegisteredInitiativeReadModel }>,
   actor?: InitiativeDocumentActor
@@ -100,6 +101,7 @@ export async function saveRuntimeOnlyInitiativeDocumentMetadata(
     ...(typeof updates.title === 'string' ? { title: updates.title } : {}),
     ...(typeof updates.description === 'string' ? { problem: updates.description } : {}),
     ...(typeof updates.summary === 'string' ? { proposedOutcome: updates.summary } : {}),
+    ...(typeof updates.ownerId === 'string' ? { initiativeOwnerId: updates.ownerId } : {}),
   });
   return toInitiativeDocumentFromRegistration(result.initiative, actor);
 }

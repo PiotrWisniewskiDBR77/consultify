@@ -83,6 +83,60 @@ describe('saveRuntimeOnlyInitiativeDocumentMetadata (N1 canonical writer routing
     expect(command.proposedOutcome).toBe('New outcome text');
   });
 
+  it('maps an editable card owner to initiativeOwnerId', async () => {
+    const amend = vi.fn().mockResolvedValue(registeredResult);
+
+    await saveRuntimeOnlyInitiativeDocumentMetadata(
+      'demo-piotr-energy-draft-initiative',
+      { ownerId: 'owner-2' },
+      4,
+      amend
+    );
+
+    expect(amend.mock.calls[0][1].initiativeOwnerId).toBe('owner-2');
+  });
+
+  it('sends all four canonical metadata fields in one command', async () => {
+    const amend = vi.fn().mockResolvedValue(registeredResult);
+    await saveRuntimeOnlyInitiativeDocumentMetadata(
+      'demo-piotr-energy-draft-initiative',
+      { title: 'T', description: 'P', summary: 'O', ownerId: 'owner-2' },
+      4,
+      amend
+    );
+    expect(amend.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        title: 'T',
+        problem: 'P',
+        proposedOutcome: 'O',
+        initiativeOwnerId: 'owner-2',
+      })
+    );
+  });
+
+  it('does not invent an owner when the card did not provide one', async () => {
+    const amend = vi.fn().mockResolvedValue(registeredResult);
+    await saveRuntimeOnlyInitiativeDocumentMetadata(
+      'demo-piotr-energy-draft-initiative',
+      { title: 'T' },
+      4,
+      amend
+    );
+    expect(amend.mock.calls[0][1].initiativeOwnerId).toBeUndefined();
+  });
+
+  it('keeps the actor when mapping the canonical readback to the card', async () => {
+    const amend = vi.fn().mockResolvedValue(registeredResult);
+    const result = await saveRuntimeOnlyInitiativeDocumentMetadata(
+      'demo-piotr-energy-draft-initiative',
+      { title: 'T' },
+      4,
+      amend,
+      { id: 'actor-1', displayName: 'Actor One' }
+    );
+    expect(result).toEqual(expect.objectContaining({ id: 'demo-piotr-energy-draft-initiative' }));
+  });
+
   it('propagates a rejection from amend() (e.g. a real 409) instead of swallowing it', async () => {
     const amend = vi.fn().mockRejectedValue(new Error('VERSION_OR_IDEMPOTENCY_CONFLICT'));
 
