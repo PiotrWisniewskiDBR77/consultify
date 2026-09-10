@@ -63,6 +63,7 @@ import {
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { sekcjeZKontraktu } from '@/components/standard/contractSections';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -2095,16 +2096,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       }
     }
 
-    out.push({
-      id: 'ai-review',
-      label: { en: 'AI review', pl: 'Ocena AI' },
-      icon: Sparkles,
-      variant: 'neutral',
-      onClick: () => {
-        void runAiQualityReview();
-      },
-      disabled: isAiEvaluating || !session?.id,
-    });
+    // DEC-433: „Ocena AI" nie jest już osobnym przyciskiem paska — wchłonięty
+    // jako pozycja „Analizuj" w `PracujZAI` (renderActionBar, obok Sekcji).
+    // Nie dublować: jeden wołacz `runAiQualityReview`, jedno miejsce w UI.
     out.push({
       id: 'export-md',
       label: { en: 'Markdown', pl: 'Markdown' },
@@ -3593,11 +3587,37 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           () => (
                 <div className="flex items-center gap-2 min-h-[36px] flex-wrap">
                   <NModeCardManager layout={interviewCardLayout} isPolish={isPolish} />
-                  {actions.length > 0 && (
-                    <div className="ml-auto">
+                  <div className="ml-auto flex items-center gap-2">
+                    {actions.length > 0 && (
                       <NModeActionBar actions={actions} activeSection={activeSection} />
-                    </div>
-                  )}
+                    )}
+                    {/* DEC-433 (K21): „Pracuj z AI" — jedno wejście AI, trzy
+                        pozycje. „Ocena AI" żyje tu jako „Analizuj" (ta sama
+                        funkcja `runAiQualityReview`, bez duplikatu). Karta
+                        wywiadu nie ma generatora treści pól (odpowiedzi daje
+                        człowiek) — „Uzupełnij…" świadomie bez źródła,
+                        komponent pokaże je wyszarzone z powodem. */}
+                    <PracujZAI
+                      isPolish={isPolish}
+                      onAnalizuj={() => {
+                        void runAiQualityReview();
+                      }}
+                      analizaWToku={isAiEvaluating}
+                      aktywnaSekcja={activeSection}
+                      kontekstArtefaktu={{
+                        title: sessionName,
+                        status: lifecycleStatus,
+                        type: 'interview_session',
+                      }}
+                      moznaEdytowac={!isLocked}
+                      powodTylkoOdczyt={
+                        isLocked
+                          ? t('interview.workspace.sessionClosedReadOnlyReason', 'session is closed')
+                          : undefined
+                      }
+                      disabled={!session?.id}
+                    />
+                  </div>
                 </div>
               )
         }
