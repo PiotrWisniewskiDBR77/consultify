@@ -369,6 +369,12 @@ export const OkrReportRegistryPage: React.FC = () => {
                 title: t('results.okr.report.emptyTitle', 'No OKR reports'),
                 description: t('results.okr.report.emptyDescription', 'There is no OKR report in this organization yet. A report is created together with a set of objectives for a chosen cycle.'
                 ),
+                // P2B (2026-09-10): sam opis mówi, jak powstaje raport, ale nie
+                // dawał do tego przycisku. Ten sam cel co `primaryCta` wyżej
+                // (pełny formularz zestawu żyje pod `/results/okr/sets` —
+                // celowo nie duplikujemy go uproszczoną wersją tutaj).
+                actionLabel: t('results.okr.report.newReport', 'New report'),
+                onAction: () => navigate('/results/okr/sets'),
               }
             : undefined,
         selectedRowId: selectedSetId,
