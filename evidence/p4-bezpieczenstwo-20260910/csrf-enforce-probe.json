@@ -1,0 +1,112 @@
+{
+  "generatedAt": "2026-09-10T06:38:57.115Z",
+  "base": "http://127.0.0.1:3107",
+  "csrfMode": "enforce",
+  "results": [
+    {
+      "name": "inicjatywa",
+      "route": "POST /api/initiatives",
+      "positive": {
+        "status": 200,
+        "csrfBlocked": false,
+        "body": "{\"id\":\"17cbdf5b-333d-4331-b481-d15888b2ba98\",\"name\":\"P4 sonda inicjatywa 1789022330370\",\"message\":\"Initiative created\"}"
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS",
+      "cleanup": {
+        "route": "/api/initiatives/17cbdf5b-333d-4331-b481-d15888b2ba98",
+        "status": 200
+      }
+    },
+    {
+      "name": "zadanie",
+      "route": "POST /api/tasks",
+      "positive": {
+        "status": 201,
+        "csrfBlocked": false,
+        "body": "{\"id\":\"70376f0a-aa44-43d6-9ac9-20447af79f38\",\"project_id\":null,\"organization_id\":\"468b234c-66c4-54e1-b626-5e0fb3a92f6a\",\"title\":\"P4 sonda zadanie 1789022330370\""
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS",
+      "cleanup": {
+        "route": "/api/tasks/70376f0a-aa44-43d6-9ac9-20447af79f38",
+        "status": 200
+      }
+    },
+    {
+      "name": "decyzja",
+      "route": "POST /api/decisions",
+      "positive": {
+        "status": 201,
+        "csrfBlocked": false,
+        "body": "{\"id\":\"0c6e11cb-3283-42ab-a70f-ee4c67a17edb\",\"projectId\":\"6174636d-c4f2-552d-9a5a-d2695738f9bc\",\"title\":\"P4 sonda decyzja 1789022330370\",\"status\":\"PENDING\"}"
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS",
+      "cleanup": {
+        "route": "/api/decisions/0c6e11cb-3283-42ab-a70f-ee4c67a17edb",
+        "status": 200
+      }
+    },
+    {
+      "name": "material",
+      "route": "POST /api/tool-assets",
+      "positive": {
+        "status": 404,
+        "csrfBlocked": false,
+        "body": "{\"status\":\"fail\",\"error\":{\"code\":\"API_ROUTE_NOT_FOUND\",\"message\":\"The requested API endpoint does not exist.\",\"timestamp\":\"2026-09-10T06:38:56.680Z\"},\"correlati"
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS"
+    },
+    {
+      "name": "web-vitals (sendBeacon)",
+      "route": "POST /api/analytics/web-vitals",
+      "positive": {
+        "status": 204,
+        "csrfBlocked": false,
+        "body": ""
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS"
+    },
+    {
+      "name": "preferencje",
+      "route": "PUT /api/preferences",
+      "positive": {
+        "status": 200,
+        "csrfBlocked": false,
+        "body": "{\"success\":true,\"message\":\"Preferences updated\"}"
+      },
+      "negative": {
+        "status": 403,
+        "csrfBlocked": true
+      },
+      "routeMissing": false,
+      "verdict": "PASS"
+    }
+  ],
+  "counts": {
+    "PASS": 6
+  }
+}
