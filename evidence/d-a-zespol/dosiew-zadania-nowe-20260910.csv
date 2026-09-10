@@ -1,0 +1,35 @@
+id,title,initiative_id,project_id,assignee,due_date,estimated_hours,status,priority
+task-dbr77-load-001,Design data model for analytics platform staging layer,b8f28cea-36b4-4f12-802e-634bf10c4d5a,b4695c7c-0434-46ac-9cc1-3cd89afc463a,anna.kowalska@dbr77.com,2026-09-11,16,in_progress,medium
+task-dbr77-load-002,Build ETL job for daily sales data ingestion,b8f28cea-36b4-4f12-802e-634bf10c4d5a,b4695c7c-0434-46ac-9cc1-3cd89afc463a,anna.kowalska@dbr77.com,2026-09-11,12,in_progress,medium
+task-dbr77-load-003,Validate dashboard KPIs with operations stakeholders,b8f28cea-36b4-4f12-802e-634bf10c4d5a,b4695c7c-0434-46ac-9cc1-3cd89afc463a,anna.kowalska@dbr77.com,2026-09-18,28,todo,high
+task-dbr77-load-004,Map current-state process for WIP warehouse put-away,seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip,,anna.kowalska@dbr77.com,2026-09-25,12,todo,medium
+task-dbr77-load-005,Map current-state process for invoice reconciliation workflow,c55f3b10-e04e-44dd-a2e0-178046902520,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,jan.zielinski@dbr77.com,2026-09-11,18,in_progress,medium
+task-dbr77-load-006,Configure RPA bot for purchase order matching,c55f3b10-e04e-44dd-a2e0-178046902520,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,jan.zielinski@dbr77.com,2026-09-11,10,in_progress,low
+task-dbr77-load-007,Validate exception-handling rules with finance team,c55f3b10-e04e-44dd-a2e0-178046902520,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,jan.zielinski@dbr77.com,2026-09-18,30,todo,urgent
+task-dbr77-load-008,Design ETL job for supplier price feed ingestion,b8f28cea-36b4-4f12-802e-634bf10c4d5a,b4695c7c-0434-46ac-9cc1-3cd89afc463a,jan.zielinski@dbr77.com,2026-09-25,8,todo,medium
+task-dbr77-load-009,Map inspection checklist into QMS 4.0 digital form,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,katarzyna.wojcik@dbr77.com,2026-09-11,18,in_progress,medium
+task-dbr77-load-010,Configure non-conformance workflow in QMS platform,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,katarzyna.wojcik@dbr77.com,2026-09-11,16,in_progress,medium
+task-dbr77-load-011,Validate calibration schedule import with quality team,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,katarzyna.wojcik@dbr77.com,2026-09-18,34,todo,urgent
+task-dbr77-load-012,Validate safety fencing layout for welding cell,seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego,,katarzyna.wojcik@dbr77.com,2026-09-25,10,todo,medium
+task-dbr77-load-013,Specify conveyor integration requirements for WIP automation,seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip,,ewa.nowicka@dbr77.com,2026-09-11,16,in_progress,medium
+task-dbr77-load-014,Validate barcode scanning flow with warehouse supervisor,seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip,,ewa.nowicka@dbr77.com,2026-09-25,14,todo,medium
+task-dbr77-load-015,Validate sensor placement with maintenance lead,e3b0a66a-dc86-4730-84e0-cdffb66cbed6,f992cfae-9b03-473f-a685-a5f58b5a5119,tomasz.jankowski@dbr77.com,2026-09-18,20,todo,high
+task-dbr77-load-016,Configure gateway firmware for IoT sensor network,e3b0a66a-dc86-4730-84e0-cdffb66cbed6,f992cfae-9b03-473f-a685-a5f58b5a5119,tomasz.jankowski@dbr77.com,2026-10-02,10,todo,medium
+task-dbr77-load-017,Draft wireframes for customer self-service dashboard,84baaa08-5249-42e4-a292-3921e67d29d1,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,marek.nowak@dbr77.com,2026-09-11,18,in_progress,medium
+task-dbr77-load-018,Define API contract for portal authentication module,84baaa08-5249-42e4-a292-3921e67d29d1,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,marek.nowak@dbr77.com,2026-09-25,12,todo,low
+task-dbr77-load-019,Review accessibility requirements for portal redesign,84baaa08-5249-42e4-a292-3921e67d29d1,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,jan.kowalski@dbr77.com,2026-09-18,24,todo,high
+task-dbr77-load-020,Draft training plan for QMS 4.0 rollout,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,jan.kowalski@dbr77.com,2026-09-11,8,in_progress,low
+task-dbr77-load-021,Prepare usability test script for new portal navigation,84baaa08-5249-42e4-a292-3921e67d29d1,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,julia.lewandowska@dbr77.com,2026-09-18,8,todo,low
+task-dbr77-load-022,Iterate wireframes based on stakeholder feedback,84baaa08-5249-42e4-a292-3921e67d29d1,6d8ae9ba-3840-46ea-9068-10cdf55d5a76,julia.lewandowska@dbr77.com,2026-10-09,6,todo,low
+task-dbr77-load-023,Review access control policy for privileged accounts,7eb944f9-c5b9-4162-8bff-23b0d620f9f3,f992cfae-9b03-473f-a685-a5f58b5a5119,justyna.laskowska@dbr77.com,2026-09-25,6,todo,low
+task-dbr77-load-024,Approve incident response runbook for security program,7eb944f9-c5b9-4162-8bff-23b0d620f9f3,f992cfae-9b03-473f-a685-a5f58b5a5119,justyna.laskowska@dbr77.com,2026-10-16,5,todo,low
+task-dbr77-load-025,Set up CI pipeline for staging deployment,d3bc32b2-ca68-456f-8af9-a432d6f10442,2fbb1e31-6c71-4228-b775-05aae98690d6,krzysztof.zielinski@dbr77.com,2026-10-02,8,todo,low
+task-dbr77-load-026,Migrate build scripts to new container registry,d3bc32b2-ca68-456f-8af9-a432d6f10442,2fbb1e31-6c71-4228-b775-05aae98690d6,krzysztof.zielinski@dbr77.com,2026-09-11,6,in_progress,low
+task-dbr77-load-027,Run vulnerability scan on external-facing services,7eb944f9-c5b9-4162-8bff-23b0d620f9f3,f992cfae-9b03-473f-a685-a5f58b5a5119,admin@dbr77.com,2026-09-18,6,todo,low
+task-dbr77-load-028,Draft incident response runbook for security program,7eb944f9-c5b9-4162-8bff-23b0d620f9f3,f992cfae-9b03-473f-a685-a5f58b5a5119,admin@dbr77.com,2026-10-16,5,todo,low
+task-dbr77-load-029,Prepare wiring diagram for sensor installation on line 3,e3b0a66a-dc86-4730-84e0-cdffb66cbed6,f992cfae-9b03-473f-a685-a5f58b5a5119,piotr@dbr77.com,2026-09-25,8,todo,medium
+task-dbr77-load-030,Review IoT sensor network rollout plan with maintenance lead,e3b0a66a-dc86-4730-84e0-cdffb66cbed6,f992cfae-9b03-473f-a685-a5f58b5a5119,piotr@dbr77.com,2026-09-11,6,in_progress,low
+task-dbr77-load-031,Inventory on-prem workloads for phase 2 cloud migration,bb9038c3-d5e0-41e4-8d3d-f695d9c045f9,f992cfae-9b03-473f-a685-a5f58b5a5119,pawel.mroczkowski@dbr77.com,2026-10-02,6,todo,low
+task-dbr77-load-032,Approve cutover runbook for database migration,bb9038c3-d5e0-41e4-8d3d-f695d9c045f9,f992cfae-9b03-473f-a685-a5f58b5a5119,pawel.mroczkowski@dbr77.com,2026-09-18,5,todo,low
+task-dbr77-load-033,Approve QMS 4.0 rollout training plan,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,tomasz.lewandowski@dbr77.com,2026-10-09,8,todo,low
+task-dbr77-load-034,Review non-conformance workflow configuration,5317c99f-1710-4e92-a65f-c56e5c38b3dd,f992cfae-9b03-473f-a685-a5f58b5a5119,tomasz.lewandowski@dbr77.com,2026-09-25,4,todo,low

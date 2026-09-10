@@ -1,0 +1,90 @@
+{
+  "op": "measure",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T17:27:25.523Z",
+  "measure": {
+    "summary": {
+      "peopleCount": 7,
+      "demandHours": 0,
+      "supplyHours": 2240,
+      "gapHours": 2240,
+      "utilizationPercent": 0,
+      "overloadedCount": 0,
+      "peopleWithoutProfileSupply": 7,
+      "backlogHoursTotal": 492,
+      "backlogPeople": 6
+    },
+    "people": [
+      {
+        "userId": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "name": "Ewa Nowicka",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 112,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "name": "Marek Nowak",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 72,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "name": "Anna Kowalska",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 60,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "name": "Katarzyna Wójcik",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 86,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "name": "Tomasz Lewandowski",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 88,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "name": "Jan Zieliński",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 74,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "name": "Jan Kowalski",
+        "role": "",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "DOMYSLNA",
+        "backlogHours": 0,
+        "unscheduledHours": 0
+      }
+    ]
+  }
+}

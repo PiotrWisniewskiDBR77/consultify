@@ -1,0 +1,233 @@
+{
+  "op": "initiatives",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T17:28:16.431Z",
+  "initiatives": {
+    "przed": [
+      {
+        "id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "name": "Platforma analityki danych",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "name": "Process Automation — RPA",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego",
+        "name": "Robotyzacja gniazda spawalniczego",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "name": "Customer Portal Redesign",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "name": "Automatyzacja magazynu WIP",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "name": "Transformacja DevOps",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "name": "System zarządzania jakością 4.0",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "name": "Program wzmocnienia cyberbezpieczeństwa",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "name": "Migracja do chmury — Faza 2",
+        "status": "APPROVED",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      },
+      {
+        "id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "name": "Wdrożenie sieci czujników IoT",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0
+      }
+    ],
+    "plan": [
+      {
+        "id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "name": "Process Automation — RPA",
+        "fte": {
+          "z": 0,
+          "na": 2.5
+        }
+      },
+      {
+        "id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "name": "Customer Portal Redesign",
+        "fte": {
+          "z": 0,
+          "na": 2
+        }
+      },
+      {
+        "id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "name": "Transformacja DevOps",
+        "fte": {
+          "z": 0,
+          "na": 1.5
+        }
+      },
+      {
+        "id": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "name": "Migracja do chmury — Faza 2",
+        "fte": {
+          "z": 0,
+          "na": 1
+        }
+      },
+      {
+        "id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "name": "Wdrożenie sieci czujników IoT",
+        "fte": {
+          "z": 0,
+          "na": 0.5
+        }
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "name": "Automatyzacja magazynu WIP",
+        "fte": {
+          "z": 0,
+          "na": 1.5
+        }
+      },
+      {
+        "id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "name": "Platforma analityki danych",
+        "fte": {
+          "z": 0,
+          "na": 1
+        }
+      },
+      {
+        "id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "name": "Program wzmocnienia cyberbezpieczeństwa",
+        "fte": {
+          "z": 0,
+          "na": 1.5
+        }
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego",
+        "name": "Robotyzacja gniazda spawalniczego",
+        "fte": {
+          "z": 0,
+          "na": 2
+        }
+      },
+      {
+        "id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "name": "System zarządzania jakością 4.0",
+        "fte": {
+          "z": 0,
+          "na": 1.5
+        }
+      }
+    ],
+    "po": [
+      {
+        "id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "name": "Process Automation — RPA",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 2.5
+      },
+      {
+        "id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "name": "Customer Portal Redesign",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 2
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "name": "Automatyzacja magazynu WIP",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1.5
+      },
+      {
+        "id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "name": "Platforma analityki danych",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1
+      },
+      {
+        "id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego",
+        "name": "Robotyzacja gniazda spawalniczego",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 2
+      },
+      {
+        "id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "name": "Transformacja DevOps",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1.5
+      },
+      {
+        "id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "name": "System zarządzania jakością 4.0",
+        "status": "IN_EXECUTION",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1.5
+      },
+      {
+        "id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "name": "Program wzmocnienia cyberbezpieczeństwa",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1.5
+      },
+      {
+        "id": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "name": "Migracja do chmury — Faza 2",
+        "status": "APPROVED",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 1
+      },
+      {
+        "id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "name": "Wdrożenie sieci czujników IoT",
+        "status": "PENDING_APPROVAL",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "required_capacity_fte": 0.5
+      }
+    ]
+  }
+}

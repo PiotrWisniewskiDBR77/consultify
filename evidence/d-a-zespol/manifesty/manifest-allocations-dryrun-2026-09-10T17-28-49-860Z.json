@@ -1,0 +1,115 @@
+{
+  "op": "allocations",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T17:28:49.679Z",
+  "allocations": {
+    "przed": [],
+    "plan": [
+      {
+        "key": "da-zespol-20260910:c55f3b10-e04e-44dd-a2e0-178046902520:jan.zielinski@dbr77.com",
+        "id": "da-zespol-359921f8eea87865cffcd8c1",
+        "initiativeId": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "userId": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "role": "Data Engineer",
+        "pct": 50,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:84baaa08-5249-42e4-a292-3921e67d29d1:julia.lewandowska@dbr77.com",
+        "id": "da-zespol-4ff9c019ac7984da320fda81",
+        "initiativeId": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "userId": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "role": "UX Designer",
+        "pct": 40,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:d3bc32b2-ca68-456f-8af9-a432d6f10442:krzysztof.zielinski@dbr77.com",
+        "id": "da-zespol-2e6c13efb386fb01a933c08b",
+        "initiativeId": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "userId": "188a66b0-f284-4869-b26c-355df56d808a",
+        "role": "DevOps Engineer",
+        "pct": 60,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:bb9038c3-d5e0-41e4-8d3d-f695d9c045f9:krzysztof.zielinski@dbr77.com",
+        "id": "da-zespol-5a0ecd882abcaba7397ee880",
+        "initiativeId": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "userId": "188a66b0-f284-4869-b26c-355df56d808a",
+        "role": "DevOps Engineer",
+        "pct": 30,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:e3b0a66a-dc86-4730-84e0-cdffb66cbed6:piotr@dbr77.com",
+        "id": "da-zespol-410b3f13127753875984d7fd",
+        "initiativeId": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "userId": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "role": "Program Director",
+        "pct": 20,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip:marek.nowak@dbr77.com",
+        "id": "da-zespol-b3faa56007a93ea0fa6f4e57",
+        "initiativeId": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "userId": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "role": "Product Manager",
+        "pct": 30,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:b8f28cea-36b4-4f12-802e-634bf10c4d5a:anna.kowalska@dbr77.com",
+        "id": "da-zespol-bfbea873c77e7694f3cc17e5",
+        "initiativeId": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "userId": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "role": "Senior Data Engineer",
+        "pct": 40,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:7eb944f9-c5b9-4162-8bff-23b0d620f9f3:tomasz.jankowski@dbr77.com",
+        "id": "da-zespol-70ddf0229f1d3733413e7a66",
+        "initiativeId": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "userId": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "role": "R&D Specialist",
+        "pct": 30,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego:tomasz.jankowski@dbr77.com",
+        "id": "da-zespol-82640b9c238e1741810152ff",
+        "initiativeId": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego",
+        "userId": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "role": "R&D Specialist",
+        "pct": 20,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      },
+      {
+        "key": "da-zespol-20260910:5317c99f-1710-4e92-a65f-c56e5c38b3dd:katarzyna.wojcik@dbr77.com",
+        "id": "da-zespol-6a22484b743fee132accb0fa",
+        "initiativeId": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "userId": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "role": "Quality Specialist",
+        "pct": 50,
+        "start": "2026-09-07",
+        "end": "2026-11-01"
+      }
+    ],
+    "po": null,
+    "window": {
+      "start": "2026-09-07",
+      "end": "2026-11-01"
+    }
+  }
+}

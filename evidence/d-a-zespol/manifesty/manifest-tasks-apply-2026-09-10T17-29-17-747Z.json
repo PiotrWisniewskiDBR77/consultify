@@ -1,0 +1,763 @@
+{
+  "op": "tasks",
+  "tryb": "APPLY",
+  "czas": "2026-09-10T17:29:16.132Z",
+  "tasks": {
+    "przed": [
+      {
+        "id": "b7342823-6286-48ab-814e-489be96d7c8b",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "549cbab0-5fc6-42b8-9c6f-0bf30b9f8dc3",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "5f687458-93ce-4787-93eb-81014852a614",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-003",
+        "title": "Naprawa krytycznego błędu produkcyjnego",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-02-10T23:00:00.000Z",
+        "estimated_hours": 6,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "3280a33c-9c04-471b-b620-658423cbc96b",
+        "title": "Zarządzanie jakością 4.0 — MVP pulpitu SPC",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-29T18:34:28.133Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "c92485ea-b906-4586-b209-bc5bcb9bfff0",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "4d63149c-9dcf-4f0b-b2b7-6d450b81f1da",
+        "title": "Planowanie zasobów zespołu — Sprint 15",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-24T19:34:28.014Z",
+        "estimated_hours": 4,
+        "actual_hours": null,
+        "initiative_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "8ef8640d-de2d-4935-be13-3d2c90fc13e8",
+        "title": "Złożenie dokumentacji zgodności",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-08T23:00:00.000Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "2b5e0e21-119e-46d3-916a-5cdfc8f2f7eb",
+        "title": "Pilotaż RPA — automatyzacja przetwarzania faktur",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-03-26T19:34:28.095Z",
+        "estimated_hours": 9,
+        "actual_hours": null,
+        "initiative_id": "1c9bb549-83e7-4017-b996-f1400f724c82",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "1cae44c8-7ea7-4e11-a89d-8c3f5bdb997f",
+        "title": "Przygotowanie prezentacji dla zarządu — wyniki dojrzałości cyfrowej",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-03-18T19:34:27.821Z",
+        "estimated_hours": 17,
+        "actual_hours": null,
+        "initiative_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "6dc6f1c3-9128-405e-933d-6b5f84f7eb5e",
+        "title": "Finalizacja mapy drogowej transformacji Q2",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-03-19T19:34:27.567Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "fd1210ec-6dfa-410f-93fc-9e954af8d50f",
+        "title": "Konfiguracja środowiska pilotażowego i integracji",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-01T17:31:27.991Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "d1b3751e-d2aa-4957-8967-10254e7628c3",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-001",
+        "title": "Przegląd raportu budżetowego za Q4",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-02-07T16:29:24.000Z",
+        "estimated_hours": 8,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-009",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "85332018-9b7b-4a58-b2a1-969f274ad02e",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "ef7c1347-9525-4db4-9d72-f11cff4446d4",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-011",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e74b426b-ff06-481c-a870-e1f2398e78b4",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "3a4d9bb9-c839-43c2-89fd-8e64e8e9b581",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-005",
+        "title": "Przegląd pull requestów",
+        "status": "in_progress",
+        "assignee_id": null,
+        "due_date": "2026-02-12T16:29:24.000Z",
+        "estimated_hours": 4,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "29e3150f-f25f-4d71-9c55-de123dfba947",
+        "title": "Roczne oceny pracownicze",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-26T16:29:24.000Z",
+        "estimated_hours": 24,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "4b9c9ad3-307a-44e2-9821-ce94dbedcf16",
+        "title": "Prezentacja na standupie zespołu",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-12T16:29:24.000Z",
+        "estimated_hours": 2,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e1fa9e27-222f-421f-8774-a6a37b76029a",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "demo-init-executing-01",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "bd990ade-4bfc-4867-a49a-b846fb716884",
+        "title": "Aktualizacja dokumentacji projektu",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-14T16:29:24.000Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "d3a43e93-8885-473f-88fb-96391dab4f91",
+        "title": "Przygotowanie demo dla interesariuszy",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-15T16:29:24.000Z",
+        "estimated_hours": 12,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "fd267f99-4666-42a8-981e-f362223b0cff",
+        "title": "Sesja przeglądu architektury",
+        "status": "todo",
+        "assignee_id": null,
+        "due_date": "2026-02-16T16:29:24.000Z",
+        "estimated_hours": 3,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e48cc142-e09f-46ae-8a57-234aeeb3fa09",
+        "title": "Krótka lista dostawców platformy IoT (IRIS)",
+        "status": "review",
+        "assignee_id": null,
+        "due_date": "2026-03-22T19:34:27.859Z",
+        "estimated_hours": 14,
+        "actual_hours": null,
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      }
+    ],
+    "plan": [
+      {
+        "id": "task-rich-001",
+        "title": "Przegląd raportu budżetowego za Q4",
+        "due": "2026-02-07T16:29:24.000Z",
+        "est": 8,
+        "przypisz": "julia.lewandowska@dbr77.com",
+        "userId": "d93e483a-1ef3-4839-965e-9fc032d80a8f"
+      },
+      {
+        "id": "8ef8640d-de2d-4935-be13-3d2c90fc13e8",
+        "title": "Złożenie dokumentacji zgodności",
+        "due": "2026-02-08T23:00:00.000Z",
+        "est": 16,
+        "przypisz": "justyna.laskowska@dbr77.com",
+        "userId": "60887056-371a-4404-b85c-61c920852579"
+      },
+      {
+        "id": "task-rich-003",
+        "title": "Naprawa krytycznego błędu produkcyjnego",
+        "due": "2026-02-10T23:00:00.000Z",
+        "est": 6,
+        "przypisz": "krzysztof.zielinski@dbr77.com",
+        "userId": "188a66b0-f284-4869-b26c-355df56d808a"
+      },
+      {
+        "id": "task-rich-005",
+        "title": "Przegląd pull requestów",
+        "due": "2026-02-12T16:29:24.000Z",
+        "est": 4,
+        "przypisz": "pawel.mroczkowski@dbr77.com",
+        "userId": "e91daa55-7657-4588-aa55-c7f1c8a34560"
+      },
+      {
+        "id": "4b9c9ad3-307a-44e2-9821-ce94dbedcf16",
+        "title": "Prezentacja na standupie zespołu",
+        "due": "2026-02-12T16:29:24.000Z",
+        "est": 2,
+        "przypisz": "piotr@dbr77.com",
+        "userId": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3"
+      },
+      {
+        "id": "bd990ade-4bfc-4867-a49a-b846fb716884",
+        "title": "Aktualizacja dokumentacji projektu",
+        "due": "2026-02-14T16:29:24.000Z",
+        "est": 10,
+        "przypisz": "tomasz.jankowski@dbr77.com",
+        "userId": "aa614b34-bfbd-4757-b2d4-52a2caa466f7"
+      },
+      {
+        "id": "d3a43e93-8885-473f-88fb-96391dab4f91",
+        "title": "Przygotowanie demo dla interesariuszy",
+        "due": "2026-02-15T16:29:24.000Z",
+        "est": 12,
+        "przypisz": "admin@dbr77.com",
+        "userId": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb"
+      },
+      {
+        "id": "fd267f99-4666-42a8-981e-f362223b0cff",
+        "title": "Sesja przeglądu architektury",
+        "due": "2026-02-16T16:29:24.000Z",
+        "est": 3,
+        "przypisz": "anna.kowalska@dbr77.com",
+        "userId": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff"
+      },
+      {
+        "id": "85332018-9b7b-4a58-b2a1-969f274ad02e",
+        "title": "Planowanie infrastruktury chmurowej",
+        "due": "2026-02-17T16:29:24.000Z",
+        "est": 20,
+        "przypisz": "ewa.nowicka@dbr77.com",
+        "userId": "4cfeae1e-0237-4d48-8755-e1d4669b93d3"
+      },
+      {
+        "id": "task-rich-009",
+        "title": "Planowanie infrastruktury chmurowej",
+        "due": "2026-02-17T16:29:24.000Z",
+        "est": 20,
+        "przypisz": "jan.kowalski@dbr77.com",
+        "userId": "7b9b0e03-0061-468a-8201-31ebac233914"
+      },
+      {
+        "id": "ef7c1347-9525-4db4-9d72-f11cff4446d4",
+        "title": "Planowanie infrastruktury chmurowej",
+        "due": "2026-02-17T16:29:24.000Z",
+        "est": 20,
+        "przypisz": "jan.zielinski@dbr77.com",
+        "userId": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4"
+      },
+      {
+        "id": "29e3150f-f25f-4d71-9c55-de123dfba947",
+        "title": "Roczne oceny pracownicze",
+        "due": "2026-02-26T16:29:24.000Z",
+        "est": 24,
+        "przypisz": "katarzyna.wojcik@dbr77.com",
+        "userId": "29262ed1-8017-4db2-9ef1-1e258ed71bdc"
+      },
+      {
+        "id": "fd1210ec-6dfa-410f-93fc-9e954af8d50f",
+        "title": "Konfiguracja środowiska pilotażowego i integracji",
+        "due": "2026-03-01T17:31:27.991Z",
+        "est": 16,
+        "przypisz": "marek.nowak@dbr77.com",
+        "userId": "5bdb3753-88fd-47c2-abe9-7c290b74af65"
+      },
+      {
+        "id": "task-rich-011",
+        "title": "Ocena stosu technologicznego",
+        "due": "2026-03-14T16:29:24.000Z",
+        "est": 32,
+        "przypisz": "tomasz.lewandowski@dbr77.com",
+        "userId": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549"
+      },
+      {
+        "id": "e74b426b-ff06-481c-a870-e1f2398e78b4",
+        "title": "Ocena stosu technologicznego",
+        "due": "2026-03-14T16:29:24.000Z",
+        "est": 32,
+        "przypisz": "julia.lewandowska@dbr77.com",
+        "userId": "d93e483a-1ef3-4839-965e-9fc032d80a8f"
+      },
+      {
+        "id": "3a4d9bb9-c839-43c2-89fd-8e64e8e9b581",
+        "title": "Ocena stosu technologicznego",
+        "due": "2026-03-14T16:29:24.000Z",
+        "est": 32,
+        "przypisz": "justyna.laskowska@dbr77.com",
+        "userId": "60887056-371a-4404-b85c-61c920852579"
+      },
+      {
+        "id": "1cae44c8-7ea7-4e11-a89d-8c3f5bdb997f",
+        "title": "Przygotowanie prezentacji dla zarządu — wyniki dojrzałości cyfrowej",
+        "due": "2026-03-18T19:34:27.821Z",
+        "est": 17,
+        "przypisz": "krzysztof.zielinski@dbr77.com",
+        "userId": "188a66b0-f284-4869-b26c-355df56d808a"
+      },
+      {
+        "id": "6dc6f1c3-9128-405e-933d-6b5f84f7eb5e",
+        "title": "Finalizacja mapy drogowej transformacji Q2",
+        "due": "2026-03-19T19:34:27.567Z",
+        "est": 10,
+        "przypisz": "pawel.mroczkowski@dbr77.com",
+        "userId": "e91daa55-7657-4588-aa55-c7f1c8a34560"
+      },
+      {
+        "id": "4d63149c-9dcf-4f0b-b2b7-6d450b81f1da",
+        "title": "Planowanie zasobów zespołu — Sprint 15",
+        "due": "2026-03-24T19:34:28.014Z",
+        "est": 4,
+        "przypisz": "piotr@dbr77.com",
+        "userId": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3"
+      },
+      {
+        "id": "2b5e0e21-119e-46d3-916a-5cdfc8f2f7eb",
+        "title": "Pilotaż RPA — automatyzacja przetwarzania faktur",
+        "due": "2026-03-26T19:34:28.095Z",
+        "est": 9,
+        "przypisz": "tomasz.jankowski@dbr77.com",
+        "userId": "aa614b34-bfbd-4757-b2d4-52a2caa466f7"
+      },
+      {
+        "id": "3280a33c-9c04-471b-b620-658423cbc96b",
+        "title": "Zarządzanie jakością 4.0 — MVP pulpitu SPC",
+        "due": "2026-03-29T18:34:28.133Z",
+        "est": 16,
+        "przypisz": "admin@dbr77.com",
+        "userId": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb"
+      },
+      {
+        "id": "549cbab0-5fc6-42b8-9c6f-0bf30b9f8dc3",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "due": "2026-04-02T18:34:28.172Z",
+        "est": 10,
+        "przypisz": "anna.kowalska@dbr77.com",
+        "userId": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff"
+      },
+      {
+        "id": "e1fa9e27-222f-421f-8774-a6a37b76029a",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "due": "2026-04-02T18:34:28.172Z",
+        "est": 10,
+        "przypisz": "ewa.nowicka@dbr77.com",
+        "userId": "4cfeae1e-0237-4d48-8755-e1d4669b93d3"
+      },
+      {
+        "id": "b7342823-6286-48ab-814e-489be96d7c8b",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "due": "2026-04-02T18:34:28.172Z",
+        "est": 10,
+        "przypisz": "jan.kowalski@dbr77.com",
+        "userId": "7b9b0e03-0061-468a-8201-31ebac233914"
+      },
+      {
+        "id": "e48cc142-e09f-46ae-8a57-234aeeb3fa09",
+        "title": "Krótka lista dostawców platformy IoT (IRIS)",
+        "due": "2026-03-22T19:34:27.859Z",
+        "est": 14,
+        "przypisz": "jan.zielinski@dbr77.com",
+        "userId": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4"
+      }
+    ],
+    "po": [
+      {
+        "id": "task-rich-001",
+        "title": "Przegląd raportu budżetowego za Q4",
+        "status": "in_progress",
+        "assignee_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "due_date": "2026-02-07T16:29:24.000Z",
+        "estimated_hours": 8,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-005",
+        "title": "Przegląd pull requestów",
+        "status": "in_progress",
+        "assignee_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "due_date": "2026-02-12T16:29:24.000Z",
+        "estimated_hours": 4,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "4b9c9ad3-307a-44e2-9821-ce94dbedcf16",
+        "title": "Prezentacja na standupie zespołu",
+        "status": "todo",
+        "assignee_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "due_date": "2026-02-12T16:29:24.000Z",
+        "estimated_hours": 2,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "bd990ade-4bfc-4867-a49a-b846fb716884",
+        "title": "Aktualizacja dokumentacji projektu",
+        "status": "todo",
+        "assignee_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "due_date": "2026-02-14T16:29:24.000Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "d3a43e93-8885-473f-88fb-96391dab4f91",
+        "title": "Przygotowanie demo dla interesariuszy",
+        "status": "todo",
+        "assignee_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "due_date": "2026-02-15T16:29:24.000Z",
+        "estimated_hours": 12,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "fd267f99-4666-42a8-981e-f362223b0cff",
+        "title": "Sesja przeglądu architektury",
+        "status": "todo",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-02-16T16:29:24.000Z",
+        "estimated_hours": 3,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "85332018-9b7b-4a58-b2a1-969f274ad02e",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-009",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "ef7c1347-9525-4db4-9d72-f11cff4446d4",
+        "title": "Planowanie infrastruktury chmurowej",
+        "status": "todo",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-02-17T16:29:24.000Z",
+        "estimated_hours": 20,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "29e3150f-f25f-4d71-9c55-de123dfba947",
+        "title": "Roczne oceny pracownicze",
+        "status": "todo",
+        "assignee_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "due_date": "2026-02-26T16:29:24.000Z",
+        "estimated_hours": 24,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "fd1210ec-6dfa-410f-93fc-9e954af8d50f",
+        "title": "Konfiguracja środowiska pilotażowego i integracji",
+        "status": "todo",
+        "assignee_id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "due_date": "2026-03-01T17:31:27.991Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "d1b3751e-d2aa-4957-8967-10254e7628c3",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-011",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e74b426b-ff06-481c-a870-e1f2398e78b4",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "3a4d9bb9-c839-43c2-89fd-8e64e8e9b581",
+        "title": "Ocena stosu technologicznego",
+        "status": "todo",
+        "assignee_id": "60887056-371a-4404-b85c-61c920852579",
+        "due_date": "2026-03-14T16:29:24.000Z",
+        "estimated_hours": 32,
+        "actual_hours": null,
+        "initiative_id": "0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "1cae44c8-7ea7-4e11-a89d-8c3f5bdb997f",
+        "title": "Przygotowanie prezentacji dla zarządu — wyniki dojrzałości cyfrowej",
+        "status": "in_progress",
+        "assignee_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "due_date": "2026-03-18T19:34:27.821Z",
+        "estimated_hours": 17,
+        "actual_hours": null,
+        "initiative_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "6dc6f1c3-9128-405e-933d-6b5f84f7eb5e",
+        "title": "Finalizacja mapy drogowej transformacji Q2",
+        "status": "in_progress",
+        "assignee_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "due_date": "2026-03-19T19:34:27.567Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "3280a33c-9c04-471b-b620-658423cbc96b",
+        "title": "Zarządzanie jakością 4.0 — MVP pulpitu SPC",
+        "status": "todo",
+        "assignee_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "due_date": "2026-03-29T18:34:28.133Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "c92485ea-b906-4586-b209-bc5bcb9bfff0",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e1fa9e27-222f-421f-8774-a6a37b76029a",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "demo-init-executing-01",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "e48cc142-e09f-46ae-8a57-234aeeb3fa09",
+        "title": "Krótka lista dostawców platformy IoT (IRIS)",
+        "status": "review",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-03-22T19:34:27.859Z",
+        "estimated_hours": 14,
+        "actual_hours": null,
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "549cbab0-5fc6-42b8-9c6f-0bf30b9f8dc3",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "5f687458-93ce-4787-93eb-81014852a614",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "b7342823-6286-48ab-814e-489be96d7c8b",
+        "title": "DevOps — utwardzenie pipeline'u CI/CD",
+        "status": "todo",
+        "assignee_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "due_date": "2026-04-02T18:34:28.172Z",
+        "estimated_hours": 10,
+        "actual_hours": null,
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "task-rich-003",
+        "title": "Naprawa krytycznego błędu produkcyjnego",
+        "status": "in_progress",
+        "assignee_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "due_date": "2026-02-10T23:00:00.000Z",
+        "estimated_hours": 6,
+        "actual_hours": null,
+        "initiative_id": "init-dbr77-001",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "4d63149c-9dcf-4f0b-b2b7-6d450b81f1da",
+        "title": "Planowanie zasobów zespołu — Sprint 15",
+        "status": "todo",
+        "assignee_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "due_date": "2026-03-24T19:34:28.014Z",
+        "estimated_hours": 4,
+        "actual_hours": null,
+        "initiative_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "8ef8640d-de2d-4935-be13-3d2c90fc13e8",
+        "title": "Złożenie dokumentacji zgodności",
+        "status": "todo",
+        "assignee_id": "60887056-371a-4404-b85c-61c920852579",
+        "due_date": "2026-02-08T23:00:00.000Z",
+        "estimated_hours": 16,
+        "actual_hours": null,
+        "initiative_id": "482dbcda-7e6e-4c9f-b670-451ea974e105",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      },
+      {
+        "id": "2b5e0e21-119e-46d3-916a-5cdfc8f2f7eb",
+        "title": "Pilotaż RPA — automatyzacja przetwarzania faktur",
+        "status": "in_progress",
+        "assignee_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "due_date": "2026-03-26T19:34:28.095Z",
+        "estimated_hours": 9,
+        "actual_hours": null,
+        "initiative_id": "1c9bb549-83e7-4017-b996-f1400f724c82",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      }
+    ]
+  }
+}

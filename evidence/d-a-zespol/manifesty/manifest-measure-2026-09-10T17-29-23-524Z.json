@@ -1,0 +1,160 @@
+{
+  "op": "measure",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T17:29:23.365Z",
+  "measure": {
+    "summary": {
+      "peopleCount": 14,
+      "demandHours": 0,
+      "supplyHours": 3490.4,
+      "gapHours": 3490.4,
+      "utilizationPercent": 0,
+      "overloadedCount": 0,
+      "peopleWithoutProfileSupply": 0,
+      "backlogHoursTotal": 849,
+      "backlogPeople": 14
+    },
+    "people": [
+      {
+        "userId": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "name": "Ewa Nowicka",
+        "role": "Operations Manager",
+        "weeklyCapacityHours": 36,
+        "availabilityPercent": 75,
+        "supplySource": "PROFIL",
+        "backlogHours": 142,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "name": "Marek Nowak",
+        "role": "Product Manager",
+        "weeklyCapacityHours": 38,
+        "availabilityPercent": 85,
+        "supplySource": "PROFIL",
+        "backlogHours": 88,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "name": "Anna Kowalska",
+        "role": "Senior Data Engineer",
+        "weeklyCapacityHours": 32,
+        "availabilityPercent": 60,
+        "supplySource": "PROFIL",
+        "backlogHours": 73,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "name": "Katarzyna Wójcik",
+        "role": "Quality Specialist",
+        "weeklyCapacityHours": 34,
+        "availabilityPercent": 70,
+        "supplySource": "PROFIL",
+        "backlogHours": 110,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "name": "Tomasz Lewandowski",
+        "role": "Managing Partner",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "PROFIL",
+        "backlogHours": 120,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "name": "Jan Zieliński",
+        "role": "Data Engineer",
+        "weeklyCapacityHours": 32,
+        "availabilityPercent": 60,
+        "supplySource": "PROFIL",
+        "backlogHours": 108,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "name": "Jan Kowalski",
+        "role": "Business Analyst",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 90,
+        "supplySource": "PROFIL",
+        "backlogHours": 30,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "name": "Julia Lewandowska",
+        "role": "UX Designer",
+        "weeklyCapacityHours": 36,
+        "availabilityPercent": 80,
+        "supplySource": "PROFIL",
+        "backlogHours": 40,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "name": "Paweł Mroczkowski",
+        "role": "Managing Partner",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "PROFIL",
+        "backlogHours": 14,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "name": "Piotr Wiśniewski",
+        "role": "Program Director",
+        "weeklyCapacityHours": 38,
+        "availabilityPercent": 90,
+        "supplySource": "PROFIL",
+        "backlogHours": 6,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "name": "Tomasz Jankowski",
+        "role": "R&D Specialist",
+        "weeklyCapacityHours": 36,
+        "availabilityPercent": 75,
+        "supplySource": "PROFIL",
+        "backlogHours": 19,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "name": "Admin DBR77",
+        "role": "Tenant Admin",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "PROFIL",
+        "backlogHours": 28,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "60887056-371a-4404-b85c-61c920852579",
+        "name": "Justyna Laskowska",
+        "role": "Managing Partner",
+        "weeklyCapacityHours": 40,
+        "availabilityPercent": 100,
+        "supplySource": "PROFIL",
+        "backlogHours": 48,
+        "unscheduledHours": 0
+      },
+      {
+        "userId": "188a66b0-f284-4869-b26c-355df56d808a",
+        "name": "Krzysztof Zieliński",
+        "role": "DevOps Engineer",
+        "weeklyCapacityHours": 36,
+        "availabilityPercent": 80,
+        "supplySource": "PROFIL",
+        "backlogHours": 23,
+        "unscheduledHours": 0
+      }
+    ]
+  }
+}

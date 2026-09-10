@@ -1,0 +1,15 @@
+name,role,weeklyCapacityHours,availabilityPercent,supplySource,backlogHours,unscheduledHours
+Ewa Nowicka,Operations Manager,36,75,PROFIL,142,0
+Tomasz Lewandowski,Managing Partner,40,100,PROFIL,120,0
+Katarzyna Wójcik,Quality Specialist,34,70,PROFIL,110,0
+Jan Zieliński,Data Engineer,32,60,PROFIL,108,0
+Marek Nowak,Product Manager,38,85,PROFIL,88,0
+Anna Kowalska,Senior Data Engineer,32,60,PROFIL,73,0
+Justyna Laskowska,Managing Partner,40,100,PROFIL,48,0
+Julia Lewandowska,UX Designer,36,80,PROFIL,40,0
+Jan Kowalski,Business Analyst,40,90,PROFIL,30,0
+Admin DBR77,Tenant Admin,40,100,PROFIL,28,0
+Krzysztof Zieliński,DevOps Engineer,36,80,PROFIL,23,0
+Tomasz Jankowski,R&D Specialist,36,75,PROFIL,19,0
+Paweł Mroczkowski,Managing Partner,40,100,PROFIL,14,0
+Piotr Wiśniewski,Program Director,38,90,PROFIL,6,0

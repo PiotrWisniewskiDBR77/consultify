@@ -1,0 +1,11 @@
+inicjatywa,id_prefix,required_capacity_fte,alokacja_initiative_resources (NIE karmi Zasoby)
+Process Automation — RPA,c55f3b10,2.5,"jan.zielinski (Data Engineer, 50%)"
+Customer Portal Redesign,84baaa08,2.0,"julia.lewandowska (UX Designer, 40%)"
+Transformacja DevOps,d3bc32b2,1.5,"krzysztof.zielinski (DevOps Engineer, 60%)"
+Migracja do chmury — Faza 2,bb9038c3,1.0,"krzysztof.zielinski (DevOps Engineer, 30%)"
+Wdrożenie sieci czujników IoT,e3b0a66a,0.5,"piotr@dbr77.com (Program Director, 20%)"
+Automatyzacja magazynu WIP,seed:...wip,1.5,"marek.nowak (Product Manager, 30%)"
+Platforma analityki danych,b8f28cea,1.0,"anna.kowalska (Senior Data Engineer, 40%)"
+Program wzmocnienia cyberbezpieczeństwa,7eb944f9,1.5,"tomasz.jankowski (R&D Specialist, 30%)"
+Robotyzacja gniazda spawalniczego,seed:...spawalniczego,2.0,"tomasz.jankowski (R&D Specialist, 20%)"
+System zarządzania jakością 4.0,5317c99f,1.5,"katarzyna.wojcik (Quality Specialist, 50%)"
