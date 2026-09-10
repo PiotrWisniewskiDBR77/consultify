@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import {
   V8PlanningApi,
@@ -11,6 +12,7 @@ import {
   cancelRegisteredInitiative,
   readRegisteredInitiative,
   registerSourceProposal,
+  RuntimeApiError,
   submitSourceProposal,
 } from '@/services/initiatives-execution/runtimeApi';
 
@@ -146,6 +148,35 @@ const stableCommandId = (prefix: string, value: unknown) => {
   return normalized ? `${prefix}-${normalized}` : newCommandId(prefix);
 };
 
+/**
+ * ODMOWA MUSI DOJSC DO CZLOWIEKA — po polsku, z powodem i nastepnym krokiem.
+ *
+ * Zmierzone 10.09: gdy runtime odmawial utworzenia inicjatywy, `RuntimeApiError`
+ * niosl w `message` SAM KOD (`INITIATIVE_OWNER_INELIGIBLE`, `CAPABILITY_REQUIRED`,
+ * ...), a wszystkie trzy powierzchnie tworzenia (`InitiativesHub`,
+ * `InitiativeCharterWizard`, `InitiativeWizardModal`) pokazuja `e?.message`
+ * wprost. Uzytkownik dostawal wiec albo surowy kod, albo nic czytelnego —
+ * przycisk „Utworz" wygladal, jakby nie robil nic.
+ *
+ * Tlumaczenie siedzi TU, w jednym wspolnym lejku, a nie w trzech ekranach:
+ *   - kazda powierzchnia dostaje ten sam komunikat bez zmian w sobie,
+ *   - serwer dalej niesie WYLACZNIE kod i status (bramka jezykowa: tekst
+ *     nalezy do klienta, zdan budowanych na serwerze nie dokladamy),
+ *   - tresc mieszka w `public/locales/*` i podlega tym samym bramkom
+ *     jezykowym co reszta interfejsu.
+ */
+const KLUCZE_ODMOWY: Record<string, string> = {
+  INITIATIVE_OWNER_INELIGIBLE: 'initiatives.form.errorOwnerIneligible',
+  CAPABILITY_REQUIRED: 'initiatives.form.errorCapabilityRequired',
+};
+
+export function opiszOdmoweTworzeniaInicjatywy(error: unknown): Error {
+  if (!(error instanceof RuntimeApiError)) return error as Error;
+  const klucz = KLUCZE_ODMOWY[error.code];
+  if (!klucz) return error;
+  return new Error(String(i18n.t(klucz)));
+}
+
 export async function createInitiativeWriteTruth(payload: Record<string, unknown>) {
   const projectId = String(payload.projectId || '').trim();
   const initiativeOwnerId = String(payload.initiativeOwnerId || payload.ownerId || '').trim();
@@ -208,6 +239,8 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
     initiativeOwnerId,
     visibility:
       payload.visibility === 'ORGANIZATION_RESTRICTED' ? 'ORGANIZATION_RESTRICTED' : 'PROJECT',
+  }).catch((error: unknown) => {
+    throw opiszOdmoweTworzeniaInicjatywy(error);
   });
 
   await registerSourceProposal({
@@ -227,6 +260,8 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
     visibility:
       payload.visibility === 'ORGANIZATION_RESTRICTED' ? 'ORGANIZATION_RESTRICTED' : 'PROJECT',
     initiativeOwnerId,
+  }).catch((error: unknown) => {
+    throw opiszOdmoweTworzeniaInicjatywy(error);
   });
 
   // Cold readback is authoritative; never synthesize success from command responses.
