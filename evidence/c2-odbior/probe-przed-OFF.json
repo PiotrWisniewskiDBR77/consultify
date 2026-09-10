@@ -1,0 +1,79 @@
+{
+ "label": "PRZED-OFF",
+ "port": "4241",
+ "orgId": "3935603f-e81c-4fc3-a154-623394e7cc32",
+ "initiativeId": "88b22dc7-614c-47ba-9057-4bca23f0a53b",
+ "unified_flag_of_process": "patrz port",
+ "matrix": [
+  {
+   "surface": "1 lista (rejestr)",
+   "route": "/api/initiatives",
+   "status": 200,
+   "containsId": true,
+   "notFoundCode": false,
+   "ms": 65,
+   "n_items": 2,
+   "snippet": "[{\"id\":\"88b22dc7-614c-47ba-9057-4bca23f0a53b\",\"organizationId\":\"3935603f-e81c-4fc3-a154-623394e7cc32\",\"createdBy\":\"f786e8f3-7a09-4fc1-b6ee-598a211038dc\",\"projec"
+  },
+  {
+   "surface": "2 karta",
+   "route": "/api/initiatives/88b22dc7-614c-47ba-9057-4bca23f0a53b",
+   "status": 200,
+   "containsId": true,
+   "notFoundCode": false,
+   "ms": 11,
+   "n_items": null,
+   "snippet": "{\"id\":\"88b22dc7-614c-47ba-9057-4bca23f0a53b\",\"organization_id\":\"3935603f-e81c-4fc3-a154-623394e7cc32\",\"project_id\":\"a1c7aa81-682f-40df-b4a0-495ec999a008\",\"name\""
+  },
+  {
+   "surface": "3 KPI",
+   "route": "/api/initiatives/88b22dc7-614c-47ba-9057-4bca23f0a53b/kpis",
+   "status": 200,
+   "containsId": false,
+   "notFoundCode": false,
+   "ms": 15,
+   "n_items": null,
+   "snippet": "{\"kpis\":[]}"
+  },
+  {
+   "surface": "4 kokpit Realizacji",
+   "route": "/api/v8/execution-control/capacity/timeline?initiativeId=88b22dc7-614c-47ba-9057-4bca23f0a53b",
+   "status": 200,
+   "containsId": false,
+   "notFoundCode": false,
+   "ms": 28,
+   "n_items": null,
+   "snippet": "{\"data\":{\"weeks\":[{\"weekStart\":\"2026-09-07\",\"capacityHours\":0,\"allocatedHours\":0,\"availableHours\":0,\"utilizationPercent\":0},{\"weekStart\":\"2026-09-14\",\"capacityH"
+  },
+  {
+   "surface": "5 Moja Praca",
+   "route": "/api/my-work/executive-analytics",
+   "status": 200,
+   "containsId": true,
+   "notFoundCode": false,
+   "ms": 18,
+   "n_items": null,
+   "snippet": "{\"projectId\":null,\"capacity\":{\"totalTeamCapacityHours\":40,\"totalRequiredHours\":0,\"totalBacklogHours\":0,\"shortfallHours\":0,\"avgUtilization\":0,\"windowStart\":\"2026"
+  },
+  {
+   "surface": "6 Wyniki",
+   "route": "/api/v8/results/dashboard?initiativeId=88b22dc7-614c-47ba-9057-4bca23f0a53b",
+   "status": 200,
+   "containsId": false,
+   "notFoundCode": false,
+   "ms": 23,
+   "n_items": null,
+   "snippet": "{\"data\":{\"snapshot\":{\"organizationId\":\"3935603f-e81c-4fc3-a154-623394e7cc32\",\"kpiScorecard\":{\"organizationId\":\"3935603f-e81c-4fc3-a154-623394e7cc32\",\"totalKpis\""
+  },
+  {
+   "surface": "7 raporty",
+   "route": "/api/report-builder/backlinks/initiative/88b22dc7-614c-47ba-9057-4bca23f0a53b",
+   "status": 200,
+   "containsId": true,
+   "notFoundCode": false,
+   "ms": 4,
+   "n_items": null,
+   "snippet": "{\"artifactType\":\"initiative\",\"artifactId\":\"88b22dc7-614c-47ba-9057-4bca23f0a53b\",\"reports\":[],\"total\":0}"
+  }
+ ]
+}

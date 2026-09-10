@@ -1,0 +1,39 @@
+C2-ODBIÓR — próba warstwy przeglądarkowej (Vite 3251 -> API 4231), 2026-09-10
+============================================================================
+Cel: sprawdzić, czy STOP Codexa na Playwright (E5) był zasadny, i czy istniał
+tańszy, Z30-bezpieczny zamiennik `server/src/index.ts`.
+
+CO ZROBIŁEM
+1. Uruchomiłem WŁASNY minimalny nasłuch HTTP (evidence/c2-odbior/harness-listen.mts):
+   express + ApiGateway.getInstance().initializeRoutes(app) + app.listen(4231/4241).
+   Zero Schedulera, zero cronów, zero drenaży outboxu  =>  Z30 spełnione.
+2. Vite dev na 3251 z VITE_API_TARGET=http://127.0.0.1:4231.
+3. Zalogowanie przez wstrzyknięcie ważnego JWT do localStorage['token']
+   (użytkownik DBR77, /api/auth/me = 200).
+
+WYNIK — aplikacja WSTAJE, ale moduł Inicjatywy NIE ŁADUJE DANYCH:
+   ekran: "Failed to load initiatives. ... code: UNKNOWN_ERROR"
+   sieć:  GET /api/initiatives                       -> 401 {"error":"No token provided"}
+          GET /api/initiatives/runtime-v1/initiatives -> 401
+          GET /api/csrf-token                         -> 404
+          POST /api/auth/refresh                      -> 400
+   a jednocześnie Z KONSOLI STRONY:
+          fetch('/api/initiatives', {Authorization: Bearer <token>}) -> 200
+          fetch('/api/initiatives')                                  -> 401
+
+PRZYCZYNA (zmierzona, nie zgadnięta):
+   `/api/csrf-token` jest zamontowany w server/src/index.ts:1251, a lista
+   dozwolonych nagłówków CORS (w tym 'x-csrf-token') w server/src/index.ts:1130.
+   ApiGateway.initializeRoutes() ICH NIE MONTUJE. Klient przeglądarkowy bez
+   tokenu CSRF nie dokłada nagłówka Authorization do wywołań modułu Inicjatywy.
+
+WNIOSEK DLA ODBIORU E5:
+   Minimalny nasłuch (mój wariant) wystarcza do dowodu HTTP, ale NIE wystarcza
+   do warstwy przeglądarkowej. Żeby uruchomić Playwright, trzeba albo odpalić
+   `server/src/index.ts` (czego zakazuje Z30 na bazie z żywymi danymi klienta),
+   albo odtworzyć jego globalny stos middleware. Taniego zamiennika NIE MA.
+   => STOP Codexa na Playwright jest MERYTORYCZNIE ZASADNY.
+   => Uzasadnienie w raporcie Codexa jest jednak NIEŚCISŁE: playwright.config.ts:125-128
+      odpala index.ts tylko przy E2E_USE_WEB_SERVER=true (playwright.config.ts:9,
+      domyślnie WYŁĄCZONE). Właściwym powodem jest brak Z30-bezpiecznego hosta
+      dla przeglądarki, a nie bezwarunkowy start index.ts przez harness.
