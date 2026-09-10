@@ -1,7 +1,7 @@
 # Karta decyzji — 10.09.2026, wieczór
 
-Cztery sprawy, których nie rozstrzygam sam, bo dotyczą Twoich danych albo kierunku produktu.
-Każda ma rekomendację; wystarczy „1 tak / 2 nie / 3 tak / 4 b" jednym zdaniem.
+Pięć spraw, których nie rozstrzygam sam, bo dotyczą Twoich danych albo kierunku produktu.
+Każda ma rekomendację; wystarczy „1 tak / 2 a / 3 b / 4 b / 5 B" jednym zdaniem.
 
 ## 1. Polskie nazwy inicjatyw, decyzji i ryzyk na stagingu
 
@@ -43,6 +43,21 @@ Opcje: (a) scalić duplikaty do jednego projektu każdej nazwy, przenosząc inic
 (b) zarchiwizować puste duplikaty, zostawić te z zawartością i dopisać im sufiks daty; (c) nie ruszać.
 
 **Rekomendacja: (b)** — bez ryzyka pomieszania zawartości, a lista wyboru staje się czytelna.
+
+## 5. Jak zatwierdza się inicjatywę (decyzja GO komitetu)
+
+Dziś przycisk „Zatwierdź inicjatywę" odmawia dla każdej Twojej inicjatywy: system wymaga formalnej decyzji GO,
+a taką decyzję potrafi dziś wydać tylko agent po akceptacji kandydata ze sprawy transformacji (ślad audytowy,
+którego nie wolno podrobić). Silnik działa: inicjatywa z kompletnym śladem przeszła do „Zatwierdzona".
+Żadna z Twoich 106 inicjatyw takiego śladu nie ma, bo powstały ręcznie lub z seedów.
+
+Opcje: **(A)** dorobić brakujący ślad automatycznie przy decyzji (szybko, ale podrabia dowód i zaśmieca moduł Teresy);
+**(B)** dodać uczciwy wariant „decyzja komitetu wydana przez człowieka" w tym samym rejestrze decyzji, z polem
+„kto i na jakiej podstawie" zamiast śladu agenta — przycisk „Decyzja GO/NO-GO" w sekcji Bramy karty;
+**(C)** uznać zatwierdzoną decyzję GO/NO-GO z modułu Decyzje za wystarczającą (cofa wcześniejszą decyzję H16).
+
+**Rekomendacja: (B)** — jeden dzień pracy, zachowuje ślad, a Ty i admin możecie zatwierdzać inicjatywy sami.
+Do czasu decyzji przejście przez „Zatwierdź inicjatywę" pozostaje zablokowane i tak jest opisane w karcie przejścia.
 
 ---
 
