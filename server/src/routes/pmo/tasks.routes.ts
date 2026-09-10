@@ -1178,6 +1178,10 @@ router.put(
   requireTaskCapability('task.update', {
     shadow: true,
     enforceMode: 'enforce',
+    // `objectScoped` osobno od predykatu CELOWO: samo skasowanie linii z
+    // predykatem konczy sie wtedy odmowa (fail-closed), a nie cichym powrotem
+    // dziury. Mutacja sprawdzona 2026-09-10.
+    objectScoped: true,
     ownerPredicate: isTaskOwnedByCaller,
   }),
   validateBody(UpdateTaskSchema),
@@ -1194,6 +1198,7 @@ router.delete(
   requireTaskCapability('task.delete', {
     shadow: true,
     enforceMode: 'enforce',
+    objectScoped: true,
     ownerPredicate: isTaskOwnedByCaller,
   }),
   TaskController.deleteTask
