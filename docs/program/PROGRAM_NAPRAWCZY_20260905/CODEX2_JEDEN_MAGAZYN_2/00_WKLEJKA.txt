@@ -1,0 +1,40 @@
+NOWY BLOK — CODEX2 — „JEDEN MAGAZYN, CZĘŚĆ 2: reszta projekcji + część zapisowa inicjatyw"
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX2_JEDEN_MAGAZYN_2/01_INSTRUKCJA.md
+Przeczytaj wynik w CAŁOŚCI, dopiero potem cokolwiek uruchamiaj.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokładnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex2-jeden-magazyn-2
+MARKER=19440011e9
+df -h /
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt
+git -C "$V" worktree add "$WT" -b codex/jeden-magazyn-czesc-2-20260911 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex2-jeden-magazyn-2/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+git -C "$WT" rev-parse HEAD
+Gałąź bazowa: origin/integracja/20260911 (NIE origin/staging — tam nie ma C1-FIX/C2-FIX).
+Zasoby wyłączne: baza 6452, harness 5592, kontener cx-codex2-pg, migracje 20262140-20262149, flaga ENABLE_INITIATIVE_UNIFIED_WRITE (default OFF).
+NIETYKALNE cudze: cx-codex1-inicjatywy-pg (6451), ~/Developer/codex-wt/codex1-*, consultify-pg18 (54418) — z tego ostatniego WOLNO wyłącznie pg_dump i SELECT.
+
+★ ZAKAZY (pełna lista Z1-Z46 w instrukcji):
+ - NIE pushujesz nic i nigdzie. Push robi nadzorca.
+ - NIE dotykasz /Users/piotrwisniewski/Developer/Consultify (katalog właściciela); jedyny wyjątek to symlink node_modules do odczytu, komenda wyżej.
+ - ZERO połączeń do Railway, demo, stagingu i produkcji — w każdą stronę.
+ - NIE robisz `source ~/Developer/consultify-secrets/server.env` — niesie ŻYWE SMTP.
+ - NIE kasujesz żadnej tabeli zastanej; migracje addytywne, z manifestem i rollbackiem.
+ - ZERO zmian wyglądu — front tylko tam, gdzie przepinasz wołacza.
+ - Nazwa bazy PARAMETREM, nie stałą (Z41). Manifest tylko przy apply (Z42).
+ - Test NIE przybija stanu zastanego: arrayContaining, nie toEqual([]) (Z43).
+ - Klucze i18n PL+EN realnie przetłumaczone (Z46). Kod i napisy w kodzie: EN (DEC-461).
+ - Każdy commit MUSI nieść CZTERY znaczniki, inaczej hook commit-msg go odrzuci:
+   [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453] [ODMROZENIE 04_ASSESSMENT DEC-453] [ODMROZENIE WSPOLNE DEC-453]
+
+★ RAPORT (jedyny nowy dokument w repo, układ 14 sekcji, etap E9):
+ docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX2_JEDEN_MAGAZYN_2/98_RAPORT.md
+ Zrzuty, logi i manifesty POZA repo: ~/Developer/codex-wt/codex2-artefakty
+Jeżeli cokolwiek tu różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
