@@ -240,6 +240,36 @@ function sendCsrfForbidden(
   res.status(403).json(body);
 }
 
+/**
+ * Zwraca sciezke wzgledna wobec punktu montazu ORAZ pelna (baseUrl + path).
+ *
+ * DEFEKT, KTORY TO NAPRAWIA (zmierzony 2026-09-10, P4): middleware jest
+ * montowany przez `app.use('/api/', csrfProtectionMiddleware)`, wiec `req.path`
+ * jest WZGLEDNA — dla POST /api/auth/login wynosi '/auth/login', nie
+ * '/api/auth/login'. Lista zwolnien porownywala wylacznie z wariantem
+ * '/api/...', wiec KAZDE zwolnienie bylo martwe: w trybie enforce logowanie,
+ * rejestracja, odswiezenie sesji, reset hasla i webhooki Stripe dostawaly 403.
+ * Widac to bylo takze w logach stagingu w trybie report — pole `path` w
+ * `csrf_violation` nie mialo prefiksu /api ("/analytics/web-vitals").
+ */
+function candidatePaths(req: Request): string[] {
+  const relative = safeRead(() => req.path, undefined as unknown as string | undefined);
+  const base = safeRead(() => req.baseUrl, undefined as unknown as string | undefined);
+  const out: string[] = [];
+  if (typeof relative === 'string' && relative) {
+    out.push(relative);
+    if (typeof base === 'string' && base) {
+      const joined = (base.replace(/\/$/, '') + relative).replace(/\/{2,}/g, '/');
+      if (joined !== relative) out.push(joined);
+    }
+  }
+  return out;
+}
+
+function isExemptRequest(req: Request): boolean {
+  return candidatePaths(req).some((p) => isExemptPath(p));
+}
+
 function isExemptPath(path: string | undefined) {
   if (!path) return false;
 
@@ -339,7 +369,7 @@ export const csrfValidationMiddleware = (req: Request, res: Response, next: Next
     typeof rawRequestMethod === 'string' ? rawRequestMethod.trim().toUpperCase() : undefined;
   const requestPath = safeRead(() => req.path, undefined as unknown as string | undefined);
   if (isSafeMethod(requestMethod)) return next();
-  if (isExemptPath(requestPath)) return next();
+  if (isExemptRequest(req)) return next();
 
   const result = evaluateCsrfToken(req);
   if (!result.ok) {
@@ -416,7 +446,7 @@ export const csrfProtectionMiddleware = (req: Request, res: Response, next: Next
   const requestPath = safeRead(() => req.path, undefined as unknown as string | undefined);
 
   if (isSafeMethod(requestMethod)) return next();
-  if (isExemptPath(requestPath)) return next();
+  if (isExemptRequest(req)) return next();
   if (isBearerOnlyRequest(req)) return next();
 
   const result = evaluateCsrfToken(req);
@@ -428,7 +458,10 @@ export const csrfProtectionMiddleware = (req: Request, res: Response, next: Next
   }
 
   // mode === 'report': never block, just observe.
-  const routeKey = `${requestMethod ?? 'UNKNOWN'} ${requestPath ?? 'unknown'}`;
+  // Loguj sciezke PELNA (z prefiksem montazu) — wariant wzgledny mylil
+  // odbiorce loga: "/analytics/web-vitals" zamiast "/api/analytics/web-vitals".
+  const loggedPath = candidatePaths(req).slice(-1)[0] ?? requestPath;
+  const routeKey = `${requestMethod ?? 'UNKNOWN'} ${loggedPath ?? 'unknown'}`;
   if (shouldLogCsrfViolation(routeKey)) {
     // No PII: method + path + failure reason only (no cookie/header values,
     // no user id, no IP — those already flow through apiLoggingMiddleware /
@@ -436,7 +469,7 @@ export const csrfProtectionMiddleware = (req: Request, res: Response, next: Next
     logger.warn('csrf_violation', {
       event: 'csrf_violation',
       method: requestMethod ?? 'UNKNOWN',
-      path: requestPath ?? 'unknown',
+      path: loggedPath ?? 'unknown',
       reason: result.code,
       mode,
     });
