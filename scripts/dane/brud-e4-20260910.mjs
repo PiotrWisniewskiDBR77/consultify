@@ -391,8 +391,8 @@ async function mierzD5(c) {
 // ============================================================================
 // D6 — ślad sondy w kanonie runtime-v1 (organizacja Northwind)
 // ============================================================================
-const D6_INITIATIVE_ID = 'initiative-w1a-probe-1789040489735';
-const D6_PROPOSAL_ID = 'proposal-w1a-probe-1789040489735';
+const D6_INITIATIVE_ID = process.env.D6_INITIATIVE_ID || 'initiative-w1a-probe-1789040489735';
+const D6_PROPOSAL_ID = process.env.D6_PROPOSAL_ID || 'proposal-w1a-probe-1789040489735';
 
 async function mierzD6(c) {
   const out = {};

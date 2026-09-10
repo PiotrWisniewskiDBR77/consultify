@@ -1,0 +1,553 @@
+{
+  "op": "all",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T13:07:04.861Z",
+  "d1": {
+    "przed": {
+      "initiative": {
+        "id": "dbr77--acceptance--initiative",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "name": "[ACCEPTANCE] Benefits realization",
+        "status": "IN_EXECUTION",
+        "archived": true,
+        "archived_at": "2026-09-10T11:04:03.319Z"
+      },
+      "roiCase": {
+        "case_id": "c3b0f15c-b2ce-4a9d-a7d3-d5f8e7b17687",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "initiative_id": "dbr77--acceptance--initiative",
+        "title": "[ACCEPTANCE] ROI baseline to PIR",
+        "status": "draft",
+        "archived_at": "2026-09-10T13:04:03.319Z"
+      }
+    },
+    "planowane": [],
+    "po": null
+  },
+  "d2": {
+    "przed": {
+      "id": "dc34768a-1e72-498b-9beb-9b2bf0c66b92",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "initiative_id": "bafcb088-5453-4345-9500-5723d883fe2c",
+      "title": "zdfsf",
+      "status": "cancelled"
+    },
+    "planowane": [],
+    "po": null
+  },
+  "d3": {
+    "przed": [
+      {
+        "tabela": "users",
+        "kolumna": "job_title",
+        "pk": "id",
+        "id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "wiersz": {
+          "pk": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "R&D Specjalist"
+        }
+      },
+      {
+        "tabela": "decisions",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "decision-c477bd37-8689-419c-b292-4b2b7fd432b3",
+        "wiersz": {
+          "pk": "decision-c477bd37-8689-419c-b292-4b2b7fd432b3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Date & Participants\n\nDate: \\[date\\] | Participants: \\[names\\]\n\nAgenda\n\n-   Topic 1\n    \n-   Topic 2\n    \n\nDiscussion & Key Points\n\nDecisions Made\n\n> Decision 1: ...\n\nAction Items\n\n-   Action 1 — Owner: \\[name\\], Due: \\[date\\]\n    \n-   Action 2 — Owner: \\[name\\], Due: \\[date\\]"
+        }
+      },
+      {
+        "tabela": "initiatives",
+        "kolumna": "kill_criteria",
+        "pk": "id",
+        "id": "d1b3751e-d2aa-4957-8967-10254e7628c3",
+        "oczekiwanyJson": true,
+        "wiersz": {
+          "pk": "d1b3751e-d2aa-4957-8967-10254e7628c3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "[\"ROI < 15%\",\"Timeline > 18 months\",\"Budget overrun > 20%\"]"
+        }
+      },
+      {
+        "tabela": "initiatives",
+        "kolumna": "problem_statement",
+        "pk": "id",
+        "id": "0a8e13eb-a610-4852-b820-604d4fc3ad73",
+        "oczekiwanyJson": true,
+        "wiersz": {
+          "pk": "0a8e13eb-a610-4852-b820-604d4fc3ad73",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "{\"symptom\":\"Sprzedaż i produkcja pracują na różnych prognozach.\",\"rootCause\":\"\",\"costOfInaction\":\"\"}"
+        }
+      },
+      {
+        "tabela": "initiatives",
+        "kolumna": "problem_statement",
+        "pk": "id",
+        "id": "3cf4ef78-fd80-4a43-be80-9889145ca533",
+        "oczekiwanyJson": true,
+        "wiersz": {
+          "pk": "3cf4ef78-fd80-4a43-be80-9889145ca533",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "{\"symptom\":\"Problem dotyczy obecnego systemu uprawnień decyzyjnych w sytuacjach wyjątkowych, które wymagają przebudowy. Kluczowe aspekty obejmują określenie osoby odpowiedzialnej za podejmowanie decyzji, moment eskalacji problemów oraz sposób monitorowania i audytowania podjętych decyzji. W projekcie należy zdefiniować nowe zasady, aby zapewnić odpowiednią kontrolę i przejrzystość procesu decyzyjnego.\",\"rootCause\":\"Inicjatywa skoncentrowana na przeprojektowaniu struktury uprawnień decyzyjnych w odniesieniu do wyjątków operacyjnych, ma na celu zwiększenie efektywności procesu decyzyjnego poprzez jasne określenie ról i odpowiedzialności. Zakres działań obejmuje analizę obecnych mechanizmów eskalacji oraz audytu decyzji, co przyczyni się do zredukowania ryzyka operacyjnego i usprawnienia reakcji na nieprzewidziane sytuacje. Implementacja tych zmian ma potencjał poprawić przejrzystość procesów decyzyjnych, co w dłuższej perspektywie wzmocni zaufanie interesariuszy. Potwierdzenie kosztów zaniechania wymaga dodatkowej analizy.\",\"costOfInaction\":\"- Bezczynność w zakresie przeprojektowania uprawnień decyzyjnych dla wyjątków może prowadzić do nieefektywnego zarządzania sytuacjami kryzysowymi, wpływając negatywnie na czas reakcji. \\n- Brak jasności w decyzjach eskalacyjnych skutkuje opóźnieniami w procesach zatwierdzania, co może obniżyć efektywność operacyjną.\\n- Niewłaściwy audyt decyzji może prowadzić do zwiększonego ryzyka prawnego oraz trudności w identyfikacji i korekcie błędów decyzyjnych.\\n- Nieprzekształcenie struktury decyzyjnej może skutkować zwiększonymi kosztami operacyjnymi z powodu nieefektywnego wykorzystania zasobów.\\n- Zaniechanie inicjatywy może wpłynąć na zaufanie interesariuszy, co ostatecznie może osłabić pozycję konkurencyjną firmy.\"}"
+        }
+      },
+      {
+        "tabela": "initiatives",
+        "kolumna": "problem_statement",
+        "pk": "id",
+        "id": "bafcb088-5453-4345-9500-5723d883fe2c",
+        "oczekiwanyJson": true,
+        "wiersz": {
+          "pk": "bafcb088-5453-4345-9500-5723d883fe2c",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "{\"symptom\":\"The primary challenge with the initiative \\\"co dalej mogę zrobić? (Fork)\\\" is the lack of a clear roadmap and defined steps for further development. This uncertainty may lead to difficulties in decision-making and resource allocation, potentially delaying project milestones. Addressing this requires comprehensive stakeholder alignment and a strategic framework to guide the next phase of the initiative.\",\"rootCause\":\"\",\"costOfInaction\":\"\"}"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "7058e152-878e-4a41-b0d4-4701db7bb439",
+        "wiersz": {
+          "pk": "7058e152-878e-4a41-b0d4-4701db7bb439",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Po otwarciu panelu następuje kilkusekundowe zawieszenie strony - nie można nic kliknąć. Prawdopodobnie jest to spowodowane tym, że w panelu zapisał się wybór \"screenshota\" wybrany przy zgłaszaniu błędu wcześnie.\n\nExpected:\nWybór screenshota nie powinien się zapamiętywać\n\n---\nTicket: 4f9a1697-43f9-44a4-b36a-6c134932a355\nEnv: staging\nRoute: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3\nUser: jan.kowalski@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "8195f3e7-8afe-4750-860e-e0b7c08c6cf8",
+        "wiersz": {
+          "pk": "8195f3e7-8afe-4750-860e-e0b7c08c6cf8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Po kliknięciu \"nowa rozmowa\" otwiera się nowy panel Teresy. Po wpisaniu zapytania okno przeskakuje do poprzedniej rozmowy wczytując ją. Odpowiedź pokazuje się w starym Chacie nie w nowej konwersacji, która wylistowana jest w panelu po prawej stronie.\n\nExpected:\nNowa konwersacja powinna być prowadzona w nowym oknie rozmowy nie w poprzednim chacie.\n\n---\nTicket: 5f361e37-cc96-4ac9-974d-909550da62e4\nEnv: staging\nRoute: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3\nUser: jan.kowalski@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "430a8f9a-bfd9-4205-9912-cde6d90fa06c",
+        "wiersz": {
+          "pk": "430a8f9a-bfd9-4205-9912-cde6d90fa06c",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Po kliknięciu przycisku \"Zatwierdź i wyślij\" nic się nie dzieje.\n\n---\nTicket: 8f12f96f-7df9-4fc4-97c3-54458cbbc878\nEnv: production\nRoute: /discovery\nUser: tomasz.jankowski@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "2ea790c7-e7bf-4f58-af1f-1ba9e17b1fea",
+        "wiersz": {
+          "pk": "2ea790c7-e7bf-4f58-af1f-1ba9e17b1fea",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "W panelu \"Organizations\" nie pokazuje wszystkich kont podpiętych do organizacji (w APLIX powinien być jan i Piotr - jest tylko Jan\n\n---\nTicket: d11ec6b0-7c04-4490-84f8-6f89a64eb921\nEnv: production\nRoute: /superadmin/customers\nUser: admin@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "6def4ccf-ef77-431d-9f1b-aed18b382a97",
+        "wiersz": {
+          "pk": "6def4ccf-ef77-431d-9f1b-aed18b382a97",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Po kliknieciu wiadomosci z inbox: \"Coś poszło nie tak\nWystąpił nieoczekiwany błąd podczas ładowania tej strony.\"\n\n---\nTicket: a7e4d052-ff3d-452e-8c73-3f473b2aa3b4\nEnv: production\nRoute: /my-work\nUser: bartlomiej.straszka@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "f9b942da-ccd6-4398-83b1-be2841ae4bc5",
+        "wiersz": {
+          "pk": "f9b942da-ccd6-4398-83b1-be2841ae4bc5",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: \"Brak powiadomień\nWszystko załatwione!\"\n\nSteps to reproduce:\n1 klinij w ikonke inbox \n2 sprawdz wiadomosci\n3. porownaj wiadomosci z inbox z listy naglowkow\n\n---\nTicket: 347ac069-e3e9-40b8-ba66-f0967cd34041\nEnv: production\nRoute: /my-work\nUser: bartlomiej.straszka@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "d5cb773d-d201-42a9-aa9a-192737d39d54",
+        "wiersz": {
+          "pk": "d5cb773d-d201-42a9-aa9a-192737d39d54",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: \"Brak powiadomień\nWszystko załatwione!\"\n\nSteps to reproduce:\n1 klinij w ikonke inbox \n2 sprawdz wiadomosci\n3. porownaj wiadomosci z inbox z listy naglowkow\n\n---\nTicket: 347ac069-e3e9-40b8-ba66-f0967cd34041\nEnv: production\nRoute: /my-work\nUser: bartlomiej.straszka@dbr77.com\n"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "01fd6613-f2ce-4dda-8b6b-0bc5d82ae185",
+        "wiersz": {
+          "pk": "01fd6613-f2ce-4dda-8b6b-0bc5d82ae185",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]"
+        }
+      },
+      {
+        "tabela": "tasks",
+        "kolumna": "description",
+        "pk": "id",
+        "id": "96a4a017-8c0f-48e4-9edc-da26ab70aa07",
+        "wiersz": {
+          "pk": "96a4a017-8c0f-48e4-9edc-da26ab70aa07",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "wartosc": "Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]"
+        }
+      }
+    ],
+    "plan": [
+      {
+        "tabela": "users",
+        "id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "kolumna": "job_title",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "decisions",
+        "id": "decision-c477bd37-8689-419c-b292-4b2b7fd432b3",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "initiatives",
+        "id": "d1b3751e-d2aa-4957-8967-10254e7628c3",
+        "kolumna": "kill_criteria",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "initiatives",
+        "id": "0a8e13eb-a610-4852-b820-604d4fc3ad73",
+        "kolumna": "problem_statement",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "initiatives",
+        "id": "3cf4ef78-fd80-4a43-be80-9889145ca533",
+        "kolumna": "problem_statement",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "initiatives",
+        "id": "bafcb088-5453-4345-9500-5723d883fe2c",
+        "kolumna": "problem_statement",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "7058e152-878e-4a41-b0d4-4701db7bb439",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "8195f3e7-8afe-4750-860e-e0b7c08c6cf8",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "430a8f9a-bfd9-4205-9912-cde6d90fa06c",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "2ea790c7-e7bf-4f58-af1f-1ba9e17b1fea",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "6def4ccf-ef77-431d-9f1b-aed18b382a97",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "f9b942da-ccd6-4398-83b1-be2841ae4bc5",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "d5cb773d-d201-42a9-aa9a-192737d39d54",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "01fd6613-f2ce-4dda-8b6b-0bc5d82ae185",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      },
+      {
+        "tabela": "tasks",
+        "id": "96a4a017-8c0f-48e4-9edc-da26ab70aa07",
+        "kolumna": "description",
+        "zmiana": "brak (już czysto)"
+      }
+    ],
+    "po": null
+  },
+  "d4": {
+    "przed": {
+      "initiatives": [
+        {
+          "id": "9825ac24-bf6c-4d3d-991e-1cbc97312a1f",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić?",
+          "status": "DRAFT",
+          "archived": true,
+          "archived_at": "2026-09-10T11:04:11.908Z"
+        },
+        {
+          "id": "bafcb088-5453-4345-9500-5723d883fe2c",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "name": "co dalej mogę zrobić? (Fork)",
+          "status": "DRAFT",
+          "archived": true,
+          "archived_at": "2026-09-10T11:04:11.908Z"
+        }
+      ],
+      "raid": [
+        {
+          "id": "172bace5-b4df-4f8b-b4ae-294393e0cbe0",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Unclear Initiative Scope",
+          "status": "CLOSED"
+        },
+        {
+          "id": "e3f56e8c-d65a-4c98-ab85-6cec772e801d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Stakeholder Identification Dependency",
+          "status": "CLOSED"
+        },
+        {
+          "id": "e1318dc7-4bc2-45d6-9b63-33c50d54c105",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Pending Decision on Key Initiative Details",
+          "status": "CLOSED"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "58dc7726-3041-4cf6-a8a7-712c52075006",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Full Rollout",
+          "status": "archived"
+        },
+        {
+          "id": "583726e0-85b1-4229-8c13-9ff9d2d592f3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Identify Stakeholders",
+          "status": "archived"
+        },
+        {
+          "id": "6dc98550-9ccb-4548-b2bd-0e2691950b58",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Initiative Discovery",
+          "status": "archived"
+        },
+        {
+          "id": "d35897b5-6ea6-45c6-9f09-1226e46c7692",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct User Testing",
+          "status": "archived"
+        },
+        {
+          "id": "9f4d8c6e-7ce0-4455-9aa4-a03abb632cda",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Execute Pilot Deployment",
+          "status": "archived"
+        },
+        {
+          "id": "3f167e3d-336f-4089-89db-872bea02595d",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Plan Pilot Deployment",
+          "status": "archived"
+        },
+        {
+          "id": "3a6f9beb-0220-48e6-890c-956b2a6813a8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Establish Monitoring Mechanisms",
+          "status": "archived"
+        },
+        {
+          "id": "016851b5-7a43-4b08-b5a8-5a8cd9774e8a",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Conduct Team Training",
+          "status": "archived"
+        },
+        {
+          "id": "3eda96ba-02a9-4613-8238-c0e226a42d78",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Create Initiative Roadmap",
+          "status": "archived"
+        },
+        {
+          "id": "f47460ae-76ca-4e2c-b770-d34852f2d190",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Define Initiative Scope",
+          "status": "archived"
+        },
+        {
+          "id": "4f3342f6-ba44-4297-872b-3dea6dae4da8",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Refine Solution Based on Feedback",
+          "status": "archived"
+        },
+        {
+          "id": "fe570b3c-d408-41aa-a592-3f0f9d636708",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Develop Initial Prototype",
+          "status": "archived"
+        },
+        {
+          "id": "1717f3ef-b267-4c5f-9aff-bcde4f33ce96",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Analyze Pilot Results",
+          "status": "archived"
+        },
+        {
+          "id": "9acf6eaf-d399-41be-b907-5a9341220ff3",
+          "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+          "title": "Design Solution Architecture",
+          "status": "archived"
+        }
+      ],
+      "decyzjaForkaZaleznosc": {
+        "id": "dc34768a-1e72-498b-9beb-9b2bf0c66b92",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "initiative_id": "bafcb088-5453-4345-9500-5723d883fe2c",
+        "title": "zdfsf",
+        "status": "cancelled"
+      }
+    },
+    "plan": [],
+    "po": null,
+    "uwaga": "initiative_milestones (1 wiersz) i initiative_history (2 wiersze, log audytowy) NIE ruszane — brak kolumny archiwizacji / to log przeszłych edycji."
+  },
+  "d5": [
+    {
+      "id": "project-dbr77-001",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "initiatives": 7,
+      "tasks": 16
+    },
+    {
+      "id": "2fbb1e31-6c71-4228-b775-05aae98690d6",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "initiatives": 7,
+      "tasks": 19
+    },
+    {
+      "id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "initiatives": 7,
+      "tasks": 16
+    },
+    {
+      "id": "5061af12-91d7-54b1-b424-9b5d9a715496",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "initiatives": 1,
+      "tasks": 0
+    },
+    {
+      "id": "655bb4b2-e757-480c-8d8d-df37a552c5bb",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "initiatives": 1,
+      "tasks": 1
+    },
+    {
+      "id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+      "name": "DBR77 Transformation Program",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "initiatives": 1,
+      "tasks": 0
+    },
+    {
+      "id": "project-dbr77-demo-all-modules",
+      "name": "DBR77 Demo — All Modules",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "initiatives": 0,
+      "tasks": 0
+    },
+    {
+      "id": "6be9d39f-2c73-4ac2-8e1d-e54870d4e872",
+      "name": "DBR77 Demo — All Modules",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "initiatives": 0,
+      "tasks": 0
+    },
+    {
+      "id": "ff83a6dd-b1f0-49e8-8edb-d06a3fc18241",
+      "name": "DBR77 Demo — All Modules",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "initiatives": 0,
+      "tasks": 1
+    },
+    {
+      "id": "04366332-e4b5-4189-b656-72f8298665cf",
+      "name": "Automated Changeover Optimization",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "initiatives": 0,
+      "tasks": 1
+    },
+    {
+      "id": "21e06b0c-cf37-4c97-ae81-256a6950d691",
+      "name": "Automated Changeover Optimization",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "initiatives": 1,
+      "tasks": 1
+    },
+    {
+      "id": "923bc369-e684-4aa6-a598-f69746fe719a",
+      "name": "Automated Changeover Optimization",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "initiatives": 0,
+      "tasks": 0
+    }
+  ],
+  "d6": {
+    "przed": {
+      "ie_aggregate_relations": [],
+      "ie_aggregate_state": [],
+      "ie_audit_events": [],
+      "ie_command_receipts": [],
+      "ie_outbox_events": [],
+      "initiative_candidates": [],
+      "initiatives_kanon_stary": []
+    },
+    "plan": [],
+    "po": null
+  }
+}
