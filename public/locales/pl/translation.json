@@ -31393,7 +31393,8 @@
       "downloadAndRescore": "Pobierz wszystko i przelicz ocenę"
     },
     "baseline": {
-      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu."
+      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu.",
+      "fallbackNotice": "Brak megatrendów dla branży {{industry}} — pokazujemy branżę {{fallback}}."
     }
   },
   "publicBooking": {

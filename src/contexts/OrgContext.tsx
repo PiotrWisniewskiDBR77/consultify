@@ -35,6 +35,8 @@ export interface Organization {
   access_type: 'MEMBER' | 'CONSULTANT';
   billing_status?: string;
   is_current?: boolean;
+  /** F3b (DEC-463): organizations.industry — used by the Megatrends panel. */
+  industry?: string | null;
 }
 
 interface OrgContextValue {

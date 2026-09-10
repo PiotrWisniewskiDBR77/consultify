@@ -51,6 +51,18 @@ router.get(
     try {
       const industry = req.query.industry as string | undefined;
       const data = await megatrendService.getBaselineTrends(industry);
+      // F3b (DEC-463): when the model degraded to the 'general' baseline
+      // because the requested industry has no curated rows yet, it marks the
+      // resolved array with non-enumerable `fallbackIndustry`/
+      // `requestedIndustry` — invisible to JSON.stringify (so the body stays
+      // a plain array for every existing caller), surfaced here as response
+      // headers so the client can show "showing general" instead of quietly
+      // rendering a different industry's trends with no explanation.
+      const fallbackIndustry = (data as any)?.fallbackIndustry;
+      if (fallbackIndustry) {
+        res.set('X-Megatrend-Fallback-Industry', String(fallbackIndustry));
+        res.set('X-Megatrend-Requested-Industry', String((data as any).requestedIndustry ?? ''));
+      }
       return res.json(data);
     } catch (err: any) {
       const unavailable = respondIfUnavailable(res, err);
