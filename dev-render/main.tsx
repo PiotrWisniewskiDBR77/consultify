@@ -143,6 +143,9 @@ const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
 // jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-team.tsx
 // (wzorzec 1:1 z admin-billing.tsx powyżej).
 const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
+const P2bAdminInvitationsEmptyScreen = React.lazy(
+  () => import('./screens/p2b-admin-invitations-empty')
+);
 // Moduł 16 „Partner" — pierwszy komplet zrzutów dla przeglądu właściciela
 // (dotąd ZERO ekranów w rejestrze grafiki). Patrz dev-render/screens/partner-portal.tsx.
 const PartnerPortalScreen = React.lazy(() => import('./screens/partner-portal'));
@@ -329,6 +332,7 @@ const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-
 // ekranu (dev-render/screens/execution-tab.tsx), tab podany wprost w propie
 // per rejestr — patrz komentarz w pliku ekranu za "DLACZEGO".
 const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
+const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
 // const ExecutionExportPrezentacjaScreen = React.lazy(
 //   () => import('./screens/execution-export-prezentacja')
 // );
@@ -596,6 +600,7 @@ const StagingFixesInitiativesI18nScreen = React.lazy(
 // harnessie (patrz StagingFixesInitiativesI18nScreen wyżej) — ten wpis go
 // tylko wystawia pod nazwą, którą właściciel faktycznie odnajdzie.
 const InicjatywyListaScreen = React.lazy(() => import('./screens/inicjatywy-lista'));
+const P2bInicjatywyEmptyScreen = React.lazy(() => import('./screens/p2b-inicjatywy-empty'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
@@ -770,6 +775,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Pomiar KPI/OKR/ROI 2026-08-30 — LISTA INICJATYW: REALNY <InitiativesHub> (StandardModuleBar + StandardTable, kanon triady) pod odkrywalną nazwą — właściciel nigdy nie widział tego ekranu. Dane przykładowe (isDemoMode).',
     render: () => <InicjatywyListaScreen />,
+  },
+  'p2b-inicjatywy-empty': {
+    label:
+      'P2B (DEC-457) — REALNY <InitiativesHub> z PRAWDZIWIE pustym rejestrem (isDemoMode=false, oba wołania rejestru zmockowane na 200/[]). &theme=light|dark',
+    render: () => <P2bInicjatywyEmptyScreen />,
   },
   'capacity-advisor-a3': {
     label:
@@ -1483,6 +1493,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Admin team — Zaproszenia (AdminMembersRolesPanel screen=invitations, StandardTable)',
     render: () => <AdminTeamScreen adminScreen="invitations" />,
   },
+  'p2b-admin-invitations-empty': {
+    label:
+      'P2B (DEC-457) — REALNY <AdminMembersRolesPanel screen="invitations"> z PRAWDZIWIE pustą listą zaproszeń (świeża organizacja). &theme=light|dark',
+    render: () => <P2bAdminInvitationsEmptyScreen />,
+  },
   'admin-team-roles-permissions': {
     label: 'Admin team — Role i uprawnienia (AdminRolesPermissionsPanel, StandardTable)',
     render: () => <AdminTeamScreen adminScreen="roles-permissions" />,
@@ -1969,6 +1984,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'execution-tab-list': {
     label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
     render: () => <ExecutionTabScreen tab="list" />,
+  },
+  'p2b-realizacja-empty': {
+    label:
+      'P2B (DEC-457) — REALNY <ExecutionHub initialTab="list"> z PRAWDZIWIE pustym portfelem (isDemoMode=false, oba wołania portfela zmockowane na 200/[]). &theme=light|dark',
+    render: () => <P2bRealizacjaEmptyScreen />,
   },
   'execution-tab-work': {
     label: 'Realizacja → zakładka "Praca", REALNY <ExecutionHub initialTab="work"> (ExecutionWorkSurface)',
