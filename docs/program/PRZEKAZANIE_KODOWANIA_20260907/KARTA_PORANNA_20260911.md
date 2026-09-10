@@ -36,8 +36,12 @@ nikt jeszcze nie obejrzał — to zadanie przed pilotażem.
 - Historia zadania: brakująca tabela w bazie dodana (F5 — gotowe).
 - Blok Codexa nr 1 „jeden magazyn inicjatyw" — za wyłączoną flagą (nic nie widać, nic nie ryzykuje).
 - Blok Codexa nr 3 „Finanse minimum": dostarczył 4 z 6 paczek (testy, zatwierdzanie pakietu,
-  zbiorczy rodowód, trzy tabele sprawozdania). Nie zrobił czystki koloru i seedu danych. Odbiór w toku
-  w nocy, wynik w rejestrze rano. Na ekranie nic się nie zmienia (front za wyłączoną flagą).
+  zbiorczy rodowód, trzy tabele sprawozdania). Nie zrobił czystki koloru i seedu danych. **Odbiór
+  zrobiony w nocy:** dwie paczki do scalenia od razu, dwie po pięciu drobnych poprawkach (w toku).
+  Na ekranie nic się nie zmienia (front za wyłączoną flagą). **Odbiór wykrył poważną rzecz:** dziś
+  żadna rola w aplikacji nie może zatwierdzić sprawozdania finansowego przez API (blokada bety i
+  mapowanie ról nie mają części wspólnej). Póki Finanse są zamknięte w menu, nikt tego nie widzi —
+  dlatego w decyzji 2 rekomenduję A.
 
 Wdrożenie tego wszystkiego = jedna paczka po zielonej bramce, po zakończeniu pokazu w Tokio.
 
