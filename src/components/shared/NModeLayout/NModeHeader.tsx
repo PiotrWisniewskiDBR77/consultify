@@ -231,6 +231,8 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   saving = false,
   saveState,
   lastSavedLabel,
+  saveErrorLabel,
+  saveErrorTitle,
   isDirty = false,
   onChat,
   inlineActions,
@@ -326,8 +328,8 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       title: t('sharedComponents.nModeHeader.dirtyTitle'),
     },
     error: {
-      label: t('sharedComponents.nModeHeader.saveFailedLabel'),
-      title: t('sharedComponents.nModeHeader.saveFailedTitle'),
+      label: saveErrorLabel || t('sharedComponents.nModeHeader.saveFailedLabel'),
+      title: saveErrorTitle || saveErrorLabel || t('sharedComponents.nModeHeader.saveFailedTitle'),
     },
   }[effectiveSaveState];
 
@@ -455,8 +457,12 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               save, so "Zapisano"/"Zapisywanie…" would be misleading. */}
           {!hideSaveState && (
             <span
-              className={`shrink-0 whitespace-nowrap text-xs ${
+              className={`shrink-0 text-xs ${
                 effectiveSaveState === 'error' ? 'text-c-danger' : 'text-c-text-muted'
+              } ${
+                effectiveSaveState === 'error' && saveErrorLabel
+                  ? 'max-w-[280px] text-right'
+                  : 'whitespace-nowrap'
               }`}
               title={saveInfo.title}
             >

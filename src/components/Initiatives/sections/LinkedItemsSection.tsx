@@ -8,6 +8,8 @@
  */
 
 import React, { useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -22,6 +24,7 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
 }) => {
   const { initiativeId, linkedItems, setLinkedItems } = useInitiativeContext();
+  const { t } = useTranslation();
 
   // Load persisted links on first expand.
   useEffect(() => {
@@ -82,18 +85,36 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
       }}
       searchItems={async (query) => {
         const results: LinkedItem[] = [];
+        // N5 (odbiór adwersaryjny 20260910, KOSMETYKA) — these two lookups
+        // used to fail silently (`.catch(() => {})`-shaped ciche catch): a
+        // failed `/tasks?search` or `/decisions?search` just meant a quietly
+        // incomplete dropdown, no signal to the user at all (confirmed —
+        // `git grep "\.catch(() => {})"` in Initiatives/Execution: these two
+        // are the only real hits, both on this read path). Fixed WITHOUT
+        // touching `MyWork/shared/LinkedItemsSection.tsx` (frozen module
+        // 07_MY_WORK_AGENT, no unfreeze decision for it here) — the existing
+        // toast mechanism this same wrapper already relies on for
+        // add/remove failures is the "istniejące miejsce" used instead.
+        let partial = false;
         try {
           const ts = await Api.get(`/tasks?search=${query}`);
           (Array.isArray(ts) ? ts : ts?.tasks || []).slice(0, 5).forEach((t: any) => {
             results.push({ id: t.id, type: 'task', title: t.title, status: t.status });
           });
-        } catch {}
+        } catch {
+          partial = true;
+        }
         try {
           const ds = await Api.get(`/decisions?search=${query}`);
           (Array.isArray(ds) ? ds : ds?.decisions || []).slice(0, 5).forEach((d: any) => {
             results.push({ id: d.id, type: 'decision', title: d.title, status: d.status });
           });
-        } catch {}
+        } catch {
+          partial = true;
+        }
+        if (partial) {
+          toast.error(t('initiatives.linkedItemsSearchPartialFailure', 'Some results could not be retrieved'));
+        }
         return results;
       }}
       expanded={expanded}

@@ -1373,6 +1373,17 @@ export async function getInitiativeRaidRead(
   organizationId: string,
   limit = 50
 ): Promise<Record<string, unknown>[]> {
+  // N3 (odbiór adwersaryjny 20260910, WAŻNY) — this is the read model the
+  // Initiative card actually calls (`V8PlanningApi.getRaid` →
+  // `GET /api/v8/planning/initiatives/:id/raid`). It never carried
+  // `aggregateVersion`, so `seedRaidVersions()` (raidWrites.ts) — the exact
+  // mechanism already wired up for Execution's RAID surface, see
+  // `ExecutionControlSurface.tsx` — had nothing to seed from here, and the
+  // card's `aggregateVersions` map stayed empty forever. Every first
+  // PATCH/DELETE from the CARD (not Execution) went with `expectedVersion: 0`
+  // → guaranteed 409 `VERSION_OR_IDEMPOTENCY_CONFLICT`, then a retry that
+  // finally got 200 (measured 2/2, `raid.routes.ts:76` already does this same
+  // LEFT JOIN for the other RAID read route — mirrored here).
   return queryHelpers.queryAll(
     `SELECT
       r.id,
@@ -1392,9 +1403,14 @@ export async function getInitiativeRaidRead(
       r.mitigation_owner_id as "mitigationOwnerId",
       r.mitigation_due_date as "mitigationDueDate",
       r.mitigation_status as "mitigationStatus",
+      s.version as "aggregateVersion",
       r.created_at as "createdAt",
       r.updated_at as "updatedAt"
     FROM raid_items r
+    LEFT JOIN ie_aggregate_state s
+      ON s.organization_id = r.organization_id
+     AND s.aggregate_type = 'raid_item'
+     AND s.aggregate_id = r.id
     WHERE r.organization_id = ? AND r.initiative_id = ?
     ORDER BY r.updated_at DESC
     LIMIT ?`,

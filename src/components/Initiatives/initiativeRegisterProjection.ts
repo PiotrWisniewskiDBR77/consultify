@@ -474,18 +474,44 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
 /**
  * Merge canonical (runtime-v1) rows with legacy classic-table rows that
  * never made it into the event-sourced projection. Canonical wins on id
- * collision (richer, authoritative shape); legacy rows only fill the gap —
- * a record must never disappear purely because of which write path created
- * it. Measured 2026-09-05 on org DBR77: 71 legacy rows, 0 canonical rows,
- * list rendered empty before this bridge existed.
+ * collision for SHAPE (richer object survives); legacy rows only fill the
+ * gap — a record must never disappear purely because of which write path
+ * created it. Measured 2026-09-05 on org DBR77: 71 legacy rows, 0 canonical
+ * rows, list rendered empty before this bridge existed.
+ *
+ * N2 (odbiór adwersaryjny 20260910, WAŻNY) — "canonical wins" was ALSO taking
+ * the runtime-v1 `lifecycleState`-derived `status`, even when the SAME id
+ * also has a row in the classic `initiatives` table. That table is the one
+ * the approval workflow and the card actually write/read
+ * (`V8PlanningApi.getInitiative` / `Api.getInitiativeById`); the runtime-v1
+ * projection can go stale relative to it. Measured on DBR77
+ * (consultify_kopia_e1a, `ie_aggregate_state` JOIN `initiatives`): 3 rows
+ * with mismatched status, worst case "IoT Sensor Network Deployment" —
+ * `initiatives.status = PENDING_APPROVAL` (what the card and the DB show)
+ * vs. runtime `lifecycleState = APPROVED_BACKLOG` → register showed
+ * "Zatwierdzona" (7× in the register) while the card said "Do zatwierdzenia".
+ * Fix: on id collision, the register's STATUS pill follows the classic
+ * table's status (`legacyRow.status`/`displayStatus`) — the same one the
+ * card renders — never the possibly-stale runtime projection. Every other
+ * field keeps coming from the canonical row (still the richer shape).
  */
 export const mergeLegacyInitiativesIntoRegister = (
   canonicalRows: PortfolioInitiative[],
   legacyRows: PortfolioInitiative[]
 ): PortfolioInitiative[] => {
   if (legacyRows.length === 0) return canonicalRows;
+  const legacyById = new Map(legacyRows.map((row) => [row.id, row] as const));
+  const reconciled = canonicalRows.map((row) => {
+    const legacyMatch = row.id ? legacyById.get(row.id) : undefined;
+    if (!legacyMatch || legacyMatch.status === row.status) return row;
+    return {
+      ...row,
+      status: legacyMatch.status,
+      displayStatus: legacyMatch.displayStatus ?? row.displayStatus,
+    };
+  });
   const knownIds = new Set(canonicalRows.map((row) => row.id));
   const extraRows = legacyRows.filter((row) => row.id && !knownIds.has(row.id));
-  if (extraRows.length === 0) return canonicalRows;
-  return [...canonicalRows, ...extraRows];
+  if (extraRows.length === 0) return reconciled;
+  return [...reconciled, ...extraRows];
 };

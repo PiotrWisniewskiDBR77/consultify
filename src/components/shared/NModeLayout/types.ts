@@ -217,6 +217,16 @@ export interface NModeHeaderConfig {
   saveState?: 'saved' | 'saving' | 'dirty' | 'error';
   /** Optional label shown for the latest successful persistence read-back. */
   lastSavedLabel?: string;
+  /**
+   * Optional override for the `saveState="error"` pill text (label) — lets a
+   * card show a SPECIFIC reason the save is blocked (e.g. a runtime-only
+   * record with no writer for a field) instead of the generic "save failed"
+   * copy. Falls back to `sharedComponents.nModeHeader.saveFailedLabel` when
+   * omitted, so existing callers are unaffected.
+   */
+  saveErrorLabel?: string;
+  /** Optional override for the `saveState="error"` pill tooltip (title). */
+  saveErrorTitle?: string;
   /** Whether there are unsaved changes */
   isDirty?: boolean;
   /** Chat button handler (omit to hide) */
