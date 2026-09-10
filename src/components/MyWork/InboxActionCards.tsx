@@ -16,12 +16,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { ActionCard } from '@/components/standard/ActionCard';
 import type { ActionCardModel } from '@/components/standard/ActionCard.types';
 import { closeActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
 
 export function InboxActionCards() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [cards, setCards] = useState<ActionCardModel[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -136,6 +138,7 @@ export function InboxActionCards() {
               <div className="mt-2">
                 <ActionCard
                   card={card}
+                  onOpen={(selected) => navigate(`/action-cards/${encodeURIComponent(selected.id)}`)}
                   onCreateTask={utworzZadanie}
                   onCloseCard={zamknij}
                   busy={busyId === card.id}
