@@ -29,13 +29,13 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `<<MARKER_SHA>>`**
+> **SHA markera: `19440011e9`**
 > **Gałąź bazowa: `origin/integracja/20260911`** (w vaulcie; to jest linia
 > integracyjna na dzień 2026-09-11 — niesie blok Codexa nr 1 `E1`–`E6`
 > oraz naprawy `C1-FIX` i `C2-FIX`). **NIE `origin/staging`** — `origin/staging`
 > jest starszy i nie ma tych napraw; start z niego to natychmiastowy konflikt
 > przy scaleniu.
-> **Stan dokumentu: PROJEKT — marker wpisuje CTO przed wydaniem.**
+> **Stan dokumentu: WYDANY — 2026-09-11 01:50, CTO (Fable), marker `19440011e9` = tip `origin/integracja/20260911` (blok Codexa 1 + FIX-y); Codex 3 pracuje równolegle na tej samej bazie — nie dotykaj `finance_*`**
 >
 > Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
 > Jeżeli widzisz `PROJEKT` albo napis `MARKER_SHA` w nawiasach kątowych —
@@ -84,7 +84,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/Users/piotrwisniewski/Developer/codex-wt/codex2-jeden-magazyn-2
-MARKER=<<MARKER_SHA>>
+MARKER=19440011e9
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego bloku
 df -h /
@@ -150,7 +150,7 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline <<MARKER_SHA>>..origin/integracja/20260911
+git -C "$VAULT" log --oneline 19440011e9..origin/integracja/20260911
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -167,7 +167,7 @@ ale **w tym bloku jest wyłączony tym akapitem**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only <<MARKER_SHA>>..HEAD
+git -C "$WT" diff --name-only 19440011e9..HEAD
 ```
 
 ---

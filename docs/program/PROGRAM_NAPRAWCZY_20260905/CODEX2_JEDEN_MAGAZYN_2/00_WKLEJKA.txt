@@ -8,7 +8,7 @@ Przeczytaj wynik w CAŁOŚCI, dopiero potem cokolwiek uruchamiaj.
 
 ★ KATALOG ROBOCZY TWORZYSZ SAM — dokładnie tak (NIE w /private/tmp):
 WT=/Users/piotrwisniewski/Developer/codex-wt/codex2-jeden-magazyn-2
-MARKER=<<MARKER_SHA>>
+MARKER=19440011e9
 df -h /
 git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
   && echo "MARKER OK" || echo "MARKER BRAK"
