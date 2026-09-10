@@ -1,0 +1,40 @@
+NOWY BLOK — CODEX3 — „FINANSE MINIMUM DO MVP (F-M2/M3/M4/M6/M7)"
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX3_FINANSE_MINIMUM/01_INSTRUKCJA.md
+Przeczytaj wynik w CAŁOŚCI, dopiero potem cokolwiek uruchamiaj.
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokładnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex3-finanse
+MARKER=19440011e9
+df -h /
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt
+git -C "$V" worktree add "$WT" -b codex/finanse-minimum-20260911 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex3-finanse/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+git -C "$WT" rev-parse HEAD
+Gałąź bazowa: origin/integracja/20260911 (NIE staging/demo/Londyn). Zasoby wyłączne:
+baza 6453, harness 5593, kontener cx-codex3-pg, migracje 20262150-20262159.
+ZAKRES — mechanika tylna: F-M6 zatwierdzanie pakietu, F-M3 zbiorczy odczyt rodowodu,
+F-M4 trzy tabele RZiS/Bilans/CF, F-M2 crimson i kanon tabel, F-M7 seed EN CD PROJEKT.
+Front tylko jako przewód, za flagą VITE_FINANCE_MINIMUM=OFF.
+★ ZAKAZY (pełna lista Z1-Z46 w instrukcji):
+ - NIE pushujesz nic i nigdzie. Push robi nadzorca.
+ - NIE dotykasz /Users/piotrwisniewski/Developer/Consultify; wyjątek: symlink wyżej.
+ - ZERO połączeń do Railway/demo/stagingu/produkcji. Kontener consultify-pg18
+   (port 54418) NIE JEST TWÓJ.
+ - NIE robisz zrzutów i nie pokazujesz nic właścicielowi — to praca robotnika
+   wewnętrznego po Tobie. Wklejki §11 z F1 są w tej sprawie NIEAKTUALNE.
+ - NIE zmieniasz pozycji Finansów w menu (betaMenuStatus/menuConfig/AppRoutes):
+   decyzja właściciela, wpisujesz STOP MERYTORYCZNY z pomiarem.
+ - NIE dotykasz Baseline/Wyceny (fala 2) ani mostu dwóch magazynów (Codex 2);
+   zero DROP/RENAME/DELETE na finance_*/financial_*.
+ - Manifest TYLKO przy --apply (Z42); nazwa bazy TYLKO z parametru (Z41);
+   klucze i18n zawsze parą EN+PL w jednym commicie (Z46).
+★ RAPORT (jedyny nowy dokument w repo, 15 sekcji, etap E7):
+ docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX3_FINANSE_MINIMUM/98_RAPORT.md
+ Manifesty i logi POZA repo: ~/Developer/codex-wt/codex3-artefakty
+Jeżeli cokolwiek tu różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
