@@ -71,7 +71,12 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 
 ---
 
-## Pojemnik 2 — MVP rękami klienta (cel: 3 tygodnie po pojemniku 1, do ~7.10)
+## Pojemnik 2 — MVP rękami klienta
+
+> **Adnotacja 10.09 (DEC-461, słowo właściciela):** „teraz budujemy wszystko po angielsku — oprogramowanie i dane
+> testowe na stagingu po angielsku; tłumaczenie aplikacji i osobny polski seed dla pokazów później". Wszędzie, gdzie
+> kryteria niżej mówią „po polsku" (kryteria 1, 3, 7 oraz S2.11), czytaj: **po angielsku teraz**; wersja polska wchodzi
+> w fali tłumaczeń po pilotażu. DEC-467: pokaz w Tokio (11.09) ze stagingu; środowisko pilotażu do decyzji po Tokio. (cel: 3 tygodnie po pojemniku 1, do ~7.10)
 **Definicja (uściślona słowem właściciela 06.09):** pilotaż odbywa się **na demo** (własna baza z pozycji 1.10), rękami czterech nazwanych osób pierwszej linii kontaktu z klientem — **Tomek, Kasia, Irina, Justyna** — które zakładają organizację, wchodzą bez asysty właściciela i dochodzą od wywiadu do wyniku bez pytania „gdzie to jest”. Produkcja (`consultify.ai`) wchodzi dopiero po pilotażu, dla pierwszego klienta zewnętrznego. Po starcie pilotażu właściciel buduje **system reakcji** (jak zgłoszenia od czterech osób trafiają do nadzorcy i wracają naprawione — dziś: Feedback w aplikacji + dziennik; docelowo wg decyzji właściciela).
 
 **Kryterium „gotowe”:**
