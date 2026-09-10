@@ -37,9 +37,40 @@ Trzy powierzchnie pod `ENABLE_INITIATIVE_UNIFIED_READ`, default OFF, SHA `f37017
 
 Import: legacy 121, kanon 31, wspólne 14, kanon bez legacy 17, legacy bez kanonu 107. Dry-run: `107 = 2 kwalifikowalne + 105 POMINIĘTE`; osobny manifest zawiera pełne wiersze. Apply #1: `created=2`, `31→33`, rozjazd `107→105`; apply #2: `created=0`; verify `ok=true`. Rollback usunął 2; verify `ok=true`, rozjazd wrócił do 107. Md5 `initiatives` przed/po: `211e648a64804feb2f6ea09bffe7e13a`. Migracja SQL nie była potrzebna.
 
+**FIX-E6-3(a) — dopisane po odbiorze C2 (`96_ODBIOR_C2_E3_E5.md` §2.3), zmierzone niezależnie:**
+migracja **nie zmienia żadnej liczby widocznej przez API**. `GET /api/initiatives` przed
+`--apply`, po `--apply` i po `--rollback` jest identyczny na każdej organizacji, w obu
+ustawieniach flagi (`DBR77/ON=121 DBR77/OFF=106 TT22TT/ON=2 TT22TT/OFF=2` — bez zmian we
+wszystkich trzech krokach). Powód: czytnik unified (E2) już robi UNION obu magazynów, więc
+te 2 rekordy i tak były widoczne przez gałąź zastaną — migracja jedynie przenosi je na gałąź
+kanoniczną tej samej mapy, nie dodaje ani nie ujmuje niczego z odpowiedzi API.
+
+**FIX-E6-3(b) — dopisane po odbiorze C2, zmierzone niezależnie:**
+**DBR77 dostaje 0 migrowanych rekordów ze 106** (Northwind — 0 z 13). Obie kwalifikowalne
+inicjatywy należą do organizacji `3935603f…` ("TT22TT") i są śmieciem testowym ("próba 1"
+oraz szkic wygenerowany z kanwy). Realna wartość E3 na TYM zbiorze danych nie leży w
+widoczności (ta jest z E2), tylko w udostępnieniu komend kanonicznych (cykl życia, bramki)
+dla rekordów zastanych — a ta wartość dziś dotyczy wyłącznie 2 rekordów śmieciowych, nie
+organizacji demo.
+
 ### E4
 
 Decyzja CTO: `milestones`, `resources`, `staffing-plans`, `budget-items`, `gate-roles`, `move` zostają bez zmian. Nie projektowano następców. Tabela dowodowa jest wejściem do osobnego bloku.
+
+**FIX-E6-3 uzupełnienie — siódmy pisarz zastany, pominięty w inwentarzu E4:**
+
+| # | Pisarz | Plik | Do kanonu? |
+|---|---|---|---|
+| 1–6 | `milestones`, `resources`, `staffing-plans`, `budget-items`, `gate-roles`, `move` | (decyzja CTO — zostają bez zmian) | NIE |
+| **7** | **seed demo** | **`server/src/services/demo/demoSeedService.ts:2295`** | **NIE — świeży błąd** |
+
+Siódmy pisarz nie był widoczny w inwentarzu `§0.1a`, bo ten opiera się na wzorcach middleware,
+a seed demo pisze bezpośrednio `INSERT INTO initiatives` z pominięciem `createInitiativeService`
+(świadomy wyjątek "USPOJNIENIE A3" — seed jest idempotentny przez `ON CONFLICT DO UPDATE`,
+przejście przez serwis złamałoby re-seedowalność). Zmierzone na żywo w odbiorze C2: samo
+otwarcie aplikacji w przeglądarce zasiało 2 sesje demo × 22 inicjatywy = 44 nowe wiersze w
+`initiatives`, z czego 0 w kanonie (`ie_aggregate_state`). Każda sesja demo powiększa rozjazd
+między magazynami o 22 rekordy — pisarz nietknięty tym blokiem, do rozliczenia osobno.
 
 ### E5
 
@@ -55,7 +86,42 @@ Test real-PG tworzy rekord drogą API używaną przez zapis UI; SQL `kanon=1`, `
 | Wyniki `/api/v8/results/dashboard?initiativeId=…` | 404 | 404 | NIE |
 | raporty `/api/report-builder/backlinks/initiative/:id` | 200, echo id bez tytułu | to samo | NIE — Z23 |
 
-Playwright STOP: harness uruchamia `server/src/index.ts` (`playwright.config.ts:125–128`), czego Z30 zabrania. Nie uruchomiono go ani nie zastąpiono zrzutem.
+**FIX-E6-2 — poprawione uzasadnienie STOP-u Playwright** (pierwotne zdanie poniżej było
+nieścisłe — zastąpione po odbiorze C2, `96_ODBIOR_C2_E3_E5.md` §1.6): `playwright.config.ts:9`
+ma `const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true'`, **domyślnie WYŁĄCZONE** —
+sam config NIE startuje `server/src/index.ts` bezwarunkowo, jak sugerowało poprzednie zdanie
+("harness uruchamia `server/src/index.ts` (`playwright.config.ts:125–128`)"). Prawdziwy, mocniejszy
+powód STOP-u: Playwright bez `webServer` wymaga DZIAŁAJĄCEGO backendu pod `E2E_API_URL`, a
+Z30-bezpiecznego hosta dla przeglądarki **NIE MA**. Zbudowany minimalny zamiennik
+(`ApiGateway.initializeRoutes()` + `express().listen()`, bez drenaży/Schedulera) nie montuje
+`/api/csrf-token` (żywy w `server/src/index.ts:1251`) ani nagłówka CORS `x-csrf-token`
+(`server/src/index.ts:1130`) — moduł Inicjatywy na takim hoście nie ładuje danych
+(`Failed to load initiatives … UNKNOWN_ERROR`, `GET /api/csrf-token → 404`), mimo że ten sam
+`fetch` z konsoli z jawnym `Authorization` zwraca 200. Odtworzenie pełnego stosu middleware
+`index.ts` bez jego uruchamiania na bazie z żywymi danymi klienta nie zostało wykonane w tym
+bloku — STOP jest zasadny, ale z INNEGO powodu niż napisano pierwotnie.
+
+**§0.2e — pułapki (a)–(e), dopisane po odbiorze C2** (bez tego akapitu pomiar E5 nie liczy
+się jako dowód — brakowało go w pakiecie pierwotnym):
+
+- **(a) `ENABLE_V8_GLOBAL=true`** — ustawione w OBU przebiegach (ON i OFF). Powierzchnie 4 i 6
+  (Realizacja, Wyniki) DALEJ dają 404, treść to `{"error":"Initiative <id> not found","code":"INITIATIVE_NOT_FOUND"}`
+  — bramka DOMENOWA (jedna z 50 pytających tabelę zastaną), nie `v8FeatureGate`. Pułapka (a)
+  NIE fałszuje wyniku.
+- **(b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`** — ustawione. Wynik powierzchni
+  „Wyniki" bez zmian (404 domenowe). Nie fałszuje.
+- **(c) `DB_TYPE='sqlite'`** w `vitest.config.ts` jest domyślne, ale omijane przez
+  `MOCK_DB=false DB_TYPE=postgres` w env wywołania.
+- **(d) `ENABLE_TEST_AUTH_BYPASS`** — jawnie nieustawione; test podpisuje realny JWT
+  `config.JWT_SECRET`, `/api/auth/me` na tym tokenie zwraca 200 z realnym użytkownikiem. Nie
+  dotyczy.
+- **(e) `409` z middleware zapisu** — nie dotyczy E5: pakiet nie robi równoległych zapisów do
+  tras zastanych, więc konflikt wersji nie jest tu mierzony. Jawnie nazwana luka, nie jedna z
+  siedmiu powierzchni.
+
+Te ustalenia i twarde asercje `beforeAll` (ENABLE_V8_GLOBAL, RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE,
+DB_TYPE, ENABLE_TEST_AUTH_BYPASS) są teraz w nagłówku i `beforeAll`
+`nowyRekordSiedemPowierzchni.pg.test.ts` (FIX-E5-2), nie tylko w tym raporcie.
 
 ### E6
 
@@ -90,9 +156,22 @@ Przed zapisem: brak env poczty, `settings smtp%=0`, brak drenaży w Gateway. Po 
 
 ## 9. STOP-y
 
+**FIX-E6-1 — najważniejsza liczba tego etapu, dopisana po odbiorze C2:** warunek STOP z
+`§E3` instrukcji ("liczba pominiętych przekracza 30% zbioru") był spełniony z OGROMNYM
+zapasem: **105/107 = 98,1%** zbioru migracji (nie tylko "powyżej progu" — prawie CAŁY zbiór).
+Ten STOP rozstrzygnęła Z GÓRY decyzja CTO (`bdc9d99eba`: pisarze zostają, E5 przez API), nie
+osąd wykonawcy w trakcie pracy — to jest fakt, który powinien był stać w tym raporcie od
+początku, bo 98,1% zmienia charakter decyzji z "przekroczenie progu" na "zbiór niemal w
+całości niekwalifikowalny bez zmiany reguły produktu" (patrz opcje w `96_ODBIOR_C2_E3_E5.md` §4).
+
 E3 i E4: STOP-y rozstrzygnięte decyzją CTO. E3 wykonany bez zgadywania; E4 pozostawiony bez zmian.
 
 E5 Playwright: STOP MERYTORYCZNY. Licencja E5 dopuszcza STOP, gdy harness nie wstaje; Z30 zakazuje wykrytego `server/src/index.ts`. Zamiast warstwy przeglądarkowej wykonano wymagany HTTP+SQL 7 tras, ON/OFF. Nie uruchomiono zakazanego procesu.
+
+**FIX-E6-2 uzupełnienie:** prawdziwy powód braku harnessu przeglądarkowego nie jest "config
+uruchamia `index.ts`" (nieścisłe — `E2E_USE_WEB_SERVER` domyślnie OFF), tylko brak
+Z30-bezpiecznego hosta dla przeglądarki (`/api/csrf-token` i nagłówki CORS żyją wyłącznie w
+`server/src/index.ts`, nie w `ApiGateway`) — pełne uzasadnienie w sekcji E5 wyżej.
 
 ## 10. TWIERDZENIA NIEZWERYFIKOWANE
 
@@ -103,6 +182,18 @@ E5 Playwright: STOP MERYTORYCZNY. Licencja E5 dopuszcza STOP, gdy harness nie ws
 ## 11. DO DECYZJI WŁAŚCICIELA
 
 105 rekordów bez agregatu nie ma wymaganej pary pól: 77 bez `project_id`, 98 bez `owner_business_id`, 70 bez obu. Potrzebna jawna mapa projekt/właściciel per rekord albo decyzja o pozostawieniu poza kanonem. Niczego nie przypisano domyślnie.
+
+**FIX-E6-3 — dwa fakty zmierzone w odbiorze C2, istotne dla decyzji:**
+
+(a) Migracja **nie zmienia żadnej liczby widocznej przez API** — `GET /api/initiatives`
+przed `--apply` / po `--apply` / po `--rollback` jest identyczny na każdej organizacji, w
+obu ustawieniach flagi (czytnik unified E2 już robi UNION obu magazynów).
+
+(b) **DBR77 dostaje 0 migrowanych rekordów ze 106** (Northwind — 0 z 13). Obie kwalifikowalne
+inicjatywy (dziś jedyne, które migracja realnie rusza) należą do organizacji testowej
+"TT22TT" i są śmieciem ("próba 1", szkic z kanwy) — czyli decyzja o 105 pominiętych dotyczy
+WYŁĄCZNIE organizacji DBR77/Northwind, a sama migracja na tym zbiorze danych nie dowozi dziś
+żadnej wartości demo/produkcyjnej, tylko mechanikę gotową na przyszłe dane z kompletnymi polami.
 
 ## 12. ZNALEZISKA POBOCZNE
 
