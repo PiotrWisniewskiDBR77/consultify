@@ -48,6 +48,24 @@ type CapabilityOptions = {
   ownerPredicate?: OwnerPredicate;
   /** Wymusza sprawdzanie wlasnosci nawet bez predykatu (= fail-closed). */
   objectScoped?: boolean;
+  /**
+   * SCIEZKA WLASCICIELA [ODMROZENIE 05_INITIATIVES DEC-453].
+   *
+   * Domyslnie (`false`) brak zdolnosci w szablonie roli = odmowa i predykat nie
+   * jest nawet pytany — dokladnie jak w E2 (zadania). Dla INICJATYW model
+   * wlasnosci jest inny i pochodzi z DEC-453 (`evaluateInitiativeAuthorOnly`):
+   * o prawie do edycji decyduje ZWIAZEK CZLOWIEKA Z OBIEKTEM (twórca, wlasciciel
+   * wykonawczy/biznesowy, sponsor), a nie szablon roli projektowej — MEMBER o
+   * roli projektowej TASK_ASSIGNEE nie ma w szablonie ZADNEJ zdolnosci
+   * `initiative.update*`, a mimo to musi moc edytowac inicjatywe, ktora sam
+   * zalozyl.
+   *
+   * `ownerGrantsAccess: true` wlacza wiec DRUGA sciezke zgody: gdy zdolnosci
+   * brak, predykat wlasnosci moze ja przyznac. To zawezenie, nie rozszerzenie —
+   * dzis (bez `enforceMode`) te bramki przepuszczaja KAZDEGO czlonka organizacji.
+   * Bez tej opcji semantyka nie zmienia sie o jotę dla zadnej innej bramki.
+   */
+  ownerGrantsAccess?: boolean;
 };
 
 export type OwnerPredicateContext = {
@@ -141,6 +159,28 @@ async function runCapabilityShadow(
         break;
       }
       reason = mocniejszyPowod(reason, decision.reason);
+    }
+
+    // SCIEZKA WLASCICIELA (opt-in per bramka, patrz `ownerGrantsAccess`).
+    // Wchodzi TYLKO gdy zadna zdolnosc nie wystarczyla i tylko dla powodu
+    // `missing` — decyzji `ownership_denied` (predykat juz powiedzial NIE)
+    // nie wolno odwracac, bo to byloby obejscie kontroli z E2.
+    if (!wouldAllow && options.ownerGrantsAccess === true && reason === 'missing') {
+      if (!ownerPredicate) {
+        reason = 'ownership_predicate_missing';
+      } else {
+        try {
+          if ((await ownerPredicate()) === true) {
+            wouldAllow = true;
+            reason = 'ownership_confirmed';
+          } else {
+            reason = 'ownership_denied';
+          }
+        } catch {
+          // Brak pomiaru nie jest wynikiem pozytywnym.
+          reason = 'ownership_check_failed';
+        }
+      }
     }
 
     return {
@@ -494,6 +534,60 @@ export async function resolveInitiativeProjectId(req: AuthRequest): Promise<stri
     }>(`SELECT project_id FROM initiatives WHERE id = ? LIMIT 1`, [initiativeId])
     .catch(() => null);
   return firstString(row?.project_id, await resolveProjectIdFromRequest(req));
+}
+
+/**
+ * PREDYKAT WLASNOSCI INICJATYWY [ODMROZENIE 05_INITIATIVES DEC-453].
+ *
+ * Kolumny ZMIERZONE na kopii `consultify_kopia_e2b` (2026-09-10) — tabela
+ * `initiatives` ma dokladnie cztery kolumny opisujace zwiazek czlowieka z
+ * inicjatywa: `created_by` (twórca), `owner_execution_id` (wlasciciel
+ * wykonawczy), `owner_business_id` (wlasciciel biznesowy) i `sponsor_id`
+ * (sponsor). `updated_by` NIE jest wlasnoscia — ktokolwiek zapisal rekord
+ * ostatni raz nie staje sie przez to jego wlascicielem, wiec ta kolumna jest
+ * swiadomie pominieta (inaczej pierwszy udany wlam nadawalby prawo do
+ * kolejnych).
+ *
+ * Model zgodny z DEC-453 (`evaluateInitiativeAuthorOnly` w
+ * `services/initiative/initiativeTransitionConditions.ts`): o prawie do edycji
+ * decyduje autorstwo/wlasnosc obiektu, a ADMIN/OWNER organizacji przechodzi
+ * wczesniej — na zdolnosci (`*` / sentinel admina), zanim predykat zostanie
+ * zapytany.
+ *
+ * FAIL-CLOSED: brak identyfikatora, brak wiersza, obca organizacja albo blad
+ * odczytu => `false`. Brak pomiaru nie jest wynikiem pozytywnym.
+ */
+export async function isInitiativeOwnedByCaller(
+  req: AuthRequest,
+  ctx: OwnerPredicateContext
+): Promise<boolean> {
+  const initiativeId = firstString(
+    req.params?.initiativeId,
+    req.params?.id,
+    req.body?.initiativeId,
+    req.body?.initiative_id
+  );
+  if (!initiativeId || initiativeId.length > 128) return false;
+  if (!ctx.userId) return false;
+
+  const row = await queryHelpers.queryOne<{
+    created_by?: string | null;
+    owner_execution_id?: string | null;
+    owner_business_id?: string | null;
+    sponsor_id?: string | null;
+    organization_id?: string | null;
+  }>(
+    `SELECT created_by, owner_execution_id, owner_business_id, sponsor_id, organization_id
+       FROM initiatives WHERE id = ? LIMIT 1`,
+    [initiativeId]
+  );
+  if (!row) return false;
+  if (row.organization_id && ctx.organizationId && row.organization_id !== ctx.organizationId)
+    return false;
+
+  return [row.created_by, row.owner_execution_id, row.owner_business_id, row.sponsor_id].some(
+    (wartosc) => typeof wartosc === 'string' && wartosc.trim() !== '' && wartosc === ctx.userId
+  );
 }
 
 export async function resolveInterviewProjectId(req: AuthRequest): Promise<string | null> {
