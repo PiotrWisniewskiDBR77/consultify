@@ -365,3 +365,27 @@ nie mają wpisu i nie znam ich losu (§10, STOP-2).
 - Wypisywanie haseł w logach, meldunkach i repo. Robotnicy nie logują się hasłem — dowody zapisu robi CTO.
 - Włączanie `ENABLE_INITIATIVE_UNIFIED_READ` na stagingu przed dowodem zapisu i przed decyzją z §8 pkt 1.
 - Zamykanie kryterium na podstawie dokumentu. **Rejestr jest hipotezą; PASS wymaga komendy albo zrzutu z dziś.**
+
+## 10. Stan 11.09 02:00 i zadania na noc (dopisane przez CTO przy przekazaniu sesji)
+
+**Mandat:** właściciel śpi, rano leci do USA; „zrób ile się da, domykajmy". Bez pytań o zgody, z punktem cofnięcia i wpisem w rejestrze.
+
+| | wartość |
+|---|---|
+| staging (health, tag `staging-deployed`) | `ff3ae0dbde` — **ZAMROŻONY** (DEC-467: targi w Tokio 11.09 pokazują ze stagingu; konto `piotr.wisniewski@dbr77.com`, DBR77) |
+| demo | `691e2d3b0f` — do promocji po hotfixie (`-f environment=demo -f confirm_demo=yes`) |
+| linia integracyjna | `~/Developer/wt/fable-inicjatywy` = `b40ecb360c` (blok Codexa 1 + C1/C2-FIX, F5, raporty A1/A2/A3, instrukcje Codex 2/3) — NIE wdrożona |
+| baza dla Codexa | `origin/integracja/20260911` = `4768acb6cf` (push tam nie buduje niczego) |
+| punkty cofnięcia | tag `staging-safe-20260910-2150` = `71094d987e`; zrzut `~/Developer/consultify-dumps/staging-thomas-przed-tokio-20260910-2040.dump` |
+| baza aplikacji stagingu | serwis Railway **`pgvector`** (thomas:52567); serwis `Postgres` (28864) martwy |
+
+**Agenci w toku (worktree, gałąź, plik meldunku w `/private/tmp/claude-501/-Users-piotrwisniewski-Developer-Consultify/209adca6-bacb-4849-b1e7-8000a7962975/tasks/`):**
+1. HOTFIX — `wt/hotfix-assignee`, `hotfix/assignee-null-20260911` (z `ff3ae0dbde`), `a41c12c6c980f27ed.output`. Zapis z karty zadania zeruje `assignee_id` → zadanie znika. **Jedyny dozwolony ruch na stagingu tej nocy.** Po meldunku: tsc serwera 0 + testy → `git push origin <sha>:staging` → `gh workflow run railway-deploy.yml --ref staging -f environment=staging` → health = sha → dowód zapisu → tag → promocja demo → koniec ruchów na stagingu.
+2. N1 — `wt/n1-karty-a` (Wniosek/Decyzja/Powiadomienie), `a82ba1278483781e0.output`. 3. N2 — `wt/n2-karty-b` (Sesja wywiadu/Wzorzec/Karta działania), `aa282349fbc23d636.output`. Obie na `3c7af01835` (linia + 18 commitów Codexa P13-A + odbiór A1). 4. F3 — `wt/f3-panel-megatrend`, `ad019b2e35e735371.output`. 5. F4 — `wt/f4-ocena-rodzina`, `a1ebef6c9843af767.output`.
+Meldunek = ostatni wpis `assistant` w pliku JSONL (nie czytaj całości). Po meldunkach: `git merge --no-ff` do linii (JSON trójstronnie `scripts/dev/scal-json3.py`), BRAMKA 4-krokowa (Sonnet), bez wdrożenia do końca Tokio.
+
+**Codex:** blok 3 Finanse MINIMUM pracuje (`~/Developer/codex-wt/codex3-finanse`, `codex/finanse-minimum-20260911`, marker `19440011e9`); blok 2 wydany, wklejka `CODEX2_JEDEN_MAGAZYN_2/00_WKLEJKA.txt` u właściciela na rano. Odbiór każdego bloku: Opus kod vs kontrakt → Sonnet runtime na kopii `consultify_staging_1009` → FIX-y Sonnet → scalenie na linię (flagi OFF).
+
+**Rano, przed wylotem właściciela — karta (jedna strona):** co jest na stagingu i demo, co czeka na wdrożenie po Tokio, decyzje: (1) inicjatywa bez projektu — projekt-skrzynka per organizacja czy `projectId=null` (105 rekordów), (2) pozycja Finansów w menu (`betaMenuStatus.ts:51` `MODULE_ECONOMICS:'closed'`), (3) SMTP Hostinger („Outbound sending is disabled") — panel Hostingera, (4) pilotaż na demo czy stagingu, (5) dwa Postgresy — sprzątnąć martwy `Postgres` i zmienne `DB_*`.
+
+**Zakazy nocy:** żadnych wdrożeń/zmiennych/danych na stagingu poza hotfixem; produkcja nietykalna; `--skip-deploys` przy każdej zmiennej; robotnicy nie logują się hasłem — dowody zapisu robi nadzorca skryptem; nie kasuj cudzych worktree (Codex `codex-wt/`, Szampan `wt/p11-*`, `audyt-p1`, `j9-tmp`).
