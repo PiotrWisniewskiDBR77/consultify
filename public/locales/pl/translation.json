@@ -1511,7 +1511,7 @@
       "artifactsSubtitle": "Wybierz dokładne dowody projektowe, na których ma się opierać wygenerowana prezentacja.",
       "searchArtifacts": "Szukaj projektu, badania, raportu, inicjatywy...",
       "loadingArtifacts": "Ładowanie artefaktów...",
-      "noArtifacts": "Nie znaleziono jeszcze żadnych zarejestrowanych artefaktów. Możesz nadal wybrać typ źródła poniżej, aby utworzyć roboczą prezentację.",
+      "noArtifacts": "Nie masz jeszcze żadnych dokumentów do wykorzystania jako źródło. Wybierz typ źródła poniżej, aby utworzyć roboczą prezentację.",
       "selectedEvidence": "Wybrane dowody",
       "showDrafts": "Pokaż robocze"
     },
@@ -8637,7 +8637,7 @@
       "profile": {
         "kicker": "Profil",
         "title": "Profil per wymiar",
-        "empty": "Output nie zawiera zagregowanych wyników per wymiar."
+        "empty": "Ten raport nie zawiera zagregowanych wyników per wymiar."
       },
       "matrix": {
         "kicker": "Macierz · oś {{number}}",
@@ -8647,12 +8647,12 @@
       "strengths": {
         "kicker": "Mocne strony",
         "title": "Co już działa",
-        "empty": "Żadna jednostka nie osiągnęła jeszcze poziomu docelowego w zaakceptowanych ustaleniach tego Outputu."
+        "empty": "Żadna jednostka nie osiągnęła jeszcze poziomu docelowego w zaakceptowanych ustaleniach tego raportu."
       },
       "gaps": {
         "kicker": "Luki i ryzyka",
         "title": "Gdzie jest największe ryzyko",
-        "empty": "Brak zaakceptowanych ustaleń z luką powyżej zera w tym Output."
+        "empty": "Brak zaakceptowanych ustaleń z luką powyżej zera w tym raporcie."
       },
       "unknowns": {
         "kicker": "Białe plamy",
@@ -8668,7 +8668,7 @@
       "nextSteps": {
         "kicker": "Co dalej",
         "title": "Rekomendacje i kolejny krok",
-        "empty": "Brak rekomendacji w zaakceptowanych ustaleniach tego Outputu.",
+        "empty": "Brak rekomendacji w zaakceptowanych ustaleniach tego raportu.",
         "more": "+{{count}} więcej rekomendacji w pełnym Output"
       }
     },
@@ -11705,7 +11705,7 @@
     "sheet": "Arkusz",
     "document2": "Dokument",
     "artifacts": "Artefakty",
-    "noArtifactsYet": "Brak artefaktów",
+    "noArtifactsYet": "Brak dokumentów",
     "openInWorkspace": "Otwórz w module",
     "deliverablesMilestones": "Produkty i kamienie milowe",
     "addDeliverable": "Dodaj produkt",
@@ -12025,7 +12025,7 @@
     "sheet2": "Arkusz",
     "document3": "Dokument",
     "artifacts2": "Artefakty",
-    "noArtifactsYet2": "Brak artefaktów",
+    "noArtifactsYet2": "Brak dokumentów",
     "openInWorkspace2": "Otwórz w module",
     "deliverablesMilestones2": "Produkty i kamienie milowe",
     "addDeliverable2": "Dodaj produkt",
@@ -15350,7 +15350,7 @@
       "deleteNote": "Kanoniczny element pracy nie może zostać usunięty.",
       "documentLead": "Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.",
       "editorLead": "Uzupełnij dane biznesowe; identyfikatory techniczne są nadawane przez system.",
-      "emptyRegister": "Brak kanonicznych zadań i decyzji w dostępnych realizacjach.",
+      "emptyRegister": "Brak zadań i decyzji w dostępnych realizacjach.",
       "field": {
         "assignee": "Osoba realizująca",
         "authority": "Osoba decyzyjna",
@@ -15535,9 +15535,9 @@
         "newDecision": "Nowa decyzja"
       },
       "empty": {
-        "decisionsTitle": "Brak decyzji w rejestrze",
-        "raidTitle": "Brak pozycji w rejestrze RAID",
-        "description": "Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka."
+        "decisionsTitle": "Brak decyzji",
+        "raidTitle": "Brak pozycji RAID",
+        "description": "Tu pojawią się decyzje i pozycje RAID Twojej organizacji. Pusta lista znaczy, że nic obecnie nie czeka na decyzję."
       },
       "preview": {
         "raidLabel": "Pozycja RAID",
@@ -27419,7 +27419,7 @@
         "library": "Brak narzędzi.",
         "librarySearchNoResults": "Brak wyników dla frazy \"{{query}}\". Zmień frazę lub wyczyść filtry.",
         "sessions": "Brak aktywnych sesji. Zacznij z Biblioteki.",
-        "outputs": "Brak outputów. Wygeneruj raporty lub prezentacje z sesji.",
+        "outputs": "Brak wyników. Wygeneruj raporty lub prezentacje z sesji.",
         "initiatives": "Brak roboczych inicjatyw. Uruchom narzędzie lub assessment, aby je wygenerować.",
         "insights": "Brak insightów. Insighty powstają z zatwierdzonych sesji — zatwierdź sesję w zakładce Sesje."
       },
@@ -27603,8 +27603,8 @@
       "assumptionsEmptyTitle": "Brak założeń",
       "assumptionsEmptyHint": "AI zaproponuje założenia w trakcie pracy",
       "work": {
-        "placeholderTitle": "Powierzchnia robocza",
-        "placeholderHint": "Konfiguracja powierzchni roboczej zależy od typu narzędzia"
+        "placeholderTitle": "Obszar roboczy",
+        "placeholderHint": "Zawartość zależy od wybranego narzędzia."
       },
       "aiSuggestion": {
         "accept": "Akceptuj",
@@ -29581,7 +29581,7 @@
       "rows": "Wierszy"
     },
     "relatedArtifacts": {
-      "empty": "Brak jeszcze żadnego artefaktu tego typu z tego sprawozdania.",
+      "empty": "Brak jeszcze żadnego dokumentu tego typu z tego sprawozdania.",
       "notLoaded": "Powiązane artefakty nie zostały jeszcze wczytane.",
       "new": "+ Nowy"
     },
@@ -33288,12 +33288,12 @@
       "presentations": "Brak prezentacji",
       "noOutputs": "Brak wyników",
       "newWithTeresa": "Nowe z Teresą",
-      "reportsTitle": "Kanoniczne raporty zarządcze",
+      "reportsTitle": "Raporty zarządcze",
       "reportsBody": "Ta biblioteka jest zorganizowana wokół kanonu raportów V3. Zacznij od jednego z czterech gotowych dla sponsora typów raportów poniżej.",
       "reportsHint": "Użyj szybkich przycisków na pasku górnym lub utwórz nowy raport, aby wejść w przepływ R1, R2, R3 lub R4.",
       "templatesOnboarding": "Biblioteka wzorców",
-      "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
-      "outputs": "Brak outputów",
+      "templatesOnboardingDesc": "Wzorce określają strukturę i standard raportów oraz prezentacji. Zacznij od gotowej rodziny wzorców lub utwórz własny.",
+      "outputs": "Brak wyników",
       "presentationsDesc": "Utwórz pierwszą prezentację od pustego decka, z generowaniem AI albo z szablonu.",
       "outputsDesc": "Dokumenty, prezentacje i arkusze, które utworzysz lub wyeksportujesz, pojawią się tutaj."
     },
@@ -33364,9 +33364,9 @@
     },
     "sheets": {
       "error": "Nie można załadować arkuszy",
-      "emptyTitle": "Arkusze w bibliotece outputów",
-      "emptyBody": "Nadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam kanoniczny rejestr artefaktów co dokumenty i prezentacje. Ta zakładka odzwierciedla teraz aktywne artefakty arkuszy, gdy tylko rejestr je otrzyma.",
-      "emptyHint": "Utwórz lub wyeksportuj nadzorowany arkusz, a pojawi się tutaj automatycznie.",
+      "emptyTitle": "Arkusze w bibliotece wyników",
+      "emptyBody": "Tu pojawią się arkusze i eksporty — tak samo jak dokumenty i prezentacje. Ta zakładka pokaże je automatycznie, gdy staną się dostępne.",
+      "emptyHint": "Arkusze pojawią się tu automatycznie, gdy będą gotowe.",
       "subtabs": {
         "label": "Sekcje arkuszy",
         "data": "Źródła danych"
@@ -33480,7 +33480,7 @@
         "lineageOutputsList": "Wskaźniki outputów",
         "download": "Pobierz",
         "open": "Otwórz",
-        "sheetHint": "Nadzorowane artefakty arkuszy korzystają z tego samego rejestru; ścieżki tworzenia i eksportu są wdrażane w fali 2.",
+        "sheetHint": "Arkusze niedługo pojawią się w tym samym miejscu co dokumenty i prezentacje.",
         "originsShort": "źródła pochodzenia",
         "sourcesShort": "źródła",
         "validationChecksAllGood": "wszystkie zaliczone",
@@ -41700,7 +41700,7 @@
       "noActivityYet": "Brak aktywności",
       "noAiActionsCanvasFullyManual": "Brak akcji AI — canvas jest w pełni ręczny",
       "noAppliedAiChangesYet": "Brak zastosowanych zmian AI",
-      "noArtifactsLinkedThisNodeYet": "Brak podłączonych artefaktów do tego węzła.",
+      "noArtifactsLinkedThisNodeYet": "Brak podłączonych dokumentów do tego węzła.",
       "noBlindSpotsFound": "Nie znaleziono luk w mapie",
       "blindSpotsIdleHint": "Uruchom sprawdzenie, żeby znaleźć obszary, których mapie brakuje.",
       "blindSpotsUnavailable": "Dodaj jeszcze kilka elementów mapy — nie ma jeszcze czego analizować.",

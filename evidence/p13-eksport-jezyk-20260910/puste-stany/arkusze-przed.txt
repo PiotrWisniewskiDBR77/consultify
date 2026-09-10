@@ -1,0 +1,23 @@
+Wszystkie
+Dokumenty
+Prezentacje
+Arkusze
+Biblioteka wzorców
+Status
+Widoczność
+Nowy arkusz
+Wszystkie
+0
+Szkic
+0
+Gotowy
+0
+Arkusze w bibliotece outputów
+
+Nadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam kanoniczny rejestr artefaktów co dokumenty i prezentacje. Ta zakładka odzwierciedla teraz aktywne artefakty arkuszy, gdy tylko rejestr je otrzyma.
+
+UTWÓRZ LUB WYEKSPORTUJ NADZOROWANY ARKUSZ, A POJAWI SIĘ TUTAJ AUTOMATYCZNIE.
+
+Nowy arkusz
+← Lista
+Uwagi
