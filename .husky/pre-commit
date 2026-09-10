@@ -224,4 +224,33 @@ if ! node scripts/i18n/pomiar-jezyka.mjs --baseline docs/program/JEZYK_EN_PL_202
   exit 1
 fi
 
+# 15) Strażnik TREŚCI pl≠en (ratchet) — P8-i18n-straznik (10.09.2026): audyt
+#     zlapal i18nTrescPolska.test.ts CZERWONY (60 NOWYCH naruszen ponad
+#     baseline) mimo ze bramka 14) wyzej mowila "OK" caly czas. Przyczyna:
+#     pomiar-jezyka.mjs (14) jest wykrywaczem JEZYKA per plik (dictionary
+#     heuristic K1/K2) — nie porownuje WARTOSCI pl vs en per klucz w ogole,
+#     wiec strukturalnie NIE WIDZI przypadku "pl==en identyczne" gdy oba
+#     slowa sa neutralne/nie sa w slowniku obcego jezyka (np. "Plan","System",
+#     "Role" — zmierzone: naprawa 11 kluczy z polskim tekstem w en/*.json w
+#     tym zleceniu NIE zmienila K1 ani o 1, mimo ze to byl realny blad).
+#     i18nTrescPolska.test.ts to jedyny przyrzad, ktory faktycznie porownuje
+#     pl[klucz] z en[klucz] tresciowo. Odpala sie TYLKO gdy commit dotyka
+#     public/locales/{pl,en}/translation.json ALBO sam test/baseline/wyjatki
+#     tego straznika (tanio w typowym przypadku, ~0.5s vitest na 1 pliku).
+STAGED_I18N_TRESC=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^(public/locales/(pl|en)/translation\.json|tests/unit/i18n/i18nTrescPolska(\.test\.ts|\.baseline\.json)$)')
+if [ -n "$STAGED_I18N_TRESC" ]; then
+  I18N_TRESC_OUT=$(npx vitest run tests/unit/i18n/i18nTrescPolska.test.ts --reporter=dot 2>&1)
+  I18N_TRESC_STATUS=$?
+  if [ "$I18N_TRESC_STATUS" -ne 0 ]; then
+    echo "$I18N_TRESC_OUT" | tail -40 >&2
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: i18nTrescPolska.test.ts (strażnik TREŚCI pl≠en) jest" >&2
+    echo "     czerwony — pomiar-jezyka.mjs (14 wyżej) tego NIE widzi, patrz komentarz przy" >&2
+    echo "     tym bloku. Przetłumacz nowe klucze albo świadomie podnieś baseline:" >&2
+    echo "     UPDATE_I18N_BASELINE=1 npx vitest run tests/unit/i18n/i18nTrescPolska.test.ts" >&2
+    echo "     (podnoszenie baseline BEZ audytu = ukrywanie długu, nie jego spłata)." >&2
+    exit 1
+  fi
+fi
+
 exit 0
