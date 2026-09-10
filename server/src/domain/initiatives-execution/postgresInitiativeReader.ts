@@ -107,6 +107,40 @@ export interface PendingDefinitionRemediationReadModel {
 export class PostgresInitiativeReader {
   constructor(private readonly pool: Pool) {}
 
+  /**
+   * Kto moze byc WLASCICIELEM inicjatywy w danym projekcie.
+   *
+   * BLOKADA PILOTAZU — pomiar 10.09 na zywym stagingu (baza pgvector, 15
+   * organizacji): warunek byl czystym `JOIN project_members`, a ZADNA sciezka
+   * tworzenia projektu nie zakladala wiersza czlonkostwa dla twórcy. Skutek:
+   * w swiezo zalozonej organizacji KAZDY kandydat byl odrzucany i
+   * `POST .../source-proposals` zwracalo 422 `INITIATIVE_OWNER_INELIGIBLE` —
+   * takze osobie, ktora ten projekt przed chwila zalozyla. Zmierzone:
+   * 23 z 25 projektow z `owner_id` nie mialy wlasciciela w `project_members`;
+   * jedyne dwa wyjatki to projekty Northwind, gdzie czlonkow wstawia SEED
+   * danych pokazowych. „W Northwind dziala" bylo wiec wlasciwoscia fikstury,
+   * nie regula systemu.
+   *
+   * Sciezka tworzenia projektu zostala naprawiona osobno
+   * (`ensureProjectOwnerMembership`), ale to nie wystarcza: nie cofa sie do
+   * projektow juz istniejacych i nie obejmuje kandydata, ktory jest
+   * wlascicielem/administratorem organizacji, a nie zostal jawnie dodany do
+   * projektu.
+   *
+   * KONTRAKT (celowo taki sam, jak w `resolveEffectiveAccess`, ktore te sama
+   * osobe juz dzis wpuszcza z capability `initiative.create`):
+   * kandydat MUSI byc ACTIVE czlonkiem organizacji projektu — to granica
+   * tenanta i ona sie NIE zmienia — oraz spelnic jeden z warunkow:
+   *   1) ma wiersz w `project_members` tego projektu, albo
+   *   2) jest `projects.owner_id` tego projektu, albo
+   *   3) ma w organizacji role OWNER lub ADMIN.
+   *
+   * Czego to NIE otwiera: zwykly czlonek organizacji BEZ czlonkostwa w
+   * projekcie dalej jest odrzucany, czlonek nieaktywny dalej jest odrzucany,
+   * a uzytkownik z innej organizacji dalej jest odrzucany — kazdy z tych
+   * trzech przypadkow jest przybity osobnym testem na realnym Postgresie
+   * (`initiativeOwnerEligibility.swiezyProjekt.realdb.test.ts`).
+   */
   async isEligibleInitiativeOwner(
     organizationId: string,
     projectId: string,
@@ -119,10 +153,15 @@ export class PostgresInitiativeReader {
            ON om.organization_id=p.organization_id
           AND om.user_id=$3
           AND UPPER(COALESCE(om.status, ''))='ACTIVE'
-         JOIN project_members pm
-           ON pm.project_id=p.id
-          AND pm.user_id=$3
         WHERE p.id=$2 AND p.organization_id=$1
+          AND (
+            EXISTS (
+              SELECT 1 FROM project_members pm
+               WHERE pm.project_id=p.id AND pm.user_id=$3
+            )
+            OR p.owner_id=$3
+            OR UPPER(COALESCE(om.role, '')) IN ('OWNER', 'ADMIN')
+          )
         LIMIT 1`,
       [organizationId, projectId, userId]
     );

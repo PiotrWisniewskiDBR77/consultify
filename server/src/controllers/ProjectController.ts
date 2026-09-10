@@ -9,6 +9,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ensureProjectOwnerMembership } from '../services/projectOwnerMembershipService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -264,6 +265,12 @@ export class ProjectController {
 
       logger.error(`[ProjectController] Executing INSERT for project ${id}`);
       await queryHelpers.queryRun(sql, [id, orgId, name, description || null, 'active', owner]);
+
+      // BLOKADA PILOTAZU (pomiar 10.09, zywy staging): sam `INSERT INTO projects`
+      // zostawial projekt z ZEREM czlonkow, wiec zalozyciel nie mogl w nim
+      // utworzyc inicjatywy (422 INITIATIVE_OWNER_INELIGIBLE), zespol byl pusty,
+      // a pojemnosc liczyla sie z zera. Patrz `projectOwnerMembershipService.ts`.
+      await ensureProjectOwnerMembership(id, owner);
 
       // Return only server-confirmed persisted truth from the current schema.
       const created = await queryHelpers.queryOne<any>(

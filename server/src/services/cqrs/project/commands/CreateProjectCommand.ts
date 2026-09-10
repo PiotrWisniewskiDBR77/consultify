@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
+import { ensureProjectOwnerMembership } from '../../../projectOwnerMembershipService.js';
 
 export class CreateProjectCommand {
   constructor(
@@ -24,6 +25,11 @@ export class CreateProjectHandler {
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, command.name, command.organizationId, command.ownerId, command.summary || '', now, now]
     );
+
+    // Ta sama ksiegowosc czlonkostwa co w `ProjectController.createProject`:
+    // bez niej projekt zalozony z Discovery ma zero czlonkow i blokuje
+    // tworzenie inicjatywy (pomiar 10.09, `projectOwnerMembershipService.ts`).
+    await ensureProjectOwnerMembership(id, command.ownerId);
 
     return {
       id,

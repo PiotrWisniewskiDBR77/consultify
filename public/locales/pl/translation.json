@@ -10798,7 +10798,9 @@
       "newInitiativeManual": "Wypełnij formularz",
       "newInitiativeManualDesc": "Tytuł, oś, poziom i krótkie podsumowanie — bez AI.",
       "newInitiativeAi": "Kreator inicjatywy AI",
-      "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj."
+      "newInitiativeAiDesc": "Zbuduj szkic z wniosku źródłowego, potem go przejrzyj.",
+      "errorOwnerIneligible": "Wskazana osoba nie może być właścicielem inicjatywy w tym projekcie. Dodaj ją do zespołu projektu albo wybierz osobę, która już w nim jest.",
+      "errorCapabilityRequired": "Nie masz uprawnień, żeby utworzyć inicjatywę w tym projekcie. Poproś właściciela lub administratora organizacji o dostęp do tego projektu."
     },
     "axis": {
       "operational": "Operacyjna",

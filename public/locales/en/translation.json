@@ -11618,7 +11618,9 @@
       "newInitiativeManual": "Fill in the form",
       "newInitiativeManualDesc": "Title, axis, level and a short summary — no AI needed.",
       "newInitiativeAi": "AI initiative wizard",
-      "newInitiativeAiDesc": "Build a draft from a source insight, then review it."
+      "newInitiativeAiDesc": "Build a draft from a source insight, then review it.",
+      "errorOwnerIneligible": "That person cannot own an initiative in this project. Add them to the project team (Project > Team) or pick someone who already belongs to it.",
+      "errorCapabilityRequired": "You do not have permission to create an initiative in this project. Ask the organization owner or an administrator for access to it."
     },
     "axis": {
       "operational": "Operational",
