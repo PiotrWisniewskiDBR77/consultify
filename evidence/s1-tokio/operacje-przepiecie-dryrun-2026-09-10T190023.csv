@@ -1,0 +1,40 @@
+etap,tabela,kolumna,pula,co,posiadane,kwota,wierszy,planowane,dodane,wynik
+A1,tasks,assignee_id,,,,,4,,,dry-run
+A1,tasks,owner_id,,,,,2,,,dry-run
+A1,tasks,reporter_id,,,,,0,,,nic do przepięcia
+A1,decisions,decision_maker_id,,,,,12,,,dry-run
+A1,decisions,created_by,,,,,0,,,nic do przepięcia
+A1,my_ideas,user_id,,,,,8,,,dry-run
+A1,my_idea_maps,user_id,,,,,8,,,dry-run
+A1,meetings,created_by,,,,,5,,,dry-run
+A1,meeting_participants,user_id,,,,,5,,,dry-run
+A1,conversations,user_id,,,,,6,,,dry-run
+A1,conversations,created_by,,,,,0,,,nic do przepięcia
+A1,projects,owner_id,,,,,1,,,dry-run
+A1,initiative_resources,user_id,,,,,1,,,dry-run
+A1,my_work_session_context,user_id,,,,,1,,,dry-run
+A1,tp_bases,created_by,,,,,1,,,dry-run
+A1,tp_tables,created_by,,,,,1,,,dry-run
+A1,tp_views,created_by,,,,,4,,,dry-run
+A1,tp_records,created_by,,,,,8,,,dry-run
+A1,tp_base_members,user_id,,,,,2,,,dry-run
+A2,,,skrzynka-zadania,,0,14,14,,,dry-run
+A2,,,skrzynka-akceptacje,,0,8,8,,,dry-run
+A2,,,skrzynka-decyzje,,0,4,4,,,dry-run
+A2,,,skrzynka-eskalacje,,0,5,5,,,dry-run
+A2,,,skrzynka-kpi-i-sygnaly,,0,7,7,,,dry-run
+A2,,,czat-rozmowy-EN,,0,5,5,,,dry-run
+A2,,,notatnik-notatniki,,0,2,2,,,dry-run
+A2,,,notatnik-strony,,0,10,10,,,dry-run
+A2,,,materialy,,0,5,5,,,dry-run
+A2,,,kpi-definicje,,0,5,5,,,dry-run
+A2,,,kpi-karty-wynikow,,0,2,2,,,dry-run
+A2,,,okr-kluczowe-rezultaty,,0,4,4,,,dry-run
+A2,,,spotkania-widmo,,0,8,8,,,dry-run
+A2,,,audyty-programy,,0,1,1,,,dry-run
+A2,,,oceny,,0,1,1,,,dry-run
+A3,,,zadania-nieprzypisane-otwarte,,0,10,10,,,dry-run
+A3,,,decyzje-bez-decydenta,,0,6,6,,,dry-run
+A3,,,inicjatywy-wlasciciel-realizacji,,0,6,6,,,dry-run
+A3,,,inicjatywy-sponsor,,0,3,3,,,dry-run
+A3,,,wywiad-przypisania-sieroce,,0,3,3,,,dry-run

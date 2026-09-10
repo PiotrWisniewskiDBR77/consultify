@@ -408,6 +408,7 @@ const A2_PULE = [
   {
     nazwa: 'skrzynka-zadania',
     tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
     filtr: `organization_id = '${ORG}' AND status='pending' AND section='assigned_tasks' AND ${BEZ_POLSKICH}`,
     kolejnosc: `CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END, created_at DESC, id`,
@@ -416,6 +417,7 @@ const A2_PULE = [
   {
     nazwa: 'skrzynka-akceptacje',
     tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
     filtr: `organization_id = '${ORG}' AND status='pending' AND section='approvals_gates'`,
     kolejnosc: `CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END, created_at DESC, id`,
@@ -424,6 +426,7 @@ const A2_PULE = [
   {
     nazwa: 'skrzynka-decyzje',
     tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
     filtr: `organization_id = '${ORG}' AND status='pending' AND section='decisions_required'`,
     kolejnosc: `created_at DESC, id`,
@@ -432,14 +435,20 @@ const A2_PULE = [
   {
     nazwa: 'skrzynka-eskalacje',
     tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
     filtr: `organization_id = '${ORG}' AND status='pending' AND section='blocked_escalations'`,
     kolejnosc: `created_at DESC, id`,
-    kwota: 5,
+    // POMIAR: w puli `blocked_escalations` (77 pending) WSZYSTKIE wiersze mają
+    // ten sam tytuł „Interview Assignment Overdue" — po odsiewie zostaje 1.
+    // Kwota 2 zostawiona świadomie: skrzynka ma pokazać eskalację, ale nie
+    // pięć klonów tego samego wiersza.
+    kwota: 2,
   },
   {
     nazwa: 'skrzynka-kpi-i-sygnaly',
     tabela: 'canonical_inbox_items',
+    dedupPo: [['source_entity_type', 'source_entity_id'], 'title'],
     kolumna: 'user_id',
     filtr: `organization_id = '${ORG}' AND status='pending' AND section IN ('ai_insights','fyi_system','fyi_mentions')`,
     kolejnosc: `CASE section WHEN 'ai_insights' THEN 0 WHEN 'fyi_mentions' THEN 1 ELSE 2 END, created_at DESC, id`,
@@ -452,6 +461,7 @@ const A2_PULE = [
     filtr: `organization_id = '${ORG}' AND deleted_at IS NULL AND message_count >= 4 AND ${BEZ_POLSKICH}`,
     kolejnosc: `last_message_at DESC NULLS LAST, id`,
     kwota: 5,
+    dedupPo: ['title'],
     takze: ['created_by'],
   },
   {
@@ -858,12 +868,54 @@ async function przepnijPule(c, pule, zrodlo, etap, apply, manifest, log) {
       warunekZrodla = `${p.kolumna} NOT IN (SELECT id::text FROM users)`;
     else warunekZrodla = `${p.kolumna} = '${p.zrodloWartosc}'`;
 
-    const wybor = await c.query(
+    // Nadmiarowy wybór + odsianie duplikatów: (a) klucz unikalności bazy
+    // (canonical_inbox_items UNIQUE(user_id, source_entity_type, source_entity_id)
+    // — przepięcie MUSI dać rozłączny zbiór, inaczej UPDATE wywróci się na
+    // ograniczeniu), (b) powtórzone tytuły (3× „Interview Assignment Overdue"
+    // w jednej skrzynce to nie jest twarz produktu).
+    const dedup = p.dedupPo || [];
+    const surowe = await c.query(
       `SELECT * FROM ${p.tabela}
        WHERE ${p.filtr} AND ${warunekZrodla}
        ORDER BY ${p.kolejnosc}
-       LIMIT ${brakuje}`
+       LIMIT ${dedup.length ? brakuje * 8 : brakuje}`
     );
+    // `dedupPo` to LISTA NIEZALEŻNYCH kluczy — każdy element to jedna kolumna
+    // albo tablica kolumn tworzących jeden klucz. Wiersz przechodzi tylko wtedy,
+    // gdy jest nowy względem KAŻDEGO z nich.
+    const widziane = dedup.map(() => new Set());
+    // IDEMPOTENCJA odsiewu: zbiory „już widziane" startują od wierszy, które
+    // właściciel MA JUŻ w tej puli — bez tego drugi przebieg dobrałby kolejny
+    // wiersz o tym samym tytule (np. piąte z rzędu „Interview Assignment
+    // Overdue") zamiast zameldować „nic do zrobienia".
+    if (dedup.length) {
+      const posiadaneWiersze = await c.query(
+        `SELECT * FROM ${p.tabela} WHERE ${p.filtr} AND ${p.kolumna} = $1`,
+        [NOWY]
+      );
+      for (const w of posiadaneWiersze.rows) {
+        for (let d = 0; d < dedup.length; d += 1) {
+          const czesci = Array.isArray(dedup[d]) ? dedup[d] : [dedup[d]];
+          widziane[d].add(czesci.map((kol) => String(w[kol] ?? '')).join('||'));
+        }
+      }
+    }
+    const odsiane = [];
+    for (const w of surowe.rows) {
+      if (odsiane.length >= brakuje) break;
+      let kolizja = false;
+      const klucze = [];
+      for (let d = 0; d < dedup.length; d += 1) {
+        const czesci = Array.isArray(dedup[d]) ? dedup[d] : [dedup[d]];
+        const k = czesci.map((kol) => String(w[kol] ?? '')).join('||');
+        klucze.push(k);
+        if (widziane[d].has(k)) kolizja = true;
+      }
+      if (kolizja) continue;
+      klucze.forEach((k, d) => widziane[d].add(k));
+      odsiane.push(w);
+    }
+    const wybor = { rows: odsiane, rowCount: odsiane.length };
     if (wybor.rowCount === 0) {
       log.push({ etap, pula: p.nazwa, posiadane: juz, kwota: p.kwota, wynik: 'brak kandydatów' });
       continue;
