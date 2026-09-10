@@ -1,0 +1,96 @@
+URL: https://staging.consultify.ai/settings
+---
+Przejdź do głównej treści
+Ustawienia
+Profil
+Dane
+Model
+Piotr P2ATest
+PP
+Ustawienia
+
+Preferencje osobiste
+
+Moje ustawienia
+Profil
+Awatar i zdjęcie
+Podpisy e-mail
+Godziny pracy
+Preferencje pracy
+AI i automatyzacja
+Powiadomienia
+Bezpieczeństwo
+Integracje
+Dane i prywatność
+Płatności
+Wygląd
+Zaawansowane
+Wróć do panelu
+Ustawienia
+Profil
+Profil
+
+Zarządzaj swoimi danymi osobowymi i kontem
+
+Zapisz zmiany
+Dane osobowe
+
+Zarządzaj swoimi danymi osobowymi i preferencjami
+
+Zmień zdjęcie
+Piotr P2ATest
+
+P2A Puste Stany Sp. z o.o.
+
+p2a-wt091041@dbr77.com
+Właściciel
+PROFIL PUBLICZNY
+Nazwa wyświetlana
+
+Tak Twoje imię będzie widoczne dla innych. Zostaw puste, aby użyć pełnego imienia i nazwiska.
+
+Zaimki
+Wolę nie podawać
+On/Jego
+Ona/Jej
+Oni/Ich
+Inne
+Dział
+Wybierz dział...
+Inżynieria
+Produkt
+Projektowanie
+Dział marketingu
+Sprzedaż
+Operacje
+Finanse
+Zasoby ludzkie
+Prawny
+Sukces klienta
+Wsparcie
+Zarząd
+Inne
+Dane osobowe
+Imię
+Nazwisko
+Telefon
+Firma
+Identyfikator profilu LinkedIn
+
+Wpisz ID profilu z adresu URL LinkedIn (po /in/)
+
+Stanowisko
+Dostępność i status
+Wiadomość statusu
+
+Poinformuj zespół, czym się zajmujesz (0/100)
+
+Poza biurem
+
+Automatycznie powiadamiaj innych, gdy jesteś nieobecny
+
+Ustawienia regionalne
+
+Strefa czasowa, data, godzina, liczba i formaty jednostek są zarządzane razem w Ustawieniach regionalnych.
+
+Otwórz ustawienia regionalne
