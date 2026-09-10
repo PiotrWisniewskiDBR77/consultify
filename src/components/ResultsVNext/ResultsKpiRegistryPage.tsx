@@ -1741,6 +1741,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
                     description: isPolish
                       ? 'Utwórz pierwszy raport, aby zacząć śledzić mierniki okres po okresie.'
                       : 'Create the first report to start tracking indicators period by period.',
+                    // P2B (2026-09-10): opis mówił „utwórz pierwszy raport", ale
+                    // przycisku nie było — ten sam handler co primaryCta
+                    // „Nowy raport" wyżej (`openCreateScorecard`).
+                    actionLabel: isPolish ? 'Nowy raport' : 'New report',
+                    onAction: openCreateScorecard,
                   }
                 : undefined,
             selectedRowId: selectedScorecardId,
@@ -1801,6 +1806,13 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             description: isPolish
               ? 'Utwórz pierwszy KPI, aby zacząć śledzić ten rejestr.'
               : 'Create the first KPI to start tracking this registry.',
+            // P2B (2026-09-10): jak w rejestrze raportów wyżej — opis obiecywał
+            // akcję, przycisku nie było. Ten sam handler co primaryCta „Nowy
+            // KPI" (`openCreateForm`); nieaktywny na zakładce `scorecards`
+            // (ta gałąź tabeli tam się nie renderuje — patrz komentarz przy
+            // primaryCta), więc bez warunku na tab.
+            actionLabel: isPolish ? 'Nowy KPI' : 'New KPI',
+            onAction: openCreateForm,
           }
         : undefined,
     emptyMessage:

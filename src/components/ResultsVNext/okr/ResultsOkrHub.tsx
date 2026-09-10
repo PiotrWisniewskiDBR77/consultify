@@ -443,24 +443,35 @@ export const ResultsOkrHub: React.FC = () => {
   ];
 
   const rows: TableRow[] = filteredSets.map(withId);
+  // P2B (2026-09-10): żadna z trzech odmian nie miała akcji — sam opis mówił
+  // „nie utworzono jeszcze", bez przycisku, który by to zmienił. Ten sam
+  // handler co primaryCta „Nowy OKR" niżej (`openCreateForm`); formularz sam
+  // pyta o zasięg, więc jeden handler wystarcza dla wszystkich trzech zakładek.
+  const emptyOrgActionLabel = isPolish ? 'Nowy OKR' : 'New OKR';
   const emptyOrgCopy = {
     org: {
       title: isPolish ? 'Brak zestawów OKR' : 'No OKR sets yet',
       description: isPolish
         ? 'W tej organizacji nie utworzono jeszcze żadnego zestawu OKR.'
         : 'No OKR set has been created in this organization yet.',
+      actionLabel: emptyOrgActionLabel,
+      onAction: openCreateForm,
     },
     my: {
       title: isPolish ? 'Brak Twoich zestawów OKR' : 'No OKR sets for you yet',
       description: isPolish
         ? 'Nie jesteś jeszcze właścicielem ani recenzentem żadnego zestawu OKR.'
         : "You're not yet the owner or reviewer of any OKR set.",
+      actionLabel: emptyOrgActionLabel,
+      onAction: openCreateForm,
     },
     company: {
       title: isPolish ? 'Brak firmowych zestawów OKR' : 'No company-level OKR sets yet',
       description: isPolish
         ? 'Nie utworzono jeszcze żadnego zestawu OKR o zasięgu firmowym.'
         : 'No company-scoped OKR set has been created yet.',
+      actionLabel: emptyOrgActionLabel,
+      onAction: openCreateForm,
     },
   }[tab];
 
