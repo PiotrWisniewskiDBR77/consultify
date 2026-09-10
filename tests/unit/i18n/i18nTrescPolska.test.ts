@@ -145,6 +145,33 @@ const IDENTITY_WHITELIST_RAW = [
   // (zapożyczenie z łaciny, ta sama pisownia); placeholder {{index}} sprawia,
   // że wpis dodatkowo spełnia kryterium (b) STRAŻNIKA (symbol nawiasu klamr.).
   'Fragment {{index}}',
+  // P8-i18n-strażnik (10.09.2026) — audyt 60 NOWYCH naruszeń (dług dorzucony
+  // 06-10.09.2026, patrz commit tego zlecenia). Poniżej WYŁĄCZNIE pozycje,
+  // które są akronimami/markami/symbolami/placeholderami — spełniają (a)/(b)/
+  // (d) STRAŻNIKA automatycznie, bez potrzeby ALLOWED_PROPER_NOUNS:
+  'DLP', 'SSO', 'PMO', 'RAG', 'UX',
+  // Marki dostawców płatności partnerskich (nazwa własna produktu):
+  'PayPal',
+  // Format eksportu — istniejące osobno 'PowerPoint' i 'PPTX' nie pokrywają
+  // złożonej frazy jako całości (dopasowanie jest na pełnym stringu):
+  'PowerPoint (PPTX)',
+  // Gate decyzyjny — ten sam wzorzec co istniejące 'GO'/'NO-GO'/'CONDITIONAL GO':
+  'Go/No-Go',
+  // Termin hostingowy używany identycznie w polskich materiałach IT (jak SLA/WACC):
+  'On-premise',
+  // Placeholdery strukturalne (tylko nawiasy/dwukropek/symbol klamrowy + już
+  // zatwierdzone słowo "status"/"date" jako część klucza, nie treść) — ten sam
+  // wzorzec co 'JQL ({{optional}})' / 'Fragment {{index}}':
+  '(status: {{status}})', '({{date}})',
+  // Pospolite rzeczowniki, które są PRAWIDŁOWYMI, samodzielnymi słowami
+  // polskimi (nie anglicyzmami z braku tłumaczenia) — słownikowe zapożyczenia
+  // dawno przyswojone (Plan/Bank/System/Format...) albo terminy branżowe
+  // trzymane identycznie w polskim żargonie biznesowym/IT/devops (jak już
+  // zatwierdzone Kanban/Sprint/Backlog/Baseline/Dashboard powyżej). Wymagają
+  // wpisu w ALLOWED_PROPER_NOUNS niżej — patrz uzasadnienie przy tamtej liście.
+  'Plan', 'Framework', 'Bank', 'Main', 'System', 'Format', 'Trend', 'Panel',
+  'Bonus', 'Stripe', 'Wise', 'Media', 'Agent', 'Briefing', 'Limit', 'Canary',
+  'Staging', 'Diagram',
 ];
 const IDENTITY_WHITELIST = IDENTITY_WHITELIST_RAW.map((entry) => entry.trim().toLowerCase());
 const IDENTITY_WHITELIST_SET = new Set(IDENTITY_WHITELIST);
@@ -180,6 +207,23 @@ const ALLOWED_PROPER_NOUNS = [
   // niezmienna w polskich raportach doradczych (Business Case/Wyniki):
   'Conservative', 'Base', 'Upside', 'Expected', 'Actual', 'Payback', 'Hard',
   'Avoided',
+  // P8-i18n-strażnik (10.09.2026) — dawno przyswojone polskie słowa
+  // (Plan/Bank/System/Format/Panel/Diagram/Media/Agent/Limit/Trend/Bonus —
+  // istnieją w słowniku języka polskiego niezależnie od informatyki, ta sama
+  // pisownia to zbieg historyczny łaciny/francuskiego, nie brak tłumaczenia)
+  // oraz terminy branżowe niezmienne w polskim żargonie biznesowym/devops
+  // (Framework/Briefing/Canary/Staging — ten sam status co Kanban/Sprint/
+  // Backlog/Baseline/Dashboard powyżej) i jedna nazwa techniczna (Main —
+  // domyślna gałąź gita, nie tłumaczy się jej, jak Baseline). UWAGA dla
+  // kolejnego audytora: to jest NAJBARDZIEJ dyskusyjna partia tej listy —
+  // każdy wpis to osobna decyzja "czy to prawdziwe słowo polskie/ustalony
+  // żargon, czy tylko wygodne uniknięcie tłumaczenia"; jeśli wątpisz w
+  // konkretny wpis, usuń go i przetłumacz treść na coś odróżnialnego zamiast
+  // ufać temu komentarzowi. Pełna lista 60 kluczy i decyzja per klucz:
+  // zobacz komunikat commita tego zlecenia (P8, 10.09.2026).
+  'Plan', 'Framework', 'Bank', 'Main', 'System', 'Format', 'Trend', 'Panel',
+  'Bonus', 'Stripe', 'Wise', 'Media', 'Agent', 'Briefing', 'Limit', 'Canary',
+  'Staging', 'Diagram',
 ].map((entry) => entry.trim().toLowerCase());
 const ALLOWED_PROPER_NOUNS_SET = new Set(ALLOWED_PROPER_NOUNS);
 
