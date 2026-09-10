@@ -1,0 +1,31 @@
+=== KROK 2: widmo POZOSTAŁE w tabelach objętych S-2 (org DBR77 vs inne org) ===
+┌─────────┬─────────────────────────┬────────────────────┬──────────┬─────────┐
+│ (index) │ tabela                  │ kolumna            │ orgDBR77 │ innaOrg │
+├─────────┼─────────────────────────┼────────────────────┼──────────┼─────────┤
+│ 0       │ 'canonical_inbox_items' │ 'user_id'          │ 402      │ 0       │
+│ 1       │ 'conversations'         │ 'user_id'          │ 288      │ 0       │
+│ 2       │ 'conversations'         │ 'created_by'       │ 288      │ 0       │
+│ 3       │ 'notebooks'             │ 'owner_user_id'    │ 0        │ 0       │
+│ 4       │ 'notebook_pages'        │ 'owner_user_id'    │ 14       │ 0       │
+│ 5       │ 'knowledge_docs'        │ 'owner_id'         │ 0        │ 0       │
+│ 6       │ 'rvn_kpi_definitions'   │ 'owner_user_id'    │ 0        │ 0       │
+│ 7       │ 'rvn_kpi_scorecards'    │ 'owner_user_id'    │ 0        │ 0       │
+│ 8       │ 'okr_vnext_key_results' │ 'owner_user_id'    │ 0        │ 1       │
+│ 9       │ 'meetings'              │ 'created_by'       │ 0        │ 0       │
+│ 10      │ 'audit_programs'        │ 'program_owner_id' │ 0        │ 0       │
+│ 11      │ 'audit_programs'        │ 'created_by'       │ 0        │ 0       │
+│ 12      │ 'assessments'           │ 'created_by'       │ 9        │ 0       │
+│ 13      │ 'initiatives'           │ 'created_by'       │ 0        │ 0       │
+│ 14      │ 'initiatives'           │ 'updated_by'       │ 0        │ 0       │
+│ 15      │ 'my_ideas'              │ 'user_id'          │ 0        │ 0       │
+│ 16      │ 'tasks'                 │ 'created_by'       │ 0        │ 0       │
+│ 17      │ 'tasks'                 │ 'owner_id'         │ 0        │ 0       │
+│ 18      │ 'meeting_participants'  │ 'user_id'          │ 0        │ 0       │
+│ 19      │ 'interview_assignments' │ 'assignee_user_id' │ 0        │ 0       │
+│ 20      │ 'interview_assignments' │ 'created_by'       │ 0        │ 0       │
+│ 21      │ 'my_idea_maps'          │ 'user_id'          │ 0        │ 0       │
+└─────────┴─────────────────────────┴────────────────────┴──────────┴─────────┘
+=== rozmowy NOWEGO właściciela z ZERO wiadomości (nie kasujemy, tylko liczymy) ===
+rozmowy NOWEGO bez wiadomości: 48 / wszystkich rozmów NOWEGO: 176
+=== SUMA widmo we WSZYSTKICH tabelach organizacji DBR77 (poza wykluczonymi logami) — ile jeszcze zostaje poza zakresem S-2 ===
+kolumn poza zakresem S-2 z widmo>0: 247 | suma wierszy: 30138
