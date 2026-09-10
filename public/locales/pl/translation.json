@@ -37878,6 +37878,10 @@
     "all": "Wszystkie",
     "search": "Wyszukiwanie",
     "cancel": "Anuluj",
+    "noMyDecisions": "Brak decyzji czekających na Twoje działanie",
+    "noRequestsPending": "Brak oczekujących próśb",
+    "noDecisions": "Brak decyzji",
+    "allCaughtUp": "Wszystko na bieżąco!",
     "detail": {
       "activityLog": {
         "decisionCreated": "Decyzja utworzona",
