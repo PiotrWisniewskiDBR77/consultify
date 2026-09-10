@@ -119,6 +119,12 @@ async function setPolishLanguage(page: Page) {
 test.describe('P2A — pusty stan -> pierwsza wartość (świeża organizacja)', () => {
   test.describe.configure({ mode: 'serial' });
 
+  // Zmierzone 2026-09-10: globalny storageState (global test-support setup,
+  // playwright.config.ts) loguje KAŻDY test domyślnie, więc page.goto('/register')
+  // ląduje już zalogowany w aplikacji zamiast na formularzu rejestracji — dokładnie
+  // ten sam bug co w tests/e2e/runtime/app-startup-smoke.spec.ts. Resetujemy stan.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('rejestracja świeżej organizacji i przełączenie na polski', async ({ page }) => {
     const email = await registerFreshOrg(page, 'setup');
     expect(email).toContain('@dbr77.com');
