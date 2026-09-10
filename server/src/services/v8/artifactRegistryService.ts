@@ -2876,20 +2876,29 @@ export function matchesViewFilters(
 }
 
 /**
- * Presentational dedup (S6.3): collapse artifacts that share the same resolved
- * name + output type + origin runtime into a single newest row, recording how
- * many older versions it stands in for. Input MUST already be sorted newest→oldest
- * (the list query orders by last_transition_at/created_at DESC). NO data is mutated.
+ * Presentational dedup (S6.3, DEC-4): collapse artifacts that stand for the SAME
+ * source object into a single newest row, recording how many older registrations
+ * it stands in for. Input MUST already be sorted newest→oldest (the list query
+ * orders by last_transition_at/created_at DESC). NO data is mutated.
+ *
+ * P15 (10.09.2026) — the key is the artifact's IDENTITY, never its name.
+ * It used to be `resolvedTitle + outputType + originRuntime`, which hid every
+ * second document that merely happened to share a title with another one:
+ * measured on staging, 283 real (non-draft) artifacts were invisible and NOT ONE
+ * of them was a genuine duplicate (zero groups shared
+ * `origin_runtime + origin_record_id`). DEC-4's actual target — the same source
+ * object registered more than once — still collapses, because that is exactly
+ * what the identity key matches. An artifact with no origin link keys on its own
+ * id, so it can never be folded away under someone else's row.
  */
 export function dedupeArtifacts(items: ArtifactListItem[]): ArtifactListItem[] {
   const seen = new Map<string, ArtifactListItem>();
   const order: string[] = [];
   for (const item of items) {
-    const key = [
-      (item.resolvedTitle || '').trim().toLowerCase(),
-      item.outputType,
-      item.originRuntime || 'none',
-    ].join('::');
+    const originRecordId = (item.originRecordId || '').trim();
+    const key = originRecordId
+      ? ['origin', item.originRuntime || 'none', originRecordId].join('::')
+      : ['artifact', item.artifactId].join('::');
     const existing = seen.get(key);
     if (!existing) {
       // First (newest) wins. Clone so we can safely accumulate version metadata.

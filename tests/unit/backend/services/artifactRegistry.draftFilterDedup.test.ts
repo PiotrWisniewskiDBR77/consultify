@@ -118,7 +118,7 @@ describe('matchesViewFilters — draft visibility (M17 junk filter)', () => {
 });
 
 describe('dedupeArtifacts — presentational dedup', () => {
-  it('collapses identical name+type+origin, keeping newest with a version count', () => {
+  it('collapses repeat registrations of the SAME source record, keeping newest with a version count', () => {
     // Input is newest→oldest (list query orders by last_transition_at DESC).
     const newest = makeItem({ artifactId: 'v3', resolvedTitle: 'Structured sheet draft', outputType: 'sheet', originRuntime: 'sheet' });
     const mid = makeItem({ artifactId: 'v2', resolvedTitle: 'Structured sheet draft', outputType: 'sheet', originRuntime: 'sheet' });
@@ -133,21 +133,24 @@ describe('dedupeArtifacts — presentational dedup', () => {
   });
 
   it('keeps distinct rows when type or origin differ', () => {
-    const asSheet = makeItem({ artifactId: 's1', resolvedTitle: 'Same title', outputType: 'sheet', originRuntime: 'sheet' });
-    const asReport = makeItem({ artifactId: 'r1', resolvedTitle: 'Same title', outputType: 'report', originRuntime: 'report' });
+    const asSheet = makeItem({ artifactId: 's1', resolvedTitle: 'Same title', outputType: 'sheet', originRuntime: 'sheet', originRecordId: 'sheet-1' });
+    const asReport = makeItem({ artifactId: 'r1', resolvedTitle: 'Same title', outputType: 'report', originRuntime: 'report', originRecordId: 'report-1' });
 
     const result = dedupeArtifacts([asSheet, asReport]);
     expect(result).toHaveLength(2);
     expect(result.every((r) => r.duplicateCount === 1)).toBe(true);
   });
 
-  it('is case/whitespace-insensitive on the title key', () => {
-    const a = makeItem({ artifactId: 'a', resolvedTitle: '  Executive Presentation ' });
-    const b = makeItem({ artifactId: 'b', resolvedTitle: 'executive presentation' });
+  // P15 (10.09.2026): the key is the artifact's IDENTITY, not its name. A shared
+  // title no longer collapses anything — that was hiding 283 real artifacts on
+  // staging, none of which was a genuine duplicate.
+  it('keeps two same-titled artifacts that stand for DIFFERENT source records', () => {
+    const a = makeItem({ artifactId: 'a', resolvedTitle: '  Executive Presentation ', originRecordId: 'deck-a' });
+    const b = makeItem({ artifactId: 'b', resolvedTitle: 'executive presentation', originRecordId: 'deck-b' });
 
     const result = dedupeArtifacts([a, b]);
-    expect(result).toHaveLength(1);
-    expect(result[0].duplicateCount).toBe(2);
+    expect(result.map((r) => r.artifactId)).toEqual(['a', 'b']);
+    expect(result.every((r) => r.duplicateCount === 1)).toBe(true);
   });
 
   it('does not mutate the input items', () => {
