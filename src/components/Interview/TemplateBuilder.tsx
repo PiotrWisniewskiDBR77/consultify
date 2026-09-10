@@ -328,7 +328,7 @@ const RespondentQuestionPreview: React.FC<{
   isPolish: boolean;
 }> = ({ question, index, isPolish }) => {
   const { t } = useTranslation();
-  const builderContent = (
+  return (
     <div className="rounded-xl border border-c-border bg-c-surface p-4">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 text-xs font-semibold text-c-text-muted">{index + 1}.</span>
@@ -1783,7 +1783,7 @@ ${sourceText || '(none)'}`;
 
   const isDocumentMode = presentation === 'document';
 
-  return (
+  const builderContent = (
     <div
       className={
         isDocumentMode
@@ -2706,19 +2706,19 @@ ${sourceText || '(none)'}`;
       icon: FileText,
       label: { pl: 'Treść wzorca', en: 'Template content' },
       component: builderContent,
-      aiContract: { state: 'edited' },
+      aiContract: { none: true, reason: 'Sterowanie AI jest wspólne dla całego wzorca w Menu 5.' },
     },
   ];
   const rightPanel = {
     actions: { label: 'Akcje', children: <div className="space-y-2"><Button variant="outline" size="sm" onClick={() => handleSave(false)} disabled={isSaving || isApplicationTemplate}>Zapisz wersję roboczą</Button><Button variant="primary" size="sm" onClick={() => handleSave(true)} disabled={isSaving || isApplicationTemplate}>Opublikuj</Button></div>, actionIds: ['save-draft', 'publish'] },
-    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable rows={[{ label: 'Status', value: template.status === 'draft' ? 'Roboczy' : 'Opublikowany' }, { label: 'Wersja', value: String(template.version || 1) }, { label: 'Liczba pytań', value: String(questions.length) }]} /> },
+    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'status', label: 'Status', value: template.status === 'draft' ? 'Roboczy' : 'Opublikowany' }, { id: 'version', label: 'Wersja', value: String(template.version || 1) }, { id: 'questions', label: 'Liczba pytań', value: String(questions.length) }]} /> },
     relations: { pominieta: true as const, reason: 'Wzorzec nie ma jeszcze zapisanych powiązań.' },
     evidence: importedSourceText.trim() ? { label: 'Źródła i założenia', children: <div className="text-sm">Materiał źródłowy został dołączony.</div> } : { pominieta: true as const, reason: 'Nie dołączono materiału źródłowego.' },
     comments: { pominieta: true as const, reason: 'Wzorzec nie ma osobnego wątku komentarzy.' },
     history: { label: 'Historia', children: <div className="text-sm">Wersja {template.version || 1}</div> },
   };
   const ai = <PracujZAI isPolish={isPolish} onAnalizuj={handleCheckQuality} analizaWToku={isCheckingQuality} aktywnaSekcja="template-content" kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }} moznaEdytowac={!isApplicationTemplate} powodTylkoOdczyt="Wzorzec aplikacyjny jest tylko do odczytu." uzupelnijSekcje={{ rodzaj: 'wlasnaPropozycja', uruchom: () => proposeQuestionImprovementsWithAI(), opis: 'Propozycje zmian pojawią się w podglądzie do zatwierdzenia.' }} uzupelnijDokument={{ rodzaj: 'wlasnaPropozycja', uruchom: handleGenerateWithAI, opis: 'Projekt całego wzorca pojawi się przed zapisem.' }} />;
-  return <StandardArtifactShell karta="interview_template" klasa="L" header={{ title: template.name || 'Wzorzec wywiadu', titleReadOnly: isApplicationTemplate, onTitleChange: (name) => setTemplate((current) => ({ ...current, name })), artifactType: 'document', artifactId: template.id, onSave: () => handleSave(false), saving: isSaving, onClose, statusLabel: template.status === 'draft' ? 'Roboczy' : 'Opublikowany', statusTone: template.status === 'draft' ? 'draft' : 'approved' }} primaryAction={{ id: 'publish', label: { pl: 'Opublikuj', en: 'Publish' }, onClick: () => handleSave(true) }} sections={sections} rightPanel={rightPanel} activeSection="template-content" onSectionChange={() => undefined} densityMode="n" onDensityModeChange={() => undefined} toolbar={<NModeToolbar activeSectionLabel="Treść wzorca" isPolish={isPolish} aiArtifactButton={ai} />} panelAriaLabel="Szczegóły wzorca wywiadu" />;
+  return <StandardArtifactShell karta="interview_template" klasa="L" header={{ title: template.name || 'Wzorzec wywiadu', titleReadOnly: isApplicationTemplate, onTitleChange: (name) => setTemplate((current) => ({ ...current, name })), artifactType: 'tool', artifactId: template.id, onSave: () => handleSave(false), saving: isSaving, onClose, statusLabel: template.status === 'draft' ? 'Roboczy' : 'Opublikowany', statusTone: template.status === 'draft' ? 'draft' : 'approved' }} primaryAction={{ id: 'publish', label: { pl: 'Opublikuj', en: 'Publish' }, onClick: () => handleSave(true) }} sections={sections} rightPanel={rightPanel} activeSection="template-content" onSectionChange={() => undefined} densityMode="n" onDensityModeChange={() => undefined} toolbar={<NModeToolbar activeSectionLabel="Treść wzorca" isPolish={isPolish} aiArtifactButton={ai} />} panelAriaLabel="Szczegóły wzorca wywiadu" />;
 };
 
 // Question Card Component
