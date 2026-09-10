@@ -442,3 +442,13 @@ nic się nie zmienia.**
 * `git push` — **ZERO**.
 * Dowody biegów: `evidence/c5-odbior-codex3/` (JSON-y vitest, logi migracji, `tsc`, esbuild,
   pomiar K-punktów, ścieżka ról OWNER/ADMIN/MEMBER). Bez binariów.
+
+### 11a. Uczciwa uwaga o cudzej bazie (nie moja operacja, ale odnotowuję)
+
+Przy wejściu w `consultify-pg18` (23:20) lista baz zawierała m.in. `consultify_kopia_n2`.
+Po moim `DROP DATABASE consultify_kopia_c5` (23:31) tej bazy **już nie było**.
+Moja komenda nazwała **wyłącznie** `consultify_kopia_c5` i zwróciła dokładnie jedno
+`DROP DATABASE`. Najprawdopodobniej sprzątnęło ją równoległe stanowisko
+(`~/Developer/wt/n2-karty-b`), ale **nie mogę tego udowodnić po fakcie** — dlatego zapisuję
+obserwację zamiast milczeć. Jeżeli ktoś tej bazy potrzebował, punkt odtworzenia to
+`CREATE DATABASE consultify_kopia_n2 TEMPLATE consultify_staging_1009`.
