@@ -42,6 +42,8 @@ export interface StatementTableRow {
   /** Polska nazwa pozycji z taksonomii tej instalacji (DTO). */
   lineNamePl: string | null;
   usesLineCodeFallback: boolean;
+  hierarchyDepth: number;
+  isTotal: boolean;
   cellsByPeriodId: Record<string, StatementTableCell>;
 }
 
@@ -60,14 +62,34 @@ export interface StatementWarning {
   affectedKey: string | null;
 }
 
-export interface DerivedStatementTable {
+export interface DerivedStatementTableSection {
   periods: StatementPeriodColumn[];
   rows: StatementTableRow[];
   warnings: StatementWarning[];
   entityIds: string[];
+  statementType: 'P&L' | 'BS' | 'CF' | 'ALL';
+  emptyReason: 'NO_MAPPED_LINES' | null;
 }
 
-export function deriveStatementTable(lines: readonly StatementLineDto[]): DerivedStatementTable {
+export interface DerivedStatementTable extends DerivedStatementTableSection {
+  profitAndLoss: DerivedStatementTableSection;
+  balanceSheet: DerivedStatementTableSection;
+  cashFlow: DerivedStatementTableSection;
+}
+
+function hierarchyDepth(lineCode: string | null): number {
+  if (!lineCode) return 0;
+  return Math.max(0, lineCode.split(/[./]/).length - 1);
+}
+
+function isTotalLine(lineCode: string | null, lineName: string | null): boolean {
+  return /(^|[_ -])(TOTAL|SUM|SUBTOTAL)([_ -]|$)/i.test(`${lineCode ?? ''} ${lineName ?? ''}`);
+}
+
+function deriveStatementSection(
+  lines: readonly StatementLineDto[],
+  statementType: DerivedStatementTableSection['statementType']
+): DerivedStatementTableSection {
   const periodsById = new Map<string, StatementPeriodColumn>();
   const rowsByKey = new Map<string, StatementTableRow>();
   const entityIds = new Set<string>();
@@ -101,6 +123,8 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
         lineName: line.lineName ?? null,
         lineNamePl: line.lineNamePl ?? null,
         usesLineCodeFallback,
+        hierarchyDepth: hierarchyDepth(line.lineCode),
+        isTotal: isTotalLine(line.lineCode, line.lineName ?? line.lineNamePl ?? null),
         cellsByPeriodId: {},
       });
     }
@@ -177,12 +201,29 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
     });
   }
 
-  return { periods, rows, warnings, entityIds: Array.from(entityIds) };
+  return {
+    periods,
+    rows,
+    warnings,
+    entityIds: Array.from(entityIds),
+    statementType,
+    emptyReason: rows.length === 0 ? 'NO_MAPPED_LINES' : null,
+  };
+}
+
+export function deriveStatementTable(lines: readonly StatementLineDto[]): DerivedStatementTable {
+  const all = deriveStatementSection(lines, 'ALL');
+  return {
+    ...all,
+    profitAndLoss: deriveStatementSection(lines.filter((line) => line.statementType === 'P&L'), 'P&L'),
+    balanceSheet: deriveStatementSection(lines.filter((line) => line.statementType === 'BS'), 'BS'),
+    cashFlow: deriveStatementSection(lines.filter((line) => line.statementType === 'CF'), 'CF'),
+  };
 }
 
 /** Bierze pierwszą realną (PRESENT_*) wartość dla waluty/skali nagłówka tabeli — honest fallback gdy brak danych: `null`. */
 export function pickHeaderCurrencyAndScale(
-  table: DerivedStatementTable
+  table: DerivedStatementTableSection
 ): { currency: string; unit: FinanceValue['unit'] } | null {
   for (const row of table.rows) {
     for (const period of table.periods) {

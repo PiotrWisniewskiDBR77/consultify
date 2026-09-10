@@ -34,14 +34,14 @@ describe('CODEX3 Finance MINIMUM contracts', () => {
     expect(source).toContain('sourceStatement');
   });
 
-  it.fails('KONTRAKT CODEX3 — statement derivation returns P&L, balance sheet and cash flow', () => {
+  it('KONTRAKT CODEX3 — statement derivation returns P&L, balance sheet and cash flow', () => {
     const source = read('src/components/Finance/statementPackWorkspaceV2/deriveStatementTable.ts');
     expect(source).toContain('profitAndLoss');
     expect(source).toContain('balanceSheet');
     expect(source).toContain('cashFlow');
   });
 
-  it.fails('KONTRAKT CODEX3 — empty statement derivation carries an honest emptyReason', () => {
+  it('KONTRAKT CODEX3 — empty statement derivation carries an honest emptyReason', () => {
     expect(read('src/components/Finance/statementPackWorkspaceV2/deriveStatementTable.ts')).toContain(
       'emptyReason'
     );
