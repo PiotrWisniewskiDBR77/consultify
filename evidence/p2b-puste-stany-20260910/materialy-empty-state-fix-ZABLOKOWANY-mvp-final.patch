@@ -1,0 +1,208 @@
+diff --git a/public/locales/en/translation.json b/public/locales/en/translation.json
+index 3b887675fb..def901bbef 100644
+--- a/public/locales/en/translation.json
++++ b/public/locales/en/translation.json
+@@ -33097,7 +33097,9 @@
+       "reportsHint": "Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.",
+       "templatesOnboarding": "Template library",
+       "templatesOnboardingDesc": "Templates define the structure and standard for reports and presentations. Start from one of the canonical families or create your own template.",
+-      "outputs": "No outputs"
++      "outputs": "No outputs",
++      "presentationsDesc": "Create your first presentation from a blank deck, AI generation or a template.",
++      "outputsDesc": "Documents, presentations and sheets you create or export will appear here."
+     },
+     "preview": {
+       "useTemplate": "Use this template",
+diff --git a/public/locales/pl/translation.json b/public/locales/pl/translation.json
+index 8d00ee0777..afe18b15fb 100644
+--- a/public/locales/pl/translation.json
++++ b/public/locales/pl/translation.json
+@@ -33292,7 +33292,9 @@
+       "reportsHint": "Użyj szybkich przycisków na pasku górnym lub utwórz nowy raport, aby wejść w przepływ R1, R2, R3 lub R4.",
+       "templatesOnboarding": "Biblioteka wzorców",
+       "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
+-      "outputs": "Brak outputów"
++      "outputs": "Brak outputów",
++      "presentationsDesc": "Utwórz pierwszą prezentację od pustego decka, z generowaniem AI albo z szablonu.",
++      "outputsDesc": "Dokumenty, prezentacje i arkusze, które utworzysz lub wyeksportujesz, pojawią się tutaj."
+     },
+     "preview": {
+       "ai": {
+diff --git a/src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx b/src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx
+index 476fc10cb2..149341bce4 100644
+--- a/src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx
++++ b/src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx
+@@ -201,6 +201,12 @@ interface OutputsAggregateTabContentProps {
+   onRefresh: () => void;
+   actions: ReturnType<typeof useRapActions>;
+   initialArtifactId?: string | null;
++  /**
++   * P2B (2026-09-10): jak `ReportsTabContent.onNewItem` — bez tego przycisk
++   * pustego stanu nie renderuje się wcale (StandardTable wymaga `onAction`),
++   * więc świeża organizacja widziała pustą tabelę bez żadnej ścieżki dalej.
++   */
++  onNewItem?: () => void;
+ }
+ 
+ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProps> = ({
+@@ -215,6 +221,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
+   onRefresh,
+   actions,
+   initialArtifactId,
++  onNewItem,
+ }) => {
+   const { t, i18n } = useTranslation();
+   const isPolish = i18n.language?.startsWith('pl');
+@@ -1237,6 +1244,12 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
+             empty={{
+               icon: FileText,
+               title: t('rap.empty.outputs', 'No outputs'),
++              description: t(
++                'rap.empty.outputsDesc',
++                'Documents, presentations and sheets you create or export will appear here.'
++              ),
++              actionLabel: t('rap.materialsLauncher.title', 'New material'),
++              onAction: onNewItem,
+             }}
+             rowMenu={(row) => buildRowMenu(row as unknown as AggregateRow)}
+             selection={{ selectedIds: selectedOutputIds, onChange: setSelectedOutputIds }}
+diff --git a/src/components/ReportsAndPresentations/PresentationsTabContent.tsx b/src/components/ReportsAndPresentations/PresentationsTabContent.tsx
+index 949b776989..23d588d1b9 100644
+--- a/src/components/ReportsAndPresentations/PresentationsTabContent.tsx
++++ b/src/components/ReportsAndPresentations/PresentationsTabContent.tsx
+@@ -75,6 +75,13 @@ interface PresentationsTabContentProps {
+   onRefresh: () => void;
+   actions: ReturnType<typeof useRapActions>;
+   initialArtifactId?: string | null;
++  /**
++   * P2B (2026-09-10): ten sam wzorzec co `ReportsTabContent.onNewItem` — bez
++   * niego przycisk pustego stanu ma etykietę, ale StandardTable/GridView nie
++   * renderuje go bez `onAction`, więc na świeżej organizacji pusta lista
++   * prezentacji nie dawała żadnej ścieżki do pierwszej wartości.
++   */
++  onNewItem?: () => void;
+ }
+ 
+ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = ({
+@@ -88,6 +95,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
+   onRefresh,
+   actions,
+   initialArtifactId,
++  onNewItem,
+ }) => {
+   const { t, i18n } = useTranslation();
+   const isPolish = i18n.language?.startsWith('pl');
+@@ -488,6 +496,12 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
+             onFilterChange={onFilterChange}
+             empty={{
+               title: t('rap.empty.presentations', 'No presentations'),
++              description: t(
++                'rap.empty.presentationsDesc',
++                'Create your first presentation from a blank deck, AI generation or a template.'
++              ),
++              actionLabel: t('rap.actions.newPresentation', 'New presentation'),
++              onAction: onNewItem,
+             }}
+             rowMenu={(row) => getRowMenu(row as unknown as PresentationItem)}
+           />
+diff --git a/src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx b/src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx
+index d822d0cf35..18ce1e9f98 100644
+--- a/src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx
++++ b/src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx
+@@ -1326,6 +1326,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
+             onRefresh={refetchArtifactOutputs}
+             actions={actions}
+             initialArtifactId={initialArtifactId}
++            onNewItem={handleNewItem}
+           />
+         );
+       case 'templates':
+@@ -1384,6 +1385,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
+             onRefresh={refetchArtifactOutputs}
+             actions={actions}
+             initialArtifactId={initialArtifactId}
++            onNewItem={handleNewItem}
+           />
+         );
+       case 'presentations':
+@@ -1399,6 +1401,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
+             onRefresh={fetchPresentations}
+             actions={actions}
+             initialArtifactId={initialArtifactId}
++            onNewItem={handleNewItem}
+           />
+         );
+       case 'outputs_sheets':
+@@ -1415,6 +1418,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
+             onRefresh={fetchSheets}
+             actions={actions}
+             initialArtifactId={initialArtifactId}
++            onNewItem={handleNewItem}
+           />
+         );
+       default:
+diff --git a/src/components/ReportsAndPresentations/SheetsTabContent.tsx b/src/components/ReportsAndPresentations/SheetsTabContent.tsx
+index 05c71c65c9..c9840abcfb 100644
+--- a/src/components/ReportsAndPresentations/SheetsTabContent.tsx
++++ b/src/components/ReportsAndPresentations/SheetsTabContent.tsx
+@@ -2,6 +2,8 @@ import { Table2 } from 'lucide-react';
+ import React, { useState } from 'react';
+ import { useTranslation } from 'react-i18next';
+ 
++import { Button } from '@/components/ui/primitives';
++
+ import type { FilterChip, ViewMode } from '../shared/ModuleHub';
+ import { DataSourcesTabContent } from './DataSourcesTabContent';
+ import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+@@ -24,6 +26,12 @@ interface SheetsTabContentProps {
+    * Gdy host go poda, ten komponent NIE rysuje własnego paska.
+    */
+   subView?: SheetsSubView;
++  /**
++   * P2B (2026-09-10): karta pustego stanu poniżej (build < 2026-09-10) nie
++   * miała ŻADNEGO przycisku akcji — sam opis, bez ścieżki dalej. Ten sam
++   * handler co topbar „Dodaj" (Hub `handleNewItem` dla `outputs_sheets`).
++   */
++  onNewItem?: () => void;
+ }
+ 
+ // #83a: "Data" no longer a standalone Menu 2 tab — Piotr's call is that data
+@@ -42,6 +50,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
+   actions,
+   initialArtifactId,
+   subView: subViewProp,
++  onNewItem,
+ }) => {
+   /**
+    * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
+@@ -93,6 +102,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
+             onRefresh={onRefresh}
+             actions={actions}
+             initialArtifactId={initialArtifactId}
++            onNewItem={onNewItem}
+           />
+         </div>
+       </div>
+@@ -107,7 +117,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
+             <div className="mt-0.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+               <Table2 size={24} />
+             </div>
+-            <div className="min-w-0 space-y-2">
++            <div className="min-w-0 space-y-3">
+               <h2 className="text-lg font-semibold text-c-text">
+                 {t('rap.sheets.emptyTitle', 'Sheets in Outputs Library')}
+               </h2>
+@@ -123,6 +133,13 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
+                   'Create or export a governed sheet and it will appear here automatically.'
+                 )}
+               </p>
++              {onNewItem && (
++                <div className="pt-1">
++                  <Button variant="primary" size="sm" onClick={onNewItem}>
++                    {t('rap.actions.newSheet', 'New sheet')}
++                  </Button>
++                </div>
++              )}
+             </div>
+           </div>
+         </div>

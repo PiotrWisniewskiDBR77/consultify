@@ -201,6 +201,12 @@ interface OutputsAggregateTabContentProps {
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
+  /**
+   * P2B (2026-09-10): jak `ReportsTabContent.onNewItem` — bez tego przycisk
+   * pustego stanu nie renderuje się wcale (StandardTable wymaga `onAction`),
+   * więc świeża organizacja widziała pustą tabelę bez żadnej ścieżki dalej.
+   */
+  onNewItem?: () => void;
 }
 
 export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProps> = ({
@@ -215,6 +221,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   onRefresh,
   actions,
   initialArtifactId,
+  onNewItem,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -1237,6 +1244,12 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             empty={{
               icon: FileText,
               title: t('rap.empty.outputs', 'No outputs'),
+              description: t(
+                'rap.empty.outputsDesc',
+                'Documents, presentations and sheets you create or export will appear here.'
+              ),
+              actionLabel: t('rap.materialsLauncher.title', 'New material'),
+              onAction: onNewItem,
             }}
             rowMenu={(row) => buildRowMenu(row as unknown as AggregateRow)}
             selection={{ selectedIds: selectedOutputIds, onChange: setSelectedOutputIds }}

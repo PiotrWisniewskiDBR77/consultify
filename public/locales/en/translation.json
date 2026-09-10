@@ -33098,7 +33098,9 @@
       "reportsHint": "Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.",
       "templatesOnboarding": "Template library",
       "templatesOnboardingDesc": "Templates define the structure and standard for reports and presentations. Start from one of the canonical families or create your own template.",
-      "outputs": "No outputs"
+      "outputs": "No outputs",
+      "presentationsDesc": "Create your first presentation from a blank deck, AI generation or a template.",
+      "outputsDesc": "Documents, presentations and sheets you create or export will appear here."
     },
     "preview": {
       "useTemplate": "Use this template",

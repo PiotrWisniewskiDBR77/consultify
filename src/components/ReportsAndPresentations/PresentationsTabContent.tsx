@@ -75,6 +75,13 @@ interface PresentationsTabContentProps {
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
+  /**
+   * P2B (2026-09-10): ten sam wzorzec co `ReportsTabContent.onNewItem` — bez
+   * niego przycisk pustego stanu ma etykietę, ale StandardTable/GridView nie
+   * renderuje go bez `onAction`, więc na świeżej organizacji pusta lista
+   * prezentacji nie dawała żadnej ścieżki do pierwszej wartości.
+   */
+  onNewItem?: () => void;
 }
 
 export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = ({
@@ -88,6 +95,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   onRefresh,
   actions,
   initialArtifactId,
+  onNewItem,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -488,6 +496,12 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
             onFilterChange={onFilterChange}
             empty={{
               title: t('rap.empty.presentations', 'No presentations'),
+              description: t(
+                'rap.empty.presentationsDesc',
+                'Create your first presentation from a blank deck, AI generation or a template.'
+              ),
+              actionLabel: t('rap.actions.newPresentation', 'New presentation'),
+              onAction: onNewItem,
             }}
             rowMenu={(row) => getRowMenu(row as unknown as PresentationItem)}
           />
