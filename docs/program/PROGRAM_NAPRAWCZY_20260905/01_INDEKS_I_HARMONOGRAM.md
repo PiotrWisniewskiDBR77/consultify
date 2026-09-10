@@ -483,3 +483,42 @@ Agent (wykonawcy etapów + producent rozpoznawania sprawy; worker `ENABLE_AI_TAS
 | F0/F1 | — | **GOTOWE (dokumenty)** | 05.09 wieczór | — | `F0_FINANSE_AUDYT_LUKI_20260905.md` (teza „backend kompletny, frontend nieprzygotowany” obalona w obie strony: 6 tabel bez producenta, 23 % zdolności z pełnym przewodem, 27 % za 3 flagami; 21 etykiet EN) + `F1_FINANSE_PROGRAM_DOKONCZENIA_20260905.md` (MINIMUM 7 paczek ≈ 8 sesji Codexa, PEŁNY +11 ≈ 24; blokada F‑P4: nikt nie zakłada wierszy selekcji KPI). Decyzja właściciela: MINIMUM do MVP czy nie — po powrocie |
 | P9 | — | **GOTOWE (paczka)** | 05.09 noc | — | `docs/ssot/KREGOSLUP_WARTOSCI.md` (32 konwersje: DZIAŁA 12 · ZA FLAGĄ 4 · WOŁACZ BEZ EKRANU 7 · EKRAN BEZ WOŁACZA 6 · BRAK 3; 8 osobnych kart działania, 14 rodzin tabel; Skrzynka zna 3 źródła) + `P9_KREGOSLUP_I_KARTA_DZIALANIA.md`. Decyzja CTO: DEC-397 obejmuje także P8/P9 (właściciel może uchylić). Rekomendacja CTO na pytanie o grupowanie inicjatyw: płaska lista + kolumna obszar/oś, program/portfel po MVP |
 | P8 | — | **GOTOWE (paczka)** | 05.09 noc | — | `docs/ssot/ZASADY_AI_TERESA_SSOT.md` + `docs/ssot/KONTRAKTY_NARZEDZI_AI.md` (36 wierszy: DZIAŁA 29 · ZA FLAGĄ 2 · EKRAN BEZ WOŁACZA 1 · BRAK 4; 12/12 narzędzi i 8/8 artefaktów mają AI; luki: wejście do Teresy w 2 z 9 modułów kanonu, Ocena tylko za flagą, martwe `AIActionSlot`/`AIConsultantPanel`, `canvasMutationRisk.ts` daje cichy zapis) + `P8_TERESA_KONTRAKTY.md` (~7–8 sesji Codexa). 3 sprzeczności rozstrzygnięte (zakładka = wejście do tej samej rozmowy, nie drugi czat) |
+
+## Dzień inżynierski koszyka 2 — 10.09.2026 (sesja „Szampan")
+
+Wszystkie liczby zmierzone tego dnia, nie przepisane z rejestru. 15 scaleń, 14 robotników
+odebranych, 3 wdrożenia na staging + promocja na demo, wszystkie potwierdzone odczytem przebiegu.
+
+| Paczka | Gałąź | Stan | SHA scalenia | Dowód / co naprawdę wyszło |
+| --- | --- | --- | --- | --- |
+| P1 poczta i onboarding | `mvp/p1-poczta-20260910` | **SCALONE** | `b8dc60f6f8` | Hipoteza nadzorcy OBALONA: poczta DZIAŁA na obu środowiskach (kod wylicza szyfrowanie z portu, `SMTP_FROM` ma zapasowe źródło). Zapis „poczta martwa w całej aplikacji" nieaktualny. Trzy maile pierwszego kontaktu przepisane na polski. STOP: kreator „Krok 1 z 3" NIE ISTNIEJE; dwie ścieżki zaproszeń mają różne reguły limitu miejsc |
+| P2A puste stany A | `mvp/p2a-puste-20260910` | **SCALONE** | `f52dcdf6a4` | 26 ekranów obejrzanych na świeżo zarejestrowanej organizacji, 1 realny brak tekstu. Nadzorca przy odbiorze wykrył, że zrzuty „jasny" i „ciemny" są OBA CIEMNE — motyw nigdy nie był sprawdzony |
+| P2B/P2B-bis puste stany B | `mvp/p2b-puste-20260910` | **SCALONE** | `f66eb1a3fc`, `dbe6325fb6` | 3 puste stany Wyników i 4 Materiałów dostały akcję (`[ODMROZENIE 11_MATERIALS DEC-457]`). Robotnik złapał własny błąd pomiarowy przed commitem (zły alias adresu maskował defekt) |
+| P3 obserwowalność i limiter | `mvp/p3-obserw-20260910` | **SCALONE** | `bc65e504b7` | Alarm o awariach serwera SZEDŁ DONIKĄD — czytał `ALERT_EMAIL`/`ADMIN_EMAIL` zamiast `ALERT_EMAIL_RECIPIENTS`. `DISABLE_RATE_LIMIT` nie jest fantomem: 250/250 z flagą, 200/210 bez |
+| P4 bezpieczeństwo | `mvp/p4-bezpiecz-20260910` | **SCALONE** | `b6783a9172` | **Zlecenie nadzorcy mogło położyć staging.** Zwolnienia CSRF porównywały adres względny z absolutnym → wszystkie martwe; enforce bez naprawy wywaliłby logowanie, rejestrację, reset hasła i webhooki Stripe. Osobno: REALNY wyciek między organizacjami (`GET /api/projects/:id/notification-settings` bez filtra org), dowód z podstawionego znacznika. Pomiar udowodnił, że umie wykryć wyciek |
+| P5 eksport i usunięcie | `mvp/p5-eksport-20260910` | **SCALONE** | `7080207b0f` | Usuwanie organizacji było MARTWE W 100% (interfejs nie wysyłał wymaganego potwierdzenia → każde kliknięcie 428). Stary mechanizm kasował 5 tabel z kilkuset. Wiersze wzorcowe bezpieczne — sprawdzone przepływem zapisu PO operacji, nie licznikiem |
+| P6/P6-bis przewodnik | `mvp/p6-przewodnik-20260910` | **SCALONE** | `7fc9a3c688` | `[ODMROZENIE 15_SETTINGS DEC-459]`. Ekran istniał, ale łamał kanon crimson, miał 5 etapów zamiast 6 i SIEDEM angielskich napisów w polskim interfejsie (nadzorca zgłosił 6 ze zrzutu, robotnik znalazł siódmy). Finanse zdjęte — moduł poza MVP |
+| P8 strażnik językowy | `mvp/p8-i18n-straznik-20260910` | **SCALONE** | `4ee1226be7` | Strażnik był CZERWONY przez 4 dni: 60 naruszeń narosło przez ~234 commity, bo hook odpalał inny przyrząd, który tej klasy błędu strukturalnie nie widzi. Rozliczone: 11 polskich zdań w pliku angielskim, 9 realnych braków, 40 zapożyczeń. Hook odpala teraz właściwy test |
+| P9 uprawnienia świeżej organizacji | `mvp/p9-wywiad404-20260910` | **SCALONE** | `6aa853adc2` | **Defekt blokujący pilotaż.** Każda normalnie założona organizacja była martwa od pierwszej sekundy — 404 na CAŁYM `/api/v8`. Ścieżka rejestracji nigdy nie zapisywała flag; robił to tylko panel admina i test-support. Działały wyłącznie Northwind i DBR77, na których robiliśmy wszystkie pomiary |
+| P10 decyzje, motyw, sprzątanie | `mvp/p10-decyzje-20260910` | **SCALONE** | `493215cf44`, `49f429bfac` | `[ODMROZENIE 07_MY_WORK_AGENT DEC-457]`. Przyczyna ciemnych zrzutów: motyw trzyma zustand w `localStorage`, `page.emulateMedia` nie zmieniał nic. 34 organizacje-śmieci usunięte z manifestem; dowód po operacji = pełny przepływ zapisu przez REST API, nie licznik |
+| P12 rdzeń tabel | `mvp/p12-tabela-i18n-20260910` | **SCALONE** | `0b3f5aeeca` | Wskazałem skutek, robotnik znalazł przyczynę o poziom głębiej: `StandardTable` renderuje przetłumaczony pusty stan tylko przy zerze filtrów. Naprawiona RODZINA 5 plików = kilkadziesiąt ekranów w 14 modułach. Odkopany martwy i18n (fallback nigdy nie sięgał tłumaczenia) |
+| P13 eksport z UI i język | `mvp/p13-eksport-jezyk-20260910` | **SCALONE** | `1d5983179b` | `[ODMROZENIE 14_ADMIN DEC-460]`. Przycisk eksportu — dowodem przechwycone realne pobranie pliku, nie zrzut przycisku. 20 tekstów przepisanych z żargonu; robotnik uzasadnił każde pominięcie z 351 trafień |
+| P14 blokada tworzenia inicjatywy | `mvp/p14-inicjatywa-blok-20260910` | **SCALONE** | `513d4d5fff` | **Druga blokada pierwszej minuty.** Premisa nadzorcy o Northwindzie OBALONA: działa tam tylko dlatego, że seed jawnie wstawia członków. 23 z 25 projektów nie miało właściciela wśród członków. Drugi defekt z tej samej rodziny: odczyt kamieni milowych szukał inicjatywy w innej tabeli niż ta, do której zapisuje przycisk (16 z 30 nie istnieje) |
+| P18 MFA (pomiar) | `mvp/p18-mfa-20260910` | **POMIAR** | `76d170dac3` | MFA DZIAŁA, nie fantom. Karencja 7 dni, kotwica = późniejsza z dat wymogu i dołączenia użytkownika. Zamknięte koło z sierpnia NAPRAWIONE — potwierdzone przejściem end-to-end. 5xx z ostatniej doby: 1 (`GET /api/megatrends/baseline` → 503) |
+
+**Decyzje wydane tego dnia:** DEC-454/455/456 (trzy decyzje wizualne właściciela), DEC-457 (odmrożenie
+celowane na puste stany, wszystkie moduły, wąski zakres), DEC-458 (polski komunikat blokady dostępu),
+DEC-459 (przewodnik), DEC-460 (przycisk eksportu + słownik języka pustych stanów).
+
+**Punkt cofnięcia:** tag `demo-safe-20260910` na `f53f9fbdf9` — kodzie faktycznie działającym na demo
+przed dzisiejszą promocją. Poprzedni tag był przestarzały o 1577 commitów i pięć dni.
+
+**Wdrożenia:** staging `4ee1226be7` → `b6783a9172` → `513d4d5fff`; demo promowane na `513d4d5fff`,
+health potwierdzony odczytem. Produkcja (centerbeam) nietknięta przez cały dzień.
+
+**Zmienne przestawione po wdrożeniu:** staging `CSRF_MODE=enforce`, `DISABLE_RATE_LIMIT=false`;
+demo `ALERT_EMAIL_RECIPIENTS`, `CSRF_MODE=report`, `API_RATE_LIMIT_MAX=1000`.
+
+**NIE zrobione świadomie:** re-tagowanie zamrożenia 16 modułów (S1.11). Tagi z 05.09 wskazują kod
+sprzed 1600–3157 commitów, ale zamrożenie oznacza „właściciel to zaakceptował", a dzisiejszych
+zmian właściciel jeszcze nie widział. Do wykonania po jego przeglądzie, nie przed.
