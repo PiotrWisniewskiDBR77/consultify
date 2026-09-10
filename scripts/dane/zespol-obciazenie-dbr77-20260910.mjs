@@ -44,21 +44,26 @@
  *   TA metryka jest NIEZALEŻNA od backlogHours — backlog stoi obok, osobno.
  *
  * ★ POMIAR (ten skrypt, przed jakimkolwiek zapisem) ujawnił TWARDY LIMIT
- *   danych na STAGING/DBR77: w CAŁEJ organizacji istnieją TYLKO 3 otwarte
- *   zadania z `due_date` w przyszłości (>= 2026-09-07), i wszystkie trzy mają
- *   `task_type='interview'` (auto-generowane zadania modułu Interview,
- *   `description` = `{"type":"interview_assignment",...}`) — a `task_type=
- *   'interview'` w CAŁEJ organizacji (15 wierszy) NIGDY nie ma estimated_hours
- *   (0/15). Ustawienie im estimated_hours byłoby fabrykacją danych sprzecznych
- *   z realnym wzorcem tego typu zadania. Zmiana `due_date` istniejących
- *   zaległych zadań jest WPROST zakazana przez zlecenie. Tworzenie NOWYCH
- *   zadań nie jest w mandacie tego skryptu (zlecenie mówi "dla zadań ISTNIEJĄCYCH
- *   bez assignee_id — przypisz", nie "utwórz zadanie").
- *   → WNIOSEK: "przeciążony tydzień" (utilizationPercent > 105) NIE DA SIĘ
- *   uczciwie dosiać na tej bazie bez fabrykacji lub zmiany terminów. Ten skrypt
- *   tego NIE robi — patrz STOP w raporcie końcowym `main()`. Za to ZALEGŁOŚĆ
- *   (backlogHours, osobna metryka) i POPYT>0 przez PEOPLECOUNT/zaległość SĄ
- *   uczciwie osiągalne i to robi operacja `tasks`.
+ *   danych na STAGING/DBR77 (D-A, 2026-09-10): w CAŁEJ organizacji istniały
+ *   TYLKO 3 otwarte zadania z `due_date` w przyszłości (>= 2026-09-07), i
+ *   wszystkie trzy miały `task_type='interview'` (auto-generowane zadania
+ *   modułu Interview, `description` = `{"type":"interview_assignment",...}`)
+ *   — a `task_type='interview'` w CAŁEJ organizacji (15 wierszy) NIGDY nie ma
+ *   estimated_hours (0/15). Zmiana `due_date` ISTNIEJĄCYCH zaległych zadań
+ *   była WPROST zakazana przez zlecenie D-A, a mandat D-A obejmował TYLKO
+ *   przypisanie zadań ISTNIEJĄCYCH — stąd STOP: "przeciążony tydzień" nie
+ *   dawało się uczciwie dosiać bez fabrykacji terminów istniejących wierszy.
+ *
+ * ★ D-A2 (2026-09-10, dokończenie DEC-462): nadzorca rozszerzył mandat na
+ *   TWORZENIE nowych zadań (zamiast zmiany terminów istniejących) — to
+ *   usuwa ograniczenie z D-A bez fabrykacji cudzych danych. `applyTasks()`
+ *   ma teraz DWIE części: CZĘŚĆ A (bez zmian, D-A: przypisanie 25 istniejących
+ *   zaległych zadań — feeduje backlogHours) i CZĘŚĆ B (NOWE, D-A2: 34 nowe
+ *   zadania `task_type='execution'` z realnym `due_date` w przyszłości i
+ *   `estimated_hours>0`, rozłożone na 10 inicjatyw z `required_capacity_fte` —
+ *   feeduje demandHours/utilizationPercent, czyli dokładnie to, czego brakowało
+ *   po D-A). KROK 0 (kolumny NOT NULL, wzorzec wiersza z UI) i dobór dat/godzin
+ *   (żeby trafić w konkretne przeciążone tygodnie) opisane przy CZĘŚCI B niżej.
  *
  * ------------------------------------------------------------------------------
  * ZAKRES OPERACJI (dry-run domyślny, każda idempotentna, jawne id, PO ANGIELSKU)
@@ -108,7 +113,7 @@
  * ------------------------------------------------------------------------------
  * UŻYCIE
  * ------------------------------------------------------------------------------
- *   DATABASE_URL=... node scripts/dane/zespol-obciazenie-dbr77-20260910.mjs --op=<measure|users|initiatives|allocations|tasks|all> --dry-run
+ *   DATABASE_URL=... node scripts/dane/zespol-obciazenie-dbr77-20260910.mjs --op=<measure|users|initiatives|allocations|tasks|tasks-new|all> --dry-run
  *   DATABASE_URL=... FORCE_DA=true node scripts/dane/zespol-obciazenie-dbr77-20260910.mjs --op=<...> --apply
  *
  * Domyślny tryb = dry-run. --apply wymaga DODATKOWO FORCE_DA=true.
@@ -717,6 +722,240 @@ async function applyTasks(c, apply) {
 }
 
 // ============================================================================
+// OP: tasks CZĘŚĆ B (D-A2, DEC-462 dokończenie) — NOWE zadania z realnym
+// due_date w przyszłości i estimated_hours>0, żeby popyt/obłożenie w Zasoby
+// przestały być zerowe (CZĘŚĆ A wyżej dawała tylko backlogHours, patrz STOP
+// opisany w nagłówku pliku).
+//
+// KROK 0 — wzorzec wiersza (zmierzony na ŻYWEJ bazie STAGING, 2026-09-10):
+//   information_schema.columns dla public.tasks (NIE fala5_backup.tasks —
+//   ten sam table_name istnieje w obu schematach, trzeba filtrować po
+//   table_schema) pokazuje TYLKO TRZY kolumny NOT NULL: id, organization_id,
+//   title. Wszystko inne jest nullable. Żeby wiersz był mimo to
+//   nieodróżnialny od utworzonego w UI, kolumny INSERT-a i ich źródło
+//   ustalone z `TaskController.createTask` (server/src/controllers/
+//   TaskController.ts:1286-1301, lista kolumn INSERT) i z 3 realnych
+//   wierszy DBR77 (assignee+due_date+estimated_hours>0, np. id
+//   8a9b3256-8fa6-49f4-b6dd-377145716ca2 "Spark job optimization"):
+//     id=uuid, project_id=z initiatives.project_id (NULL gdy inicjatywa go
+//     nie ma — TaskController robi dokładnie to samo, `effectiveProjectId`),
+//     status='todo'|'in_progress' (domyślka CreateTaskSchema='todo'),
+//     priority z PriorityEnum, task_type='execution' (dominujący typ w
+//     DBR77 — 103/206 zadań; 'interview' NIGDY nie ma estimated_hours, więc
+//     użycie go tu byłoby sprzeczne z realnym wzorcem), source='manual',
+//     reporter_id=twórca (TaskController: `userId` zalogowanego), tu =
+//     admin@dbr77.com (jedyne konto z rolą Tenant Admin w DBR77), owner_id=
+//     assignee_id (TaskController: `effectiveOwnerId = ownerId||assigneeId||
+//     userId`), requires_acceptance=false, weight=1, tags/assignees='[]',
+//     custom_fields_json='{}', decision_impact='{}', evidence_required=
+//     '[]', strategic_contribution='[]', created_by=NULL i created_at=teraz
+//     (TaskController NIE ustawia created_by w INSERT — zostaje NULL, tak
+//     samo jak w 3 próbkach powyżej — więc świadomie NIE dublujemy autora do
+//     created_by, żeby nie odróżniać się od realnego wzorca).
+//
+//   Rozkład tygodniowy (zmierzony z `spreadTaskHoursByWeek`, ten plik
+//   linia ~283, replika workloadCapacityService.ts:732): `start` = MAX(
+//   created_at, poniedziałek bieżącego tygodnia), `due` = due_date; godziny
+//   dzielone RÓWNO na dni robocze między start i due, każdy dzień trafia w
+//   tydzień (poniedziałek) w którym leży. Ponieważ `created_at` NOWO
+//   tworzonego zadania nie może uczciwie być przyszłością (fabrykacja),
+//   `start` ZAWSZE wypada w bieżącym tygodniu (2026-09-07) — więc żaden
+//   pojedynczy nowy task nie wrzuci 100% godzin w tydzień 3+ bez fabrykacji.
+//   Rozwiązanie zastosowane tutaj: KILKA zadań na osobę z różnymi due_date
+//   (część w tym tygodniu, część za tydzień, część dalej) — SUMA ich
+//   rozkładów daje >105% w KONKRETNYCH DWÓCH tygodniach dla 3 osób
+//   (dobrane liczbowo offline, replika `simulate2.mjs` w scratchpadzie sesji,
+//   bez dotykania bazy — dopiero po dopasowaniu liczb do apply).
+// ============================================================================
+const ADMIN_EMAIL = 'admin@dbr77.com';
+
+// 10 inicjatyw z D-A (required_capacity_fte) — id/project_id zmierzone SELECT.
+const NEW_TASK_INITIATIVES = {
+  RPA: { id: 'c55f3b10-e04e-44dd-a2e0-178046902520', projectId: '6d8ae9ba-3840-46ea-9068-10cdf55d5a76' },
+  PORTAL: { id: '84baaa08-5249-42e4-a292-3921e67d29d1', projectId: '6d8ae9ba-3840-46ea-9068-10cdf55d5a76' },
+  DEVOPS: { id: 'd3bc32b2-ca68-456f-8af9-a432d6f10442', projectId: '2fbb1e31-6c71-4228-b775-05aae98690d6' },
+  CLOUD: { id: 'bb9038c3-d5e0-41e4-8d3d-f695d9c045f9', projectId: 'f992cfae-9b03-473f-a685-a5f58b5a5119' },
+  IOT: { id: 'e3b0a66a-dc86-4730-84e0-cdffb66cbed6', projectId: 'f992cfae-9b03-473f-a685-a5f58b5a5119' },
+  WIP: {
+    id: 'seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip',
+    projectId: null,
+  },
+  DATAPLATFORM: { id: 'b8f28cea-36b4-4f12-802e-634bf10c4d5a', projectId: 'b4695c7c-0434-46ac-9cc1-3cd89afc463a' },
+  CYBER: { id: '7eb944f9-c5b9-4162-8bff-23b0d620f9f3', projectId: 'f992cfae-9b03-473f-a685-a5f58b5a5119' },
+  WELDING: {
+    id: 'seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego',
+    projectId: null,
+  },
+  QMS: { id: '5317c99f-1710-4e92-a65f-c56e5c38b3dd', projectId: 'f992cfae-9b03-473f-a685-a5f58b5a5119' },
+};
+
+// 34 nowe zadania. Terminy/godziny dobrane offline (replika czystych funkcji
+// algorytmu, bez bazy) tak by: anna.kowalska, jan.zielinski, katarzyna.wojcik
+// wypadły >105% w DWÓCH tygodniach (2026-09-07 i 2026-09-14) każda; ewa.nowicka,
+// marek.nowak, tomasz.jankowski w paśmie ok. 60-90% w swoim szczytowym tygodniu;
+// reszta lekko obciążona. `due` = data (bez czasu, jak w innych wierszach
+// tabeli); `hours` = estimated_hours.
+const NEW_TASKS = [
+  // --- ANNA KOWALSKA (Senior Data Engineer, supply 19.2h/tydz) — PRZECIĄŻONA ---
+  { n: '001', email: 'anna.kowalska@dbr77.com', init: 'DATAPLATFORM', title: 'Design data model for analytics platform staging layer', status: 'in_progress', priority: 'medium', hours: 16, due: '2026-09-11' },
+  { n: '002', email: 'anna.kowalska@dbr77.com', init: 'DATAPLATFORM', title: 'Build ETL job for daily sales data ingestion', status: 'in_progress', priority: 'medium', hours: 12, due: '2026-09-11' },
+  { n: '003', email: 'anna.kowalska@dbr77.com', init: 'DATAPLATFORM', title: 'Validate dashboard KPIs with operations stakeholders', status: 'todo', priority: 'high', hours: 28, due: '2026-09-18' },
+  { n: '004', email: 'anna.kowalska@dbr77.com', init: 'WIP', title: 'Map current-state process for WIP warehouse put-away', status: 'todo', priority: 'medium', hours: 12, due: '2026-09-25' },
+
+  // --- JAN ZIELINSKI (Data Engineer, supply 19.2h/tydz) — PRZECIĄŻONY ---
+  { n: '005', email: 'jan.zielinski@dbr77.com', init: 'RPA', title: 'Map current-state process for invoice reconciliation workflow', status: 'in_progress', priority: 'medium', hours: 18, due: '2026-09-11' },
+  { n: '006', email: 'jan.zielinski@dbr77.com', init: 'RPA', title: 'Configure RPA bot for purchase order matching', status: 'in_progress', priority: 'low', hours: 10, due: '2026-09-11' },
+  { n: '007', email: 'jan.zielinski@dbr77.com', init: 'RPA', title: 'Validate exception-handling rules with finance team', status: 'todo', priority: 'urgent', hours: 30, due: '2026-09-18' },
+  { n: '008', email: 'jan.zielinski@dbr77.com', init: 'DATAPLATFORM', title: 'Design ETL job for supplier price feed ingestion', status: 'todo', priority: 'medium', hours: 8, due: '2026-09-25' },
+
+  // --- KATARZYNA WOJCIK (Quality Specialist, supply 23.8h/tydz) — PRZECIĄŻONA ---
+  { n: '009', email: 'katarzyna.wojcik@dbr77.com', init: 'QMS', title: 'Map inspection checklist into QMS 4.0 digital form', status: 'in_progress', priority: 'medium', hours: 18, due: '2026-09-11' },
+  { n: '010', email: 'katarzyna.wojcik@dbr77.com', init: 'QMS', title: 'Configure non-conformance workflow in QMS platform', status: 'in_progress', priority: 'medium', hours: 16, due: '2026-09-11' },
+  { n: '011', email: 'katarzyna.wojcik@dbr77.com', init: 'QMS', title: 'Validate calibration schedule import with quality team', status: 'todo', priority: 'urgent', hours: 34, due: '2026-09-18' },
+  { n: '012', email: 'katarzyna.wojcik@dbr77.com', init: 'WELDING', title: 'Validate safety fencing layout for welding cell', status: 'todo', priority: 'medium', hours: 10, due: '2026-09-25' },
+
+  // --- EWA NOWICKA (Operations Manager, supply 27h/tydz) — ~68% szczyt ---
+  { n: '013', email: 'ewa.nowicka@dbr77.com', init: 'WIP', title: 'Specify conveyor integration requirements for WIP automation', status: 'in_progress', priority: 'medium', hours: 16, due: '2026-09-11' },
+  { n: '014', email: 'ewa.nowicka@dbr77.com', init: 'WIP', title: 'Validate barcode scanning flow with warehouse supervisor', status: 'todo', priority: 'medium', hours: 14, due: '2026-09-25' },
+
+  // --- TOMASZ JANKOWSKI (R&D Specialist, supply 27h/tydz) — ~64% szczyt ---
+  { n: '015', email: 'tomasz.jankowski@dbr77.com', init: 'IOT', title: 'Validate sensor placement with maintenance lead', status: 'todo', priority: 'high', hours: 20, due: '2026-09-18' },
+  { n: '016', email: 'tomasz.jankowski@dbr77.com', init: 'IOT', title: 'Configure gateway firmware for IoT sensor network', status: 'todo', priority: 'medium', hours: 10, due: '2026-10-02' },
+
+  // --- MAREK NOWAK (Product Manager, supply 32.3h/tydz) — ~62% szczyt ---
+  { n: '017', email: 'marek.nowak@dbr77.com', init: 'PORTAL', title: 'Draft wireframes for customer self-service dashboard', status: 'in_progress', priority: 'medium', hours: 18, due: '2026-09-11' },
+  { n: '018', email: 'marek.nowak@dbr77.com', init: 'PORTAL', title: 'Define API contract for portal authentication module', status: 'todo', priority: 'low', hours: 12, due: '2026-09-25' },
+
+  // --- reszta zespołu: lekko/umiarkowanie obciążeni ---
+  { n: '019', email: 'jan.kowalski@dbr77.com', init: 'PORTAL', title: 'Review accessibility requirements for portal redesign', status: 'todo', priority: 'high', hours: 24, due: '2026-09-18' },
+  { n: '020', email: 'jan.kowalski@dbr77.com', init: 'QMS', title: 'Draft training plan for QMS 4.0 rollout', status: 'in_progress', priority: 'low', hours: 8, due: '2026-09-11' },
+  { n: '021', email: 'julia.lewandowska@dbr77.com', init: 'PORTAL', title: 'Prepare usability test script for new portal navigation', status: 'todo', priority: 'low', hours: 8, due: '2026-09-18' },
+  { n: '022', email: 'julia.lewandowska@dbr77.com', init: 'PORTAL', title: 'Iterate wireframes based on stakeholder feedback', status: 'todo', priority: 'low', hours: 6, due: '2026-10-09' },
+  { n: '023', email: 'justyna.laskowska@dbr77.com', init: 'CYBER', title: 'Review access control policy for privileged accounts', status: 'todo', priority: 'low', hours: 6, due: '2026-09-25' },
+  { n: '024', email: 'justyna.laskowska@dbr77.com', init: 'CYBER', title: 'Approve incident response runbook for security program', status: 'todo', priority: 'low', hours: 5, due: '2026-10-16' },
+  { n: '025', email: 'krzysztof.zielinski@dbr77.com', init: 'DEVOPS', title: 'Set up CI pipeline for staging deployment', status: 'todo', priority: 'low', hours: 8, due: '2026-10-02' },
+  { n: '026', email: 'krzysztof.zielinski@dbr77.com', init: 'DEVOPS', title: 'Migrate build scripts to new container registry', status: 'in_progress', priority: 'low', hours: 6, due: '2026-09-11' },
+  { n: '027', email: 'admin@dbr77.com', init: 'CYBER', title: 'Run vulnerability scan on external-facing services', status: 'todo', priority: 'low', hours: 6, due: '2026-09-18' },
+  { n: '028', email: 'admin@dbr77.com', init: 'CYBER', title: 'Draft incident response runbook for security program', status: 'todo', priority: 'low', hours: 5, due: '2026-10-16' },
+  { n: '029', email: 'piotr@dbr77.com', init: 'IOT', title: 'Prepare wiring diagram for sensor installation on line 3', status: 'todo', priority: 'medium', hours: 8, due: '2026-09-25' },
+  { n: '030', email: 'piotr@dbr77.com', init: 'IOT', title: 'Review IoT sensor network rollout plan with maintenance lead', status: 'in_progress', priority: 'low', hours: 6, due: '2026-09-11' },
+  { n: '031', email: 'pawel.mroczkowski@dbr77.com', init: 'CLOUD', title: 'Inventory on-prem workloads for phase 2 cloud migration', status: 'todo', priority: 'low', hours: 6, due: '2026-10-02' },
+  { n: '032', email: 'pawel.mroczkowski@dbr77.com', init: 'CLOUD', title: 'Approve cutover runbook for database migration', status: 'todo', priority: 'low', hours: 5, due: '2026-09-18' },
+  { n: '033', email: 'tomasz.lewandowski@dbr77.com', init: 'QMS', title: 'Approve QMS 4.0 rollout training plan', status: 'todo', priority: 'low', hours: 8, due: '2026-10-09' },
+  { n: '034', email: 'tomasz.lewandowski@dbr77.com', init: 'QMS', title: 'Review non-conformance workflow configuration', status: 'todo', priority: 'low', hours: 4, due: '2026-09-25' },
+];
+
+function newTaskId(n) {
+  return `task-dbr77-load-${n}`;
+}
+
+async function mierzNewTasks(c) {
+  const ids = NEW_TASKS.map((t) => newTaskId(t.n));
+  const r = await c.query(
+    `SELECT id, title, status, priority, assignee_id, reporter_id, owner_id, due_date, estimated_hours,
+            task_type, initiative_id, project_id, organization_id, source
+       FROM tasks WHERE id = ANY($1::text[])`,
+    [ids]
+  );
+  return r.rows;
+}
+
+async function applyNewTasks(c, apply) {
+  await resolveUserIds(c);
+  const byEmail = new Map(USERS.map((u) => [u.email, u.id]));
+  const adminId = byEmail.get(ADMIN_EMAIL);
+  if (!adminId) throw new Error(`tasks-new: ${ADMIN_EMAIL} nie rozwiązany — STOP.`);
+
+  // Sprawdzenie inicjatyw (istnieją, w DBR77) — jeden SELECT, jak w applyInitiatives.
+  const initIds = [...new Set(Object.values(NEW_TASK_INITIATIVES).map((i) => i.id))];
+  const initRows = await c.query(
+    `SELECT id, organization_id FROM initiatives WHERE id = ANY($1::text[])`,
+    [initIds]
+  );
+  const initById = new Map(initRows.rows.map((r) => [r.id, r]));
+  for (const id of initIds) {
+    const row = initById.get(id);
+    if (!row) throw new Error(`tasks-new: inicjatywa ${id} nie istnieje — STOP.`);
+    if (row.organization_id && row.organization_id !== DBR77_ORG) {
+      throw new Error(`tasks-new: inicjatywa ${id} spoza DBR77 — STOP.`);
+    }
+  }
+
+  const przed = await mierzNewTasks(c);
+  const byId = new Map(przed.map((r) => [r.id, r]));
+  const plan = [];
+  for (const t of NEW_TASKS) {
+    const id = newTaskId(t.n);
+    const userId = byEmail.get(t.email);
+    if (!userId) throw new Error(`tasks-new: ${t.email} nie rozwiązany — STOP.`);
+    const initiative = NEW_TASK_INITIATIVES[t.init];
+    const existing = byId.get(id);
+    if (existing) {
+      plan.push({ id, zmiana: 'brak (już istnieje — idempotentne)' });
+      continue;
+    }
+    plan.push({
+      id,
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      assignee: t.email,
+      userId,
+      initiativeId: initiative.id,
+      projectId: initiative.projectId,
+      dueDate: t.due,
+      estimatedHours: t.hours,
+    });
+    if (apply) {
+      await c.query(
+        `INSERT INTO tasks (
+            id, project_id, organization_id, title, description,
+            status, priority, assignee_id, backup_assignee_id, reporter_id,
+            due_date, started_at, estimated_hours, tags,
+            task_type, initiative_id, list_id, workstream_id, why,
+            source, owner_id, requires_acceptance, acceptance_type, acceptor_id,
+            weight, weight_reason,
+            expected_outcome, decision_impact, evidence_required, strategic_contribution,
+            roadmap_initiative_id, kpi_id, raid_item_id, assignees,
+            progress, blocked_reason, blocked_by_decision_id, blocked_at,
+            custom_fields_json, idempotency_key,
+            created_at, updated_at
+         ) VALUES (
+            $1, $2, $3, $4, NULL,
+            $5, $6, $7, NULL, $8,
+            $9, NULL, $10, '[]',
+            'execution', $11, NULL, NULL, '',
+            'manual', $7, false, NULL, NULL,
+            1, NULL,
+            '', '{}', '[]', '[]',
+            NULL, NULL, NULL, '[]',
+            0, '', NULL, NULL,
+            '{}', $12,
+            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+         )
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          id,
+          initiative.projectId,
+          DBR77_ORG,
+          t.title,
+          t.status,
+          t.priority,
+          userId,
+          adminId,
+          t.due,
+          t.hours,
+          initiative.id,
+          `da-zespol-20260910:new:${id}`,
+        ]
+      );
+    }
+  }
+  const po = apply ? await mierzNewTasks(c) : null;
+  return { przed, plan, po };
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 async function main() {
@@ -732,7 +971,7 @@ async function main() {
   if (apply && process.env.FORCE_DA !== 'true') {
     throw new Error('--apply wymaga FORCE_DA=true.');
   }
-  if (!op) throw new Error('Podaj --op=measure|users|initiatives|allocations|tasks|all');
+  if (!op) throw new Error('Podaj --op=measure|users|initiatives|allocations|tasks|tasks-new|all');
 
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 3 });
   const c = await pool.connect();
@@ -747,8 +986,17 @@ async function main() {
         if (o === 'users') raport.users = await applyUsers(c, apply);
         else if (o === 'initiatives') raport.initiatives = await applyInitiatives(c, apply);
         else if (o === 'allocations') raport.allocations = await applyAllocations(c, apply);
-        else if (o === 'tasks') raport.tasks = await applyTasks(c, apply);
-        else throw new Error(`Nieznana operacja: ${o}`);
+        else if (o === 'tasks') {
+          // CZĘŚĆ A (D-A, przypisanie istniejących) + CZĘŚĆ B (D-A2, nowe
+          // zadania z popytem) — "rozszerzony `--op=tasks`" ze zlecenia D-A2.
+          raport.tasks = {
+            existing: await applyTasks(c, apply),
+            new: await applyNewTasks(c, apply),
+          };
+        } else if (o === 'tasks-new') {
+          // Sama CZĘŚĆ B, do izolowanego dry-run/apply bez dotykania CZĘŚCI A.
+          raport.tasksNew = await applyNewTasks(c, apply);
+        } else throw new Error(`Nieznana operacja: ${o}`);
       }
       if (apply) await c.query('COMMIT');
       else await c.query('ROLLBACK');

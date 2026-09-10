@@ -1,0 +1,692 @@
+{
+  "op": "tasks-new",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T17:44:29.052Z",
+  "tasksNew": {
+    "przed": [
+      {
+        "id": "task-dbr77-load-001",
+        "title": "Design data model for analytics platform staging layer",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 16,
+        "task_type": "execution",
+        "initiative_id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "project_id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-002",
+        "title": "Build ETL job for daily sales data ingestion",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 12,
+        "task_type": "execution",
+        "initiative_id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "project_id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-003",
+        "title": "Validate dashboard KPIs with operations stakeholders",
+        "status": "todo",
+        "priority": "high",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 28,
+        "task_type": "execution",
+        "initiative_id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "project_id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-004",
+        "title": "Map current-state process for WIP warehouse put-away",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "025ae9d5-b9c4-4b0e-8e1f-d720c17881ff",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 12,
+        "task_type": "execution",
+        "initiative_id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "project_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-005",
+        "title": "Map current-state process for invoice reconciliation workflow",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 18,
+        "task_type": "execution",
+        "initiative_id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-006",
+        "title": "Configure RPA bot for purchase order matching",
+        "status": "in_progress",
+        "priority": "low",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 10,
+        "task_type": "execution",
+        "initiative_id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-007",
+        "title": "Validate exception-handling rules with finance team",
+        "status": "todo",
+        "priority": "urgent",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 30,
+        "task_type": "execution",
+        "initiative_id": "c55f3b10-e04e-44dd-a2e0-178046902520",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-008",
+        "title": "Design ETL job for supplier price feed ingestion",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d38cf7f5-fc74-40c5-a5ec-86532f8c72e4",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "b8f28cea-36b4-4f12-802e-634bf10c4d5a",
+        "project_id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-009",
+        "title": "Map inspection checklist into QMS 4.0 digital form",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 18,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-010",
+        "title": "Configure non-conformance workflow in QMS platform",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 16,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-011",
+        "title": "Validate calibration schedule import with quality team",
+        "status": "todo",
+        "priority": "urgent",
+        "assignee_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 34,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-012",
+        "title": "Validate safety fencing layout for welding cell",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "29262ed1-8017-4db2-9ef1-1e258ed71bdc",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 10,
+        "task_type": "execution",
+        "initiative_id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|robotyzacja-gniazda-spawalniczego",
+        "project_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-013",
+        "title": "Specify conveyor integration requirements for WIP automation",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 16,
+        "task_type": "execution",
+        "initiative_id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "project_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-014",
+        "title": "Validate barcode scanning flow with warehouse supervisor",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "4cfeae1e-0237-4d48-8755-e1d4669b93d3",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 14,
+        "task_type": "execution",
+        "initiative_id": "seed:wyniki-dbr77-20260905|a3e05d4a-5397-419d-b486-8e44366c0063|automatyzacja-magazynu-wip",
+        "project_id": null,
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-015",
+        "title": "Validate sensor placement with maintenance lead",
+        "status": "todo",
+        "priority": "high",
+        "assignee_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 20,
+        "task_type": "execution",
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-016",
+        "title": "Configure gateway firmware for IoT sensor network",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "aa614b34-bfbd-4757-b2d4-52a2caa466f7",
+        "due_date": "2026-10-01T22:00:00.000Z",
+        "estimated_hours": 10,
+        "task_type": "execution",
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-017",
+        "title": "Draft wireframes for customer self-service dashboard",
+        "status": "in_progress",
+        "priority": "medium",
+        "assignee_id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 18,
+        "task_type": "execution",
+        "initiative_id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-018",
+        "title": "Define API contract for portal authentication module",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "5bdb3753-88fd-47c2-abe9-7c290b74af65",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 12,
+        "task_type": "execution",
+        "initiative_id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-019",
+        "title": "Review accessibility requirements for portal redesign",
+        "status": "todo",
+        "priority": "high",
+        "assignee_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 24,
+        "task_type": "execution",
+        "initiative_id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-020",
+        "title": "Draft training plan for QMS 4.0 rollout",
+        "status": "in_progress",
+        "priority": "low",
+        "assignee_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "7b9b0e03-0061-468a-8201-31ebac233914",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-021",
+        "title": "Prepare usability test script for new portal navigation",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-022",
+        "title": "Iterate wireframes based on stakeholder feedback",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "d93e483a-1ef3-4839-965e-9fc032d80a8f",
+        "due_date": "2026-10-08T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "84baaa08-5249-42e4-a292-3921e67d29d1",
+        "project_id": "6d8ae9ba-3840-46ea-9068-10cdf55d5a76",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-023",
+        "title": "Review access control policy for privileged accounts",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "60887056-371a-4404-b85c-61c920852579",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "60887056-371a-4404-b85c-61c920852579",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-024",
+        "title": "Approve incident response runbook for security program",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "60887056-371a-4404-b85c-61c920852579",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "60887056-371a-4404-b85c-61c920852579",
+        "due_date": "2026-10-15T22:00:00.000Z",
+        "estimated_hours": 5,
+        "task_type": "execution",
+        "initiative_id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-025",
+        "title": "Set up CI pipeline for staging deployment",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "due_date": "2026-10-01T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "project_id": "2fbb1e31-6c71-4228-b775-05aae98690d6",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-026",
+        "title": "Migrate build scripts to new container registry",
+        "status": "in_progress",
+        "priority": "low",
+        "assignee_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "188a66b0-f284-4869-b26c-355df56d808a",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "d3bc32b2-ca68-456f-8af9-a432d6f10442",
+        "project_id": "2fbb1e31-6c71-4228-b775-05aae98690d6",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-027",
+        "title": "Run vulnerability scan on external-facing services",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-028",
+        "title": "Draft incident response runbook for security program",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "due_date": "2026-10-15T22:00:00.000Z",
+        "estimated_hours": 5,
+        "task_type": "execution",
+        "initiative_id": "7eb944f9-c5b9-4162-8bff-23b0d620f9f3",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-029",
+        "title": "Prepare wiring diagram for sensor installation on line 3",
+        "status": "todo",
+        "priority": "medium",
+        "assignee_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-030",
+        "title": "Review IoT sensor network rollout plan with maintenance lead",
+        "status": "in_progress",
+        "priority": "low",
+        "assignee_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "due_date": "2026-09-10T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "e3b0a66a-dc86-4730-84e0-cdffb66cbed6",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-031",
+        "title": "Inventory on-prem workloads for phase 2 cloud migration",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "due_date": "2026-10-01T22:00:00.000Z",
+        "estimated_hours": 6,
+        "task_type": "execution",
+        "initiative_id": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-032",
+        "title": "Approve cutover runbook for database migration",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "due_date": "2026-09-17T22:00:00.000Z",
+        "estimated_hours": 5,
+        "task_type": "execution",
+        "initiative_id": "bb9038c3-d5e0-41e4-8d3d-f695d9c045f9",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-033",
+        "title": "Approve QMS 4.0 rollout training plan",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "due_date": "2026-10-08T22:00:00.000Z",
+        "estimated_hours": 8,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      },
+      {
+        "id": "task-dbr77-load-034",
+        "title": "Review non-conformance workflow configuration",
+        "status": "todo",
+        "priority": "low",
+        "assignee_id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "reporter_id": "3ef1b819-31f6-40a3-a77a-47d2a4436fbb",
+        "owner_id": "eb79c7f2-01f6-4b70-b0c0-c612da9cd549",
+        "due_date": "2026-09-24T22:00:00.000Z",
+        "estimated_hours": 4,
+        "task_type": "execution",
+        "initiative_id": "5317c99f-1710-4e92-a65f-c56e5c38b3dd",
+        "project_id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "source": "manual"
+      }
+    ],
+    "plan": [
+      {
+        "id": "task-dbr77-load-001",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-002",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-003",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-004",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-005",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-006",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-007",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-008",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-009",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-010",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-011",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-012",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-013",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-014",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-015",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-016",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-017",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-018",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-019",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-020",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-021",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-022",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-023",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-024",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-025",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-026",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-027",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-028",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-029",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-030",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-031",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-032",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-033",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      },
+      {
+        "id": "task-dbr77-load-034",
+        "zmiana": "brak (już istnieje — idempotentne)"
+      }
+    ],
+    "po": null
+  }
+}
