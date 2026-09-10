@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { ensureProjectOwnerMembership } from './projectOwnerMembershipService.js';
 
 export const SYSTEM_PORTFOLIO_PROJECT_NAME = 'Portfel — inicjatywy bezpośrednie';
 
@@ -55,7 +56,10 @@ export async function resolveOrCreateSystemPortfolioProject(
       `SELECT id FROM projects WHERE organization_id = ? AND is_system = TRUE LIMIT 1`,
       [orgId]
     );
-    if (existing?.id) return existing.id;
+    if (existing?.id) {
+      await ensureProjectOwnerMembership(existing.id, opts.createdBy ?? null);
+      return existing.id;
+    }
   } catch (err) {
     logger.warn(
       `[initiativeProjectPolicyService] system portfolio lookup failed (ignored): ${
@@ -87,7 +91,13 @@ export async function resolveOrCreateSystemPortfolioProject(
       `SELECT id FROM projects WHERE organization_id = ? AND is_system = TRUE LIMIT 1`,
       [orgId]
     );
-    if (resolved?.id) return resolved.id;
+    if (resolved?.id) {
+      // Kontener systemowy tez musi miec czlonka, inaczej inicjatywa zakotwiczona
+      // w nim trafia na te sama blokade co projekt zalozony reka (pomiar 10.09,
+      // patrz `projectOwnerMembershipService.ts`).
+      await ensureProjectOwnerMembership(resolved.id, opts.createdBy ?? null);
+      return resolved.id;
+    }
     logger.warn('[initiativeProjectPolicyService] system portfolio insert produced no readable owner');
     return null;
   } catch (err) {
