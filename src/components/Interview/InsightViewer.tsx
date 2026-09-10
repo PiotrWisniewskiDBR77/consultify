@@ -154,7 +154,7 @@ import {
   INSIGHT_CARDS,
   INSIGHT_CARD_SPEC,
 } from './insightCardContract';
-import { sekcjeZKontraktu } from '../standard/contractSections';
+import { pilnujSekcjiZKontraktu, sekcjeZKontraktu } from '../standard/contractSections';
 import { extractQuotedFragments } from './insightQuotes';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -726,11 +726,26 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // idzie do Rezultatów, znika z centrum". Wpis nawigacji usunięty stąd; JSX
 // kafelków powstaje teraz w JEDNYM miejscu — `resultTilesNode` przy budowie
 // prawego panelu (wariant `compact` pod szerokość panelu).
-// `insightCardContract.ts` (flaga default OFF) zostaje NIETKNIĘTY — id żyje
-// dalej w katalogu kanonicznym; `applyToSections` po prostu nie znajdzie dla
-// niego sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc
-// nie pokaże fantomu.
+// `insightCardContract.ts` — 2026-09-10 (odbiór A1, R1): `artifact-actions`
+// dostała `kolumna:'right'` w kompozycji, więc `sekcjeZKontraktu` już jej NIE
+// zwraca tutaj — id żyje dalej w katalogu kanonicznym (core, nieusuwalny), ale
+// nie trafia do sekcji lewej kolumny; `applyToSections` nie znajdzie dla niego
+// sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc nie
+// pokaże fantomu.
 const INSIGHT_CONTRACT_SECTIONS: Omit<NModeSection, 'component'>[] = sekcjeZKontraktu(INSIGHT_CARDS, 'insight');
+
+// R1 (odbiór A1, blokujący): pierwsza aktywna sekcja NIE MOŻE być wybrana
+// ślepym `[0]` — jeśli kiedykolwiek kontrakt zwróci jako pierwszą sekcję bez
+// komponentu centrum (dokładnie to zrobiła `artifact-actions` przed naprawą
+// kolumny wyżej), karta otwiera się z pustym centrum. `SEKCJE_BEZ_KOMPONENTU_CENTRUM`
+// wylicza id-ki, dla których `nModeSectionsWithContent` NIGDY nie przypisuje
+// komponentu (patrz komentarz „celowo NIEOBECNE" przy `renderIds` niżej) —
+// startowa sekcja pomija je i bierze pierwszą sekcję, która faktycznie renderuje
+// treść.
+const SEKCJE_BEZ_KOMPONENTU_CENTRUM = new Set<string>(['artifact-actions']);
+const INSIGHT_INITIAL_SECTION_ID: string =
+  INSIGHT_CONTRACT_SECTIONS.find((section) => !SEKCJE_BEZ_KOMPONENTU_CENTRUM.has(section.id))?.id ??
+  INSIGHT_CONTRACT_SECTIONS[0].id;
 
 // ── AI-draft affordance na kartach Insightu (wzorzec N §3.3) ────────────────
 //
@@ -1138,7 +1153,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   );
 
   // N-mode navigation
-  const [activeNSection, setActiveNSection] = useState(INSIGHT_CONTRACT_SECTIONS[0].id);
+  const [activeNSection, setActiveNSection] = useState(INSIGHT_INITIAL_SECTION_ID);
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
     entityType: 'insight',
   });
@@ -7716,7 +7731,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     };
 
     const order = groupLabels;
-    return INSIGHT_CONTRACT_SECTIONS.map((section) => {
+    const sectionsWithComponent = INSIGHT_CONTRACT_SECTIONS.map((section) => {
       const rawComponent = composedComponentById[section.id] ?? null;
       return {
         ...section,
@@ -7741,7 +7756,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         completed: !!sectionCompletions[section.id],
         group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
-    }).sort((a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? ''));
+    });
+
+    // DEC-432 / W1-A (odbiór A1): bramka pilnuje, że KAŻDA sekcja kontraktu
+    // centrum faktycznie dostaje komponent — dokładnie klasa defektu R1
+    // (`artifact-actions` była sekcją #0 bez case'a w switchu wyżej).
+    pilnujSekcjiZKontraktu(
+      sectionsWithComponent.filter((section) => Boolean(section.component)),
+      INSIGHT_CONTRACT_SECTIONS
+    );
+
+    return sectionsWithComponent.sort(
+      (a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? '')
+    );
   }, [
     executiveSummary,
     insight,
@@ -7944,8 +7971,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   useEffect(() => {
     if (visibleNModeSections.length === 0) return;
-    if (!visibleNModeSections.some((section) => section.id === activeNSection)) {
-      setActiveNSection(visibleNModeSections[0].id);
+    // R1 (odbiór A1): dopasowanie SAMEGO id nie wystarcza — sekcja musi mieć
+    // realny komponent centrum. Bez tego strażnika sekcja bez case'a w
+    // `nModeSectionsWithContent` (dziś: żadna, świadomie — `artifact-actions`
+    // ma `kolumna:'right'` i w ogóle tu nie trafia) przechodziłaby test
+    // obecności, a centrum zostałoby puste.
+    const active = visibleNModeSections.find((section) => section.id === activeNSection);
+    if (!active || !active.component) {
+      const firstWithComponent =
+        visibleNModeSections.find((section) => Boolean(section.component)) ?? visibleNModeSections[0];
+      if (firstWithComponent.id !== activeNSection) {
+        setActiveNSection(firstWithComponent.id);
+      }
     }
   }, [visibleNModeSections, activeNSection]);
 

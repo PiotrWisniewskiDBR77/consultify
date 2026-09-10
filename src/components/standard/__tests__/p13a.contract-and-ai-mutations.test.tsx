@@ -27,9 +27,12 @@ describe('P13-A — kontrakt i propozycja AI', () => {
     await waitFor(() => expect(zastosuj).toHaveBeenCalledOnce());
   });
 
-  it('mutacja AI: bez kliknięcia Zatwierdź pozostaje RED', () => {
-    const zapis = vi.fn();
-    expect(zapis).not.toHaveBeenCalled();
-    expect(() => expect(zapis).toHaveBeenCalled()).toThrow();
-  });
+  // W1-B (odbiór A1, 2026-09-10): usunięty przypadek „mutacja AI: bez
+  // kliknięcia Zatwierdź pozostaje RED" był tautologią — asercja na świeżym
+  // `vi.fn()`, którego nikt nigdy nie wołał (nie mógł się zaczerwienić po
+  // ŻADNEJ zmianie kodu, fałszywy dowód K22). Przypadek WYŻEJ („AI niczego nie
+  // zapisuje przed kliknięciem Zatwierdź") już jest realnym renderem `PracujZAI`
+  // z tym samym `zastosuj`, sprawdza BRAK wywołania przed „Zatwierdź" i
+  // OBECNOŚĆ wywołania po nim — to wystarcza za dowód K22 (raport odbioru A1,
+  // §1 W1-B: „Trzeci przypadek w tym pliku … jest dobry i wystarcza").
 });

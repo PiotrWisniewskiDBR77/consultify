@@ -158,3 +158,27 @@ export function wymagajSekcjiZKontraktu(
     throw new Error(`SEKCJE_POZA_KONTRAKTEM: ekran=${ekranIds.join(',')} kontrakt=${kontraktIds.join(',')}`);
   }
 }
+
+/**
+ * Wołacz `wymagajSekcjiZKontraktu` (odbiór A1, W1-A: 0 wołaczy produkcyjnych).
+ * Karty N (Wniosek/Decyzja/Powiadomienie) wołają TĘ funkcję z ekranu zbudowanego
+ * PO przypisaniu treści (sekcje bez komponentu = odfiltrowane), żeby złapać
+ * dokładnie klasę defektu R1 (kontrakt deklaruje sekcję centrum, której ekran
+ * nigdy nie renderuje). W produkcji/dev jeden zepsuty ekran nie może wywalić
+ * całej karty (dev-warn), w testach ma się zaczerwienić (throw) — stąd osobna
+ * funkcja zamiast gołego `wymagajSekcjiZKontraktu` w miejscu wołania.
+ */
+export function pilnujSekcjiZKontraktu(
+  ekran: readonly Pick<NModeSection, 'id'>[],
+  kontrakt: readonly Pick<NModeSection, 'id'>[]
+): void {
+  try {
+    wymagajSekcjiZKontraktu(ekran, kontrakt);
+  } catch (err) {
+    const isTest =
+      typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.env?.VITEST);
+    if (isTest) throw err;
+    // eslint-disable-next-line no-console
+    console.warn('[contractSections] ' + (err instanceof Error ? err.message : String(err)));
+  }
+}
