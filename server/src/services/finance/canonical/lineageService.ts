@@ -339,3 +339,36 @@ export async function getDescendants(
     )
   );
 }
+
+/** Direct lineage for many business versions in one organization-scoped query. */
+export async function getLineageForBusinessVersions(
+  organizationId: string,
+  businessVersionIds: readonly string[]
+): Promise<LineageEdgeRow[]> {
+  if (businessVersionIds.length === 0) return [];
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<LineageEdgeRow>(
+      `SELECT e.id, e.organization_id, e.source_version_id, e.source_artifact_type,
+              e.target_version_id, e.target_artifact_type, e.edge_type, e.transformation_kind,
+              e.assumption_snapshot_hash, e.assumption_snapshot_id, e.compute_run_id,
+              e.author_id, e.created_at,
+              source_artifact.display_name AS source_display_name,
+              source_artifact.natural_key AS source_natural_key,
+              target_artifact.display_name AS target_display_name,
+              target_artifact.natural_key AS target_natural_key
+         FROM finance_lineage_edges e
+         LEFT JOIN finance_business_versions source_version
+                ON source_version.business_version_id = e.source_version_id
+         LEFT JOIN finance_artifacts source_artifact
+                ON source_artifact.artifact_id = source_version.artifact_id
+         LEFT JOIN finance_business_versions target_version
+                ON target_version.business_version_id = e.target_version_id
+         LEFT JOIN finance_artifacts target_artifact
+                ON target_artifact.artifact_id = target_version.artifact_id
+        WHERE e.organization_id = ?
+          AND (e.source_version_id = ANY(?) OR e.target_version_id = ANY(?))
+        ORDER BY e.created_at, e.id`,
+      [organizationId, [...businessVersionIds], [...businessVersionIds]]
+    )
+  );
+}

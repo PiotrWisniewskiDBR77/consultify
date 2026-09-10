@@ -16,13 +16,13 @@ describe('CODEX3 Finance MINIMUM contracts', () => {
     );
   });
 
-  it.fails('KONTRAKT CODEX3 — bulk lineage route accepts many business version ids', () => {
+  it('KONTRAKT CODEX3 — bulk lineage route accepts many business version ids', () => {
     expect(read('server/src/routes/v8/finance-v2/crosscutting.routes.ts')).toContain(
-      "'/versions/lineage-edges'"
+      "'/versions/lineage-edges/bulk-read'"
     );
   });
 
-  it.fails('KONTRAKT CODEX3 — lineage service provides an organization-scoped bulk reader', () => {
+  it('KONTRAKT CODEX3 — lineage service provides an organization-scoped bulk reader', () => {
     expect(read('server/src/services/finance/canonical/lineageService.ts')).toContain(
       'getLineageForBusinessVersions'
     );

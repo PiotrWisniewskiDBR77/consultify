@@ -1142,6 +1142,11 @@ export interface VersionLineageDto {
   descendants: LineageEdgeDto[];
 }
 
+export interface BulkVersionLineageDto {
+  businessVersionIds: string[];
+  edges: LineageEdgeDto[];
+}
+
 function finanaceV2ErrorCode(err: FinanceV2ApiError): string | null {
   return (
     (err.data && typeof err.data === 'object' && typeof err.data.code === 'string'

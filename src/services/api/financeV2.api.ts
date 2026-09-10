@@ -33,6 +33,7 @@ import type {
   BaselineStatementType,
   BaselineWorkspaceContextDto,
   // --- AP-CLIENT ---
+  BulkVersionLineageDto,
   CompareErrorCodeDto,
   CompareResultDto,
   FinanceApproveModelResultDto,
@@ -830,6 +831,14 @@ export async function getFinanceVersionLineage(
   return v8Get<VersionLineageDto>(
     `${BASE}/versions/${encodeURIComponent(businessVersionId)}/lineage${suffix}`
   );
+}
+
+export async function getFinanceVersionLineageBulk(
+  businessVersionIds: readonly string[]
+): Promise<BulkVersionLineageDto> {
+  return v8Post<BulkVersionLineageDto>(`${BASE}/versions/lineage-edges/bulk-read`, {
+    businessVersionIds: [...businessVersionIds],
+  });
 }
 
 // --- PKG-F Baseline ---
