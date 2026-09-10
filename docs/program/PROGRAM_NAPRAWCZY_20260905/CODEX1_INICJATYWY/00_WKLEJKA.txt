@@ -1,0 +1,40 @@
+NOWY BLOK — CODEX1 — „INICJATYWY: JEDEN MAGAZYN DANYCH"
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/staging:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX1_INICJATYWY/01_INSTRUKCJA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem cokolwiek uruchamiaj.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokładnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex1-inicjatywy
+MARKER=<<MARKER_SHA>>
+df -h /
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/staging \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt
+git -C "$V" worktree add "$WT" -b codex/inicjatywy-jeden-magazyn-20260910 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex1-inicjatywy/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+git -C "$WT" rev-parse HEAD
+
+Gałąź bazowa: origin/staging. Zasoby wyłączne: baza 6451, harness 5591,
+kontener cx-codex1-inicjatywy-pg, migracje 20262130-20262139.
+
+★ ZAKAZY (pełna lista Z1-Z40 w instrukcji):
+ - NIE pushujesz nic i nigdzie. Push robi nadzorca.
+ - NIE dotykasz /Users/piotrwisniewski/Developer/Consultify (katalog właściciela);
+   jedyny wyjątek to symlink node_modules do odczytu, komenda wyżej.
+ - ZERO połączeń do Railway, demo, stagingu i produkcji — w każdą stronę.
+ - NIE kasujesz tabeli `initiatives` ani żadnej `initiative_*`; migracja jest
+   wyłącznie addytywna, z trybem suchym, manifestem i przywracaniem.
+ - ZERO zmian wyglądu — front tylko tam, gdzie przepinasz wołacza.
+ - Każdy commit MUSI nieść oba znaczniki, inaczej hook commit-msg go odrzuci:
+   [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]
+
+★ RAPORT (jedyny nowy dokument w repo, układ 14 sekcji w instrukcji, etap E6):
+ docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX1_INICJATYWY/98_RAPORT.md
+ Zrzuty, logi i manifesty POZA repo: ~/Developer/codex-wt/codex1-artefakty
+
+Jeżeli cokolwiek tu różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
