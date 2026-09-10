@@ -144,6 +144,9 @@ interface UserOrganization {
   name: string;
   billing_status: string;
   role: OrganizationRole;
+  // F3b (DEC-463): org's own industry, used by the Megatrends panel to default
+  // to a real baseline instead of a hardcoded 'automotive' for every org.
+  industry: string | null;
 }
 
 interface AISettings {
@@ -414,7 +417,7 @@ export async function getActiveMembers(orgId: string): Promise<Member[]> {
 export async function getUserOrganizations(userId: string): Promise<UserOrganization[]> {
   const rows = await DbPromise.all<UserOrganization>(
     db,
-    `SELECT o.id, o.name, o.billing_status, m.role
+    `SELECT o.id, o.name, o.billing_status, o.industry, m.role
          FROM organizations o
          JOIN organization_members m ON o.id = m.organization_id
          WHERE m.user_id = ?`,

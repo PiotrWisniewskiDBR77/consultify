@@ -8,11 +8,13 @@ import { ArrowLeft, FileText, Globe, PlusCircle, Radar, Sparkles } from 'lucide-
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOrgContextOptional } from '../../contexts/OrgContext';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useMegatrendStore } from '../../store/megatrendStore';
 import { AIInsightsCard } from './AIInsightsCard';
 import { CustomTrendCard } from './CustomTrendCard';
 import { IndustryBaselineCard } from './IndustryBaselineCard';
+import { resolveDefaultMegatrendIndustry } from './megatrendIndustry';
 import { TrendDetailCard } from './TrendDetailCard';
 import { type RadarMegatrend, TrendRadarCard } from './TrendRadarCard';
 
@@ -41,9 +43,21 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
   >('baseline');
   const [lastTab, setLastTab] = useState<'baseline' | 'radar'>('baseline');
   const [selectedTrendId, setSelectedTrendId] = useState<string | null>(null);
-  const [industry, setIndustry] = useState('automotive');
 
-  const { megatrends, loading, error, fetchMegatrends } = useMegatrendStore();
+  // F3b (DEC-463): default to the CURRENT ORGANIZATION's own industry instead
+  // of the hardcoded 'automotive' every org used to see. `useOrgContextOptional`
+  // never throws when there is no provider (isolated tests / dev-render), so
+  // this degrades to DEFAULT_MEGATREND_INDUSTRY ('general') there too.
+  const orgIndustry = useOrgContextOptional()?.currentOrg?.industry;
+  const [industry, setIndustry] = useState(() => resolveDefaultMegatrendIndustry(orgIndustry));
+
+  const { megatrends, loading, error, fallback, fetchMegatrends } = useMegatrendStore();
+
+  // Org context resolves asynchronously (a fetch after mount) — once it
+  // reports the real industry, switch away from the initial 'general' guess.
+  useEffect(() => {
+    setIndustry(resolveDefaultMegatrendIndustry(orgIndustry));
+  }, [orgIndustry]);
 
   useEffect(() => {
     fetchMegatrends(industry);
@@ -151,6 +165,7 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
             megatrends={megatrends}
             loading={loading}
             error={error}
+            fallback={fallback}
             onRetry={() => {
               void fetchMegatrends(industry);
             }}

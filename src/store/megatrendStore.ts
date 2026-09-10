@@ -4,10 +4,23 @@ import { create } from 'zustand';
 
 import { MegatrendDetail } from '../components/Megatrend/TrendDetailCard'; // reuse type definition
 
+/**
+ * F3b (DEC-463): set when the backend couldn't find rows for the requested
+ * industry and degraded to the 'general' baseline instead of 503ing (see
+ * server/src/models/megatrend.ts getBaselineTrends). Lets the UI say "no
+ * megatrends for X yet — showing general" instead of silently rendering an
+ * unrelated industry's trends, or a scary "not configured" error.
+ */
+export interface MegatrendFallbackNotice {
+  requestedIndustry: string;
+  fallbackIndustry: string;
+}
+
 interface MegatrendState {
   megatrends: MegatrendDetail[];
   loading: boolean;
   error: string | null;
+  fallback: MegatrendFallbackNotice | null;
   fetchMegatrends: (industry?: string) => Promise<void>;
   setMegatrends: (data: MegatrendDetail[]) => void;
   setLoading: (loading: boolean) => void;
@@ -18,8 +31,12 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
   megatrends: [],
   loading: false,
   error: null,
-  fetchMegatrends: async (industry = 'automotive') => {
-    set({ loading: true, error: null });
+  fallback: null,
+  // NOTE: 'general' — NOT 'automotive' (F3b, DEC-463). This default only
+  // applies if a caller omits `industry` entirely; MegatrendsWorkspace always
+  // passes the organization's own industry (or 'general' itself already).
+  fetchMegatrends: async (industry = 'general') => {
+    set({ loading: true, error: null, fallback: null });
     try {
       // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
       const token = localStorage.getItem('token');
@@ -73,9 +90,21 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
           actions: [],
         },
       }));
-      set({ megatrends: mappedData, loading: false });
+
+      // F3b: see server/src/routes/megatrend.routes.ts — a fallback response
+      // is still a plain 200 array (backward-compatible body), the marker
+      // rides on two response headers instead.
+      const fallbackIndustry = res.headers.get('X-Megatrend-Fallback-Industry');
+      const fallback: MegatrendFallbackNotice | null = fallbackIndustry
+        ? {
+            requestedIndustry: res.headers.get('X-Megatrend-Requested-Industry') || industry,
+            fallbackIndustry,
+          }
+        : null;
+
+      set({ megatrends: mappedData, loading: false, fallback });
     } catch (e: any) {
-      set({ error: e.message, loading: false });
+      set({ error: e.message, loading: false, fallback: null });
     }
   },
   setMegatrends: (data) => set({ megatrends: data }),

@@ -31250,7 +31250,8 @@
       "downloadAndRescore": "Download all and re-score"
     },
     "baseline": {
-      "subtitle": "Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context."
+      "subtitle": "Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context.",
+      "fallbackNotice": "No megatrends for industry {{industry}} yet — showing {{fallback}}."
     }
   },
   "publicBooking": {
