@@ -79,7 +79,7 @@ import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { PracujZAI } from '../standard/PracujZAI';
 import { StickyStosKartyN } from '../standard/StickyStosKartyN';
-import { sekcjeZKontraktu } from '../standard/contractSections';
+import { pilnujSekcjiZKontraktu, sekcjeZKontraktu } from '../standard/contractSections';
 import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
 import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
@@ -1402,7 +1402,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     // Guard: if notification/contract not yet loaded, return sections with null components
     if (!notification || !contract) return notificationContractSections;
 
-    return notificationContractSections.map((section) => {
+    const sectionsWithComponent = notificationContractSections.map((section) => {
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -2098,6 +2098,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
       return { ...section, component };
     });
+
+    // W1-A (odbiór A1, 2026-09-10): `pilnujSekcjiZKontraktu` porównuje TĘ samą
+    // podstawę (`notificationContractSections`, już po filtrze `ai-analysis`
+    // — „puste AI ukrywane" zostaje NIEtknięte, symetryczne po obu stronach),
+    // więc łapie wyłącznie realny rozjazd: sekcję w kontrakcie/nawigacji, dla
+    // której switch wyżej nie przypisał komponentu (klasa defektu R1 w Insight).
+    pilnujSekcjiZKontraktu(
+      sectionsWithComponent.filter((section) => Boolean(section.component)),
+      notificationContractSections
+    );
+
+    return sectionsWithComponent;
   }, [
     notificationContractSections,
     isPolish,
@@ -2754,10 +2766,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   ];
 
   // [ODMROZENIE 07_MY_WORK_AGENT DEC-411] Decyzja CTO P10, runda 2:
-  // powiadomienie ma w prawym panelu wyłącznie akcje rekordu i historię.
-  // Implementacje pozostałych sekcji zostają poniżej (bez kasowania kodu), ale
-  // nie są częścią widocznego kontraktu powiadomienia.
-  const notificationRightPanelContract = new Set(['actions', 'history']);
+  // powiadomienie miało w prawym panelu wyłącznie akcje rekordu i historię.
+  // NAPRAWA (odbiór A1, F8, 2026-09-10): K7 (tabela Właściwości) jest
+  // OBOWIĄZKOWA dla każdej karty N — DEC-411 ją milcząco wyłączyła razem z
+  // resztą, kolizji z K7 nikt nie odnotował. Dokładam `properties` (mandatory)
+  // + `relations`/`evidence` — obie mają już gotową, bezpieczną treść (realne
+  // dane powiadomienia + graceful empty-state, zero nowych wywołań backendu)
+  // i realizują SPEC-A „Powiązania klikalne first-class". `comments` ZOSTAJE
+  // wyłączona — to osobna, już zgłoszona kolizja (ETAP 2.1, patrz niżej), nie
+  // milczenie: rozstrzyga ją właściciel, nie ten fix.
+  const notificationRightPanelContract = new Set(['actions', 'properties', 'relations', 'evidence', 'history']);
   const allRightPanelSections: ArtifactRightPanelSection[] = [
     // KOLEJNOSC KANONICZNA (standard n-Type §7.2): Akcje → Wlasciwosci →
     // Powiazania → Zrodla i zalozenia → Rezultaty → [Komentarze] → Historia.
