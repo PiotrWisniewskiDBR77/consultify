@@ -1,0 +1,11 @@
+# Lista organizacji ZACHOWANYCH — bezpiecznik dla sprzątania P11, 2026-09-10.
+# Skrypt scripts/dane/usun-organizacje.ts ODMAWIA startu, jeśli którykolwiek z tych
+# identyfikatorów znajdzie się na liście do usunięcia.
+#
+# Format:  <organization_id> | <nazwa> | <uwaga>
+
+a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77 | prawdziwa firma wlasciciela — NIGDY
+dbr77 | DBR77 Digital Consulting | wymieniona jawnie w zleceniu — NIGDY
+468b234c-66c4-54e1-b626-5e0fb3a92f6a | Northwind Manufacturing Ltd. | wymieniona jawnie w zleceniu — NIGDY
+system | System | organizacja techniczna wymagana przez runtime — NIGDY
+ateliertoys-demo-session-f786e8f37a-mtv4kwa4 | Atelier Toys | wymieniona jawnie w zleceniu — NIGDY

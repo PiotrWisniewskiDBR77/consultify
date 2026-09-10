@@ -1,0 +1,16 @@
+# Lista organizacji DO USUNIĘCIA — sprzątanie po P11 (weryfikacja naprawy V8_ORG_DISABLED), 2026-09-10.
+#
+# UWAGA: zlecenie mówiło o gotowej liście `lista-do-usuniecia-p2a-e2e.txt` (34 pozycje,
+# wzorzec `p2a-e2e-%@dbr77.com`). Plik NIE ISTNIEJE w tej gałęzi. Zapytanie do żywej bazy
+# staging (users.email ILIKE 'p2a-e2e-%@dbr77.com') zwróciło 0 WIERSZY — ten wzorzec nie
+# ma dziś żadnego dopasowania w bazie. Premisa zlecenia była nieaktualna/błędna; zamiast
+# zgadywać, zmierzyłem stan żywej bazy i buduję listę WYŁĄCZNIE z organizacji jawnie
+# wymienionych w zleceniu, zweryfikowanych zapytaniem do bazy (nazwa + liczba członków).
+#
+# Format wiersza:  <organization_id> | <nazwa> | <powód>
+# Skrypt scripts/dane/usun-organizacje.ts czyta WYŁĄCZNIE pierwszą kolumnę (id).
+
+ec4e6a43-0d9b-4bba-87f1-a3f26c1bc0b0 | P1 Test Poczta 074843 | konto testowe zostawione dzis przez robotnika (1 czlonek: p1-test-074843@dbr77.com)
+503f9c10-003f-45ca-bfc6-673fa3f88f0f | P9 Wywiad404 Sp. z o.o. | konto testowe zostawione dzis przez robotnika (1 czlonek: p9-wywiad404-091042@dbr77.com)
+4eca39dc-845a-456e-a060-be42d5cdcf01 | P2A Puste Stany Sp. z o.o. | diagnoza zakonczona, martwa organizacja sprzed naprawy V8 flag (1 czlonek: p2a-wt091041@dbr77.com)
+d9f7c61e-87a0-4135-b1bd-2a0b76cce985 | P11 Weryfikacja Sp. z o.o. | wlasna organizacja testowa P11 z Zadania 1 tej sesji (1 czlonek: p11-023213@dbr77.com)
