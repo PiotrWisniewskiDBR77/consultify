@@ -92,9 +92,14 @@ import {
   createRaidItem as createCanonicalRaidItem,
   deleteRaidItem as deleteCanonicalRaidItem,
   newRaidItemId,
+  seedRaidVersions,
   updateRaidItem as updateCanonicalRaidItem,
 } from '@/services/initiatives-execution/raidWrites';
-import { readRegisteredInitiative, requestHandoffAcceptance } from '@/services/initiatives-execution/runtimeApi';
+import {
+  amendRegisteredInitiative,
+  readRegisteredInitiative,
+  requestHandoffAcceptance,
+} from '@/services/initiatives-execution/runtimeApi';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -199,7 +204,11 @@ import {
   type InitiativeKpiEditorRow,
   toInitiativeKpiEditorRow,
 } from './initiativeKpiContract';
-import { resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource } from './initiativeDocumentSource';
+import {
+  resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource,
+  saveRuntimeOnlyInitiativeDocumentMetadata,
+} from './initiativeDocumentSource';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { runOriginAwareInitiativeSubresource } from './initiativeOriginSubresources';
 import {
   createInitiativesDemoDataset,
@@ -2659,7 +2668,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             V8PlanningApi.getRaid(initiativeId).catch(() =>
               Api.get(`/initiatives/${initiativeId}/raid`)
             ),
-          onLoaded: (r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])),
+          onLoaded: (r: any) => {
+            const items = r?.items || r?.raid || (Array.isArray(r) ? r : []);
+            // N3 (odbiór adwersaryjny 20260910, WAŻNY) — bez tego pierwszy
+            // PATCH/DELETE z KARTY po każdym przeładowaniu szedł z
+            // expectedVersion:0 → gwarantowany 409, dopiero retry dawał 200
+            // (zmierzone 2/2). `seedRaidVersions` już istniało dla Execution
+            // (`ExecutionControlSurface.tsx`) — karta nigdy go nie wołała.
+            seedRaidVersions(items);
+            setRaidItems(items);
+          },
           onSkipped: () => setRaidItems([]),
           onUnavailable: () => setRaidItems([]),
         }),
@@ -3331,7 +3349,70 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
+  // N1 (odbiór adwersaryjny 20260910, BLOKER) — rekord widoczny WYŁĄCZNIE w
+  // rejestrze runtime-v1 (nie istnieje w tabeli `initiatives`) nie ma writera
+  // pod `PUT /api/initiatives/:id` — ta trasa ZAWSZE zwraca 404 dla takiego id.
+  // Poprzednio: handleSave wołał ją i tak → autosave co 1.5 s wznawiał się w
+  // nieskończoność (6 × przy otwarciu + 9 × na 15 s bezczynności), bez ŻADNEGO
+  // komunikatu dla użytkownika ("Niezapisane" i cisza). Naprawa: dla takiego
+  // rekordu title/summary/description (jedyne pola z kanonicznym pisarzem,
+  // `PATCH .../runtime-v1/initiatives/:id/metadata`) idą TAM zamiast na PUT;
+  // reszta pól nie ma dziś pisarza i NIE jest wysyłana nigdzie (0 dodatkowych
+  // żądań) — użytkownik widzi jawny komunikat w miejscu statusu zapisu
+  // (`runtimeOnlyEditBlockedMessage` → NModeHeader saveState="error").
+  const handleSaveRuntimeOnlyMetadata = async (silent: boolean) => {
+    const normalizedTitle = String(titleDraft || '').trim();
+    const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+    const titleChanged = canEditCards && !!normalizedTitle && normalizedTitle !== savedTitle;
+    const summaryChanged = summary !== (initiative?.summary || '');
+    const descriptionChanged = description !== (initiative?.description || '');
+
+    if (!titleChanged && !summaryChanged && !descriptionChanged) {
+      // Nic do zapisania kanonicznym pisarzem — jeśli coś innego jest
+      // "brudne", komunikat blokady (runtimeOnlyEditBlockedMessage) już to
+      // pokazuje; tu nie ma czego wysyłać, więc kończymy bez żadnego żądania.
+      return;
+    }
+
+    const canonicalVersion = Number(initiative?.canonicalVersion);
+    if (!Number.isFinite(canonicalVersion) || canonicalVersion <= 0) {
+      if (!silent) {
+        toast.error(t('initiatives.runtimeOnlyEditBlocked'));
+      }
+      return;
+    }
+
+    setIsMutating(true);
+    try {
+      const updated = await saveRuntimeOnlyInitiativeDocumentMetadata(
+        initiativeId,
+        {
+          title: titleChanged ? normalizedTitle : undefined,
+          summary: summaryChanged ? summary : undefined,
+          description: descriptionChanged ? description : undefined,
+        },
+        canonicalVersion,
+        amendRegisteredInitiative
+      );
+      setInitiative((prev: any) => ({ ...prev, ...updated }));
+      bumpInitiativeRefresh();
+      if (!silent) {
+        toast.success(t('initiatives.saved2'));
+      }
+    } catch (e: any) {
+      if (!silent) {
+        toast.error(e?.message || t('initiatives.toast.saveError', 'Failed to save'));
+      }
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const handleSave = async (silent = false) => {
+    if (isRuntimeOnlyRecord) {
+      await handleSaveRuntimeOnlyMetadata(silent);
+      return;
+    }
     setIsMutating(true);
     try {
       // Build structured problem definition as JSON for the problemStatement field
@@ -3471,7 +3552,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
-  const hasUnsavedChanges = useMemo(() => {
+  // N1 (odbiór adwersaryjny 20260910) — rozbite na flagi PER POLE zamiast
+  // jednego OR-a, żeby dało się odróżnić „pola z kanonicznym pisarzem"
+  // (tytuł/streszczenie/opis — mają PATCH .../runtime-v1/initiatives/:id/metadata)
+  // od reszty (priorytet, daty, budżet, tagi, RAID…), która na rekordzie
+  // runtime-only NIE MA dziś żadnego pisarza. Suma flag = stare `hasUnsavedChanges`,
+  // więc zachowanie dla zwykłych inicjatyw (tabela `initiatives`) jest identyczne.
+  const unsavedFieldFlags = useMemo(() => {
     const savedProblemRaw = initiative?.problemStatement || initiative?.problem_statement || '';
     let savedSymptom = '';
     let savedRootCause = '';
@@ -3562,31 +3649,38 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       initiative?.targetState?.description || initiative?.target_state?.description || ''
     );
 
-    return (
-      String(titleDraft || '').trim() !==
-        String(initiative?.title || initiative?.name || '').trim() ||
-      summary !== (initiative?.summary || '') ||
-      description !== (initiative?.description || '') ||
-      priority !== (initiative?.priority || 'medium').toLowerCase() ||
-      ownerId !== (initiative?.ownerId || initiative?.owner_id || '') ||
-      sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || '') ||
-      targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || '') ||
-      (startDate || '') !==
-        (initiative?.plannedStartDate || initiative?.planned_start_date || '') ||
-      symptomDraft !== savedSymptom ||
-      rootCauseDraft !== savedRootCause ||
-      costOfInactionDraft !== savedCost ||
-      marketContextDraft !== (initiative?.marketContext || initiative?.market_context || '') ||
-      budgetDraft !== savedBudget ||
-      JSON.stringify(resourceTools) !== JSON.stringify(savedTools) ||
-      JSON.stringify(tags) !== JSON.stringify(initiative?.tags || []) ||
-      JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables) ||
-      JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria) ||
-      JSON.stringify(inScopeItems) !== JSON.stringify(savedScopeIn) ||
-      JSON.stringify(outScopeItems) !== JSON.stringify(savedScopeOut) ||
-      JSON.stringify(killCriteriaItems) !== JSON.stringify(savedKillCriteria) ||
-      targetDescriptionDraft !== savedTargetDescription
-    );
+    return {
+      // Pola z kanonicznym pisarzem na rekordzie runtime-only (PATCH metadata:
+      // title/problem/proposedOutcome) — patrz saveRuntimeOnlyInitiativeDocumentMetadata.
+      title:
+        String(titleDraft || '').trim() !==
+        String(initiative?.title || initiative?.name || '').trim(),
+      summary: summary !== (initiative?.summary || ''),
+      description: description !== (initiative?.description || ''),
+      // Reszta — BEZ pisarza na rekordzie runtime-only.
+      priority: priority !== (initiative?.priority || 'medium').toLowerCase(),
+      owner: ownerId !== (initiative?.ownerId || initiative?.owner_id || ''),
+      sponsor: sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || ''),
+      targetDate: targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || ''),
+      startDate:
+        (startDate || '') !==
+        (initiative?.plannedStartDate || initiative?.planned_start_date || ''),
+      symptom: symptomDraft !== savedSymptom,
+      rootCause: rootCauseDraft !== savedRootCause,
+      costOfInaction: costOfInactionDraft !== savedCost,
+      marketContext:
+        marketContextDraft !== (initiative?.marketContext || initiative?.market_context || ''),
+      budget: budgetDraft !== savedBudget,
+      resourceTools: JSON.stringify(resourceTools) !== JSON.stringify(savedTools),
+      tags: JSON.stringify(tags) !== JSON.stringify(initiative?.tags || []),
+      deliverables: JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables),
+      successCriteria:
+        JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria),
+      scopeIn: JSON.stringify(inScopeItems) !== JSON.stringify(savedScopeIn),
+      scopeOut: JSON.stringify(outScopeItems) !== JSON.stringify(savedScopeOut),
+      killCriteria: JSON.stringify(killCriteriaItems) !== JSON.stringify(savedKillCriteria),
+      targetDescription: targetDescriptionDraft !== savedTargetDescription,
+    };
   }, [
     initiative,
     titleDraft,
@@ -3613,9 +3707,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     decodeHtmlEntities,
   ]);
 
+  const hasUnsavedChanges = useMemo(
+    () => Object.values(unsavedFieldFlags).some(Boolean),
+    [unsavedFieldFlags]
+  );
+
+  // N1 — rekord widoczny WYŁĄCZNIE w rejestrze runtime-v1 (nie ma go w tabeli
+  // `initiatives`); wystawiane przez `resolveInitiativeDocumentRecord`
+  // (initiativeDocumentSource.ts) jako `documentOrigin`. Na takim rekordzie
+  // `PUT /api/initiatives/:id` zawsze zwraca 404 — patrz handleSave niżej.
+  const isRuntimeOnlyRecord = initiative?.documentOrigin === 'initiatives-runtime-v1';
+
+  // Pola, które MAJĄ dziś kanoniczny pisarz na rekordzie runtime-only.
+  const hasRuntimeOnlySupportedChanges =
+    unsavedFieldFlags.title || unsavedFieldFlags.summary || unsavedFieldFlags.description;
+
+  // Pola, które NIE MAJĄ dziś żadnego pisarza na rekordzie runtime-only —
+  // użytkownik może je edytować w UI (zero nowych kontrolek/blokad wejścia),
+  // ale zapis nie ma dokąd polecieć. Komunikat w miejscu statusu zapisu (D-C)
+  // zamiast ciszy + pętli 404.
+  const hasRuntimeOnlyUnsupportedChanges = useMemo(() => {
+    if (!isRuntimeOnlyRecord) return false;
+    const { title, summary, description, ...rest } = unsavedFieldFlags;
+    return Object.values(rest).some(Boolean);
+  }, [isRuntimeOnlyRecord, unsavedFieldFlags]);
+
+  const runtimeOnlyEditBlockedMessage =
+    isRuntimeOnlyRecord && hasRuntimeOnlyUnsupportedChanges
+      ? t('initiatives.runtimeOnlyEditBlocked')
+      : null;
+
+  // Autozapis: dla zwykłych inicjatyw bez zmian — jak dawniej (każda zmiana
+  // planuje PUT). Dla rekordu runtime-only planujemy PUT... a raczej NIE —
+  // planujemy zapis WYŁĄCZNIE gdy zmieniło się pole z kanonicznym pisarzem
+  // (title/summary/description); reszta nigdy nie trafia w sieć, więc nie ma
+  // czego pętlić. To jest naprawa BLOKERA N1 (PUT 404 × 6 przy otwarciu + 9/15s).
+  const hasSavableChanges = isRuntimeOnlyRecord
+    ? hasRuntimeOnlySupportedChanges
+    : hasUnsavedChanges;
+
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!hasUnsavedChanges || isMutating || !initiativeId) return;
+    if (!hasSavableChanges || isMutating || !initiativeId) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       handleSave(true);
@@ -3624,7 +3757,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasUnsavedChanges, isMutating, initiativeId]);
+  }, [hasSavableChanges, isMutating, initiativeId]);
 
   const handleCreateTask = async () => {
     if (!canEditCards) {
@@ -10977,6 +11110,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onSave={() => handleSave(false)}
                 saving={isMutating}
                 isDirty={hasUnsavedChanges}
+                saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
+                saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
+                saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
                 onClose={onBack || (() => {})}
                 statusLabel={statusPillLabel}
                 statusTone={statusPillTone}
@@ -11521,6 +11657,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onSave={() => handleSave(false)}
                   saving={isMutating}
                   isDirty={hasUnsavedChanges}
+                  saveState={runtimeOnlyEditBlockedMessage ? 'error' : undefined}
+                  saveErrorLabel={runtimeOnlyEditBlockedMessage || undefined}
+                  saveErrorTitle={runtimeOnlyEditBlockedMessage || undefined}
                   onClose={onBack || (() => {})}
                   statusLabel={statusPillLabel}
                   statusTone={statusPillTone}

@@ -64,6 +64,46 @@ export const toInitiativeDocumentFromRegistration = (
   };
 };
 
+/**
+ * N1 (odbiór adwersaryjny 20260910, BLOKER) — karta inicjatywy runtime-only
+ * (`documentOrigin === 'initiatives-runtime-v1'`) wysyłała autozapis na
+ * `PUT /api/initiatives/:id`, którego rejestr runtime-v1 nigdy nie zna →
+ * 404 w nieskończonej pętli, zero komunikatu. Jedyny kanoniczny pisarz dla
+ * takiego rekordu to `PATCH .../runtime-v1/initiatives/:id/metadata`
+ * (tytuł/streszczenie/opis/właściciel — `AmendInitiativeMetadataSchema` po
+ * stronie serwera). Ten helper kieruje TYLKO te pola tam, resztę (priorytet,
+ * daty, budżet, tagi, RAID…) zostawia bez zapisu — wołający musi pokazać
+ * użytkownikowi, że te pola nie mają dziś pisarza (patrz InitiativeDocumentView).
+ */
+export async function saveRuntimeOnlyInitiativeDocumentMetadata(
+  initiativeId: string,
+  updates: { title?: string; summary?: string; description?: string },
+  expectedVersion: number,
+  amend: (
+    initiativeId: string,
+    command: {
+      expectedVersion: number;
+      clientRequestId: string;
+      title?: string;
+      problem?: string;
+      proposedOutcome?: string | null;
+    }
+  ) => Promise<{ initiative: RegisteredInitiativeReadModel }>,
+  actor?: InitiativeDocumentActor
+): Promise<Record<string, any>> {
+  const clientRequestId = `initiative-doc-amend-${initiativeId}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+  const result = await amend(initiativeId, {
+    expectedVersion,
+    clientRequestId,
+    ...(typeof updates.title === 'string' ? { title: updates.title } : {}),
+    ...(typeof updates.description === 'string' ? { problem: updates.description } : {}),
+    ...(typeof updates.summary === 'string' ? { proposedOutcome: updates.summary } : {}),
+  });
+  return toInitiativeDocumentFromRegistration(result.initiative, actor);
+}
+
 export interface InitiativeDocumentSourceReaders {
   /** GET /api/v8/planning/initiatives/:id */
   readPlanningInitiative: (initiativeId: string) => Promise<any>;

@@ -12654,6 +12654,8 @@
     "stoppedWatching2": "Stopped watching",
     "nowWatching2": "Now watching",
     "saved2": "Saved",
+    "runtimeOnlyEditBlocked": "This initiative is in the new register — editing from the card will be available after the registers are merged",
+    "linkedItemsSearchPartialFailure": "Some results could not be retrieved",
     "youDoNotHaveEditPermissions2": "You do not have edit permissions at this initiative stage.",
     "taskCreated2": "Task created",
     "decisionCreated2": "Decision created",

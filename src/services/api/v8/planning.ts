@@ -328,6 +328,8 @@ export interface V8PlanningRaidItem {
   mitigationOwnerId?: string;
   mitigationDueDate?: string;
   mitigationStatus?: string;
+  /** CAS version for the canonical RAID writer (`raidWrites.ts`) — see N3, `seedRaidVersions`. */
+  aggregateVersion?: number | null;
   createdAt?: string;
   updatedAt?: string;
 }

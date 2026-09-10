@@ -5305,6 +5305,12 @@ export class InitiativeController {
       return;
     }
 
+    // N3 (odbiór adwersaryjny 20260910, WAŻNY) — fallback czytnik karty
+    // inicjatywy (gdy `V8PlanningApi.getRaid` rzuci). Ten sam brak
+    // `aggregateVersion` co w `getInitiativeRaidRead` (planningPortfolioReadService.ts)
+    // — dopisany identycznym LEFT JOIN jak `raid.routes.ts:76`, żeby
+    // `seedRaidVersions()` miało z czego zasilić pamięć CAS niezależnie od
+    // tego, którą z dwóch tras front finalnie trafi.
     const rows = await queryHelpers.queryAll(
       `SELECT
           r.id,
@@ -5324,9 +5330,14 @@ export class InitiativeController {
           r.mitigation_owner_id,
           r.mitigation_due_date,
           r.mitigation_status,
+          s.version as "aggregateVersion",
           r.created_at as "createdAt",
           r.updated_at as "updatedAt"
         FROM raid_items r
+        LEFT JOIN ie_aggregate_state s
+          ON s.organization_id = r.organization_id
+         AND s.aggregate_type = 'raid_item'
+         AND s.aggregate_id = r.id
         WHERE r.organization_id = ? AND r.initiative_id = ?
         ORDER BY r.updated_at DESC
         LIMIT ?`,

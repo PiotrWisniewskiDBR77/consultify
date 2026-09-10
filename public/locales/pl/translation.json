@@ -11838,6 +11838,8 @@
     "stoppedWatching2": "Przestałeś obserwować",
     "nowWatching2": "Obserwujesz inicjatywę",
     "saved2": "Zapisano",
+    "runtimeOnlyEditBlocked": "Ta inicjatywa jest w nowym rejestrze — edycja z karty będzie dostępna po scaleniu rejestrów",
+    "linkedItemsSearchPartialFailure": "Nie udało się pobrać części wyników",
     "youDoNotHaveEditPermissions2": "Nie masz uprawnień do edycji na tym etapie inicjatywy.",
     "taskCreated2": "Zadanie utworzone",
     "decisionCreated2": "Decyzja utworzona",
