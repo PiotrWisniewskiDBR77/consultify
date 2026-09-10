@@ -178,6 +178,11 @@ export const API_ERROR_FALLBACKS_EN: Readonly<Record<string, string>> = Object.f
   REPORT_BUILDER_PUBLIC_GENERATE_DOCX_FAILED: 'The DOCX file could not be generated.',
   REPORT_BUILDER_PUBLIC_GENERATE_PDF_FAILED: 'The PDF file could not be generated.',
   REPORT_BUILDER_PUBLIC_GENERATE_PPTX_FAILED: 'The PPTX file could not be generated.',
+  // P3 (S2.6): `aiRateLimiter` (server/src/middleware/rateLimiting.middleware.ts) returns
+  // this code on 429 with an English `error` field ("AI request rate limit exceeded.").
+  // Without this entry the English server sentence rendered verbatim — see
+  // public/locales/pl/translation.json `errors.RATE_LIMIT_EXCEEDED` for the PL text.
+  RATE_LIMIT_EXCEEDED: 'Too many AI requests in a short time. Please wait a moment and try again.',
   SETTINGS_AI_PROVIDERS_UPDATE_FAILED: 'The AI providers could not be saved.',
   SETTINGS_DASHBOARD_PREFERENCES_UPDATE_FAILED: 'The dashboard preferences could not be saved.',
   SETTINGS_DIGEST_PREFERENCES_UPDATE_FAILED: 'The notification digest could not be saved.',

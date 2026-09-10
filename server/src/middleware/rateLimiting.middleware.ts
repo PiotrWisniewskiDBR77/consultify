@@ -1123,7 +1123,23 @@ export const defaultRateLimiter = createLimiter({
   prefix: 'api',
 });
 
-/** AI Chat stream: 30 req / min (prod) */
+/**
+ * AI Chat stream: 30 req / min (prod).
+ *
+ * P3 (S2.6, 2026-09-10): kept English on purpose — J0 (docs/program/JEZYK_EN_PL_20260908)
+ * forbids hardcoding Polish sentences in server code (category K5pl: "polskie zdania
+ * z serwera do UI"). The client is meant to translate by `code`, not render this
+ * string; see `code: 'RATE_LIMIT_EXCEEDED'` below, registered in
+ * `src/utils/apiErrorFallbacks.ts` and `errors.RATE_LIMIT_EXCEEDED` in both locales.
+ * CAVEAT found while wiring this up: the translation helper that is supposed to
+ * consume that registration, `src/utils/translateApiError.ts` (J17), currently has
+ * ZERO callers anywhere in `src/` — it is built but never invoked, so today NEITHER
+ * this English string NOR the Polish translation actually reaches the AI chat UI on
+ * a 429; `src/services/api.ts`'s `ApiError` class renders this raw string verbatim
+ * via `.message` and nothing downstream re-translates it. Wiring `translateApiError`
+ * into the AI chat error path is out of scope for this step (touches chat UI
+ * components, not just the limiter) — flagged separately for follow-up.
+ */
 export const aiRateLimiter = createLimiter({
   windowMs: 60_000,
   max: isProd ? 30 : 200,
