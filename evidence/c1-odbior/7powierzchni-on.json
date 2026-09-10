@@ -1,0 +1,32 @@
+{
+ "20-rejestr": {
+  "nowa": true,
+  "kanon": true,
+  "len": 32285
+ },
+ "21-realizacja": {
+  "nowa": false,
+  "kanon": true,
+  "len": 1536
+ },
+ "22-roi": {
+  "nowa": false,
+  "kanon": false,
+  "len": 827
+ },
+ "23-moja-praca": {
+  "nowa": false,
+  "kanon": false,
+  "len": 430
+ },
+ "24-wyniki-kpi": {
+  "nowa": false,
+  "kanon": false,
+  "len": 797
+ },
+ "25-raporty": {
+  "nowa": false,
+  "kanon": false,
+  "len": 309
+ }
+}

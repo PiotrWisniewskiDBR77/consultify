@@ -1,0 +1,185 @@
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Execution
+Data
+Model
+Audyt C1
+AC
+Dashboard
+Deliveries
+Work
+Resources
+Decisions & risks
+Reports
+Active
+All
+All
+8
+At risk
+0
+Overdue
+2
+	
+INITIATIVE
+	
+LEVEL
+	
+STATUS
+	
+ASSIGNEE
+	
+PLANNED START / END
+	
+VARIANCE (DAYS)
+	
+RAG
+	
+
+	
+Automatyzacja magazynu WIP
+	
+—
+	
+In execution
+	
+MN
+Marek Nowak
+	
+27/05/2026 → 03/03/2027
+	
+0
+	
+On track
+	
+
+	
+System wizyjny kontroli jakości
+	
+—
+	
+In execution
+	
+Unassigned
+	
+12/04/2026 → 18/10/2026
+	
+0
+	
+On track
+	
+
+	
+Robotyzacja gniazda spawalniczego
+	
+—
+	
+In execution
+	
+TJ
+Tomasz Jankowski
+	
+03/04/2026 → 30/11/2026
+	
+0
+	
+On track
+	
+
+	
+[ACCEPTANCE] Benefits realization
+	
+—
+	
+In execution
+	
+Unassigned
+	
+no plan dates
+	
+—
+	
+No plan dates
+	
+
+	
+Poprawa realizacji korzyści programu
+	
+—
+	
+In execution
+	
+Unassigned
+	
+15/07/2026 → 09/01/2027
+	
+0
+	
+On track
+	
+
+	
+Process Automation — RPA
+	
+—
+	
+On hold
+	
+Unassigned
+	
+no plan dates
+	
+—
+	
+Blocked
+	
+
+	
+Transformacja DevOps
+	
+—
+	
+In execution
+	
+Unassigned
+	
+11/04/2026 → 20/02/2027
+	
+0
+	
+On track
+	
+
+	
+System zarządzania jakością 4.0
+	
+—
+	
+On hold
+	
+Unassigned
+	
+18/07/2026 → 20/01/2027
+	
+0
+	
+Blocked
+	
+
+Step 1 of 3
+
+WELCOME TO CONSULTIFY
+
+Meet Teresa — a consultant that talks
+
+Teresa is your AI co-thinker. Describe a decision, an assessment, or a question in plain language and she structures the thinking with you — no walls of text, just a conversation that gets you to clarity.
+
+Ask anything — Teresa replies like a senior consultant, not a chatbot
+Run assessments, interviews, and financial models when you need rigor
+Everything stays in your workspace, in your language
+Get started
+Skip for now

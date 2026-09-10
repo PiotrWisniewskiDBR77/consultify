@@ -1,0 +1,154 @@
+LOCAL @996d9145910b
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Results
+KPI
+Data
+Model
+Audyt C1
+AC
+KPI
+OKR
+ROI
+Management reports
+New report
+REPORT NAME
+	
+SCOPE
+	
+PERIOD
+	
+INDICATORS
+	
+STATUS
+	
+OPEN ACTIONS
+	
+PREPARED BY
+	
+UPDATED
+	
+
+
+Karta wyników transformacji
+	
+DBR77
+	
+IX 2026
+	
+1
+	
+0
+·
+1
+·
+0
+·
+0
+	
+1
+	
+Unknown user
+	
+Sep 5, 2026
+	
+
+
+Plant Balanced Scorecard — Zakład DBR77
+	
+DBR77
+	
+IX 2026
+	
+138
+	
+93
+·
+21
+·
+8
+·
+16
+	
+0
+	
+Tomasz Jankowski
+	
+Sep 5, 2026
+	
+
+
+KPI produkcji — Q3 2026
+	
+Business unit
+	
+Q3 2026
+	
+24
+	
+17
+·
+4
+·
+2
+·
+1
+	
+0
+	
+Unknown user
+	
+Sep 5, 2026
+	
+
+
+KPI jakości — sierpień 2026
+	
+Business unit
+	
+IX 2026
+	
+18
+	
+13
+·
+3
+·
+1
+·
+1
+	
+0
+	
+Marek Nowak
+	
+Sep 5, 2026
+	
+
+
+Acceptance scorecard
+	
+Organization
+	
+IX 2026
+	
+0
+	
+0
+·
+0
+·
+0
+·
+0
+	
+0
+	
+Unknown user
+	
+Aug 13, 2026
+	

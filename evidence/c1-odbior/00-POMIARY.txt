@@ -1,0 +1,86 @@
+C1-ODBIOR — surowe pomiary (2026-09-10), SHA odbierany 49cd114773, marker 4630b1ee4c
+Baza: consultify_kopia_c1 (TEMPLATE consultify_staging_1009), realny PostgreSQL 18 na 54418
+API ON 4227 (ENABLE_INITIATIVE_UNIFIED_READ=true) | API OFF 4237 (flaga nieustawiona)
+
+[BAZA]
+organizacje=8  initiatives=121  ie_aggregate_state(initiative)=31
+DBR77 a3e05d4a-5397-419d-b486-8e44366c0063: legacy=106 kanon=21 kolizji=6 kanon-only=15
+statusy legacy: DRAFT 74 | REJECTED 16 | IN_EXECUTION 12 | PENDING_APPROVAL 6 | APPROVED 6 | CLOSED 6 | PROPOSED 1
+lifecycle kanon: APPROVED_BACKLOG 10 | IN_EXECUTION 8 | REGISTERED_DRAFT 4 | READY_FOR_DECISION 3 | DEFINED 1 | SCHEDULED 1 | DELIVERED 1 | CANCELLED 1 | ARCHIVED 1 | EXECUTING 1
+
+[KOLIZJE DBR77 — status zastany vs kanon]
+8df2897b RPA Implementation              APPROVED         / APPROVED_BACKLOG
+bb9038c3 Cloud Migration Phase 2         APPROVED         / APPROVED_BACKLOG
+a3e05d4a--acceptance--initiative         IN_EXECUTION     / EXECUTING
+84baaa08 Customer Portal Redesign        PENDING_APPROVAL / APPROVED_BACKLOG   <- N2 (E1a)
+7eb944f9 Cybersecurity Enhancement       PENDING_APPROVAL / APPROVED_BACKLOG   <- N2 (E1a)
+e3b0a66a IoT Sensor Network Deployment   PENDING_APPROVAL / APPROVED_BACKLOG   <- N2 (E1a)
+GET /api/initiatives ON dla tych 3: PENDING_APPROVAL (zgodne z E1a — wygrywa tabela klasyczna)
+
+[GET /api/initiatives]
+OFF: 200, 106 rekordow, statusy {DRAFT 71, IN_EXECUTION 8, CLOSED 5, PENDING_APPROVAL 5, REJECTED 15, APPROVED 2}
+ON : 200, 121 rekordow, statusy {..OFF.. + READY_FOR_DECISION 3, REGISTERED_DRAFT 3, ARCHIVED 1, DEFINED 1, APPROVED_BACKLOG 1, SCHEDULED 1, DELIVERED 1, IN_EXECUTION 12}
+ON sourceType: manual 11, (null) 30, tool 17, teresa_chat 38, interview_insight 7, assessment 3, CANONICAL 15
+
+[FILTRY / STRONICOWANIE — OFF -> ON]
+?limit=10             10  -> 121   REGRESJA
+?source=assessment     3  -> 121   REGRESJA
+?priority=high        13  -> 121   REGRESJA
+?projectId=unassigned 73  -> 121   REGRESJA
+?status=DRAFT         71  ->  74   OK
+?search=IoT            6  ->   6   OK
+
+[WYDAJNOSC 10 pomiarow, 121 rekordow]
+ON  25 25 26 26 26 26 27 27 28 28  -> mediana 26.0 ms
+OFF 23 23 23 23 24 25 28 35 36 36  -> mediana 24.5 ms
+
+[NOWA INICJATYWA Z UI (4227 ON): initiative-23371ce8-7593-4dc9-a247-b621a990a1e1]
+zapis: 201 POST runtime-v1/source-proposals -> 201 POST runtime-v1/registrations
+baza: initiatives=0  ie_aggregate_state=1  (rekord tylko w kanonie)
+                     ON(4227)   OFF(4237)
+GET  /api/initiatives   ma       nie ma
+GET  /:id (karta)       200      404
+GET  /:id/kpis          200      404
+GET  /:id/milestones    200      200
+PUT  /:id (zapis)       404      404   <- bramka InitiativeController.ts:823
+
+[PETLA ZAPISU KARTY — 1 edycja, okno 12 s]
+ON : 6 x 404 PUT /api/initiatives/initiative-23371ce8-...
+OFF: 7 x 404 PUT /api/initiatives/initiative-23371ce8-...
+=> petla wystepuje NIEZALEZNIE od flagi (dlug zastany tej galezi, na linii integracyjnej gasi go E1a)
+
+[IZOLACJA ORGANIZACJI — token DBR77]
+obce id w bazie: 17 | wyciek na liscie ON: 0
+GET /api/initiatives/<kanon org468> -> 404 (x2) | <legacy org468> -> 404 | /kpis, /milestones -> 404
+
+[7 POWIERZCHNI]
+1 Rejestr /initiatives      OFF widzi kanon | ON widzi kanon  -> BEZ ZMIANY (most kliencki)
+2 Karta (API)               OFF 404 | ON 200                  -> ZYSK
+3 KPI (API)                 OFF 404 | ON 200                  -> ZYSK
+4 GET /api/initiatives      OFF 106 | ON 121                  -> ZYSK + regresje filtrow
+5 Realizacja /execution     OFF "All 8" | ON "All 12"         -> ZYSK (zrzut 21-realizacja-*.png)
+6 Moja Praca /my-work       bez zmian (ekran nie czyta inicjatyw)
+7 Wyniki + Raporty          bez zmian (ekrany nie czytaja listy inicjatyw)
+
+[KONSOLA / 5xx]
+ON : bledy konsoli 5, odpowiedzi >=400: 5, 5xx: 0
+OFF: bledy konsoli 6, odpowiedzi >=400: 5, 5xx: 0
+wszystkie 404 identyczne po obu stronach: GET /api/vnext/results/kpi/scorecards/<id>/review-snapshots/published (x5, dlug zastany)
+log API: 0 wpisow 5xx
+
+[HALAS W LOGU — nowy]
+warn [initiativeUnifiedReader] legacy record has unmapped header fields
+ON : 106 linii na JEDNO GET /api/initiatives (4664 -> 4770)
+OFF: 0 (reader nie zawolany ani razu)
+
+[TEST dwaMagazynyRozjazd.pg.test.ts na realnym PG]
+ON : 10/10 zielone | OFF: 10/10 zielone
+sprzatanie po tescie kompletne (przed 8/121/31 -> po 8/121/31)
+
+[BRAMKI ZASTANE — K1]
+grep -rn "SELECT id FROM initiatives WHERE id" server/src | grep -v __tests__  = 50 w 19 plikach (bez zmiany wobec markera)
+
+[DOWOD IDENTYCZNOSCI SCIEZKI OFF Z MARKEREM]
+po usunieciu importu czytnika i 3 blokow za flaga, porownanie InitiativeController.ts z markerem
+po usunieciu bialych znakow: roznica 4 znakow (dwie pary zbednych nawiasow w
+hasMilestoneBaseline ? (Number(x)||0) : null) — semantyka identyczna
