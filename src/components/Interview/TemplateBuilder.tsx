@@ -66,6 +66,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Select } from '@/components/shared/forms';
+import { NModeToolbar } from '@/components/shared/NModeLayout';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import { StandardArtifactShell } from '@/components/standard/StandardArtifactShell';
+import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
@@ -323,7 +328,7 @@ const RespondentQuestionPreview: React.FC<{
   isPolish: boolean;
 }> = ({ question, index, isPolish }) => {
   const { t } = useTranslation();
-  return (
+  const builderContent = (
     <div className="rounded-xl border border-c-border bg-c-surface p-4">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 text-xs font-semibold text-c-text-muted">{index + 1}.</span>
@@ -2082,7 +2087,7 @@ ${sourceText || '(none)'}`;
                 </div>
               </div>
 
-              <button
+              {!isDocumentMode ? <button
                 type="button"
                 onClick={handleGenerateWithAI}
                 disabled={isAiGenerating || isApplicationTemplate}
@@ -2094,7 +2099,7 @@ ${sourceText || '(none)'}`;
                   <Sparkles size={15} />
                 )}
                 {t('interview.templateBuilder.createSurveyWithAi')}
-              </button>
+              </button> : null}
 
               {errors.questions && (
                 <div className="mt-4 p-3 bg-danger-500/10 border border-danger-500/30 rounded-lg">
@@ -2146,7 +2151,7 @@ ${sourceText || '(none)'}`;
                   >
                     {t('interview.templateBuilder.addQuestion')}
                   </Button>
-                  <Button
+                  {!isDocumentMode ? <Button
                     variant="outline"
                     size="sm"
                     icon={<Sparkles />}
@@ -2157,7 +2162,7 @@ ${sourceText || '(none)'}`;
                     className="text-c-info border-c-info/30 hover:bg-c-info/5 dark:hover:bg-c-info/10"
                   >
                     {t('interview.templateBuilder.improveWithAi')}
-                  </Button>
+                  </Button> : null}
                 </div>
               </div>
 
@@ -2656,7 +2661,7 @@ ${sourceText || '(none)'}`;
             <Button variant="outline" size="sm" onClick={onClose}>
               {t('interview.templateBuilder.cancel')}
             </Button>
-            <Button
+            {!isDocumentMode ? <Button
               variant="outline"
               size="sm"
               icon={<Sparkles size={14} aria-hidden="true" />}
@@ -2666,7 +2671,7 @@ ${sourceText || '(none)'}`;
               title={t('interview.templateBuilder.checkQuestionQualityAi')}
             >
               {t('interview.templateBuilder.checkQuality')}
-            </Button>
+            </Button> : null}
             <Button
               variant="outline"
               size="sm"
@@ -2692,6 +2697,28 @@ ${sourceText || '(none)'}`;
       </div>
     </div>
   );
+
+  if (!isDocumentMode) return builderContent;
+
+  const sections: StandardSekcjaDef[] = [
+    {
+      id: 'template-content',
+      icon: FileText,
+      label: { pl: 'Treść wzorca', en: 'Template content' },
+      component: builderContent,
+      aiContract: { state: 'edited' },
+    },
+  ];
+  const rightPanel = {
+    actions: { label: 'Akcje', children: <div className="space-y-2"><Button variant="outline" size="sm" onClick={() => handleSave(false)} disabled={isSaving || isApplicationTemplate}>Zapisz wersję roboczą</Button><Button variant="primary" size="sm" onClick={() => handleSave(true)} disabled={isSaving || isApplicationTemplate}>Opublikuj</Button></div>, actionIds: ['save-draft', 'publish'] },
+    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable rows={[{ label: 'Status', value: template.status === 'draft' ? 'Roboczy' : 'Opublikowany' }, { label: 'Wersja', value: String(template.version || 1) }, { label: 'Liczba pytań', value: String(questions.length) }]} /> },
+    relations: { pominieta: true as const, reason: 'Wzorzec nie ma jeszcze zapisanych powiązań.' },
+    evidence: importedSourceText.trim() ? { label: 'Źródła i założenia', children: <div className="text-sm">Materiał źródłowy został dołączony.</div> } : { pominieta: true as const, reason: 'Nie dołączono materiału źródłowego.' },
+    comments: { pominieta: true as const, reason: 'Wzorzec nie ma osobnego wątku komentarzy.' },
+    history: { label: 'Historia', children: <div className="text-sm">Wersja {template.version || 1}</div> },
+  };
+  const ai = <PracujZAI isPolish={isPolish} onAnalizuj={handleCheckQuality} analizaWToku={isCheckingQuality} aktywnaSekcja="template-content" kontekstArtefaktu={{ title: template.name, status: template.status, type: 'interview_template' }} moznaEdytowac={!isApplicationTemplate} powodTylkoOdczyt="Wzorzec aplikacyjny jest tylko do odczytu." uzupelnijSekcje={{ rodzaj: 'wlasnaPropozycja', uruchom: () => proposeQuestionImprovementsWithAI(), opis: 'Propozycje zmian pojawią się w podglądzie do zatwierdzenia.' }} uzupelnijDokument={{ rodzaj: 'wlasnaPropozycja', uruchom: handleGenerateWithAI, opis: 'Projekt całego wzorca pojawi się przed zapisem.' }} />;
+  return <StandardArtifactShell karta="interview_template" klasa="L" header={{ title: template.name || 'Wzorzec wywiadu', titleReadOnly: isApplicationTemplate, onTitleChange: (name) => setTemplate((current) => ({ ...current, name })), artifactType: 'document', artifactId: template.id, onSave: () => handleSave(false), saving: isSaving, onClose, statusLabel: template.status === 'draft' ? 'Roboczy' : 'Opublikowany', statusTone: template.status === 'draft' ? 'draft' : 'approved' }} primaryAction={{ id: 'publish', label: { pl: 'Opublikuj', en: 'Publish' }, onClick: () => handleSave(true) }} sections={sections} rightPanel={rightPanel} activeSection="template-content" onSectionChange={() => undefined} densityMode="n" onDensityModeChange={() => undefined} toolbar={<NModeToolbar activeSectionLabel="Treść wzorca" isPolish={isPolish} aiArtifactButton={ai} />} panelAriaLabel="Szczegóły wzorca wywiadu" />;
 };
 
 // Question Card Component
