@@ -1,0 +1,18 @@
+{
+  "op": "d2",
+  "tryb": "DRY-RUN",
+  "czas": "2026-09-10T13:02:39.499Z",
+  "d2": {
+    "przed": {
+      "id": "dc34768a-1e72-498b-9beb-9b2bf0c66b92",
+      "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+      "initiative_id": "bafcb088-5453-4345-9500-5723d883fe2c",
+      "title": "zdfsf",
+      "status": "pending"
+    },
+    "planowane": [
+      "decisions.status='cancelled'"
+    ],
+    "po": null
+  }
+}
