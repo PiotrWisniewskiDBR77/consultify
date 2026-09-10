@@ -1,0 +1,36 @@
+{
+ "url": "http://127.0.0.1:3256/my-work?tab=ideas",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=tbody tr:first-child"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1920,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nMy Work\nIdeas\nData\nModel\nPaweł Mroczkowski\nPM\nIdeas\nNotebook\nInbox\nCalendar\nTasks\nDecisions\nVaults\nNew Idea\nALL\n1\nSpark\n1\nGrowing\n0\nShaping\n0\nReady\n0\nPromoted\n0\nFolder\n□\n\tTitle\n\t\nStage\n\t\nTags\n\t\nTool\n\tUpdated\n↓\n\t\n\n\n\t\nA2 pomiar — pozycja testowa\nWiersz wstawiony wylacznie do pomiaru S1.5 na kopii bazy consultify_kopia_a2.\n\t\nSpark\n\t—\t\nMind Map\n\t10/09/2026\t\nA2 pomiar — pozycja testowa\nOpen\nSpark\nMind Map\n10/09/2026\nDETAILS\n~10 words\n\nWiersz wstawiony wylacznie do pomiaru S1.5 na kopii bazy consultify_kopia_a2.\n\nProperty\tValue\nPriority\t50\nCreated\t10/09/2026\nUpdated\t10/09/2026\nAI\nExpand the idea\nFind risks\nSuggest next step\nRELATIONS\nNo linked documents\nOpen Flow\nWHAT'S NEXT\nCreates a MyWork session first\nInitiative\nReport\nPresentation\nFinancial Model\nBudget\nValuation\nFinancial Analysis",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1408,
+     "y": 172,
+     "width": 480,
+     "height": 728
+    }
+   ]
+  },
+  "[role=\"tab\"]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-10T19:35:51.481Z"
+}
