@@ -117,6 +117,9 @@ const PrawyPasJednaFormulaScreen = React.lazy(
 const P6PrzewodnikJakZaczacScreen = React.lazy(
   () => import('./screens/p6-przewodnik-jak-zaczac')
 );
+const F4cLinkedItemsAddButtonScreen = React.lazy(
+  () => import('./screens/f4c-linked-items-add-button')
+);
 const P13EksportOrganizacjeScreen = React.lazy(
   () => import('./screens/p13-eksport-organizacje')
 );
@@ -699,6 +702,11 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'f4c-linked-items-add-button': {
+    label:
+      'F4c — realny MyWork/shared/LinkedItemsSection: przycisk "Add Link"/"Add External Link" otwiera panel (znalezisko E1a N5, DEC-453).',
+    render: () => <F4cLinkedItemsAddButtonScreen />,
+  },
   'p6-przewodnik-jak-zaczac': {
     label:
       'P6 — REALNY <AppIntroView> (trasa /app-intro), przewodnik "Jak zacząć": 6 kroków kontekst organizacji → wywiad → ocena → inicjatywy → realizacja → wyniki, każdy z linkiem, czasem i wymaganiem. &lang=pl|en &theme=light|dark',
