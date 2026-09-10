@@ -29,10 +29,10 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `<<MARKER_SHA>>`**
+> **SHA markera: `4630b1ee4c`**
 > **Gałąź bazowa: `origin/staging`** (w vaulcie; to jest linia integracyjna
-> na dzień 2026-09-10, tip `691e2d3b0f` = „merge(P19): CSRF enforce…")
-> **Stan dokumentu: PROJEKT — NIE ZACZYNAJ, DOPÓKI CTO NIE WPISZE SHA MARKERA**
+> na dzień 2026-09-10, tip `4630b1ee4c` = „docs(plan): PLAN_CTO_20260910")
+> **Stan dokumentu: WYDANY — 2026-09-10 14:30, CTO (Fable), marker `4630b1ee4c` = tip `origin/staging` po wdrożeniu run 34470281144**
 >
 > Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
 > Jeżeli widzisz `PROJEKT` albo napis `MARKER_SHA` w nawiasach kątowych —
@@ -72,7 +72,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/Users/piotrwisniewski/Developer/codex-wt/codex1-inicjatywy
-MARKER=<<MARKER_SHA>>
+MARKER=4630b1ee4c
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego bloku
 df -h /
@@ -138,7 +138,7 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline <<MARKER_SHA>>..origin/staging
+git -C "$VAULT" log --oneline 4630b1ee4c..origin/staging
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -155,7 +155,7 @@ ale **w tym bloku jest wyłączony tym akapitem**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only <<MARKER_SHA>>..HEAD
+git -C "$WT" diff --name-only 4630b1ee4c..HEAD
 ```
 
 ---
