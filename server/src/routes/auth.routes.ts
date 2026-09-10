@@ -1962,6 +1962,40 @@ router.post(
             await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]);
             return res.status(500).json({ error: 'Failed to initialize trial limits' });
           }
+
+          // Write the EXPLICIT V8 feature-flag rows this tenant needs to exist.
+          //
+          // Measured 2026-09-10 on live staging: without these rows `v8OrgGate`
+          // answers 404 V8_ORG_DISABLED for the entire `/api/v8/*` surface
+          // whenever NODE_ENV === 'production' (staging and demo both run that
+          // way). A freshly registered org therefore opened Interview -> Inbox
+          // to an amber "degraded mode" error banner instead of an empty list.
+          // Seeding here keeps the production posture intact (rows stay
+          // explicit; the gate is NOT relaxed) while making a new workspace
+          // usable from its first request.
+          try {
+            const { provisionDefaultV8Flags } = await import(
+              '../services/v8/featureFlagService.js'
+            );
+            const provisioned = await provisionDefaultV8Flags(orgId, userId);
+            if (!provisioned.seeded) {
+              logger.warn('[Auth] V8 flags not provisioned for new org', {
+                organizationId: orgId,
+                reason: provisioned.reason,
+              });
+            }
+          } catch (v8FlagErr) {
+            logger.error('[Auth] Failed to provision V8 feature flags:', v8FlagErr);
+            // Roll the half-built tenant back and rethrow onto the EXISTING
+            // registration error path (outer `catch (regErr)` -> 500). Deliberately
+            // no new user-facing string here: language gate J0 counts every fresh
+            // English server message, and this failure needs no distinct wording.
+            await dbRun(`DELETE FROM organization_limits WHERE organization_id = ?`, [
+              orgId,
+            ]).catch(() => undefined);
+            await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+            throw v8FlagErr;
+          }
         }
 
         const userRole = joiningExistingOrg ? accessCodeRole : 'ADMIN';

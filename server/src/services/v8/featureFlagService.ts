@@ -263,4 +263,52 @@ export async function getAllOrgFlags(): Promise<
   }));
 }
 
+/**
+ * Provision explicit V8 flag rows for a NEWLY created organization.
+ *
+ * Why this exists (measured defect, 2026-09-10):
+ * `v8OrgGate` answers 404 `V8_ORG_DISABLED` for any org that has ZERO rows in
+ * `v8_feature_flags` whenever NODE_ENV === 'production' — and staging/demo both
+ * run with NODE_ENV=production. Registration never wrote those rows, so every
+ * freshly self-registered organization got 404 on the WHOLE `/api/v8/*` surface
+ * (Interview inbox/assigned/insights, My Work, Assessment, Execution, Chat...).
+ * The UI turned that 404 into an amber "degraded mode" banner on a brand-new
+ * account — the first thing a pilot tester would ever see.
+ *
+ * The production posture ("explicit rows required, never implicit enablement")
+ * is deliberately PRESERVED: we do not relax the gate, we write the explicit
+ * rows at the moment the tenant is created. Existing organizations are
+ * untouched — this only runs on the create-organization path.
+ *
+ * Fail modes are asymmetric on purpose:
+ * - table missing (environment without V8 migrations) -> skip, report it, never
+ *   break registration; the gate is uniformly closed there anyway.
+ * - table present but the write fails -> throw, so the caller can refuse to hand
+ *   the user a half-provisioned, permanently 404-ing workspace.
+ */
+export async function provisionDefaultV8Flags(
+  organizationId: string,
+  updatedBy?: string
+): Promise<{ seeded: boolean; modules: string[]; reason?: 'table-missing' }> {
+  const orgId = OrgIdSchema.parse(organizationId);
+
+  const hasTable = await flagTableExists();
+  if (!hasTable) {
+    Logger.warn(`${LOG_PREFIX} Skipping V8 provisioning — flag table missing`, {
+      organizationId: orgId,
+    });
+    return { seeded: false, modules: [], reason: 'table-missing' };
+  }
+
+  for (const module of V8_MODULES) {
+    await setV8OrgFlag(orgId, module, true, updatedBy);
+  }
+
+  clearFlagCache(orgId);
+  Logger.info(`${LOG_PREFIX} Provisioned V8 flags for new org ${orgId}`, {
+    modules: [...V8_MODULES],
+  });
+  return { seeded: true, modules: [...V8_MODULES] };
+}
+
 export { V8_MODULES, type V8Module };
