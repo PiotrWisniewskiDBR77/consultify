@@ -3362,13 +3362,34 @@ export class InitiativeController {
         return;
       }
 
-      // Verify initiative belongs to org
+      // Verify initiative belongs to org.
+      //
+      // DWA REJESTRY, JEDNA INICJATYWA (pomiar 10.09 na zywym stagingu):
+      // 16 z 30 agregatow `ie_aggregate_state/initiative` NIE ma wiersza
+      // w tabeli `initiatives` — w tym `initiative-d29cc12d-…` w organizacji
+      // Northwind, czyli takze w danych pokazowych. Kazda inicjatywa utworzona
+      // przyciskiem „Utworz" zapisuje sie do rejestru KANONICZNEGO pod
+      // identyfikatorem `initiative-<uuid>` (`createInitiativeWriteTruth`).
+      // Sprawdzanie istnienia WYLACZNIE w `initiatives` dawalo wiec
+      // 404 `Initiative not found` dla inicjatywy, ktora istnieje — a zakladka
+      // Zadania zamieniala to na czerwone „Could not load milestones".
+      //
+      // Granica tenanta sie NIE zmienia: oba odczyty sa zawezone do
+      // `organization_id` wolajacego, wiec cudza inicjatywa dalej daje 404.
       const initiative = await queryHelpers.queryOne(
         'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
 
-      if (!initiative) {
+      const wRejestrzeKanonicznym = initiative
+        ? null
+        : await queryHelpers.queryOne(
+            `SELECT aggregate_id FROM ie_aggregate_state
+              WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
+            [orgId, initiativeId]
+          );
+
+      if (!initiative && !wRejestrzeKanonicznym) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
