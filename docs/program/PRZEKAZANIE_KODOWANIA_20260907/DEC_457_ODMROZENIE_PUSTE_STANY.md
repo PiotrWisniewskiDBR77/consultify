@@ -81,3 +81,35 @@ odsyłacz z kreatora. Znacznik: `[ODMROZENIE 15_SETTINGS DEC-459]`.
 więc przewodnik nie może go obiecywać.
 
 Warunek ten sam co przy DEC-457: zrzut PRZED i PO, akcept właściciela przed promocją na demo.
+
+---
+
+# DEC-460 — odmrożenie: przycisk eksportu danych organizacji
+
+**Moduł:** `14_ADMIN` (`src/views/superadmin/OrganizationsView.tsx`) · **Kryterium:** koszyk 2 nr 12, lista S2.7
+
+Kryterium mówi wprost: eksport organizacji **działa z interfejsu**. Robotnik P5 zbudował i przetestował
+warstwę serwera (eksport JSON i CSV, odkrywanie tabel dynamiczne, dowód w `evidence/p5-eksport-20260910/`),
+ale nie mógł dodać przycisku — to nowy element w zamrożonym module, a DEC-457 obejmuje tylko podpięcie
+**istniejącego** handlera.
+
+Przy okazji zmierzył, że **usuwanie organizacji było martwe w stu procentach**: interfejs nie wysyłał
+wymaganego potwierdzenia, więc każde kliknięcie kończyło się odmową. Naprawa usuwania weszła pod DEC-457
+(istniejący przewód). Zostaje sam przycisk eksportu.
+
+**Odmrażam** `OrganizationsView.tsx` w zakresie: dodanie jednego przycisku eksportu wołającego gotowego
+klienta `Api.exportOrganizationData` i zapisującego plik. Zero zmian układu tabeli organizacji, zero
+zmian innych akcji. Znacznik: `[ODMROZENIE 14_ADMIN DEC-460]`.
+
+Warunek ten sam: zrzut PRZED i PO, akcept właściciela przed promocją na demo.
+
+---
+
+# Uwaga wykonawcza do wszystkich odmrożeń — język pustych stanów
+
+Odbiór 10.09 wykazał, że część naprawionych pustych stanów mówi żargonem inżynierskim, np.
+„Nadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam **kanoniczny rejestr artefaktów**".
+
+Adresatem jest konsultant pierwszej linii kontaktu z klientem, nie programista. Obowiązuje słownik:
+**dokument** zamiast „artefakt", **rozmowa** zamiast „sesja", **wynik** zamiast „output", i żadnego
+„kanonicznego", „rejestru", „projekcji", „runtime". Zdanie ma mówić, co tu będzie i co zrobić.
