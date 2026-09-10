@@ -1,0 +1,114 @@
+DOWOD PRZEPLYWU ZAPISU — Northwind — staging.consultify.ai — 2026-09-10 13:39 CEST
+Zadanie: 1-A2 (dowod zapisu po dzisiejszym usunieciu 15 organizacji-smieci ze stagingu)
+Stanowisko: /Users/piotrwisniewski/Developer/wt/w1a-sprzatanie, galaz mvp/w1a-sprzatanie-20260910
+HEAD na starcie: 25387bc236f332eca2c8aff77a9bcae6376a61f7
+
+===============================================================================
+STOP — TWARDY, NIE DO OBEJSCIA (poprzedza cala reszte przebiegu)
+===============================================================================
+Zlecenie wymaga, zeby AGENT sam zalogowal sie haslem konta Northwind (POST
+/api/auth/login z {email,password}) i przez to konto wykonal zapisy. To jest
+dokladnie kategoria "Creating accounts, or entering passwords to authenticate"
+z zasad bezpieczenstwa tej sesji — PROHIBITED, "never perform", i zasada wprost
+zastrzega: "These actions stay prohibited when the user explicitly asks for
+them, supplies all the details, or says they authorize it." Argument zlecenia
+("to konto testowe, tak dziala e2e, to standard projektu") nie zmienia tego —
+zasada jest napisana wlasnie po to, zeby taka argumentacja jej nie omijala.
+Zlecenie od agenta-nadzorcy tez nie jest zgoda uzytkownika w rozumieniu tej
+zasady (zgoda moze dac tylko czlowiek na czacie).
+
+SKUTEK: agent NIE wykonal logowania i NIC po logowaniu (utworzenie inicjatywy,
+edycja, zadanie, anulowanie). Ponizej jest to, co dalo sie zmierzyc BEZ hasla,
+plus gotowy, przygotowany do jednorazowego uruchomienia przez czlowieka skrypt.
+
+Ten sam wniosek wyciagnal juz POPRZEDNI przebieg tego samego stanowiska (patrz
+commit 25387bc236, "chore(w1a): gotowy skrypt dowodu zapisu Northwind — NIE
+uruchomiony (zasada hasel)") dla wezszej wersji tego zadania (tylko zadania w
+Mojej Pracy). Ten przebieg rozszerza ten skrypt o pelny kanon inicjatywy
+(source-proposals -> registrations -> metadata PATCH -> cancel), zweryfikowany
+CZYTANIEM ZRODEL, ale rowniez NIE URUCHOMIONY do konca z tego samego powodu.
+
+===============================================================================
+CO ZOSTALO FAKTYCZNIE ZMIERZONE NA ZYWO (bez hasla, odczyt anonimowy)
+===============================================================================
+Krok                          Trasa                          Kod HTTP   Uwagi
+1. CSRF token (anonimowe)     GET  /api/csrf-token            200       Body: {"token":"<64 znaki hex>"}.
+                                                                          UWAGA: pole nazywa sie "token", NIE
+                                                                          "csrfToken" jak zakladala instrukcja
+                                                                          zadania — zweryfikowane empirycznie,
+                                                                          nie zgadywane. Ustawia cookie
+                                                                          csrf_token (Secure, SameSite=Lax).
+                                                                          Serwer: cloudflare, UA przegladarki
+                                                                          w naglowku — zadnego 1010.
+
+Krokow 2-9 z listy zlecenia (login, /api/auth/me, GET /api/initiatives,
+utworzenie/edycja/anulowanie inicjatywy, zadanie w Mojej Pracy) NIE
+WYKONANO — wymagaja hasla. STOP jak wyzej.
+
+===============================================================================
+TRASY ZWERYFIKOWANE CZYTANIEM ZRODEL (nie zgadywane, nie uruchomione na zywo)
+===============================================================================
+- Logowanie:            POST  /api/auth/login                         server/src/routes/auth.routes.ts
+- Kim jestem:            GET   /api/auth/me
+- Lista inicjatyw:       GET   /api/initiatives
+- Lista projektow:       GET   /api/projects -> mount server/src/Gateway.ts:906
+                          (uwaga: server/src/routes/projects.routes.ts to MARTWY plik-pulapka
+                          ze stubem {success:true,data:[]} — realnie zamontowany jest
+                          server/src/routes/pmo/projects.routes.ts; latwo pomylic przy audycie)
+- KANON tworzenia inicjatywy (src/services/initiatives-execution/runtimeApi.ts,
+  wolane przez src/services/initiativeWriteTruth.ts <- src/components/Initiatives/InitiativesHub.tsx):
+    1) POST /api/initiatives/runtime-v1/source-proposals   (submitSourceProposal)
+    2) POST /api/initiatives/runtime-v1/registrations      (registerSourceProposal)
+  Wymaga projectId (z GET /api/projects) i initiativeOwnerId (= wlasne id z /api/auth/me).
+- Odczyt zarejestrowanej inicjatywy: GET   /api/initiatives/runtime-v1/initiatives/:id
+- Edycja tytulu:                     PATCH /api/initiatives/runtime-v1/initiatives/:id/metadata
+- Usuniecie — KANON NIE MA DELETE, jest tylko anulowanie:
+                                      POST  /api/initiatives/runtime-v1/initiatives/:id/cancel
+- Zadanie w Mojej Pracy (server/src/routes/pmo/tasks.routes.ts, zamontowane
+  server/src/Gateway.ts:926 jako /api/tasks; walidator CreateTaskSchema w
+  server/src/validators/task.validators.ts wymaga wylacznie "title"):
+    POST   /api/tasks    {"title": "...", "status": "todo"}
+    DELETE /api/tasks/:id
+- CSRF (server/src/middleware/csrf.middleware.ts): request z Authorization:
+  Bearer <jwt> i BEZ ciasteczka csrf_token omija walidacje CSRF
+  (isBearerOnlyRequest) — ale skrypt i tak zawsze wysyla x-csrf-token +
+  ciasteczko, zeby dzialac niezaleznie od CSRF_MODE danego srodowiska.
+- Konfiguracja produktu (krok 6 zlecenia): brak jednego generycznego
+  GET /api/templates — sa endpointy /templates per-modul (assessment-reports,
+  deliverableTemplates, document-studio, interview, ...). Zgodnie z instrukcja
+  zlecenia: jesli krok tworzenia inicjatywy da 201 — to wystarcza jako dowod,
+  ze konfiguracja/wzorce istnieja (09.09 objawem ich braku byl 500 w tym
+  wlasnie miejscu). Krok tworzenia inicjatywy NIE zostal wykonany (STOP
+  logowania) — wiec TEN element pozostaje NIEZMIERZONY tym przebiegiem.
+
+===============================================================================
+5xx NAPOTKANE: 0 (wykonano wylacznie 1 anonimowy GET; zadna trasa pisząca nie
+zostala wywolana)
+===============================================================================
+
+===============================================================================
+CO ZOSTALO W BAZIE STAGINGU PO TYM PRZEBIEGU: NIC
+===============================================================================
+Jedyna wykonana operacja to anonimowy GET /api/csrf-token — nie tworzy zadnego
+rekordu. Zero kont, zadan, inicjatyw utworzonych przez ten przebieg.
+
+===============================================================================
+GOTOWY SKRYPT DO JEDNORAZOWEGO URUCHOMIENIA PRZEZ CZLOWIEKA (Piotr/nadzorca)
+===============================================================================
+  node scripts/dane/dowod-zapisu-northwind.mjs
+
+Czyta haslo z ~/Developer/consultify-secrets/northwind-konta-STAGING.txt
+(linia "Wspolne haslo", NIE "Rotacja"), nigdy go nie wypisuje na ekran ani do
+logu. Wykonuje PELNY przebieg z listy zlecenia: login -> /api/auth/me ->
+GET /api/initiatives (licznik) -> GET /api/projects (projectId) -> KANON
+tworzenia inicjatywy (source-proposals + registrations) -> PATCH metadata
+(edycja tytulu) -> odczyt kontrolny -> POST/DELETE zadania w Mojej Pracy ->
+POST cancel inicjatywy -> odczyt kontrolny statusu -> podsumowanie 5xx. Kod
+wyjscia != 0 przy jakimkolwiek 5xx. Skrypt jest idempotentny (kazde
+uruchomienie tworzy nowe id przez timestamp w clientRequestId) i sprzata po
+sobie (usuwa zadanie, anuluje inicjatywe) — jesli anulowanie inicjatywy sie
+nie uda, skrypt jawnie drukuje STOP z initiativeId do recznego usuniecia.
+
+Skrypt NIE zostal uruchomiony w calosci przez agenta (patrz STOP na gorze
+tego pliku). Zweryfikowano tylko: skladnia (`node --check`, OK) i krok 1
+(anonimowy GET /api/csrf-token, na zywo, 200) — patrz wyzej.

@@ -9,7 +9,24 @@ import {
   type SeedDemoDatasetStageFailure,
 } from './demoSeedService.js';
 
-const DEMO_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
+/**
+ * Demo session lifetime — how long a per-user clone (or, in DEMO_USE_BASE_ORG
+ * mode, the base-org session marker) stays valid before `cleanupExpiredDemos`
+ * (server/src/services/demoService.ts) is allowed to reclaim it.
+ *
+ * Configurable via `DEMO_SESSION_TTL_HOURS` (w1a-sprzatanie-20260910, zadanie 3:
+ * skracanie zycia sesji demo na stagingu). Default stays 24h — today's behavior
+ * is unchanged unless the env var is set. Invalid/non-positive values fall back
+ * to the default rather than producing a zero- or negative-length session.
+ */
+const DEFAULT_DEMO_SESSION_TTL_HOURS = 24;
+
+export function demoSessionTtlMs(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = Number.parseInt(String(env.DEMO_SESSION_TTL_HOURS ?? ''), 10);
+  const hours = Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_DEMO_SESSION_TTL_HOURS;
+  return hours * 60 * 60 * 1000;
+}
+
 const DEMO_PREF_SESSION_ID = 'demo:session_id';
 const DEMO_PREF_SESSION_ORG_ID = 'demo:session_org_id';
 const DEMO_PREF_SESSION_EXPIRES_AT = 'demo:session_expires_at';
@@ -408,7 +425,7 @@ export async function startDemoSession(
     source,
     status: 'active',
     anchor_date: nowIso(),
-    expires_at: new Date(Date.now() + DEMO_SESSION_DURATION_MS).toISOString(),
+    expires_at: new Date(Date.now() + demoSessionTtlMs()).toISOString(),
   };
 
   const seed = await seedAtelierToysDemoDataset({
@@ -555,7 +572,7 @@ export async function resolveOrCreateDemoSession(
       source,
       status: 'active',
       anchor_date: nowIso(),
-      expires_at: new Date(Date.now() + DEMO_SESSION_DURATION_MS).toISOString(),
+      expires_at: new Date(Date.now() + demoSessionTtlMs()).toISOString(),
     };
     await dbRun(
       `INSERT INTO demo_sessions (

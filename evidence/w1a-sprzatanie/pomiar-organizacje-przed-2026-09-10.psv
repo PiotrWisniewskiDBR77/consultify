@@ -1,0 +1,25 @@
+id|name|created_at|czlonkow|emaile
+a3e05d4a-5397-419d-b486-8e44366c0063|DBR77|2026-02-19 07:58:37.065762|15|acceptance.owner@consultify.local,admin@dbr77.com,anna.kowalska@dbr77.com,ewa.nowicka@dbr77.com,jan.kowalski@dbr77.com,jan.zielinski@dbr77.com,julia.lewandowska@dbr77.com,justyna.laskowska@dbr77.com,katarzyna.wojcik@dbr77.com,krzysztof.zielinski@dbr77.com,marek.nowak@dbr77.com,pawel.mroczkowski@dbr77.com,piotr@dbr77.com,tomasz.jankowski@dbr77.com,tomasz.lewandowski@dbr77.com
+system|System|2026-03-03 18:29:48.561246|1|system@iris.internal
+dbr77|DBR77 Digital Consulting|2026-04-03 18:27:54.727074|1|justyna.laskowska@dbr77.com
+468b234c-66c4-54e1-b626-5e0fb3a92f6a|Northwind Manufacturing Ltd.|2026-09-08 14:46:45.821584|9|daniel.osei@northwind.example,emily.carter@northwind.example,james.whitfield@northwind.example,laura.novak@northwind.example,michael.grant@northwind.example,priya.sharma@northwind.example,robert.chen@northwind.example,sarah.mitchell@northwind.example,thomas.baker@northwind.example
+3935603f-e81c-4fc3-a154-623394e7cc32|TT22TT|2026-09-09 09:39:04.493853|1|t.tomasz.jankowski+123@gmail.com
+be953b47-1dba-469c-98cb-414806f36276|TT22TT|2026-09-09 09:45:38.106|1|t.tomasz.jankowski+123@gmail.com
+9151ee70-0141-43fd-9614-8ea609a7e5aa|My Company|2026-09-09 10:01:51.566333|1|k.szwarocka+1@gmail.com
+a6b81efe-98b8-426d-bac6-03340e1ea4f6|TT22TT|2026-09-09 10:05:22.133|1|t.tomasz.jankowski+123@gmail.com
+c240672e-24bb-4b3f-b129-df2802bc7daf|P2A Reload Test|2026-09-10 06:01:42.779523|1|p2a-reload-1789020100736@dbr77.com
+6175b332-3560-4055-a9a1-927d99f1c3c5|P2A Reload Test 2|2026-09-10 06:01:58.040333|1|p2a-reload2-1789020115753@dbr77.com
+196835dd-b867-450e-a9d3-c796452554fe|P2A Reload Test 3|2026-09-10 06:02:26.208169|1|p2a-reload3-1789020143881@dbr77.com
+b8bb7593-c48a-403d-a7af-f5637e93b955|P2A Reload Test 4|2026-09-10 06:02:52.957826|1|p2a-reload4-1789020170671@dbr77.com
+ateliertoys-demo-session-f786e8f37a-mtv4kwa4|Atelier Toys|2026-09-10 06:07:22.763261|0|
+ateliertoys-demo-session-f786e8f37a-mtv7frip|Atelier Toys|2026-09-10 07:27:22.142934|0|
+ateliertoys-demo-session-f786e8f37a-mtv7i250|Atelier Toys|2026-09-10 07:29:09.215912|0|
+ateliertoys-demo-session-f786e8f37a-mtvaakx6|Atelier Toys|2026-09-10 08:47:19.163494|0|
+ateliertoys-demo-session-f786e8f37a-mtvaanht|Atelier Toys|2026-09-10 08:47:22.492907|0|
+ateliertoys-demo-session-f786e8f37a-mtvagl9z|Atelier Toys|2026-09-10 08:51:59.557921|0|
+ateliertoys-demo-session-f786e8f37a-mtvaikcr|Atelier Toys|2026-09-10 08:53:31.671337|0|
+ateliertoys-demo-session-f786e8f37a-mtvcp31j|Atelier Toys|2026-09-10 09:54:35.060741|0|
+ateliertoys-demo-session-f786e8f37a-mtvctbn1|Atelier Toys|2026-09-10 09:57:52.843017|0|
+ateliertoys-demo-session-f786e8f37a-mtvcwt6h|Atelier Toys|2026-09-10 10:00:35.538097|0|
+ateliertoys-demo-session-f786e8f37a-mtvdxiai|Atelier Toys|2026-09-10 10:29:07.686642|0|
+(23 rows)
