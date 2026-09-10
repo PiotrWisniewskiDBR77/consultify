@@ -39,6 +39,8 @@ export type KartaNKey =
   | 'notification'
   | 'task'
   | 'action'
+  | 'idea'
+  | 'interview_template'
   // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] Trzy karty modułu Wyniki. Do
   // 06.09.2026 stały POZA rejestrem (test `registry.kompletnosc.test.ts`
   // wymieniał `metric`/`objective` jako „jawne wyjątki", a analizy ROI nie
@@ -98,6 +100,8 @@ export type KartaNEkranHarnessu =
   | 'karta-notification'
   | 'karta-task'
   | 'karta-dzialania'
+  | 'karta-pomysl'
+  | 'karta-wzorzec-wywiadu'
   | 'karta-miernik'
   | 'karta-cel-okr'
   | 'karta-analiza-roi'
@@ -141,12 +145,28 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
     statusMigracji: 'zmigrowana',
   },
   action: {
-    nazwa: 'Action',
+    nazwa: 'Karta działania',
     komponent: 'src/components/standard/ActionCard.tsx',
     klasa: 'S',
     paragraf: 'KREGOSLUP_WARTOSCI §2.4, §3 · DEC-397',
     ekranHarnessu: 'karta-dzialania',
-    statusMigracji: 'zmigrowana',
+    statusMigracji: 'przed',
+  },
+  idea: {
+    nazwa: 'Pomysł',
+    komponent: 'src/components/MyWork/IdeaMapWorkspace.tsx',
+    klasa: 'L',
+    paragraf: 'KARTA_N_KONTRAKT K1-K30 · DEC-433 · DEC-442',
+    ekranHarnessu: 'karta-pomysl',
+    statusMigracji: 'przed',
+  },
+  interview_template: {
+    nazwa: 'Wzorzec wywiadu',
+    komponent: 'src/components/Interview/TemplateBuilder.tsx',
+    klasa: 'L',
+    paragraf: 'KARTA_N_KONTRAKT K1-K30 · DEC-433 · DEC-443',
+    ekranHarnessu: 'karta-wzorzec-wywiadu',
+    statusMigracji: 'przed',
   },
   tool: {
     nazwa: 'Tool',

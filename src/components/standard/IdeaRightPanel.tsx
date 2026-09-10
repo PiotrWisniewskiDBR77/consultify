@@ -113,7 +113,7 @@ export interface IdeaRightPanelProps {
    */
   relationsContent: React.ReactNode;
   /** Treść karty „Historia" (komendy + strumień sugestii — <IdeaTeresaSection>). */
-  teresaContent: React.ReactNode;
+  teresaContent?: React.ReactNode;
   /**
    * HP-17: id artefaktu canvas (tool_session/mindmap id) — gdy podane (flaga
    * `ff_evidencePanel` ON u wołającego), `EvidencePanelSection` („Źródła i
