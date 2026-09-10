@@ -26,7 +26,15 @@ export interface InitiativeWriteTruthBundle {
 export interface InitiativeStatusPreflightTruth {
   readiness: V8PlanningGateReadinessCheck | null;
   transition: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']>[number] | null;
-  blockingItems: string[];
+  /**
+   * E3b (10.09), 18. kształt: serwer odsyła `label` PO ANGIELSKU („Owner
+   * assigned"), a wszystkie trzy powierzchnie wklejały go do polskiego zdania
+   * w toaście. Kontrakt niesie od teraz KLUCZ obok etykiety — tłumaczy
+   * `initiativeReadinessCheckLabel` (jeden lejek w
+   * `components/Initiatives/lifecycle/initiativeLifecycleMessages.ts`),
+   * a nieznany klucz nadal oddaje oryginał serwera.
+   */
+  blockingItems: Array<{ key: string; label: string }>;
 }
 
 export async function getInitiativeReadTruth(initiativeId: string) {
@@ -111,10 +119,11 @@ export async function getInitiativeStatusPreflightTruth(
           (item: V8PlanningGateReadinessCheck['readiness'][number]) =>
             item?.severity === 'blocking' && !item?.pass
         )
-        .map((item: V8PlanningGateReadinessCheck['readiness'][number]) =>
-          String(item?.label || item?.key || '').trim()
-        )
-        .filter(Boolean)
+        .map((item: V8PlanningGateReadinessCheck['readiness'][number]) => ({
+          key: String(item?.key || '').trim(),
+          label: String(item?.label || item?.key || '').trim(),
+        }))
+        .filter((item: { key: string; label: string }) => Boolean(item.label))
     : [];
 
   return {

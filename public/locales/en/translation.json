@@ -14456,6 +14456,52 @@
         "benefits_owner": "business owner for benefits",
         "benefits_kpis": "KPIs",
         "unknown": "gate requirements"
+      },
+      "readinessCheck": {
+        "title": "Title defined",
+        "owner": "Owner assigned",
+        "summary": "Summary / problem statement",
+        "sponsor": "Sponsor assigned",
+        "timeline_dates": "Planned dates set (start + end)",
+        "schedule_milestones": "Milestones defined",
+        "schedule_milestones_schema": "Milestones schema available",
+        "timeline": "Timeline set",
+        "baseline": "Schedule baseline locked",
+        "scope": "Scope defined",
+        "risks": "Risks identified",
+        "tasks": "Tasks created",
+        "benefits_owner": "Business Owner assigned (benefits owner)",
+        "benefits_kpis": "KPIs defined",
+        "benefits_kpi_targets": "KPI targets + units defined",
+        "gate_role": "Gate approver assigned for {{gate}}: {{roles}}"
+      },
+      "readinessAction": {
+        "title": "Add a concise initiative title that clearly describes the change.",
+        "owner": "Assign a business or execution owner who will be accountable.",
+        "summary": "Write a 2-3 sentence summary explaining the business problem this initiative addresses.",
+        "sponsor": "Nominate a senior leader who will champion and fund this initiative.",
+        "timeline_dates": "Set planned start and end dates before scheduling (baseline lock).",
+        "schedule_milestones": "Add at least one milestone to lock the schedule baseline.",
+        "schedule_milestones_schema": "Milestones table is missing. Run migrations (initiative_milestones).",
+        "timeline": "Set planned start and end dates for baseline scheduling.",
+        "baseline": "Create a schedule baseline snapshot (re-schedule) to enable variance tracking.",
+        "scope": "Define the scope or objectives so reviewers understand boundaries.",
+        "risks": "Identify at least one risk and its mitigation strategy.",
+        "tasks": "Break down the initiative into executable tasks.",
+        "benefits_owner": "Assign the business owner who will track realized benefits.",
+        "benefits_kpis": "Define measurable KPIs that will prove business value.",
+        "benefits_kpi_targets": "Set numeric targets and units for each KPI.",
+        "gate_role": "Assign users to roles: {{roles}} so the gate can be approved."
+      },
+      "readinessActor": {
+        "initiativeOwner": "Initiative Owner",
+        "pmo": "PMO",
+        "projectManager": "Project Manager",
+        "portfolioOwner": "Portfolio Owner",
+        "platformAdmin": "Platform Admin",
+        "riskManager": "Risk Manager",
+        "sponsor": "Sponsor",
+        "businessOwner": "Business Owner"
       }
     },
     "planGenerator": {
@@ -16125,7 +16171,9 @@
         "blockedReasonRequired": "Status \"Blocked\" requires a blocking reason.",
         "alreadyClosed": "The task is already closed.",
         "dictionaryMissing": "The status dictionary has not loaded yet.",
-        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first."
+        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first.",
+        "deleted": "Task deleted",
+        "deleteForbidden": "You can only delete tasks that you created yourself."
       },
       "create": {
         "title": "New task",
@@ -16135,7 +16183,10 @@
         "titleRequired": "Enter a task title."
       },
       "menu": {
-        "openTask": "Open task"
+        "openTask": "Open task",
+        "assignPerson": "Assign person",
+        "setStatus": "Set status: {{status}}",
+        "noTransitions": "Status \"{{z}}\" has no further transitions available."
       },
       "archiveNote": "Work items follow the Execution Case retention policy.",
       "baselineVersion": "accepted baseline",
@@ -16196,6 +16247,10 @@
       "kind": {
         "task": "Task",
         "decision": "Decision"
+      },
+      "delete": {
+        "title": "Delete task",
+        "message": "Delete \"{{title}}\"? This action cannot be undone."
       }
     },
     "resources": {

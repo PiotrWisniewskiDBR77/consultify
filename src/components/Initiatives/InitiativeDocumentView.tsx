@@ -122,6 +122,10 @@ import {
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import {
+  initiativeReadinessCheckLabel,
+  opiszOdmoweZmianyStatusu,
+} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -3247,7 +3251,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return;
       }
       if (blockingItems.length > 0) {
-        const list = blockingItems.slice(0, 5).join('\n• ');
+        const list = blockingItems
+          .slice(0, 5)
+          .map((item) =>
+            initiativeReadinessCheckLabel(item.key, item.label, (klucz, zapas) =>
+              String(t(klucz, zapas))
+            )
+          )
+          .join('\n• ');
         toast.error(
           t(
             'initiatives.toast.gateBlockedHub',
@@ -3282,8 +3293,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       await commitStatusTransition(action.targetStatus);
     } catch (e: any) {
+      // E3/P1: 400 z regułą (`rule`) dochodzi do właściciela PO POLSKU.
+      // Zmierzone: PENDING_APPROVAL → APPROVED odbija
+      // `{"rule":"GATE_DECISION_REQUIRED"}`, a ekran pokazywał angielskie
+      // zdanie serwera mimo gotowego tłumaczenia w słowniku reguł.
+      const odmowa = opiszOdmoweZmianyStatusu(e, (klucz, zapas) => String(t(klucz, zapas)));
       toast.error(
-        e?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
+        odmowa?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);
@@ -3319,8 +3335,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     try {
       await commitStatusTransition(pending.targetStatus, reason);
     } catch (e: any) {
+      const odmowa = opiszOdmoweZmianyStatusu(e, (klucz, zapas) => String(t(klucz, zapas)));
       toast.error(
-        e?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
+        odmowa?.message || t('initiatives.toast.statusUpdateError', 'Failed to update status')
       );
     } finally {
       setIsMutating(false);

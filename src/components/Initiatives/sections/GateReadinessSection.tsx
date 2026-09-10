@@ -30,6 +30,11 @@ import { updateRaidItem as updateCanonicalRaidItem } from '@/services/initiative
 import { getStatusMeta } from '@/services/initiativeLifecycle';
 
 import { GateReadinessPanel, GateReadinessPill } from '../gate-ai';
+import {
+  initiativeReadinessActionText,
+  initiativeReadinessActorLabel,
+  initiativeReadinessCheckLabel,
+} from '../lifecycle/initiativeLifecycleMessages';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
@@ -322,15 +327,34 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     return Math.round((metCount / nextGateConfig.requirements.length) * 100);
   }, [nextGateConfig, checkRequirement]);
 
+  /*
+   * E3b (10.09) — 18. kształt: `GET /gate-readiness-check` odsyła etykietę,
+   * podpowiedź i rolę PO ANGIELSKU (`addCheck('owner','Owner assigned',…)`),
+   * a ta lista malowała je wprost — polski użytkownik czytał „Owner assigned".
+   * Tłumaczenie idzie przez JEDEN lejek w `initiativeLifecycleMessages`
+   * (ten sam plik, co odmowy statusu), a klucz spoza słownika oddaje
+   * oryginalny napis serwera zamiast pustki.
+   */
   const backendReadiness = useMemo(() => {
-    const items = (gateReadiness?.readiness || []).map((r: any) => ({
-      key: String(r.key || ''),
-      label: String(r.label || r.key || ''),
-      pass: !!r.pass,
-      severity: String(r.severity || 'warning'),
-      suggestedAction: String(r.suggestedAction || r.suggested_action || ''),
-      suggestedActor: String(r.suggestedActor || r.suggested_actor || ''),
-    }));
+    const tt = (key: string, fallback: string) => t(key, fallback) as unknown as string;
+    const items = (gateReadiness?.readiness || []).map((r: any) => {
+      const key = String(r.key || '');
+      const serverLabel = String(r.label || r.key || '');
+      const serverAction = String(r.suggestedAction || r.suggested_action || '');
+      return {
+        key,
+        label: initiativeReadinessCheckLabel(key, serverLabel, tt),
+        pass: !!r.pass,
+        severity: String(r.severity || 'warning'),
+        suggestedAction: serverAction
+          ? initiativeReadinessActionText(key, serverAction, tt)
+          : '',
+        suggestedActor: initiativeReadinessActorLabel(
+          String(r.suggestedActor || r.suggested_actor || ''),
+          tt
+        ),
+      };
+    });
     // Sort: blocking fails first, then warnings fails, then passes.
     const weight = (x: { pass: boolean; severity: string }) => {
       if (!x.pass && x.severity === 'blocking') return 0;
@@ -339,7 +363,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       return 3;
     };
     return items.sort((a, b) => weight(a) - weight(b));
-  }, [gateReadiness]);
+  }, [gateReadiness, t]);
 
   const blockingMissing = useMemo(
     () => backendReadiness.filter((r) => r.severity === 'blocking' && !r.pass),

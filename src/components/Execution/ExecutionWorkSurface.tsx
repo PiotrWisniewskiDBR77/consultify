@@ -1,4 +1,12 @@
-import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, Eye, UserCog } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Eye,
+  ListChecks,
+  UserCog,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +53,7 @@ import { formatListDate, formatListDateTime, PUSTA_DATA } from '@/utils/listDate
 
 import { Banner } from '@/components/shared/Banner';
 import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { ConfirmModal } from '@/components/ui/primitives/Modal';
 import {
   MENU_2_FILTER_SELECT,
   MENU_2_FILTERS_ROW,
@@ -633,8 +642,21 @@ export const ExecutionWorkSurface = ({
   /** Błąd zapisu PRZY WIERSZU — cisza po nieudanym zapisie jest zakazana. */
   const [bladWiersza, setBladWiersza] = useState<{ rowId: string; message: string } | null>(null);
   const [zapisywanyWiersz, setZapisywanyWiersz] = useState<string | null>(null);
-  /** Otwarta akcja podglądu (Zmień osobę / Zmień termin) — edytor w podglądzie. */
-  const [edycjaPodgladu, setEdycjaPodgladu] = useState<'owner' | 'due' | null>(null);
+  /**
+   * Otwarta akcja podglądu (Zmień osobę / Zmień termin / Zmień status) —
+   * edytor w podglądzie.
+   *
+   * E3/P2 (10.09): dołożony `status`. Odbiór W1B zmierzył, że „Zamknij zadanie"
+   * jest wyłączone z podpisem „ustaw najpierw W toku albo W przeglądzie" —
+   * A NIE MA CZYM USTAWIĆ: kontrolki statusu nie było ani w kebabie wiersza,
+   * ani w stopce podglądu. Edytor statusu istniał wyłącznie w komórce tabeli
+   * (dwuklik), a dwuklik na wierszu otwiera przestrzeń roboczą — więc dla
+   * użytkownika droga do zmiany statusu nie istniała.
+   */
+  const [edycjaPodgladu, setEdycjaPodgladu] = useState<'owner' | 'due' | 'status' | null>(null);
+  /** Zadanie wskazane do usunięcia — potwierdzenie przez `ConfirmModal`. */
+  const [zadanieDoUsuniecia, setZadanieDoUsuniecia] = useState<Row | null>(null);
+  const [usuwanieWToku, setUsuwanieWToku] = useState(false);
   /** Formularz „Nowe zadanie" (Menu 2). */
   const [formularzNowego, setFormularzNowego] = useState<{
     otwarty: boolean;
@@ -881,6 +903,14 @@ export const ExecutionWorkSurface = ({
           'Status "Blocked" requires a blocking reason.'
         );
       }
+      // E3/P2: odmowa usunięcia (`TaskController.deleteTask` → 403) niesie
+      // angielskie zdanie serwera; użytkownik ma zobaczyć regułę po swojemu.
+      if (/You can only delete tasks you created/i.test(surowy)) {
+        return t(
+          'execution.work.edit.deleteForbidden',
+          'You can only delete tasks that you created yourself.'
+        );
+      }
       return t('execution.work.edit.failed', {
         powod: surowy || t('execution.work.edit.unknownReason', 'no response from server'),
         defaultValue: 'The change could not be saved: {{powod}}',
@@ -990,6 +1020,56 @@ export const ExecutionWorkSurface = ({
         console.error('[ExecutionWorkSurface] zapis zadania nieudany:', error);
       } finally {
         setZapisywanyWiersz(null);
+      }
+    },
+    [komunikatBledu, t]
+  );
+
+  /**
+   * Przejścia DOPUSZCZONE PRZEZ SERWER z bieżącego statusu wiersza.
+   *
+   * Źródłem jest wyłącznie `GET /api/tasks/workflow-config`
+   * (`server/src/services/taskWorkflowService.ts` → `ALLOWED_TRANSITIONS`),
+   * czyli ten sam słownik, którym `PUT /api/tasks/:id` odrzuca zapis
+   * (400 `INVALID_TRANSITION`). Własnej listy nie budujemy: szersza lista =
+   * obietnica 400-tki za wybór, który sami pokazaliśmy.
+   */
+  const dozwolonePrzejscia = useCallback(
+    (row: Row): string[] => {
+      const biezacy = String(row.status ?? '').toLowerCase();
+      return (slownikStatusow?.transitions?.[biezacy] ?? []).filter(
+        (docelowy) => docelowy && docelowy !== biezacy
+      );
+    },
+    [slownikStatusow]
+  );
+
+  /**
+   * USUNIĘCIE ZADANIA — `DELETE /api/tasks/:id`.
+   *
+   * Trasa istnieje i sprawdza uprawnienie po swojej stronie
+   * (`TaskController.deleteTask`: `team_member` usuwa wyłącznie zadanie, które
+   * sam zgłosił — inaczej 403). Odmowy NIE połykamy: 403 dojdzie do człowieka
+   * przy wierszu, tak samo jak każda inna odmowa zapisu.
+   */
+  const usunZadanie = useCallback(
+    async (row: Row) => {
+      const id = String(row.id);
+      setUsuwanieWToku(true);
+      setBladWiersza(null);
+      try {
+        await Api.deleteTask(id);
+        setRows((current) => current.filter((wiersz) => wiersz.id !== id));
+        setSelectedId((biezacy) => (biezacy === id ? null : biezacy));
+        setZadanieDoUsuniecia(null);
+        toast.success(t('execution.work.edit.deleted', 'Task deleted'));
+      } catch (error) {
+        const komunikat = komunikatBledu(error);
+        setBladWiersza({ rowId: id, message: komunikat });
+        toast.error(komunikat);
+        console.error('[ExecutionWorkSurface] usunięcie zadania nieudane:', error);
+      } finally {
+        setUsuwanieWToku(false);
       }
     },
     [komunikatBledu, t]
@@ -1829,6 +1909,20 @@ export const ExecutionWorkSurface = ({
                             icon: CalendarClock,
                             onClick: () => setEdycjaPodgladu('due'),
                           },
+                          /*
+                           * E3/P2 — „Zmień status". Wyłączona, gdy słownik
+                           * serwera nie daje z bieżącego statusu ANI JEDNEGO
+                           * przejścia: pusta lista do wyboru jest gorsza niż
+                           * uczciwie wyłączona akcja z powodem pod spodem.
+                           */
+                          {
+                            id: 'change-status',
+                            label: t('execution.work.edit.status', 'Change status'),
+                            variant: 'neutral',
+                            icon: ListChecks,
+                            disabled: dozwolonePrzejscia(r).length === 0,
+                            onClick: () => setEdycjaPodgladu('status'),
+                          },
                           {
                             id: 'close-task',
                             label: t('execution.work.edit.close', 'Close task'),
@@ -1897,6 +1991,38 @@ export const ExecutionWorkSurface = ({
                         />
                       </label>
                     )}
+                    {/*
+                     * E3/P2 — edytor statusu w stopce podglądu. Lista zawiera
+                     * WYŁĄCZNIE przejścia dopuszczone przez serwer dla statusu
+                     * bieżącego (`GET /api/tasks/workflow-config`), plus sam
+                     * status bieżący jako wartość wyjściowa selecta.
+                     */}
+                    {edycjaPodgladu === 'status' && (
+                      <label className="block text-xs text-c-text-secondary">
+                        {t('execution.work.edit.status', 'Change status')}
+                        <select
+                          autoFocus
+                          aria-label={t('execution.work.edit.status', 'Change status')}
+                          data-testid="execution-work-preview-status"
+                          defaultValue={String(r.status ?? '').toLowerCase()}
+                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          onChange={(event) => {
+                            setEdycjaPodgladu(null);
+                            if (event.target.value !== String(r.status ?? '').toLowerCase())
+                              void zapiszPoleZadania(r, 'status', event.target.value);
+                          }}
+                        >
+                          <option value={String(r.status ?? '').toLowerCase()}>
+                            {etykietaStatusu(String(r.status ?? ''), t)}
+                          </option>
+                          {dozwolonePrzejscia(r).map((docelowy) => (
+                            <option key={docelowy} value={docelowy}>
+                              {etykietaStatusu(docelowy, t)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                     {!mozliwoscZamkniecia(r).mozna && (
                       <p role="note" className="text-xs text-c-text-muted">
                         {mozliwoscZamkniecia(r).powod}
@@ -1931,16 +2057,33 @@ export const ExecutionWorkSurface = ({
                   void openWorkspace(work);
                 };
                 /*
-                 * WIERSZ Z `/api/tasks` — kebab ma DWIE pozycje: Otwórz i
-                 * Otwórz podgląd. Zmiana osoby/terminu/statusu żyje w wierszu
-                 * (podwójny klik) i w podglądzie; powtórzenie jej tutaj byłoby
-                 * tą samą akcją w trzech domach (doktryna gęstości §1).
-                 * Świadomie BEZ „Archiwizuj"/„Usuń": to jest słownik rejestru
-                 * `runtime-v1` („Kanoniczny element pracy nie może zostać
-                 * usunięty"), a zadanie z tabeli `tasks` nie ma z nim nic
-                 * wspólnego — atrapa z obcą notą jest gorsza niż brak pozycji.
+                 * WIERSZ Z `/api/tasks`.
+                 *
+                 * E3/P2 (10.09) — dwie pozycje to było ZA MAŁO. Odbiór W1B
+                 * zmierzył, że statusu zadania nie dało się zmienić NIGDZIE:
+                 * edytor w komórce wymaga dwukliku, a dwuklik na wierszu
+                 * otwiera przestrzeń roboczą, więc jedyna droga była
+                 * nieosiągalna. Dokładamy:
+                 *   · blok `statusTransitions` — kanoniczne miejsce przejść
+                 *     stanu w kebabie (`StandardTable` §blok 2), lista
+                 *     WYŁĄCZNIE ze słownika serwera; zapis idzie tą samą
+                 *     funkcją co edytor w wierszu i w podglądzie,
+                 *   · „Przypisz osobę" — otwiera JEDEN istniejący edytor osoby
+                 *     w podglądzie (nie druga implementacja tej samej akcji),
+                 *   · „Usuń" — `DELETE /api/tasks/:id` za `ConfirmModal`.
+                 *
+                 * BEZ „Edytuj": dla zadania z `tasks` byłaby to ta sama akcja
+                 * co „Otwórz zadanie", a dwie nazwy jednej akcji uczą
+                 * użytkownika nieprawdy. BEZ „Archiwizuj": nota o archiwizacji
+                 * należy do rejestru `runtime-v1`, nie do tej tabeli.
                  */
                 if (work.origin === 'tasks') {
+                  const otworzPodglad = (edytor: 'owner' | 'status' | null) => {
+                    setSelectedId(String(row.id));
+                    setShowWorkspace(false);
+                    setEdycjaPodgladu(edytor);
+                  };
+                  const przejscia = dozwolonePrzejscia(work);
                   return {
                     primary: [
                       {
@@ -1949,13 +2092,47 @@ export const ExecutionWorkSurface = ({
                         icon: ArrowRight,
                         onClick: openWorkspaceForAction,
                       },
-                    ],
-                    universalHandlers: {
-                      preview: () => {
-                        setSelectedId(String(row.id));
-                        setShowWorkspace(false);
-                        setEdycjaPodgladu(null);
+                      {
+                        id: 'assign-person',
+                        label: t('execution.work.menu.assignPerson', 'Assign person'),
+                        icon: UserCog,
+                        onClick: () => otworzPodglad('owner'),
                       },
+                    ],
+                    statusTransitions: przejscia.length
+                      ? przejscia.map((docelowy) => ({
+                          id: `status-${docelowy}`,
+                          label: t('execution.work.menu.setStatus', {
+                            status: etykietaStatusu(docelowy, t),
+                            defaultValue: 'Set status: {{status}}',
+                          }) as unknown as string,
+                          icon: ListChecks,
+                          onClick: () => void zapiszPoleZadania(work, 'status', docelowy),
+                        }))
+                      : [
+                          {
+                            id: 'status-none',
+                            label: t('execution.work.edit.status', 'Change status'),
+                            icon: ListChecks,
+                            disabled: true,
+                            note: slownikStatusow
+                              ? (t('execution.work.menu.noTransitions', {
+                                  z: etykietaStatusu(String(work.status ?? ''), t),
+                                  defaultValue:
+                                    'Status "{{z}}" has no further transitions available.',
+                                }) as unknown as string)
+                              : t(
+                                  'execution.work.edit.dictionaryMissing',
+                                  "The status dictionary hasn't loaded yet."
+                                ),
+                          },
+                        ],
+                    universalHandlers: {
+                      preview: () => otworzPodglad(null),
+                    },
+                    destructive: {
+                      label: t('common.delete', 'Delete'),
+                      onClick: () => setZadanieDoUsuniecia(work),
                     },
                   };
                 }
@@ -2224,6 +2401,29 @@ export const ExecutionWorkSurface = ({
           </div>
         </section>
       )}
+      {/*
+       * E3/P2 — nazwane potwierdzenie przed nieodwracalnym usunięciem zadania
+       * (kanoniczny `ConfirmModal`, wzór `RaidCanvas`), nigdy natychmiastowe
+       * usunięcie spod kebaba.
+       */}
+      <ConfirmModal
+        open={zadanieDoUsuniecia != null}
+        onClose={() => setZadanieDoUsuniecia(null)}
+        onConfirm={() => {
+          if (zadanieDoUsuniecia) void usunZadanie(zadanieDoUsuniecia);
+        }}
+        loading={usuwanieWToku}
+        title={t('execution.work.delete.title', 'Delete task')}
+        message={
+          t('execution.work.delete.message', {
+            title: zadanieDoUsuniecia?.title ?? '',
+            defaultValue: 'Delete "{{title}}"? This action cannot be undone.',
+          }) as unknown as string
+        }
+        confirmText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
+        confirmVariant="danger"
+      />
     </section>
   );
 };

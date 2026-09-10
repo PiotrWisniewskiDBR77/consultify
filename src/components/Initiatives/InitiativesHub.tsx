@@ -62,6 +62,10 @@ import {
 } from '@/services/api/v8/planning';
 import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
 import {
+  initiativeReadinessCheckLabel,
+  opiszOdmoweZmianyStatusu,
+} from '@/components/Initiatives/lifecycle/initiativeLifecycleMessages';
+import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
   getInitiativeStatusPreflightTruth,
@@ -1217,7 +1221,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return;
         }
         if (blockingItems.length > 0) {
-          const list = blockingItems.slice(0, 5).join('\n• ');
+          const list = blockingItems
+            .slice(0, 5)
+            .map((item) =>
+              initiativeReadinessCheckLabel(item.key, item.label, (klucz, zapas) =>
+                String(t(klucz, zapas))
+              )
+            )
+            .join('\n• ');
           toast.error(
             t(
               'initiatives.toast.gateBlockedHub',
@@ -1269,8 +1280,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // reason). `error.response.data.error` is an axios shape this client
         // never produces, so it was always undefined and silently hid the
         // real reason behind a generic toast.
+        // E3/P1: odmowa reguły (`rule` w ciele 400, np. GATE_DECISION_REQUIRED)
+        // przechodzi przez wspólny lejek i dociera po polsku; kod nieznany
+        // słownikowi zostaje bez zmian, żeby przyczyny nie zgubić.
+        const odmowa = opiszOdmoweZmianyStatusu(error, (klucz, zapas) =>
+          String(t(klucz, zapas))
+        );
         toast.error(
-          error?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
+          odmowa?.message || t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }
     },
