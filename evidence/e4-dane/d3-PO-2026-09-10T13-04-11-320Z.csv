@@ -1,0 +1,194 @@
+op,element,pole,przed,po
+d3,users.aa614b34-bfbd-4757-b2d4-52a2caa466f7,job_title,R&amp;amp;amp;D Specjalist,R&D Specjalist
+d3,decisions.decision-c477bd37-8689-419c-b292-4b2b7fd432b3,description,"Date &amp; Participants
+
+Date: \[date\] | Participants: \[names\]
+
+Agenda
+
+-   Topic 1
+    
+-   Topic 2
+    
+
+Discussion &amp; Key Points
+
+Decisions Made
+
+&gt; Decision 1: ...
+
+Action Items
+
+-   Action 1 — Owner: \[name\], Due: \[date\]
+    
+-   Action 2 — Owner: \[name\], Due: \[date\]","Date & Participants
+
+Date: \[date\] | Participants: \[names\]
+
+Agenda
+
+-   Topic 1
+    
+-   Topic 2
+    
+
+Discussion & Key Points
+
+Decisions Made
+
+> Decision 1: ...
+
+Action Items
+
+-   Action 1 — Owner: \[name\], Due: \[date\]
+    
+-   Action 2 — Owner: \[name\], Due: \[date\]"
+d3,initiatives.d1b3751e-d2aa-4957-8967-10254e7628c3,kill_criteria,"[""ROI &amp;amp;amp;lt; 15%"",""Timeline &amp;amp;amp;gt; 18 months"",""Budget overrun &amp;amp;amp;gt; 20%""]","[""ROI < 15%"",""Timeline > 18 months"",""Budget overrun > 20%""]"
+d3,initiatives.0a8e13eb-a610-4852-b820-604d4fc3ad73,problem_statement,"{&quot;symptom&quot;:&quot;Sprzedaż i produkcja pracują na różnych prognozach.&quot;,&quot;rootCause&quot;:&quot;&quot;,&quot;costOfInaction&quot;:&quot;&quot;}","{""symptom"":""Sprzedaż i produkcja pracują na różnych prognozach."",""rootCause"":"""",""costOfInaction"":""""}"
+d3,initiatives.3cf4ef78-fd80-4a43-be80-9889145ca533,problem_statement,"{&quot;symptom&quot;:&quot;Problem dotyczy obecnego systemu uprawnień decyzyjnych w sytuacjach wyjątkowych, które wymagają przebudowy. Kluczowe aspekty obejmują określenie osoby odpowiedzialnej za podejmowanie decyzji, moment eskalacji problemów oraz sposób monitorowania i audytowania podjętych decyzji. W projekcie należy zdefiniować nowe zasady, aby zapewnić odpowiednią kontrolę i przejrzystość procesu decyzyjnego.&quot;,&quot;rootCause&quot;:&quot;Inicjatywa skoncentrowana na przeprojektowaniu struktury uprawnień decyzyjnych w odniesieniu do wyjątków operacyjnych, ma na celu zwiększenie efektywności procesu decyzyjnego poprzez jasne określenie ról i odpowiedzialności. Zakres działań obejmuje analizę obecnych mechanizmów eskalacji oraz audytu decyzji, co przyczyni się do zredukowania ryzyka operacyjnego i usprawnienia reakcji na nieprzewidziane sytuacje. Implementacja tych zmian ma potencjał poprawić przejrzystość procesów decyzyjnych, co w dłuższej perspektywie wzmocni zaufanie interesariuszy. Potwierdzenie kosztów zaniechania wymaga dodatkowej analizy.&quot;,&quot;costOfInaction&quot;:&quot;- Bezczynność w zakresie przeprojektowania uprawnień decyzyjnych dla wyjątków może prowadzić do nieefektywnego zarządzania sytuacjami kryzysowymi, wpływając negatywnie na czas reakcji. \n- Brak jasności w decyzjach eskalacyjnych skutkuje opóźnieniami w procesach zatwierdzania, co może obniżyć efektywność operacyjną.\n- Niewłaściwy audyt decyzji może prowadzić do zwiększonego ryzyka prawnego oraz trudności w identyfikacji i korekcie błędów decyzyjnych.\n- Nieprzekształcenie struktury decyzyjnej może skutkować zwiększonymi kosztami operacyjnymi z powodu nieefektywnego wykorzystania zasobów.\n- Zaniechanie inicjatywy może wpłynąć na zaufanie interesariuszy, co ostatecznie może osłabić pozycję konkurencyjną firmy.&quot;}","{""symptom"":""Problem dotyczy obecnego systemu uprawnień decyzyjnych w sytuacjach wyjątkowych, które wymagają przebudowy. Kluczowe aspekty obejmują określenie osoby odpowiedzialnej za podejmowanie decyzji, moment eskalacji problemów oraz sposób monitorowania i audytowania podjętych decyzji. W projekcie należy zdefiniować nowe zasady, aby zapewnić odpowiednią kontrolę i przejrzystość procesu decyzyjnego."",""rootCause"":""Inicjatywa skoncentrowana na przeprojektowaniu struktury uprawnień decyzyjnych w odniesieniu do wyjątków operacyjnych, ma na celu zwiększenie efektywności procesu decyzyjnego poprzez jasne określenie ról i odpowiedzialności. Zakres działań obejmuje analizę obecnych mechanizmów eskalacji oraz audytu decyzji, co przyczyni się do zredukowania ryzyka operacyjnego i usprawnienia reakcji na nieprzewidziane sytuacje. Implementacja tych zmian ma potencjał poprawić przejrzystość procesów decyzyjnych, co w dłuższej perspektywie wzmocni zaufanie interesariuszy. Potwierdzenie kosztów zaniechania wymaga dodatkowej analizy."",""costOfInaction"":""- Bezczynność w zakresie przeprojektowania uprawnień decyzyjnych dla wyjątków może prowadzić do nieefektywnego zarządzania sytuacjami kryzysowymi, wpływając negatywnie na czas reakcji. \n- Brak jasności w decyzjach eskalacyjnych skutkuje opóźnieniami w procesach zatwierdzania, co może obniżyć efektywność operacyjną.\n- Niewłaściwy audyt decyzji może prowadzić do zwiększonego ryzyka prawnego oraz trudności w identyfikacji i korekcie błędów decyzyjnych.\n- Nieprzekształcenie struktury decyzyjnej może skutkować zwiększonymi kosztami operacyjnymi z powodu nieefektywnego wykorzystania zasobów.\n- Zaniechanie inicjatywy może wpłynąć na zaufanie interesariuszy, co ostatecznie może osłabić pozycję konkurencyjną firmy.""}"
+d3,initiatives.bafcb088-5453-4345-9500-5723d883fe2c,problem_statement,"{&quot;symptom&quot;:&quot;The primary challenge with the initiative \&quot;co dalej mogę zrobić? (Fork)\&quot; is the lack of a clear roadmap and defined steps for further development. This uncertainty may lead to difficulties in decision-making and resource allocation, potentially delaying project milestones. Addressing this requires comprehensive stakeholder alignment and a strategic framework to guide the next phase of the initiative.&quot;,&quot;rootCause&quot;:&quot;&quot;,&quot;costOfInaction&quot;:&quot;&quot;}","{""symptom"":""The primary challenge with the initiative \""co dalej mogę zrobić? (Fork)\"" is the lack of a clear roadmap and defined steps for further development. This uncertainty may lead to difficulties in decision-making and resource allocation, potentially delaying project milestones. Addressing this requires comprehensive stakeholder alignment and a strategic framework to guide the next phase of the initiative."",""rootCause"":"""",""costOfInaction"":""""}"
+d3,tasks.7058e152-878e-4a41-b0d4-4701db7bb439,description,"Po otwarciu panelu następuje kilkusekundowe zawieszenie strony - nie można nic kliknąć. Prawdopodobnie jest to spowodowane tym, że w panelu zapisał się wybór &quot;screenshota&quot; wybrany przy zgłaszaniu błędu wcześnie.
+
+Expected:
+Wybór screenshota nie powinien się zapamiętywać
+
+---
+Ticket: 4f9a1697-43f9-44a4-b36a-6c134932a355
+Env: staging
+Route: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3
+User: jan.kowalski@dbr77.com
+","Po otwarciu panelu następuje kilkusekundowe zawieszenie strony - nie można nic kliknąć. Prawdopodobnie jest to spowodowane tym, że w panelu zapisał się wybór ""screenshota"" wybrany przy zgłaszaniu błędu wcześnie.
+
+Expected:
+Wybór screenshota nie powinien się zapamiętywać
+
+---
+Ticket: 4f9a1697-43f9-44a4-b36a-6c134932a355
+Env: staging
+Route: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3
+User: jan.kowalski@dbr77.com
+"
+d3,tasks.8195f3e7-8afe-4750-860e-e0b7c08c6cf8,description,"Po kliknięciu &quot;nowa rozmowa&quot; otwiera się nowy panel Teresy. Po wpisaniu zapytania okno przeskakuje do poprzedniej rozmowy wczytując ją. Odpowiedź pokazuje się w starym Chacie nie w nowej konwersacji, która wylistowana jest w panelu po prawej stronie.
+
+Expected:
+Nowa konwersacja powinna być prowadzona w nowym oknie rozmowy nie w poprzednim chacie.
+
+---
+Ticket: 5f361e37-cc96-4ac9-974d-909550da62e4
+Env: staging
+Route: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3
+User: jan.kowalski@dbr77.com
+","Po kliknięciu ""nowa rozmowa"" otwiera się nowy panel Teresy. Po wpisaniu zapytania okno przeskakuje do poprzedniej rozmowy wczytując ją. Odpowiedź pokazuje się w starym Chacie nie w nowej konwersacji, która wylistowana jest w panelu po prawej stronie.
+
+Expected:
+Nowa konwersacja powinna być prowadzona w nowym oknie rozmowy nie w poprzednim chacie.
+
+---
+Ticket: 5f361e37-cc96-4ac9-974d-909550da62e4
+Env: staging
+Route: /chat/76a2e60e-1d7a-426b-bfaa-d7a88de7b8a3
+User: jan.kowalski@dbr77.com
+"
+d3,tasks.430a8f9a-bfd9-4205-9912-cde6d90fa06c,description,"Po kliknięciu przycisku &quot;Zatwierdź i wyślij&quot; nic się nie dzieje.
+
+---
+Ticket: 8f12f96f-7df9-4fc4-97c3-54458cbbc878
+Env: production
+Route: /discovery
+User: tomasz.jankowski@dbr77.com
+","Po kliknięciu przycisku ""Zatwierdź i wyślij"" nic się nie dzieje.
+
+---
+Ticket: 8f12f96f-7df9-4fc4-97c3-54458cbbc878
+Env: production
+Route: /discovery
+User: tomasz.jankowski@dbr77.com
+"
+d3,tasks.2ea790c7-e7bf-4f58-af1f-1ba9e17b1fea,description,"W panelu &quot;Organizations&quot; nie pokazuje wszystkich kont podpiętych do organizacji (w APLIX powinien być jan i Piotr - jest tylko Jan
+
+---
+Ticket: d11ec6b0-7c04-4490-84f8-6f89a64eb921
+Env: production
+Route: /superadmin/customers
+User: admin@dbr77.com
+","W panelu ""Organizations"" nie pokazuje wszystkich kont podpiętych do organizacji (w APLIX powinien być jan i Piotr - jest tylko Jan
+
+---
+Ticket: d11ec6b0-7c04-4490-84f8-6f89a64eb921
+Env: production
+Route: /superadmin/customers
+User: admin@dbr77.com
+"
+d3,tasks.6def4ccf-ef77-431d-9f1b-aed18b382a97,description,"Po kliknieciu wiadomosci z inbox: &quot;Coś poszło nie tak
+Wystąpił nieoczekiwany błąd podczas ładowania tej strony.&quot;
+
+---
+Ticket: a7e4d052-ff3d-452e-8c73-3f473b2aa3b4
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+","Po kliknieciu wiadomosci z inbox: ""Coś poszło nie tak
+Wystąpił nieoczekiwany błąd podczas ładowania tej strony.""
+
+---
+Ticket: a7e4d052-ff3d-452e-8c73-3f473b2aa3b4
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+"
+d3,tasks.f9b942da-ccd6-4398-83b1-be2841ae4bc5,description,"W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: &quot;Brak powiadomień
+Wszystko załatwione!&quot;
+
+Steps to reproduce:
+1 klinij w ikonke inbox 
+2 sprawdz wiadomosci
+3. porownaj wiadomosci z inbox z listy naglowkow
+
+---
+Ticket: 347ac069-e3e9-40b8-ba66-f0967cd34041
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+","W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: ""Brak powiadomień
+Wszystko załatwione!""
+
+Steps to reproduce:
+1 klinij w ikonke inbox 
+2 sprawdz wiadomosci
+3. porownaj wiadomosci z inbox z listy naglowkow
+
+---
+Ticket: 347ac069-e3e9-40b8-ba66-f0967cd34041
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+"
+d3,tasks.d5cb773d-d201-42a9-aa9a-192737d39d54,description,"W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: &quot;Brak powiadomień
+Wszystko załatwione!&quot;
+
+Steps to reproduce:
+1 klinij w ikonke inbox 
+2 sprawdz wiadomosci
+3. porownaj wiadomosci z inbox z listy naglowkow
+
+---
+Ticket: 347ac069-e3e9-40b8-ba66-f0967cd34041
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+","W inbox - na pasku górnym- mam 2 wiadomości. Natomiast ikonka inbox pokazuje: ""Brak powiadomień
+Wszystko załatwione!""
+
+Steps to reproduce:
+1 klinij w ikonke inbox 
+2 sprawdz wiadomosci
+3. porownaj wiadomosci z inbox z listy naglowkow
+
+---
+Ticket: 347ac069-e3e9-40b8-ba66-f0967cd34041
+Env: production
+Route: /my-work
+User: bartlomiej.straszka@dbr77.com
+"
+d3,tasks.01fd6613-f2ce-4dda-8b6b-0bc5d82ae185,description,"Date &amp; Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion &amp; Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]","Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]"
+d3,tasks.96a4a017-8c0f-48e4-9edc-da26ab70aa07,description,"Date &amp; Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion &amp; Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]","Date & Participants Date: [date] | Participants: [names] Agenda Topic 1 Topic 2 Discussion & Key Points Decisions Made Decision 1: ... Action Items Action 1 — Owner: [name], Due: [date] Action 2 — Owner: [name], Due: [date]"
