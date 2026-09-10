@@ -634,6 +634,19 @@
         "scripts/dev/d2-odkrycie-frontend.sh"
       ],
       "port": 38271
+    },
+    {
+      "name": "p6-przewodnik-20260910",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3115",
+        "--strictPort"
+      ],
+      "port": 3115
     }
   ]
 }

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useDemo } from '../../hooks/useDemo';
+import { ROUTES } from '../../routes/routeConfig';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
 import type { FirstRunRole } from './firstRunConfig';
@@ -82,6 +83,14 @@ export const FirstRunOnboarding: React.FC = () => {
 
   const handleStartFresh = () => {
     void finishAndGo(routeForRole(selectedRole));
+  };
+
+  // P6 — subtle link on the last step to the full "Jak zacząć" journey map
+  // (org context → interview → assessment → initiatives → execution →
+  // results). Reuses finishAndGo so it marks onboarding complete exactly
+  // like Start fresh does, instead of leaving the modal in a half-done state.
+  const handleOpenGuide = () => {
+    void finishAndGo(ROUTES.APP_INTRO);
   };
 
   const handleOpenDemo = async () => {
@@ -155,6 +164,7 @@ export const FirstRunOnboarding: React.FC = () => {
               onBack={() => setStep('role')}
               onOpenDemo={handleOpenDemo}
               onStartFresh={handleStartFresh}
+              onOpenGuide={handleOpenGuide}
               busy={finishing || isDemoLoading}
               t={t}
             />
@@ -319,9 +329,10 @@ const SampleStep: React.FC<
     onBack: () => void;
     onOpenDemo: () => void;
     onStartFresh: () => void;
+    onOpenGuide: () => void;
     busy: boolean;
   }
-> = ({ onBack, onOpenDemo, onStartFresh, busy, t }) => (
+> = ({ onBack, onOpenDemo, onStartFresh, onOpenGuide, busy, t }) => (
   <div>
     <div className="mb-6 text-center">
       <h2 className="text-xl font-bold text-c-text">
@@ -379,10 +390,18 @@ const SampleStep: React.FC<
       </div>
     </div>
 
-    <div className="mt-7 flex items-center">
+    <div className="mt-7 flex items-center justify-between gap-3">
       <Button variant="ghost" icon={<ArrowLeft size={16} />} disabled={busy} onClick={onBack}>
         {t('firstRun.sample.back', 'Back')}
       </Button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onOpenGuide}
+        className="rounded px-1 text-xs font-medium text-c-text-muted underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+      >
+        {t('onboardingGuide.firstRunLink', 'See the full work map: from company context to results')}
+      </button>
     </div>
   </div>
 );
