@@ -185,9 +185,10 @@ export interface ArtifactListItem extends ArtifactRecord {
   reviewGateCount: number;
   ownerName: string | null;
   /**
-   * Presentational dedup metadata. When identical name+type+origin artifacts
-   * collapse into one list row, the newest is kept and this reports how many
-   * older versions it stands in for (1 = unique, no duplicates hidden).
+   * Presentational dedup metadata. When several artifacts stand for the SAME
+   * source object (same origin runtime + origin record), the newest is kept and
+   * this reports how many older registrations it stands in for (1 = unique, no
+   * duplicates hidden). P15: a shared TITLE never collapses rows any more.
    */
   duplicateCount: number;
   /** Artifact IDs of the older duplicates collapsed under this row (newest→oldest). */
@@ -212,8 +213,10 @@ export interface ArtifactListFilters {
    */
   drafts?: 'exclude' | 'include' | 'only';
   /**
-   * Collapse identical name+type+origin duplicates into a single newest row
-   * with a version count. Presentational only — no data is mutated. Defaults on.
+   * Collapse repeat registrations of the SAME source object (origin runtime +
+   * origin record) into a single newest row with a version count. Presentational
+   * only — no data is mutated, and no row is hidden merely for sharing a title.
+   * Defaults on.
    */
   dedupe?: boolean;
 }

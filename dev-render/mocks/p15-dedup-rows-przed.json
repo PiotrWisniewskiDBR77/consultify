@@ -1,0 +1,28 @@
+{
+  "wejscie": 2,
+  "poDedupie": 1,
+  "wiersze": [
+    {
+      "kind": "document",
+      "originRecordId": "b4ad328c-0000-4000-8000-000000000001",
+      "artifactId": "artifact-b4ad328c",
+      "title": "Plan transformacji operacyjnej",
+      "statusKey": "ready",
+      "owner": "Kasia Nowak",
+      "updatedAt": "2026-09-10T08:30:00.000Z",
+      "reportType": "executive_memo",
+      "exportFormats": [
+        "docx"
+      ],
+      "fileFormat": "DOCX",
+      "governance": {
+        "visibilityScope": "organization",
+        "publishState": "approved",
+        "openPath": "/document-studio/b4ad328c-0000-4000-8000-000000000001",
+        "originSummary": {
+          "sourceType": "document_studio"
+        }
+      }
+    }
+  ]
+}
