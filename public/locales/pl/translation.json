@@ -52986,5 +52986,8 @@
       }
     },
     "breadcrumb": "Zlecenia"
+  },
+  "onboardingGuide": {
+    "firstRunLink": "Zobacz całą mapę pracy: od kontekstu firmy do wyników"
   }
 }

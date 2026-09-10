@@ -1,5 +1,6 @@
 import type { FAQItem } from './faqContent';
 import type { ViewHelpMapping } from './viewToModuleMapping';
+import { ROUTES } from '../routes/routeConfig';
 
 export type SupportedHelpLanguage = 'en' | 'pl' | 'de' | 'ar' | 'ja' | 'es';
 
@@ -82,6 +83,12 @@ interface HelpOverviewCard {
   icon: string;
   title: LocalizedText;
   description: LocalizedText;
+  /** P6 — route this journey step links to (order: kontekst organizacji → wywiad → ocena → inicjatywy → realizacja → wyniki). Undefined for support cards, which stay text-only. */
+  route?: string;
+  /** P6 — plain-language "how long" sentence, shown only when route is set. */
+  timeLabel?: LocalizedText;
+  /** P6 — plain-language "what you need to move on" sentence, shown only when route is set. */
+  requirementLabel?: LocalizedText;
 }
 
 const text = (en: string, pl: string): LocalizedText => ({ en, pl });
@@ -179,7 +186,7 @@ export const HELP_SYSTEM_OVERVIEW = {
   title: text('Consultify work map', 'Mapa pracy w Consultify'),
   summary: text(
     'Help explains the work. AI helps you do the work in the exact place where you are.',
-    'Help wyjaśnia pracę. AI pomaga ją wykonać dokładnie tam, gdzie jesteś.'
+    'Pomoc wyjaśnia pracę. AI pomaga ją wykonać dokładnie tam, gdzie jesteś.'
   ),
   intro: text(
     'Consultify guides users through a consulting journey from understanding the current state to measuring business results.',
@@ -187,48 +194,108 @@ export const HELP_SYSTEM_OVERVIEW = {
   ),
   journeyCards: [
     {
+      id: 'org_context',
+      icon: 'Building2',
+      title: text('Organization context', 'Kontekst organizacji'),
+      description: text(
+        'Tell us about the company so every later step already knows who it works for.',
+        'Powiedz nam o firmie, żeby każdy kolejny krok wiedział, dla kogo pracuje.'
+      ),
+      route: ROUTES.ORG_SETUP,
+      timeLabel: text('About 5 minutes.', 'Około 5 minut.'),
+      requirementLabel: text(
+        'You need the company name and a short description of what it does.',
+        'Potrzebujesz nazwy firmy i krótkiego opisu, czym się zajmuje.'
+      ),
+    },
+    {
       id: 'interview',
       icon: 'MessagesSquare',
-      title: text('Interview', 'Interview'),
+      title: text('Interview', 'Wywiad'),
       description: text(
-        'Gather facts, context, and evidence about how the organization works today.',
-        'Zbieraj fakty, kontekst i dowody o tym, jak organizacja działa dzisiaj.'
+        'Talk to people at the client and write down how the organization really works today.',
+        'Porozmawiaj z ludźmi u klienta i zapisz, jak organizacja naprawdę działa dzisiaj.'
+      ),
+      route: ROUTES.INTERVIEW,
+      timeLabel: text(
+        'One conversation per interview, usually 30-60 minutes.',
+        'Jedna rozmowa na wywiad, zwykle 30-60 minut.'
+      ),
+      requirementLabel: text(
+        'You need at least one person to talk to and an interview template to fill in.',
+        'Potrzebujesz przynajmniej jednej osoby do rozmowy i szablonu wywiadu do uzupełnienia.'
       ),
     },
     {
       id: 'tools_assessments',
       icon: 'ClipboardList',
-      title: text('Tools + Assessments', 'Tools + Assessments'),
+      title: text('Assessment', 'Ocena'),
       description: text(
-        'Use frameworks and tools to define how the future state should look.',
-        'Używaj frameworków i narzędzi, aby określić, jak ma wyglądać stan docelowy.'
+        'Score where the organization stands today and see where the biggest gaps are.',
+        'Oceń, gdzie dzisiaj stoi organizacja, i zobacz, gdzie są największe luki.'
+      ),
+      route: ROUTES.ASSESSMENT.ROOT,
+      timeLabel: text(
+        'A first pass usually takes 20-40 minutes.',
+        'Pierwsze przejście to zwykle 20-40 minut.'
+      ),
+      requirementLabel: text(
+        'You need answers from the interview — the assessment is built on them.',
+        'Potrzebujesz odpowiedzi z wywiadu — ocena się na nich opiera.'
       ),
     },
     {
       id: 'initiatives',
       icon: 'Flag',
-      title: text('Initiatives', 'Initiatives'),
+      title: text('Initiatives', 'Inicjatywy'),
       description: text(
-        'Turn diagnosis into a concrete path of change and prioritized initiatives.',
-        'Zamieniaj diagnozę w konkretną drogę zmiany i priorytetowe inicjatywy.'
+        'Turn what you found into a short list of concrete changes worth doing, with an owner for each.',
+        'Zamień to, co znalazłeś, na krótką listę konkretnych zmian wartych zrobienia, z właścicielem dla każdej.'
+      ),
+      route: ROUTES.INITIATIVES,
+      timeLabel: text(
+        'Drafting the first list takes about 15-30 minutes.',
+        'Naszkicowanie pierwszej listy zajmuje około 15-30 minut.'
+      ),
+      requirementLabel: text(
+        'You need at least one finished assessment or interview to base the initiatives on.',
+        'Potrzebujesz przynajmniej jednej ukończonej oceny lub wywiadu, na których oprzesz inicjatywy.'
       ),
     },
     {
       id: 'execution',
       icon: 'PlayCircle',
-      title: text('Execution', 'Execution'),
+      title: text('Execution', 'Realizacja'),
       description: text(
-        'Move from planning to delivery, ownership, and operational follow-through.',
-        'Przechodź z planowania do realizacji, odpowiedzialności i codziennego dowożenia zmian.'
+        'Track who is doing what, by when, on the initiatives you decided to run.',
+        'Śledź, kto co robi i do kiedy, przy inicjatywach, które postanowiłeś prowadzić.'
+      ),
+      route: ROUTES.EXECUTION,
+      timeLabel: text(
+        'Ongoing work — check in on it a few times a week.',
+        'Praca ciągła — zaglądaj tu kilka razy w tygodniu.'
+      ),
+      requirementLabel: text(
+        'You need at least one initiative with an owner and a next task.',
+        'Potrzebujesz przynajmniej jednej inicjatywy z właścicielem i kolejnym zadaniem.'
       ),
     },
     {
       id: 'results',
       icon: 'BarChart3',
-      title: text('Results', 'Results'),
+      title: text('Results', 'Wyniki'),
       description: text(
-        'Check whether the transformation produced the expected business impact.',
-        'Sprawdzaj, czy transformacja przyniosła oczekiwany efekt biznesowy.'
+        'Check whether the changes actually delivered the business result you expected.',
+        'Sprawdź, czy zmiany rzeczywiście dały efekt biznesowy, którego oczekiwałeś.'
+      ),
+      route: ROUTES.RESULTS,
+      timeLabel: text(
+        'Review it once initiatives have been running for a while — not on day one.',
+        'Przejrzyj to, gdy inicjatywy trwają już jakiś czas — nie pierwszego dnia.'
+      ),
+      requirementLabel: text(
+        'You need at least one initiative in execution with a measurable KPI attached.',
+        'Potrzebujesz przynajmniej jednej inicjatywy w realizacji z podpiętym mierzalnym KPI.'
       ),
     },
   ] satisfies HelpOverviewCard[],
@@ -236,7 +303,7 @@ export const HELP_SYSTEM_OVERVIEW = {
     {
       id: 'my_work',
       icon: 'ListTodo',
-      title: text('My Work', 'My Work'),
+      title: text('My Work', 'Moja Praca'),
       description: text(
         'Run tasks and decisions that fall out of every initiative.',
         'Prowadź zadania i decyzje wynikające z każdej inicjatywy.'
@@ -245,25 +312,20 @@ export const HELP_SYSTEM_OVERVIEW = {
     {
       id: 'ideas',
       icon: 'Lightbulb',
-      title: text('Ideas / Workplace / Notes', 'Ideas / Workplace / Notes'),
+      title: text('Ideas / Workplace / Notes', 'Pomysły / Notatnik / Notatki'),
       description: text(
         'Capture raw observations, workshop output, and emerging ideas.',
         'Zbieraj surowe obserwacje, wyniki warsztatów i nowe pomysły.'
       ),
     },
-    {
-      id: 'finance',
-      icon: 'Wallet',
-      title: text('Finance', 'Finance'),
-      description: text(
-        'Validate value, ROI, and financial trade-offs behind the change.',
-        'Waliduj wartość, ROI i finansowe kompromisy stojące za zmianą.'
-      ),
-    },
+    // DEC-459 / odbiór 2026-09-10: karta Finanse zdjęta z przewodnika — moduł
+    // MODULE_ECONOMICS ma dziś status 'closed' w betaMenuStatus.ts (poza MVP,
+    // patrz _MVP_PRZEGLAD_MENU_2026-07-28.md) i nie ma pozycji w menu głównym.
+    // Przewodnik nie może obiecywać przejścia, którego nie da się wykonać.
     {
       id: 'presentations',
       icon: 'Presentation',
-      title: text('Reports / Presentations', 'Reports / Presentations'),
+      title: text('Reports / Presentations', 'Raporty / Prezentacje'),
       description: text(
         'Turn work into decisions, updates, and stakeholder communication.',
         'Zamieniaj pracę w decyzje, statusy i komunikację do interesariuszy.'
@@ -5829,6 +5891,10 @@ export function getOverviewCards(language: SupportedHelpLanguage) {
       ...card,
       title: getLocalizedText(card.title, language),
       description: getLocalizedText(card.description, language),
+      timeLabel: card.timeLabel ? getLocalizedText(card.timeLabel, language) : undefined,
+      requirementLabel: card.requirementLabel
+        ? getLocalizedText(card.requirementLabel, language)
+        : undefined,
     })),
     support: HELP_SYSTEM_OVERVIEW.supportCards.map((card) => ({
       ...card,

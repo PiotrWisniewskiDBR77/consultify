@@ -35,9 +35,9 @@ export const AppIntroView: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6 py-8 md:px-8 md:py-10">
         <section className="rounded-3xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-6 md:p-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 px-3 py-1 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200 px-3 py-1 text-xs font-semibold">
               <BookOpen size={14} />
-              {lang === 'pl' ? 'Intro aplikacji' : 'App intro'}
+              {lang === 'pl' ? 'Jak zacząć' : 'Getting started'}
             </div>
             <h1 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 dark:text-white">
               {getLocalizedText(HELP_SYSTEM_OVERVIEW.title, lang)}
@@ -53,7 +53,7 @@ export const AppIntroView: React.FC = () => {
                 onClick={() => navigate(ROUTES.INTERVIEW)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2.5 text-sm font-semibold transition-colors"
               >
-                {lang === 'pl' ? 'Przejdź do Interview' : 'Go to Interview'}
+                {lang === 'pl' ? 'Przejdź do Wywiadu' : 'Go to Interview'}
                 <ArrowRight size={15} />
               </button>
               <button
@@ -76,31 +76,39 @@ export const AppIntroView: React.FC = () => {
         <section className="mt-8">
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {lang === 'pl' ? '5 etapów pracy' : '5-step journey'}
+              {lang === 'pl'
+                ? `${overviewCards.journey.length} etapów pracy`
+                : `${overviewCards.journey.length}-step journey`}
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
               {lang === 'pl'
-                ? 'To jest główna logika pracy w Consultify. Każdy etap odpowiada innemu rodzajowi decyzji.'
-                : 'This is the core work map in Consultify. Each step supports a different kind of decision.'}
+                ? 'To jest kolejność pracy w Consultify — od poznania firmy do sprawdzenia efektu. Kliknij krok, aby tam przejść.'
+                : 'This is the order of work in Consultify — from understanding the company to checking the result. Click a step to go there.'}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {overviewCards.journey.map((card, index) => (
-              <div
+              <button
                 key={card.id}
-                className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-4"
+                type="button"
+                onClick={() => card.route && navigate(card.route)}
+                disabled={!card.route}
+                className="text-left rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-4 transition-colors hover:border-slate-300 dark:hover:border-navy-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-default disabled:hover:border-slate-200 dark:disabled:hover:border-navy-800"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
                     <DynamicIcon
                       name={card.icon}
                       size={18}
-                      className="text-primary-600 dark:text-primary-300"
+                      className="text-slate-600 dark:text-slate-300"
                     />
                   </div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {String(index + 1).padStart(2, '0')}
                   </div>
+                  {card.route && (
+                    <ArrowRight size={15} className="ml-auto text-slate-400 dark:text-slate-500" />
+                  )}
                 </div>
                 <div className="mt-4 text-sm font-semibold text-slate-900 dark:text-white">
                   {card.title}
@@ -108,7 +116,17 @@ export const AppIntroView: React.FC = () => {
                 <div className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                   {card.description}
                 </div>
-              </div>
+                {card.timeLabel && (
+                  <div className="mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    {card.timeLabel}
+                  </div>
+                )}
+                {card.requirementLabel && (
+                  <div className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    {card.requirementLabel}
+                  </div>
+                )}
+              </button>
             ))}
           </div>
         </section>
@@ -134,7 +152,7 @@ export const AppIntroView: React.FC = () => {
                   <DynamicIcon
                     name={card.icon}
                     size={18}
-                    className="text-primary-600 dark:text-primary-300"
+                    className="text-slate-600 dark:text-slate-300"
                   />
                 </div>
                 <div className="mt-4 text-sm font-semibold text-slate-900 dark:text-white">
@@ -151,12 +169,12 @@ export const AppIntroView: React.FC = () => {
         <section className="mt-8 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Sparkles size={16} className="text-primary-500" />
-              {lang === 'pl' ? 'Jak działa Help' : 'How Help works'}
+              <Sparkles size={16} className="text-slate-500 dark:text-slate-400" />
+              {lang === 'pl' ? 'Jak działa Pomoc' : 'How Help works'}
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
               {lang === 'pl'
-                ? 'Help tłumaczy, po co istnieje bieżący ekran, co tu robisz i co powinno wydarzyć się dalej.'
+                ? 'Pomoc tłumaczy, po co istnieje bieżący ekran, co tu robisz i co powinno wydarzyć się dalej.'
                 : 'Help explains why the current screen exists, what you do here, and what should happen next.'}
             </p>
           </div>
@@ -167,7 +185,7 @@ export const AppIntroView: React.FC = () => {
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
               {lang === 'pl'
-                ? 'AI nie zastępuje helpa. Pomaga zinterpretować kontekst i przygotować następny krok dokładnie tam, gdzie pracujesz.'
+                ? 'AI nie zastępuje pomocy. Pomaga zinterpretować kontekst i przygotować następny krok dokładnie tam, gdzie pracujesz.'
                 : 'AI does not replace help. It helps interpret context and prepare the next step exactly where you are working.'}
             </p>
           </div>

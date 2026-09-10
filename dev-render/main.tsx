@@ -111,6 +111,9 @@ const AssessmentPresentationViewScreen = React.lazy(
 const PrawyPasJednaFormulaScreen = React.lazy(
   () => import('./screens/prawy-pas-jedna-formula')
 );
+const P6PrzewodnikJakZaczacScreen = React.lazy(
+  () => import('./screens/p6-przewodnik-jak-zaczac')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -685,6 +688,11 @@ const Day267MaterialyHubZrzutyScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'p6-przewodnik-jak-zaczac': {
+    label:
+      'P6 — REALNY <AppIntroView> (trasa /app-intro), przewodnik "Jak zacząć": 6 kroków kontekst organizacji → wywiad → ocena → inicjatywy → realizacja → wyniki, każdy z linkiem, czasem i wymaganiem. &lang=pl|en &theme=light|dark',
+    render: () => <P6PrzewodnikJakZaczacScreen />,
+  },
   'day237-spotkania': {
     label:
       'Dyżur 237 — realne MeetingHub / MeetingObjectPage / Sidebar; &view=list|object|member-sidebar|member-direct &state=pending|rejected|approved',
