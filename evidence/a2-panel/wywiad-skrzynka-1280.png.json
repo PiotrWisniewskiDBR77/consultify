@@ -1,0 +1,73 @@
+{
+ "url": "http://127.0.0.1:3256/interview",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "css=tbody tr:first-child"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1280,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInterview\nInbox\nData\nModel\nPaweł Mroczkowski\nPM\nInbox\nSessions\nAssigned\nTemplates\nInsights\nInitiatives\nAssign\nAll\n10\nAnswered\n1\nApproved\n1\nSent back\n0\n\t\nTYPE\n\t\nNAME\n\t\nSTATUS\n\t\nPROGRESS\n\t\nDAYS TO DUE\n\t\nASSIGNEE\n\t\n\n\t\nSzybki Wywiad ze Stakeholderem\n\t\nSzybki Wywiad ze Stakeholderem\n\t\nAssigned\n\t\n0%\n\t\n53d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nSzybki Wywiad ze Stakeholderem\n\t\nSzybki Wywiad ze Stakeholderem\n\t\nAssigned\n\t\n0%\n\t\n53d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nPrzegląd Optymalizacji Kosztów\n\t\nPrzegląd Optymalizacji Kosztów\n\t\nAssigned\n\t\n0%\n\t\n53d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nPrzegląd Optymalizacji Kosztów\n\t\nPrzegląd Optymalizacji Kosztów\n\t\nAssigned\n\t\n0%\n\t\n53d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nA3 QA — Test wywiadu (usunąć po teście)\n\t\nA3 QA — Test wywiadu (usunąć po teście)\n\t\nAssigned\n\t\n0%\n\t\n44d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nA3 QA Org — Test wywiadu (usunąć po teście)\n\t\nA3 QA Org — Test wywiadu (usunąć po teście)\n\t\nSubmitted\n\t\n100%\n\t\n44d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nA3 QA Org — Test wywiadu (usunąć po teście)\n\t\nA3 QA Org — Test wywiadu (usunąć po teście)\n\t\nApproved\n\t\n100%\n\t\n44d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nQuick Company Snapshot\n\t\nQuick Company Snapshot\n\t\nAssigned\n\t\n0%\n\t\n1d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nQuick Company Snapshot\n\t\nQuick Company Snapshot\n\t\nAssigned\n\t\n0%\n\t\n1d overdue\n\t\nP\nPaweł Mroczkowski\n\t\n\n\t\nQuick Company Snapshot\n\t\nQuick Company Snapshot\n\t\nAssigned\n\t\n0%\n\t\n1d overdue\n\t\nP\nPaweł Mroczkowski\n\t\nSzybki Wywiad ze Stakeholderem\nOpen\nAssigned\nProgress: 0%\n53d overdue\nDETAILS\n~14 words\n\nKrótki szablon (15-20 min) do zbierania perspektywy kluczowych interesariuszy na temat projektu lub inicjatywy.\n\nAI\nSummarize\nRisks\nNext steps\nRELATIONS\nNo relations\nStart\nOpen\nO\n+1d\n+3d\n+7d",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 908,
+     "y": 180,
+     "width": 340,
+     "height": 720
+    }
+   ]
+  },
+  "[role=\"tab\"]": {
+   "liczba": 6,
+   "boxy": [
+    {
+     "x": 128,
+     "y": 61,
+     "width": 86.859375,
+     "height": 36
+    },
+    {
+     "x": 220.859375,
+     "y": 61,
+     "width": 110.296875,
+     "height": 36
+    },
+    {
+     "x": 337.15625,
+     "y": 61,
+     "width": 112.453125,
+     "height": 36
+    },
+    {
+     "x": 455.609375,
+     "y": 61,
+     "width": 119.234375,
+     "height": 36
+    },
+    {
+     "x": 580.84375,
+     "y": 61,
+     "width": 102.578125,
+     "height": 36
+    },
+    {
+     "x": 689.421875,
+     "y": 61,
+     "width": 113.828125,
+     "height": 36
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-10T19:36:19.625Z"
+}
