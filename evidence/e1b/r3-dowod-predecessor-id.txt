@@ -1,0 +1,27 @@
+E1b/R3 — dowod na zywo (2026-09-10)
+Stanowisko: kopia consultify_kopia_e1b (port 54418), API :4221, konto ADMIN audyt@dbr77.local
+Endpoint: GET /api/v8/planning/initiatives/bafcb088-5453-4345-9500-5723d883fe2c/task-dependencies
+
+SCHEMAT REALNY task_dependencies (information_schema.columns, ta sama baza co staging/demo):
+id
+from_task_id
+to_task_id
+type
+created_at
+dependency_type
+lag_days
+notes
+created_by
+
+PRZED naprawa (kod zmutowany recznie z powrotem na stara wersje — predecessor_id/successor_id PIERWSZE, catch+fallback):
+  odpowiedz HTTP 200 (dane poprawne dzieki fallbackowi w catch), ALE log API:
+  2026-09-10 15:24:45 [error]: [QueryHelper] Error in queryAll: column td.predecessor_id does not exist
+  {"code":"42703","routine":"errorMissingColumn", ...}
+
+PO naprawie (resolveTaskDependenciesColumns — jedno realne zapytanie, bez proby skazanej na blad):
+  4x wywolanie tego samego endpointu, HTTP 200 kazdorazowo:
+  call1: 200
+  call2: 200
+  call3: 200
+  call4: 200
+  grep -c "predecessor_id" w logu API po tych 4 wywolaniach: 0

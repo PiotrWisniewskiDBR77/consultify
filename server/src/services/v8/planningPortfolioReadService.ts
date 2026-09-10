@@ -19,6 +19,48 @@ import {
 } from '../initiative/initiativeLifecycleCanon.js';
 import { kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 
+// E1b/R3 (2026-09-10): POMIAR na kopii `consultify_kopia_e1b` (schemat
+// identyczny jak staging/demo — `PostgresDatabase.ts` CREATE TABLE
+// `task_dependencies(... from_task_id ... to_task_id ...)`,
+// `conflictTargets.ts:77` potwierdza to samo "verified in parity DB") —
+// kolumny `predecessor_id`/`successor_id` NIE ISTNIEJĄ w tej bazie.
+// `getInitiativeTaskDependenciesRead` (niżej) próbował NAJPIERW
+// `predecessor_id`/`successor_id`, łapał błąd, dopiero potem sięgał po
+// prawdziwe `from_task_id`/`to_task_id` — funkcjonalnie działało (fallback
+// w `catch`), ale KAŻDE wywołanie logowało `[QueryHelper] Error in
+// queryAll: column td.predecessor_id does not exist` (42703) jako ERROR —
+// dokładnie zgłoszenie z odbioru adwersaryjnego (4× w logu API). Naprawa:
+// rozpoznaj realny schemat RAZ (`getTableColumns`, jak `TaskController.
+// getTaskDepsSchema`) i buduj zapytanie z właściwymi kolumnami od razu —
+// zero prób skazanych na błąd, zero szumu w logu. Fallback na
+// predecessor_id/successor_id zostaje jako sieć bezpieczeństwa dla innego
+// wariantu schematu (nigdy nie zmierzony na tej bazie, ale tani do
+// utrzymania).
+type TaskDependenciesColumns = {
+  from: 'from_task_id' | 'predecessor_id';
+  to: 'to_task_id' | 'successor_id';
+};
+let taskDependenciesColumnsCache: TaskDependenciesColumns | null = null;
+
+async function resolveTaskDependenciesColumns(): Promise<TaskDependenciesColumns> {
+  if (taskDependenciesColumnsCache) return taskDependenciesColumnsCache;
+  try {
+    const cols = await getTableColumns('task_dependencies');
+    if (cols.has('from_task_id') && cols.has('to_task_id')) {
+      taskDependenciesColumnsCache = { from: 'from_task_id', to: 'to_task_id' };
+      return taskDependenciesColumnsCache;
+    }
+    if (cols.has('predecessor_id') && cols.has('successor_id')) {
+      taskDependenciesColumnsCache = { from: 'predecessor_id', to: 'successor_id' };
+      return taskDependenciesColumnsCache;
+    }
+  } catch {
+    // ignore; fall back to the real schema below
+  }
+  taskDependenciesColumnsCache = { from: 'from_task_id', to: 'to_task_id' };
+  return taskDependenciesColumnsCache;
+}
+
 function isMissingPlanningSupportTableError(error: unknown, tableName: string): boolean {
   const message = String((error as any)?.message || error || '').toLowerCase();
   const normalizedTable = tableName.toLowerCase();
@@ -444,13 +486,12 @@ export async function getInitiativeTaskDependenciesRead(
     SF: 'SF',
   };
 
-  let rows: any[] = [];
-  try {
-    rows = await queryHelpers.queryAll(
-      `SELECT
+  const { from: fromCol, to: toCol } = await resolveTaskDependenciesColumns();
+  const rows: any[] = await queryHelpers.queryAll(
+    `SELECT
         td.id,
-        td.predecessor_id as "fromTaskId",
-        td.successor_id as "toTaskId",
+        td.${fromCol} as "fromTaskId",
+        td.${toCol} as "toTaskId",
         ${TASK_DEPENDENCY_SQL_SELECT},
         td.notes,
         td.created_at as "createdAt",
@@ -461,43 +502,15 @@ export async function getInitiativeTaskDependenciesRead(
         t.status as "toStatus",
         t.priority as "toPriority"
       FROM task_dependencies td
-      JOIN tasks f ON f.id = td.predecessor_id
-      JOIN tasks t ON t.id = td.successor_id
+      JOIN tasks f ON f.id = td.${fromCol}
+      JOIN tasks t ON t.id = td.${toCol}
       WHERE f.organization_id = ?
         AND t.organization_id = ?
         AND f.initiative_id = ?
         AND t.initiative_id = ?
       ORDER BY td.created_at DESC`,
-      [organizationId, organizationId, initiativeId, initiativeId]
-    );
-  } catch (err: any) {
-    const msg = String(err?.message || '').toLowerCase();
-    if (!msg.includes('no such column') && !msg.includes('does not exist')) throw err;
-    rows = await queryHelpers.queryAll(
-      `SELECT
-        td.id,
-        td.from_task_id as "fromTaskId",
-        td.to_task_id as "toTaskId",
-        ${TASK_DEPENDENCY_SQL_SELECT},
-        td.notes,
-        td.created_at as "createdAt",
-        f.title as "fromTitle",
-        f.status as "fromStatus",
-        f.priority as "fromPriority",
-        t.title as "toTitle",
-        t.status as "toStatus",
-        t.priority as "toPriority"
-      FROM task_dependencies td
-      JOIN tasks f ON f.id = td.from_task_id
-      JOIN tasks t ON t.id = td.to_task_id
-      WHERE f.organization_id = ?
-        AND t.organization_id = ?
-        AND f.initiative_id = ?
-        AND t.initiative_id = ?
-      ORDER BY td.created_at DESC`,
-      [organizationId, organizationId, initiativeId, initiativeId]
-    );
-  }
+    [organizationId, organizationId, initiativeId, initiativeId]
+  );
 
   return (rows || []).flatMap((row: any) => {
     // node-pg folds UNQUOTED column aliases to lowercase (Postgres), while
