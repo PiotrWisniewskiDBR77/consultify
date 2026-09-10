@@ -134,6 +134,29 @@ class TrialCron {
   }
 
   /**
+   * Standalone demo-org reclaim, run on its own (hourly) schedule
+   * (w1a-sprzatanie-20260910, zadanie 3: staging accumulated 11 session clones
+   * in under 5h because cleanup only ran once a day at 2:30 — anything created
+   * after that ran sat for up to 24h before the next pass). Kept separate from
+   * `runDailyTrialTasks` rather than changing that method's cadence: trial
+   * warnings/lockdown must stay daily (hourly would spam T-7 warnings), while
+   * demo cleanup is a pure, idempotent read-then-delete safe to run as often as
+   * the schedule allows. Calling `cleanupExpiredDemos` here in addition to the
+   * daily bundle is harmless — a second pass in the same day just finds fewer
+   * (or zero) candidates, since anything already reclaimed no longer matches.
+   */
+  async runDemoCleanup(): Promise<number> {
+    const deps = await this.ensureDeps();
+    if (!deps.demoService || typeof deps.demoService.cleanupExpiredDemos !== 'function') {
+      logger.warn('[TrialCron] DemoService unavailable; skipping hourly demo cleanup');
+      return 0;
+    }
+    const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
+    logger.info(`[TrialCron] (hourly) Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+    return demosCleanedUp;
+  }
+
+  /**
    * Reset usage counters (optional - counters auto-reset by date)
    * This cleans up old counter records older than 30 days
    */
@@ -176,6 +199,10 @@ export const runDailyTrialTasks = async (
   deps?: Partial<Dependencies>
 ): Promise<DailyTrialTasksResult> => {
   return getTrialCron(deps).runDailyTrialTasks();
+};
+
+export const runDemoCleanup = async (deps?: Partial<Dependencies>): Promise<number> => {
+  return getTrialCron(deps).runDemoCleanup();
 };
 
 export const cleanupOldUsageCounters = async (deps?: Partial<Dependencies>): Promise<number> => {

@@ -228,6 +228,26 @@ export const Scheduler = {
     });
     this.jobs.push(job3);
 
+    // 3b. Demo org reclaim — run more often than the daily bundle above.
+    // w1a-sprzatanie-20260910 zadanie 3: on staging, demo-session clones
+    // (server/src/services/demo/demoSessionService.ts) accumulated for hours
+    // because the only cleanup pass was the once-daily job3 at 2:30 AM — a
+    // clone minted at 06:00 sat around until the NEXT day's run. Default here
+    // is hourly; override with `DEMO_CLEANUP_CRON_EXPRESSION` (standard 5-field
+    // cron string) if a different cadence is ever needed. Safe to run this
+    // often: findExpiredDemoCandidates is a pure read gated by TTL + zero real
+    // members + DEMO type + whitelist, and cleanupExpiredDemos itself is a
+    // no-op unless DEMO_CLEANUP_ENABLED is truthy — so an hourly schedule never
+    // changes behavior in an environment that has not opted in.
+    const demoCleanupCron = process.env.DEMO_CLEANUP_CRON_EXPRESSION || '30 * * * *';
+    const job3b = cron.schedule(demoCleanupCron, () => {
+      logger.info('[Scheduler] Running hourly Demo Org Cleanup');
+      trialCron.runDemoCleanup().catch((err: any) => {
+        logger.error('[Scheduler] Hourly Demo Org Cleanup failed:', err?.message || err);
+      });
+    });
+    this.jobs.push(job3b);
+
     // 4. Usage Counter Cleanup - Run weekly on Sunday at 2:00 AM
     const job4 = cron.schedule('0 2 * * 0', () => {
       logger.info('[Scheduler] Running Weekly Usage Counter Cleanup');
