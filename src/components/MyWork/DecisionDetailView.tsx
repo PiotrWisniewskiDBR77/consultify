@@ -107,7 +107,7 @@ import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { PracujZAI } from '../standard/PracujZAI';
 import { StickyStosKartyN } from '../standard/StickyStosKartyN';
-import { sekcjeZKontraktu } from '../standard/contractSections';
+import { pilnujSekcjiZKontraktu, sekcjeZKontraktu } from '../standard/contractSections';
 import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
 import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // SPEC-N §2.4: jedyna dozwolona droga budowy toolbara karty.
@@ -134,6 +134,19 @@ import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 // POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
 import { DECISION_CARDS, DECISION_CARD_SPEC } from './decisionCardContract';
+
+// Id-ki lewej kolumny kontraktu Decision, dla których TEN plik ma realny blok
+// centrum (`activeNotionSection === '<id>'`, patrz grep niżej) — SSOT „ekranu"
+// dla `pilnujSekcjiZKontraktu` w `decisionContractSections`. Utrzymuj ręcznie w
+// parze z: `grep -n "activeNotionSection === '" DecisionDetailView.tsx`.
+export const DECISION_SECTIONS_Z_RENDEREM = [
+  'context-problem',
+  'options-tradeoffs',
+  'risk-impact',
+  'consequences',
+  'governance-escalation',
+  'resources-links',
+] as const;
 import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
@@ -1579,10 +1592,20 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // zostaje to, co widoczne ZAWSZE, czyli prawy panel; sekcje znikaja z lewej
   // nawigacji, a PELNA tresc (CommentsCanvas / ActivityLogCanvas) przenosi sie
   // do panelu — patrz `rightPanelSections` nizej.
-  const decisionContractSections = useMemo(
-    () => sekcjeZKontraktu(DECISION_CARDS, 'decision'),
-    []
-  );
+  const decisionContractSections = useMemo(() => {
+    const sections = sekcjeZKontraktu(DECISION_CARDS, 'decision');
+    // W1-A (odbiór A1, 2026-09-10): `wymagajSekcjiZKontraktu` miała 0 wołaczy
+    // produkcyjnych — dokładnie ta klasa defektu ujawniła R1 w Insight (sekcja
+    // w kontrakcie bez case'a w centrum = puste centrum). Decision renderuje
+    // centrum PER-ID (`activeNotionSection === '<id>'`, nie tablicą komponentów
+    // jak Insight/Notification), więc „ekran" to statyczna lista id-ków, dla
+    // których w tym pliku istnieje realny blok JSX — utrzymywana ręcznie obok
+    // grepa `activeNotionSection ===`, żeby dopisanie karty do katalogu bez
+    // dopisania renderu (albo odwrotnie) zaczerwieniło testy, zamiast cicho
+    // wyrenderować pustkę.
+    pilnujSekcjiZKontraktu(DECISION_SECTIONS_Z_RENDEREM.map((id) => ({ id })), sections);
+    return sections;
+  }, []);
 
   // ── Kontrakt AI per sekcja (SPEC-N §2.5) ──────────────────────────────────
   // Wymog: KAZDA sekcja deklaruje kontrakt AI albo jawne wykluczenie
