@@ -315,10 +315,18 @@ export const ResultsReportGeneratorDrawer: React.FC<ResultsReportGeneratorDrawer
                   value={projectId}
                   onChange={setProjectId}
                   placeholder={isPolish ? 'Wskaż projekt…' : 'Choose a project…'}
-                  options={projects.map((project) => ({
-                    value: project.id,
-                    label: project.name,
-                  }))}
+                  options={projects
+                    // D-C2/DEC-464: rodzina RequiredProjectPicker — lista
+                    // służy do WYBORU projektu dla nowego raportu, więc
+                    // archived jest ukryty (poza już wybranym projectId).
+                    .filter((project) => project.status !== 'archived' || project.id === projectId)
+                    .map((project) => ({
+                      value: project.id,
+                      label:
+                        project.status === 'archived'
+                          ? `${project.name} ${isPolish ? '(zarchiwizowany)' : '(archived)'}`
+                          : project.name,
+                    }))}
                   error={
                     projectsError
                       ? isPolish

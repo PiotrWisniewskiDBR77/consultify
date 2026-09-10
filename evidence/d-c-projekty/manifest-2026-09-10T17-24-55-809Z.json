@@ -1,0 +1,143 @@
+{
+  "wykonano": "2026-09-10T17:24:55.810Z",
+  "tryb": "apply",
+  "cel": "thomas.proxy.rlwy.net:52567/railway",
+  "organizacja": "a3e05d4a-5397-419d-b486-8e44366c0063",
+  "archived_by": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+  "planowane_archiwizacje": [
+    {
+      "id": "923bc369-e684-4aa6-a598-f69746fe719a",
+      "nazwa": "Automated Changeover Optimization",
+      "powod": "pusty duplikat: 0 wierszy we wszystkich tabelach project_id poza project_members",
+      "poprzedniStatus": "active"
+    },
+    {
+      "id": "6be9d39f-2c73-4ac2-8e1d-e54870d4e872",
+      "nazwa": "DBR77 Demo — All Modules",
+      "powod": "pusty duplikat: 0 wierszy we wszystkich tabelach project_id poza project_members",
+      "poprzedniStatus": "active"
+    }
+  ],
+  "stop_bez_zmian": [
+    "21e06b0c-cf37-4c97-ae81-256a6950d691",
+    "04366332-e4b5-4189-b656-72f8298665cf",
+    "ff83a6dd-b1f0-49e8-8edb-d06a3fc18241",
+    "project-dbr77-demo-all-modules",
+    "2fbb1e31-6c71-4228-b775-05aae98690d6",
+    "f992cfae-9b03-473f-a685-a5f58b5a5119",
+    "project-dbr77-001",
+    "655bb4b2-e757-480c-8d8d-df37a552c5bb",
+    "5061af12-91d7-54b1-b424-9b5d9a715496",
+    "b4695c7c-0434-46ac-9cc1-3cd89afc463a"
+  ],
+  "przed": [
+    {
+      "id": "04366332-e4b5-4189-b656-72f8298665cf",
+      "name": "Automated Changeover Optimization",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "923bc369-e684-4aa6-a598-f69746fe719a",
+      "name": "Automated Changeover Optimization",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "21e06b0c-cf37-4c97-ae81-256a6950d691",
+      "name": "Automated Changeover Optimization",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-15T16:52:27.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "ff83a6dd-b1f0-49e8-8edb-d06a3fc18241",
+      "name": "DBR77 Demo — All Modules",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "updated_at": "2026-02-22T10:40:51.370Z"
+    },
+    {
+      "id": "project-dbr77-demo-all-modules",
+      "name": "DBR77 Demo — All Modules",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "updated_at": "2026-02-22T10:40:51.370Z"
+    },
+    {
+      "id": "6be9d39f-2c73-4ac2-8e1d-e54870d4e872",
+      "name": "DBR77 Demo — All Modules",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-22T10:29:11.506Z",
+      "updated_at": "2026-02-22T10:40:51.370Z"
+    },
+    {
+      "id": "f992cfae-9b03-473f-a685-a5f58b5a5119",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "project-dbr77-001",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "2fbb1e31-6c71-4228-b775-05aae98690d6",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2025-12-23T17:26:46.000Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "655bb4b2-e757-480c-8d8d-df37a552c5bb",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "5061af12-91d7-54b1-b424-9b5d9a715496",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    },
+    {
+      "id": "b4695c7c-0434-46ac-9cc1-3cd89afc463a",
+      "name": "DBR77 Transformation Program",
+      "status": "active",
+      "archived_at": null,
+      "archived_by": null,
+      "created_at": "2026-02-16T20:37:36.154Z",
+      "updated_at": "2026-02-17T10:19:12.627Z"
+    }
+  ]
+}
