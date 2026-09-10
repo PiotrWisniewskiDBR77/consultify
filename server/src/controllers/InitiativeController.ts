@@ -443,9 +443,27 @@ export class InitiativeController {
         archived: Boolean((i as any).archived),
       }));
 
-      if (isInitiativeUnifiedReadEnabled()) {
+      // FIX-6 [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]:
+      // `listInitiativeHeaders` zna WYLACZNIE projectId/status/search. Ten blok
+      // dokleja jego naglowki PO `ORDER BY`/`LIMIT`/`OFFSET` i po WSZYSTKICH
+      // klauzulach WHERE budowanych wyzej — dla kazdego filtra, ktorego
+      // czytnik nie rozumie, doklejenie uniewazniało cala odpowiedz. Zmierzone
+      // na kopii stagingu 10.09 (`97_ODBIOR_W1_W2.md` §2.4): `limit=10` -> 121
+      // zamiast 10, `source=assessment` -> 121 zamiast 3, `priority=high` ->
+      // 121 zamiast 13, `projectId=unassigned` -> 121 zamiast 73. Minimum
+      // bezpieczne, ktore daje kontrakt IDENTYCZNY z OFF przy tych filtrach:
+      // NIE doklejac naglowkow kanonicznych, gdy zapytanie niesie filtr spoza
+      // zestawu, ktory czytnik obsluguje.
+      const hasReaderUnsupportedFilter =
+        pageLimit !== null ||
+        pageOffset > 0 ||
+        Boolean(normalizedSourceFilter) ||
+        Boolean(sourceAssessmentId) ||
+        priorities.length > 0 ||
+        projectId === 'unassigned';
+      if (isInitiativeUnifiedReadEnabled() && !hasReaderUnsupportedFilter) {
         const headers = await listInitiativeHeaders(orgId, {
-          projectId: projectId && projectId !== 'unassigned' ? projectId : undefined,
+          projectId: projectId ? String(projectId) : undefined,
           status,
           search,
         });
@@ -461,7 +479,15 @@ export class InitiativeController {
             priority: 'medium',
             progress: 0,
             ownerBusiness: header.ownerId ? { id: header.ownerId } : null,
-            sourceType: header.source,
+            // FIX-2: `sourceType` to plakietka ZRODLA BIZNESOWEGO
+            // (manual/tool/teresa_chat/assessment, DEC 02.09 „Assessment =
+            // plakietka zrodla") — wpisywanie tu technicznego pochodzenia
+            // magazynu (`CANONICAL`) lamalo ten kontrakt (zmierzone: 15x w
+            // odpowiedzi ON). `recordSource` to nowe, osobne pole niosace
+            // WYLACZNIE `CANONICAL|LEGACY`; front dalej czyta `sourceType`
+            // bez zmian (niezliczone miejsca w `src/components/Initiatives/**`
+            // renderuja plakietke zrodla z tego pola).
+            recordSource: header.source,
           } as (typeof initiatives)[number]);
         }
       }

@@ -26,7 +26,30 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
   let sql: Client;
   let authorization: string;
 
+  // FIX-8 [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]:
+  // pulapki §0.2e (a)/(b)/(d) ustawiane JAWNIE W PLIKU TESTU, nie zalezne od
+  // env wywolania — wzorem (c), ktore juz mial ten plik (`expect(process.env.DB_TYPE)`
+  // + `assertRealPostgresTestEnvironment()` ponizej). Wszystkie trzy strazniki
+  // czytaja `process.env` NA ZYWO przy kazdym zadaniu (nie sa cache'owane w
+  // module-scope stalej jak `featureFlags` w `FeatureFlags.ts`), wiec ustawienie
+  // ich tutaj, w `beforeAll` PRZED `ApiGateway.getInstance().initializeRoutes(app)`,
+  // jest wystarczajace i nie wymaga zadnej gimnastyki z kolejnoscia importow:
+  //   (a) `v8FeatureGate.middleware.ts:15` — `ENABLE_V8_GLOBAL`
+  //   (b) `resultsInternalBetaVisibility.middleware.ts:29` — `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE`
+  //   (d) `auth.middleware.ts:1396` — `ENABLE_TEST_AUTH_BYPASS`
+  // Oryginalne wartosci zapamietane i przywrocone w `afterAll`, zeby ten plik
+  // nie zostawial srodowiska zmienionego dla innych plikow w tym samym
+  // procesie robotnika testowego.
+  const originalEnv = {
+    ENABLE_V8_GLOBAL: process.env.ENABLE_V8_GLOBAL,
+    RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE: process.env.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE,
+    ENABLE_TEST_AUTH_BYPASS: process.env.ENABLE_TEST_AUTH_BYPASS,
+  };
+
   beforeAll(async () => {
+    process.env.ENABLE_V8_GLOBAL = 'true';
+    process.env.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE = 'enforce';
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
     expect(process.env.DB_TYPE).toBe('postgres');
     await assertRealPostgresTestEnvironment();
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
@@ -62,7 +85,20 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
   }, 30_000);
 
   afterAll(async () => {
+    // FIX-8 — przywrocenie env sprzed testu (patrz komentarz przy beforeAll).
+    if (originalEnv.ENABLE_V8_GLOBAL === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = originalEnv.ENABLE_V8_GLOBAL;
+    if (originalEnv.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE === undefined)
+      delete process.env.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE;
+    else
+      process.env.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE =
+        originalEnv.RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE;
+    if (originalEnv.ENABLE_TEST_AUTH_BYPASS === undefined) delete process.env.ENABLE_TEST_AUTH_BYPASS;
+    else process.env.ENABLE_TEST_AUTH_BYPASS = originalEnv.ENABLE_TEST_AUTH_BYPASS;
+
     if (!sql) return;
+    // FIX-7 — sprzatanie wiersza kolizyjnego dopisanego do tabeli zastanej.
+    await sql.query(`DELETE FROM initiatives WHERE id=$1`, [initiativeId]);
     await sql.query(`DELETE FROM ie_outbox_events WHERE organization_id=$1`, [organizationId]);
     await sql.query(`DELETE FROM ie_audit_events WHERE organization_id=$1`, [organizationId]);
     await sql.query(`DELETE FROM ie_command_receipts WHERE organization_id=$1`, [organizationId]);
@@ -197,8 +233,49 @@ describe('CODEX1 — charakterystyka rozjazdu dwoch magazynow inicjatyw', NO_RET
     expect(await initiativeExists(randomUUID(), initiativeId)).toBe(false);
   });
 
-  it('E2 — przy kolizji zrodlem rozstrzygajacym jest kanon', async () => {
-    const header = await readInitiativeHeader(organizationId, initiativeId);
-    expect(header).toMatchObject({ id: initiativeId, title, source: 'CANONICAL' });
+  it('FIX-1/FIX-7 — przy kolizji zrodlem rozstrzygajacym dla STATUSU jest tabela klasyczna', async () => {
+    // Krok 1: zanim istnieje kolizja, zapamietaj naturalny stan kanoniczny
+    // (rejestracja z §"CHARAKTERYSTYKA PRZED E2" powyzej pisze WYLACZNIE do
+    // `ie_aggregate_state` — tabela zastana `initiatives` nie ma jeszcze tego
+    // id, potwierdzone testem "tabela zastana nie zawiera rekordu" wyzej).
+    const canonicalOnly = await readInitiativeHeader(organizationId, initiativeId);
+    expect(canonicalOnly).toMatchObject({ id: initiativeId, title, source: 'CANONICAL' });
+    const canonicalOnlyState = canonicalOnly?.lifecycleState;
+
+    // Krok 2: zbuduj REALNA kolizje — dopisz do tabeli KLASYCZNEJ wiersz o
+    // TYM SAMYM id, z INNYM statusem niz to, co dala projekcja kanoniczna.
+    // `CLOSED` jest bezpiecznym wyborem: swiezo zarejestrowana inicjatywa
+    // (krok wczesny cyklu zycia) nie moze naturalnie wyladowac w `CLOSED`.
+    expect(canonicalOnlyState).not.toBe('CLOSED');
+    await sql.query(
+      `INSERT INTO initiatives(id, organization_id, name, title, status, project_id, owner_business_id)
+       VALUES ($1, $2, $3, $3, 'CLOSED', $4, $5)`,
+      [initiativeId, organizationId, title, projectId, userId]
+    );
+    const collisionCount = await sql.query(
+      `SELECT count(*)::int AS count FROM initiatives WHERE id=$1 AND organization_id=$2`,
+      [initiativeId, organizationId]
+    );
+    expect(collisionCount.rows[0].count).toBe(1);
+    const canonicalCount = await sql.query(
+      `SELECT count(*)::int AS count FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+      [organizationId, initiativeId]
+    );
+    expect(canonicalCount.rows[0].count).toBe(1);
+
+    // Krok 3: przy realnej kolizji (rekord w OBU magazynach) wygrywa
+    // KLASYCZNA tabela dla statusu — parytet z klientowym E1a
+    // (`src/components/Initiatives/initiativeRegisterProjection.ts:482-511`,
+    // `mergeLegacyInitiativesIntoRegister`). Reszta pol (tytul) zostaje z
+    // bogatszego wiersza kanonicznego.
+    const collided = await readInitiativeHeader(organizationId, initiativeId);
+    expect(collided).toMatchObject({
+      id: initiativeId,
+      title,
+      source: 'CANONICAL',
+      lifecycleState: 'CLOSED',
+    });
+    expect(collided?.lifecycleState).not.toBe(canonicalOnlyState);
   });
 });
