@@ -2,6 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "p10-decyzje-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3121",
+        "--strictPort"
+      ],
+      "port": 3121
+    },
+    {
       "name": "lokalnie-staging-20260905",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
