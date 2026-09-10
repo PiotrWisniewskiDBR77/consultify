@@ -1,0 +1,43 @@
+URL: https://staging.consultify.ai/interview
+---
+Przejdź do głównej treści
+Wywiad
+Skrzynka
+Dane
+Model
+Piotr P2ATest
+PP
+Skrzynka
+Sesje
+Przydzielone
+Szablony
+Wnioski
+Inicjatywy
+Przydziel
+Wszystkie
+0
+Odpowiedziane
+0
+Zatwierdzone
+0
+Do poprawy
+0
+Tryb ograniczony: Nie udało się pobrać przydziałów wywiadu. Spróbuj odświeżyć.Spróbuj ponownie
+	
+TYP
+	
+NAZWA
+	
+STATUS
+	
+POSTĘP
+	
+DNI DO TERMINU
+	
+PRZYPISANY
+	
+
+
+Brak przydziałów
+
+Nie masz jeszcze żadnych przydzielonych wywiadów.

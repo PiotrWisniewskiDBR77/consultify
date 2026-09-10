@@ -1,0 +1,76 @@
+URL: https://staging.consultify.ai/assessment
+---
+Przejdź do głównej treści
+Ocena
+Dane
+Model
+Piotr P2ATest
+PP
+Biblioteka
+Procesy
+Wnioski
+Raporty
+Inicjatywy
+METODYKA
+	
+OBSZAR
+	
+STATUS
+	
+DZIAŁANIA
+	
+
+
+Advanced Digital Maturity Assessment
+ADMA
+	
+Produkcja cyfrowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Capability Maturity Model Integration
+CMMI
+	
+Zdolność procesowa
+	
+Planowane
+	
+Uruchom
+	
+
+
+Digital Readiness Diagnosis
+DRD
+	
+Transformacja cyfrowa
+	
+Rdzeń metody
+	
+Uruchom
+	
+
+
+Lean 4.0
+LEAN
+	
+Lean i automatyzacja
+	
+Planowane
+	
+Uruchom
+	
+
+
+Smart Industry Readiness Index
+SIRI
+	
+Inteligentna produkcja
+	
+Planowane
+	
+Uruchom
+	

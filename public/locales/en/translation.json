@@ -37075,6 +37075,10 @@
     "all": "All",
     "search": "Search",
     "cancel": "Cancel",
+    "noMyDecisions": "No decisions awaiting your action",
+    "noRequestsPending": "No requests pending",
+    "noDecisions": "No decisions",
+    "allCaughtUp": "All caught up!",
     "detail": {
       "activityLog": {
         "decisionCreated": "Decision created",
