@@ -27878,9 +27878,9 @@
         "title": "Scenariusze i baseline"
       },
       "serverVersion": "server version",
-      "cfOperating": "Operacyjne",
-      "cfInvesting": "Inwestycyjne",
-      "cfFinancing": "Finansowe",
+      "cfOperating": "Operating",
+      "cfInvesting": "Investing",
+      "cfFinancing": "Financing",
       "computing": "Computing forecast — running the model, generating outputs and validations. This can take up to 30 seconds…",
       "defaultForecastSuffix": "forecast",
       "defaultLatestApproved": "Latest approved (default)",
@@ -28028,7 +28028,7 @@
       "budgetCreated": "Budget created",
       "statementDuplicateUnsupported": "Statement duplication is not supported",
       "analysisCreated": "Analysis created",
-      "modelCreated": "Model utworzony"
+      "modelCreated": "Model created"
     },
     "prediction": {
       "budget": "Budget",
@@ -28047,7 +28047,7 @@
       "monthly": "Monthly",
       "granularity": "Granularity",
       "annual": "Annual",
-      "quarterly": "Kwartalna"
+      "quarterly": "Quarterly"
     },
     "analysis": {
       "ratioSummary": "Financial Ratios",
@@ -28225,8 +28225,8 @@
       "documentSearchPlaceholder": "Ask the report",
       "extractedSections": "Extracted sections",
       "ingestRuns": "Ingest runs",
-      "importStage": "Przetwarzanie dokumentu",
-      "documentRecognized": "Rozpoznano rodzaj dokumentu",
+      "importStage": "Processing document",
+      "documentRecognized": "Document type recognized",
       "line": "Line",
       "mappingCandidates": "Mapping candidates",
       "noDocumentMatches": "No document matches yet",
@@ -28415,7 +28415,7 @@
       "mappedTo": "Mapped to",
       "unmapped": "Unmapped",
       "noMappedValues": "No lines to map",
-      "periodPlaceholder": "np. 2024"
+      "periodPlaceholder": "e.g. 2024"
     },
     "lane": {
       "kpi": {
@@ -29124,7 +29124,7 @@
       "financeRef": "Finance entity ref (model / analysis ID)",
       "hint": "Attach an initiative to this finance entity so its economics appear in Results and the value pipeline.",
       "initiativeId": "Initiative ID",
-      "initiativeIdPlaceholder": "np. 42",
+      "initiativeIdPlaceholder": "e.g. 42",
       "missingFields": "Initiative ID and Finance ref are required",
       "success": "Initiative linked to finance",
       "title": "Link initiative to finance",
@@ -29451,7 +29451,7 @@
       "addPeriod": "+ period"
     },
     "statementPack": {
-      "title": "Sprawozdanie finansowe"
+      "title": "Financial Statement Pack"
     },
     "errors": {
       "realSourceTitle": "Real finance source needs attention",
@@ -31287,7 +31287,7 @@
       "asOf": "Valuation date",
       "cashTax": "Cash tax rate (%)",
       "failed": "Failed to save assumptions",
-      "gordonGrowth": "Wzrost Gordona"
+      "gordonGrowth": "Gordon growth rate"
     },
     "comps": {
       "title": "Comparable valuation (multiples)",

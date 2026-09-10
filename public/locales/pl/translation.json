@@ -8579,7 +8579,7 @@
         "areaLabel": "Obszar",
         "typeLabel": "Typ dowodu",
         "typeNote": "Notatka",
-        "typeLink": "Link",
+        "typeLink": "Łącze",
         "typeDocument": "Dokument",
         "typeReference": "Odniesienie",
         "titlePlaceholder": "Tytuł dowodu",
@@ -9149,7 +9149,7 @@
         "frozen": {
           "draftNotice": "Draft — decyzja „Register as Initiative” należy do człowieka, poza tym modułem.",
           "exit": "Wyjdź",
-          "findings": "Findings ({{count}})",
+          "findings": "Ustalenia ({{count}})",
           "generateInitiative": "Wygeneruj z findingów",
           "generateReport": "Generuj raport z Outputu",
           "heading": "Sesja {{id}} — {{state}}",
@@ -11006,7 +11006,7 @@
         "name": "Nazwa",
         "sourcePlan": "Plan źródłowy",
         "periods": "Okresy",
-        "roles": "Role",
+        "roles": "Funkcje",
         "gaps": "Luki",
         "updatedAt": "Zaktualizowano",
         "period": "Okres",
@@ -14786,7 +14786,7 @@
       },
       "resources": {
         "people": "Osoby",
-        "role": "Role",
+        "role": "Rola",
         "conflicts": "Konflikty",
         "overallocated": "Przeciążeni",
         "noRole": "Bez stanowiska",
@@ -19928,7 +19928,7 @@
           "description": "Inicjatywy podpowiadane przez AI"
         },
         "magicWand": {
-          "label": "Magic Wand",
+          "label": "Magiczna różdżka",
           "description": "Autouzupełnianie pól formularzy"
         },
         "taskAdvisor": {
@@ -31088,7 +31088,7 @@
       "scenarios": {
         "sections": {
           "scenarios": "Scenariusze transformacji",
-          "brief": "Executive brief"
+          "brief": "Podsumowanie dla zarządu"
         },
         "lead": "Na podstawie {{count}} zadeklarowanych wyzwań rekomendowany kierunek to „{{scenario}}\".",
         "recommended": "Rekomendowany",
@@ -31237,7 +31237,7 @@
       "userRoleOption": {
         "EXECUTIVE": "Zarząd / C-Suite",
         "DIRECTOR": "Dyrektor / Senior Manager",
-        "MANAGER": "Manager / Team Lead",
+        "MANAGER": "Kierownik / Lider zespołu",
         "SPECIALIST": "Specjalista / Ekspert",
         "CONSULTANT": "Konsultant zewnętrzny"
       },
@@ -32247,7 +32247,7 @@
     "context": "Kontekst i metadane",
     "contextTitle": "Kontekst i metadane",
     "hasScreenshot": "Zgłoszenie zawiera screenshot",
-    "screenshot": "Screenshot",
+    "screenshot": "Zrzut ekranu",
     "downloadScreenshot": "Pobierz",
     "loadingScreenshot": "Ładowanie screenshota...",
     "statusHistory": "Historia statusów",
@@ -33855,7 +33855,7 @@
     },
     "appView": {
       "badge": "Cennik",
-      "heading": "AI Strategic Consulting,",
+      "heading": "Strategiczne doradztwo AI,",
       "headingAccent": "skalowany dla Ciebie",
       "subtitle": "Zastąp kosztownych konsultantów strategicznym wsparciem AI. 14-dniowy trial. Bez karty kredytowej.",
       "billingToggle": {
