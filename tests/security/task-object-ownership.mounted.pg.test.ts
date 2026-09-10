@@ -163,4 +163,43 @@ describe.skipIf(!realDb).sequential('E2 — zakres obiektowy zdolnosci task.upda
     expect(String(odp.body.code || '')).toMatch(/^CAPABILITY_/);
     await expect(tytul(zadanieB)).resolves.not.toBeNull();
   }, 30_000);
+  it('MEMBER blokuje CUDZE zadanie (POST /:id/block) -> 403, status w bazie bez zmian', async () => {
+    const { rows: przed } = await pool.query('SELECT status FROM tasks WHERE id = $1', [zadanieB]);
+
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieB}/block`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({ reason: 'proba blokady cudzego zadania' });
+
+    expect(odp.status).toBe(403);
+    expect(odp.body.code).toBe('CAPABILITY_OBJECT_OWNERSHIP_REQUIRED');
+    const { rows: po } = await pool.query('SELECT status FROM tasks WHERE id = $1', [zadanieB]);
+    expect(po[0]?.status).toBe(przed[0]?.status);
+  }, 30_000);
+
+  it('MEMBER zdejmuje przypisanie z CUDZEGO zadania -> 403, assignee_id w bazie bez zmian', async () => {
+    const { rows: przed } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [
+      zadanieB,
+    ]);
+
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieB}/unassign`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({});
+
+    expect(odp.status).toBe(403);
+    expect(odp.body.code).toBe('CAPABILITY_OBJECT_OWNERSHIP_REQUIRED');
+    const { rows: po } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [zadanieB]);
+    expect(po[0]?.assignee_id).toBe(przed[0]?.assignee_id);
+    expect(po[0]?.assignee_id).toBe(czlonekB);
+  }, 30_000);
+
+  it('MEMBER blokuje WLASNE zadanie -> 200 (rodzenstwo nie zablokowalo wlasnej pracy)', async () => {
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieA}/block`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({ reason: 'blokada wlasnego zadania' });
+
+    expect(odp.status).toBe(200);
+  }, 30_000);
 });

@@ -1266,7 +1266,15 @@ router.post(
 router.post(
   '/:id/unassign',
   requireAudit,
-  requireTaskCapability('task.unassign', { shadow: true }),
+  // Rodzenstwo z PUT /:id (K4). Pomiar 2026-09-10: MEMBER zdjal przypisanie z
+  // CUDZEGO zadania (assignee_id -> NULL) i dostal 200. Ten sam mechanizm, ten
+  // sam predykat.
+  requireTaskCapability('task.unassign', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   TaskController.unassignTask
 );
 
@@ -1337,7 +1345,14 @@ router.get('/my-workload', TaskController.getMyWorkload);
 router.post(
   '/:id/block',
   requireAudit,
-  requireTaskCapability('task.status.update', { shadow: true }),
+  // Rodzenstwo z PUT /:id (K4). Pomiar 2026-09-10: MEMBER zablokowal CUDZE
+  // zadanie (status -> 'blocked') i dostal 200.
+  requireTaskCapability('task.status.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   validateBody(BlockTaskSchema),
   TaskController.blockTask
 );
