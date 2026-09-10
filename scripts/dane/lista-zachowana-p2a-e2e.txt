@@ -1,0 +1,12 @@
+# Lista organizacji ZACHOWANYCH — bezpiecznik dla sprzatania p2a-e2e-* (Zadanie 3,
+# dyzur p10-decyzje-20260910). Skrypt usun-organizacje.ts ODMAWIA uruchomienia,
+# jesli ktorykolwiek identyfikator z listy-do-usuniecia znajdzie sie tutaj.
+#
+# Format: <organization_id> | <nazwa> | <uwaga>
+
+a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77 | prawdziwa firma wlasciciela — ZOSTAJE
+dbr77 | DBR77 Digital Consulting | druga organizacja DBR77 — ZOSTAJE (nie w zakresie tego zadania)
+system | System | organizacja techniczna wymagana przez runtime — ZOSTAJE ZAWSZE
+468b234c-66c4-54e1-b626-5e0fb3a92f6a | Northwind Manufacturing Ltd. | organizacja pokazowa pilotazu — ZOSTAJE
+4eca39dc-845a-456e-a060-be42d5cdcf01 | P2A Puste Stany Sp. z o.o. | swieza organizacja potrzebna innemu robotnikowi do diagnozy (ZLECENIE) — ZOSTAJE
+ateliertoys-demo-session-f786e8f37a-mtv4kwa4 | Atelier Toys | organizacja demo — ZOSTAJE (nie w zakresie tego zadania)
