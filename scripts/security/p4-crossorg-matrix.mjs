@@ -62,6 +62,28 @@ function carriesResource(r, marker) {
   return (r.text || '').includes(marker);
 }
 
+// UUID, ktorego w bazie nie ma — sluzy do odsiania "echa" identyfikatora.
+const FAKE_ID = '00000000-0000-4000-8000-000000000999';
+
+/**
+ * PULAPKA, KTORA TO ODSIEWA: wiele tras odbija identyfikator z URL-a
+ * ("initiativeId": "<to, co podal atakujacy>") i dokleja wartosci domyslne.
+ * Marker = id zasobu, wiec taka odpowiedz wyglada jak wyciek, a nie niesie
+ * ANI JEDNEJ danej ofiary. Rozstrzygamy empirycznie: strzelamy ta sama trasa
+ * z id, ktorego nie ma w bazie. Jesli odpowiedz jest identyczna (po
+ * znormalizowaniu id), to bylo echo — nie wyciek.
+ *
+ * Ten sam test odroznil realny wyciek (project notification-settings oddawalo
+ * wiersz z bazy) od pozornego (initiative capacity odbijalo tylko id).
+ */
+async function isEchoOnly(routeTpl, victimId) {
+  const real = await call('GET', routeTpl.replace(':id', victimId));
+  const fake = await call('GET', routeTpl.replace(':id', FAKE_ID));
+  if (real.status !== 200 || fake.status !== 200) return false;
+  const norm = (t, id) => (t || '').split(id).join('<ID>');
+  return norm(real.text, victimId) === norm(fake.text, FAKE_ID);
+}
+
 async function login(email, password) {
   const tok = await fetch(BASE + '/api/csrf-token');
   csrfToken = (await tok.json()).token;
@@ -97,10 +119,16 @@ async function main() {
       }
 
       const attack = await call('GET', victimPath);
-      const leaked = carriesResource(attack, res.marker);
+      let leaked = carriesResource(attack, res.marker);
+      let echoOnly = false;
+      if (leaked) {
+        echoOnly = await isEchoOnly(routeTpl, res.id);
+        if (echoOnly) leaked = false;
+      }
 
       let verdict;
       if (leaked) verdict = 'WYCIEK';
+      else if (echoOnly) verdict = 'IZOLACJA (odbite id, zero danych ofiary)';
       else if (baseline && baseline.status === 404 && !baseline.carries) verdict = 'N/A (trasa nie istnieje)';
       else if (baseline && !baseline.carries) verdict = 'N/A (trasa nie oddaje wlasnego zasobu)';
       else if (attack.status === 403 || attack.status === 404) verdict = 'IZOLACJA';
@@ -114,6 +142,7 @@ async function main() {
         victimOrg: targets.victim.org,
         baseline,
         attack: { status: attack.status, bodyHead: attack.text.slice(0, 140) },
+        echoOnly,
         verdict,
       });
       console.error(`  ${verdict.padEnd(38)} GET ${routeTpl}  wlasny=${baseline?.status ?? '-'}/${baseline?.carries ? 'dane' : 'brak'}  cudzy=${attack.status}`);

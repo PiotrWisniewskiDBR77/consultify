@@ -455,9 +455,52 @@ export class ProjectController {
   /**
    * Get notification settings for project
    */
+  /**
+   * P4 BEZPIECZENSTWO (2026-09-10): straznik przynaleznosci projektu do organizacji.
+   *
+   * DEFEKT, KTORY TO ZAMYKA — zmierzony na zywym serwerze na bazie staging:
+   * `GET /api/projects/:id/notification-settings` czytalo
+   * `SELECT * FROM project_notification_settings WHERE project_id = ?`
+   * BEZ filtra po organizacji i bez straznika w routerze (PUT mial
+   * requireAnyProjectCapability, GET nie). Konto organizacji B odczytalo
+   * ustawienia projektu organizacji A wraz z wartoscia zapisana w bazie
+   * (wiersz kontrolny z escalation_days=4242). Rodzenstwo z tym samym
+   * ksztaltem — `/:id/ai-role` i `/:id/regulatory-mode` — oddawalo dotad
+   * wartosci domyslne wylacznie dlatego, ze ich tabele byly puste; po
+   * pierwszym zapisie wyciekloby to samo.
+   *
+   * Zwraca 404 (a nie 403) spojnie z `getProjectById`, zeby nie potwierdzac
+   * istnienia cudzego projektu.
+   */
+  private static async assertProjectInCallerOrg(
+    req: AuthenticatedRequest,
+    res: Response,
+    projectId: string | undefined
+  ): Promise<boolean> {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return false;
+    }
+    if (!projectId) {
+      res.status(404).json({ error: 'Project not found' });
+      return false;
+    }
+    const owned = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, orgId]
+    );
+    if (!owned) {
+      res.status(404).json({ error: 'Project not found' });
+      return false;
+    }
+    return true;
+  }
+
   static getNotificationSettings = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      if (!(await ProjectController.assertProjectInCallerOrg(req, res, id))) return;
 
       const row = await queryHelpers.queryOne(
         `SELECT * FROM project_notification_settings WHERE project_id = ?`,
@@ -545,6 +588,7 @@ export class ProjectController {
   static getAIRole = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      if (!(await ProjectController.assertProjectInCallerOrg(req, res, id))) return;
 
       const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
       if (
@@ -663,6 +707,7 @@ export class ProjectController {
   static getRegulatoryMode = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
+      if (!(await ProjectController.assertProjectInCallerOrg(req, res, id))) return;
 
       const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then(
         (m) => m.default || m
