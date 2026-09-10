@@ -1326,6 +1326,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onRefresh={refetchArtifactOutputs}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={handleNewItem}
           />
         );
       case 'templates':
@@ -1384,6 +1385,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onRefresh={refetchArtifactOutputs}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={handleNewItem}
           />
         );
       case 'presentations':
@@ -1399,6 +1401,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onRefresh={fetchPresentations}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={handleNewItem}
           />
         );
       case 'outputs_sheets':
@@ -1415,6 +1418,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onRefresh={fetchSheets}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={handleNewItem}
           />
         );
       default:

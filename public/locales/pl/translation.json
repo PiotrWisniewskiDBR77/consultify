@@ -33292,7 +33292,9 @@
       "reportsHint": "Użyj szybkich przycisków na pasku górnym lub utwórz nowy raport, aby wejść w przepływ R1, R2, R3 lub R4.",
       "templatesOnboarding": "Biblioteka wzorców",
       "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
-      "outputs": "Brak outputów"
+      "outputs": "Brak outputów",
+      "presentationsDesc": "Utwórz pierwszą prezentację od pustego decka, z generowaniem AI albo z szablonu.",
+      "outputsDesc": "Dokumenty, prezentacje i arkusze, które utworzysz lub wyeksportujesz, pojawią się tutaj."
     },
     "preview": {
       "ai": {

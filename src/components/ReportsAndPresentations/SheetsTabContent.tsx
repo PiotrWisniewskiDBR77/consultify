@@ -2,6 +2,8 @@ import { Table2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/ui/primitives';
+
 import type { FilterChip, ViewMode } from '../shared/ModuleHub';
 import { DataSourcesTabContent } from './DataSourcesTabContent';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -24,6 +26,12 @@ interface SheetsTabContentProps {
    * Gdy host go poda, ten komponent NIE rysuje własnego paska.
    */
   subView?: SheetsSubView;
+  /**
+   * P2B (2026-09-10): karta pustego stanu poniżej (build < 2026-09-10) nie
+   * miała ŻADNEGO przycisku akcji — sam opis, bez ścieżki dalej. Ten sam
+   * handler co topbar „Dodaj" (Hub `handleNewItem` dla `outputs_sheets`).
+   */
+  onNewItem?: () => void;
 }
 
 // #83a: "Data" no longer a standalone Menu 2 tab — Piotr's call is that data
@@ -42,6 +50,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
   actions,
   initialArtifactId,
   subView: subViewProp,
+  onNewItem,
 }) => {
   /**
    * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
@@ -93,6 +102,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
             onRefresh={onRefresh}
             actions={actions}
             initialArtifactId={initialArtifactId}
+            onNewItem={onNewItem}
           />
         </div>
       </div>
@@ -107,7 +117,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
             <div className="mt-0.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
               <Table2 size={24} />
             </div>
-            <div className="min-w-0 space-y-2">
+            <div className="min-w-0 space-y-3">
               <h2 className="text-lg font-semibold text-c-text">
                 {t('rap.sheets.emptyTitle', 'Sheets in Outputs Library')}
               </h2>
@@ -123,6 +133,13 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
                   'Create or export a governed sheet and it will appear here automatically.'
                 )}
               </p>
+              {onNewItem && (
+                <div className="pt-1">
+                  <Button variant="primary" size="sm" onClick={onNewItem}>
+                    {t('rap.actions.newSheet', 'New sheet')}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
