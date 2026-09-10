@@ -3563,7 +3563,7 @@ router.post(
       try {
         taskId = uuidv4();
         await dbRun(
-          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assigned_to, due_date, created_by, source_type, source_id, created_at, updated_at)
+          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assignee_id, due_date, created_by, source_type, source_id, created_at, updated_at)
            VALUES (?, ?, ?, ?, 'todo', 'medium', ?, ?, ?, 'kpi_next_action', ?, datetime('now'), datetime('now'))`,
           [
             taskId,
