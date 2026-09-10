@@ -39,12 +39,16 @@ nikt jeszcze nie obejrzał — to zadanie przed pilotażem.
 - Blok Codexa nr 3 „Finanse minimum": dostarczył 4 z 6 paczek (testy, zatwierdzanie pakietu,
   zbiorczy rodowód, trzy tabele sprawozdania). Nie zrobił czystki koloru i seedu danych. **Odbiór
   zrobiony w nocy:** dwie paczki do scalenia od razu, dwie po pięciu drobnych poprawkach (w toku).
-  Na ekranie nic się nie zmienia (front za wyłączoną flagą). **Odbiór wykrył poważną rzecz:** dziś
+  Wszystkie pięć poprawek zrobionych i scalonych o 23:58 — blok jest na linii, za wyłączoną flagą.
+  Na ekranie nic się nie zmienia. **Odbiór wykrył poważną rzecz:** dziś
   żadna rola w aplikacji nie może zatwierdzić sprawozdania finansowego przez API (blokada bety i
   mapowanie ról nie mają części wspólnej). Póki Finanse są zamknięte w menu, nikt tego nie widzi —
   dlatego w decyzji 2 rekomenduję A.
 
-Wdrożenie tego wszystkiego = jedna paczka po zielonej bramce, po zakończeniu pokazu w Tokio.
+**Bramka całej paczki przeszła w nocy** (kompilacja serwera 0 błędów, front na progu 192, język bez wzrostu,
+build OK, kanon tabel i artefaktów bez wzrostu, 66/66 testów nocnych paczek). Dwa stare testy językowe są
+czerwone — sprawdziłem, że są czerwone także na dzisiejszym stagingu, więc nie blokują.
+Wdrożenie = jedna paczka po zakończeniu pokazu w Tokio; kopia całości leży na gałęzi `integracja/20260911`.
 
 ## 4. Pięć decyzji — odpowiedz literą
 

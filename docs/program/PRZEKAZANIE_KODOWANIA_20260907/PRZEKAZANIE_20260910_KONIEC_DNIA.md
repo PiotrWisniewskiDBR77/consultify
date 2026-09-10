@@ -398,8 +398,8 @@ Meldunek = ostatni wpis `assistant` w pliku JSONL (nie czytaj całości). Po mel
 | demo (health 23:14:35) | **`e25b7cd5d0`** (promocja run 34530157001; 0 migracji między `691e2d3b0f` a hotfixem) — **NIETYKALNE** |
 | punkty cofnięcia | `staging-safe-20260910-2258` = `ff3ae0dbde`; `demo-safe-20260910-2300` = `691e2d3b0f` + `~/Developer/consultify-dumps/demo-trolley-przed-promocja-20260910-2300.dump` (sha256 `74c253f1…`) |
 | dowody po hotfixie | ogólny (w1a, Northwind) 0×5xx + sonda D6 usunięta; celowany (skrypt CTO): PUT tytułu → `assigneeId` zachowane; log w scratchpadzie sesji |
-| linia integracyjna `mvp/inicjatywy-lancuch-20260907` | hotfix `b84dd79ff2` · F3 `e9e9a36c81` · N1 `f2f06705f2` · N2 `db076288f4` · F4 `4e85827280` · F5 · blok Codexa 1 OFF · rejestr · `KARTA_PORANNA_20260911.md` — **NIE wdrożona**; bramka 4-krokowa Sonnet w toku (worktree `wt/bramka-20260911`) |
-| Codex 3 Finanse | dostawa `39ea4ce7f2` (E1–E4; E5/E6 nie) → odbiór Opus `mvp/c5-odbior-codex3-20260911` = `8e74f50f5f` (`97_ODBIOR_W1_W2.md`) → FIX-1…5 Sonnet `mvp/c5-fix-codex3-20260911` w toku → scalenie na linię OFF |
+| linia integracyjna `mvp/inicjatywy-lancuch-20260907` | hotfix `b84dd79ff2` · F3 `e9e9a36c81` · N1 `f2f06705f2` · N2 `db076288f4` · F4 `4e85827280` · F5 · blok Codexa 1 OFF · **blok Codexa 3 + FIX-y `f1f1846035` OFF** · rejestr · `KARTA_PORANNA_20260911.md` — **NIE wdrożona**; BRAMKA-6 ZIELONA (23:52; 2 bezpieczniki i18n czerwone = zastane na `ff3ae0dbde`); kopia = `origin/integracja/20260911` |
+| Codex 3 Finanse | dostawa `39ea4ce7f2` (E1–E4; E5/E6 nie) → odbiór Opus `8e74f50f5f` (`97_ODBIOR_W1_W2.md`, 5 FIX-ów) → FIX-1…5 Sonnet `81609b0555` → scalone na linię `f1f1846035` (flagi OFF). Zostaje: E5 crimson (robotnik), E6 seed EN (Codex 3b), przewód E3 (aliasy serwera), powłoka E4 (skill artefakty), defekt BetaGate×role (decyzja właściciela) |
 | Codex 2 | wklejka w karcie porannej §5; worktree `codex-wt/codex2-jeden-magazyn-2` na markerze `19440011e9` istnieje |
 
 **Pułapki nocy (do pamięci):** (1) dwie sesje CTO na jednej linii — stara sesja scaliła hotfix i N1 po przekazaniu, uruchomiła
