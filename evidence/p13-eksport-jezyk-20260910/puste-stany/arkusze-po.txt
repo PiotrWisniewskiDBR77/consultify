@@ -1,0 +1,23 @@
+Wszystkie
+Dokumenty
+Prezentacje
+Arkusze
+Biblioteka wzorców
+Status
+Widoczność
+Nowy arkusz
+Wszystkie
+0
+Szkic
+0
+Gotowy
+0
+Arkusze w bibliotece wyników
+
+Tu pojawią się arkusze i eksporty — tak samo jak dokumenty i prezentacje. Ta zakładka pokaże je automatycznie, gdy staną się dostępne.
+
+ARKUSZE POJAWIĄ SIĘ TU AUTOMATYCZNIE, GDY BĘDĄ GOTOWE.
+
+Nowy arkusz
+← Lista
+Uwagi

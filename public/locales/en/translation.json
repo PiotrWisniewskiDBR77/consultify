@@ -9475,7 +9475,7 @@
       "profile": {
         "kicker": "Profile",
         "title": "Profile per dimension",
-        "empty": "The Output contains no aggregated results per dimension."
+        "empty": "This report contains no aggregated results per dimension."
       },
       "matrix": {
         "kicker": "Matrix · axis {{number}}",
@@ -9485,12 +9485,12 @@
       "strengths": {
         "kicker": "Strengths",
         "title": "What already works",
-        "empty": "No unit has reached its target level yet in the accepted findings of this Output."
+        "empty": "No unit has reached its target level yet in the accepted findings of this report."
       },
       "gaps": {
         "kicker": "Gaps and risks",
         "title": "Where the biggest risk is",
-        "empty": "No accepted finding with a gap above zero in this Output."
+        "empty": "No accepted finding with a gap above zero in this report."
       },
       "unknowns": {
         "kicker": "Blind spots",
@@ -9506,7 +9506,7 @@
       "nextSteps": {
         "kicker": "What next",
         "title": "Recommendations and the next step",
-        "empty": "No recommendations in the accepted findings of this Output.",
+        "empty": "No recommendations in the accepted findings of this report.",
         "more": "+{{count}} more recommendations in the full Output"
       }
     },
@@ -12523,7 +12523,7 @@
     "sheet": "Sheet",
     "document2": "Document",
     "artifacts": "Artifacts",
-    "noArtifactsYet": "No artifacts yet",
+    "noArtifactsYet": "No documents yet",
     "openInWorkspace": "Open in workspace",
     "deliverablesMilestones": "Deliverables & Milestones",
     "addDeliverable": "Add deliverable",
@@ -12843,7 +12843,7 @@
     "sheet2": "Sheet",
     "document3": "Document",
     "artifacts2": "Artifacts",
-    "noArtifactsYet2": "No artifacts yet",
+    "noArtifactsYet2": "No documents yet",
     "openInWorkspace2": "Open in workspace",
     "deliverablesMilestones2": "Deliverables & Milestones",
     "addDeliverable2": "Add deliverable",
@@ -16143,7 +16143,7 @@
       "deleteNote": "A canonical work item cannot be deleted.",
       "documentLead": "Canonical task or decision document with its controls, evidence and dependencies.",
       "editorLead": "Fill in the business data; technical identifiers are assigned by the system.",
-      "emptyRegister": "No canonical tasks or decisions in the available deliveries.",
+      "emptyRegister": "No tasks or decisions in the available deliveries.",
       "field": {
         "assignee": "Assignee",
         "authority": "Decision maker",
@@ -16328,9 +16328,9 @@
         "newDecision": "New decision"
       },
       "empty": {
-        "decisionsTitle": "No decisions in the register",
-        "raidTitle": "No items in the RAID register",
-        "description": "The register reads the organization's decisions and RAID items. An empty register means nothing is waiting."
+        "decisionsTitle": "No decisions",
+        "raidTitle": "No RAID items",
+        "description": "Your organization's decisions and RAID items will appear here. An empty list means nothing is currently waiting on a decision."
       },
       "preview": {
         "raidLabel": "RAID item",
@@ -26341,8 +26341,8 @@
       "assumptionsEmptyTitle": "No assumptions yet",
       "assumptionsEmptyHint": "AI will propose assumptions during work",
       "work": {
-        "placeholderTitle": "Work surface",
-        "placeholderHint": "Work surface configuration depends on the tool type"
+        "placeholderTitle": "Work area",
+        "placeholderHint": "Content depends on the tool you choose."
       },
       "aiSuggestion": {
         "accept": "Accept",
@@ -27079,7 +27079,7 @@
       "artifactsSubtitle": "Select the exact project evidence that should ground the generated deck.",
       "searchArtifacts": "Search project, study, report, initiative...",
       "loadingArtifacts": "Loading artifacts...",
-      "noArtifacts": "No registered artifacts found yet. You can still choose a source type below for a draft deck.",
+      "noArtifacts": "You don't have any documents to use as a source yet. Choose a source type below to create a draft presentation.",
       "selectedEvidence": "Selected evidence",
       "showDrafts": "Show drafts",
       "title": "Choose the data sources",
@@ -29389,7 +29389,7 @@
       "rows": "Rows"
     },
     "relatedArtifacts": {
-      "empty": "No artefact of this type from this statement yet.",
+      "empty": "No document of this type from this statement yet.",
       "notLoaded": "Related artefacts have not been loaded yet.",
       "new": "+ New"
     },
@@ -33095,11 +33095,11 @@
       "presentations": "No presentations found",
       "noOutputs": "No outputs yet",
       "newWithTeresa": "New with Teresa",
-      "reportsTitle": "Canonical management reports",
+      "reportsTitle": "Management reports",
       "reportsBody": "This library is organized around the V3 report canon. Start from one of the four sponsor-ready report types below.",
       "reportsHint": "Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.",
       "templatesOnboarding": "Template library",
-      "templatesOnboardingDesc": "Templates define the structure and standard for reports and presentations. Start from one of the canonical families or create your own template.",
+      "templatesOnboardingDesc": "Templates define the structure and standard for reports and presentations. Start from a ready-made template family or create your own.",
       "outputs": "No outputs",
       "presentationsDesc": "Create your first presentation from a blank deck, AI generation or a template.",
       "outputsDesc": "Documents, presentations and sheets you create or export will appear here."
@@ -33135,8 +33135,8 @@
     "sheets": {
       "error": "Could not load sheets",
       "emptyTitle": "Sheets in Outputs Library",
-      "emptyBody": "Governed workbooks and exports will appear here through the same canonical artifact registry as documents and presentations. This tab now reflects live sheet artifacts as soon as the registry receives them.",
-      "emptyHint": "Create or export a governed sheet and it will appear here automatically.",
+      "emptyBody": "Sheets and exports will appear here — the same way documents and presentations do. This tab will show them automatically once they're available.",
+      "emptyHint": "Sheets will appear here automatically once they're ready.",
       "subtabs": {
         "label": "Sheets sections",
         "data": "Data sources"
@@ -33236,7 +33236,7 @@
         "lineageOutputsList": "Output pointers",
         "download": "Download",
         "open": "Open",
-        "sheetHint": "Governed sheet artifacts use the same registry; authoring and export paths are rolling out in Wave 2.",
+        "sheetHint": "Sheets will soon appear in the same place as documents and presentations.",
         "originsShort": "origins",
         "sourcesShort": "sources",
         "validationChecksAllGood": "all passed",
@@ -40933,7 +40933,7 @@
       "noActivityYet": "No activity yet",
       "noAiActionsCanvasFullyManual": "No AI actions — canvas is fully manual",
       "noAppliedAiChangesYet": "No applied AI changes yet",
-      "noArtifactsLinkedThisNodeYet": "No artifacts linked to this node yet.",
+      "noArtifactsLinkedThisNodeYet": "No documents linked to this node yet.",
       "noBlindSpotsFound": "No blind spots found",
       "blindSpotsIdleHint": "Run the check to find areas the map is missing.",
       "blindSpotsUnavailable": "Add a few more elements to the map — there is nothing to analyse yet.",
