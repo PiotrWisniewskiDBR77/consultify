@@ -1,0 +1,9 @@
+{
+  "url": "http://localhost:3255/interview?tab=templates",
+  "pozycjeMenuAI": [
+    "Analizuj",
+    "Uzupełnij tę sekcję",
+    "Uzupełnij cały dokument"
+  ],
+  "bledyKonsoli": []
+}

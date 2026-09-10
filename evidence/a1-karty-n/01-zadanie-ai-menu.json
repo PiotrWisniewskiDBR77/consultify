@@ -1,0 +1,9 @@
+{
+  "url": "http://localhost:3255/my-work",
+  "pozycjeMenuAI": [
+    "Analizuj",
+    "Uzupełnij tę sekcję",
+    "Uzupełnij cały dokument"
+  ],
+  "bledyKonsoli": []
+}
