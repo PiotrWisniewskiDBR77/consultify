@@ -56,11 +56,11 @@ router.post(
     const { organizationId } = getV8Context(req);
     const rawIds = (req.body ?? {}).businessVersionIds;
     if (!Array.isArray(rawIds) || rawIds.some((id) => typeof id !== 'string' || !id.trim())) {
-      return sendError(res, 400, 'INVALID_BUSINESS_VERSION_IDS', 'INVALID_BUSINESS_VERSION_IDS');
+      return sendError(res, 400, 'INVALID_BUSINESS_VERSION_IDS', 'businessVersionIds must be a non-empty array of strings');
     }
     const businessVersionIds = [...new Set(rawIds.map((id) => id.trim()))];
     if (businessVersionIds.length > 100) {
-      return sendError(res, 400, 'BUSINESS_VERSION_IDS_LIMIT_EXCEEDED', 'BUSINESS_VERSION_IDS_LIMIT_EXCEEDED');
+      return sendError(res, 400, 'BUSINESS_VERSION_IDS_LIMIT_EXCEEDED', 'businessVersionIds accepts at most 100 unique ids');
     }
     const edges = await getLineageForBusinessVersions(organizationId, businessVersionIds);
     return res.status(200).json({
