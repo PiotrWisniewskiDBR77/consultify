@@ -13,7 +13,10 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
+import {
+  isTaskOwnedByCaller,
+  requireTaskCapability,
+} from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireAudit } from '../../middleware/requireAudit.middleware.js';
@@ -1167,7 +1170,16 @@ router.get('/:id', TaskController.getTaskById);
 router.put(
   '/:id',
   requireAudit,
-  requireTaskCapability('task.update', { shadow: true }),
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-453] Bramka obiektowa TYLKO na tej trasie:
+  // `enforceMode: 'enforce'` nie rusza globalnego `CAPABILITY_ENFORCE`, a
+  // `ownerPredicate` sprawia, ze `task.update.assigned` przepuszcza WYLACZNIE
+  // zadanie zwiazane z wolajacym. Pomiar przed naprawa: MEMBER nadpisywal
+  // cudze zadanie z kodem 200 (evidence/e2-uprawnienia/k0-*.txt).
+  requireTaskCapability('task.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   validateBody(UpdateTaskSchema),
   TaskController.updateTask
 );
@@ -1179,7 +1191,11 @@ router.put(
 router.delete(
   '/:id',
   requireAudit,
-  requireTaskCapability('task.delete', { shadow: true }),
+  requireTaskCapability('task.delete', {
+    shadow: true,
+    enforceMode: 'enforce',
+    ownerPredicate: isTaskOwnedByCaller,
+  }),
   TaskController.deleteTask
 );
 
