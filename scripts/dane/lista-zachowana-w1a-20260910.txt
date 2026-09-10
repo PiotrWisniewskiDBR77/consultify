@@ -1,0 +1,17 @@
+# Lista organizacji ZACHOWANYCH — bezpiecznik dla sprzatania stagingu, zadanie 1-A
+# (dyzur w1a-sprzatanie-20260910). Skrypt usun-organizacje.ts ODMAWIA startu, jesli
+# ktorykolwiek identyfikator z listy-do-usuniecia znajdzie sie tutaj.
+#
+# Zrodlo: pelny pomiar 23 organizacji na zywej bazie stagingu (thomas.proxy.rlwy.net),
+# 2026-09-10. Te 8 to WSZYSTKO co NIE trafilo na liste do usuniecia.
+#
+# Format: <organization_id> | <nazwa> | <uwaga>
+
+a3e05d4a-5397-419d-b486-8e44366c0063 | DBR77 | prawdziwa firma wlasciciela (15 czlonkow) — ZOSTAJE
+system | System | organizacja techniczna wymagana przez runtime — ZOSTAJE ZAWSZE
+dbr77 | DBR77 Digital Consulting | druga organizacja DBR77 — ZOSTAJE (poza zakresem zadania)
+468b234c-66c4-54e1-b626-5e0fb3a92f6a | Northwind Manufacturing Ltd. | organizacja pokazowa pilotazu (9 czlonkow) — ZOSTAJE
+3935603f-e81c-4fc3-a154-623394e7cc32 | TT22TT | Tomek (t.tomasz.jankowski+123@gmail.com), pilotaz — ZOSTAJE
+be953b47-1dba-469c-98cb-414806f36276 | TT22TT | Tomek (t.tomasz.jankowski+123@gmail.com), pilotaz — ZOSTAJE
+a6b81efe-98b8-426d-bac6-03340e1ea4f6 | TT22TT | Tomek (t.tomasz.jankowski+123@gmail.com), pilotaz — ZOSTAJE
+9151ee70-0141-43fd-9614-8ea609a7e5aa | My Company | Kasia (k.szwarocka+1@gmail.com), pilotaz — ZOSTAJE

@@ -1,0 +1,38 @@
+# Lista organizacji DO USUNIECIA — sprzatanie stagingu, zadanie 1-A (dyzur w1a-sprzatanie-20260910).
+# Zrodlo pomiaru: SELECT o.id,o.name,o.created_at,count(organization_members),string_agg(emaili)
+# na zywej bazie stagingu (host thomas.proxy.rlwy.net), 2026-09-10 ok. 13:00.
+# Zero dopasowania po nazwie — skrypt usun-organizacje.ts czyta wylacznie kolumne 1.
+#
+# Dwie grupy:
+#  A) 4x "P2A Reload Test*" — zalozone dzisiaj 06:01-06:02 przez uzytkownikow
+#     p2a-reload*@dbr77.com (1 czlonek kazda) — smieci testowe, jednorazowe.
+#  B) 11x "Atelier Toys" (id wzorca ateliertoys-demo-session-f786e8f37a-<sufiks>) —
+#     KOMPLET organizacji Atelier Toys obecnych dzis w bazie. Kazda ma 0 wierszy w
+#     organization_members (osoby demo NIE sa czlonkami — to fikcyjne persony
+#     zasiane przez seedAtelierToysDemoDataset, ktorych users.organization_id
+#     wskazuje wprost na tego session-tenanta; e-maile wzorca
+#     <imie>.<nazwisko>+ateliertoys-demo-session-<hash>-<sufiks>@demo.ateliertoys.com,
+#     zweryfikowano 198 takich wierszy w users). Utworzone dzis (06:07-10:29) przez
+#     funkcje sesji demo (server/src/services/demo/demoSessionService.ts,
+#     makeSessionOrgId). WAZNE — patrz STOP w meldunku koncowym: organizacji
+#     "bazowej" (organizations.id = 'ateliertoys-demo', wartosc DEMO_ORG_ID) NIE MA
+#     w bazie stagingu (sprawdzone wprost: 0 wierszy). Instrukcja "zachowaj baze"
+#     nie ma tu przedmiotu — wszystkie 11 to rownorzedne, jednorazowe klony sesji.
+#
+# Format: <organization_id> | <nazwa> | <liczba czlonkow> | <uwaga>
+
+c240672e-24bb-4b3f-b129-df2802bc7daf | P2A Reload Test | 1 | test p2a-reload, dzis 06:01, jednorazowa
+6175b332-3560-4055-a9a1-927d99f1c3c5 | P2A Reload Test 2 | 1 | test p2a-reload2, dzis 06:01, jednorazowa
+196835dd-b867-450e-a9d3-c796452554fe | P2A Reload Test 3 | 1 | test p2a-reload3, dzis 06:02, jednorazowa
+b8bb7593-c48a-403d-a7af-f5637e93b955 | P2A Reload Test 4 | 1 | test p2a-reload4, dzis 06:02, jednorazowa
+ateliertoys-demo-session-f786e8f37a-mtv4kwa4 | Atelier Toys | 0 | klon sesji demo, dzis 06:07
+ateliertoys-demo-session-f786e8f37a-mtv7frip | Atelier Toys | 0 | klon sesji demo, dzis 07:27
+ateliertoys-demo-session-f786e8f37a-mtv7i250 | Atelier Toys | 0 | klon sesji demo, dzis 07:29
+ateliertoys-demo-session-f786e8f37a-mtvaakx6 | Atelier Toys | 0 | klon sesji demo, dzis 08:47
+ateliertoys-demo-session-f786e8f37a-mtvaanht | Atelier Toys | 0 | klon sesji demo, dzis 08:47
+ateliertoys-demo-session-f786e8f37a-mtvagl9z | Atelier Toys | 0 | klon sesji demo, dzis 08:51
+ateliertoys-demo-session-f786e8f37a-mtvaikcr | Atelier Toys | 0 | klon sesji demo, dzis 08:53
+ateliertoys-demo-session-f786e8f37a-mtvcp31j | Atelier Toys | 0 | klon sesji demo, dzis 09:54
+ateliertoys-demo-session-f786e8f37a-mtvctbn1 | Atelier Toys | 0 | klon sesji demo, dzis 09:57
+ateliertoys-demo-session-f786e8f37a-mtvcwt6h | Atelier Toys | 0 | klon sesji demo, dzis 10:00
+ateliertoys-demo-session-f786e8f37a-mtvdxiai | Atelier Toys | 0 | klon sesji demo, dzis 10:29
