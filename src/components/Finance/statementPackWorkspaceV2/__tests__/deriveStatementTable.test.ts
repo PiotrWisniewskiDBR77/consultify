@@ -42,6 +42,46 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
 }
 
 describe('deriveStatementTable', () => {
+  it('returns separate P&L, balance-sheet and cash-flow structures', () => {
+    const table = deriveStatementTable([
+      line({ stmtLineId: 'pl', statementType: 'P&L' }),
+      line({ stmtLineId: 'bs', statementType: 'BS', canonicalLineId: 'assets', lineCode: 'ASSETS' }),
+      line({ stmtLineId: 'cf', statementType: 'CF', canonicalLineId: 'cash', lineCode: 'CASH_FLOW' }),
+    ]);
+    expect(table.profitAndLoss.rows).toHaveLength(1);
+    expect(table.balanceSheet.rows).toHaveLength(1);
+    expect(table.cashFlow.rows).toHaveLength(1);
+  });
+
+  it('keeps period and comparative-period columns in every applicable structure', () => {
+    const table = deriveStatementTable([
+      line({ stmtLineId: 'a', periodId: 'fy24', periodLabel: 'FY2024' }),
+      line({ stmtLineId: 'b', periodId: 'fy25', periodLabel: 'FY2025' }),
+    ]);
+    expect(table.profitAndLoss.periods.map((period) => period.periodLabel)).toEqual(['FY2024', 'FY2025']);
+  });
+
+  it('returns an honest emptyReason and no fabricated rows for an absent section', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'pl', statementType: 'P&L' })]);
+    expect(table.balanceSheet).toMatchObject({ emptyReason: 'NO_MAPPED_LINES', rows: [] });
+    expect(table.cashFlow).toMatchObject({ emptyReason: 'NO_MAPPED_LINES', rows: [] });
+  });
+
+  it('marks total rows from canonical line metadata without recomputing source values', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'total', lineCode: 'TOTAL_REVENUE', lineName: 'Total revenue' })]);
+    expect(table.profitAndLoss.rows[0]).toMatchObject({ isTotal: true });
+  });
+
+  it('derives hierarchy depth from a structured canonical line code', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'nested', lineCode: 'PL.REVENUE.DOMESTIC' })]);
+    expect(table.profitAndLoss.rows[0]).toMatchObject({ hierarchyDepth: 2 });
+  });
+
+  it('keeps currency and scale available for each statement structure header', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'pl', statementType: 'P&L' })]);
+    expect(pickHeaderCurrencyAndScale(table.profitAndLoss)).toEqual({ currency: 'PLN', unit: 'UNITS' });
+  });
+
   it('groups lines into rows×periods keyed by canonicalLineId', () => {
     const table = deriveStatementTable([
       line({ stmtLineId: 'l1', periodId: 'p1', periodLabel: 'FY2024' }),
