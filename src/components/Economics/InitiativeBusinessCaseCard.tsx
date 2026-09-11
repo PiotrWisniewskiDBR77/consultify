@@ -225,7 +225,9 @@ export const InitiativeBusinessCaseCard: React.FC<Props> = ({ initiative, projec
                 {t('businessCase.scenarios')}
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
+                <table /* §27-exempt: arkusz metryk scenariuszy (NPV/IRR/Payback/ROI) — wyniki finansowe, zero kebaba/preview/nawigacji */
+                  className="w-full text-sm border-collapse"
+                >
                   <thead>
                     <tr className="text-left text-[11px] uppercase text-c-text-muted border-b border-c-border-subtle">
                       <th className="py-2 pr-3 font-medium">{t('businessCase.scenario')}</th>

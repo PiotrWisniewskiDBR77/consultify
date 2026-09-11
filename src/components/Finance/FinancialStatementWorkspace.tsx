@@ -1018,8 +1018,8 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
             ) : (
               <div className="mt-4 overflow-x-auto">
-                <table
-                  /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm"
+                <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */
+                  className="w-full text-sm"
                 >
                   <thead className="text-left text-slate-500">
                     <tr>

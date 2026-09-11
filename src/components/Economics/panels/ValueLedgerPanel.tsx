@@ -290,7 +290,9 @@ export const ValueLedgerPanel: React.FC<ValueLedgerPanelProps> = ({ fetcher }) =
           </div>
 
           <div className="overflow-x-auto" data-testid="ledger-audit-trail">
-            <table className="w-full text-left text-xs">
+            <table /* §27-exempt: log audytowy obliczen ledgera (kind/delta/running total) — slad kalkulacji, nie lista rekordow, zero kebaba/preview */
+              className="w-full text-left text-xs"
+            >
               <thead>
                 <tr className="border-b border-c-border-subtle text-c-text-muted">
                   <th className="py-1.5 pr-3 font-medium">

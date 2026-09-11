@@ -230,9 +230,10 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
       </div>
 
       <div className="flex-1 overflow-auto px-6 py-5">
-        {/* §27-exempt: document-layout — financial model document with hierarchical line groups, subtotals, and year-columns; not a flat filterable data set */}
         <div className="overflow-x-auto rounded-2xl bg-white/[0.02]">
-          <table className="w-full min-w-[760px] text-sm">
+          <table /* §27-exempt: document-layout — financial model document with hierarchical line groups, subtotals, and year-columns; not a flat filterable data set */
+            className="w-full min-w-[760px] text-sm"
+          >
             <thead>
               <tr className="border-b border-white/[0.06] text-left text-[11px] uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">{t('finance.preview.lineColumn', 'Line')}</th>

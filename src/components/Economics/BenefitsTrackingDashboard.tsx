@@ -372,7 +372,9 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table /* §27-exempt: lista pomiarow benefitow z akcja edycji — ksztaltem kandydat na StandardTable, ale komponent nie ma ZADNEGO importera w apce (dead code, zero konsumentow poza wlasnym plikiem i re-exportem index.ts) — przepisanie odlozone do dyzuru, ktory najpierw zdecyduje czy podlaczyc czy usunac */
+              className="w-full"
+            >
               <thead className="bg-slate-50 dark:bg-navy-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
