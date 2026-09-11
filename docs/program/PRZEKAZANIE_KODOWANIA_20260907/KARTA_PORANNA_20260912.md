@@ -19,6 +19,8 @@ Piotrze, wykonałem Twoje polecenie z 20:30. Poniżej uczciwie: co jest na żywo
 
 **Dowody na żywo po wdrożeniu (skryptem, nie okiem robotnika):** wszystkie zapisy 200/201, zero błędów serwera; członek projektu dostaje 403 na cudzym zadaniu i wiersz w bazie nie drgnął; Twoja karta zadania jako zgłaszającego otwiera się; aplikacja startuje w 1,5 s, każdy moduł w 1,6 s.
 
+**Odbiór adwersaryjny nr 2 (o 1:00, obie role, ciepła sesja): ZERO REGRESJI.** Wszystkie 16 modułów otwiera się z treścią (15 z 16 poniżej 5,6 s), karty N 7/7, dziury uprawnień zamknięte także na Twoich starych rekordach, karta zadania 46/46. Dwie nowe rzeczy do listy: zamknięcia karty działania nie da się cofnąć (brak trasy „otwórz ponownie") i stary adres skrzynki daje 500 (ekran działa nową ścieżką).
+
 **Punkty cofnięcia:** tag `staging-safe-20260912-0003` (= stan z Tokio + hotfix) i zrzuty obu baz.
 
 ## 2. Co się wywróciło po drodze (i dlaczego rano jest dobrze)
