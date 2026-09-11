@@ -239,10 +239,16 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
       timeout: 3000,
     });
-    expect(screen.getByText('Popyt (h)')).toBeInTheDocument();
+    // NAPRAWA (dług 11.09): 'Popyt (h)'/'Luka (h)' to sprzed DEC-461
+    // (jezyk-angielski-najpierw) — source (ExecutionResourcesSurface.tsx)
+    // ma dziś fallback 'Demand (h)'/'Gap (h)', tak samo jak 'Supply (h)'/
+    // 'Utilization %' już poprawione w J7 wyżej w tym pliku. Test dogoniony
+    // do aktualnego, poprawnego stanu source — kontrakt (4 kolumny liczbowe
+    // + realne wartości) się nie zmienia.
+    expect(screen.getByText('Demand (h)')).toBeInTheDocument();
     expect(screen.getByText('Supply (h)')).toBeInTheDocument();
     expect(screen.getByText('Utilization %')).toBeInTheDocument();
-    expect(screen.getByText('Luka (h)')).toBeInTheDocument();
+    expect(screen.getByText('Gap (h)')).toBeInTheDocument();
     expect(screen.getByText('64 h')).toBeInTheDocument();
     expect(screen.getByText('160 %')).toBeInTheDocument();
     expect(screen.getByText('-24 h')).toBeInTheDocument();
