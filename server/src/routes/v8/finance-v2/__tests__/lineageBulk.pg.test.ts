@@ -20,6 +20,11 @@ describe.skipIf(!realPg)('CODEX3 E3 — bulk lineage through real ApiGateway', {
   let app: express.Express;
   let sourceVersionId: string;
   let targetVersionId: string;
+  // Przewód E3 do listy (97_ODBIOR_W1_W2.md §6 STOP3/§9b, WZNOWIENIE 2026-09-11):
+  // `legacyIdWithAlias` ma wiersz w `finance_artifact_aliases` -> `sourceVersionId`;
+  // `legacyIdWithoutAlias` celowo NIE ma aliasu (honest gap, `unresolvedIds`).
+  const legacyIdWithAlias = `financial_statement_packs:${randomUUID()}`;
+  const legacyIdWithoutAlias = `financial_statement_packs:${randomUUID()}`;
 
   const bearer = (userId: string, orgId: string) => ({
     Authorization: `Bearer ${jwt.sign({ id: userId, userId, organizationId: orgId, organization_id: orgId, role: 'OWNER' }, process.env.JWT_SECRET!, { algorithm: 'HS256', expiresIn: '1h' })}`,
@@ -49,6 +54,18 @@ describe.skipIf(!realPg)('CODEX3 E3 — bulk lineage through real ApiGateway', {
     });
     const inserted = await insertEdge({ organizationId, sourceVersionId, sourceArtifactType: 'STATEMENT_PACK', targetVersionId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS', transformationKind: 'COMPUTE', authorId: ownerId });
     expect(inserted.ok).toBe(true);
+    // Most legacy→kanon (WP-C03, `finance_artifact_aliases`, 13 wierszy na kopii
+    // sztabowej `consultify_kopia_fe3`) — jeden wiersz per organizację, tak jak
+    // pisze go `statementPackRegistrationService.ts:287-295`.
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO finance_artifact_aliases
+         (legacy_table, legacy_id, legacy_version, artifact_id, organization_id,
+          business_version_id, mapping_confidence, mapping_reason, created_by)
+         VALUES ('financial_statement_packs', ?, '', ?, ?, ?, 'AUTO_MIGRATE', 'CODEX3 E3 test fixture', ?)`,
+        [legacyIdWithAlias, source.artifact.artifact_id, organizationId, sourceVersionId, ownerId]
+      );
+    });
     const { ApiGateway } = await import('../../../../Gateway.js');
     app = express();
     app.use(express.json());
@@ -69,6 +86,41 @@ describe.skipIf(!realPg)('CODEX3 E3 — bulk lineage through real ApiGateway', {
     expect(response.status).toBe(200);
     expect(response.body.data.businessVersionIds).toEqual([sourceVersionId, targetVersionId]);
     expect(response.body.data.edges).toHaveLength(1);
+    // (a) kanoniczne BV id -> jak dotąd, plus pola addytywne: id rozwiązuje się na siebie.
+    expect(response.body.data.resolvedVersionIds).toMatchObject({
+      [sourceVersionId]: sourceVersionId,
+      [targetVersionId]: targetVersionId,
+    });
+    expect(response.body.data.unresolvedIds).toEqual([]);
+  });
+
+  it('(b) resolves a legacy id through finance_artifact_aliases to the canonical edge', async () => {
+    const response = await post([legacyIdWithAlias, targetVersionId]);
+    expect(response.status).toBe(200);
+    expect(response.body.data.businessVersionIds).toEqual([legacyIdWithAlias, targetVersionId]);
+    expect(response.body.data.edges).toHaveLength(1);
+    expect(response.body.data.edges[0]).toMatchObject({ sourceVersionId, targetVersionId });
+    expect(response.body.data.resolvedVersionIds).toMatchObject({
+      [legacyIdWithAlias]: sourceVersionId,
+      [targetVersionId]: targetVersionId,
+    });
+    expect(response.body.data.unresolvedIds).toEqual([]);
+  });
+
+  it('(c) returns the honest NO_LINEAGE contract for a legacy id without an alias', async () => {
+    const response = await post([legacyIdWithoutAlias]);
+    expect(response.status).toBe(200);
+    expect(response.body.data.edges).toEqual([]);
+    expect(response.body.data.resolvedVersionIds).toEqual({});
+    expect(response.body.data.unresolvedIds).toEqual([legacyIdWithoutAlias]);
+  });
+
+  it('(d) does not resolve another organization alias — no cross-tenant leak', async () => {
+    const response = await post([legacyIdWithAlias], otherOwnerId, otherOrganizationId);
+    expect(response.status).toBe(200);
+    expect(response.body.data.edges).toEqual([]);
+    expect(response.body.data.resolvedVersionIds).toEqual({});
+    expect(response.body.data.unresolvedIds).toEqual([legacyIdWithAlias]);
   });
 
   it('returns display names rather than hashes', async () => {
@@ -97,6 +149,15 @@ describe.skipIf(!realPg)('CODEX3 E3 — bulk lineage through real ApiGateway', {
 
   it('rejects more than 100 unique ids', async () => {
     const response = await post(Array.from({ length: 101 }, () => randomUUID()));
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('BUSINESS_VERSION_IDS_LIMIT_EXCEEDED');
+  });
+
+  it('(e) enforces the 100-id limit on the requested surface even when ids would resolve to far fewer canonical versions', async () => {
+    // 101 unikatowych legacy id, WSZYSTKIE bez aliasu — gdyby limit liczył po
+    // rozwiązaniu (0 kanonicznych trafień), request przeszedłby cicho. Limit
+    // musi paść na wejściu, zanim `resolveLineageRequestIds` w ogóle odpali.
+    const response = await post(Array.from({ length: 101 }, () => `financial_statement_packs:${randomUUID()}`));
     expect(response.status).toBe(400);
     expect(response.body.code).toBe('BUSINESS_VERSION_IDS_LIMIT_EXCEEDED');
   });
