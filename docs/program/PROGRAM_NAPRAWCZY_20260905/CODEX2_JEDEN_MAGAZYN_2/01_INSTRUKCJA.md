@@ -834,6 +834,52 @@ grep -rn "SELECT id FROM initiatives WHERE id" server/src | grep -v __tests__ | 
 `initiative/initiativeKpiAssignmentService.ts:262`).
 **DO PRZEŁĄCZENIA ZOSTAJE 47.**
 
+**★ FIX-6 (97_ODBIOR_W1_W2.md §8, wykonane 2026-09-11) — K1 PRZEDEFINIOWANE.**
+Powód: licznik oparty na literale SQL `SELECT id FROM initiatives WHERE id`
+spadł 50→48 wyłącznie dlatego, że E1 Codexa przepisał tekst zapytania na
+`SELECT 1 AS found FROM initiatives WHERE id` w dwóch bramkach, które
+realnie przełączył (`results.routes.ts:544`, `execution-control.routes.ts:604`)
+— sama zmiana literału, bez żadnego przełączenia, też obniżałaby ten licznik.
+**Miarą musi być obecność wywołania `initiativeExists(`/`readInitiativeHeader(`/
+`isInitiativeUnifiedReadEnabled(` w tej samej bramce, nie kształt literału SQL.**
+
+Nowa komenda (kandydat = OBIE postacie literału, żeby przepisanie tekstu nie
+zmieniało mianownika; „przełączona" = wywołanie funkcji przełączającej w oknie
+±20 linii wokół zapytania — wymaga nawiasu `(` zaraz po nazwie, żeby NIE
+łapać podobnie nazwanych lokalnych funkcji jak `initiativeExistsInOrg`):
+
+```bash
+git grep -nE "SELECT (id|1 AS found) FROM initiatives WHERE id" <SHA> -- server/src \
+  | grep -v __tests__ | sed -E "s#^<SHA>:##" \
+  | while IFS=: read -r f ln _; do
+      s=$((ln-20)); e=$((ln+20))
+      git show "<SHA>:${f}" | sed -n "${s},${e}p" \
+        | grep -qE "initiativeExists\(|readInitiativeHeader\(|isInitiativeUnifiedReadEnabled\(" \
+        || echo "ZASTANA: ${f}:${ln}"
+    done | wc -l
+```
+
+**Zmierzone przeze mnie (Sonnet, worktree `c6-fix-codex2`, 2026-09-11):**
+
+| SHA | Kandydatów (oba literały) | Przełączonych (wywołanie w oknie) | ZASTANA (K1 nowe) |
+| --- | --- | --- | --- |
+| marker `19440011e9` | 50 | 2 | **48** |
+| tip `a954495c2e` (merge C6, przed FIX-ami) | 50 | 4 | **46** |
+
+**Rozbieżność z „spodziewane 47/50" z 97_ODBIOR_W1_W2.md §8 — wyjaśniona,
+nie wymuszona na siłę (zasada „zmierz sam, nie ufaj premisie"):** liczba „47"
+w tym dokumencie (linia wyżej) sama pochodzi z komendy `§0.1a (2)`, która
+liczy dopasowania substringu `initiativeExists` BEZ wymogu nawiasu zaraz po
+nazwie — a to łapie też `initiativeExistsInOrg(` w
+`initiatives-additive.routes.ts:60` (funkcja lokalna, pyta WYŁĄCZNIE tabelę
+zastaną, zero świadomości flagi/czytnika kanonicznego) jako fałszywy
+pozytyw „ma fallback". Realnie na markerze są **2** bramki z genuinym
+przełączeniem (`InitiativeController.ts:3275`,
+`initiativeKpiAssignmentService.ts:262`), nie 3 — więc **48**, nie 47,
+zostaje do przełączenia na starcie. Na tipie E1 Codexa dodał 2 kolejne
+(`results.routes.ts:552`, `execution-control.routes.ts:612`) → **46**.
+**Dla kolejnego bloku: użyj liczb z tej tabeli (48/46), nie „47/50".**
+
 **Liczby z bazy (kopia `consultify_staging_1009`, 11.09):**
 
 | Co | Mój wynik |
