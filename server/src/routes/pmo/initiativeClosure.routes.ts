@@ -15,6 +15,10 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -105,11 +109,15 @@ router.get('/:id/closure-requests', async (req: AuthenticatedRequest, res: Respo
   if (!auth) return;
   try {
     const { id: initiativeId } = req.params;
-    const initiative = await queryHelpers.queryOne(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, auth.orgId]
-    );
-    if (!initiative) {
+    const initiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(auth.orgId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, auth.orgId]
+          )
+        );
+    if (!initiativeFound) {
       res.status(404).json({ error: 'Initiative not found' });
       return;
     }
