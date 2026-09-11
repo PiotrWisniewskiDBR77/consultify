@@ -13,6 +13,15 @@ import { v4 as uuidv4 } from 'uuid';
 import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
 import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
+// FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
+// "same clientRequestId, different command" (receipt clash — our dedup path)
+// from "aggregate version conflict" (real concurrent edit) by message text;
+// only the former is caught below and turned into an idempotent replay.
+import { MaterialCommandConflictError } from '../domain/initiatives-execution/materialCommand.js';
+// FIX-3 (97_ODBIOR_W1_W2.md §8): reuse the existing deterministic content-hash
+// helper (already cross-domain: evidenceService, OrganizationContextService)
+// instead of writing a second stable-stringify implementation.
+import { computeContentHash } from '../method-core/db.js';
 import { PostgresGovernancePolicyResolver } from '../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
 import { PostgresInitiativeReader } from '../domain/initiatives-execution/postgresInitiativeReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
@@ -935,24 +944,66 @@ export class InitiativeController {
               canonical.initiative.projectId,
               id
             );
-            const result = await amendInitiativeMetadata(canonicalInitiativeWriteUnitOfWork, {
-              organizationId: orgId,
-              actorId: userId,
-              aggregateType: 'initiative',
-              aggregateId: id,
-              expectedVersion: canonical.version,
-              clientRequestId: `legacy-put-${uuidv4()}`,
-              correlationId: req.get('X-Correlation-ID') || `legacy-put-${uuidv4()}`,
-              policyId: policy.policyId,
-              policyVersion: policy.version,
-              commandType: 'initiative.metadata.amend',
-              payload: {
-                ...(typeof body.title === 'string' ? { title: body.title } : {}),
-                ...(typeof body.description === 'string' ? { problem: body.description } : {}),
-                ...(typeof body.summary === 'string' ? { proposedOutcome: body.summary } : {}),
-                ...(requestedOwner !== undefined ? { initiativeOwnerId: requestedOwner } : {}),
-              },
-            });
+            // FIX-3 (97_ODBIOR_W1_W2.md §8): `clientRequestId` must be
+            // deterministic from the request, not `legacy-put-${uuidv4()}`.
+            // Measured: sending the same PUT payload twice previously bumped
+            // `version` 2 -> 3 and created a second `ie_command_receipts` row
+            // (retry / double-click multiplied aggregate versions). Prefer
+            // the client-supplied `Idempotency-Key` header when present;
+            // otherwise hash id + orgId + the (already-validated) payload so
+            // an identical retry reuses the same receipt.
+            const suppliedIdempotencyKey = String(req.get('Idempotency-Key') || '').trim();
+            const deterministicClientRequestId = suppliedIdempotencyKey
+              ? `legacy-put-idem-${suppliedIdempotencyKey}`
+              : `legacy-put-${computeContentHash({ id, orgId, body })}`;
+            let result;
+            try {
+              result = await amendInitiativeMetadata(canonicalInitiativeWriteUnitOfWork, {
+                organizationId: orgId,
+                actorId: userId,
+                aggregateType: 'initiative',
+                aggregateId: id,
+                expectedVersion: canonical.version,
+                clientRequestId: deterministicClientRequestId,
+                correlationId: req.get('X-Correlation-ID') || `legacy-put-${uuidv4()}`,
+                policyId: policy.policyId,
+                policyVersion: policy.version,
+                commandType: 'initiative.metadata.amend',
+                payload: {
+                  ...(typeof body.title === 'string' ? { title: body.title } : {}),
+                  ...(typeof body.description === 'string' ? { problem: body.description } : {}),
+                  ...(typeof body.summary === 'string' ? { proposedOutcome: body.summary } : {}),
+                  ...(requestedOwner !== undefined ? { initiativeOwnerId: requestedOwner } : {}),
+                },
+              });
+            } catch (error) {
+              // FIX-3: the deterministic clientRequestId is the SAME on an
+              // identical retry (same id+orgId+payload). If the first
+              // attempt already succeeded, `expectedVersion` re-read fresh
+              // per request (FIX-4, left as-is) differs on the retry, so the
+              // stored receipt's fingerprint no longer matches and the
+              // command layer rejects it as "different command" rather than
+              // replaying it. That specific collision IS this same command
+              // re-arriving, not a real conflict, so answer it exactly like
+              // the first, successful response instead of a 500 for what is
+              // a benign retry/double-click. Any other conflict (e.g. a
+              // genuine concurrent edit — "aggregate version conflict") is
+              // rethrown unchanged.
+              if (
+                error instanceof MaterialCommandConflictError &&
+                error.message === 'clientRequestId was already used for a different command target'
+              ) {
+                const readBackAfterConflict = await canonicalInitiativeWriteReader.findById(orgId, id);
+                res.json({
+                  id,
+                  message: INITIATIVE_UPDATED_MESSAGE,
+                  changesCount: Object.keys(readBackAfterConflict?.initiative || {}).length,
+                  initiative: readBackAfterConflict,
+                });
+                return;
+              }
+              throw error;
+            }
             const readBack = await canonicalInitiativeWriteReader.findById(orgId, id);
             res.json({
               id,

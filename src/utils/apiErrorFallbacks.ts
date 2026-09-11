@@ -129,6 +129,8 @@ export const API_ERROR_FALLBACKS_EN: Readonly<Record<string, string>> = Object.f
   DATA_EXPORT_LIST_REQUESTS_FAILED: 'Export requests could not be loaded.',
   DATA_EXPORT_STATUS_FAILED: 'The export status could not be loaded.',
   GOVERNED_CONNECTOR_NOT_APPROVED: 'This integration is not available in this edition.',
+  INITIATIVE_CANONICAL_WRITE_REQUIRED:
+    'This initiative is in the new registry — save it from the initiative card.',
   INITIATIVE_GENERATION_SCHEMA_MISSING: 'The run could not be created.',
   INVALID_ORGANIZATION_IDENTIFIER: 'The organization identifier is not a valid UUID, so this configuration cannot be saved.',
   KNOWLEDGE_CANDIDATES_APPROVED_FAILED: 'Approved ideas could not be loaded.',
