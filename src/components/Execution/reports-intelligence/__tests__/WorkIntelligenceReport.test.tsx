@@ -146,11 +146,18 @@ describe('Work Intelligence report', () => {
     expect(screen.getByRole('heading', { name: 'What is approaching' })).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'What is at stake' })).toBeInTheDocument();
-    expect(screen.getByText(/NO_API_BSC/)).toBeInTheDocument();
+    // NAPRAWA (dług 11.09): `NO_API_BSC` był surowym literałem w JSX przed
+    // naprawą i18n-reszty (komentarz przy WorkIntelligenceReport.tsx:85) —
+    // dziś idzie przez `trPair(t, REASON_LABEL_KEY.NO_API_BSC)`, więc RAW
+    // klucz enuma nigdy nie trafia na ekran, tylko jego angielski fallback
+    // ('No objective-mapping API available' — mock ma i18n.language:'en').
+    expect(screen.getByText(/No objective-mapping API available/)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'Why it is happening' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'How the system is changing' })).toBeInTheDocument();
-    expect(screen.getByText('UNKNOWN · NO_API_HISTORY')).toBeInTheDocument();
+    // Ta sama naprawa: `EPISTEMIC_LABEL_KEY.unknown` → 'UNKNOWN',
+    // `REASON_LABEL_KEY.NO_API_HISTORY` → 'No history API available'.
+    expect(screen.getByText('UNKNOWN · No history API available')).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: 'What management should do' })).toBeInTheDocument();
     expect(screen.getByText(/No recommendation is issued/)).toBeInTheDocument();
@@ -191,7 +198,9 @@ describe('Work Intelligence report', () => {
     expect(
       await screen.findByText('No work records are available for the selected scope.')
     ).toBeInTheDocument();
-    expect(screen.getByText('UNKNOWN · NO_API_HISTORY')).toBeInTheDocument();
+    // NAPRAWA (dług 11.09): patrz uzasadnienie przy pierwszym teście tego
+    // pliku — `trPair` renderuje angielski fallback, nigdy surowy klucz enuma.
+    expect(screen.getByText('UNKNOWN · No history API available')).toBeInTheDocument();
   });
 
   it('opens the governed task tool from the exact register row', async () => {
