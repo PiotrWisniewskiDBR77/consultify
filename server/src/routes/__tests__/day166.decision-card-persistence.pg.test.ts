@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 
 import { randomUUID } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
@@ -41,8 +42,8 @@ describe(
         [organizationId]
       );
       for (const [id, email, firstName] of [
-        [userId, 'owner-day166@example.test', 'Owner'],
-        [stakeholderUserId, 'stakeholder-day166@example.test', 'Stakeholder'],
+        [userId, `owner-day166-${organizationId}@example.test`, 'Owner'],
+        [stakeholderUserId, `stakeholder-day166-${organizationId}@example.test`, 'Stakeholder'],
       ]) {
         await sql.query(
           `INSERT INTO users
@@ -62,7 +63,13 @@ describe(
         [decisionId, organizationId, userId]
       );
       authorization = `Bearer ${jwt.sign(
-        { id: userId, userId, email: 'owner-day166@example.test', organizationId, role: 'ADMIN' },
+        {
+          id: userId,
+          userId,
+          email: `owner-day166-${organizationId}@example.test`,
+          organizationId,
+          role: 'ADMIN',
+        },
         config.JWT_SECRET,
         { algorithm: 'HS256', expiresIn: '1h' }
       )}`;
@@ -72,17 +79,29 @@ describe(
     });
 
     afterAll(async () => {
+      // DB cleanup runs first (and is wrapped in try/finally) so that a
+      // problem writing the evidence file — e.g. the /private/tmp scratch
+      // directory not existing — can never skip cleanup and leave orphaned
+      // fixture rows (fixed emails below) behind for the next run to trip
+      // over on the users_email_key unique constraint.
+      try {
+        if (sql) {
+          await sql.query('DELETE FROM decision_risks WHERE decision_id = $1', [decisionId]);
+          await sql.query('DELETE FROM decision_stakeholders WHERE decision_id = $1', [
+            decisionId,
+          ]);
+          await sql.query('DELETE FROM decisions WHERE id = $1', [decisionId]);
+          await sql.query('DELETE FROM organization_members WHERE organization_id = $1', [
+            organizationId,
+          ]);
+          await sql.query('DELETE FROM users WHERE organization_id = $1', [organizationId]);
+          await sql.query('DELETE FROM organizations WHERE id = $1', [organizationId]);
+        }
+      } finally {
+        if (sql) await sql.end();
+      }
+      mkdirSync(dirname(ARTIFACT), { recursive: true });
       writeFileSync(ARTIFACT, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
-      if (!sql) return;
-      await sql.query('DELETE FROM decision_risks WHERE decision_id = $1', [decisionId]);
-      await sql.query('DELETE FROM decision_stakeholders WHERE decision_id = $1', [decisionId]);
-      await sql.query('DELETE FROM decisions WHERE id = $1', [decisionId]);
-      await sql.query('DELETE FROM organization_members WHERE organization_id = $1', [
-        organizationId,
-      ]);
-      await sql.query('DELETE FROM users WHERE organization_id = $1', [organizationId]);
-      await sql.query('DELETE FROM organizations WHERE id = $1', [organizationId]);
-      await sql.end();
     });
 
     it('persists risk category and contingency and reads them from the detail aggregate', async () => {
