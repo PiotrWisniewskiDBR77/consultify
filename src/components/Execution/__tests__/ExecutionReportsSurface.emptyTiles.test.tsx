@@ -24,17 +24,38 @@
  *       dostałby węzeł z tekstem „Nowa definicja" nawet dla MEMBER (FAIL).
  */
 // [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
-// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
-// na angielski ('No reports'). Asercja zaktualizowana — kontrakt się nie
-// zmienił, zmienił się tylko język domyślnego tekstu.
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — domyślny
+// tekst W KODZIE poprawiono na angielski ('No reports').
+// NAPRAWA (dług 11.09, bramka-9): ÓWCZESNY mock (t: (k, fallback) => fallback)
+// ignorował i18n.language i zawsze zwracał ten angielski fallback.
+// `executionReports.empty.runs.title` MA tłumaczenie PL ("Brak raportów") —
+// z poprawnym mockiem (resolvePlKey, jak realny react-i18next dla
+// language:'pl') renderuje się to, co widzi polski użytkownik.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
+    t: (k: string, fallback?: unknown) => {
+      const resolved = resolvePlKey(k);
+      if (resolved !== undefined) return resolved;
+      return typeof fallback === 'string' ? fallback : k;
+    },
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
@@ -153,7 +174,7 @@ describe('ExecutionReportsSurface — pusty stan z kaflami (D6) i kebab admin-on
     expect(screen.queryByTestId('standard-table-empty-actions')).not.toBeInTheDocument();
     expect(screen.queryByTestId('standard-table-empty-action-mvp-owner-test')).not.toBeInTheDocument();
     expect(screen.queryByText('Wygeneruj pierwszy raport')).not.toBeInTheDocument();
-    expect(screen.getByText('No reports')).toBeInTheDocument();
+    expect(screen.getByText('Brak raportów')).toBeInTheDocument();
   });
 
   it('(l) MEMBER (isAdmin=false) nie dostaje kebaba deweloperskiego w Menu 3', async () => {
@@ -195,7 +216,8 @@ describe('ExecutionReportsSurface — pusty stan z kaflami (D6) i kebab admin-on
       onRegisterMenu3Control.mock.calls[onRegisterMenu3Control.mock.calls.length - 1];
     render(<MemoryRouter>{lastCall[0]}</MemoryRouter>);
     // Kebab jest zamknięty domyślnie — otwórz go, żeby zobaczyć pozycje.
-    fireEvent.click(screen.getByLabelText('Row actions'));
+    // 'common.rowActions' MA tłumaczenie PL ("Akcje wiersza").
+    fireEvent.click(screen.getByLabelText('Akcje wiersza'));
     await waitFor(() => {
       expect(screen.getByText('Nowa definicja')).toBeInTheDocument();
       expect(screen.getByText('Kontrakt raportu (zaawansowane)')).toBeInTheDocument();
