@@ -1,5 +1,7 @@
 import logger from '../../utils/Logger.js';
 import { send as sendEmail } from '../emailService.js';
+import { t } from '../email/onboardingEmailCopy.js';
+import type { OnboardingEmailLang } from '../email/onboardingEmailLocale.js';
 
 export type InvitationDeliveryResult = {
   inviteLink: string;
@@ -71,26 +73,33 @@ export class InvitationSendingService {
     return { inviteLink, deliveryStatus: 'SENT' };
   }
 
-  /** Canonical admin-IAM transport: never converts a provider failure into success. */
+  /**
+   * Canonical admin-IAM transport: never converts a provider failure into
+   * success.
+   *
+   * DEC-461: `lang` defaults to 'en' — this used to be hardcoded Polish
+   * (P1, commit 0bfffeac4e), which predates DEC-461 (English is the
+   * default, Polish is a per-recipient translation). Since the invitee has
+   * no account yet, callers resolve `lang` from the inviting organization's
+   * default locale (`getOnboardingEmailLangForOrganization`), not a user.
+   */
   async dispatchAdminIamInvitation(
     email: string,
     token: string,
-    resent = false
+    resent = false,
+    lang: OnboardingEmailLang = 'en'
   ): Promise<{ state: 'SENT' | 'FAILED'; code: string | null }> {
     const inviteLink = this.getInviteLink(token);
+    const tr = (key: string) => t(lang, key);
     try {
       const sent = await this.emailSender({
         to: email,
-        subject: resent
-          ? 'Twoje zaproszenie do Consultify (ponownie)'
-          : 'Zaproszenie do Consultify',
+        subject: resent ? tr('invite.resent.subject') : tr('invite.create.subject'),
         html: this.buildInviteHtml({
-          heading: resent ? 'Twoje zaproszenie do Consultify' : 'Dołącz do zespołu w Consultify',
-          intro: resent
-            ? 'Wysyłamy Twój link z zaproszeniem jeszcze raz.'
-            : 'Zaproszono Cię do wspólnej pracy w Consultify.',
+          heading: resent ? tr('invite.resent.heading') : tr('invite.create.heading'),
+          intro: resent ? tr('invite.resent.intro') : tr('invite.create.intro'),
           inviteLink,
-          cta: 'Przyjmij zaproszenie',
+          cta: tr('invite.cta'),
         }),
         requireDelivery: true,
       });
