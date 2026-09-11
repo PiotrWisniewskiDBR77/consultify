@@ -134,8 +134,16 @@ describe('1.12-R1 (A) — zakładka Realizacje', () => {
     expect(blokRag).toContain('initiativeRag(row as any)');
     expect(blokRag).toContain('execution.rag.noDates');
     expect(blokRag).toContain('bg-c-text-muted');
-    // Zablokowana = czerwona niezależnie od dat.
-    expect(blokRag).toContain('InitiativeStatus.BLOCKED');
+    // Zablokowana = czerwona niezależnie od dat. NAPRAWA (dług 11.09): asercja
+    // szukała literału `InitiativeStatus.BLOCKED`, ale migracja P12 (już
+    // ukończona — `packages/shared/src/constants/initiativeStatuses.generated.ts`
+    // nie ma dziś `BLOCKED` w enumie, tylko w `LEGACY_INITIATIVE_STATUS_CODES`)
+    // przeniosła rozpoznawanie blokady do `isBlockedInitiative()`
+    // (`executionRealData.ts`), która czyta OBA słowniki (stary `status==='BLOCKED'`
+    // i nowy `IN_EXECUTION`+`on_hold`). Referencja `InitiativeStatus.BLOCKED`
+    // byłaby dziś błędem kompilacji — test asercjuje istniejącą, poprawną ścieżkę.
+    expect(blokRag).toContain('isBlockedInitiative(row as any)');
+    expect(blokRag).toContain("zablokowana ? 'red'");
   });
 
   it('Menu 3 „Realizacji" ma trzy chipy i FILTRUJE tabelę (dawniej: dekoracja)', () => {
