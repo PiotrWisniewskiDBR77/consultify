@@ -2255,14 +2255,26 @@ router.post(
         });
 
         // GAP-AUTH-001: Send email verification
+        // DEC-461: English default, Polish only per recipient preference — see
+        // onboardingEmailLocale.ts. Resolved once and reused for the welcome
+        // email below so both first-contact emails agree on language.
         let emailVerificationSent = false;
+        let onboardingEmailLang: 'en' | 'pl' = 'en';
+        try {
+          const { getOnboardingEmailLangForUser } = await import(
+            '../services/email/onboardingEmailLocale.js'
+          );
+          onboardingEmailLang = await getOnboardingEmailLangForUser(userId);
+        } catch (langErr) {
+          logger.warn('[Auth] Failed to resolve onboarding email language (defaulting to en):', langErr);
+        }
         try {
           const emailVerificationService = (await import('../services/emailVerificationService.js'))
             .default;
           const token = await emailVerificationService.createVerificationToken(userId, email);
           // Do not block registration on flaky SMTP/network.
           await _withTimeout(
-            emailVerificationService.sendVerificationEmail(email, firstName, token),
+            emailVerificationService.sendVerificationEmail(email, firstName, token, onboardingEmailLang),
             1500
           );
           emailVerificationSent = true;
@@ -2282,6 +2294,7 @@ router.post(
               firstName,
               companyName: companyName || 'Your Organization',
               isDemo,
+              lang: onboardingEmailLang,
             }),
             1500
           );

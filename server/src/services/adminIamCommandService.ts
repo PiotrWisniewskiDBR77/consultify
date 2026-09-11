@@ -5,6 +5,7 @@ import { withPinnedPostgresTransaction } from '../database/PostgresDatabase.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { InvitationSendingService } from './invitation/InvitationSendingService.js';
 import { invalidatePlatformSuperAdminCache } from './organizationSuspensionGuard.js';
+import { getOnboardingEmailLangForOrganization } from './email/onboardingEmailLocale.js';
 
 type CommandType = 'CREATE' | 'RESEND' | 'REVOKE';
 type DeliveryState = 'SENT' | 'FAILED' | 'NOT_ATTEMPTED';
@@ -80,10 +81,15 @@ async function delivery(params: {
   email: string;
   resend: boolean;
 }) {
+  // DEC-461: English default, Polish only per the inviting organization's
+  // preference — the invitee has no account yet, so there is no user-level
+  // preference to consult (see onboardingEmailLocale.ts).
+  const lang = await getOnboardingEmailLangForOrganization(params.org);
   const dispatched = await sender.dispatchAdminIamInvitation(
     params.email,
     params.raw,
-    params.resend
+    params.resend,
+    lang
   );
   const state = dispatched.state;
   const failure = dispatched.code;

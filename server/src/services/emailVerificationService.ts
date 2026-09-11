@@ -6,6 +6,11 @@ import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import EmailService from './emailService.js';
+import { t } from './email/onboardingEmailCopy.js';
+import {
+  getOnboardingEmailLangForUser,
+  type OnboardingEmailLang,
+} from './email/onboardingEmailLocale.js';
 
 type VerifyResult =
   | { success: true; userId: string; email: string }
@@ -118,26 +123,32 @@ async function createVerificationToken(userId: string, email: string): Promise<s
 async function sendVerificationEmail(
   email: string,
   firstName: string,
-  token: string
+  token: string,
+  lang: OnboardingEmailLang = 'en'
 ): Promise<void> {
   const baseUrl = String(
     process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000'
   ).replace(/\/$/, '');
   const verifyLink = `${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`;
+  const tr = (key: string, params: Record<string, string> = {}) => t(lang, key, params);
+  const trimmedName = String(firstName || '').trim();
+  const greeting = trimmedName
+    ? tr('verify.greeting.named', { firstName: trimmedName })
+    : tr('verify.greeting.generic');
 
   await EmailService.send({
     to: email,
-    subject: 'Potwierdź swój adres e-mail',
+    subject: tr('verify.subject'),
     html: `
-      <p>Cześć ${firstName || ''},</p>
-      <p>Potwierdź swój adres e-mail, klikając poniższy link:</p>
+      <p>${greeting}</p>
+      <p>${tr('verify.intro')}</p>
       <p><a href="${verifyLink}">${verifyLink}</a></p>
-      <p>Jeśli to nie Ty zakładałeś konto w Consultify, zignoruj tę wiadomość.</p>
+      <p>${tr('verify.disclaimer')}</p>
     `,
     text:
-      `Cześć ${firstName || ''},\n\n` +
-      `Potwierdź swój adres e-mail, otwierając poniższy adres:\n${verifyLink}\n\n` +
-      'Jeśli to nie Ty zakładałeś konto w Consultify, zignoruj tę wiadomość.\n',
+      `${greeting}\n\n` +
+      `${tr('verify.intro')}\n${verifyLink}\n\n` +
+      `${tr('verify.disclaimer')}\n`,
   });
 }
 
@@ -180,7 +191,8 @@ async function resendVerificationEmail(
   if (!user) return { success: false, error: 'User not found' };
 
   const token = await createVerificationToken(userId, user.email);
-  await sendVerificationEmail(user.email, user.firstName, token);
+  const lang = await getOnboardingEmailLangForUser(userId);
+  await sendVerificationEmail(user.email, user.firstName, token, lang);
   return { success: true };
 }
 
