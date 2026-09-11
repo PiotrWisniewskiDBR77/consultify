@@ -13,7 +13,10 @@ import DecisionPlaybookControllerRaw from '../../controllers/DecisionPlaybookCon
 const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
-import { requireDecisionCapability } from '../../middleware/effectiveCapability.middleware.js';
+import {
+  isDecisionOwnedByCaller,
+  requireDecisionCapability,
+} from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -218,9 +221,31 @@ router.get('/:id/detail', DecisionController.getDecisionDetail);
  */
 router.get('/:id/history', DecisionController.getDecisionHistory);
 
+// [ODMROZENIE 06_EXECUTION DEC-453] STOP-2 z paczki E2 (10.09), zmierzony
+// 11.09 na kopii `consultify_kopia_s12b`: PRZED — MEMBER zapisywal
+// `decision_enhancements` CUDZEJ decyzji i dostawal 200 (wiersz w bazie
+// nadpisany). Cala rodzina tej trasy (stakeholders / alternatives / risks)
+// broni sie recznym `if` (`isDossierEditor`), a WLASNIE TA jedna trasa tego
+// `if` nie miala — bramka stala w `shadow`, wiec nie blokowala niczego.
+//
+// Naprawa tym samym mechanizmem co E2 (zadania): `enforceMode: 'enforce'`
+// TYLKO na tej trasie (globalne `CAPABILITY_ENFORCE` nietkniete),
+// `objectScoped` + `ownerPredicate` fail-closed. `ownerGrantsAccess: true`
+// jak w E2b (inicjatywy) — autor/wlasciciel decyzji nie musi miec
+// `decision.update` w szablonie roli projektowej, zeby edytowac SWOJA decyzje.
+// `allowWithoutProject: true`, bo `decisions.project_id` bywa NULL (decyzje
+// org-wide) — bez tego wlasciciel takiej decyzji dostalby 400
+// `PROJECT_CONTEXT_REQUIRED` zamiast zapisu.
 router.put(
   '/:id/enhancements',
-  requireDecisionCapability('decision.update', { shadow: true }),
+  requireDecisionCapability('decision.update', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isDecisionOwnedByCaller,
+    ownerGrantsAccess: true,
+    allowWithoutProject: true,
+  }),
   validateBody(ReplaceDecisionEnhancementsSchema),
   DecisionController.replaceEnhancements
 );
