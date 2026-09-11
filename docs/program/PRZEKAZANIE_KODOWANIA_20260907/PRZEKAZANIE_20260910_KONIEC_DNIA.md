@@ -412,3 +412,10 @@ worktree n1/a1/c3/hotfix/w1c/w1e → 54 GB. (5) Odbiorca Codexa 3 znalazł defek
 
 **Po Tokio (kolejność):** zielona bramka linii → scalenie c5-fix → `git push origin HEAD:staging` + workflow staging → health →
 dowód zapisu → tag → promocja demo → ponowny odbiór adwersaryjny kart N i Oceny na stagingu → decyzje właściciela z karty porannej.
+
+## 12. Noc 11/12.09 — wskaźnik (pełny opis w `KARTA_PORANNA_20260912.md` i rejestrze od wiersza „NOC 11/12.09 — mandat właściciela")
+
+Staging i demo = `60051310d7` (linia z 15 paczkami + naprawy 4 blokerów odbioru). Przebieg: wdrożenie 21:00 → odbiór adwersaryjny
+(`ODBIOR_STAGING_7e8668c7cc_20260911.md`) → cofnięcie 22:22 → diagnoza (`DIAGNOZA_W3_W4_20260911.md`: brak regresji, przyrząd) → naprawy
+B-1..B-4 → bramka-10 → ponowne wdrożenie 00:00 → dowody PASS 00:10. Codex 2b wydany (marker `a176d3f906`). Punkt cofnięcia
+`staging-safe-20260912-0003` = `b9122ea9d7` (wersja z Tokio + hotfix). Pomiar wydajności: `POMIAR_WYDAJNOSCI_STAGING_20260911.md`.
