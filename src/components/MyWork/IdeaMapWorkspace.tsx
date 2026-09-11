@@ -4549,7 +4549,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           <div data-testid="idea-canvas-loading" className="space-y-3">
             {loadingPhase === 'slow' && (
               <p role="status" className="text-sm text-c-text-muted">
-                {t('myWork.ideaMap.loadingSlow', 'Loading is taking longer than usual…')}
+                {t('common.loadingSlow', 'This is taking longer than usual…')}
               </p>
             )}
             <SkeletonState variant="canvas" />
