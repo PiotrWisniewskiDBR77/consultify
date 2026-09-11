@@ -63,7 +63,14 @@ afterEach(() => {
 const PROPS = { artifactId: 'art-1', businessVersionId: 'bv-1', expectedWorkingRevisionId: 'wr-1' };
 
 describe('FinanceExportImportPanel', () => {
-  it('flaga domyślnie OFF → renderuje null, ZERO wywołań export/import', () => {
+  // DEC-2026-09-03-348 (A2): financeExportImportV1 domyślnie ON
+  // (useFinanceExportImportFlag.ts) — kontrola negatywna wymaga teraz
+  // jawnego override'u OFF.
+  it('flaga jawnie OFF (override) → renderuje null, ZERO wywołań export/import', () => {
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: false })
+    );
     const { container } = render(<FinanceExportImportPanel {...PROPS} />);
     expect(container.firstChild).toBeNull();
     expect(mockExport).not.toHaveBeenCalled();

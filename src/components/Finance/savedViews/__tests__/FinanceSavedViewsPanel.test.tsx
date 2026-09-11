@@ -55,7 +55,14 @@ afterEach(() => {
 });
 
 describe('FinanceSavedViewsPanel', () => {
-  it('flaga domyślnie OFF → renderuje null, ZERO wywołań listFinanceSavedViews', () => {
+  // DEC-2026-09-03-348 (A2): financeSavedViewsV1 domyślnie ON
+  // (useFinanceSavedViewsFlag.ts) — kontrola negatywna wymaga teraz jawnego
+  // override'u OFF.
+  it('flaga jawnie OFF (override) → renderuje null, ZERO wywołań listFinanceSavedViews', () => {
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: false })
+    );
     const { container } = render(<FinanceSavedViewsPanel artifactId="art-1" />);
     expect(container.firstChild).toBeNull();
     expect(mockListFinanceSavedViews).not.toHaveBeenCalled();

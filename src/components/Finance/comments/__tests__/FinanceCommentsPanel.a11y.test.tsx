@@ -116,7 +116,14 @@ describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakie
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF brak jakiegokolwiek role="status" (panel nie renderuje nic)', () => {
-    window.localStorage.clear();
+    // DEC-2026-09-03-348 (A2) zmieniła domyślną wartość financeCommentsV1 na
+    // ON (useFinanceCommentsFlag.ts) — samo `localStorage.clear()` już NIE
+    // wyłącza panelu (brak override = default ON), więc kontrola negatywna
+    // musi jawnie wymusić override OFF.
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: false })
+    );
     const { container } = render(
       <FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />
     );

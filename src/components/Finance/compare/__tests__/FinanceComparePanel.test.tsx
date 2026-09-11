@@ -133,7 +133,14 @@ afterEach(() => {
 });
 
 describe('FinanceComparePanel', () => {
-  it('flaga domyślnie OFF → renderuje null, ZERO wywołań klienta compare', () => {
+  // DEC-2026-09-03-348 (A2) zmieniła domyślną wartość financeCompareV1 na ON
+  // (useFinanceCompareFlag.ts, defaultValue: true) — kontrola negatywna
+  // wymaga teraz jawnego override'u OFF, bo brak override = default ON.
+  it('flaga jawnie OFF (override) → renderuje null, ZERO wywołań klienta compare', () => {
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: false })
+    );
     const { container } = render(<FinanceComparePanel request={REQUEST} />);
     expect(container.firstChild).toBeNull();
     expect(mockComparePeriods).not.toHaveBeenCalled();

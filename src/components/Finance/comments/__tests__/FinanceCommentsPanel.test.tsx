@@ -94,7 +94,16 @@ afterEach(() => {
 });
 
 describe('FinanceCommentsPanel', () => {
-  it('flaga domyślnie OFF → renderuje null, ZERO wywołań listFinanceComments', () => {
+  // DEC-2026-09-03-348 (A2, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
+  // wiersz A2) zmieniła domyślną wartość flagi financeCommentsV1 z OFF na ON —
+  // patrz useFinanceCommentsFlag.ts (defaultValue: true). Panel bez flagi=false
+  // w override nadal renderuje się (ON), więc negatywna kontrola OFF wymaga
+  // teraz JAWNEGO override'u, żeby dalej sprawdzać tę ścieżkę kodu.
+  it('flaga jawnie OFF (override) → renderuje null, ZERO wywołań listFinanceComments', () => {
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: false })
+    );
     const { container } = render(
       <FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />
     );
