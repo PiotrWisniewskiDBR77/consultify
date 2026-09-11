@@ -25,8 +25,8 @@ dobieraj sobie zakresu.
 > **Gałąź bazowa: `origin/integracja/20260911`** (w vaulcie). **NIE `origin/staging`,
 > NIE `origin/demo`, NIE `Londyn`** — tamte nie mają ani `E1` Codexa 2 (zapis
 > kanoniczny `PUT`), ani paczek `E3`, ani `E7` (seed pisze do kanonu).
-> **Stan dokumentu: PROJEKT — marker do wpisania przez nadzorcę.**
-> Widzisz `WYDANY` + konkretny SHA → zaczynasz. Widzisz `PROJEKT` albo `a176d3f906` →
+> **Stan dokumentu: WYDANY — marker `a176d3f906` wpisany przez nadzorcę 11.09 22:10.**
+> Widzisz `WYDANY` + konkretny SHA → zaczynasz. Widzisz `PROJEKT` albo `<TIP>` →
 > **nie zaczynasz i zgłaszasz to nadzorcy**. Ta ramka jest jedynym miejscem,
 > w którym rozstrzyga się stan wydania.
 
