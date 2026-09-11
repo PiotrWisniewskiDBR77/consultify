@@ -49,7 +49,8 @@ const en: Record<string, string> = {
   'welcome.footer.address': 'DBR77 Consultify Sp. z o.o. | Warsaw, Poland',
 
   'verify.subject': 'Verify your email',
-  'verify.greeting': 'Hi {firstName},',
+  'verify.greeting.named': 'Hi {firstName},',
+  'verify.greeting.generic': 'Hello,',
   'verify.intro': 'Please verify your email by clicking the link below:',
   'verify.disclaimer': "If you didn't create an account with Consultify, ignore this message.",
 
@@ -98,7 +99,8 @@ const pl: Record<string, string> = {
   'welcome.footer.address': 'DBR77 Consultify Sp. z o.o. | Warszawa, Polska',
 
   'verify.subject': 'Potwierdź swój adres e-mail',
-  'verify.greeting': 'Cześć {firstName},',
+  'verify.greeting.named': 'Cześć {firstName},',
+  'verify.greeting.generic': 'Dzień dobry,',
   'verify.intro': 'Potwierdź swój adres e-mail, klikając poniższy link:',
   'verify.disclaimer': 'Jeśli to nie Ty zakładałeś konto w Consultify, zignoruj tę wiadomość.',
 
