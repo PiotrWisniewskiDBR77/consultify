@@ -24,13 +24,14 @@ import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { listExceptionInbox } from '../../../services/finance/canonical/exceptionInboxService.js';
 import { listOpen } from '../../../services/finance/canonical/exceptionLedgerService.js';
 import { listFreshnessEvents } from '../../../services/finance/canonical/lineageFreshnessService.js';
+import type { LineageEdgeRow } from '../../../services/finance/canonical/lineageService.js';
 import { getAncestors, getDescendants, getLineageForBusinessVersions } from '../../../services/finance/canonical/lineageService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
 
-const toLineageDto = (e: Awaited<ReturnType<typeof getLineageForBusinessVersions>>[number]) => ({
+const toLineageDto = (e: LineageEdgeRow) => ({
   edgeId: e.id,
   sourceVersionId: e.source_version_id,
   sourceArtifactType: e.source_artifact_type,
@@ -62,9 +63,17 @@ router.post(
     if (businessVersionIds.length > 100) {
       return sendError(res, 400, 'BUSINESS_VERSION_IDS_LIMIT_EXCEEDED', 'businessVersionIds accepts at most 100 unique ids');
     }
-    const edges = await getLineageForBusinessVersions(organizationId, businessVersionIds);
+    // Przewód E3 do listy (97_ODBIOR_W1_W2.md §6 STOP3/§9b): `businessVersionIds`
+    // tu bywa mieszanką kanonicznych `business_version_id` i legacy id
+    // (`financial_statement_packs.id` itd. z `FinanceHub.tsx`) — rozwiązywanie
+    // aliasów siedzi w `getLineageForBusinessVersions`, ta trasa tylko
+    // przekazuje wynik dalej.
+    const { edges, resolvedVersionIds, unresolvedIds } = await getLineageForBusinessVersions(
+      organizationId,
+      businessVersionIds
+    );
     return res.status(200).json({
-      data: { businessVersionIds, edges: edges.map(toLineageDto) },
+      data: { businessVersionIds, edges: edges.map(toLineageDto), resolvedVersionIds, unresolvedIds },
       meta: financeV2Meta(),
     });
   })
