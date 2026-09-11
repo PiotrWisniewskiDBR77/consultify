@@ -20,10 +20,39 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
 import {
   clearFeatureFlagOverrides,
   setFeatureFlagOverrides,
 } from '@/test-utils/featureFlagOverrides';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (tests/setup.ts:122) ma i18n.language:'en' na stałe — zakładki
+// FinanceWorkspaceBar renderowały się po angielsku ("Assumptions"/"To
+// complete") zamiast PL ("Założenia"/"Wyliczenia"). Lokalny mock z
+// language:'pl' + resolvePlKey, wzór ExecutionWorkSurface.daneRealne.test.tsx
+// / FinanceWorkspaceBar.test.tsx.
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 vi.mock('@/services/api/financeV2.api', () => ({
   approveFinanceModel: vi.fn(),
