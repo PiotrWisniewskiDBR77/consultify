@@ -6,12 +6,28 @@
  * zero, i że klik komórki niesie realny `sourceRef`.
  */
 import { fireEvent, render, screen } from '@testing-library/react';
+import i18n from 'i18next';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StatementLineDto } from '@/services/api/financeV2.types';
 
 import { CanonicalStatementTableV2 } from '../CanonicalStatementTableV2';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): `formatFinanceValueForDisplay`
+// formatuje liczby przez `n.toLocaleString(localeListy())`
+// (src/utils/listDateFormat.ts), a `localeListy()` czyta `i18n.language`
+// WPROST z pakietu `i18next` (świadomie, nie z `react-i18next` — patrz
+// komentarz przy `localeListy`), więc mockowanie `react-i18next` nie ma na
+// nią wpływu. Bez inicjalizacji (`@/i18n` celowo nie jest importowany w
+// testach) singleton nie ma ustawionego języka, `localeListy()` spada na
+// domyślne `en-GB` i grupuje tysiące przecinkiem ("1,000,000"), a asercje
+// oczekują polskiego grupowania spacją ("1 000 000"). Ustawiamy język konta
+// wprost na realnym singletonie — zgodnie z sugestią zlecenia („ustaw locale
+// pl-PL w tym teście").
+beforeEach(() => {
+  i18n.language = 'pl';
+});
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {

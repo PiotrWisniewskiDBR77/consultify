@@ -233,8 +233,17 @@ describe('Praca (ExecutionWorkSurface)', () => {
       const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number> | undefined;
       expect(last?.all).toBe(1);
     });
+    // NAPRAWA (dług 11.09): `workPresets` niosło kiedyś `tasks` (obok
+    // `decisions`/`due-soon`/…) — kanonizacja Menu 3 do TRZECH chipów
+    // (`canonicalMenu3.ts` / `const workPresets = ['all', 'overdue',
+    // 'blocked']`) usunęła ten preset z `countExecutionPresets`, więc
+    // `last.tasks` jest dziś zawsze `undefined`, niezależnie od danych — test
+    // sprawdzał usunięty klucz, nie regresję produktu. `all` niesie ten sam
+    // sens („licznik ma realną liczbę, nie zero") i jest już zweryfikowany
+    // wyżej; drugie odczytanie potwierdza, że wartość jest STABILNA (nie
+    // spadła do zera/undefined) po ustabilizowaniu efektów.
     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>;
-    expect(last.tasks).toBe(1);
+    expect(last.all).toBe(1);
   });
 });
 
@@ -322,7 +331,16 @@ describe('Praca — etykiety realnych danych', () => {
     render(<ExecutionWorkSurface activePreset="all" />);
     await waitFor(() => expect(screen.getByText('In progress')).toBeInTheDocument());
     expect(document.body.textContent).not.toContain('UNKNOWN');
-    expect(document.body.textContent).toContain('SLA brak');
+    // NAPRAWA (dług 11.09): kolumna „Termin / SLA" USUNIĘTA — komentarz przy
+    // `ExecutionWorkSurface.tsx:236` (1.12-R1 (B)) mierzy dokładnie ten sam
+    // fakt co ten test: tabela `tasks` nie ma pola `slaAt`, więc połączona
+    // kolumna pisała „· SLA brak" w KAŻDYM wierszu — pustą, mylącą
+    // informację. Zastąpiona samym „Termin" (dueAt) + osobną kolumną
+    // „Poślizg (dni)". Ten wiersz ma dueAt w przyszłości, więc realny
+    // kontrakt to: widać sformatowaną datę terminu, a poślizg pokazuje „—",
+    // nigdy „UNKNOWN" ani tekstu o SLA, którego produkt już nie ma.
+    expect(document.body.textContent).toContain('17/09/2026');
+    expect(document.body.textContent).not.toContain('SLA brak');
   });
 
   /**

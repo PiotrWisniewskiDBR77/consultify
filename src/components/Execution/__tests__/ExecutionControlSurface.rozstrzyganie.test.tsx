@@ -20,20 +20,50 @@
  *       (MEMBER widziałby przycisk, który i tak odbije się o 403).
  */
 // [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
-// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
-// na angielski (Decision title/Needed by (required)/Reject/missing-context
-// message). Asercje w tym pliku zaktualizowano na nowy angielski tekst —
-// kontrakt się nie zmienił, zmienił się tylko język domyślnego tekstu.
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — domyślny
+// tekst W KODZIE poprawiono na angielski (Decision title/Needed by
+// (required)/Reject/missing-context message).
+// NAPRAWA (dług 11.09, bramka-9): ÓWCZESNY mock (t: (k, fallback) => fallback)
+// ignorował i18n.language i zawsze zwracał ten angielski fallback — stąd
+// asercje poszły za EN. Klucze użyte w tym ekranie MAJĄ realne tłumaczenia PL
+// w public/locales/pl/translation.json — z poprawnym mockiem (resolvePlKey,
+// jak realny react-i18next dla language:'pl') renderuje się to, co widzi
+// polski użytkownik. Kontrakt (pola/walidacja/trasy) bez zmian, dogonione
+// tylko oczekiwania językowe. Wzór: ExecutionWorkSurface.daneRealne.test.tsx.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
+// Referencja `t`/`useTranslation` STABILNA między renderami (jak realny
+// react-i18next) — inline-owy mock daje NOWĄ funkcję za każdym wywołaniem
+// hooka, co przy `t` w tablicy zależności `useCallback`/`useEffect` w
+// `ExecutionControlSurface.tsx` (np. `loadGovernance`) potrafi wywołać pętlę
+// re-renderów („Maximum update depth exceeded" — znalezione i naprawione tą
+// samą naprawą w `raidSygnaly.test.tsx` 11.09).
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl' };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne };
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
-    i18n: { language: 'pl' },
-  }),
+  useTranslation: () => useTranslationStabilne,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
@@ -221,7 +251,7 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
     const zapisz = screen.getByTestId('execution-new-decision-save');
     expect(zapisz).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText('Decision title'), {
+    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), {
       target: { value: 'proba-r3-test' },
     });
     // Sam tytuł to DOKŁADNIE payload sprzed R3 — i dokładnie ten, który
@@ -233,7 +263,7 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
     });
     expect(zapisz).toBeDisabled(); // wciąż brak terminu
 
-    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
+    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
       target: { value: '2026-10-15' },
     });
     expect(zapisz).toBeEnabled();
@@ -241,13 +271,13 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
 
   it('wysyła initiativeId + sourceId + sourceType + dueDate + decydenta', async () => {
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Decision title'), {
+    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), {
       target: { value: 'proba-r3-test' },
     });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
-    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
+    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
       target: { value: '2026-10-15' },
     });
     fireEvent.click(screen.getByTestId('execution-new-decision-save'));
@@ -277,20 +307,21 @@ describe('(f) „Nowa decyzja" wysyła kontekst, który serwer przyjmuje', () =>
       new TestowyApiError({ error: 'Missing decision context' }, 'Failed to create decision', 400)
     );
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Decision title'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Tytuł decyzji'), { target: { value: 'x' } });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
-    fireEvent.change(screen.getByLabelText('Needed by (required)'), {
+    fireEvent.change(screen.getByLabelText('Potrzebna do dnia (wymagane)'), {
       target: { value: '2026-10-15' },
     });
     fireEvent.click(screen.getByTestId('execution-new-decision-save'));
 
+    // NAPRAWA (dług 11.09): test nazywa się „PO POLSKU" — asercja szukała
+    // angielskiego tekstu (artefakt starego mocka). `execution.decisions.
+    // errors.missingContext` MA tłumaczenie PL, dogonione do realnego renderu.
     await waitFor(() =>
       expect(
-        screen.getByText(
-          'Decision data is missing — complete the initiative, due date and decision maker.'
-        )
+        screen.getByText('Brakuje danych decyzji — uzupełnij inicjatywę, termin i decydenta.')
       ).toBeInTheDocument()
     );
     expect(screen.queryByText('Failed to create decision')).toBeNull();
@@ -384,9 +415,12 @@ describe('(g) rozstrzygnięcie BEZ uzasadnienia jest zablokowane', () => {
       target: { value: 'powód' },
     });
     fireEvent.click(screen.getByTestId('execution-decision-reason-confirm'));
+    // NAPRAWA (dług 11.09): test nazywa się „po polsku" — asercja szukała
+    // angielskiego tekstu (artefakt starego mocka). `execution.decisions.
+    // errors.forbidden` MA tłumaczenie PL.
     await waitFor(() =>
       expect(screen.getByTestId('execution-decision-reason-error')).toHaveTextContent(
-        "You don't have permission for this operation"
+        'Nie masz uprawnień do tej operacji'
       )
     );
   });
@@ -409,7 +443,9 @@ describe('(l) kto widzi akcje rozstrzygające', () => {
     await waitFor(() => expect(screen.getByText('Cudza decyzja po terminie')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Cudza decyzja po terminie'));
     await waitFor(() => expect(screen.getByText('Rozstrzygnij')).toBeInTheDocument());
-    expect(screen.getByText('Reject')).toBeInTheDocument();
+    // NAPRAWA (dług 11.09): 'execution.decisions.actions.reject' MA
+    // tłumaczenie PL ("Odrzuć") — artefakt starego mocka szukał EN.
+    expect(screen.getByText('Odrzuć')).toBeInTheDocument();
     expect(screen.getByText('Nieaktualna')).toBeInTheDocument();
   });
 

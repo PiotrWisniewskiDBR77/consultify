@@ -28,10 +28,45 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
 import {
   clearFeatureFlagOverrides,
   setFeatureFlagOverrides,
 } from '@/test-utils/featureFlagOverrides';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (tests/setup.ts:122) ma i18n.language:'en' na stałe. `PredictionWorkspace`
+// osadza `FinanceWorkspaceBar`, którego etykiety (CTA/zakładki/freshness) MAJĄ
+// wariant PL wybierany przez `i18n.language` z `useTranslation()` — pod
+// globalnym mockiem renderowały się po angielsku ("Uruchom preflight"→"Run
+// preflight", zakładka "Modele/Wyniki" nieznaleziona pod tą nazwą). Lokalny
+// mock z language:'pl' + resolvePlKey, wzór ExecutionWorkSurface
+// .daneRealne.test.tsx / FinanceWorkspaceBar.test.tsx. (Etykiety idące przez
+// `ft()` — np. „Try again" — świadomie NIE reagują na ten mock: `ft`
+// (financeT.ts) czyta `i18n.isInitialized` z SUROWEGO pakietu `i18next`, nie
+// z hooka, i w testach zawsze bierze angielski fallback — to zamierzone,
+// zostaje bez zmian.)
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
 import { createEmptyScenarioDraft } from '../predictionScenarioModel';
@@ -116,8 +151,13 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     await waitFor(() =>
       expect(screen.getByTestId('prediction-canonical-authoring-banner')).toBeInTheDocument()
     );
+    // NAPRAWA (dług 11.09): asercja szukała „Rewizja authoringu" — literał w
+    // źródle (PredictionWorkspace.tsx, banner statyczny, bez t()/ft()) to od
+    // dawna „Rewizja edycji" (zmiana słownictwa, nie języka — oba PL). Test
+    // dogoniony do aktualnego tekstu; ten sam błąd powtarza się w trzech
+    // dalszych testach poniżej.
     expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
-      /Rewizja authoringu: 0/
+      /Rewizja edycji: 0/
     );
   });
 
@@ -246,7 +286,7 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() =>
       expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
-        'Rewizja authoringu: 0'
+        'Rewizja edycji: 0'
       )
     );
     fireEvent.click(screen.getByTestId('prediction-save-authoring'));
@@ -256,7 +296,7 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
       )
     );
     expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
-      'Rewizja authoringu: 1'
+      'Rewizja edycji: 1'
     );
     expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
       'Zmiana z innej sesji'
@@ -269,7 +309,7 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     fireEvent.click(screen.getByTestId('prediction-save-authoring'));
     await waitFor(() =>
       expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
-        'Rewizja authoringu: 2'
+        'Rewizja edycji: 2'
       )
     );
     expect(apiMocks.saveFinancePredictionAuthoring).toHaveBeenNthCalledWith(

@@ -32,9 +32,32 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+// NAPRAWA (dług 11.09, bramka-9): mock zwracał SUROWY fallback z t(klucz,
+// fallback) — fallbacki w źródle są po angielsku (DEC-461), więc renderował
+// się angielski nagłówek/opcja filtra, a asercje szukają polskiego tekstu,
+// który realny react-i18next (language:'pl') by pokazał. Wzór:
+// ExecutionWorkSurface.daneRealne.test.tsx — rozwiązuje klucz z PRAWDZIWEGO
+// public/locales/pl/translation.json, tak jak zrobiłby to runtime.
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
+    t: (k: string, fallback?: unknown) => {
+      const resolved = resolvePlKey(k);
+      if (resolved !== undefined) return resolved;
+      return typeof fallback === 'string' ? fallback : k;
+    },
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
@@ -286,10 +309,13 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
       (th.textContent || '').replace(/[^\p{L} ]/gu, '').trim()
     );
     expect(naglowki).toContain('Typ');
-    // [ODMROZENIE 06_EXECUTION DEC-453] kolumna „Właściciel" ma teraz angielski
-    // default 'Owner' (execution.governance.columns.owner, J7) — kontrakt kolumn
-    // się nie zmienił, zmienił się tylko język domyślnego tekstu.
-    expect(naglowki).toContain('Owner');
+    // NAPRAWA (dług 11.09): [ODMROZENIE 06_EXECUTION DEC-453]/J7 zakładał
+    // angielski 'Owner', bo ÓWCZESNY mock zwracał surowy fallback z kodu.
+    // `execution.governance.columns.owner` MA realny klucz PL ("Właściciel")
+    // w public/locales/pl/translation.json — zgodnie z zasadą „nie zmieniaj
+    // oczekiwań na EN, jeśli komponent ma realny klucz PL" test dogoniony do
+    // tego, co faktycznie renderuje react-i18next z language:'pl'.
+    expect(naglowki).toContain('Właściciel');
     expect(naglowki).not.toContain('Decydent');
     expect(naglowki).not.toContain('Potrzebna do dnia');
   });
@@ -298,11 +324,12 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     zamontuj('ryzyka');
     await waitFor(() => expect(screen.getByText('Ryzyko 0')).toBeInTheDocument());
     expect(wierszeZ('Ryzyko')).toHaveLength(16);
-    // [ODMROZENIE 06_EXECUTION DEC-453] J7b: mock `t` zwraca DOMYŚLNY tekst
-    // z kodu, a ten jest od 08.09 ANGIELSKI (zasada §2.3 PLANU językowego —
-    // polski żyje wyłącznie w `public/locales/pl/`). Asercje sprawdzają ten
-    // sam kontrakt, tylko w języku, który realnie stoi w kodzie.
-    expect(screen.getAllByText('Risk').length).toBeGreaterThan(0); // etykieta typu
+    // NAPRAWA (dług 11.09): J7b zakładał angielski 'Risk', bo ÓWCZESNY mock
+    // zwracał surowy fallback z kodu niezależnie od language. Klucz
+    // `execution.raid.type.risk` MA tłumaczenie PL ("Ryzyko") — z poprawnym
+    // mockiem (resolvePlKey, jak realny react-i18next dla language:'pl')
+    // etykieta typu w tabeli faktycznie brzmi „Ryzyko", nie „Risk".
+    expect(screen.getAllByText('Ryzyko').length).toBeGreaterThan(0); // etykieta typu
   });
 
   /*

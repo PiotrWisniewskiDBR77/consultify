@@ -33,17 +33,40 @@
  *        wygląd wspólny z Pracą/Zasobami/Decyzjami i ryzykiem (FAIL).
  */
 // [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod miał polski
-// defaultValue w t() mimo poprawnego klucza EN w public/locales — poprawiony
-// na angielski ('Add report' / 'Custom report…'). Asercje zaktualizowano —
-// kontrakt się nie zmienił, zmienił się tylko język domyślnego tekstu.
+// defaultValue w t() mimo poprawnego klucza EN w public/locales — domyślny
+// tekst W KODZIE poprawiono na angielski ('Add report' / 'Custom report…').
+// NAPRAWA (dług 11.09, bramka-9): ÓWCZESNY mock (t: (k, fallback) => fallback)
+// ignorował i18n.language i zawsze zwracał ten angielski fallback. Klucze
+// użyte w kreatorze (np. `executionReports.wizard.definition`) MAJĄ realne
+// tłumaczenia PL w public/locales/pl/translation.json — z poprawnym mockiem
+// (resolvePlKey, jak realny react-i18next dla language:'pl') renderuje się
+// to, co widzi polski użytkownik. Wzór: ExecutionWorkSurface.daneRealne
+// .test.tsx.
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
+    t: (k: string, fallback?: unknown) => {
+      const resolved = resolvePlKey(k);
+      if (resolved !== undefined) return resolved;
+      return typeof fallback === 'string' ? fallback : k;
+    },
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
@@ -206,7 +229,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Add report'));
+    fireEvent.click(screen.getByText('Dodaj raport'));
 
     // Katalog testowy ma DWA mvp (mvp-owner-test, weekly-exec) — nie cztery
     // realne klucze produkcyjne, i ZERO dla 'wave2-test' (mvp: false).
@@ -222,14 +245,14 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     expect(screen.queryByText('Definicja Fali 2')).not.toBeInTheDocument();
 
     // Piąta pozycja: „Własny raport…" (dawniej: „Nowy raport" w primary CTA).
-    expect(screen.getByText('Custom report…')).toBeInTheDocument();
+    expect(screen.getByText('Własny raport…')).toBeInTheDocument();
   });
 
   it('(m2) klik pozycji menu otwiera kreator z TĄ definicją wybraną (ten sam handler co dawny kafel)', async () => {
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Add report'));
+    fireEvent.click(screen.getByText('Dodaj raport'));
     const item = await screen.findByText('Tygodniowy pakiet realizacji');
     fireEvent.click(item);
 
@@ -245,8 +268,8 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
     const onRegisterPrimaryCta = mountSurface();
     await renderMenu2Node(onRegisterPrimaryCta);
 
-    fireEvent.click(screen.getByText('Add report'));
-    const custom = await screen.findByText('Custom report…');
+    fireEvent.click(screen.getByText('Dodaj raport'));
+    const custom = await screen.findByText('Własny raport…');
     fireEvent.click(custom);
 
     await waitFor(() => {
@@ -275,7 +298,7 @@ describe('ExecutionReportsSurface — CTA „Dodaj raport" w Menu 2 (DEC-453, 08
 
     // Widok domyślny to „Raporty" — CTA jest widoczne.
     render(<PrimaryCtaMenuButton cta={latestCta(onRegisterPrimaryCta)} />);
-    expect(screen.getByText('Add report')).toBeInTheDocument();
+    expect(screen.getByText('Dodaj raport')).toBeInTheDocument();
 
     // Węzeł Menu 2 (segment „Raporty | Definicje") — najnowsze wywołanie.
     const filterCalls = onRegisterFilterControl.mock.calls;

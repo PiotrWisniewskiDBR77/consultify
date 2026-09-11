@@ -19,6 +19,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
 import {
   clearFeatureFlagOverrides,
   setFeatureFlagOverrides,
@@ -26,6 +27,36 @@ import {
 
 import type { ValuationWorkspaceApi } from '../ValuationWorkspace';
 import { ValuationWorkspace } from '../ValuationWorkspace';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (tests/setup.ts:122) ma i18n.language:'en' na stałe. `ValuationWorkspace`
+// osadza `FinanceWorkspaceBar`/kroki nawigacji, które czytają `i18n.language`
+// z `useTranslation()` — pod globalnym mockiem etykiety kroków ("Metody i
+// wagi"→"Methods", "Eksport"→"Export", "Źródło"→"Source") i CTA renderowały
+// się po angielsku. Lokalny mock z language:'pl' + resolvePlKey (czyta
+// realny public/locales/pl/translation.json) — wzór: ExecutionWorkSurface
+// .daneRealne.test.tsx / FinanceWorkspaceBar.test.tsx (ten sam pasek).
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 // AP_MOUNT §A: `ValuationWorkspace` teraz SAM odczytuje `financeValuationWorkspaceV1`
 // i renderuje `null` przy OFF — file-scope hook włącza flagę dla WSZYSTKICH

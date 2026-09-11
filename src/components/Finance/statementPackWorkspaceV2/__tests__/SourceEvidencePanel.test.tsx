@@ -19,14 +19,25 @@
  * ewentualnych narzędzi/testów potrzebujących go wprost.
  */
 import { render, screen } from '@testing-library/react';
+import i18n from 'i18next';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { financeValueStatusLabel } from '@/services/api/financeV2.types';
 import type { FinanceValue, ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 
 import type { StatementTableCell } from '../deriveStatementTable';
 import { SourceEvidencePanel } from '../SourceEvidencePanel';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): `formatFinanceValueForDisplay`
+// formatuje liczby przez `n.toLocaleString(localeListy())`, a `localeListy()`
+// czyta `i18n.language` wprost z pakietu `i18next` (nie z `react-i18next`),
+// więc bez inicjalizacji singleton spada na domyślne `en-GB` (przecinek jako
+// separator tysięcy). Ustawiamy język konta wprost — wzór:
+// CanonicalStatementTableV2.test.tsx (ten sam plik źródłowy formatera).
+beforeEach(() => {
+  i18n.language = 'pl';
+});
 
 function value(overrides: Partial<FinanceValue> = {}): FinanceValue {
   return {
