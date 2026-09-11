@@ -97,6 +97,42 @@ describe('CODEX2 E1 canonical PUT compatibility', { retry: 0 }, () => {
     expect(result.rows[0].payload_json.proposedOutcome).toBe('After outcome');
   });
 
+  it('is idempotent: the same PUT payload sent twice does not bump version twice (FIX-3)', async () => {
+    const versionOf = async (): Promise<number> => {
+      const result = await sql.query(
+        `SELECT version FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+        [organizationId, initiativeId]
+      );
+      return result.rows[0].version;
+    };
+    const receiptCount = async (): Promise<number> => {
+      const result = await sql.query(
+        `SELECT count(*)::int AS count FROM ie_command_receipts WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+        [organizationId, initiativeId]
+      );
+      return result.rows[0].count;
+    };
+
+    const payload = { title: 'Idempotent title', summary: 'Idempotent outcome', description: 'Idempotent problem' };
+    const versionBefore = await versionOf();
+
+    const first = await request(app).put(`/api/initiatives/${initiativeId}`).set('Authorization', authorization).send(payload);
+    expect(first.status, JSON.stringify(first.body)).toBe(200);
+    const versionAfterFirst = await versionOf();
+    expect(versionAfterFirst).toBe(versionBefore + 1);
+    const receiptsAfterFirst = await receiptCount();
+
+    const second = await request(app).put(`/api/initiatives/${initiativeId}`).set('Authorization', authorization).send(payload);
+    expect(second.status, JSON.stringify(second.body)).toBe(200);
+    const versionAfterSecond = await versionOf();
+    const receiptsAfterSecond = await receiptCount();
+
+    // FIX-3 contract (97_ODBIOR_W1_W2.md §8): identical payload retried ->
+    // deterministic clientRequestId -> replayed receipt, NOT a new command.
+    expect(versionAfterSecond).toBe(versionAfterFirst);
+    expect(receiptsAfterSecond).toBe(receiptsAfterFirst);
+  });
+
   it('rejects unsupported fields with the dedicated 409 contract', async () => {
     const response = await request(app).put(`/api/initiatives/${initiativeId}`).set('Authorization', authorization).send({ title: 'Still after', priority: 'high' });
     expect(response.status).toBe(409);
