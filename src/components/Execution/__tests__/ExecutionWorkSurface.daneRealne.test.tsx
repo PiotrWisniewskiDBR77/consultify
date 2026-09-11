@@ -23,9 +23,33 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+// Rozwiązuje klucz i18n z PRAWDZIWEGO katalogu pl, tak jak zrobiłby to realny
+// react-i18next z i18n.language = 'pl' — literał-fallback z wywołania t(key,
+// fallback) w kodzie jest po angielsku (patrz ExecutionWorkSurface.tsx),
+// więc naiwny mock „t: (k, fallback) => fallback" renderował angielski
+// tekst nagłówka i test szukający polskiego „Dni po terminie" nigdy nie
+// mógł przejść, mimo że realny użytkownik zawsze widzi tłumaczenie z
+// katalogu (klucz w pl istnieje).
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
+    t: (k: string, fallback?: unknown) => {
+      const resolved = resolvePlKey(k);
+      if (resolved !== undefined) return resolved;
+      return typeof fallback === 'string' ? fallback : k;
+    },
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },

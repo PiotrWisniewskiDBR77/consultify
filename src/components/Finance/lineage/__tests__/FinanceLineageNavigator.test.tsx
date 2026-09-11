@@ -124,7 +124,14 @@ afterEach(() => {
 });
 
 describe('FinanceLineageNavigator', () => {
-  it('flaga domyślnie OFF → renderuje null, ZERO wywołań getFinanceLineageNavigator', () => {
+  // DEC-2026-09-03-348 (A2): financeLineageNavigatorV1 domyślnie ON
+  // (useFinanceLineageNavigatorFlag.ts) — kontrola negatywna wymaga teraz
+  // jawnego override'u OFF.
+  it('flaga jawnie OFF (override) → renderuje null, ZERO wywołań getFinanceLineageNavigator', () => {
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeLineageNavigatorV1: false })
+    );
     const { container } = render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
     expect(container.firstChild).toBeNull();
     expect(mockGetFinanceLineageNavigator).not.toHaveBeenCalled();

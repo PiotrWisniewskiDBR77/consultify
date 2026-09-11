@@ -348,7 +348,10 @@ describe('P16-R2 (c) — „Nowe zadanie" wysyła inicjatywę', () => {
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Nowe zadanie z formularza' },
     });
-    fireEvent.change(screen.getByLabelText('Inicjatywa'), { target: { value: 'init-1' } });
+    // J7-style rozjazd: pole ma fallback `t('execution.work.columns.initiative',
+    // 'Initiative')` (angielski, patrz komentarz DEC-453/J7 wyżej) — mock t()
+    // w tym pliku zwraca literał fallbacku, nie tłumaczenie z katalogu pl.
+    fireEvent.change(screen.getByLabelText('Initiative'), { target: { value: 'init-1' } });
     fireEvent.click(screen.getByTestId('execution-work-create-submit'));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
@@ -394,7 +397,10 @@ describe('P16-R2 (d) — zadania bez inicjatywy na KOŃCU listy', () => {
     const indeksBez = tytuly.findIndex((tekst) => tekst.includes('Zadanie bez inicjatywy'));
     const indeksZ = tytuly.findIndex((tekst) => tekst.includes('Zadanie z inicjatywa'));
     expect(indeksBez).toBeGreaterThan(indeksZ);
-    expect(within(wiersz('Zadanie bez inicjatywy')).getByText('Bez inicjatywy')).toBeInTheDocument();
+    // Fallback w kodzie to `t('execution.work.withoutInitiative', 'No initiative')`
+    // (angielski, DEC-453/J7) — mock renderuje ten literał, nie polskie
+    // tłumaczenie z katalogu.
+    expect(within(wiersz('Zadanie bez inicjatywy')).getByText('No initiative')).toBeInTheDocument();
   });
 });
 
@@ -403,7 +409,9 @@ describe('P16-R2 (e) — „Dni po terminie" tylko dla niezakończonych', () => 
     zamontuj();
     await waitFor(() => expect(screen.getByText('Zadanie zamkniete po terminie')).toBeInTheDocument());
 
-    expect(screen.getByText('Dni po terminie')).toBeInTheDocument();
+    // Fallback w kodzie to `t('execution.work.columns.daysOverdue', 'Days
+    // overdue')` (angielski, DEC-453/J7) — mock renderuje ten literał.
+    expect(screen.getByText('Days overdue')).toBeInTheDocument();
     const zamkniete = wiersz('Zadanie zamkniete po terminie');
     expect(within(zamkniete).queryByText('+9')).toBeNull();
     expect(within(zamkniete).getAllByText('—').length).toBeGreaterThan(0);

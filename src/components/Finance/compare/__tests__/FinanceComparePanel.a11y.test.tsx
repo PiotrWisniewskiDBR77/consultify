@@ -94,7 +94,12 @@ describe('FinanceComparePanel — ogłaszanie stanów dynamicznych (a11y, Pakiet
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF nie ma ŻADNEGO role="status" (panel nie renderuje nic)', () => {
-    window.localStorage.clear();
+    // DEC-2026-09-03-348 (A2): financeCompareV1 domyślnie ON — samo clear()
+    // już nie wyłącza panelu, trzeba jawnie wymusić override OFF.
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: false })
+    );
     const { container } = render(<FinanceComparePanel request={REQUEST} />);
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();

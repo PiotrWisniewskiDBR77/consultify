@@ -99,7 +99,12 @@ describe('FinanceLineageNavigator — ogłaszanie stanów dynamicznych (a11y, Pa
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF brak jakiegokolwiek role="status"', () => {
-    window.localStorage.clear();
+    // DEC-2026-09-03-348 (A2): financeLineageNavigatorV1 domyślnie ON —
+    // clear() już nie wyłącza panelu, trzeba jawnie wymusić override OFF.
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeLineageNavigatorV1: false })
+    );
     const { container } = render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();

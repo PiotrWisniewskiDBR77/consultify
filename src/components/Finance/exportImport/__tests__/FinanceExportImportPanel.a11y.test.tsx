@@ -150,7 +150,12 @@ describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, P
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF panel nie renderuje nic — brak jakiegokolwiek role="status" lub etykiety pliku', () => {
-    window.localStorage.clear();
+    // DEC-2026-09-03-348 (A2): financeExportImportV1 domyślnie ON — clear()
+    // już nie wyłącza panelu, trzeba jawnie wymusić override OFF.
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: false })
+    );
     const { container } = render(<FinanceExportImportPanel {...PROPS} />);
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
