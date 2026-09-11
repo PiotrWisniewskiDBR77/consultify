@@ -1,0 +1,45 @@
+NOWY BLOK — CODEX 2b — „SZESCIU PISARZY LEGACY -> KANON" (jeden etap rdzeniowy)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX2B_SZESCIU_PISARZY/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex2b-szesciu-pisarzy
+MARKER=<TIP>
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt && git -C "$V" worktree add "$WT" -b codex/szesciu-pisarzy-legacy-20260911 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex2b-szesciu-pisarzy/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex2b-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+
+Galaz bazowa: origin/integracja/20260911 (NIE staging, NIE demo, NIE Londyn — tam nie ma
+ani E1 zapisu kanonicznego, ani paczek E3, ani E7 seeda). Zasoby wylaczne: baza 6454,
+harness 5594, kontener cx-codex2b-pg, migracje 20262160-20262169, artefakty
+~/Developer/codex-wt/codex2b-artefakty. NIETYKALNE cudze: cx-codex1-inicjatywy-pg (6451),
+cx-codex2-pg (6452), cx-codex3-pg (6453), consultify-pg18 (54418 — tylko pg_dump/SELECT).
+
+★ ZADANIE (jeden etap E2 + raport E9): szesciu pisarzy zastanych — milestones, resources,
+ staffing-plans, budget-items, gate-roles, move — pisze dzis WYLACZNIE do magazynu
+ zastanego. Dla kazdego: cztery pytania z dowodem i kanoniczny nastepca (komenda runtime-v1
+ przez executeMaterialCommand, deterministyczny clientRequestId, idempotencja przez findReceipt,
+ zapis DO TEJ SAMEJ TABELI, KTORA CZYTA EKRAN — wzorzec raid_items), przelaczenie za flaga
+ ENABLE_INITIATIVE_UNIFIED_WRITE z parytetem OFF bit w bit, test realdb przez realny ApiGateway
+ i dowod mutacyjny. Minimum: trzy pierwsze zrobione, trzy pozostale z projektem i kontraktem.
+
+★ ZAKAZY (pelna lista Z1-Z46 w instrukcji):
+ - NIE pushujesz nic i nigdzie. Push robi nadzorca.
+ - NIE dotykasz /Users/piotrwisniewski/Developer/Consultify poza symlinkiem node_modules wyzej.
+ - ZERO polaczen do Railway, demo, stagingu i produkcji — w kazda strone.
+ - ZERO zmian w src/** (blok jest serwerowy, zero zmian wygladu); NIE dotykasz bramek
+   istnienia (E3), Ocen (E4), E8 ani demoSeedService (E7).
+ - ZAKAZ git stash (cp do codex2b-scratch); env w JEDNEJ linii, --retry=0, --config server/vitest.config.ts.
+ - Kazdy commit niesie trzy znaczniki, inaczej hook go odrzuci:
+   [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453] [ODMROZENIE WSPOLNE DEC-453]
+
+★ RAPORT (jedyny nowy dokument w repo, 14 sekcji, E9; zrzuty i logi POZA repo): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX2B_SZESCIU_PISARZY/98_RAPORT.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.
