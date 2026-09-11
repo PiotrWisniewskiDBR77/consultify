@@ -1,0 +1,20 @@
+{
+ "nazwa": "12-interview",
+ "motyw": "light",
+ "url": "/interview",
+ "urlKoncowy": "/interview",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoZrzutu": 24430,
+ "msDoRenderu": 21390,
+ "msDoTresci": 21416,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Interview Inbox Data Model 1 2 James Whitfield JW Inbox Sessions Assigned Templates Insights Initiatives Assign All 3 Answered 1 Approved 1 Sent back 0 TYPE NAME STATUS PROGRESS DAYS TO DUE ASSIGNEE Quality, Compliance & Risk Quality, Compliance & Risk Approved 100% 22d overdue R Robert Chen Manufacturing Walkthrough Manufacturing Walkthrough Submitted 100% 8d overdue S Sarah Mitchell Strategic Direction Discovery Strategic Direction Discovery Assigned 0% 9d left J James Whitfield "
+}

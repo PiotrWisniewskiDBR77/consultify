@@ -1,0 +1,20 @@
+{
+ "nazwa": "14-assessment",
+ "motyw": "light",
+ "url": "/assessment",
+ "urlKoncowy": "/assessment?tab=library",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoZrzutu": 42552,
+ "msDoRenderu": 39511,
+ "msDoTresci": 39537,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Assessment Data Model 1 2 James Whitfield JW Library Processes Insights Reports Initiatives METHODOLOGY AREA STATUS ACTIONS Advanced Digital Maturity Assessment ADMA Digital manufacturing Planned Start Capability Maturity Model Integration CMMI Process capability Planned Start Digital Readiness Diagnosis DRD Digital transformation Method core Start Lean 4.0 LEAN Lean and automation Planned Start Smart Industry Readiness Index SIRI Smart manufacturing Planned Start "
+}

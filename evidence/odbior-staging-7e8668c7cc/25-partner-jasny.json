@@ -1,0 +1,20 @@
+{
+ "nazwa": "25-partner",
+ "motyw": "light",
+ "url": "/partner",
+ "urlKoncowy": "/partner?tab=partner-home",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 1,
+  "tabela": 0
+ },
+ "msDoZrzutu": 13459,
+ "msDoRenderu": 10428,
+ "msDoTresci": 10446,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Partner Portal Data Model 1 2 James Whitfield JW Partner Portal DBR77 Consultify HOME Home Dashboard Metrics REFERRALS My Links & Codes Click Analytics Referred Customers EARNINGS Commission Earnings Statements Payout History Payout Settings CLIENT MANAGEMENT Client Access Manager Organizations Active Projects Team Members ACADEMY Learning Path Exams Certificates PROFILE Company Info Specializations Regions Public Listing RESOURCES Documentation Marketing Materials Case Studies PMO Templates Back to app Partner Portal The Partner profile is not connected yet Your organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data. Connect this organization as a partner"
+}

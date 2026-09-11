@@ -1,0 +1,22 @@
+{
+ "nazwa": "22-organization",
+ "motyw": "light",
+ "url": "/organization",
+ "urlKoncowy": "/organization",
+ "konto": "owner",
+ "bledyKonsoli": 1,
+ "bledy": [
+  "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 95110,
+ "msDoRenderu": null,
+ "msDoTresci": 92097,
+ "czasy": {},
+ "tekst": ""
+}

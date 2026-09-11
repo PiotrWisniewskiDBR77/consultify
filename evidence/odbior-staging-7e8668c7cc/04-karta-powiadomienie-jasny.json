@@ -1,0 +1,21 @@
+{
+ "nazwa": "04-karta-powiadomienie",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 1,
+  "pracujZAI": 1,
+  "ladowanie": 0
+ },
+ "msDoZrzutu": 69541,
+ "msDoRenderu": 43510,
+ "msDoTresci": 43519,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Inbox Data Model 1 2 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults List Interview assigned New Interview Assignment Unread Saved Mark as read Sections Edit Preview Work with AI What's Happening Expected Action What's Happening DESCRIPTION WHY IT MATTERS WHAT IS BLOCKED ACTIONS Snooze PROPERTIES Property Value Status Unread Priority Info Source System Notification type Interview Assigned Category System Date 2d ago RELATIONS 1 SOURCES AND ASSUMPTIONS COMMENTS HISTORY 1"
+}

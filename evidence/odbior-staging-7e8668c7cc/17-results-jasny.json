@@ -1,0 +1,20 @@
+{
+ "nazwa": "17-results",
+ "motyw": "light",
+ "url": "/results",
+ "urlKoncowy": "/results/kpi",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 39926,
+ "msDoRenderu": 36904,
+ "msDoTresci": 36912,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Results Data Model 1 James Whitfield JW"
+}

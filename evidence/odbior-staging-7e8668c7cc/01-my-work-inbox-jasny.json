@@ -1,0 +1,19 @@
+{
+ "nazwa": "01-my-work-inbox",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoZrzutu": 39881,
+ "msDoRenderu": 35855,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Inbox Data Model 1 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults ALL 11 Overdue 4 Saved 0 AI 0 Critical 0 Action required 9 Today 1 This week 1 Done 0 AI Triage TITLE STATUS URGENCY TYPE SECTION SOURCE RECEIVED SLA Interview: Strategic Direction Discovery Open High Assignment New Assignments System 1d ago L1 8d Prepare the restart decision pack for the paused programme Open High Assignment New Assignments System 3d ago L1 2h Approve Q3 capex request Open High Assignment New Assignments System 3d ago L1 17d Sign off Line 3 MES kickoff deck Open High Assignment New Assignments System 3d ago L1 1d Task Unassigned Open Normal System System Notifications System 3m ago — New Interview Assignment Open Normal System System Notifications System 1d ago — Accept the vendor firmware release as a hard dependency Open Normal Decision Requires Your Decision System 3d ago L1 55d Review supplier corrective action plan Open Normal Assignment New Assignments System 3d ago L1 4h Draft opening remarks for steering committee Open Normal Assignment New Assignments System 3d ago L1 6d Follow up with Rotherham plant manager on downtime log Open Normal Assignment New Assignments System 3d ago L1 9d Prepare board pack for October review Open Low Assignment New Assignments System 3d ago L1 18d "
+}

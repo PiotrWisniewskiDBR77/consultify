@@ -1,0 +1,23 @@
+{
+ "nazwa": "03-karta-decyzja",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 1,
+ "bledy": [
+  "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "pracujZAI": 0,
+  "ladowanie": 0
+ },
+ "msDoZrzutu": 115330,
+ "msDoRenderu": null,
+ "msDoTresci": 89312,
+ "czasy": {},
+ "tekst": ""
+}

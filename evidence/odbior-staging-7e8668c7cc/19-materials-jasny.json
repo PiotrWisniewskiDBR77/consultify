@@ -1,0 +1,22 @@
+{
+ "nazwa": "19-materials",
+ "motyw": "light",
+ "url": "/materials",
+ "urlKoncowy": "/materials",
+ "konto": "owner",
+ "bledyKonsoli": 1,
+ "bledy": [
+  "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 83503,
+ "msDoRenderu": null,
+ "msDoTresci": 80491,
+ "czasy": {},
+ "tekst": ""
+}
