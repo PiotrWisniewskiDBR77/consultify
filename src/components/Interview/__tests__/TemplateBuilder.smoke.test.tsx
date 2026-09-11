@@ -37,6 +37,7 @@ vi.mock('react-i18next', () => ({
     t: tEn,
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => {
@@ -141,7 +142,7 @@ describe('TemplateBuilder smoke', () => {
     });
   });
 
-  it('renders the Teresa quality result panel after a check', async () => {
+  it('renders the AI quality result panel after a check', async () => {
     apiPost.mockResolvedValue({
       results: [
         {
@@ -163,7 +164,7 @@ describe('TemplateBuilder smoke', () => {
     fireEvent.click(checkBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/Teresa reviewed your template/i)).toBeInTheDocument();
+      expect(screen.getByText(/AI reviewed your template/i)).toBeInTheDocument();
     });
     expect(screen.getByText('40/100')).toBeInTheDocument();
     expect(screen.getByText(/Question is too short/i)).toBeInTheDocument();
