@@ -10,6 +10,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
@@ -1427,11 +1431,17 @@ export async function createModel(params: {
     if (!ownedProject?.id) throw new Error('Source project not found');
   }
   if (params.initiativeId) {
-    const ownedInitiative = await dbGet<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [params.initiativeId, params.organizationId]
-    );
-    if (!ownedInitiative?.id) throw new Error('Source initiative not found');
+    const ownedInitiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(params.organizationId, params.initiativeId)
+      : Boolean(
+          (
+            await dbGet<{ id: string }>(
+              `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              [params.initiativeId, params.organizationId]
+            )
+          )?.id
+        );
+    if (!ownedInitiativeFound) throw new Error('Source initiative not found');
   }
   let resolvedCaseRootId: string | null = null;
   if (params.caseId) {
