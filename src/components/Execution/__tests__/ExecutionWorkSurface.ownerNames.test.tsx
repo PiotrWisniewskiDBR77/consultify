@@ -18,6 +18,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -112,7 +113,11 @@ beforeEach(() => {
 
 describe('ExecutionWorkSurface — kolumna osoby', () => {
   it('pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a', async () => {
-    render(<ExecutionWorkSurface activePreset="all" />);
+    render(
+      <MemoryRouter>
+        <ExecutionWorkSurface activePreset="all" />
+      </MemoryRouter>
+    );
 
     await waitFor(() =>
       expect(screen.getByText('Zweryfikować kompletność danych')).toBeInTheDocument()
@@ -124,7 +129,11 @@ describe('ExecutionWorkSurface — kolumna osoby', () => {
   it('gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator', async () => {
     getOrganizationMembers.mockResolvedValue([]);
 
-    render(<ExecutionWorkSurface activePreset="all" />);
+    render(
+      <MemoryRouter>
+        <ExecutionWorkSurface activePreset="all" />
+      </MemoryRouter>
+    );
 
     await waitFor(() =>
       expect(screen.getByText('Zweryfikować kompletność danych')).toBeInTheDocument()
