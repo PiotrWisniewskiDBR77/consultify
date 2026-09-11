@@ -187,6 +187,61 @@ export async function listExecutionCases(signal?: AbortSignal) {
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
+/** Ile realizacji wolno spakowac w jedno zbiorcze zapytanie (sufit trasy serwera). */
+export const EXECUTION_CASE_BULK_LIMIT = 100;
+
+export interface ExecutionCaseBundle {
+  work: any;
+  allocations: any;
+}
+
+/**
+ * ZBIORCZY odczyt pracy i przydzialow dla WIELU realizacji naraz.
+ *
+ * DLACZEGO (pomiar wydajnosci stagingu 2026-09-11: Realizacja LCP 11,4 s):
+ * zakladka Praca wolala `…/<id>/work` osobno dla kazdej realizacji (1 + N),
+ * a Zasoby jeszcze `…/<id>/allocations` (1 + 2N). Przy dziesieciu realizacjach
+ * to dwadziescia zadan HTTP na jedno wejscie w ekran — przegladarka puszcza
+ * szesc naraz na host, wiec reszta czeka w kolejce, zanim serwer w ogole
+ * zobaczy pytanie.
+ *
+ * KONTRAKT — PARYTET ZE STARA SCIEZKA:
+ *  · `null` znaczy „tej trasy tu nie ma" (404/501 albo odmowa ksztaltu) i jest
+ *    JEDYNYM sygnalem do zejscia na stare, pojedyncze zapytania. Kazdy inny
+ *    blad (401, 500, przerwanie) leci do wolajacego tak jak wczesniej — inaczej
+ *    zamienilibysmy awarie na cicho puste tabele,
+ *  · realizacja niewidoczna dla uzytkownika NIE WCHODZI do mapy; wolajacy
+ *    dopyta o nia po staremu i dostanie to samo 404 co przed zmiana,
+ *  · ksztalt `work` i `allocations` jest DOKLADNIE taki, jaki zwracaja trasy
+ *    pojedyncze — komponenty nie wiedza, ktora sciezka je nakarmila.
+ */
+export async function readExecutionCaseBundles(
+  ids: readonly string[],
+  signal?: AbortSignal
+): Promise<Map<string, ExecutionCaseBundle> | null> {
+  const unikalne = [...new Set(ids.map((id) => String(id ?? '').trim()).filter(Boolean))];
+  if (unikalne.length === 0 || unikalne.length > EXECUTION_CASE_BULK_LIMIT) return null;
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/execution-cases/bulk?ids=${encodeURIComponent(unikalne.join(','))}`,
+    { credentials: 'include', signal }
+  );
+  if (response.status === 404 || response.status === 501 || response.status === 400) return null;
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  const cases = (body as any)?.cases;
+  if (!Array.isArray(cases)) return null;
+  const bundles = new Map<string, ExecutionCaseBundle>();
+  for (const entry of cases) {
+    const id = String(entry?.executionCaseId ?? '');
+    if (!id) continue;
+    bundles.set(id, {
+      work: entry?.work ?? { tasks: [], decisions: [] },
+      allocations: entry?.allocations ?? { items: [] },
+    });
+  }
+  return bundles;
+}
+
 export async function readExecutionCase(id: string, signal?: AbortSignal) {
   const response = await fetch(
     `/api/initiatives/runtime-v1/execution-cases/${encodeURIComponent(id)}`,

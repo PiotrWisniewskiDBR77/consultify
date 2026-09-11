@@ -41,6 +41,7 @@ import {
   decideExecutionDecision,
   listExecutionCases,
   readExecutionCase,
+  readExecutionCaseBundles,
   readExecutionMilestones,
   readExecutionWork,
   requestExecutionDecision,
@@ -64,7 +65,7 @@ import {
   type ExecutionMenu3Contract,
   type ExecutionSurfacePrimaryCta,
 } from './canonicalMenu3';
-import { fanOutExecutionCases } from './executionCaseFanOut';
+import { fanOutExecutionCases, prefetchExecutionCaseBundles } from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -765,15 +766,26 @@ export const ExecutionWorkSurface = ({
       // Do 2026-09-05 stało tu `Promise.all`, więc realizacja, której endpoint
       // /work nie odpowiada (zmierzone na stagingu), zamrażała całą zakładkę na
       // „Loading canonical work" z licznikami na zerach.
+      // N+1 (pomiar 2026-09-11, Realizacja LCP 11,4 s): tu leciało `…/<id>/work`
+      // OSOBNO dla każdej realizacji — 1 + N żądań HTTP na jedno wejście w
+      // zakładkę. Jedno zbiorcze pobranie zdejmuje N; wachlarz poniżej zostaje
+      // nietknięty jako ścieżka zapasowa (stary serwer, błąd, brak trasy).
+      const bundles = await prefetchExecutionCaseBundles(
+        (nextCases ?? []).map((item: any) => String(item?.executionCaseId ?? '')),
+        (ids, signal) => readExecutionCaseBundles(ids, signal)
+      );
       const fanOut = await fanOutExecutionCases<Row>(
         nextCases,
         async (executionCase: any, signal) => {
           const reviewWork = getExecutionReviewWork(executionCase.executionCaseId);
+          const bundle = bundles?.get(executionCase.executionCaseId);
           const work = executionReviewCases.some(
             (item) => item.executionCaseId === executionCase.executionCaseId
           )
             ? reviewWork
-            : ((await readExecutionWork(executionCase.executionCaseId, signal)) as any);
+            : bundle
+              ? bundle.work
+              : ((await readExecutionWork(executionCase.executionCaseId, signal)) as any);
           return mapRuntimeWorkRows(
             work,
             executionCase.executionCaseId,

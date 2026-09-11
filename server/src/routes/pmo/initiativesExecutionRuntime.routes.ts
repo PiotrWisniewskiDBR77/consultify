@@ -1447,6 +1447,9 @@ function firstParam(value: string | string[] | undefined): string {
   return value ?? '';
 }
 
+/** Sufit zbiorczego odczytu realizacji (`GET /execution-cases/bulk`). */
+const EXECUTION_CASE_BULK_LIMIT = 100;
+
 function decodeInitiativeCursor(value: unknown): { updatedAt: string; aggregateId: string } | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   try {
@@ -4912,6 +4915,89 @@ export function createInitiativesExecutionRuntimeRouter(
         // for the authorize() check above, just never sent to the client.
         .map((entry) => ({ ...entry.item, initiativeTitle: entry.initiative!.initiative.title }));
       res.json({ cases: visible });
+    })
+  );
+  /**
+   * GET /execution-cases/bulk?ids=a,b,c — ZBIORCZY odczyt pracy i przydzialow.
+   *
+   * DLACZEGO (pomiar wydajnosci stagingu 2026-09-11: Realizacja LCP 11,4 s):
+   * zakladka Praca robila `GET …/<id>/work` OSOBNO dla kazdej realizacji,
+   * a zakladka Zasoby dodatkowo `GET …/<id>/allocations` — czyli 1 + N oraz
+   * 1 + 2N zadan HTTP na jedno wejscie w ekran. To jest N+1 po stronie sieci:
+   * kazda realizacja to osobna podroz w obie strony, osobny uscisk TLS i osobna
+   * kolejka przegladarki (limit 6 polaczen na host), wiec dziesiec realizacji
+   * to trzy fale zamiast jednej.
+   *
+   * KONTRAKT — identyczny z trasami pojedynczymi, tylko spakowany:
+   *  · widocznosc liczona TA SAMA regula (`canViewAggregate` per realizacja),
+   *    fail-closed: realizacja bez rodowodu projektu NIE wchodzi do odpowiedzi,
+   *    a jej identyfikator wraca w `missingIds` (klient zdegraduje ja do niej
+   *    samej, dokladnie jak przy 404 z trasy pojedynczej),
+   *  · zero nowych uprawnien: to polaczenie `…/work` i `…/allocations`,
+   *  · trasa ADDYTYWNA — trasy pojedyncze zostaja i sa sciezka zapasowa.
+   *
+   * LIMIT 100: odpowiedz musi miec sufit, zeby `?ids=` nie stalo sie sposobem
+   * na jedno zapytanie przemielajace cala organizacje.
+   *
+   * KOLEJNOSC REJESTRACJI JEST ISTOTNA: `/execution-cases/bulk` musi stac PRZED
+   * `/execution-cases/:executionCaseId`, inaczej Express potraktuje slowo
+   * `bulk` jak identyfikator realizacji i zwroci 404.
+   */
+  router.get(
+    '/execution-cases/bulk',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const raw = firstParam(req.query.ids as string | string[] | undefined);
+      const ids = [
+        ...new Set(
+          raw
+            .split(',')
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0)
+        ),
+      ];
+      if (ids.length === 0) {
+        res.status(400).json({ error: { code: 'IDS_REQUIRED' } });
+        return;
+      }
+      if (ids.length > EXECUTION_CASE_BULK_LIMIT) {
+        res.status(400).json({
+          error: { code: 'TOO_MANY_IDS', limit: EXECUTION_CASE_BULK_LIMIT },
+        });
+        return;
+      }
+      const entries = await Promise.all(
+        ids.map(async (executionCaseId) => {
+          if (!(await canViewAggregate(actor, 'execution_case', executionCaseId))) {
+            return { executionCaseId, visible: false as const };
+          }
+          const [tasks, decisions, allocations] = await Promise.all([
+            deps.reader.listExecutionTasks(actor.organizationId, executionCaseId),
+            deps.reader.listExecutionDecisions(actor.organizationId, executionCaseId),
+            deps.reader.listOperationalAllocations(actor.organizationId, executionCaseId),
+          ]);
+          return {
+            executionCaseId,
+            visible: true as const,
+            work: { tasks, decisions },
+            allocations: { items: allocations },
+          };
+        })
+      );
+      res.json({
+        cases: entries
+          .filter((entry) => entry.visible)
+          .map(({ executionCaseId, work, allocations }) => ({
+            executionCaseId,
+            work,
+            allocations,
+          })),
+        missingIds: entries.filter((entry) => !entry.visible).map((entry) => entry.executionCaseId),
+      });
     })
   );
   router.get(
