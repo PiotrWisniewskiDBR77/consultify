@@ -30,11 +30,49 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../public/locales/pl/translation.json';
+
+// NAPRAWA (dług 11.09, bramka-9): mock zwracał surowy fallback z t(klucz,
+// fallback) niezależnie od i18n.language:'pl' — fallbacki w kodzie są po
+// angielsku (DEC-461), więc renderował się angielski tekst, a asercje
+// szukają polskiego. Wzór: ExecutionWorkSurface.daneRealne.test.tsx —
+// rozwiązuje klucz z PRAWDZIWEGO public/locales/pl/translation.json, tak jak
+// zrobiłby to runtime.
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+
+// STABILNA referencja `t`/`useTranslation` (dług 11.09, znaleziony przy tej
+// naprawie): mock definiowany INLINE w `useTranslation: () => ({...})` daje
+// NOWY obiekt/funkcję przy KAŻDYM wywołaniu hooka — w przeciwieństwie do
+// realnego react-i18next, którego `t`/`useTranslation()` są stabilne między
+// renderami. `loadGovernance` (ExecutionControlSurface.tsx:1141) ma `t` w
+// tablicy zależności `useCallback`, więc niestabilny mock zamieniał
+// `load()`/`useEffect([load])` w pętlę „setState → nowy `t` → nowy
+// `loadGovernance` → nowy `load` → efekt znów woła `load()`" i React rzucał
+// „Maximum update depth exceeded" (dokładnie ten sam mechanizm, który
+// komentarz przy linii 2188 tego samego pliku źródłowego już opisuje jako
+// przyczynę OOM w vitest z 07.09 — tam naprawiono usunięciem `t` z zależności
+// JEDNEGO efektu; tu naprawiamy WIERNOŚĆ MOCKA, żeby nie trzeba było czyścić
+// zależności `t` w całym pliku źródłowym). Stałe poza `useTranslation`
+// odwzorowują realną stabilność referencji.
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl' };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne };
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
-    i18n: { language: 'pl' },
-  }),
+  useTranslation: () => useTranslationStabilne,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
@@ -306,11 +344,17 @@ describe('(i) EKSPOZYCJA jest liczona i tylko do odczytu', () => {
 
 // [ODMROZENIE 06_EXECUTION DEC-453] J7 (spójność językowa): kod pod tym plikiem
 // miał polski defaultValue w t() mimo poprawnego klucza EN w public/locales —
-// domyślny tekst poprawiony na angielski (Probability/Impact/Title (required)/
-// Late start/No owner/New RAID item/Delay signal/Owner). Test mock (t: (k,
-// fallback) => fallback) czyta ten sam string co realny UI w EN, więc
-// asercje w tym pliku zaktualizowano na nowy angielski tekst — kontrakt się
-// nie zmienił, zmienił się tylko język domyślnego tekstu.
+// domyślny tekst w KODZIE poprawiono na angielski (Probability/Impact/Title
+// (required)/Late start/No owner/New RAID item/Delay signal/Owner).
+// NAPRAWA (dług 11.09): ÓWCZESNY mock (t: (k, fallback) => fallback) ignorował
+// i18n.language i zawsze zwracał ten angielski fallback — stąd asercje w tym
+// pliku poszły za EN. `execution.raid.columns.probability`/`.impact`,
+// `execution.raid.form.title` i `execution.signals.preview.label` MAJĄ realne
+// tłumaczenia PL (Prawdopodobieństwo/Wpływ/Tytuł (wymagany)/Sygnał
+// opóźnienia) — z poprawnym mockiem (resolvePlKey, jak realny react-i18next
+// dla language:'pl') to one się faktycznie renderują. Kontrakt kolumn/pól się
+// nie zmienił, tylko język, w którym go dziś sprawdzamy — ten sam, który
+// widzi polski użytkownik.
 describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legacy', () => {
   const otworzFormularz = async () => {
     await zamontujRyzyka();
@@ -331,22 +375,22 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
     await otworzFormularz();
     // Domyślnie MEDIUM × MEDIUM = 3 × 3 = 9.
     expect(screen.getByTestId('execution-new-raid-exposure')).toHaveTextContent('9');
-    fireEvent.change(screen.getByLabelText('Probability'), { target: { value: 'HIGH' } });
-    fireEvent.change(screen.getByLabelText('Impact'), { target: { value: 'CRITICAL' } });
+    fireEvent.change(screen.getByLabelText('Prawdopodobieństwo'), { target: { value: 'HIGH' } });
+    fireEvent.change(screen.getByLabelText('Wpływ'), { target: { value: 'CRITICAL' } });
     expect(screen.getByTestId('execution-new-raid-exposure')).toHaveTextContent('20');
   });
 
   it('zapis idzie pod runtime-v1/.../raid-items/:id, NIGDY pod /api/raid', async () => {
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Title (required)'), {
+    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), {
       target: { value: 'proba-r45-ryzyko' },
     });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), {
       target: { value: 'ini-1' },
     });
     fireEvent.change(screen.getByLabelText('Termin'), { target: { value: '2026-10-20' } });
-    fireEvent.change(screen.getByLabelText('Probability'), { target: { value: 'HIGH' } });
-    fireEvent.change(screen.getByLabelText('Impact'), { target: { value: 'CRITICAL' } });
+    fireEvent.change(screen.getByLabelText('Prawdopodobieństwo'), { target: { value: 'HIGH' } });
+    fireEvent.change(screen.getByLabelText('Wpływ'), { target: { value: 'CRITICAL' } });
     fireEvent.click(screen.getByTestId('execution-new-raid-save'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
@@ -372,7 +416,7 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
     const zapisz = screen.getByTestId('execution-new-raid-save');
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: '' } });
     expect(zapisz).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('Title (required)'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), { target: { value: 'x' } });
     expect(zapisz).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: 'ini-1' } });
     expect(zapisz).toBeEnabled();
@@ -381,7 +425,7 @@ describe('(k) „Nowa pozycja RAID" woła KANONICZNEGO pisarza, nie trasę legac
   it('awaria zapisu ma widoczny komunikat PO POLSKU — zero cichych awarii', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({}) });
     await otworzFormularz();
-    fireEvent.change(screen.getByLabelText('Title (required)'), { target: { value: 'x' } });
+    fireEvent.change(screen.getByLabelText('Tytuł (wymagany)'), { target: { value: 'x' } });
     fireEvent.change(screen.getByLabelText('Inicjatywa (wymagana)'), { target: { value: 'ini-1' } });
     fireEvent.click(screen.getByTestId('execution-new-raid-save'));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
@@ -422,7 +466,24 @@ describe('(m) ESKALACJA ryzyko → problem zostawia link do źródła', () => {
 describe('(j) PRESET „Sygnały" czyta delay-signals, nie pusty runtime-v1', () => {
   it('licznik chipa „sygnaly" równa się liczbie sygnałów opóźnień', async () => {
     const liczniki: Record<string, number>[] = [];
-    render(<Gospodarz preset="ryzyka" onCounts={(c) => liczniki.push(c)} />);
+    // NAPRAWA (dług 11.09): `(c) => liczniki.push(c)` zwraca WYNIK
+    // `Array.push` (nową długość — liczbę), a ekran rejestruje ten callback
+    // wprost jako CIAŁO efektu bez nawiasów klamrowych
+    // (`ExecutionControlSurface.tsx` — moduł 06_EXECUTION, ZAMROŻONY MVP
+    // final, nie do zmiany bez decyzji właściciela), więc React brał tę
+    // liczbę za funkcję czyszczącą i przy odmontowaniu rzucał
+    // `TypeError: destroy is not a function` (2 unhandled exceptions,
+    // zmierzone w tym pliku). Blok `{ }` gwarantuje, że callback zwraca
+    // `undefined`, tak jak realny handler w `ExecutionHub` — naprawa
+    // WIERNOŚCI testu wobec kontraktu efektu, bez ruszania zamrożonego pliku.
+    render(
+      <Gospodarz
+        preset="ryzyka"
+        onCounts={(c) => {
+          liczniki.push(c);
+        }}
+      />
+    );
     await waitFor(() => expect(liczniki.length).toBeGreaterThan(0));
     await waitFor(() => expect(liczniki[liczniki.length - 1].sygnaly).toBe(2));
     // Rejestr runtime-v1 ma 0 rekordów — gdyby chip liczył jego, byłoby 0.
@@ -436,8 +497,12 @@ describe('(j) PRESET „Sygnały" czyta delay-signals, nie pusty runtime-v1', ()
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     const wiersz = screen.getByText('Migracja ERP').closest('tr') as HTMLElement;
-    expect(within(wiersz).getByText('Late start')).toBeInTheDocument();
-    expect(within(wiersz).getByText('No owner')).toBeInTheDocument();
+    // NAPRAWA (dług 11.09): test nazywa się „PO POLSKU", ale asercje szukały
+    // angielskiego 'Late start'/'No owner' — artefakt starego mocka bez
+    // realnego PL. Oba klucze MAJĄ tłumaczenie PL ("Późny start"/
+    // "Bez właściciela"), dogonione do rzeczywistego renderu.
+    expect(within(wiersz).getByText('Późny start')).toBeInTheDocument();
+    expect(within(wiersz).getByText('Bez właściciela')).toBeInTheDocument();
     expect(within(wiersz).getByText('+140')).toBeInTheDocument();
     expect(within(wiersz).getByText('Nowy')).toBeInTheDocument();
   });
@@ -466,13 +531,13 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Migracja ERP'));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /Prepare intervention/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Przygotuj interwencję/ })).toBeInTheDocument()
     );
   };
 
   it('wysyła sourceType + sourceId sygnału, termin dziś + 3 dni i tytuł po polsku', async () => {
     await otworzPodgladSygnalu();
-    fireEvent.click(screen.getByRole('button', { name: /Prepare intervention/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Przygotuj interwencję/ }));
     await waitFor(() => expect(createDecision).toHaveBeenCalledTimes(1));
     const payload = createDecision.mock.calls[0][0];
     expect(payload.sourceType).toBe('delay_signal');
@@ -491,8 +556,11 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Konfiguracja środowiska')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Konfiguracja środowiska'));
-    await waitFor(() => expect(screen.getByText('Delay signal')).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Prepare intervention/ })).toBeNull();
+    // NAPRAWA (dług 11.09): 'execution.signals.preview.label' MA tłumaczenie PL
+    // ('Sygnał opóźnienia') — z poprawnym mockiem (jak realny react-i18next dla
+    // language:'pl') podgląd pokazuje polski tekst, nie angielski fallback.
+    await waitFor(() => expect(screen.getByText('Sygnał opóźnienia')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /Przygotuj interwencję/ })).toBeNull();
   });
 
   it('awaria tworzenia wniosku ma widoczny komunikat PO POLSKU', async () => {
@@ -500,9 +568,12 @@ describe('(l) „Przygotuj interwencję" tworzy decyzję z rodowodem i terminem'
       new TestowyApiError({ error: 'Permission denied' }, 'Failed', 403)
     );
     await otworzPodgladSygnalu();
-    fireEvent.click(screen.getByRole('button', { name: /Prepare intervention/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Przygotuj interwencję/ }));
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0));
-    expect(screen.getAllByRole('alert')[0].textContent).toContain("don't have permission");
+    // NAPRAWA (dług 11.09): test nazywa się „PO POLSKU", ale asercja szukała
+    // angielskiego "don't have permission" — artefakt starego mocka bez
+    // realnego PL. `execution.decisions.errors.forbidden` MA tłumaczenie PL.
+    expect(screen.getAllByRole('alert')[0].textContent).toContain('Nie masz uprawnień');
   });
 });
 
@@ -511,13 +582,13 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
     await zamontujRyzyka();
     fireEvent.click(screen.getByText('Awaria dostawcy chmury'));
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /Change due date/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Zmień termin/ })).toBeInTheDocument()
     );
   };
 
   it('„Zmień termin" zapisuje przez kanonicznego pisarza, bez wymogu powodu', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Change due date/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Zmień termin/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: '2026-11-30' },
     });
@@ -539,7 +610,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
    */
   it('pierwszy zapis idzie z WERSJĄ z modelu odczytu, nie ze ślepym 0', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Change due date/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Zmień termin/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: '2026-11-30' },
     });
@@ -552,7 +623,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
 
   it('„Zmień właściciela" wysyła identyfikator osoby z katalogu', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Change owner/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Zmień właściciela/ }));
     fireEvent.change(screen.getByTestId('execution-raid-edit-input'), {
       target: { value: 'osoba-2' },
     });
@@ -563,7 +634,7 @@ describe('AKCJE POZYCJI RAID w podglądzie — termin, właściciel, zamknięcie
 
   it('„Zamknij pozycję" WYMAGA uzasadnienia — pusty powód nie zapisuje', async () => {
     await otworzPodglad();
-    fireEvent.click(screen.getByRole('button', { name: /Close item/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Zamknij pozycję/ }));
     await waitFor(() =>
       expect(screen.getByTestId('execution-decision-reason-confirm')).toBeInTheDocument()
     );
@@ -614,8 +685,11 @@ describe('MEMBER — para negatywna', () => {
     render(<Gospodarz preset="sygnaly" />);
     await waitFor(() => expect(screen.getByText('Migracja ERP')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Migracja ERP'));
-    await waitFor(() => expect(screen.getByText('Delay signal')).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Prepare intervention/ })).toBeNull();
+    // NAPRAWA (dług 11.09): 'execution.signals.preview.label' MA tłumaczenie PL
+    // ('Sygnał opóźnienia') — z poprawnym mockiem (jak realny react-i18next dla
+    // language:'pl') podgląd pokazuje polski tekst, nie angielski fallback.
+    await waitFor(() => expect(screen.getByText('Sygnał opóźnienia')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /Przygotuj interwencję/ })).toBeNull();
   });
 
   /**
@@ -660,7 +734,10 @@ describe('MEMBER — para negatywna', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Inicjatywa (wymagana)')).toBeInTheDocument()
     );
-    const wlasciciel = screen.getByLabelText('Owner') as HTMLSelectElement;
+    // NAPRAWA (dług 11.09): 'execution.governance.columns.owner' MA
+    // tłumaczenie PL ("Właściciel") — z poprawnym mockiem pole selecta
+    // faktycznie nosi tę etykietę, nie angielskie 'Owner'.
+    const wlasciciel = screen.getByLabelText('Właściciel') as HTMLSelectElement;
     expect(Array.from(wlasciciel.options).map((o) => o.value)).toEqual(['']);
   });
 });
