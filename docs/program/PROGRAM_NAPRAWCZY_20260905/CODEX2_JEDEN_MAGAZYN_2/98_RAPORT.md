@@ -117,6 +117,7 @@ Brak `02_DECYZJA_NADZORCY.txt`, dlatego WARIANT N. Na świeżej bazie nie było 
 | E3 | 45 bramek pozostało | tylko wskazane bramki, per plik | dalsza implementacja i testy per plik | 2 bramki, K1=48, izolacja flagą |
 | E8 | 200 bez treści na Results/Execution; My Work nie czyta inicjatyw; raport bez tytułu | test E8 wąski; brak zgody na sztuczną kopertę | prawdziwe projekcje/read-model | macierz rzeczywista 2+1/7 |
 | E1c | baza ma 0 rekordów legacy | tylko lokalna baza 6452 | legalna kopia danych z rekordami | pełny cykl na pustym manifeście z ostrzeżeniem |
+| E1 (dopisane FIX-4, 97_ODBIOR_W1_W2.md §8, 2026-09-11) | `expectedVersion` w `updateInitiative` (`InitiativeController.ts:943`) jest dociągane po cichu z `canonical.version` odczytanego tuż przed zapisem — instrukcja §0.2e przewidziała dokładnie to jako STOP MERYTORYCZNY z opisem ryzyka („albo serwer dociąga wersję sam — i wtedy tracimy ochronę przed nadpisaniem cudzej edycji, albo wymagamy `expectedVersion` od klienta — i wtedy stare karty przestają zapisywać") | wymagany jawny STOP z tabelą kto/co traci ochronę | **STOP nie został zgłoszony przy dostawie.** Odbiór C6 to wychwycił (§5.5) i zmierzył: dwóch redaktorów nadpisuje się nawzajem BEZ `409` — „ostatni wygrywa". Nowy test dokumentujący dzisiejsze zachowanie (nie zmienia semantyki): `server/src/domain/initiatives-execution/__tests__/initiativeCanonicalPutConcurrentEdit.pg.test.ts`. Decyzja o tym, czy przyjąć `expectedVersion` od klienta, pozostaje otwarta dla właściciela/kolejnego bloku — patrz §11 |
 
 ## 10. TWIERDZENIA NIEZWERYFIKOWANE
 
@@ -126,6 +127,7 @@ Niezweryfikowane: realne liczby z kopii stagingu autora; wydajność projekcji d
 
 | Decyzja | Czego zabrakło, żeby rozstrzygnąć samodzielnie |
 |---|---|
+| `expectedVersion` w `PUT /api/initiatives/:id` (kanon): przyjąć od klienta (realna ochrona CAS, ale stare karty bez pola przestają zapisywać) czy zostawić „ostatni wygrywa" (dzisiejsze, udokumentowane FIX-4) | brak decyzji produktowej — to jest świadomy kompromis bezpieczeństwo/kompatybilność, nie błąd do naprawienia bez zgody |
 | rekordy bez projektu/właściciela | brak decyzji i legalnego źródła danych dla wskazanych 105 rekordów |
 | tożsamość core↔legacy ocen | brak reguły produktu i właściciela backfillu |
 | 65 osieroconych linków artefaktów | brak reguły: usunąć, naprawić czy zachować jako audyt |
