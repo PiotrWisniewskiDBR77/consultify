@@ -43,7 +43,7 @@ interface Props {
 const EVIDENCE_ICONS: Record<string, React.ReactNode> = {
   direct: <Zap size={12} className="text-emerald-500" />,
   aggregated: <Layers size={12} className="text-blue-500" />,
-  split: <GitMerge size={12} className="text-primary-500" />,
+  split: <GitMerge size={12} className="text-purple-500" />,
   derived: <Sparkles size={12} className="text-amber-500" />,
   manual_note: <PenLine size={12} className="text-blue-500" />,
 };
