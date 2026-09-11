@@ -231,7 +231,9 @@ export const ValueCapturePipelinePanel: React.FC<ValueCapturePipelinePanelProps>
 
       {!error && funnel && (
         <div className="mb-4 overflow-x-auto" data-testid="capture-funnel-table">
-          <table className="w-full text-left text-xs">
+          <table /* §27-exempt: podsumowanie lejka (gate/count/value/conversion) — zagregowane metryki per etap, nie lista rekordow */
+            className="w-full text-left text-xs"
+          >
             <thead>
               <tr className="border-b border-c-border-subtle text-c-text-muted">
                 <th className="py-1.5 pr-3 font-medium">
@@ -337,7 +339,9 @@ export const ValueCapturePipelinePanel: React.FC<ValueCapturePipelinePanelProps>
 
       {gates.length > 0 && (
         <div className="overflow-x-auto" data-testid="capture-gates-list">
-          <table className="w-full text-left text-xs">
+          <table /* §27-exempt: lista rekordow initiative x gate z inline sign-off/advance — kandydat na StandardTable, przepisanie >60 linii logiki (custom input+button w komorce), do przepisania osobnym dyzurem */
+            className="w-full text-left text-xs"
+          >
             <thead>
               <tr className="border-b border-c-border-subtle text-c-text-muted">
                 <th className="py-1.5 pr-3 font-medium">
