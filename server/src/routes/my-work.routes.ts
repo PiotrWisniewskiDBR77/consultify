@@ -698,6 +698,40 @@ const resolveCanonicalPersonalTaskIdentity = async (
   }
 };
 
+/**
+ * ZAKRES „MOJE ZADANIE" DLA MOJEJ PRACY — jedno miejsce dla listy, detalu,
+ * zapisu i usuwania.
+ *
+ * B-4 (odbior adwersaryjny stagingu `7e8668c7cc`, 11.09.2026): karta zadania w
+ * Mojej Pracy nie ladowala tresci — `GET /api/my-work/personal-tasks/:id`
+ * zwracal 404 dla zadania, ktore uzytkownik sam zglosil i zalozyl, ale ktorego
+ * nie jest WYKONAWCA. Przyczyna: ten helper pytal WYLACZNIE o `assignee_id`.
+ *
+ * KROK 0 zmierzony na kopii `consultify_kopia_b14` (11.09 22:47), konto
+ * `james.whitfield@northwind.example` (OWNER Northwind), przez zamontowany
+ * router:
+ *   GET /api/my-work/personal-tasks                      -> 200, 8 pozycji
+ *   GET /api/my-work/personal-tasks/0512a736-c0b5-…      -> 404 TASK_NOT_FOUND
+ * przy stanie bazy: 46 zadan w organizacji, james jest ZGLASZAJACYM 46,
+ * TWORCA 42, WLASCICIELEM 2, a WYKONAWCA tylko 8.
+ *
+ * SPROSTOWANIE POMIARU ODBIORU: lista `personal-tasks` zwracala 8, nie 46 —
+ * lista i detal mialy ten SAM filtr (`assignee_id`), wiec „lista pokazuje 46,
+ * karta 404 dla 38" nie opisuje tego endpointu. Karty zadan otwierane sa w
+ * Mojej Pracy takze spoza tej listy (`openDocuments` w `MyWorkHub`: skrzynka,
+ * wyszukiwarka, odnosniki z innych modulow), i to one dawaly 404. Defekt jest
+ * realny, premisa o liczbie 46 w liscie — nie.
+ *
+ * MODEL WLASNOSCI: ten sam czteroskladnikowy, ktorego uzywa kanoniczny
+ * `isTaskOwnedByCaller` w bramce obiektowej `/api/tasks/:id`
+ * (`effectiveCapability.middleware.ts`, paczka E2): WYKONAWCA `assignee_id`
+ * LUB WLASCICIEL `owner_id` LUB ZGLASZAJACY `reporter_id` LUB TWORCA
+ * `created_by`. Wszystkie cztery kolumny sa gwarantowane dla tabeli `tasks`
+ * (`DatabaseInitializer.ts:330-350`). To NIE jest rozszerzenie na cudze
+ * zadania: obca organizacja odpada wczesniej (`organization_id = ?` w kazdym
+ * zapytaniu), a osoba bez zadnego z czterech zwiazkow nadal dostaje 404
+ * (zmierzone: `daniel.osei` na tym samym zadaniu -> 404 przed naprawa i po).
+ */
 const buildPersonalTaskOwnerScope = (
   req: AuthRequest,
   taskAlias = 't',
@@ -713,18 +747,29 @@ const buildPersonalTaskOwnerScope = (
     overrides?.email !== undefined && overrides?.email !== null ? String(overrides.email) : '';
   const fromReq = typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
   const email = (rawOverride.trim().toLowerCase() || fromReq).trim();
-  const assigneeIdCol = taskAlias ? `${taskAlias}.assignee_id` : 'assignee_id';
+  const kolumna = (nazwa: string) => (taskAlias ? `${taskAlias}.${nazwa}` : nazwa);
+  const assigneeIdCol = kolumna('assignee_id');
+
+  // Kolejnosc warunkow = kolejnosc parametrow; `params` musi isc dokladnie tak
+  // samo, bo wolajacy sklejaja je z wlasnymi (`[id, orgId, ...ownerScope.params]`).
+  const warunki = [
+    `${assigneeIdCol} = ?`,
+    `${kolumna('owner_id')} = ?`,
+    `${kolumna('reporter_id')} = ?`,
+    `${kolumna('created_by')} = ?`,
+  ];
+  const params: unknown[] = [userId, userId, userId, userId];
 
   if (allowLegacyEmailOwnerMatch && email) {
-    return {
-      whereSql: `(${assigneeIdCol} = ? OR EXISTS (SELECT 1 FROM users pu WHERE pu.id = ${assigneeIdCol} AND lower(coalesce(pu.email,'')) = ?))`,
-      params: [userId, email],
-    };
+    warunki.push(
+      `EXISTS (SELECT 1 FROM users pu WHERE pu.id = ${assigneeIdCol} AND lower(coalesce(pu.email,'')) = ?)`
+    );
+    params.push(email);
   }
 
   return {
-    whereSql: `${assigneeIdCol} = ?`,
-    params: [userId],
+    whereSql: `(${warunki.join(' OR ')})`,
+    params,
   };
 };
 
