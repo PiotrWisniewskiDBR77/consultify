@@ -62,8 +62,6 @@ import {
 } from '@/components/shared/NModeLayout';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { sekcjeZKontraktu } from '@/components/standard/contractSections';
-import { PracujZAI } from '@/components/standard/PracujZAI';
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -95,7 +93,7 @@ import { loadInterviewV8Capability } from './interviewBackendRouting';
 // MIGRACJA (D-8): kompozycja kart Interview wyprowadzona z WIĄŻĄCEGO kontraktu
 // karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
 // patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
-import { INTERVIEW_CARDS, INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
+import { INTERVIEW_CARD_RENDER_IDS, INTERVIEW_CARD_SPEC } from './interviewCardContract';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
@@ -190,6 +188,46 @@ interface InterviewWorkspaceProps {
 // oraz localStorage `ff.cardContract` działają TAKŻE na produkcji (bez DEV guardu) —
 // żeby Piotr mógł włączyć kontrakt tylko sobie jednym linkiem. Kolejność: URL →
 // localStorage → env → OFF. Wzór: isInitiativeCardContractEnabled.
+function parseCardContractFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return null;
+}
+
+function useInterviewCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const q = parseCardContractFlag(
+          new URLSearchParams(window.location.search).get('cardContract')
+        );
+        if (q !== null) {
+          try {
+            window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
+          } catch {
+            /* ignore */
+          }
+          return q;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const ls = parseCardContractFlag(window.localStorage.getItem('ff.cardContract'));
+        if (ls !== null) return ls;
+      } catch {
+        /* ignore */
+      }
+    }
+    if (import.meta.env.VITE_VF1_INTERVIEW_CARD_CONTRACT === 'true') return true;
+    return false;
+  }, []);
+}
+
 // ==========================================
 // COMPONENT
 // ==========================================
@@ -1899,7 +1937,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // `spec` (INTERVIEW_CARD_SPEC) NADPISUJE fallback, więc `artifactType` jest
   // MARTWY (nie konsumowany); podajemy inertny literał. DO POTWIERDZENIA PIOTRA:
   // czy `NModeArtifactType` ma dostać 'interview' (osobny pakiet — dotyka powłoki).
-  const interviewCardLayoutStorageKey = `interview:nmode:card-layout:v2-contract:${session?.id ?? 'new'}`;
+  const interviewCardContractEnabled = useInterviewCardContractEnabled();
+  const interviewCardLayoutStorageKey = `interview:nmode:card-layout:${
+    interviewCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${session?.id ?? 'new'}`;
   const initialInterviewCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(interviewCardLayoutStorageKey);
@@ -1921,7 +1962,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const interviewCardLayout = useCardLayout({
     // Inertny fallback (patrz wyżej) — nadpisany przez `spec` gdy flaga ON.
     artifactType: 'insight',
-    spec: INTERVIEW_CARD_SPEC,
+    spec: interviewCardContractEnabled ? INTERVIEW_CARD_SPEC : undefined,
     initialLayout: initialInterviewCardLayout,
     onLayoutChange: persistInterviewCardLayout,
   });
@@ -2096,9 +2137,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       }
     }
 
-    // DEC-433: „Ocena AI" nie jest już osobnym przyciskiem paska — wchłonięty
-    // jako pozycja „Analizuj" w `PracujZAI` (renderActionBar, obok Sekcji).
-    // Nie dublować: jeden wołacz `runAiQualityReview`, jedno miejsce w UI.
+    out.push({
+      id: 'ai-review',
+      label: { en: 'AI review', pl: 'Ocena AI' },
+      icon: Sparkles,
+      variant: 'neutral',
+      onClick: () => {
+        void runAiQualityReview();
+      },
+      disabled: isAiEvaluating || !session?.id,
+    });
     out.push({
       id: 'export-md',
       label: { en: 'Markdown', pl: 'Markdown' },
@@ -2393,7 +2441,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   ];
 
-  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
+  const sections: NModeSection[] = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
         {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
@@ -3117,31 +3165,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
     }
 
-    return Object.fromEntries(base.map((section) => [section.id, section]));
+    return base;
   })();
-
-  // DEC-432: kontrakt jest jedynym źródłem członkostwa, nazw, ikon i kolejności.
-  // Lokalnie zostaje wyłącznie treść oraz widoczność wynikająca z realnych danych.
-  const sections: NModeSection[] = sekcjeZKontraktu(
-    INTERVIEW_CARDS,
-    'interview',
-    (id) => {
-      if (id === 'notes') return notes.length > 0;
-      if (id === 'evidence') return evidence.length > 0;
-      if (id === 'stakeholders') return stakeholders.length > 0;
-      if (id === 'open-gaps') return openGaps.length > 0;
-      if (id === 'company-facts') return Boolean(companyProfile.name || companyProfile.industry || companyProfile.location);
-      if (id === 'summary') return !isAssignmentMode && summaryData.facts.length > 0;
-      return true;
-    }
-  ).map((contractSection) => ({
-    ...contractSection,
-    ...Object.fromEntries(
-      Object.entries(sectionContentById[contractSection.id] ?? {}).filter(
-        ([key]) => !['id', 'label', 'icon'].includes(key)
-      )
-    ),
-  }));
 
   // ── KONTRAKT AI PER SEKCJA (SPEC-N §2.5) ───────────────────────────────────
   //
@@ -3190,12 +3215,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // rdzeń `questions` (core:true) jest nieusuwalny (removeCard przerywa). Flaga OFF
   // ⇒ `sections` bez zmian (zero regresji na demo). Sekcje spoza layoutu (np.
   // `summary` w trybie assignment nieobecny) nie znikają (useCardLayout:307).
-  const orderedSections = interviewCardLayout.applyToSections(sections);
+  const orderedSections = interviewCardContractEnabled
+    ? interviewCardLayout.applyToSections(sections)
+    : sections;
 
   // R2 (przepis §9): każda sekcja renderowana ma wpis w katalogu kanonicznym i
   // odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog (nie blokuje). Plain
   // `if` (nie useEffect) — ten fragment biegnie PO wczesnym returnie (rules-of-hooks).
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && interviewCardContractEnabled) {
     const bezWpisu = sections
       .map((s) => s.id)
       .filter((id) => !INTERVIEW_CARD_RENDER_IDS.includes(id));
@@ -3584,42 +3611,18 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         // akcje renderujemy obok (NModeActionBar) — nic nie ginie. Flaga OFF ⇒
         // `undefined` ⇒ powłoka rysuje standardowy pasek jak dotąd (zero regresji).
         renderActionBar={
-          () => (
+          interviewCardContractEnabled
+            ? () => (
                 <div className="flex items-center gap-2 min-h-[36px] flex-wrap">
                   <NModeCardManager layout={interviewCardLayout} isPolish={isPolish} />
-                  <div className="ml-auto flex items-center gap-2">
-                    {actions.length > 0 && (
+                  {actions.length > 0 && (
+                    <div className="ml-auto">
                       <NModeActionBar actions={actions} activeSection={activeSection} />
-                    )}
-                    {/* DEC-433 (K21): „Pracuj z AI" — jedno wejście AI, trzy
-                        pozycje. „Ocena AI" żyje tu jako „Analizuj" (ta sama
-                        funkcja `runAiQualityReview`, bez duplikatu). Karta
-                        wywiadu nie ma generatora treści pól (odpowiedzi daje
-                        człowiek) — „Uzupełnij…" świadomie bez źródła,
-                        komponent pokaże je wyszarzone z powodem. */}
-                    <PracujZAI
-                      isPolish={isPolish}
-                      onAnalizuj={() => {
-                        void runAiQualityReview();
-                      }}
-                      analizaWToku={isAiEvaluating}
-                      aktywnaSekcja={activeSection}
-                      kontekstArtefaktu={{
-                        title: sessionName,
-                        status: lifecycleStatus,
-                        type: 'interview_session',
-                      }}
-                      moznaEdytowac={!isLocked}
-                      powodTylkoOdczyt={
-                        isLocked
-                          ? t('interview.workspace.sessionClosedReadOnlyReason', 'session is closed')
-                          : undefined
-                      }
-                      disabled={!session?.id}
-                    />
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
+            : undefined
         }
         activeSection={activeSection}
         onSectionChange={setActiveSection}

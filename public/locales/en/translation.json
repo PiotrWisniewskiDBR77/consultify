@@ -213,7 +213,6 @@
     "DATA_EXPORT_LIST_REQUESTS_FAILED": "Export requests could not be loaded.",
     "DATA_EXPORT_STATUS_FAILED": "The export status could not be loaded.",
     "GOVERNED_CONNECTOR_NOT_APPROVED": "This integration is not available in this edition.",
-    "INITIATIVE_CANONICAL_WRITE_REQUIRED": "This initiative is in the new registry — save it from the initiative card.",
     "INITIATIVE_GENERATION_SCHEMA_MISSING": "The run could not be created.",
     "INVALID_ORGANIZATION_IDENTIFIER": "The organization identifier is not a valid UUID, so this configuration cannot be saved.",
     "KNOWLEDGE_CANDIDATES_APPROVED_FAILED": "Approved ideas could not be loaded.",
@@ -584,7 +583,6 @@
         "okr": "OKR"
       },
       "page": {
-        "actionCard": "Action card",
         "reports": "Reports",
         "statement": "Statement",
         "model": "Model",
@@ -6052,7 +6050,6 @@
       "uRL": "URL",
       "placeholder2": "https://example.com",
       "addLink": "Add Link",
-      "addExternalLink": "Add External Link",
       "cancel": "Cancel",
       "noLinkedItems": "No linked items",
       "title": "Open in new tab",
@@ -8200,7 +8197,6 @@
       "addFirstQuestion": "Add first question",
       "aiChangeProposal": "AI change proposal",
       "aiReviewedTheSurveyAnd": "AI reviewed the survey and prepared changes for approval.",
-      "aiReviewedYourTemplate": "AI reviewed your template",
       "updatesToExistingQuestions": "Updates to existing questions",
       "current": "Current",
       "aiProposal": "AI proposal",
@@ -8290,17 +8286,7 @@
         "one_question_per_screen": "One question per screen",
         "task_list": "Question list"
       },
-      "upload": "Upload",
-      "versionFieldLabel": "Version",
-      "evidenceSectionLabel": "Sources & assumptions",
-      "evidenceAttachedNotice": "Source material has been attached.",
-      "evidenceMissingReason": "No source material attached.",
-      "historyVersionValue": "Version {{version}}",
-      "defaultTitle": "Interview template",
-      "documentPanelAriaLabel": "Interview template details",
-      "applicationTemplateReadOnlyReason": "This is a system template — read-only.",
-      "proposeChangesPreviewNotice": "Proposed changes will appear in a preview to approve.",
-      "generateWholeTemplatePreviewNotice": "A draft of the whole template will appear before saving."
+      "upload": "Upload"
     },
     "workspace": {
       "clarifyKeyAnswers": "Clarify key answers",
@@ -8355,7 +8341,6 @@
       "dataLoadingError": "Data Loading Error",
       "locked": "Locked",
       "active": "Active",
-      "sessionClosedReadOnlyReason": "session is closed",
       "enUs": "en-US",
       "status": "Status:",
       "complete": "complete",
@@ -31265,8 +31250,7 @@
       "downloadAndRescore": "Download all and re-score"
     },
     "baseline": {
-      "subtitle": "Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context.",
-      "fallbackNotice": "No megatrends for industry {{industry}} yet — showing {{fallback}}."
+      "subtitle": "Below are the top megatrends affecting your industry globally. AI has prioritised these based on market signals and your context."
     }
   },
   "publicBooking": {
@@ -50625,46 +50609,6 @@
       "nicNiewybrane": "No proposal selected.",
       "zgodaTytul": "Run AI?",
       "postep": "Field {{i}} of {{n}}"
-    },
-    "akcja": {
-      "wczytywanie": "Loading action card…",
-      "nieZnaleziono": "Action card not found.",
-      "domyslnyTytul": "Action card",
-      "wrocDoListy": "Back to list",
-      "statusOtwarta": "Open",
-      "statusZamknieta": "Closed",
-      "problem": "Problem",
-      "glownaPrzyczyna": "Root cause",
-      "dzialanie": "Action",
-      "zrodlo": "Source",
-      "wlasciciel": "Owner",
-      "termin": "Due date",
-      "okres": "Period",
-      "komentarz": "Comment",
-      "akcje": "Actions",
-      "wlasciwosci": "Properties",
-      "wlasciwosc": "Property",
-      "wartosc": "Value",
-      "powiazania": "Relations",
-      "powiazanieZrodlem": "Linked to the source record.",
-      "zrodlaZalozenia": "Sources & assumptions",
-      "pomiarZeZrodla": "The measurement and threshold come from the source record.",
-      "komentarze": "Comments",
-      "historia": "History",
-      "biezacyStan": "Current state: {{status}}.",
-      "status": "Status",
-      "sekcjaOpis": "Description",
-      "sekcjaWlascicielTermin": "Owner and due date",
-      "tylkoOdczytZamknieta": "Card is closed.",
-      "panelAriaLabel": "Action card details",
-      "paskModulu": "Inbox",
-      "sourceKind": {
-        "kpi_deviation": "KPI deviation",
-        "execution_delay": "Execution delay",
-        "audit_finding": "Audit finding",
-        "finance_variance": "Finance variance",
-        "meeting_action": "Meeting action"
-      }
     }
   },
   "executionReports": {

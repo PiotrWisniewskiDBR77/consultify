@@ -310,8 +310,8 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
 
       {/* Table */}
       <div className="max-h-[65vh] overflow-auto">
-        <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */
-          className="w-full text-sm"
+        <table
+          /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */ className="w-full text-sm"
           role="grid"
         >
           <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm dark:bg-navy-900/95">

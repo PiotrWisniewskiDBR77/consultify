@@ -213,7 +213,6 @@
     "DATA_EXPORT_LIST_REQUESTS_FAILED": "Nie udało się pobrać wniosków o eksport.",
     "DATA_EXPORT_STATUS_FAILED": "Nie udało się pobrać statusu eksportu.",
     "GOVERNED_CONNECTOR_NOT_APPROVED": "Integracja nie jest dostępna w tej wersji.",
-    "INITIATIVE_CANONICAL_WRITE_REQUIRED": "Ta inicjatywa jest w nowym rejestrze — zapisz ją z karty inicjatywy.",
     "INITIATIVE_GENERATION_SCHEMA_MISSING": "Nie udało się utworzyć przebiegu.",
     "INVALID_ORGANIZATION_IDENTIFIER": "Identyfikator organizacji nie jest prawidłowym UUID, więc nie można zapisać tej konfiguracji.",
     "KNOWLEDGE_CANDIDATES_APPROVED_FAILED": "Nie udało się pobrać zatwierdzonych pomysłów.",
@@ -584,7 +583,6 @@
         "okr": "OKR"
       },
       "page": {
-        "actionCard": "Karta działania",
         "reports": "Raporty",
         "statement": "Sprawozdanie",
         "model": "Model",
@@ -5176,7 +5174,6 @@
       "uRL": "URL",
       "placeholder2": "https://example.com",
       "addLink": "Dodaj link",
-      "addExternalLink": "Dodaj link zewnętrzny",
       "cancel": "Anuluj",
       "noLinkedItems": "Brak powiązań",
       "title": "Otwórz w nowej karcie",
@@ -7354,7 +7351,6 @@
       "addFirstQuestion": "Dodaj pierwsze pytanie",
       "aiChangeProposal": "Propozycje zmian od AI",
       "aiReviewedTheSurveyAnd": "AI przejrzało ankietę i przygotowało zmiany do zatwierdzenia.",
-      "aiReviewedYourTemplate": "AI sprawdziło Twój wzorzec",
       "updatesToExistingQuestions": "Zmiany w istniejących pytaniach",
       "current": "Teraz",
       "aiProposal": "Propozycja AI",
@@ -7448,17 +7444,7 @@
         "one_question_per_screen": "Jedno pytanie na ekran",
         "task_list": "Lista pytań"
       },
-      "upload": "Prześlij",
-      "versionFieldLabel": "Wersja",
-      "evidenceSectionLabel": "Źródła i założenia",
-      "evidenceAttachedNotice": "Materiał źródłowy został dołączony.",
-      "evidenceMissingReason": "Nie dołączono materiału źródłowego.",
-      "historyVersionValue": "Wersja {{version}}",
-      "defaultTitle": "Wzorzec wywiadu",
-      "documentPanelAriaLabel": "Szczegóły wzorca wywiadu",
-      "applicationTemplateReadOnlyReason": "Wzorzec aplikacyjny jest tylko do odczytu.",
-      "proposeChangesPreviewNotice": "Propozycje zmian pojawią się w podglądzie do zatwierdzenia.",
-      "generateWholeTemplatePreviewNotice": "Projekt całego wzorca pojawi się przed zapisem."
+      "upload": "Prześlij"
     },
     "workspace": {
       "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi",
@@ -7513,7 +7499,6 @@
       "dataLoadingError": "Błąd pobierania danych",
       "locked": "Zablokowane",
       "active": "Aktywne",
-      "sessionClosedReadOnlyReason": "sesja zamknięta",
       "enUs": "pl-PL",
       "status": "Stan:",
       "complete": "ukończone",
@@ -31408,8 +31393,7 @@
       "downloadAndRescore": "Pobierz wszystko i przelicz ocenę"
     },
     "baseline": {
-      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu.",
-      "fallbackNotice": "Brak megatrendów dla branży {{industry}} — pokazujemy branżę {{fallback}}."
+      "subtitle": "Poniżej najważniejsze megatrendy wpływające globalnie na Twoją branżę. AI ustawiła je według sygnałów rynkowych i Twojego kontekstu."
     }
   },
   "publicBooking": {
@@ -51440,46 +51424,6 @@
       "nicNiewybrane": "Nie wybrano żadnej propozycji.",
       "zgodaTytul": "Uruchomić AI?",
       "postep": "Pole {{i}} z {{n}}"
-    },
-    "akcja": {
-      "wczytywanie": "Wczytywanie karty działania…",
-      "nieZnaleziono": "Nie znaleziono karty działania.",
-      "domyslnyTytul": "Karta działania",
-      "wrocDoListy": "Wróć do listy",
-      "statusOtwarta": "Otwarta",
-      "statusZamknieta": "Zamknięta",
-      "problem": "Problem",
-      "glownaPrzyczyna": "Główna przyczyna",
-      "dzialanie": "Działanie",
-      "zrodlo": "Źródło",
-      "wlasciciel": "Właściciel",
-      "termin": "Termin",
-      "okres": "Okres",
-      "komentarz": "Komentarz",
-      "akcje": "Akcje",
-      "wlasciwosci": "Właściwości",
-      "wlasciwosc": "Właściwość",
-      "wartosc": "Wartość",
-      "powiazania": "Powiązania",
-      "powiazanieZrodlem": "Powiązana ze źródłem działania.",
-      "zrodlaZalozenia": "Źródła i założenia",
-      "pomiarZeZrodla": "Pomiar i próg pochodzą z rekordu źródłowego.",
-      "komentarze": "Komentarze",
-      "historia": "Historia",
-      "biezacyStan": "Bieżący stan: {{status}}.",
-      "status": "Status",
-      "sekcjaOpis": "Opis",
-      "sekcjaWlascicielTermin": "Właściciel i termin",
-      "tylkoOdczytZamknieta": "Karta jest zamknięta.",
-      "panelAriaLabel": "Szczegóły karty działania",
-      "paskModulu": "Skrzynka",
-      "sourceKind": {
-        "kpi_deviation": "Odchylenie KPI",
-        "execution_delay": "Opóźnienie realizacji",
-        "audit_finding": "Ustalenie audytowe",
-        "finance_variance": "Odchylenie finansowe",
-        "meeting_action": "Działanie ze spotkania"
-      }
     }
   },
   "executionReports": {

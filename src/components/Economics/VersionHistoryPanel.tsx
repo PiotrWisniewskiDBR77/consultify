@@ -322,9 +322,9 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
             {/* Comparison result */}
             {comparisonResult && (
-              <div className="bg-c-info/10 rounded-xl p-4 border border-c-info/20">
+              <div className="bg-primary-50 dark:bg-primary-500/10 rounded-xl p-4 border border-primary-200 dark:border-primary-500/20">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-c-info">
+                  <h4 className="font-medium text-primary-700 dark:text-primary-400">
                     Version Comparison
                   </h4>
                   <button
@@ -332,9 +332,9 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                       setComparisonResult(null);
                       setSelectedForCompare([]);
                     }}
-                    className="p-1 hover:bg-c-info/20 rounded"
+                    className="p-1 hover:bg-primary-200 dark:hover:bg-primary-500/20 rounded"
                   >
-                    <X size={16} className="text-c-info" />
+                    <X size={16} className="text-primary-500" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -355,7 +355,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-c-info/20">
+                <div className="mt-4 pt-4 border-t border-primary-200 dark:border-primary-500/20">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     <span className="font-medium">{comparisonResult.summary.totalChanges}</span>{' '}
                     changes w ocenach

@@ -151,10 +151,10 @@ import {
 // (cardContract.types.ts) zamiast z martwego mirrora INSIGHT_SPEC — patrz
 // insightCardContract.ts. Za flagą (default OFF); OFF ⇒ zero zmian.
 import {
-  INSIGHT_CARDS,
+  INSIGHT_CARD_RENDER_IDS,
   INSIGHT_CARD_SPEC,
+  INSIGHT_PHASE_D_RENDER_IDS,
 } from './insightCardContract';
-import { pilnujSekcjiZKontraktu, sekcjeZKontraktu } from '../standard/contractSections';
 import { extractQuotedFragments } from './insightQuotes';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -176,7 +176,63 @@ function warnInsightSilentFailure(context: string, err?: unknown): void {
   console.warn(`[InsightViewer] ${context}`, err);
 }
 
-// DEC-432: kontrakt kart Insight obowiązuje stale; nie ma alternatywnej ścieżki flagowej.
+// MIGRACJA — kompozycja kart Insight przez WIĄŻĄCY kontrakt karty (D-8, KONTRAKT §9).
+// Default OFF (zero regresji na demo). Kolejność opt-in (wzór Initiative
+// `isInitiativeCardContractEnabled`): URL `?cardContract=1` → localStorage
+// `ff.cardContract` → env `VITE_VF1_INSIGHT_CARD_CONTRACT` → OFF. BEZ guardu
+// `import.meta.env.DEV`, żeby Piotr włączył kontrakt na ŻYWYM demo jednym linkiem;
+// publiczność bez linku/localStorage/env widzi demo bez zmian (reguła #7 — nadzorca
+// renderuje zrzut sam). Flaga DEDYKOWANA (jak POC Decision/Task/Initiative:
+// VITE_VF1_*_CARD_CONTRACT), świadomie NIE współdzielona z VF1_INSIGHT_SPECA — tamta
+// bramkuje puste/skeleton/error stany (inny cel, InsightViewer:7806/7819).
+function parseInsightCardContractFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return null;
+}
+
+function useInsightCardContractEnabled(): boolean {
+  return useMemo(() => {
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const q = parseInsightCardContractFlag(
+          new URLSearchParams(window.location.search).get('cardContract')
+        );
+        if (q !== null) {
+          try {
+            window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
+          } catch {
+            /* ignore */
+          }
+          return q;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const ls = parseInsightCardContractFlag(window.localStorage.getItem('ff.cardContract'));
+        if (ls !== null) return ls;
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      const env = parseInsightCardContractFlag(
+        (import.meta.env as unknown as Record<string, string | undefined>)
+          ?.VITE_VF1_INSIGHT_CARD_CONTRACT
+      );
+      if (env !== null) return env;
+    } catch {
+      /* ignore */
+    }
+    return false;
+  }, []);
+}
+
 /**
  * Tryb prezentacji (PresentMode) — WYŁĄCZONY 2026-07-20 decyzją Piotra.
  *
@@ -726,26 +782,159 @@ const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
 // idzie do Rezultatów, znika z centrum". Wpis nawigacji usunięty stąd; JSX
 // kafelków powstaje teraz w JEDNYM miejscu — `resultTilesNode` przy budowie
 // prawego panelu (wariant `compact` pod szerokość panelu).
-// `insightCardContract.ts` — 2026-09-10 (odbiór A1, R1): `artifact-actions`
-// dostała `kolumna:'right'` w kompozycji, więc `sekcjeZKontraktu` już jej NIE
-// zwraca tutaj — id żyje dalej w katalogu kanonicznym (core, nieusuwalny), ale
-// nie trafia do sekcji lewej kolumny; `applyToSections` nie znajdzie dla niego
-// sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc nie
-// pokaże fantomu.
-const INSIGHT_CONTRACT_SECTIONS: Omit<NModeSection, 'component'>[] = sekcjeZKontraktu(INSIGHT_CARDS, 'insight');
+// `insightCardContract.ts` (flaga default OFF) zostaje NIETKNIĘTY — id żyje
+// dalej w katalogu kanonicznym; `applyToSections` po prostu nie znajdzie dla
+// niego sekcji, a picker „Sekcje ▾" chodzi po sekcjach, nie po katalogu, więc
+// nie pokaże fantomu.
+const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
+  {
+    id: 'executive-summary',
+    icon: Star,
+    label: { en: 'Executive Summary', pl: 'Podsumowanie' },
+    cSpan: 2,
+  },
+  {
+    id: 'consulting-readout',
+    icon: Sparkles,
+    label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
+    cSpan: 3,
+  },
+  { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
+  {
+    id: 'issues-risks',
+    icon: ShieldAlert,
+    label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
+    quoteRequirementLevel: 'STRONG_ITEMS',
+  },
+  {
+    id: 'opportunities',
+    icon: TrendingUp,
+    label: { en: 'Opportunity Spaces', pl: 'Przestrzenie szans' },
+  },
 
-// R1 (odbiór A1, blokujący): pierwsza aktywna sekcja NIE MOŻE być wybrana
-// ślepym `[0]` — jeśli kiedykolwiek kontrakt zwróci jako pierwszą sekcję bez
-// komponentu centrum (dokładnie to zrobiła `artifact-actions` przed naprawą
-// kolumny wyżej), karta otwiera się z pustym centrum. `SEKCJE_BEZ_KOMPONENTU_CENTRUM`
-// wylicza id-ki, dla których `nModeSectionsWithContent` NIGDY nie przypisuje
-// komponentu (patrz komentarz „celowo NIEOBECNE" przy `renderIds` niżej) —
-// startowa sekcja pomija je i bierze pierwszą sekcję, która faktycznie renderuje
-// treść.
-const SEKCJE_BEZ_KOMPONENTU_CENTRUM = new Set<string>(['artifact-actions']);
-const INSIGHT_INITIAL_SECTION_ID: string =
-  INSIGHT_CONTRACT_SECTIONS.find((section) => !SEKCJE_BEZ_KOMPONENTU_CENTRUM.has(section.id))?.id ??
-  INSIGHT_CONTRACT_SECTIONS[0].id;
+  // ── Między wierszami / Between the lines ──────────────────────────────────
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' }, cSpan: 2 },
+  { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
+  {
+    id: 'analysis-matrix',
+    icon: BarChart3,
+    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
+    cSpan: 2,
+  },
+  {
+    id: 'consensus-divergence',
+    icon: GitCompare,
+    label: { en: 'Consensus & Divergence', pl: 'Zgoda i rozbieżności' },
+    cSpan: 2,
+  },
+  {
+    id: 'implicit-assumptions',
+    icon: Brain,
+    label: { en: 'Implicit Assumptions', pl: 'Ukryte założenia' },
+  },
+  { id: 'silences', icon: EyeOff, label: { en: 'Silences', pl: 'Przemilczenia' } },
+  {
+    id: 'quote-comparison',
+    icon: Quote,
+    label: { en: 'Quote Comparison', pl: 'Porównanie cytatów' },
+  },
+  {
+    id: 'sentiment-tone',
+    icon: Heart,
+    label: { en: 'Sentiment & Tone', pl: 'Sentyment i ton' },
+  },
+  { id: 'power-dynamics', icon: Scale, label: { en: 'Power Dynamics', pl: 'Dynamika władzy' } },
+  {
+    id: 'hypothesis-board',
+    icon: Network,
+    label: { en: 'Hypothesis Board', pl: 'Tablica hipotez' },
+  },
+
+  // ── Dowody / Evidence ─────────────────────────────────────────────────────
+  {
+    id: 'evidence-map',
+    icon: MapIcon,
+    label: { en: 'Evidence Map', pl: 'Mapa dowodów' },
+    cSpan: 2,
+    quoteRequirementLevel: 'STRONG_ITEMS',
+  },
+  {
+    id: 'candidate-triage',
+    icon: Eye,
+    label: { en: 'Findings & Evidence', pl: 'Wnioski i dowody' },
+    cSpan: 2,
+  },
+  {
+    id: 'source-pack',
+    icon: Link2,
+    label: { en: 'Sources', pl: 'Źródła' },
+  },
+
+  // ── Dostarczane / Deliverables ────────────────────────────────────────────
+  {
+    id: 'report-pack',
+    icon: FileText,
+    label: { en: 'Report Pack', pl: 'Pakiet raportu' },
+    cSpan: 3,
+  },
+
+  // ── Audyt / Audit ─────────────────────────────────────────────────────────
+  {
+    id: 'material-quality',
+    icon: AlertCircle,
+    label: { en: 'Quality & Trust', pl: 'Jakość i zaufanie' },
+    cSpan: 2,
+  },
+  // TODO(#23c) WYKONANY 2026-07-21 (SPEC-N §2.1 — zarezerwowane identyfikatory):
+  // `comments` i `activity-log` NIE MOGĄ być sekcją lewej kolumny — należą
+  // wyłącznie do prawego panelu. Do dziś renderowały się DWA RAZY: pełny canvas
+  // w centrum + skrót w panelu (§2.6 anty-duplikacja). Wpisy nav usunięte;
+  // treść nie zginęła — CommentsCanvas przeniesiony w PEŁNEJ formie do sekcji
+  // `comments` prawego panelu, aktywność do sekcji `history` (bez obcięcia).
+
+  // ── Phase D: Canon sections → 23/23 ─────────────────────────────────────────
+  {
+    id: 'key-findings',
+    icon: Star,
+    label: { en: 'Key Findings', pl: 'Kluczowe wnioski' },
+    quoteRequirementLevel: 'EACH_ITEM',
+  },
+  { id: 'recommendations', icon: Rocket, label: { en: 'Recommendations', pl: 'Rekomendacje' } },
+  { id: 'tensions', icon: GitCompare, label: { en: 'Tensions', pl: 'Napięcia' } },
+  { id: 'patterns', icon: Layers, label: { en: 'Patterns', pl: 'Wzorce' } },
+  { id: 'mental-models', icon: Brain, label: { en: 'Mental Models', pl: 'Modele myślowe' } },
+  { id: 'moments', icon: Quote, label: { en: 'Moments', pl: 'Momenty' } },
+  {
+    id: 'quote-bank',
+    icon: Quote,
+    label: { en: 'Quote Bank', pl: 'Bank cytatów' },
+    cSpan: 2,
+    quoteRequirementLevel: 'EACH_ITEM',
+  },
+  {
+    id: 'stakeholder-map',
+    icon: Users,
+    label: { en: 'Stakeholder Map', pl: 'Mapa interesariuszy' },
+    cSpan: 2,
+  },
+  {
+    id: 'source-credibility',
+    icon: Eye,
+    label: { en: 'Source Credibility', pl: 'Wiarygodność źródeł' },
+  },
+  {
+    id: 'consulting-narrative',
+    icon: FileText,
+    label: { en: 'Consulting Narrative', pl: 'Narracja konsultingowa' },
+    cSpan: 3,
+  },
+  {
+    id: 'executive-memo',
+    icon: Sparkles,
+    label: { en: 'Executive Memo', pl: 'Memo zarządcze' },
+    cSpan: 2,
+  },
+];
 
 // ── AI-draft affordance na kartach Insightu (wzorzec N §3.3) ────────────────
 //
@@ -1153,7 +1342,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   );
 
   // N-mode navigation
-  const [activeNSection, setActiveNSection] = useState(INSIGHT_INITIAL_SECTION_ID);
+  const [activeNSection, setActiveNSection] = useState(INSIGHT_SECTIONS[0].id);
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
     entityType: 'insight',
   });
@@ -1223,7 +1412,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // MIGRACJA (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
   // domyślny — 10 kart), więc namespace klucza jest OSOBNY. Stary layout NIE hydratuje
   // się nad węższy default, a wyłączenie flagi wraca do 'v1' bez utraty.
-  const cardLayoutStorageKey = `insight:nmode:card-layout:v2-contract:${insight?.id ?? 'new'}`;
+  const insightCardContractEnabled = useInsightCardContractEnabled();
+  const cardLayoutStorageKey = `insight:nmode:card-layout:${
+    insightCardContractEnabled ? 'v2-contract' : 'v1'
+  }:${insight?.id ?? 'new'}`;
   const initialCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(cardLayoutStorageKey);
@@ -1262,10 +1454,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // MIGRACJA: flaga ON ⇒ katalog+zestawy z kontraktu kanonicznego (INSIGHT_CARD_SPEC —
     // stała moduł-const, stabilna referencja); OFF ⇒ undefined ⇒ useCardLayout czyta
     // DEFAULT_CARD_SETS['insight'] jak dotąd (pozostałe artefakty nietknięte).
-    spec: INSIGHT_CARD_SPEC,
+    spec: insightCardContractEnabled ? INSIGHT_CARD_SPEC : undefined,
     initialLayout: initialCardLayout,
     onLayoutChange: persistCardLayout,
   });
+
+  // R2/R4 (przepis §2/§4): dev-only sygnał rozjazdu render↔katalog. Każda sekcja
+  // renderowana przez INSIGHT_SECTIONS ma być ZNANA kontraktowi; brak wpisu =
+  // prawdziwa sierota (orphan). „Extras" = sekcje renderowane, których NIE ma w
+  // SPEC.catalog → applyToSections doklejałby je zawsze-widoczne na koniec. Po
+  // domknięciu zwężenia (Phase-D w katalogu jako `dodawalna`) extras MA być 0.
+  useEffect(() => {
+    if (!import.meta.env.DEV || !insightCardContractEnabled) return;
+    const known = new Set(INSIGHT_CARD_RENDER_IDS);
+    const orphans = INSIGHT_SECTIONS.map((s) => s.id).filter((id) => !known.has(id));
+    if (orphans.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[insightCardContract] sekcje renderowane bez wpisu w deskryptorze:', orphans);
+    }
+    const catalogIds = new Set(INSIGHT_CARD_SPEC.catalog.map((c) => c.id));
+    const extras = INSIGHT_SECTIONS.map((s) => s.id).filter((id) => !catalogIds.has(id));
+    // eslint-disable-next-line no-console
+    console.info(
+      `[insightCardContract] kontrakt ON — katalog ${INSIGHT_CARD_SPEC.catalog.length} kart, ` +
+        `Phase-D w katalogu (dodawalne): ${INSIGHT_PHASE_D_RENDER_IDS.length}, ` +
+        `renderowane poza katalogiem (extras): ${extras.length}`
+    );
+  }, [insightCardContractEnabled]);
 
   // Editable fields
   const [title, setTitle] = useState('');
@@ -2865,7 +3080,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       const content = insight?.content;
       if (!content) return null;
       const selected = new Set(sectionIds);
-      const wanted = INSIGHT_CONTRACT_SECTIONS.filter((s) => selected.has(s.id)).flatMap((s) =>
+      const wanted = INSIGHT_SECTIONS.filter((s) => selected.has(s.id)).flatMap((s) =>
         [s.label.en, s.label.pl].map((l) => l.toLowerCase().trim())
       );
       if (wanted.length === 0) return null;
@@ -3646,7 +3861,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     // entry was merged away (#23c). Their JSX is still produced here and then
     // composed into the surviving section below, so no content is lost.
     const renderIds: string[] = [
-      ...INSIGHT_CONTRACT_SECTIONS.map((s) => s.id),
+      ...INSIGHT_SECTIONS.map((s) => s.id),
       // merged-away ids (content folded into a surviving section)
       'truth-review-summary',
       'source-sessions',
@@ -7731,7 +7946,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     };
 
     const order = groupLabels;
-    const sectionsWithComponent = INSIGHT_CONTRACT_SECTIONS.map((section) => {
+    return INSIGHT_SECTIONS.map((section) => {
       const rawComponent = composedComponentById[section.id] ?? null;
       return {
         ...section,
@@ -7756,19 +7971,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         completed: !!sectionCompletions[section.id],
         group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
-    });
-
-    // DEC-432 / W1-A (odbiór A1): bramka pilnuje, że KAŻDA sekcja kontraktu
-    // centrum faktycznie dostaje komponent — dokładnie klasa defektu R1
-    // (`artifact-actions` była sekcją #0 bez case'a w switchu wyżej).
-    pilnujSekcjiZKontraktu(
-      sectionsWithComponent.filter((section) => Boolean(section.component)),
-      INSIGHT_CONTRACT_SECTIONS
-    );
-
-    return sectionsWithComponent.sort(
-      (a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? '')
-    );
+    }).sort((a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? ''));
   }, [
     executiveSummary,
     insight,
@@ -7900,7 +8103,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // pole" w praktyce, tym samym szwem, którym żyje już Mark-complete.
   const renderSectionManualField = useCallback(
     (sectionId: string) => {
-      const meta = INSIGHT_CONTRACT_SECTIONS.find((s) => s.id === sectionId);
+      const meta = INSIGHT_SECTIONS.find((s) => s.id === sectionId);
       const label = meta ? (isPolish ? meta.label.pl : meta.label.en) : sectionId;
       const persisted = sectionOverrides[sectionId]?.content ?? '';
       const draft = sectionDrafts[sectionId];
@@ -7971,18 +8174,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   useEffect(() => {
     if (visibleNModeSections.length === 0) return;
-    // R1 (odbiór A1): dopasowanie SAMEGO id nie wystarcza — sekcja musi mieć
-    // realny komponent centrum. Bez tego strażnika sekcja bez case'a w
-    // `nModeSectionsWithContent` (dziś: żadna, świadomie — `artifact-actions`
-    // ma `kolumna:'right'` i w ogóle tu nie trafia) przechodziłaby test
-    // obecności, a centrum zostałoby puste.
-    const active = visibleNModeSections.find((section) => section.id === activeNSection);
-    if (!active || !active.component) {
-      const firstWithComponent =
-        visibleNModeSections.find((section) => Boolean(section.component)) ?? visibleNModeSections[0];
-      if (firstWithComponent.id !== activeNSection) {
-        setActiveNSection(firstWithComponent.id);
-      }
+    if (!visibleNModeSections.some((section) => section.id === activeNSection)) {
+      setActiveNSection(visibleNModeSections[0].id);
     }
   }, [visibleNModeSections, activeNSection]);
 
@@ -7996,13 +8189,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── Phase A3 / Phase E — canonical section → DeckCard mapping ──────────────
   // Used by both Present mode (fullscreen deck) and the `deck` export target.
-  // We walk INSIGHT_CONTRACT_SECTIONS in CANONICAL order (the nav order, NOT any drag
+  // We walk INSIGHT_SECTIONS in CANONICAL order (the nav order, NOT any drag
   // order) so the deck always reflects the doctrine sequence. Body text is
   // derived from the section's rendered narrative (best-effort markdown match)
   // with sensible fallbacks for the summary-style sections.
   const buildDeckCards = useCallback((): DeckCard[] => {
     const cards: DeckCard[] = [];
-    INSIGHT_CONTRACT_SECTIONS.forEach((section, index) => {
+    INSIGHT_SECTIONS.forEach((section, index) => {
       // Resolve a plain-text body for this section.
       let body = stripMarkdownPreview(buildFilteredMarkdown([section.id]) || '');
       if (!body) {
@@ -8509,7 +8702,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const zrodlaPracujZAI = useMemo(
     () =>
       zbudujZrodlaPracujZAI({
-        sekcje: INSIGHT_CONTRACT_SECTIONS.map((sec) => ({ id: sec.id, label: sec.label })),
+        sekcje: INSIGHT_SECTIONS.map((sec) => ({ id: sec.id, label: sec.label })),
         polaSekcji: insightPolaSekcji,
         applyChange: applyInsightAnalysisChange,
         isPolish,
@@ -9258,7 +9451,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         // z rdzeniem Faza 0 DEDUP) NIE pojawiają się tu, tak samo jak
                         // już znikły z „+ Nowa karta ▾" (AddCardMenu → layout.availableToAdd
                         // z tego samego katalogu). Flaga OFF ⇒ bez zmian (32 sekcje jak dotąd).
-                        const catalogIds = new Set(cardLayout.catalog.map((c) => c.id));
+                        const catalogIds = insightCardContractEnabled
+                          ? new Set(cardLayout.catalog.map((c) => c.id))
+                          : null;
                         const groups: { group: string; items: NModeSection[] }[] = [];
                         orderedNModeSectionsWithContent
                           .filter((s) => !catalogIds || catalogIds.has(s.id))

@@ -1104,3 +1104,70 @@ export function buildInitiativeCanonicalCards(dbRows: SectionTypeInfo[]): Kanoni
     return { ...karta, label, ...(opis ? { opis } : {}) } as KanonicznaKarta;
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// (5) FLAGA (default OFF, jak POC / vf1InitSpecAFlag). Wygląd czeka za flagą do
+//     akceptu Piotra (CLAUDE.md #7/#9). Kolejność: URL ?ff_initiativeCardContract=0|1
+//     → localStorage ff.initiativeCardContract → env VITE_VF1_INITIATIVE_CARD_CONTRACT → OFF.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FLAG_QUERY = 'ff_initiativeCardContract';
+// ALIAS wspólny dla wszystkich 6 artefaktów: `?cardContract=1` włącza je naraz jednym linkiem.
+const FLAG_QUERY_ALIAS = 'cardContract';
+const FLAG_LS = 'ff.initiativeCardContract';
+const FLAG_ENV = 'VITE_VF1_INITIATIVE_CARD_CONTRACT';
+
+function parseFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const v = String(raw).trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return null;
+}
+
+export function isInitiativeCardContractEnabled(): boolean {
+  if (typeof window !== 'undefined' && window.location) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      // Query akceptuje ALBO własny klucz, ALBO wspólny alias `cardContract`.
+      const q = parseFlag(params.get(FLAG_QUERY) ?? params.get(FLAG_QUERY_ALIAS));
+      if (q !== null) {
+        try {
+          window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
+        } catch {
+          /* ignore */
+        }
+        return q;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      // Wspólny klucz `ff.cardContract` (jeden link włącza wszystkie artefakty),
+      // z fallbackiem na własny FLAG_LS dla wstecznej kompatybilności.
+      const ls = parseFlag(
+        window.localStorage.getItem('ff.cardContract') ?? window.localStorage.getItem(FLAG_LS)
+      );
+      if (ls !== null) return ls;
+    } catch {
+      /* ignore */
+    }
+  }
+  try {
+    const env = parseFlag(
+      (import.meta.env as unknown as Record<string, string | undefined>)?.[FLAG_ENV]
+    );
+    if (env !== null) return env;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+export const INITIATIVE_CARD_CONTRACT_FLAG_KEYS = {
+  query: FLAG_QUERY,
+  localStorage: FLAG_LS,
+  env: FLAG_ENV,
+} as const;

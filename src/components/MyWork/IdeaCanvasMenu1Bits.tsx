@@ -9,7 +9,7 @@
  * is NEUTRAL — no per-stage colour, the dot is a single `c-info` tone.
  */
 
-import { AlertTriangle, PanelRight } from 'lucide-react';
+import { AlertTriangle, PanelRight, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import { IDEA_TOOL_ICON } from './ideaCanvasMelsChips';
@@ -136,8 +136,10 @@ export const IdeaSaveIndicator: React.FC<{ state: IdeaSaveState; label: string }
 export const IdeaCornerActions: React.FC<{
   panelOpen: boolean;
   onTogglePanel: () => void;
+  onOpenAi: () => void;
   panelLabel: string;
-}> = ({ panelOpen, onTogglePanel, panelLabel }) => {
+  aiLabel: string;
+}> = ({ panelOpen, onTogglePanel, onOpenAi, panelLabel, aiLabel }) => {
   const cls =
     'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-c-border-subtle px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
   return (
@@ -153,6 +155,17 @@ export const IdeaCornerActions: React.FC<{
       >
         <PanelRight size={14} aria-hidden="true" />
         <span>{panelLabel}</span>
+      </button>
+      <button
+        type="button"
+        data-testid="idea-corner-ai"
+        onClick={onOpenAi}
+        aria-label={aiLabel}
+        title={aiLabel}
+        className={cls}
+      >
+        <Sparkles size={14} aria-hidden="true" />
+        <span>{aiLabel}</span>
       </button>
     </div>
   );

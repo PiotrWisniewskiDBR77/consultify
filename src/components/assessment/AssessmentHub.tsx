@@ -2328,20 +2328,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             taskId={doc.id}
             onClose={() => handleCloseDocument(doc.id)}
             onSaved={() => refreshData()}
-            // F4a (rodzina po E1b/E1c, [ODMROZENIE 04_ASSESSMENT DEC-453]):
-            // `handleOpenTaskFromInitiative` otwiera zadanie z karty inicjatywy
-            // (Ocena → Inicjatywy → karta → Zadania → „Otwórz zadanie"), gdzie
-            // oglądający zwykle NIE jest właścicielem zadania. `TaskDetailView`
-            // domyślnie doczytuje przez `Api.getPersonalTask` →
-            // `GET /api/my-work/personal-tasks/:id`, filtrowane po
-            // WŁAŚCICIELU — 404 dla każdego takiego zadania. Ta sama rodzina co
-            // `InitiativesHub` (naprawiona w E1c, 93517a117d) — tam
-            // `AssessmentHub.tsx` był jawnie zgłoszony jako NIE naprawiony,
-            // bo 04_ASSESSMENT nie było wtedy w zakresie DEC-453.
-            // `ownerScoped={false}` przełącza na kanoniczne `Api.getTask`
-            // (org-scoped, zero filtra właściciela) — identycznie jak
-            // `InitiativesHub.tsx`.
-            ownerScoped={false}
           />
         );
       }
@@ -3219,11 +3205,7 @@ const EXPORT_FORMAT_CONFIG: Record<
   },
 };
 
-// F4b: exportowane wyłącznie do testu (`AssessmentHub.exportsFetchGuard.test.tsx`) —
-// pozwala zmontować ten podkomponent w izolacji i zmierzyć, że fetch exportów
-// jest pomijany, gdy nie ma prawdziwego `builderReportId` (patrz komentarz
-// przy efekcie "Fetch export records" powyżej).
-export const ReportSlideOverContent: React.FC<{
+const ReportSlideOverContent: React.FC<{
   assessmentReportId: string;
   builderReportId?: string;
   onOpenFull: () => void;
@@ -3256,30 +3238,12 @@ export const ReportSlideOverContent: React.FC<{
   }, [assessmentReportId]);
 
   // Fetch export records
-  //
-  // F4b (pomiar A2 §4 defekt 3, KROK 0 zmierzone na kopii `consultify_kopia_f4`):
-  // 404 na `GET /api/report-builder/:id/exports` przy KAŻDYM otwarciu podglądu
-  // raportu bez zmaterializowanego builder-reportu — nie "zła trasa" (trasa
-  // istnieje i działa, `server/src/routes/report-builder.routes.ts:4654`) ani
-  // "zła ścieżka" w rozumieniu adresu, tylko zły PARAMETR: `builderReportId`
-  // bywa `null` (raport oceny nigdy nie przeszedł przez Report Builder —
-  // legalny stan, nie błąd), a poprzedni fallback `|| assessmentReportId`
-  // wysyłał wtedy `GET /report-builder/<id oceny>/exports` — `assessment_reports.id`
-  // i `report_builder_reports.id` to ROZŁĄCZNE przestrzenie identyfikatorów,
-  // więc to zapytanie było SKAZANE na 404 z definicji, za każdym razem (stąd
-  // "reprodukowalne 3/3"). Naprawa: pomiń fetch, gdy nie ma prawdziwego
-  // `builderReportId` — panel i tak poprawnie pokazuje „No exports yet"
-  // (front już traktował 404 bez toastu/błędu; teraz nie wysyła zapytania,
-  // które i tak nie mogło się powieść).
   React.useEffect(() => {
-    if (!builderReportId) {
-      setExports([]);
-      setExportsLoading(false);
-      return;
-    }
+    const reportId = builderReportId || assessmentReportId;
+    if (!reportId) return;
     let cancelled = false;
     setExportsLoading(true);
-    Api.get(`/report-builder/${builderReportId}/exports`)
+    Api.get(`/report-builder/${reportId}/exports`)
       .then((data: any) => {
         if (!cancelled) setExports(data?.exports || []);
       })
@@ -3292,7 +3256,7 @@ export const ReportSlideOverContent: React.FC<{
     return () => {
       cancelled = true;
     };
-  }, [builderReportId]);
+  }, [builderReportId, assessmentReportId]);
 
   // Download an export file
   const handleDownloadExport = React.useCallback(

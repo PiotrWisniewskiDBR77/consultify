@@ -2934,33 +2934,6 @@ export class DecisionController {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      // STOP-2 (E2, 10.09) — PARYTET Z RODZENSTWEM. `replaceStakeholders`,
-      // `createAlternative`, `updateRisk` itd. sprawdzaja `isDossierEditor`;
-      // ta jedna metoda rodziny tego sprawdzenia nie miala, wiec kazdy czlonek
-      // organizacji nadpisywal `decision_enhancements` CUDZEJ decyzji (pomiar
-      // 11.09: HTTP 200, `context_details` nadpisane). Bramka na trasie jest
-      // pierwsza linia; ten `if` jest druga — gdyby bramka kiedys wrocila do
-      // `shadow`, dziura NIE odrasta.
-      const decisionRow = await queryHelpers.queryOne<{
-        created_by?: string;
-        decision_maker_id?: string;
-      }>(
-        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
-        [req.params.id, organizationId]
-      );
-      if (!decisionRow) {
-        res.status(404).json({ error: 'Decision not found' });
-        return;
-      }
-      if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        // Bez nowego napisu po angielsku (bramka jezykowa J0): front tlumaczy
-        // ten kod odmowy ze slownika PL/EN dodanego w E1c.
-        res.status(403).json({
-          code: 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
-          required: 'decision.update',
-        });
-        return;
-      }
       try {
         const enhancements = await replaceDecisionEnhancements({
           decisionId: req.params.id,

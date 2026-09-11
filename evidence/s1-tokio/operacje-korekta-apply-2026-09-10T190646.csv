@@ -1,5 +1,0 @@
-etap,tabela,kolumna,pula,co,posiadane,kwota,wierszy,planowane,dodane,wynik
-KOREKTA,tasks,assignee_id,,,,,20,,,COFNIĘTE do NULL
-KOREKTA,decisions,decision_maker_id,,,,,12,,,COFNIĘTE do NULL
-KOREKTA,initiatives,owner_execution_id,,,,,4,,,COFNIĘTE do NULL
-KOREKTA,initiatives,sponsor_id,,,,,6,,,COFNIĘTE do NULL

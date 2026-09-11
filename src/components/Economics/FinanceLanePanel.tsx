@@ -87,7 +87,7 @@ function StepIcon({ status }: { status: 'done' | 'active' | 'failed' | 'pending'
     case 'done':
       return <CheckCircle2 size={18} className="text-emerald-400" />;
     case 'active':
-      return <Loader2 size={18} className="text-c-info animate-spin" />;
+      return <Loader2 size={18} className="text-primary-400 animate-spin" />;
     case 'failed':
       return <XCircle size={18} className="text-danger-400" />;
     case 'pending':
@@ -382,7 +382,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                 {onRefreshCoherence && (
                   <button
                     type="button"
-                    className="mt-2 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors"
+                    className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
                     onClick={onRefreshCoherence}
                   >
                     {t('finance.lane.refreshCoherence', 'Refresh coherence check')}
@@ -413,7 +413,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                     <button
                       key={snap.snapshotId}
                       type="button"
-                      className="text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors"
+                      className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
                       onClick={() => onFinalizeVersion?.(snap.snapshotId)}
                     >
                       {t('finance.lane.finalizeSwitchover', 'Finalize')}{' '}

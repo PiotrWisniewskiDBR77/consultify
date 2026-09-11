@@ -14,10 +14,5 @@ describe('DEC-387 — kontrakt karty Insight zachowuje komplet sekcji', () => {
     expect([...INSIGHT_CARD_SPEC.sets[0].cards].sort()).toEqual([...expected].sort());
   });
   it('M3: domyślny zestaw nie ma duplikatów', () => expect(new Set(INSIGHT_CARD_SPEC.sets[0].cards).size).toBe(INSIGHT_CARD_SPEC.sets[0].cards.length));
-  it('M4: realny widok jest stale sterowany kontraktem', () => {
-    const source = fs.readFileSync(path.resolve(__dirname, '../../../src/components/Interview/InsightViewer.tsx'), 'utf8');
-    expect(source).toMatch(/spec: INSIGHT_CARD_SPEC/);
-    expect(source).toMatch(/sekcjeZKontraktu\(INSIGHT_CARDS, 'insight'\)/);
-    expect(source).not.toContain('VITE_VF1_INSIGHT_CARD_CONTRACT');
-  });
+  it('M4: realny widok przekazuje kontrakt do useCardLayout', () => expect(fs.readFileSync(path.resolve(__dirname, '../../../src/components/Interview/InsightViewer.tsx'), 'utf8')).toMatch(/spec: insightCardContractEnabled \? INSIGHT_CARD_SPEC : undefined/));
 });

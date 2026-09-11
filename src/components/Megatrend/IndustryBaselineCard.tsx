@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/states';
 
-import type { MegatrendFallbackNotice } from '../../store/megatrendStore';
 import { MegatrendDetail } from './TrendDetailCard';
 
 interface IndustryBaselineCardProps {
@@ -19,12 +18,6 @@ interface IndustryBaselineCardProps {
   megatrends: MegatrendDetail[];
   loading?: boolean;
   error?: string | null;
-  /**
-   * F3b (DEC-463): set when the server couldn't find rows for `industry` and
-   * degraded to a general baseline instead. Rendered as an info notice —
-   * distinct from `error`, which is a real fetch failure.
-   */
-  fallback?: MegatrendFallbackNotice | null;
   /** Refetch handler — renders a "Try again" button on the error state. */
   onRetry?: () => void;
   onTrendSelect: (trendId: string) => void;
@@ -35,7 +28,6 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
   megatrends,
   loading,
   error,
-  fallback,
   onRetry,
   onTrendSelect,
 }) => {
@@ -57,22 +49,6 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
           </p>
         </div>
       </div>
-
-      {!loading && !error && fallback && (
-        <div
-          data-testid="megatrends-fallback-notice"
-          className="bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] p-3 rounded-lg flex items-start gap-3 border-l-2 border-c-warning"
-        >
-          <Globe className="text-c-warning mt-0.5 shrink-0" size={16} />
-          <p className="text-xs text-c-text-secondary">
-            {t(
-              'megatrends.baseline.fallbackNotice',
-              'No megatrends for industry {{industry}} yet — showing {{fallback}}.',
-              { industry: fallback.requestedIndustry, fallback: fallback.fallbackIndustry }
-            )}
-          </p>
-        </div>
-      )}
 
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4" aria-busy="true">

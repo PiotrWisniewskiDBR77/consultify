@@ -61,9 +61,6 @@ const StudioView = lazyWithRetry(() =>
 const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
-const ActionCardPage = lazyWithRetry(() =>
-  import('@/components/standard/ActionCardPage').then((m) => ({ default: m.ActionCardPage }))
-);
 // HP-22 / HP-4 F3 (Client Vault, Run agent): the lazy view components and
 // their route-level flag gates were removed here in VLT-004/AGT-003
 // (relokacja 2026-07-23) — both surfaces now render from the My Work tab
@@ -1659,14 +1656,6 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* My Work */}
-        <Route
-          path="/action-cards/:id"
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork'), t('layout.breadcrumb.page.actionCard', 'Action card')]}>
-              <RouteErrorBoundary><ActionCardPage /></RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
         <Route
           path={`${ROUTES.MY_WORK}/*`}
           element={

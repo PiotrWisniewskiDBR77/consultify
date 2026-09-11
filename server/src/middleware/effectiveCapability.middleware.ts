@@ -646,55 +646,6 @@ export async function resolveDecisionProjectId(req: AuthRequest): Promise<string
   return firstString(row?.project_id, await resolveProjectIdFromRequest(req));
 }
 
-/**
- * PREDYKAT WLASNOSCI DECYZJI [ODMROZENIE 06_EXECUTION DEC-453] — STOP-2 z E2.
- *
- * Kolumny ZMIERZONE na kopii `consultify_kopia_s12b` (2026-09-11): tabela
- * `decisions` ma `created_by` (autor/preparer), `decision_maker_id`
- * (wlasciciel decyzji) i `decision_owner_id` (ta sama rola w nowszym
- * nazewnictwie). Dokladnie ten sam model wlasnosci, ktorego rodzenstwo tej
- * trasy (stakeholders / alternatives / risks) pilnuje recznym `if`
- * (`isDossierEditor` w `DecisionController`), tylko postawiony w BRAMCE.
- * `updated_by` swiadomie pominiety — kto zapisal rekord ostatni raz, nie staje
- * sie przez to jego wlascicielem.
- *
- * FAIL-CLOSED: brak identyfikatora, brak wiersza, obca organizacja albo blad
- * odczytu => `false`. Brak pomiaru nie jest wynikiem pozytywnym.
- */
-export async function isDecisionOwnedByCaller(
-  req: AuthRequest,
-  ctx: OwnerPredicateContext
-): Promise<boolean> {
-  const decisionId = firstString(
-    req.params?.decisionId,
-    req.params?.id,
-    req.body?.decisionId,
-    req.body?.decision_id
-  );
-  if (!decisionId || decisionId.length > 128) return false;
-  if (!ctx.userId) return false;
-
-  const row = await queryHelpers
-    .queryOne<{
-      created_by?: string | null;
-      decision_maker_id?: string | null;
-      decision_owner_id?: string | null;
-      organization_id?: string | null;
-    }>(
-      `SELECT created_by, decision_maker_id, decision_owner_id, organization_id
-         FROM decisions WHERE id = ? LIMIT 1`,
-      [decisionId]
-    )
-    .catch(() => null);
-  if (!row) return false;
-  if (row.organization_id && ctx.organizationId && row.organization_id !== ctx.organizationId)
-    return false;
-
-  return [row.created_by, row.decision_maker_id, row.decision_owner_id].some(
-    (wartosc) => typeof wartosc === 'string' && wartosc.trim() !== '' && wartosc === ctx.userId
-  );
-}
-
 export function requireProjectCapability(
   capability: string,
   resolveProjectId: ProjectResolver = resolveProjectIdFromRequest,

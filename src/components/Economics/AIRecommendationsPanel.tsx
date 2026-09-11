@@ -160,8 +160,8 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     return (
       <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="text-center py-8">
-          <div className="w-16 h-16 mx-auto bg-c-ai/10 rounded-xl flex items-center justify-center mb-4">
-            <Sparkles className="text-c-ai" size={28} />
+          <div className="w-16 h-16 mx-auto bg-primary-500/10 rounded-xl flex items-center justify-center mb-4">
+            <Sparkles className="text-primary-500" size={28} />
           </div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
             Recommendations AI
@@ -172,7 +172,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
           <button
             onClick={generateRecommendations}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-6 py-2.5 bg-c-ai hover:bg-c-ai/90 text-white transition-colors rounded-xl font-medium mx-auto"
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white rounded-xl font-medium mx-auto"
           >
             {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
             {isGenerating ? 'Generating...' : 'Wygeneruj recommendations'}
@@ -185,10 +185,10 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
   return (
     <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="p-4 bg-c-ai/10 border-b border-c-ai/20">
+      <div className="p-4 bg-gradient-to-r from-primary-500/10 to-crimson-500/10 border-b border-primary-200 dark:border-primary-500/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-c-ai flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-500 flex items-center justify-center">
               <Sparkles className="text-white" size={20} />
             </div>
             <div>
@@ -201,7 +201,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
           <button
             onClick={generateRecommendations}
             disabled={isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-c-ai hover:bg-c-ai/10 rounded-lg"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-500/10 rounded-lg"
           >
             {isGenerating ? (
               <Loader2 size={14} className="animate-spin" />
@@ -218,7 +218,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filter === 'all'
-                ? 'bg-white dark:bg-navy-700 text-c-ai shadow-sm'
+                ? 'bg-white dark:bg-navy-700 text-primary-600 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-white/50'
             }`}
           >

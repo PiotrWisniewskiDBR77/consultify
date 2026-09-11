@@ -25,7 +25,7 @@ export interface VersionedContextPack {
 
 const CONTEXT_QUERIES: Record<string, { sql: string; type: string }> = {
   tasks: {
-    sql: `SELECT id, title, status, priority, assignee_id, due_date
+    sql: `SELECT id, title, status, priority, assigned_to, due_date
           FROM tasks WHERE organization_id = ? AND status != 'deleted'
           ORDER BY updated_at DESC LIMIT 50`,
     type: 'task',

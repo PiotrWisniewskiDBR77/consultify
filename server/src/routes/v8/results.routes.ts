@@ -10,10 +10,6 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  initiativeExists,
-  isInitiativeUnifiedReadEnabled,
-} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
@@ -544,18 +540,12 @@ router.get(
         ? req.query.initiativeId.trim()
         : undefined;
     if (initiativeId) {
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, initiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [initiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!exists) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -602,18 +592,12 @@ router.get(
         : undefined;
 
     if (initiativeId) {
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, initiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [initiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!exists) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -675,18 +659,12 @@ router.post(
     }
 
     // Org-scope guard: the initiative must belong to the caller's org.
-    const exists = isInitiativeUnifiedReadEnabled()
-      ? await initiativeExists(organizationId, initiativeId)
-      : Boolean(
-          (
-            await dbGet<{ found: number }>(
-              `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-              [initiativeId, organizationId],
-              { fallback: true }
-            )
-          )?.found
-        );
-    if (!exists) {
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
       return res.status(404).json({
         error: `Initiative ${initiativeId} not found`,
         code: 'INITIATIVE_NOT_FOUND',
@@ -762,18 +740,12 @@ router.get(
         ? req.query.initiativeId.trim()
         : undefined;
     if (initiativeId) {
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, initiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [initiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!exists) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -1151,18 +1123,12 @@ router.post(
         code: 'RESULTS_KPI_MAPPING_REQUIRED_FIELDS',
       });
     }
-    const exists = isInitiativeUnifiedReadEnabled()
-      ? await initiativeExists(organizationId, initiativeId)
-      : Boolean(
-          (
-            await dbGet<{ found: number }>(
-              `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-              [String(initiativeId), organizationId],
-              { fallback: true }
-            )
-          )?.found
-        );
-    if (!exists) {
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(initiativeId), organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
       return res.status(404).json({
         error: 'Initiative not found',
         code: 'INITIATIVE_NOT_FOUND',
@@ -1721,18 +1687,12 @@ router.post(
         ? linkedInitiativeId.trim()
         : '';
     if (safeLinkedInitiativeId) {
-      const linkedExists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, safeLinkedInitiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [safeLinkedInitiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!linkedExists) {
+      const linkedInitiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [safeLinkedInitiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!linkedInitiative?.id) {
         return res.status(404).json({
           error: 'Initiative not found',
           code: 'INITIATIVE_NOT_FOUND',
@@ -2628,18 +2588,12 @@ router.get(
       });
     }
     if (initiativeId) {
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, initiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [initiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!exists) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -2933,18 +2887,12 @@ router.get(
         ? req.query.initiativeId.trim()
         : undefined;
     if (initiativeId) {
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(organizationId, initiativeId)
-        : Boolean(
-            (
-              await dbGet<{ found: number }>(
-                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-                [initiativeId, organizationId],
-                { fallback: true }
-              )
-            )?.found
-          );
-      if (!exists) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -3106,18 +3054,12 @@ router.get(
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
       });
     }
-    const exists = isInitiativeUnifiedReadEnabled()
-      ? await initiativeExists(organizationId, initiativeId)
-      : Boolean(
-          (
-            await dbGet<{ found: number }>(
-              `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-              [initiativeId, organizationId],
-              { fallback: true }
-            )
-          )?.found
-        );
-    if (!exists) {
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
       return res.status(404).json({
         error: 'Initiative not found',
         code: 'INITIATIVE_NOT_FOUND',
@@ -3147,18 +3089,12 @@ router.put(
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
       });
     }
-    const exists = isInitiativeUnifiedReadEnabled()
-      ? await initiativeExists(organizationId, initiativeId)
-      : Boolean(
-          (
-            await dbGet<{ found: number }>(
-              `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-              [initiativeId, organizationId],
-              { fallback: true }
-            )
-          )?.found
-        );
-    if (!exists) {
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
       return res.status(404).json({
         error: 'Initiative not found',
         code: 'INITIATIVE_NOT_FOUND',
@@ -3239,18 +3175,12 @@ router.post(
         code: 'RESULTS_ROI_INITIATIVE_ID_REQUIRED',
       });
     }
-    const exists = isInitiativeUnifiedReadEnabled()
-      ? await initiativeExists(organizationId, initiativeId)
-      : Boolean(
-          (
-            await dbGet<{ found: number }>(
-              `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
-              [initiativeId, organizationId],
-              { fallback: true }
-            )
-          )?.found
-        );
-    if (!exists) {
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
       return res.status(404).json({
         error: 'Initiative not found',
         code: 'INITIATIVE_NOT_FOUND',
@@ -3633,7 +3563,7 @@ router.post(
       try {
         taskId = uuidv4();
         await dbRun(
-          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assignee_id, due_date, created_by, source_type, source_id, created_at, updated_at)
+          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assigned_to, due_date, created_by, source_type, source_id, created_at, updated_at)
            VALUES (?, ?, ?, ?, 'todo', 'medium', ?, ?, ?, 'kpi_next_action', ?, datetime('now'), datetime('now'))`,
           [
             taskId,

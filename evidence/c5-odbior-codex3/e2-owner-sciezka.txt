@@ -1,7 +1,0 @@
-CREATE(OWNER) 201 {"data":{"artifactId":"51108535-fb5b-48a4-8150-b8877bf819fb","artifactType":"STATEMENT_PACK","naturalKey":"c5-9b9b1a3a-c4e6-44e5-8036-60d3101046e1","createdAt":"2026-09-10T21:26:14.393Z","currentBusin
-SUBMIT(OWNER) 403 {"error":"Role approver may not perform submit_for_review on a version in DRAFT","code":"FORBIDDEN","currentStatus":"DRAFT"}
-START_REVIEW(OWNER) 409 {"error":"Cannot start_review: version is in status DRAFT, which has no such transition","code":"STATE_PRECONDITION_FAILED","currentStatus":"DRAFT"}
-APPROVE(OWNER) 409 {"error":"Cannot approve: no version of this model is in IN_REVIEW","code":"STATE_PRECONDITION_FAILED"}
-ZIMNY_ODCZYT {"status":"DRAFT","approved_by":null}
-CREATE(ADMIN) 201 {"data":{"artifactId":"2d025148-68f3-4b91-8de7-fea5a1baa9ee","artifactType":"STATEMENT_PACK","naturalKey":"c5-41f235c2-6efc-468b-9556-6c7ed3a7e3e1","createdAt":"2026-09-10T21:26:14.606Z","currentBusin
-CREATE(MEMBER) 403 {"error":"This beta module is not available for your role","code":"BETA_LOCKED"}

@@ -40,9 +40,6 @@ interface CustomTrendPayload {
 
 const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
 const MEGATREND_UNAVAILABLE_MESSAGE = 'Megatrend data is not available';
-// F3b (DEC-463): the industry with a curated seed that always exists as the
-// last-resort baseline when an organization's own industry has no rows yet.
-const FALLBACK_INDUSTRY = 'general';
 
 // Helper to map DB rows to JS objects
 function mapMegatrendRow(row: MegatrendRow): Megatrend {
@@ -57,78 +54,38 @@ function mapMegatrendRow(row: MegatrendRow): Megatrend {
   };
 }
 
-// Small helper shared by getBaselineTrends' primary + fallback query.
-function queryMegatrendsByIndustry(industryFilter) {
-  return new Promise((resolve, reject) => {
-    let sql = `SELECT * FROM megatrends`;
-    const params = [];
-    if (industryFilter) {
-      sql += ` WHERE industry = ?`;
-      params.push(industryFilter);
-    }
-    db.all(sql, params, (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows || []);
-    });
-  });
-}
-
 /**
  * Get baseline megatrends for a given industry.
  * If no industry is provided, returns all baseline trends.
- *
- * F3b (pomiar DEC-463, 2026-09-10): a requested industry with zero curated
- * rows is a CONTENT GAP for a real organization (e.g. 'financial', 'edtech
- * manufacturing'), not a broken feature — the old behaviour rejected with the
- * same 503 "not configured" used for a genuinely missing table, which read as
- * an error to the user and offered a Retry button that could only fail again
- * identically. When the requested industry has no rows, degrade to the
- * 'general' baseline instead and resolve with a *plain array* (unchanged
- * shape for every existing caller) that additionally carries two
- * non-enumerable markers — `fallbackIndustry` / `requestedIndustry` — so
- * `JSON.stringify`/`res.json` still serialize it as a bare array, while the
- * route can still detect the fallback and forward it to the client.
- *
- * Still returns 503 when there is truly nothing to show (DB error, or even
- * 'general' itself has no rows) — that IS a configuration problem.
+ * Returns 503 when the underlying megatrends data is missing.
  */
 function getBaselineTrends(industry) {
   return new Promise((resolve, reject) => {
-    const unavailable = (reason) =>
-      reject(
-        new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, { reason })
-      );
+    let sql = `SELECT * FROM megatrends`;
+    const params = [];
+    if (industry) {
+      sql += ` WHERE industry = ?`;
+      params.push(industry);
+    }
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        return reject(
+          new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, {
+            reason: 'db_error',
+          })
+        );
+      }
 
-    queryMegatrendsByIndustry(industry)
-      .then((rows) => {
-        if (rows.length > 0) {
-          return resolve(rows.map(mapMegatrendRow));
-        }
+      if (!rows || rows.length === 0) {
+        return reject(
+          new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, {
+            reason: 'empty_table',
+          })
+        );
+      }
 
-        // No exact match. Only attempt the 'general' fallback when a specific,
-        // different industry was requested — avoids a pointless self-fallback
-        // when 'general' itself (or no filter) already came back empty.
-        if (!industry || industry === FALLBACK_INDUSTRY) {
-          return unavailable('empty_table');
-        }
-
-        return queryMegatrendsByIndustry(FALLBACK_INDUSTRY).then((fallbackRows) => {
-          if (fallbackRows.length === 0) {
-            return unavailable('empty_table');
-          }
-          const result = fallbackRows.map(mapMegatrendRow);
-          Object.defineProperty(result, 'fallbackIndustry', {
-            value: FALLBACK_INDUSTRY,
-            enumerable: false,
-          });
-          Object.defineProperty(result, 'requestedIndustry', {
-            value: industry,
-            enumerable: false,
-          });
-          return resolve(result);
-        }, () => unavailable('db_error'));
-      })
-      .catch(() => unavailable('db_error'));
+      return resolve(rows.map(mapMegatrendRow));
+    });
   });
 }
 

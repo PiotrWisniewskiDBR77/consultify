@@ -1,7 +1,6 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import { writeSeedInitiativeToCanon } from '../../domain/initiatives-execution/seedCanonicalInitiativeWriter.js';
 import {
   ensureReceiptForMaterializedDone,
   triggerImmediateDeliveryBestEffort,
@@ -63,8 +62,6 @@ export interface SeedDemoDatasetResult {
     reports: number;
     docs: number;
     decks: number;
-    /** E7: initiatives that also landed a canonical aggregate (ie_aggregate_state). */
-    canonicalInitiatives: number;
   };
   failures: SeedDemoDatasetStageFailure[];
   complete: boolean;
@@ -2176,18 +2173,10 @@ async function upsertInitiatives(
   projectMap: ProjectMap,
   anchorDate: Date,
   locale: DemoLocale
-): Promise<{
-  initiativeMap: InitiativeMap;
-  taskCount: number;
-  decisionCount: number;
-  canonicalCount: number;
-  canonicalFailures: SeedDemoDatasetStageFailure[];
-}> {
+): Promise<{ initiativeMap: InitiativeMap; taskCount: number; decisionCount: number }> {
   const initiativeMap: InitiativeMap = {};
   let taskCount = 0;
   let decisionCount = 0;
-  let canonicalCount = 0;
-  const canonicalFailures: SeedDemoDatasetStageFailure[] = [];
   const initiatives = getAtelierToysInitiatives(locale);
 
   const hasArea = await columnExists('initiatives', 'area');
@@ -2311,51 +2300,6 @@ async function upsertInitiatives(
       vals,
       { fallback: false }
     );
-
-    // E7 [ODMROZENIE 05_INITIATIVES DEC-453]: the INSERT above is the legacy
-    // pisarz — it never touched the canon (`ie_aggregate_state`). Dopisujemy
-    // OBOK, SAME id (initiativeId), SAME two commands the UI registration
-    // flow uses (source-proposal.submit -> initiative.register), so
-    // `initiativeUnifiedReader` collapses legacy+canon into ONE row instead
-    // of the seed silently widening the two-warehouse split on every demo
-    // session. Idempotent: deterministic clientRequestId means a re-seed
-    // REPLAYS both commands (0 new aggregate/outbox/audit/relation rows) —
-    // see `seedCanonicalInitiativeWriter.ts` doc comment for the full
-    // contract. Never blocks the rest of the seed: a domain rejection here
-    // is logged and counted, not thrown, because dozens of unrelated seed
-    // stages (tasks, decisions, milestones, finance, results…) still depend
-    // on `initiativeMap` being fully populated for every one of the 22 seed
-    // initiatives regardless of whether the canonical twin landed.
-    try {
-      const canonicalResult = await writeSeedInitiativeToCanon({
-        organizationId,
-        initiativeId,
-        projectId: projectMap[initiative.projectSlug],
-        title: initiative.name,
-        problem: initiative.summary,
-        priority: initiative.priority,
-        initiativeOwnerId: userMap[initiative.ownerBusiness]?.id,
-        capturedAt: anchorDate.toISOString(),
-      });
-      if (canonicalResult) {
-        canonicalCount += 1;
-      } else {
-        canonicalFailures.push({
-          stage: 'canonical_initiative',
-          detail: `${initiativeId}: seed template missing initiativeOwnerId — canonical write skipped`,
-        });
-      }
-    } catch (error) {
-      logger.error('[demoSeedService] Canonical initiative write failed', {
-        organizationId,
-        initiativeId,
-        message: error instanceof Error ? error.message : String(error),
-      });
-      canonicalFailures.push({
-        stage: 'canonical_initiative',
-        detail: `${initiativeId}: ${error instanceof Error ? error.message : String(error)}`,
-      });
-    }
 
     // G1 fix (2026-07-10): seed initiatives can be created ALREADY in DONE
     // status (see the "USPOJNIENIE A3" exception above) — they never pass
@@ -2549,7 +2493,7 @@ async function upsertInitiatives(
     }
   }
 
-  return { initiativeMap, taskCount, decisionCount, canonicalCount, canonicalFailures };
+  return { initiativeMap, taskCount, decisionCount };
 }
 
 async function upsertReports(
@@ -4178,8 +4122,7 @@ export async function seedAtelierToysDemoDataset(
   await upsertTeams(organizationId, userMap, locale);
   const projectMap = await upsertProjects(organizationId, userMap, locale);
   await upsertProjectUsers(projectMap, userMap, locale);
-  const { initiativeMap, taskCount, decisionCount, canonicalCount, canonicalFailures } =
-    await upsertInitiatives(
+  const { initiativeMap, taskCount, decisionCount } = await upsertInitiatives(
     organizationId,
     userMap,
     projectMap,
@@ -4279,13 +4222,10 @@ export async function seedAtelierToysDemoDataset(
     userMap,
     initiativeMap,
   });
-  const failures: SeedDemoDatasetStageFailure[] = [
-    ...canonicalFailures,
-    ...deckSeed.failures.map((failure) => ({
-      stage: 'presentation_decks',
-      detail: `${failure.deckId}: ${failure.reason}`,
-    })),
-  ];
+  const failures: SeedDemoDatasetStageFailure[] = deckSeed.failures.map((failure) => ({
+    stage: 'presentation_decks',
+    detail: `${failure.deckId}: ${failure.reason}`,
+  }));
   if (failures.length > 0) {
     logger.error('[demoSeedService] Atelier presentation seed incomplete', {
       organizationId,
@@ -4314,7 +4254,6 @@ export async function seedAtelierToysDemoDataset(
       reports: reportCount,
       docs: docCount,
       decks: deckSeed.decks,
-      canonicalInitiatives: canonicalCount,
     },
     failures,
     complete: failures.length === 0,
@@ -4433,18 +4372,6 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     // Spine: Outputs / Deliverables (09)
     ['v8_output_exports', 'organization_id'],
     ['v8_output_artifacts', 'organization_id'],
-    // E7 [ODMROZENIE 05_INITIATIVES DEC-453]: the canonical twin
-    // (`seedCanonicalInitiativeWriter.ts`) writes six org-scoped rows per
-    // seed initiative that this cleanup previously never touched — a
-    // re-seeded organization left orphaned canon rows behind every time.
-    // Before `initiatives`/`projects`/`users` so nothing here still needs
-    // to resolve a project/user id.
-    ['ie_aggregate_relations', 'organization_id'],
-    ['ie_audit_events', 'organization_id'],
-    ['ie_outbox_events', 'organization_id'],
-    ['ie_command_receipts', 'organization_id'],
-    ['ie_aggregate_state', 'organization_id'],
-    ['initiative_candidates', 'organization_id'],
     ['initiatives', 'organization_id'],
     ['projects', 'organization_id'],
     ['users', 'organization_id'],

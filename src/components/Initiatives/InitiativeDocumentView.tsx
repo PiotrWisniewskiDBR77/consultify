@@ -75,7 +75,6 @@ import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NMo
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { sekcjeZKontraktu } from '@/components/standard/contractSections';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
@@ -242,11 +241,11 @@ import {
 // MIGRACJA (D-8): kompozycja kart Initiative wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) — patrz sections/initiativeCardContract.ts. Za flagą (default OFF).
 import {
-  INITIATIVE_BOARD_DESCRIPTOR_BY_ID,
   INITIATIVE_CARD_RENDER_IDS,
   INITIATIVE_CONTRACT_HIDDEN_SEED,
   INITIATIVE_CORE_BOARD_IDS,
   INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS,
+  isInitiativeCardContractEnabled,
   sekcjeBoarduPozaKontraktem,
   uporzadkujSekcjeBoarduInicjatywy,
   wybierzDostepneSekcjeBoarduInicjatywy,
@@ -341,7 +340,7 @@ const INITIATIVE_STATUS_TONE: Record<InitiativeStatus, NModeStatusTone> = {
 // NModeCardState). Ograniczone do sekcji z REALNYM generatorem AI w runSectionAi
 // (nie no-op). Overview + Problem + Scope + Kill Criteria są scalone w
 // initiative-definition / target-state-scope w tym widoku (13 kart §1 BCG →
-// zestaw poniżej). Mapowanie ids = ids z initiativeContractSections.
+// zestaw poniżej). Mapowanie ids = ids z initiativeNSections.
 // Sekcje, których section-AI dispatch spada na handleGenerateAI (no-op toast,
 // nic nie zapisuje) — dla nich NIE pokazujemy „Regeneruj". Zsynchronizowane z
 // realnymi case'ami w runSectionAi. (Hoisted na moduł: statyczne + używane w
@@ -799,6 +798,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // MIGRACJA (D-8): flaga kontraktu karty Initiative (default OFF; CLAUDE.md #7/#9).
   // Wartość stała per-montaż (URL/localStorage/env), więc liczymy raz. Pod flagą:
   // RDZEŃ (overview→board `initiative-definition`) staje się NIEUSUWALNY w pickerze „Sekcje".
+  const initiativeCardContractEnabled = useMemo(() => isInitiativeCardContractEnabled(), []);
   // Wzorzec N (§3) — per-section AI-draft state map. Sekcje generowane AI dostają
   // badge stanu (AI-draft/Edytowane/Gotowe) + pasek Regeneruj·Edytuj·Zaakceptuj.
   // Stan trzymany LOKALNIE (brak persystencji regenerateCount w backendzie sekcji);
@@ -2274,7 +2274,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // aliasem. Nie blokuje renderu; ostrzega, gdyby klucz kod↔katalog się rozjechał.
   // Tylko dev + flaga (żeby nie hałasować w produkcie ani przy OFF).
   useEffect(() => {
-    if (!import.meta.env.DEV || !true) return;
+    if (!import.meta.env.DEV || !initiativeCardContractEnabled) return;
     const known = new Set<string>(INITIATIVE_CARD_RENDER_IDS);
     const deadAliases = new Set(['initiativeTeam', 'linkedItems']);
     const missing = [...leftSections, ...rightSections]
@@ -2287,7 +2287,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         missing
       );
     }
-  }, [true, leftSections, rightSections]);
+  }, [initiativeCardContractEnabled, leftSections, rightSections]);
 
   // ── Suggested changes (Faza 4) — load + accept/reject (mini-gate) ──────────
   const loadSuggestedChanges = useCallback(async () => {
@@ -2348,23 +2348,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }));
       setInitiative(data);
       setInitiativeTemplate(null);
-      // D-4b (odbiór W2B 20260910): dwa różne teksty dla tego samego rekordu —
-      // rejestr (`InitiativesHub`/`initiativeRegisterProjection.ts`) renderuje
-      // WSZĘDZIE `initiative.name`, ale ta karta wcześniej brała
-      // `data.title || data.name`. Zmierzone na kopii `consultify_staging_1009`
-      // (org DBR77, inicjatywa `e3b0a66a-dc86-4730-84e0-cdffb66cbed6`,
-      // "Wdrożenie sieci czujników IoT"): tabela `initiatives` niesie DWIE
-      // niezależne kolumny — `name` (Polish, bieżąca — ta sama, którą czyta
-      // rejestr) i `title` (angielski, zastany ślad pierwotnego draftu AI,
-      // nigdy nieaktualizowany). `GET /api/v8/planning/initiatives/:id`
-      // (`getInitiativeDetailRead`) tłumaczy/normalizuje `name`, ale zwraca
-      // surowe `title` bez zmian — więc `data.title` było prawie zawsze
-      // ustawione i zawsze wygrywało z `||`. Rekordy z jednym kanonicznym
-      // pisarzem (`toInitiativeDocumentFromRegistration` dla runtime-v1-only)
-      // ustawiają `title` i `name` na tę samą wartość, więc zamiana kolejności
-      // ich nie dotyka. `name` pierwsze — ten sam rekord, ten sam tytuł co
-      // w rejestrze.
-      setTitleDraft(String(data.name || data.title || '').trim());
+      setTitleDraft(String(data.title || data.name || '').trim());
       setSummary(data.summary || data.description || '');
       setDescription(data.description || '');
       // Sync problem definition fields — try structured object first, then parse JSON string
@@ -3400,10 +3384,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const titleChanged = canEditCards && !!normalizedTitle && normalizedTitle !== savedTitle;
     const summaryChanged = summary !== (initiative?.summary || '');
     const descriptionChanged = description !== (initiative?.description || '');
-    const ownerChanged =
-      canEditOwner && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
 
-    if (!titleChanged && !summaryChanged && !descriptionChanged && !ownerChanged) {
+    if (!titleChanged && !summaryChanged && !descriptionChanged) {
       // Nic do zapisania kanonicznym pisarzem — jeśli coś innego jest
       // "brudne", komunikat blokady (runtimeOnlyEditBlockedMessage) już to
       // pokazuje; tu nie ma czego wysyłać, więc kończymy bez żadnego żądania.
@@ -3426,7 +3408,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           title: titleChanged ? normalizedTitle : undefined,
           summary: summaryChanged ? summary : undefined,
           description: descriptionChanged ? description : undefined,
-          ownerId: ownerChanged ? ownerId : undefined,
         },
         canonicalVersion,
         amendRegisteredInitiative
@@ -5648,10 +5629,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     []
   );
 
-  const initiativeContractSections: NModeSection[] = useMemo(() => {
-    // Dane prezentacyjne nie definiują członkostwa karty. Id, nazwa, ikona i
-    // kolejność poniżej są nadpisywane przez wiążący kontrakt (DEC-432).
-    const sectionPresentation: NModeSection[] = [
+  const initiativeNSections: NModeSection[] = useMemo(() => {
+    const allSections: NModeSection[] = [
       // --- Definition (always at top) ---
       {
         id: 'initiative-definition',
@@ -5903,24 +5882,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         group: groupLabels[groupIndexById[section.id] ?? 4],
       }));
 
-    const boardEntries = Object.entries(INITIATIVE_BOARD_DESCRIPTOR_BY_ID);
-    const contractSections = sekcjeZKontraktu(
-      boardEntries.map(([, descriptor]) => descriptor),
-      'initiative',
-      () => true,
-      (descriptor) => boardEntries.find(([, candidate]) => candidate === descriptor)?.[0] ?? descriptor.id
-    ).map((contractSection) => ({
-      ...contractSection,
-      ...Object.fromEntries(
-        Object.entries(sectionPresentation.find((item) => item.id === contractSection.id) ?? {}).filter(
-          ([key]) => !['id', 'label', 'icon'].includes(key)
-        )
-      ),
-    }));
-
     return withGroup(
       wybierzDostepneSekcjeBoarduInicjatywy(
-        contractSections,
+        allSections,
         enabledNModeSectionIds,
         initiativeSectionsCompleteEnabled
       )
@@ -6925,7 +6889,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // procesu, nie powodem do wywalenia karty użytkownikowi.
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
-    const bez = initiativeContractSections
+    const bez = initiativeNSections
       .map((sec) => sec.id)
       .filter((id) => !(id in SECTION_AI_CONTRACT));
     if (bez.length > 0) {
@@ -6935,10 +6899,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           'Dopisz je do SECTION_AI_CONTRACT ({ ai: true } albo { none: true, reason }).'
       );
     }
-  }, [initiativeContractSections]);
+  }, [initiativeNSections]);
 
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
-    return initiativeContractSections.map((section) => {
+    return initiativeNSections.map((section) => {
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -9203,7 +9167,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canUseAi,
     canEditCards,
     setActiveNSection,
-    initiativeContractSections,
+    initiativeNSections,
     initiative,
     sectionCompletions,
     isPolish,
@@ -9372,10 +9336,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Efekt zostaje, żeby powrót do ukrywania wymagał zmiany stałej, a nie cichego
   // dopisania id w komponencie; przy pustej stałej jest to no-op.
   useEffect(() => {
-    if (!true) return; // OFF => zero zmian (jak dotąd)
+    if (!initiativeCardContractEnabled) return; // OFF => zero zmian (jak dotąd)
     if (INITIATIVE_CONTRACT_HIDDEN_SEED.length === 0) return; // DEC-387: nic nie chowamy
     setHiddenSectionIds(new Set(INITIATIVE_CONTRACT_HIDDEN_SEED));
-  }, [true]);
+  }, [initiativeCardContractEnabled]);
 
   // DEC-387 — ostrzeżenie DEV: sekcja boardu, której kontrakt nie nazywa, jest
   // długiem kontraktu (renderuje się dalej, na końcu listy — nie znika).
@@ -9401,7 +9365,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // NIEZMIENIONA (funkcja zwraca permutację wejścia — asercja w kontrakcie
         // i w teście kompletności). Wyprowadzenie, nie ziarno stanu: ziarno
         // przegrywało wyścig z efektem czytającym localStorage.
-        if (!true) return nModeSectionsWithContent;
+        if (!initiativeCardContractEnabled) return nModeSectionsWithContent;
         const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(
           nModeSectionsWithContent.map((s) => s.id)
         );
@@ -9431,7 +9395,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     nModeSectionsWithContent,
     nModeSectionOrder,
     hiddenSectionIds,
-    true,
+    initiativeCardContractEnabled,
   ]);
 
   useEffect(() => {
@@ -11887,7 +11851,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         {/* MIGRACJA (D-8, ETAP 2): przełącznik zestawu domyślnego
                                         Rdzeń / Pełny (za flagą). Stan aktywny = NEUTRALNY
                                         (tokeny c-*, bez akcentu semantyki krytycznej). */}
-                                        {true &&
+                                        {initiativeCardContractEnabled &&
                                           (() => {
                                             const isRdzenActive =
                                               hiddenSectionIds.size > 0 &&
@@ -11954,7 +11918,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                               // z rdzenia kontraktu (overview→`initiative-definition`) nie
                                               // daje się ukryć; poza flagą zachowanie bez zmian.
                                               const isCore =
-                                                true &&
+                                                initiativeCardContractEnabled &&
                                                 INITIATIVE_CORE_BOARD_IDS.has(s.id);
                                               const isVisible =
                                                 isCore || !hiddenSectionIds.has(s.id);

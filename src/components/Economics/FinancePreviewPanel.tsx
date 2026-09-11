@@ -293,10 +293,9 @@ export function useFinancePreview({
           ))}
         </div>
 
+        {/* §27-exempt: financial-calculation — forecast grid with hierarchical row groups (income/costs/EBITDA/taxes) and a computed totals column; not a flat data array */}
         <div className="overflow-x-auto">
-          <table /* §27-exempt: financial-calculation — forecast grid with hierarchical row groups (income/costs/EBITDA/taxes) and a computed totals column; not a flat data array */
-            className="w-full min-w-[620px] text-xs border-collapse"
-          >
+          <table className="w-full min-w-[620px] text-xs border-collapse">
             <thead>
               <tr className="bg-slate-100/80 dark:bg-white/[0.04]">
                 <th className="min-w-[220px] px-3 py-2 text-left font-semibold text-slate-500 dark:text-slate-400">
@@ -873,10 +872,9 @@ export function useFinancePreview({
                       <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
                         {t('finance.valuation.sensitivity', 'Sensitivity Analysis')}
                       </div>
+                      {/* §27-exempt: financial-calculation — WACC/g sensitivity heatmap (pivot cross-tab, cell values computed from DCF formula) */}
                       <div className="overflow-x-auto">
-                        <table /* §27-exempt: financial-calculation — WACC/g sensitivity heatmap (pivot cross-tab, cell values computed from DCF formula) */
-                          className="w-full text-[10px]"
-                        >
+                        <table className="w-full text-[10px]">
                           <thead>
                             <tr>
                               <th className="text-left text-slate-500 py-0.5 pr-1">WACC \ g</th>

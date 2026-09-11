@@ -172,12 +172,6 @@ const IDENTITY_WHITELIST_RAW = [
   'Plan', 'Framework', 'Bank', 'Main', 'System', 'Format', 'Trend', 'Panel',
   'Bonus', 'Stripe', 'Wise', 'Media', 'Agent', 'Briefing', 'Limit', 'Canary',
   'Staging', 'Diagram',
-  // N2 karty-b (10/11.09.2026) — tej samej kategorii co Plan/System/Format/
-  // Panel powyżej: „Problem" (łac. problema) jest samodzielnym, dawno
-  // przyswojonym polskim słowem o identycznej pisowni. Klucz:
-  // `karta.akcja.problem` (etykieta pola karty działania). Uzasadnienie
-  // przy ALLOWED_PROPER_NOUNS niżej.
-  'Problem',
 ];
 const IDENTITY_WHITELIST = IDENTITY_WHITELIST_RAW.map((entry) => entry.trim().toLowerCase());
 const IDENTITY_WHITELIST_SET = new Set(IDENTITY_WHITELIST);
@@ -230,11 +224,6 @@ const ALLOWED_PROPER_NOUNS = [
   'Plan', 'Framework', 'Bank', 'Main', 'System', 'Format', 'Trend', 'Panel',
   'Bonus', 'Stripe', 'Wise', 'Media', 'Agent', 'Briefing', 'Limit', 'Canary',
   'Staging', 'Diagram',
-  // N2 karty-b (10/11.09.2026): „Problem" jest dawno przyswojonym polskim
-  // słowem (łac. problema) o identycznej pisowni w obu językach — ta sama
-  // kategoria co Plan/System/Format/Panel powyżej, nie brak tłumaczenia.
-  // Klucz: `karta.akcja.problem` (etykieta pola karty działania).
-  'Problem',
 ].map((entry) => entry.trim().toLowerCase());
 const ALLOWED_PROPER_NOUNS_SET = new Set(ALLOWED_PROPER_NOUNS);
 

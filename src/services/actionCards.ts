@@ -44,11 +44,6 @@ export async function createActionCard(payload: CreateActionCardPayload): Promis
   return (await read<{ card: ActionCardModel }>(response)).card;
 }
 
-export async function getActionCard(id: string): Promise<ActionCardModel> {
-  const response = await fetch(`/api/action-cards/${encodeURIComponent(id)}`, { credentials: 'include', headers: headers() });
-  return (await read<{ card: ActionCardModel }>(response)).card;
-}
-
 export async function updateActionCard(id: string, patch: Partial<CreateActionCardPayload>): Promise<ActionCardModel> {
   const response = await fetch(`/api/action-cards/${encodeURIComponent(id)}`, { method: 'PATCH', credentials: 'include', headers: headers(true), body: JSON.stringify(patch) });
   return (await read<{ card: ActionCardModel }>(response)).card;

@@ -842,7 +842,7 @@ class NotificationService {
     try {
       if (entityType === 'task') {
         const task = await db.get<Record<string, any>>(
-          `SELECT id, title, status, priority, assignee_id, due_date, progress, description FROM tasks WHERE id = ?`,
+          `SELECT id, title, status, priority, assigned_to, due_date, progress, description FROM tasks WHERE id = ?`,
           [entityId]
         );
         if (task) {
@@ -852,7 +852,7 @@ class NotificationService {
             title: task.title,
             status: task.status,
             priority: task.priority,
-            assignee: task.assignee_id,
+            assignee: task.assigned_to,
             dueDate: task.due_date,
             progress: task.progress,
             description: task.description?.substring(0, 200),
@@ -1383,13 +1383,13 @@ class NotificationService {
     try {
       if (type === 'task') {
         const task = await db.get<Record<string, any>>(
-          `SELECT id, title, status, priority, assignee_id, due_date, progress FROM tasks WHERE id = ?`,
+          `SELECT id, title, status, priority, assigned_to, due_date, progress FROM tasks WHERE id = ?`,
           [entityId]
         );
         if (task) {
           result.entityName = task.title;
           result.entityStatus = task.status;
-          result.entityAssignee = task.assignee_id;
+          result.entityAssignee = task.assigned_to;
           result.entityDeadline = task.due_date;
           result.entityProgress = task.progress;
           result.task_title = task.title;
@@ -1437,7 +1437,7 @@ class NotificationService {
           if (result.days_overdue && Number(result.days_overdue) > 0) {
             parts.push(`${result.days_overdue}d overdue`);
           }
-          if (task.assignee_id) parts.push(task.assignee_id);
+          if (task.assigned_to) parts.push(task.assigned_to);
           if (result.blocking_count) parts.push(`blocks ${result.blocking_count} tasks`);
           result.contextLine =
             parts.length > 0 ? `${task.title} — ${parts.join(' · ')}` : task.title;

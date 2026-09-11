@@ -42,9 +42,9 @@ const WIDOK = path.join(ROOT, 'src/components/Initiatives/InitiativeDocumentView
  */
 function idSekcjiBoarduZeZrodla(): string[] {
   const src = fs.readFileSync(WIDOK, 'utf8');
-  const start = src.indexOf('const initiativeContractSections');
+  const start = src.indexOf('const initiativeNSections');
   const koniec = src.indexOf('const groupLabels', start);
-  expect(start, 'nie znaleziono sekcji kontraktu w źródle widoku').toBeGreaterThan(-1);
+  expect(start, 'nie znaleziono `const initiativeNSections` w źródle widoku').toBeGreaterThan(-1);
   expect(koniec, 'nie znaleziono `const groupLabels` w źródle widoku').toBeGreaterThan(start);
   const blok = src.slice(start, koniec);
   const ids = Array.from(blok.matchAll(/^ {8}id: '([a-z0-9-]+)',$/gm)).map((m) => m[1]);

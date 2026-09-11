@@ -7,24 +7,9 @@
  */
 
 import type { Response } from 'express';
-import { Pool, type PoolConfig } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
-import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
-// FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
-// "same clientRequestId, different command" (receipt clash — our dedup path)
-// from "aggregate version conflict" (real concurrent edit) by message text;
-// only the former is caught below and turned into an idempotent replay.
-import { MaterialCommandConflictError } from '../domain/initiatives-execution/materialCommand.js';
-// FIX-3 (97_ODBIOR_W1_W2.md §8): reuse the existing deterministic content-hash
-// helper (already cross-domain: evidenceService, OrganizationContextService)
-// instead of writing a second stable-stringify implementation.
-import { computeContentHash } from '../method-core/db.js';
-import { PostgresGovernancePolicyResolver } from '../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
-import { PostgresInitiativeReader } from '../domain/initiatives-execution/postgresInitiativeReader.js';
-import { PostgresMaterialCommandUnitOfWork } from '../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 // R3 (plan 1.12 §C4) — reguła re-baseline i odchylenie od baseline'u.
 import {
   deviationDaysFromBaseline,
@@ -97,10 +82,6 @@ import {
 import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
 import notificationService from '../services/notificationService.js';
 import {
-  evaluateEffectiveCapability,
-  resolveEffectiveAccess,
-} from '../services/effectiveAccessService.js';
-import {
   calculateRiskScore,
   categorizeScore,
   DEFAULT_THRESHOLDS,
@@ -125,27 +106,6 @@ import type {
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
-
-const canonicalInitiativeWritePool = new Pool(
-  databaseConfig.postgres as PoolConfig | undefined
-);
-const canonicalInitiativeWriteReader = new PostgresInitiativeReader(
-  canonicalInitiativeWritePool
-);
-const canonicalInitiativeWriteUnitOfWork = new PostgresMaterialCommandUnitOfWork(
-  canonicalInitiativeWritePool
-);
-const canonicalInitiativeWritePolicyResolver = new PostgresGovernancePolicyResolver(
-  canonicalInitiativeWritePool
-);
-
-const isInitiativeUnifiedWriteEnabled = (): boolean =>
-  process.env.ENABLE_INITIATIVE_UNIFIED_WRITE === 'true';
-
-// `sourceType` is injected by the existing request pipeline and is not a card
-// mutation. Ignore it when deciding whether the user's payload is supported.
-const CANONICAL_PUT_FIELDS = new Set(['title', 'summary', 'description', 'ownerId', 'sourceType']);
-const INITIATIVE_UPDATED_MESSAGE = 'Initiative updated';
 
 const safeJsonParse = <T = unknown>(
   str: string | null | undefined,
@@ -891,129 +851,6 @@ export class InitiativeController {
         [id, orgId]
       );
       if (!existing) {
-        if (isInitiativeUnifiedWriteEnabled()) {
-          const canonical = await canonicalInitiativeWriteReader.findById(orgId, id);
-          if (canonical) {
-            const body = req.body as Record<string, unknown>;
-            const unsupportedFields = Object.keys(body).filter(
-              (field) => body[field] !== undefined && !CANONICAL_PUT_FIELDS.has(field)
-            );
-            if (unsupportedFields.length > 0) {
-              res.status(409).json({
-                code: 'INITIATIVE_CANONICAL_WRITE_REQUIRED',
-                unsupportedFields,
-                canonicalWriter: '/api/initiatives/runtime-v1',
-              });
-              return;
-            }
-
-            if (!userId) {
-              res.status(401).json({ error: 'Unauthorized' });
-              return;
-            }
-            const access = await resolveEffectiveAccess({
-              userId,
-              organizationId: orgId,
-              applicationRole: req.user?.role,
-              projectId: canonical.initiative.projectId,
-              isImpersonating: Boolean((req.user as any)?.isImpersonating),
-            });
-            const authorization = await evaluateEffectiveCapability(access, 'initiative.update', {
-              requireOwnership: true,
-              ownerPredicate: () => canonical.initiative.initiativeOwnerId === userId,
-            });
-            if (!authorization.allowed) {
-              res.status(403).json({ code: 'CAPABILITY_REQUIRED' });
-              return;
-            }
-            const requestedOwner =
-              typeof body.ownerId === 'string' ? body.ownerId.trim() : undefined;
-            if (
-              requestedOwner !== undefined &&
-              !(await canonicalInitiativeWriteReader.isEligibleInitiativeOwner(
-                orgId,
-                canonical.initiative.projectId,
-                requestedOwner
-              ))
-            ) {
-              res.status(422).json({ code: 'INITIATIVE_OWNER_INELIGIBLE' });
-              return;
-            }
-            const policy = await canonicalInitiativeWritePolicyResolver.resolve(
-              orgId,
-              canonical.initiative.projectId,
-              id
-            );
-            // FIX-3 (97_ODBIOR_W1_W2.md §8): `clientRequestId` must be
-            // deterministic from the request, not `legacy-put-${uuidv4()}`.
-            // Measured: sending the same PUT payload twice previously bumped
-            // `version` 2 -> 3 and created a second `ie_command_receipts` row
-            // (retry / double-click multiplied aggregate versions). Prefer
-            // the client-supplied `Idempotency-Key` header when present;
-            // otherwise hash id + orgId + the (already-validated) payload so
-            // an identical retry reuses the same receipt.
-            const suppliedIdempotencyKey = String(req.get('Idempotency-Key') || '').trim();
-            const deterministicClientRequestId = suppliedIdempotencyKey
-              ? `legacy-put-idem-${suppliedIdempotencyKey}`
-              : `legacy-put-${computeContentHash({ id, orgId, body })}`;
-            let result;
-            try {
-              result = await amendInitiativeMetadata(canonicalInitiativeWriteUnitOfWork, {
-                organizationId: orgId,
-                actorId: userId,
-                aggregateType: 'initiative',
-                aggregateId: id,
-                expectedVersion: canonical.version,
-                clientRequestId: deterministicClientRequestId,
-                correlationId: req.get('X-Correlation-ID') || `legacy-put-${uuidv4()}`,
-                policyId: policy.policyId,
-                policyVersion: policy.version,
-                commandType: 'initiative.metadata.amend',
-                payload: {
-                  ...(typeof body.title === 'string' ? { title: body.title } : {}),
-                  ...(typeof body.description === 'string' ? { problem: body.description } : {}),
-                  ...(typeof body.summary === 'string' ? { proposedOutcome: body.summary } : {}),
-                  ...(requestedOwner !== undefined ? { initiativeOwnerId: requestedOwner } : {}),
-                },
-              });
-            } catch (error) {
-              // FIX-3: the deterministic clientRequestId is the SAME on an
-              // identical retry (same id+orgId+payload). If the first
-              // attempt already succeeded, `expectedVersion` re-read fresh
-              // per request (FIX-4, left as-is) differs on the retry, so the
-              // stored receipt's fingerprint no longer matches and the
-              // command layer rejects it as "different command" rather than
-              // replaying it. That specific collision IS this same command
-              // re-arriving, not a real conflict, so answer it exactly like
-              // the first, successful response instead of a 500 for what is
-              // a benign retry/double-click. Any other conflict (e.g. a
-              // genuine concurrent edit — "aggregate version conflict") is
-              // rethrown unchanged.
-              if (
-                error instanceof MaterialCommandConflictError &&
-                error.message === 'clientRequestId was already used for a different command target'
-              ) {
-                const readBackAfterConflict = await canonicalInitiativeWriteReader.findById(orgId, id);
-                res.json({
-                  id,
-                  message: INITIATIVE_UPDATED_MESSAGE,
-                  changesCount: Object.keys(readBackAfterConflict?.initiative || {}).length,
-                  initiative: readBackAfterConflict,
-                });
-                return;
-              }
-              throw error;
-            }
-            const readBack = await canonicalInitiativeWriteReader.findById(orgId, id);
-            res.json({
-              id,
-              message: INITIATIVE_UPDATED_MESSAGE,
-              changesCount: Object.keys(result.response || {}).length,
-              initiative: readBack,
-            });
-            return;
-          }
-        }
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
@@ -1585,7 +1422,7 @@ export class InitiativeController {
       }
       res.json({
         id,
-        message: INITIATIVE_UPDATED_MESSAGE,
+        message: 'Initiative updated',
         changesCount: changes.length,
         initiative: updated,
       });
@@ -2170,18 +2007,14 @@ export class InitiativeController {
       // a dependency edge to (or from) a foreign-org initiative id it merely
       // guessed. Fail closed: both ids must resolve inside this tenant.
       const [fromInOrg, toInOrg] = await Promise.all([
-        isInitiativeUnifiedReadEnabled()
-          ? initiativeExists(orgId, fromInitiativeId)
-          : queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
-              fromInitiativeId,
-              orgId,
-            ]),
-        isInitiativeUnifiedReadEnabled()
-          ? initiativeExists(orgId, toInitiativeId)
-          : queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
-              toInitiativeId,
-              orgId,
-            ]),
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          fromInitiativeId,
+          orgId,
+        ]),
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          toInitiativeId,
+          orgId,
+        ]),
       ]);
       if (!fromInOrg || !toInOrg) {
         res.status(404).json({
@@ -3637,21 +3470,20 @@ export class InitiativeController {
       //
       // Granica tenanta sie NIE zmienia: oba odczyty sa zawezone do
       // `organization_id` wolajacego, wiec cudza inicjatywa dalej daje 404.
-      const exists = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(orgId, initiativeId)
-        : Boolean(
-            (await queryHelpers.queryOne(
-              'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-              [initiativeId, orgId]
-            )) ||
-              (await queryHelpers.queryOne(
-                `SELECT aggregate_id FROM ie_aggregate_state
-                  WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
-                [orgId, initiativeId]
-              ))
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      const wRejestrzeKanonicznym = initiative
+        ? null
+        : await queryHelpers.queryOne(
+            `SELECT aggregate_id FROM ie_aggregate_state
+              WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
+            [orgId, initiativeId]
           );
 
-      if (!exists) {
+      if (!initiative && !wRejestrzeKanonicznym) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
@@ -3740,12 +3572,10 @@ export class InitiativeController {
       }
 
       // Verify initiative belongs to org
-      const initiative = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(orgId, initiativeId)
-        : await queryHelpers.queryOne(
-            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-            [initiativeId, orgId]
-          );
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
@@ -4366,12 +4196,10 @@ export class InitiativeController {
       // EXE-02/03/04: this endpoint previously had no organization-scope guard —
       // a caller from another org who knew a foreign initiativeId could attach a
       // resource to it. Match the same guard pattern used in createMilestone.
-      const initiative = isInitiativeUnifiedReadEnabled()
-        ? await initiativeExists(orgId, initiativeId)
-        : await queryHelpers.queryOne(
-            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-            [initiativeId, orgId]
-          );
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });

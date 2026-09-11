@@ -191,8 +191,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-c-info/10 flex items-center justify-center">
-            <Paperclip className="text-c-info" size={20} />
+          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center">
+            <Paperclip className="text-primary-500" size={20} />
           </div>
           <div>
             <h2 className="font-bold text-navy-900 dark:text-white">Evidence & Justification</h2>

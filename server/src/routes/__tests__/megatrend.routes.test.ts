@@ -80,44 +80,4 @@ describe('GET /api/megatrends/baseline', () => {
     expect(res.body.type).toBe('not_configured');
     expect(res.body.userMessage).toMatch(/not yet configured/i);
   });
-
-  // F3b (DEC-463): the model degrades an unmapped industry to 'general'
-  // instead of rejecting with the same 503 used for a real outage. It marks
-  // the resolved array with non-enumerable fallbackIndustry/requestedIndustry
-  // (invisible to JSON.stringify) — the route must read those two props off
-  // the array and forward them as response headers, while the JSON body
-  // stays a plain array (unchanged contract, see the first test above).
-  it('surfaces a general-baseline fallback as headers while keeping the body a plain array', async () => {
-    const fallbackArray: any = [
-      { id: 'mg-gen-1', label: 'Agentic AI', type: 'Technology', initialRing: 'On the Horizon' },
-    ];
-    Object.defineProperty(fallbackArray, 'fallbackIndustry', {
-      value: 'general',
-      enumerable: false,
-    });
-    Object.defineProperty(fallbackArray, 'requestedIndustry', {
-      value: 'financial',
-      enumerable: false,
-    });
-    mockGetBaselineTrends.mockResolvedValue(fallbackArray);
-
-    const res = await request(createApp()).get('/api/megatrends/baseline?industry=financial');
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body).toHaveLength(1);
-    expect(res.body[0].label).toBe('Agentic AI');
-    expect(res.headers['x-megatrend-fallback-industry']).toBe('general');
-    expect(res.headers['x-megatrend-requested-industry']).toBe('financial');
-  });
-
-  it('does not set fallback headers on an ordinary, non-fallback response', async () => {
-    mockGetBaselineTrends.mockResolvedValue([{ id: 'mg-1', label: 'Industrial AI' }]);
-
-    const res = await request(createApp()).get('/api/megatrends/baseline?industry=Manufacturing');
-
-    expect(res.status).toBe(200);
-    expect(res.headers['x-megatrend-fallback-industry']).toBeUndefined();
-    expect(res.headers['x-megatrend-requested-industry']).toBeUndefined();
-  });
 });

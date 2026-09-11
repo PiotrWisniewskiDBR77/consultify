@@ -127,52 +127,7 @@ export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriteri
   'finance-analysis': STRUCTURAL_COMPLETENESS,
   'execution-report': STRUCTURAL_COMPLETENESS,
   'execution-work-doc': STRUCTURAL_COMPLETENESS,
-  action: [
-    {
-      id: 'action-problem', pl: 'konkretny problem', en: 'specific problem',
-      definition: { pl: 'Problem nazywa odchylenie, jego skalę i wpływ.', en: 'The problem names the deviation, its scale and impact.' },
-      failsWhen: { pl: 'Opis jest ogólny albo nie wskazuje odchylenia.', en: 'The description is generic or does not identify the deviation.' },
-    },
-    {
-      id: 'action-root-cause', pl: 'główna przyczyna', en: 'root cause',
-      definition: { pl: 'Przyczyna wyjaśnia mechanizm powstania problemu i odróżnia fakt od hipotezy.', en: 'The cause explains the mechanism and distinguishes evidence from a hypothesis.' },
-      failsWhen: { pl: 'Pole powtarza problem albo podaje objaw zamiast przyczyny.', en: 'The field repeats the problem or gives a symptom instead of a cause.' },
-    },
-    {
-      id: 'action-close-criterion', pl: 'kryterium zamknięcia', en: 'closure criterion',
-      definition: { pl: 'Opis działania zawiera mierzalny rezultat pozwalający zamknąć kartę.', en: 'The action includes a measurable outcome that permits closing the card.' },
-      failsWhen: { pl: 'Nie da się obiektywnie rozstrzygnąć, czy działanie wykonano.', en: 'It is impossible to decide objectively whether the action is complete.' },
-    },
-  ],
-  idea: [
-    {
-      id: 'idea-problem-fit', pl: 'dopasowanie do problemu', en: 'problem fit',
-      definition: { pl: 'Pomysł odpowiada na nazwany problem i odbiorcę.', en: 'The idea addresses a named problem and audience.' },
-      failsWhen: { pl: 'Nie wiadomo, jaki problem lub czyją potrzebę rozwiązuje.', en: 'The problem or user need is not identifiable.' },
-    },
-    {
-      id: 'idea-testability', pl: 'testowalność', en: 'testability',
-      definition: { pl: 'Pomysł zawiera hipotezę, kryterium sukcesu i najtańszy test.', en: 'The idea includes a hypothesis, success criterion and cheapest test.' },
-      failsWhen: { pl: 'Brak sposobu szybkiego potwierdzenia albo obalenia pomysłu.', en: 'There is no quick way to validate or falsify the idea.' },
-    },
-  ],
-  interview_template: [
-    {
-      id: 'template-purpose', pl: 'cel wzorca', en: 'template purpose',
-      definition: { pl: 'Cel mówi, jakiej decyzji lub diagnozie mają służyć odpowiedzi.', en: 'The purpose states which decision or diagnosis the answers support.' },
-      failsWhen: { pl: 'Cel opisuje samo przeprowadzenie rozmowy, nie jej rezultat.', en: 'The purpose describes conducting the interview rather than its outcome.' },
-    },
-    {
-      id: 'template-question-quality', pl: 'jakość pytań', en: 'question quality',
-      definition: { pl: 'Pytania są jednoznaczne, neutralne i zbierają dowody potrzebne do celu.', en: 'Questions are clear, neutral and collect evidence required by the purpose.' },
-      failsWhen: { pl: 'Pytania sugerują odpowiedź, dublują się albo nie wspierają celu.', en: 'Questions are leading, duplicated or unrelated to the purpose.' },
-    },
-    {
-      id: 'template-flow', pl: 'logika rozmowy', en: 'interview flow',
-      definition: { pl: 'Kolejność prowadzi od kontekstu przez fakty do podsumowania bez zbędnych skoków.', en: 'The order moves from context through evidence to a summary without unnecessary jumps.' },
-      failsWhen: { pl: 'Kolejność miesza wątki lub wymaga kontekstu, którego jeszcze nie zebrano.', en: 'The order mixes topics or requires context not yet collected.' },
-    },
-  ],
+  action: [],
   plan: [],
   capacity_analysis: [],
   task: [
@@ -721,23 +676,7 @@ export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriteri
   // (kontrakt wylicza sześć kart: Decision, Task, Notification, Insight, Tool,
   // Initiative). Gdyby przycisk kiedyś powstał — najpierw decyzja właściciela
   // o osiach, potem wpis tutaj.
-  interview: [
-    {
-      id: 'interview-evidence', pl: 'pokrycie dowodami', en: 'evidence coverage',
-      definition: { pl: 'Odpowiedzi i notatki wskazują konkretne fakty, przykłady oraz źródła.', en: 'Answers and notes identify concrete facts, examples and sources.' },
-      failsWhen: { pl: 'Wnioski opierają się na opinii bez przykładu lub materiału źródłowego.', en: 'Conclusions rely on opinion without an example or source material.' },
-    },
-    {
-      id: 'interview-gaps', pl: 'jawne luki', en: 'explicit gaps',
-      definition: { pl: 'Nieudzielone odpowiedzi i sprzeczności są nazwane jako luki, a nie uzupełniane domysłem.', en: 'Missing answers and contradictions are named as gaps rather than filled by assumption.' },
-      failsWhen: { pl: 'Podsumowanie dopowiada treść, której respondent nie przekazał.', en: 'The summary invents content the respondent did not provide.' },
-    },
-    {
-      id: 'interview-summary', pl: 'podsumowanie sesji', en: 'session summary',
-      definition: { pl: 'Podsumowanie oddziela fakty, cytaty, hipotezy konsultanta i następne pytania.', en: 'The summary separates facts, quotes, consultant hypotheses and follow-up questions.' },
-      failsWhen: { pl: 'Fakty i interpretacje są wymieszane lub brak następnego kroku badawczego.', en: 'Facts and interpretations are mixed or the next research step is missing.' },
-    },
-  ],
+  interview: [],
 
   // ── [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] Trzy karty modułu Wyniki ─────
   // Osie NIE są wymyślone tutaj: pochodzą z `docs/modules/07_rezultaty/
@@ -1137,8 +1076,6 @@ const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKart
   'execution-report': [],
   'execution-work-doc': [],
   action: [],
-  idea: [],
-  interview_template: [],
   plan: [],
   capacity_analysis: [],
   task: TASK_CARDS,

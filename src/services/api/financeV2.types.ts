@@ -1142,29 +1142,6 @@ export interface VersionLineageDto {
   descendants: LineageEdgeDto[];
 }
 
-/**
- * Przewód E3 do listy (97_ODBIOR_W1_W2.md §6 STOP3 / §9(b), DEC-461):
- * `crosscutting.routes.ts` (`POST /versions/lineage-edges/bulk-read`) rozwiązuje
- * teraz mieszankę kanonicznych `business_version_id` i legacy id
- * (`financial_statement_packs.id` itd. — `FinanceHub.tsx` karmi listę tymi
- * drugimi) przez `finance_artifact_aliases`, PO STRONIE SERWERA, zanim odpyta
- * `finance_lineage_edges`. `resolvedVersionIds`/`unresolvedIds` są addytywne —
- * `businessVersionIds`/`edges` mają dokładnie ten sam kształt co dotąd.
- */
-export interface BulkVersionLineageDto {
-  businessVersionIds: string[];
-  edges: LineageEdgeDto[];
-  /** `requestedId -> business_version_id` dla KAŻDEGO id, które serwer rozwiązał
-   *  (czy to była już wersja kanoniczna, czy legacy id z aliasem). Klient
-   *  dopasowuje `edges` do wiersza listy przez tę mapę, NIGDY zakładając, że
-   *  `sourceVersionId`/`targetVersionId` w `edges` są równe legacy id z żądania. */
-  resolvedVersionIds: Record<string, string>;
-  /** Id z żądania bez żadnego kanonicznego odpowiednika (ani bezpośrednio, ani
-   *  przez alias) — honest gap (Z23). Kolumna „Source statement" renderuje dla
-   *  tych id klucz `finance.statements.noSourceStatement`, NIGDY pustkę/404. */
-  unresolvedIds: string[];
-}
-
 function finanaceV2ErrorCode(err: FinanceV2ApiError): string | null {
   return (
     (err.data && typeof err.data === 'object' && typeof err.data.code === 'string'
