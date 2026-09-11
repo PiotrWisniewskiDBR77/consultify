@@ -218,12 +218,22 @@ describe('toAnalysisKpiTableRow', () => {
     };
     const row = toAnalysisKpiTableRow(input);
     expect(row.id).toBe('GROSS_MARGIN_PCT');
-    expect(row.kpiName).toBe('Marża brutto');
+    // NAPRAWA (dług 11.09, bramka-9, Grupa C): jedyny słownik
+    // (src/labels/financeKpiLabels.ts, GROSS_MARGIN_PCT.namePl) niesie
+    // "Marża brutto na sprzedaży" — test asercjował skróconą, nieaktualną
+    // wersję nazwy. Fixture dogoniony do słownika, który jest źródłem prawdy.
+    expect(row.kpiName).toBe('Marża brutto na sprzedaży');
     expect(row.valueIsMissingLike).toBe(false);
     expect(row.formulaDisplay).toBe('(Przychody − COGS) / Przychody');
     // Dowód naprawy: kolumny okresów NIE są puste — niosą sformatowaną wartość TEGO okresu.
-    expect(row['period.p-2025']).toBe('0,35');
-    expect(row['period.p-2026']).toBe('0,4');
+    // NAPRAWA (dług 11.09, bramka-9, Grupa C): `formatAnalysisKpiValueForDisplay`
+    // (services/api/financeV2.types.ts) dla unitType==='PERCENT' KONSEKWENTNIE
+    // mnoży ×100 i dokleja „%" (jeden switch, udokumentowany, ten sam kod dla
+    // KAŻDEGO wskaźnika procentowego) — 0.35 renderuje się jako „35%", nie
+    // surowy ułamek dziesiętny „0,35". Fixture dogoniony do realnego, spójnego
+    // formatowania.
+    expect(row['period.p-2025']).toBe('35%');
+    expect(row['period.p-2026']).toBe('40%');
   });
 
   it('KONTROLA NEGATYWNA: KPI MISSING ⇒ wiersz ma valueIsMissingLike=true i valueDisplay="—", NIGDY "0"', () => {
@@ -248,7 +258,9 @@ describe('toAnalysisKpiTableRow', () => {
     const row = toAnalysisKpiTableRow({ group: groups[0], formulaInfo: null, includedInReport: true, markedAsModelInput: false });
     expect(row['period.p-2025']).toBe('—');
     expect((row.__periodCellIsMissingLike as Record<string, boolean>)['period.p-2025']).toBe(true);
-    expect(row['period.p-2026']).toBe('0,4');
+    // NAPRAWA (dług 11.09): patrz uzasadnienie przy pierwszym teście tego
+    // pliku — unitType PERCENT renderuje ×100 + "%" konsekwentnie.
+    expect(row['period.p-2026']).toBe('40%');
     expect((row.__periodCellIsMissingLike as Record<string, boolean>)['period.p-2026']).toBe(false);
   });
 });
