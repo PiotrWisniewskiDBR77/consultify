@@ -14,14 +14,24 @@ import { useDeferredLoading } from '@/hooks/useDeferredLoading';
  */
 export const DeferredRouteLoadingFallback: React.FC = () => {
   const { t } = useTranslation();
-  const phase = useDeferredLoading(true);
+  // DIAG-W3 (11.09, DIAGNOZA_W3_W4_20260911.md): this is the ONLY Suspense
+  // boundary around <Routes> (AppRoutes.tsx:1199), so whatever it renders
+  // replaces the WHOLE application — sidebar included. The default 15 s
+  // timeout of useDeferredLoading is a DATA contract; a lazy module import
+  // cannot "time out" (it resolves, or rejects into RouteErrorBoundary), and
+  // this app's own cold boot on staging measures 16-26 s. The old 15 s guard
+  // therefore fired BEFORE the app could finish booting and painted a
+  // full-screen "Nie udało się wczytać danych na czas" over a load that was
+  // still in flight (ODBIOR_STAGING_7e8668c7cc §7.4, W-3: Inicjatywy).
+  const phase = useDeferredLoading(true, { timeoutAfterMs: 45_000 });
 
   if (phase === 'idle') return null;
 
   if (phase === 'timeout') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--c-surface)] p-6">
-        <ErrorState variant="timeout" compact />
+        {/* DIAG-W3: never a dead end — the only honest action here is a reload. */}
+        <ErrorState variant="timeout" compact onRetry={() => window.location.reload()} />
       </div>
     );
   }

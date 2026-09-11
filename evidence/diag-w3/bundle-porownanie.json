@@ -1,0 +1,8 @@
+{
+  "budowa": "npx vite build, NODE_OPTIONS=--max-old-space-size=6144, kolejno (nie rownolegle), ten sam worktree ~/Developer/wt/diag-w3",
+  "e25b7cd5d0": { "sumaJsB": 32042311, "plikowJs": 531, "cssGlownyB": 710880, "App": 3777371, "AppProviders": 1516960, "IdeaMapWorkspace": 2312482, "DiscoveryToolsHub": 1723996 },
+  "7e8668c7cc": { "sumaJsB": 32057450, "plikowJs": 534, "cssGlownyB": 710757, "App": 3777985, "AppProviders": 1517283, "IdeaMapWorkspace": 2310936, "DiscoveryToolsHub": 1724081 },
+  "roznica": { "sumaJsB": 15139, "procent": 0.047, "plikowJs": 3 },
+  "grafEager7e86": { "chunkow": 7, "bajtow": 5627398, "MB": 5.37, "sklad": ["App 3777985", "AppProviders 1517283", "index(entry) 317202", "finance 7396", "ideaAIGenerator 3930", "canvasPatchOps 3288", "financeCandidateHandoffDigitizationAnalysis 314"] },
+  "modulepreloadWIndexHtml": 0
+}
