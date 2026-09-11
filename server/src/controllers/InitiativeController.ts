@@ -2119,14 +2119,18 @@ export class InitiativeController {
       // a dependency edge to (or from) a foreign-org initiative id it merely
       // guessed. Fail closed: both ids must resolve inside this tenant.
       const [fromInOrg, toInOrg] = await Promise.all([
-        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
-          fromInitiativeId,
-          orgId,
-        ]),
-        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
-          toInitiativeId,
-          orgId,
-        ]),
+        isInitiativeUnifiedReadEnabled()
+          ? initiativeExists(orgId, fromInitiativeId)
+          : queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+              fromInitiativeId,
+              orgId,
+            ]),
+        isInitiativeUnifiedReadEnabled()
+          ? initiativeExists(orgId, toInitiativeId)
+          : queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+              toInitiativeId,
+              orgId,
+            ]),
       ]);
       if (!fromInOrg || !toInOrg) {
         res.status(404).json({
@@ -3582,20 +3586,21 @@ export class InitiativeController {
       //
       // Granica tenanta sie NIE zmienia: oba odczyty sa zawezone do
       // `organization_id` wolajacego, wiec cudza inicjatywa dalej daje 404.
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
-
-      const wRejestrzeKanonicznym = initiative
-        ? null
-        : await queryHelpers.queryOne(
-            `SELECT aggregate_id FROM ie_aggregate_state
-              WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
-            [orgId, initiativeId]
+      const exists = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : Boolean(
+            (await queryHelpers.queryOne(
+              'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+              [initiativeId, orgId]
+            )) ||
+              (await queryHelpers.queryOne(
+                `SELECT aggregate_id FROM ie_aggregate_state
+                  WHERE organization_id = ? AND aggregate_type = 'initiative' AND aggregate_id = ?`,
+                [orgId, initiativeId]
+              ))
           );
 
-      if (!initiative && !wRejestrzeKanonicznym) {
+      if (!exists) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
@@ -3684,10 +3689,12 @@ export class InitiativeController {
       }
 
       // Verify initiative belongs to org
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId]
+          );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
@@ -4308,10 +4315,12 @@ export class InitiativeController {
       // EXE-02/03/04: this endpoint previously had no organization-scope guard —
       // a caller from another org who knew a foreign initiativeId could attach a
       // resource to it. Match the same guard pattern used in createMilestone.
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId]
+          );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
