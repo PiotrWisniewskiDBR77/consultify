@@ -20,13 +20,13 @@ dobieraj sobie zakresu.
 > wykonawców naraz.
 
 > ### ★★ MARKER I STAN WYDANIA
-> **SHA markera: `<TIP>`** — wpisuje nadzorca przy wydaniu (tip linii integracyjnej
+> **SHA markera: `a176d3f906`** — wpisuje nadzorca przy wydaniu (tip linii integracyjnej
 > `origin/integracja/20260911` po scaleniu i pushu).
 > **Gałąź bazowa: `origin/integracja/20260911`** (w vaulcie). **NIE `origin/staging`,
 > NIE `origin/demo`, NIE `Londyn`** — tamte nie mają ani `E1` Codexa 2 (zapis
 > kanoniczny `PUT`), ani paczek `E3`, ani `E7` (seed pisze do kanonu).
 > **Stan dokumentu: PROJEKT — marker do wpisania przez nadzorcę.**
-> Widzisz `WYDANY` + konkretny SHA → zaczynasz. Widzisz `PROJEKT` albo `<TIP>` →
+> Widzisz `WYDANY` + konkretny SHA → zaczynasz. Widzisz `PROJEKT` albo `a176d3f906` →
 > **nie zaczynasz i zgłaszasz to nadzorcy**. Ta ramka jest jedynym miejscem,
 > w którym rozstrzyga się stan wydania.
 
@@ -46,7 +46,7 @@ Vault ma `extensions.worktreeConfig=true` — **to obsługujesz w kroku (4)**.
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/Users/piotrwisniewski/Developer/codex-wt/codex2b-szesciu-pisarzy
-MARKER=<TIP>
+MARKER=a176d3f906
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego bloku
 df -h /

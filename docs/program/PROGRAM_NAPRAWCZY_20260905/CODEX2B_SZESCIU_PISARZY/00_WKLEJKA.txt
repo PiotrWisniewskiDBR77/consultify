@@ -8,7 +8,7 @@ Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj.
 
 ★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
 WT=/Users/piotrwisniewski/Developer/codex-wt/codex2b-szesciu-pisarzy
-MARKER=<TIP>
+MARKER=a176d3f906
 df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
 git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
   && echo "MARKER OK" || echo "MARKER BRAK"
