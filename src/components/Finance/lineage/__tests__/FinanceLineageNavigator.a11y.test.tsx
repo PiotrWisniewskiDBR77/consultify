@@ -80,9 +80,16 @@ describe('FinanceLineageNavigator — ogłaszanie stanów dynamicznych (a11y, Pa
   it('po sukcesie role="status" ogłasza liczbę elementów łańcucha', async () => {
     mockGetFinanceLineageNavigator.mockResolvedValueOnce(MINIMAL_RESULT);
     render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
+    // NAPRAWA (dług 11.09): plik NIE ma lokalnego mocka react-i18next — czyta
+    // globalny (tests/setup.ts:122), który ma `i18n.language:'en'` na stałe i
+    // ZAWSZE zwraca angielski fallback niezależnie od klucza (tak samo jak
+    // sąsiedni test „podczas ładowania…", którego własny tytuł już nazywa
+    // oczekiwany tekst „Loading lineage…" — ten sam język). Asercja szukała
+    // polskiego tłumaczenia, którego globalny mock nigdy nie odda; dogonione
+    // do tego, co realnie ogłasza `role="status"` pod tym przyrządem.
     await waitFor(() =>
       expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
-        'Łańcuch powiązań wczytany: 0 elementów.'
+        'Lineage chain loaded: 0 items.'
       )
     );
   });

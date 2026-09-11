@@ -10,9 +10,40 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
+
 const mockGetFinanceLineageNavigator = vi.fn();
 vi.mock('@/services/api/financeV2.api', () => ({
   getFinanceLineageNavigator: (...args: unknown[]) => mockGetFinanceLineageNavigator(...args),
+}));
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (`tests/setup.ts:122`) ma `i18n.language:'en'` na stałe — `FinanceLineageNavigator.tsx`
+// czyta `i18n.language` wprost (`const isEn = (i18n.language || 'pl').toLowerCase()
+// .startsWith('en')`) i wybiera `businessVersionStatusLabelEn` zamiast PL, więc status
+// „Wersja robocza" (DRAFT) nigdy nie mógł się pojawić pod globalnym mockiem. Lokalny
+// mock z language:'pl' + resolvePlKey (czyta realny public/locales/pl/translation.json,
+// jak zrobiłby to runtime) — wzór: ExecutionWorkSurface.daneRealne.test.tsx.
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 import { FinanceLineageNavigator } from '../FinanceLineageNavigator';
