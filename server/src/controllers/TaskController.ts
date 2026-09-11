@@ -30,6 +30,11 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import DbPromise from '../utils/DbPromise.js';
 import { getTableColumns as getSchemaColumns } from '../utils/dbSchema.js';
+import {
+  ApplicationRole,
+  normalizeApplicationRole,
+  normalizePlatformRole,
+} from '../utils/roleNormalization.js';
 import logger from '../utils/Logger.js';
 import type {
   AddTaskCommentRequest,
@@ -2166,7 +2171,8 @@ export class TaskController {
 
       // Check permission - only Admin/SuperAdmin or task reporter can delete
       const task = await DbPromise.get<TaskRow>(
-        'SELECT reporter_id, initiative_id, title FROM tasks WHERE id = ? AND organization_id = ?',
+        `SELECT reporter_id, created_by, owner_id, assignee_id, initiative_id, title
+           FROM tasks WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
 
@@ -2175,8 +2181,34 @@ export class TaskController {
         return;
       }
 
-      if (req.user?.role === 'team_member' && task.reporter_id !== userId) {
-        res.status(403).json({ error: 'You can only delete tasks you created' });
+      // STOP-3 z paczki E2 (10.09) — INNA NORMALIZACJA ROLI NIZ PUT.
+      //
+      // Bylo: `req.user?.role === 'team_member'`. Zaden dzisiejszy token nie
+      // niesie tego literalu (role to 'MEMBER'/'ADMIN'/'OWNER'/'SUPERADMIN'),
+      // wiec warunek NIGDY nie byl prawdziwy i kontroler nie bronil NIKOGO.
+      // Pomiar 11.09 (kopia `consultify_kopia_s12b`, sam kontroler bez bramki):
+      // MEMBER usunal CUDZE zadanie — HTTP 200 i wiersz zniknal z `tasks`.
+      // Cala obrona stala wiec na jednej bramce z E2; tu jest druga linia,
+      // zbudowana na TYM SAMYM modelu wlasnosci co `isTaskOwnedByCaller`
+      // (assignee / owner / created_by / reporter), zeby nie zabrac nikomu
+      // prawa, ktore bramka juz przyznaje.
+      const rolaAplikacji = normalizeApplicationRole(req.user?.role);
+      const jestAdministratorem =
+        normalizePlatformRole(req.user?.role) !== null ||
+        rolaAplikacji === ApplicationRole.ADMIN ||
+        rolaAplikacji === ApplicationRole.OWNER;
+      const jestZwiazanyZZadaniem = [
+        task.reporter_id,
+        (task as { created_by?: string | null }).created_by,
+        (task as { owner_id?: string | null }).owner_id,
+        (task as { assignee_id?: string | null }).assignee_id,
+      ].some((wartosc) => typeof wartosc === 'string' && wartosc !== '' && wartosc === userId);
+
+      if (!jestAdministratorem && !jestZwiazanyZZadaniem) {
+        res.status(403).json({
+          error: 'You can only delete tasks you created',
+          code: 'CAPABILITY_OBJECT_OWNERSHIP_REQUIRED',
+        });
         return;
       }
 
