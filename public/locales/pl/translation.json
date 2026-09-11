@@ -213,6 +213,7 @@
     "DATA_EXPORT_LIST_REQUESTS_FAILED": "Nie udało się pobrać wniosków o eksport.",
     "DATA_EXPORT_STATUS_FAILED": "Nie udało się pobrać statusu eksportu.",
     "GOVERNED_CONNECTOR_NOT_APPROVED": "Integracja nie jest dostępna w tej wersji.",
+    "INITIATIVE_CANONICAL_WRITE_REQUIRED": "Ta inicjatywa jest w nowym rejestrze — zapisz ją z karty inicjatywy.",
     "INITIATIVE_GENERATION_SCHEMA_MISSING": "Nie udało się utworzyć przebiegu.",
     "INVALID_ORGANIZATION_IDENTIFIER": "Identyfikator organizacji nie jest prawidłowym UUID, więc nie można zapisać tej konfiguracji.",
     "KNOWLEDGE_CANDIDATES_APPROVED_FAILED": "Nie udało się pobrać zatwierdzonych pomysłów.",
