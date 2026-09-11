@@ -1463,7 +1463,12 @@ export async function rejectProposal(params: {
  * semantics is a materially larger change than what was asked for). Those
  * targets fall through to `true` here unchanged.
  */
-async function confirmTargetObjectReadBack(
+// Exported (E3 paczka 3/3, testability only, zero behavior change) so the
+// initiative branch's unified-reader switch can be exercised directly on a
+// real Postgres fixture without reconstructing the full approveProposal ->
+// commitProposalToDomain materialization pipeline (proposal + draft +
+// canvasMaterialize) this is the only call site of.
+export async function confirmTargetObjectReadBack(
   target: WorkCanvasTarget,
   targetObjectId: string,
   organizationId: string
