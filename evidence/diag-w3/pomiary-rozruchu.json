@@ -1,0 +1,16 @@
+{
+  "opis": "Koszt ROZRUCHU aplikacji bez API: statyczny serwer na dist (127.0.0.1, zero opoznienia sieci) + Playwright 1440x900, swiezy kontekst (zimny cache) na kazdy przebieg. msDoPierwszegoRenderu = od goto do #root.innerHTML.length > 500.",
+  "skrypt": "evidence/diag-w3/mierz-boot.mjs",
+  "przebiegi": [
+    { "sha": "e25b7cd5d0", "msDoPierwszegoRenderu": 1111, "jsPobrane": 5611418, "jsZadania": 3, "cssPobrane": 710880, "zadaniaRazem": 30 },
+    { "sha": "7e8668c7cc", "msDoPierwszegoRenderu": 3036, "jsPobrane": 5612470, "jsZadania": 3, "cssPobrane": 710757, "zadaniaRazem": 30 },
+    { "sha": "e25b7cd5d0", "msDoPierwszegoRenderu": 1698, "jsPobrane": 5611418, "jsZadania": 3, "cssPobrane": 710880, "zadaniaRazem": 30 },
+    { "sha": "7e8668c7cc", "msDoPierwszegoRenderu": 1213, "jsPobrane": 5612470, "jsZadania": 3, "cssPobrane": 710757, "zadaniaRazem": 30 },
+    { "sha": "e25b7cd5d0", "msDoPierwszegoRenderu": 4586, "jsPobrane": 5611418, "jsZadania": 3, "cssPobrane": 710880, "zadaniaRazem": 30 },
+    { "sha": "7e8668c7cc", "msDoPierwszegoRenderu": 1062, "jsPobrane": 5612470, "jsZadania": 3, "cssPobrane": 710757, "zadaniaRazem": 26 },
+    { "sha": "e25b7cd5d0", "msDoPierwszegoRenderu": 2818, "jsPobrane": 5611418, "jsZadania": 3, "cssPobrane": 710880, "zadaniaRazem": 30 },
+    { "sha": "7e8668c7cc", "msDoPierwszegoRenderu": 11040, "jsPobrane": 5612470, "jsZadania": 3, "cssPobrane": 710757, "zadaniaRazem": 24 }
+  ],
+  "mediany": { "e25b7cd5d0_ms": 2258, "7e8668c7cc_ms": 1625 },
+  "rozstrzal": "1062 - 11040 ms dla TEGO SAMEGO builda, na localhoscie, bez sieci i bez API — 10x. To ten sam 'loteria' ktory odbior opisal na stagingu."
+}
