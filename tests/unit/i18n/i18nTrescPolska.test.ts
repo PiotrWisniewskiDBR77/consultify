@@ -178,6 +178,16 @@ const IDENTITY_WHITELIST_RAW = [
   // `karta.akcja.problem` (etykieta pola karty działania). Uzasadnienie
   // przy ALLOWED_PROPER_NOUNS niżej.
   'Problem',
+  // ODMROZENIE WSPOLNE DEC-461 (11.09.2026) — dług i18n-dlug-2: EN dopisany
+  // dla kluczy realnie brakujących w en/translation.json (billing/v8/vector/
+  // rap/mels/security/pricing, przekazanie 263). Poniższe wpisy to
+  // akronimy/nazwy standardów/marki/terminy techniczne trzymane identycznie
+  // w obu językach w istniejącej (niezmienionej) treści PL sekcji
+  // security/vector/landing — nie nowe zapożyczenia wprowadzone tym
+  // zleceniem, tylko brakujący dotąd angielski odpowiednik tej samej treści:
+  'Prompt OS', 'Multi-tenancy', 'SOC2', 'GDPR', 'NIST AI RMF', 'ISO 23247',
+  'ISO 22400-2', 'CI/CD', 'GitHub Actions', 'RunPod / On-prem', 'AES-256',
+  'TLS 1.3', 'RBAC', 'Industrial IoT', 'Digital Twin', 'IRIS', 'Marketplace',
 ];
 const IDENTITY_WHITELIST = IDENTITY_WHITELIST_RAW.map((entry) => entry.trim().toLowerCase());
 const IDENTITY_WHITELIST_SET = new Set(IDENTITY_WHITELIST);
@@ -235,6 +245,11 @@ const ALLOWED_PROPER_NOUNS = [
   // kategoria co Plan/System/Format/Panel powyżej, nie brak tłumaczenia.
   // Klucz: `karta.akcja.problem` (etykieta pola karty działania).
   'Problem',
+  // ODMROZENIE WSPOLNE DEC-461 (11.09.2026) — "Marketplace" jest jedną
+  // warstwą DBR77-owego ekosystemu (vector.ecosystem.layers), trzymaną
+  // identycznie jak już zatwierdzone Portfolio/Dashboard powyżej (angielski
+  // termin biznesowy bez odrębnego polskiego odpowiednika w tym kontekście).
+  'Marketplace',
 ].map((entry) => entry.trim().toLowerCase());
 const ALLOWED_PROPER_NOUNS_SET = new Set(ALLOWED_PROPER_NOUNS);
 
