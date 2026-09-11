@@ -15,6 +15,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -638,11 +642,15 @@ class InterviewEnterpriseService {
     // downstream traceability read (finding → initiative) then follows out of
     // the tenant. Same doctrine as `interview-insights.routes.ts`, which already
     // pre-checks `target_initiative_id` against `initiatives.organization_id`.
-    const initiative = await queryHelpers.queryOne<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, orgId]
-    );
-    if (!initiative) {
+    const initiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(orgId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryOne<{ id: string }>(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, orgId]
+          )
+        );
+    if (!initiativeFound) {
       throw new InterviewDistributionError('Initiative not found', 'INITIATIVE_NOT_FOUND', 404);
     }
     const result = await queryHelpers.queryRun(
