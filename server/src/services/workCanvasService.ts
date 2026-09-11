@@ -1,6 +1,10 @@
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { ArtifactContentEnvelopeV1 } from '../types/artifactContent.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1504,6 +1508,9 @@ async function confirmTargetObjectReadBack(
       return Boolean(row);
     }
     case 'initiative': {
+      if (isInitiativeUnifiedReadEnabled()) {
+        return initiativeExists(organizationId, targetObjectId);
+      }
       const row = await dbGet<{ id: string }>(
         `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
         [targetObjectId, organizationId],
