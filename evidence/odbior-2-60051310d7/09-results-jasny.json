@@ -1,0 +1,34 @@
+{
+ "nazwa": "09-results",
+ "motyw": "light",
+ "url": "/results/kpi",
+ "urlKoncowy": "/results/kpi",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 12,
+ "apiReq": [
+  "GET /api/mfa/status",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/my-work/personal-tasks",
+  "GET /api/organizations/current",
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/vnext/results/kpi/scorecards?limit=200&offset=0",
+  "GET /api/vnext/results/kpi?limit=200&offset=0",
+  "GET /api/notifications?limit=20",
+  "GET /api/notifications/unread-count",
+  "GET /api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/status",
+  "GET /api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/items",
+  "GET /api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 1072,
+ "msDoZrzutu": 4779,
+ "rootLen": 49532,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Results KPI Data Model 1 1 James Whitfield JW KPI OKR ROI Management reports New report REPORT NAME SCOPE PERIOD INDICATORS STATUS OPEN ACTIONS PREPARED BY UPDATED Northwind 2027 — monthly performance report Northwind Manufacturing Ltd. — — — — Sarah Mitchell Sep 8, 2026 "
+}

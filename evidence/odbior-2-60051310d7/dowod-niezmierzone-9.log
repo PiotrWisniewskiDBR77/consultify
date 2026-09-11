@@ -1,0 +1,47 @@
+== §9.1 RAID runtime-v1 (dodaj/zmień/usuń, 409 duplikat) ==
+OWNER  GET    /api/initiatives/runtime-v1/initiatives                                            -> 200  (1293ms)
+  wybrany agregat: initiative-d29cc12d-8e36-481d-958e-71747a6fbf26 wersja=3 stan=REGISTERED_DRAFT
+  agregatów runtime-v1: 9 | wybrany: initiative-d29cc12d-8e36-481d-958e-71747a6fbf26
+OWNER  POST   /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 400 COMMAND_VALIDATION_FAILED (273ms)
+  DODAJ -> 400 {"error":{"code":"COMMAND_VALIDATION_FAILED"}}
+OWNER  POST   /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 400 COMMAND_VALIDATION_FAILED (1816ms)
+  DUPLIKAT (expectedVersion=0 na istniejącym) -> 400 {"error":{"code":"COMMAND_VALIDATION_FAILED"}}
+OWNER  PATCH  /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 409 VERSION_OR_IDEMPOTENCY_CONFLICT (2616ms)
+  ZMIEN -> 409 {"error":{"code":"VERSION_OR_IDEMPOTENCY_CONFLICT","expectedVersion":1,"currentVersion":null}}
+OWNER  DELETE /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 409 VERSION_OR_IDEMPOTENCY_CONFLICT (752ms)
+  USUN -> 409 {"error":{"code":"VERSION_OR_IDEMPOTENCY_CONFLICT","expectedVersion":2,"currentVersion":null}}
+
+== §9.2 „Zatwierdź" (bramka definicji) — OWNER i odmowa dla MEMBER ==
+OWNER  GET    /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 200  (441ms)
+  gotowosc bramki: 200 {"initiativeId":"initiative-d29cc12d-8e36-481d-958e-71747a6fbf26","initiativeVersion":3,"lifecycleState":"REGISTERED_DRAFT","sourceStatus":{"proposalId":"proposal-28037948-fa4e-4e66-8ec9-247281bf624b","snapshotProposalVe
+MEMBER POST   /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 404 NOT_FOUND (261ms)
+  MEMBER zatwierdza -> 404 {"error":{"code":"NOT_FOUND"}}
+OWNER  POST   /api/initiatives/runtime-v1/initiatives/initiative-d29cc12d-8e36-481d-958e-71747   -> 400 COMMAND_VALIDATION_FAILED (384ms)
+  OWNER zatwierdza -> 400 {"error":{"code":"COMMAND_VALIDATION_FAILED"}}
+
+== §9.3 Zasoby — obciążenie ==
+  /api/execution/resources                         -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.","timestamp
+  /api/execution/resource-allocations              -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.","timestamp
+  /api/v8/execution/resources                      -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.","timestamp
+  /api/execution/execution-cases/bulk              -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.","timestamp
+  /api/execution/cases                             -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.","timestamp
+
+== §9.4 Ocena — „dodaj powiązanie" ==
+OWNER  GET    /api/assessments                                                                   -> 200  (234ms)
+  ocena: b2de5832-0a42-5639-8e46-6ecff2db82e5
+  /api/assessments/b2de5832-0a42-5639-8e46-6ecff2db82e5/linked-items -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.",
+  /api/assessments/b2de5832-0a42-5639-8e46-6ecff2db82e5/links -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.",
+  /api/assessments/b2de5832-0a42-5639-8e46-6ecff2db82e5/relations -> 404 {"status":"fail","error":{"code":"API_ROUTE_NOT_FOUND","message":"The requested API endpoint does not exist.",
+
+== §9.5 „Close card" — realna zmiana statusu ==
+OWNER  GET    /api/action-cards                                                                  -> 200  (244ms)
+  UWAGA: zamkniecie karty jest NIEODWRACALNE przez API (brak trasy reopen; actionCardService.ts:201-222 nie przyjmuje pola status) — nie powtarzam zapisu.
+  karta 6a206245-dedf-4674-8b81-2537a5b01ae3 status=OPEN
+
+== §6 czasy API i megatrendy ==
+  /api/initiatives     200 248 ms / 144 ms  (prog 3000 ms)
+  /api/decisions       200 124 ms / 114 ms  (prog 3000 ms)
+  /api/tasks           200 147 ms / 127 ms  (prog 3000 ms)
+  megatrendy: 200, wierszy=10, „automotive" w odpowiedzi: NIE
+
+5xx w tej sondzie: 0 

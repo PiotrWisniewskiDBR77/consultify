@@ -1,0 +1,33 @@
+{
+ "nazwa": "03-interview",
+ "motyw": "light",
+ "url": "/interview",
+ "urlKoncowy": "/interview",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 11,
+ "apiReq": [
+  "GET /api/pmo/projects/my-memberships",
+  "GET /api/access/effective",
+  "GET /api/interview/sessions",
+  "GET /api/v8/interview/insights",
+  "GET /api/initiatives?source=interview_insight",
+  "GET /api/interview/templates",
+  "GET /api/my-work/decisions?source=interview_insight",
+  "GET /api/my-work/tasks?source=interview_insight",
+  "GET /api/v8/interview/assignments/my",
+  "GET /api/v8/interview/assignments/managed",
+  "GET /api/v8/interview/assignments/overdue"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 5507,
+ "msDoZrzutu": 9214,
+ "rootLen": 64384,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Interview Inbox Data Model 1 1 James Whitfield JW Inbox Sessions Assigned Templates Insights Initiatives Assign All 3 Answered 1 Approved 1 Sent back 0 TYPE NAME STATUS PROGRESS DAYS TO DUE ASSIGNEE Quality, Compliance & Risk Quality, Compliance & Risk Approved 100% 23d overdue R Robert Chen Manufacturing Walkthrough Manufacturing Walkthrough Submitted 100% 9d overdue S Sarah Mitchell Strategic Direction Discovery Strategic Direction Discovery Assigned 0% 8d left J James Whitfield "
+}

@@ -1,0 +1,35 @@
+{
+ "nazwa": "K7-karta-pomysl",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 2,
+ "bledy": [
+  "EKRAN NIE POKAZAL NOWEJ TRESCI W 60 s",
+  "TRESC NIE USTABILIZOWALA SIE W 45 s"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 8,
+ "apiReq": [
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/health",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/my-work/my-ideas?limit=200",
+  "GET /api/my-work/my-idea-folders",
+  "GET /api/my-work/my-ideas/metrics/map?",
+  "GET /api/notifications?limit=20",
+  "GET /api/notifications/unread-count"
+ ],
+ "dom": {
+  "aside": 0,
+  "workWithAI": 0,
+  "ladowanie": 0,
+  "tabela": 0
+ },
+ "msDoTresci": null,
+ "msDoZrzutu": 113597,
+ "rootLen": 48028,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Ideas Data Model 1 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults New Idea List Agree the shuttle safety case with the works council Decide on the third-party training platform proposal notification Your Idea Garden awaits Plant your first idea — AI will help it grow, research context, and propose creative variants. Plant an idea"
+}

@@ -1,0 +1,28 @@
+{
+ "nazwa": "06-audits",
+ "motyw": "light",
+ "url": "/audit-programs?tab=library",
+ "urlKoncowy": "/audit-programs?tab=library",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 6,
+ "apiReq": [
+  "GET /api/mfa/status",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/organizations/current",
+  "GET /api/audits/packs",
+  "GET /api/audits/programs",
+  "GET /api/users"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 462,
+ "msDoZrzutu": 5777,
+ "rootLen": 54821,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Audits Data Model 1 1 James Whitfield JW Library Sessions Conclusions Reports Initiatives Verification: All 1 New audit Frozen until wave 2: uploading audit assumptions and the question generator. All 1 Verified 0 Pending review 0 TITLE SOURCE VERSION SOURCE TYPE VERIFICATION PUBLICATION STATUS CRITERIA UPDATED Operational Excellence Audit 2026 Northwind Operational Excellence Programme — internal audit procedure v1 Internal procedure Unverified Published 7 08/09/2026 "
+}

@@ -1,0 +1,26 @@
+{
+ "nazwa": "11b-audits-brief",
+ "motyw": "light",
+ "url": "/assessment/audits",
+ "urlKoncowy": "/assessment/audits",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 4,
+ "apiReq": [
+  "GET /api/demo/status",
+  "GET /api/mfa/status",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/organizations/current"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoTresci": 20,
+ "msDoZrzutu": 3727,
+ "rootLen": 26327,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Assessment Data Model 1 1 James Whitfield JW"
+}

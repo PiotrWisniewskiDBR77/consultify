@@ -1,0 +1,30 @@
+{
+ "nazwa": "10-materials",
+ "motyw": "light",
+ "url": "/knowledge-base",
+ "urlKoncowy": "/knowledge-base",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 8,
+ "apiReq": [
+  "GET /api/public/anna/voice-config",
+  "GET /api/public/kb-v8/collections?lang=en&site=consultify",
+  "GET /api/public/kb-v8/featured?lang=en&limit=20&site=consultify",
+  "GET /api/public/kb-v8/tags?lang=en&site=consultify",
+  "GET /api/public/kb-v8/articles?lang=en&limit=100&site=consultify",
+  "GET /api/public/kb-v8/collections/consultify-why-transformations-fail/articles?lang=en&limit=4&offset=0&site=consultify",
+  "GET /api/public/kb-v8/collections/consultify-the-money-question/articles?lang=en&limit=4&offset=0&site=consultify",
+  "GET /api/public/kb-v8/collections/consultify-decisions-that-ship/articles?lang=en&limit=4&offset=0&site=consultify"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoTresci": 2279,
+ "msDoZrzutu": 8806,
+ "rootLen": 122951,
+ "tekst": "Become Partner Try demo Menu EN Log in Start trial 50+ expert articles on transformation management Knowledge Base Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion. CHOOSE THE TENSION YOU WANT TO SOLVE Three sharper ways into the library Each lane is framed around a real executive tension, so people can enter through failure, money, or execution instead of generic taxonomy. CATEGORY Why Transformations Fail The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater. FEATURED 18 ARTICLES Open lane CATEGORY The Money Question ROI defense, board packets, budget linkage, and investment logic that survives scrutiny. FEATURED 17 ARTICLES Open lane CATEGORY Decisions That Ship From decision latency to owned initiatives — how to move from alignment theater to execution clarity. FEATURED 15 ARTICLES Open lane Featured Articles Start here for the most impactful insights FEATURED WHY TRANSFORMATIONS FAIL Why Strategy Workshops Fail Without an Execution System many organizations invest in strategy workshops that create alignment in the room, but lose force quickly because priorities, ownership, ROI logic, and follow-through remain outside a live system For Owners & Presidents Execution Governance Leadership 7 min Read article FEATURED THE MONEY QUESTION How to Calculate the Real ROI of AI Consulting many leaders evaluate consulting and AI strat"
+}

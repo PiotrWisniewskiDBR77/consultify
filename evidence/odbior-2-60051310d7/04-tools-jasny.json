@@ -1,0 +1,31 @@
+{
+ "nazwa": "04-tools",
+ "motyw": "light",
+ "url": "/discovery-tools",
+ "urlKoncowy": "/discovery-tools",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 9,
+ "apiReq": [
+  "GET /api/users",
+  "GET /api/tools",
+  "GET /api/assessment-workflow-v2?limit=100",
+  "GET /api/assessment-reports",
+  "GET /api/report-builder",
+  "GET /api/presentations/decks",
+  "GET /api/tool-outputs",
+  "GET /api/known-tools?lang=en&limit=50",
+  "GET /api/initiatives/by-status/PROPOSED,DRAFT,PENDING_APPROVAL,APPROVED,IN_EXECUTION,CLOSED,REJECTED"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 4855,
+ "msDoZrzutu": 8967,
+ "rootLen": 165074,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Tools Data Model 1 1 James Whitfield JW Library Sessions Insights Reports Initiatives Add tool All 36 Strategy 10 Operations 10 Digital 10 Automation 1 Assessments 5 TOOL CATEGORY TAGS LICENSE STATUS Dynamic SWOT Strategy strategy swot diagnosis Free Active Market Forces (Porter) In development Strategy strategy porter competition Free Inactive Growth Paths (Ansoff) In development Strategy strategy ansoff growth Free Inactive Value Chain Analysis In development Strategy strategy value-chain operating-model Free Inactive Portfolio Prioritization In development Strategy strategy prioritization portfolio Free Inactive Risk & Uncertainty In development Strategy strategy risk uncertainty Free Inactive Capability Mapper In development Strategy strategy capabilities roadmap Free Inactive Ambition Decomposer In development Strategy strategy targets roadmap Free Inactive Focus & Trade-offs In development Strategy strategy tradeoffs focus Free Inactive Narrative & Alignment In development Strategy strategy narrative alignment Free Inactive A3 Problem Solving In development Operations operations a3 root-cause Free Inactive VSM Builder In development Operations operations lean vsm Free Inactive SOP Builder In development Operations operations sop standard-work Free Inactive Constraint Control (TOC) In development Operations operations toc throughput Free Inactive Decision Engine In development Operations operations decision priorit"
+}

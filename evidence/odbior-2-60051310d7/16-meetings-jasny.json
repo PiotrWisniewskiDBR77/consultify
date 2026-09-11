@@ -1,0 +1,28 @@
+{
+ "nazwa": "16-meetings",
+ "motyw": "light",
+ "url": "/meetings",
+ "urlKoncowy": "/meetings",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 6,
+ "apiReq": [
+  "GET /api/mfa/status",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/my-work/personal-tasks",
+  "GET /api/organizations/current",
+  "GET /api/notifications?limit=20",
+  "GET /api/notifications/unread-count"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoTresci": 615,
+ "msDoZrzutu": 5130,
+ "rootLen": 28241,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Meeting Data Model 1 1 James Whitfield JW Meetings — planned for Wave 2 This module isn't part of the MVP yet. We'll come back to it in the next wave. Back to Chat"
+}

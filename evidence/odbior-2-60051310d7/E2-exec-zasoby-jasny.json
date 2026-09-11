@@ -1,0 +1,27 @@
+{
+ "nazwa": "E2-exec-zasoby",
+ "motyw": "light",
+ "url": "/execution?tab=list&view=table",
+ "urlKoncowy": "/execution?tab=resources&view=table",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 5,
+ "apiReq": [
+  "GET /api/execution-control/capacity/resource-plan?weeks=8",
+  "GET /api/initiatives/runtime-v1/execution-cases",
+  "GET /api/initiatives",
+  "GET /api/initiatives/runtime-v1/execution-cases",
+  "GET /api/initiatives/runtime-v1/execution-cases/bulk?ids=004db83d-06fc-59f2-9cd9-64290638f2bc%2C9b06b4c3-fc76-56fc-b9b1-a5c29e2db589%2C6bfccd56-ea23-5c94-a5c4-4ade9168082f%2C3327e4be-a2d9-582c-9a3e-f13f44654966"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 15,
+ "msDoZrzutu": 13287,
+ "rootLen": 322861,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Execution Data Model 1 James Whitfield JW Dashboard Deliveries Work Resources Decisions & risks Reports All deliveries Skills Matrix and Upskilling Warehouse Automation Pilot MES Rollout Line 3 Predictive Maintenance for CNC Line Add availability People 9 Overallocated 4 With backlog 6 As of 12/09/2026 · people 9 · demand 1230.4 h · supply 2704 h · utilisation 46 % · overloaded weeks 9 · backlog 169 h across 6 people PERSON / ROLE WEEK DEMAND (H) SUPPLY (H) UTILISATION % GAP (H) BACKLOG (H) Daniel Osei · Automation Engineer from 07/09/2026 136.4 h 40 h 341 % -96.4 h — Daniel Osei · Automation Engineer from 14/09/2026 89.8 h 40 h 225 % -49.8 h — Daniel Osei · Automation Engineer from 21/09/2026 89.8 h 40 h 225 % -49.8 h — Daniel Osei · Automation Engineer from 28/09/2026 0 h 40 h 0 % +40 h — Daniel Osei · Automation Engineer from 05/10/2026 0 h 40 h 0 % +40 h — Daniel Osei · Automation Engineer from 12/10/2026 0 h 40 h 0 % +40 h — Daniel Osei · Automation Engineer from 19/10/2026 0 h 40 h 0 % +40 h — Daniel Osei · Automation Engineer from 26/10/2026 0 h 40 h 0 % +40 h — James Whitfield · Operations Director from 07/09/2026 30.2 h 40 h 76 % +9.8 h 7 h James Whitfield · Operations Director from 14/09/2026 4 h 40 h 10 % +36 h — James Whitfield · Operations Director from 21/09/2026 2.4 h 40 h 6 % +37.6 h — James Whitfield · Operations Director from 28/09/2026 1.4 h 40 h 3 % +38.6 h — James Whitfield · Operations Director fro"
+}

@@ -1,0 +1,36 @@
+OWNER  GET    /api/tasks                                                                 -> 200 (1026ms)
+  ZADAN: 46
+  jako REPORTER ale NIE wykonawca: 38 | jako WYKONAWCA: 8
+  projekty w zadaniach: ["6174636d-c4f2-552d-9a5a-d2695738f9bc","ae6cfbae-1ba8-5328-9048-d86f2a52a09e"]
+  projekt 6174636d-c4f2-552d-9a5a-d2695738f9bc: czlonkow=6 rola daniela=INITIATIVE_OWNER
+  projekt ae6cfbae-1ba8-5328-9048-d86f2a52a09e: czlonkow=4 rola daniela=BRAK
+
+== CEL (zastany, cudzy dla MEMBER-a): f9c386c1-8b09-5276-a5a0-4452f1e283b8 "Agree the shuttle safety case with the works council" projectId=6174636d-c4f2-552d-9a5a-d2695738f9bc assignee=a0e18893-9740-557d-92c5-66a50a43b3bb status=blocked
+
+== B-1..B-3: MEMBER (daniel) na CUDZYM ZASTANYM zadaniu w projekcie, gdzie ma role .scoped
+MEMBER PUT    /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8                            -> 403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED (2073ms)
+MEMBER POST   /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/assign                     -> 403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED (631ms)
+MEMBER POST   /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/block                      -> 403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED (507ms)
+MEMBER PUT    /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/status                     -> 404 [object Object] (178ms)
+MEMBER DELETE /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8                            -> 403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED (129ms)
+MEMBER POST   /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/reassign                   -> 403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED (281ms)
+MEMBER POST   /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/unassign                   -> 403 CAPABILITY_REQUIRED (239ms)
+OWNER  GET    /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8                            -> 200 (1912ms)
+  STAN WIERSZA PO PROBACH: title="Agree the shuttle safety case with the works council" assignee=a0e18893-9740-557d-92c5-66a50a43b3bb status=blocked
+  WIERSZ NIETKNIETY: TAK
+  WERDYKT B-1 (PUT): DZIALA (403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED)
+  WERDYKT B-2 (assign): DZIALA (403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED)
+  WERDYKT B-3 (block): DZIALA (403 CAPABILITY_OBJECT_OWNERSHIP_REQUIRED)
+
+== KONTROLA POZYTYWNA: MEMBER na WLASNYM zadaniu 80662cd4-1b86-5775-a0dc-6795838f05a2 "Commission the shuttle system in the pilot aisle"
+MEMBER PUT    /api/tasks/80662cd4-1b86-5775-a0dc-6795838f05a2                            -> 200 (172ms)
+MEMBER GET    /api/tasks/80662cd4-1b86-5775-a0dc-6795838f05a2                            -> 200 (125ms)
+  po zapisie title="ODBIOR2- MEMBER wlasne"  -> DZIALA (200 + zapis)
+MEMBER PUT    /api/tasks/80662cd4-1b86-5775-a0dc-6795838f05a2                            -> 200 (133ms)
+  przywrocenie tytulu: 200
+
+== B-4: GET /api/my-work/personal-tasks/<id> dla ZASTANYCH zadan (OWNER reporter, nie wykonawca)
+  probka 12 zadan (reporter, nie wykonawca): 200 = 12, inne = 0
+  PELNY PRZELOT po 46 zadaniach: 200 = 46, nie-200 = 0  (PRZED: 8/46 otwieralo sie)
+
+5xx w sondzie: 0 

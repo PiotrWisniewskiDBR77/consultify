@@ -1,0 +1,35 @@
+{
+ "nazwa": "05-assessment",
+ "motyw": "light",
+ "url": "/assessment/overview",
+ "urlKoncowy": "/assessment/overview?tab=library",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 13,
+ "apiReq": [
+  "GET /api/mfa/status",
+  "GET /api/health",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/my-work/personal-tasks",
+  "GET /api/organizations/current",
+  "GET /api/users",
+  "GET /api/method/sessions?methodPackId=drd&limit=100&offset=0",
+  "GET /api/v8/assessment?limit=200&offset=0",
+  "GET /api/assessment-reports",
+  "GET /api/initiatives?source=assessment",
+  "GET /api/report-import",
+  "GET /api/notifications?limit=20",
+  "GET /api/notifications/unread-count"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 5368,
+ "msDoZrzutu": 9478,
+ "rootLen": 57663,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Assessment Data Model 1 1 James Whitfield JW Library Processes Insights Reports Initiatives METHODOLOGY AREA STATUS ACTIONS Advanced Digital Maturity Assessment ADMA Digital manufacturing Planned Start Capability Maturity Model Integration CMMI Process capability Planned Start Digital Readiness Diagnosis DRD Digital transformation Method core Start Lean 4.0 LEAN Lean and automation Planned Start Smart Industry Readiness Index SIRI Smart manufacturing Planned Start "
+}

@@ -1,0 +1,24 @@
+{
+ "nazwa": "13-admin",
+ "motyw": "light",
+ "url": "/admin/team/members",
+ "urlKoncowy": "/admin/team/members",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 2,
+ "apiReq": [
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/admin/invitations"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 463,
+ "msDoZrzutu": 4572,
+ "rootLen": 158316,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Admin Overview Data Model 1 1 James Whitfield JW Back ADMIN PANEL Access, organization policies, evidence, and safe operations TEAM & ACCESS Members Invitations Roles & Permissions Teams Guests & External Access Access Requests Access Reviews Ownership BILLING & PLANS AI CONTROL SECURITY & IDENTITY AUDIT LOG ADMIN COMMAND CENTER SYSTEM HEALTH Admin panel Team & Access Members Members Membership operations, role changes, ownership transfer, and team invite codes. Owner Full workspace control, ownership transfer, and owner-only safeguards. Only an owner can assign or remove another owner. Admin Can manage team members, member roles, and team invite codes. Cannot change owner membership or bypass owner protections. Member Standard workspace access without team administration permissions. Cannot open Team Admin or change membership. Guest Restricted collaborator role with no admin access. Guests cannot access admin tools. Members & Roles Canonical P32 surface for membership, role changes, and ownership safeguards. Invitation role Member Admin Guest Add member MEMBER EMAIL ROLE STATUS James Whitfield james.whitfield@northwind.example Role for James Whitfield Owner Admin Member Guest Active Sarah Mitchell sarah.mitchell@northwind.example Role for Sarah Mitchell Owner Admin Member Guest Active Robert Chen robert.chen@northwind.example Role for Robert Chen Owner Admin Member Guest Active Emily Carter emily.carter@northwind.exam"
+}

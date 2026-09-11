@@ -1,0 +1,33 @@
+{
+ "nazwa": "07-initiatives",
+ "motyw": "light",
+ "url": "/initiatives",
+ "urlKoncowy": "/initiatives",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 11,
+ "apiReq": [
+  "GET /api/mfa/status",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/organizations/current",
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/v8/planning/pending-decisions",
+  "GET /api/initiatives/runtime-v1/initiatives",
+  "GET /api/initiatives",
+  "GET /api/users",
+  "GET /api/initiatives/runtime-v1/initiatives",
+  "GET /api/initiatives",
+  "GET /api/notifications/unread-count"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 615,
+ "msDoZrzutu": 5129,
+ "rootLen": 101263,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Initiatives Data Model 1 1 James Whitfield JW Initiatives Plan Load Priority All priorities Critical High Medium Low Status Active All New initiative All 12 Pending approval 1 In execution 4 INITIATIVE STATUS NEXT GATE READINESS OWNER AREA / AXIS NEXT ACTION EXPECTED IMPACT PLANNED WINDOW HEALTH UPDATED P11 weryfikacja zapisu po czystce Test zapisu po sprzataniu organizacji testowych (P11, 2026-09-10). Draft Definition Not evaluated James Whitfield — Complete the definition Test zapisu po sprzataniu organizacji testowych (P11, 2026-09-10). Confidence: Unknown — Not applicable 3 hours ago Cybersecurity Hardening OT Segment the OT network, retire unsupported controller firmware and monitor vendor remote access. Proposed Definition Not evaluated Robert Chen Information Technology Complete the definition — Confidence: Unknown — Not applicable 2 days ago Customer Portal for Order Tracking A self-service portal exposing delivery date, production stage and dispatch tracking for every open order. Draft Definition Not evaluated Michael Grant Commercial Complete the definition — Confidence: Unknown — Not applicable 2 days ago Digital Work Instructions Tablet-based work instructions served from the current revision, replacing laminated folders at the station. Pending approval Portfolio Not evaluated Sarah Mitchell Digital Manufacturing Prepare the portfolio decision — Confidence: Unknown — Not applicable 2 days ago Skills Matrix a"
+}
