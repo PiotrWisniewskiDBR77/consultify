@@ -1496,11 +1496,17 @@ router.put(
     // per-org), so an unscoped ON CONFLICT UPSERT could overwrite another org's
     // assumptions row. Verify parent (initiative) ownership before writing — mirrors
     // the already-fixed v8 router (v8/results.routes.ts) which 404s on a foreign-org id.
-    const parentInitiative = await dbGet<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, orgId]
-    );
-    if (!parentInitiative?.id) {
+    const parentInitiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(String(orgId), String(initiativeId))
+      : Boolean(
+          (
+            await dbGet<{ id: string }>(
+              `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              [initiativeId, orgId]
+            )
+          )?.id
+        );
+    if (!parentInitiativeFound) {
       return res.status(404).json({ success: false, error: 'Initiative not found' });
     }
     const {
@@ -1582,11 +1588,17 @@ router.post(
     // SEC-3 (L-04): verify parent (initiative) ownership before recording a realized
     // value, so a foreign-org id cannot attach realized data to another org's initiative
     // (mirrors the v8 router which 404s on a foreign-org id).
-    const parentInitiative = await dbGet<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, orgId]
-    );
-    if (!parentInitiative?.id) {
+    const parentInitiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(String(orgId), String(initiativeId))
+      : Boolean(
+          (
+            await dbGet<{ id: string }>(
+              `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              [initiativeId, orgId]
+            )
+          )?.id
+        );
+    if (!parentInitiativeFound) {
       return res.status(404).json({ success: false, error: 'Initiative not found' });
     }
     const {
