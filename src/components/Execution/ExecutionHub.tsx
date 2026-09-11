@@ -5381,6 +5381,41 @@ Please return:
           );
         }
       }
+      // D-6 (odbiór W2B 20260910): `handleOpenWorkDocument` (kebab wiersza
+      // Realizacja → Praca, pozycja „Zaktualizuj zadanie"/„Update task" na
+      // elemencie KANONICZNYM) wpisuje `activeDocumentId` postaci
+      // `work:<executionCaseId>:<workId>` — np.
+      // `work:review-exec-supply-chain:task-supplier-data`. Ten blok
+      // (`if (activeDocumentId) {…}`) sprawdza WSZYSTKIE inne prefiksy
+      // wcześniej, ale nie ten, więc identyfikator pracy leciał niżej do
+      // ogólnego `return` z widokiem karty inicjatywy (patrz niżej) —
+      // karta próbowała otworzyć „inicjatywę" o id `work:…` i dostawała
+      // 4×404 (`/api/v8/planning/initiatives/work%3A…`,
+      // `/api/initiatives/work:…/suggested-changes`,
+      // `/api/initiatives/work:…`, `/api/initiatives/runtime-v1/initiatives/
+      // work%3A…`) plus komunikat błędu karty inicjatywy (pół PL/pół EN).
+      // Niżej w tej funkcji (gałąź `activeTab === 'work'`) już ISTNIAŁ
+      // poprawny handler dla dokładnie tego prefiksu — renderujący
+      // `ExecutionWorkSurface` z `documentId`, czyli WBUDOWANY podgląd
+      // pracy (ta sama rodzina napraw co E1b/R1 i E1c/F1) — ale nie był
+      // osiągalny, bo ten wcześniejszy `if (activeDocumentId)` zawsze
+      // wygrywał pierwszy. Naprawa: obsłużyć `work:` tutaj, zanim dojdzie
+      // do karty inicjatywy — niezależnie od tego, jaka zakładka jest
+      // aktywna (ten sam wzorzec co `report:`/`execution-intelligence:`
+      // wyżej).
+      if (activeDocumentId.startsWith('work:')) {
+        const [, , ...workIdParts] = activeDocumentId.split(':');
+        return (
+          <ExecutionWorkSurface
+            activePreset="all"
+            onCountsChange={menu3CountHandlers.work}
+            documentId={workIdParts.join(':')}
+            onRegisterFilterControl={setWorkFilterControl}
+            onRegisterPrimaryCta={setWorkPrimaryCta}
+            onRegisterMenu3Control={setWorkMenu3Control}
+          />
+        );
+      }
       return (
         <Suspense fallback={<HubWorkAreaLoading />}>
           <ExecutionInitiativeDocumentView
@@ -5567,19 +5602,10 @@ Please return:
     }
 
     if (activeTab === ('work' as ModuleTab)) {
-      if (activeDocumentId?.startsWith('work:')) {
-        const [, , ...workIdParts] = activeDocumentId.split(':');
-        return (
-          <ExecutionWorkSurface
-            activePreset="all"
-            onCountsChange={menu3CountHandlers.work}
-            documentId={workIdParts.join(':')}
-            onRegisterFilterControl={setWorkFilterControl}
-            onRegisterPrimaryCta={setWorkPrimaryCta}
-            onRegisterMenu3Control={setWorkMenu3Control}
-          />
-        );
-      }
+      // D-6: `activeDocumentId?.startsWith('work:')` niżej byłby zawsze
+      // nieosiągalny — ten sam prefiks jest już przechwytywany wcześniej,
+      // w bloku `if (activeDocumentId) {…}` na górze `renderContent`
+      // (patrz komentarz tam). Nie duplikujemy tu tej gałęzi drugi raz.
       return (
         <ExecutionWorkSurface
           activePreset={canonicalMenu3Preset.work}

@@ -83,6 +83,7 @@ import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilo
 import {
   listLegacyInitiatives,
   listRegisteredInitiatives,
+  readRegisteredInitiative,
 } from '../../services/initiatives-execution/runtimeApi';
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
@@ -1096,10 +1097,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               try {
                 response = await Api.get(`/initiatives/${encodeURIComponent(openId)}`);
               } catch {
-                const interviewResponse = await Api.get('/initiatives?source=interview_insight');
-                const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
-                response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
-                if (!response) throw v8Error;
+                try {
+                  // D-3 (odbiór W2B 20260910): rekord KANONICZNY runtime-v1
+                  // (np. świeżo utworzona inicjatywa, id postaci
+                  // `initiative-…`) nie ma odpowiednika ani w V8, ani w
+                  // tabeli klasycznej — jedyna trasa, która go zna, to
+                  // `GET /api/initiatives/runtime-v1/initiatives/:id`
+                  // (ten sam odczyt, z którego korzysta karta —
+                  // `initiativeDocumentSource.ts`). Bez tej gałęzi adres
+                  // `?open=<id>&mode=doc` i każde odświeżenie strony gubiły
+                  // taki rekord i pokazywały rejestr zamiast karty — ten
+                  // sam adapter (`toCanonicalInitiativeRegisterItem`),
+                  // którego używa lista, żeby wiersz i karta nie rozjechały
+                  // się po raz drugi.
+                  const registered = await readRegisteredInitiative(openId);
+                  response = toCanonicalInitiativeRegisterItem(
+                    registered,
+                    { id: currentUserId, displayName: currentUserDisplayName },
+                    resolveOwnerMemberName
+                  );
+                } catch {
+                  const interviewResponse = await Api.get(
+                    '/initiatives?source=interview_insight'
+                  );
+                  const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+                  response = interviewInitiatives.find(
+                    (item: any) => String(item?.id) === openId
+                  );
+                  if (!response) throw v8Error;
+                }
               }
             }
           }
@@ -1149,6 +1175,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     handleOpenInitiativeDocument,
     scope,
     activeStatusFilter,
+    currentUserId,
+    currentUserDisplayName,
+    resolveOwnerMemberName,
   ]);
 
   // Deep link: open the canonical initiative wizard.

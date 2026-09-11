@@ -2348,7 +2348,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }));
       setInitiative(data);
       setInitiativeTemplate(null);
-      setTitleDraft(String(data.title || data.name || '').trim());
+      // D-4b (odbiór W2B 20260910): dwa różne teksty dla tego samego rekordu —
+      // rejestr (`InitiativesHub`/`initiativeRegisterProjection.ts`) renderuje
+      // WSZĘDZIE `initiative.name`, ale ta karta wcześniej brała
+      // `data.title || data.name`. Zmierzone na kopii `consultify_staging_1009`
+      // (org DBR77, inicjatywa `e3b0a66a-dc86-4730-84e0-cdffb66cbed6`,
+      // "Wdrożenie sieci czujników IoT"): tabela `initiatives` niesie DWIE
+      // niezależne kolumny — `name` (Polish, bieżąca — ta sama, którą czyta
+      // rejestr) i `title` (angielski, zastany ślad pierwotnego draftu AI,
+      // nigdy nieaktualizowany). `GET /api/v8/planning/initiatives/:id`
+      // (`getInitiativeDetailRead`) tłumaczy/normalizuje `name`, ale zwraca
+      // surowe `title` bez zmian — więc `data.title` było prawie zawsze
+      // ustawione i zawsze wygrywało z `||`. Rekordy z jednym kanonicznym
+      // pisarzem (`toInitiativeDocumentFromRegistration` dla runtime-v1-only)
+      // ustawiają `title` i `name` na tę samą wartość, więc zamiana kolejności
+      // ich nie dotyka. `name` pierwsze — ten sam rekord, ten sam tytuł co
+      // w rejestrze.
+      setTitleDraft(String(data.name || data.title || '').trim());
       setSummary(data.summary || data.description || '');
       setDescription(data.description || '');
       // Sync problem definition fields — try structured object first, then parse JSON string
