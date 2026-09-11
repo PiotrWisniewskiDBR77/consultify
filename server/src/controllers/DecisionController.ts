@@ -9,6 +9,10 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { InitiativeStatus } from '../constants/initiativeStatuses.js';
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import {
   createDecisionAlternative,
@@ -700,11 +704,15 @@ async function assertRelatedObjectsBelongToOrg(input: {
     }
   }
   if (initiativeId) {
-    const row = await queryHelpers.queryOne<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, organizationId]
-    );
-    if (!row) {
+    const found = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(organizationId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryOne<{ id: string }>(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, organizationId]
+          )
+        );
+    if (!found) {
       return {
         ok: false,
         field: 'initiativeId',
