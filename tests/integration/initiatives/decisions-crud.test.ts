@@ -112,7 +112,16 @@ describe('M03 — GET /decisions getTableColumns guard (real controller)', () =>
     expect(mockQueryAll).toHaveBeenCalledTimes(1);
     const [sql, params] = mockQueryAll.mock.calls[0] as [string, any[]];
     expect(String(sql)).toMatch(/FROM decision_impacts di/i);
-    expect(String(sql)).toMatch(/is_blocker = TRUE/i);
+    // NOTE: intentionally NOT asserting the literal `is_blocker = TRUE` —
+    // DecisionController.ts:244-262 documents a genuine schema conflict
+    // between two pre-existing migrations (292/297 define `is_blocker
+    // INTEGER`, 728 defines `is_blocker BOOLEAN`) plus PostgresDatabase.ts's
+    // ALWAYS_BOOLEAN_COLUMNS normalizer that rewrites bare `= 1`/`= TRUE`
+    // comparisons, so the controller deliberately uses
+    // `is_blocker::text IN ('1','true')` to stay correct across both column
+    // types. Assert the documented, environment-safe predicate instead of a
+    // literal this codebase can never safely emit.
+    expect(String(sql)).toMatch(/is_blocker::text IN \('1','true'\)/i);
     expect(String(sql)).toMatch(/d\.organization_id = \?/i);
     expect(params).toContain(ORG_ID);
 
