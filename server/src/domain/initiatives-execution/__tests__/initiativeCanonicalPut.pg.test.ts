@@ -23,6 +23,12 @@ describe('CODEX2 E1 canonical PUT compatibility', { retry: 0 }, () => {
   const foreignOrganizationId = randomUUID();
   const userId = randomUUID();
   const foreignUserId = randomUUID();
+  // FIX-2 (97_ODBIOR_W1_W2.md §8): second owner candidate eligible via
+  // organization_members.role IN ('OWNER','ADMIN') (postgresInitiativeReader
+  // .isEligibleInitiativeOwner), and a third candidate that is an ACTIVE org
+  // member but neither a project member/owner nor OWNER/ADMIN — ineligible.
+  const eligibleOwnerId = randomUUID();
+  const ineligibleOwnerId = randomUUID();
   const projectId = randomUUID();
   const initiativeId = `initiative-${randomUUID()}`;
   const proposalId = `proposal-${randomUUID()}`;
@@ -41,7 +47,11 @@ describe('CODEX2 E1 canonical PUT compatibility', { retry: 0 }, () => {
     await sql.connect();
     await sql.query(`INSERT INTO organizations(id,name,status) VALUES($1,'CODEX2 E1','active'),($2,'CODEX2 E1 foreign','active')`, [organizationId, foreignOrganizationId]);
     await sql.query(`INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'local-only','OWNER','active'),($4,$5,$6,'local-only','OWNER','active')`, [userId, organizationId, `${userId}@test.invalid`, foreignUserId, foreignOrganizationId, `${foreignUserId}@test.invalid`]);
+    await sql.query(`INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'local-only','MEMBER','active'),($4,$5,$6,'local-only','MEMBER','active')`, [eligibleOwnerId, organizationId, `${eligibleOwnerId}@test.invalid`, ineligibleOwnerId, organizationId, `${ineligibleOwnerId}@test.invalid`]);
     await sql.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER','ACTIVE'),($4,$5,$6,'OWNER','ACTIVE')`, [randomUUID(), organizationId, userId, randomUUID(), foreignOrganizationId, foreignUserId]);
+    // eligibleOwnerId: ADMIN org role -> isEligibleInitiativeOwner() true via role branch.
+    // ineligibleOwnerId: MEMBER org role, no project_members row, not project owner -> false.
+    await sql.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$6,'MEMBER','ACTIVE')`, [randomUUID(), organizationId, eligibleOwnerId, randomUUID(), organizationId, ineligibleOwnerId]);
     await sql.query(`INSERT INTO projects(id,organization_id,name,owner_id) VALUES($1,$2,'CODEX2 E1 project',$3)`, [projectId, organizationId, userId]);
     authorization = `Bearer ${jwt.sign({ id: userId, userId, email: `${userId}@test.invalid`, organizationId, organization_id: organizationId, role: 'OWNER' }, config.JWT_SECRET, { algorithm: 'HS256', expiresIn: '10m' })}`;
     app = express();
@@ -93,6 +103,21 @@ describe('CODEX2 E1 canonical PUT compatibility', { retry: 0 }, () => {
     expect(response.body.code).toBe('INITIATIVE_CANONICAL_WRITE_REQUIRED');
     expect(response.body.unsupportedFields).toEqual(expect.arrayContaining(['priority']));
     expect(response.body.canonicalWriter).toBe('/api/initiatives/runtime-v1');
+  });
+
+  it('rejects an ineligible ownerId with 422 INITIATIVE_OWNER_INELIGIBLE', async () => {
+    const response = await request(app).put(`/api/initiatives/${initiativeId}`).set('Authorization', authorization).send({ ownerId: ineligibleOwnerId });
+    expect(response.status, JSON.stringify(response.body)).toBe(422);
+    expect(response.body.code).toBe('INITIATIVE_OWNER_INELIGIBLE');
+    const result = await sql.query(`SELECT payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`, [organizationId, initiativeId]);
+    expect(result.rows[0].payload_json.initiativeOwnerId).toBe(userId);
+  });
+
+  it('routes an eligible ownerId to the canonical command and persists it (FIX-2)', async () => {
+    const response = await request(app).put(`/api/initiatives/${initiativeId}`).set('Authorization', authorization).send({ ownerId: eligibleOwnerId });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const result = await sql.query(`SELECT payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`, [organizationId, initiativeId]);
+    expect(result.rows[0].payload_json.initiativeOwnerId).toBe(eligibleOwnerId);
   });
 
   it('does not reveal a canonical record to another tenant', async () => {
