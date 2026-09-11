@@ -1,15 +1,29 @@
 /**
  * Welcome Email Service
  * GAP-AUTH-003: Send welcome email to new users
+ *
+ * DEC-461 (2026-09-10 evening): English is the default language for this
+ * email; Polish is a translation selected per recipient (see
+ * `onboardingEmailLocale.ts`). Was hardcoded Polish only
+ * (commit 0bfffeac4e) — that predates DEC-461 and did not offer English.
  */
 
 import logger from '../utils/Logger.js';
+import { t } from './email/onboardingEmailCopy.js';
+import {
+  getOnboardingEmailLangForUser,
+  type OnboardingEmailLang,
+} from './email/onboardingEmailLocale.js';
 
 interface WelcomeEmailData {
   email: string;
   firstName: string;
   companyName: string;
   isDemo?: boolean;
+  /** Explicit language override — skips the DB lookup when already known. */
+  lang?: OnboardingEmailLang;
+  /** Used to resolve `lang` from the account's preference when `lang` is omitted. */
+  userId?: string;
 }
 
 /**
@@ -18,11 +32,14 @@ interface WelcomeEmailData {
 async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
   try {
     const EmailService = (await import('./emailService.js')).default;
+    const lang = data.lang ?? (await getOnboardingEmailLangForUser(data.userId));
 
     await EmailService.send({
       to: data.email,
-      subject: `Witamy w Consultify${data.isDemo ? ' (konto pokazowe)' : ''} 🎉`,
-      html: generateWelcomeEmailHtml(data),
+      subject: `${t(lang, 'welcome.subject.base')}${
+        data.isDemo ? t(lang, 'welcome.subject.demoSuffix') : ''
+      } 🎉`,
+      html: generateWelcomeEmailHtml(data, lang),
     });
 
     logger.info(`[WelcomeEmail] Welcome email sent to ${data.email}`);
@@ -35,12 +52,13 @@ async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
 /**
  * Generate welcome email HTML
  */
-function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
+function generateWelcomeEmailHtml(data: WelcomeEmailData, lang: OnboardingEmailLang): string {
   const appUrl = process.env.FRONTEND_URL || 'https://app.consultify.com';
+  const tr = (key: string, params: Record<string, string> = {}) => t(lang, key, params);
 
   return `
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="${lang}">
 <head>
     <meta charset="utf-8">
     <style>
@@ -64,78 +82,78 @@ function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Witamy w Consultify! 🎉</h1>
-            <p>Twoja platforma doradcza z AI jest gotowa</p>
-            ${data.isDemo ? '<span class="demo-badge">Konto pokazowe</span>' : ''}
+            <h1>${tr('welcome.header.title')}</h1>
+            <p>${tr('welcome.header.subtitle')}</p>
+            ${data.isDemo ? `<span class="demo-badge">${tr('welcome.demoBadge')}</span>` : ''}
         </div>
-        
+
         <div class="content">
-            <p>Cześć ${data.firstName},</p>
-            
-            <p>Dziękujemy za dołączenie do Consultify. Cieszymy się, że jest z nami <strong>${data.companyName}</strong>.</p>
-            
+            <p>${tr('welcome.greeting', { firstName: data.firstName })}</p>
+
+            <p>${tr('welcome.intro', { companyName: `<strong>${data.companyName}</strong>` })}</p>
+
             ${
               data.isDemo
                 ? `
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                <strong>🧪 Konto pokazowe</strong><br>
-                <p style="margin: 10px 0 0; font-size: 14px;">Korzystasz z konta pokazowego z przykładowymi danymi. Klikaj swobodnie — wszystkie funkcje są dostępne.</p>
+                <strong>${tr('welcome.demoNote.title')}</strong><br>
+                <p style="margin: 10px 0 0; font-size: 14px;">${tr('welcome.demoNote.body')}</p>
             </div>
             `
                 : ''
             }
-            
-            <h2 style="color: #1f2937;">Co możesz tu zrobić:</h2>
-            
+
+            <h2 style="color: #1f2937;">${tr('welcome.whatYouCanDo')}</h2>
+
             <div class="feature-grid">
                 <div class="feature">
                     <div class="feature-icon">📊</div>
-                    <h3>Prowadź oceny</h3>
-                    <p>Oceniaj projekty, zespoły i procesy z pomocą analizy AI</p>
+                    <h3>${tr('welcome.feature.assessments.title')}</h3>
+                    <p>${tr('welcome.feature.assessments.body')}</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">🤖</div>
-                    <h3>Asystent AI</h3>
-                    <p>Otrzymuj wnioski i rekomendacje od swojego doradcy AI</p>
+                    <h3>${tr('welcome.feature.ai.title')}</h3>
+                    <p>${tr('welcome.feature.ai.body')}</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">📈</div>
-                    <h3>Pulpit analityczny</h3>
-                    <p>Śledź postęp i mierz efekty w całej organizacji</p>
+                    <h3>${tr('welcome.feature.dashboard.title')}</h3>
+                    <p>${tr('welcome.feature.dashboard.body')}</p>
                 </div>
                 <div class="feature">
                     <div class="feature-icon">👥</div>
-                    <h3>Praca zespołowa</h3>
-                    <p>Pracujcie razem nad inicjatywami i decyzjami</p>
+                    <h3>${tr('welcome.feature.team.title')}</h3>
+                    <p>${tr('welcome.feature.team.body')}</p>
                 </div>
             </div>
-            
+
             <div style="text-align: center;">
-                <a href="${appUrl}/dashboard" class="cta-button">Przejdź do pulpitu →</a>
+                <a href="${appUrl}/dashboard" class="cta-button">${tr('welcome.cta.dashboard')}</a>
             </div>
-            
-            <h2 style="color: #1f2937; margin-top: 40px;">Potrzebujesz pomocy na start?</h2>
+
+            <h2 style="color: #1f2937; margin-top: 40px;">${tr('welcome.help.title')}</h2>
             <ul style="padding-left: 20px;">
-                <li><a href="${appUrl}/help">Zajrzyj do Centrum pomocy</a></li>
-                <li><a href="${appUrl}/settings/team">Zaproś osoby ze swojego zespołu</a></li>
-                <li><a href="mailto:support@consultify.com">Napisz do naszego wsparcia</a></li>
+                <li><a href="${appUrl}/help">${tr('welcome.help.center')}</a></li>
+                <li><a href="${appUrl}/settings/team">${tr('welcome.help.inviteTeam')}</a></li>
+                <li><a href="mailto:support@consultify.com">${tr('welcome.help.contact')}</a></li>
             </ul>
-            
-            <p style="margin-top: 30px;">Jesteśmy po to, żeby Ci pomóc.</p>
-            
-            <p>Pozdrawiamy,<br>
-            <strong>Zespół Consultify</strong></p>
+
+            <p style="margin-top: 30px;">${tr('welcome.signoff.line')}</p>
+
+            <p>${tr('welcome.signoff.closing')}<br>
+            <strong>${tr('welcome.team')}</strong></p>
         </div>
-        
+
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Consultify. Wszelkie prawa zastrzeżone.</p>
+            <p>© ${new Date().getFullYear()} Consultify. ${tr('welcome.footer.rights')}</p>
             <p>
-                <a href="${appUrl}/settings">Ustawienia</a> • 
-                <a href="${appUrl}/help">Pomoc</a> • 
-                <a href="mailto:support@consultify.com">Kontakt</a>
+                <a href="${appUrl}/settings">${tr('welcome.footer.settings')}</a> •
+                <a href="${appUrl}/help">${tr('welcome.footer.help')}</a> •
+                <a href="mailto:support@consultify.com">${tr('welcome.footer.contact')}</a>
             </p>
             <p style="font-size: 12px; color: #9ca3af;">
-                DBR77 Consultify Sp. z o.o. | Warszawa, Polska
+                ${tr('welcome.footer.address')}
             </p>
         </div>
     </div>
