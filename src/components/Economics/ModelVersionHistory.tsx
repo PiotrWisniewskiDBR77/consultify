@@ -96,7 +96,9 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
     <div className="space-y-4">
       {/* Version list */}
       <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
-        <table className="w-full text-sm">
+        <table /* §27-exempt: lista wersji modelu z dwukolumnowa selekcja radio (compare from/to) nieobslugiwana przez StandardTable.selection (checkbox bulk) — kandydat na StandardTable, do przepisania osobnym dyzurem */
+          className="w-full text-sm"
+        >
           <thead>
             <tr className="border-b border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
               <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -220,7 +222,9 @@ export const ModelVersionHistory: React.FC<Props> = ({ modelId }) => {
             )}
           </div>
           {diff.assumptionChanges.length > 0 && (
-            <table className="w-full text-sm">
+            <table /* §27-exempt: diff zalozen przed/po (klucz + wartosc before/after) — widok porownawczy wartosci, nie lista rekordow */
+              className="w-full text-sm"
+            >
               <thead>
                 <tr className="border-b border-slate-200 dark:border-white/[0.06]">
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500">
