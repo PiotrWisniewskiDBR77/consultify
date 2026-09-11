@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve as resolvePath } from 'node:path';
+
 import '@testing-library/jest-dom';
 import { beforeAll, vi, beforeEach } from 'vitest';
 import { mockLLMApi } from './__mocks__/llmApi.js';
@@ -914,12 +917,62 @@ vi.mock('@google/generative-ai', () => {
 // The global vi.mock('@google/generative-ai') above should suffice for most cases.
 // Individual tests should mock the service using vi.mock() if they need specifically injected behavior.
 
+// DEC-461 i18n-dlug-2 (11.09.2026) — KROK 0 dla
+// tests/unit/i18n/deck-builder-default-content.test.ts: ten test importuje
+// i uzywa PRAWDZIWEJ instancji i18next (src/i18n.ts), ktora laduje pliki
+// tlumaczen przez i18next-http-backend (fetch GET /locales/{lng}/{ns}.json).
+// Zanim ponizsza gałąź istniała, KAZDY fetch — w tym ten do locale JSON —
+// dostawal ten sam atrapowy `{ data: [] }`, wiec i18next nigdy nie ladowal
+// zadnych realnych kluczy pl/en i `t(klucz, 'English default')` zawsze
+// zwracal angielski literal wpisany w kodzie jako drugi argument, NIEZALEZNIE
+// od jezyka — nie "nie czyta locale" w produkcie (przegladarka realnie
+// fetch'uje ten sam plik i dostaje poprawna tresc — patrz
+// public/locales/pl/translation.json, klucze `presentations.builder.
+// defaultContent.*` MAJA polskie tlumaczenia), tylko przyrzad testowy klamal
+// o tresci. Naprawa u zrodla: rozpoznaj zadania do `/locales/<lng>/<ns>.json`
+// i oddaj realny plik z dysku; wszystko inne zostaje atrapa jak dotad. Jedyny
+// plik w repo importujacy surowa instancje `src/i18n` w teście to properties
+// wyzej wymieniony deck-builder test (`grep -rl "from '.*src/i18n'" tests/
+// src/`), wiec zasieg tej zmiany jest zamkniety do tego jednego pliku.
+const LOCALE_FETCH_PATTERN = /\/locales\/([a-zA-Z-]+)\/([\w-]+)\.json(?:\?.*)?$/;
+
 // Mock global fetch to handle relative URLs in JSDOM and prevents network calls
 global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : String(input);
 
   // Log for debugging if needed
   // console.log('[Mock Fetch]', url);
+
+  const localeMatch = url.match(LOCALE_FETCH_PATTERN);
+  if (localeMatch) {
+    const [, lng, ns] = localeMatch;
+    try {
+      const filePath = resolvePath(process.cwd(), 'public', 'locales', lng, `${ns}.json`);
+      const raw = readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => parsed,
+        text: async () => raw,
+        blob: async () => new Blob([raw]),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        headers: new Headers(),
+      } as Response);
+    } catch {
+      // Brak pliku dla danego lng/ns (np. de/discovery.json nie istnieje) —
+      // zachowanie identyczne jak dotychczasowa atrapa dla reszty fetch'y.
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+        text: async () => '',
+        blob: async () => new Blob(),
+        arrayBuffer: async () => new ArrayBuffer(0),
+        headers: new Headers(),
+      } as Response);
+    }
+  }
 
   return Promise.resolve({
     ok: true,

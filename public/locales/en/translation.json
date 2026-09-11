@@ -1366,7 +1366,34 @@
       "badge": "AI operating system",
       "footer": "The point is not more AI surfaces. The point is one coherent, governed AI operating environment across chat, execution, knowledge, and outputs.",
       "heading": "One AI system for assistants, prompts, agents, knowledge, and artifact-native work.",
-      "sub": "Consultify packages strong AI architecture as a visible operating environment: guided assistants, governed prompts, multi-step agents, policy-aware knowledge, and outputs that continue beyond chat."
+      "sub": "Consultify packages strong AI architecture as a visible operating environment: guided assistants, governed prompts, multi-step agents, policy-aware knowledge, and outputs that continue beyond chat.",
+      "items": [
+        {
+          "badge": "Assistants",
+          "title": "Anna and Teresa are guided entry points into the same managed system.",
+          "description": "Anna handles public product support, while Teresa handles work inside tenants, but both belong to one Consultify AI operating environment."
+        },
+        {
+          "badge": "Prompt OS",
+          "title": "Prompt behavior is managed as a platform capability.",
+          "description": "Consultify does not rely on hidden prompt fragments. Prompt policy, releases and runtime behavior form one controlled system."
+        },
+        {
+          "badge": "Agents",
+          "title": "Agents plan, propose and coordinate work instead of acting like isolated tricks.",
+          "description": "The AI work model follows a managed lifecycle from request to plan, approval, application and audit."
+        },
+        {
+          "badge": "Knowledge",
+          "title": "Knowledge is policy-compliant, tracked and tied to the work context.",
+          "description": "Search and memory are governed by scope, privacy and provenance, so users can trust what the system uses."
+        },
+        {
+          "badge": "Outputs",
+          "title": "AI work continues into artifacts, deliverables and proof of execution.",
+          "description": "The system carries context into reports, presentations, sheets and deployment-ready outputs instead of ending at chat responses."
+        }
+      ]
     },
     "modelDeployment": {
       "badge": "Custom AI model & deployment",
@@ -3462,7 +3489,8 @@
     "superAdmin": "SuperAdmin",
     "portfolioRoadmap": "Portfolio & Roadmap",
     "mcpIris": "MCP IRIS",
-    "mcpMarketplace": "MCP Marketplace"
+    "mcpMarketplace": "MCP Marketplace",
+    "agentPlan": "Run agent"
   },
   "widgets": {
     "help": {
@@ -27857,7 +27885,8 @@
       "language": "Language",
       "scope": "Scope",
       "scopePlaceholder": "e.g. last 12 months + key ratios",
-      "sendAsCandidate": "Send as Candidate"
+      "sendAsCandidate": "Send as Candidate",
+      "format": "Format"
     },
     "model": {
       "title": "Financial Models",
@@ -29575,7 +29604,8 @@
       "notMigrated": "This record has no counterpart in the new system yet (it has not been migrated).",
       "legacyTitle": "You are opening the proven classic view",
       "legacyBody": "The new workspace has no link to this record yet. You can keep working on the data in the existing view; nothing is hidden or simulated."
-    }
+    },
+    "currency": "Currency"
   },
   "portfolio": {
     "toast": {
@@ -31603,7 +31633,10 @@
       "aiUsageTooltip": "AI calls used today / daily limit",
       "tokenUsageTooltip": "Tokens used today / daily limit",
       "readyForMore": "Ready for your own data?",
-      "readyForMoreWorkspace": "Want to run the same flow on your own work?"
+      "readyForMoreWorkspace": "Want to run the same flow on your own work?",
+      "backToWorkspace": "Back to my workspace",
+      "exitWorkspace": "Exit sample workspace",
+      "sampleWorkspace": "Sample workspace"
     },
     "session": {
       "returnWorkspace": "Back to my workspace",
@@ -31687,7 +31720,10 @@
       "getFullAccess": "Get full access"
     },
     "toast": {
-      "enabled": "Demo mode is on. You are browsing {{organization}}."
+      "enabled": "Demo mode is on. You are browsing {{organization}}.",
+      "disabled": "Demo mode disabled. Returning to your workspace.",
+      "toggleError": "Failed to toggle demo mode",
+      "toggleErrorShort": "Demo mode toggle error"
     },
     "loading": {
       "title": "Preparing your environment",
@@ -33141,7 +33177,8 @@
         "shared": "Shared",
         "deprecated": "Deprecated"
       },
-      "drafts": "Drafts"
+      "drafts": "Drafts",
+      "statusLabel": "Status"
     },
     "actions": {
       "newTemplate": "New template",
@@ -33168,7 +33205,9 @@
       "newFromTemplate": "New from template",
       "openInWorkspace": "Open in workspace",
       "exportXlsx": "Download XLSX",
-      "startReview": "Start review"
+      "startReview": "Start review",
+      "newDocument": "New document",
+      "newSheet": "New sheet"
     },
     "empty": {
       "templates": "No templates found",
@@ -33200,7 +33239,13 @@
       "replacedBy": "New template",
       "updatedAt": "Last updated",
       "open": "Preview",
-      "source": "Source"
+      "source": "Source",
+      "ai": {
+        "improve": "Suggest improvements",
+        "summary": "Summarize sections"
+      },
+      "aiNextSteps": "Suggest next steps",
+      "aiSummarize": "Summarize report"
     },
     "toast": {
       "exported": "Exported successfully",
@@ -33286,7 +33331,8 @@
           "diagnostic": "Diagnostic read-out",
           "riskRegister": "Risk register",
           "kpiDashboard": "KPI dashboard"
-        }
+        },
+        "bundleBriefPlaceholder": "Describe the company, product, market, funding needed and key metrics."
       },
       "kind": {
         "presentation": "Presentation",
@@ -33298,7 +33344,8 @@
         "visibility": "Visibility",
         "review": "Review",
         "kind": "Type",
-        "exports": "Exports"
+        "exports": "Exports",
+        "format": "Format"
       },
       "preview": {
         "status": "Status",
@@ -33347,7 +33394,9 @@
         "checkFailed": "not passed",
         "checkPending": "awaiting check",
         "checkSkipped": "skipped",
-        "copyId": "Copy ID"
+        "copyId": "Copy ID",
+        "originsCount": "Origin sources: {{count}}",
+        "sourcesCount": "Source materials: {{count}}"
       },
       "tabs": {
         "all": "All",
@@ -33380,6 +33429,16 @@
       },
       "breadcrumb": {
         "library": "Library"
+      },
+      "ai": {
+        "suggestNext": "Suggest next steps",
+        "summarize": "Summarize"
+      },
+      "archive": {
+        "sheetsComingSoon": "Archiving sheets is not available yet"
+      },
+      "delete": {
+        "comingSoon": "Deleting is not available yet"
       }
     },
     "bundles": {
@@ -33399,7 +33458,19 @@
       "redownloadUnavailable": "Re-download unavailable (brief not stored)",
       "showHistory": "AI Bundle generation history",
       "hideHistory": "Hide history",
-      "sectionTitle": "AI bundle — generation history"
+      "sectionTitle": "AI bundle — generation history",
+      "detail": {
+        "created": "Created",
+        "language": "Language",
+        "quality": "Quality",
+        "status": "Status"
+      },
+      "quality": {
+        "issues": "Quality issues",
+        "ok": "Quality OK",
+        "pending": "Awaiting review"
+      },
+      "untitled": "Untitled bundle"
     },
     "errors": {
       "realReportsTitle": "Real reports source needs attention",
@@ -33461,7 +33532,8 @@
       },
       "viewGallery": "Gallery",
       "statusApproved": "Approved",
-      "statusPublished": "Published"
+      "statusPublished": "Published",
+      "legacyBadge": "Legacy template"
     },
     "bundleHistoryPanel": {
       "qualityIsFine": "Quality is fine",
@@ -33633,7 +33705,9 @@
     "enterpriseNote": {
       "badge": "Enterprise details",
       "title": "Custom deployment, governance, and commercial setup",
-      "body": "Enterprise plans are for organizations that need more than standard packaging: on-premise or dedicated deployment, custom legal flow, procurement support, partner-heavy rollout, licensed tool bundles, or negotiated AI budget structures."
+      "body": "Enterprise plans are for organizations that need more than standard packaging: on-premise or dedicated deployment, custom legal flow, procurement support, partner-heavy rollout, licensed tool bundles, or negotiated AI budget structures.",
+      "ctaEnterprise": "Talk about an enterprise rollout",
+      "ctaTrial": "Start a trial first"
     },
     "budget": {
       "shared": {
@@ -33647,24 +33721,31 @@
       "payg": {
         "title": "Automatic pay-as-you-go fallback",
         "body": "When the included budget is exhausted, AI usage can continue through pay-as-you-go or by switching to a larger package."
-      }
+      },
+      "badge": "Shared AI budget",
+      "heading": "Usage is pooled across the whole organization"
     },
     "overLimit": {
       "items": [
         "After the AI budget is exhausted, users keep access to existing data, workspaces, and prior outputs.",
         "What stops is AI assistance: generation, AI-guided support, and token-consuming actions.",
         "Teams can continue through pay-as-you-go, upgrade the package, or contact sales for a larger commercial setup."
-      ]
+      ],
+      "badge": "Behavior after the limit is used up",
+      "heading": "The workspace keeps working even when AI stops"
     },
     "licensedTools": {
       "items": [
         "Selected assessments and frameworks such as SIR or DRD can require separate licensing.",
         "Licensed tools are sold as add-ons or handled as pricing on request, not mixed into the base seat price.",
         "This keeps the core platform readable while preserving room for specialized enterprise configurations."
-      ]
+      ],
+      "badge": "Licensed tools and frameworks",
+      "heading": "Specialized modules stay outside the base seat price"
     },
     "salesNote": {
-      "body": "AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase."
+      "body": "AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase.",
+      "badge": "Sales note"
     },
     "appView": {
       "badge": "Pricing",
@@ -34576,7 +34657,8 @@
         "retry_requested": "Retry requested",
         "completed": "Completed",
         "failed": "Failed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "planned": "Planned"
       },
       "visibility": {
         "private": "Only me",
@@ -34596,7 +34678,8 @@
         "completed": "Completed",
         "failed": "Failed",
         "cancelled": "Cancelled",
-        "expired": "Deadline passed"
+        "expired": "Deadline passed",
+        "unknown": "State unavailable"
       },
       "preflightState": {
         "passed": "Checks passed",
@@ -34615,7 +34698,59 @@
         "failed": "Needs fixing"
       },
       "preflightCheckPending": "Control pending execution",
-      "preflightCheckFailed": "Control needs correction"
+      "preflightCheckFailed": "Control needs correction",
+      "acceptButton": "Accept plan",
+      "acceptFailed": "Failed to accept the material plan",
+      "accepted": "Plan accepted and proposal created",
+      "approveReviewButton": "Approve review",
+      "artifactReady": "Material is ready",
+      "captureFirst": "Capture the conversation state to start planning the material",
+      "captureSnapshotAction": "Capture conversation state",
+      "goal": "Goal",
+      "goalPlaceholder": "Describe the material that should be produced from this conversation.",
+      "governedExecution": "Execution awaiting review",
+      "historyOriginal": "Original run",
+      "historyRetry": "Retry",
+      "historyTitle": "Run history",
+      "latestSnapshot": "The latest conversation snapshot is ready",
+      "materializeButton": "Create material",
+      "materializeFailed": "Failed to create the material",
+      "materialized": "Target material created",
+      "noSnapshot": "Capture the conversation state before planning the material",
+      "outputType": "Material type",
+      "planButton": "Plan material",
+      "planCreated": "Material plan created from the conversation",
+      "planFailed": "Failed to create the material plan",
+      "planVersion": "Plan version",
+      "preflightAction": "Check before running",
+      "preflightFailed": "Failed to check this run",
+      "preflightNotRun": "Not run",
+      "preflightOk": "Check updated",
+      "preflightTitle": "Pre-run check",
+      "proposalReady": "Proposal is ready",
+      "proposalsCount": "Proposals",
+      "rejectReviewButton": "Reject review",
+      "retried": "Material planning retried from the conversation",
+      "retryButton": "Retry",
+      "retryFailed": "Failed to retry planning",
+      "reviewApproveFailed": "Failed to approve the execution",
+      "reviewApproved": "Execution approved",
+      "reviewRejectFailed": "Failed to reject the execution",
+      "reviewRejected": "Execution rejected",
+      "reviewSubmitFailed": "Failed to submit the execution for review",
+      "reviewSubmitted": "Execution submitted for review",
+      "sheetTableId": "Target table ID",
+      "sheetTableIdHint": "The data will be saved to the existing target table.",
+      "sheetTableIdPlaceholder": "Enter the target table ID",
+      "snapshotCaptureFailed": "Failed to capture the conversation state",
+      "snapshotCaptured": "This conversation's state has been captured",
+      "snapshotMissing": "The conversation state must be captured before planning can start.",
+      "snapshotMissingButCapturable": "Capture the conversation state to start planning the material.",
+      "snapshotReady": "The latest snapshot of this conversation will be used.",
+      "submitReviewButton": "Submit for review",
+      "title": "Output material plan",
+      "trigger": "Create material plan",
+      "waitingSnapshot": "No captured conversation state"
     },
     "handoffIntentValue": {
       "unknown": "Not specified",
@@ -34628,7 +34763,28 @@
     "contextShortCount": "Context: {{count}}",
     "searchShortCount": "Searches: {{count}}",
     "handoffShortCount": "Handoffs: {{count}}",
-    "retrievalPresetConfigured": "Setting matched to conversation"
+    "retrievalPresetConfigured": "Setting matched to conversation",
+    "contextSnapshotsCount": "Conversation snapshots: {{count}}",
+    "contextSnapshotsLabel": "Context snapshots",
+    "contextSummary": "Conversation context",
+    "contextUnavailable": "Part of the context is unavailable",
+    "contextUnavailableHint": "A missing source is not treated as loaded. Try again or continue without passing the task on.",
+    "handoffCount": "Handoffs",
+    "handoffCreateAction": "Create handoff",
+    "handoffCreateFailed": "Failed to create the handoff",
+    "handoffCreated": "Handoff created from the active conversation",
+    "handoffEmpty": "No handoffs have been captured in this conversation yet.",
+    "handoffGoal": "Last goal",
+    "handoffIntent": "Intent",
+    "handoffRun": "Run",
+    "handoffSummary": "Handoffs from the conversation",
+    "retrievalDenied": "Access denied",
+    "retrievalEmpty": "No retrieval information has been captured in this conversation yet.",
+    "retrievalLatency": "Response time",
+    "retrievalPreset": "Retrieval preset",
+    "retrievalResults": "Results",
+    "retrievalSummary": "Information retrieval",
+    "retrievalWarnings": "Warnings"
   },
   "billing": {
     "addCard": {
@@ -34649,7 +34805,20 @@
       "manualNote": "Billing is currently handled manually by our team. No card is required.",
       "emptyManual": "Billing is handled manually",
       "learnMore": "Learn more",
-      "empty": "No presentations yet."
+      "empty": "No presentations yet.",
+      "addFirst": "Add your first card",
+      "default": "Default",
+      "defaultError": "Failed to change the default method",
+      "defaultSet": "Default payment method changed",
+      "description": "Manage saved payment methods",
+      "expires": "Expires",
+      "fetchError": "Failed to load payment methods",
+      "removeConfirm": "Are you sure you want to remove this payment method?",
+      "removeError": "Failed to remove the payment method",
+      "removed": "Payment method removed",
+      "securityNote": "Payment data is processed securely by Stripe. We do not store full card details.",
+      "setDefault": "Set as default",
+      "title": "Payment methods"
     },
     "analytics": {
       "unavailableTitle": "Revenue analytics coming soon",
@@ -34719,7 +34888,30 @@
         "nz_gst": "New Zealand GST",
         "sg_uen": "Singapore UEN",
         "other": "Other"
-      }
+      },
+      "addressLine1": "Address — line 1",
+      "addressLine2": "Address — line 2",
+      "billingAddress": "Billing address",
+      "billingEmail": "Billing email",
+      "billingName": "Company or full name",
+      "city": "City",
+      "country": "Country",
+      "description": "Set your tax ID and billing details shown on invoices",
+      "fetchError": "Failed to load tax settings",
+      "invoiceCustomization": "Invoice settings",
+      "invoicePrefix": "Invoice number prefix",
+      "poNumber": "Default purchase order number",
+      "postalCode": "Postal code",
+      "saveError": "Failed to save settings",
+      "selectCountry": "Select…",
+      "selectType": "Select type…",
+      "state": "State or region",
+      "taxExempt": "Tax exempt",
+      "taxExemptDesc": "Check if the organization is tax exempt",
+      "taxId": "Tax ID or VAT number",
+      "taxIdNumber": "Tax identification number",
+      "taxIdType": "Tax ID type",
+      "title": "Tax and invoicing settings"
     },
     "alerts": {
       "saved": "Saved",
@@ -34729,11 +34921,65 @@
       "storageThreshold100": "Alert at 100% storage usage",
       "tokenThreshold80": "Alert at 80% token usage",
       "tokenThreshold90": "Alert at 90% token usage",
-      "tokenThreshold100": "Alert at 100% token usage"
+      "tokenThreshold100": "Alert at 100% token usage",
+      "autoUpgrade": "Automatic plan change",
+      "autoUpgradeDesc": "Automatically change plan when the limit is reached",
+      "costCap": "Monthly cost cap",
+      "costCapDesc": "Set a maximum monthly cost; charges above the cap will be blocked",
+      "description": "Set up notifications when approaching usage limits",
+      "emailNotifications": "Email notifications",
+      "emailNotificationsDesc": "Receive alerts by email",
+      "fetchError": "Failed to load settings",
+      "noCap": "No cap",
+      "saveError": "Failed to save settings",
+      "selectPlan": "Select target plan…",
+      "storageUsage": "Storage usage alerts",
+      "title": "Usage alerts and limits",
+      "tokenUsage": "Token usage alerts"
     },
     "usage": {
       "resetsOn": "Limit resets on {{date}}"
-    }
+    },
+    "benefit1": "AI-powered project analysis and insights",
+    "benefit2": "Smart recommendations and suggestions",
+    "benefit3": "Automatic reports and documentation",
+    "benefit4": "Risk detection and early warnings",
+    "bonusOffer": "With larger packages you can get up to 20% bonus tokens.",
+    "buyTokens": "Buy tokens",
+    "currentBalance": "Current balance",
+    "lowBalance": "Low token balance",
+    "lowBalanceDescription": "Your token balance is low. Buy tokens to keep uninterrupted access to AI features.",
+    "lowTokenBalance": "Low token balance",
+    "noTokens": "No tokens",
+    "noTokensDescription": "To keep using AI features, you need to buy tokens. The AI assistant consumes tokens while handling your requests.",
+    "outOfTokens": "Out of tokens",
+    "purchaseToUseAI": "Buy tokens to keep using AI features",
+    "subscription": {
+      "apply": "Apply",
+      "availablePlans": "Available plans",
+      "changeError": "Failed to update subscription",
+      "changed": "Subscription updated",
+      "confirm": "Confirm change",
+      "confirmChange": "Confirm plan change",
+      "confirmUpgrade": "Confirm upgrade",
+      "current": "Current",
+      "currentPlan": "CURRENT PLAN",
+      "discountCode": "Discount code",
+      "downgradeNote": "The change will take effect at the end of the current billing period.",
+      "fetchError": "Failed to load subscription data",
+      "invalidDiscount": "Invalid discount code",
+      "newPrice": "New monthly price",
+      "popular": "Most popular",
+      "proratedNote": "The prorated difference will be charged immediately.",
+      "select": "Select",
+      "switch": "Switch",
+      "trial": "TRIAL PERIOD",
+      "trialEnds": "Trial ends",
+      "upgrade": "Upgrade",
+      "yourPlan": "Your current plan"
+    },
+    "tokensRemaining": "Tokens remaining: {{count}}",
+    "whatYouGet": "What you get with tokens"
   },
   "firstRun": {
     "welcome": {
@@ -39051,16 +39297,100 @@
       "subtitle": "Consultify and DBR77 Vector deliver enterprise-grade AI through technical solutions — from encryption and data sovereignty to dedicated deployment models and ISO 27001 alignment."
     },
     "infra": {
-      "title": "Security Infrastructure"
+      "title": "Security Infrastructure",
+      "features": [
+        {
+          "title": "Encryption",
+          "description": "AES-256 encryption at rest, TLS 1.3 in transit. Encryption controls are applied according to the deployment model — never as generic marketing claims."
+        },
+        {
+          "title": "Deployment options",
+          "description": "Shared cloud, dedicated API/runtime, or fully on-premise. Every path provides session isolation and containerized Docker inference."
+        },
+        {
+          "title": "Governance review",
+          "description": "Security postures are reviewed with the customer — not hidden behind generic badges. RBAC, audit trails and governance checkpoints are built in."
+        },
+        {
+          "title": "Access control",
+          "description": "Role-based access control (RBAC) with admin permissions tailored to customer environments. API key management and session controls included."
+        },
+        {
+          "title": "Traceability",
+          "description": "Workspace activity, generated outputs and governance checkpoints can be reviewed inside the operating environment. A full audit trail for every AI interaction."
+        },
+        {
+          "title": "Customer fit assessment",
+          "description": "Security and legal details are tailored to the customer's target environment. No universal certification language — only what applies to your deployment."
+        }
+      ]
     },
     "pillars": {
       "badge": "AI Security Architecture",
       "title": "Six Pillars of Industrial AI Security",
-      "subtitle": "Every aspect of DBR77 Vector — from training data to deployment to inference — is designed for environments where data sovereignty and auditability are non-negotiable."
+      "subtitle": "Every aspect of DBR77 Vector — from training data to deployment to inference — is designed for environments where data sovereignty and auditability are non-negotiable.",
+      "items": [
+        {
+          "title": "No training on customer data",
+          "body": "DBR77 Vector is trained exclusively on anonymized historical case studies. No customer production data, documents or queries are used for training. Queries and outputs are not stored after the session ends."
+        },
+        {
+          "title": "Deployment isolation by design",
+          "body": "Every deployment model — on-premise, private API or shared — is designed with isolation as the default. On-premise: zero data leaves the network. Private API: dedicated compute, no multi-tenancy."
+        },
+        {
+          "title": "Human in the approval loop",
+          "body": "Vector is an intelligence layer for decisions, not an autonomous authority. Every recommendation sits inside a human decision loop with traceable reasoning logic."
+        },
+        {
+          "title": "Enterprise governance compliance",
+          "body": "SOC2, GDPR, ISO 27001 and data residency compliance. Audit-friendly outputs with source tracing. Role-based access and encryption at rest and in transit."
+        },
+        {
+          "title": "Anonymized learning",
+          "body": "Continuous improvement relies on anonymized industrial patterns, not any specific customer's data. No customer identifiers, drawings or proprietary data in the training base."
+        },
+        {
+          "title": "Ready for OT/IT convergence",
+          "body": "Compatible with air-gapped networks and restricted environments. No mandatory external API calls during inference. Designed for environments where uptime and security are non-negotiable."
+        }
+      ]
     },
     "deployment": {
       "title": "Choose Your Deployment Model",
-      "subtitle": "Same Vector intelligence, same domain depth. The difference is where it runs and who manages the infrastructure."
+      "subtitle": "Same Vector intelligence, same domain depth. The difference is where it runs and who manages the infrastructure.",
+      "models": [
+        {
+          "title": "On-Premise",
+          "tag": "Full control",
+          "body": "Run DBR77 Vector entirely on your own servers. Production data, transformation plans and AI reasoning never leave your security perimeter. Best for regulated industries, sensitive IP and OT-managed environments.",
+          "bullets": [
+            "Full control over model runtime, data and access",
+            "No external network dependency for inference",
+            "Strongest legal, OT and procurement compliance"
+          ]
+        },
+        {
+          "title": "Private dedicated API",
+          "tag": "Enterprise isolation",
+          "body": "An isolated hosted environment for a single customer only. Full isolation, predictable performance and no shared infrastructure — without managing the underlying systems.",
+          "bullets": [
+            "Dedicated compute and storage — no multi-tenancy",
+            "Customer-specific access controls and encryption",
+            "Managed updates and scaling without internal DevOps overhead"
+          ]
+        },
+        {
+          "title": "Shared API",
+          "tag": "Fastest start",
+          "body": "A lower-friction entry path for pilots, workshops and quick experiments. Enterprise security policies still apply. An easy upgrade path to private or on-premise when you're ready.",
+          "bullets": [
+            "Fastest time to first value",
+            "Enterprise security policies still apply",
+            "Session isolation with no persistent storage"
+          ]
+        }
+      ]
     },
     "sovereignty": {
       "title": "Data Sovereignty & Residency",
@@ -39076,22 +39406,138 @@
       "d4": "Transparent methodology available for security review"
     },
     "techControls": {
-      "title": "Encryption & Technical Controls"
+      "title": "Encryption & Technical Controls",
+      "items": [
+        {
+          "label": "AES-256",
+          "sub": "Encryption at rest"
+        },
+        {
+          "label": "TLS 1.3",
+          "sub": "Encryption in transit"
+        },
+        {
+          "label": "RBAC",
+          "sub": "Role-based access control"
+        },
+        {
+          "label": "Docker isolation",
+          "sub": "Containerized inference"
+        },
+        {
+          "label": "Session isolation",
+          "sub": "No persistent storage"
+        },
+        {
+          "label": "CI/CD pipeline",
+          "sub": "Versioned and auditable"
+        }
+      ]
     },
     "compliance": {
       "title": "Compliance & Standards",
-      "subtitle": "Designed to pass enterprise procurement, legal, and IT security reviews."
+      "subtitle": "Designed to pass enterprise procurement, legal, and IT security reviews.",
+      "standards": [
+        {
+          "label": "ISO 27001",
+          "sub": "Information security management",
+          "status": "Compliant"
+        },
+        {
+          "label": "SOC2",
+          "sub": "Service organization control",
+          "status": "Compliant"
+        },
+        {
+          "label": "GDPR",
+          "sub": "General Data Protection Regulation",
+          "status": "Compliant"
+        },
+        {
+          "label": "NIST AI RMF",
+          "sub": "AI risk management framework",
+          "status": "Compliant"
+        },
+        {
+          "label": "ISO 23247",
+          "sub": "Digital Twin security standards",
+          "status": "Compliant"
+        },
+        {
+          "label": "ISO 22400-2",
+          "sub": "Industrial KPI framework",
+          "status": "Integrated"
+        }
+      ]
     },
     "comparison": {
       "title": "DBR77 Vector vs. Public LLMs",
       "subtitle": "Security side by side — how Vector compares on the dimensions that matter most.",
       "dimensionHeader": "Dimension",
       "vectorHeader": "DBR77 Vector",
-      "llmHeader": "Public LLM"
+      "llmHeader": "Public LLM",
+      "rows": [
+        {
+          "dimension": "Training data used",
+          "vector": "Only anonymized historical cases. No customer data is used for training.",
+          "generic": "Trained on web-scale data. May use user data for improvement unless you opt out."
+        },
+        {
+          "dimension": "Data residency",
+          "vector": "On-premise, private cloud, or region-specific hosting. Customer chooses.",
+          "generic": "Data processed on the provider's cloud infrastructure. Limited residency control."
+        },
+        {
+          "dimension": "Query and output storage",
+          "vector": "No persistent storage after the session. Customer controls retention.",
+          "generic": "Queries may be logged, stored and reviewed by the provider."
+        },
+        {
+          "dimension": "Network dependency",
+          "vector": "On-premise runs fully offline. Private API only needs the internal network.",
+          "generic": "Requires an internet connection to the provider's servers for every query."
+        },
+        {
+          "dimension": "Multi-tenancy",
+          "vector": "On-premise and private API are single-tenant. Shared API uses session isolation.",
+          "generic": "Multi-tenant infrastructure shared across all users."
+        },
+        {
+          "dimension": "Procurement and compliance",
+          "vector": "Designed to pass enterprise security, legal and OT reviews.",
+          "generic": "Often blocked or restricted by enterprise security policies."
+        }
+      ]
     },
     "pipeline": {
       "title": "Auditable from Code to Inference",
-      "subtitle": "Every step in the deployment pipeline is versioned, automated, and traceable. No manual steps. No untracked changes."
+      "subtitle": "Every step in the deployment pipeline is versioned, automated, and traceable. No manual steps. No untracked changes.",
+      "steps": [
+        {
+          "label": "Source control",
+          "sub": "Version-controlled repositories"
+        },
+        {
+          "label": "CI/CD",
+          "sub": "GitHub Actions"
+        },
+        {
+          "label": "Docker build",
+          "sub": "Containerized model"
+        },
+        {
+          "label": "Deployment",
+          "sub": "RunPod / On-prem"
+        },
+        {
+          "label": "Isolated inference",
+          "sub": "No shared state"
+        },
+        {
+          "label": "No output storage",
+          "sub": "Data kept only for the session"
+        }
+      ]
     },
     "disclosure": {
       "title": "Responsible Disclosure",
@@ -49942,7 +50388,9 @@
   },
   "shared": {
     "executiveModuleShell": {
-      "resizeElementInspector": "Resize element inspector"
+      "resizeElementInspector": "Resize element inspector",
+      "collapseElementInspector": "Collapse inspector panel",
+      "expandElementInspector": "Expand inspector panel"
     },
     "project": {
       "archivedSuffix": "(archived)"
@@ -49969,7 +50417,8 @@
       "previewAddDocument": "Add document",
       "whatsNextFixErrors": "Show indexing errors",
       "previewRecentDocuments": "Recent documents",
-      "previewNoDocuments": "No documents in this safe yet."
+      "previewNoDocuments": "No documents in this safe yet.",
+      "indexingErrorsCount_one": "{{count}} error"
     },
     "categories": {
       "bestPractices": "Best Practices",
@@ -51451,7 +51900,16 @@
   },
   "mels": {
     "leftRailPanel": "Tool panel (left)",
-    "rightRailPanel": "Tool panel (right)"
+    "rightRailPanel": "Tool panel (right)",
+    "collapseLeftRail": "Collapse left panel",
+    "collapseRightRail": "Collapse right panel",
+    "discussWithTeresa": "Discuss with Teresa",
+    "expandLeftRail": "Expand left panel",
+    "expandRightRail": "Expand right panel",
+    "moreActions": "More actions",
+    "outline": "Outline",
+    "resizeLeftRail": "Resize left panel",
+    "resizeRightRail": "Resize right panel"
   },
   "artifactRail": {
     "teresa": {
@@ -51463,15 +51921,27 @@
   },
   "vector": {
     "hero": {
-      "title": "The world's first AI that"
+      "title": "The world's first AI that",
+      "badge": "Industrial reasoning engine",
+      "demoCta": "Book a demo",
+      "downloadCta": "Download whitepaper",
+      "subtitle": "DBR77 Vector 1.0 turns raw factory data into structured, actionable business decisions in under 120 seconds — reaching 94% agreement with senior consultants in double-blind benchmarks.",
+      "titleHighlight": "reasons like an industrial engineer."
     },
     "beyond": {
       "subtitle": "Manufacturing faces a “data-rich, decision-poor” paradox. Vector closes the gap that generic AI cannot.",
       "problem": {
-        "body": "Factories generate exascale telemetry, yet optimization still waits on slow human analysis. Data is no longer the bottleneck — the missing piece is a decision system."
+        "body": "Factories generate exascale telemetry, yet optimization still waits on slow human analysis. Data is no longer the bottleneck — the missing piece is a decision system.",
+        "title": "The problem"
       },
       "generic": {
-        "body": "GPT and other LLMs are “industrially blind”. They are not grounded in factory physics, MTM motion analysis or operational constraints. Their answers read well and mean little on the shop floor."
+        "body": "GPT and other LLMs are “industrially blind”. They are not grounded in factory physics, MTM motion analysis or operational constraints. Their answers read well and mean little on the shop floor.",
+        "title": "Generic LLMs"
+      },
+      "title": "Beyond generative AI",
+      "vector": {
+        "body": "The first industrial reasoning engine. Trained on 1400+ verified transformation cases. Constructs structured decisions — not text. Embeds MTM, Lean and ISO 22400-2 as reasoning primitives.",
+        "title": "DBR77 Vector"
       }
     },
     "pipeline": {
@@ -51500,7 +51970,10 @@
           "title": "Structured decision artifact",
           "body": "The output is not prose — it is a complete, defensible business case with a diagnostic summary, a prioritized action plan and financial projections."
         }
-      }
+      },
+      "badge": "Decision architecture",
+      "subtitle": "A six-stage reasoning pipeline that turns raw industrial context into structured, actionable decisions.",
+      "title": "How Vector thinks"
     },
     "roadmap": {
       "stages": {
@@ -51524,7 +51997,92 @@
           "title": "Autonomous decision systems",
           "body": "A fully closed loop with real-time feedback and iterative learning."
         }
-      }
+      },
+      "done": "Done",
+      "now": "Now",
+      "subtitle": "A four-stage evolutionary trajectory toward fully autonomous industrial systems.",
+      "title": "From decision support to autonomy"
+    },
+    "comparison": {
+      "dimensionHeader": "Dimension",
+      "genericHeader": "Generic LLM",
+      "rows": [
+        {
+          "dimension": "Training data",
+          "vector": "1400+ verified industrial case studies + synthetic Digital Twin data",
+          "generic": "Internet-scale text corpora with no industrial foundation"
+        },
+        {
+          "dimension": "Reasoning logic",
+          "vector": "MTM, Lean, ISO 22400-2 embedded as reasoning primitives",
+          "generic": "Linguistic heuristics — no awareness of factory physics"
+        },
+        {
+          "dimension": "Output type",
+          "vector": "Structured decision object — diagnosis + action plan + financials",
+          "generic": "Free-form text responses"
+        },
+        {
+          "dimension": "Validation",
+          "vector": "Post-inference validation layer with hallucination mitigation",
+          "generic": "No built-in industrial validation"
+        },
+        {
+          "dimension": "Use of customer data",
+          "vector": "Never used for training — queries are not stored after the session",
+          "generic": "May be used to improve the model unless you opt out"
+        },
+        {
+          "dimension": "Deployment",
+          "vector": "On-premise, private API or shared — customer chooses",
+          "generic": "Provider cloud only — limited residency control"
+        }
+      ],
+      "subtitle": "Purpose-built industrial reasoning vs. general-purpose language generation.",
+      "title": "Vector vs. generic LLMs",
+      "vectorHeader": "DBR77 Vector"
+    },
+    "cta": {
+      "demo": "Book a live demo",
+      "download": "Download whitepaper (PDF)",
+      "subtitle": "Download the full whitepaper for technical details, or book a live demo to see how Vector analyzes a real industrial scenario.",
+      "title": "Ready to see industrial reasoning in action?"
+    },
+    "ecosystem": {
+      "layers": [
+        {
+          "label": "Industrial IoT",
+          "sub": "Data layer"
+        },
+        {
+          "label": "Digital Twin",
+          "sub": "Simulation layer"
+        },
+        {
+          "label": "DBR77 Vector",
+          "sub": "Decision layer"
+        },
+        {
+          "label": "IRIS",
+          "sub": "Operating system"
+        },
+        {
+          "label": "Marketplace",
+          "sub": "Execution layer"
+        }
+      ],
+      "subtitle": "Vector is not a standalone tool. It is the cognitive core of DBR77's industrial AI operating system.",
+      "title": "Part of a complete industrial ecosystem"
+    },
+    "numbers": {
+      "cases": "Verified case studies",
+      "casesSub": "Proprietary training corpus",
+      "params": "Model parameters",
+      "paramsSub": "+ QLoRA domain adapter",
+      "parity": "Agreement with senior consultants",
+      "speed": "Analysis time",
+      "speedSub": "vs weeks of manual work",
+      "title": "The numbers"
     }
   },
   "emptyStates": {
