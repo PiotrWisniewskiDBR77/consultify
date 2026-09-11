@@ -1,0 +1,3475 @@
+{
+  "Chat": {
+    "route": "/chat",
+    "runs": [
+      {
+        "route": "/chat",
+        "networkIdleMs": 15792,
+        "navError": null,
+        "lcp": 9848,
+        "apiCallCount": 23,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai/agent-audit/agents",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/conversations?",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/cloud/providers",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/chat-projects",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/chat",
+        "networkIdleMs": 6556,
+        "navError": null,
+        "lcp": 1604,
+        "apiCallCount": 22,
+        "apiCalls": [
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/chat-projects",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/conversations?",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai/agent-audit/agents",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/cloud/providers",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/chat",
+        "networkIdleMs": 5630,
+        "navError": null,
+        "lcp": null,
+        "apiCallCount": 20,
+        "apiCalls": [
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/cloud/providers",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai/agent-audit/agents",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/chat-projects",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/conversations?",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 6556,
+    "medianLcp": 5726
+  },
+  "My Work": {
+    "route": "/my-work",
+    "runs": [
+      {
+        "route": "/my-work",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/my-work\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/my-work",
+        "networkIdleMs": 15491,
+        "navError": null,
+        "lcp": 10124,
+        "apiCallCount": 25,
+        "apiCalls": [
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -6
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives/runtime-v1/my-work/gate-signoffs",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives/runtime-v1/my-work/handoff-acceptances",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/action-cards?status=OPEN&ownerUserId=me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical?status=pending&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/context-summary",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical/materialize",
+            "status": 201,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical/stats",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/my-work",
+        "networkIdleMs": 10870,
+        "navError": null,
+        "lcp": 4752,
+        "apiCallCount": 25,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -6
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives/runtime-v1/my-work/handoff-acceptances",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives/runtime-v1/my-work/gate-signoffs",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical?status=pending&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical/stats",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/context-summary",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/action-cards?status=OPEN&ownerUserId=me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/my-work/inbox/canonical/materialize",
+            "status": 201,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 15491,
+    "medianLcp": 7438
+  },
+  "Interview": {
+    "route": "/interview",
+    "runs": [
+      {
+        "route": "/interview",
+        "networkIdleMs": 20001,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/interview\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/interview",
+        "networkIdleMs": 20001,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/interview\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/interview",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/interview\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20001,
+    "medianLcp": null
+  },
+  "Tools": {
+    "route": "/discovery-tools",
+    "runs": [
+      {
+        "route": "/discovery-tools",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/discovery-tools\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/discovery-tools",
+        "networkIdleMs": 20000,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/discovery-tools\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/discovery-tools",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/discovery-tools\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20002,
+    "medianLcp": null
+  },
+  "Assessment": {
+    "route": "/assessment/overview",
+    "runs": [
+      {
+        "route": "/assessment/overview",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/assessment/overview\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 10,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/assessment/overview",
+        "networkIdleMs": 19121,
+        "navError": null,
+        "lcp": 13668,
+        "apiCallCount": 25,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -8
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/users",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/method/sessions?methodPackId=drd&limit=100&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/assessment?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/report-import",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/assessment-reports",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives?source=assessment",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/assessment/overview",
+        "networkIdleMs": 13072,
+        "navError": null,
+        "lcp": 7236,
+        "apiCallCount": 24,
+        "apiCalls": [
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -14
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/users",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/assessment?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/method/sessions?methodPackId=drd&limit=100&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/assessment-reports",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/report-import",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives?source=assessment",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 19121,
+    "medianLcp": 10452
+  },
+  "Audits": {
+    "route": "/audit-programs",
+    "runs": [
+      {
+        "route": "/audit-programs",
+        "networkIdleMs": 20006,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/audit-programs\", waiting until \"networkidle\"\n",
+        "lcp": 13072,
+        "apiCallCount": 19,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/audit-programs",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/audit-programs\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/audit-programs",
+        "networkIdleMs": 20001,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/audit-programs\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20002,
+    "medianLcp": 13072
+  },
+  "Initiatives": {
+    "route": "/initiatives",
+    "runs": [
+      {
+        "route": "/initiatives",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/initiatives\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/initiatives",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/initiatives\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/initiatives",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/initiatives\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20002,
+    "medianLcp": null
+  },
+  "Execution": {
+    "route": "/execution",
+    "runs": [
+      {
+        "route": "/execution",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/execution\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/execution",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/execution\", waiting until \"networkidle\"\n",
+        "lcp": 15648,
+        "apiCallCount": 16,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/execution",
+        "networkIdleMs": 11007,
+        "navError": null,
+        "lcp": 7188,
+        "apiCallCount": 40,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/action-cards?status=OPEN&sourceKind=execution_delay",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/action-queue/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/decisions/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/blockers/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/risk/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/people-change/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/manager/lanes/workload/problems",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/delay-signals",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/raid",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/risk-signals",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/timeline-warnings",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/report-builder/definitions?kind=EXECUTION_PACK",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/capacity/leveling-alerts",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/execution-control/capacity/resource-plan?weeks=8",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/decisions",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/initiatives/runtime-v1/execution-cases",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/capacity/timeline",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/execution-control/budget/overspend-signals",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20002,
+    "medianLcp": 11418
+  },
+  "Results (Wyniki)": {
+    "route": "/results/kpi",
+    "runs": [
+      {
+        "route": "/results/kpi",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/results/kpi\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/results/kpi",
+        "networkIdleMs": 10141,
+        "navError": null,
+        "lcp": 8468,
+        "apiCallCount": 24,
+        "apiCalls": [
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -3
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/items",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/results/kpi",
+        "networkIdleMs": 5636,
+        "navError": null,
+        "lcp": 1692,
+        "apiCallCount": 24,
+        "apiCalls": [
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi?limit=200&offset=0",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/items",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/vnext/results/kpi/scorecards/9e2b5b6a-0b87-469c-83da-b5c909a55d8b/review-snapshots/published",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -4
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -2
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 10141,
+    "medianLcp": 5080
+  },
+  "Finance": {
+    "route": "/finance",
+    "runs": [
+      {
+        "route": "/finance",
+        "networkIdleMs": 10994,
+        "navError": null,
+        "lcp": 4668,
+        "apiCallCount": 25,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/finance/statement-packs",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -329
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -551
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -931
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1375
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/finance",
+        "networkIdleMs": 5335,
+        "navError": null,
+        "lcp": 2184,
+        "apiCallCount": 24,
+        "apiCalls": [
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/finance/statement-packs",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -4
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -702
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1266
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1752
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -2
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -2
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -2273
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/finance",
+        "networkIdleMs": 5417,
+        "navError": null,
+        "lcp": 1860,
+        "apiCallCount": 24,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -4
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/finance/statement-packs",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -471
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -930
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1211
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1378
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -2
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -2
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 5417,
+    "medianLcp": 2184
+  },
+  "Materials": {
+    "route": "/presentations",
+    "runs": [
+      {
+        "route": "/presentations",
+        "networkIdleMs": 17339,
+        "navError": null,
+        "lcp": 14676,
+        "apiCallCount": 28,
+        "apiCalls": [
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -3
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=sheet",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=report&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=report",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=presentation",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=sheet&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=report&limit=200",
+            "status": 200,
+            "durMs": -703
+          },
+          {
+            "url": "/api/artifacts?outputType=sheet&limit=200",
+            "status": 200,
+            "durMs": -3169
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=presentation&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=presentation&limit=200",
+            "status": 200,
+            "durMs": -3572
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/presentations",
+        "networkIdleMs": 11108,
+        "navError": null,
+        "lcp": 2608,
+        "apiCallCount": 27,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -5
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=report&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=presentation&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=sheet",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=presentation",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=sheet&limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?limit=200&artifactFamily=template&outputType=report",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/artifacts?outputType=report&limit=200",
+            "status": 200,
+            "durMs": -406
+          },
+          {
+            "url": "/api/artifacts?outputType=presentation&limit=200",
+            "status": 200,
+            "durMs": -406
+          },
+          {
+            "url": "/api/artifacts?outputType=sheet&limit=200",
+            "status": 200,
+            "durMs": -974
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/presentations",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/presentations\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 17339,
+    "medianLcp": 8642
+  },
+  "Admin": {
+    "route": "/admin",
+    "runs": [
+      {
+        "route": "/admin",
+        "networkIdleMs": 20001,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/admin\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 6,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/admin",
+        "networkIdleMs": 8704,
+        "navError": null,
+        "lcp": 6552,
+        "apiCallCount": 19,
+        "apiCalls": [
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/admin/invitations",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/admin",
+        "networkIdleMs": 10179,
+        "navError": null,
+        "lcp": 5784,
+        "apiCallCount": 20,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -3
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/admin/invitations",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications/unread-count",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/notifications?limit=20",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 10179,
+    "medianLcp": 6168
+  },
+  "Organization": {
+    "route": "/organization/profile",
+    "runs": [
+      {
+        "route": "/organization/profile",
+        "networkIdleMs": 15281,
+        "navError": "page.goto: net::ERR_CONNECTION_CLOSED at https://staging.consultify.ai/organization/profile\nCall log:\n  - navigating to \"https://staging.consultify.ai/organization/profile\", waiting until \"networkidle",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/organization/profile",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/organization/profile\", waiting until \"networkidle\"\n",
+        "lcp": 7540,
+        "apiCallCount": 14,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/organization/profile",
+        "networkIdleMs": 6878,
+        "navError": null,
+        "lcp": 2700,
+        "apiCallCount": 21,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -3
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organization-context/governed/claims?limit=200",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organization-context-store",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organization-profiles/468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organization-context",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organization-context",
+            "status": 200,
+            "durMs": -1156
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 15281,
+    "medianLcp": 5120
+  },
+  "Internal Tools (AI OS)": {
+    "route": "/ai",
+    "runs": [
+      {
+        "route": "/ai",
+        "networkIdleMs": 12734,
+        "navError": null,
+        "lcp": null,
+        "apiCallCount": 20,
+        "apiCalls": [
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 403,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -2
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/cloud/providers",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai/agent-audit/agents",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/chat-projects",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/conversations?",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 1,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 403 ()"
+        ],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/ai",
+        "networkIdleMs": 20007,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/ai\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/ai",
+        "networkIdleMs": 20001,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/ai\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20001,
+    "medianLcp": null
+  },
+  "Settings": {
+    "route": "/settings/profile",
+    "runs": [
+      {
+        "route": "/settings/profile",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/settings/profile\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/settings/profile",
+        "networkIdleMs": 20002,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/settings/profile\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/settings/profile",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/settings/profile\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20003,
+    "medianLcp": null
+  },
+  "Partner Portal": {
+    "route": "/partner",
+    "runs": [
+      {
+        "route": "/partner",
+        "networkIdleMs": 20003,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/partner\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 0,
+        "apiCalls": [],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "cold"
+      },
+      {
+        "route": "/partner",
+        "networkIdleMs": 20000,
+        "navError": "page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating to \"https://staging.consultify.ai/partner\", waiting until \"networkidle\"\n",
+        "lcp": null,
+        "apiCallCount": 6,
+        "apiCalls": [
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      },
+      {
+        "route": "/partner",
+        "networkIdleMs": 5205,
+        "navError": null,
+        "lcp": 2192,
+        "apiCallCount": 18,
+        "apiCalls": [
+          {
+            "url": "/api/feature-flags/runtime",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/settings/preferences/accessibility",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/csrf-token",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/auth/me",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/admin/flags",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/ai-settings/user",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-config",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v10/teresa/voice-event",
+            "status": 202,
+            "durMs": -1
+          },
+          {
+            "url": "/api/llm/providers/health?timeoutMs=4000",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/health",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/mfa/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/demo/status",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/organizations/current",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/preferences",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/v8/partner/connection",
+            "status": 200,
+            "durMs": -1
+          },
+          {
+            "url": "/api/my-work/personal-tasks",
+            "status": 200,
+            "durMs": -1
+          }
+        ],
+        "consoleErrorCount": 0,
+        "consoleErrors": [],
+        "failed5xx": [],
+        "cache": "warm"
+      }
+    ],
+    "medianNetworkIdleMs": 20000,
+    "medianLcp": 2192
+  }
+}
