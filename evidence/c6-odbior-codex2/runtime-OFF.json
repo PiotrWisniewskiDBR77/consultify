@@ -1,0 +1,160 @@
+{
+  "flagi": {
+    "READ": false,
+    "WRITE": false
+  },
+  "macierzPrzed": [
+    {
+      "surface": "1 lista",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "2 karta",
+      "status": 404,
+      "id": false,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "3 KPI",
+      "status": 404,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "4 Realizacja",
+      "status": 404,
+      "id": true,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "5 Moja Praca",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "6 Wyniki",
+      "status": 404,
+      "id": true,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "7 Raporty",
+      "status": 200,
+      "id": true,
+      "tytul": false,
+      "kod": null
+    }
+  ],
+  "sql": {
+    "kanon": 1,
+    "zastany": 0
+  },
+  "put": {
+    "status": 404,
+    "ms": 48,
+    "body": {
+      "error": "Initiative not found"
+    }
+  },
+  "poZapisie": {
+    "version": 1,
+    "title": "C6 8b85db4b-2810-4581-895b-a9549ac2829b",
+    "problem": "C6 problem",
+    "proposedOutcome": null
+  },
+  "macierzPoZapisie": [
+    {
+      "surface": "1 lista",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "2 karta",
+      "status": 404,
+      "id": false,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "3 KPI",
+      "status": 404,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "4 Realizacja",
+      "status": 404,
+      "id": true,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "5 Moja Praca",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "6 Wyniki",
+      "status": 404,
+      "id": true,
+      "tytul": false,
+      "kod": "INITIATIVE_NOT_FOUND"
+    },
+    {
+      "surface": "7 Raporty",
+      "status": 200,
+      "id": true,
+      "tytul": false,
+      "kod": null
+    }
+  ],
+  "idempotencja": {
+    "drugiStatus": 404,
+    "versionPrzed": 1,
+    "versionPo": 1,
+    "receipts": 2
+  },
+  "put409": {
+    "status": 404,
+    "body": {
+      "error": "Initiative not found"
+    }
+  },
+  "tenant": {
+    "putObcy": 404,
+    "getObcy": 404,
+    "tytulPoAtaku": "C6 8b85db4b-2810-4581-895b-a9549ac2829b"
+  },
+  "listaStatus": 200,
+  "wydajnosc": {
+    "mediana": 57,
+    "min": 50,
+    "max": 69,
+    "czasy": [
+      50,
+      53,
+      53,
+      55,
+      56,
+      57,
+      58,
+      61,
+      62,
+      69
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+POMIARY W1 — odbiór C6 bloku CODEX2 (wykonane 2026-09-11 przez odbierającego)
+
+git rev-parse HEAD (worktree odbioru) = 4f4110b0c3bee67dad3d9fca3aec436d79513058
+git merge-base --is-ancestor 19440011e9 4f4110b0c3 -> 0 (rodowód potwierdzony)
+
+K1 (bramki pytające wyłącznie magazyn zastany):
+  git grep -n "SELECT id FROM initiatives WHERE id" 19440011e9 -- server/src | grep -v __tests__ | wc -l  =  50
+  git grep -n "SELECT id FROM initiatives WHERE id" 4f4110b0c3 -- server/src | grep -v __tests__ | wc -l  =  48
+  git grep -n "SELECT 1 AS found FROM initiatives" 19440011e9 -- server/src | wc -l = 0
+  git grep -n "SELECT 1 AS found FROM initiatives" 4f4110b0c3 -- server/src | wc -l = 2
+  => spadek 50->48 pochodzi z PRZEPISANIA tekstu SQL w gałęzi OFF (2 pliki), nie z usunięcia zapytania zastanego.
+
+Migracje: ls server/migrations | grep -cE "^2026214[0-9]" = 0 (blok nie dodał ani jednej migracji)
+Runner migracji na kopii consultify_kopia_c6: przebieg 1 "Applying migrations: 0" + "Postgres migrations complete", exit 0.
+
+tsc: npx tsc -p server/tsconfig.json --noEmit -> exit 0, 0 linii wyjścia (bez potoku, 48 s)
+
+Baza pomiaru: consultify_kopia_c6 (TEMPLATE consultify_staging_1009, kontener consultify-pg18:54418)
+  SELECT count(*) FROM initiatives = 121 ; ie_aggregate_state (initiative) = 31 ; organizations = 8

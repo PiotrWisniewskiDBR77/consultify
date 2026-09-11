@@ -1,0 +1,165 @@
+{
+  "flagi": {
+    "READ": true,
+    "WRITE": true
+  },
+  "macierzPrzed": [
+    {
+      "surface": "1 lista",
+      "status": 200,
+      "id": true,
+      "tytul": true,
+      "kod": null
+    },
+    {
+      "surface": "2 karta",
+      "status": 200,
+      "id": true,
+      "tytul": true,
+      "kod": null
+    },
+    {
+      "surface": "3 KPI",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "4 Realizacja",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "5 Moja Praca",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "6 Wyniki",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "7 Raporty",
+      "status": 200,
+      "id": true,
+      "tytul": false,
+      "kod": null
+    }
+  ],
+  "sql": {
+    "kanon": 1,
+    "zastany": 0
+  },
+  "put": {
+    "status": 200,
+    "ms": 139,
+    "body": {
+      "id": "initiative-6c075244-f038-4a65-9af0-6e00e417eb9d",
+      "message": "Initiative updated"
+    }
+  },
+  "poZapisie": {
+    "version": 2,
+    "title": "C6-PO-6a1ae70d-1e52-45d0-8897-e41c71237509",
+    "problem": "C6 problem 2",
+    "proposedOutcome": "C6 outcome"
+  },
+  "macierzPoZapisie": [
+    {
+      "surface": "1 lista",
+      "status": 200,
+      "id": true,
+      "tytul": true,
+      "kod": null
+    },
+    {
+      "surface": "2 karta",
+      "status": 200,
+      "id": true,
+      "tytul": true,
+      "kod": null
+    },
+    {
+      "surface": "3 KPI",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "4 Realizacja",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "5 Moja Praca",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "6 Wyniki",
+      "status": 200,
+      "id": false,
+      "tytul": false,
+      "kod": null
+    },
+    {
+      "surface": "7 Raporty",
+      "status": 200,
+      "id": true,
+      "tytul": false,
+      "kod": null
+    }
+  ],
+  "idempotencja": {
+    "drugiStatus": 200,
+    "versionPrzed": 2,
+    "versionPo": 3,
+    "receipts": 4
+  },
+  "put409": {
+    "status": 409,
+    "body": {
+      "code": "INITIATIVE_CANONICAL_WRITE_REQUIRED",
+      "unsupportedFields": [
+        "priority"
+      ],
+      "canonicalWriter": "/api/initiatives/runtime-v1"
+    }
+  },
+  "tenant": {
+    "putObcy": 500,
+    "getObcy": 404,
+    "tytulPoAtaku": "C6-PO-6a1ae70d-1e52-45d0-8897-e41c71237509"
+  },
+  "listaStatus": 200,
+  "wydajnosc": {
+    "mediana": 64,
+    "min": 50,
+    "max": 95,
+    "czasy": [
+      50,
+      51,
+      53,
+      58,
+      60,
+      64,
+      65,
+      68,
+      77,
+      95
+    ]
+  }
+}

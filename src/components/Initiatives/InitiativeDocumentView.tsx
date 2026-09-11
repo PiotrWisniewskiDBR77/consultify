@@ -3400,8 +3400,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const titleChanged = canEditCards && !!normalizedTitle && normalizedTitle !== savedTitle;
     const summaryChanged = summary !== (initiative?.summary || '');
     const descriptionChanged = description !== (initiative?.description || '');
+    const ownerChanged =
+      canEditOwner && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
 
-    if (!titleChanged && !summaryChanged && !descriptionChanged) {
+    if (!titleChanged && !summaryChanged && !descriptionChanged && !ownerChanged) {
       // Nic do zapisania kanonicznym pisarzem — jeśli coś innego jest
       // "brudne", komunikat blokady (runtimeOnlyEditBlockedMessage) już to
       // pokazuje; tu nie ma czego wysyłać, więc kończymy bez żadnego żądania.
@@ -3424,6 +3426,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           title: titleChanged ? normalizedTitle : undefined,
           summary: summaryChanged ? summary : undefined,
           description: descriptionChanged ? description : undefined,
+          ownerId: ownerChanged ? ownerId : undefined,
         },
         canonicalVersion,
         amendRegisteredInitiative

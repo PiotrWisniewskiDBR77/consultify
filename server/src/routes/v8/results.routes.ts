@@ -10,6 +10,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
@@ -540,12 +544,18 @@ router.get(
         ? req.query.initiativeId.trim()
         : undefined;
     if (initiativeId) {
-      const initiative = await dbGet<{ id: string }>(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, organizationId],
-        { fallback: true }
-      );
-      if (!initiative?.id) {
+      const exists = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(organizationId, initiativeId)
+        : Boolean(
+            (
+              await dbGet<{ found: number }>(
+                `SELECT 1 AS found FROM initiatives WHERE id = ? AND organization_id = ?`,
+                [initiativeId, organizationId],
+                { fallback: true }
+              )
+            )?.found
+          );
+      if (!exists) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',

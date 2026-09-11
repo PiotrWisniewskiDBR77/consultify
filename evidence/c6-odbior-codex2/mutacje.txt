@@ -1,0 +1,26 @@
+DOWODY MUTACYJNE (Z32) — wykonane przez odbierającego, Codex ich NIE zrobił
+Cofnięcie każdej mutacji przez `cp` z kopii (Z27); po każdym cofnięciu `git diff --stat` = PUSTY.
+
+M1 — E1, mapowanie pola `title` w gałęzi kanonicznej PUT (InitiativeController.ts:~948)
+  mutacja: { title: body.title } -> { title: `MUT-${body.title}` }
+  wynik: initiativeCanonicalPut.pg.test.ts -> Tests 1 failed | 5 passed (6)   [CZERWONY — OK]
+  po cofnięciu: 6 passed (6), git diff pusty                                   [ZIELONY — OK]
+
+M2 — E1, mapowanie pola WŁAŚCICIEL (`initiativeOwnerId`) w tej samej gałęzi
+  mutacja: linia `...(requestedOwner !== undefined ? { initiativeOwnerId: requestedOwner } : {})` USUNIĘTA
+  wynik: initiativeCanonicalPut.pg.test.ts -> Test Files 1 passed, Tests 6 passed (6)  [ZIELONY = DZIURA]
+  wniosek: czwarte pole karty (właściciel) NIE MA ani jednej asercji serwerowej.
+           K4 "4/4 pola karty z pisarzem" jest udowodnione dla 3 pól, dla właściciela wyłącznie testem
+           jednostkowym klienta na atrapie `amend`.
+
+M3 — E3, czytnik kanoniczny w results.routes.ts:547
+  mutacja: `isInitiativeUnifiedReadEnabled() ? ...` -> `false ? ...` (wymuszona gałąź zastana)
+  wynik (flagi ON): powierzchnia 6 "Wyniki" 200 -> 404 INITIATIVE_NOT_FOUND; powierzchnia 4 bez zmian (200)
+  ŻADEN test nie zrobił się czerwony — dla E3 NIE ISTNIEJE ani jeden test. Dowód pochodzi z sondy odbioru.
+  po cofnięciu: 200, git diff pusty
+
+M4 — granica tenanta, postgresInitiativeReader.findById:1670
+  mutacja: `WHERE organization_id = $1` -> `WHERE (organization_id = $1 OR true)`
+  wynik: initiativeCanonicalPut.pg.test.ts -> 1 failed ("does not reveal a canonical record to another tenant")
+         sonda: PUT obcą organizacją 404 -> 500, tytuł agregatu NIEZMIENIONY (atak nie zapisał)
+  po cofnięciu: zielony, git diff pusty                                        [OK — bezpiecznik broniony testem]
