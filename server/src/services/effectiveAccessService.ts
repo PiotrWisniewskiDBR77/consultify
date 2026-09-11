@@ -1025,12 +1025,35 @@ async function resolveEffectiveAccessNiepamietane(params: {
  *
  * Rozdzielamy wiec dwie rodziny sufiksow:
  *  - `.scoped` = zakres PROJEKTU. Kontekst projektu jest juz rozwiazany przez
- *    wolajacego (rola projektowa pochodzi z tego wlasnie projektu), wiec ten
- *    sufiks spelnia zdolnosc bez dodatkowych pytan — tak jak dotad.
+ *    wolajacego (rola projektowa pochodzi z tego wlasnie projektu).
  *  - `.own` / `.assigned` / `.delegated` = zakres OBIEKTU. Spelniaja zdolnosc
  *    TYLKO wtedy, gdy predykat wlasnosci potwierdzi zwiazek wolajacego z tym
  *    konkretnym obiektem. Brak predykatu przy takim sufiksie = ODMOWA
  *    (fail-closed), nie milczaca zgoda.
+ *
+ * B-1/B-2/B-3 (odbior adwersaryjny stagingu `7e8668c7cc`, 11.09.2026 21:09-21:52)
+ * — POPRAWKA TEJ SEMANTYKI. Zdanie „`.scoped` spelnia zdolnosc bez dodatkowych
+ * pytan" bylo bledne dla bramek OBIEKTOWYCH. Zmierzone na zywo: MEMBER
+ * `daniel.osei` z rola projektowa INITIATIVE_OWNER (szablon niesie
+ * `task.update.scoped`, `task.assign.scoped`, `task.status.update.scoped`)
+ * dostawal **200** na `PUT /api/tasks/<cudze>`, `POST .../assign` i
+ * `POST .../block`, a wiersze realnie sie zmienialy — bo `.scoped` wychodzilo
+ * jako `kind: 'allow'` PRZED gala zia wlasnosci i `ownerPredicate` nigdy nie
+ * byl wolany. Odtworzone na kopii `consultify_kopia_b14` (KROK 0, 11.09 22:28):
+ * 200/200/200 + tytul, `assignee_id` i `status` zmienione w bazie.
+ *
+ * Decyzja CTO: sufiks `.scoped` znaczy „w projekcie, w ktorym mam role" — to
+ * ZAWEZENIE do projektu, nie upowaznienie do CUDZEGO obiektu w tym projekcie.
+ * Gdy bramka pyta o zakres obiektu (`requireOwnership`, czyli `objectScoped` /
+ * `ownerPredicate` w middleware), `.scoped` musi przejsc przez ten sam predykat
+ * co `.assigned`/`.own`/`.delegated`. ADMIN/OWNER organizacji nie sa tym objeci:
+ * rozstrzygaja sie WCZESNIEJ, na `'*'` (OWNER/SUPERADMIN) albo na sentinelu
+ * `admin.*.except-owner-only` (ADMIN) — zmierzone kontrolami pozytywnymi.
+ *
+ * Zmiana jest w KLASYFIKACJI sufiksu, nie w 137 bramkach: `.scoped` dostaje
+ * wlasny `kind: 'scope'`, ktory BEZ `requireOwnership` zwraca dokladnie stara
+ * decyzje (`allowed: true`, `reason: 'scope_suffix'`). Decyzje zmieniaja
+ * WYLACZNIE bramki, ktore same poprosily o zakres obiektu.
  *
  * Sprawdzanie wlasnosci jest OPT-IN per bramka (`requireOwnership`), zeby nie
  * przelaczac naraz 142 bramek w 8 plikach (zakaz masowego wlaczania, CLAUDE.md
@@ -1062,6 +1085,12 @@ export type OwnershipPredicate = () => boolean | Promise<boolean>;
 
 type CapabilityMatch =
   | { kind: 'allow'; reason: CapabilityDecisionReason; matched: string | null }
+  /**
+   * B-1/B-2/B-3: dopasowanie na sufiks `.scoped`. BEZ `requireOwnership`
+   * zachowuje sie jak dawne `allow` (co do joty — `reason: 'scope_suffix'`);
+   * gdy bramka prosi o zakres obiektu, idzie przez predykat wlasnosci.
+   */
+  | { kind: 'scope'; matched: string }
   | { kind: 'ownership'; matched: string }
   | { kind: 'missing' };
 
@@ -1079,7 +1108,7 @@ function matchEffectiveCapability(
     return { kind: 'allow', reason: 'admin_unrestricted', matched: ADMIN_UNRESTRICTED_SENTINEL };
   for (const suffix of SCOPE_SUFFIXES) {
     if (capabilities.has(`${capability}${suffix}`))
-      return { kind: 'allow', reason: 'scope_suffix', matched: `${capability}${suffix}` };
+      return { kind: 'scope', matched: `${capability}${suffix}` };
   }
   for (const suffix of OWNERSHIP_SUFFIXES) {
     if (capabilities.has(`${capability}${suffix}`))
@@ -1111,6 +1140,12 @@ export async function evaluateEffectiveCapability(
   if (match.kind === 'allow')
     return { allowed: true, reason: match.reason, matched: match.matched };
   if (match.kind === 'missing') return { allowed: false, reason: 'missing', matched: null };
+
+  // B-1/B-2/B-3: bramka, ktora NIE prosi o zakres obiektu, dostaje dla `.scoped`
+  // dokladnie dawna decyzje (`scope_suffix`). Bez tej linii naprawa dotknelaby
+  // wszystkich bramek naraz — zakaz masowego wlaczania (CLAUDE.md regula 9).
+  if (match.kind === 'scope' && !options.requireOwnership)
+    return { allowed: true, reason: 'scope_suffix', matched: match.matched };
 
   if (!options.requireOwnership)
     return { allowed: true, reason: 'ownership_confirmed', matched: match.matched };
