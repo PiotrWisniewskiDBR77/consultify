@@ -13,6 +13,39 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (tests/setup.ts:122) ma i18n.language:'en' na stałe i zawsze zwraca
+// angielski fallback z t(klucz, fallback, opcje) — `finance.exportImport
+// .import.parsed` MA tłumaczenie PL ("Wczytano {{count}} wierszy. Manifest
+// OK."). Lokalny mock z language:'pl' + resolvePlKey (czyta realny
+// public/locales/pl/translation.json) + interpolacja {{count}} — wzór:
+// ExecutionWorkSurface.daneRealne.test.tsx.
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const podstaw = (wzorzec: string, dane: Record<string, unknown>): string =>
+  wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(dane[name] ?? ''));
+const tStabilne = (k: string, fallback?: unknown, opcje?: Record<string, unknown>) => {
+  const resolved = resolvePlKey(k);
+  const wzorzec = resolved !== undefined ? resolved : typeof fallback === 'string' ? fallback : k;
+  return opcje ? podstaw(wzorzec, opcje) : wzorzec;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
 const mockExport = vi.fn();
 const mockParse = vi.fn();
 const mockPreview = vi.fn();
