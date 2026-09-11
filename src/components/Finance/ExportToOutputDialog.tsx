@@ -210,19 +210,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('report')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-focus/50 ${
                   outputType === 'report'
-                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
+                    ? 'border-c-focus-solid bg-c-focus/10'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <FileText size={18} className="text-primary-500" />
+                  <FileText size={18} className="text-c-text-secondary" />
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.report', 'Report')}
                   </span>
                   {outputType === 'report' && (
-                    <Check size={16} className="text-primary-500 ml-auto" />
+                    <Check size={16} className="text-c-focus-solid ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -233,19 +233,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('presentation')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-focus/50 ${
                   outputType === 'presentation'
-                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
+                    ? 'border-c-focus-solid bg-c-focus/10'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Presentation size={18} className="text-primary-500" />
+                  <Presentation size={18} className="text-c-text-secondary" />
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.presentation', 'Presentation')}
                   </span>
                   {outputType === 'presentation' && (
-                    <Check size={16} className="text-primary-500 ml-auto" />
+                    <Check size={16} className="text-c-focus-solid ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -259,19 +259,19 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
               <button
                 type="button"
                 onClick={() => setOutputType('initiatives')}
-                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-primary-400/50 ${
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left hover:ring-2 hover:ring-c-focus/50 ${
                   outputType === 'initiatives'
-                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
+                    ? 'border-c-focus-solid bg-c-focus/10'
                     : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2 w-full">
-                  <span className="text-primary-500 font-semibold">+</span>
+                  <span className="text-c-text-secondary font-semibold">+</span>
                   <span className="font-medium text-slate-900 dark:text-white">
                     {t('finance.export.initiatives', 'Initiatives')}
                   </span>
                   {outputType === 'initiatives' && (
-                    <Check size={16} className="text-primary-500 ml-auto" />
+                    <Check size={16} className="text-c-focus-solid ml-auto" />
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
