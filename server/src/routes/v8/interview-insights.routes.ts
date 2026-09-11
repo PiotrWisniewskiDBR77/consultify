@@ -2,6 +2,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -938,11 +942,15 @@ router.post(
     } | null = null;
 
     if (target_initiative_id) {
-      const existing = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [target_initiative_id, organizationId]
-      );
-      if (!existing) {
+      const existingFound = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(organizationId, target_initiative_id)
+        : Boolean(
+            await queryHelpers.queryOne(
+              `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              [target_initiative_id, organizationId]
+            )
+          );
+      if (!existingFound) {
         return res.status(404).json({
           error: 'Target initiative not found',
           code: 'P10_TARGET_INITIATIVE_NOT_FOUND',

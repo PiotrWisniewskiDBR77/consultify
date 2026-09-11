@@ -19,6 +19,10 @@
 import { type Response, Router } from 'express';
 import { z } from 'zod';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
@@ -56,6 +60,9 @@ function getOrgId(req: any): string | null {
 
 /** Defensive org-scoped existence check so we never leak / write cross-org. */
 async function initiativeExistsInOrg(initiativeId: string, orgId: string): Promise<boolean> {
+  if (isInitiativeUnifiedReadEnabled()) {
+    return initiativeExists(orgId, initiativeId);
+  }
   const row = await queryHelpers.queryOne(
     `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? LIMIT 1`,
     [initiativeId, orgId]

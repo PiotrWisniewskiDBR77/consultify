@@ -2,6 +2,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { ZodError } from 'zod';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as artifactRegistryService from '../../services/v8/artifactRegistryService.js';
@@ -179,12 +183,18 @@ router.get(
       });
     }
     if (initiativeId) {
-      const initiative = await dbGet<{ id: string }>(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, organizationId],
-        { fallback: true }
-      );
-      if (!initiative?.id) {
+      const initiativeFound = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(organizationId, initiativeId)
+        : Boolean(
+            (
+              await dbGet<{ id: string }>(
+                `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+                [initiativeId, organizationId],
+                { fallback: true }
+              )
+            )?.id
+          );
+      if (!initiativeFound) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',
@@ -225,12 +235,18 @@ router.post(
         ? metadataInitiativeId.trim()
         : undefined;
     if (initiativeId) {
-      const initiative = await dbGet<{ id: string }>(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, organizationId],
-        { fallback: true }
-      );
-      if (!initiative?.id) {
+      const initiativeFound = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(organizationId, initiativeId)
+        : Boolean(
+            (
+              await dbGet<{ id: string }>(
+                `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+                [initiativeId, organizationId],
+                { fallback: true }
+              )
+            )?.id
+          );
+      if (!initiativeFound) {
         return res.status(404).json({
           error: `Initiative ${initiativeId} not found`,
           code: 'INITIATIVE_NOT_FOUND',

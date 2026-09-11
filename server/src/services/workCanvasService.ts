@@ -1,6 +1,10 @@
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import type { ArtifactContentEnvelopeV1 } from '../types/artifactContent.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1459,7 +1463,12 @@ export async function rejectProposal(params: {
  * semantics is a materially larger change than what was asked for). Those
  * targets fall through to `true` here unchanged.
  */
-async function confirmTargetObjectReadBack(
+// Exported (E3 paczka 3/3, testability only, zero behavior change) so the
+// initiative branch's unified-reader switch can be exercised directly on a
+// real Postgres fixture without reconstructing the full approveProposal ->
+// commitProposalToDomain materialization pipeline (proposal + draft +
+// canvasMaterialize) this is the only call site of.
+export async function confirmTargetObjectReadBack(
   target: WorkCanvasTarget,
   targetObjectId: string,
   organizationId: string
@@ -1504,6 +1513,9 @@ async function confirmTargetObjectReadBack(
       return Boolean(row);
     }
     case 'initiative': {
+      if (isInitiativeUnifiedReadEnabled()) {
+        return initiativeExists(organizationId, targetObjectId);
+      }
       const row = await dbGet<{ id: string }>(
         `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
         [targetObjectId, organizationId],

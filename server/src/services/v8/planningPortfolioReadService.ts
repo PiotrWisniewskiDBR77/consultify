@@ -1,6 +1,10 @@
 // INI-04: the gate/transition constants are no longer read here directly — the
 // approval profile comes from `initiativeCapabilityMatrix`, which owns them.
 import { isScheduledOnward } from '../../constants/initiativeStatuses.js';
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -465,11 +469,15 @@ export async function getInitiativeTaskDependenciesRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
-  const initiative = await queryHelpers.queryOne(
-    `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-    [initiativeId, organizationId]
-  );
-  if (!initiative) return [];
+  const initiativeFound = isInitiativeUnifiedReadEnabled()
+    ? await initiativeExists(organizationId, initiativeId)
+    : Boolean(
+        await queryHelpers.queryOne(
+          `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [initiativeId, organizationId]
+        )
+      );
+  if (!initiativeFound) return [];
 
   const dbToShort: Record<string, 'FS' | 'SS' | 'FF' | 'SF'> = {
     finish_to_start: 'FS',
