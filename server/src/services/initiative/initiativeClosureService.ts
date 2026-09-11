@@ -53,6 +53,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
@@ -356,11 +360,21 @@ export interface AddEvidenceResult {
  */
 export async function addEvidence(input: AddEvidenceInput): Promise<AddEvidenceResult> {
   return withPgTransaction<AddEvidenceResult>(async (tx): Promise<AddEvidenceResult> => {
+    // Row lock is attempted regardless of the flag (harmless no-op when the
+    // legacy row does not exist) — it is load-bearing for write-concurrency
+    // on the classic `initiatives` row and must not be dropped by this
+    // switch. `initiative_closure_requests.initiative_id` is a NOT NULL FK
+    // to `initiatives(id)` (934_initiative_closure_evidence_gate.sql:66), so
+    // in practice a reachable closure request always has a legacy row —
+    // the canonical fallback below only matters if that FK is ever relaxed.
     const initiative = await tx.query<{ id: string }>(
       `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? FOR UPDATE`,
       [input.initiativeId, input.orgId]
     );
-    if (initiative.rowCount === 0) {
+    const initiativeFound =
+      initiative.rowCount > 0 ||
+      (isInitiativeUnifiedReadEnabled() && (await initiativeExists(input.orgId, input.initiativeId)));
+    if (!initiativeFound) {
       fail('INITIATIVE_NOT_FOUND', 'Initiative not found', 404);
     }
 
