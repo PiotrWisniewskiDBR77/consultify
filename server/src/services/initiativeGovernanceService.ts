@@ -12,6 +12,10 @@ import {
   type PolicyParameterName,
 } from './executionControl/controlKpiPolicySchema.js';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -139,11 +143,15 @@ class InitiativeGovernanceService {
   ) {
     const goal = await this.getGoal(orgId, goalId);
     if (!goal) throw Object.assign(new Error('Goal not found'), { status: 404 });
-    const init = await queryHelpers.queryFirst(
-      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
-      [initiativeId, orgId]
-    );
-    if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
+    const initiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(orgId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryFirst(
+            `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+            [initiativeId, orgId]
+          )
+        );
+    if (!initiativeFound) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     const id = uuidv4();
     if (contributionClass) {
       if (!CONTRIBUTION_CLASSES.includes(contributionClass)) {
@@ -629,11 +637,15 @@ class InitiativeGovernanceService {
       requiredApprovers?: string[];
     }
   ) {
-    const owner = await queryHelpers.queryFirst<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = $1 AND organization_id = $2`,
-      [data.initiativeId, orgId]
-    );
-    if (!owner) throw Object.assign(new Error('initiative_not_found'), { status: 404 });
+    const ownerFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(orgId, data.initiativeId)
+      : Boolean(
+          await queryHelpers.queryFirst<{ id: string }>(
+            `SELECT id FROM initiatives WHERE id = $1 AND organization_id = $2`,
+            [data.initiativeId, orgId]
+          )
+        );
+    if (!ownerFound) throw Object.assign(new Error('initiative_not_found'), { status: 404 });
 
     const id = uuidv4();
     await queryHelpers.queryRun(
@@ -740,11 +752,15 @@ class InitiativeGovernanceService {
     decisionId: string,
     linkType?: string
   ) {
-    const init = await queryHelpers.queryFirst(
-      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
-      [initiativeId, orgId]
-    );
-    if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
+    const initiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(orgId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryFirst(
+            `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+            [initiativeId, orgId]
+          )
+        );
+    if (!initiativeFound) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     // SECURITY (M13 cross-org): the decision being linked must also belong to the
     // caller's org — otherwise org A could attach org B's decision id as a gate
     // dependency (and later probe its status via evaluateGate).
@@ -764,11 +780,15 @@ class InitiativeGovernanceService {
   }
 
   async getInitiativeDecisions(orgId: string, initiativeId: string) {
-    const init = await queryHelpers.queryFirst(
-      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
-      [initiativeId, orgId]
-    );
-    if (!init) return [];
+    const initiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(orgId, initiativeId)
+      : Boolean(
+          await queryHelpers.queryFirst(
+            `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+            [initiativeId, orgId]
+          )
+        );
+    if (!initiativeFound) return [];
     return queryHelpers.queryAll(
       `SELECT idl.*, d.title as decision_title, d.workflow_status
        FROM initiative_decision_links idl

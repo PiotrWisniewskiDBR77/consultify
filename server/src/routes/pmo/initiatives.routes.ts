@@ -11,6 +11,10 @@ import { z } from 'zod';
 
 import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../../domain/initiatives-execution/initiativeUnifiedReader.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { validateOrgMembership, verifyToken } from '../../middleware/auth.middleware.js';
@@ -1741,10 +1745,12 @@ router.patch(
         }
       }
 
-      const existing = await queryHelpers.queryOne<any>(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? LIMIT 1`,
-        [String(id), String(orgId)]
-      );
+      const existing = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(String(orgId), String(id))
+        : await queryHelpers.queryOne<any>(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? LIMIT 1`,
+            [String(id), String(orgId)]
+          );
       if (!existing) return res.status(404).json({ error: 'Initiative not found' });
 
       await queryHelpers.queryRun(
@@ -2043,10 +2049,12 @@ router.post(
         req.body || {};
 
       // Org-scope guard BEFORE any mutation, same shape as apply-template above.
-      const initiative = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [String(id), String(orgId)]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(String(orgId), String(id))
+        : await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [String(id), String(orgId)]
+          );
       if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
 
       const isLink = Boolean(decisionId);
@@ -2233,10 +2241,12 @@ router.post(
       const { templateId } = req.body;
       if (!templateId) return res.status(400).json({ error: 'templateId is required' });
 
-      const initiative = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [String(id), String(orgId)]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(String(orgId), String(id))
+        : await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [String(id), String(orgId)]
+          );
       if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
 
       const template = await initiativeTemplateService.getTemplateById(String(templateId));

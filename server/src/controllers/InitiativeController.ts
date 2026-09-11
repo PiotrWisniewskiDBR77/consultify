@@ -5251,10 +5251,12 @@ export class InitiativeController {
         return;
       }
 
-      const exists = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, orgId]
-      );
+      const exists = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, orgId]
+          );
       if (!exists) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
@@ -5493,10 +5495,12 @@ export class InitiativeController {
         return;
       }
 
-      const exists = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, orgId]
-      );
+      const exists = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, orgId]
+          );
       if (!exists) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
@@ -5632,10 +5636,12 @@ export class InitiativeController {
       // EXE-02/03/04: this endpoint previously had no organization-scope guard
       // (unlike updateRaidItem below, which already filters by organization_id).
       // Match that same guard pattern for the initiatives row.
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId]
+          );
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
@@ -5956,10 +5962,12 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.queryOne(
-        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [initiativeId, orgId]
-      );
+      const initiative = isInitiativeUnifiedReadEnabled()
+        ? await initiativeExists(orgId, initiativeId)
+        : await queryHelpers.queryOne(
+            `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+            [initiativeId, orgId]
+          );
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
         return;

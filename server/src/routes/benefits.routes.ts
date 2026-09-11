@@ -16,6 +16,10 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  initiativeExists,
+  isInitiativeUnifiedReadEnabled,
+} from '../domain/initiatives-execution/initiativeUnifiedReader.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
@@ -1397,11 +1401,17 @@ router.post(
     // unique, not per-org), so the ON CONFLICT UPSERT below could overwrite another org's
     // mapping row when handed a foreign-org (initiativeId, kpiId) pair. Verify both parents
     // belong to the caller's org before writing — mirrors the v8 router which 404s here.
-    const parentInitiative = await dbGet<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [String(initiativeId), orgId]
-    );
-    if (!parentInitiative?.id) {
+    const parentInitiativeFound = isInitiativeUnifiedReadEnabled()
+      ? await initiativeExists(String(orgId), String(initiativeId))
+      : Boolean(
+          (
+            await dbGet<{ id: string }>(
+              `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+              [String(initiativeId), orgId]
+            )
+          )?.id
+        );
+    if (!parentInitiativeFound) {
       return res.status(404).json({
         success: false,
         error: 'Initiative not found',
