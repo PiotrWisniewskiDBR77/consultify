@@ -1,0 +1,31 @@
+{
+ "nazwa": "E1-exec-praca",
+ "motyw": "light",
+ "url": "/execution?tab=list&view=table",
+ "urlKoncowy": "/execution?tab=work&view=table",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 8,
+ "apiReq": [
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/tasks",
+  "GET /api/initiatives",
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/tasks/workflow-config",
+  "GET /api/initiatives/runtime-v1/execution-cases",
+  "GET /api/initiatives/runtime-v1/execution-cases",
+  "GET /api/initiatives/runtime-v1/execution-cases/bulk?ids=004db83d-06fc-59f2-9cd9-64290638f2bc%2C9b06b4c3-fc76-56fc-b9b1-a5c29e2db589%2C6bfccd56-ea23-5c94-a5c4-4ade9168082f%2C3327e4be-a2d9-582c-9a3e-f13f44654966"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 10429,
+ "msDoZrzutu": 12085,
+ "rootLen": 171873,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Execution Data Model 1 James Whitfield JW Dashboard Deliveries Work Resources Decisions & risks Reports All deliveries Skills Matrix and Upskilling Warehouse Automation Pilot MES Rollout Line 3 Predictive Maintenance for CNC Line New task All 46 Overdue 18 Blocked 2 TASK INITIATIVE PERSON DUE STATUS DAYS OVERDUE Agree the shuttle safety case with the works council Warehouse Automation Pilot Priya Sharma 14/08/2026 Blocked +28 Agree the MES downtime reason-code taxonomy MES Rollout Line 3 Robert Chen 21/08/2026 Blocked +21 Commission the shuttle system in the pilot aisle Warehouse Automation Pilot Daniel Osei 28/08/2026 Done — Agree the maintenance work-order trigger with Planning Predictive Maintenance for CNC Line Emily Carter 03/09/2026 To do +8 Identify single points of failure per line Skills Matrix and Upskilling Priya Sharma 04/09/2026 In progress +7 Configure the MES work-order interface to ERP MES Rollout Line 3 Laura Novak 11/09/2026 In progress +1 Install shop-floor terminals on Line 3 MES Rollout Line 3 Laura Novak 26/06/2026 Done — Commission vibration sensors on cells 1 and 2 Predictive Maintenance for CNC Line Daniel Osei 30/06/2026 Done — Populate the skills matrix for all production roles Skills Matrix and Upskilling Priya Sharma 31/07/2026 Done — Agree the cross-training rota with the shift leads Skills Matrix and Upskilling Sarah Mitchell 31/08/2026 To do +11 Retrain the goods-out team on the new pick ",
+ "zimnyStart": 10429
+}

@@ -1,0 +1,43 @@
+{
+ "nazwa": "08-execution",
+ "motyw": "light",
+ "url": "/execution?tab=list&view=table",
+ "urlKoncowy": "/execution?tab=list&view=table",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 21,
+ "apiReq": [
+  "GET /api/action-cards?status=OPEN&sourceKind=execution_delay",
+  "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+  "GET /api/initiatives",
+  "GET /api/initiatives/runtime-v1/execution-cases",
+  "GET /api/v8/execution-control/risk-signals",
+  "GET /api/v8/execution-control/delay-signals",
+  "GET /api/v8/execution-control/budget/overspend-signals",
+  "GET /api/v8/execution-control/manager/lanes/action-queue/problems",
+  "GET /api/v8/execution-control/manager/lanes/decisions/problems",
+  "GET /api/v8/execution-control/manager/lanes/blockers/problems",
+  "GET /api/v8/execution-control/manager/lanes/workload/problems",
+  "GET /api/v8/execution-control/manager/lanes/risk/problems",
+  "GET /api/v8/execution-control/manager/lanes/people-change/problems",
+  "GET /api/v8/execution-control/timeline-warnings",
+  "GET /api/v8/execution-control/capacity/leveling-alerts",
+  "GET /api/v8/execution-control/capacity/timeline",
+  "GET /api/raid",
+  "GET /api/execution-control/capacity/resource-plan?weeks=8",
+  "GET /api/tasks",
+  "GET /api/decisions",
+  "GET /api/report-builder/definitions?kind=EXECUTION_PACK"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 1676,
+ "msDoZrzutu": 6192,
+ "rootLen": 61973,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Execution Data Model 1 1 James Whitfield JW Dashboard Deliveries Work Resources Decisions & risks Reports Active All All 4 At risk 2 Overdue 1 INITIATIVE LEVEL STATUS ASSIGNEE PLANNED START / END VARIANCE (DAYS) RAG Predictive Maintenance for CNC Line Rollout In execution SM Sarah Mitchell 06/04/2026 → 31/03/2027 +61 At risk MES Rollout Line 3 Rollout In execution SM Sarah Mitchell 04/05/2026 → 30/06/2027 +61 At risk Warehouse Automation Pilot Pilot Preparation In execution JW James Whitfield 02/03/2026 → 29/01/2027 0 On track Skills Matrix and Upskilling Value Realization On hold JW James Whitfield 02/02/2026 → 18/12/2026 -42 Blocked "
+}

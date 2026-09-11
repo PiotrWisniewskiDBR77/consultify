@@ -1,0 +1,26 @@
+{
+ "nazwa": "K5-karta-dzialania",
+ "motyw": "light",
+ "url": "/action-cards/13efc367-f4ad-400e-be76-19c5688ff266",
+ "urlKoncowy": "/action-cards/13efc367-f4ad-400e-be76-19c5688ff266",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 2,
+ "apiReq": [
+  "GET /api/initiatives/fd4139d8-def3-58e0-8e33-eba1a7b00877/transition-preflight",
+  "GET /api/action-cards/13efc367-f4ad-400e-be76-19c5688ff266"
+ ],
+ "dom": {
+  "aside": 1,
+  "workWithAI": 1,
+  "closeCard": 0,
+  "ladowanie": 0
+ },
+ "msDoTresci": 34,
+ "msDoZrzutu": 8053,
+ "rootLen": 47716,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Action card Data Model 1 James Whitfield JW Inbox List KPI deviation Odchylenie: Training Hours per FTE 01.2026 — rezultat 6,8 hours/quarter poza limitem (cel 12 hours/quarter). Odchylenie: Training Hours per FTE 01.2026 — rezultat 6,8 hours/quarter poza limitem (cel 12 hours/quarter). Closed Saved Description Work with AI Description Source Owner and due date Actions and status Problem: Odchylenie: Training Hours per FTE 01.2026 — rezultat 6,8 hours/quarter poza limitem (cel 12 hours/quarter). Root cause: — Action: — ACTIONS Back to list PROPERTIES Property Value Status Closed Owner Priya Sharma Due date 2026-02-14 RELATIONS SOURCES AND ASSUMPTIONS COMMENTS HISTORY"
+}

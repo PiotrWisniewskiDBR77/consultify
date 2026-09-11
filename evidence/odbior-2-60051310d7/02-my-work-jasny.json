@@ -1,0 +1,29 @@
+{
+ "nazwa": "02-my-work",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 7,
+ "apiReq": [
+  "GET /api/initiatives/runtime-v1/my-work/handoff-acceptances",
+  "GET /api/initiatives/runtime-v1/my-work/gate-signoffs",
+  "GET /api/action-cards?status=OPEN&ownerUserId=me",
+  "GET /api/v8/my-work/inbox/canonical?status=pending&limit=200",
+  "GET /api/v8/my-work/inbox/canonical/stats",
+  "GET /api/my-work/context-summary",
+  "POST /api/v8/my-work/inbox/canonical/materialize"
+ ],
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 3189,
+ "msDoZrzutu": 7700,
+ "rootLen": 117933,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Inbox Data Model 1 1 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults ALL 10 Overdue 4 Saved 0 AI 0 Critical 0 Action required 9 Today 0 This week 0 Done 1 AI Triage TITLE STATUS URGENCY TYPE SECTION SOURCE RECEIVED SLA Interview: Strategic Direction Discovery Open High Assignment New Assignments System 1d ago L1 8d Prepare the restart decision pack for the paused programme Open High Assignment New Assignments System 3d ago L1 5h Sign off Line 3 MES kickoff deck Open High Assignment New Assignments System 3d ago L1 1d Approve Q3 capex request Open High Assignment New Assignments System 3d ago L1 17d Task Unassigned Open Normal System System Notifications System 3h ago — Accept the vendor firmware release as a hard dependency Open Normal Decision Requires Your Decision System 3d ago L1 55d Follow up with Rotherham plant manager on downtime log Open Normal Assignment New Assignments System 3d ago L1 9d Draft opening remarks for steering committee Open Normal Assignment New Assignments System 3d ago L1 6d Review supplier corrective action plan Open Normal Assignment New Assignments System 3d ago L1 1h Prepare board pack for October review Open Low Assignment New Assignments System 3d ago L1 18d "
+}

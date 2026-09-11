@@ -1,0 +1,42 @@
+{
+ "nazwa": "K2-karta-decyzja",
+ "motyw": "light",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 2,
+ "bledy": [
+  "EKRAN NIE POKAZAL NOWEJ TRESCI W 60 s",
+  "TRESC NIE USTABILIZOWALA SIE W 45 s"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 15,
+ "apiReq": [
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/health",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/decisions/870d50ea-8e8d-4aad-9762-9c33229a4c33/detail",
+  "GET /api/notifications?limit=20",
+  "GET /api/notifications/unread-count",
+  "GET /api/cloud/providers",
+  "GET /api/users",
+  "GET /api/my-work/object-attachments/decision/870d50ea-8e8d-4aad-9762-9c33229a4c33",
+  "GET /api/v8/my-work/notebook/pages?q=Decide+on+the+third-party+training+platform+proposal&limit=5",
+  "GET /api/decisions/870d50ea-8e8d-4aad-9762-9c33229a4c33/stakeholders",
+  "GET /api/decisions/870d50ea-8e8d-4aad-9762-9c33229a4c33/history",
+  "GET /api/artifact-approvals/decision/870d50ea-8e8d-4aad-9762-9c33229a4c33/approval-state",
+  "PUT /api/decisions/870d50ea-8e8d-4aad-9762-9c33229a4c33/enhancements",
+  "PUT /api/decisions/870d50ea-8e8d-4aad-9762-9c33229a4c33/stakeholders"
+ ],
+ "dom": {
+  "aside": 1,
+  "workWithAI": 1,
+  "ladowanie": 0,
+  "tabela": 1
+ },
+ "msDoTresci": null,
+ "msDoZrzutu": 116517,
+ "rootLen": 85862,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Decisions Data Model 1 1 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults List Agree the shuttle safety case with the works council Decide on the third-party training platform proposal Decide on the third-party training platform proposal Escalated Saved AI Sections Edit Preview Work with AI Decision Scope Options & Trade-offs Risk & Impact Consequences RACI & Escalation Attachments & Links Decision Scope Edited RELATED TONo linked item DECISION SCOPE AI ADDITIONAL CONTEXT AI Regenerate Edit Accept Related Context AI-Discovered Connections Submit for review ACTIONS Approve decision Reject More actions 4 PROPERTIES Property Value Status Escalated Workflow Proposed Priority Medium Due date Aug 28, 2026 Decider — RELATIONS SOURCES AND ASSUMPTIONS COMMENTS HISTORY 1"
+}

@@ -1,0 +1,33 @@
+{
+ "nazwa": "12-organization",
+ "motyw": "light",
+ "url": "/organization/profile/identity-scale",
+ "urlKoncowy": "/organization/profile/identity-scale",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 11,
+ "apiReq": [
+  "GET /api/demo/status",
+  "GET /api/mfa/status",
+  "GET /api/health",
+  "GET /api/llm/providers/health?timeoutMs=4000",
+  "GET /api/organizations/current",
+  "GET /api/organization-context",
+  "GET /api/organization-profiles/468b234c-66c4-54e1-b626-5e0fb3a92f6a",
+  "GET /api/organization-context",
+  "GET /api/organization-context/governed/claims?limit=200",
+  "GET /api/organization-context-store",
+  "GET /api/notifications/unread-count"
+ ],
+ "dom": {
+  "aside": 1,
+  "tabela": 0
+ },
+ "msDoTresci": 461,
+ "msDoZrzutu": 4572,
+ "rootLen": 87639,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Organization Data Model 1 1 James Whitfield JW Back to Dashboard Organization Business context, sources, and decision readiness ORGANIZATION PROFILE Identity & Operating Model Direction & Constraints GOALS & EXPECTATIONS Goals & Metrics Scope & Ways of Working CHALLENGES Challenges & Evidence Root Causes & Blockers STRATEGIC SYNTHESIS Risks & Opportunities Scenarios & Brief SOURCES & KNOWLEDGE Sources & Claims Knowledge Graph READINESS & GOVERNANCE Organization Readiness Organization Organization Profile Identity & Operating Model Teresa context: 17 claims · updated 2d ago Teresa is using this context to answer your questions View knowledge graph Identity Scale Markets & systems Add source All 13 Filled in 13 To fill in 0 Conflicts 0 Identity The organization type decides what Teresa asks about next. ORGANIZATION TYPE Manufacturing Professional Services Technology Public Sector Nonprofit / NGO Other INDUSTRY — Technology Financial Services Healthcare Manufacturing Industrial Consumer Energy Telecommunications Real Estate Transportation & Logistics Education Government Retail & E-commerce Media & Entertainment Agriculture Construction Hospitality Professional Services Other Organization profile · not approved 09/09/2026 SUB-INDUSTRY INDUSTRY CODE ORGANIZATION DESCRIPTION Organization profile · not approved 09/09/2026 Technical details Scale COMPANY SIZE — Startup (< 50) SMB (50-250) Mid-Market (250-1000) Enterprise (1000"
+}

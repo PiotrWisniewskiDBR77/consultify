@@ -1,0 +1,37 @@
+{
+ "nazwa": "K1-karta-zadanie",
+ "motyw": "dark",
+ "url": "/my-work",
+ "urlKoncowy": "/my-work",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "zadanApi": 12,
+ "apiReq": [
+  "GET /api/my-work/personal-tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8",
+  "GET /api/users",
+  "GET /api/initiatives",
+  "GET /api/my-work/personal-tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8",
+  "GET /api/my-work/link-graph/backlinks?type=task&id=f9c386c1-8b09-5276-a5a0-4452f1e283b8&limit=100",
+  "GET /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/risk-alternatives",
+  "GET /api/v8/my-work/notebook/pages?q=Agree+the+shuttle+safety+case+with+the+works+council&limit=5",
+  "GET /api/my-work/object-attachments/task/f9c386c1-8b09-5276-a5a0-4452f1e283b8",
+  "GET /api/my-work/my-ideas/suggest?q=Agree+the+shuttle+safety+case+with+the+works+council+The+council+asked+for+a+written+position+on+manual+intervention+inside+the+shuttle+aisle.&limit=5",
+  "GET /api/tasks/f9c386c1-8b09-5276-a5a0-4452f1e283b8/comments",
+  "GET /api/v8/my-work/notebook/pages?q=Agree+the+shuttle+safety+case+with+the+works+council+The+council+asked+for+a+written+position+on+manual+intervention+inside+the+shuttle+aisle.&limit=5",
+  "GET /api/capabilities/effective"
+ ],
+ "dom": {
+  "aside": 1,
+  "workWithAI": 1,
+  "ladowanie": 0,
+  "tabela": 1
+ },
+ "msDoTresci": 8630,
+ "msDoZrzutu": 12005,
+ "rootLen": 80728,
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content My Work Tasks Data Model 1 James Whitfield JW Ideas Notebook Inbox Calendar Tasks Decisions Vaults List Agree the shuttle safety case with the works council Agree the shuttle safety case with the works council Blocked Saved AI Start Sections Edit Preview Work with AI Warning: deadline approaching or overdue! BLOCKED REASON Description & Scope Checklist Dependencies Evidence Attachments & Links Strategy Edited Description & Scope RELATED TONo linked source — standalone task TASK DESCRIPTION AI RELEVANT IDEAS No suggestions Save ideas from chat to build your private library. RELEVANT NOTES Loading No suggestions Save notes to build your personal knowledge base. EXPECTED OUTCOME AI Review this draft, then save the task to persist it. Regenerate Edit ACTIONS Reassign PROPERTIES Property Value Status Blocked Priority Critical Due date Aug 14, 2026 Owner Priya Sharma Source — RELATIONS SOURCES AND ASSUMPTIONS COMMENTS HISTORY 1",
+ "zimnyStart": 8630
+}
