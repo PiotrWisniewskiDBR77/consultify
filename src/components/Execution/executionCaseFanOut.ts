@@ -128,3 +128,35 @@ export async function fanOutExecutionCases<T>(
     failedCaseIds: settled.filter((entry) => !entry.ok).map((entry) => entry.caseId),
   };
 }
+
+/**
+ * JEDNO zbiorcze pobranie PRZED wachlarzem (naprawa N+1, pomiar 2026-09-11).
+ *
+ * DLACZEGO TAK, A NIE „zamiast wachlarza": wachlarz niesie kontrakt, ktorego
+ * nie wolno zgubic — limit czasu per realizacja, abort, render przyrostowy
+ * (`onCaseSettled`) i lista `failedCaseIds`. Zbiorcze zapytanie zmienia tylko
+ * to, SKAD `loadOne` bierze dane: gdy mapa jest, `loadOne` nie robi ANI JEDNEGO
+ * zadania sieciowego; gdy jej nie ma (stary serwer, blad, przekroczony czas),
+ * wachlarz dziala dokladnie jak przed zmiana. Parytet bez rozgalezienia widoku.
+ *
+ * KAZDY blad konczy sie `null` — zbiorcze zapytanie jest przyspieszeniem, nie
+ * warunkiem dzialania ekranu. Gdyby rzucalo, jeden zly serwer zabralby dane,
+ * ktore stara sciezka potrafi przyniesc.
+ */
+export async function prefetchExecutionCaseBundles<B>(
+  ids: readonly string[],
+  fetchBulk: (ids: string[], signal: AbortSignal) => Promise<Map<string, B> | null>,
+  options?: { timeoutMs?: number }
+): Promise<Map<string, B> | null> {
+  const unikalne = [...new Set(ids.map((id) => String(id ?? '').trim()).filter(Boolean))];
+  if (unikalne.length === 0) return null;
+  try {
+    return await loadExecutionCaseWithTimeout(
+      'bulk',
+      (signal) => fetchBulk(unikalne, signal),
+      { timeoutMs: options?.timeoutMs ?? EXECUTION_CASE_FANOUT_TIMEOUT_MS }
+    );
+  } catch {
+    return null;
+  }
+}

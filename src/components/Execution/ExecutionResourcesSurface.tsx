@@ -23,6 +23,7 @@ import {
   listExecutionCases,
   proposeOperationalAllocation,
   readExecutionCase,
+  readExecutionCaseBundles,
   readExecutionWork,
   readOperationalAllocations,
   simulateOperationalAllocation,
@@ -44,6 +45,7 @@ import {
   fanOutExecutionCases,
   isExecutionCaseTimeout,
   loadExecutionCaseWithTimeout,
+  prefetchExecutionCaseBundles,
 } from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
@@ -243,21 +245,32 @@ export const ExecutionResourcesSurface = ({
       // po 12 s (limit wachlarza), mimo ze pozostale odpowiadaly od razu.
       const zebrane: any[] = [];
       const nieodpowiadajace: string[] = [];
+      // N+1 (pomiar 2026-09-11, Realizacja LCP 11,4 s): tu leciały DWA żądania na
+      // każdą realizację (`…/allocations` + `…/work`) — 1 + 2N na jedno wejście
+      // w zakładkę. Jedno zbiorcze pobranie zdejmuje 2N; wachlarz poniżej
+      // (limit, abort, render przyrostowy) zostaje jako ścieżka zapasowa.
+      const bundles = await prefetchExecutionCaseBundles(
+        (nextCases ?? []).map((item: any) => String(item?.executionCaseId ?? '')),
+        (ids, signal) => readExecutionCaseBundles(ids, signal)
+      );
       const fanOut = await fanOutExecutionCases<any>(
         nextCases,
         async (executionCase: any, signal) => {
           const isReview = executionReviewCases.some(
             (item) => item.executionCaseId === executionCase.executionCaseId
           );
+          const bundle = bundles?.get(executionCase.executionCaseId);
           const [result, work] = isReview
             ? [
                 getExecutionReviewAllocations(executionCase.executionCaseId),
                 getExecutionReviewWork(executionCase.executionCaseId),
               ]
-            : ((await Promise.all([
-                readOperationalAllocations(executionCase.executionCaseId, signal),
-                readExecutionWork(executionCase.executionCaseId, signal),
-              ])) as any[]);
+            : bundle
+              ? [bundle.allocations, bundle.work]
+              : ((await Promise.all([
+                  readOperationalAllocations(executionCase.executionCaseId, signal),
+                  readExecutionWork(executionCase.executionCaseId, signal),
+                ])) as any[]);
           return (result.items ?? []).map((item: any) => ({
             ...item,
             executionCaseId: executionCase.executionCaseId,

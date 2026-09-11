@@ -1,4 +1,5 @@
 import { v8Get, v8Patch, v8Post } from './client';
+import { dedupeInFlight } from '../inFlightDedupe';
 
 export interface V8ExecutionManagementSectionProvenance {
   source: string;
@@ -509,10 +510,18 @@ export const V8ExecutionControlApi = {
       projectId ? { projectId } : undefined
     ),
 
+  // DEDUPE W LOCIE (pomiar 2026-09-11): `ExecutionHub` odpala szesc torow w
+  // efekcie zaleznym od `currentProjectId`, ktory ustala sie PO pierwszym
+  // renderze — te same szesc zapytan leci dwa razy. Klucz = tor + projekt, wiec
+  // rozne tory i rozne projekty nadal ida osobno, a powtorzenie tego samego
+  // zapytania w locie dostaje TE SAMA obietnice. To nie cache: wpis znika po
+  // rozstrzygnieciu, wiec odswiezenie zawsze pobiera dane od nowa.
   getManagerProblems: (laneId: string, projectId?: string) =>
-    v8Get<{ problems: V8ManagerProblemRow[]; count: number }>(
-      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problems`,
-      projectId ? { projectId } : undefined
+    dedupeInFlight(`manager-problems:${laneId}:${projectId ?? ''}`, () =>
+      v8Get<{ problems: V8ManagerProblemRow[]; count: number }>(
+        `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problems`,
+        projectId ? { projectId } : undefined
+      )
     ),
 
   executeManagerProblemAction: (
