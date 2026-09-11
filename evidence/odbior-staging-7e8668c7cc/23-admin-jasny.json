@@ -1,0 +1,22 @@
+{
+ "nazwa": "23-admin",
+ "motyw": "light",
+ "url": "/admin",
+ "urlKoncowy": "/admin",
+ "konto": "owner",
+ "bledyKonsoli": 1,
+ "bledy": [
+  "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 89817,
+ "msDoRenderu": null,
+ "msDoTresci": 86803,
+ "czasy": {},
+ "tekst": ""
+}

@@ -1,0 +1,20 @@
+{
+ "nazwa": "20-audits",
+ "motyw": "light",
+ "url": "/audits-hub",
+ "urlKoncowy": "/audits-hub",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 63657,
+ "msDoRenderu": 60644,
+ "msDoTresci": 60646,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Page not found Data Model 2 James Whitfield JW Page not found The address you followed doesn't exist or has moved. Go back Back to Chat"
+}

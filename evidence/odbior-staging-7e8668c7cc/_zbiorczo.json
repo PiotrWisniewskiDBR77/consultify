@@ -1,0 +1,314 @@
+[
+ {
+  "nazwa": "10-chat",
+  "motyw": "light",
+  "url": "/chat",
+  "urlKoncowy": "/chat",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 20630,
+  "msDoRenderu": 16612,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content AI Chat Data Model 1 2 James Whitfield JW Skip to chat input Let's get to work, James. Start by voice OUTPUT Auto Documents Tables Presentations Daily brief Quick savings Product idea Plan review Market analysis Financial analysis Classic consulting Digital transformation Consultify® DBR77 INDUSTRIAL INTELLIGENCE"
+ },
+ {
+  "nazwa": "11-my-work",
+  "motyw": "light",
+  "url": "/my-work",
+  "urlKoncowy": "/my-work",
+  "konto": "owner",
+  "bledyKonsoli": 1,
+  "bledy": [
+   "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+  ],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 81323,
+  "msDoRenderu": null,
+  "czasy": {},
+  "tekst": ""
+ },
+ {
+  "nazwa": "12-interview",
+  "motyw": "light",
+  "url": "/interview",
+  "urlKoncowy": "/interview",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 33115,
+  "msDoRenderu": 29100,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Interview Inbox Data Model 1 James Whitfield JW Inbox Sessions Assigned Templates Insights Initiatives Assign All 0 Answered 0 Approved 0 Sent back 0 Loading"
+ },
+ {
+  "nazwa": "13-tools",
+  "motyw": "light",
+  "url": "/tools-hub",
+  "urlKoncowy": "/tools-hub",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 48943,
+  "msDoRenderu": 44925,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Page not found Data Model 1 James Whitfield JW Page not found The address you followed doesn't exist or has moved. Go back Back to Chat"
+ },
+ {
+  "nazwa": "14-assessment",
+  "motyw": "light",
+  "url": "/assessment",
+  "urlKoncowy": "/assessment?tab=library",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 1
+  },
+  "msDoZrzutu": 77175,
+  "msDoRenderu": 73160,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Assessment Data Model 1 James Whitfield JW Library Processes Insights Reports Initiatives METHODOLOGY AREA STATUS ACTIONS Advanced Digital Maturity Assessment ADMA Digital manufacturing Planned Start Capability Maturity Model Integration CMMI Process capability Planned Start Digital Readiness Diagnosis DRD Digital transformation Method core Start Lean 4.0 LEAN Lean and automation Planned Start Smart Industry Readiness Index SIRI Smart manufacturing Planned Start "
+ },
+ {
+  "nazwa": "15-initiatives",
+  "motyw": "light",
+  "url": "/initiatives",
+  "urlKoncowy": "/initiatives",
+  "konto": "owner",
+  "bledyKonsoli": 1,
+  "bledy": [
+   "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+  ],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 89084,
+  "msDoRenderu": null,
+  "czasy": {},
+  "tekst": "Nie udało się wczytać danych na czas Ładowanie trwało dłużej niż 15 sekund. Spróbuj ponownie."
+ },
+ {
+  "nazwa": "16-execution",
+  "motyw": "light",
+  "url": "/execution",
+  "urlKoncowy": "/execution",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 18881,
+  "msDoRenderu": 14867,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Execution Data Model James Whitfield JW Loading…"
+ },
+ {
+  "nazwa": "17-results",
+  "motyw": "light",
+  "url": "/results",
+  "urlKoncowy": "/results/kpi",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 13837,
+  "msDoRenderu": 9824,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Results Data Model James Whitfield JW"
+ },
+ {
+  "nazwa": "18-finance",
+  "motyw": "light",
+  "url": "/finance",
+  "urlKoncowy": "/finance?tab=statements",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 1
+  },
+  "msDoZrzutu": 41157,
+  "msDoRenderu": 37133,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Finance Statements Data Model 1 James Whitfield JW Statements Analysis Models Prediction Enterprise valuation Import statement All 1 Rejected Imports 0 Recovery Queue 0 Ready Statements 1 Analyze AI TYPE NAME COMPLETENESS PERIOD CURRENCY DOCS STATUS UPDATED STM Northwind Manufacturing Ltd. P&L / — BS / — CF Q3 FY2025 – Q2 FY2026 GBP 4 Approved 3 days ago "
+ },
+ {
+  "nazwa": "19-materials",
+  "motyw": "light",
+  "url": "/materials",
+  "urlKoncowy": "/materials",
+  "konto": "owner",
+  "bledyKonsoli": 1,
+  "bledy": [
+   "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+  ],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 85077,
+  "msDoRenderu": null,
+  "czasy": {},
+  "tekst": ""
+ },
+ {
+  "nazwa": "20-audits",
+  "motyw": "light",
+  "url": "/audits-hub",
+  "urlKoncowy": "/audits-hub",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 18849,
+  "msDoRenderu": 14836,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Page not found Data Model 1 2 James Whitfield JW Page not found The address you followed doesn't exist or has moved. Go back Back to Chat"
+ },
+ {
+  "nazwa": "21-meeting",
+  "motyw": "light",
+  "url": "/meeting",
+  "urlKoncowy": "/meetings",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 26075,
+  "msDoRenderu": 22063,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Meeting Data Model 1 James Whitfield JW Meetings — planned for Wave 2 This module isn't part of the MVP yet. We'll come back to it in the next wave. Back to Chat"
+ },
+ {
+  "nazwa": "22-organization",
+  "motyw": "light",
+  "url": "/organization",
+  "urlKoncowy": "/organization",
+  "konto": "owner",
+  "bledyKonsoli": 1,
+  "bledy": [
+   "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+  ],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 83678,
+  "msDoRenderu": null,
+  "czasy": {},
+  "tekst": ""
+ },
+ {
+  "nazwa": "23-admin",
+  "motyw": "light",
+  "url": "/admin",
+  "urlKoncowy": "/admin/team/members",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 1
+  },
+  "msDoZrzutu": 31945,
+  "msDoRenderu": 27930,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Admin Overview Data Model 1 2 James Whitfield JW Back ADMIN PANEL Access, organization policies, evidence, and safe operations TEAM & ACCESS Members Invitations Roles & Permissions Teams Guests & External Access Access Requests Access Reviews Ownership BILLING & PLANS AI CONTROL SECURITY & IDENTITY AUDIT LOG ADMIN COMMAND CENTER SYSTEM HEALTH Admin panel Team & Access Members Members Membership operations, role changes, ownership transfer, and team invite codes. Owner Full workspace control, ownership transfer, and owner-only safeguards. Only an owner can assign or remove another owner. Admin Can manage team members, member roles, and team invite codes. Cannot change owner membership or bypass owner protections. Member Standard workspace access without team administration permissions. Cannot open Team Admin or change membership. Guest Restricted collaborator role with no admin access. Guests cannot access admin tools. Members & Roles Canonical P32 surface for membership, role changes, and ownership safeguards. Invitation role Member Admin Guest Add member MEMBER EMAIL ROLE STATUS James Whitfield james.whitfield@northwind.example Role for James Whitfield Owner Admin Member Guest Active Sarah Mitchell sarah.mitchell@northwind.example Role for Sarah Mitchell Owner Admin Member Guest Active Robert Chen robert.chen@northwind.e"
+ },
+ {
+  "nazwa": "24-settings",
+  "motyw": "light",
+  "url": "/settings",
+  "urlKoncowy": "/settings/profile",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 0,
+   "tabela": 0
+  },
+  "msDoZrzutu": 14886,
+  "msDoRenderu": 10865,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Settings Profile Data Model 1 2 James Whitfield JW Settings Personal preferences My settings Profile Avatar & Photo Email Signatures Working Hours Work preferences AI & automation Notifications Security Integrations Data & privacy Billing Appearance Advanced Back to Dashboard Settings Profile Profile Manage your personal information and account Save Changes Personal Information Manage your personal information and preferences Change Photo James Whitfield Northwind Manufacturing Ltd. james.whitfield@northwind.example Owner Operations PUBLIC PROFILE Display Name This is how your name will appear to other users. Leave empty to use your full name. Pronouns Prefer not to say He/Him She/Her They/Them Other Department Select department... Engineering Product Design Marketing Sales Operations Finance Human Resources Legal Customer Success Support Executive Other Personal Information First Name Last Name Phone Company LinkedIn Profile ID Enter your profile ID from the LinkedIn URL (after /in/) Job Title Availability & Status Status Message Let your team know what you're up to (0/100) Out of Office Automatically notify others when you're away Regional Settings Timezone, date, time, number and unit formats are managed together in Regional Settings. Open Regional Settings"
+ },
+ {
+  "nazwa": "25-partner",
+  "motyw": "light",
+  "url": "/partner",
+  "urlKoncowy": "/partner?tab=partner-home",
+  "konto": "owner",
+  "bledyKonsoli": 0,
+  "bledy": [],
+  "http4xx5xx": [],
+  "piatkiXX": 0,
+  "dom": {
+   "aside": 1,
+   "tabela": 0
+  },
+  "msDoZrzutu": 39897,
+  "msDoRenderu": 35876,
+  "czasy": {},
+  "tekst": "? Help Center Feedback Documents 77 Skip to main content Partner Portal Data Model 1 2 James Whitfield JW Partner Portal DBR77 Consultify HOME Home Dashboard Metrics REFERRALS My Links & Codes Click Analytics Referred Customers EARNINGS Commission Earnings Statements Payout History Payout Settings CLIENT MANAGEMENT Client Access Manager Organizations Active Projects Team Members ACADEMY Learning Path Exams Certificates PROFILE Company Info Specializations Regions Public Listing RESOURCES Documentation Marketing Materials Case Studies PMO Templates Back to app Partner Portal The Partner profile is not connected yet Your organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data. Connect this organization as a partner"
+ }
+]

@@ -1,0 +1,22 @@
+{
+ "nazwa": "21-meeting",
+ "motyw": "light",
+ "url": "/meeting",
+ "urlKoncowy": "/meeting",
+ "konto": "owner",
+ "bledyKonsoli": 1,
+ "bledy": [
+  "APLIKACJA NIE ZAMONTOWALA SIE W 75 s (root < 20 kB)"
+ ],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 0
+ },
+ "msDoZrzutu": 79833,
+ "msDoRenderu": null,
+ "msDoTresci": 76819,
+ "czasy": {},
+ "tekst": ""
+}

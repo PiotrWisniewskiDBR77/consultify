@@ -1,0 +1,20 @@
+{
+ "nazwa": "18-finance",
+ "motyw": "light",
+ "url": "/finance",
+ "urlKoncowy": "/finance?tab=statements",
+ "konto": "owner",
+ "bledyKonsoli": 0,
+ "bledy": [],
+ "http4xx5xx": [],
+ "piatkiXX": 0,
+ "dom": {
+  "aside": 0,
+  "tabela": 1
+ },
+ "msDoZrzutu": 30334,
+ "msDoRenderu": 27309,
+ "msDoTresci": 27321,
+ "czasy": {},
+ "tekst": "? Help Center Feedback Documents 77 Skip to main content Finance Statements Data Model 1 James Whitfield JW Statements Analysis Models Prediction Enterprise valuation Import statement All 1 Rejected Imports 0 Recovery Queue 0 Ready Statements 1 Analyze AI TYPE NAME COMPLETENESS PERIOD CURRENCY DOCS STATUS UPDATED STM Northwind Manufacturing Ltd. P&L / — BS / — CF Q3 FY2025 – Q2 FY2026 GBP 4 Approved 3 days ago "
+}
