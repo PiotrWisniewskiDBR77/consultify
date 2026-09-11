@@ -1239,10 +1239,28 @@ router.delete('/:taskId/comments/:commentId', requireAudit, TaskController.delet
  * POST /api/tasks/:id/assign
  * Assign task to user
  */
+// [ODMROZENIE 07_MY_WORK_AGENT DEC-453] STOP-4 z paczki E2 (10.09), zmierzony
+// 11.09 na kopii `consultify_kopia_s12b`: PRZED — MEMBER wolal
+// `POST /api/tasks/<CUDZE>/assign` i dostawal 200, a `tasks.assignee_id`
+// realnie przechodzilo z wlasciciela na wolajacego. Rodzenstwo `/unassign`
+// dostalo bramke obiektowa juz w E2; `assign`/`reassign` zostaly wtedy
+// niezmierzone.
+//
+// Ten sam mechanizm co E2/E2b i TYLKO te dwie trasy: `enforceMode: 'enforce'`
+// (globalne `CAPABILITY_ENFORCE` nietkniete), `objectScoped` + `ownerPredicate`
+// fail-closed. `ownerGrantsAccess: true`, bo szablon roli TASK_ASSIGNEE nie ma
+// zdolnosci `task.assign` (zmierzone: `wouldAllow:false, reason:"missing"`
+// takze na WLASNYM zadaniu) — bez tego bramka zabralaby czlonkowi wlasna prace.
 router.post(
   '/:id/assign',
   requireAudit,
-  requireTaskCapability('task.assign', { shadow: true }),
+  requireTaskCapability('task.assign', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+    ownerGrantsAccess: true,
+  }),
   validateBody(AssignTaskSchema),
   TaskController.assignTask
 );
@@ -1251,10 +1269,18 @@ router.post(
  * POST /api/tasks/:id/reassign
  * Reassign task
  */
+// Rodzenstwo `assign` (STOP-4). Pomiar 11.09: MEMBER przepinal CUDZE zadanie
+// przez `/reassign` z kodem 200.
 router.post(
   '/:id/reassign',
   requireAudit,
-  requireTaskCapability('task.reassign', { shadow: true }),
+  requireTaskCapability('task.reassign', {
+    shadow: true,
+    enforceMode: 'enforce',
+    objectScoped: true,
+    ownerPredicate: isTaskOwnedByCaller,
+    ownerGrantsAccess: true,
+  }),
   validateBody(ReassignTaskSchema),
   TaskController.reassignTask
 );
