@@ -23,6 +23,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import config from '../../server/src/config/Config.js';
+import TaskController from '../../server/src/controllers/TaskController.js';
 import tasksRouter from '../../server/src/routes/pmo/tasks.routes.js';
 
 const databaseUrl = process.env.DATABASE_URL || '';
@@ -91,6 +92,18 @@ describe.skipIf(!realDb).sequential('E2 — zakres obiektowy zdolnosci task.upda
       );
     }
 
+    // S12-B: `TaskAssignmentService.assignTask` wymaga, zeby przypisywany byl
+    // czlonkiem projektu (inaczej rzuca i trasa konczy sie 500 dla KAZDEGO,
+    // takze wlasciciela) — bez tych wierszy pomiar STOP-4 mierzylby brak
+    // fikstury, nie uprawnienia.
+    for (const id of [czlonekA, czlonekB, administrator] as const) {
+      await pool.query(
+        `INSERT INTO project_members(id,project_id,user_id,project_role)
+         VALUES($1,$2,$3,'TASK_ASSIGNEE')`,
+        [randomUUID(), projekt, id]
+      );
+    }
+
     for (const [id, wlasciciel, nazwa] of [
       [zadanieA, czlonekA, 'zadanie czlonka A'],
       [zadanieB, czlonekB, 'zadanie czlonka B'],
@@ -110,6 +123,7 @@ describe.skipIf(!realDb).sequential('E2 — zakres obiektowy zdolnosci task.upda
   afterAll(async () => {
     if (!pool) return;
     await pool.query('DELETE FROM tasks WHERE organization_id = $1', [org]);
+    await pool.query('DELETE FROM project_members WHERE project_id = $1', [projekt]);
     await pool.query('DELETE FROM organization_members WHERE organization_id = $1', [org]);
     await pool.query('DELETE FROM users WHERE organization_id = $1', [org]);
     await pool.query('DELETE FROM project_role_templates WHERE organization_id = $1', [org]);
@@ -201,5 +215,121 @@ describe.skipIf(!realDb).sequential('E2 — zakres obiektowy zdolnosci task.upda
       .send({ reason: 'blokada wlasnego zadania' });
 
     expect(odp.status).toBe(200);
+  }, 30_000);
+  // ==========================================================================
+  // S12-B — domkniecie STOP-3 i STOP-4 z paczki E2 (11.09,
+  // kopia `consultify_kopia_s12b`).
+  // ==========================================================================
+
+  it('STOP-4: MEMBER przepina CUDZE zadanie na siebie (POST /:id/assign) -> 403, assignee_id bez zmian', async () => {
+    const { rows: przed } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [
+      zadanieB,
+    ]);
+
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieB}/assign`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({ assigneeId: czlonekA });
+
+    const { rows: po } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [zadanieB]);
+    // eslint-disable-next-line no-console
+    console.log('[POMIAR STOP-4 assign cudze]', odp.status, JSON.stringify(odp.body).slice(0, 160), {
+      przed: przed[0]?.assignee_id,
+      po: po[0]?.assignee_id,
+    });
+
+    expect(odp.status).toBe(403);
+    expect(odp.body.code).toBe('CAPABILITY_OBJECT_OWNERSHIP_REQUIRED');
+    // Stan BAZY, nie `changes` (atrapa bazy klamie o zapisie).
+    expect(po[0]?.assignee_id).toBe(przed[0]?.assignee_id);
+    expect(po[0]?.assignee_id).toBe(czlonekB);
+  }, 30_000);
+
+  it('STOP-4: MEMBER przepina CUDZE zadanie na kogos innego (POST /:id/reassign) -> 403, assignee_id bez zmian', async () => {
+    const { rows: przed } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [
+      zadanieB,
+    ]);
+
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieB}/reassign`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({ fromAssigneeId: czlonekB, toAssigneeId: czlonekA, reason: 'proba przepiecia' });
+
+    const { rows: po } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [zadanieB]);
+    // eslint-disable-next-line no-console
+    console.log(
+      '[POMIAR STOP-4 reassign cudze]',
+      odp.status,
+      JSON.stringify(odp.body).slice(0, 160),
+      { przed: przed[0]?.assignee_id, po: po[0]?.assignee_id }
+    );
+
+    expect(odp.status).toBe(403);
+    expect(odp.body.code).toBe('CAPABILITY_OBJECT_OWNERSHIP_REQUIRED');
+    expect(po[0]?.assignee_id).toBe(przed[0]?.assignee_id);
+  }, 30_000);
+
+  it('STOP-4: MEMBER przepina WLASNE zadanie -> 200 (nie zablokowalismy wlasnej pracy)', async () => {
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieA}/assign`)
+      .set('Authorization', `Bearer ${token(czlonekA, 'MEMBER')}`)
+      .send({ assigneeId: czlonekA });
+
+    // eslint-disable-next-line no-console
+    console.log('[POMIAR STOP-4 assign wlasne]', odp.status, JSON.stringify(odp.body).slice(0, 160));
+    expect(odp.status).toBe(200);
+  }, 30_000);
+
+  it('STOP-4: ADMIN przepina CUDZE zadanie -> 200 i assignee_id zmienione w bazie', async () => {
+    const odp = await request(app)
+      .post(`/api/tasks/${zadanieB}/assign`)
+      .set('Authorization', `Bearer ${token(administrator, 'ADMIN')}`)
+      .send({ assigneeId: administrator });
+
+    const { rows: po } = await pool.query('SELECT assignee_id FROM tasks WHERE id = $1', [zadanieB]);
+    // eslint-disable-next-line no-console
+    console.log('[POMIAR STOP-4 assign admin]', odp.status, { po: po[0]?.assignee_id });
+    expect(odp.status).toBe(200);
+    expect(po[0]?.assignee_id).toBe(administrator);
+  }, 30_000);
+
+  it('STOP-3: kontroler DELETE broni sie SAM (rola znormalizowana), niezaleznie od bramki', async () => {
+    // Pomiar 11.09: `TaskController.deleteTask` sprawdzal `req.user?.role ===
+    // 'team_member'` — literal, ktorego ZADNA dzisiejsza rola nie ma
+    // ('MEMBER'/'ADMIN'/'OWNER'). Kontroler bronil wiec NIKOGO; cala obrona
+    // stala na bramce z E2. Tu wolamy sam kontroler (bez bramki), zeby druga
+    // linia obrony byla zmierzona, a nie zalozona.
+    const osobnaApp = express();
+    osobnaApp.use(express.json());
+    osobnaApp.delete(
+      '/tylko-kontroler/:id',
+      (req, _res, next) => {
+        (req as unknown as { user: unknown }).user = {
+          id: czlonekA,
+          organizationId: org,
+          role: 'MEMBER',
+        };
+        next();
+      },
+      TaskController.deleteTask
+    );
+
+    const odp = await request(osobnaApp).delete(`/tylko-kontroler/${zadanieB}`);
+    // eslint-disable-next-line no-console
+    console.log('[POMIAR STOP-3 sam kontroler]', odp.status, JSON.stringify(odp.body).slice(0, 160));
+
+    expect(odp.status).toBe(403);
+    await expect(tytul(zadanieB)).resolves.not.toBeNull();
+  }, 30_000);
+
+  it('STOP-3: ADMIN usuwa CUDZE zadanie -> 200 i zadania nie ma w bazie', async () => {
+    const odp = await request(app)
+      .delete(`/api/tasks/${zadanieB}`)
+      .set('Authorization', `Bearer ${token(administrator, 'ADMIN')}`);
+
+    // eslint-disable-next-line no-console
+    console.log('[POMIAR STOP-3 admin delete]', odp.status, JSON.stringify(odp.body).slice(0, 160));
+    expect(odp.status).toBe(200);
+    await expect(tytul(zadanieB)).resolves.toBeNull();
   }, 30_000);
 });
