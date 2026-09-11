@@ -16,6 +16,39 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import plTranslation from '../../../../../public/locales/pl/translation.json';
+
+// NAPRAWA (dług 11.09, bramka-9, Grupa B): globalny mock react-i18next
+// (tests/setup.ts:122) ma i18n.language:'en' na stałe. `FinanceWorkspaceBar
+// .tsx` czyta `i18n.language` z `useTranslation()` (`pick = (label) =>
+// pickWorkspaceBarLabel(label, i18n.language || 'pl')`), więc pod globalnym
+// mockiem freshness zawsze wybierał `.en` ("Outdated") zamiast `.pl`
+// ("Nieaktualne"). Lokalny mock z language:'pl' — wzór: ExecutionWorkSurface
+// .daneRealne.test.tsx. (STATUS_LABELS w źródle jest stałą mapą ZAWSZE po
+// polsku, niezależną od i18n — 'Zatwierdzone' w tym pliku nie jest tym
+// dotknięte.)
+const resolvePlKey = (key: string): string | undefined => {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      plTranslation as unknown
+    );
+  return typeof value === 'string' ? value : undefined;
+};
+const tStabilne = (k: string, fallback?: unknown) => {
+  const resolved = resolvePlKey(k);
+  if (resolved !== undefined) return resolved;
+  return typeof fallback === 'string' ? fallback : k;
+};
+const i18nStabilne = { language: 'pl', getFixedT: () => tStabilne, changeLanguage: vi.fn() };
+const useTranslationStabilne = { t: tStabilne, i18n: i18nStabilne, ready: true };
+vi.mock('react-i18next', () => ({
+  useTranslation: () => useTranslationStabilne,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
 import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig, type WorkspaceBarEvaluationContext } from '../financeWorkspaceBar.contract';
 import { FinanceWorkspaceBar } from '../FinanceWorkspaceBar';
 
