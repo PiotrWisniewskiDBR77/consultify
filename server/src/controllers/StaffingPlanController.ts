@@ -181,6 +181,12 @@ export class StaffingPlanController {
       return;
     }
 
+    // SECURITY-C2B-GAPS: validate tenant ownership before reading role gaps.
+    if (!(await staffingPlanService.getPlan(planId, orgId))) {
+      res.status(404).json({ error: 'Staffing plan not found' });
+      return;
+    }
+
     const gaps = await staffingPlanService.computeStaffingGaps(planId, orgId);
     res.json({ gaps });
   });

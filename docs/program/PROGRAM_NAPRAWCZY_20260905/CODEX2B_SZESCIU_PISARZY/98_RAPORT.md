@@ -215,3 +215,8 @@ Update/delete również wymagają lokalnej walidacji rodzica; nie zmieniamy shad
 
 Katalog absolutny: `/Users/piotrwisniewski/Developer/codex-wt/codex2b-artefakty`.
 Manifest SHA256 zostanie uzupełniony na zamknięciu bloku.
+
+
+### SECURITY-C2B-GAPS — osobny wyjątek integratora, 2026-09-12
+
+Root po real RED rozszerzył licencję wyłącznie na GET staffing-plans/:planId/gaps: potwierdzenie planu w organizacji przed odczytem luk; legalny GET bez zmian. Nie zmieniono innych GET ani E3. Bazowy ApiGateway/JWT/PG zwracał foreign 200 z chronioną nazwą roli, missing 200. Osobny staffingGapsSecurity.pg.test.ts: RED 1 FAIL → GREEN 1 PASS, ten sam fullName; legalny GET nadal 200 z nazwą. Artefakty staffing-gaps-security-{red,green}.json/.log w codex2b-artefakty. Bramka używa istniejącego getPlan(planId, orgId); foreign i missing mają identyczne 404. To usunięcie potwierdzonego wycieku, jawny wyjątek od zakazu GET, nie decyzja produktu.
