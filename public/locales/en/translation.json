@@ -68,6 +68,10 @@
     }
   },
   "errors": {
+    "VERSION_CONFLICT": "This item changed. Refresh it and try again.",
+    "NOT_FOUND": "This item is unavailable in your organization. Refresh and choose an available item.",
+    "VALIDATION_FAILED": "Check the entered values and try again.",
+    "INITIATIVE_ARCHIVED_READ_ONLY": "This initiative is archived and cannot be changed.",
     "app": {
       "reportId": "Report identifier",
       "notFound": {
