@@ -756,3 +756,12 @@ Autor ukończył0dedb2345e0278475400e4d97ba3e6225ce51f9e; root zweryfikował com
 Root wykonał git merge-tree --write-tree HEAD8b90eff015 +0dedb2345e: exit0, tree a6d5a98d28f5802225360413b6cb0a35eb7f34f0, brak konfliktów. To wyłącznie preflight obiektów Git; index/working tree produktu i branch nie zostały scalone. Integracja dopiero po niezależnym odbiorze; dotychczasowy typedmock pozostaje do ratchet po merge.
 
 IE00 scope pre-review zgłosił wybór członkostwa multi-org i opóźniony response A→B; autor naprawia te konkretne przypadki wraz z typed guard bulk/doubleclick. Nie rozszerza pierwszego pionu o pozostałe bramki przed checkpointem. Cel pełnegoMVP ACTIVE, brak live/deploy i brak fałszywego końcowego ACCEPT.
+
+
+## W05 odebrany i zintegrowany — 12.09.2026
+
+Root przeczytał W05_FINAL_INDEPENDENT_REVIEW.md w całości: scope bounded ACCEPT0dedb2345e, niezależny43API/PG PASS, świeży jeden rekordUI submit/return/edit/resubmit/approve/reload PASS, negatywy A/B/revoke z pending0/finished1 i równym hashem. Pierwsze kolidujące/selector próby zachowane jako niekwalifikowane. Istniejący evaluate debt i async opener SOURCE_RISK nie zamknięte.
+
+Root scalił0dedb do kandydata: merge6a697629c49b101215e50e81d61a01b6581af8cf, normalny freeze hook zaakceptował obowiązujące znaczniki. Bez konfliktów; wcześniejszy typedmock zachowany. Na scalonym kandydacie trzy zmienione pliki testów front (review hook/Hub/Workspace)15/15 PASS,11.14s,exit0; W05_INTEGRATION_FRONT.log. Nie jest to nowy built/backend/live smoke kandydata. Kolejny wspólny tsc/build jeszcze do wykonania po zwolnieniu heavy slotu IE00.
+
+C4 next AI evaluation implementuje w osobnym sparse worktree i przejmuje zwolnione zasoby scope do swoich lokalnych testów. Scope wolny po W05, IE00 kończy dwie wykazane poprawki. W17/C6 i pozostały pełnyMVP nadal w kolejce; celACTIVE, brak push/deploy/live.
