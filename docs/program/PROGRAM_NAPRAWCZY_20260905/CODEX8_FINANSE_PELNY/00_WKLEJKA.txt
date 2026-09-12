@@ -1,0 +1,57 @@
+NOWY BLOK — CODEX 8 — „FINANSE PELNY" (fala 2, poz. 3.5) + „wkrotce" w menu
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX8_FINANSE_PELNY/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI. Bezpieczniki Z1-Z24: CODEX4_DLUG_MVP/01_INSTRUKCJA.md §0 — przeczytaj tez.
+MATERIAL WIAZACY (nie wymyslaj zakresu): F1_FINANSE_PROGRAM_DOKONCZENIA_20260905.md sekcja PELNY
+(paczki F-P1…F-P6 rozpisane co do pliku i progu, F-P7…F-P11 w skrocie) + F0_FINANSE_AUDYT_LUKI…md
++ F_FINANSE_PELNA_TABELA.md + CODEX3_FINANSE_MINIMUM/98_RAPORT.md.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny
+MARKER=0b5ba8337c
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt && git -C "$V" worktree add "$WT" -b codex/finanse-pelny-20260912 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex8-finanse-pelny/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex8-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+
+Zasoby wylaczne: kontener cx-codex8-pg (6459), bazy cx8_*, API 4218, preview 5218, harness 5599,
+migracje 20262200-20262219, artefakty ~/Developer/codex-wt/codex8-artefakty. NIETYKALNE cudze:
+cx-codex2b-pg (6454), cx-codex4-pg (6455), cx-codex5-pg (6456), cx-codex6-pg (6457),
+cx-codex7-pg (6458), cx-codex1/2/3-pg (6451-6453), consultify-pg18 (54418 — tylko SELECT/pg_dump
+i CREATE DATABASE cx8_* TEMPLATE consultify_staging_1009).
+
+★ KROK 0 OBOWIAZKOWY: zmierz, co z MINIMUM (F-M2/M3/M4/M6/M7 z bloku 3) REALNIE dziala na linii —
+ raport poprzednika to deklaracja, a lancuch finansowy jest szeregowy: jesli ogniwo 1-3 nie dziala,
+ budowanie ogniwa 4 nic nie da i masz to zglosic ZANIM zaczniesz.
+
+★ ZADANIE:
+ E0 „WKROTCE" ZAMIAST CISZY (decyzja wlasciciela 12.09, robisz pierwsze, ~pol dnia): pozycja Finanse
+    WIDOCZNA w menu, wejscie = jeden ekran „Coming soon" z jednym zdaniem (fala 2). Bez klodek, bez
+    okna „beta", bez czerwieni. Mechanizm juz istnieje (uzyty dla Spotkan: betaMenuStatus.ts, BetaGate,
+    declutterMenu) — sprawdz jak dziala tam i zrob TAK SAMO, nie pisz drugiego. Zadna trasa finansowa
+    nie zwraca 404 ani 500. Zrzut jasny i ciemny robisz SAM.
+ E1-E6 PELNY, szeregowo i BEZ zmiany kolejnosci: F-P1 rejestr finance_baseline_models + trzy krawedzie
+    → F-P2 generator miesiecznych okresow prognozy → F-P3 PUT kontekstu z kreatora → F-P4 producent
+    definicji analizy i wierszy selekcji wskaznikow → F-P5 analiza: koniec 404 → F-P6 pelna tabela
+    RZiS/Bilans/przeplywy. Dla KAZDEGO etapu wiazaca jest sekcja tej paczki w F1 (§1-§11: zakres,
+    pliki, progi §10, dyscyplina §11) — wklejka ich nie zastepuje i nie skraca.
+ MINIMUM bloku: E0 + F-P1 + F-P2 skonczone i udowodnione. Etap nieskonczony = opis NIEWYKONANY z tym,
+ co ustaliles. Ogniwo juz zbudowane: NIE buduj drugi raz — udowodnij ze dziala i idz dalej.
+
+★ ZAKAZY: nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji · nie projektujesz nowych
+ ekranow ani wygladu (podpinasz ISTNIEJACE powierzchnie; polerowanie przodu robia wewnetrzni robotnicy
+ po prototypie) · nie ruszasz magazynu kanonicznego inicjatyw (blok 2b) ani zatwierdzania inicjatyw
+ (blok 7) · nie przestawiasz domyslnych wartosci istniejacych flag · kazda nowa rzecz za flaga OFF ·
+ ZAKAZ git stash i --no-verify · ZAKAZ pelnego tsc frontu (esbuild per plik; tsc serwera wymagany) ·
+ testy PER PLIK, --retry=0, env w jednej linii · kazda naprawa z testem mutacyjnym RED→GREEN ·
+ znacznik commita [ODMROZENIE WSPOLNE DEC-470] (Finanse NIE sa modulem zamrozonym; jesli dotkniesz
+ plikow modulu zamrozonego, hook wypisze jego nazwe — dopisz wtedy [ODMROZENIE <MODUL> DEC-470]).
+
+★ RAPORT (jedyny nowy dokument; logi POZA repo): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX8_FINANSE_PELNY/98_RAPORT.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.

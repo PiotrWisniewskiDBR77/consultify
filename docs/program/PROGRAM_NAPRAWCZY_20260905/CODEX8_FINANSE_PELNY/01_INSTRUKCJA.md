@@ -3,7 +3,7 @@ doc_id: codex8-finanse-pelny
 status: WYDANY 12.09 (decyzja właściciela: „w fali 2 ma iść cały finance")
 truth_type: codex-block-instruction
 established: 2026-09-12
-marker: <<MARKER_SHA_8>>
+marker: 0b5ba8337c
 baza: origin/integracja/20260911
 ---
 
@@ -29,7 +29,7 @@ program PEŁNY od pierwszego ogniwa łańcucha.
 Obowiązują Z1–Z24 z `CODEX4_DLUG_MVP/01_INSTRUKCJA.md` (§0), z różnicami: kontener `cx-codex8-pg`
 (port **6459**), bazy `cx8_*`, API **4218**, preview **5218**, harness **5599**, migracje
 **20262200–20262219**, artefakty `~/Developer/codex-wt/codex8-artefakty`, gałąź
-`codex/finanse-pelny-20260912` z markera `<<MARKER_SHA_8>>`.
+`codex/finanse-pelny-20260912` z markera `0b5ba8337c`.
 Znaczniki commita: **Finanse NIE są modułem zamrożonym** (rejestr `docs/program/MVP_FINAL_ZAMROZONE.json`
 nie ma pozycji finansowej — zmierzone 12.09), więc domyślnie wystarcza `[ODMROZENIE WSPOLNE DEC-470]`.
 Jeżeli dotkniesz plików należących do modułu zamrożonego (np. `src/services/ideaFinance/**` należy do
