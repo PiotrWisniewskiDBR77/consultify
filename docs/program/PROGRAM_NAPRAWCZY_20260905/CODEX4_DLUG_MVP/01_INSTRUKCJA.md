@@ -4,7 +4,7 @@ status: WYDANY
 truth_type: codex-block-instruction
 established: 2026-09-12
 author: CTO
-marker: <<MARKER_SHA>>
+marker: d4ebea2c86
 baza: origin/integracja/20260911
 ---
 
@@ -19,9 +19,9 @@ i przejdź do następnego — blok nie przepada przez jeden etap.
 
 ## §0 BEZPIECZNIKI (Z1–Z24)
 
-- **Z1.** Katalog roboczy tworzysz sam (komendy w `00_WKLEJKA.txt`), baza = **marker `<<MARKER_SHA>>`**,
+- **Z1.** Katalog roboczy tworzysz sam (komendy w `00_WKLEJKA.txt`), baza = **marker `d4ebea2c86`**,
   gałąź `codex/dlug-mvp-20260912`. Warunek wejścia:
-  `git merge-base --is-ancestor <<MARKER_SHA>> origin/integracja/20260911` = TAK.
+  `git merge-base --is-ancestor d4ebea2c86 origin/integracja/20260911` = TAK.
 - **Z2.** **NIE pushujesz nic i nigdzie.** Push, scalanie, wdrożenie — wyłącznie nadzorca.
 - **Z3.** **ZERO połączeń** do Railway, stagingu, demo i produkcji — w każdą stronę. Żaden skrypt,
   który piszesz, nie może sam łączyć się z żywym środowiskiem: przyjmuje `DATABASE_URL` z env
