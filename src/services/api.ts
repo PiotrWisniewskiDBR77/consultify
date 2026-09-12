@@ -2965,6 +2965,23 @@ export const Api = {
                   typeof data.code === 'string' ? data.code : String(data.code || '');
                 const isAccessError = accessErrorCodes.includes(dataCode);
 
+                if (dataCode === 'AI_BUDGET_EXHAUSTED') {
+                  const { useAppStore } = await import('../store/useAppStore');
+                  useAppStore.getState().setAiFreezeStatus({
+                    isFrozen: true,
+                    reason: data.error,
+                    scope: data.budgetStatus?.scope || 'Organization',
+                  });
+                  const friendly = `⚠️ ${String(data.error || 'Your organization monthly AI budget has been used.')}`;
+                  hasAnyVisibleOutput = true;
+                  onChunk(friendly);
+                  const streamError: any = new Error(friendly);
+                  streamError.code = dataCode;
+                  streamError.isStreamError = true;
+                  streamError.retryable = false;
+                  throw streamError;
+                }
+
                 // UX: Always show *something* in the chat bubble when stream ends with access errors,
                 // otherwise the placeholder stays empty and the UI hides it (looks like "thinking then reset").
                 if (isAccessError) {
@@ -3060,15 +3077,7 @@ export const Api = {
                   throw streamError;
                 }
 
-                // Budget freeze (existing behavior)
-                if (data.code === 'AI_BUDGET_EXHAUSTED') {
-                  const { useAppStore } = await import('../store/useAppStore');
-                  useAppStore.getState().setAiFreezeStatus({
-                    isFrozen: true,
-                    reason: data.error,
-                    scope: data.budgetStatus?.scope || 'Global',
-                  });
-                } else if (isAccessError) {
+                if (isAccessError) {
                   // Unified access-blocked UX hook (only for access/auth blocks)
                   try {
                     window.dispatchEvent(

@@ -331,6 +331,8 @@ export interface AIError {
   retryable?: boolean;
   providerStarts?: number;
   maxProviderStarts?: number;
+  isBudgetError?: boolean;
+  budgetStatus?: Record<string, unknown>;
 }
 
 // ==========================================

@@ -34,6 +34,10 @@ import {
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 import { isQaAiMode } from './qaAiRuntime.js';
+import {
+  enforceOrganizationCostLimit,
+  isOrganizationCostLimiterEnabled,
+} from './organizationCostLimiter.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -261,10 +265,7 @@ export class AIPipeline {
       };
 
       // 6b. Enforce AI Budgets + Model Permissions (SuperAdmin)
-      const budgetsEnabled =
-        String(process.env.AI_BUDGETS_ENABLED || '')
-          .trim()
-          .toLowerCase() !== 'false';
+      const budgetsEnabled = isOrganizationCostLimiterEnabled();
       const orgId = request.organizationId;
       const userId = request.userId;
       const normalizeModelId = (m: string) =>
@@ -284,6 +285,8 @@ export class AIPipeline {
         if (!budgetsEnabled || !orgId || !userId)
           return { allowed: true, warnings: [] as string[] };
         const svc = await getAiBudgetService();
+
+        await enforceOrganizationCostLimit(String(orgId), String(userId));
 
         // Explicit deny rules (we treat permissions as "deny list" by default)
         try {
@@ -312,7 +315,12 @@ export class AIPipeline {
         // Hard-limit: block if already exceeded (projected usage + 0 still exceeds)
         const check = await svc.checkBudget(String(orgId), String(userId), { tokens: 0, cost: 0 });
         if (!check.allowed) {
-          throw new Error(`AI budget exceeded: ${(check.warnings || []).join(', ') || 'blocked'}`);
+          const error = new Error(
+            'Your organization monthly AI budget has been used. Existing work remains available. Ask an administrator to raise the budget or wait for the next monthly reset.'
+          );
+          (error as any).code = 'AI_BUDGET_EXHAUSTED';
+          (error as any).isBudgetError = true;
+          throw error;
         }
         return check;
       };
@@ -3215,6 +3223,8 @@ export class AIPipeline {
         ...(Number.isInteger(anyErr?.maxProviderStarts)
           ? { maxProviderStarts: Number(anyErr.maxProviderStarts) }
           : {}),
+        ...(anyErr?.isBudgetError ? { isBudgetError: true } : {}),
+        ...(anyErr?.budgetStatus ? { budgetStatus: anyErr.budgetStatus } : {}),
       };
     }
     return {

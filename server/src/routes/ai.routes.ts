@@ -5273,6 +5273,21 @@ router.post(
           (/invalid_api_key|incorrect api key/i.test(msg)
             ? 'INVALID_API_KEY'
             : 'AI_PIPELINE_ERROR');
+        if (code === 'AI_BUDGET_EXHAUSTED') {
+          if (isClientConnected && !res.destroyed) {
+            res.write(
+              `data: ${JSON.stringify({
+                error: msg,
+                code,
+                errorCode: code,
+                budgetStatus: (errObj as any)?.budgetStatus,
+              })}\n\n`
+            );
+            res.write('data: [DONE]\n\n');
+          }
+          streamCompleted = true;
+          return res.end();
+        }
         // CHAT-OWN-016: `msg` to SUROWA tresc dostawcy (nazwy modeli, adresy,
         // tekst wylacznika, echo klucza). Zostaje w logu i w sladzie run-a;
         // do klienta idzie wylacznie `safeMessage` + kanoniczny `errorCode`.

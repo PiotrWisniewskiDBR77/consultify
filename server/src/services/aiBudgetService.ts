@@ -300,6 +300,31 @@ const aiBudgetService = {
 
   // ------ USAGE & CHECKING ------
 
+  async ensureDefaultOrganizationCostBudget(
+    organizationId: string,
+    createdBy: string,
+    budgetLimit = 50
+  ) {
+    await ensureTables();
+    const existing = await dbGet<Row>(
+      `SELECT * FROM ai_budgets
+       WHERE organization_id = ? AND (user_id IS NULL OR user_id = '')
+         AND budget_type = 'cost' AND period = 'monthly' AND is_active = true
+       ORDER BY created_at ASC LIMIT 1`,
+      [organizationId]
+    );
+    if (existing) return budgetRowToDto(existing);
+
+    return this.createBudget(organizationId, {
+      budgetType: 'cost',
+      period: 'monthly',
+      budgetLimit,
+      warningThreshold: 0.8,
+      hardLimit: true,
+      createdBy,
+    });
+  },
+
   async checkBudget(
     organizationId: string,
     userId: string,
@@ -310,6 +335,21 @@ const aiBudgetService = {
       'SELECT * FROM ai_budgets WHERE organization_id = ? AND is_active = true',
       [organizationId]
     );
+
+    const now = new Date();
+    const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    for (const budget of budgets) {
+      if (budget.period !== 'monthly') continue;
+      const anchor = String(budget.last_reset_at || budget.created_at || '');
+      if (anchor && anchor.slice(0, 7) !== currentMonth) {
+        await dbRun(
+          'UPDATE ai_budgets SET current_usage = 0, last_reset_at = ?, updated_at = ? WHERE id = ?',
+          [now.toISOString(), now.toISOString(), budget.id]
+        );
+        budget.current_usage = 0;
+        budget.last_reset_at = now.toISOString();
+      }
+    }
 
     let allowed = true;
     const warnings: string[] = [];

@@ -21,11 +21,12 @@ export const AIFreezeBanner: React.FC = () => {
             {t('aiFreezeBanner.title', 'AI FREEZE ACTIVE:')}
           </span>
           <span className="text-sm ml-2 text-white/90">
-            {t(
-              'aiFreezeBanner.message',
-              'Budget hard limit reached ({{scope}}). AI functionality is temporarily restricted.',
-              { scope: aiFreezeStatus.scope || t('aiFreezeBanner.scopeGlobal', 'Global') }
-            )}
+            {aiFreezeStatus.reason ||
+              t(
+                'aiFreezeBanner.message',
+                'Budget hard limit reached ({{scope}}). AI functionality is temporarily restricted.',
+                { scope: aiFreezeStatus.scope || t('aiFreezeBanner.scopeGlobal', 'Global') }
+              )}
           </span>
         </div>
       </div>
