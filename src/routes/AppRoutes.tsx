@@ -41,9 +41,6 @@ import { isMeetingsModuleEnabled } from '@/utils/meetingsModuleFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
 import { isStudioEnabled } from '@/utils/studioFlag';
-import { AuthView } from '@/views/AuthView';
-import { ProductEntryPage } from '@/views/ProductEntryPage';
-import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
 import { DeferredRouteLoadingFallback } from './DeferredRouteLoadingFallback';
@@ -53,6 +50,19 @@ import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
+
+// Keep the disabled Studio route out of the boot graph: its layout includes the editor.
+const StudioUnavailableView = lazyWithRetry(() =>
+  import('@/views/StudioUnavailableView').then((m) => ({ default: m.StudioUnavailableView }))
+);
+
+const AuthView = lazyWithRetry(() =>
+  import('@/views/AuthView').then((m) => ({ default: m.AuthView }))
+);
+
+const ProductEntryPage = lazyWithRetry(() =>
+  import('@/views/ProductEntryPage').then((m) => ({ default: m.ProductEntryPage }))
+);
 
 // Lazy load views for new routes
 const StudioView = lazyWithRetry(() =>

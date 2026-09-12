@@ -229,3 +229,13 @@ pełna regresja aplikacji, kanoniczny inbox runtime i oddzielne trasy delegate/p
 Nie zmierzono wszystkich istniejących zadań bez projektu ani liczby z pierwotnej premisy;
 reprodukcja używa izolowanych fixture w legalnej lokalnej kopii. Brak migracji i zmian
 uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnych E1/E2.
+
+## E3 — krok 1, dostawa częściowa (kolejny krok wymagany)
+
+Premisa zmierzona na archiwum markera d4ebea2c86:5615909B JS wspólnego startu (App3781294B + AppProviders1517348B + index317267B),3chunki. To5.36MiB; raportowane dawniej7chunków nie odtworzyło się w tym lokalnym buildzie. Sam index317267B zaniża wynik: normalny boot bezwarunkowo importuje App. Pomiar scripts/dev/measure-boot-bundle.mjs liczy unikalne pliki w przechodnim statycznym domknięciu obu korzeni. JS pierwszej wybranej lazytrasy i czas rzeczywistego ekranu są osobnym pomiarem.
+
+Krok1: StudioUnavailableView, AuthView, ProductEntryPage przez istniejący lazyWithRetry/Suspense. HelpSidePanel dopiero przy pierwszym otwarciu, potem zachowuje stan po zamknięciu; listener deep-link pozostaje aktywny. Diagnoza: Studio→SplitLayout→UnifiedChatPanel→TipTap; Help/Landing importowały całą przestrzeń ikon. Bez zmiany UI i bez manualChunks.
+
+Wspólny boot po kroku1 na kodzie E2+zmiana: **2459398B**, 3chunki. Cel≤2000000B jeszcze NIEosiągnięty. Build0 (35.65s,heap8GB). Pierwszy baseline przy domyślnym heap4GB zakończył się OOM; powtórka przy8GB przeszła38.44s. Oba wyniki zachowane poza repo.
+
+Dowody poza repo: codex4-artefakty/e3-before-chunks.json, e3-marker-build-8gb.json/log, e3-step1-current-chunks.json, e3-step1-current-build.json/log, e3-step1-module-map.json. Niezależny source review: brak znalezionego blokera kroku1; odbiór przeglądarkowy i limit pakietu pozostają NIEUDOWODNIONE dla zakończeniaE3. Następny krok: odroczenie SDKgłosowego, zachowanie anulowania sesji, odbiór wspólnej wersji PRZED/PO. Nie przenosimy tej częściowej dostawy do statusuE3PASS.

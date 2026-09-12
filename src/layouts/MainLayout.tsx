@@ -12,7 +12,7 @@ import { DocumentToggleButton } from '../components/documents/DocumentToggleButt
 import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpDeepLinkListener } from '../components/Help/HelpDeepLinkListener';
-import { HelpSidePanel } from '../components/Help/HelpSidePanel';
+import { useHelpSidePanel } from '../contexts/HelpContext';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
 // import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
 import { DemoModeBanner } from '../components/layout/DemoModeBanner';
@@ -40,6 +40,21 @@ import { isArtifactStudioLaneEnabled } from '../utils/artifactStudioFlags';
 // The full Teresa workspace pulls in providers, artifact editors and tool
 // renderers that are not needed to paint the requested route. Keep the shell
 // interactive first and load chat only when its visible panel is mounted.
+const HelpSidePanel = React.lazy(() =>
+  import('../components/Help/HelpSidePanel').then((module) => ({ default: module.HelpSidePanel }))
+);
+
+// Load the help renderer only on first use, then retain its state across closes.
+const DeferredHelpSidePanel: React.FC = () => {
+  const { isOpen } = useHelpSidePanel();
+  const [hasOpened, setHasOpened] = React.useState(isOpen);
+  React.useEffect(() => {
+    if (isOpen) setHasOpened(true);
+  }, [isOpen]);
+  if (!isOpen && !hasOpened) return null;
+  return <React.Suspense fallback={null}><HelpSidePanel /></React.Suspense>;
+};
+
 const UnifiedChatPanel = React.lazy(() =>
   import('../components/AIChat/UnifiedChatPanel').then((module) => ({
     default: module.UnifiedChatPanel,
@@ -334,7 +349,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         </div>
         <HelpDeepLinkListener />
-        <HelpSidePanel />
+        <DeferredHelpSidePanel />
         <DocumentSidePanel />
         <FeedbackSidePanel />
 
