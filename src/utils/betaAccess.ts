@@ -8,6 +8,9 @@
  *                "access restricted" plate (AccessBlockedModal, code BETA_LOCKED)
  *                and cannot enter the module.
  *
+ * DEC-470: announcement entries keep their backend beta status but remain
+ * clickable for every role; BetaGate renders only the neutral announcement.
+ *
  * Org administrators (ADMIN / OWNER / SUPERADMIN) always keep full access so the
  * team can keep building the beta surfaces while they stay hidden from users.
  *
@@ -20,6 +23,7 @@
 
 import type { MenuItem } from '../components/navigation/Sidebar/types';
 import {
+  isModuleComingSoon,
   BETA_ADMINS_EXEMPT,
   BETA_LOCKED_CODE,
   BETA_MENU_STATUS,
@@ -72,7 +76,7 @@ export function lockClosedBetaModules(
   const decorate = (item: MenuItem): MenuItem => {
     const decoratedChildren = item.subItems?.map(decorate);
 
-    if (!isBetaClosed(item.id)) {
+    if (isModuleComingSoon(item.id) || !isBetaClosed(item.id)) {
       return decoratedChildren ? { ...item, subItems: decoratedChildren } : item;
     }
 
@@ -112,7 +116,7 @@ export function lockClosedBetaModules(
 export function declutterMenu(menu: MenuItem[]): MenuItem[] {
   const strip = (items: MenuItem[]): MenuItem[] =>
     items
-      .filter((item) => !isBetaClosed(item.id))
+      .filter((item) => isModuleComingSoon(item.id) || !isBetaClosed(item.id))
       .map((item) => {
         const next: MenuItem = { ...item };
         if (next.subItems) {

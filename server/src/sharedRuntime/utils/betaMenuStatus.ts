@@ -40,16 +40,8 @@ export const BETA_ADMINS_EXEMPT = true;
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
   MODULE_CONCLUSIONS: 'closed', // HIDDEN 2026-07-04 (owner decision — added without consent); nav entry removed in menuConfig too
-  // DEC-2026-08-28-177 supersedes the July decision: Finance enters the MVP.
-  // Keep it closed until the owner accepts the visual polish screenshots
-  // (CLAUDE.md rule 7); the supervisor then performs the reversible flip here.
-  // Historical rationale for the still-current closed state:
-  // „MVP finansów nie ładowałbym, to jest ogromny projekt… zostawiłbym w wersji
-  // beta i klientom bym tego później nie pokazywał, zakluczyłbym to. Nie jesteśmy
-  // w stanie do poniedziałku rozwinąć tego modułu."
-  // Moduł zostaje dostępny dla administratorów (BETA_ADMINS_EXEMPT), więc dalej
-  // nad nim pracujemy — znika tylko z zasięgu klienta.
-  MODULE_ECONOMICS: 'closed', // Finance (M16 — poza MVP, patrz _MVP_PRZEGLAD_MENU_2026-07-28.md)
+  // DEC-470: API beta remains closed; UI announcement is independently reachable.
+  MODULE_ECONOMICS: 'closed',
   MODULE_AUDITS: 'open', // FLIP — akcept Piotra 07-16 (816 linii + backend, demo-ready)
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
@@ -84,3 +76,12 @@ export const BETA_SUBAREA_STATUS: Record<string, BetaStatus> = {
   // Harvard/wdrozenie-100/_PLAN_WYKONAWCZY_2026-07-20.md
   MYWORK_IDEAS: 'closed', // My Work → Ideas tab
 };
+
+/** DEC-470: announcement only; never grants access to the module or its API. */
+export const COMING_SOON_MENU_IDS: ReadonlySet<string> = new Set(['MODULE_ECONOMICS']);
+export const isModuleComingSoon = (id?: string | null): boolean =>
+  COMING_SOON_MENU_IDS.has(
+    String(id || '')
+      .trim()
+      .toUpperCase()
+  );

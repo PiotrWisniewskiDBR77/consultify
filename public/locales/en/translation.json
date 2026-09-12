@@ -3420,6 +3420,7 @@
     "useAiHints": "Use AI hints in the footer to generate a brief."
   },
   "sidebar": {
+    "comingSoon": "Coming soon",
     "module3_1": "Initiatives",
     "dashboard": "Dashboard",
     "settings": "Settings",
@@ -27666,6 +27667,7 @@
     }
   },
   "finance": {
+    "wave2Placeholder": {"title": "Finance — Coming soon", "message": "Financial analysis, planning and valuation are planned for Wave 2."},
     "comments": {
       "added": "Comment added.",
       "resolved": "Comment marked as resolved.",

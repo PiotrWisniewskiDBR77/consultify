@@ -1,3 +1,4 @@
+import { isModuleComingSoon } from './betaMenuStatus';
 import { isPilotRestrictedRole } from './roleGuards';
 import { isBetaClosed } from './betaAccess';
 
@@ -102,6 +103,8 @@ export function isPilotParticipantRole(role: string | null | undefined): boolean
 
 export function isPilotAllowedPath(path: string): boolean {
   const normalized = String(path || '').trim();
+  if (isModuleComingSoon('MODULE_ECONOMICS') && /^\/(finance|economics)(\/|$)/.test(normalized))
+    return true;
   return PILOT_ALLOWED_ROUTE_PREFIXES.some((prefix) =>
     prefix.endsWith('/')
       ? normalized.startsWith(prefix)
@@ -110,10 +113,13 @@ export function isPilotAllowedPath(path: string): boolean {
 }
 
 export function isPilotAllowedMenuId(id: string | null | undefined): boolean {
-  return PILOT_VISIBLE_MENU_IDS.has(
-    String(id || '')
-      .trim()
-      .toUpperCase()
+  return (
+    isModuleComingSoon(id) ||
+    PILOT_VISIBLE_MENU_IDS.has(
+      String(id || '')
+        .trim()
+        .toUpperCase()
+    )
   );
 }
 
