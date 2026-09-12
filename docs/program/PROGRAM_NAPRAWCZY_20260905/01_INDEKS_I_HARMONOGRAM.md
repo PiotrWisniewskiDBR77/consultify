@@ -674,3 +674,8 @@ C6 oddał clean0025c1c448 do niezależnego odbioru źródeł/logów. C6_EXACT_00
 Delivery rozpoczął SECURITY_W05_SCOPE_FIX.md w C4 po zwolnieniu C6: jawny mandatDEC2026091201, API4214/UI5214/cx4_pilot przydzielone; legalneA200+Bdeny, obie rodzinytras, persistedproject i wspólne review-access dlaUI. Max2implementacje: IE00+W05. Galileo real2/2GREEN dlaDefinitionrequest/return/edit/review/concurrentresubmit[201,409]/approve, sameDecision; UI jeszczeNOT_PROVEN. Ciężki slot root zwolnił do servertscIE00.
 
 Scope wykonuje built rootfrontend+C8backend smoke na jawnie przydzielonym5290; nie przestawia4218/5218. Pierwsza próba wykazała pobranieMainLayoutchunk na anonimowymdeep link przed poprawnym redirect; brakHelpchunk iHTTP/pageerror. Pełny test trwa, niePASS. Rootdist ma sourcead7618df32, późniejsza poprawka wyłącznie testowa go nie zmienia.
+
+
+## Review następnego projektu C6 — 12.09.2026
+
+C6_NEXT_FIX_DESIGN_REVIEW.md ma REVISE: SELECT advisorylock w REPEATABLE READ sam może ustalić za wczesny snapshot; rebindFK narusza bezwarunkowy immutableUPDATE trigger w20261030/20261034. Root przeczytał obie migracje i zweryfikował semantykę snapshot w oficjalnej dokumentacjiPG. Autor dostał korekty i konkretną macierz do read-only przygotowania, bez zezwolenia na zmianę retencji/triggerów. IE00 i W05 nadal aktywnie implementowane, scope wykonuje built smoke5290. Root sourceHEAD e1f9d2f188 przed tym doccommitem, clean na początku tury.
