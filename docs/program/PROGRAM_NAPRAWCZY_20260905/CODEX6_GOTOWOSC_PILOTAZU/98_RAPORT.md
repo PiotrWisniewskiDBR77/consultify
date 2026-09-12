@@ -1,75 +1,61 @@
 # CODEX 6 — raport gotowości pilotażu
 
-## Stanowisko
+## Werdykt
 
-**Blok osiągnął lokalne minimum i wszystkie pięć zakresów ma dowód zachowania:** E1, E2, E5, E3 i E4 są udowodnione w granicach opisanych niżej. Nie rozszerzam wyniku ponad dowód: E1 nadal nie dowodzi wyklikania każdej operacji tworzącej, a E2 nie ma wizualnego dowodu rejestru KPI.
+**PARTIAL / HOLD. Minimum bloku nie zostało udowodnione, ponieważ E1 i E2 nie spełniają pełnych kryteriów UI instrukcji.** E3 ma lokalny dowód głównego kontraktu limitu, E4 eksport i legal hold zostały istotnie uszczelnione, ale pełne usunięcie używanego tenantu pozostaje zablokowane przez nierozstrzygnięty kontrakt immutable receipts. Nie wykonano push, deploy ani żadnego połączenia do Railway/staging/demo/produkcji.
 
-Marker: `45c07b024c`. Worktree: `codex6-gotowosc-pilotazu`. Zero połączeń do Railway, stagingu, demo i produkcji.
+Marker: `45c07b024c`. Worktree: `codex6-gotowosc-pilotazu`. Ostatni commit implementacyjny tego raportu: `8c00585aa8`.
 
-## E1 — pusta organizacja → pierwsza wartość
+## E1 — PARTIAL
 
-**PRZED:** rejestracja nie gwarantowała używalnego kontekstu świeżej organizacji; endpoint zapisu kontekstu nie istniał. **PO:** rejestracja tworzy `First value workspace`, a `POST /api/onboarding/context` zapisuje kontekst. Playwright przeszedł rejestrację oraz render/readback siedmiu etapów bez 404/5xx; 14 zrzutów light/dark jest w `evidence/pilotaz-przeplyw/`.
+Rejestracja tworzy używalny kontekst, a droga rejestracja→kontekst→wywiad→ocena→inicjatywa→zadanie→wynik ma lokalny render/readback i 14 zrzutów w `evidence/pilotaz-przeplyw/` (`0c65beabf6`). Po rejestracji rekordy są jednak tworzone przez rzeczywiste HTTP `page.request`, a potem renderowane. Pełna droga klikana kontrolkami UI, w tym brak martwych przycisków na każdej operacji tworzącej, jest **NOT_PROVEN**.
 
-Zmiany: `server/src/controllers/AuthController.ts`, `server/src/routes/onboarding.routes.ts`, `server/src/routes/__tests__/codex6-fresh-organization.http.pg.test.ts`, `tests/e2e/onboarding/codex6-first-value.spec.ts`. SHA: `0c65beabf6`.
+## E2 — PARTIAL
 
-Ograniczenie dowodu: tworzenie wywiadu, oceny, inicjatywy, zadania i wyniku w teście odbywa się przez rzeczywiste HTTP aplikacji (`page.request`), następnie jest sprawdzane w przeglądarce. Nie jest to dowód, że użytkownik wyklika każdą operację utworzenia wyłącznie kontrolkami UI.
+Angielski seed (`9f778907f6`) jest domyślnie dry-run, wymaga manifestu do apply, używa ścieżek aplikacji, transakcji i jest idempotentny. Lokalny readback wykazał 4 członków, 12 inicjatyw, 12 zadań, 3 KPI, 6 pomiarów, 1 wywiad i 1 ocenę. Nazwy KPI są dowiedzione endpointem aplikacji i PostgreSQL, lecz nie widokiem rejestru KPI w produkcie; dlatego wymaganie widoczności danych w UI jest **NOT_PROVEN**.
 
-## E2 — angielski seed pilotażu
+## E5 — PARTIAL
 
-**PRZED:** brak governowanego, idempotentnego seeda. **PO:** `scripts/dane/seed-pilotaz-20260912.mjs` jest domyślnie dry-run, wymaga manifestu dla apply, używa ścieżek aplikacyjnych i jednej transakcji. Udowodniono rollback mutanta, dwa apply bez duplikatów oraz readback UI.
+Feedback zapisuje rekord PostgreSQL z użytkownikiem, organizacją i route, a chroniony endpoint odczytuje ten sam rekord (`b2e4dd9459`). Zrzut potwierdzenia: `evidence/pilotaz-feedback/01-feedback-confirmation.png`. Admin-list UI oraz komplet pól `appVersion`/browser wymaganych przez instrukcję nie mają pełnego dowodu zachowania, więc pozostają **NOT_PROVEN**. Poczta nie jest częścią dowodu.
 
-Stan końcowy lokalny: 4 członków, 12 inicjatyw, 12 zadań, 3 KPI, 6 pomiarów, 1 wywiad, 1 ocena; treść EN. Zrzuty: `evidence/pilotaz-seed/`. SHA: `9f778907f6`.
+## E3 — główny kontrakt GREEN, ścisły koszt współbieżny NOT_PROVEN
 
-Ograniczenie: menu Results pokazuje moduł wyników wykonania, nie rejestr definicji KPI. Nazwy KPI udowodniono endpointem aplikacji i PostgreSQL, nie tym ekranem.
+Flaga `AI_BUDGETS_ENABLED` jest domyślnie OFF. Po włączeniu nowa organizacja dostaje 50 USD/mies. Commit `8c00585aa8` usuwa rozjazd źródeł: zapis `Monthly Budget (USD)`, odczyt usage i limiter korzystają z `ai_budgets`; `/budget-usage` wymaga aktywnego kanonicznego członkostwa; reset miesiąca ma warunek w SQL i usage odświeża reset przed pokazaniem.
 
-## E5 — dziennik zgłoszeń
+Ten sam test Playwright przeszedł mutację RED→GREEN: UI zmienia 50→13→12, SQL potwierdza obie wartości, reload UI pokazuje 13, żądanie poniżej 12.34/13 nie zwraca błędu limitu, a 12.34/12 zwraca `AI_BUDGET_EXHAUSTED` z angielską następną akcją bez zmiany usage. Nie skonfigurowano klucza providera i nie wykonano ruchu do providera w tym dowodzie. Logi: `../codex6-artefakty/e3-ui-sql-gate-mutation-red.log`, `e3-ui-sql-gate-mutation-green.log`. Zrzut: `evidence/pilotaz-ai-budget/01-admin-usage.png`.
 
-**PRZED:** premise poczty nie został przyjęty. **PO:** zgłoszenie wysłane z Feedback zapisuje się w PostgreSQL z użytkownikiem, organizacją i route; chroniony endpoint dziennika odczytuje ten sam rekord. Dowód UI: `evidence/pilotaz-feedback/01-feedback-confirmation.png`. SHA: `b2e4dd9459`.
+Granica: preflight nie rezerwuje szacowanego kosztu, a naliczenie jest po providerze. Ścisły sufit dla równoległych wywołań oraz udany lokalny provider→naliczenie→SQL pozostają **NOT_PROVEN**. Wcześniejszy testowy incydent z jawnie fałszywym kluczem OpenRouter zakończył się 401, bez udanego wywołania i bez kosztu; nie był powtarzany.
 
-Zapytanie nadzorcy (ostatnia doba):
+## E4 — eksport/hold GREEN; populated delete BLOCKED
 
-```sql
-SELECT id, created_at, user_id, organization_id, category, title, status,
-       source_env, context
-FROM user_feedback
-WHERE created_at >= NOW() - INTERVAL '24 hours'
-ORDER BY created_at DESC;
-```
+Commity `056841ea1a`, `d81a818a27`, `eb1b87ba31`, `8c00585aa8` wprowadzają:
 
-## E3 — limiter kosztu AI
+- jawne bezpieczne projekcje zamiast `SELECT *`, redakcję snake_case/camelCase oraz JSONB i JSON-as-TEXT;
+- wykluczenie security tables, w tym `integration_secrets`, bez utraty biznesowych `interview_sessions`;
+- pełny snapshot bez limitu 20 000, rekursywne dzieci FK oraz dynamiczne aliasy FK do organizacji;
+- kontrolę współdzielonego użytkownika A/B na każdym kroku grafu;
+- spójną blokadę eksportu i usunięcia przy legal hold, 423 `LEGAL_HOLD`, 503 przy błędzie odczytu oraz faktycznie uruchomiony request w teście współbieżnym.
 
-**PRZED:** `AI_BUDGETS_ENABLED` było efektywnie domyślnie ON, ale brak rekordu budżetu oznaczał brak limitu; komunikat SSE nie ustawiał freeze, bo klient rzucał wyjątek wcześniej. **PO:** flaga jest ON wyłącznie dla wartości `true`; po włączeniu powstaje organizacyjny budżet cost/monthly 50 USD, miesięczne zużycie jest resetowane, wyczerpanie blokuje przed providerem kodem `AI_BUDGET_EXHAUSTED`/403, a UI pokazuje angielski komunikat z następną akcją. Mutant domyślnego ON dał RED, po przywróceniu 3/3 GREEN; test bannera 1/1 GREEN; server tsc i esbuild per plik GREEN.
+Real-PG testy eksportu JSON/CSV obejmują sekrety, nested TEXT/JSONB, `integration_secrets`, biznesowe sesje, dzieci `staffing_plan_roles`, drugi tenant i 20 001 wierszy. Mutacja filtra współdzielonego użytkownika ujawniła rekord B, po przywróceniu test przeszedł. Logi: `e4-export-shared-user-mutation-red.log`, `e4-export-shared-user-mutation-green.log`, `e4-export-hold-followup-green.log`. Server `tsc` jest GREEN.
 
-Zmiany bazowe: `server/src/services/ai/organizationCostLimiter.ts`, `server/src/services/aiBudgetService.ts`, `server/src/services/ai/AIPipeline.ts`, `server/src/routes/ai.routes.ts`, `src/services/api.ts`, `src/components/AIFreezeBanner.tsx`. SHA: `76787fdd11`.
+Granice eksportu: discovery obejmuje `public`. Aktywne tenantowe relacje w osobnym schemacie `v8` i zgodność manifestu z ledgerem migracji są **NOT_PROVEN**. Malformed JSON-as-TEXT pozostaje bez zmian; bezpieczeństwo nieznanej treści nie jest deklarowane jako dowiedzione.
 
-Domknięcie: administrator organizacji ma tenant-scoped odczyt `Used / Monthly limit / Remaining` w istniejącym ekranie AI settings; bramka została wpięta przed fast-fail providera. Realny browser→HTTP→PostgreSQL przeszedł dla 12.34/50 USD oraz dla progu 50/50 USD. Przy progu odpowiedź zawiera `AI_BUDGET_EXHAUSTED` i zrozumiały komunikat, a zużycie w PostgreSQL nie zmienia się. Test ujawnił i naprawił błąd resetu miesiąca dla timestampu zwracanego przez `pg` jako `Date`. Mutacja RED→GREEN objęła ten przypadek. Zrzut: `evidence/pilotaz-ai-budget/01-admin-usage.png`. Logi: `../codex6-artefakty/e3-browser-http-pg-below-final.log` i `../codex6-artefakty/e3-browser-http-pg-above-final.log`. SHA domknięcia: `6117cdbf67`.
+### R4 — STOP kontraktowy
 
-Incydent testowy: podczas diagnozy błędu resetu użyto jawnie fałszywego klucza OpenRouter. Ponieważ wadliwy limiter przepuścił żądanie, wykonana została jedna próba HTTPS do OpenRouter, zakończona 401 „Missing Authentication header”. Nie użyto prawidłowego sekretu, nie było udanego wywołania AI ani obciążenia. Po tym dowody prowadzono bez klucza providera.
+Próba usunięcia populated disposable tenantu odtworzyła 500 na immutable `account_deletion_request_receipts`; transakcja się wycofała. Nie usunięto FK/NOT NULL/triggerów i nie zastosowano arbitralnego rehome współdzielonego użytkownika. Lokalnie przywrócono wszystkie trzy FK, zweryfikowano brak sierot i usunięto disposable DB.
 
-Włączenie przez nadzorcę:
+Do decyzji integratora/owner pozostają trzy bezpieczne klasy kontraktu: (1) zachowanie immutable receipts po kontrolowanym odłączeniu lifecycle references, (2) anonimowe tombstone entities spełniające FK, albo (3) jawna odmowa self-service deletion przy governed history. Opcja (3) chroni dane i rollback, ale nie spełnia pełnego wymagania E4. Dlatego populated delete i pełne E4 są **BLOCKED/HOLD**.
 
-```bash
-AI_BUDGETS_ENABLED=true DATABASE_URL="<DATABASE_URL>" npm --prefix server start
-```
+## Pozostałe bramki
 
-## E4 — eksport i usunięcie organizacji
+- Brak pełnego frontowego `tsc` zgodnie z zakazem; dotknięte pliki frontu sprawdzano esbuild per plik, serwer pełnym `tsc`.
+- Brak staging/deploy/live acceptance; DEC-472 nie daje temu blokowi prawa do połączenia live.
+- SuperAdmin outcome po COMMIT przy awarii audytu/utracie ACK pozostaje source-risk **NOT_PROVEN**.
+- Wymagany jest niezależny review dokładnego nowego SHA przed integracją.
 
-**PRZED:** istniejące trasy eksportu i kasowania były wyłącznie SuperAdmin; nie stanowiły samoobsługi tenant admina i nie zapewniały surviving receipt. **PO:** OWNER/ADMIN z aktywnym kanonicznym członkostwem może z routowanego ekranu `Settings → Data Controls` pobrać JSON własnej organizacji oraz usunąć ją po dokładnym wpisaniu nazwy. Trasy są odrębne od SuperAdmin, wymagają zgodnego `organizationId`, sprawdzają legal hold, a usunięcie i zapis receipt są jedną transakcją.
-
-Realny Playwright→HTTP→PostgreSQL przeszedł 1/1: login administratora disposable tenantu, widoczne kontrolki, download zawierający własnego użytkownika, zablokowany przycisk dla błędnej nazwy, skuteczne usunięcie dla nazwy dokładnej, brak organizacji i aktora w PG oraz obecny receipt. Zrzut: `evidence/pilotaz-organization-lifecycle/01-export-delete-controls.png`; log: `../codex6-artefakty/e4-browser-http-pg-final.log`. Osobny real-PG test przeszedł 3/3: cross-tenant export 403, błędna nazwa 428 bez mutacji, receipt przeżywa skasowanie i odrzuca DELETE. Kontrolowana mutacja usuwająca barierę nazwy dała RED (200 zamiast 428), przywrócony kod dał GREEN 3/3. Logi: `../codex6-artefakty/e4-mutation-red.log`, `../codex6-artefakty/e4-mutation-green.log`. SHA: `cb251a2523`.
-
-## Komendy dla nadzorcy
+## Komendy tylko dla nadzorcy
 
 ```bash
 DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs
 DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs --apply --manifest=/bezpieczna/sciezka/codex6-seed-manifest.json
-DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs --apply --manifest=/bezpieczna/sciezka/codex6-seed-manifest-second.json
 ```
-
-## STOP-y i niezweryfikowany zakres
-
-- Nie uruchamiano skryptu ani flagi na staging/demo/produkcji.
-- Nie wykonano pełnego frontowego `tsc` (zakaz); wykonano esbuild per plik.
-- E1 nie dowodzi wyklikania wszystkich operacji tworzących.
-- E2 KPI udowodniono ścieżką aplikacji i PostgreSQL, lecz nie wizualnym ekranem rejestru KPI.
-- Nie wykonano wdrożenia ani testu stagingowego; DEC-472 wskazuje staging jako cel pilota, ale ten blok pozostał ściśle lokalny.
