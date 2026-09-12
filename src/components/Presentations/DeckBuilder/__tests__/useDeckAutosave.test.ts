@@ -498,8 +498,10 @@ describe('useDeckAutosave — reopen must not write', () => {
           : Promise.resolve({data:{data:{version:5, deck_json:makeDeck('A remote')}}}));
         const {result, rerender} = renderHook(({id, deck}: {id:string;deck:Deck|null}) => useDeckAutosave({
           deckId:id,deck,hasLoadedInitialRef,serverVersionRef,paused:false,
-          onConflict,fetchLatestDeck,onSaveError,onSaveSuccess,
-        }),{initialProps:{id:'A',deck:null}});
+          onConflict: onConflict as (c: DeckAutosaveConflict) => void,
+          fetchLatestDeck: fetchLatestDeck as (id: string) => Promise<any>,
+          onSaveError,onSaveSuccess,
+        }),{initialProps:{id:'A',deck:null} as {id:string;deck:Deck|null}});
         act(()=>result.current.markPersisted(makeDeck('A baseline')));
         rerender({id:'A',deck:makeDeck('A edit')});
         await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});
@@ -529,8 +531,10 @@ describe('useDeckAutosave — reopen must not write', () => {
       const pending: Array<(r:Response)=>void>=[];
       fetchMock.mockImplementation(()=>new Promise<Response>(resolve=>pending.push(resolve)));
       const {result,rerender}=renderHook(({id,deck}:{id:string;deck:Deck|null})=>useDeckAutosave({
-        deckId:id,deck,hasLoadedInitialRef,serverVersionRef,paused:false,onConflict,fetchLatestDeck,
-      }),{initialProps:{id:'A',deck:null}});
+        deckId:id,deck,hasLoadedInitialRef,serverVersionRef,paused:false,
+        onConflict: onConflict as (c: DeckAutosaveConflict) => void,
+        fetchLatestDeck: fetchLatestDeck as (id: string) => Promise<any>,
+      }),{initialProps:{id:'A',deck:null} as {id:string;deck:Deck|null}});
       act(()=>result.current.markPersisted(makeDeck('A baseline')));
       rerender({id:'A',deck:makeDeck('A edit')});
       await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});

@@ -539,7 +539,9 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
   });
 
   it('reloads an observed conflict in the active shell without writing its canonical readback', async () => {
-    const originalFetch = fetchMock.getMockImplementation()!;
+    const originalFetch = fetchMock.getMockImplementation()! as (
+      url: string, init?: RequestInit
+    ) => Promise<Response>;
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
       if (String(url).endsWith('/autosave') && init?.method === 'PUT') {
         serverDeck = { ...CURRENT_DECK, title: 'Other session persisted' };
@@ -562,7 +564,9 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
   });
 
   it('does not carry an established A conflict into a different routed deck B', async () => {
-    const originalFetch = fetchMock.getMockImplementation()!;
+    const originalFetch = fetchMock.getMockImplementation()! as (
+      url: string, init?: RequestInit
+    ) => Promise<Response>;
     fetchMock.mockImplementation(async (url:string, init?:RequestInit) => {
       if(String(url).endsWith('/autosave') && init?.method==='PUT') return jsonResponse({serverVersion:12},409);
       return originalFetch(url,init);
