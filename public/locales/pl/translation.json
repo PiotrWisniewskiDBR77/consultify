@@ -7528,6 +7528,7 @@
       "reviewerMode": "Tryb recenzenta",
       "youAreReviewingAnswersFor": "Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków \"Zatwierdź\" lub \"Odeślij\" w pasku akcji.",
       "managerFeedback": "Feedback od managera",
+      "aiReviewMissing": "Brak zapisanej oceny AI. Wybierz Odśwież, aby uruchomić ocenę.",
       "aiQualityReview": "Kontrola jakości AI",
       "running": "Analiza...",
       "refresh": "Odśwież",

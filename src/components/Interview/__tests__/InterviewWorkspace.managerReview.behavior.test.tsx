@@ -216,3 +216,27 @@ describe('manager review uses the real Workspace lifecycle controls', () => {
     expect(api.get).toHaveBeenCalledWith('/interview/assignments/assignment');
   });
 });
+
+for (const withSnapshot of [false, true]) {
+  it(`submitted open and remount do not evaluate with snapshot=${withSnapshot}`, async () => {
+    Object.assign(fixture.assignment, { aiReview: withSnapshot ? { overallScore: 4, overallVerdict: 'ready_for_approval', recommendations: [], questionEvaluations: [] } : null, aiReviewedAt: withSnapshot ? '2026-09-12T10:00:00Z' : null });
+    const first = render(<InterviewWorkspace sessionId="session" />);
+    await screen.findByRole('textbox', { name: 'answer' });
+    await waitFor(() => expect(v8.getMyAssignments).toHaveBeenCalled());
+    expect(v8.evaluateSessionAnswers).not.toHaveBeenCalled();
+    first.unmount();
+    render(<InterviewWorkspace sessionId="session" />);
+    await screen.findByRole('textbox', { name: 'answer' });
+    expect(v8.evaluateSessionAnswers).not.toHaveBeenCalled();
+  });
+}
+
+it('explicit Refresh still calls the existing evaluation action after readonly open', async () => {
+  v8.evaluateSessionAnswers.mockResolvedValue({ overallScore: 4, overallVerdict: 'ready_for_approval', recommendations: [], questionEvaluations: [] });
+  render(<InterviewWorkspace sessionId="session" />);
+  await screen.findByRole('textbox', { name: 'answer' });
+  expect(v8.evaluateSessionAnswers).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'interview.workspace.refresh' }));
+  await waitFor(() => expect(v8.evaluateSessionAnswers).toHaveBeenCalledTimes(1));
+  expect(v8.evaluateSessionAnswers).toHaveBeenCalledWith('session', { language: 'en' });
+});
