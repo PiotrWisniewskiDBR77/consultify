@@ -754,7 +754,9 @@ router.get(
     const format = req.query.format === 'csv' ? 'csv' : 'json';
     const client = await acquirePgClient();
     try {
+      await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
       const result = await exportOrganizationData(client, id);
+      await client.query('COMMIT');
       await req.emitAuditEvent?.({
         actorType: 'USER',
         action: 'export',
@@ -779,6 +781,7 @@ router.get(
       );
       return res.send(JSON.stringify(result, null, 2));
     } catch (err: any) {
+      await client.query('ROLLBACK').catch(() => undefined);
       if (err?.code === 'ORG_NOT_FOUND') {
         return res.status(404).json({ code: 'ORG_NOT_FOUND' });
       }

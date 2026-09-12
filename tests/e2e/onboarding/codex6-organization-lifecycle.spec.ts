@@ -3,11 +3,12 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 import { expect, test } from '@playwright/test';
+import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const EVIDENCE_DIR = path.resolve('evidence/pilotaz-organization-lifecycle');
-const PASSWORD = 'Codex6-Seed-Owner-Password-123!';
+const quoteIdentifier = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 test('organization admin exports and permanently deletes only their tenant', async ({ page }) => {
   test.setTimeout(180_000);
@@ -19,6 +20,11 @@ test('organization admin exports and permanently deletes only their tenant', asy
   const userId = `cx6-ui-admin-${suffix}`;
   const orgName = `CX6 Lifecycle ${suffix}`;
   const email = `${userId}@example.test`;
+  const rootTable = `cx6_ui_export_root_${suffix}`;
+  const childTable = `cx6_ui_export_child_${suffix}`;
+  const largeTable = `cx6_ui_export_large_${suffix}`;
+  const loginPassword = `Fixture-Password-${suffix}!`;
+  const secretSentinels = ['', `fixture-mfa-${suffix}`, `fixture-token-${suffix}`];
 
   try {
     const password = await pool.query<{ password: string }>(
@@ -38,10 +44,18 @@ test('organization admin exports and permanently deletes only their tenant', asy
       `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
       [randomUUID(), orgId, userId]
     );
+    secretSentinels[0] = await bcrypt.hash(loginPassword, 4);
+    await pool.query('UPDATE users SET password=$2,mfa_secret=$3 WHERE id=$1', [userId, secretSentinels[0], secretSentinels[1]]);
+    await pool.query(`CREATE TABLE ${quoteIdentifier(rootTable)} (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), access_token TEXT, payload TEXT)`);
+    await pool.query(`CREATE TABLE ${quoteIdentifier(childTable)} (id TEXT PRIMARY KEY, root_id TEXT NOT NULL REFERENCES ${quoteIdentifier(rootTable)}(id), note TEXT)`);
+    await pool.query(`CREATE TABLE ${quoteIdentifier(largeTable)} (id INTEGER PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), label TEXT)`);
+    await pool.query(`INSERT INTO ${quoteIdentifier(rootTable)} VALUES ('ui-root',$1,$2,'ui-root-data')`, [orgId, secretSentinels[2]]);
+    await pool.query(`INSERT INTO ${quoteIdentifier(childTable)} VALUES ('ui-child','ui-root','ui-child-data')`);
+    await pool.query(`INSERT INTO ${quoteIdentifier(largeTable)} SELECT value,$1,'ui-large-' || value FROM generate_series(1,20001) value`, [orgId]);
 
     await page.goto('/login');
     await page.locator('input[type="email"]').fill(email);
-    await page.locator('input[type="password"]').fill(PASSWORD);
+    await page.locator('input[type="password"]').fill(loginPassword);
     const loginResponse = page.waitForResponse(
       (response) => response.request().method() === 'POST' && response.url().includes('/api/auth/login')
     );
@@ -67,6 +81,22 @@ test('organization admin exports and permanently deletes only their tenant', asy
     const exported = fs.readFileSync(downloadPath!, 'utf8');
     expect(exported).toContain(userId);
     expect(exported).not.toContain('cx6-other-user-');
+    for (const sentinel of secretSentinels) expect(exported.includes(sentinel)).toBe(false);
+    expect(exported).toContain('ui-child-data');
+    expect(JSON.parse(exported).rowCounts[largeTable]).toBe(20_001);
+    const token = await page.evaluate(() => localStorage.getItem('accessToken') || localStorage.getItem('token'));
+    const csv = await page.request.get(`http://127.0.0.1:4216/api/organizations/${orgId}/export?format=csv`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(csv.status()).toBe(200);
+    const csvText = await csv.text();
+    for (const sentinel of secretSentinels) expect(csvText.includes(sentinel)).toBe(false);
+    expect(csvText).toContain('ui-child-data');
+    expect(csvText.split(`"${largeTable}"`).length - 1).toBe(20_001);
+
+    await pool.query(`DROP TABLE ${quoteIdentifier(childTable)}`);
+    await pool.query(`DROP TABLE ${quoteIdentifier(rootTable)}`);
+    await pool.query(`DROP TABLE ${quoteIdentifier(largeTable)}`);
 
     await controls.getByLabel('Organization name confirmation').fill('wrong organization');
     await expect(controls.getByRole('button', { name: 'Permanently Delete Organization' })).toBeDisabled();
@@ -86,6 +116,9 @@ test('organization admin exports and permanently deletes only their tenant', asy
     );
     expect(receipt.rows).toEqual([{ actor_id: userId }]);
   } finally {
+    await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(childTable)}`).catch(() => undefined);
+    await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(rootTable)}`).catch(() => undefined);
+    await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(largeTable)}`).catch(() => undefined);
     await pool.query('DELETE FROM organization_members WHERE organization_id=$1', [orgId]).catch(() => undefined);
     await pool.query('DELETE FROM users WHERE organization_id=$1', [orgId]).catch(() => undefined);
     await pool.query('DELETE FROM organizations WHERE id=$1', [orgId]).catch(() => undefined);

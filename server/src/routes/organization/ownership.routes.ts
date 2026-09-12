@@ -51,11 +51,16 @@ router.get(
     if (!(await requireOrganizationAdministrator(req, res))) return;
     const client = await acquirePgClient();
     try {
+      await client.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
       const result = await exportOrganizationData(client, req.params.orgId);
+      await client.query('COMMIT');
       const format = req.query.format === 'csv' ? 'csv' : 'json';
       res.setHeader('Content-Disposition', `attachment; filename="organization-export-${req.params.orgId}.${format}"`);
       if (format === 'csv') return res.type('text/csv').send(organizationExportToCsv(result));
       return res.type('application/json').send(JSON.stringify(result, null, 2));
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw error;
     } finally {
       client.release();
     }

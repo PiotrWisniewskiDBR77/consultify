@@ -107,12 +107,102 @@ export interface OrganizationExportResult {
   tables: Record<string, Record<string, unknown>[]>;
   rowCounts: Record<string, number>;
   skipped: Array<{ tabela: string; kolumna: string; reason: string }>;
+  securityManifest: {
+    policyVersion: string;
+    complete: boolean;
+    truncated: boolean;
+    scope: string;
+    excludedTables: Array<{ table: string; reason: string }>;
+    excludedColumns: Array<{ table: string; classes: string[]; count: number; reason: string }>;
+  };
   totalRows: number;
 }
 
-/** Limit wierszy PER TABELA w jednym eksporcie — ochrona przed nieograniczonym
- *  rozmiarem pliku dla organizacji z bardzo długą historią (np. activity_logs). */
-const MAX_ROWS_PER_TABLE = 20_000;
+interface ForeignKeyEdge {
+  childTable: string;
+  parentTable: string;
+  childColumns: string[];
+  parentColumns: string[];
+}
+
+const USER_EXPORT_COLUMNS = new Set([
+  'id', 'organization_id', 'email', 'first_name', 'last_name', 'role', 'status',
+  'avatar_url', 'title', 'timezone', 'locale', 'date_format', 'time_format',
+  'first_day_of_week', 'accessibility_settings', 'notification_preferences',
+  'ui_preferences', 'ai_assertiveness_level', 'ai_autonomy_level', 'job_title',
+  'department', 'site_location', 'seniority_level', 'tenure_years', 'manages_team',
+  'team_size', 'expertise_tags', 'display_name', 'pronouns', 'status_message',
+  'out_of_office', 'vacation_end', 'location', 'company_name', 'language',
+  'is_active', 'weekly_capacity_hours', 'availability_percent', 'created_at',
+  'updated_at', 'last_login', 'last_login_at', 'onboarding_completed',
+]);
+
+const SECURITY_COLUMN_PATTERN = /(^|_)(password|passcode|secret|token|credential|session|mfa|otp|api_key|private_key|access_key|recovery|backup_codes?|hash|salt|cookie|authorization)($|_)/i;
+const SECURITY_TABLE_PATTERN = /(^|_)(sessions?|tokens?|credentials?|secrets?|mfa|oauth|api_keys?|password_resets?|refresh_tokens?)($|_)/i;
+const EXPORT_POLICY_VERSION = 'tenant-export-safe-v2';
+const QUERY_KEY_BATCH_SIZE = 500;
+
+async function discoverTableColumns(client: PoolClient): Promise<Map<string, string[]>> {
+  const result = await client.query<{ table_name: string; column_name: string }>(`
+    SELECT table_name, column_name
+      FROM information_schema.columns
+     WHERE table_schema = 'public'
+     ORDER BY table_name, ordinal_position`);
+  const columns = new Map<string, string[]>();
+  for (const row of result.rows) {
+    const current = columns.get(row.table_name) || [];
+    current.push(row.column_name);
+    columns.set(row.table_name, current);
+  }
+  return columns;
+}
+
+async function discoverForeignKeyEdges(client: PoolClient): Promise<ForeignKeyEdge[]> {
+  const result = await client.query<ForeignKeyEdge>(`
+    SELECT child.relname AS "childTable", parent.relname AS "parentTable",
+           array_agg(child_attribute.attname ORDER BY child_key.ordinality)::text[] AS "childColumns",
+           array_agg(parent_attribute.attname ORDER BY child_key.ordinality)::text[] AS "parentColumns"
+      FROM pg_constraint constraint_row
+      JOIN pg_class child ON child.oid = constraint_row.conrelid
+      JOIN pg_class parent ON parent.oid = constraint_row.confrelid
+      JOIN pg_namespace namespace_row ON namespace_row.oid = child.relnamespace AND namespace_row.nspname = 'public'
+      JOIN unnest(constraint_row.conkey) WITH ORDINALITY child_key(attnum, ordinality) ON true
+      JOIN unnest(constraint_row.confkey) WITH ORDINALITY parent_key(attnum, ordinality)
+        ON parent_key.ordinality = child_key.ordinality
+      JOIN pg_attribute child_attribute ON child_attribute.attrelid = child.oid AND child_attribute.attnum = child_key.attnum
+      JOIN pg_attribute parent_attribute ON parent_attribute.attrelid = parent.oid AND parent_attribute.attnum = parent_key.attnum
+     WHERE constraint_row.contype = 'f' AND child.relkind = 'r' AND parent.relkind = 'r'
+     GROUP BY child.relname, parent.relname, constraint_row.oid
+     ORDER BY parent.relname, child.relname`);
+  return result.rows;
+}
+
+function exportColumnsForTable(table: string, columns: string[]): string[] {
+  if (table === 'users') return columns.filter((column) => USER_EXPORT_COLUMNS.has(column));
+  return columns.filter((column) => !SECURITY_COLUMN_PATTERN.test(column));
+}
+
+function projection(columns: string[]): string {
+  if (columns.length === 0) return `ctid::text AS "__export_row_id"`;
+  return `ctid::text AS "__export_row_id", ${columns.map(qi).join(', ')}`;
+}
+
+function sanitizeExportValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizeExportValue);
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([key]) => !SECURITY_COLUMN_PATTERN.test(key))
+        .map(([key, nested]) => [key, sanitizeExportValue(nested)])
+    );
+  }
+  return value;
+}
+
+function publicRow(row: Record<string, unknown>): Record<string, unknown> {
+  const { __export_row_id: _rowIdentity, ...safe } = row;
+  return sanitizeExportValue(safe) as Record<string, unknown>;
+}
 
 export async function exportOrganizationData(
   client: PoolClient,
@@ -120,50 +210,129 @@ export async function exportOrganizationData(
 ): Promise<OrganizationExportResult> {
   assertNotReservedOrganizationId(organizationId);
 
-  const orgRow = await client.query('SELECT * FROM organizations WHERE id = $1', [
-    organizationId,
-  ]);
+  const allColumns = await discoverTableColumns(client);
+  const foreignKeys = await discoverForeignKeyEdges(client);
+  const securityTables = new Set(
+    [...allColumns.keys()].filter((table) => SECURITY_TABLE_PATTERN.test(table))
+  );
+  const safeColumns = new Map<string, string[]>();
+  const excludedColumns: Array<{ table: string; classes: string[]; count: number; reason: string }> = [];
+  for (const [table, columns] of allColumns) {
+    if (securityTables.has(table)) continue;
+    const safe = exportColumnsForTable(table, columns);
+    safeColumns.set(table, safe);
+    const excluded = columns.filter((column) => !safe.includes(column));
+    if (excluded.length > 0) {
+      excludedColumns.push({
+        table,
+        classes: table === 'users'
+          ? ['authentication', 'session_recovery', 'linked_identity']
+          : ['credential_or_security_material'],
+        count: excluded.length,
+        reason: 'security_class_excluded',
+      });
+    }
+  }
+
+  const organizationColumns = safeColumns.get('organizations') || [];
+  const orgRow = await client.query(
+    `SELECT ${projection(organizationColumns)} FROM organizations WHERE id = $1`,
+    [organizationId]
+  );
   if (orgRow.rowCount === 0) {
     throw Object.assign(new Error('Organization not found'), { code: 'ORG_NOT_FOUND' });
   }
 
   const kolumny = await discoverOrganizationScopedColumns(client);
-  const tables: Record<string, Record<string, unknown>[]> = {};
-  const rowCounts: Record<string, number> = {};
-  const skipped: Array<{ tabela: string; kolumna: string; reason: string }> = [];
-  let totalRows = 0;
-
-  for (const k of kolumny) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await client.query(
-        `SELECT * FROM ${qi(k.tabela)} WHERE ${qi(k.kolumna)}::text = $1 LIMIT ${MAX_ROWS_PER_TABLE}`,
-        [organizationId]
-      );
-      if (res.rowCount && res.rowCount > 0) {
-        const key = kolumny.filter((x) => x.tabela === k.tabela).length > 1
-          ? `${k.tabela}.${k.kolumna}`
-          : k.tabela;
-        tables[key] = res.rows;
-        rowCounts[key] = res.rowCount;
-        totalRows += res.rowCount;
+  const rawRows = new Map<string, Map<string, Record<string, unknown>>>();
+  const queue: string[] = [];
+  const addRows = (table: string, rows: Record<string, unknown>[]) => {
+    const tableRows = rawRows.get(table) || new Map<string, Record<string, unknown>>();
+    let added = false;
+    for (const row of rows) {
+      const identity = String(row.__export_row_id || JSON.stringify(row));
+      if (!tableRows.has(identity)) {
+        tableRows.set(identity, row);
+        added = true;
       }
-    } catch (err: any) {
-      logger.warn('[OrgLifecycle] Export: skipping table due to read error', {
-        tabela: k.tabela,
-        kolumna: k.kolumna,
-        err: err?.message,
-      });
-      skipped.push({ tabela: k.tabela, kolumna: k.kolumna, reason: err?.message || 'unknown' });
+    }
+    rawRows.set(table, tableRows);
+    if (added && !queue.includes(table)) queue.push(table);
+  };
+  addRows('organizations', orgRow.rows);
+
+  for (const scoped of kolumny) {
+    if (securityTables.has(scoped.tabela)) continue;
+    const columns = safeColumns.get(scoped.tabela);
+    if (!columns) throw new Error(`EXPORT_SCHEMA_MISSING:${scoped.tabela}`);
+    // eslint-disable-next-line no-await-in-loop
+    const result = await client.query(
+      `SELECT ${projection(columns)} FROM ${qi(scoped.tabela)} WHERE ${qi(scoped.kolumna)}::text = $1`,
+      [organizationId]
+    );
+    addRows(scoped.tabela, result.rows);
+  }
+
+  while (queue.length > 0) {
+    const parentTable = queue.shift()!;
+    const parentRows = [...(rawRows.get(parentTable)?.values() || [])];
+    for (const edge of foreignKeys.filter((candidate) => candidate.parentTable === parentTable)) {
+      if (securityTables.has(edge.childTable)) continue;
+      const childColumns = safeColumns.get(edge.childTable);
+      if (!childColumns) throw new Error(`EXPORT_SCHEMA_MISSING:${edge.childTable}`);
+      if (edge.parentColumns.some((column) => !safeColumns.get(parentTable)?.includes(column)) ||
+          edge.childColumns.some((column) => !childColumns.includes(column))) {
+        throw new Error(`EXPORT_SECURITY_EDGE_UNSUPPORTED:${parentTable}:${edge.childTable}`);
+      }
+      const tuples = parentRows
+        .map((row) => edge.parentColumns.map((column) => row[column]))
+        .filter((values) => values.every((value) => value !== null && value !== undefined));
+      for (let offset = 0; offset < tuples.length; offset += QUERY_KEY_BATCH_SIZE) {
+        const batch = tuples.slice(offset, offset + QUERY_KEY_BATCH_SIZE);
+        if (batch.length === 0) continue;
+        const params = batch.flat();
+        const width = edge.childColumns.length;
+        const placeholders = batch.map((_, tupleIndex) =>
+          `(${edge.childColumns.map((__, columnIndex) => `$${tupleIndex * width + columnIndex + 1}`).join(',')})`
+        ).join(',');
+        // eslint-disable-next-line no-await-in-loop
+        const result = await client.query(
+          `SELECT ${projection(childColumns)} FROM ${qi(edge.childTable)} WHERE (${edge.childColumns.map(qi).join(',')}) IN (${placeholders})`,
+          params
+        );
+        addRows(edge.childTable, result.rows);
+      }
     }
   }
 
+  const tables: Record<string, Record<string, unknown>[]> = {};
+  const rowCounts: Record<string, number> = {};
+  let totalRows = 0;
+  for (const [table, rowsByIdentity] of rawRows) {
+    if (table === 'organizations' || rowsByIdentity.size === 0) continue;
+    const rows = [...rowsByIdentity.values()].map(publicRow);
+    tables[table] = rows;
+    rowCounts[table] = rows.length;
+    totalRows += rows.length;
+  }
+
   return {
-    organization: orgRow.rows[0] || null,
+    organization: publicRow(orgRow.rows[0]) || null,
     exportedAt: new Date().toISOString(),
     tables,
     rowCounts,
-    skipped,
+    skipped: [],
+    securityManifest: {
+      policyVersion: EXPORT_POLICY_VERSION,
+      complete: true,
+      truncated: false,
+      scope: 'all tenant rows reachable by exact organization scope or foreign-key descendants, excluding declared security classes',
+      excludedTables: [...securityTables].sort().map((table) => ({
+        table,
+        reason: 'credential_session_or_security_material',
+      })),
+      excludedColumns,
+    },
     totalRows,
   };
 }
