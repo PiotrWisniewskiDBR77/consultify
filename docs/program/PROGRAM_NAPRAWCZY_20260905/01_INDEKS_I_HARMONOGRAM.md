@@ -770,3 +770,13 @@ C4 next AI evaluation implementuje w osobnym sparse worktree i przejmuje zwolnio
 ## Post-merge ratchet W05 i finalny IE00 — 12.09.2026
 Frontend tsc8GiB na root32222a8edb zakończony exit2. Normalized diagnostics:192baseline=192candidate, added0/removed0 (W05_INTEGRATION_FRONT_TSC_DELTA.json). To ratchetPASS, nie tsc0. Root server tsc teraz ACTIVE session76190, W05_INTEGRATION_SERVER_TSC.log; ciężki slot pozostaje root do końca.
 IE00 source commit e14526a711a12832a529e85d60b3b69858c432e9 zweryfikowany przez root:23files, normalne hookiPASS wg autora; source/runtime przekazane scope. Niezależny odbiór rozpoczęty. Root merge-tree --write-tree na32222+e145 exit0, tree e7727c55c434be5c444d33a13fd1bbcaf0bf075b, bez konfliktów; nie wykonano integracji źródeł IE00. Pierwszy pionDefinition, nie całeIE00. W17 autor rusza w odrębnym checkout z jużwydanym zakresem po swoim trwałym checkpoint.
+
+
+## IE00 pierwszy pion przyjęty i scalony — 12.09.2026
+
+Root przeczytał IE00_FINAL_INDEPENDENT_REVIEW.md w całości. Niezależny ACCEPT sourcee14526a711, docs-only d74abe43: PG6/6, identity2/2, nowa inicjatywa z Hub201, jawne8HTTPcardprep+8review,6UIcommands201, SQLv23DEFINED/Decisionv4APPROVED z zachowanymID poRETURN/resubmit. Typedconsumer i ONreadbackPASS. To presenter/Gateway/JWT/PG, nie pełnyAppRoutes/login;20pobocznych404/503 i wizualne/i18n luki zachowane. Pozostałe12gate/kworum/legacy adapter/policyrace niezamknięte.
+
+Root merge d74abe43 →6bd8d59581a4a88f9a5d4b4fdf6a167ad92a7cbc, normalny freezehookPASS, bez konfliktów. Połączony kandydat ma Interview W05 oraz pierwszy Definitionvertical. Kontrola build/tsc poIE00 jeszcze przednami. Feature defaultOFF zachowane, bez live.
+
+### Rozwinięcie wykonawcze istniejącego mandatu DEC-2026091201 — W17
+Polecenie właściciela pełnegoMVP oraz obowiązujący plan W17 obejmują działające narzędzia i profesjonalną prezentację. Integrator kieruje udowodnioną regresję unsolicited Deck autosave do naprawy w11_MATERIALS: jeden writer/persistedbaseline, canonicalload/serverrestore/AIaccept/conflictReload bez zbędnegoPUT, realedit/localrestore zapisują, CAS/inflightundo i historia zachowane. Odbiór5componentRED→GREEN oraz realbrowser/API/PG z W17_DECK_BASELINE_REVIEW.md i W17_DECK_RUNTIME_REOPEN.md. To naprawa istniejącego kontraktu w pełnymMVP, bez nowego zakresu biznesowego ani live; świadomy marker [ODMROZENIE 11_MATERIALS DEC-2026091201], WSPOLNE tylko jeśli faktycznie dotknięte. DEC-2026091202 pozostaje wyłącznie05/06 i ich wspólne integracje. W17 autor dostał tę korektę; nowy sparseWT od32222 chroni C7 podczas odbioru.
