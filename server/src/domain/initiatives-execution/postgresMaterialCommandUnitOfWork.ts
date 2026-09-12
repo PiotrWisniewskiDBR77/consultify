@@ -1,3 +1,4 @@
+import { BudgetItemNotFoundError } from './budgetItems.js';
 import type { Pool, PoolClient } from 'pg';
 
 import type {
@@ -47,6 +48,52 @@ function relationDuplicateRule(relationType: string): string {
 
 class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   constructor(private readonly client: PoolClient) {}
+
+  async writeInitiativeBudgetItem(input: import('./budgetItems.js').BudgetItemMutation & {
+    organizationId: string;
+    itemId: string;
+  }): Promise<import('./budgetItems.js').BudgetItemRecord> {
+    const parent = await this.client.query(
+      'SELECT id, status FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',
+      [input.initiativeId, input.organizationId]
+    );
+    if (parent.rowCount !== 1) throw new BudgetItemNotFoundError('Initiative not found');
+    if (String(parent.rows[0].status).toUpperCase() === 'ARCHIVED') {
+      throw new MaterialCommandRuleError('INITIATIVE_ARCHIVED_READ_ONLY', 409, 'Archived initiative is read-only');
+    }
+    const p = input.fields;
+    let result;
+    if (input.operation === 'create') {
+      result = await this.client.query(
+        `INSERT INTO initiative_budget_items
+          (id,initiative_id,organization_id,category,cost_type,amount,currency,description,source,created_at,updated_at)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING *`,
+        [input.itemId,input.initiativeId,input.organizationId,p.category || 'other',
+         p.costType || 'OPEX',p.amount || 0,p.currency || 'PLN',p.description || null,p.source || 'manual']
+      );
+    } else if (input.operation === 'update') {
+      result = await this.client.query(
+        `UPDATE initiative_budget_items SET category=COALESCE($4,category),
+         cost_type=COALESCE($5,cost_type),amount=COALESCE($6,amount),
+         currency=COALESCE($7,currency),description=COALESCE($8,description),updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *`,
+        [input.itemId,input.initiativeId,input.organizationId,p.category,p.costType,p.amount,p.currency,p.description]
+      );
+    } else {
+      result = await this.client.query(
+        'DELETE FROM initiative_budget_items WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *',
+        [input.itemId,input.initiativeId,input.organizationId]
+      );
+    }
+    if (result.rowCount !== 1) throw new BudgetItemNotFoundError('Budget item not found');
+    const row = result.rows[0];
+    return {
+      id: row.id, initiativeId: row.initiative_id, category: row.category,
+      costType: row.cost_type, amount: Number(row.amount), currency: row.currency,
+      description: row.description, source: row.source,
+      ...(input.operation === 'delete' ? { deleted: true as const } : {}),
+    };
+  }
 
   async createRaidItem(input: {
     organizationId: string;

@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { isAiGate } from '../constants/initiativeGateAi.js';
+import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeLegacyBudgetItem } from '../domain/initiatives-execution/budgetItems.js';
 import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendInitiativeMetadata.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): MaterialCommandConflictError distinguishes
 // "same clientRequestId, different command" (receipt clash — our dedup path)
@@ -4718,6 +4719,42 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const clientRequestId = `budget-create-${computeContentHash({
+          orgId, initiativeId, targetId: null, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'create', fields, itemId: `budget-${computeContentHash({orgId,initiativeId,clientRequestId})}`, clientRequestId,
+          expectedVersion: req.body.expectedCanonicalVersion,
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.status(result.status === 'APPLIED' ? 201 : 200).json({success: true, budgetItem: result.response});
+        return;
+      }
       const itemId = uuidv4();
       const now = new Date().toISOString();
 
@@ -4770,6 +4807,42 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const clientRequestId = `budget-update-${computeContentHash({
+          orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'update', fields, itemId: itemId, clientRequestId,
+          expectedVersion: req.body.expectedCanonicalVersion,
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.json({success: true});
+        return;
+      }
       const now = new Date().toISOString();
       await queryHelpers.queryRun(
         `UPDATE initiative_budget_items SET
@@ -4800,6 +4873,42 @@ export class InitiativeController {
         return;
       }
 
+      // Tenant ownership is checked even with unified writes OFF. A caller
+      // must not attach a budget row to another organization's initiative.
+      const budgetParent = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+      if (!budgetParent) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = BudgetItemFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields = parsed.data;
+        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const clientRequestId = `budget-delete-${computeContentHash({
+          orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
+          ...(suppliedKey ? {} : { fields }),
+        })}`;
+        let result;
+        try {
+          result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
+          organizationId: orgId, actorId: req.user.id, initiativeId,
+          operation: 'delete', fields, itemId: itemId, clientRequestId,
+          expectedVersion: req.body.expectedCanonicalVersion,
+        });
+        } catch (error) {
+          if (error instanceof MaterialCommandConflictError) {
+            res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
+          }
+          if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          throw error;
+        }
+        res.json({success: true});
+        return;
+      }
       await queryHelpers.queryRun(
         `DELETE FROM initiative_budget_items WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [itemId, initiativeId, orgId]

@@ -1,13 +1,13 @@
 # CODEX2B — raport wykonania
 
-Stan: W TOKU. Żaden pisarz nie jest jeszcze odebrany.
+Stan: W TOKU. Budget-items: implementacja i dowody lokalne gotowe do niezależnego review; pozostałych pięciu nieodebranych.
 
 ## 0. Metryka
 
 Marker `a176d3f906`, gałąź `codex/szesciu-pisarzy-legacy-20260911`.
 Kontener `cx-codex2b-pg`, PostgreSQL18/pgvector, port6454.
 Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony.
-Pełne migracje czystej bazy zakończone; drugi przebieg: `Applying migrations: 0`.
+Pełne migracje czystej bazy:914; zakończone; drugi przebieg: `Applying migrations: 0`.
 Korekta pg16→pg18: lokalny szablon pochodzi zPG18; żadna baza zdalna nieużyta.
 
 ## 1. K-PUNKTY przed/po
@@ -83,7 +83,21 @@ E2.1: analiza trwa. E2.2–E2.6 orazE9 nieodebrane.
 
 ## 5. Dowody mutacyjne (Z32)
 
-NIEZROBIONE.
+Budget-items: 3mutacje, każda przy7tych samych pełnych nazwach:
+- usunięty INSERT do projection:2PASS/5FAIL → cp →7PASS;
+- usunięty organization_id w UoW:6PASS/1FAIL (nativeforeign404) → cp →7PASS;
+- wymuszony WRITEfalse:4PASS/3FAIL, legalnyOFFPASS → cp →7PASS.
+Skrypt exact mutacji: `codex2b-scratch/run-budget-mutations.py`.
+Każdy przebieg ma `budget-mutation-<projection|tenant|flag>-<red|green>.command.txt`, JSON i log.
+Pliki przywrócone przez kopię; porównanie bajtowe identyczne; diff mutacji pusty.
+Backend tsc -p server/tsconfig.json --noEmit:exit0. Pozostałych writerów nie mierzyłem.
+
+Budget-items: GREEN7/7 po rozszerzeniu o native runtime CRUD/replay/CAS/tenant
+oraz legacyON update/delete/expectedCanonicalVersion409. Ten sam UI GET zawiera
+id+opis przy READfalse iREADtrue. LegalnyOFFCRUDPASS przed i po zmianie.
+Nowe error keys errors.VERSION_CONFLICT, NOT_FOUND, VALIDATION_FAILED,
+INITIATIVE_ARCHIVED_READ_ONLY dopisano w PL i EN. Wyświetlenie tłumaczenia
+w przeglądarce NOT_PROVEN (Z11 — blok nie ma warstwy browser).
 
 ## 6. Zasięg testów (§0.4a)
 

@@ -1,3 +1,4 @@
+import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeBudgetItem } from '../../domain/initiatives-execution/budgetItems.js';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { Pool, type PoolConfig } from 'pg';
 import { z } from 'zod';
@@ -5752,6 +5753,45 @@ export function createInitiativesExecutionRuntimeRouter(
       });
     })
   );
+  for (const [method, operation] of [
+    ['post', 'create'], ['patch', 'update'], ['delete', 'delete'],
+  ] as const) {
+    router[method](
+      '/initiatives/:initiativeId/budget-items/:itemId',
+      asyncHandler(async (req, res) => {
+        const actor = actorFromRequest(req);
+        if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        const parsed = z.object({
+          expectedVersion: z.number().int().nonnegative(),
+          clientRequestId: z.string().min(1).max(240),
+          fields: BudgetItemFieldsSchema.default({}),
+        }).safeParse(req.body);
+        if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        const initiativeId = firstParam(req.params.initiativeId);
+        const projectIds = await deps.reader.resolveProjectIdsForAggregate(actor.organizationId, 'initiative', initiativeId);
+        const allowed = projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+        if (!allowed) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        let result;
+        try {
+          result = await writeBudgetItem(deps.unitOfWork, {
+          organizationId: actor.organizationId, actorId: actor.userId,
+          aggregateType: 'initiative_budget_item', aggregateId: firstParam(req.params.itemId),
+          expectedVersion: parsed.data.expectedVersion,
+          clientRequestId: parsed.data.clientRequestId, correlationId: parsed.data.clientRequestId,
+          policyId: 'execution-control', policyVersion: 1,
+          commandType: `initiative-budget-item.${operation}`, createIfMissing: true,
+          payload: { initiativeId, operation, fields: parsed.data.fields },
+        });
+        } catch (error) {
+          if (error instanceof BudgetItemNotFoundError) return void res.status(404).json({error:{code:'NOT_FOUND'}});
+          throw error;
+        }
+        res.status(operation === 'create' && result.status === 'APPLIED' ? 201 : 200).json(result);
+      })
+    );
+  }
   router.post(
     '/initiatives/:initiativeId/raid-items/:raidItemId',
     asyncHandler(async (req, res) => {

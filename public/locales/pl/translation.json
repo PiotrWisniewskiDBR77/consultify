@@ -68,6 +68,10 @@
     }
   },
   "errors": {
+    "VERSION_CONFLICT": "Ten element został zmieniony. Odśwież go i spróbuj ponownie.",
+    "NOT_FOUND": "Ten element jest niedostępny w Twojej organizacji. Odśwież i wybierz dostępny element.",
+    "VALIDATION_FAILED": "Sprawdź wprowadzone wartości i spróbuj ponownie.",
+    "INITIATIVE_ARCHIVED_READ_ONLY": "Ta inicjatywa jest zarchiwizowana i nie można jej zmieniać.",
     "app": {
       "reportId": "Identyfikator zgłoszenia",
       "notFound": {
