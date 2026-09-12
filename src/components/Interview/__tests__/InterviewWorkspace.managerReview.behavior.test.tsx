@@ -29,8 +29,9 @@ vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({ currentUser: fixture.user, currentOrganization: { id: 'org' } }),
 }));
 vi.mock('@/hooks/useInterviewPermissions', () => ({
-  useInterviewPermissions: () => ({
-    canViewManaged: fixture.canManage,
+  useInterviewReviewAccess: () => ({
+    canReview: fixture.canManage,
+    refresh: vi.fn(),
     canAssign: fixture.canManage,
     isLoading: false,
   }),

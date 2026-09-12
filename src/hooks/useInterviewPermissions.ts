@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 
 export interface ProjectMembership {
@@ -294,3 +295,32 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 };
 
 export default useInterviewPermissions;
+
+/** Record-bound review policy; never inferred from create or cached across records. */
+export function useInterviewReviewAccess(assignmentId?: string | null) {
+  const { currentUser, currentOrganization } = useAppStore();
+  const [revision, setRevision] = useState(0);
+  const refresh = useCallback(() => setRevision((value) => value + 1), []);
+  const key = JSON.stringify([currentUser?.id, currentOrganization?.id, assignmentId, revision]);
+  const [result, setResult] = useState<{ key: string; canReview: boolean } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setResult(null);
+    if (!assignmentId || !currentUser?.id) return;
+    V8InterviewApi.getAssignmentReviewAccess(assignmentId)
+      .then((response) => {
+        if (active) setResult({ key, canReview: response?.canReview === true });
+      })
+      .catch(() => {
+        if (active) setResult({ key, canReview: false });
+      });
+    return () => {
+      active = false;
+    };
+  }, [key, assignmentId, currentUser?.id]);
+  return {
+    canReview: result?.key === key && result.canReview,
+    isLoading: Boolean(assignmentId) && result?.key !== key,
+    refresh,
+  };
+}

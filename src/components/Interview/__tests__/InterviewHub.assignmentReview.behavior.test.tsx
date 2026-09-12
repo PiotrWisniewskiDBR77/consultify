@@ -6,7 +6,7 @@
  * Heavy service dependencies and the child card are mocked at their boundary.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,7 +74,7 @@ const {
   setInterviewBreadcrumbs: vi.fn(),
   getMyAssignments: vi.fn(async () => []),
   getSession: vi.fn(async () => null),
-  appStoreState: { currentProjectId: 'proj-1' as string | null },
+  appStoreState: { currentProjectId: 'proj-1' as string | null, scopedReviewer: false },
 }));
 
 vi.mock('@/services/api', () => ({
@@ -112,7 +112,7 @@ vi.mock('@/services/api/v8/interview', () => ({
 vi.mock('@/hooks/useInterviewPermissions', () => ({
   useInterviewPermissions: () => ({
     canAssign: true,
-    canViewManaged: true,
+    canViewManaged: !appStoreState.scopedReviewer,
     canViewOverdue: true,
     canSendReminder: true,
     canViewInsights: true,
@@ -175,6 +175,7 @@ const renderTab = (tab: string) =>
   );
 
 beforeEach(() => {
+  sessionStorage.clear();
   apiGet.mockReset();
   apiPost.mockReset();
   // Default: every data fetch resolves to an empty collection.
@@ -193,6 +194,7 @@ beforeEach(() => {
   }));
   setCurrentProjectId.mockReset();
   appStoreState.currentProjectId = 'proj-1';
+  appStoreState.scopedReviewer = false;
   getMyAssignments.mockReset();
   getMyAssignments.mockResolvedValue([]);
   getSession.mockReset();
@@ -201,6 +203,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.clearAllMocks();
 });
 
@@ -249,5 +252,47 @@ describe('Interview Hub assignment lifecycle readback', () => {
       ).toBe(true)
     );
     expect(getMyAssignments.mock.calls.length).toBe(before);
+  });
+});
+
+describe('Interview notification record read without list membership', () => {
+  it('opens the explicit assignment through its protected detail when lists are empty', async () => {
+    appStoreState.scopedReviewer = true;
+    const session = {
+      id: 'scoped-session',
+      name: 'Scoped record',
+      status: 'submitted',
+      assignmentId: 'scoped-assignment',
+    };
+    apiGet.mockImplementation(async (url: string) =>
+      url === '/interview/assignments/scoped-assignment'
+        ? { id: 'scoped-assignment', status: 'submitted', sessionId: session.id, session }
+        : []
+    );
+    getSession.mockResolvedValue({ session } as any);
+    render(
+      <MemoryRouter initialEntries={['/interview?assignmentId=scoped-assignment&scope=managed']}>
+        <InterviewHub />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole('button', { name: 'accept canonical assignment' })).toBeTruthy();
+    expect(apiGet).toHaveBeenCalledWith('/interview/assignments/scoped-assignment');
+  });
+  it('denied explicit detail never opens an assignment card', async () => {
+    apiGet.mockImplementation(async (url: string) => {
+      if (url === '/interview/assignments/foreign-assignment')
+        throw Object.assign(Error('Forbidden'), { status: 403 });
+      return [];
+    });
+    render(
+      <MemoryRouter initialEntries={['/interview?assignmentId=foreign-assignment&scope=managed']}>
+        <InterviewHub />
+      </MemoryRouter>
+    );
+    await waitFor(() =>
+      expect(apiGet).toHaveBeenCalledWith('/interview/assignments/foreign-assignment')
+    );
+    expect(screen.queryByRole('button', { name: 'accept canonical assignment' })).toBeNull();
+    expect(getSession).not.toHaveBeenCalled();
   });
 });

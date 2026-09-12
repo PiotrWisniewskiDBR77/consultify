@@ -69,7 +69,7 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
-import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
+import { useInterviewReviewAccess } from '@/hooks/useInterviewPermissions';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
@@ -222,7 +222,6 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   });
   const { currentUser, currentOrganization } = useAppStore();
   const openChatWithContext = useOpenChatWithContext();
-  const { canViewManaged, isLoading: permissionsLoading } = useInterviewPermissions();
   const interviewDemoData = useMemo(
     () =>
       createInterviewDemoDataset({
@@ -314,10 +313,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   }, [assignmentStatus, session?.assignmentId, session?.status]);
 
   const isAssignmentMode = Boolean(session?.assignmentId);
-  // Same capability as the Hub and INTERVIEW_ASSIGN_MANAGE route mapping.
-  // Session ownership identifies authorship, not manager authority.
+  const {
+    canReview,
+    isLoading: permissionsLoading,
+    refresh: refreshReviewAccess,
+  } = useInterviewReviewAccess(session?.assignmentId);
+  // Review authority comes from the persisted assignment context, separately from creation.
   const isReviewerMode =
-    isAssignmentMode && assignmentStatus === 'submitted' && !permissionsLoading && canViewManaged;
+    isAssignmentMode && assignmentStatus === 'submitted' && !permissionsLoading && canReview;
 
   const [sendBackReason, setSendBackReason] = useState('');
   const [sendBackMissingItems, setSendBackMissingItems] = useState<SendBackChecklistItem[]>([]);
@@ -1642,6 +1645,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to send back:', error);
       const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      if (status === 403 || status === 404) refreshReviewAccess();
       toast.error(
         status === 409
           ? isPolish
@@ -1661,6 +1665,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     onAssignmentChange,
     onSessionChange,
     isReviewerMode,
+    refreshReviewAccess,
     isSendingBack,
     isApproving,
     sendBackMissingItems,
@@ -1689,6 +1694,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to approve:', error);
       const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+      if (status === 403 || status === 404) refreshReviewAccess();
       toast.error(
         status === 409
           ? isPolish
@@ -1705,6 +1711,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     session?.assignmentId,
     isPolish,
     isReviewerMode,
+    refreshReviewAccess,
     isApproving,
     isSendingBack,
     canApprove,

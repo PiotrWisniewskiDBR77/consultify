@@ -393,15 +393,20 @@ router.post(
   v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta)
 );
 
+router.get(
+  '/assignments/:id/review-access',
+  v8Wrap(InterviewController.getAssignmentReviewAccess, interviewMeta)
+);
+
 router.post(
   '/assignments/:id/send-back',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  // Persisted project review policy is enforced by the shared controller, then rechecked under lock.
   v8Wrap(InterviewController.sendBackAssignment, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/approve',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  // Persisted project review policy is enforced by the shared controller, then rechecked under lock.
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
 );
 

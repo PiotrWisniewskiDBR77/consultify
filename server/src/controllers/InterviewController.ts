@@ -16,6 +16,11 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import {
+  assertInterviewAssignmentReviewAccess,
+  interviewAssignmentReviewAccess,
+} from '../services/interviewAssignmentReviewAccess.js';
+
 import { incrementAiTimeouts } from '../middleware/metrics.middleware.js';
 import { logAIAction } from '../services/auditService.js';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
@@ -2355,6 +2360,20 @@ async function assertSessionAccessibleOrThrow(params: {
   const { sessionId, organizationId, userId, userRole } = params;
   const ok = await canUserAccessSession({ sessionId, organizationId, userId, userRole });
   if (ok) return;
+
+  // Review grants READ access to an identified, persistently linked session only.
+  // Do not change canUserAccessSession: the ownership mutation guard also uses it.
+  const reviewSession = await queryHelpers.queryOne(
+    'SELECT assignment_id, is_anonymous FROM interview_sessions WHERE id = ? AND organization_id = ?',
+    [sessionId, organizationId]
+  );
+  if (reviewSession?.assignment_id && !flagOn(reviewSession.is_anonymous)) {
+    const review = await interviewAssignmentReviewAccess(
+      { id: userId, organizationId, role: userRole || undefined },
+      reviewSession.assignment_id
+    );
+    if (review.canReview && review.sessionId === sessionId) return;
+  }
 
   // Differentiate "not found" from "forbidden" for read endpoints.
   let exists: any = null;
@@ -4697,10 +4716,16 @@ export const InterviewController = {
     });
   }),
 
+  getAssignmentReviewAccess: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const access = await interviewAssignmentReviewAccess(requireUser(req), req.params.id);
+    res.json({ canReview: access.canReview, projectId: access.projectId });
+  }),
+
   sendBackAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
     const { id } = req.params;
     const { reason, missingItems } = req.body || {};
+    const reviewAccess = await assertInterviewAssignmentReviewAccess(admin, id);
     await ensureInterviewAssignmentAiReviewColumns();
 
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
@@ -4814,6 +4839,11 @@ export const InterviewController = {
     // routes every nested query below (including snapshotInterviewAnswers) to the
     // same pinned client, so a failure cannot leave lifecycle rows divergent.
     const { updated, updatedSession } = await queryHelpers.withPgTransaction(async () => {
+      await assertInterviewAssignmentReviewAccess(admin, id, {
+        lock: true,
+        expectedSessionId: reviewAccess.sessionId,
+        expectedProjectId: reviewAccess.projectId,
+      });
       await snapshotInterviewAnswers({
         organizationId: admin.organizationId,
         assignmentId: id,
@@ -5006,6 +5036,7 @@ export const InterviewController = {
   approveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const reviewer = requireUser(req);
     const { id } = req.params;
+    const reviewAccess = await assertInterviewAssignmentReviewAccess(reviewer, id);
     await ensureInterviewAssignmentAiReviewColumns();
 
     const assignment = await queryHelpers.queryOne(
@@ -5070,6 +5101,11 @@ export const InterviewController = {
       createdAt: now,
     });
     const { updatedAssignment, updatedSession } = await queryHelpers.withPgTransaction(async () => {
+      await assertInterviewAssignmentReviewAccess(reviewer, id, {
+        lock: true,
+        expectedSessionId: reviewAccess.sessionId,
+        expectedProjectId: reviewAccess.projectId,
+      });
       const transition = await queryHelpers.queryRun(
         `UPDATE interview_assignments
            SET status = 'approved', review_decision_memory_json = ?, updated_at = ?
