@@ -92,6 +92,7 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
+import { useDeckAutosave } from './useDeckAutosave';
 import { useVersionHistory } from './useVersionHistory';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
@@ -329,7 +330,7 @@ function deckFromUnifiedJson(params: {
   };
 }
 
-export const DeckBuilder: React.FC = () => {
+const DeckBuilderForDeck: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
@@ -400,7 +401,6 @@ export const DeckBuilder: React.FC = () => {
     critic?: { overallScore: number; regenerateSlides: number[]; passed: boolean };
   } | null>(null);
   const [qualityBannerExpanded, setQualityBannerExpanded] = useState(false);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
   const [serverVersion, setServerVersion] = useState(1);
@@ -504,15 +504,8 @@ export const DeckBuilder: React.FC = () => {
     lastSavedAt,
     restoreVersion,
     saveManualCheckpoint,
-    // ★ ZAMKNIĘCIE PĘTLI ZAPISU (2026-08-30). Te trzy funkcje istniały
-    // w `useVersionHistory` od 2026-08-01 z komentarzem „woła je JEDYNY pisarz,
-    // `useDeckAutosave`" — ale `useDeckAutosave` przestał być podpięty do
-    // DeckBuildera 2026-08-09 (commit 2d53892c76 usunął import) i od tamtej
-    // pory NIKT ich nie wołał. Skutek zmierzony w przeglądarce: po edycji
-    // slajdu wskaźnik zostaje na „Zapisywanie…" NA ZAWSZE, mimo że PUT
-    // /autosave wychodzi i wraca 200 — a niepowodzenie 500/403 wygląda
-    // dokładnie tak samo. Do czasu przywrócenia kanonicznego pisarza pętlę
-    // domyka pisarz wbudowany niżej.
+    // The sole autosave writer reports accepted/rejected writes to this timeline.
+    markSaved,
     noteSaveStarted,
     notePersistedSave,
     noteSaveFailed,
@@ -523,6 +516,47 @@ export const DeckBuilder: React.FC = () => {
    * `res.ok`, więc odrzucony zapis nie zostawiał na ekranie żadnego śladu.
    */
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
+
+  const { markPersisted } = useDeckAutosave({
+    deckId,
+    deck,
+    hasLoadedInitialRef,
+    serverVersionRef,
+    paused: Boolean(conflict),
+    fetchLatestDeck: (id) => Api.get(`/presentations/decks/${id}`),
+    onConflict: (next) => {
+      setConflict(next);
+      toast.error(t('presentations.versionConflictDetected'));
+    },
+    onSaveStart: noteSaveStarted,
+    onSaveSuccess: (saved, version) => {
+      if (version !== null) syncDeckServerVersion(version);
+      setAutosaveError(null);
+      notePersistedSave(saved);
+    },
+    onSaveError: (status) => {
+      noteSaveFailed();
+      if (status === 409) return; // The dedicated conflict banner owns this refusal.
+      if (status) {
+        setAutosaveError(t(
+          'presentations.builder.autosaveFailed',
+          `Unable to save the presentation (HTTP ${status}). Changes are visible on screen but are NOT saved.`
+        ));
+        return;
+      }
+      setAutosaveError(t(
+        'presentations.builder.autosaveOffline',
+        'No connection to the server — changes are visible on screen but are NOT saved.'
+      ));
+    },
+  });
+  // Adopt server truth in both observers before it can look like a local edit.
+  const adoptPersistedDeck = useCallback((next: Deck) => {
+    markPersisted(next);
+    markSaved(next);
+    setAutosaveError(null);
+    setDeck(next);
+  }, [markPersisted, markSaved, setDeck]);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
     deck,
@@ -695,6 +729,7 @@ export const DeckBuilder: React.FC = () => {
 
       try {
         const res = (await Api.get(`/presentations/decks/${deckId}`)) as any;
+        if (cancelled) return;
         const payload = res?.data;
         const row =
           payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
@@ -743,7 +778,7 @@ export const DeckBuilder: React.FC = () => {
             updated_at: row?.updated_at || deckJson.updated_at || new Date().toISOString(),
           };
           if (!cancelled) {
-            setDeck(loaded);
+            adoptPersistedDeck(loaded);
             setLoadingDeck(false);
             setLoadError(null);
             hasLoadedInitialRef.current = true;
@@ -766,7 +801,7 @@ export const DeckBuilder: React.FC = () => {
         });
         if (converted) {
           if (!cancelled) {
-            setDeck(converted);
+            adoptPersistedDeck(converted);
             setLoadingDeck(false);
             setLoadError(null);
             hasLoadedInitialRef.current = true;
@@ -805,7 +840,7 @@ export const DeckBuilder: React.FC = () => {
           updated_at: String(row?.updated_at || nowIso),
         };
         if (!cancelled) {
-          setDeck(emptyDeck);
+          adoptPersistedDeck(emptyDeck);
           setLoadingDeck(false);
           setLoadError(null);
           hasLoadedInitialRef.current = true;
@@ -830,134 +865,29 @@ export const DeckBuilder: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [deckId, setDeck, deckReloadKey]);
-
-  const deckForAutosave = useMemo(() => {
-    if (!deckId || !deck) return null;
-    return { deckId, deck };
-  }, [deckId, deck]);
-
-  useEffect(() => {
-    if (!deckForAutosave) return;
-    if (!hasLoadedInitialRef.current) return;
-    // P3.1 — pause autosave while an unresolved version conflict is on screen.
-    // Autosaving again would just re-trigger the same 409 loop; the user must
-    // pick "Reload latest" or "Keep my version" first.
-    if (conflict) return;
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = setTimeout(async () => {
-      noteSaveStarted();
-      try {
-        const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'X-Deck-Version': String(serverVersionRef.current),
-          },
-          body: JSON.stringify(deckForAutosave.deck),
-        });
-        if (res.status === 409) {
-          // P3.1 — another session advanced the deck's version. DO NOT silently
-          // clobber the local (unsaved) edits with the server copy. Fetch the
-          // latest so we can offer an instant reload, then raise a visible
-          // conflict banner and stop autosaving until the user resolves it.
-          const conflictPayload = await res.json().catch(() => ({}));
-          let serverVersion: number | null =
-            typeof conflictPayload?.serverVersion === 'number'
-              ? conflictPayload.serverVersion
-              : null;
-          let pendingServer: { deckJson: any; title: string } | null = null;
-          try {
-            const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
-            const latestPayload =
-              latest?.data && typeof latest.data === 'object' && 'data' in latest.data
-                ? latest.data.data
-                : latest?.data;
-            if (typeof latestPayload?.version === 'number') {
-              serverVersion = latestPayload.version;
-            }
-            const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
-            if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
-              pendingServer = {
-                deckJson: latestDeckJson,
-                title: String(latestPayload?.title || latestDeckJson.title || 'Untitled'),
-              };
-            }
-          } catch {
-            /* keep whatever the 409 body told us */
-          }
-          setConflict({ serverVersion, pendingServer });
-          noteSaveFailed();
-          toast.error(t('presentations.versionConflictDetected'));
-          return;
-        }
-        /*
-          ★ NIE-2xx TO PORAŻKA, NIE CISZA. Ta gałąź nie istniała: kod czytał
-          `res.json()` niezależnie od statusu i kończył bez śladu, więc 500
-          / 403 / 404 wyglądały na ekranie identycznie jak udany zapis.
-        */
-        if (!res.ok) {
-          noteSaveFailed();
-          setAutosaveError(
-            t(
-              'presentations.builder.autosaveFailed',
-              `Nie udało się zapisać prezentacji (błąd ${res.status}). Zmiany są widoczne na ekranie, ale NIE są zapisane na serwerze.`
-            )
-          );
-          return;
-        }
-        const payload = await res.json().catch(() => ({}));
-        if (typeof payload?.version === 'number') {
-          serverVersionRef.current = payload.version;
-          setServerVersion(payload.version);
-        }
-        setAutosaveError(null);
-        notePersistedSave(deckForAutosave.deck);
-      } catch {
-        // Sieć padła. Builder zostaje używalny, ale człowiek MUSI wiedzieć,
-        // że to, co widzi, nie jest zapisane.
-        noteSaveFailed();
-        setAutosaveError(
-          t(
-            'presentations.builder.autosaveOffline',
-            'No connection to the server — changes are visible on screen but are NOT saved.'
-          )
-        );
-      }
-    }, 800);
-
-    return () => {
-      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    };
-  }, [deckForAutosave, conflict]);
+  }, [deckId, setDeck, deckReloadKey, adoptPersistedDeck]);
 
   // P3.1 — conflict resolution handlers. "Reload latest" adopts the server's
   // deck (discarding local edits); "Keep my version" bumps our version pointer
   // to the server's and clears the banner so the next autosave force-wins
   // (last-write-wins, but now an explicit, visible choice — no silent loss).
   const resolveConflictReload = useCallback(() => {
-    setConflict((current) => {
-      if (current?.serverVersion != null) {
-        serverVersionRef.current = current.serverVersion;
-        setServerVersion(current.serverVersion);
-      }
-      if (current?.pendingServer && Array.isArray(current.pendingServer.deckJson?.cards)) {
-        setDeck((prev) => ({
-          ...(prev || {}),
-          ...current.pendingServer!.deckJson,
-          deck_id: deckId,
-          title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
-        }));
-      }
-      return null;
-    });
+    if (conflict?.serverVersion != null) syncDeckServerVersion(conflict.serverVersion);
+    if (conflict?.pendingServer && Array.isArray(conflict.pendingServer.deckJson?.cards)) {
+      adoptPersistedDeck({
+        ...(deck || {}),
+        ...conflict.pendingServer.deckJson,
+        deck_id: deckId,
+        title: String(conflict.pendingServer.title || deck?.title || 'Untitled'),
+      } as Deck);
+    } else {
+      // No canonical payload was available with the conflict: reload it before writing again.
+      hasLoadedInitialRef.current = false;
+      setDeckReloadKey((key) => key + 1);
+    }
+    setConflict(null);
     toast.success(t('presentations.versionConflictReloaded'));
-  }, [deckId, setDeck, t]);
+  }, [conflict, deck, deckId, adoptPersistedDeck, syncDeckServerVersion, t]);
 
   const resolveConflictKeepMine = useCallback(() => {
     setConflict((current) => {
@@ -1140,7 +1070,8 @@ export const DeckBuilder: React.FC = () => {
       try {
         const restored = await restoreVersion(versionId);
         if (restored) {
-          setDeck(restored.deck);
+          if (restored.source === 'server') adoptPersistedDeck(restored.deck);
+          else setDeck(restored.deck);
           toast.success(t('presentations.versionRestored'));
         } else {
           toast.error(t('presentations.couldNotRestoreThatVersion'));
@@ -1149,7 +1080,7 @@ export const DeckBuilder: React.FC = () => {
         toast.error(t('presentations.couldNotRestoreThatVersion'));
       }
     },
-    [restoreVersion, setDeck]
+    [restoreVersion, setDeck, adoptPersistedDeck]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -1163,14 +1094,21 @@ export const DeckBuilder: React.FC = () => {
           res?.data && typeof res.data === 'object' && 'data' in res.data
             ? res.data.data
             : res?.data;
-        setDeck(payload?.deck || pendingAgentEdit.deck);
+        if (!payload?.deck || typeof payload?.version !== 'number') {
+          // Accept succeeded, but only a canonical read can establish its state/token.
+          hasLoadedInitialRef.current = false;
+          setDeckReloadKey((key) => key + 1);
+        } else {
+          syncDeckServerVersion(payload.version);
+          adoptPersistedDeck(payload.deck);
+        }
       } else {
         setDeck(pendingAgentEdit.deck);
       }
       toast.success(t('presentations.changesAppliedAndSaved'));
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, deck?.deck_id]);
+  }, [pendingAgentEdit, setDeck, deck?.deck_id, syncDeckServerVersion, adoptPersistedDeck]);
 
   const handleRejectAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.operationId && deck?.deck_id) {
@@ -1933,7 +1871,13 @@ export const DeckBuilder: React.FC = () => {
           */
           aiEntrySlot={undefined}
           bannerSlot={
-            autosaveError ? (
+            conflict ? (
+              <ConflictBanner
+                serverVersion={conflict.serverVersion}
+                onReload={resolveConflictReload}
+                onKeepMine={resolveConflictKeepMine}
+              />
+            ) : autosaveError ? (
               /*
                 UCZCIWOŚĆ ZAPISU (2026-08-30). Slajd pokazuje optymistycznie
                 NOWĄ treść, więc odrzucony zapis znaczy, że człowiek widzi
@@ -2535,5 +2479,12 @@ export function getDefaultContent(blockType: string, t: SimpleT): Record<string,
       return {};
   }
 }
+
+
+/** Route identity owns its local conflict, proposal, history and edit state. */
+export const DeckBuilder: React.FC = () => {
+  const { deckId } = useParams<{ deckId: string }>();
+  return <DeckBuilderForDeck key={deckId} />;
+};
 
 export default DeckBuilder;

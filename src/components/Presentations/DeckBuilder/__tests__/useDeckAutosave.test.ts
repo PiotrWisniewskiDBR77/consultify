@@ -484,4 +484,71 @@ describe('useDeckAutosave — reopen must not write', () => {
       expect(serverVersionRef.current).toBe(4);
     });
   });
+  describe('deck identity while a write is pending', () => {
+    it.each(['409', '500', 'network', '409-latest'] as const)(
+      'ignores a late %s refusal from A after adopting B', async (kind) => {
+        let settle!: (response: Response) => void;
+        let reject!: (error: Error) => void;
+        let latestResolve!: (row: any) => void;
+        const onSaveError = vi.fn();
+        const onSaveSuccess = vi.fn();
+        fetchMock.mockImplementation(() => new Promise<Response>((resolve, fail) => { settle=resolve; reject=fail; }));
+        fetchLatestDeck.mockImplementation(() => kind === '409-latest'
+          ? new Promise(resolve => { latestResolve=resolve; })
+          : Promise.resolve({data:{data:{version:5, deck_json:makeDeck('A remote')}}}));
+        const {result, rerender} = renderHook(({id, deck}: {id:string;deck:Deck|null}) => useDeckAutosave({
+          deckId:id,deck,hasLoadedInitialRef,serverVersionRef,paused:false,
+          onConflict,fetchLatestDeck,onSaveError,onSaveSuccess,
+        }),{initialProps:{id:'A',deck:null}});
+        act(()=>result.current.markPersisted(makeDeck('A baseline')));
+        rerender({id:'A',deck:makeDeck('A edit')});
+        await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        if(kind === '409-latest') {
+          await act(async()=>{settle(jsonResponse({serverVersion:5},409));await Promise.resolve();});
+          expect(fetchLatestDeck).toHaveBeenCalledTimes(1);
+        }
+        rerender({id:'B',deck:null});
+        serverVersionRef.current=20;
+        act(()=>result.current.markPersisted(makeDeck('B canonical')));
+        rerender({id:'B',deck:makeDeck('B canonical')});
+        await act(async()=>{
+          if(kind==='network') reject(new Error('A disconnected'));
+          else if(kind==='409-latest') latestResolve({data:{data:{version:5,deck_json:makeDeck('A remote')}}});
+          else settle(jsonResponse({serverVersion:5},Number(kind)));
+          await vi.advanceTimersByTimeAsync(2000);
+        });
+        expect(onConflict).not.toHaveBeenCalled();
+        expect(onSaveError).not.toHaveBeenCalled();
+        expect(onSaveSuccess).not.toHaveBeenCalled();
+        expect(serverVersionRef.current).toBe(20);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      }
+    );
+    it('saves the queued B edit after pending A finishes without overlapping writes', async()=>{
+      const pending: Array<(r:Response)=>void>=[];
+      fetchMock.mockImplementation(()=>new Promise<Response>(resolve=>pending.push(resolve)));
+      const {result,rerender}=renderHook(({id,deck}:{id:string;deck:Deck|null})=>useDeckAutosave({
+        deckId:id,deck,hasLoadedInitialRef,serverVersionRef,paused:false,onConflict,fetchLatestDeck,
+      }),{initialProps:{id:'A',deck:null}});
+      act(()=>result.current.markPersisted(makeDeck('A baseline')));
+      rerender({id:'A',deck:makeDeck('A edit')});
+      await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});
+      rerender({id:'B',deck:null});
+      serverVersionRef.current=20;
+      act(()=>result.current.markPersisted(makeDeck('B baseline')));
+      rerender({id:'B',deck:makeDeck('B edit')});
+      await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await act(async()=>{pending[0](jsonResponse({version:5}));await vi.advanceTimersByTimeAsync(1000);});
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[1][0]).toBe('/api/presentations/decks/B/autosave');
+      expect(fetchMock.mock.calls[1][1].headers['X-Deck-Version']).toBe('20');
+      expect(JSON.parse(fetchMock.mock.calls[1][1].body).title).toBe('B edit');
+      await act(async()=>{pending[1](jsonResponse({version:21}));await vi.advanceTimersByTimeAsync(1000);});
+      expect(serverVersionRef.current).toBe(21);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
 });
