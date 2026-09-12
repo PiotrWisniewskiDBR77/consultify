@@ -7,6 +7,7 @@ import { TaskService } from '../services/TaskService.js';
 import {
   ACTION_CARD_SOURCE_KINDS,
   closeActionCard,
+  reopenActionCard,
   createActionCard,
   getActionCard,
   listActionCards,
@@ -58,6 +59,12 @@ router.patch('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
 
 router.post('/:id/close', asyncHandler(async (req: AuthRequest, res: Response) => {
   const card = await closeActionCard(scope(req), req.params.id);
+  if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
+  res.json({ ok: true, card });
+}));
+
+router.post('/:id/reopen', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const card = await reopenActionCard(scope(req), req.params.id);
   if (!card) return res.status(404).json({ ok: false, error: 'ACTION_CARD_NOT_FOUND' });
   res.json({ ok: true, card });
 }));

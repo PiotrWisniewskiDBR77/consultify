@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-09-12T09:11:28.109Z",
+  "name": "Action card",
+  "phase": "before",
+  "url": "/action-cards/59b33098-0bc8-41f0-8aba-0fab9f67119b",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1207
+  },
+  "readyFromTriggerMs": 1307,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3309,
+  "totalCaptureMs": 3402,
+  "scriptBytes": {
+    "requestCount": 1,
+    "decodedBodyBytes": 7391,
+    "encodedBodyBytes": 3082,
+    "transferBytes": 3382,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/ActionCardPage-CCshW3Y3.js",
+      "initiatorType": "script",
+      "startTime": 65122.10000000149,
+      "responseEnd": 65123.80000000447,
+      "duration": 1.7000000029802322,
+      "decodedBodySize": 7391,
+      "encodedBodySize": 3082,
+      "transferSize": 3382,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 1,
+  "apiRequests": [
+    "GET /api/action-cards/59b33098-0bc8-41f0-8aba-0fab9f67119b"
+  ],
+  "scriptRequests": [
+    "/assets/ActionCardPage-CCshW3Y3.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nMy Work\nAction card\nData\nModel\n1\nLocal Reviewer\nLR\nInbox\nList\nAudit finding\nReview delivery quality\nReview delivery quality\nOpen\nSaved\nClose card\nDescription\nWork with AI\nDescription\nSource\nOwner and due date\nActions and status\n\nProblem: Review delivery quality\n\nRoot cause: Final review was missed\n\nAction: Complete the delivery quality review\n\nACTIONS\nBack to list\nPROPERTIES\nProperty\tValue\nStatus\tOpen\nOwner\tLocal Reviewer\nDue date\t2026-10-01\nRELATIONS\nSOURCES AND ASSUMPTIONS\nCOMMENTS\nHISTORY"
+}

@@ -2,6 +2,9 @@
   "actionCard": {
     "title": "Karta działania",
     "open": "Otwórz kartę",
+    "reopen": "Otwórz ponownie",
+    "reopened": "Karta otwarta ponownie.",
+    "reopenFailed": "Nie udało się ponownie otworzyć karty.",
     "fields": {
       "period": "Okres",
       "goalMet": "Cel osiągnięty?",

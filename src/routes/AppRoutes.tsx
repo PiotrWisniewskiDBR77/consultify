@@ -26,7 +26,6 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
@@ -41,9 +40,6 @@ import { isMeetingsModuleEnabled } from '@/utils/meetingsModuleFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
 import { isStudioEnabled } from '@/utils/studioFlag';
-import { AuthView } from '@/views/AuthView';
-import { ProductEntryPage } from '@/views/ProductEntryPage';
-import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
 import { DeferredRouteLoadingFallback } from './DeferredRouteLoadingFallback';
@@ -53,6 +49,25 @@ import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
+
+// Public routes do not need the signed-in navigation shell. Protected routes
+// load it under the shared route Suspense boundary below.
+const MainLayout = lazyWithRetry(() =>
+  import('@/layouts/MainLayout').then((m) => ({ default: m.MainLayout }))
+);
+
+// Keep the disabled Studio route out of the boot graph: its layout includes the editor.
+const StudioUnavailableView = lazyWithRetry(() =>
+  import('@/views/StudioUnavailableView').then((m) => ({ default: m.StudioUnavailableView }))
+);
+
+const AuthView = lazyWithRetry(() =>
+  import('@/views/AuthView').then((m) => ({ default: m.AuthView }))
+);
+
+const ProductEntryPage = lazyWithRetry(() =>
+  import('@/views/ProductEntryPage').then((m) => ({ default: m.ProductEntryPage }))
+);
 
 // Lazy load views for new routes
 const StudioView = lazyWithRetry(() =>

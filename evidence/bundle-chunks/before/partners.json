@@ -1,0 +1,62 @@
+{
+  "capturedAt": "2026-09-12T09:11:17.914Z",
+  "name": "Partners",
+  "phase": "before",
+  "url": "/partner?tab=partner-home",
+  "timing": {
+    "firstChangedMs": 0,
+    "stableMs": 1214
+  },
+  "readyFromTriggerMs": 1348,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3350,
+  "totalCaptureMs": 3400,
+  "scriptBytes": {
+    "requestCount": 2,
+    "decodedBodyBytes": 111778,
+    "encodedBodyBytes": 24458,
+    "transferBytes": 25058,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/PartnerPortalView-3DGCL75o.js",
+      "initiatorType": "script",
+      "startTime": 54962.10000000149,
+      "responseEnd": 54966.60000000149,
+      "duration": 4.5,
+      "decodedBodySize": 109630,
+      "encodedBodySize": 23605,
+      "transferSize": 23905,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/partner-BOFYKo_J.js",
+      "initiatorType": "script",
+      "startTime": 54962.30000000447,
+      "responseEnd": 54965.20000000298,
+      "duration": 2.899999998509884,
+      "decodedBodySize": 2148,
+      "encodedBodySize": 853,
+      "transferSize": 1153,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 1,
+  "apiRequests": [
+    "GET /api/v8/partner/connection"
+  ],
+  "scriptRequests": [
+    "/assets/partner-BOFYKo_J.js",
+    "/assets/PartnerPortalView-3DGCL75o.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nPartner Portal\nData\nModel\n1\nLocal Reviewer\nLR\nPartner Portal\n\nDBR77 Consultify\n\nHOME\nHome\nDashboard\nMetrics\nREFERRALS\nMy Links & Codes\nClick Analytics\nReferred Customers\nEARNINGS\nCommission Earnings\nStatements\nPayout History\nPayout Settings\nCLIENT MANAGEMENT\nClient Access Manager\nOrganizations\nActive Projects\nTeam Members\nACADEMY\nLearning Path\nExams\nCertificates\nPROFILE\nCompany Info\nSpecializations\nRegions\nPublic Listing\nRESOURCES\nDocumentation\nMarketing Materials\nCase Studies\nPMO Templates\nBack to app\nPartner Portal\nThe Partner profile is not connected yet\n\nYour organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data.\n\nConnect this organization as a partner"
+}

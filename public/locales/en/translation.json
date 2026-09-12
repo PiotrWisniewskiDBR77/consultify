@@ -2,6 +2,9 @@
   "actionCard": {
     "title": "Action card",
     "open": "Open card",
+    "reopen": "Reopen card",
+    "reopened": "Action card reopened.",
+    "reopenFailed": "Could not reopen the card.",
     "fields": {
       "period": "Period",
       "goalMet": "Goal met?",

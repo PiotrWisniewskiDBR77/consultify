@@ -15,6 +15,7 @@ export interface ActionCardProps {
   onCreateTask?: (card: ActionCardModel) => void;
   /** P7K część B — zamknięcie karty; karta znika ze Skrzynki właściciela. */
   onCloseCard?: (card: ActionCardModel) => void;
+  onReopenCard?: (card: ActionCardModel) => void;
   /** Etykieta zamiast „Utwórz zadanie", gdy zadanie już powstało. */
   createTaskLabel?: string;
   busy?: boolean;
@@ -35,6 +36,7 @@ export function ActionCard({
   onOpen,
   onCreateTask,
   onCloseCard,
+  onReopenCard,
   createTaskLabel,
   busy = false,
   className = '',
@@ -85,7 +87,7 @@ export function ActionCard({
           </div>
         ))}
       </dl>
-      {onOpen || onCreateTask || onCloseCard ? (
+      {onOpen || onCreateTask || onCloseCard || onReopenCard ? (
         <footer className="flex flex-wrap justify-end gap-2 border-t border-c-border-subtle px-5 py-3">
           {onCreateTask && card.status === 'OPEN' ? (
             <button
@@ -109,9 +111,15 @@ export function ActionCard({
               {t('actionCard.close', 'Close card')}
             </button>
           ) : null}
+          {onReopenCard && card.status === 'CLOSED' ? (
+            <button type="button" data-testid="action-card-reopen" disabled={busy}
+              onClick={() => onReopenCard(card)} className={BUTTON_CLASS}>
+              {t('actionCard.reopen', 'Reopen card')}
+            </button>
+          ) : null}
           {onOpen ? (
             <button type="button" onClick={() => onOpen(card)} className={BUTTON_CLASS}>
-              {t('actionCard.open', 'Reopen card')}
+              {t('actionCard.open', 'Open card')}
             </button>
           ) : null}
         </footer>

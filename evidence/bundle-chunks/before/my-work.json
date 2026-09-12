@@ -1,0 +1,40 @@
+{
+  "capturedAt": "2026-09-12T09:10:31.844Z",
+  "name": "My Work",
+  "phase": "before",
+  "url": "/my-work",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1210
+  },
+  "readyFromTriggerMs": 1370,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3370,
+  "totalCaptureMs": 3429,
+  "scriptBytes": {
+    "requestCount": 0,
+    "decodedBodyBytes": 0,
+    "encodedBodyBytes": 0,
+    "transferBytes": 0,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 7,
+  "apiRequests": [
+    "GET /api/initiatives/runtime-v1/my-work/handoff-acceptances",
+    "GET /api/initiatives/runtime-v1/my-work/gate-signoffs",
+    "GET /api/action-cards?status=OPEN&ownerUserId=me",
+    "GET /api/v8/my-work/inbox/canonical?status=pending&limit=200",
+    "GET /api/v8/my-work/inbox/canonical/stats",
+    "GET /api/my-work/context-summary",
+    "POST /api/v8/my-work/inbox/canonical/materialize"
+  ],
+  "scriptRequests": [],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nMy Work\nInbox\nData\nModel\n1\nLocal Reviewer\nLR\nIdeas\nNotebook\nInbox\nCalendar\nTasks\nDecisions\nVaults\nALL\n3\nOverdue\n0\nSaved\n0\nAI\n0\nCritical\n0\nAction required\n2\nToday\n3\nThis week\n3\nDone\n0\nAI Triage\nAction cards (1)\nReview delivery quality\n\t\nTITLE\n\t\nSTATUS\n\t\nURGENCY\n\t\nTYPE\n\t\nSECTION\n\t\nSOURCE\n\t\nRECEIVED\n\t\nSLA\n\t\n\n\t\nReview delivery quality\n\t\nOpen\n\t\nHigh\n\t\nAssignment\n\t\nNew Assignments\n\t\nSystem\n\t\n38m ago\n\t\nL1 18d\n\t\n\n\t\nVerify launch readiness\n\t\nOpen\n\t\nNormal\n\t\nAssignment\n\t\nNew Assignments\n\t\nSystem\n\t\n20m ago\n\t\nL1 18d\n\t\n\n\t\nKarta działania wymaga reakcji\n\t\nOpen\n\t\nNormal\n\t\nSystem\n\t\nSystem Notifications\n\t\nSystem\n\t\n38m ago\n\t\n—\n\t\nMY WORK"
+}
