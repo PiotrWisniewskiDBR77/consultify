@@ -137,9 +137,11 @@ const USER_EXPORT_COLUMNS = new Set([
   'updated_at', 'last_login', 'last_login_at', 'onboarding_completed',
 ]);
 
-const SECURITY_COLUMN_PATTERN = /(^|_)(password|passcode|secret|token|credential|session|mfa|otp|api_key|private_key|access_key|recovery|backup_codes?|hash|salt|cookie|authorization)($|_)/i;
-const SECURITY_TABLE_PATTERN = /(^|_)(sessions?|tokens?|credentials?|secrets?|mfa|oauth|api_keys?|password_resets?|refresh_tokens?)($|_)/i;
-const EXPORT_POLICY_VERSION = 'tenant-export-safe-v2';
+const normalizedSecurityName = (name: string): string =>
+  name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+const SECURITY_COLUMN_PATTERN = /(^|_)(password|passcode|secret|token|credential|mfa|otp|api_key|private_key|access_key|recovery|backup_codes?|hash|salt|cookie|authorization)($|_)/i;
+const SECURITY_TABLE_PATTERN = /^(user_sessions?|auth_sessions?|refresh_tokens?|password_reset_tokens?|oauth_(tokens?|credentials?)|api_keys?|mfa_(secrets?|challenges?)|credentials?|secrets?)$/i;
+const EXPORT_POLICY_VERSION = 'tenant-export-safe-v3';
 const QUERY_KEY_BATCH_SIZE = 500;
 
 async function discoverTableColumns(client: PoolClient): Promise<Map<string, string[]>> {
@@ -179,7 +181,7 @@ async function discoverForeignKeyEdges(client: PoolClient): Promise<ForeignKeyEd
 
 function exportColumnsForTable(table: string, columns: string[]): string[] {
   if (table === 'users') return columns.filter((column) => USER_EXPORT_COLUMNS.has(column));
-  return columns.filter((column) => !SECURITY_COLUMN_PATTERN.test(column));
+  return columns.filter((column) => !SECURITY_COLUMN_PATTERN.test(normalizedSecurityName(column)));
 }
 
 function projection(columns: string[]): string {
@@ -192,7 +194,7 @@ function sanitizeExportValue(value: unknown): unknown {
   if (value && typeof value === 'object' && !(value instanceof Date)) {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
-        .filter(([key]) => !SECURITY_COLUMN_PATTERN.test(key))
+        .filter(([key]) => !SECURITY_COLUMN_PATTERN.test(normalizedSecurityName(key)))
         .map(([key, nested]) => [key, sanitizeExportValue(nested)])
     );
   }
@@ -284,6 +286,10 @@ export async function exportOrganizationData(
           edge.childColumns.some((column) => !childColumns.includes(column))) {
         throw new Error(`EXPORT_SECURITY_EDGE_UNSUPPORTED:${parentTable}:${edge.childTable}`);
       }
+      const childHasOrganizationScope = (allColumns.get(edge.childTable) || []).includes('organization_id');
+      // A user may belong to more than one tenant. A user FK without an explicit tenant
+      // discriminator cannot prove ownership of the child row, so it must not be traversed.
+      if (parentTable === 'users' && !childHasOrganizationScope) continue;
       const tuples = parentRows
         .map((row) => edge.parentColumns.map((column) => row[column]))
         .filter((values) => values.every((value) => value !== null && value !== undefined));
@@ -297,8 +303,8 @@ export async function exportOrganizationData(
         ).join(',');
         // eslint-disable-next-line no-await-in-loop
         const result = await client.query(
-          `SELECT ${projection(childColumns)} FROM ${qi(edge.childTable)} WHERE (${edge.childColumns.map(qi).join(',')}) IN (${placeholders})`,
-          params
+          `SELECT ${projection(childColumns)} FROM ${qi(edge.childTable)} WHERE (${edge.childColumns.map(qi).join(',')}) IN (${placeholders})${childHasOrganizationScope ? ` AND ${qi('organization_id')}::text = $${params.length + 1}` : ''}`,
+          childHasOrganizationScope ? [...params, organizationId] : params
         );
         addRows(edge.childTable, result.rows);
       }
