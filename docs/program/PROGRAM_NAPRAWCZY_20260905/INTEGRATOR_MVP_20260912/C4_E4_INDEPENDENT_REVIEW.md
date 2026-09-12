@@ -50,3 +50,19 @@ Z autorskich8plików restore-evidence odczytano exit0 i równość obu map1833wp
 - TLS handshake/operator remote i faktycznyCIstaging nieuruchomione. Manifest środowiska i aktualny dryrun muszą zostać oddzielnie odebrane przedlive.
 
 Nie wymaga się nowego pełnego builda lub tsc dla tego odczytu. Root może integrować zaakceptowane techniczne przygotowanie z jawnym HOLD cleanup, lecz nie przedstawiaćE4 jako w pełni zamkniętego bezpieczeństwa operatora. Autorowi należy wydać odrębną poprawkę P1, bez rozszerzania projektu.
+
+## Niezależny odbiór poprawki — 1db4da480664276c727e6b7bef905eea1b5086cf
+
+**P1 zamknięty: ACCEPT poprawki i E4 jako przygotowania lokalnych narzędzi, z poniższymi granicami.** PierwotnyHOLD dotyczył kodu172d56ade i pozostaje historycznym wynikiem, nie oceną poprawionegoSHA. Źródło cleanup przełącza wyłącznie apply naREAD COMMITTED przed discovery, zachowuje wszystkie stałe i odkryte tabele w SHARE ROW EXCLUSIVE, porządkuje kolejnośćblokad, a każdy guard czyta dopiero po uzyskaniu pełnegoLOCK. Pilot pozostajeSERIALIZABLE, dryrunREPEATABLE READ. To usuwa przyczynę starego snapshotu bez usunięcia zabezpieczenia. Nie znaleziono nowego blokera w tym ograniczonymdiff.
+
+Po przekazaniu wyłączności zasobu wykonałem niezależnie:
+
+`node scripts/dev/codex4-e4-cleanup-race.mjs --out=/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/e4-race-independent-delivery-20260912 --source=/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/review-cleanup-race/before.dump`
+
+Wynik **13/13PASS, exit0**. Każda próba odtwarza własny pierwotnydump w jednej dokładnie dozwolonejbaziecx4_review_cleanup_race; Dockerport5432→127.0.0.1:6455 ponownie sprawdzony.11zmian drugiej sesji pomiędzy discovery/LOCK: hold, człowiekprimary, człowiekmembership, obie datylogin, orphanmember, externalmember, aktywnasesja, aktywnytenant, template i paid. Wszystkie odmawiają właściwym kodem; organizacja zachowana, hashe wszystkich6tabel guardów identyczne ze stanem po zatwierdzonej zmianie drugiej sesji; zero commitreceipt.6prób zapisu poLOCK (polityka,user,membership,session,tenant,organization) odmawia55P03. Legalny pusty expiredclone nadal usuwa się prawidłowo. To rzeczywiste dwa połączeniaPG i niezmieniony runCleanup/lifecycle, nie mock wynikuSQL.
+
+Niezależny wynik:`codex4-scratch/e4-race-independent-delivery-20260912/result.json`, SHA256 `535599f32b8ded8809726ea0e1e66f6ed13d973cec5f9b4a1167dfcc3b0011e2`. Źródło testu przejrzane przed uruchomieniem. PierwotneRED zachowane wreview-cleanup-race/result.json. Korekta opisu wcześniejszego review: syntetyczna fixture ma **6tabel**, nie7; wszystkie6objęto odczytem po odmowie. Nie jest to pełny schematstagingu. AuthorRED11/13FAIL nie oznacza11usunięć:9INSERT dopuszczałoDELETE, template/paid rzucało40001 zamiast właściwej odmowy.
+
+Niezależnie nie powtarzano kont/restore pełnejbazy/CI — ich wcześniejszy bounded source/evidenceACCEPT pozostaje. Nadal obowiązują jawne ograniczenia: canonicalorgpredicate/template source mutants całego silnika, cleanup fault po częściowymdelete, rzeczywisty networkACK/powerfailure, noweDDL podczas operacji, pełny schemat i doręczenie/remoteTLS/aktualnydryrun przedlive. To nie są ukrytePASS. Lokalny etapE4 jest przyjęty do integracji jako **przygotowanie**, zgodnie z instrukcją; liveapply pozostaje osobnym kontrolowanym odbiorem.
+
+Źródła/index nietknięte, WTclean. cx4_review_cleanup_race po ostatniej próbie ma skasowany wyłącznie syntetycznyvalidclone; baza/evidence pozostawione integratorowi. cx4_pilot/cx4_cleanup i wszystkie żywe środowiska nietknięte.
