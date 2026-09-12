@@ -45,7 +45,8 @@ export async function lockOrganizationPolicy(client: PoolClient, organizationId:
 export async function requireNoLegalHoldInTransaction(
   client: PoolClient,
   organizationId: string,
-  operation: string
+  operation: string,
+  options: { lockRows?: boolean } = {}
 ): Promise<void> {
   try {
     const table = await client.query<{ table_name: string | null }>(
@@ -53,7 +54,7 @@ export async function requireNoLegalHoldInTransaction(
     );
     if (!table.rows[0]?.table_name) return;
     const policy = await client.query<{ legal_hold_enabled: number }>(
-      'SELECT legal_hold_enabled FROM org_policies WHERE organization_id = $1 FOR SHARE',
+      `SELECT legal_hold_enabled FROM org_policies WHERE organization_id = $1${options.lockRows === false ? '' : ' FOR SHARE'}`,
       [organizationId]
     );
     if ((policy.rows[0]?.legal_hold_enabled ?? 0) === 1) {

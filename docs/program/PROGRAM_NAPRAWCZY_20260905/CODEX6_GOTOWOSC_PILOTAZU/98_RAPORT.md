@@ -59,3 +59,50 @@ Do decyzji integratora/owner pozostają trzy bezpieczne klasy kontraktu: (1) zac
 DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs
 DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs --apply --manifest=/bezpieczna/sciezka/codex6-seed-manifest.json
 ```
+
+## 2026-09-12 — osobny checkpoint eksportu: snapshot i projekty
+
+**PARTIAL, poza RC1.** Osobny worktree `codex-c6-export-20260912`, baza
+`0025c1c4484254ca29435ca0cc30638ba2bd889d`. Ten checkpoint nie przyjmuje całej bazy
+C6 ani usuwania organizacji. Integrator uzgadnia wyłącznie nowy diff eksportu,
+zachowując aktualną ochronę policy/cleanup w swoim kandydacie.
+
+- `organizationExportSnapshot.ts`: oba istniejące eksporty używają jednej sesji,
+  advisory lock przed snapshotem RR READ ONLY, następnie sprawdzają legal hold.
+  Niepewne ACK BEGIN oznacza rollback; niepewny ACK locka, rollback lub unlock
+  oznacza zniszczenie klienta zamiast ponownego użycia. Pozostali użytkownicy
+  `requireNoLegalHoldInTransaction` zachowują domyślne FOR SHARE.
+- `organizationExportService.ts` i kontrakty: jawne projekcje i tożsamość
+  schema/table, kontrola typów/kolumn/PK/FK, brak dynamicznego dopuszczania tabel.
+  Nierozstrzygnięte tabele są pomijane z `complete:false`. Publiczne klucze JSON
+  oraz nagłówek CSV są zachowane. Discovery obejmuje r/p; aktualny katalog ma
+  zero partitioned parents. Brak limitu liczby wierszy w nowym odczycie.
+- Pierwsze tabele biznesowe: `public.projects` i `public.project_members` przez
+  jawny związek własności projektu. Realne POST projektu A/B → GET → JSON/CSV →
+  SQL potwierdza projekt A i jego membership, bez B; rowCounts 1+1, totalRows 2.
+  Mutacja filtra daje rzeczywiste HTTP 200 z dwoma projektami i czerwony test.
+
+Dowody poza repo: `../c6-export-artefakty/`. Finalny Gateway: **5/5**, bez skipów.
+Para Gateway dla snapshotu: te same cztery fullNames **RED 2 PASS/2 FAIL → GREEN 4**,
+HTTP 423 bez załącznika po canonical policy writer-first dla pierwszego INSERT
+oraz istniejącego UPDATE; superadmin ma tę samą odmowę. Realny helper: te same
+siedem fullNames **RED 5/2 → GREEN 7**, w tym export-first, SQL 25006 oraz wymiana
+backend PID po utraconym ACK lub niepotwierdzonym unlock. Unit helper: 9 PASS.
+Unit kontraktu: 9 PASS; trzy osobne mutacje typu, usuniętej wykluczonej kolumny
+oraz driftu rodzica dają każda **8 PASS/1 FAIL → 9 PASS**, identyczny mianownik.
+Pełny server `tsc --noEmit`: **exit 0**. Nie wykonano builda ani operacji live.
+
+Granice: pełny eksport i biznesowy writer w schemacie v8 nadal NOT_PROVEN.
+119/121 nazw v8 koliduje z public, a dotychczas znalezione biznesowe writery
+korzystają z public-first search_path. Qualified writer shadow jest telemetrią;
+nie zastępuje bramki biznesowej. Nie zmieniono routingu w celu uzyskania wyniku.
+Oryginalne inventory 1 EXPORT /4 EXCLUDE /1918 UNRESOLVED pozostaje zachowane;
+checkpoint rozstrzyga tylko dwie dodatkowe relacje projektowe. Następne etapy:
+Interview z przyjętą ochroną D18 anonimowości i AI recommendations, inicjatywy
+oraz wersje, zadania/decyzje i materiały. Nie są odbierane tym checkpointem.
+
+Nieudane próby przyrządu są zachowane w raporcie zewnętrznym: cleanup z nieistniejącym
+closePool, CQRS Project writer z nieistniejącą kolumną summary, początkowo niepełna
+lokalna schema polityk oraz mutant z nieużywanym parametrem. Ten ostatni nie jest
+dowodem izolacji tenantów; kwalifikowana mutacja zachowuje parametr i zwraca dwa
+rzeczywiste rekordy. Żaden z tych przypadków nie został zamaskowany mockiem bramki.
