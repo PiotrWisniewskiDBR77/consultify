@@ -19,6 +19,10 @@ async function handleStaffingWrite(req:AuthenticatedRequest,res:Response,kind:St
   const initiativeId=String(req.params.id),planId=String(req.params.planId||''),roleId=String(req.params.roleId||'');
   const parent=await queryHelpers.queryOne('SELECT id FROM initiatives WHERE id=? AND organization_id=?',[initiativeId,organizationId]);
   if(!parent){res.status(404).json({error:'Staffing plan not found'});return true;}
+  if(kind==='role'&&req.body?.assignedUserId){
+    const user=await queryHelpers.queryOne('SELECT id FROM users WHERE id=? AND organization_id=?',[req.body.assignedUserId,organizationId]);
+    if(!user){res.status(404).json({error:'Staffing plan not found'});return true;}
+  }
   const enabled=process.env.ENABLE_INITIATIVE_UNIFIED_WRITE==='true';
   if(!enabled){
     if(!(kind==='plan'&&operation==='create')){

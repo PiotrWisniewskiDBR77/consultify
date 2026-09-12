@@ -445,4 +445,65 @@ describe('CODEX2B staffing canonical writer', { retry: 0, sequential: true }, ()
       expect(Number(sums.rows[0].actual)).toBe(Number(sums.rows[0].expected));
     }
   );
+  for (const method of ['post', 'put'] as const) {
+    it(`OFF ${method} cannot assign a foreign organization user`, { retry: 0 }, async () => {
+      delete process.env.ENABLE_INITIATIVE_UNIFIED_WRITE;
+      const id = await createPlan(`Assignee boundary ${method}`);
+      let roleId: string | undefined;
+      if (method === 'put') {
+        const role = await request(app)
+          .post(`${base}/${id}/roles`)
+          .set(auth())
+          .send({ roleName: 'Existing role' });
+        expect(role.status).toBe(201);
+        roleId = role.body.id;
+      }
+      const response = await request(app)
+        [method](`${base}/${id}/roles${roleId ? `/${roleId}` : ''}`)
+        .set(auth())
+        .send({ roleName: 'Foreign assignment', assignedUserId: foreignActor });
+      const foreignRows = await pool.query(
+        'SELECT id FROM staffing_plan_roles WHERE staffing_plan_id=$1 AND assigned_user_id=$2',
+        [id, foreignActor]
+      );
+      expect({ status: response.status, foreignAssignments: foreignRows.rowCount }).toEqual({
+        status: 404,
+        foreignAssignments: 0,
+      });
+    });
+  }
+  it(
+    'plan deletion cascades UI roles while canonical plan tombstone preserves history',
+    { retry: 0 },
+    async () => {
+      process.env.ENABLE_INITIATIVE_UNIFIED_WRITE = 'true';
+      const id = await createPlan('Cascade plan');
+      const role = await request(app)
+        .post(`${base}/${id}/roles`)
+        .set(auth())
+        .send({ roleName: 'Cascade role' });
+      expect(role.status).toBe(201);
+      expect((await request(app).delete(`${base}/${id}`).set(auth())).status).toBe(200);
+      expect(
+        (await pool.query('SELECT id FROM staffing_plan_roles WHERE staffing_plan_id=$1', [id]))
+          .rowCount
+      ).toBe(0);
+      const read = await request(app).get(`${base}/${id}`).set(auth());
+      expect(read.status).toBe(404);
+      expect(JSON.stringify(read.body)).not.toContain('Cascade role');
+      const list = await request(app).get(base).set(auth());
+      expect(list.status).toBe(200);
+      expect(list.body.plans.some((plan: { id: string }) => plan.id === id)).toBe(false);
+      const tombstone = await pool.query(
+        "SELECT payload_json AS payload FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='staffing_plan' AND aggregate_id=$2",
+        [org, id]
+      );
+      expect(tombstone.rows[0].payload.deleted).toBe(true);
+      const roleHistory = await pool.query(
+        "SELECT payload_json AS payload FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='staffing_plan_role' AND aggregate_id=$2",
+        [org, role.body.id]
+      );
+      expect(roleHistory.rows[0].payload.staffingPlanId).toBe(id);
+    }
+  );
 });

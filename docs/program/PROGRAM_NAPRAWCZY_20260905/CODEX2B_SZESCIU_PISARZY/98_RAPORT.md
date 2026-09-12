@@ -6,7 +6,7 @@ Stan: PARTIAL — pięć rodzin zaimplementowanych lokalnie, move STOP/PENDING d
 
 Marker `a176d3f906`, gałąź `codex/szesciu-pisarzy-legacy-20260911`.
 Kontener `cx-codex2b-pg`, PostgreSQL18/pgvector, port6454.
-Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backend tsc exit0: `five-writers-server-tsc-fixed.log`; gitdiff--check exit0.
+Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backend tsc exit0: `final-staffing-security-server-tsc.log`; gitdiff--check exit0.
 Pełne migracje czystej bazy:914; zakończone; drugi przebieg: `Applying migrations: 0`.
 Korekta pg16→pg18: lokalny szablon pochodzi zPG18; żadna baza zdalna nieużyta.
 
@@ -73,7 +73,7 @@ Pełne komendy i wyniki: `codex2b-artefakty/e2-0-static.txt`.
 | milestones |3|6|writeInitiativeMilestone|P:6testów,3mutacje|
 | resources |4|6|writeInitiativeResource|P:6testów,3mutacje; ai-apply-log osobno|
 | gate-roles |1|4|replaceInitiativeGateRoles|P: 6 testów, 3 mutacje|
-| staffing-plans |7|10|writeStaffingProjection|P: 13 testów, 3 mutacje|
+| staffing-plans |7|10|writeStaffingProjection|P: 16 testów, 3 mutacje|
 | move |1|1|brak|N: kontrakt runtime RED 404; STOP decyzji|
 
 ## 4. Kroki E2.0…E2.6, E9
@@ -173,17 +173,17 @@ gateRoles flag red: 4 PASS / 2 FAIL; 6 fullName. `gateRoles-mutation-flag-red.js
 
 gateRoles flag green: 6 PASS / 0 FAIL; 6 fullName. `gateRoles-mutation-flag-green.json`.
 
-staffing projection red: 7 PASS / 6 FAIL; 13 fullName. `staffing-mutation-projection-red.json`.
+staffing projection red: 9 PASS / 7 FAIL; 16 fullName. `staffing-mutation-projection-red.json`.
 
-staffing projection green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-projection-green.json`.
+staffing projection green: 16 PASS / 0 FAIL; 16 fullName. `staffing-mutation-projection-green.json`.
 
-staffing tenant red: 12 PASS / 1 FAIL; 13 fullName. `staffing-mutation-tenant-red.json`.
+staffing tenant red: 15 PASS / 1 FAIL; 16 fullName. `staffing-mutation-tenant-red.json`.
 
-staffing tenant green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-tenant-green.json`.
+staffing tenant green: 16 PASS / 0 FAIL; 16 fullName. `staffing-mutation-tenant-green.json`.
 
-staffing flag red: 8 PASS / 5 FAIL; 13 fullName. `staffing-mutation-flag-red.json`.
+staffing flag red: 10 PASS / 6 FAIL; 16 fullName. `staffing-mutation-flag-red.json`.
 
-staffing flag green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-flag-green.json`.
+staffing flag green: 16 PASS / 0 FAIL; 16 fullName. `staffing-mutation-flag-green.json`.
 
 Przywrócenie cp + porównanie bajtowe; skrypty run-gateRoles-mutations.py i run-staffing-mutations.py. Pierwsza próba gate flag była no-op z powodu odstępu w matcherze; skorygowana run-gateRoles-flag.py wykonała rzeczywistą mutację RED, następnie GREEN. Nie liczymy no-op jako dowodu.
 
@@ -203,7 +203,7 @@ LegalnyOFF CRUD ma te same trzy pełne nazwy przed i po zmianie, wszystkiePASS.
 SecuritybudgetOFF celowo naprawia cross-org201→404, autoryzacja integratora zapisana.
 Początkowe trzy czerwone kontrakty pozostałych writerów są osobnym plikiem. Gate i staffing mają teraz implementację; move pozostaje celowo RED. Finalny mianownik opisano poniżej.
 
-Końcowy mianownik pięciu rodzin: 10 + 6 + 6 + 6 + 13 = 41 wykonań PASS. Dodatkowy osobny test SECURITY-C2B-GAPS: 1 PASS (ta sama nazwa zachowania co w staffing, celowa samodzielna regresja osobnego commitu); razem 42 wykonania / 41 unikalnych fullName. Pary mutacyjne porównane osobno per plik: 15 par RED→GREEN, żadne fullName nie znika w parze. Baseline staffing 10 nazw → final13, zniknięte0; gate6→6. Kontrakty pozostałych trzech: baseline 0 PASS / 3 FAIL → final 2 PASS / 1 FAIL (`remaining-contracts-final.json`), te same trzy fullName. Jedyny RED to move404. Czerwony kontrakt move liczymy osobno, nigdy jako PASS produktu.
+Końcowy mianownik pięciu rodzin: 10 + 6 + 6 + 6 + 16 = 44 wykonań PASS. Dodatkowy osobny test SECURITY-C2B-GAPS: 1 PASS (ta sama nazwa zachowania co w staffing, celowa samodzielna regresja osobnego commitu); razem 45 wykonań / 44 unikalne fullName. Pary mutacyjne porównane osobno per plik: 15 par RED→GREEN, żadne fullName nie znika w parze. Baseline staffing 10 nazw → final16, zniknięte0; gate6→6. Kontrakty pozostałych trzech: baseline 0 PASS / 3 FAIL → final 2 PASS / 1 FAIL (`remaining-contracts-final.json`), te same trzy fullName. Jedyny RED to move404. Czerwony kontrakt move liczymy osobno, nigdy jako PASS produktu.
 
 ## 7. Deklaracja Z30
 
@@ -259,3 +259,10 @@ Manifest SHA256: `SHA256SUMS.txt` (bez dumpa w repo). Trwały handoff: `HANDOFF-
 ### SECURITY-C2B-GAPS — osobny wyjątek integratora, 2026-09-12
 
 Root po real RED rozszerzył licencję wyłącznie na GET staffing-plans/:planId/gaps: potwierdzenie planu w organizacji przed odczytem luk; legalny GET bez zmian. Nie zmieniono innych GET ani E3. Bazowy ApiGateway/JWT/PG zwracał foreign 200 z chronioną nazwą roli, missing 200. Osobny staffingGapsSecurity.pg.test.ts: RED 1 FAIL → GREEN 1 PASS, ten sam fullName; legalny GET nadal 200 z nazwą. Artefakty staffing-gaps-security-{red,green}.json/.log w codex2b-artefakty. Bramka używa istniejącego getPlan(planId, orgId); foreign i missing mają identyczne 404. To usunięcie potwierdzonego wycieku, jawny wyjątek od zakazu GET, nie decyzja produktu.
+
+
+### SECURITY staffing OFF foreign assignee — osobny follow-up
+
+Checkpoint pięciu rodzin: 5ba24436d7. Spotcheck integratora wskazał, że istniejący OFF nadal dopuszcza przypisanie użytkownika z obcej organizacji. Real JWT/PG: POST201 i PUT200, oba zapisują foreign assigned_user_id (`staffing-assignee-red.json`). Lokalna walidacja users.id + organization_id działa teraz przed flagą; nie zmienia globalnego modelu uprawnień. Końcowy test16 zawiera dwa scenariusze OFF oraz kasowanie planu z istniejącą rolą: SQL kaskada, UI getPlan404, brak planu w liście, canonical plan tombstone i historyczny payload roli. Integrator potwierdził, że ten reader UI jest granicą akceptacji; modelu historii nie zmieniono.
+
+Pierwsza próba testu historii miała błędną nazwę kolumny payload zamiast payload_json; naprawiono test, nie jest to błąd produktu. Pierwszy końcowy flag GREEN zakończył się 0 wykonanych / 16 pending po przerwaniu pracy; kod był odtworzony bajtowo. Powtórzono wyłącznie brakujący GREEN, bez ponawiania zakończonych par projection/tenant. Wszystkie 3 końcowe pary staffing mają identyczne 16 fullName.
