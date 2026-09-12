@@ -10,6 +10,8 @@ import { Response, Router } from 'express';
 import { getDatabase } from '../database/index.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import legalService from '../services/legalService.js';
+import onboardingService from '../services/onboardingService.js';
+import { FIRST_VALUE_ERRORS } from '../services/initiativeProjectPolicyService.js';
 import { ensureUserOnboardingStatusTable } from '../utils/ensureUserOnboardingStatusTable.js';
 import logger from '../utils/Logger.js';
 
@@ -28,6 +30,29 @@ router.use(async (_req, _res, next) => {
     next();
   } catch (error) {
     next(error);
+  }
+});
+
+/**
+ * POST /api/onboarding/context
+ * Persist the minimum transformation context used by the first-value flow.
+ */
+router.post('/context', async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    if (!organizationId) {
+      return res.status(400).json({ error: FIRST_VALUE_ERRORS.contextRequired });
+    }
+
+    const result = await onboardingService.saveContext(organizationId, req.body);
+    return res.json(result);
+  } catch (error: any) {
+    const message = error instanceof Error ? error.message : FIRST_VALUE_ERRORS.contextSaveFailed;
+    if (message.startsWith('Missing required field:')) {
+      return res.status(400).json({ error: message });
+    }
+    logger.error('Error saving onboarding context:', error);
+    return res.status(500).json({ error: FIRST_VALUE_ERRORS.contextSaveFailed });
   }
 });
 

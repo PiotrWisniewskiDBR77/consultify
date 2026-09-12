@@ -2028,6 +2028,48 @@ router.post(
           [uuidv4(), orgId, userId, memberRole]
         );
 
+        // CODEX6 E1: a fresh organization must be able to start its first
+        // interview immediately. Interview creation requires a real project,
+        // while registration previously left the tenant with zero projects and
+        // the first user action ended in `400 Project required`.
+        //
+        // Reuse the canonical system-project writer (including owner membership)
+        // instead of introducing a registration-only INSERT contract. Existing
+        // organizations joined with an access code are deliberately untouched.
+        if (!joiningExistingOrg) {
+          try {
+            const { FIRST_VALUE_ERRORS, resolveOrCreateSystemPortfolioProject } = await import(
+              '../services/initiativeProjectPolicyService.js'
+            );
+            const starterProjectId = await resolveOrCreateSystemPortfolioProject(orgId, {
+              createdBy: userId,
+            });
+            if (!starterProjectId) throw new Error(FIRST_VALUE_ERRORS.starterProjectMissing);
+          } catch (pilotWorkspaceErr) {
+            logger.error('[Auth] Failed to initialize the first-value workspace:', pilotWorkspaceErr);
+            await dbRun(
+              `DELETE FROM project_members WHERE project_id IN
+                 (SELECT id FROM projects WHERE organization_id = ?)`,
+              [orgId]
+            ).catch(() => undefined);
+            await dbRun(`DELETE FROM projects WHERE organization_id = ?`, [orgId]).catch(
+              () => undefined
+            );
+            await dbRun(`DELETE FROM organization_members WHERE organization_id = ?`, [orgId]).catch(
+              () => undefined
+            );
+            await dbRun(`DELETE FROM users WHERE id = ?`, [userId]).catch(() => undefined);
+            await dbRun(`DELETE FROM organization_limits WHERE organization_id = ?`, [orgId]).catch(
+              () => undefined
+            );
+            await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+            const { FIRST_VALUE_ERRORS } = await import(
+              '../services/initiativeProjectPolicyService.js'
+            );
+            return res.status(500).json({ error: FIRST_VALUE_ERRORS.workspaceSetupFailed });
+          }
+        }
+
         try {
           await assignAplixDefaultInterviews({
             organizationId: orgId,

@@ -28,7 +28,13 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { ensureProjectOwnerMembership } from './projectOwnerMembershipService.js';
 
-export const SYSTEM_PORTFOLIO_PROJECT_NAME = 'Portfel — inicjatywy bezpośrednie';
+export const SYSTEM_PORTFOLIO_PROJECT_NAME = 'First value workspace';
+export const FIRST_VALUE_ERRORS = Object.freeze({
+  contextRequired: 'Context required',
+  contextSaveFailed: 'Context save failed',
+  workspaceSetupFailed: 'Workspace setup failed',
+  starterProjectMissing: 'Starter project was not created',
+});
 
 /** Real, grep-able flag check — NOT a phantom. Default ON per D-J. */
 export function isRequireInitiativeProjectEnabled(): boolean {
@@ -79,7 +85,7 @@ export async function resolveOrCreateSystemPortfolioProject(
         id,
         orgId,
         SYSTEM_PORTFOLIO_PROJECT_NAME,
-        'Kontener systemowy dla inicjatyw utworzonych bez przypisanego projektu (Zwornik Delta C). Przenieś je do właściwego projektu przez „Nieprzypisane” → przypisz.',
+        'Starter workspace.',
         opts.createdBy ?? null,
       ]
     );
