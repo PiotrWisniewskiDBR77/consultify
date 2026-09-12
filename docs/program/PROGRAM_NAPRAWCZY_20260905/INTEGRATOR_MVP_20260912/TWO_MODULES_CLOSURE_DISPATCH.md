@@ -29,6 +29,7 @@ Spotkania z końca notatki pozostają zachowane w W18 wraz z zależnością od k
 | IE-04 | Realizacja | Bank tego samegoinitiativeId, zaakceptowany handoff, task/decision/resource w Pracy i readback My Work | IE-00; może iść równolegle z IE-01/02 po zamknięciu sharedcontract |
 | IE-05 | Realizacja | Analiza ostatniego/następnego tygodnia i miesiąca, priorytety/delegacja/escalation; zgodna zmiana tylko w uprawnieniu przełożonego | IE-04 |
 | IE-06 | Realizacja | N-card ryzyka: sytuacja→działania→skutki→poinformowani; approval→materialchange→readback→verification, retry bez dubla | IE-04/05; wspólne decyzje IE-00 |
+| IE-06K | Realizacja, kontrakt wejścia uzgadnia Inicjatywy | Obowiązkowy adapter E6 KPI/Results: przygotowany kontrakt IE-01 → canonical measurement → oba moduły i raport IE-07; Delivery nie oznacza Benefit achieved | IE-01 + IE-04/06 |
 | IE-07 | Jeden właściciel wspólnego raportowania, oba zespoły adaptery | Oddzielny raport przygotowania i wykonania; definition/run/snapshot, manual+cadence, PDF, odbiorcy,5domyślnych wzorców przygotowania, jawny wynik dostarczenia | IE-02/03 i IE-05/06; istniejący transport poczty W19 |
 | IE-08 | Niezależny odbiorca + integrator | Pełny łańcuch obu modułów i Results, macierz ról/projektów/org, retry/stale/partial, wizualny odbiór menu4/4 i wszystkich działań; zero otwartych blockerów/ważnych | Wszystkie powyższe |
 
@@ -59,3 +60,5 @@ RED→GREEN minimum: widoczna inicjatywa bez authority403zprzyczyną, obca/niewi
 ## Wspólny odbiór i ograniczenia
 
 Kod, helperPASS, screenshot i flagaOFF nie zamykają modułu. Wymagane: działający interfejs, realne utrwalenie i reload, trace do źródła, skuteczne capability, stale/versionconflict, retry, partialfailure, brak wycieku, materialhumanapproval, log wysyłki z odróżnieniem queued/delivered/failed. Brak poczty blokuje wyłącznie dowód doręczenia, nie pozostałą implementację. Wykresy mają jednostki/mianownik/okres i tekstowy status; unknown nie jest zielonymzerem. Nie zmieniamy cudzych WIP, nie pushujemy i nie uruchamiamy live z tej paczki przygotowania.
+
+Niezależny review TWO_MODULES_DISPATCH_REVIEW.md: READY_FOR_ASSIGNMENT. Uwaga dotycząca ownershipKPI zamknięta pozycjąIE-06K (Realizacja). Zasoby i marker pierwszego wykonawcy: reużyty czysty C7WT `/Users/piotrwisniewski/Developer/codex-wt/codex7-zatwierdzanie`, branch `codex/ie00-governance-20260912`, bazaee397109a0; Galileo prowadzi read/preflight. Kodowanie rusza po oddaniu paczkiInterview, żeby zachować2sloty.
