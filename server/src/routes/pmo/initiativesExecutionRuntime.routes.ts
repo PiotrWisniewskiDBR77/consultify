@@ -1,3 +1,5 @@
+import { StaffingFieldsSchema, StaffingNotFoundError, staffingAggregateType, writeStaffing, type StaffingMutation } from '../../domain/initiatives-execution/staffingPlans.js';
+import { GateRolesSchema, GateRolesNotFoundError, replaceGateRoles } from '../../domain/initiatives-execution/gateRoles.js';
 import { ResourceFieldsSchema, ResourceNotFoundError, writeResource } from '../../domain/initiatives-execution/resources.js';
 import { MilestoneFieldsSchema, MilestoneNotFoundError, writeMilestone } from '../../domain/initiatives-execution/milestones.js';
 import { BudgetItemFieldsSchema, BudgetItemNotFoundError, writeBudgetItem } from '../../domain/initiatives-execution/budgetItems.js';
@@ -5872,6 +5874,47 @@ export function createInitiativesExecutionRuntimeRouter(
       })
     );
   }
+  for(const [method,kind,operation,path] of [
+    ['post','plan','create','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['patch','plan','update','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['delete','plan','delete','/initiatives/:initiativeId/staffing-plans/:planId'],
+    ['post','role','create','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['patch','role','update','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['delete','role','delete','/initiatives/:initiativeId/staffing-plans/:planId/roles/:roleId'],
+    ['post','capacity','sync','/initiatives/:initiativeId/staffing-plans/:planId/sync-capacity'],
+  ] as const){
+    router[method](path,asyncHandler(async(req,res)=>{
+      const actor=actorFromRequest(req);if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
+      const parsed=StaffingFieldsSchema.extend({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240)}).safeParse(req.body);
+      if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
+      const initiativeId=firstParam(req.params.initiativeId),planId=firstParam(req.params.planId),itemId=kind==='capacity'?initiativeId:kind==='plan'?planId:firstParam(req.params.roleId);
+      const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
+      const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
+      if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+      const {expectedVersion,clientRequestId,...fields}=parsed.data;
+      try{
+        const result=await writeStaffing(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:staffingAggregateType(kind),aggregateId:itemId,expectedVersion,clientRequestId,correlationId:clientRequestId,policyId:'execution-control',policyVersion:1,commandType:`staffing-${kind}.${operation}`,createIfMissing:true,payload:{initiativeId,planId,kind,operation,fields}});
+        res.status(operation==='create'&&result.status==='APPLIED'?201:200).json(result);
+      }catch(error){if(error instanceof StaffingNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});throw error;}
+    }));
+  }
+  router.put('/initiatives/:initiativeId/gate-roles',asyncHandler(async(req,res)=>{
+    const actor=actorFromRequest(req);
+    if(!actor)return void res.status(401).json({error:{code:'AUTH_REQUIRED'}});
+    const parsed=z.object({expectedVersion:z.number().int().nonnegative(),clientRequestId:z.string().min(1).max(240),roles:GateRolesSchema}).safeParse(req.body);
+    if(!parsed.success)return void res.status(400).json({error:{code:'VALIDATION_FAILED'}});
+    const initiativeId=firstParam(req.params.initiativeId);
+    const projects=await deps.reader.resolveProjectIdsForAggregate(actor.organizationId,'initiative',initiativeId);
+    const allowed=projects.length>0?await authorizeProjects(actor,projects,'initiative.update'):await deps.authorize(actor,'','initiative.update');
+    if(!allowed)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+    try {
+      const result=await replaceGateRoles(deps.unitOfWork,{organizationId:actor.organizationId,actorId:actor.userId,aggregateType:'initiative_gate_role_profile',aggregateId:initiativeId,expectedVersion:parsed.data.expectedVersion,clientRequestId:parsed.data.clientRequestId,correlationId:parsed.data.clientRequestId,policyId:'execution-control',policyVersion:1,commandType:'initiative-gate-roles.replace',createIfMissing:true,payload:{initiativeId,roles:parsed.data.roles}});
+      res.json(result);
+    }catch(error){
+      if(error instanceof GateRolesNotFoundError)return void res.status(404).json({error:{code:'NOT_FOUND'}});
+      throw error;
+    }
+  }));
   router.post(
     '/initiatives/:initiativeId/raid-items/:raidItemId',
     asyncHandler(async (req, res) => {

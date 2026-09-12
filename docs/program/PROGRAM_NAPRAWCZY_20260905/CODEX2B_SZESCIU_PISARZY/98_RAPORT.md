@@ -1,19 +1,19 @@
 # CODEX2B — raport wykonania
 
-Stan: PARTIAL — checkpoint trzech rodzin. Budget-items, milestones i resources mają kod i dowody lokalne; niezależny odbiór poprawki review w toku. Gate-roles i staffing-plans będą kontynuowane. Move pozostaje decyzją o rodowodzie projektu, nie ukończoną funkcją.
+Stan: PARTIAL — pięć rodzin zaimplementowanych lokalnie, move STOP/PENDING decyzji o rodowodzie i dostępie. Pierwsze trzy rodziny odebrane niezależnie na 8322686a15. Gate-roles i staffing-plans czekają na końcowy review tego checkpointu. Flagi nadal domyślnie OFF; brak deploy/push.
 
 ## 0. Metryka
 
 Marker `a176d3f906`, gałąź `codex/szesciu-pisarzy-legacy-20260911`.
 Kontener `cx-codex2b-pg`, PostgreSQL18/pgvector, port6454.
-Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backendtsc exit0: `three-writers-server-tsc-fixed.log`; gitdiff--check exit0.
+Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backend tsc exit0: `five-writers-server-tsc-fixed.log`; gitdiff--check exit0.
 Pełne migracje czystej bazy:914; zakończone; drugi przebieg: `Applying migrations: 0`.
 Korekta pg16→pg18: lokalny szablon pochodzi zPG18; żadna baza zdalna nieużyta.
 
 ## 1. K-PUNKTY przed/po
 
 Pomiar kodu: K5 0/6 wycofanych;6rodzin ma wołaczy;19tras zapisu.
-K7 przed:3metody RAID. K8 przed:4wzorce.
+K7 przed:3 metody RAID; po:8 metod (dodano 5 projekcyjnych metod rodzin). K8 przed:4 wzorce; istniejących metod/UoW i globalnych wzorców nie przerabiano. K5 po:0/6 fizycznie wycofanych; 5/6 rodzin delegowanych pod istniejącą flagą. 17 tras materialnego zapisu ma następcę; resources/ai-apply-log jest tylko audytem, move STOP.
 K9 kopia lokalna po pełnym restore:
 
 ```
@@ -72,9 +72,9 @@ Pełne komendy i wyniki: `codex2b-artefakty/e2-0-static.txt`.
 | budget-items |3|5|writeInitiativeBudgetItem|P:10testów,3mutacje|
 | milestones |3|6|writeInitiativeMilestone|P:6testów,3mutacje|
 | resources |4|6|writeInitiativeResource|P:6testów,3mutacje; ai-apply-log osobno|
-| gate-roles |1|4|brak na markerze|NIEZROBIONE|
-| staffing-plans |7|10|brak na markerze|NIEZROBIONE|
-| move |1|1|brak na markerze|NIEZROBIONE|
+| gate-roles |1|4|replaceInitiativeGateRoles|P: 6 testów, 3 mutacje|
+| staffing-plans |7|10|writeStaffingProjection|P: 13 testów, 3 mutacje|
+| move |1|1|brak|N: kontrakt runtime RED 404; STOP decyzji|
 
 ## 4. Kroki E2.0…E2.6, E9
 
@@ -99,6 +99,14 @@ Pułapki§0.2e(a)-(f): każdy plik wymuszaDBpostgres/RUN_DB_TESTS1/MOCK_DBfalse,
 V8true, betavisibilityenforce, authbypass!=true; assertRealPostgresbezargumentów.
 ApiGateway+JWT+SQL jest realny; WRITEON/OFF jawnie perprzypadek, READfalse/true
 przy odczycie po treści. Tests nie montują samego routera i nie uruchamiają index.ts.
+
+Gate roles zastępuje cały jawny profil atomowo, zachowuje walidację użytkowników organizacji i zapis historii przed/po. Domyślny OFF oraz pochodne role GET pozostają. Własny agregat to initiative_gate_role_profile.
+
+Staffing obejmuje 7 istniejących zapisów: plan CRUD, role CRUD, sync capacity. Agregaty staffing_plan (metadane bez pochodnych sum), staffing_plan_role oraz initiative_capacity_snapshot. Role przeliczają sumy planu w tej samej transakcji. Sync zachowuje istniejącą formułę: alokacja z resources / 100, wymagane FTE z ról; suma0 nie kasuje starego required_capacity_fte. Fallback sync zawiera sumy źródłowe, więc zmiana źródła daje nowy zapis; rzeczywisty test pokazuje wzrost wersji i równość SQL SUM.
+
+SECURITY staffing: baseline 1 PASS / 9 FAIL potwierdził foreign POST201 planu, foreign POST201/PUT200/DELETE200 ról i GET200 gaps z nazwą. Root autoryzował lokalne bramki WRITE; osobny wyjątek GET wydzielono w commit720fd678f1. Legalny OFF zachowany. ON addRole zwraca fteAllocated0 zgodne z SQL zamiast starej fałszywej deklaracji fteRequired; root autoryzował tę korektę odpowiedzi, test obejmuje assigned i unassigned. Nie przydzielamy automatycznie FTE.
+
+Plan delete zachowuje istniejącą kaskadę SQL ról; tombstone planu blokuje przyszłe zapisy ról przez scoped parent lookup. Payloady kanonicznych ról pozostają historyczne, bez dopisywania osobnych receipts dzieci. Bezpośredni historyczny odczyt tych agregatów nie dowodzi aktywnej roli po usunięciu planu; to jawny punkt review.
 
 ## 5. Dowody mutacyjne (Z32)
 
@@ -150,6 +158,35 @@ flag green: 6PASS/0FAIL; 6pełnych nazw. `resources-mutation-flag-green.json`.
 
 Komendy exact w plikach `resources-mutation-*-*.command.txt`, kod mutacji w `codex2b-scratch/run-resources-mutations.py`. Przywrócenie przezcp; porównanie bajtowe identyczne; mutacyjnydiffpusty.
 
+
+### Gate roles i staffing — końcowe mutacje
+
+gateRoles projection red: 4 PASS / 2 FAIL; 6 fullName. `gateRoles-mutation-projection-red.json`.
+
+gateRoles projection green: 6 PASS / 0 FAIL; 6 fullName. `gateRoles-mutation-projection-green.json`.
+
+gateRoles tenant red: 5 PASS / 1 FAIL; 6 fullName. `gateRoles-mutation-tenant-red.json`.
+
+gateRoles tenant green: 6 PASS / 0 FAIL; 6 fullName. `gateRoles-mutation-tenant-green.json`.
+
+gateRoles flag red: 4 PASS / 2 FAIL; 6 fullName. `gateRoles-mutation-flag-red.json`.
+
+gateRoles flag green: 6 PASS / 0 FAIL; 6 fullName. `gateRoles-mutation-flag-green.json`.
+
+staffing projection red: 7 PASS / 6 FAIL; 13 fullName. `staffing-mutation-projection-red.json`.
+
+staffing projection green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-projection-green.json`.
+
+staffing tenant red: 12 PASS / 1 FAIL; 13 fullName. `staffing-mutation-tenant-red.json`.
+
+staffing tenant green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-tenant-green.json`.
+
+staffing flag red: 8 PASS / 5 FAIL; 13 fullName. `staffing-mutation-flag-red.json`.
+
+staffing flag green: 13 PASS / 0 FAIL; 13 fullName. `staffing-mutation-flag-green.json`.
+
+Przywrócenie cp + porównanie bajtowe; skrypty run-gateRoles-mutations.py i run-staffing-mutations.py. Pierwsza próba gate flag była no-op z powodu odstępu w matcherze; skorygowana run-gateRoles-flag.py wykonała rzeczywistą mutację RED, następnie GREEN. Nie liczymy no-op jako dowodu.
+
 ## 6. Zasięg testów (§0.4a)
 
 Przed:15nazw. Po:22nazwy. ZNIKNIĘTE:0. DODANE:7:
@@ -164,7 +201,9 @@ Przed:15nazw. Po:22nazwy. ZNIKNIĘTE:0. DODANE:7:
 
 LegalnyOFF CRUD ma te same trzy pełne nazwy przed i po zmianie, wszystkiePASS.
 SecuritybudgetOFF celowo naprawia cross-org201→404, autoryzacja integratora zapisana.
-Czerwone kontrakty pozostałych writerów są osobnym plikiem, nie wchodzą do22PASS.
+Początkowe trzy czerwone kontrakty pozostałych writerów są osobnym plikiem. Gate i staffing mają teraz implementację; move pozostaje celowo RED. Finalny mianownik opisano poniżej.
+
+Końcowy mianownik pięciu rodzin: 10 + 6 + 6 + 6 + 13 = 41 wykonań PASS. Dodatkowy osobny test SECURITY-C2B-GAPS: 1 PASS (ta sama nazwa zachowania co w staffing, celowa samodzielna regresja osobnego commitu); razem 42 wykonania / 41 unikalnych fullName. Pary mutacyjne porównane osobno per plik: 15 par RED→GREEN, żadne fullName nie znika w parze. Baseline staffing 10 nazw → final13, zniknięte0; gate6→6. Kontrakty pozostałych trzech: baseline 0 PASS / 3 FAIL → final 2 PASS / 1 FAIL (`remaining-contracts-final.json`), te same trzy fullName. Jedyny RED to move404. Czerwony kontrakt move liczymy osobno, nigdy jako PASS produktu.
 
 ## 7. Deklaracja Z30
 
@@ -187,13 +226,13 @@ powtórzono z powodzeniem. Drugie wykonanie jest idempotentne.
 
 ## 10. STOP-y
 
-Brak STOP całego bloku. Lokalna ochrona tenantów budget została autoryzowana przez
+Move STOP/PENDING: wymagana decyzja zakresu przenoszenia i dziedziczenia autoryzacji. Pozostałe pięć rodzin kontynuowane. Lokalna ochrona tenantów budget została autoryzowana przez
 integratora jako poprawka bezpieczeństwa w trzech handlerach, bez zmian istniejących
 bramek E3 lub globalnego middleware.
 
 ## 11. TWIERDZENIA NIEZWERYFIKOWANE
 
-Nie zmierzono staging/demo/produkcji ani przeglądarki/i18nrender. Nie zmierzono równoczesnego retry dwóch procesów ani pełnego korpusu testowego. Gate-roles/staffing/move nie mają jeszcze gotowej implementacji w tym checkpoincie. Dowody22PASS dotyczą lokalnego ApiGateway/JWT/Postgres, nie gotowości uruchomienia produktu.
+Nie zmierzono staging/demo/produkcji ani przeglądarki/i18nrender. Nie zmierzono równoczesnego retry dwóch procesów ani pełnego korpusu testowego. Move nie ma implementacji; gate/staffing wymagają końcowego niezależnego review. Dowody dotyczą lokalnego ApiGateway/JWT/Postgres, nie gotowości uruchomienia produktu.
 
 ## 12. DO DECYZJI WŁAŚCICIELA
 
@@ -214,7 +253,7 @@ Update/delete również wymagają lokalnej walidacji rodzica; nie zmieniamy shad
 ## 14. Artefakty
 
 Katalog absolutny: `/Users/piotrwisniewski/Developer/codex-wt/codex2b-artefakty`.
-Manifest SHA256 zostanie uzupełniony na zamknięciu bloku.
+Manifest SHA256: `SHA256SUMS.txt` (bez dumpa w repo). Trwały handoff: `HANDOFF-ACTIVE.md`.
 
 
 ### SECURITY-C2B-GAPS — osobny wyjątek integratora, 2026-09-12

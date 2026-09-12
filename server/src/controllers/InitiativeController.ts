@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { GateRolesSchema, GateRolesNotFoundError, replaceLegacyGateRoles } from '../domain/initiatives-execution/gateRoles.js';
 import { ResourceFieldsSchema, ResourceNotFoundError, writeLegacyResource } from '../domain/initiatives-execution/resources.js';
 import { MilestoneFieldsSchema, MilestoneNotFoundError, writeLegacyMilestone } from '../domain/initiatives-execution/milestones.js';
 /**
@@ -6240,6 +6241,24 @@ export class InitiativeController {
         return;
       }
 
+      if(isInitiativeUnifiedWriteEnabled()) {
+        const parsed=GateRolesSchema.safeParse(roles);
+        if(!parsed.success){res.status(400).json({code:'VALIDATION_FAILED'});return;}
+        const normalizedRoles=parsed.data.sort((a,b)=>JSON.stringify([a.gateRole,a.userId]).localeCompare(JSON.stringify([b.gateRole,b.userId])));
+        const key=req.get('Idempotency-Key');
+        const clientRequestId=`gate-roles-${computeContentHash({orgId,initiativeId,key:key||null,...(key?{}:{roles:normalizedRoles})})}`;
+        try {
+          const result=await replaceLegacyGateRoles(canonicalInitiativeWriteUnitOfWork,{organizationId:orgId,actorId,initiativeId,roles:normalizedRoles,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key)});
+          res.json({success:true,roles:result.response.roles});
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError){res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion});return;}
+          if(error instanceof GateRolesNotFoundError){res.status(404).json({code:'NOT_FOUND'});return;}
+          if(error instanceof MaterialCommandRuleError){res.status(error.httpStatus).json({code:error.rule,error:error.message});return;}
+          if(error instanceof MaterialCommandValidationError){res.status(400).json({code:'VALIDATION_FAILED'});return;}
+          throw error;
+        }
+        return;
+      }
       // Previous profile — captured for the audit record (requirement: the audit
       // shows the actor, the profile CHANGE, and the resulting capability).
       let previousRoles: any[] = [];

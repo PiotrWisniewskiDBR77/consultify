@@ -1,3 +1,5 @@
+import { StaffingNotFoundError } from './staffingPlans.js';
+import { GateRolesNotFoundError } from './gateRoles.js';
 import { ResourceNotFoundError } from './resources.js';
 import { MilestoneNotFoundError } from './milestones.js';
 import { evaluateScheduleShift, isSameScheduledDay } from './scheduleBaseline.js';
@@ -195,6 +197,57 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     );
     const row=result.rows[0];
     return {id:row.id,initiativeId:row.initiative_id,userId:row.user_id,name:row.name,role:row.role,allocationPercentage:Number(row.allocation_percentage),startDate:row.start_date,endDate:row.end_date,notes:row.notes,source:row.source,version:Number(row.version),...(input.operation==='delete'?{deleted:true as const}:{})};
+  }
+
+  async replaceInitiativeGateRoles(input: import('./gateRoles.js').GateRolesPayload & {organizationId:string;actorId:string}) {
+    const parent=await this.client.query('SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',[input.initiativeId,input.organizationId]);
+    if(parent.rowCount!==1)throw new GateRolesNotFoundError('Initiative not found');
+    const roles=[...new Map(input.roles.map(role=>[JSON.stringify([role.gateRole,role.userId]),role])).values()];
+    for(const role of roles){
+      const user=await this.client.query('SELECT id FROM users WHERE id=$1 AND organization_id=$2',[role.userId,input.organizationId]);
+      if(user.rowCount!==1)throw new GateRolesNotFoundError('Role user not found');
+    }
+    const before=await this.client.query('SELECT gate_role AS "gateRole",user_id AS "userId" FROM initiative_gate_roles WHERE initiative_id=$1',[input.initiativeId]);
+    await this.client.query('DELETE FROM initiative_gate_roles WHERE initiative_id=$1',[input.initiativeId]);
+    const inserted:Array<{id:string;gateRole:string;userId:string}>=[];
+    for(const role of roles){
+      const row=await this.client.query('INSERT INTO initiative_gate_roles(id,initiative_id,gate_role,user_id,assigned_by) VALUES(gen_random_uuid()::text,$1,$2,$3,$4) RETURNING id,gate_role AS "gateRole",user_id AS "userId"',[input.initiativeId,role.gateRole,role.userId,input.actorId]);
+      inserted.push(row.rows[0]);
+    }
+    await this.client.query("INSERT INTO initiative_history(id,initiative_id,action,old_value,new_value,changed_by) VALUES(gen_random_uuid()::text,$1,'gate_roles_updated',$2,$3,$4)",[input.initiativeId,JSON.stringify(before.rows),JSON.stringify(inserted),input.actorId]);
+    return {roles:inserted,previousRoles:before.rows};
+  }
+
+  async writeStaffingProjection(input: import('./staffingPlans.js').StaffingMutation & {organizationId:string;actorId:string;itemId:string}):Promise<Record<string,unknown>> {
+    const parent=await this.client.query('SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',[input.initiativeId,input.organizationId]);
+    if(parent.rowCount!==1)throw new StaffingNotFoundError('Initiative not found');
+    const p=input.fields;
+    if(!(input.kind==='plan'&&input.operation==='create')){
+      const plan=await this.client.query('SELECT id FROM staffing_plans WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 FOR UPDATE',[input.planId,input.initiativeId,input.organizationId]);
+      if(plan.rowCount!==1)throw new StaffingNotFoundError('Staffing plan not found');
+    }
+    if(p.assignedUserId){const user=await this.client.query('SELECT id FROM users WHERE id=$1 AND organization_id=$2',[p.assignedUserId,input.organizationId]);if(user.rowCount!==1)throw new StaffingNotFoundError('Assigned user not found');}
+    if(input.kind==='capacity'){
+      const sums=await this.client.query(`SELECT (SELECT COALESCE(SUM(allocation_percentage),0)/100.0 FROM initiative_resources WHERE initiative_id=$1 AND organization_id=$2) AS allocated,(SELECT COALESCE(SUM(r.fte_required),0) FROM staffing_plan_roles r JOIN staffing_plans p ON p.id=r.staffing_plan_id WHERE p.initiative_id=$1 AND p.organization_id=$2) AS required`,[input.initiativeId,input.organizationId]);
+      const result=await this.client.query('UPDATE initiatives SET allocated_capacity_fte=ROUND($3::numeric,2),required_capacity_fte=CASE WHEN $4::numeric>0 THEN $4::numeric ELSE required_capacity_fte END,updated_at=NOW() WHERE id=$1 AND organization_id=$2 RETURNING allocated_capacity_fte,required_capacity_fte',[input.initiativeId,input.organizationId,sums.rows[0].allocated,sums.rows[0].required]);
+      return {id:input.initiativeId,initiativeId:input.initiativeId,capacityAllocatedFte:Number(result.rows[0].allocated_capacity_fte),capacityRequiredFte:Number(result.rows[0].required_capacity_fte)};
+    }
+    if(input.kind==='plan'){
+      let result;
+      if(input.operation==='create')result=await this.client.query(`INSERT INTO staffing_plans(id,initiative_id,organization_id,name,status,planned_start,planned_end,notes,created_by,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW()) RETURNING *`,[input.itemId,input.initiativeId,input.organizationId,p.name?.trim(),p.status||'draft',p.plannedStart||null,p.plannedEnd||null,p.notes||null,input.actorId]);
+      else if(input.operation==='delete')result=await this.client.query('DELETE FROM staffing_plans WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *',[input.itemId,input.initiativeId,input.organizationId]);
+      else result=await this.client.query('UPDATE staffing_plans SET name=COALESCE($4,name),status=COALESCE($5,status),planned_start=COALESCE($6,planned_start),planned_end=COALESCE($7,planned_end),notes=COALESCE($8,notes),updated_at=NOW() WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *',[input.itemId,input.initiativeId,input.organizationId,p.name??null,p.status??null,p.plannedStart??null,p.plannedEnd??null,p.notes??null]);
+      if(result.rowCount!==1)throw new StaffingNotFoundError('Staffing plan not found');
+      const r=result.rows[0];return {id:r.id,initiativeId:r.initiative_id,organizationId:r.organization_id,name:r.name,status:r.status,plannedStart:r.planned_start||null,plannedEnd:r.planned_end||null,totalFteRequired:Number(r.total_fte_required)||0,totalFteAllocated:Number(r.total_fte_allocated)||0,notes:r.notes||null,createdBy:r.created_by||null,createdAt:r.created_at,updatedAt:r.updated_at,...(input.operation==='delete'?{deleted:true}:{})};
+    }
+    let result;
+    if(input.operation==='create')result=await this.client.query(`INSERT INTO staffing_plan_roles(id,staffing_plan_id,role_name,required_skills,fte_required,assigned_user_id,start_date,end_date,priority,status,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING *`,[input.itemId,input.planId,p.roleName?.trim(),p.requiredSkills?.length?JSON.stringify(p.requiredSkills):null,p.fteRequired??1,p.assignedUserId||null,p.startDate||null,p.endDate||null,p.priority||'medium',p.assignedUserId?'filled':'open']);
+    else if(input.operation==='delete')result=await this.client.query('DELETE FROM staffing_plan_roles WHERE id=$1 AND staffing_plan_id=$2 RETURNING *',[input.itemId,input.planId]);
+    else result=await this.client.query(`UPDATE staffing_plan_roles SET role_name=COALESCE($3,role_name),required_skills=COALESCE($4,required_skills),fte_required=COALESCE($5,fte_required),fte_allocated=COALESCE($6,fte_allocated),assigned_user_id=CASE WHEN $7 THEN $8 ELSE assigned_user_id END,start_date=COALESCE($9,start_date),end_date=COALESCE($10,end_date),priority=COALESCE($11,priority),status=COALESCE($12,status) WHERE id=$1 AND staffing_plan_id=$2 RETURNING *`,[input.itemId,input.planId,p.roleName??null,p.requiredSkills!==undefined?JSON.stringify(p.requiredSkills):null,p.fteRequired??null,p.fteAllocated??(p.assignedUserId===null?0:null),p.assignedUserId!==undefined,p.assignedUserId||null,p.startDate??null,p.endDate??null,p.priority??null,p.status??(p.assignedUserId!==undefined?(p.assignedUserId?'filled':'open'):null)]);
+    if(result.rowCount!==1)throw new StaffingNotFoundError('Staffing role not found');
+    await this.client.query(`UPDATE staffing_plans SET total_fte_required=(SELECT COALESCE(SUM(fte_required),0) FROM staffing_plan_roles WHERE staffing_plan_id=$1),total_fte_allocated=(SELECT COALESCE(SUM(fte_allocated),0) FROM staffing_plan_roles WHERE staffing_plan_id=$1),updated_at=NOW() WHERE id=$1 AND initiative_id=$2 AND organization_id=$3`,[input.planId,input.initiativeId,input.organizationId]);
+    const r=result.rows[0];let skills:string[]=[];try{skills=JSON.parse(r.required_skills||'[]');}catch{skills=String(r.required_skills||'').split(',').map((s:string)=>s.trim()).filter(Boolean);}
+    return {id:r.id,initiativeId:input.initiativeId,staffingPlanId:r.staffing_plan_id,roleName:r.role_name,requiredSkills:skills,fteRequired:Number(r.fte_required)||0,fteAllocated:Number(r.fte_allocated)||0,assignedUserId:r.assigned_user_id||null,startDate:r.start_date||null,endDate:r.end_date||null,priority:r.priority||'medium',status:r.status||'open',createdAt:r.created_at,...(input.operation==='delete'?{deleted:true}:{})};
   }
 
   async createRaidItem(input: {
