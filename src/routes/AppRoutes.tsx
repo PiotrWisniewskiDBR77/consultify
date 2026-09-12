@@ -26,7 +26,6 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
@@ -50,6 +49,12 @@ import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
 import { resolvePresentationWizardRedirectTarget } from './presentationWizardRedirect';
 import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
+
+// Public routes do not need the signed-in navigation shell. Protected routes
+// load it under the shared route Suspense boundary below.
+const MainLayout = lazyWithRetry(() =>
+  import('@/layouts/MainLayout').then((m) => ({ default: m.MainLayout }))
+);
 
 // Keep the disabled Studio route out of the boot graph: its layout includes the editor.
 const StudioUnavailableView = lazyWithRetry(() =>

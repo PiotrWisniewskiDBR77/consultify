@@ -247,3 +247,9 @@ SDK GoogleGenAI ładowany przy rozpoczęciu voice w Teresie i Annie. Unmount uni
 Build PASS36.95s, wspólny boot **2182459B** (App624783, AppProviders1240409,index317267); cel2000000B nadal nieosiągnięty. Zmniejszenie od baseline około61.1%. Nie ogłaszamy E3PASS. Logi codex4-artefakty/e3-step2-build.json/log, e3-voice-*-red/green.log oraz e3-voice-existing-*.log.
 
 Przegląd baseline:15rzeczywistych modułów sidebar, dodatkowo coldMyWork i3karty =19PNG obejrzanych niezależnie, bez pustych ekranów. Oryginalna premisa16pozycji niepotwierdzona. Realny defekt: otwarcie CLOSED inicjatywy wykonuje automatyczny PUT403; GET renderuje kartę, widoczne Unsaved. Pozostaje osobnym problemem produktu; nie ukrywamy go zmianą fixture. Końcowy pomiar czasu i before/after jeszcze trwa; wspólny boot nie oznacza całego JS pierwszego zalogowanego ekranu.
+
+## E3 — krok 3, wspólny start poniżej progu; odbiór całości nadal PARTIAL
+
+MainLayout ładowany przez istniejący lazyWithRetry i wspólny Suspense tras. Publiczny login nie potrzebuje powłoki zalogowanego użytkownika. Dla /my-work powłoka nadal jest potrzebna i jej JS musi wejść do osobnego pomiaru pierwszego ekranu; nie utożsamiamy tych metryk. Bez zmian wyglądu, guardów lub manualChunks.
+
+Common boot **1911610B**,3chunki (App354014, AppProviders1240369,index317227), cel≤2000000 osiągnięty wyłącznie dla tej jawnej definicji. Build z --manifest PASS35.21s. Poprzedni build PASS35.63s nie wygenerował manifestu; pomiar poprawnie odmówił ENOENT i wykonano nowy build. Dowody e3-step3-build-manifest.log i e3-step3-chunks.json poza repo. Pełny before/after zbudowanych stron oraz Help regresja trwają; do czasu ich zakończenia E3 pozostaje PARTIAL. Znany odziedziczony autoPUT403 na CLOSED inicjatywie nadal otwarty, poza logiką optymalizacji.
