@@ -2,7 +2,7 @@
 
 ## Stanowisko
 
-**Minimum bloku osiągnięte:** E1 i E2 mają lokalny dowód. E5 jest udowodnione. E3 jest **PARTIAL**. E4 jest **NIEWYKONANY po pomiarze**: istniejący eksport i delete działają dla SUPERADMIN, ale nie spełniają wymagania samoobsługi administratora organizacji. Nie rozszerzałem wyniku ponad dowód.
+**Blok osiągnął lokalne minimum i wszystkie pięć zakresów ma dowód zachowania:** E1, E2, E5, E3 i E4 są udowodnione w granicach opisanych niżej. Nie rozszerzam wyniku ponad dowód: E1 nadal nie dowodzi wyklikania każdej operacji tworzącej, a E2 nie ma wizualnego dowodu rejestru KPI.
 
 Marker: `45c07b024c`. Worktree: `codex6-gotowosc-pilotazu`. Zero połączeń do Railway, stagingu, demo i produkcji.
 
@@ -36,13 +36,15 @@ WHERE created_at >= NOW() - INTERVAL '24 hours'
 ORDER BY created_at DESC;
 ```
 
-## E3 — limiter kosztu AI — PARTIAL
+## E3 — limiter kosztu AI
 
 **PRZED:** `AI_BUDGETS_ENABLED` było efektywnie domyślnie ON, ale brak rekordu budżetu oznaczał brak limitu; komunikat SSE nie ustawiał freeze, bo klient rzucał wyjątek wcześniej. **PO:** flaga jest ON wyłącznie dla wartości `true`; po włączeniu powstaje organizacyjny budżet cost/monthly 50 USD, miesięczne zużycie jest resetowane, wyczerpanie blokuje przed providerem kodem `AI_BUDGET_EXHAUSTED`/403, a UI pokazuje angielski komunikat z następną akcją. Mutant domyślnego ON dał RED, po przywróceniu 3/3 GREEN; test bannera 1/1 GREEN; server tsc i esbuild per plik GREEN.
 
-Zmiany: `server/src/services/ai/organizationCostLimiter.ts`, `server/src/services/aiBudgetService.ts`, `server/src/services/ai/AIPipeline.ts`, `server/src/routes/ai.routes.ts`, `src/services/api.ts`, `src/components/AIFreezeBanner.tsx`. SHA: `76787fdd11`.
+Zmiany bazowe: `server/src/services/ai/organizationCostLimiter.ts`, `server/src/services/aiBudgetService.ts`, `server/src/services/ai/AIPipeline.ts`, `server/src/routes/ai.routes.ts`, `src/services/api.ts`, `src/components/AIFreezeBanner.tsx`. SHA: `76787fdd11`.
 
-**Nieudowodnione:** realny browser→HTTP→PG przebieg z budżetem ponad/pod limitem oraz widoczność zużycia dla administratora organizacji. Istniejąca administracja budżetami jest powierzchnią SuperAdmin. Z tego powodu E3 nie jest COMPLETE.
+Domknięcie: administrator organizacji ma tenant-scoped odczyt `Used / Monthly limit / Remaining` w istniejącym ekranie AI settings; bramka została wpięta przed fast-fail providera. Realny browser→HTTP→PostgreSQL przeszedł dla 12.34/50 USD oraz dla progu 50/50 USD. Przy progu odpowiedź zawiera `AI_BUDGET_EXHAUSTED` i zrozumiały komunikat, a zużycie w PostgreSQL nie zmienia się. Test ujawnił i naprawił błąd resetu miesiąca dla timestampu zwracanego przez `pg` jako `Date`. Mutacja RED→GREEN objęła ten przypadek. Zrzut: `evidence/pilotaz-ai-budget/01-admin-usage.png`. Logi: `../codex6-artefakty/e3-browser-http-pg-below-final.log` i `../codex6-artefakty/e3-browser-http-pg-above-final.log`. SHA domknięcia: `6117cdbf67`.
+
+Incydent testowy: podczas diagnozy błędu resetu użyto jawnie fałszywego klucza OpenRouter. Ponieważ wadliwy limiter przepuścił żądanie, wykonana została jedna próba HTTPS do OpenRouter, zakończona 401 „Missing Authentication header”. Nie użyto prawidłowego sekretu, nie było udanego wywołania AI ani obciążenia. Po tym dowody prowadzono bez klucza providera.
 
 Włączenie przez nadzorcę:
 
@@ -50,11 +52,11 @@ Włączenie przez nadzorcę:
 AI_BUDGETS_ENABLED=true DATABASE_URL="<DATABASE_URL>" npm --prefix server start
 ```
 
-## E4 — eksport i usunięcie — NIEWYKONANY po pomiarze
+## E4 — eksport i usunięcie organizacji
 
-Real HTTP/PostgreSQL test istniejących tras SuperAdmin przeszedł 5/5: JSON zawiera organizację i użytkownika, CSV jest niepusty, delete bez nazwy daje 428 bez skutku, poprawne potwierdzenie usuwa organizację i użytkownika, brak tokenu jest odrzucany. Log: `../codex6-artefakty/e4-real-http-pg.log`.
+**PRZED:** istniejące trasy eksportu i kasowania były wyłącznie SuperAdmin; nie stanowiły samoobsługi tenant admina i nie zapewniały surviving receipt. **PO:** OWNER/ADMIN z aktywnym kanonicznym członkostwem może z routowanego ekranu `Settings → Data Controls` pobrać JSON własnej organizacji oraz usunąć ją po dokładnym wpisaniu nazwy. Trasy są odrębne od SuperAdmin, wymagają zgodnego `organizationId`, sprawdzają legal hold, a usunięcie i zapis receipt są jedną transakcją.
 
-To nie spełnia instrukcji: przyciski i trasy są dostępne dla **SUPERADMIN**, nie dla administratora organizacji. Nie ma też udowodnionej negatywnej kontroli, że eksport nie zawiera danych innego tenant-a, ani trwałego self-service audit receipt po skasowaniu aktora. Nie wprowadziłem ryzykownej pozornej samoobsługi. E4 wymaga osobnej implementacji i testu browser→download/delete→PG readback.
+Realny Playwright→HTTP→PostgreSQL przeszedł 1/1: login administratora disposable tenantu, widoczne kontrolki, download zawierający własnego użytkownika, zablokowany przycisk dla błędnej nazwy, skuteczne usunięcie dla nazwy dokładnej, brak organizacji i aktora w PG oraz obecny receipt. Zrzut: `evidence/pilotaz-organization-lifecycle/01-export-delete-controls.png`; log: `../codex6-artefakty/e4-browser-http-pg-final.log`. Osobny real-PG test przeszedł 3/3: cross-tenant export 403, błędna nazwa 428 bez mutacji, receipt przeżywa skasowanie i odrzuca DELETE. Kontrolowana mutacja usuwająca barierę nazwy dała RED (200 zamiast 428), przywrócony kod dał GREEN 3/3. Logi: `../codex6-artefakty/e4-mutation-red.log`, `../codex6-artefakty/e4-mutation-green.log`. SHA: `cb251a2523`.
 
 ## Komendy dla nadzorcy
 
@@ -69,5 +71,5 @@ DATABASE_URL="<DATABASE_URL>" node scripts/dane/seed-pilotaz-20260912.mjs --appl
 - Nie uruchamiano skryptu ani flagi na staging/demo/produkcji.
 - Nie wykonano pełnego frontowego `tsc` (zakaz); wykonano esbuild per plik.
 - E1 nie dowodzi wyklikania wszystkich operacji tworzących.
-- E3 nie dowodzi administracyjnego widoku zużycia ani realnego requestu ponad/pod limitem.
-- E4 pozostaje NIEWYKONANY w zakresie wymaganej samoobsługi administratora organizacji.
+- E2 KPI udowodniono ścieżką aplikacji i PostgreSQL, lecz nie wizualnym ekranem rejestru KPI.
+- Nie wykonano wdrożenia ani testu stagingowego; DEC-472 wskazuje staging jako cel pilota, ale ten blok pozostał ściśle lokalny.
