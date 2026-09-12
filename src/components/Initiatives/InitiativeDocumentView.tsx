@@ -2431,11 +2431,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               : [{ id: 'ts-0', text: tsDesc, done: false }]
           );
         }
-        const sc = td.successCriteria || [];
+        const sc = data.successCriteria || data.success_criteria || td.successCriteria || [];
         setSuccessCriteriaItems(
           sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false }))
         );
-        const dl = td.deliverables || data.deliverables || [];
+        const dl = data.deliverables || td.deliverables || [];
         // Done flags persist as an index-aligned boolean[] alongside the texts.
         const dlDone = Array.isArray(data.deliverablesDone)
           ? data.deliverablesDone
@@ -2454,8 +2454,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Sync scope & boundaries fields
       const scopeObj = data.scope || {};
       if (typeof scopeObj === 'object' && scopeObj !== null) {
-        setInScopeItems(normalizeStringList((scopeObj as any).inScope));
-        setOutScopeItems(normalizeStringList((scopeObj as any).outScope));
+        setInScopeItems(normalizeStringList(data.scopeIn || data.scope_in || (scopeObj as any).inScope));
+        setOutScopeItems(normalizeStringList(data.scopeOut || data.scope_out || (scopeObj as any).outScope));
       } else {
         setInScopeItems([]);
         setOutScopeItems([]);
@@ -2491,9 +2491,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             const serverCost = String(pd.costOfInaction || '').trim();
             const serverMarket = String(data.marketContext || data.market_context || '').trim();
             const serverInScopeRaw =
-              typeof scopeObj === 'object' ? (scopeObj as any).inScope || [] : [];
+              data.scopeIn || data.scope_in || (typeof scopeObj === 'object' ? (scopeObj as any).inScope || [] : []);
             const serverOutScopeRaw =
-              typeof scopeObj === 'object' ? (scopeObj as any).outScope || [] : [];
+              data.scopeOut || data.scope_out || (typeof scopeObj === 'object' ? (scopeObj as any).outScope || [] : []);
             const serverKillRaw =
               data.killCriteria ||
               data.kill_criteria ||
@@ -3067,9 +3067,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
   ]);
 
-  // Persist local draft continuously so refresh won't lose edits (even before autosave).
+  // Persist only after hydration; initial empty state must not erase its own backup.
   useEffect(() => {
-    if (!initiativeId) return;
+    if (!initiativeId || isLoading) return;
     try {
       const hasAny =
         !!symptomDraft.trim() ||
@@ -3100,6 +3100,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // ignore localStorage errors (private mode / quota)
     }
   }, [
+    isLoading,
     initiativeId,
     initiativeDefinitionDraftStorageKey,
     symptomDraft,
@@ -3415,12 +3416,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // (`runtimeOnlyEditBlockedMessage` → NModeHeader saveState="error").
   const handleSaveRuntimeOnlyMetadata = async (silent: boolean) => {
     const normalizedTitle = String(titleDraft || '').trim();
-    const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+    const savedTitle = String(initiative?.name || initiative?.title || '').trim();
     const titleChanged = canEditCards && !!normalizedTitle && normalizedTitle !== savedTitle;
-    const summaryChanged = summary !== (initiative?.summary || '');
-    const descriptionChanged = description !== (initiative?.description || '');
+    const summaryChanged = canEditCards && summary !== (initiative?.summary || initiative?.description || '');
+    const descriptionChanged = canEditCards && description !== (initiative?.description || '');
     const ownerChanged =
-      canEditOwner && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
+      canEditOwner && !!ownerId.trim() && ownerId !== (initiative?.ownerId || initiative?.owner_id || '');
 
     if (!titleChanged && !summaryChanged && !descriptionChanged && !ownerChanged) {
       // Nic do zapisania kanonicznym pisarzem — jeśli coś innego jest
@@ -3474,10 +3475,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleSave = async (silent = false) => {
+    if (isLoading) return;
     if (isRuntimeOnlyRecord) {
       await handleSaveRuntimeOnlyMetadata(silent);
       return;
     }
+    if (!canEditCards && !canEditPriority && !canEditOwner && !canEditTargetDate) return;
     setIsMutating(true);
     try {
       // Build structured problem definition as JSON for the problemStatement field
@@ -3508,7 +3511,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         .toLowerCase();
       const normalizedTitle = String(titleDraft || '').trim();
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload: Record<string, unknown> = canEditCards ? {
         // Core narrative
         summary,
         description, // backend alias → hypothesis
@@ -3529,12 +3532,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         targetState: {
           description: targetDescriptionDraft || undefined,
         },
-      };
+      } : {};
 
       // Title is edited in the header and saved as `title` (DB column may be title or name).
       // Guarded by canEditCards to avoid editing in read-only contexts.
       if (canEditCards && normalizedTitle) {
-        const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+        const savedTitle = String(initiative?.name || initiative?.title || '').trim();
         if (normalizedTitle !== savedTitle) {
           updatePayload.title = normalizedTitle;
         }
@@ -3542,57 +3545,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Top-bar fields are permissioned by backend capabilities (gateReadiness).
       // Do NOT send fields the current user cannot edit, otherwise backend rejects the save.
-      if (canEditPriority) {
-        updatePayload.priority = normalizedPriority || undefined;
+      if (canEditPriority && unsavedFieldFlags.priority) {
+        updatePayload.priority = normalizedPriority;
       }
       if (canEditOwner) {
-        updatePayload.ownerId = ownerId || undefined;
-        updatePayload.sponsorId = sponsorId || undefined;
+        if (unsavedFieldFlags.owner) updatePayload.ownerId = ownerId || null;
+        if (unsavedFieldFlags.sponsor) updatePayload.sponsorId = sponsorId || null;
       }
       if (canEditTargetDate) {
-        updatePayload.plannedStartDate = startDate || undefined;
-        updatePayload.plannedEndDate = targetDate || undefined;
+        if (unsavedFieldFlags.startDate) updatePayload.plannedStartDate = startDate || null;
+        if (unsavedFieldFlags.targetDate) updatePayload.plannedEndDate = targetDate || null;
       }
 
+      if (Object.keys(updatePayload).length === 0) return;
+      let submittedDefinitionBackup: string | null = null;
+      try { submittedDefinitionBackup = localStorage.getItem(initiativeDefinitionDraftStorageKey); } catch { /* storage unavailable */ }
       const truth = await saveInitiativeWriteTruth(initiativeId, updatePayload);
 
-      // Keep local baseline in sync so dirty-check resets immediately.
+      // Advance only fields actually sent. A top-bar-only save must not absorb
+      // unsent card edits after a capability change.
       setInitiative((prev: any) => ({
         ...prev,
         ...(truth.initiative || {}),
-        title: canEditCards && normalizedTitle ? normalizedTitle : prev?.title,
-        name: canEditCards && normalizedTitle ? normalizedTitle : prev?.name,
-        summary,
-        description,
-        priority,
-        ownerId,
-        owner_id: ownerId,
-        sponsorId,
-        sponsor_id: sponsorId,
-        plannedStartDate: startDate || null,
-        planned_start_date: startDate || null,
-        plannedEndDate: targetDate || null,
-        planned_end_date: targetDate || null,
-        targetDate: targetDate || null,
-        problemStatement: problemDefinitionPayload || null,
-        problem_statement: problemDefinitionPayload || null,
-        marketContext: marketContextDraft || null,
-        market_context: marketContextDraft || null,
-        estimatedBudget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
-        estimated_budget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
-        resourceTools,
-        resource_tools: resourceTools,
-        deliverables: normalizedDeliverables,
-        deliverablesDone: normalizedDeliverablesDone,
-        deliverables_done: normalizedDeliverablesDone,
-        successCriteria: normalizedSuccessCriteria,
-        scopeIn: normalizedScopeIn,
-        scopeOut: normalizedScopeOut,
-        killCriteria: normalizedKillCriteria,
-        kill_criteria: normalizedKillCriteria,
-        tags,
-        targetState: { description: targetDescriptionDraft || '' },
-        target_state: { description: targetDescriptionDraft || '' },
+        ...updatePayload,
+        ...(typeof updatePayload.title === 'string' ? { name: updatePayload.title } : {}),
+        ...(Object.hasOwn(updatePayload, 'ownerId') ? { owner_id: updatePayload.ownerId } : {}),
+        ...(Object.hasOwn(updatePayload, 'sponsorId') ? { sponsor_id: updatePayload.sponsorId } : {}),
+        ...(Object.hasOwn(updatePayload, 'plannedStartDate') ? { planned_start_date: updatePayload.plannedStartDate } : {}),
+        ...(Object.hasOwn(updatePayload, 'plannedEndDate') ? { planned_end_date: updatePayload.plannedEndDate, targetDate: updatePayload.plannedEndDate } : {}),
       }));
       setGateReadiness(truth.gateReadiness);
       setStatusHistory(truth.statusHistory as any);
@@ -3600,7 +3580,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Clear local draft backup after a successful save.
       try {
-        localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+        if (canEditCards && localStorage.getItem(initiativeDefinitionDraftStorageKey) === submittedDefinitionBackup) {
+          localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+        }
       } catch {
         // ignore
       }
@@ -3624,11 +3606,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // runtime-only NIE MA dziś żadnego pisarza. Suma flag = stare `hasUnsavedChanges`,
   // więc zachowanie dla zwykłych inicjatyw (tabela `initiatives`) jest identyczne.
   const unsavedFieldFlags = useMemo(() => {
-    const savedProblemRaw = initiative?.problemStatement || initiative?.problem_statement || '';
+    const savedProblemRaw = initiative?.problemDefinition || initiative?.problem_definition || initiative?.problemStatement || initiative?.problem_statement || '';
     let savedSymptom = '';
     let savedRootCause = '';
     let savedCost = '';
-    if (savedProblemRaw && typeof savedProblemRaw === 'string') {
+    if (savedProblemRaw && typeof savedProblemRaw === 'object') {
+      savedSymptom = savedProblemRaw.symptom || '';
+      savedRootCause = savedProblemRaw.rootCause || '';
+      savedCost = savedProblemRaw.costOfInaction || '';
+    } else if (savedProblemRaw && typeof savedProblemRaw === 'string') {
       try {
         const parsed = JSON.parse(savedProblemRaw);
         savedSymptom = parsed?.symptom || '';
@@ -3662,7 +3648,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ? initiative.resource_tools
         : Array.isArray(initiative?.tools)
           ? initiative.tools
-          : [];
+          : Array.isArray(initiative?.toolsNeeded) ? initiative.toolsNeeded : [];
 
     const savedDeliverables = Array.isArray(initiative?.deliverables)
       ? initiative.deliverables
@@ -3719,14 +3705,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // title/problem/proposedOutcome) — patrz saveRuntimeOnlyInitiativeDocumentMetadata.
       title:
         String(titleDraft || '').trim() !==
-        String(initiative?.title || initiative?.name || '').trim(),
-      summary: summary !== (initiative?.summary || ''),
+        String(initiative?.name || initiative?.title || '').trim(),
+      summary: summary !== (initiative?.summary || initiative?.description || ''),
       description: description !== (initiative?.description || ''),
       // Reszta — BEZ pisarza na rekordzie runtime-only.
       priority: priority !== (initiative?.priority || 'medium').toLowerCase(),
       owner: ownerId !== (initiative?.ownerId || initiative?.owner_id || ''),
       sponsor: sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || ''),
-      targetDate: targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || ''),
+      targetDate: targetDate !== (initiative?.plannedEndDate || initiative?.planned_end_date || initiative?.targetDate || ''),
       startDate:
         (startDate || '') !==
         (initiative?.plannedStartDate || initiative?.planned_start_date || ''),
@@ -3736,14 +3722,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       marketContext:
         marketContextDraft !== (initiative?.marketContext || initiative?.market_context || ''),
       budget: budgetDraft !== savedBudget,
-      resourceTools: JSON.stringify(resourceTools) !== JSON.stringify(savedTools),
+      resourceTools: JSON.stringify(resourceTools) !== JSON.stringify(savedTools.map((value: unknown) => String(value))),
       tags: JSON.stringify(tags) !== JSON.stringify(initiative?.tags || []),
-      deliverables: JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables),
+      deliverables: JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables.map((value: unknown) => String(value || '').trim()).filter(Boolean)),
       successCriteria:
-        JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria),
-      scopeIn: JSON.stringify(inScopeItems) !== JSON.stringify(savedScopeIn),
-      scopeOut: JSON.stringify(outScopeItems) !== JSON.stringify(savedScopeOut),
-      killCriteria: JSON.stringify(killCriteriaItems) !== JSON.stringify(savedKillCriteria),
+        JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria.map((value: unknown) => String(value || '').trim()).filter(Boolean)),
+      scopeIn: JSON.stringify(inScopeItems) !== JSON.stringify(normalizeStringList(savedScopeIn)),
+      scopeOut: JSON.stringify(outScopeItems) !== JSON.stringify(normalizeStringList(savedScopeOut)),
+      killCriteria: JSON.stringify(killCriteriaItems) !== JSON.stringify(normalizeStringList(savedKillCriteria)),
       targetDescription: targetDescriptionDraft !== savedTargetDescription,
     };
   }, [
@@ -3798,7 +3784,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Pola, które MAJĄ dziś kanoniczny pisarz na rekordzie runtime-only.
   const hasRuntimeOnlySupportedChanges =
-    unsavedFieldFlags.title || unsavedFieldFlags.summary || unsavedFieldFlags.description;
+    (canEditCards && (unsavedFieldFlags.title || unsavedFieldFlags.summary || unsavedFieldFlags.description)) ||
+    (canEditOwner && !!ownerId.trim() && unsavedFieldFlags.owner);
 
   // Pola, które NIE MAJĄ dziś żadnego pisarza na rekordzie runtime-only —
   // użytkownik może je edytować w UI (zero nowych kontrolek/blokad wejścia),
@@ -3806,9 +3793,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // zamiast ciszy + pętli 404.
   const hasRuntimeOnlyUnsupportedChanges = useMemo(() => {
     if (!isRuntimeOnlyRecord) return false;
-    const { title, summary, description, ...rest } = unsavedFieldFlags;
-    return Object.values(rest).some(Boolean);
-  }, [isRuntimeOnlyRecord, unsavedFieldFlags]);
+    const { title, summary, description, owner, ...rest } = unsavedFieldFlags;
+    // Canonical metadata requires an eligible owner; clearing it has no legal writer.
+    return (owner && !ownerId.trim()) || Object.values(rest).some(Boolean);
+  }, [isRuntimeOnlyRecord, unsavedFieldFlags, ownerId]);
 
   const runtimeOnlyEditBlockedMessage =
     isRuntimeOnlyRecord && hasRuntimeOnlyUnsupportedChanges
@@ -3822,20 +3810,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // czego pętlić. To jest naprawa BLOKERA N1 (PUT 404 × 6 przy otwarciu + 9/15s).
   const hasSavableChanges = isRuntimeOnlyRecord
     ? hasRuntimeOnlySupportedChanges
-    : hasUnsavedChanges;
+    : ((canEditCards && Object.entries(unsavedFieldFlags).some(([key, dirty]) => !['priority', 'owner', 'sponsor', 'targetDate', 'startDate'].includes(key) && dirty)) ||
+      (canEditPriority && unsavedFieldFlags.priority) ||
+      (canEditOwner && (unsavedFieldFlags.owner || unsavedFieldFlags.sponsor)) ||
+      (canEditTargetDate && (unsavedFieldFlags.targetDate || unsavedFieldFlags.startDate)));
 
+  const latestSaveRef = useRef(handleSave);
+  latestSaveRef.current = handleSave;
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!hasSavableChanges || isMutating || !initiativeId) return;
+    if (isLoading || !hasSavableChanges || isMutating || !initiativeId) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
-      handleSave(true);
+      void latestSaveRef.current(true);
     }, 1500);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSavableChanges, isMutating, initiativeId]);
+  }, [isLoading, hasSavableChanges, isMutating, initiativeId, canEditCards, canEditPriority, canEditOwner, canEditTargetDate, unsavedFieldFlags]);
 
   const handleCreateTask = async () => {
     if (!canEditCards) {
