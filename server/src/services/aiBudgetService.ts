@@ -340,8 +340,13 @@ const aiBudgetService = {
     const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
     for (const budget of budgets) {
       if (budget.period !== 'monthly') continue;
-      const anchor = String(budget.last_reset_at || budget.created_at || '');
-      if (anchor && anchor.slice(0, 7) !== currentMonth) {
+      const anchorRaw = budget.last_reset_at || budget.created_at;
+      const anchorDate = anchorRaw ? new Date(anchorRaw as string | number | Date) : null;
+      const anchorMonth =
+        anchorDate && !Number.isNaN(anchorDate.getTime())
+          ? `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, '0')}`
+          : '';
+      if (anchorMonth && anchorMonth !== currentMonth) {
         await dbRun(
           'UPDATE ai_budgets SET current_usage = 0, last_reset_at = ?, updated_at = ? WHERE id = ?',
           [now.toISOString(), now.toISOString(), budget.id]

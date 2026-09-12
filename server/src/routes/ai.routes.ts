@@ -30,6 +30,10 @@ import { buildCitationStatusPayload } from '../services/ai/citationAccessStatus.
 import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import {
+  enforceOrganizationCostLimit,
+  isOrganizationCostLimiterEnabled,
+} from '../services/ai/organizationCostLimiter.js';
+import {
   numericConfidenceFromVerification,
   verifyRuntimeCitations,
 } from '../services/ai/runtimeCitationVerification.js';
@@ -2493,6 +2497,23 @@ router.post(
       );
 
     try {
+      if (isOrganizationCostLimiterEnabled() && req.organizationId && req.userId) {
+        try {
+          await enforceOrganizationCostLimit(req.organizationId, req.userId);
+        } catch (budgetError: any) {
+          if (budgetError?.code !== 'AI_BUDGET_EXHAUSTED') throw budgetError;
+          res.write(
+            `data: ${JSON.stringify({
+              error: budgetError.message,
+              code: budgetError.code,
+              errorCode: budgetError.code,
+              budgetStatus: budgetError.budgetStatus,
+            })}\n\n`
+          );
+          res.write('data: [DONE]\n\n');
+          return res.end();
+        }
+      }
       // --------------------------------------------------------
       // Fast-fail when no LLM provider is configured (dev UX)
       // --------------------------------------------------------

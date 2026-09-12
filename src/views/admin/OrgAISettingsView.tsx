@@ -45,6 +45,7 @@ import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { formatListNumber } from '../../utils/listDateFormat';
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
+type BudgetSnapshot = { limit: number; current: number; remaining: number; percentUsed: number };
 
 const normalizeOrgAISettings = (
   organizationId: string,
@@ -244,6 +245,7 @@ export const OrgAISettingsView: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [budgetSnapshot, setBudgetSnapshot] = useState<BudgetSnapshot | null>(null);
   const organizationId = currentOrganization?.id;
 
   const loadSettings = useCallback(async () => {
@@ -255,8 +257,15 @@ export const OrgAISettingsView: React.FC = () => {
     setLoading(true);
     try {
       setLoadError(null);
-      const data = await AdminApi.getOrganizationAISettings(organizationId);
+      const [data, budgetResponse] = await Promise.all([
+        AdminApi.getOrganizationAISettings(organizationId),
+        AdminApi.getOrganizationAIBudgetStats(organizationId),
+      ]);
       setSettings(normalizeOrgAISettings(organizationId, (data as Partial<OrgAISettings>) || null));
+      const budgets = (budgetResponse as any)?.budgets || (budgetResponse as any)?.data?.budgets || [];
+      setBudgetSnapshot(
+        budgets.find((budget: any) => budget.type === 'cost' && budget.period === 'monthly') || null
+      );
       setHasChanges(false);
     } catch (error) {
       const message = normalizeApiErrorMessage(
@@ -693,6 +702,25 @@ export const OrgAISettingsView: React.FC = () => {
           {/* Limits & Budget Tab */}
           {activeTab === 'limits' && settings && (
             <>
+              <SettingsCard
+                title={t('admin.aiControlCenter.orgAISettings.currentUsage.title', 'Current AI Cost Usage')}
+                description={t(
+                  'admin.aiControlCenter.orgAISettings.currentUsage.description',
+                  'Authoritative monthly usage for this organization'
+                )}
+                icon={DollarSign}
+                iconColor="text-emerald-400"
+              >
+                {budgetSnapshot ? (
+                  <div className="grid grid-cols-3 gap-4" data-testid="organization-ai-budget-usage">
+                    <div><div className="text-xs text-c-text-muted">Used</div><div className="text-xl font-semibold text-c-text">${budgetSnapshot.current.toFixed(2)}</div></div>
+                    <div><div className="text-xs text-c-text-muted">Monthly limit</div><div className="text-xl font-semibold text-c-text">${budgetSnapshot.limit.toFixed(2)}</div></div>
+                    <div><div className="text-xs text-c-text-muted">Remaining</div><div className="text-xl font-semibold text-c-text">${budgetSnapshot.remaining.toFixed(2)}</div></div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-c-text-muted">No active monthly AI cost budget.</p>
+                )}
+              </SettingsCard>
               <SettingsCard
                 title={t('admin.aiControlCenter.orgAISettings.usageLimits.title', 'Usage Limits')}
                 description={t(

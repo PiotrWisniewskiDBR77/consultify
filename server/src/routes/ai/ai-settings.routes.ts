@@ -13,6 +13,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import aiBudgetService from '../../services/aiBudgetService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
@@ -306,6 +307,22 @@ router.get(
       });
       return;
     }
+  })
+);
+
+router.get(
+  '/org/:orgId/budget-usage',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const normalizedRole = String(req.user?.role || '').trim().toLowerCase();
+    const userOrgId = req.user?.organizationId || req.user?.organization_id;
+    const allowed =
+      normalizedRole === 'superadmin' ||
+      normalizedRole === 'super_admin' ||
+      (userOrgId === orgId && ['owner', 'admin', 'administrator'].includes(normalizedRole));
+    if (!allowed) return res.status(403).json({ error: 'Admin access required' });
+    return res.json(await aiBudgetService.getUsageStats(orgId, {}));
   })
 );
 

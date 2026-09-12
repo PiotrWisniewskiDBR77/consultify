@@ -125,6 +125,13 @@ export const AdminApi = {
     return handleResponse(res, 'Failed to fetch organization AI settings');
   },
 
+  getOrganizationAIBudgetStats: async (organizationId: string): Promise<unknown> => {
+    const res = await fetchWithRetry(`${API_URL}/ai-settings/org/${organizationId}/budget-usage`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organization AI budget usage');
+  },
+
   updateOrganizationAISettings: async (
     organizationId: string,
     settings: Record<string, unknown>
