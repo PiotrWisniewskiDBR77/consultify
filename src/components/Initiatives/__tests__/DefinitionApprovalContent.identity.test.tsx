@@ -57,14 +57,14 @@ describe('IE00 delayed document identity', () => {
       b.resolve({ initiativeVersion: 5, cards: [card('B content')] });
     });
     await waitFor(() =>
-      expect(screen.getByRole('textbox', { name: 'Expected outcome', exact: true })).toHaveValue(
+      expect(screen.getByRole('textbox', { name: 'Expected outcome' })).toHaveValue(
         'B content'
       )
     );
     await act(async () => {
       a.resolve({ initiativeVersion: 5, cards: [card('A content')] });
     });
-    expect(screen.getByRole('textbox', { name: 'Expected outcome', exact: true })).toHaveValue(
+    expect(screen.getByRole('textbox', { name: 'Expected outcome' })).toHaveValue(
       'B content'
     );
     fireEvent.click(screen.getByRole('button', { name: 'Save card and request review' }));

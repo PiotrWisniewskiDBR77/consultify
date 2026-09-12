@@ -923,12 +923,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
         );
         if (typed) {
           const read = await readDefinitionApproval(typed.initiativeId!);
-          if (read.decision?.decisionId !== typed.nativeDecisionId)
+          const decision = read.decision;
+          if (!decision || decision.decisionId !== typed.nativeDecisionId)
             throw new Error('Decision identity mismatch');
           setPreviewDecision({
             ...typed,
-            status: read.decision.status,
-            rationale: read.decision.rationale,
+            status: decision.status,
+            rationale: decision.rationale,
           } as DecisionPreviewData);
           setPreviewBrief(null);
           return;
