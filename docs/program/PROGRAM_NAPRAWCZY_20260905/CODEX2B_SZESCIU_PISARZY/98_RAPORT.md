@@ -1,6 +1,6 @@
 # CODEX2B — raport wykonania
 
-Stan: PARTIAL — pięć rodzin zaimplementowanych lokalnie, move STOP/PENDING decyzji o rodowodzie i dostępie. Pierwsze trzy rodziny odebrane niezależnie na 8322686a15. Gate-roles i staffing-plans czekają na końcowy review tego checkpointu. Flagi nadal domyślnie OFF; brak deploy/push.
+Stan: PARTIAL — pięć rodzin zaimplementowanych lokalnie, move STOP/PENDING decyzji o rodowodzie i dostępie. Pierwsze trzy rodziny odebrane niezależnie na 8322686a15. Końcowy niezależny review delivery_audit: ACCEPT na kodzie 2f70a7387939c1b0c6ababc4f4332a52a9e05b93 w uzgodnionym zakresie pięciu rodzin i lokalnych poprawek security. Flagi nadal domyślnie OFF; brak deploy/push.
 
 ## 0. Metryka
 
@@ -232,7 +232,7 @@ bramek E3 lub globalnego middleware.
 
 ## 11. TWIERDZENIA NIEZWERYFIKOWANE
 
-Nie zmierzono staging/demo/produkcji ani przeglądarki/i18nrender. Nie zmierzono równoczesnego retry dwóch procesów ani pełnego korpusu testowego. Move nie ma implementacji; gate/staffing wymagają końcowego niezależnego review. Dowody dotyczą lokalnego ApiGateway/JWT/Postgres, nie gotowości uruchomienia produktu.
+Nie zmierzono staging/demo/produkcji ani przeglądarki/i18nrender. Nie zmierzono równoczesnego retry dwóch procesów ani pełnego korpusu testowego. Move nie ma implementacji; gate/staffing odebrane niezależnie na 2f70a73879. Dowody dotyczą lokalnego ApiGateway/JWT/Postgres, nie gotowości uruchomienia produktu.
 
 ## 12. DO DECYZJI WŁAŚCICIELA
 
@@ -275,3 +275,8 @@ Review 5ba24436d7 wskazał, że sam historyczny payload roli i tombstone planu n
 Nowa metoda lockStaffingParentScope czyta plan i inicjatywę w organizacji z FOR UPDATE. Dla role/capacity writeStaffing wykonuje tę walidację przed executeMaterialCommand, współdzieląc tę samą transakcję przez adapter UnitOfWork. Blokada trwa przez odczyt receipt i ewentualny zapis, nie jest rozdzielonym preflight. Istniejący writer ponownie chroni projekcję; model historii i istniejący materialCommand niezmienione. Po zmianie pełny staffing16 ponownie GREEN (`staffing-final-after-replay.json`) oraz backend tsc0. Wcześniejsze 3 mutationpary staffing dotyczą checkpointu ef0898f43d; dodatkową granicę pokrywa real RED2→GREEN2, nie deklarujemy ponownego wykonania starych mutacji po tej zmianie.
 
 Łączny dodatni dowód pięciu rodzin i dwóch osobnych regresji: 47 wykonań PASS / 46 unikalnych fullName (jedno powtórzenie to samodzielny test GET gaps). Move pozostaje oddzielnym celowym RED; nie ma nowej decyzji o przenoszeniu dostępu. K7: nadal 5 nowych metod projekcyjnych + dodatkowy read/lock helper, nie szósty writer.
+
+
+### Niezależny odbiór końcowy
+
+Delivery_audit odczytał dokładny kod 2f70a7387939c1b0c6ababc4f4332a52a9e05b93 i wydał ACCEPT dla pięciu rodzin oraz lokalnego security. Potwierdził, że adapter współdzieli scopeTx bez drugiego BEGIN/COMMIT, waliduje parent organization przed receipt i zachowuje guard OFF przed flagą. Sprawdził 16 identycznych fullName mutacji staffing i uczciwy zakres wcześniejszych par, a także RED2→GREEN2 replay. Historia dzieci zaakceptowana zgodnie z decyzją integratora i testem rzeczywistego UI. Brak nowego blockera. Osobnego równoczesnego DELETE/replay runtime proof nie wykonano — blokada transakcyjna jest zweryfikowana źródłowo, nie próbą dwóch równoległych klientów. Ten końcowy commit zmienia wyłącznie raport; kod pozostaje dokładnie odebrany.
