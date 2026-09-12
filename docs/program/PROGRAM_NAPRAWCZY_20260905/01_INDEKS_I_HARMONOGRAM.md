@@ -747,3 +747,12 @@ W05 autor ustalił różnicę revoke-hash jako równoległy evaluate-answers akt
 Root przeczytał niezależny W05_AI_EVALUATION_ACCESS_FINDING.md: org-only authorization przed odczytem/ewaluacją/persist, handler identyczny z865c, source finding potencjalneP1 bez runtime exploita. W05_AI_EVALUATION_EXECUTION_PACKET.md gotowy dla C4 dopiero po finalnym SHA obecnej paczki i oddaniu do review. Naprawa obu endpointów, ponowna kwalifikacja przed persist i readonly open submitted; sześć grup dowodów, zachowana anonimowość/timeout/istniejący lifecycle. Ten sam slot implementacyjny, nie trzeci blok.
 
 Root wychwycił w negative-evidence.json evaluationPending1 oraz evaluate200 po hash-readback. Autor uznał korektę: approve403 i niezmienność w oknie komendy, nie brak wszystkich aktywnych zapisów. Dopisuje final readback po zakończeniu evaluate bez kasowania dowodów. Scope zna ograniczenie. Cel pełnegoMVP ACTIVE; brak integracji WIP/live.
+
+
+## W05 exact-SHA przekazany do niezależnego odbioru — 12.09.2026
+
+Autor ukończył0dedb2345e0278475400e4d97ba3e6225ce51f9e; root zweryfikował commit13files i czysty WT C4. Autor: servertsc0, backend43/43 po mutacjach, front5/7/3, realny UI jeden rekord. Scope dostał priorytet finalnego source/runtime odbioru tego SHA. Resources C4 API4214/Vite5214/PG6455 pozostają przy tym odbiorze; następny autorowy branch AI evaluation nie może zmienić serwowanego source bez uzgodnienia z recenzentem.
+
+Root wykonał git merge-tree --write-tree HEAD8b90eff015 +0dedb2345e: exit0, tree a6d5a98d28f5802225360413b6cb0a35eb7f34f0, brak konfliktów. To wyłącznie preflight obiektów Git; index/working tree produktu i branch nie zostały scalone. Integracja dopiero po niezależnym odbiorze; dotychczasowy typedmock pozostaje do ratchet po merge.
+
+IE00 scope pre-review zgłosił wybór członkostwa multi-org i opóźniony response A→B; autor naprawia te konkretne przypadki wraz z typed guard bulk/doubleclick. Nie rozszerza pierwszego pionu o pozostałe bramki przed checkpointem. Cel pełnegoMVP ACTIVE, brak live/deploy i brak fałszywego końcowego ACCEPT.
