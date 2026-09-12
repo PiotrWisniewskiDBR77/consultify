@@ -8393,6 +8393,7 @@
       "reviewerMode": "Reviewer mode",
       "youAreReviewingAnswersFor": "You are reviewing answers for approval. Use \"Approve\" or \"Send back\" in the action bar.",
       "managerFeedback": "Manager feedback",
+      "aiReviewMissing": "No saved AI review. Use Refresh to run an evaluation.",
       "aiQualityReview": "AI quality review",
       "running": "Running...",
       "refresh": "Refresh",

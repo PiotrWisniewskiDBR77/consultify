@@ -985,11 +985,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             setAssignmentInfo(found || null);
             setAiEvaluation((found as any)?.aiReview || null);
             setAiEvaluationUpdatedAt((found as any)?.aiReviewedAt || null);
-            if (String(found?.status || '').toLowerCase() === 'submitted') {
-              void runAiQualityReview({ silent: true });
-            } else {
-              setAiEvaluationError(null);
-            }
+            // Opening a record adopts its saved review; evaluation requires an explicit action.
+            setAiEvaluationError(null);
           }
 
           if (contextRes && typeof contextRes === 'object') {
@@ -2452,36 +2449,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     },
   ];
 
-  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
-    const overview = (
-      <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
-        {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
-            sent_back / approved / completed) via the canonical EntityStatusChip. */}
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-c-text-muted">
-            {t('interview.workspace.status')}
-          </span>
-          <EntityStatusChip
-            status={lifecycleStatus}
-            label={t(
-              `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
-              lifecycleConfig.label.en
-            )}
-          />
-          <span className="text-xs text-c-text-muted tabular-nums">
-            {completionPercent}% {t('interview.workspace.complete')}
-          </span>
-        </div>
-        {isReviewerMode && (
-          <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
-            <div className="space-y-1">
-              <p>{t('interview.workspace.youAreReviewingAnswersFor')}</p>
-              {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
-            </div>
-          </Callout>
-        )}
-        {managerFeedback}
-        {(aiEvaluation || isAiEvaluating || aiEvaluationError) && (
+  const aiReviewPanel = (aiEvaluation || isAiEvaluating || aiEvaluationError || assignmentStatus === 'submitted') && (
           <Callout
             variant={
               aiEvaluation?.overallVerdict === 'ready_for_approval'
@@ -2560,10 +2528,41 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 )}
               </div>
             ) : (
-              <p>{aiEvaluationError}</p>
+              <p>{aiEvaluationError || t('interview.workspace.aiReviewMissing')}</p>
             )}
           </Callout>
+        );
+
+  const sectionContentById: Readonly<Record<string, NModeSection>> = (() => {
+    const overview = (
+      <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
+        {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
+            sent_back / approved / completed) via the canonical EntityStatusChip. */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-c-text-muted">
+            {t('interview.workspace.status')}
+          </span>
+          <EntityStatusChip
+            status={lifecycleStatus}
+            label={t(
+              `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
+              lifecycleConfig.label.en
+            )}
+          />
+          <span className="text-xs text-c-text-muted tabular-nums">
+            {completionPercent}% {t('interview.workspace.complete')}
+          </span>
+        </div>
+        {isReviewerMode && (
+          <Callout variant="warning" title={t('interview.workspace.reviewerMode')} compact>
+            <div className="space-y-1">
+              <p>{t('interview.workspace.youAreReviewingAnswersFor')}</p>
+              {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
+            </div>
+          </Callout>
         )}
+        {managerFeedback}
+        {aiReviewPanel}
         {showSendBackForm && isReviewerMode && (
           <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
@@ -3556,6 +3555,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           )}
 
           {managerFeedback}
+          {aiReviewPanel}
           <main className="min-h-0 flex-1">
             {totalCount > 0 ? (
               <InterviewSingleQuestionRuntime

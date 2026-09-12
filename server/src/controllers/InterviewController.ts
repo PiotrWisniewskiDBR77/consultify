@@ -11,6 +11,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { AppError } from '../utils/ErrorHandler.js';
+import { authorizeInterviewEvaluation, interviewEvaluationRevision } from '../services/interviewEvaluationAccess.js';
 
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -1250,9 +1252,9 @@ const isAnonymityWallActive = (row: any, viewerUserId: string, ownerField: strin
  * D18-A hard wall — strips every field on an AI review snapshot that could
  * quote or paraphrase a specific respondent's raw answer (feedback text,
  * per-criterion justification). Keeps everything that is a pure number/score
- * (overallScore, overallVerdict, rubric scores, rubricVersion/Criteria) plus
- * session-level recommendations, so the manager still sees the AI-score wall
- * — just never the underlying answer content or per-answer commentary.
+ * (overallScore, overallVerdict, rubric scores, rubricVersion/Criteria).
+ * Model-authored recommendations can also quote private answers and are removed.
+ * The manager retains numeric signals; the respondent retains the full snapshot.
  */
 function redactAiReviewSnapshotForAnonymity(
   aiReview: InterviewAiReviewSnapshot | null | undefined
@@ -1260,6 +1262,8 @@ function redactAiReviewSnapshotForAnonymity(
   if (!aiReview) return aiReview ?? null;
   return {
     ...aiReview,
+    // Free-text recommendations are no safer than per-question feedback.
+    recommendations: [],
     questionEvaluations: (aiReview.questionEvaluations || []).map((qe: any) => ({
       questionId: qe.questionId,
       score: qe.score,
@@ -7387,41 +7391,18 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     const { sessionId } = req.params;
     const { language } = req.body || {};
 
-    // P1-7 — null-safe org predicate so project-less (ad-hoc) sessions can be
-    // evaluated/parsed. The previous inner JOIN on projects excluded them
-    // entirely. Mirror getSummary/createInsight org match.
-    let session: any = null;
-    try {
-      session = await queryHelpers.queryOne(
-        `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
-         LEFT JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ?
-           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
-        [sessionId, user.organizationId, user.organizationId]
-      );
-    } catch {
-      // Backward compatibility for environments still using legacy user_id.
-      session = await queryHelpers.queryOne(
-        `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-         LEFT JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ?
-           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
-        [sessionId, user.organizationId, user.organizationId]
-      );
-    }
-    if (!session) {
-      res.status(404).json({ error: 'Session not found' });
-      return;
-    }
-
-    const questions = await queryHelpers.queryAll(
-      `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
-              status, answer_text, context_note, confidence_score
-       FROM interview_questions
-       WHERE session_id = ? AND organization_id = ?
-       ORDER BY sort_order`,
+    const readQuestions = (lock = false) => queryHelpers.queryAll(
+      `SELECT * FROM interview_questions WHERE session_id = ? AND organization_id = ? ORDER BY sort_order, id${lock ? ' FOR UPDATE' : ''}`,
       [sessionId, user.organizationId]
     );
+    // Short authorization/read snapshot. No transaction or row lock crosses the provider call.
+    const initial = await queryHelpers.withPgTransaction(async () => {
+      const context = await authorizeInterviewEvaluation(user, sessionId, true);
+      const questions = await readQuestions(true);
+      return { context, questions, revision: interviewEvaluationRevision(context, questions) };
+    });
+    const session = { ...initial.context.session, owner_id: initial.context.session.owner_id || initial.context.session.user_id };
+    const questions = initial.questions;
 
     if (!questions || questions.length === 0) {
       res.json({
@@ -7442,40 +7423,22 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     }
 
     const persistSnapshot = async (evaluation: InterviewAiReviewSnapshot) => {
-      try {
-        await ensureInterviewAssignmentAiReviewColumns();
-        const assignment = await queryHelpers.queryOne(
-          `SELECT id FROM interview_assignments WHERE session_id = ? AND organization_id = ? LIMIT 1`,
-          [sessionId, user.organizationId]
-        );
-        if ((assignment as any)?.id) {
+      await queryHelpers.withPgTransaction(async () => {
+        const current = await authorizeInterviewEvaluation(user, sessionId, true);
+        const currentQuestions = await readQuestions(true);
+        if (interviewEvaluationRevision(current, currentQuestions) !== initial.revision)
+          throw new AppError('Interview changed during evaluation', 409, 'INTERVIEW_EVALUATION_STALE');
+        if (current.assignment) {
+          const now = new Date().toISOString();
           await queryHelpers.queryRun(
-            `UPDATE interview_assignments
-             SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
-             WHERE id = ?`,
-            [
-              JSON.stringify(evaluation),
-              new Date().toISOString(),
-              new Date().toISOString(),
-              (assignment as any).id,
-            ]
+            `UPDATE interview_assignments SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+            [JSON.stringify(evaluation), now, now, current.assignment.id, user.organizationId]
           );
         }
-      } catch (persistError) {
-        logger.warn('[evaluateSessionAnswers] Failed to persist AI review snapshot', persistError);
-      }
+      });
     };
 
-    // INT-BVP-001 (2): the server previously awaited evaluateInterviewSessionAnswers
-    // with NO bound — a hung provider hung the HTTP request indefinitely. We now
-    // race it against INTERVIEW_AI_REVIEW_TIMEOUT_MS on top of llmService's own
-    // (now-passed-through) abort timeout, so the response is guaranteed within the
-    // bound even if the provider/mocked call ignores its own timeout. `responded`
-    // guards against a double res.* call if the underlying promise settles after
-    // we've already sent the timeout fallback (Express would throw on a second
-    // response); the loser promise, if it does complete later, only persists the
-    // snapshot for a future read — it never touches interview_questions/answers,
-    // so the user's already-persisted answer is never at risk either way.
+    // Only the winner may persist. A late provider completion has no write continuation.
     let responded = false;
     const timeoutMs = INTERVIEW_AI_REVIEW_TIMEOUT_MS;
     const TIMED_OUT = Symbol('interview-ai-review-timed-out');
@@ -7499,7 +7462,6 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       const winner = await Promise.race([evaluationPromise, timeoutPromise]);
 
       if (winner === TIMED_OUT) {
-        responded = true;
         incrementAiTimeouts();
         logger.warn('[evaluateSessionAnswers] AI review exceeded bound, returning fallback', {
           sessionId,
@@ -7556,6 +7518,7 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       const wallActive = isAnonymityWallActive(session, user.id, 'owner_id');
       res.json(wallActive ? redactAiReviewSnapshotForAnonymity(evaluation) : evaluation);
     } catch (err) {
+      if (err instanceof AppError) throw err;
       if (!responded) {
         logger.error('[evaluateSessionAnswers] AI call failed:', err);
         // Provider configuration/outage is an unavailable dependency, not an
