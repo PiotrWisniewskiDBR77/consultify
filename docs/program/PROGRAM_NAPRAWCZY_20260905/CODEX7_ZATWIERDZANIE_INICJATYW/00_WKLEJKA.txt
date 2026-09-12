@@ -23,15 +23,22 @@ migracje 20262190-20262199, artefakty ~/Developer/codex-wt/codex7-artefakty. NIE
 cx-codex2b-pg (6454), cx-codex4-pg (6455), cx-codex5-pg (6456), cx-codex6-pg (6457),
 cx-codex1/2/3-pg (6451-6453), consultify-pg18 (54418 — tylko SELECT/pg_dump i CREATE DATABASE cx7_*).
 
-★ ZADANIE: dzis nie da sie zatwierdzic inicjatywy („Brakuje aktualnej decyzji GO komitetu", a decyzji
- nie ma jak wystawic). Budujesz mechanike wariantu B: decyzja komitetu jako OSOBNY rekord z wersja;
- zatwierdzenie inicjatywy wymaga AKTUALNEJ decyzji GO; istotna zmiana tresci inicjatywy uniewaznia
- decyzje. Do tego: odmowy z kodem i zrozumialym zdaniem en+pl (naprawa defektu D-1: dzis niepowolany
- dostaje 404 bez powodu i bez jezyka — ma byc 403, jesli rekord jest dla niego widoczny), slad audytu,
- idempotencja, kontrola obcej organizacji, dowod mutacyjny na kazda bramke.
+★ ZADANIE — DWA CELE, W TEJ KOLEJNOSCI (decyzja wlasciciela 12.09: wybor wariantu ceremonii zapada
+ w fali 2, wiec NIE narzucasz wariantu, tylko opracowujesz go i budujesz rdzen wspolny):
+ E0 OPRACOWANIE DO DECYZJI — jedna strona PO POLSKU dla nie-kodera: docs/ssot/ZATWIERDZANIE_INICJATYW_SSOT.md
+    (jak jest dzis w 3 zdaniach bez zargonu i co realnie blokuje zatwierdzenie · trzy warianty A/B/C:
+    co uzytkownik klika, co zostaje w sladzie audytu, co sie dzieje po zmianie tresci po zgodzie ·
+    koszt kazdego w dniach · rekomendacja z jednym powodem · pytanie „A / B / C" i nic wiecej).
+ E1+ RDZEN WSPOLNY dla wariantow B i C, za flaga ENABLE_INITIATIVE_APPROVAL_V2 domyslnie OFF:
+    decyzja komitetu jako OSOBNY rekord z wersja i uzasadnieniem · zatwierdzenie inicjatywy wymaga
+    AKTUALNEJ decyzji GO · istotna zmiana tresci uniewaznia decyzje (zdefiniuj liste pol) · odmowy
+    z kodem i zrozumialym zdaniem en+pl (naprawa D-1: dzis niepowolany dostaje 404 bez powodu — ma
+    byc 403, jesli rekord jest dla niego widoczny) · slad audytu · idempotencja · kontrola obcej
+    organizacji · dowod mutacyjny na kazda bramke · parytet OFF bit w bit jak dzis, z testem.
+    CEREMONIA (ilu ludzi, etapy, kworum) ma byc PARAMETREM — wariant C ma sie dac wlaczyc konfiguracja,
+    nie przebudowa modulu.
  KROK 0 OBOWIAZKOWY: zmierz, co juz istnieje (trasa gates/definition/decisions, bramka initiative.review,
  lejek initiativeReadinessCheckLabel) — NIE buduj drugiego magazynu decyzji obok istniejacego.
- Flaga ENABLE_INITIATIVE_APPROVAL_V2 domyslnie OFF; przy OFF zachowanie bit w bit jak dzis (z testem).
 
 ★ ZAKAZY: nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji · nie projektujesz nowych
  ekranow, paneli ani kolorow (podpinasz ISTNIEJACY przycisk „Zatwierdz inicjatywe"; brak miejsca na

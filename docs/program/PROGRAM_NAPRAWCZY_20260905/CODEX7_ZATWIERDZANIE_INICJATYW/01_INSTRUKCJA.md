@@ -1,6 +1,6 @@
 ---
 doc_id: codex7-zatwierdzanie-inicjatyw
-status: WYDANY (wydać 13.09, po odbiorze bloku 5)
+status: WYDANY 12.09 (decyzja właściciela: wydać od razu; wariant ceremonii wybiera właściciel w fali 2)
 truth_type: codex-block-instruction
 established: 2026-09-12
 marker: 45c07b024c
@@ -14,13 +14,21 @@ kończy się komunikatem „Brakuje aktualnej decyzji GO komitetu", a samej decy
 z interfejsu. Właściciel widzi to przy każdym przejściu i to jest największa dziura w łańcuchu
 „sygnał → wartość". Ten blok buduje **mechanikę** tej decyzji, za flagą domyślnie wyłączoną.
 
-**Wariant wiążący (rekomendacja CTO, zatwierdzana przez właściciela literą przy wydaniu bloku — jeśli
-decyzji nie ma, budujesz wariant B):**
-**B — decyzja komitetu jako osobny rekord z wersją.** Komitet wystawia decyzję GO (albo zwrot)
-powiązaną z inicjatywą i z wersją jej zawartości; zatwierdzenie inicjatywy wymaga **aktualnej**
-decyzji GO, czyli takiej, której wersja odpowiada bieżącej wersji inicjatywy. Zmiana istotnej treści
-inicjatywy po decyzji **unieważnia** decyzję i wymaga nowej. (Wariant A = zatwierdzenie jednym kliknięciem
-bez rekordu decyzji — odrzucony, bo znika ślad audytu. Wariant C = pełny obieg wieloosobowy — za duży na teraz.)
+**Decyzja właściciela 12.09: wybór wariantu ceremonii zapada w fali 2, nie teraz.** Dlatego ten blok
+ma dwa cele, w tej kolejności: (1) **opracować** rzecz do decyzji — zmierzyć stan, opisać trzy warianty
+z konsekwencjami i dać właścicielowi jedną stronę do wyboru; (2) zbudować **rdzeń wspólny** dla wariantów
+B i C, tak żeby późniejszy wybór był ustawieniem, a nie przepisywaniem modułu.
+
+Warianty (nazwy używane w całym dokumencie):
+- **A** — zatwierdzenie jednym kliknięciem, bez rekordu decyzji. Tani, ale znika ślad audytu.
+- **B** — decyzja komitetu jako **osobny rekord z wersją**: zatwierdzenie wymaga aktualnej decyzji GO,
+  a istotna zmiana treści inicjatywy unieważnia decyzję.
+- **C** — pełny obieg wieloosobowy: kilku opiniujących, kworum, etapy.
+
+**Rdzeń wspólny dla B i C** (to budujesz): rekord decyzji z wersją i uzasadnieniem, sprawdzenie
+aktualności przy zatwierdzaniu, unieważnianie po istotnej zmianie, odmowy z kodem i komunikatem,
+ślad audytu. **Ceremonia** (ilu ludzi, jakie etapy, czy kworum) ma być **parametrem**, nie wszytym
+zachowaniem — wariant C musi dać się włączyć konfiguracją, a nie przebudową.
 
 ## §0 BEZPIECZNIKI
 
@@ -48,7 +56,16 @@ Pomiar z 12.09 (do potwierdzenia własnym grepem — może być nieaktualny):
 jest kompletniejsza, niż tu napisano — tym lepiej, opisz to i **nie buduj drugiej obok istniejącej**.
 Najgorszy możliwy wynik tego bloku to drugi magazyn decyzji obok pierwszego.
 
-## §2 DEFINICJA UKOŃCZENIA
+## §2 ETAP 0 — OPRACOWANIE DO DECYZJI WŁAŚCICIELA (robisz to PIERWSZE)
+
+Jedna strona, po polsku, dla nie-kodera: `docs/ssot/ZATWIERDZANIE_INICJATYW_SSOT.md`.
+Zawiera: (a) jak to działa dziś, w trzech zdaniach i bez żargonu, z tym, co realnie blokuje
+zatwierdzenie; (b) trzy warianty A/B/C — co użytkownik klika w każdym, co zostaje w śladzie audytu,
+co się dzieje po zmianie treści inicjatywy po zgodzie; (c) koszt każdego wariantu w dniach pracy;
+(d) rekomendacja z jednym powodem; (e) pytanie do właściciela w formie „A / B / C" i nic więcej.
+Bez tabel z nazwami plików i bez kodu — to strona dla właściciela, nie dla programisty.
+
+## §3 DEFINICJA UKOŃCZENIA
 
 1. **Wystawienie decyzji.** Osoba z uprawnieniem `initiative.review` wystawia decyzję GO albo zwrot
    z uzasadnieniem, przez realny ApiGateway; decyzja zapisuje się z wersją inicjatywy, autorem i czasem;
@@ -74,14 +91,14 @@ Najgorszy możliwy wynik tego bloku to drugi magazyn decyzji obok pierwszego.
    idempotencja, kontrola obcej organizacji (odmowa + wiersz nietknięty), **dowód mutacyjny** na każdą
    bramkę uprawnień.
 
-## §3 POZA ZAKRESEM
+## §4 POZA ZAKRESEM
 
 Nowe ekrany i wygląd · zmiana słowników statusów inicjatyw w innych modułach (to osobny program) ·
 magazyn kanoniczny inicjatyw (blok 2b) · Finanse · migracje niszczące (tylko addytywne, z zakresu §0).
 
-## §4 RAPORT
+## §5 RAPORT
 
 `docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX7_ZATWIERDZANIE_INICJATYW/98_RAPORT.md`:
 stanowisko · KROK 0 (co z §1 potwierdzone, co obalone, `plik:linia`) · model danych decyzji
-(tabela, kolumny, migracja) · definicja „istotnej zmiany" · per punkt §2 dowód · parytet OFF ·
+(tabela, kolumny, migracja) · definicja „istotnej zmiany" · per punkt §3 dowód · parytet OFF ·
 testy RED→GREEN · SHA per etap · STOP-y · **czego nie sprawdziłeś**.

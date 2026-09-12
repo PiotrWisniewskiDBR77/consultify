@@ -9,7 +9,7 @@ baza: origin/integracja/20260911
 
 # CODEX 6 — GOTOWOŚĆ PILOTAŻU (pojemnik 2)
 
-Za dwa dni na demo wchodzi czworo ludzi z pierwszej linii kontaktu z klientem: Tomasz Jankowski,
+Za dwa dni na **staging** (decyzja właściciela 12.09, zmiana wobec 06.09) wchodzi czworo ludzi z pierwszej linii kontaktu z klientem: Tomasz Jankowski,
 Katarzyna Marszałkiewicz, Irina Lebedjuk, Justyna Laskowska. Mają **sami** przejść drogę od pustej
 organizacji do pierwszego wyniku i zgłosić, co ich zatrzymało. Ten blok usuwa to, co zatrzyma ich
 na pewno. Kryteria pochodzą z `docs/program/TRZY_POJEMNIKI_PRACY_20260906.md` (pojemnik 2, punkty
