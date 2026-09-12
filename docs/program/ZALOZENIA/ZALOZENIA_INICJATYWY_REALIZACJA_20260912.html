@@ -1,0 +1,238 @@
+<title>Założenia — Inicjatywy i Realizacja</title>
+<style>
+:root{--tlo:#fbfaf8;--tekst:#1c1a17;--szary:#6b6660;--linia:#e2ddd6;--akcent:#1f4f7a;--zolty:#fff8e6;--zielony:#eef6ee;--czerwony:#fdf0ee}
+*{box-sizing:border-box}
+body{margin:0;background:var(--tlo);color:var(--tekst);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.strona{max-width:920px;margin:0 auto;padding:40px 28px 80px}
+h1{font-size:30px;line-height:1.2;margin:0 0 6px}
+h2{font-size:22px;margin:44px 0 4px;padding-top:18px;border-top:2px solid var(--tekst)}
+h3{font-size:18px;margin:28px 0 6px;color:var(--akcent)}
+p{margin:8px 0}
+.lead{color:var(--szary);font-size:15px;margin-bottom:28px}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--linia)}
+th{background:#f3f0ec;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+td.stan{white-space:nowrap;font-weight:600;font-size:13px}
+.dziala{color:#2c6b39}.czesc{color:#8a6100}.brak{color:#96301f}
+.zal{background:var(--zielony);border-left:4px solid #2c6b39;padding:10px 14px;margin:10px 0}
+.pyt{background:var(--zolty);border-left:4px solid #b98900;padding:10px 14px;margin:10px 0}
+.uwaga{background:var(--czerwony);border-left:4px solid #96301f;padding:10px 14px;margin:10px 0}
+.zal b,.pyt b,.uwaga b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;color:var(--szary)}
+ol,ul{margin:6px 0 6px 22px;padding:0}li{margin:4px 0}
+.linia{border:none;border-top:1px solid var(--linia);margin:34px 0}
+.miejsce{border:1px dashed #b9b2a8;border-radius:6px;min-height:74px;padding:8px 12px;margin:8px 0;color:#b0a89d;font-size:13px}
+@media print{body{background:#fff}.strona{padding:0}h2{page-break-before:auto}.miejsce{min-height:60px}}
+</style>
+<div class="strona">
+<h1>Inicjatywy i Realizacja — założenia wszystkich funkcji</h1>
+<p class="lead">Dokument roboczy na lot, 12.09.2026. Kolumna „jak jest dziś" to stan zmierzony na żywym
+stagingu i w kodzie, nie deklaracja z dokumentacji. Pod każdą grupą funkcji jest założenie robocze
+(moja propozycja) i pytania, na które tylko Ty możesz odpowiedzieć. Pisz wprost w ramkach — po locie
+zamienię Twoje odpowiedzi na zlecenia dla Codexa.</p>
+
+<h2>Część I · INICJATYWY</h2>
+<p>Moduł odpowiada na pytanie „co chcemy zrobić i czy się to spina". Ma dziś osiem zakładek,
+ośmiostopniowy cykl życia i kartę inicjatywy złożoną z kilkunastu sekcji.</p>
+
+<h3>1. Lista i zakładki portfela</h3>
+<table><tr><th>Funkcja</th><th>Po co jest</th><th>Jak jest dziś</th></tr>
+<tr><td><b>Inicjatywy</b> (lista główna)</td><td>wszystkie inicjatywy organizacji, filtry, podgląd boczny, menu przy wierszu</td><td class="stan dziala">działa</td></tr>
+<tr><td><b>Portfolio</b></td><td>widok zbiorczy: co jest w grze, ile tego jest, jak się rozkłada</td><td class="stan czesc">działa, wartość zależy od danych</td></tr>
+<tr><td><b>Kandydaci</b></td><td>pomysły i propozycje przed przekształceniem w inicjatywę</td><td class="stan czesc">jest, słabo powiązana z Ocenami</td></tr>
+<tr><td><b>Analiza</b></td><td>pięć wymiarów inicjatywy: logika, wykonalność, harmonogram, zasoby, kompletność</td><td class="stan czesc">powierzchnia jest, ocena częściowo AI</td></tr>
+<tr><td><b>Plan</b></td><td>układanie inicjatyw w czasie: teraz / następne / później, konflikty, zależności</td><td class="stan czesc">warsztat planu i generator istnieją</td></tr>
+<tr><td><b>Obciążenie</b></td><td>czy mamy ludzi na to, co zaplanowaliśmy</td><td class="stan czesc">liczy, gdy są dane o zespole</td></tr>
+<tr><td><b>Zdrowie portfela</b></td><td>sygnały ostrzegawcze na poziomie całości</td><td class="stan czesc">wskaźniki są, progi nieustalone</td></tr>
+<tr><td><b>Obserwowalność</b></td><td>co się dzieje z inicjatywami w czasie, ślad zdarzeń</td><td class="stan czesc">techniczna, mało czytelna dla klienta</td></tr></table>
+<div class="zal"><b>Założenie robocze</b>Dla klienta liczą się trzy zakładki: <b>Inicjatywy</b>, <b>Plan</b>, <b>Obciążenie</b>.
+Portfolio i Zdrowie portfela to jeden ekran dla sponsora, nie dwa. Kandydaci powinni być wejściem
+z Ocen i Wywiadu, a nie osobną listą do ręcznego wypełniania. Obserwowalność to narzędzie wewnętrzne —
+schowałbym ją przed klientem.</div>
+<div class="pyt"><b>Pytania</b>
+<ol><li>Które z ośmiu zakładek widzi klient w pierwszym tygodniu, a które chowamy do fali 2?</li>
+<li>Czy „Kandydaci" mają się zasilać automatycznie z Ocen i Wywiadu, czy zostaje ręczne dodawanie?</li>
+<li>Czy sponsor ma swój osobny widok, czy wystarczy mu Portfolio z filtrem?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>2. Cykl życia inicjatywy (statusy)</h3>
+<p>Dziś w produkcie żyje osiem statusów głównych: <b>Propozycja → Szkic → Do zatwierdzenia →
+Zatwierdzona → W realizacji → Zamknięta</b>, plus <b>Odrzucona</b> i <b>Wstrzymana</b>. Obok nich
+istnieje druga, dłuższa ścieżka używana przez silnik planowania (oczekuje na przegląd, przyjęta do
+planowania, gotowa do zaplanowania, umieszczona w harmonogramie, zablokowana, anulowana, zarchiwizowana).</p>
+<div class="uwaga"><b>To jest realny problem</b>Dwa słowniki statusów opisują tę samą rzecz. Użytkownik widzi
+„Do zatwierdzenia", a silnik myśli „oczekuje na przegląd". Stąd brały się rozjazdy typu „lista pokazuje
+Zatwierdzona, a inicjatywa czeka". Zgłaszałeś to już 6 września jako „pełne przepracowanie statusów".</div>
+<div class="zal"><b>Założenie robocze</b>Jeden słownik, sześć statusów widocznych dla człowieka, reszta jako
+stan techniczny pod spodem i nigdy na ekranie. Każde przejście ma jeden warunek wejścia i jedną osobę,
+która je wykonuje.</div>
+<div class="pyt"><b>Pytania</b>
+<ol><li>Sześć statusów wystarczy, czy chcesz rozdzielić „Szkic" i „W opracowaniu"?</li>
+<li>Kto przesuwa inicjatywę z „Szkic" do „Do zatwierdzenia" — autor czy kierownik?</li>
+<li>Czy „Wstrzymana" to status, czy flaga nakładana na „W realizacji"? Dziś jest po trochu jednym i drugim.</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>3. Karta inicjatywy — sekcje</h3>
+<table><tr><th>Sekcja</th><th>Po co</th><th>Jak jest dziś</th></tr>
+<tr><td><b>Właściwości</b> (status, priorytet, właściciel)</td><td>tożsamość i odpowiedzialność</td><td class="stan dziala">zapisuje się, zostaje po odświeżeniu</td></tr>
+<tr><td><b>Opis problemu i stan docelowy</b></td><td>po co to robimy, kryteria sukcesu</td><td class="stan dziala">działa</td></tr>
+<tr><td><b>Zespół inicjatywy</b></td><td>kto pracuje, w jakiej roli</td><td class="stan czesc">jest, wymaga danych o stanowiskach</td></tr>
+<tr><td><b>Zadania i kamienie milowe</b></td><td>rozbicie na pracę</td><td class="stan dziala">działa, z podpowiedziami AI</td></tr>
+<tr><td><b>Harmonogram</b> (oś czasu, planer)</td><td>kiedy, w jakiej kolejności</td><td class="stan czesc">planer jest rozbudowany, mało sprawdzony</td></tr>
+<tr><td><b>Zależności</b></td><td>co musi być wcześniej</td><td class="stan czesc">jest, z sugestiami AI</td></tr>
+<tr><td><b>Ryzyka (RAID)</b></td><td>ryzyka, założenia, problemy, zależności</td><td class="stan dziala">pełny cykl działa, z blokadą duplikatu</td></tr>
+<tr><td><b>Decyzje</b></td><td>co zostało postanowione i przez kogo</td><td class="stan czesc">rejestr jest, wystawianie decyzji kuleje</td></tr>
+<tr><td><b>Gotowość bramki</b></td><td>czego brakuje, żeby pójść dalej</td><td class="stan dziala">liczy i mówi po polsku, czego brak</td></tr>
+<tr><td><b>Zasoby</b></td><td>ilu ludzi i o jakich kompetencjach potrzeba</td><td class="stan czesc">liczy, gdy wpisane zapotrzebowanie</td></tr>
+<tr><td><b>Wskaźniki (KPI)</b></td><td>po czym poznamy efekt</td><td class="stan czesc">jest, słabo spięte z Wynikami</td></tr>
+<tr><td><b>Zamknięcie</b></td><td>wniosek o zamknięcie i rozliczenie</td><td class="stan czesc">powierzchnia jest, przepływ niesprawdzony</td></tr>
+<tr><td><b>Kreator karty inicjatywy</b></td><td>szybkie założenie porządnej inicjatywy</td><td class="stan czesc">otwiera się; generowania AI nie potwierdziłem</td></tr>
+<tr><td><b>Widok dokumentu</b></td><td>inicjatywa jako czytelny dokument do wysłania</td><td class="stan czesc">jest, nie przeszła odbioru</td></tr></table>
+<div class="uwaga"><b>Znane ograniczenie</b>Inicjatywa założona z formularza zapisuje tytuł i opis, ale
+pozostałe pola karty są zablokowane z komunikatem o „nowym rejestrze". To celowa blokada zamiast
+cichego gubienia danych; znika, gdy Codex domknie jeden magazyn danych (blok pracuje dziś).</div>
+<div class="zal"><b>Założenie robocze</b>Karta ma dwa poziomy: <b>krótki</b> (właściciel, problem, stan docelowy,
+zadania, ryzyka, gotowość) dla 90% pracy i <b>pełny</b> (harmonogram, zależności, zasoby, wskaźniki,
+decyzje, zamknięcie) rozwijany świadomie. Dziś wszystko jest na jednym poziomie i przytłacza.</div>
+<div class="pyt"><b>Pytania</b>
+<ol><li>Które sekcje są obowiązkowe, żeby inicjatywa mogła iść do zatwierdzenia?</li>
+<li>Czy wskaźniki inicjatywy mają być te same co w module Wyniki, czy osobne?</li>
+<li>Co ma się stać po zamknięciu: archiwum, raport zamknięcia, wpis do bazy wiedzy?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>4. Zatwierdzanie i bramy</h3>
+<p>Dziś: duży przycisk „Zatwierdź inicjatywę" istnieje, silnik gotowości działa i po polsku mówi, czego
+brakuje, ale <b>zatwierdzić się nie da</b>, bo nie ma jak wystawić decyzji komitetu. To jedyna rzecz,
+którą zobaczysz jako twardo zablokowaną przy przejściu. Codex dostał dziś blok, który to opracuje
+i zbuduje rdzeń, a wybór ceremonii zostawiłem Tobie na falę 2 — zgodnie z Twoją decyzją.</p>
+<div class="zal"><b>Założenie robocze</b>Decyzja komitetu to osobny wpis z uzasadnieniem, powiązany z wersją
+inicjatywy. Zmiana istotnej treści po zgodzie unieważnia zgodę. Bramy (etapy) korzystają z tego samego
+mechanizmu, więc jest jeden sposób wydawania zgód, nie dwa.</div>
+<div class="pyt"><b>Pytania</b>
+<ol><li>Ile osób wydaje zgodę: jedna (sponsor), czy komitet z kworum?</li>
+<li>Co jest „istotną zmianą", która unieważnia zgodę: budżet, zakres, termin, właściciel?</li>
+<li>Czy zgoda ma termin ważności, np. 90 dni?</li>
+<li>Czy odrzucenie wraca do szkicu z uzasadnieniem, czy kończy inicjatywę?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>5. Plan, obciążenie i scenariusze</h3>
+<p>Istnieje warsztat planu ze scenariuszami, generator planu, doradca obciążenia i filtry ograniczeń:
+krytyczne, nieznana dostępność, brak zapotrzebowania, luki kompetencyjne, obciążenie kadry zarządzającej,
+limit budżetowy. To najbogatsza i najmniej sprawdzona część modułu.</p>
+<div class="zal"><b>Założenie robocze</b>W MVP wystarczy jedno pytanie: „czy to, co zaplanowaliśmy na najbliższy
+kwartał, mieści się w ludziach, których mamy". Scenariusze i porównania wersji planu to fala 2.</div>
+<div class="pyt"><b>Pytania</b>
+<ol><li>Planujemy w kwartałach, miesiącach czy w oknach „teraz / następne / później"?</li>
+<li>Obciążenie liczymy w osobach, godzinach czy procentach etatu?</li>
+<li>Kto ma prawo opublikować plan i czy publikacja go zamraża?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<hr class="linia">
+<h2>Część II · REALIZACJA</h2>
+<p>Moduł odpowiada na pytanie „czy to, co zatwierdziliśmy, naprawdę się dzieje". Sześć zakładek:
+Realizacje, Praca, Zasoby, Sterowanie, Raporty, Decyzje i ryzyka.</p>
+
+<h3>6. Realizacje (lista wdrożeń)</h3>
+<p>Lista tego, co jest w realizacji, z filtrami: aktywne, zagrożone, krytyczne, zablokowana praca,
+brak punktu odniesienia, brak prognozy, zamykanie, ostatnio dostarczone, po terminie.</p>
+<div class="zal"><b>Założenie robocze</b>Jedna inicjatywa zatwierdzona = jedna realizacja, zakładana automatycznie,
+bez drugiego ręcznego wpisywania. Dziś ten przeskok jest niejasny i to on gubi ludzi.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Czy realizacja powstaje sama po zatwierdzeniu, czy ktoś ją świadomie otwiera?</li>
+<li>Czy jedna inicjatywa może mieć kilka realizacji (np. per lokalizacja)?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>7. Praca (zadania)</h3>
+<table><tr><th>Funkcja</th><th>Jak jest dziś</th></tr>
+<tr><td>Lista zadań z filtrami: zablokowane, po terminie, wkrótce termin, brak właściciela, brak dowodu wykonania, oczekuje na zależność, moje, wg zespołu</td><td class="stan dziala">działa</td></tr>
+<tr><td>Ścieżka statusu: Do zaplanowania → Do zrobienia → W toku → W przeglądzie → Wykonane (plus Zablokowane, Wstrzymane, Anulowane)</td><td class="stan dziala">przechodzi i zostaje po odświeżeniu</td></tr>
+<tr><td>Menu przy zadaniu: otwórz, przypisz osobę, ustaw status, zmień termin, podgląd, usuń</td><td class="stan dziala">sześć pozycji, działają</td></tr>
+<tr><td>Karta zadania z opisem, załącznikami i powiązaniami</td><td class="stan czesc">otwiera się; zapis powiązań niesprawdzony</td></tr>
+<tr><td>Historia zmian zadania</td><td class="stan dziala">dopisana 11.09, zapisuje się w bazie</td></tr>
+<tr><td>Przypisanie osoby do zadania bez projektu</td><td class="stan brak">kończy się błędem serwera — naprawa dziś</td></tr></table>
+<div class="zal"><b>Założenie robocze</b>Zadanie ma mieć zawsze cztery rzeczy: właściciela, termin, status
+i dowód wykonania. Brak któregokolwiek to sygnał na liście, a nie cicha luka.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Czy „dowód wykonania" jest obowiązkowy, żeby zamknąć zadanie?</li>
+<li>Kto może zmienić cudze zadanie: tylko właściciel inicjatywy, czy każdy członek zespołu?</li>
+<li>Czy zadania mają podzadania, czy płaska lista wystarczy?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>8. Zasoby</h3>
+<p>Osoby, role, konflikty, przeciążeni, bez stanowiska, nieprzypisana praca, braki kompetencji,
+niepotwierdzone przypisania, nieznana dostępność, ryzyko kosztowe. Obłożenie liczy się realnie —
+zmierzone wartości to między innymi 46%, 76%, 225%, 341%.</p>
+<div class="uwaga"><b>Uwaga</b>Obłożenie powyżej 200% oznacza, że dane o dostępności ludzi są niepełne albo
+że plan jest nierealny. Dla klienta to wygląda jak błąd aplikacji, nawet gdy liczby są policzone dobrze.</div>
+<div class="zal"><b>Założenie robocze</b>Jeśli brakuje danych o dostępności, ekran ma to powiedzieć wprost
+zamiast pokazywać 341%. Próg alarmu ustalasz Ty, proponuję 110%.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Skąd bierzemy dostępność ludzi: wpis ręczny, etat, kalendarz?</li>
+<li>Od ilu procent obłożenie jest czerwone?</li>
+<li>Czy konsultant z zewnątrz to też „zasób" z kosztem godzinowym?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>9. Sterowanie</h3>
+<p>Najbardziej „konsultingowa" zakładka: wymaga działania, krytyczne, decyzje, harmonogram, zasoby, koszt,
+ryzyko, zależności, adopcja, ryzyko efektu, weryfikacja przeterminowana. Do tego wykrywanie opóźnień,
+kontrola budżetu, wartość zrealizowana i interwencje (zastosowanie zatwierdzonego działania).</p>
+<div class="zal"><b>Założenie robocze</b>To jest miejsce, w którym konsultant zaczyna dzień: lista rzeczy
+wymagających jego decyzji dziś, z jednym kliknięciem do działania. Wszystko inne to tło.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Co trafia do „wymaga działania" i po ilu dniach cisza staje się alarmem?</li>
+<li>Czy interwencja ma być propozycją AI zatwierdzaną przez człowieka, czy tylko ręczna?</li>
+<li>Kto dostaje powiadomienie o odchyleniu: właściciel, sponsor, oboje?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>10. Raporty</h3>
+<p>Tygodniowe, miesięczne, na żądanie, sponsorskie. Stany: wymaga wygenerowania, do przeglądu,
+częściowe lub nieaktualne, opublikowane, nieudane. Jest też osobny raport zarządczy — najbogatsza
+pojedyncza funkcja w całym module.</p>
+<div class="zal"><b>Założenie robocze</b>Raport to produkt sprzedażowy usługi: jeden szablon tygodniowy dla
+zespołu i jeden miesięczny dla sponsora, generowane automatycznie z danych, z miejscem na komentarz
+konsultanta. Eksport do prezentacji i PDF jest w fali 2.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Dwa szablony wystarczą, czy potrzebny trzeci dla zarządu?</li>
+<li>Raport wychodzi sam w piątek, czy zawsze po akceptacji człowieka?</li>
+<li>Czy klient dostaje raport w aplikacji, czy plikiem?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>11. Decyzje i ryzyka</h3>
+<p>Rozstrzygnięcia, ryzyka, do rozstrzygnięcia, po terminie, sygnały. Rejestr decyzji działa,
+rozstrzyganie ma osobne okno.</p>
+<div class="zal"><b>Założenie robocze</b>Jeden rejestr decyzji na organizację, widoczny i z inicjatywy,
+i z realizacji. Decyzja ma zawsze: pytanie, opcje, wybór, uzasadnienie, autora i datę.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Czy decyzja może być „odłożona" z terminem przypomnienia?</li>
+<li>Czy ryzyko zamknięte zostaje w historii, czy znika z listy?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>12. Wdrożenie i zamknięcie (rollout)</h3>
+<p>Śledzenie wskaźników, rejestr ryzyk wdrożenia, lista zamknięcia, runbook przełączenia, dziennik zmian,
+sygnały zmiany (ile osób obejmuje zmiana). To najmniej sprawdzona część modułu.</p>
+<div class="zal"><b>Założenie robocze</b>W MVP zostawiam listę zamknięcia i dziennik zmian; runbook przełączenia
+i sygnały zmiany przenoszę do fali 2, bo bez pilotażu nie wiemy, czy ktokolwiek ich użyje.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Zgoda na przeniesienie runbooka do fali 2?</li>
+<li>Co musi być prawdą, żeby uznać wdrożenie za zamknięte: wskaźnik osiągnięty, czy zgoda sponsora?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<h3>13. Kokpit i widok menedżera</h3>
+<p>Kafle: kolejka działań, zwrot z inwestycji i wpływ finansowy, strumienie prac, wskaźniki, ryzyka,
+najważniejsze ostrzeżenia.</p>
+<div class="zal"><b>Założenie robocze</b>Kokpit to jeden ekran dla szefa: ile inicjatyw, ile zagrożonych,
+ile pieniędzy w grze, co wymaga jego decyzji. Cztery liczby i jedna lista, nie dwanaście kafli.</div>
+<div class="pyt"><b>Pytania</b><ol><li>Które cztery liczby chcesz widzieć jako pierwsze po zalogowaniu?</li>
+<li>Czy menedżer to osobna rola z osobnym widokiem, czy ten sam ekran z filtrem?</li></ol></div>
+<div class="miejsce">Twoje uwagi:</div>
+
+<hr class="linia">
+<h2>Trzy rozstrzygnięcia, które zmieniają najwięcej</h2>
+<ol>
+<li><b>Jeden słownik statusów</b> zamiast dwóch. Bez tego każdy ekran będzie mówił co innego i żadne
+polerowanie tego nie naprawi.</li>
+<li><b>Automatyczne przejście inicjatywa → realizacja</b> po zatwierdzeniu. Dziś to jest przepaść,
+w którą wpada użytkownik i pyta „i co teraz".</li>
+<li><b>Jeden ekran startowy konsultanta</b> — „co wymaga mojej decyzji dziś". Sterowanie i Kokpit
+robią dziś to samo w dwóch miejscach.</li>
+</ol>
+<div class="miejsce">Twoje rozstrzygnięcia:</div>
+
+<h2>Co robię, zanim wylądujesz</h2>
+<p>Codex pracuje nad: jednym magazynem inicjatyw, długiem MVP (dwa błędy serwera, cofanie zamknięcia karty,
+pakiet startowy), gotowością pilotażu, opracowaniem zatwierdzania inicjatyw i pełnymi Finansami.
+Ja odbieram paczki, scalam i wdrażam. Po Twoim powrocie zamieniam odpowiedzi z tego dokumentu
+na kolejne zlecenia.</p>
+</div>
