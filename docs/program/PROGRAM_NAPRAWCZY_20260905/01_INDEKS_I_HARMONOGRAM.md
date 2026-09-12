@@ -706,3 +706,12 @@ Root uruchomił istniejący testDeckBuilder.restoreNoWrite. Najpierw0tests impor
 W17_DECK_BASELINE_REVIEW.md ma konkretny następnyfix i odbiórUI/API/PG. Kolejka zachowujeC6export/budget orazW17, nie zamyka3trudnychscenariuszy anipełnegomianownikaakcji. W05scopereview wykryłmemoizacjęuprawnień i staleJWTrole; autorpoprawiłźródła i meldował39realPASS, dalejrealUI/deeplinkdetail+history oraz finalmutacje. Scope teraz dostępny dofinalnegoodbioru poSHA. IE00 kontynuujeUI. Dwa blokiimplementacyjne pozostająIE00+W05.
 
 C6 dostał dalszyread-only pełnytablecontractJSON (per-tablepublic/v8,nie sameagregaty) i dokładnyexportfixpacket. Braknowejimplementacji/DBmutacji. WszystkieotwartebramkiMVP zachowane, celACTIVE, ownercheckout/live nietknięte.
+
+
+## Kolejne odbiory — 12.09.2026
+
+Root HEAD7b7a1c5175clean na początku tury. C6_EXPORT_FIX_PACKET przeczytany wcałości, C6_EXPORT_PACKET_REVIEW.md wymaga dwóch korekt: writer-first absent/existing race zmutantBEGIN-before-lock oraz niepewne acquireACK wymagające cleanup/discard zamiast powrotudo pool. C6 dostał poprawęread-only, całyeksportpozostajecelem, boundedv8nie zastępujeE4.
+
+Scope dostał rzeczywistyW17readonlyreopen pomiar rootbuilt5290+C8backend4218/PG6459 poidentitycheck, tylko własny syntetycznydeck przezwriter; odczytversion/time/history iPUTbezuseredits. Bez productchanges/restart/live/flagbypass, to weryfikacja a nie trzeciaimplementacja. Wynikpending.
+
+W05 realUI ujawnił sessionreadguard odcinającyquestions/notes/evidence/summary/links dla scopedreviewera. Autor dodaje tylko readgrant zpersistedassignment, bez rozszerzeniaownershipmutations i bezruszaniaanonymouswall. DwaimplementationblocksIE00+W05 nadal aktywne. CelpełnegoMVP zachowanyACTIVE.
