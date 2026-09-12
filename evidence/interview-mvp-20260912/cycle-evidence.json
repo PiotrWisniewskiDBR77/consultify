@@ -1,0 +1,1294 @@
+[
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-01-initial",
+    "readback": [
+      {
+        "status": "in_progress",
+        "session_status": "active",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "stage": "cycle-02-answer-v1",
+    "readback": [
+      {
+        "status": "in_progress",
+        "session_status": "active",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/submit"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-03-submitted",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "failedStage": "manager_return",
+    "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Send Back', exact: true })\u001b[22m\n"
+  },
+  {
+    "stage": "failure-manager_return-respondent",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "stage": "failure-manager_return-manager",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-01-initial",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "failedStage": "manager_return",
+    "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Send back', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"absolute inset-0 bg-black/30 dark:bg-black/50\"></div> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"absolute inset-0 bg-black/30 dark:bg-black/50\"></div> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    26 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"absolute inset-0 bg-black/30 dark:bg-black/50\"></div> from <div class=\"↵            fixed inset-0 z-modal flex items-center justify-center p-4↵            backdrop-blur-sm↵          \">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m  - element was detached from the DOM, retrying\u001b[22m\n\u001b[2m    - waiting for\" http://127.0.0.1:5214/interview?scope=managed&tab=sessions\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:5214/interview?scope=managed&tab=sessions\"\u001b[22m\n"
+  },
+  {
+    "stage": "failure-manager_return-respondent",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "stage": "failure-manager_return-manager",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-01-initial",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": null,
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "PUT",
+    "path": "/api/preferences"
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "stage": "cycle-04-manager-return",
+    "readback": [
+      {
+        "status": "in_progress",
+        "session_status": "active",
+        "sent_back_reason": "Please add the measured transport cost and the observation period.",
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]}]",
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "stage": "cycle-05-manager-list",
+    "readback": [
+      {
+        "status": "in_progress",
+        "session_status": "active",
+        "sent_back_reason": "Please add the measured transport cost and the observation period.",
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]}]",
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-06-feedback",
+    "readback": [
+      {
+        "status": "in_progress",
+        "session_status": "active",
+        "sent_back_reason": "Please add the measured transport cost and the observation period.",
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]}]",
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/submit"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-07-resubmitted",
+    "readback": [
+      {
+        "status": "submitted",
+        "session_status": "submitted",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "stage": "cycle-08-approved",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 200,
+    "method": "POST",
+    "path": "/api/v8/interview/sessions/86371aec-9cf5-4a7e-8546-8c0c682792f1/evaluate-answers"
+  },
+  {
+    "stage": "cycle-09-approved-list",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-10-manager-reload",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-11-respondent-reload",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "status": "PASS_ONE_RECORD",
+    "ids": {
+      "assignment": "6cbeffa7-a324-4f32-96c5-f8dde96dee71",
+      "session": "86371aec-9cf5-4a7e-8546-8c0c682792f1"
+    },
+    "history": [
+      {
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval.",
+        "reason": "submission"
+      },
+      {
+        "answer_text": "Our dispatch team repeatedly misses the agreed shipping cutoff. During August we recorded 12 late departures from 80 planned shipments. This created overtime and additional transport cost. The immediate cause was waiting for final quality approval.",
+        "reason": "send_back"
+      },
+      {
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality.",
+        "reason": "submission"
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "role": "respondent",
+    "http": 428,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "guardReadback": [
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve",
+        "status": 403
+      },
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back",
+        "status": 403
+      },
+      {
+        "path": "/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c",
+        "status": 428
+      }
+    ]
+  },
+  {
+    "failedStage": "final-inspection",
+    "message": "PERMISSION_OR_LOCK_EXPECTATION"
+  },
+  {
+    "stage": "failure-inspection-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "role": "respondent",
+    "http": 409,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "guardReadback": [
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve",
+        "status": 403
+      },
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back",
+        "status": 403
+      },
+      {
+        "path": "/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c",
+        "status": 409
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "failedStage": "final-inspection",
+    "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Assigned', exact: true })\u001b[22m\n"
+  },
+  {
+    "stage": "failure-inspection-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "stage": "failure-inspection-manager",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "role": "respondent",
+    "http": 409,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "guardReadback": [
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve",
+        "status": 403
+      },
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back",
+        "status": 403
+      },
+      {
+        "path": "/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c",
+        "status": 409
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-12-assigned-readback",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "failedStage": "final-inspection",
+    "message": "page.evaluate: TypeError: useAppStore.getState(...).setTheme is not a function\n    at eval (eval at evaluate (:290:30), <anonymous>:1:96)\n    at async <anonymous>:316:30"
+  },
+  {
+    "stage": "failure-inspection-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "stage": "failure-inspection-manager",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "role": "respondent",
+    "http": 409,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "guardReadback": [
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve",
+        "status": 403
+      },
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back",
+        "status": 403
+      },
+      {
+        "path": "/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c",
+        "status": 409
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-12-assigned-readback",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-13-dark-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "failedStage": "final-inspection",
+    "message": "DARK_NOT_APPLIED"
+  },
+  {
+    "stage": "failure-inspection-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "stage": "failure-inspection-manager",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "POST",
+    "path": "/api/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back"
+  },
+  {
+    "role": "respondent",
+    "http": 409,
+    "method": "PATCH",
+    "path": "/api/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c"
+  },
+  {
+    "guardReadback": [
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/approve",
+        "status": 403
+      },
+      {
+        "path": "/v8/interview/assignments/6cbeffa7-a324-4f32-96c5-f8dde96dee71/send-back",
+        "status": 403
+      },
+      {
+        "path": "/interview/questions/b8dd9f10-49b8-44d5-b996-ca4c3e7cd94c",
+        "status": 409
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-12-assigned-readback",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "role": "respondent",
+    "http": 403,
+    "method": "GET",
+    "path": "/api/v8/interview/insights"
+  },
+  {
+    "stage": "cycle-13-dark-respondent",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "role": "manager",
+    "http": 202,
+    "method": "POST",
+    "path": "/api/v10/teresa/voice-event"
+  },
+  {
+    "stage": "cycle-13-dark-manager",
+    "readback": [
+      {
+        "status": "approved",
+        "session_status": "completed",
+        "sent_back_reason": null,
+        "review_decision_memory_json": "[{\"id\":\"irdm_1650eb05-9f39-44e7-8ce7-ed378988b925\",\"action\":\"send_back\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:38.580Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"manager_stricter_than_ai\",\"reason\":\"Please add the measured transport cost and the observation period.\",\"missingItems\":[{\"key\":\"quality_gaps\",\"label\":\"Uzupełnij brakujące odpowiedzi i doprecyzuj kluczowe odpowiedzi.\"}]},{\"id\":\"irdm_a1c6624d-8fae-4e48-86ad-21a70998f276\",\"action\":\"approve\",\"actorId\":\"7dacdc7c-ff58-42c3-8631-7e64655b6f71\",\"actorRole\":\"administrator\",\"createdAt\":\"2026-09-12T20:49:51.689Z\",\"aiOverallVerdict\":\"ready_for_approval\",\"aiOverallScore\":4.6,\"aiWeakAnswerCount\":0,\"alignment\":\"aligned\"}]",
+        "answer_text": "In August 2026, 12 of 80 planned shipments left after the agreed cutoff. We verified transport invoices and found EUR 4800 additional cost for those twelve departures. Dispatch logs identify delayed final quality approval as the common cause. The operations manager will review release times with Quality."
+      }
+    ]
+  },
+  {
+    "status": "PASS_PERMISSION_DARK_READBACK"
+  }
+]

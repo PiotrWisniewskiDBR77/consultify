@@ -1,0 +1,64 @@
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Interview
+Sessions
+Data
+Model
+1
+Manager CX4
+MC
+Inbox
+Sessions
+Assigned
+Templates
+Insights
+Initiatives
+New session
+All
+1
+In progress
+1
+Submitted
+0
+Approved
+0
+Active
+Archive
+Trash
+	
+NAME
+	
+TEMPLATE
+	
+ASSIGNEE
+	
+STATUS
+	
+PROGRESS
+	
+DUE
+	
+SUBMITTED
+	
+
+	
+CX4 Interview MVP one record
+	
+—
+	
+Unassigned
+	
+In Progress
+	
+100%
+	
+—
+	
+—
+	
+Interview sent back for revision.
