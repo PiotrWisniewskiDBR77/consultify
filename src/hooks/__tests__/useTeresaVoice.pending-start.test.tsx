@@ -19,7 +19,7 @@ const deferred = () => {
 let closeBarrier: ReturnType<typeof deferred> | null;
 let closeAudio: ReturnType<typeof vi.fn>;
 let mic: ReturnType<typeof vi.fn>;
-let contexts: ReturnType<typeof vi.fn>;
+let contexts: ReturnType<typeof vi.fn<() => void>>;
 const mount = () => renderHook(() => useTeresaVoice({
   enabled: true, language: 'en', systemInstruction: 'test', apiKey: 'local-unit-token',
 }));
