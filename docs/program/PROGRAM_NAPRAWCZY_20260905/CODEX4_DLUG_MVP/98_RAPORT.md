@@ -1,8 +1,8 @@
-# CODEX4 — raport E1 i E2 (12.09.2026)
+# CODEX4 — raport E1–E4 (12.09.2026)
 
 ## 1. Stanowisko
 
-Zakres tego przekazania: wyłącznie E1, dwa zastane 5xx. Worktree
+Pierwsze przekazanie obejmowało E1. Raport uzupełniono o E2, częściowy E3 i lokalne narzędzia E4; bez wdrożenia. Worktree
 `/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp`, gałąź
 `codex/dlug-mvp-20260912`, marker `d4ebea2c86` (przodek lokalnego
 `origin/integracja/20260911`, exit 0). Przeczytano całą instrukcję, `docs/SOURCE_OF_TRUTH.md`,
@@ -191,19 +191,67 @@ handlerów health/CSRF. Nie wykonano osobnego żywego kliknięcia listy KPI ani 
 lista ma test render/klik i esbuild, polski klucz jest dostarczony. UI nie dowodzi całego produktu.
 
 
-## 4. E3
+## 4. E3 — PARTIAL
 
-NIEWYKONANE w tym przekazaniu — dalsza praca integratora.
+Finalny odbiór i pełna tabela per moduł: `docs/program/PRZEKAZANIE_KODOWANIA_20260907/POMIAR_BUNDLE_20260912.md`, commit dowodów `3d79d82972a7cdcc18583d2107081b36e2a18dff`. Kod po krokach: `375660f7d1b8bd171bf52a9f271eefdd2b986c1e`. Wspólny boot 5615909→1911610B spełnia próg2MB; pełny cold zalogowanego My Work 7010816→5788473B decoded JS go nie spełnia. Transfer1874354→1782616B, liczba skryptów54→263; gotowość2455→2462ms nie dowodzi przyspieszenia.
 
-## 5. E4
+Obejrzano osobiście wszystkie19parPNG (15 prawdziwych modułów sidebar + cold +3karty), bez nowej regresji renderu w light1440. Znane2automatyczne PUT403 na CLOSED initiative występują w obu fazach, więc zero błędów produktu NIEosiągnięte. Root potwierdził Help first-open/state/deep-link oraz public auth bez prywatnego layoutu; artykuł Help i prawdziwy voice pozostają nieprzetestowane. Historyczne kroki1/2 poniżej opisują stan pośredni, nie zastępują tego wyniku.
 
-NIEWYKONANE w tym przekazaniu. Starsza instrukcja kont wskazuje demo, nowsza decyzja
-pilotażu staging; przed użyciem narzędzi integrator ma ujednolicić cel.
+## 5. E4 — przygotowanie narzędzi i lokalny odbiór
+
+DEC-472 wyznacza **staging** jako cel pilotażu; historyczna nazwa pliku z „demo” nie zmienia celu. Dostawa przygotowuje narzędzia operatora. Wszystkie wykonania opisane niżej używały wyłącznie własnego PostgreSQL18 w cx-codex4-pg, loopback6455/cx4_*, realnego ApiGateway4214 i prywatnych plików poza repo. Bez poczty, schedulerów, dotenv, obejścia auth i bez połączeń z żywymi środowiskami. API montuje realne health/CSRF/sanitization/error handlers; health200. MOCK_DB=false/RUN_DB_TESTS=1; mock dotyczy Redis, nie PG lub HTTPlogin. Stanowisko rozpoczęte przy25GiB wolnego. Oryginalny prepare integratora nie był ponawiany.
+
+### E4.1 — CI
+
+Marker: staging nieobecny w push i pull_request. Dodany do obu oraz do istniejących warunków jobów/kroków, aby samo uruchomienie workflow nie kończyło się pominięciem testów. YAML safe_load PASS; deklaratywne RED marker → GREEN aktualne trigger branches. Żaden job tego workflow nie wdraża aplikacji, więc nie dodano fikcyjnego deployment if. Konfiguracja nie dowodzi, że CI przejdzie.
+
+Po push staging uruchamiają się lint/typecheck i readiness-paths, następnie zależne quality/skip/levels/unit/component/integration/colocated/security/initiatives/acceptance, E2E gates, coverage i summary; readiness-smoke zależy od readiness-paths. Non-PR obejmuje performance, security, l4-smoke, e2e-runtime-smoke i coverage. PR-only patch-coverage/pr-gate nie startują po push. Szczegółowe needs/if/timeouts: `codex4-artefakty/e4-ci-config-review.json`.
+
+Read-only `gh run list` zachowano w `e4-ci-history.json`: ostatni demo34331513097 zakończył się failure po8m58s od createdAt do updatedAt, trzy develop po11m04s/10m06s/9m56s, też failure. To czas obserwowany z kolejką, nie prognoza pełnego zielonego zestawu. Brak staging w ostatnich10wynikach nie dowodzi „nigdy”; czas nowego staging run UNKNOWN. Nie wywołano workflow ani push.
+
+### E4.2 — konta pilotażu
+
+`pilotaz-demo-konta-20260912.mjs`: dokładnie4 potwierdzone adresy w UUIDDBR77; bcrypt koszt10, losowe14znaków, nowe konto MEMBER + ACTIVE membership, email verified, onboarding_completed jak `/onboarding/skip`. Nie fabrykuje zgód prawnych ani stanu organizacyjnego onboardingu. Istniejące users.role i membership.role pozostają oddzielnie zachowane; login używa membership jako SSOT. Brak membership istniejącej osoby zatrzymuje całość (`EXISTING_MEMBERSHIP_REQUIRES_REVIEW`), nie przywraca odebranego dostępu. Obca organizacja, nieaktywne konto lub membership, duplikat email również STOP.
+
+Stan PRZED (w tym wrażliwe skróty/tokens) i nowe credentials trafiają do prywatnych0600wx plików poza checkoutem. File fsync + parent directory fsync przed COMMIT; błąd zapisu zatrzymuje transakcję. Credentials mają PRECOMMIT_VERIFY_BEFORE_DISTRIBUTION, dopiero ACK daje osobny receipt. Lost ACK oznacza COMMIT_OUTCOME_UNKNOWN, nigdy potwierdzony rollback; release/end nie maskują wyniku. Reset rows są usuwane, aktywne refreshe odwołane. Forced password change w produkcie NIEISTNIEJE; wcześniejsze accessJWT żyją do expiry. Reset route przechowuje losowy32B hex token z expires_at (authRuntime.ts:64, domyślnie60min, konfigurowalne), odrzuca brak/wygaśnięcie i użycie bieżącego hasła; aplikacja również hashuje nowe hasło bcrypt10.
+
+Lokalnie: dry-run bez zmian6tabel; apply + realne4HTTPloginy; odmowa starych haseł istniejących kont; zachowanie obu ról i efektywnej roli HTTP; drugi apply stałe UUID/brak duplikatów +4loginy; pełne pg_dump/pg_restore do osobnej cx4_pilot_rollback i zgodność readback PASS. Oba apply: committed:true, receiptWritten:true, cleanupWarnings:[] odczytane z logów. Powtórny pilot jest rotacją hasła, nie zerowym zapisem.
+
+### E4.3 — klony i ochrona danych
+
+Premisa20klonów NIEodtworzona w dostarczonej lokalnej kopii: SELECT prefiksu ateliertoys-demo-session-% zwrócił0 (`e4-cleanup-premise.json`), stan staging UNKNOWN. Utworzono jawne lokalne sentinele, zamiast twierdzić, że skasowano20żywych organizacji.
+
+Źródła istniejącego sprzątacza: index.ts:612 nie startuje schedulera w test lub DISABLE_SCHEDULER=true; Scheduler.ts:242 ma już godzinowy job, TrialCron.ts:154 woła demoService.cleanupExpiredDemos. demoService.ts:65 wymaga DEMO_CLEANUP_ENABLED; :70 używa osobnego DEMO_CLEANUP_TTL_HOURS(default24), podczas gdy demo/demoSessionService.ts:25 używa DEMO_SESSION_TTL_HOURS. demoService.ts:87 chroni też nazwę „atelier toys”, :181 filtruje whitelist po nazwie, więc klon z tą nazwą może zostać wyłączony mimo TTL. Nie znamy rzeczywistych env/logów20klonów; są to konkretne możliwe warunki, nie ustalona przyczyna produkcyjna.
+
+Propozycja nadzorcy: sprawdzić flagę/cadence i oba TTL; zastąpić ochronę po samej nazwie jawnie ustalonymi bazowymi ID + człowiekiem przez obie ścieżki/obie daty login + legalhold + aktywna sesja, z realną transakcją. Samego schedulera/demoSeedService nie zmieniono. Zastany demoService guard patrzy tylko na users.organization_id i domenę seed, więc nie należy go bez review utożsamiać z nowym, surowszym skryptem.
+
+`sprzatanie-klonow-demo-session-20260912.mjs` wymaga listy dokładnych ID, kwalifikacji DEMO/nonpaying/expired, bazowych/protected IDs i seed allowlist. Chroni primary i membership, last_login OR last_login_at, orphan membership, zewnętrzne membership seed, legalhold (nieznany/query failure = STOP), aktywne sesje, template i global/reserved IDs. Nie wybiera celu po nazwie. Blokuje tabele przed kwalifikacją/zapisem; reużywa `organizationLifecycleService.deleteOrganizationDataInTransaction` i jego kolejności FK, bez własnej listy DELETE.
+
+Apply wymaga pełnego custom PGDMP i SHA256, źródłowego host/port/database zgodnego z target, prywatnego niesymlinkowego pliku oraz ścieżki/hash dowodów rzeczywistego restore do review. Manifest/counts nie zastępują dumpu. Hash JSON nie jest dowodem odtwarzalności. Harness rzeczywiście wykonywał pg_restore i porównał wszystkie public-table hashes/counts, sekwencje i large objects. Nie narzucono arbitralnego max1h, opcjonalny maxAgeSeconds jest jawnie ustalaną polityką.
+
+Lokalnie9negatywnych partii valid+protected odrzuconych właściwymi kodami i cała baza bez zmian; dry-run bez zmian; poprawny apply usunął tylko valid i CASCADE child; protected/global sentinel rows identyczne. Drugi apply zero zmian. Pełny restore do cx4_cleanup_rollback odzyskał klon i dziecko bez organization_id. Wszystko PASS. Pierwsza próba kanonicznej inicjatywy była NOT_PROVEN przez błąd harness sourceType='manual'; poprawiono na kontrakt MANUAL_HUB/provenance i osobna próba po czystce przeszła POSTsource-proposals201→POSTregistrations201→GET200→SQLie_aggregate_state. Bez osłabiania bramek lub SQL zastępującego tworzenie inicjatywy.
+
+### Walidacja, komendy i ograniczenia
+
+Pure testy bezpieczeństwa43PASS; mutation usunięcia guard istniejącego membership: RED1FAIL/42PASS → GREEN43 (integrator, e4-safety-*.log). To nie zastępuje RealPG. Runtime/harness źródła w `scripts/dev/codex4-e4-local-acceptance.mjs`; prywatny katalog run: `codex4-scratch/e4-local-20260912`, state/credentials/manifestów nie wolno publikować. Końcowe dodatkowe próby opisano poniżej.
+
+Komendy operatora są szablonem do review, NIEautoryzacją ich uruchomienia zdalnie. Target JSONversion1: operation, intendedEnvironment=staging, executionEnvironment=staging, dokładne host/port/database/organizationIds, backup metadata i kwalifikacja cleanup. W local-copy używa się loopback6455 i cx4_*. Brak auto-discovery lub domyślnego zdalnego hosta. Staging wymaga jawnego absolutnego --tls-ca, poprawnego PEM i ssl.rejectUnauthorized:true.
+
+```sh
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/pilotaz-demo-konta-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/pilot-target.json --manifest=/absolute/private/pilot-dry.json
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/pilotaz-demo-konta-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/pilot-target.json --manifest=/absolute/private/pilot-before.json --apply --backup=/absolute/private/full.dump --out=/absolute/private/passwords.json
+DATABASE_URL='<reviewed PostgreSQL URL>' node scripts/dane/sprzatanie-klonow-demo-session-20260912.mjs --target=staging --expected-host='<reviewed host>' --expected-database='<reviewed database>' --tls-ca=/absolute/reviewed-ca.pem --target-manifest=/absolute/private/cleanup-target.json --manifest=/absolute/private/cleanup-dry.json
+# Apply cleanup: same reviewed target, distinct --manifest, plus --apply --backup=/absolute/private/full.dump.
+```
+
+Review E4 wykonał autor; NIEjest niezależnym odbiorem. Nadzorca musi przejrzeć pełne wyniki restore, listę celu i aktualny stan przed jakimkolwiek live apply.
 
 ## 6. SHA
 
 E1: `5544f2f3fe36434a6c7fc6ca9a29b5272feea0c2`.
-E2: commit zawierający aktualizację tego raportu; pełny SHA w przekazaniu integratora.
+E2: `934e08de86f23d8f48438a69e9dde1522136c04c`.
+E3: kod `8ff9565b7f`, `ff2caf56a5`, `375660f7d1`; evidence/report `3d79d82972a7cdcc18583d2107081b36e2a18dff`.
+E4: commit zawierający aktualizację tej sekcji; SHA w końcowym handoffie.
 Nie wykonano push ani scalenia.
 
 ## 7. Przekazanie bazy i sprzątanie
@@ -228,7 +276,7 @@ docker exec -i cx-codex4-pg pg_restore -U postgres -d cx4_bundle --no-owner --no
 pełna regresja aplikacji, kanoniczny inbox runtime i oddzielne trasy delegate/portfolio.
 Nie zmierzono wszystkich istniejących zadań bez projektu ani liczby z pierwotnej premisy;
 reprodukcja używa izolowanych fixture w legalnej lokalnej kopii. Brak migracji i zmian
-uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnych E1/E2.
+uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnych E1/E2, częściowego E3 i narzędzi E4. E4: brak live TLS handshake, actual lost-COMMIT-ACK injection, dwusesyjnego race i testu crash/power-loss; pure mocks nie dowodzą tych scenariuszy. Nie sprawdzono aktywnego staging CI ani środowiskowych przyczyn20klonów. Nie uruchomiono pełnego fronttsc lub kolejnego builda dla E4 (pliki Node/CI).
 
 ## E3 — krok 1, dostawa częściowa (kolejny krok wymagany)
 
@@ -253,3 +301,16 @@ Przegląd baseline:15rzeczywistych modułów sidebar, dodatkowo coldMyWork i3kar
 MainLayout ładowany przez istniejący lazyWithRetry i wspólny Suspense tras. Publiczny login nie potrzebuje powłoki zalogowanego użytkownika. Dla /my-work powłoka nadal jest potrzebna i jej JS musi wejść do osobnego pomiaru pierwszego ekranu; nie utożsamiamy tych metryk. Bez zmian wyglądu, guardów lub manualChunks.
 
 Common boot **1911610B**,3chunki (App354014, AppProviders1240369,index317227), cel≤2000000 osiągnięty wyłącznie dla tej jawnej definicji. Build z --manifest PASS35.21s. Poprzedni build PASS35.63s nie wygenerował manifestu; pomiar poprawnie odmówił ENOENT i wykonano nowy build. Dowody e3-step3-build-manifest.log i e3-step3-chunks.json poza repo. Pełny before/after zbudowanych stron oraz Help regresja trwają; do czasu ich zakończenia E3 pozostaje PARTIAL. Znany odziedziczony autoPUT403 na CLOSED inicjatywie nadal otwarty, poza logiką optymalizacji.
+
+
+## E4 — końcowe dodatkowe dowody lokalne
+
+- Cztery rzeczywiste source mutants na osobnych cx4_cleanup_mut_*: usunięcie guard membership, legalhold, last_login i last_login_at umożliwiło skasowanie chronionego rekordu; każda odpowiadająca poprawna próba zatrzymała całą partię i zachowała bazę. **4/4 PASS**. Każda baza mutanta miała pełny backup i rzeczywisty restore/readback przed apply. Produkcyjne źródła nie były mutowane; kopie wyłącznie w prywatnym scratch.
+- `pilot-security`: rzeczywisty login wystawił refresh; /auth/refresh200 potwierdził jego działanie. Lokalny reset token utworzony według schematu aplikacji był odnaleziony przez /reset-password (odmowa ponownego użycia bieżącego hasła PASSWORD_REUSE_NOT_ALLOWED). Po ponownym CLI apply refresh401 i reset400/PASSWORD_RESET_INVALID, SQL0aktywnych refresh i0resetów. Nowe4hasła logują. **PASS**, bez wysyłania poczty.
+- `pilot-faults`: pełny nowy backup+restore/readback. Zastany prywatny plik --out powoduje EEXIST dopiero po SQLrotacji: CLI odmówił,6tabel identycznych, brak successreceipt — **realny rollback PASS**. W kopii safety modułu wstrzyknięto wyjątek klienta bezpośrednio po prawdziwym COMMIT. CLI zwrócił COMMIT_OUTCOME_UNKNOWN bez receipt; nowe połączenie PG sprawdziło skróty, a4loginy potwierdziły rzeczywisty zapis. **PASS klasyfikacji i rozpoznania skutku**, nie symulacja awarii sieci/utraty TCP. Nie ponawiano niejednoznacznej operacji. Ten bieg zmienił hasła tylko lokalnych kopii; jego plik pozostaje oznaczony PRECOMMIT i prywatny, nie służy dystrybucji.
+- Pierwotne NOT_PROVEN dla token replay i client fault w fazie pilot pozostają w surowych wynikach; późniejsze osobne fazy uzupełniają te dowody. NOT_PROVEN dwusesyjnego race, mutanta predykatu organizacji kanonicznego silnika, mutanta template i rzeczywistej awarii sieci pozostają otwarte. Nie ogłaszamy pełnego odbioru bezpieczeństwa operatora lub całej aplikacji.
+- Przyrząd uzupełniono o opcjonalne initiative-probe / pilot-security / pilot-faults / pilot-membership-guard, zawsze local6455/cx4_* i prywatne rozłączne ścieżki. Kontrole node --check dla4plików.mjs PASS. Jedna odrzucona próba syntax-check podczas pisania dodatkowego reset fixture została poprawiona przed wykonaniem; nic z błędną składnią nie wykonało SQL.
+
+Bazy i prywatne dowody pozostawiono integratorowi do niezależnego odbioru w izolowanym kontenerze; nie są bazami prezentowanymi użytkownikom. Do usunięcia po review wyłącznie własne cx4_* i własny proces API, bez kasowania cudzych zasobów. E4 nie potrzebuje nowego builda ani tsc serwera (Z9 wymagał ich po E1/E2, wykonane wcześniej). Brak powtórzenia prepare, no push/live.
+
+Dodatkowo realny preflight braku membership: osobny cx4_pilot_membership_guard sklonowany z ukończonego, niezmienionego restore; lokalna fixture usuwa membership. CLI dry-run kończy EXISTING_MEMBERSHIP_REQUIRES_REVIEW, sześć tabel/hasła bez zmian, dostęp nie został odtworzony. PASS tej negatywnej próby; nie jest to osobna realna próba apply przy brakującym membership. Bezpieczne zestawienie wszystkich faz (bez credentials): codex4-artefakty/E4_LOCAL_ACCEPTANCE.json.
