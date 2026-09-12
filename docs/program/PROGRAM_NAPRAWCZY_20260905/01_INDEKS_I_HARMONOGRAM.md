@@ -715,3 +715,12 @@ Root HEAD7b7a1c5175clean na początku tury. C6_EXPORT_FIX_PACKET przeczytany wca
 Scope dostał rzeczywistyW17readonlyreopen pomiar rootbuilt5290+C8backend4218/PG6459 poidentitycheck, tylko własny syntetycznydeck przezwriter; odczytversion/time/history iPUTbezuseredits. Bez productchanges/restart/live/flagbypass, to weryfikacja a nie trzeciaimplementacja. Wynikpending.
 
 W05 realUI ujawnił sessionreadguard odcinającyquestions/notes/evidence/summary/links dla scopedreviewera. Autor dodaje tylko readgrant zpersistedassignment, bez rozszerzeniaownershipmutations i bezruszaniaanonymouswall. DwaimplementationblocksIE00+W05 nadal aktywne. CelpełnegoMVP zachowanyACTIVE.
+
+
+## W17 — realny odczyt zmienia dane, odbiór 12.09.2026
+
+Root zweryfikował W17_DECK_RUNTIME_REOPEN.md oraz surowe readback.json/content-delta.json. Lokalny built frontend ad7618df32 (5290), istniejący backend C8 (4218), PostgreSQL cx8_e0 (6459): własny deck utworzony prawdziwym POST 201; samo otwarcie i reload, bez edycji, wykonały dwa PUT autosave. SQL i API potwierdzają wersję 1→2→3, historię 0→1→2 oraz zmiany updated_at. Hash każdego payloadu odpowiada odczytowi API po zapisie. Drugi reload zmienia w deck_json wyłącznie updated_at. Wynik REPRODUCED / RED, nie PASS produktu. Brak page errors i HTTP 4xx/5xx; sześć prób zewnętrznych fontów/analytics zablokował lokalny przyrząd.
+
+To rozszerza poprzedni dowód komponentowy na rzeczywisty lokalny browser/API/PG. Nie jest dowodem staging ani całego backendu kandydata. W17_DECK_BASELINE_REVIEW.md pozostaje pakietem naprawy jednego writera, persisted baseline, CAS/conflict, restore/AI i kolejki in-flight; pełne W17 nie zamyka się wraz z tym błędem. Scope otrzymał read-only audyt pełnego mianownika akcji DeckBuilder, z pierwszeństwem niezależnego odbioru finalnego W05.
+
+IE00 autor zgłosił utworzenie inicjatywy przez rzeczywisty InitiativesHub, request i RETURN; dalszy UI edit/review/approve trwa, bez finalnego ACCEPT. W05 kończy scoped session-read oraz pełny UI. Dwa bloki implementacyjne pozostają IE00 i W05; C6 export i naprawa W17 czekają na zwolnienie slotu. Cel pełnego MVP ACTIVE, bez promocji ani działań live.
