@@ -86,7 +86,7 @@ export interface UseDeckAutosaveParams {
   /** The server ACCEPTED this exact deck state. The only place baselines move. */
   onSaveSuccess?: (savedDeck: Deck, serverVersion: number | null) => void;
   /** The write failed (non-2xx, 409 or network). No baseline may move. */
-  onSaveError?: () => void;
+  onSaveError?: (status?: number) => void;
 }
 
 /**
@@ -130,6 +130,7 @@ export function useDeckAutosave({
    * server's own freshly restored content straight back.
    */
   const baselineEpochRef = useRef(0);
+  const mountedRef = useRef(true);
 
   // Live values for the async flush, which runs outside the render that armed it.
   const deckRef = useRef<Deck | null>(deck);
@@ -185,6 +186,7 @@ export function useDeckAutosave({
     if (payload === persistedRef.current) return;
 
     const epoch = baselineEpochRef.current;
+    const isCurrent = () => mountedRef.current && baselineEpochRef.current === epoch && deckIdRef.current === id;
     inFlightPayloadRef.current = payload;
     callbacksRef.current.onSaveStart?.();
     try {
@@ -197,12 +199,14 @@ export function useDeckAutosave({
         },
         body: payload,
       });
+      if (!isCurrent()) return;
       if (res.status === 409) {
         // P3.1 — another session advanced the deck's version. DO NOT silently
         // clobber the local (unsaved) edits with the server copy. Fetch the
         // latest so we can offer an instant reload, then raise a visible
         // conflict banner and stop autosaving until the user resolves it.
         const conflictPayload = await res.json().catch(() => ({}));
+        if (!isCurrent()) return;
         let serverVersion: number | null =
           typeof conflictPayload?.serverVersion === 'number' ? conflictPayload.serverVersion : null;
         let pendingServer: { deckJson: any; title: string } | null = null;
@@ -239,13 +243,14 @@ export function useDeckAutosave({
         }
         // A rejected write is not a save: no baseline, no version token, and
         // `hasUnsavedChanges` stays true so `beforeunload` still warns.
-        callbacksRef.current.onSaveError?.();
+        if (!isCurrent()) return;
+        callbacksRef.current.onSaveError?.(409);
         callbacksRef.current.onConflict({ serverVersion, pendingServer });
         return;
       }
 
       if (!res.ok) {
-        callbacksRef.current.onSaveError?.();
+        callbacksRef.current.onSaveError?.(res.status);
         return;
       }
 
@@ -256,13 +261,13 @@ export function useDeckAutosave({
       // landed while this write was in flight — its answer is now stale, so it
       // may inform nothing. Reporting the save would move the timeline and the
       // token backwards.
-      if (baselineEpochRef.current !== epoch || deckIdRef.current !== id) return;
+      if (!isCurrent()) return;
       if (version !== null) serverVersionRef.current = version;
       persistedRef.current = payload;
       callbacksRef.current.onSaveSuccess?.(current, version);
     } catch {
       // Non-blocking; builder remains usable offline-ish.
-      callbacksRef.current.onSaveError?.();
+      if (isCurrent()) callbacksRef.current.onSaveError?.();
     } finally {
       inFlightPayloadRef.current = null;
       // THE QUEUE: whatever the user did while this write was in flight is in
@@ -275,9 +280,11 @@ export function useDeckAutosave({
       // 800 ms until the tab closes. A deck nobody touched is left alone
       // (`hasUnsavedChanges` stays true; the next edit retries), while a queued
       // edit — the edit-then-revert lost update — is still saved.
-      if (deckIdRef.current === id && !pausedRef.current) {
+      // A new deck may have queued an edit while this single writer was busy.
+      // Re-arm the current identity after releasing the mutex, never the old payload.
+      if (mountedRef.current && deckIdRef.current && !pausedRef.current) {
         const latest = serializeDeck(deckRef.current);
-        if (latest !== null && latest !== payload && latest !== persistedRef.current) {
+        if (latest !== null && (deckIdRef.current !== id || latest !== payload) && latest !== persistedRef.current) {
           scheduleFlush();
         }
       }
@@ -327,12 +334,14 @@ export function useDeckAutosave({
     scheduleFlush();
   }, [deckId, deck, paused, hasLoadedInitialRef, scheduleFlush]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      baselineEpochRef.current += 1;
       if (timerRef.current) clearTimeout(timerRef.current);
-    },
-    []
-  );
+    };
+  }, []);
 
   return { markPersisted };
 }
