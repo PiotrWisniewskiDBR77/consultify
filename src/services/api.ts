@@ -3200,8 +3200,27 @@ export const Api = {
     const res = await fetch(`${API_URL}/superadmin/organizations/${id}/export?format=${format}`, {
       headers: getHeaders(),
     });
+    if (!res.ok) throw new Error();
+    return res.blob();
+  },
+
+  exportOwnOrganizationData: async (id: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/organizations/${id}/export`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to export organization data');
     return res.blob();
+  },
+
+  deleteOwnOrganization: async (
+    id: string,
+    organizationName: string,
+    reason: string
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/organizations/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+      body: JSON.stringify({ confirmation: true, organizationName, reason }),
+    });
+    if (!res.ok) throw new Error();
   },
 
   getOrganizationBillingDetails: async (orgId: string): Promise<any> => {

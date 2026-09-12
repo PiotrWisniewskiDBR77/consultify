@@ -42,6 +42,7 @@ import { useDemo } from '../../hooks/useDemo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -237,12 +238,16 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
+  const { currentOrganization } = useAppStore();
   const [consents, setConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
   const [retention, setRetention] = useState<DataRetention>(DEFAULT_RETENTION);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [organizationExporting, setOrganizationExporting] = useState(false);
+  const [organizationDeleting, setOrganizationDeleting] = useState(false);
+  const [organizationDeleteConfirmText, setOrganizationDeleteConfirmText] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
@@ -263,6 +268,56 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [originalConsents, setOriginalConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
   const [originalRetention, setOriginalRetention] = useState<DataRetention>(DEFAULT_RETENTION);
   const deleteConfirmationPhrase = t('settings.data.deleteConfirmPhrase', 'delete my data');
+  const canManageOrganization = ['OWNER', 'ADMIN'].includes(String(currentUser.role || '').toUpperCase());
+  const organizationName = String(currentOrganization?.name || '').trim();
+
+  const handleExportOrganization = async () => {
+    if (!currentOrganization?.id) return;
+    setOrganizationExporting(true);
+    try {
+      setActionError(null);
+      const blob = await Api.exportOwnOrganizationData(currentOrganization.id);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `organization-export-${currentOrganization.id}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success(t('settings.data.organizationExported', 'Organization data exported'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.data.organizationExportFailed', 'Failed to export organization data')
+      );
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setOrganizationExporting(false);
+    }
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (!currentOrganization?.id || organizationDeleteConfirmText !== organizationName) return;
+    setOrganizationDeleting(true);
+    try {
+      setActionError(null);
+      await Api.deleteOwnOrganization(
+        currentOrganization.id,
+        organizationName,
+        'Organization administrator confirmed permanent self-service deletion'
+      );
+      localStorage.clear();
+      window.location.assign('/');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.data.organizationDeleteFailed', 'Failed to delete organization')
+      );
+      setActionError(message);
+      toast.error(message);
+      setOrganizationDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const dirty =
@@ -760,6 +815,78 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             </div>
 
             <SettingsDivider />
+
+            {canManageOrganization && currentOrganization?.id && (
+              <>
+                <div data-testid="organization-data-controls">
+                  <h3 className={sectionLabel}>
+                    <Database size={14} className="text-c-text-secondary" />
+                    {t('settings.data.organizationData', 'Organization Data')}
+                  </h3>
+                  <div className={cardClass}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white">
+                          {t('settings.data.exportOrganizationData', 'Export Organization Data')}
+                        </p>
+                        <p className="text-xs text-c-text-secondary mt-1">
+                          {t(
+                            'settings.data.exportOrganizationDataDesc',
+                            'Download a JSON copy of the data owned by {{organizationName}}.',
+                            { organizationName }
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleExportOrganization()}
+                        disabled={organizationExporting}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:border-c-focus disabled:opacity-50"
+                      >
+                        {organizationExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        {organizationExporting
+                          ? t('settings.data.exportingOrganization', 'Exporting...')
+                          : t('settings.data.exportOrganization', 'Export Organization')}
+                      </button>
+                    </div>
+
+                    <div className="mt-5 rounded-lg border border-danger-500/20 bg-danger-500/5 p-4">
+                      <p className="text-sm font-medium text-danger-300">
+                        {t('settings.data.deleteOrganization', 'Permanently Delete Organization')}
+                      </p>
+                      <p className="mt-1 text-xs text-c-text-secondary">
+                        {t(
+                          'settings.data.deleteOrganizationDesc',
+                          'This permanently deletes the organization and its tenant data. This cannot be undone. Type {{organizationName}} to confirm.',
+                          { organizationName }
+                        )}
+                      </p>
+                      <input
+                        aria-label={t(
+                          'settings.data.organizationNameConfirmation',
+                          'Organization name confirmation'
+                        )}
+                        value={organizationDeleteConfirmText}
+                        onChange={(event) => setOrganizationDeleteConfirmText(event.target.value)}
+                        className="mt-3 w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteOrganization()}
+                        disabled={organizationDeleting || organizationDeleteConfirmText !== organizationName}
+                        className="mt-3 flex items-center gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-2 text-sm font-medium text-danger-400 disabled:opacity-50"
+                      >
+                        {organizationDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        {organizationDeleting
+                          ? t('settings.data.deletingOrganization', 'Deleting...')
+                          : t('settings.data.deleteOrganization', 'Permanently Delete Organization')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <SettingsDivider />
+              </>
+            )}
 
             {/* ─── Danger Zone: Delete Account ─── */}
             <div>

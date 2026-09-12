@@ -2,6 +2,7 @@
  * Ownership Routes
  * Organization ownership management - transfer, billing admin
  */
+import { createHash, randomUUID } from 'node:crypto';
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -10,12 +11,95 @@ import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js'
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { acquirePgClient } from '../../database/PostgresDatabase.js';
+import {
+  deleteOrganizationDataInTransaction,
+  exportOrganizationData,
+  organizationExportToCsv,
+} from '../../services/organizationLifecycleService.js';
+import { requireNoLegalHold } from '../../services/OrgPoliciesService.js';
 
 const router = Router();
 
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+
+async function requireOrganizationAdministrator(req: AuthRequest, res: Response) {
+  const { orgId } = req.params;
+  const userId = req.user?.id;
+  if (!userId || req.user?.organizationId !== orgId) {
+    res.status(403).json({ error: 'ORG_TENANT_ACCESS_DENIED' });
+    return null;
+  }
+  const membership = await dbGet<{ role: string; status: string }>(
+    `SELECT role, status FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+    [orgId, userId],
+    { fallback: false }
+  );
+  const role = String(membership?.role || req.user?.role || '').toUpperCase();
+  if (!membership || String(membership.status || '').toUpperCase() !== 'ACTIVE' || !['OWNER', 'ADMIN'].includes(role)) {
+    res.status(403).json({ error: 'ORG_ADMIN_REQUIRED' });
+    return null;
+  }
+  return { userId, role, email: String(req.user?.email || '') };
+}
+
+router.get(
+  '/:orgId/export',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await requireOrganizationAdministrator(req, res))) return;
+    const client = await acquirePgClient();
+    try {
+      const result = await exportOrganizationData(client, req.params.orgId);
+      const format = req.query.format === 'csv' ? 'csv' : 'json';
+      res.setHeader('Content-Disposition', `attachment; filename="organization-export-${req.params.orgId}.${format}"`);
+      if (format === 'csv') return res.type('text/csv').send(organizationExportToCsv(result));
+      return res.type('application/json').send(JSON.stringify(result, null, 2));
+    } finally {
+      client.release();
+    }
+  })
+);
+
+router.delete(
+  '/:orgId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const actor = await requireOrganizationAdministrator(req, res);
+    if (!actor) return;
+    const organizationName = String(req.body?.organizationName || '').trim();
+    const reason = String(req.body?.reason || '').trim();
+    if (req.body?.confirmation !== true || reason.length < 3 || !organizationName) {
+      return res.status(428).json({ code: 'ORG_DELETION_CONFIRMATION_REQUIRED' });
+    }
+    await requireNoLegalHold(req.params.orgId, 'ORG_DELETION');
+    const client = await acquirePgClient();
+    try {
+      await client.query('BEGIN');
+      const current = await client.query<{ name: string }>('SELECT name FROM organizations WHERE id = $1 FOR UPDATE', [req.params.orgId]);
+      if (!current.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ code: 'ORG_NOT_FOUND' }); }
+      if (String(current.rows[0].name || '').trim() !== organizationName) {
+        await client.query('ROLLBACK');
+        return res.status(428).json({ code: 'ORG_NAME_CONFIRMATION_REQUIRED' });
+      }
+      const result = await deleteOrganizationDataInTransaction(client, req.params.orgId);
+      const digest = createHash('sha256').update(JSON.stringify({ organizationId: req.params.orgId, organizationName, actorId: actor.userId, reason })).digest('hex');
+      await client.query(
+        `INSERT INTO organization_self_service_deletion_receipts
+          (receipt_id,target_organization_id,target_organization_name,actor_id,actor_email,reason,request_digest,deleted_counts)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)`,
+        [randomUUID(), req.params.orgId, organizationName, actor.userId, actor.email, reason, digest, JSON.stringify(result.deletedCounts)]
+      );
+      await client.query('COMMIT');
+      return res.json({ success: true, deletedCounts: result.deletedCounts });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+  })
+);
 
 /**
  * GET /api/organizations/:orgId/ownership
