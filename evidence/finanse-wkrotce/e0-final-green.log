@@ -1,0 +1,68 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny
+
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) > returns true for the v8-unavailable statuses 400/404/405/501 68ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) > returns false for success and genuine-error statuses 200/403/500 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) > returns false for other non-fallback statuses (401/409/422/503) 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) > coerces string statuses via Number() — "404" still triggers fallback 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts) > returns false when error has no usable status (undefined/null/missing) 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_CASE_WORKSPACE is closed (src/utils/betaAccess.ts) > MODULE_CASE_WORKSPACE is registered as a closed beta in the SSOT 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_CASE_WORKSPACE is closed (src/utils/betaAccess.ts) > trims whitespace around the module id when resolving status 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_CASE_WORKSPACE is closed (src/utils/betaAccess.ts) > unknown / empty ids are not beta and not closed 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_ECONOMICS (Finance) is closed > MODULE_ECONOMICS is registered as a closed beta 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — role exemption (admins/owners exempt while BETA_ADMINS_EXEMPT) > precondition: admins are currently exempt 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — role exemption (admins/owners exempt while BETA_ADMINS_EXEMPT) > locks closed betas for regular / pilot roles 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > beta gating — role exemption (admins/owners exempt while BETA_ADMINS_EXEMPT) > exempts ADMIN / OWNER / SUPERADMIN (and their aliases) 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Case Workspace menu item with the locked plate > locks MODULE_CASE_WORKSPACE for a regular USER with BETA_LOCKED code + message 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Case Workspace menu item with the locked plate > returns the menu untouched for an exempt ADMIN 0ms
+ ✓ tests/unit/finance/financeFallbackGating.test.ts (14 tests) 73ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > bez zmiennej (domyślnie OFF) menu NIE zawiera MODULE_MEETING 33ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > jawne OFF ('false') menu NIE zawiera MODULE_MEETING 1ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > literówka ('True', wielka litera) NIE włącza — pozostaje OFF 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > VITE_MODULE_MEETINGS=true menu ZAWIERA MODULE_MEETING 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > nie zmienia liczby/tożsamości pozostałych pozycji menu między OFF i ON (poza MODULE_MEETING) 1ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts (5 tests) 36ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate on /document-studio (MODULE_DOCUMENT_STUDIO) > current SSOT config: MODULE_DOCUMENT_STUDIO is "open" 2ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate on /document-studio (MODULE_DOCUMENT_STUDIO) > regular USER reaches Document Studio while the module is open (current prod state) 27ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate on /document-studio (MODULE_DOCUMENT_STUDIO) > admin (OWNER) also reaches Document Studio while open 3ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate mechanism (module simulated as closed) > blocks a regular USER and redirects to /chat when the module is closed 7ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate mechanism (module simulated as closed) > still allows OWNER/ADMIN through a closed module (BETA_ADMINS_EXEMPT) 2ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx > L-06 — BetaGate mechanism (module simulated as closed) > does not rewrite an unauthenticated closed-beta deep link to chat 2ms
+ ✓ tests/components/BetaGate.document-studio.test.tsx (6 tests) 44ms
+ ✓ src/components/Finance/__tests__/FinanceWave2Placeholder.translation.test.tsx > FinanceWave2Placeholder (DEC-470) > renderuje polski nagłówek "Finanse — Wkrótce" (realne tłumaczenie, nie fallback) 47ms
+ ✓ src/components/Finance/__tests__/FinanceWave2Placeholder.translation.test.tsx > FinanceWave2Placeholder (DEC-470) > renderuje angielski nagłówek "Finance — Coming soon" 8ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > renderuje polski nagłówek "Spotkania — planowane w Fali 2" (realne tłumaczenie, nie fallback) 43ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > renderuje angielski nagłówek "Meetings — planned for Wave 2" 6ms
+ ✓ src/components/Finance/__tests__/FinanceWave2Placeholder.translation.test.tsx > FinanceWave2Placeholder (DEC-470) > przycisk "Wróć do Czatu" nawiguje na /chat, nie zostawia na 404/wyjątku 160ms
+ ✓ src/components/Finance/__tests__/FinanceWave2Placeholder.translation.test.tsx (3 tests) 219ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > przycisk "Wróć do Czatu" nawiguje na /chat, nie zostawia na 404/wyjątku 163ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx (3 tests) 217ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER sees announcement without mounting finance 158ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > OWNER has visible unlocked announcement across menu gates 3ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN sees announcement without mounting finance 17ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > ADMIN has visible unlocked announcement across menu gates 1ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER sees announcement without mounting finance 14ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > USER has visible unlocked announcement across menu gates 1ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER sees announcement without mounting finance 11ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > MEMBER has visible unlocked announcement across menu gates 1ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > preserves backend beta closed and meeting default hiding 0ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > allows canonical and legacy finance deep links through pilot routing only 1ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx > DEC-470 finance announcement > unauthenticated caller mounts no finance or announcement 2ms
+ ✓ src/components/Finance/__tests__/financeWave2Gate.test.tsx (11 tests) 212ms
+
+ Test Files  6 passed (6)
+      Tests  42 passed (42)
+   Start at  10:41:36
+   Duration  2.07s (transform 2.45s, setup 1.87s, import 4.01s, tests 802ms, environment 3.60s)
+
+
+ Test Files  6 passed (6)
+      Tests  42 passed (42)
+   Start at  10:41:36
+   Duration  2.07s (transform 2.45s, setup 1.87s, import 4.01s, tests 802ms, environment 3.60s)
+
+JSON report written to /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny/junit.xml
+JUNIT report written to /Users/piotrwisniewski/Developer/codex-wt/codex8-finanse-pelny/junit.xml

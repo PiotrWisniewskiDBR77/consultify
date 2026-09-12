@@ -1,3 +1,4 @@
+import { isModuleComingSoon } from './betaMenuStatus';
 const PUBLIC_PRODUCTION_HOSTS = new Set(['consultify.ai', 'www.consultify.ai']);
 // VTS pilot scope: surface Chat + Interview plus My Work, Initiatives, Execution
 // and Settings on public production. Everything else stays locked at the sidebar.
@@ -45,7 +46,7 @@ export function lockMainMenuForPublicProduction<T extends { id: string }>(
   const decorateItem = (item: LockableMenuItem<T>): LockableMenuItem<T> => {
     const subItems = item.subItems?.map((subItem) => decorateItem(subItem));
 
-    if (PUBLIC_PRODUCTION_CORE_MENU_IDS.has(item.id)) {
+    if (isModuleComingSoon(item.id) || PUBLIC_PRODUCTION_CORE_MENU_IDS.has(item.id)) {
       return {
         ...item,
         subItems,

@@ -2507,6 +2507,7 @@
     "comingSoon": "Wkrótce"
   },
   "sidebar": {
+    "comingSoon": "Wkrótce",
     "module3_1": "Inicjatywy",
     "dashboard": "Panel",
     "settings": "Ustawienia",
@@ -27786,6 +27787,7 @@
     }
   },
   "finance": {
+    "wave2Placeholder": {"title": "Finanse — Wkrótce", "message": "Analizy finansowe, planowanie i wyceny pojawią się w Fali 2."},
     "comments": {
       "added": "Komentarz dodany.",
       "resolved": "Komentarz oznaczony jako rozwiązany.",

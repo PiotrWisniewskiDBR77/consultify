@@ -1,4 +1,6 @@
 import React from 'react';
+import { FinanceWave2Placeholder } from './Finance/FinanceWave2Placeholder';
+import { isModuleComingSoon } from '@/utils/betaMenuStatus';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
@@ -121,7 +123,10 @@ export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
   // when flipped true, ADMIN/OWNER/SUPERADMIN keep route access too — matching
   // the betaAccess.ts contract ("administrators always keep full access").
   const isLocked =
-    isAuthenticated && isBetaClosed(moduleId) && isBetaLockedForRole(currentUser?.role);
+    isAuthenticated &&
+    !isModuleComingSoon(moduleId) &&
+    isBetaClosed(moduleId) &&
+    isBetaLockedForRole(currentUser?.role);
 
   React.useEffect(() => {
     if (isLocked) dispatchBetaAccessBlocked();
@@ -137,6 +142,8 @@ export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
   if (!isAuthenticated) {
     return null;
   }
+
+  if (isModuleComingSoon(moduleId)) return <FinanceWave2Placeholder />;
 
   return <>{children}</>;
 };

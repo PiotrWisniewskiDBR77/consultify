@@ -1,0 +1,14 @@
+PASS server/src/sharedRuntime/utils/betaMenuStatus.ts
+PASS src/components/ProtectedRoute.tsx
+PASS src/components/navigation/Sidebar/NavItem.tsx
+PASS src/components/navigation/Sidebar/menuConfig.ts
+PASS src/routes/AppRoutes.tsx
+PASS src/utils/betaAccess.ts
+PASS src/utils/betaMenuStatus.ts
+PASS src/utils/pilotAccess.ts
+PASS src/utils/publicProduction.ts
+PASS tests/components/BetaGate.document-studio.test.tsx
+PASS tests/unit/finance/financeFallbackGating.test.ts
+PASS src/components/Finance/FinanceWave2Placeholder.tsx
+PASS src/components/Finance/__tests__/financeWave2Gate.test.tsx
+PASS src/components/Finance/__tests__/FinanceWave2Placeholder.translation.test.tsx

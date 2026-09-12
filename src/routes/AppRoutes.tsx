@@ -2487,8 +2487,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.FINANCE}
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2497,15 +2497,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/statements/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.statement')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.statement')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2514,15 +2514,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/models/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.model')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.model')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2531,15 +2531,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/analyses/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.analysis')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.analysis')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2548,15 +2548,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/predictions/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.prediction')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.prediction')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2565,15 +2565,15 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
         <Route
           path="/finance/valuations/:id"
           element={
-            <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.valuation')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.valuation')]} noPadding>
+              <BetaGate moduleId="MODULE_ECONOMICS">
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2582,10 +2582,13 @@ export const AppRoutes: React.FC = () => {
                     <EconomicsView />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+              </BetaGate>
+            </MainLayout>
           }
         />
+        {/* DEC-470: unknown and legacy deep links share the same announcement. */}
+        <Route path="/finance/*" element={<MainLayout><BetaGate moduleId="MODULE_ECONOMICS"><></></BetaGate></MainLayout>} />
+        <Route path="/economics/*" element={<MainLayout><BetaGate moduleId="MODULE_ECONOMICS"><></></BetaGate></MainLayout>} />
         <Route
           path={ROUTES.EXECUTION}
           element={
