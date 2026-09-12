@@ -1,0 +1,42 @@
+[
+  {
+    "log": "INTEGRATION_SERVER_TSC.log",
+    "command": "../node_modules/.bin/tsc --noEmit --pretty false",
+    "source": "6494a5b239",
+    "exit_code": 0,
+    "exit_evidence": "exec/write_stdin terminal process result observed by integrator",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "log": "INTEGRATION_FINANCE_VOICE_TESTS.log",
+    "command": "vitest run explicit9files --maxWorkers=2",
+    "source": "6494a5b239 (pre-commit identical source tree)",
+    "exit_code": 0,
+    "exit_evidence": "exec/write_stdin terminal process result observed by integrator",
+    "sha256": "5e04239b01fd5fff43a6fc96c9443cc86e06fa7a04add35ddbd16fd8e1f66048"
+  },
+  {
+    "log": "INTEGRATION_BUILD_8GB.log",
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "source": "907ccb4be1 frontend; E4 scripts staged only after transformation",
+    "exit_code": 0,
+    "exit_evidence": "exec/write_stdin terminal process result observed by integrator",
+    "sha256": "01b9c5bcee3ad7e59a7ac22eb0ef49c4a8cfcb56dd72b35c481cf50cb2fd11de"
+  },
+  {
+    "log": "INTEGRATION_E4_SAFETY.log",
+    "command": "vitest run tests/dane/codex4-ops-safety.test.js --config vitest.config.ts --maxWorkers=1",
+    "source": "251a15c9f3 (pre-commit identical source tree)",
+    "exit_code": 0,
+    "exit_evidence": "exec/write_stdin terminal process result observed by integrator",
+    "sha256": "6085ff6b9d2b63a06c1f79f13deedc3d21eaa96f1177e03a83253ebdb9726da1"
+  },
+  {
+    "log": "INTEGRATION_BACKEND_BUILD.log",
+    "command": "npm run build:backend",
+    "source": "251a15c9f3",
+    "exit_code": 0,
+    "exit_evidence": "write_stdin session86138 returned exit0",
+    "sha256": "043578ad2ae4cbde063f76a9411cf6fefd1386587ec265c8b83a9a17a32b0acc"
+  }
+]
