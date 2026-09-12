@@ -697,3 +697,12 @@ BUILT_CANDIDATE_SMOKE_RESULT.md przeczytany przez root łącznie z addendum: Fin
 C6_RETENTION_AND_SCHEMA_MATRIX.md orazJSON przeczytane i zachowane. Kopia6457/cx6_swieza:public1802tabele,1282broadtenantcandidates;v8 121/111 pozaeksportem. 109public+1v8candidate immutableDELETEguards; counts są katalogowe/heurystyczne, nie wykonaniem każdejpolityki. complete:true eksportu nie ma podstaw pełnego zakresu. RetentionSSOT źródłowySET-MVP-DELETE-001 z23.08 ma ograniczonyrequest/status/cancel i nie ustanawia treatment immutablePII. Nowsze polecenie pełnegoMVP autoryzuje przygotowanie rozwiązania; nie jest dowodem zatwierdzonej retencji każdejklasy ani zgodąna live. Nie podmieniamy celu pełnegoE4 na trwałyREFUSE. Zostaje przygotowanie konkretnego wersjonowanego rozwiązania/odbioru; niezależneexporthold/completeness/budget/UIfixy nie zależą od tejdecyzji.
 
 W05 autor poszerza legalny recordread dla detail+answerhistory tym samym scopedguard (bez otwarcialistorg), konieczny do rzeczywistegoUI. FinalSHA i niezależnyruntimeodbiór jeszcze przednami. IE00 kontynuuje rzeczywistąkartę/listęwprzeglądarce. CelACTIVE, 2implementationblocks, braklive.
+
+
+## W17 — jawny RED zapisu prezentacji, 12.09.2026
+
+Root uruchomił istniejący testDeckBuilder.restoreNoWrite. Najpierw0tests importfailstaregmocki18n; adapterroot odtworzył import i aktualny sharedTeresa handler zamiast emerytowanegopanelu. Następnie5/5wykonane i5FAIL; izolowanyreadonlyreopen1FAILz1niezamówionymPUT. Produktnietknięty. Scope niezależnieprzeczytałdiff/source/logi i zakwalifikował rzeczywistą regresjękomponentu: wbudowanywriter bezbaseline/inflightguard, nieużywanyuseDeckAutosave, restore/accept nieuzgadniająstanupisarza. Nieudowodniony efektPG, brakbrowserproof. Asercjezachowane; jawnyREDutrwalony, nieGREEN.
+
+W17_DECK_BASELINE_REVIEW.md ma konkretny następnyfix i odbiórUI/API/PG. Kolejka zachowujeC6export/budget orazW17, nie zamyka3trudnychscenariuszy anipełnegomianownikaakcji. W05scopereview wykryłmemoizacjęuprawnień i staleJWTrole; autorpoprawiłźródła i meldował39realPASS, dalejrealUI/deeplinkdetail+history oraz finalmutacje. Scope teraz dostępny dofinalnegoodbioru poSHA. IE00 kontynuujeUI. Dwa blokiimplementacyjne pozostająIE00+W05.
+
+C6 dostał dalszyread-only pełnytablecontractJSON (per-tablepublic/v8,nie sameagregaty) i dokładnyexportfixpacket. Braknowejimplementacji/DBmutacji. WszystkieotwartebramkiMVP zachowane, celACTIVE, ownercheckout/live nietknięte.

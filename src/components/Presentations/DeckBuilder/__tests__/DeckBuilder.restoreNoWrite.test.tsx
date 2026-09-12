@@ -9,14 +9,14 @@
  *   - it appends a `presentation_deck_versions` snapshot recording no change;
  *   - it moves `updated_at`, reordering the Materials list.
  *
- * This suite renders the REAL `DeckBuilder` (real loader, real
- * `useDeckAutosave`, real `useVersionHistory`, real `handleRestoreVersion`) and
+ * This suite renders the REAL `DeckBuilder` (real loader, current autosave
+ * wiring, real `useVersionHistory`, real `handleRestoreVersion`) and
  * asserts on the network calls the browser would actually make. Only leaf UI
  * components and services are stubbed — none of the save/restore wiring is.
  *
  * @vitest-environment jsdom
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,6 +30,11 @@ const DECK_ID = 'deck-mat006b';
 // ---------------------------------------------------------------------------
 const apiGet = vi.fn();
 const apiPost = vi.fn();
+const chatBridge = vi.hoisted(() => ({
+  handler: null as null | ((prompt: string) => Promise<unknown>),
+  setIntent: vi.fn(),
+  clearIntent: vi.fn(),
+}));
 
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ deckId: DECK_ID }),
@@ -37,6 +42,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key),
     i18n: { language: 'en', changeLanguage: vi.fn() },
@@ -85,8 +91,8 @@ vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (s: unknown) => unknown) =>
     selector({
       currentUser: null,
-      setChatModuleIntent: vi.fn(),
-      clearChatModuleIntent: vi.fn(),
+      setChatModuleIntent: chatBridge.setIntent,
+      clearChatModuleIntent: chatBridge.clearIntent,
     }),
 }));
 
@@ -99,22 +105,6 @@ const { stub } = vi.hoisted(() => ({
   stub: () => (props: { children?: unknown }) => (props?.children ?? null) as any,
 }));
 
-/**
- * Teresa's entry point, reduced to one button that fires the real
- * `handleTeresaDeckIntent` → `handleAiPrompt` chain (the only way to reach the
- * agent-edit accept banner).
- */
-vi.mock('@/components/AIChat/UnifiedChatPanel', () => ({
-  UnifiedChatPanel: (props: any) => (
-    <button
-      type="button"
-      data-testid="teresa-prompt"
-      onClick={() => props.onModuleIntent('rewrite')}
-    >
-      ask
-    </button>
-  ),
-}));
 vi.mock('@/components/Initiatives/InitiativeSourceLink', () => ({
   getSourceDisplayLabel: () => 'source',
 }));
@@ -297,6 +287,13 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     );
 
   beforeEach(() => {
+    chatBridge.handler = null;
+    chatBridge.setIntent.mockImplementation(({ handler }) => {
+      chatBridge.handler = handler;
+    });
+    chatBridge.clearIntent.mockImplementation(() => {
+      chatBridge.handler = null;
+    });
     serverDeck = CURRENT_DECK;
     serverVersion = 7;
 
@@ -433,7 +430,9 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
     });
 
     const user = await renderBuilderAndLoad();
-    await user.click(screen.getByTestId('teresa-prompt'));
+    // The shared Teresa dock invokes the handler registered by the real builder.
+    expect(chatBridge.handler).toBeTypeOf('function');
+    await act(async () => { await chatBridge.handler!('rewrite'); });
     const acceptButton = await screen.findByText('presentations.accept');
     const versionBeforeAccept = serverVersion;
 
@@ -457,7 +456,7 @@ describe('DeckBuilder — a version restore must not write (MAT-006B / P2)', () 
   it('does not write when the deck is merely opened (read-only reopen stays fixed)', async () => {
     await renderBuilderAndLoad();
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    expect(autosavePuts()).toHaveLength(0);
+    expect(autosavePuts(), JSON.stringify(autosavePuts())).toHaveLength(0);
     expect(serverVersion).toBe(7);
   });
 
