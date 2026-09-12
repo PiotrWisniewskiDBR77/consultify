@@ -688,3 +688,12 @@ Scope zakończył run-c na rootdistad7618df32 +C8backend4218:36Finance wejśćPA
 C6 poprawił projekt po review; root przeczytał całość. SessionlockPRZEDBEGIN kandydatem do realtestu, nie dowodem. Tombstone-rebind odrzucone; retainedidentity nadal wymaga macierzy zgodnej zeźródłami. C6 przydzielono read-only katalog własnego6457 poidentitycheck i istniejąceSSOTretencji: C6_RETENTION_AND_SCHEMA_MATRIX.md/JSONmetadata, zero source/schema/data mutation. Nie czekamy z samym odczytem na slot kodowania.
 
 IE00 według autora4/4realPASS plus servertsc0, UI i mutacje trwają. W05 według autoraA200/Bdeny działa,22/24pierwszepróby (2fixtureGRANT/REVOKE do korekty), brak finalnego odbioru. Dwa bloki nadal aktywne. Cel pełnegoMVP pozostajeACTIVE, bez live/promocji.
+
+
+## Zakończony smoke i katalog C6 — 12.09.2026
+
+BUILT_CANDIDATE_SMOKE_RESULT.md przeczytany przez root łącznie z addendum: Finance36/36, istniejąceMeetings24/24,Help4/4 iUIlogin4/4PASS;28PNG obejrzanychprzezwykonawcę, root2PNG osobno. Frontad7618df32 + istniejącyC8backend; nie pełnybackendkandydata aniMVP. NieistniejącywildcardNotFound poprawny; anonymousFinance ładujeMainLayout przed prawidłowymredirect (obserwacjaperformance). Zewnętrznefonts/analytics blokowane i policzone, bezudawania zerazasobowychbłędów. Preview5290/session44223 przekazanyroot; scope już nie używa4218. Scope rozpoczął read-only pre-review stabilnychfragmentówW05 za uzgodnieniemzdelivery, bez końcowegoACCEPTWIP.
+
+C6_RETENTION_AND_SCHEMA_MATRIX.md orazJSON przeczytane i zachowane. Kopia6457/cx6_swieza:public1802tabele,1282broadtenantcandidates;v8 121/111 pozaeksportem. 109public+1v8candidate immutableDELETEguards; counts są katalogowe/heurystyczne, nie wykonaniem każdejpolityki. complete:true eksportu nie ma podstaw pełnego zakresu. RetentionSSOT źródłowySET-MVP-DELETE-001 z23.08 ma ograniczonyrequest/status/cancel i nie ustanawia treatment immutablePII. Nowsze polecenie pełnegoMVP autoryzuje przygotowanie rozwiązania; nie jest dowodem zatwierdzonej retencji każdejklasy ani zgodąna live. Nie podmieniamy celu pełnegoE4 na trwałyREFUSE. Zostaje przygotowanie konkretnego wersjonowanego rozwiązania/odbioru; niezależneexporthold/completeness/budget/UIfixy nie zależą od tejdecyzji.
+
+W05 autor poszerza legalny recordread dla detail+answerhistory tym samym scopedguard (bez otwarcialistorg), konieczny do rzeczywistegoUI. FinalSHA i niezależnyruntimeodbiór jeszcze przednami. IE00 kontynuuje rzeczywistąkartę/listęwprzeglądarce. CelACTIVE, 2implementationblocks, braklive.
