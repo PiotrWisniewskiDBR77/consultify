@@ -679,3 +679,12 @@ Scope wykonuje built rootfrontend+C8backend smoke na jawnie przydzielonym5290; n
 ## Review następnego projektu C6 — 12.09.2026
 
 C6_NEXT_FIX_DESIGN_REVIEW.md ma REVISE: SELECT advisorylock w REPEATABLE READ sam może ustalić za wczesny snapshot; rebindFK narusza bezwarunkowy immutableUPDATE trigger w20261030/20261034. Root przeczytał obie migracje i zweryfikował semantykę snapshot w oficjalnej dokumentacjiPG. Autor dostał korekty i konkretną macierz do read-only przygotowania, bez zezwolenia na zmianę retencji/triggerów. IE00 i W05 nadal aktywnie implementowane, scope wykonuje built smoke5290. Root sourceHEAD e1f9d2f188 przed tym doccommitem, clean na początku tury.
+
+
+## Uzupełnienie odbioru built UI i projektu C6 — 12.09.2026
+
+Scope zakończył run-c na rootdistad7618df32 +C8backend4218:36Finance wejśćPASS,12istniejącychMeetingsPASS,Help4PASS, realUIlogin4/4, 0HTTP4xx/5xx/pageerror. Root sam odczytał4role-theme JSON oraz obejrzałOWNER-lightFinance/MEMBER-darkHelpPNG. Nieistniejący meetings/unknown jest poprawnymNotFound, nie produktemBLOKER. AnonymousFinance pobieraMainLayoutprzed poprawnymredirect, direct/login bezMainLayout/HelpPASS; ograniczenieperformance, nie authbypass. Odkryte3realneroutes minutes/decisions/notes są teraz dopełniane w12dodatkowychwejściach, bez ponawiania poprzedniej macierzy. Pełny report pending.
+
+C6 poprawił projekt po review; root przeczytał całość. SessionlockPRZEDBEGIN kandydatem do realtestu, nie dowodem. Tombstone-rebind odrzucone; retainedidentity nadal wymaga macierzy zgodnej zeźródłami. C6 przydzielono read-only katalog własnego6457 poidentitycheck i istniejąceSSOTretencji: C6_RETENTION_AND_SCHEMA_MATRIX.md/JSONmetadata, zero source/schema/data mutation. Nie czekamy z samym odczytem na slot kodowania.
+
+IE00 według autora4/4realPASS plus servertsc0, UI i mutacje trwają. W05 według autoraA200/Bdeny działa,22/24pierwszepróby (2fixtureGRANT/REVOKE do korekty), brak finalnego odbioru. Dwa bloki nadal aktywne. Cel pełnegoMVP pozostajeACTIVE, bez live/promocji.
