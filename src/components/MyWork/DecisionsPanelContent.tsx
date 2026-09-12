@@ -1,3 +1,8 @@
+import { DefinitionApprovalContent } from '@/components/Initiatives/DefinitionApprovalContent';
+import {
+  listDefinitionApprovals,
+  readDefinitionApproval,
+} from '@/services/initiatives-execution/definitionApprovalApi';
 /**
  * DecisionsPanelContent - Professional decision table for MyWorkHub
  * Interview-style design with hover animations and resizable columns
@@ -135,6 +140,9 @@ type ViewMode = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface Decision {
+  sourceContract?: 'RUNTIME_INITIATIVE_GATE';
+  initiativeId?: string;
+  nativeDecisionId?: string;
   id: string;
   title: string;
   description?: string;
@@ -260,6 +268,7 @@ const DECISION_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
   EXCEPTION: { en: 'Exception', pl: 'Odstępstwo' },
   STRATEGIC: { en: 'Strategic', pl: 'Strategiczna' },
   EXECUTION: { en: 'Execution', pl: 'Wykonawcza' },
+  DEFINITION: { en: 'Definition', pl: 'Definicja' },
   GENERAL: { en: 'General', pl: 'Ogólna' },
   OTHER: { en: 'Other', pl: 'Inna' },
 };
@@ -854,13 +863,26 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       setLoading(true);
       setLoadError(null);
       const data = await Api.getDecisions();
-      setDecisions(Array.isArray(data) ? data : []);
+      const runtime = await listDefinitionApprovals();
+      const typed: Decision[] = (runtime.items || []).map((d) => ({
+        id: `runtime-definition:${d.decisionId}`,
+        nativeDecisionId: d.decisionId,
+        sourceContract: d.sourceContract,
+        decisionType: 'DEFINITION',
+        initiativeId: d.initiativeId,
+        title: `${d.initiativeTitle || d.initiativeId} — Definition`,
+        status: d.status,
+        decisionOwnerId: d.authorityId,
+        requestedById: d.requesterId,
+        projectId: d.projectId,
+        createdAt: d.requestedAt,
+        dueDate: d.dueAt,
+        rationale: d.rationale || undefined,
+      }));
+      setDecisions([...(Array.isArray(data) ? data : []), ...typed]);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
-      const message = t(
-        'myWork.decisionsPanel.toast.loadFailed',
-        'Failed to load decisions'
-      );
+      const message = t('myWork.decisionsPanel.toast.loadFailed', 'Failed to load decisions');
       setLoadError(message);
       toast.error(message);
     } finally {
@@ -892,29 +914,47 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     }
   }, []);
 
-  const fetchPreview = useCallback(async (id: string) => {
-    setPreviewLoading(true);
-    try {
-      const d = (await Api.getDecision(id)) as any;
-      const normalized: DecisionPreviewData = {
-        ...d,
-        id: String(d?.id || id),
-        title: String(d?.title || 'Decision'),
-      };
-      setPreviewDecision(normalized);
+  const fetchPreview = useCallback(
+    async (id: string) => {
+      setPreviewLoading(true);
       try {
-        const b = (await Api.get(`/my-work/decisions/${id}/brief`)) as any;
-        setPreviewBrief(b && typeof b?.summary === 'string' ? (b as DecisionBrief) : null);
+        const typed = decisions.find(
+          (d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE'
+        );
+        if (typed) {
+          const read = await readDefinitionApproval(typed.initiativeId!);
+          if (read.decision?.decisionId !== typed.nativeDecisionId)
+            throw new Error('Decision identity mismatch');
+          setPreviewDecision({
+            ...typed,
+            status: read.decision.status,
+            rationale: read.decision.rationale,
+          } as DecisionPreviewData);
+          setPreviewBrief(null);
+          return;
+        }
+        const d = (await Api.getDecision(id)) as any;
+        const normalized: DecisionPreviewData = {
+          ...d,
+          id: String(d?.id || id),
+          title: String(d?.title || 'Decision'),
+        };
+        setPreviewDecision(normalized);
+        try {
+          const b = (await Api.get(`/my-work/decisions/${id}/brief`)) as any;
+          setPreviewBrief(b && typeof b?.summary === 'string' ? (b as DecisionBrief) : null);
+        } catch {
+          setPreviewBrief(null);
+        }
       } catch {
+        setPreviewDecision(null);
         setPreviewBrief(null);
+      } finally {
+        setPreviewLoading(false);
       }
-    } catch {
-      setPreviewDecision(null);
-      setPreviewBrief(null);
-    } finally {
-      setPreviewLoading(false);
-    }
-  }, []);
+    },
+    [decisions]
+  );
 
   useEffect(() => {
     setDetailsMenuOpen(false);
@@ -1016,6 +1056,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const openPreview = (decisionId: string) => setPreviewDecisionId(decisionId);
 
   const handleApprove = async (id: string) => {
+    if (decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')) {
+      openPreview(id);
+      return;
+    }
     try {
       await Api.decideDecision(id, 'approved');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d)));
@@ -1026,6 +1070,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   };
 
   const handleDeleteDecision = async (id: string) => {
+    if (decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')) {
+      openPreview(id);
+      return;
+    }
     const confirmMsg = t(
       'myWork.decisionsPanel.deleteThisDecisionThis',
       'Delete this decision? This cannot be undone.'
@@ -1042,6 +1090,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   };
 
   const handleReject = async (id: string) => {
+    if (decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')) {
+      openPreview(id);
+      return;
+    }
     try {
       await Api.decideDecision(id, 'rejected');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d)));
@@ -1053,6 +1105,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Handler for sending reminder (Awaiting Others view)
   const handleRemind = async (id: string) => {
+    if (decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')) {
+      openPreview(id);
+      return;
+    }
     const decision = decisions.find((d) => d.id === id);
     if (!decision) return;
 
@@ -1086,6 +1142,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Handler for escalating decision (Awaiting Others view)
   const handleEscalate = async (id: string) => {
+    if (decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')) {
+      openPreview(id);
+      return;
+    }
     const decision = decisions.find((d) => d.id === id);
     if (!decision) return;
 
@@ -1284,6 +1344,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Selection handlers
   const handleSelectDecision = (decisionId: string) => {
+    if (
+      decisions.some((d) => d.id === decisionId && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')
+    )
+      return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(decisionId)) {
@@ -1297,7 +1361,14 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
-      setSelectedIds(new Set(allVisibleDecisionIds));
+      setSelectedIds(
+        new Set(
+          [...allVisibleDecisionIds].filter(
+            (id) =>
+              !decisions.some((d) => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')
+          )
+        )
+      );
     } else {
       setSelectedIds(new Set());
     }
@@ -1571,10 +1642,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       <div className="flex-1 flex items-center justify-center h-full">
         <ErrorState
           title={loadError}
-          message={t(
-            'myWork.decisionsPanel.loadErrorHint',
-            'Check your connection and try again.'
-          )}
+          message={t('myWork.decisionsPanel.loadErrorHint', 'Check your connection and try again.')}
           retry={() => void fetchDecisions()}
           className="h-full"
         />
@@ -1614,12 +1682,25 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           autoOpenPreview={false}
           onOpenFull={(id) => {
             const full = decisions.find((d) => d.id === id);
+            if (full?.sourceContract === 'RUNTIME_INITIATIVE_GATE') {
+              setPreviewDecisionId(id);
+              return;
+            }
             onDecisionClick?.(id, full);
             setPreviewDecisionId(null);
           }}
           itemIds={orderedDecisionIds}
           getItemById={(id) => displayedDecisions.find((x) => x.id === id) ?? null}
           renderPreview={(item) => {
+            if (item.sourceContract === 'RUNTIME_INITIATIVE_GATE')
+              return (
+                <DefinitionApprovalContent
+                  key={item.id}
+                  initiativeId={item.initiativeId!}
+                  decisionId={item.nativeDecisionId}
+                  onChanged={() => void fetchDecisions()}
+                />
+              );
             const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
             if (previewLoading) {
               return (
@@ -1644,6 +1725,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
             );
           }}
           renderPreviewFooter={(item) => {
+            if (item.sourceContract === 'RUNTIME_INITIATIVE_GATE') return null;
             const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
             const mode: DecisionPreviewMode =
               viewMode === 'awaiting' ? 'requests_pending' : viewMode === 'my' ? 'my' : 'all';
@@ -1719,11 +1801,15 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
               onRowClick={(row) => openPreview(String(row.id))}
               onRowDoubleClick={(row) => {
                 const full = decisions.find((d) => d.id === row.id);
+                if (full?.sourceContract === 'RUNTIME_INITIATIVE_GATE') { openPreview(full.id); return; }
                 onDecisionClick?.(String(row.id), full);
                 setPreviewDecisionId(null);
               }}
               rowActions={(row) => {
                 const decision = row as unknown as Decision;
+                if (decision.sourceContract === 'RUNTIME_INITIATIVE_GATE') return [{
+                  id: 'open', kind: 'open' as const, actions: [{id:'open',label:t('myWork.decisionsPanel.open', 'Open'),icon:ChevronRight,onClick:()=>openPreview(decision.id)}],
+                }];
                 const handlers: DecisionRowHandlers = {
                   onApprove: handleApprove,
                   onReject: handleReject,
@@ -1742,7 +1828,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                   : buildDecisionKebabSections(decision, handlers, t, !!isPolish);
               }}
               rowDescription={(row) => (row as unknown as Decision).description}
-              selection={{ selectedIds, onChange: setSelectedIds }}
+              selection={{ selectedIds, onChange: (ids) => setSelectedIds(new Set([...ids].filter(id => !decisions.some(d => d.id === id && d.sourceContract === 'RUNTIME_INITIATIVE_GATE')))) }}
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
               persistKey="mywork.decisions.list"
@@ -1752,7 +1838,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       </div>
 
       {/* Delegation modal (preview action) */}
-      {previewDecisionId && previewDecision ? (
+      {previewDecisionId && previewDecision && !(previewDecision as any).sourceContract ? (
         <DelegationModal
           isOpen={delegationOpen}
           onClose={() => setDelegationOpen(false)}

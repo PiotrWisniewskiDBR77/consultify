@@ -1,3 +1,4 @@
+import { definitionApprovalEnabled, definitionAuthorities, mountDefinitionApprovalReads } from './definitionApprovalAdapter.js';
 import { StaffingFieldsSchema, StaffingNotFoundError, staffingAggregateType, writeStaffing, type StaffingMutation } from '../../domain/initiatives-execution/staffingPlans.js';
 import { GateRolesSchema, GateRolesNotFoundError, replaceGateRoles } from '../../domain/initiatives-execution/gateRoles.js';
 import { ResourceFieldsSchema, ResourceNotFoundError, writeResource } from '../../domain/initiatives-execution/resources.js';
@@ -1482,6 +1483,7 @@ export function createInitiativesExecutionRuntimeRouter(
   deps: InitiativesExecutionRuntimeDependencies
 ): Router {
   const router = Router();
+  mountDefinitionApprovalReads(router, deps, actorFromRequest);
 
   const authorizeProjects = async (
     actor: RuntimeActor,
@@ -2829,6 +2831,26 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
+      if (definitionApprovalEnabled()) {
+        const canUpdate = deps.authorizeInitiativeObject
+          ? await deps.authorizeInitiativeObject(
+              actor,
+              found.initiative.projectId,
+              'initiative.update',
+              [found.initiative.initiativeOwnerId]
+            )
+          : await deps.authorize(actor, found.initiative.projectId, 'initiative.update');
+        const authorities = await definitionAuthorities(
+          deps,
+          actor.organizationId,
+          found.initiative.projectId,
+          policy
+        );
+        if (!canUpdate || !authorities.some((a) => a.id === parsed.data.authorityId)) {
+          res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+          return;
+        }
+      }
       const result = await requestDefinitionDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -2845,6 +2867,7 @@ export function createInitiativesExecutionRuntimeRouter(
           authorityId: parsed.data.authorityId,
           dueAt: parsed.data.dueAt,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -2869,6 +2892,15 @@ export function createInitiativesExecutionRuntimeRouter(
         firstParam(req.params.initiativeId)
       );
       if (
+        definitionApprovalEnabled() &&
+        found &&
+        (await deps.authorize(actor, found.initiative.projectId, 'initiative.view')) &&
+        !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
+      ) {
+        res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+        return;
+      }
+      if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
       ) {
@@ -2880,6 +2912,18 @@ export function createInitiativesExecutionRuntimeRouter(
         found.initiative.projectId,
         firstParam(req.params.initiativeId)
       );
+      if (definitionApprovalEnabled()) {
+        const authorities = await definitionAuthorities(
+          deps,
+          actor.organizationId,
+          found.initiative.projectId,
+          policy
+        );
+        if (!authorities.some((a) => a.id === actor.userId)) {
+          res.status(403).json({ error: { code: 'DEFINITION_AUTHORITY_REQUIRED' } });
+          return;
+        }
+      }
       const result = await decideDefinition(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -2898,6 +2942,7 @@ export function createInitiativesExecutionRuntimeRouter(
           outcome: parsed.data.outcome,
           rationale: parsed.data.rationale,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          ...(definitionApprovalEnabled() ? { approvalV2: true } : {}),
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);

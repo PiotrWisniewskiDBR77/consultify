@@ -73,6 +73,7 @@ export interface InitiativeRegisterColumnOptions {
 }
 
 export type InitiativeRegisterRow = PortfolioInitiative & {
+  canonicalLifecyclePresentation?: boolean;
   canonicalVersion?: number;
   title?: string;
   description?: string;
@@ -224,7 +225,9 @@ export const createInitiativeRegisterColumns = (
                 'initiatives.status.ON_HOLD',
                 'Wstrzymana'
               )
-            : getLocalizedStatusLabel(status, t ?? ((key) => key))
+            : row.canonicalLifecyclePresentation && isKnownEnumValue('initiativeLifecycle', String(row.displayStatus))
+              ? enumLabel('initiativeLifecycle', String(row.displayStatus), t ?? ((_key, fallback) => fallback || _key))
+              : getLocalizedStatusLabel(status, t ?? ((key) => key))
         );
       },
     },
