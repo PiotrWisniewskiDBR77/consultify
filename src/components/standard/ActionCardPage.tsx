@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { NModeToolbar, useCardAIAnalysis } from '@/components/shared/NModeLayout';
 import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
 import type { OpenDocument } from '@/components/shared/ModuleHub/types';
-import { closeActionCard, getActionCard, updateActionCard } from '@/services/actionCards';
+import { closeActionCard, reopenActionCard, getActionCard, updateActionCard } from '@/services/actionCards';
 
 import { ArtifactPropertiesTable } from './ArtifactPropertiesTable';
 import { PracujZAI } from './PracujZAI';
@@ -122,21 +123,17 @@ export function ActionCardPage() {
     [apply, card, tr]
   );
 
-  /**
-   * F5 (odbiór P13-A) — ATRAPA usunięta: `primaryAction: intentionallyNone`
-   * obiecywał zmianę stanu „w sekcji Akcje", a sekcja miała tylko „Wróć do
-   * listy". Trasa `POST /api/action-cards/:id/close` istnieje i działa
-   * (`closeActionCard` w `services/actionCards.ts`) — to jedyne realne
-   * przejście stanu (OPEN → CLOSED; serwer nie ma trasy powrotnej). Zamiast
-   * kontrolki-atrapy: realny primary w Menu 1, dopóki karta jest otwarta.
-   */
-  const handleClose = useCallback(() => {
-    if (!card || card.status !== 'OPEN') return;
+  const handleLifecycle = useCallback(() => {
+    if (!card || closing) return;
+    const reopening = card.status === 'CLOSED';
     setClosing(true);
-    void closeActionCard(card.id)
+    void (reopening ? reopenActionCard(card.id) : closeActionCard(card.id))
       .then(setCard)
+      .catch(() => toast.error(reopening
+        ? t('actionCard.reopenFailed', 'Could not reopen the card.')
+        : t('actionCard.closeFailed', 'Could not close the card.')))
       .finally(() => setClosing(false));
-  }, [card]);
+  }, [card, closing, t]);
 
   // K3b: wołany z `StandardModuleBar` (Menu 2/3). Musi żyć NAD wczesnym
   // `return` niżej — hook zadeklarowany po warunkowym return renderuje się
@@ -317,12 +314,15 @@ export function ActionCardPage() {
                 id: 'close-action-card',
                 label: { pl: 'Zamknij kartę', en: 'Close card' },
                 icon: Check,
-                onClick: handleClose,
+                onClick: handleLifecycle,
                 disabled: closing,
               }
             : {
-                intentionallyNone: true,
-                reason: 'Karta jest zamknięta — nie ma dalszej akcji cyklu życia (brak trasy ponownego otwarcia).',
+                id: 'reopen-action-card',
+                label: { pl: t('actionCard.reopen', { lng: 'pl', defaultValue: 'Otwórz ponownie' }), en: t('actionCard.reopen', { lng: 'en', defaultValue: 'Reopen card' }) },
+                icon: Check,
+                onClick: handleLifecycle,
+                disabled: closing,
               }
         }
         sections={sections}

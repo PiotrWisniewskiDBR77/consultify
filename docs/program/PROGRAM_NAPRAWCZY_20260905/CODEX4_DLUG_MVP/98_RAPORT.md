@@ -1,4 +1,4 @@
-# CODEX4 — raport E1 (12.09.2026)
+# CODEX4 — raport E1 i E2 (12.09.2026)
 
 ## 1. Stanowisko
 
@@ -99,9 +99,97 @@ npx tsc --noEmit
 - Nie projektowano odmów dla innych zastanych błędów członkostwa/roli w zadaniach
   z projektem; to odrębne warunki, nie defekt NULL projektu.
 
-## 3. E2
+## 3. E2 — ponowne otwarcie karty działania
 
-NIEWYKONANE w tym przekazaniu — dalsza praca integratora.
+**E2: lokalne kryteria spełnione; niezależny odbiór integratora pozostaje osobną bramką.**
+Baza kodu E1: `5544f2f3fe36434a6c7fc6ca9a29b5272feea0c2`. Ten etap korzysta z tego samego
+izolowanego `cx4_e1`; realny ApiGateway na 4214, zbudowany Vite preview na 5214.
+
+### Premisa i kontrakt
+
+PRZED: brak trasy reopen w `server/src/routes/actionCards.routes.ts`; update serwisu
+przyjmuje wybrane pola treści, nie status. Realny POST reopen daje 404. Close ustawia
+`action_cards.status=CLOSED`, `updated_by`, `updated_at`; nie ma osobnych kolumn closed_at/by
+ani oddzielnego wpisu historii. Dodatkowo zamyka istniejący canonical Inbox właściciela
+jako resolved z `metadata.closedBy=action_card_close`. Dotychczas błąd tego drugiego zapisu
+był połykany, więc karta i Inbox mogły pozostać niespójne.
+
+PO: `POST /api/action-cards/:id/reopen` ustawia OPEN i aktualnego aktora/czas. Ta sama
+bramka co close: zalogowany członek organizacji, również peer niebędący właścicielem → 200;
+obca organizacja i brak karty → 404; bez JWT → 401. Nie rozszerzono uprawnień. Powtórny
+reopen otwartej karty → 200, bez żadnej zmiany jej wiersza ani Inbox. Przyjęto semantykę
+idempotentnego sukcesu; close również nie przepisuje już czasu zamkniętej karty.
+
+Obie strony wykonują się w jednej transakcji z blokadą wiersza karty (`FOR UPDATE OF ac`),
+a następnie istniejącej projekcji Inbox. Reopen przywraca wyłącznie resolved z dokładnym
+znacznikiem `action_card_close`: pending, source_status OPEN, resolved_at NULL, usunięty
+closedBy, pozostałe metadata zachowane. Manual resolved i dismissed pozostają nietknięte,
+nawet dismissed ze starym znacznikiem systemowym. Brak Inbox jest legalny, nic nie jest tworzone.
+Uszkodzona metadata nie powoduje500 i nie daje dowodu systemowej własności dla reopen.
+Retry close naprawia stary częściowy zapis CLOSED+pending bez zmiany zamkniętej karty.
+
+Zmiana close jest konieczna dla tej samej przyczyny: bez wspólnego row lock opóźniony zapis
+starego close mógł zamknąć Inbox już po reopen. Po zmianie błąd któregokolwiek zapisu daje
+500 i rollback całości, zamiast dotychczasowego sukcesu z połkniętym błędem Inbox.
+Nie zmieniono queryHelpers, schematu, innych kart ani mechanizmu historii.
+
+### Interfejs i rodzina
+
+ActionCardPage przełącza Close/Reopen w tym samym miejscu, stylu i z istniejącą ikoną Check.
+Przewód obejmuje też ActionCard → ActionCardList → KpiToolPage oraz klienta API.
+EN `Reopen card`, PL `Otwórz ponownie`; powiadomienia sukcesu/błędu mają klucze obu języków.
+Przycisk jest zablokowany podczas zapisu; błąd nie zmienia stanu karty lokalnie.
+Istniejąca akcja nawigacyjna `Open card` pozostaje odrębna od zmiany cyklu życia
+(i poprawiono jej mylący fallback tekstowy). KpiToolPage zachowuje zastany translator pl/en;
+nowe klucze używają osobnego aliasu `translate`.
+Rodzeństwo tej samej przyczyny: close, strona karty i lista kart KPI — objęte zmianą.
+Pozostałe typy kart N i ogólny Inbox nie zostały refaktoryzowane.
+
+### Stały mianownik RED → GREEN
+
+| Kontrola | RED | GREEN | Dowody poza repo |
+|---|---|---|---|
+| RealPG ApiGateway JWT, 8 testów, retry=0 | 7 failed / 1 passed | 8 passed | `e2-red8-final.log`, `e2-green8-final.log` |
+| Render/klik ActionCard, 4 testy, retry=0 | 3 failed / 1 passed | 4 passed | `e2-front-red.log`, `e2-front-green.log` |
+| TypeScript serwera po finalnym kodzie | — | exit 0 | `e2-server-tsc-final.log` |
+| esbuild per 5 zmienionych plików frontu | — | 5/5 | `e2-esbuild.log` |
+| Vite build z manifestem, heap 8GB | — | exit 0, 45.67s | `e2-build-final.log`, `dist/.vite/manifest.json` |
+
+RealPG: close→reopen+SQL readback; idempotencja; same-org peer; foreign/anon/missing;
+manual resolved; dismissed; brak Inbox; rollback obu kierunków przy kontrolowanej awarii
+**zarówno zapisu Inbox, jak i karty**; rzeczywiste czekanie obu requestów za row lock
+potwierdzone przez pg_stat_activity; naprawa legacy partial-close; błędna metadata.
+RED przywraca dwa pliki backendu z HEAD E1 (dla E2 identyczne z markerem), potem wracają
+kopie GREEN, bez stash/reset. W obu końcowych biegach identyczne 8 przypadków.
+Pierwszy build wykrył zdublowane `t` w KpiToolPage; alias poprawiono i ponowny build przeszedł.
+Nie zaliczamy wcześniejszego nieudanego buildu jako dowodu.
+
+### UI i granice pomiaru
+
+Konto lokalne `audyt@dbr77.local` powstało w osobnej organizacji kopii DB, bcrypt zgodny
+z aplikacją, onboarding zakończony. Realny POST /api/auth/login dostarczył sesję JWT;
+Playwright używa tej sesji. Karta `274e62e8-0e09-4267-beb8-cf159c46c5e4` powstała realnym API.
+Jeden kontekst 1440×900; motyw z zustand, stabilność treści 3×400ms; klik Close→200,
+klik Reopen→200, reload→OPEN/Close card w obu motywach. Bez mockowania endpointów.
+
+Zrzuty własne, obejrzane: `evidence/n1-reopen-card/closed-light.png`, `closed-dark.png`,
+`reopened-reload-light.png`, `reopened-reload-dark.png`; każdy ma JSON z URL, stanem,
+motywem, czasem, luma i odpowiedziami HTTP. `summary.json` zachowuje surowe błędy.
+Średnia luma i różnice znajdują się w tabeli poniżej (próg różnicy >40).
+
+| Stan | Light | Dark | Różnica |
+|---|---:|---:|---:|
+| closed | 247.71 | 24.92 | 222.80 |
+| reopened-reload | 247.80 | 24.85 | 222.95 |
+
+
+0 pageerror, 0 błędów lifecycle. W konsoli występują wyłącznie 404 `/api/health` i
+`/api/csrf-token`: są montowane w aplikacyjnym index.ts poza Gateway, którego minimalny
+przyrząd używa bez index.ts. Nie ukryto ich ani nie dodano sztucznych odpowiedzi200.
+To ograniczenie przyrządu, nie dowód poprawnego globalnego bootstrapu; E3 wymaga prawdziwych
+handlerów health/CSRF. Nie wykonano osobnego żywego kliknięcia listy KPI ani polskiej sesji;
+lista ma test render/klik i esbuild, polski klucz jest dostarczony. UI nie dowodzi całego produktu.
+
 
 ## 4. E3
 
@@ -114,7 +202,8 @@ pilotażu staging; przed użyciem narzędzi integrator ma ujednolicić cel.
 
 ## 6. SHA
 
-E1: commit zawierający ten raport; pełny SHA w przekazaniu integratora i `git log -1`.
+E1: `5544f2f3fe36434a6c7fc6ca9a29b5272feea0c2`.
+E2: commit zawierający aktualizację tego raportu; pełny SHA w przekazaniu integratora.
 Nie wykonano push ani scalenia.
 
 ## 7. Przekazanie bazy i sprzątanie
@@ -135,8 +224,8 @@ docker exec -i cx-codex4-pg pg_restore -U postgres -d cx4_bundle --no-owner --no
 
 ## 8. Czego nie sprawdzono
 
-Żadne żywe środowisko, UI ani nowe zrzuty (E1 jest backend-only), pełny front tsc,
+Żadne żywe środowisko; UI E1 (backend-only); pełny front tsc,
 pełna regresja aplikacji, kanoniczny inbox runtime i oddzielne trasy delegate/portfolio.
 Nie zmierzono wszystkich istniejących zadań bez projektu ani liczby z pierwotnej premisy;
 reprodukcja używa izolowanych fixture w legalnej lokalnej kopii. Brak migracji i zmian
-uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnego E1.
+uprawnień; nie ma dowodu wdrożenia, wyłącznie lokalnych E1/E2.

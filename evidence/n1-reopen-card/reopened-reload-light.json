@@ -1,0 +1,44 @@
+{
+  "url": "http://127.0.0.1:5214/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+  "cardId": "274e62e8-0e09-4267-beb8-cf159c46c5e4",
+  "theme": "light",
+  "state": "reopened-reload",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "luma": 247.79603135185187,
+  "capturedAt": "2026-09-12T08:18:34.141Z",
+  "pageErrors": [],
+  "harnessHttpErrors": [
+    "http://127.0.0.1:5214/api/csrf-token",
+    "http://127.0.0.1:5214/api/health"
+  ],
+  "lifecycle": [
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/close",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4/reopen",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5214/api/action-cards/274e62e8-0e09-4267-beb8-cf159c46c5e4",
+      "method": "GET",
+      "status": 200
+    }
+  ]
+}
