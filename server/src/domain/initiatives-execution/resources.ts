@@ -3,72 +3,65 @@ import { z } from 'zod';
 import {
   executeMaterialCommand,
   MaterialCommandValidationError,
-  MaterialCommandRuleError,
   type MaterialCommandEnvelope,
   type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
 } from './materialCommand.js';
 
-export class BudgetItemNotFoundError extends MaterialCommandValidationError {}
+export class ResourceNotFoundError extends MaterialCommandValidationError {}
 
-export const BudgetItemFieldsSchema = z.object({
-  category: z.string().max(100).optional(),
-  costType: z.string().max(40).optional(),
-  amount: z.number().finite().optional(),
-  currency: z.string().min(1).max(10).optional(),
-  description: z.string().nullable().optional(),
-  source: z.string().max(100).optional(),
+export const ResourceFieldsSchema = z.object({
+  userId: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  role: z.string().min(1).optional(),
+  allocationPercentage: z.number().finite().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  source: z.string().optional(),
+  idempotencyKey: z.string().optional(),
+  expectedVersion: z.number().int().nonnegative().optional(),
 });
-export type BudgetItemFields = z.infer<typeof BudgetItemFieldsSchema>;
-export type BudgetItemMutation = {
+export type ResourceFields = z.infer<typeof ResourceFieldsSchema>;
+export type ResourceMutation = {
   initiativeId: string;
   operation: 'create' | 'update' | 'delete';
-  fields: BudgetItemFields;
+  fields: ResourceFields;
 };
-export type BudgetItemRecord = BudgetItemFields & {
+export type ResourceRecord = ResourceFields & {
   id: string;
   initiativeId: string;
   deleted?: true;
+  version?: number;
 };
-export interface BudgetItemTransaction extends MaterialCommandTransaction {
-  writeInitiativeBudgetItem(
-    input: BudgetItemMutation & {
+export interface ResourceTransaction extends MaterialCommandTransaction {
+  writeInitiativeResource(
+    input: ResourceMutation & {
       organizationId: string;
       itemId: string;
     }
-  ): Promise<BudgetItemRecord>;
+  ): Promise<ResourceRecord>;
 }
-function supportsBudgetItems(tx: MaterialCommandTransaction): tx is BudgetItemTransaction {
-  return 'writeInitiativeBudgetItem' in tx && typeof tx.writeInitiativeBudgetItem === 'function';
+function supportsResources(tx: MaterialCommandTransaction): tx is ResourceTransaction {
+  return 'writeInitiativeResource' in tx && typeof tx.writeInitiativeResource === 'function';
 }
 /** Same transaction owns projection, aggregate CAS, receipt, audit and outbox. */
-export async function writeBudgetItem(
+export async function writeResource(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<BudgetItemMutation>
+  envelope: MaterialCommandEnvelope<ResourceMutation>
 ) {
   if (
-    envelope.aggregateType !== 'initiative_budget_item' ||
-    envelope.commandType !== `initiative-budget-item.${envelope.payload.operation}`
+    envelope.aggregateType !== 'initiative_resource' ||
+    envelope.commandType !== `initiative-resource.${envelope.payload.operation}`
   ) {
-    throw new MaterialCommandValidationError('Invalid initiative budget item command');
+    throw new MaterialCommandValidationError('Invalid initiative resource command');
   }
-  BudgetItemFieldsSchema.parse(envelope.payload.fields);
-  const initiative = await unitOfWork.transaction((tx) =>
-    tx.getAggregatePayload<{ status?: string; lifecycleState?: string }>(
-      envelope.organizationId,
-      'initiative',
-      envelope.payload.initiativeId
-    )
-  );
-  if (initiative?.status === 'ARCHIVED' || initiative?.lifecycleState === 'ARCHIVED') {
-    throw new MaterialCommandRuleError('INITIATIVE_ARCHIVED_READ_ONLY', 409);
-  }
-
+  ResourceFieldsSchema.parse(envelope.payload.fields);
   return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
-    if (!supportsBudgetItems(tx)) {
+    if (!supportsResources(tx)) {
       throw new MaterialCommandValidationError('Budget item projection writer is not configured');
     }
-    const state = await tx.writeInitiativeBudgetItem({
+    const state = await tx.writeInitiativeResource({
       ...envelope.payload,
       organizationId: envelope.organizationId,
       itemId: envelope.aggregateId,
@@ -83,14 +76,14 @@ export async function writeBudgetItem(
   });
 }
 
-export async function writeLegacyBudgetItem(
+export async function writeLegacyResource(
   unitOfWork: MaterialCommandUnitOfWork,
   input: {
     organizationId: string;
     actorId: string;
     initiativeId: string;
-    operation: BudgetItemMutation['operation'];
-    fields: BudgetItemFields;
+    operation: ResourceMutation['operation'];
+    fields: ResourceFields;
     itemId: string;
     clientRequestId: string;
     expectedVersion?: number;
@@ -120,24 +113,24 @@ export async function writeLegacyBudgetItem(
           );
         const state = await tx.getAggregatePayload<{ deleted?: boolean }>(
           input.organizationId,
-          'initiative_budget_item',
+          'initiative_resource',
           itemId
         );
         if (!state?.deleted) break;
         const version = await tx.getAggregateVersion(
           input.organizationId,
-          'initiative_budget_item',
+          'initiative_resource',
           itemId
         );
         const identityHash = createHash('sha256')
           .update(JSON.stringify([input.organizationId, itemId, version]))
           .digest('hex');
-        itemId = `budget-recreate-${identityHash}`;
-        clientRequestId = `budget-recreate-${identityHash}`;
+        itemId = `resource-recreate-${identityHash}`;
+        clientRequestId = `resource-recreate-${identityHash}`;
       }
     }
     const current =
-      (await tx.getAggregateVersion(input.organizationId, 'initiative_budget_item', itemId)) ?? 0;
+      (await tx.getAggregateVersion(input.organizationId, 'initiative_resource', itemId)) ?? 0;
     if (!input.hasIdempotencyKey && input.operation !== 'create') {
       if (input.expectedVersion !== undefined) clientRequestId += `-v${input.expectedVersion}`;
       else {
@@ -155,17 +148,17 @@ export async function writeLegacyBudgetItem(
       expectedVersion: input.expectedVersion ?? (receipt ? receipt.aggregateVersion - 1 : current),
     };
   });
-  return writeBudgetItem(unitOfWork, {
+  return writeResource(unitOfWork, {
     organizationId: input.organizationId,
     actorId: input.actorId,
-    aggregateType: 'initiative_budget_item',
+    aggregateType: 'initiative_resource',
     aggregateId: identity.itemId,
     expectedVersion: identity.expectedVersion,
     clientRequestId: identity.clientRequestId,
     correlationId: input.clientRequestId,
     policyId: 'execution-control',
     policyVersion: 1,
-    commandType: `initiative-budget-item.${input.operation}`,
+    commandType: `initiative-resource.${input.operation}`,
     createIfMissing: true,
     payload: { initiativeId: input.initiativeId, operation: input.operation, fields: input.fields },
   });

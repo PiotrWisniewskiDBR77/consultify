@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { ResourceFieldsSchema, ResourceNotFoundError, writeLegacyResource } from '../domain/initiatives-execution/resources.js';
+import { MilestoneFieldsSchema, MilestoneNotFoundError, writeLegacyMilestone } from '../domain/initiatives-execution/milestones.js';
 /**
  * Initiative Controller
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -18,7 +20,7 @@ import { amendInitiativeMetadata } from '../domain/initiatives-execution/amendIn
 // "same clientRequestId, different command" (receipt clash — our dedup path)
 // from "aggregate version conflict" (real concurrent edit) by message text;
 // only the former is caught below and turned into an idempotent replay.
-import { MaterialCommandConflictError } from '../domain/initiatives-execution/materialCommand.js';
+import { MaterialCommandConflictError, MaterialCommandRuleError, MaterialCommandValidationError } from '../domain/initiatives-execution/materialCommand.js';
 // FIX-3 (97_ODBIOR_W1_W2.md §8): reuse the existing deterministic content-hash
 // helper (already cross-domain: evidenceService, OrganizationContextService)
 // instead of writing a second stable-stringify implementation.
@@ -3796,6 +3798,28 @@ export class InitiativeController {
         }
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-create-${computeContentHash({orgId,initiativeId,targetId:null,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'create',fields,
+            itemId:`milestone-${computeContentHash({orgId,initiativeId,clientRequestId})}`,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.status(result.status==='APPLIED'?201:200).json({success:true,milestone:result.response});
+        return;
+      }
       // Get next order index
       // H4.4 fix (SQLite-izm systemowy — MEMORY finding_unquoted_camelcase_aliases_systemic):
       // unquoted camelCase alias `maxOrder` gets folded to lowercase `maxorder` by
@@ -3928,6 +3952,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-update-${computeContentHash({orgId,initiativeId,targetId:milestoneId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'update',fields,
+            itemId:milestoneId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true,message:'Milestone updated'});
+        return;
+      }
       const updates: string[] = [];
       const params: unknown[] = [];
 
@@ -4152,6 +4198,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = MilestoneFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`milestone-delete-${computeContentHash({orgId,initiativeId,targetId:milestoneId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyMilestone(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'delete',fields,
+            itemId:milestoneId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof MilestoneNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof MilestoneNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true});
+        return;
+      }
       await queryHelpers.queryRun('DELETE FROM initiative_milestones WHERE id = ?', [milestoneId]);
 
       try {
@@ -4436,6 +4504,28 @@ export class InitiativeController {
         }
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-create-${computeContentHash({orgId,initiativeId,targetId:null,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'create',fields,
+            itemId:`resource-${computeContentHash({orgId,initiativeId,clientRequestId})}`,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.status(result.status==='APPLIED'?201:200).json({success:true,resource:result.response});
+        return;
+      }
       const resourceId = uuidv4();
       const now = new Date().toISOString();
 
@@ -4540,6 +4630,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse({});
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-delete-${computeContentHash({orgId,initiativeId,targetId:resourceId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'delete',fields,
+            itemId:resourceId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true});
+        return;
+      }
       await queryHelpers.queryRun(
         `DELETE FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [resourceId, initiativeId, orgId]
@@ -4591,6 +4703,28 @@ export class InitiativeController {
         return;
       }
 
+      if (isInitiativeUnifiedWriteEnabled()) {
+        const parsed = ResourceFieldsSchema.safeParse(req.body);
+        if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+        const fields=parsed.data;
+        const key=req.get('Idempotency-Key') || req.body?.idempotencyKey;
+        const clientRequestId=`resource-update-${computeContentHash({orgId,initiativeId,targetId:resourceId,key:key||null,...(key?{}:{fields})})}`;
+        let result;
+        try {
+          result=await writeLegacyResource(canonicalInitiativeWriteUnitOfWork,{
+            organizationId:orgId,actorId:req.user.id,initiativeId,operation:'update',fields,
+            itemId:resourceId,clientRequestId,expectedVersion:req.body?.expectedCanonicalVersion,hasIdempotencyKey:Boolean(key),
+          });
+        } catch(error) {
+          if(error instanceof MaterialCommandConflictError) { res.status(409).json({code:'RESOURCE_VERSION_CONFLICT',currentVersion:error.currentVersion}); return; }
+          if(error instanceof MaterialCommandValidationError && !(error instanceof ResourceNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
+          if(error instanceof ResourceNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
+          if(error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          throw error;
+        }
+        res.json({success:true,version:result.response.version});
+        return;
+      }
       const now = new Date().toISOString();
       const hasExpectedVersion =
         expectedVersion !== undefined && expectedVersion !== null && expectedVersion !== '';
@@ -4733,7 +4867,7 @@ export class InitiativeController {
         const parsed = BudgetItemFieldsSchema.safeParse(req.body);
         if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
         const fields = parsed.data;
-        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const suppliedKey = req.get('Idempotency-Key');
         const clientRequestId = `budget-create-${computeContentHash({
           orgId, initiativeId, targetId: null, key: suppliedKey || null,
           ...(suppliedKey ? {} : { fields }),
@@ -4743,12 +4877,14 @@ export class InitiativeController {
           result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
           organizationId: orgId, actorId: req.user.id, initiativeId,
           operation: 'create', fields, itemId: `budget-${computeContentHash({orgId,initiativeId,clientRequestId})}`, clientRequestId,
-          expectedVersion: req.body.expectedCanonicalVersion,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
         });
         } catch (error) {
           if (error instanceof MaterialCommandConflictError) {
             res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
           }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
           if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
           throw error;
         }
@@ -4821,7 +4957,7 @@ export class InitiativeController {
         const parsed = BudgetItemFieldsSchema.safeParse(req.body);
         if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
         const fields = parsed.data;
-        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const suppliedKey = req.get('Idempotency-Key');
         const clientRequestId = `budget-update-${computeContentHash({
           orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
           ...(suppliedKey ? {} : { fields }),
@@ -4831,12 +4967,14 @@ export class InitiativeController {
           result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
           organizationId: orgId, actorId: req.user.id, initiativeId,
           operation: 'update', fields, itemId: itemId, clientRequestId,
-          expectedVersion: req.body.expectedCanonicalVersion,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
         });
         } catch (error) {
           if (error instanceof MaterialCommandConflictError) {
             res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
           }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
           if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
           throw error;
         }
@@ -4887,7 +5025,7 @@ export class InitiativeController {
         const parsed = BudgetItemFieldsSchema.safeParse({});
         if (!parsed.success) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
         const fields = parsed.data;
-        const suppliedKey = req.get('Idempotency-Key') || req.get('X-Correlation-ID');
+        const suppliedKey = req.get('Idempotency-Key');
         const clientRequestId = `budget-delete-${computeContentHash({
           orgId, initiativeId, targetId: itemId, key: suppliedKey || null,
           ...(suppliedKey ? {} : { fields }),
@@ -4897,12 +5035,14 @@ export class InitiativeController {
           result = await writeLegacyBudgetItem(canonicalInitiativeWriteUnitOfWork, {
           organizationId: orgId, actorId: req.user.id, initiativeId,
           operation: 'delete', fields, itemId: itemId, clientRequestId,
-          expectedVersion: req.body.expectedCanonicalVersion,
+          expectedVersion: req.body?.expectedCanonicalVersion, hasIdempotencyKey: Boolean(suppliedKey),
         });
         } catch (error) {
           if (error instanceof MaterialCommandConflictError) {
             res.status(409).json({code:'VERSION_CONFLICT', currentVersion:error.currentVersion}); return;
           }
+          if (error instanceof MaterialCommandRuleError) { res.status(error.httpStatus).json({code:error.rule,error:error.message}); return; }
+          if (error instanceof MaterialCommandValidationError && !(error instanceof BudgetItemNotFoundError)) { res.status(400).json({code:'VALIDATION_FAILED'}); return; }
           if (error instanceof BudgetItemNotFoundError) { res.status(404).json({code:'NOT_FOUND'}); return; }
           throw error;
         }

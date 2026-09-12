@@ -1,12 +1,12 @@
 # CODEX2B — raport wykonania
 
-Stan: W TOKU. Budget-items: implementacja i dowody lokalne gotowe do niezależnego review; pozostałych pięciu nieodebranych.
+Stan: PARTIAL — checkpoint trzech rodzin. Budget-items, milestones i resources mają kod i dowody lokalne; niezależny odbiór poprawki review w toku. Gate-roles i staffing-plans będą kontynuowane. Move pozostaje decyzją o rodowodzie projektu, nie ukończoną funkcją.
 
 ## 0. Metryka
 
 Marker `a176d3f906`, gałąź `codex/szesciu-pisarzy-legacy-20260911`.
 Kontener `cx-codex2b-pg`, PostgreSQL18/pgvector, port6454.
-Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony.
+Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backendtsc exit0: `three-writers-server-tsc-fixed.log`; gitdiff--check exit0.
 Pełne migracje czystej bazy:914; zakończone; drugi przebieg: `Applying migrations: 0`.
 Korekta pg16→pg18: lokalny szablon pochodzi zPG18; żadna baza zdalna nieużyta.
 
@@ -69,9 +69,9 @@ Pełne komendy i wyniki: `codex2b-artefakty/e2-0-static.txt`.
 
 | Rodzina | Trasy zapisu | Trafienia src | Kanoniczny zapis do tabeli UI | Stan |
 |---|---:|---:|---|---|
-| budget-items |3|5|brak na markerze|W TOKU P|
-| milestones |3|6|brak na markerze|NIEZROBIONE|
-| resources |4|6|brak na markerze|NIEZROBIONE|
+| budget-items |3|5|writeInitiativeBudgetItem|P:10testów,3mutacje|
+| milestones |3|6|writeInitiativeMilestone|P:6testów,3mutacje|
+| resources |4|6|writeInitiativeResource|P:6testów,3mutacje; ai-apply-log osobno|
 | gate-roles |1|4|brak na markerze|NIEZROBIONE|
 | staffing-plans |7|10|brak na markerze|NIEZROBIONE|
 | move |1|1|brak na markerze|NIEZROBIONE|
@@ -79,37 +79,98 @@ Pełne komendy i wyniki: `codex2b-artefakty/e2-0-static.txt`.
 ## 4. Kroki E2.0…E2.6, E9
 
 E2.0: pomiar kodu, migracje ×2 i pełny restore lokalnego szablonu wykonane.
-E2.1: analiza trwa. E2.2–E2.6 orazE9 nieodebrane.
+E2.0 commit1af9920ce5. E2.2 pierwszy budget commit828c68cf88 został wstrzymany
+przez niezależny review (opis niżej); ten checkpoint zawiera poprawkę.
+E2.3: trzy rodziny mają kanoniczne create/update/delete, adaptery istniejącej flagi
+oraz testy po treści. Nie wycofano żadnej trasy. OFF legalneCRUD pozostaje.
+Milestones zachowuje rebaseline gate i zapisuje log z rzeczywistym requested_by.
+Resources zachowuje rowversionCAS i przelicza capacity w tej samej transakcji.
+
+Review znalazł dwa P1: session-stable X-Correlation-ID nie jest idempotency key;
+stały hashPUT(A) nie rozróżniał późniejszego A→B→A. Naprawa używa wyłącznie
+Idempotency-Key jako jawnej intencji. FallbackPUT uwzględnia wersję i rozpoznaje
+replay ostatniego receipt. KeylessPOST po usunięciu tworzy nową deterministyczną
+inkarnację. Identyczne keylessPOST na żywym rekordzie nadal są deduplikowane:
+różne intencje o identycznej treści wymagają różnych Idempotency-Key.
+Nowe testy odkryły DELETE bezbody500 — optionalchain usuwa ten błąd.
+Błędne expectedCanonicalVersion zwraca400; archiwum kanoniczne409.
+
+Pułapki§0.2e(a)-(f): każdy plik wymuszaDBpostgres/RUN_DB_TESTS1/MOCK_DBfalse,
+V8true, betavisibilityenforce, authbypass!=true; assertRealPostgresbezargumentów.
+ApiGateway+JWT+SQL jest realny; WRITEON/OFF jawnie perprzypadek, READfalse/true
+przy odczycie po treści. Tests nie montują samego routera i nie uruchamiają index.ts.
 
 ## 5. Dowody mutacyjne (Z32)
 
-Budget-items: 3mutacje, każda przy7tych samych pełnych nazwach:
-- usunięty INSERT do projection:2PASS/5FAIL → cp →7PASS;
-- usunięty organization_id w UoW:6PASS/1FAIL (nativeforeign404) → cp →7PASS;
-- wymuszony WRITEfalse:4PASS/3FAIL, legalnyOFFPASS → cp →7PASS.
-Skrypt exact mutacji: `codex2b-scratch/run-budget-mutations.py`.
-Każdy przebieg ma `budget-mutation-<projection|tenant|flag>-<red|green>.command.txt`, JSON i log.
-Pliki przywrócone przez kopię; porównanie bajtowe identyczne; diff mutacji pusty.
-Backend tsc -p server/tsconfig.json --noEmit:exit0. Pozostałych writerów nie mierzyłem.
+### budget
 
-Budget-items: GREEN7/7 po rozszerzeniu o native runtime CRUD/replay/CAS/tenant
-oraz legacyON update/delete/expectedCanonicalVersion409. Ten sam UI GET zawiera
-id+opis przy READfalse iREADtrue. LegalnyOFFCRUDPASS przed i po zmianie.
-Nowe error keys errors.VERSION_CONFLICT, NOT_FOUND, VALIDATION_FAILED,
-INITIATIVE_ARCHIVED_READ_ONLY dopisano w PL i EN. Wyświetlenie tłumaczenia
-w przeglądarce NOT_PROVEN (Z11 — blok nie ma warstwy browser).
+projection red: 3PASS/7FAIL; 10pełnych nazw. `budget-mutation-projection-red.json`.
+
+projection green: 10PASS/0FAIL; 10pełnych nazw. `budget-mutation-projection-green.json`.
+
+tenant red: 9PASS/1FAIL; 10pełnych nazw. `budget-mutation-tenant-red.json`.
+
+tenant green: 10PASS/0FAIL; 10pełnych nazw. `budget-mutation-tenant-green.json`.
+
+flag red: 5PASS/5FAIL; 10pełnych nazw. `budget-mutation-flag-red.json`.
+
+flag green: 10PASS/0FAIL; 10pełnych nazw. `budget-mutation-flag-green.json`.
+
+Komendy exact w plikach `budget-mutation-*-*.command.txt`, kod mutacji w `codex2b-scratch/run-budget-mutations.py`. Przywrócenie przezcp; porównanie bajtowe identyczne; mutacyjnydiffpusty.
+
+### milestones
+
+projection red: 3PASS/3FAIL; 6pełnych nazw. `milestones-mutation-projection-red.json`.
+
+projection green: 6PASS/0FAIL; 6pełnych nazw. `milestones-mutation-projection-green.json`.
+
+tenant red: 5PASS/1FAIL; 6pełnych nazw. `milestones-mutation-tenant-red.json`.
+
+tenant green: 6PASS/0FAIL; 6pełnych nazw. `milestones-mutation-tenant-green.json`.
+
+flag red: 4PASS/2FAIL; 6pełnych nazw. `milestones-mutation-flag-red.json`.
+
+flag green: 6PASS/0FAIL; 6pełnych nazw. `milestones-mutation-flag-green.json`.
+
+Komendy exact w plikach `milestones-mutation-*-*.command.txt`, kod mutacji w `codex2b-scratch/run-milestones-mutations.py`. Przywrócenie przezcp; porównanie bajtowe identyczne; mutacyjnydiffpusty.
+
+### resources
+
+projection red: 3PASS/3FAIL; 6pełnych nazw. `resources-mutation-projection-red.json`.
+
+projection green: 6PASS/0FAIL; 6pełnych nazw. `resources-mutation-projection-green.json`.
+
+tenant red: 5PASS/1FAIL; 6pełnych nazw. `resources-mutation-tenant-red.json`.
+
+tenant green: 6PASS/0FAIL; 6pełnych nazw. `resources-mutation-tenant-green.json`.
+
+flag red: 4PASS/2FAIL; 6pełnych nazw. `resources-mutation-flag-red.json`.
+
+flag green: 6PASS/0FAIL; 6pełnych nazw. `resources-mutation-flag-green.json`.
+
+Komendy exact w plikach `resources-mutation-*-*.command.txt`, kod mutacji w `codex2b-scratch/run-resources-mutations.py`. Przywrócenie przezcp; porównanie bajtowe identyczne; mutacyjnydiffpusty.
 
 ## 6. Zasięg testów (§0.4a)
 
-Pierwszy RED budget5nazw:1PASS legalnego OFF CRUD,4FAIL:
-2brak kanonu;2naruszenie izolacji tenanta. Lista nazw w budget-before.json.
-Nie jest to regresja dostarczonego kodu: pomiar uruchomiono na niezmienionym markerze.
+Przed:15nazw. Po:22nazwy. ZNIKNIĘTE:0. DODANE:7:
+
+- CODEX2B budget items canonical writer a session correlation ID does not merge different operations; keyless edits can return A-B-A
+- CODEX2B budget items canonical writer invalid canonical versions return 400 and archived writes return 409
+- CODEX2B budget items canonical writer keyless create after delete creates a live new incarnation and retries it
+- CODEX2B budget items canonical writer legacy ON supports update/delete and surfaces stale canonical version
+- CODEX2B budget items canonical writer native runtime CRUD, explicit CAS and foreign tenant use the same projection
+- CODEX2B milestones canonical writer native CRUD keeps schedule decision gate, audit actor and canonical CAS
+- CODEX2B resources canonical writer native CRUD preserves resource version CAS and atomic capacity readback
+
+LegalnyOFF CRUD ma te same trzy pełne nazwy przed i po zmianie, wszystkiePASS.
+SecuritybudgetOFF celowo naprawia cross-org201→404, autoryzacja integratora zapisana.
+Czerwone kontrakty pozostałych writerów są osobnym plikiem, nie wchodzą do22PASS.
 
 ## 7. Deklaracja Z30
 
 SMTP env:0nazw; settings SMTP0;ie_outbox_delivery_receipts0 przed pierwszym zapisem.
 ApiGateway montowany bez index.ts, żaden drenaż nieuruchomiony.
-Finalna deklaracja z liczbą outbox — po ostatnim przebiegu.
+Zero realnych wysyłek. Zdarzenia leżą w `ie_outbox_events` (0 sztuk po sprzątnięciu fixture), `ie_outbox_delivery_receipts` = 0, żaden drenaż nie działał w procesie testowym. Po każdym pełnym pliku fixture są usuwane poorganizationId; zera po sprzątnięciu nie negują zdarzeń w transakcji.
 
 ## 8. Migracje i manifesty
 
@@ -120,6 +181,7 @@ Brak nowych migracji. Pełny dump lokalnego szablonu leży poza repo.
 Z30 sprawdzony bez drukowania wartości zmiennych środowiska.
 Vitest wymaga --root server i absolutnego --config; względny po zmianie root
 wskazuje błędnie server/server/vitest.config.ts. Pierwszy startup nie był pomiarem.
+Nowe importy przesunęły zastany // @ts-nocheck kontrolera i aktywowały stary plik wtsc; istniejący komentarz przywrócono do pierwszej linii, bez nowego wyciszenia. Powtórny backendtsc0.
 Pierwsze uruchomienie migratora trafiło na rozruch PG; po pg_isready pełny przebieg
 powtórzono z powodzeniem. Drugie wykonanie jest idempotentne.
 
@@ -131,13 +193,12 @@ bramek E3 lub globalnego middleware.
 
 ## 11. TWIERDZENIA NIEZWERYFIKOWANE
 
-Nie zmierzono staging/demo/produkcji. Nie potwierdzono jeszcze kompletności żadnego
-z sześciu pisarzy, mutacji ani braku regresji pełnego serwera.
+Nie zmierzono staging/demo/produkcji ani przeglądarki/i18nrender. Nie zmierzono równoczesnego retry dwóch procesów ani pełnego korpusu testowego. Gate-roles/staffing/move nie mają jeszcze gotowej implementacji w tym checkpoincie. Dowody22PASS dotyczą lokalnego ApiGateway/JWT/Postgres, nie gotowości uruchomienia produktu.
 
 ## 12. DO DECYZJI WŁAŚCICIELA
 
 - move: czy zmiana project_id ma zostać osobną komendą kanoniczną; brakuje decyzji
-  kontraktu tożsamości i skutków dla istniejących relacji.
+  kontraktu tożsamości i skutków dla istniejących relacji. Lokalny pomiar:10execution_case,4z własnymprojectId,6dziedziczy;12execution_task przezexecutionCaseId. Reader bierze najpierw własnyprojectId,potemcase,poteminitiative. Sam UPDATE dwóchmagazynów przeniesie tylko część uprawnieńzadań; trzeba rozstrzygnąć relacjęmoveTasks zkanonicznymcase i zaakceptowanymplanem/proposal.
 - Autoryzacja: budget legacy ma shadow capability; kanoniczny runtime ogranicza
   dostęp przez authorizeProjects. Nie zmieniono modelu uprawnień.
 - expectedVersion: starszy klient nie podaje wersji kanonicznej. Adapter zachowuje

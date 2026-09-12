@@ -3,74 +3,76 @@ import { z } from 'zod';
 import {
   executeMaterialCommand,
   MaterialCommandValidationError,
-  MaterialCommandRuleError,
   type MaterialCommandEnvelope,
   type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
 } from './materialCommand.js';
 
-export class BudgetItemNotFoundError extends MaterialCommandValidationError {}
+export class MilestoneNotFoundError extends MaterialCommandValidationError {}
 
-export const BudgetItemFieldsSchema = z.object({
-  category: z.string().max(100).optional(),
-  costType: z.string().max(40).optional(),
-  amount: z.number().finite().optional(),
-  currency: z.string().min(1).max(10).optional(),
+export const MilestoneFieldsSchema = z.object({
+  name: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
-  source: z.string().max(100).optional(),
+  targetDate: z.string().nullable().optional(),
+  actualDate: z.string().nullable().optional(),
+  status: z.string().optional(),
+  orderIndex: z.number().int().optional(),
+  isGate: z.boolean().optional(),
+  idempotencyKey: z.string().optional(),
+  rebaselineDecision: z
+    .object({
+      approvedBy: z.string().optional(),
+      reason: z.string().optional(),
+      decisionId: z.string().optional(),
+      resetBaseline: z.boolean().optional(),
+    })
+    .nullable()
+    .optional(),
 });
-export type BudgetItemFields = z.infer<typeof BudgetItemFieldsSchema>;
-export type BudgetItemMutation = {
+export type MilestoneFields = z.infer<typeof MilestoneFieldsSchema>;
+export type MilestoneMutation = {
   initiativeId: string;
   operation: 'create' | 'update' | 'delete';
-  fields: BudgetItemFields;
+  fields: MilestoneFields;
 };
-export type BudgetItemRecord = BudgetItemFields & {
+export type MilestoneRecord = MilestoneFields & {
   id: string;
   initiativeId: string;
   deleted?: true;
+  createdAt?: string;
 };
-export interface BudgetItemTransaction extends MaterialCommandTransaction {
-  writeInitiativeBudgetItem(
-    input: BudgetItemMutation & {
+export interface MilestoneTransaction extends MaterialCommandTransaction {
+  writeInitiativeMilestone(
+    input: MilestoneMutation & {
       organizationId: string;
+      actorId: string;
       itemId: string;
     }
-  ): Promise<BudgetItemRecord>;
+  ): Promise<MilestoneRecord>;
 }
-function supportsBudgetItems(tx: MaterialCommandTransaction): tx is BudgetItemTransaction {
-  return 'writeInitiativeBudgetItem' in tx && typeof tx.writeInitiativeBudgetItem === 'function';
+function supportsMilestones(tx: MaterialCommandTransaction): tx is MilestoneTransaction {
+  return 'writeInitiativeMilestone' in tx && typeof tx.writeInitiativeMilestone === 'function';
 }
 /** Same transaction owns projection, aggregate CAS, receipt, audit and outbox. */
-export async function writeBudgetItem(
+export async function writeMilestone(
   unitOfWork: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<BudgetItemMutation>
+  envelope: MaterialCommandEnvelope<MilestoneMutation>
 ) {
   if (
-    envelope.aggregateType !== 'initiative_budget_item' ||
-    envelope.commandType !== `initiative-budget-item.${envelope.payload.operation}`
+    envelope.aggregateType !== 'initiative_milestone' ||
+    envelope.commandType !== `initiative-milestone.${envelope.payload.operation}`
   ) {
-    throw new MaterialCommandValidationError('Invalid initiative budget item command');
+    throw new MaterialCommandValidationError('Invalid initiative milestone command');
   }
-  BudgetItemFieldsSchema.parse(envelope.payload.fields);
-  const initiative = await unitOfWork.transaction((tx) =>
-    tx.getAggregatePayload<{ status?: string; lifecycleState?: string }>(
-      envelope.organizationId,
-      'initiative',
-      envelope.payload.initiativeId
-    )
-  );
-  if (initiative?.status === 'ARCHIVED' || initiative?.lifecycleState === 'ARCHIVED') {
-    throw new MaterialCommandRuleError('INITIATIVE_ARCHIVED_READ_ONLY', 409);
-  }
-
+  MilestoneFieldsSchema.parse(envelope.payload.fields);
   return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
-    if (!supportsBudgetItems(tx)) {
+    if (!supportsMilestones(tx)) {
       throw new MaterialCommandValidationError('Budget item projection writer is not configured');
     }
-    const state = await tx.writeInitiativeBudgetItem({
+    const state = await tx.writeInitiativeMilestone({
       ...envelope.payload,
       organizationId: envelope.organizationId,
+      actorId: envelope.actorId,
       itemId: envelope.aggregateId,
     });
     return {
@@ -83,14 +85,14 @@ export async function writeBudgetItem(
   });
 }
 
-export async function writeLegacyBudgetItem(
+export async function writeLegacyMilestone(
   unitOfWork: MaterialCommandUnitOfWork,
   input: {
     organizationId: string;
     actorId: string;
     initiativeId: string;
-    operation: BudgetItemMutation['operation'];
-    fields: BudgetItemFields;
+    operation: MilestoneMutation['operation'];
+    fields: MilestoneFields;
     itemId: string;
     clientRequestId: string;
     expectedVersion?: number;
@@ -120,24 +122,24 @@ export async function writeLegacyBudgetItem(
           );
         const state = await tx.getAggregatePayload<{ deleted?: boolean }>(
           input.organizationId,
-          'initiative_budget_item',
+          'initiative_milestone',
           itemId
         );
         if (!state?.deleted) break;
         const version = await tx.getAggregateVersion(
           input.organizationId,
-          'initiative_budget_item',
+          'initiative_milestone',
           itemId
         );
         const identityHash = createHash('sha256')
           .update(JSON.stringify([input.organizationId, itemId, version]))
           .digest('hex');
-        itemId = `budget-recreate-${identityHash}`;
-        clientRequestId = `budget-recreate-${identityHash}`;
+        itemId = `milestone-recreate-${identityHash}`;
+        clientRequestId = `milestone-recreate-${identityHash}`;
       }
     }
     const current =
-      (await tx.getAggregateVersion(input.organizationId, 'initiative_budget_item', itemId)) ?? 0;
+      (await tx.getAggregateVersion(input.organizationId, 'initiative_milestone', itemId)) ?? 0;
     if (!input.hasIdempotencyKey && input.operation !== 'create') {
       if (input.expectedVersion !== undefined) clientRequestId += `-v${input.expectedVersion}`;
       else {
@@ -155,17 +157,17 @@ export async function writeLegacyBudgetItem(
       expectedVersion: input.expectedVersion ?? (receipt ? receipt.aggregateVersion - 1 : current),
     };
   });
-  return writeBudgetItem(unitOfWork, {
+  return writeMilestone(unitOfWork, {
     organizationId: input.organizationId,
     actorId: input.actorId,
-    aggregateType: 'initiative_budget_item',
+    aggregateType: 'initiative_milestone',
     aggregateId: identity.itemId,
     expectedVersion: identity.expectedVersion,
     clientRequestId: identity.clientRequestId,
     correlationId: input.clientRequestId,
     policyId: 'execution-control',
     policyVersion: 1,
-    commandType: `initiative-budget-item.${input.operation}`,
+    commandType: `initiative-milestone.${input.operation}`,
     createIfMissing: true,
     payload: { initiativeId: input.initiativeId, operation: input.operation, fields: input.fields },
   });

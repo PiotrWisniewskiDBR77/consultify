@@ -1,3 +1,6 @@
+import { ResourceNotFoundError } from './resources.js';
+import { MilestoneNotFoundError } from './milestones.js';
+import { evaluateScheduleShift, isSameScheduledDay } from './scheduleBaseline.js';
 import { BudgetItemNotFoundError } from './budgetItems.js';
 import type { Pool, PoolClient } from 'pg';
 
@@ -93,6 +96,105 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       description: row.description, source: row.source,
       ...(input.operation === 'delete' ? { deleted: true as const } : {}),
     };
+  }
+
+  async writeInitiativeMilestone(input: import('./milestones.js').MilestoneMutation & {
+    organizationId: string; actorId: string; itemId: string;
+  }): Promise<import('./milestones.js').MilestoneRecord> {
+    const parent = await this.client.query(
+      'SELECT id,status FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',
+      [input.initiativeId,input.organizationId]
+    );
+    if (parent.rowCount !== 1) throw new MilestoneNotFoundError('Initiative not found');
+    if (['ARCHIVED','CANCELLED'].includes(String(parent.rows[0].status).toUpperCase())) throw new MaterialCommandRuleError('INITIATIVE_ARCHIVED_READ_ONLY',409);
+    const p=input.fields;
+    let result;
+    if (input.operation==='create') {
+      if (!p.name) throw new MaterialCommandValidationError('Name is required');
+      const ordering=await this.client.query('SELECT COALESCE(MAX(order_index),0)+1 AS next_order FROM initiative_milestones WHERE initiative_id=$1 AND organization_id=$2',[input.initiativeId,input.organizationId]);
+      result=await this.client.query(
+        `INSERT INTO initiative_milestones(id,initiative_id,organization_id,name,description,target_date,status,order_index,is_gate,idempotency_key,created_at,updated_at)
+         VALUES($1,$2,$3,$4,$5,$6,'PENDING',$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING *`,
+        [input.itemId,input.initiativeId,input.organizationId,p.name,p.description || null,p.targetDate || null,ordering.rows[0].next_order,p.isGate?1:0,p.idempotencyKey || null]
+      );
+    } else if(input.operation==='delete') {
+      result=await this.client.query('DELETE FROM initiative_milestones WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *',[input.itemId,input.initiativeId,input.organizationId]);
+    } else {
+      const existing=await this.client.query('SELECT * FROM initiative_milestones WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 FOR UPDATE',[input.itemId,input.initiativeId,input.organizationId]);
+      if(existing.rowCount!==1) throw new MilestoneNotFoundError('Milestone not found');
+      const row=existing.rows[0];
+      const changes:Record<string,unknown>={};
+      const fields={name:'name',description:'description',targetDate:'target_date',actualDate:'actual_date',status:'status',orderIndex:'order_index'} as const;
+      for(const [key,column] of Object.entries(fields)) if(p[key as keyof typeof fields]!==undefined) changes[column]=p[key as keyof typeof fields];
+      if(p.isGate!==undefined) changes.is_gate=p.isGate?1:0;
+      let shift: {index:number;reset:boolean}|null=null;
+      if(p.targetDate!==undefined && 'baseline_date' in row && 'schedule_shift_count' in row) {
+        if(row.baseline_date==null && p.targetDate!==null) {
+          changes.baseline_date=p.targetDate; changes.baseline_set_at=new Date().toISOString();
+        } else if(row.baseline_date!=null && !isSameScheduledDay(p.targetDate,row.target_date)) {
+          const verdict=evaluateScheduleShift(Number(row.schedule_shift_count)||0,p.rebaselineDecision ?? null);
+          if(!verdict.allowed) throw new MaterialCommandRuleError(verdict.code,409,verdict.error);
+          const reset=p.rebaselineDecision?.resetBaseline===true;
+          changes.schedule_shift_count=verdict.shiftIndex;
+          if(reset) { changes.baseline_date=p.targetDate; changes.baseline_set_at=new Date().toISOString(); changes.baseline_version=(Number(row.baseline_version)||1)+1; }
+          shift={index:verdict.shiftIndex,reset};
+        }
+      }
+      changes.updated_at=new Date().toISOString();
+      const entries=Object.entries(changes);
+      result=await this.client.query(`UPDATE initiative_milestones SET ${entries.map(([column],i)=>`${column}=$${i+4}`).join(',')} WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *`,[input.itemId,input.initiativeId,input.organizationId,...entries.map(([,v])=>v)]);
+      if(shift) await this.client.query(
+        `INSERT INTO initiative_rebaseline_log(id,organization_id,initiative_id,milestone_id,shift_index,previous_date,new_date,previous_baseline_date,new_baseline_date,baseline_reset,reason,decision_id,approved_by,requested_by,created_at)
+         VALUES(gen_random_uuid()::text,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,CURRENT_TIMESTAMP)`,
+        [input.organizationId,input.initiativeId,input.itemId,shift.index,row.target_date,p.targetDate,row.baseline_date,shift.reset?p.targetDate:row.baseline_date,shift.reset?1:0,p.rebaselineDecision?.reason??null,p.rebaselineDecision?.decisionId??null,p.rebaselineDecision?.approvedBy??input.actorId,input.actorId]
+      );
+    }
+    if(result.rowCount!==1) throw new MilestoneNotFoundError('Milestone not found');
+    const row=result.rows[0];
+    return {id:row.id,initiativeId:row.initiative_id,name:row.name,description:row.description,targetDate:row.target_date,actualDate:row.actual_date,status:row.status,orderIndex:row.order_index,isGate:Boolean(row.is_gate),createdAt:row.created_at,...(input.operation==='delete'?{deleted:true as const}:{})};
+  }
+
+  async writeInitiativeResource(input: import('./resources.js').ResourceMutation & {
+    organizationId:string; itemId:string;
+  }):Promise<import('./resources.js').ResourceRecord> {
+    const parent=await this.client.query('SELECT id,status FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',[input.initiativeId,input.organizationId]);
+    if(parent.rowCount!==1)throw new ResourceNotFoundError('Initiative not found');
+    if(['ARCHIVED','CANCELLED'].includes(String(parent.rows[0].status).toUpperCase()))throw new MaterialCommandRuleError('INITIATIVE_ARCHIVED_READ_ONLY',409);
+    const p=input.fields;
+    if(p.userId){
+      const user=await this.client.query('SELECT id FROM users WHERE id=$1 AND organization_id=$2',[p.userId,input.organizationId]);
+      if(user.rowCount!==1)throw new ResourceNotFoundError('Resource user not found');
+    }
+    let result;
+    if(input.operation==='create') {
+      if(!p.role)throw new MaterialCommandValidationError('Role is required');
+      result=await this.client.query(
+        `INSERT INTO initiative_resources(id,initiative_id,organization_id,user_id,name,role,allocation_percentage,start_date,end_date,notes,created_at,source,idempotency_key)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,$11,$12) RETURNING *`,
+        [input.itemId,input.initiativeId,input.organizationId,p.userId||null,p.name||null,p.role,p.allocationPercentage||100,p.startDate||null,p.endDate||null,p.notes||null,p.source||'manual',p.idempotencyKey||null]
+      );
+    } else if(input.operation==='delete') {
+      result=await this.client.query('DELETE FROM initiative_resources WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *',[input.itemId,input.initiativeId,input.organizationId]);
+    } else {
+      const current=await this.client.query('SELECT version FROM initiative_resources WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 FOR UPDATE',[input.itemId,input.initiativeId,input.organizationId]);
+      if(current.rowCount!==1)throw new ResourceNotFoundError('Resource not found');
+      if(p.expectedVersion!==undefined && Number(current.rows[0].version)!==p.expectedVersion)throw new MaterialCommandConflictError('Resource version conflict',p.expectedVersion,Number(current.rows[0].version));
+      result=await this.client.query(
+        `UPDATE initiative_resources SET name=COALESCE($4,name),role=COALESCE($5,role),allocation_percentage=COALESCE($6,allocation_percentage),start_date=COALESCE($7,start_date),end_date=COALESCE($8,end_date),notes=COALESCE($9,notes),version=version+1,updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND initiative_id=$2 AND organization_id=$3 RETURNING *`,
+        [input.itemId,input.initiativeId,input.organizationId,p.name,p.role,p.allocationPercentage,p.startDate,p.endDate,p.notes]
+      );
+    }
+    if(result.rowCount!==1)throw new ResourceNotFoundError('Resource not found');
+    // Same calculation as syncInitiativeCapacity, now atomic with the resource.
+    await this.client.query(
+      `UPDATE initiatives SET allocated_capacity_fte=(SELECT ROUND(COALESCE(SUM(allocation_percentage),0)::numeric/100,2) FROM initiative_resources WHERE initiative_id=$1 AND organization_id=$2),
+       required_capacity_fte=CASE WHEN (SELECT COALESCE(SUM(r.fte_required),0) FROM staffing_plan_roles r JOIN staffing_plans p ON p.id=r.staffing_plan_id WHERE p.initiative_id=$1 AND p.organization_id=$2)>0
+       THEN (SELECT SUM(r.fte_required) FROM staffing_plan_roles r JOIN staffing_plans p ON p.id=r.staffing_plan_id WHERE p.initiative_id=$1 AND p.organization_id=$2) ELSE required_capacity_fte END,updated_at=CURRENT_TIMESTAMP
+       WHERE id=$1 AND organization_id=$2`,[input.initiativeId,input.organizationId]
+    );
+    const row=result.rows[0];
+    return {id:row.id,initiativeId:row.initiative_id,userId:row.user_id,name:row.name,role:row.role,allocationPercentage:Number(row.allocation_percentage),startDate:row.start_date,endDate:row.end_date,notes:row.notes,source:row.source,version:Number(row.version),...(input.operation==='delete'?{deleted:true as const}:{})};
   }
 
   async createRaidItem(input: {
