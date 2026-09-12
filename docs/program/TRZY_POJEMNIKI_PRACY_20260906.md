@@ -9,6 +9,11 @@ wykonuje: następca (nadzorca) — po kolei, pojemnik po pojemniku
 
 # Trzy pojemniki pracy: MVP rękami właściciela → MVP rękami klienta → Fala 2
 
+> **AKTUALIZACJA 12.09.2026 (wieczór):** rozliczenie stanu wszystkich trzech pojemników znajduje się
+> na końcu tego pliku — sekcja „STAN NA 12.09.2026". Szczegóły fali 2 zostały zastąpione dyktandem
+> właściciela z lotu: `docs/program/FALA2/SPEC_FALA2_20260912.md` (tam, gdzie się różnią, wiążąca
+> jest specyfikacja z 12.09).
+
 Zasada: pojemnik zamyka się mierzalnie (kryteria poniżej), wpisem w „Rejestrze odbioru”
 (`PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`) i słowem właściciela na jednym żywym obrazie.
 Następny pojemnik nie startuje, zanim poprzedni nie ma wszystkich kryteriów odhaczonych. Rytm pracy,
@@ -173,3 +178,77 @@ Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomenda
 - 06.09 13:00 (właściciel, Sejfy): **Fala 2, pozycja 3.11 (nowa): Foldery w Sejfach** — zakładka „Foldery” zdjęta z MVP, wraca jako osobny program po pilotażu.
 
 - 06.09 13:31 (właściciel, Wywiad): **Fala 2, pozycja 3.12 (nowa): zatwierdzanie i dopuszczanie odpowiedzi w Wywiadzie** — „menedżer zwracający ma mieć możliwość przyjęcia albo nieprzyjęcia udzielonych odpowiedzi”. W pojemniku 1 tylko porządek: stepper etapów i zakładka „Dopuszczenie” usunięte (DEC-410, DEC-410b), istniejące „zatwierdź / odeślij” w Przydzielone zostaje.
+
+---
+
+# STAN NA 12.09.2026 (wieczór) — rozliczenie trzech pojemników
+
+Pomiar własny nadzorcy, nie deklaracja z raportów. Na żywo: staging i demo = `60051310d7`
+(od 12.09 00:20, osiemnaście godzin bez zmiany). Linia integracyjna = `origin/integracja/20260911`.
+Kandydat MVP Codexa = gałąź `codex/integrator-mvp-20260912` (67 commitów, 52 pliki kodu, zero
+migracji, żadna flaga domyślna nieprzestawiona) — **zbudowany, nieodebrany, niewdrożony**.
+Kopie zapasowe sześciu gałęzi Codexa wypchnięte na `origin/backup/*` 12.09 wieczorem.
+
+## Pojemnik 1 — MVP rękami właściciela
+
+| # | Kryterium | Stan 12.09 | Czego brakuje |
+|---|---|---|---|
+| S1.1 | 16 modułów przeszedł właściciel na swoich danych | **WARUNKOWE TAK** (DEC-466, tylko Inicjatywy i Realizacja) | przejście właściciela wg `KARTA_PRZEJSCIA_WLASCICIELA_20260910.md` — właściciel w podróży |
+| S1.2 | Zero otwartych BLOKER/WAŻNY z przejścia | **CZĘŚCIOWO** | 9 dziur zamkniętych i odbiór nr 2 bez regresji; dwa zastane 5xx naprawione **tylko w kandydacie**, niewdrożone |
+| S1.3 | Rezultat poza limitem → Skrzynka → karta działania → zadanie | **CZĘŚCIOWO** | pełny cykl RAID i „Close card" zmierzone; ponowne otwarcie karty dopiero w kandydacie |
+| S1.4 | Dokument i prezentacja z szablonu na danych DBR77 | **NIEZMIERZONE** | najstarsza niezamknięta obawa właściciela; nikt tego nie pokazał od początku programu |
+| S1.5 | Jeden prawy panel na 8 listach | **TAK** | — (8/8 wg DEC-404) |
+| S1.6 | Teresa odpowiada ze źródłami w każdym module | **CZĘŚCIOWO / kryterium nieaktualne** | DEC-461 przestawił produkt na angielski; kryterium „po polsku" wymaga przepisania |
+| S1.7 | Dane właściciela czyste | **NIE** | na stagingu wróciło 20 klonów „Atelier Toys" z sesji demo + `My Company` + 4 organizacje `TT22TT`; skrypt sprzątania gotowy w kandydacie, nieuruchomiony |
+| S1.8 | Strażniki zielone, dług nie rośnie, tsc serwera 0, zero zmienionych migracji | **TAK na wdrożonej wersji** | bramka na kandydacie dopiero przed nami (blok 9) |
+| S1.9 | Demo ma własną bazę i przećwiczoną promocję z cofnięciem | **TAK** | cofnięcie przećwiczone realnie 11.09 o 22:22 |
+| S1.10 | Trzy decyzje zapisane | **TAK, zaktualizowane** | Finanse: DEC-470 zmienia MINIMUM na jawne „wkrótce" i przenosi całość do fali 2 |
+| S1.11 | 16 modułów zamrożonych tagiem | **TAK, wymaga re-tagu** | tagi `mvp-final-*-20260910`; po wdrożeniu kandydata trzeba je przesunąć |
+| S1.12 | Przekazanie dla pojemnika 2 napisane | **TAK** | `PRZEKAZANIE_20260912_RANO.md` + pamięć nadzorcy |
+| S1.13 | Analiza kart N: ekran + kontrakt treści | **CZĘŚCIOWO** | 7/7 kart zmierzonych w odbiorze nr 2; **kontrakty treści** to teraz osobny punkt fali 2 (spec §7) |
+
+**Werdykt pojemnika 1:** blisko, ale niezamknięty. Trzy rzeczy trzymają: przejście właściciela (S1.1),
+dokument i prezentacja z szablonu (S1.4) oraz czystość danych stagingu (S1.7).
+
+## Pojemnik 2 — MVP rękami klienta
+
+**Zmiana środowiska (DEC-472, 12.09):** pilotaż odbywa się na **stagingu**, nie na demo.
+To odwraca decyzję z 06.09; demo zostaje środowiskiem pokazowym.
+
+| # | Kryterium | Stan 12.09 | Czego brakuje |
+|---|---|---|---|
+| S2.1 | Czworo ludzi samodzielnie od wywiadu do wyniku | **NIE** | konta: Tomasz i Justyna istnieją, **Katarzyna i Irina nie istnieją**; hasła wydaję ręcznie, bo poczta martwa (DEC-471) |
+| S2.2 | Przepływ „pusty stan → pierwsza wartość" w każdym module | **W TOKU** | paczka C6 na HOLD po niezależnym przeglądzie |
+| S2.3 | Bezpieczeństwo: cross-org, CSRF, MFA, zero 5xx przez 7 dni | **CZĘŚCIOWO + NOWE BLOKERY** | CSRF `enforce` działa; **dwa błędy krytyczne z własnych przeglądów Codexa**: eksport sięgający poza organizację oraz obejście ochrony prawnej przy błędzie odczytu i przy wyścigu migawki |
+| S2.4 | Ścieżka staging → demo → produkcja przećwiczona | **NIE** | ćwiczenie na demo nierobione; produkcja nietykalna |
+| S2.5 | Alert na 5xx i padnięcie health do nazwanej osoby | **NIEZMIERZONE** | nikt tego nie sprawdził sztucznym błędem |
+| S2.6 | Limiter AI z budżetem per organizacja | **W TOKU** | etap E3 paczki C6, wstrzymany razem z nią |
+| S2.7 | Eksport i usunięcie organizacji z interfejsu | **W TOKU + BLOKER** | etap E4 paczki C6; to właśnie tam siedzą oba błędy krytyczne z S2.3 |
+| S2.8 | Poczta żywa (zaproszenie, reset hasła) | **NIE** | DEC-471: właściciel prosi o dostęp do panelu Hostingera; do tego czasu zaproszenia i resety nie działają |
+| S2.9 | Dwa magazyny spięte z testem „nowy rekord widać wszędzie" | **W TOKU** | sześciu pisarzy dostarczonych za flagą wyłączoną, niewdrożonych i nieodebranych na żywo |
+| S2.10 | Decyzja o Finansach | **ZAMKNIĘTE** | DEC-470: jawne „wkrótce", pełne Finanse w fali 2; etap E0 zbudowany w kandydacie |
+| S2.11 | Przewodnik „jak zacząć" w aplikacji | **NIE** | po DEC-461 ma powstać po angielsku |
+| S2.12 | Playbook wdrożenia klienta z godzinami | **NIE** | — |
+| S2.13 | Dwa tygodnie pilotażu, zero blokerów na koniec | **NIE ROZPOCZĘTY** | start zależy od S2.1, S2.3 i wdrożenia kandydata |
+| S2.14 | Zamrożenie „MVP klienta" tagiem i przekazanie | **NIE** | — |
+
+**Werdykt pojemnika 2:** niegotowy do startu. Dwa błędy krytyczne dotyczące danych klienta (S2.3, S2.7)
+są twardym warunkiem wstępnym — pilotaż nie może ruszyć, póki są otwarte.
+
+## Fala 2
+
+Lista 3.1–3.20 z tego pliku pozostaje jako historia. **Wiążąca jest specyfikacja właściciela
+z 12.09**: `docs/program/FALA2/SPEC_FALA2_20260912.md` — PMO jako fundament (projekty, role,
+odpowiedzialności, automatyczne procedury zatwierdzeń, pełny słownik statusów), agent i graficzny
+przepływ klocków w stylu n8n, analiza finansowa (pojedyncze sprawozdanie w fali 2, konsolidacja
+300 spółek jako faza 3), integracje, KPI/OKR/MBO/ROI ze zbieraniem danych i eskalacją, przegląd
+kontraktów kart N, Wywiad, Tools, SIRI i ADMA, Audyt, analiza „wielka trójka", nowy układ Inicjatyw
+(cztery przyciski) i Realizacji (Bank, Praca, Zarządzanie ryzykiem, Raporty) oraz moduł Spotkań.
+
+## Co musi się wydarzyć, żeby ruszyć dalej — kolejność
+
+1. Zamknięcie i odbiór kandydata na żywo (blok 9 u Codexa).
+2. Naprawa dwóch błędów krytycznych z paczki C6 (eksport poza organizację, ochrona prawna).
+3. Wdrożenie na staging z punktem cofnięcia, potem promocja na demo — robi nadzorca.
+4. Przejście właściciela: Inicjatywy i Realizacja.
+5. Konta pilotażu na stagingu i hasła wydane ręcznie, potem start pilotażu.
