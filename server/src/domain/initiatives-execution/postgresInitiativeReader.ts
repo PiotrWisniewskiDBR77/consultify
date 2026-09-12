@@ -301,7 +301,10 @@ export class PostgresInitiativeReader {
     initiativeIds: string[]
   ): Promise<Record<string, number>> {
     if (!initiativeIds.length) return {};
-    const result = await this.pool.query<{ id: string; required_capacity_fte: string | number | null }>(
+    const result = await this.pool.query<{
+      id: string;
+      required_capacity_fte: string | number | null;
+    }>(
       `SELECT id, required_capacity_fte FROM initiatives
         WHERE organization_id=$1 AND id = ANY($2::text[])`,
       [organizationId, initiativeIds]
@@ -1920,6 +1923,31 @@ export class PostgresInitiativeReader {
       requiredness: row.requiredness,
       waiverDecisionId: row.waiver_decision_id,
     }));
+  }
+
+  async listDefinitionApprovalDecisions(
+    organizationId: string,
+    initiativeId?: string
+  ): Promise<Array<Record<string, any> & { version: number }>> {
+    const rows = await this.pool.query<{ version: number; payload_json: Record<string, any> }>(
+      `SELECT version,payload_json FROM ie_aggregate_state
+       WHERE organization_id=$1 AND aggregate_type='decision' AND payload_json->>'gate'='DEFINITION'
+         AND ($2::text IS NULL OR payload_json->>'initiativeId'=$2) ORDER BY updated_at DESC`,
+      [organizationId, initiativeId ?? null]
+    );
+    return rows.rows.map((row) => ({ ...row.payload_json, version: row.version }));
+  }
+
+  async listDefinitionApprovalMembers(organizationId: string, projectId: string) {
+    const rows = await this.pool.query<{ id: string; name: string; role: string }>(
+      `SELECT DISTINCT u.id,trim(concat(u.first_name,' ',u.last_name)) AS name,om.role
+       FROM users u JOIN organization_members om ON om.user_id=u.id AND om.organization_id=$1
+       JOIN project_members pm ON pm.user_id=u.id AND pm.project_id=$2
+       JOIN projects p ON p.id=pm.project_id AND p.organization_id=om.organization_id
+       WHERE om.organization_id=$1 AND UPPER(om.status)='ACTIVE' AND LOWER(u.status)='active' ORDER BY u.id`,
+      [organizationId, projectId]
+    );
+    return rows.rows;
   }
 
   async listPendingDefinitionDecisions(

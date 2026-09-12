@@ -1,3 +1,4 @@
+import { listDefinitionApprovals } from '@/services/initiatives-execution/definitionApprovalApi';
 /**
  * InitiativesHub
  * Unified Initiatives module with ModuleHub UI pattern
@@ -551,12 +552,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         // backfill exactly those rows without touching write paths.
         let canonicalRows: PortfolioInitiative[] = [];
         if (!allowDemoData) {
-          const [registeredResult, legacyRows] = await Promise.all([
+          const [registeredResult, legacyRows, approvalAdapter] = await Promise.all([
             listRegisteredInitiatives(),
             listLegacyInitiatives().catch((legacyError) => {
               console.warn('[InitiativesHub] Legacy initiatives fetch failed:', legacyError);
               return [];
             }),
+            listDefinitionApprovals().catch(() => ({enabled:false,items:[]})),
           ]);
           // PUSTA LISTA INICJATYW (07.09.2026) — bezpiecznik konstrukcyjny.
           // Przyczyna zgloszenia „w inicjatywach jest pusto" byla w adapterze
@@ -607,7 +609,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               skippedRows
             );
           }
-          canonicalRows = mergeLegacyInitiativesIntoRegister(registeredRows, legacyCanonicalRows);
+          canonicalRows = mergeLegacyInitiativesIntoRegister(registeredRows, legacyCanonicalRows).map(row => ({
+            ...row,
+            canonicalLifecyclePresentation: approvalAdapter.enabled && !legacyRows.some(legacy => legacy.id === row.id),
+          }));
         }
         const sourceRows = selectInitiativeRegisterSource(
           canonicalRows,

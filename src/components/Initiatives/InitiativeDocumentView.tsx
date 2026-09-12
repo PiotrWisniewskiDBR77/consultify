@@ -1,3 +1,6 @@
+import { enumLabel } from '@/utils/enumLabel';
+import { readDefinitionApproval } from '@/services/initiatives-execution/definitionApprovalApi';
+import { DefinitionApprovalContent } from './DefinitionApprovalContent';
 /**
  * InitiativeDocumentView - Dynamic Section Renderer
  *
@@ -213,6 +216,7 @@ import {
 import {
   resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource,
   saveRuntimeOnlyInitiativeDocumentMetadata,
+  toInitiativeDocumentFromRegistration,
 } from './initiativeDocumentSource';
 import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { runOriginAwareInitiativeSubresource } from './initiativeOriginSubresources';
@@ -573,6 +577,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Core state
   const [initiative, setInitiative] = useState<any | null>(null);
+  const [definitionApprovalV2, setDefinitionApprovalV2] = useState(false);
   // A20: status widziany przez lokalny fallback zdolnosci, gdy gate-readiness
   // zwraca 404 (patrz `gateReadinessFallback.ts`). Ref, nie zmienna z domkniecia
   // — pobranie startuje zanim rekord dojedzie.
@@ -1455,7 +1460,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   ) as InitiativeStatus;
   initiativeStatusRef.current = status;
   const statusMeta = getStatusMeta(status);
-  const statusPillLabel = getLocalizedStatusLabel(status, t);
+  const statusPillLabel = definitionApprovalV2 && initiative?.documentOrigin === 'initiatives-runtime-v1'
+    ? enumLabel('initiativeLifecycle', String(initiative.lifecycle || 'UNKNOWN'), t)
+    : getLocalizedStatusLabel(status, t);
   const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
   //
@@ -1500,6 +1507,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, [gateReadiness]);
   const currentModule = getModuleFromStatus(status);
   const moduleConfig = MODULE_CONFIG[currentModule];
+  const phaseDisplayLabel = definitionApprovalV2 && ['REGISTERED_DRAFT', 'DEFINED', 'ANALYZING'].includes(initiative?.lifecycle)
+    ? (isPolish ? 'Przygotowanie' : 'Preparation')
+    : (isPolish ? moduleConfig.labelPl : moduleConfig.label);
+  const canonicalNextGate = definitionApprovalV2 ? initiative?.gateName : null;
 
   const topBarCaps = gateReadiness?.capabilities?.topBar;
   // §4.4 — tryb Podgląd zdejmuje edytowalność WŁAŚCIWOŚCI tak samo jak zdejmuje
@@ -3192,6 +3203,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   const handleStatusAction = async (action: StatusAction) => {
+    if (initiative?.documentOrigin === 'initiatives-runtime-v1' && definitionApprovalV2) {
+      setActiveNSection('gates');
+      return;
+    }
     // Warn if this transition moves the initiative to a different module
     const targetStatus = action.targetStatus as InitiativeStatus;
 
@@ -3326,6 +3341,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Commit a status transition (shared by the normal path and the gate-AI
   // override-confirm path). Pass overrideReason to bypass an AI soft-block.
   const commitStatusTransition = async (targetStatus: string, overrideReason?: string) => {
+    if (initiative?.documentOrigin === 'initiatives-runtime-v1' && definitionApprovalV2) {
+      setActiveNSection('gates');
+      return;
+    }
     const truth = await updateInitiativeStatusWriteTruth(
       initiativeId,
       targetStatus,
@@ -3763,6 +3782,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // (initiativeDocumentSource.ts) jako `documentOrigin`. Na takim rekordzie
   // `PUT /api/initiatives/:id` zawsze zwraca 404 — patrz handleSave niżej.
   const isRuntimeOnlyRecord = initiative?.documentOrigin === 'initiatives-runtime-v1';
+  useEffect(() => {
+    let active = true;
+    setDefinitionApprovalV2(false);
+    if (isRuntimeOnlyRecord) void readDefinitionApproval(initiativeId).then(read => {
+      if (active) setDefinitionApprovalV2(read.enabled);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [initiativeId, isRuntimeOnlyRecord]);
+  const refreshDefinitionDocument = async () => {
+    const record = await Api.get(`/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}`);
+    setInitiative((prev: any) => ({...prev, ...toInitiativeDocumentFromRegistration(record)}));
+    bumpInitiativeRefresh();
+  };
 
   // Pola, które MAJĄ dziś kanoniczny pisarz na rekordzie runtime-only.
   const hasRuntimeOnlySupportedChanges =
@@ -5099,7 +5131,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       id: initiativeId,
       title: initiative?.name || '',
       status,
-      phase: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+      phase: phaseDisplayLabel,
       summary,
       tasksCount: tasks.length,
       tasksDone,
@@ -6022,7 +6054,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // stoją na neutralnej pigułce (kontrast AA), semantykę niesie kropka.
     const currentStatusMeta = getStatusMeta(status as InitiativeStatus);
     const currentStatusDot = currentStatusMeta?.dotColor || 'bg-c-border-strong';
-    const currentStatusLabel = getLocalizedStatusLabel(status as InitiativeStatus, t);
+    const currentStatusLabel = statusPillLabel;
 
     // Helper: get metadata for current priority
     const priorityMeta: Record<
@@ -6111,7 +6143,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => {
           // `readMode` wchodzi tu jako pełnoprawny warunek — w Podglądzie select
           // NIE JEST renderowany (nie „disabled", tylko go nie ma).
-          const canChangeStatus = stripStatusActions.length > 0 && !isMutating && !readMode;
+          const canChangeStatus = !definitionApprovalV2 && stripStatusActions.length > 0 && !isMutating && !readMode;
           // DEC-104 (corrected in duty 196, 2026-08-31; the original claim was
           // disproved by acceptance 172): `stripStatusActions` is empty when
           // `gateReadiness.availableTransitions` offers no executable transition
@@ -6169,7 +6201,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'phase',
         label: { en: 'Phase', pl: 'Faza' },
         type: 'custom' as const,
-        value: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+        value: phaseDisplayLabel,
         onChange: () => {},
         readOnly: true,
         // `phaseOptions` zostaje policzone wyżej wyłącznie jako źródło etykiet;
@@ -6179,7 +6211,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <span className={propPill}>
             {propDot(moduleConfig.color)}
-            <span className="truncate">{isPolish ? moduleConfig.labelPl : moduleConfig.label}</span>
+            <span className="truncate">{phaseDisplayLabel}</span>
           </span>
         ),
       },
@@ -6187,7 +6219,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'gate',
         label: { en: 'Next Gate', pl: 'Następna brama' },
         type: 'custom' as const,
-        value: isPolish ? gateLabel.pl : gateLabel.en,
+        value: canonicalNextGate || (isPolish ? gateLabel.pl : gateLabel.en),
         onChange: () => {},
         readOnly: true,
         // Jak wyżej (faza): select był atrapą (`onChange: () => {}`) — pole jest
@@ -6195,7 +6227,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <span className={propPill}>
             {propDot(gateVisual.dot)}
-            <span className="truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
+            <span className="truncate">{canonicalNextGate || (isPolish ? gateLabel.pl : gateLabel.en)}</span>
           </span>
         ),
       },
@@ -6395,6 +6427,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     moduleConfig,
     statusActions,
     stripStatusActions,
+    statusPillLabel,
+    definitionApprovalV2,
+    phaseDisplayLabel,
+    canonicalNextGate,
     isMutating,
     handleStatusAction,
     setPriority,
@@ -8136,7 +8172,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {/* Full lifecycle gate workflow table (13 stages) */}
-              <InitiativeGatesWorkflowTable />
+              {isRuntimeOnlyRecord && <DefinitionApprovalContent initiativeId={initiativeId} readOnly={readMode} onChanged={() => void refreshDefinitionDocument()} />}
+              {!definitionApprovalV2 && <InitiativeGatesWorkflowTable />}
             </div>
           );
           break;

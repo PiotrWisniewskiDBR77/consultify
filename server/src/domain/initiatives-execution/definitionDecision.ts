@@ -35,6 +35,7 @@ interface DefinitionInitiative extends InitiativeWithCardRefs {
   gateState?: string;
   gateReadiness?: string;
   disposition?: string;
+  definitionDecisionId?: string;
 }
 
 export interface DefinitionDecisionCase {
@@ -57,6 +58,7 @@ export interface RequestDefinitionDecisionPayload {
   authorityId: string;
   dueAt: string;
   selfApprovalAllowed: boolean;
+  approvalV2?: boolean;
 }
 
 export interface DecideDefinitionPayload {
@@ -64,6 +66,7 @@ export interface DecideDefinitionPayload {
   outcome: 'APPROVED' | 'RETURNED';
   rationale: string;
   selfApprovalAllowed: boolean;
+  approvalV2?: boolean;
   governanceQuorumRequired?: boolean;
   governanceQuorumRef?: { quorumId: string; version: number; receiptId: string };
 }
@@ -145,6 +148,29 @@ export async function requestDefinitionDecision(
     if (readiness.readiness !== 'READY') {
       throw new MaterialCommandValidationError('Definition is not ready for Decision');
     }
+    const previous = envelope.payload.approvalV2
+      ? await transaction.getRelatedAggregateForUpdate<DefinitionDecisionCase>(
+          envelope.organizationId,
+          'decision',
+          envelope.payload.decisionId
+        )
+      : null;
+    if (envelope.payload.approvalV2 && previous && !initiative.definitionDecisionId) {
+      throw new MaterialCommandValidationError('Decision ID is already assigned');
+    }
+    if (
+      envelope.payload.approvalV2 &&
+      initiative.definitionDecisionId &&
+      (initiative.definitionDecisionId !== envelope.payload.decisionId ||
+        !previous ||
+        previous.payload.initiativeId !== envelope.aggregateId ||
+        previous.payload.status !== 'RETURNED' ||
+        previous.payload.requesterId !== envelope.actorId)
+    ) {
+      throw new MaterialCommandValidationError(
+        'Returned Definition decision must be resubmitted by its requester'
+      );
+    }
     const decision: DefinitionDecisionCase = {
       decisionId: envelope.payload.decisionId,
       initiativeId: envelope.aggregateId,
@@ -163,20 +189,21 @@ export async function requestDefinitionDecision(
       envelope.organizationId,
       'decision',
       decision.decisionId,
-      0,
-      1,
+      previous?.version ?? 0,
+      (previous?.version ?? 0) + 1,
       decision
     );
-    await transaction.claimRelation({
-      organizationId: envelope.organizationId,
-      relationType: 'INITIATIVE_DEFINITION_DECISION',
-      sourceType: 'initiative',
-      sourceId: envelope.aggregateId,
-      sourceVersion: envelope.expectedVersion,
-      targetType: 'decision',
-      targetId: decision.decisionId,
-      payload: { gate: 'DEFINITION', status: 'PENDING' },
-    });
+    if (!previous)
+      await transaction.claimRelation({
+        organizationId: envelope.organizationId,
+        relationType: 'INITIATIVE_DEFINITION_DECISION',
+        sourceType: 'initiative',
+        sourceId: envelope.aggregateId,
+        sourceVersion: envelope.expectedVersion,
+        targetType: 'decision',
+        targetId: decision.decisionId,
+        payload: { gate: 'DEFINITION', status: 'PENDING' },
+      });
     return {
       mutation: {
         ...initiative,
@@ -229,7 +256,10 @@ export async function decideDefinition(
     if (!stored || stored.payload.initiativeId !== envelope.aggregateId) {
       throw new MaterialCommandValidationError('Definition Decision not found');
     }
-    if (stored.payload.status !== 'PENDING' || stored.version !== 1) {
+    if (
+      stored.payload.status !== 'PENDING' ||
+      (!envelope.payload.approvalV2 && stored.version !== 1)
+    ) {
       throw new MaterialCommandValidationError('Definition Decision is no longer pending');
     }
     if (stored.payload.authorityId !== envelope.actorId) {
@@ -237,6 +267,17 @@ export async function decideDefinition(
     }
     if (!envelope.payload.selfApprovalAllowed && stored.payload.requesterId === envelope.actorId) {
       throw new MaterialCommandValidationError('Self-approval is not permitted');
+    }
+    if (
+      envelope.payload.approvalV2 &&
+      (stored.payload.policy.policyId !== envelope.policyId ||
+        stored.payload.policy.policyVersion !== envelope.policyVersion)
+    ) {
+      throw new MaterialCommandConflictError(
+        'Definition policy snapshot is stale',
+        envelope.expectedVersion,
+        envelope.expectedVersion
+      );
     }
     const readiness = await currentReadiness(
       transaction,
@@ -267,8 +308,8 @@ export async function decideDefinition(
       envelope.organizationId,
       'decision',
       envelope.payload.decisionId,
-      1,
-      2,
+      stored.version,
+      stored.version + 1,
       decided
     );
     return {
