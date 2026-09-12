@@ -41,13 +41,30 @@ Kanon: `docs/modules/03_wywiad/06_PERMISSIONS_AND_SECURITY.md` wymaga tenant **i
 
 **Co potwierdzono:** konkretny błędny transfer scoped→organization w funkcji hooka oraz brak projektu w opisanej ścieżce legacy permission check. **Czego NIE potwierdzono:** że realny użytkownik mający wyłącznie scoped capability uzyskuje backend200 w obcym projekcie. Może on dostać403 również w swoim projekcie, ponieważ backend czyta inny rejestr uprawnień. Nie opisuję tego jako zmierzonego cross-project write exploitu.
 
-Minimalny reproducer do następnego securityfixu (przygotowany zakres, **jeszcze niewykonany A/B**):
+Minimalny reproducer do następnego securityfixu (poniżej specyfikacja; rzeczywista próba A/B opisana w następnym podrozdziale):
 
 - jedna własna testowa organizacja, projektyA/B; użytkownik nie-ADMIN/OWNER/SUPERADMIN, rzeczywisty project membership/grant INITIATIVE_OWNER lub zarządzający tylkoA, bez org-wide MANAGE. Wykazać `/api/access/effective?projectId=A` i dlaB oraz grants wPG. Osobny respondent; po jednym realnie submitted assignment/session naA iB, z właściwym project_id i kompletną odpowiedzią.
 - aktor może czytać wybrany kontekstB jedynie jeśli ma osobny jawny read (nie przyznawać mu manageB). Interfejs nie pokazuje reviewB; pokazuje reviewA według rzeczywistej polityki. Test hooka na response `create.scoped` oddzielnie wykrywa organization scope, test samego create bez review wykrywa błędne utożsamienie.
 - POST V8 i legacy approve/send-backB:403/404, zero zmian assignment/session/history/task/notifications. LegalneA:200 i właściwa transakcja. Jeżeli A403/B403, zarejestrować **brak realizacji legalnego scoped grant**, nie uznać testu za PASS tylko dlatego, że foreign odmówiony.
 - osobny kontrolny ADMIN/OWNER z globalnym grantem może działać w obu projektach. Nie używać PROJECT_MANAGER globalnego fallbacku jako dowodu prawa ograniczonego doA. Osobne sentinele obcego tenantu.
 - minimalna naprawa: wspólny scoped resolver review dla obu endpointów i odpowiadający capability/record scope w UI; nie redesign całego RBAC i nie usuwanie tenant guard. Tenant/project z persisted assignment/session, nie z body. Test odmowy po cofnięciu roli, brak rekordu i role update bez review; mutation usuwająca project check musi byćRED.
+
+### Własny realny A/B repro po dodatkowym przydziale root — RED legalnego scoped review
+
+Na tym samym exact SHA i przydzielonym cx4_pilot dodałem nowego nieuprzywilejowanego USER/MEMBER oraz projektyA/B. Tylko wA ma project_members INITIATIVE_OWNER z jawnymi create/review/approve/send_back.scoped; brak org_user_permissions grants. Osiem nowych submitted/complete assignment/session/question (po jednym na każdą kombinację2projektów×2rodzin API×2akcji), bez mutacji rekordów autora ani głównego cyklu.
+
+Real login i `GET /api/access/effective?projectId=A`:200, applicationRole USER, projectRole INITIATIVE_OWNER, review/approve/send_back.scoped obecne, warnings=[]. DlaB:200, fallback TASK_ASSIGNEE, brak review/approve/send_back; osobne ostrzeżenie PROJECT_ROLE_FALLBACK_FROM_APPLICATION_ROLE zachowane w evidence.
+
+| Aktor ten sam USER, grant tylkoA | V8 approve | V8 send-back | Legacy approve | Legacy send-back | SQL skutki po każdej próbie |
+|---|---|---|---|---|---|
+| Własny projektA — wymagane200 |403 **FAIL** |403 **FAIL** |403 **FAIL** |403 **FAIL** |assignment/session/history/notifications hash bez zmiany |
+| ProjektB — wymagana odmowa |403 PASS |403 PASS |403 PASS |403 PASS |ten sam hash przed/po, wszystkie8prób |
+
+**Wynik4PASS/4FAIL kontraktu, nie permissions PASS.** Harness exit0 oznacza ukończony pomiar, nie zielony produkt. Dodatkowa kontrola tego samego A/V8/approve rekordu przez rzeczywistego globalnego ADMIN:200, SQL approved/completed. Potwierdza, że odmowa scoped aktora nie wynikała z niekompletnej fixture lub złego statusu. Nie traktować kontroli ADMIN jako zastępstwa wymaganego legalnego200 scoped aktora.
+
+Zidentyfikowana realna przyczyna: effective scoped grants nie są honorowane przez legacy INTERVIEW_ASSIGN_MANAGE check. Po prostu dodanie scoped grant do globalnego boolean MANAGE byłoby niebezpieczne, ponieważ kontroler nadal nie sprawdza projektu docelowego. Naprawa musi równocześnie przepuścićA i zachować odmowęB. Nie potwierdzono cross-project write200; statyczny scope collapse UI nadal osobnym ogniwem findingu.
+
+Dowody: `codex4-scratch/interview-independent-20260912/project-scope-probe.mjs` i `evidence/project-scope-probe.json` z IDs, effectiveAccess obu projektów, brakiem globalnych grants,8statusami i hashami readback oraz positive fixture control. Fixture jest SQL read/write-authorization probe, nie dowodem creator flow. Probe zakończony, brak aktywnych procesów. Root może teraz ponownie przejąć zasoby.
 
 ## Pozostałe ograniczenia wobec pełnego briefu
 

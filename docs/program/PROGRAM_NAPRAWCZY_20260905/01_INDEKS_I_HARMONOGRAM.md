@@ -663,3 +663,14 @@ C6 pozostaje HOLD. Niezależny C6_REVIEW_FOLLOWUP.md przekazany wykonawcy: encry
 IE00 aktywnie kodowany przez Galileo. Pierwszy ApiGateway/JWT/PG pomiar: brak typed Definition read endpoint daje404 wobec oczekiwanego200; istniejący request500 jest dopiero klasyfikowany. Własny cx-codex7-pg PG18 na127.0.0.1:6458/cx7_ie00, limit384MB/1CPU, tylko12 tabel schematu auth/identity i istniejące932/933/934; bez pełnej kopii danych. Preflight zachowany, nagłówek sprzed START jest historyczny.
 
 Scope przygotowuje read-only built-candidate smoke preflight. Istniejące C8 procesy4218 PID55218 i5218 PID15855 mają cwd codex8-finanse-pelny; nie zatrzymano ich i nie przedstawiono jako root candidate. Owner checkout/live nietknięte. Cel i heartbeat5min pozostają ACTIVE, pełny MVP nie jest ukończony.
+
+
+## Następna paczka i odbiór C6 — 12.09.2026
+
+Root frontend build ad7618df32 PASS39.08s. Typecheck po Interview ujawnił193vs192 (mock getMyAssignments inferred never[]). Root poprawił wyłącznie typ API mocka i brakujące wymagane pola syntetycznej fixture; asercje bez zmian, niezależny sourceACCEPT delivery,1/1 testPASS. Końcowy tsc8GiB exit2,192diagnostics identyczne zbaseline192, added0/removed0. To ratchetPASS, nie tsc0. Domyślny tsc134heapOOM zachowany jakoFAIL.
+
+C6 oddał clean0025c1c448 do niezależnego odbioru źródeł/logów. C6_EXACT_0025_REVIEW.md: HOLD pełnejpaczk/integracji. R4populateddelete wciąż rollback500; exportfirst-policy concurrency nieodebrane, kompletność public/v8/multi-org nieudowodniona, realcostprovider/concurrentlimit oraz E1/E2/E5 nadal otwarte. Autor dostał read-only C6_NEXT_FIX_DESIGN, bez trzeciego implementationblock.
+
+Delivery rozpoczął SECURITY_W05_SCOPE_FIX.md w C4 po zwolnieniu C6: jawny mandatDEC2026091201, API4214/UI5214/cx4_pilot przydzielone; legalneA200+Bdeny, obie rodzinytras, persistedproject i wspólne review-access dlaUI. Max2implementacje: IE00+W05. Galileo real2/2GREEN dlaDefinitionrequest/return/edit/review/concurrentresubmit[201,409]/approve, sameDecision; UI jeszczeNOT_PROVEN. Ciężki slot root zwolnił do servertscIE00.
+
+Scope wykonuje built rootfrontend+C8backend smoke na jawnie przydzielonym5290; nie przestawia4218/5218. Pierwsza próba wykazała pobranieMainLayoutchunk na anonimowymdeep link przed poprawnym redirect; brakHelpchunk iHTTP/pageerror. Pełny test trwa, niePASS. Rootdist ma sourcead7618df32, późniejsza poprawka wyłącznie testowa go nie zmienia.

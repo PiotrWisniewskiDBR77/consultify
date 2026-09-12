@@ -1,5 +1,17 @@
 # Macierz wykonania bramek pełnego MVP — S1/S2
 
+## Bieżąca aktualizacja integratora — 12.09.2026 po ad7618df32
+
+Poniższe historyczne pomiary pozostają dowodami z podanych SHA. Ta aktualizacja zastępuje ich status wykonawczy, nie podnosi żadnej pełnej bramki do PASS:
+
+- **S1.2/S1.7:** C4 E4 poprawione i niezależnie odebrane lokalnie (13/13), scalone251a15c9f3; dawne HOLD172d nie jest stanem obecnego kandydata. Live cleanup nadal niewykonany. CLOSED autosave pozostaje otwarty.
+- **S1.8:** server tsc i backend build exit0 zapisane w INTEGRATION_CHECK_RESULTS.json; frontend build po Interview na ad7618df32 exit0 w39.08s z heap8GiB. Dawny domyślny heapOOM pozostaje historycznym FAIL. Hooki nie wykazały nowego długu. To nie dowód runtime całego produktu ani wydajności<3s.
+- **S2.2/W05:** Interview865c scalił root4df001999a po niezależnym pełnym same-record browser cyklu i SQL. Root8/8 testów dwóch zmienionych zachowań PASS. **SECURITY-W05-SCOPE real RED:** scoped reviewer projektuA otrzymuje403 w4/4 legalnych próbach zamiast200; projektB4/4 odmów poprawnie, SQL niezmieniony. Kontrola ADMIN na tym samym A200 potwierdza poprawną fixture. Nie ma dowodu cross-project write; jest niedziałający legalny scoped grant. Fix w MVP musi dowieść A200 oraz Bdeny, nie tylko odmów.
+- **S2.7/C6:** nadal HOLD. C6_REVIEW_FOLLOWUP.md zawiera dalsze findings źródeł dotyczące sekretów, JSON TEXT, zgodności z istniejącym legal hold i rzeczywistego concurrency testu. Nie są runtime PASS ani udowodnionym exploitem. C6 aktywnie poprawia na własnym6457.
+- **S1.1/S1.11 i dwa warunkowe moduły:** późniejszy rzeczywisty mandat DEC-2026091202 uruchomił domknięcie Inicjatyw/Realizacji zgodnie z TWO_MODULES_CLOSURE_DISPATCH.md, w tym docelowy lifecycle i powiązania. Historyczne wzmianki poniżej o odłożeniu12stanów nie są powodem pominięcia nowego dispatch. Granica z pełną Falą2 pozostaje zapisana w pełnym planie; FinanceComingsoon bez zmiany.
+- **IE00:** kodowanie trwa; realny request/RETURN przechodzą, RESUBMIT tego samego Decision kończy500 przez ponowny insertwersji0→1. To zachowany RED do naprawy, nie brak schematu. Typed read endpoint jeszcze404. Brak odbioru tej paczki.
+
+
 Stan odniesienia: 12.09.2026, lokalny kandydat `6494a5b239364a0f1252b7135ab8a7e786a91a37`, `/Users/piotrwisniewski/Developer/codex-wt/codex-integrator-mvp-20260912` (HEAD sprawdzony). To indeks wykonania istniejących wymagań W00/W21 i S1/S2, nie nowy proces ani nowy zakres. Review read-only: bez kodu, DB, testów, logowania i live. Jedyny zapis: ten plik. Nie wydaję żadnego nowego PASS runtime.
 
 ## Źródła i pierwszeństwo

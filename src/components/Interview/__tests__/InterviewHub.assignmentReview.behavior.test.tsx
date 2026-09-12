@@ -12,6 +12,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enTranslation from '../../../../public/locales/en/translation.json';
+import type { V8InterviewApi, V8InterviewAssignment } from '@/services/api/v8/interview';
 
 const resolveEnKey = (key: string): string | undefined => {
   const value = key
@@ -72,7 +73,7 @@ const {
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
   setInterviewBreadcrumbs: vi.fn(),
-  getMyAssignments: vi.fn(async () => []),
+  getMyAssignments: vi.fn<typeof V8InterviewApi.getMyAssignments>(),
   getSession: vi.fn(async () => null),
   appStoreState: { currentProjectId: 'proj-1' as string | null },
 }));
@@ -194,7 +195,7 @@ beforeEach(() => {
   setCurrentProjectId.mockReset();
   appStoreState.currentProjectId = 'proj-1';
   getMyAssignments.mockReset();
-  getMyAssignments.mockResolvedValue([]);
+  getMyAssignments.mockResolvedValue({ assignments: [] });
   getSession.mockReset();
   getSession.mockResolvedValue(null);
   setInterviewBreadcrumbs.mockReset();
@@ -216,7 +217,7 @@ describe('Interview Hub assignment lifecycle readback', () => {
       answeredQuestions: 1,
       completenessPercent: 100,
     };
-    const assignment = {
+    const assignment: V8InterviewAssignment = {
       id: 'sync-assignment',
       organizationId: 'org-1',
       projectId: 'proj-1',
@@ -226,12 +227,13 @@ describe('Interview Hub assignment lifecycle readback', () => {
       status: 'submitted',
       sessionId: 'sync-session',
       priority: 'medium',
+      isTeamAssignment: false,
       createdBy: 'manager',
       createdAt: '2026-09-12T00:00:00Z',
       updatedAt: '2026-09-12T00:00:00Z',
       template: { id: 'sync-template', name: 'Workflow sync assignment', category: 'strategy' },
       session,
-      assignee: { id: 'user-1', name: 'Test User' },
+      assignee: { id: 'user-1', name: 'Test User', email: 'user-1@example.test' },
     };
     getMyAssignments.mockResolvedValue({ assignments: [assignment] });
     getSession.mockResolvedValue({ session } as any);
