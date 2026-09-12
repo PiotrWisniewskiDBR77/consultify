@@ -218,6 +218,15 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     return {roles:inserted,previousRoles:before.rows};
   }
 
+  async lockStaffingParentScope(input: { organizationId: string; initiativeId: string; planId: string }): Promise<void> {
+    const result = await this.client.query(
+      `SELECT p.id FROM staffing_plans p JOIN initiatives i ON i.id=p.initiative_id
+       WHERE p.id=$1 AND p.initiative_id=$2 AND p.organization_id=$3 AND i.organization_id=$3
+       FOR UPDATE OF i, p`, [input.planId, input.initiativeId, input.organizationId]
+    );
+    if (result.rowCount !== 1) throw new StaffingNotFoundError('Staffing plan not found');
+  }
+
   async writeStaffingProjection(input: import('./staffingPlans.js').StaffingMutation & {organizationId:string;actorId:string;itemId:string}):Promise<Record<string,unknown>> {
     const parent=await this.client.query('SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2 FOR UPDATE',[input.initiativeId,input.organizationId]);
     if(parent.rowCount!==1)throw new StaffingNotFoundError('Initiative not found');

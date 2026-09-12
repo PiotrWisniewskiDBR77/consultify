@@ -38,12 +38,22 @@ export const staffingAggregateType = (kind: StaffingMutation['kind']) =>
       ? 'staffing_plan_role'
       : 'initiative_capacity_snapshot';
 interface StaffingTransaction extends MaterialCommandTransaction {
+  lockStaffingParentScope(input: {
+    organizationId: string;
+    initiativeId: string;
+    planId: string;
+  }): Promise<void>;
   writeStaffingProjection(
     input: StaffingMutation & { organizationId: string; actorId: string; itemId: string }
   ): Promise<Record<string, unknown>>;
 }
 function supportsStaffing(tx: MaterialCommandTransaction): tx is StaffingTransaction {
-  return 'writeStaffingProjection' in tx && typeof tx.writeStaffingProjection === 'function';
+  return (
+    'writeStaffingProjection' in tx &&
+    typeof tx.writeStaffingProjection === 'function' &&
+    'lockStaffingParentScope' in tx &&
+    typeof tx.lockStaffingParentScope === 'function'
+  );
 }
 export async function writeStaffing(
   unitOfWork: MaterialCommandUnitOfWork,
@@ -58,23 +68,38 @@ export async function writeStaffing(
   StaffingFieldsSchema.parse(p.fields);
   if (p.operation === 'create' && !(p.kind === 'plan' ? p.fields.name : p.fields.roleName)?.trim())
     throw new MaterialCommandValidationError('Name is required');
-  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
-    if (!supportsStaffing(tx))
+  return unitOfWork.transaction(async (scopeTx) => {
+    if (!supportsStaffing(scopeTx))
       throw new MaterialCommandValidationError('Staffing projection writer is not configured');
-    const state = await tx.writeStaffingProjection({
-      ...p,
-      organizationId: envelope.organizationId,
-      actorId: envelope.actorId,
-      itemId: envelope.aggregateId,
-    });
-    const { totalFteRequired: _required, totalFteAllocated: _allocated, ...metadata } = state;
-    return {
-      mutation: p.kind === 'plan' ? metadata : state,
-      response: state,
-      eventType: envelope.commandType,
-      eventPayload: state,
-      auditPayload: { disposition: envelope.commandType, after: state },
+    // Receipt replay must not expose a child outside a live parent scope.
+    // Keep this lock and the receipt/projection in one database transaction.
+    if (p.kind !== 'plan')
+      await scopeTx.lockStaffingParentScope({
+        organizationId: envelope.organizationId,
+        initiativeId: p.initiativeId,
+        planId: p.planId,
+      });
+    const scopedUnitOfWork: MaterialCommandUnitOfWork = {
+      transaction: async (work) => work(scopeTx),
     };
+    return executeMaterialCommand(scopedUnitOfWork, envelope, async (tx) => {
+      if (!supportsStaffing(tx))
+        throw new MaterialCommandValidationError('Staffing projection writer is not configured');
+      const state = await tx.writeStaffingProjection({
+        ...p,
+        organizationId: envelope.organizationId,
+        actorId: envelope.actorId,
+        itemId: envelope.aggregateId,
+      });
+      const { totalFteRequired: _required, totalFteAllocated: _allocated, ...metadata } = state;
+      return {
+        mutation: p.kind === 'plan' ? metadata : state,
+        response: state,
+        eventType: envelope.commandType,
+        eventPayload: state,
+        auditPayload: { disposition: envelope.commandType, after: state },
+      };
+    });
   });
 }
 export async function writeLegacyStaffing(

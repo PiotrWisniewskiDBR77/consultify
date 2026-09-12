@@ -6,7 +6,7 @@ Stan: PARTIAL — pięć rodzin zaimplementowanych lokalnie, move STOP/PENDING d
 
 Marker `a176d3f906`, gałąź `codex/szesciu-pisarzy-legacy-20260911`.
 Kontener `cx-codex2b-pg`, PostgreSQL18/pgvector, port6454.
-Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backend tsc exit0: `final-staffing-security-server-tsc.log`; gitdiff--check exit0.
+Bazy `cx_codex2b`, `codex2b_kopia_1009`. Harness5594 nieuruchomiony. Backend tsc exit0: `staffing-parent-replay-server-tsc.log`; gitdiff--check exit0.
 Pełne migracje czystej bazy:914; zakończone; drugi przebieg: `Applying migrations: 0`.
 Korekta pg16→pg18: lokalny szablon pochodzi zPG18; żadna baza zdalna nieużyta.
 
@@ -266,3 +266,12 @@ Root po real RED rozszerzył licencję wyłącznie na GET staffing-plans/:planId
 Checkpoint pięciu rodzin: 5ba24436d7. Spotcheck integratora wskazał, że istniejący OFF nadal dopuszcza przypisanie użytkownika z obcej organizacji. Real JWT/PG: POST201 i PUT200, oba zapisują foreign assigned_user_id (`staffing-assignee-red.json`). Lokalna walidacja users.id + organization_id działa teraz przed flagą; nie zmienia globalnego modelu uprawnień. Końcowy test16 zawiera dwa scenariusze OFF oraz kasowanie planu z istniejącą rolą: SQL kaskada, UI getPlan404, brak planu w liście, canonical plan tombstone i historyczny payload roli. Integrator potwierdził, że ten reader UI jest granicą akceptacji; modelu historii nie zmieniono.
 
 Pierwsza próba testu historii miała błędną nazwę kolumny payload zamiast payload_json; naprawiono test, nie jest to błąd produktu. Pierwszy końcowy flag GREEN zakończył się 0 wykonanych / 16 pending po przerwaniu pracy; kod był odtworzony bajtowo. Powtórzono wyłącznie brakujący GREEN, bez ponawiania zakończonych par projection/tenant. Wszystkie 3 końcowe pary staffing mają identyczne 16 fullName.
+
+
+### Review follow-up — parent scope przed replay roli/capacity
+
+Review 5ba24436d7 wskazał, że sam historyczny payload roli i tombstone planu nie zapobiegają odtworzeniu receipt roli po usunięciu planu. Dwa osobne rzeczywiste testy: native po canonical DELETE oraz legacy ON replay po DELETE z flagą OFF, oba RED200 przy SQL0 → GREEN404 przy SQL0. Pliki `staffing-parent-replay-{red,green}.json`, po 2 identyczne fullName.
+
+Nowa metoda lockStaffingParentScope czyta plan i inicjatywę w organizacji z FOR UPDATE. Dla role/capacity writeStaffing wykonuje tę walidację przed executeMaterialCommand, współdzieląc tę samą transakcję przez adapter UnitOfWork. Blokada trwa przez odczyt receipt i ewentualny zapis, nie jest rozdzielonym preflight. Istniejący writer ponownie chroni projekcję; model historii i istniejący materialCommand niezmienione. Po zmianie pełny staffing16 ponownie GREEN (`staffing-final-after-replay.json`) oraz backend tsc0. Wcześniejsze 3 mutationpary staffing dotyczą checkpointu ef0898f43d; dodatkową granicę pokrywa real RED2→GREEN2, nie deklarujemy ponownego wykonania starych mutacji po tej zmianie.
+
+Łączny dodatni dowód pięciu rodzin i dwóch osobnych regresji: 47 wykonań PASS / 46 unikalnych fullName (jedno powtórzenie to samodzielny test GET gaps). Move pozostaje oddzielnym celowym RED; nie ma nowej decyzji o przenoszeniu dostępu. K7: nadal 5 nowych metod projekcyjnych + dodatkowy read/lock helper, nie szósty writer.
