@@ -24,13 +24,20 @@ export async function runCleanup(options) {
   const ctx = await connect(options, 'cleanup-demo-clones'); let ended = false;
   try {
     const { client: c, target } = ctx;
+    // Cleanup qualifies every candidate only AFTER its table locks are held.
+    // SERIALIZABLE would pin a snapshot at catalog discovery, hiding a legal
+    // hold/member/session committed while discovery or LOCK was in flight.
+    // READ COMMITTED gives the post-lock guards a fresh snapshot; the locks
+    // then prevent every guarded table from changing through COMMIT/ROLLBACK.
+    // This is cleanup-only: pilot account transactions keep SERIALIZABLE.
+    if (options.apply) await c.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
     const { tsImport } = await import('tsx/esm/api');
     const lifecycle = await tsImport('../../server/src/services/organizationLifecycleService.ts', import.meta.url);
     const scoped = await lifecycle.discoverOrganizationScopedColumns(c);
     if (options.apply) {
       // Includes membership/legal-policy tables: no human can join, enable hold or add source rows between guard and delete.
       const tables = new Set(['organizations','users','organization_members','org_policies','demo_sessions','demo_session_tenants', ...scoped.map(x => x.tabela)]);
-      await c.query(`LOCK TABLE ${[...tables].map(qi).join(',')} IN SHARE ROW EXCLUSIVE MODE`);
+      await c.query(`LOCK TABLE ${[...tables].sort().map(qi).join(',')} IN SHARE ROW EXCLUSIVE MODE`);
     }
     const plans = [];
     for (const id of target.organizationIds) {

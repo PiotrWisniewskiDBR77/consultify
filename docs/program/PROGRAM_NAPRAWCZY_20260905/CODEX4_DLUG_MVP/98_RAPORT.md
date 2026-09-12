@@ -314,3 +314,26 @@ Common boot **1911610B**,3chunki (App354014, AppProviders1240369,index317227), c
 Bazy i prywatne dowody pozostawiono integratorowi do niezależnego odbioru w izolowanym kontenerze; nie są bazami prezentowanymi użytkownikom. Do usunięcia po review wyłącznie własne cx4_* i własny proces API, bez kasowania cudzych zasobów. E4 nie potrzebuje nowego builda ani tsc serwera (Z9 wymagał ich po E1/E2, wykonane wcześniej). Brak powtórzenia prepare, no push/live.
 
 Dodatkowo realny preflight braku membership: osobny cx4_pilot_membership_guard sklonowany z ukończonego, niezmienionego restore; lokalna fixture usuwa membership. CLI dry-run kończy EXISTING_MEMBERSHIP_REQUIRES_REVIEW, sześć tabel/hasła bez zmian, dostęp nie został odtworzony. PASS tej negatywnej próby; nie jest to osobna realna próba apply przy brakującym membership. Bezpieczne zestawienie wszystkich faz (bez credentials): codex4-artefakty/E4_LOCAL_ACCEPTANCE.json.
+
+## E4 — poprawka wyścigu kwalifikacji po niezależnym HOLD (12.09)
+
+Niezależny odbiór `C4_E4_INDEPENDENT_REVIEW.md` wykazał P1: SERIALIZABLE zapamiętywał snapshot na discovery katalogu, zanim cleanup zdobył blokady tabel. Legal hold zatwierdzony na drugim połączeniu między discovery i LOCK był niewidoczny; organizacja została usunięta. Pierwotny RED zachowany bez zmian: `codex4-scratch/review-cleanup-race/result.json`.
+
+Poprawka dotyczy wyłącznie cleanup apply: przed pierwszym odczytem w transakcji ustawia READ COMMITTED; discovery znajduje tabele, istniejący SHARE ROW EXCLUSIVE blokuje wszystkie stałe guard tables i dynamiczne tabele org, a dopiero po zdobyciu blokad wykonywana jest **cała kwalifikacja**. Każdy guard widzi zapisy zatwierdzone przed LOCK; blokady uniemożliwiają zmianę danych podczas kwalifikacji/usuwania do końca transakcji. Posortowana lista tabel ogranicza różną kolejność locków. Pilot pozostaje SERIALIZABLE, dry-run REPEATABLE READ READ ONLY, kanoniczny silnik kasowania i pozostałe zabezpieczenia bez zmian. To nie jest nowe globalne ustawienie izolacji.
+
+Przyrząd `scripts/dev/codex4-e4-cleanup-race.mjs` używa wyłącznie przekazanej bazy `cx4_review_cleanup_race` na127.0.0.1:6455 i jawnego lokalnego Docker socket. Przed każdym scenariuszem wykonuje prawdziwy restore pełnego custom dump syntetycznej bazy do tej samej własnej bazy, zachowuje stdout/stderr procesu i readback. Nie jest to restore pełnego schematu staging ani jego odbiór. Dwa połączenia PG, rzeczywisty runCleanup i kanoniczny delete; wrapper steruje tylko momentem drugiej transakcji między discovery i LOCK. Nie dotknięto cx4_pilot/cx4_cleanup/API4214/live.
+
+Dowody:
+
+- Autor przed poprawką: `codex4-scratch/e4-race-red-20260912/result.json`, exit1,11/13 testów czerwonych. Dziewięć guardów INSERT (hold, primary human, membership human, last_login, last_login_at, orphan membership, external membership, active demo session, active tenant) przepuszczało usunięcie; template/paid UPDATE zachowały org przez PostgreSQL40001, lecz nie dawały prawidłowego rozpoznania guardu. Nie opisujemy tych dwóch jako udanego niebezpiecznego skasowania.
+- Po poprawce: `codex4-scratch/e4-race-green-20260912/result.json`, exit0,13/13 PASS; ten sam moment zatwierdzenia równoległego guardu. Legal hold jest widoczny jako1wiersz i daje typed LEGAL_HOLD.
+- Wzmocniony końcowy readback: `codex4-scratch/e4-race-green-readback-20260912/result.json`, exit0,13/13 PASS. Każdy z11guardów zachowuje wszystkie wiersze sześciu tabel kwalifikacji (porównanie deterministycznych hashy po zatwierdzeniu drugiej transakcji i po odmowie cleanup), bez commit receipt. Sześć prób zapisu po LOCK (organizations/users/membership/policies/demo_sessions/demo_session_tenants) kończy55P03 przy150ms lock_timeout. Niechroniony valid clone zostaje prawidłowo usunięty.
+- Dotychczasowe czyste testy safety:43/43 PASS, `codex4-artefakty/e4-race-safety-green.log`; node --check obu zmienionych .mjs i git diff --check PASS. Nie wykonywano ciężkiego build/tsc — zmiana operatora.mjs i lokalnego harnessu.
+
+Komenda odbioru (nowa, nieistniejąca prywatna ścieżka OUT; destructive tylko na wskazanej własnej bazie review):
+
+```sh
+node scripts/dev/codex4-e4-cleanup-race.mjs --out=/absolute/new/private/review-output --source=/Users/piotrwisniewski/Developer/codex-wt/codex4-scratch/review-cleanup-race/before.dump
+```
+
+Status autora: **FIX + LOCAL13/13 + PURE43/43; oczekuje niezależnego ponownego odbioru**, E4 HOLD nie jest automatycznie zniesiony. Dotychczasowe ograniczenia prawdziwego network ACK loss, pełnego schematu/concurrent DDL, canonical org-predicate mutation i live TLS pozostają. Ostatni scenariusz pozostawia syntetyczną bazę review po valid delete; każdy następny bieg przyrządu odtwarza wyłącznie tę bazę. Nie ma automatycznego push/deploy.
