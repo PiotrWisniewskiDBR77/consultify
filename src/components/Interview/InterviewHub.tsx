@@ -2502,6 +2502,19 @@ export const InterviewHub: React.FC = () => {
     [setOpenDocuments]
   );
 
+  // Merge the actual lifecycle response from an open card, not a status
+  // inferred from session.active/completed. All list surfaces share this state.
+  const handleAssignmentChange = useCallback(
+    (updated: Partial<InterviewAssignment> & { id: string }) => {
+      const merge = (assignment: InterviewAssignment) =>
+        assignment.id === updated.id ? { ...assignment, ...updated } : assignment;
+      setMyAssignments((prev) => prev.map(merge));
+      setManagedAssignments((prev) => prev.map(merge));
+      setOverdueAssignments((prev) => prev.map(merge));
+    },
+    []
+  );
+
   // Search is handled by ModuleHub's onSearch prop
 
   // Template actions
@@ -5981,6 +5994,7 @@ export const InterviewHub: React.FC = () => {
           onClose={() => handleCloseDocument(doc.id)}
           onComplete={handleSessionComplete}
           onSessionChange={handleSessionChange}
+          onAssignmentChange={handleAssignmentChange}
         />
       );
     }

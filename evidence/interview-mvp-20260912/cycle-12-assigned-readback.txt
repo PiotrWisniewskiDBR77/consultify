@@ -1,0 +1,68 @@
+LOCAL
+?
+Help Center
+Feedback
+Documents
+77
+Skip to main content
+Interview
+Assigned
+Data
+Model
+2
+Manager CX4
+MC
+Inbox
+Sessions
+Assigned
+Templates
+Insights
+Initiatives
+Assign
+All
+1
+To approve
+0
+Overdue
+0
+Sent back
+0
+Active
+Archive
+	
+TEMPLATE
+	
+ASSIGNEE
+	
+STATUS
+	
+PROGRESS
+	
+DAYS TO DUE
+	
+SUBMITTED
+	
+AI SCORE
+	
+ESCALATION
+	
+
+	
+CX4 Interview MVP one record
+Strategy
+	
+R
+Respondent CX4
+	
+Approved
+	
+100%
+	
+—
+	
+12/09/2026
+	
+90
+	
+—
+	
