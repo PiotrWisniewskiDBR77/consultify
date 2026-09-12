@@ -87,3 +87,20 @@ To rozwinięcia istniejących wierszy, nie dodatkowy program:
 5. **Kalendarz:** 14 dni rzeczywistego użycia, w tym wymagane 7 dni obserwacji można udokumentować w obrębie pilotażu — źródła nie wymagają automatycznie 14+7=21 dni. Start liczyć od rzeczywistego użycia, nie daty planu. Zerowy stan błędów przez7dni musi być rzeczywisty; zgłoszony500 nie znika przez test lokalny. Finalny tag dopiero przy spełnieniu wszystkich pozostałych warunków i wymaganych potwierdzeniach.
 
 Żadna wartość historyczna nie została w tym dokumencie awansowana do aktualnego PASS. Jednocześnie żaden autentyczny zapis decyzji/akceptacji właściciela nie został skasowany przez brak dzisiejszego retestu.
+
+
+## Evidence update after combined candidate ac98ccaaf3b92a76daa84e75478def8cd87b417c
+
+This appendix supersedes earlier delivery status only where an exact new result is identified. Original S1/S2 requirements and owner decisions remain unchanged; no full gate is promoted merely because a component passed. Repository checkpoint b0ca63b3389ddbc9364449d90c7fed8fad4ba03c is documentation over that source.
+
+| Gate | New verified evidence | Remaining requirement |
+|---|---|---|
+| S1.2 | Deck unsolicited autosave independently accepted and integrated (W17_AUTOSAVE_FINAL_INDEPENDENT_REVIEW.md);37 postmerge tests. Interview scoped review and AI evaluation independently accepted; built Interview cycle accepted. | CLOSED initiative two unsolicited PUT403 reproduced on current backend; fix in progress. C6 export/delete and complete zero-open registry remain open. |
+| S1.4 / S1.13 | Deck canonical load/restore/AI accept/conflict reload do not echo saves; real edits/local restore and queued writes persist. | Full action denominator, three hard scenarios per tool, current professional file generation/opening, complete visual acceptance. Historical approved files are preserved. Actual built Deck action census is assigned. |
+| S1.8 | Combined build15524 exit0; server tsc84281 exit0; frontend9266 exit2 with192 diagnostics, matching prior file/TS-code multiplicities. Typefix casts independently reviewed;37 Deck and10 Interview postmerge tests PASS. Normal root hooks passed. | Frontend is not clean. Final candidate changes still require proportionate checks; complete release/migration/operating gate is not inferred from this subset. |
+| S1.12 | Exact source, runtime ownership, review reports and active implementation queue are durable in program index and HANDOFF_CHICAGO.md. | Final release/configuration/rollback handoff depends on remaining gates. |
+| S2.2 | Built root Gateway/JWT/PG Interview: answer, submit, send-back, correction, resubmit, approve, both reload; three immutable history rows. Read-only reload0evaluation, explicit Refresh200 persisted. W05_BUILT_INTEGRATION_INDEPENDENT_REVIEW.md;260 observed assets match built dist. | Initial fixture was SQL seeded and login session API installed. Full registration, onboarding, publication, diagnosis-to-initiative-to-execution/result and zero-error fresh-org flow remain open. |
+| S2.3 | Scoped review43PG and evaluation58PG independently verified object/tenant/policy boundaries; anonymous recommendations sentinel removed only from reviewer response. | Full mounted route denominator, CSRF/MFA checks and actual seven-day logs remain open. Controlled evaluator does not prove real AI integration. |
+| S2.7 | C6 author now has real helper/canonical-writer lock tests:7 GREEN and writer-first INSERT/UPDATE mutation RED. | These are not HTTP423/file proof; classified business export, JSON/CSV/UI, delete/receipts, retention and agreement still require completion. No C6 candidate integrated. |
+
+S1.1 and historical owner/file acceptances remain preserved. S1.3/5/6/7/9/10/11 and S2.1/4/5/6/8/9/10/11/12/13/14 receive no new full-gate PASS in this update. In particular, no staging deployment, actual mail delivery, real provider budget measurement, four-person completion or14-day pilot was performed in these local integration checks. Existing decisions are not questions to reopen. Full MVP remains ACTIVE; Wave2 scope stays in its existing plan.
