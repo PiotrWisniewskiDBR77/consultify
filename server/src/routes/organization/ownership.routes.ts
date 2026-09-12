@@ -17,7 +17,11 @@ import {
   exportOrganizationData,
   organizationExportToCsv,
 } from '../../services/organizationLifecycleService.js';
-import { requireNoLegalHold } from '../../services/OrgPoliciesService.js';
+import {
+  lockOrganizationPolicy,
+  OrgPoliciesError,
+  requireNoLegalHoldInTransaction,
+} from '../../services/OrgPoliciesService.js';
 
 const router = Router();
 
@@ -77,16 +81,17 @@ router.delete(
     if (req.body?.confirmation !== true || reason.length < 3 || !organizationName) {
       return res.status(428).json({ code: 'ORG_DELETION_CONFIRMATION_REQUIRED' });
     }
-    await requireNoLegalHold(req.params.orgId, 'ORG_DELETION');
     const client = await acquirePgClient();
     try {
       await client.query('BEGIN');
+      await lockOrganizationPolicy(client, req.params.orgId);
       const current = await client.query<{ name: string }>('SELECT name FROM organizations WHERE id = $1 FOR UPDATE', [req.params.orgId]);
       if (!current.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ code: 'ORG_NOT_FOUND' }); }
       if (String(current.rows[0].name || '').trim() !== organizationName) {
         await client.query('ROLLBACK');
         return res.status(428).json({ code: 'ORG_NAME_CONFIRMATION_REQUIRED' });
       }
+      await requireNoLegalHoldInTransaction(client, req.params.orgId, 'ORG_DELETION');
       const result = await deleteOrganizationDataInTransaction(client, req.params.orgId);
       const digest = createHash('sha256').update(JSON.stringify({ organizationId: req.params.orgId, organizationName, actorId: actor.userId, reason })).digest('hex');
       await client.query(
@@ -99,6 +104,9 @@ router.delete(
       return res.json({ success: true, deletedCounts: result.deletedCounts });
     } catch (error) {
       await client.query('ROLLBACK').catch(() => undefined);
+      if (error instanceof OrgPoliciesError) {
+        return res.status(error.statusCode).json({ code: error.code });
+      }
       throw error;
     } finally {
       client.release();

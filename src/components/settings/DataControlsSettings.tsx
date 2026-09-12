@@ -309,10 +309,21 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       localStorage.clear();
       window.location.assign('/');
     } catch (error: unknown) {
-      const message = normalizeApiErrorMessage(
-        error,
-        t('settings.data.organizationDeleteFailed', 'Failed to delete organization')
-      );
+      const errorCode = String((error as any)?.errorCode || (error as any)?.code || '');
+      const message = errorCode === 'LEGAL_HOLD'
+        ? t(
+            'settings.data.organizationDeleteLegalHold',
+            'This organization cannot be deleted while a legal hold is active. Contact your compliance administrator.'
+          )
+        : errorCode === 'POLICY_READ_FAILED'
+          ? t(
+              'settings.data.organizationDeletePolicyUnavailable',
+              'Deletion is temporarily unavailable because the organization policy could not be verified. Try again later.'
+            )
+          : normalizeApiErrorMessage(
+              error,
+              t('settings.data.organizationDeleteFailed', 'Failed to delete organization')
+            );
       setActionError(message);
       toast.error(message);
       setOrganizationDeleting(false);

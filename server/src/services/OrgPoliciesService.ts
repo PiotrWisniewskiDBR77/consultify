@@ -2,13 +2,18 @@
  * V4-ENT-04: Org policies service (retention, legal hold, residency)
  * Enforces org_policies before delete/export operations.
  */
+import type { PoolClient } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
+
+import { acquirePgClient } from '../database/PostgresDatabase.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 export class OrgPoliciesError extends Error {
   constructor(
     message: string,
-    public code: 'LEGAL_HOLD' | 'POLICY_VIOLATION'
+    public code: 'LEGAL_HOLD' | 'POLICY_VIOLATION' | 'POLICY_READ_FAILED',
+    public statusCode: number = code === 'LEGAL_HOLD' ? 423 : 503
   ) {
     super(message);
     this.name = 'OrgPoliciesError';
@@ -28,8 +33,39 @@ export async function hasLegalHold(organizationId: string): Promise<boolean> {
     if (msg.includes('no such table') || msg.includes('does not exist')) {
       return false;
     }
-    logger.warn('[OrgPolicies] Error checking legal hold:', e);
-    return false;
+    logger.error('[OrgPolicies] Error checking legal hold; denying operation', e);
+    throw new OrgPoliciesError('Organization policy could not be verified.', 'POLICY_READ_FAILED');
+  }
+}
+
+export async function lockOrganizationPolicy(client: PoolClient, organizationId: string): Promise<void> {
+  await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [organizationId]);
+}
+
+export async function requireNoLegalHoldInTransaction(
+  client: PoolClient,
+  organizationId: string,
+  operation: string
+): Promise<void> {
+  try {
+    const table = await client.query<{ table_name: string | null }>(
+      `SELECT to_regclass('public.org_policies')::text AS table_name`
+    );
+    if (!table.rows[0]?.table_name) return;
+    const policy = await client.query<{ legal_hold_enabled: number }>(
+      'SELECT legal_hold_enabled FROM org_policies WHERE organization_id = $1 FOR SHARE',
+      [organizationId]
+    );
+    if ((policy.rows[0]?.legal_hold_enabled ?? 0) === 1) {
+      throw new OrgPoliciesError(
+        `Operation blocked: organization has legal hold. ${operation} is not allowed while legal hold is active.`,
+        'LEGAL_HOLD'
+      );
+    }
+  } catch (error) {
+    if (error instanceof OrgPoliciesError) throw error;
+    logger.error('[OrgPolicies] Transactional policy read failed; denying operation', error);
+    throw new OrgPoliciesError('Organization policy could not be verified.', 'POLICY_READ_FAILED');
   }
 }
 
@@ -91,11 +127,18 @@ export async function upsertOrgPolicy(
     residencyRegion?: string | null;
   }
 ): Promise<OrgPolicyRow> {
-  const { v4: uuidv4 } = await import('uuid');
   const now = new Date().toISOString();
-
-  const existing = await getOrgPolicy(organizationId);
-  if (existing) {
+  const client = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+    await lockOrganizationPolicy(client, organizationId);
+    const existingResult = await client.query<OrgPolicyRow>(
+      'SELECT * FROM org_policies WHERE organization_id = $1 FOR UPDATE',
+      [organizationId]
+    );
+    const existing = existingResult.rows[0] || null;
+    let result: OrgPolicyRow;
+    if (existing) {
     const retentionDays =
       patch.retentionDays !== undefined ? patch.retentionDays : existing.retention_days;
     const legalHoldEnabled =
@@ -107,33 +150,42 @@ export async function upsertOrgPolicy(
     const residencyRegion =
       patch.residencyRegion !== undefined ? patch.residencyRegion : existing.residency_region;
 
-    await queryHelpers.queryRun(
-      `UPDATE org_policies SET retention_days = ?, legal_hold_enabled = ?, residency_region = ?, updated_at = ? WHERE organization_id = ?`,
-      [retentionDays, legalHoldEnabled, residencyRegion, now, organizationId]
-    );
-    return (await getOrgPolicy(organizationId))!;
-  } else {
-    const id = `op-${uuidv4()}`;
-    await queryHelpers.queryRun(
-      `INSERT INTO org_policies (id, organization_id, retention_days, legal_hold_enabled, residency_region, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        organizationId,
-        patch.retentionDays ?? null,
-        patch.legalHoldEnabled ? 1 : 0,
-        patch.residencyRegion ?? null,
-        now,
-        now,
-      ]
-    );
-    return (await getOrgPolicy(organizationId))!;
+      const updated = await client.query<OrgPolicyRow>(
+        `UPDATE org_policies SET retention_days = $1, legal_hold_enabled = $2, residency_region = $3, updated_at = $4 WHERE organization_id = $5 RETURNING *`,
+        [retentionDays, legalHoldEnabled, residencyRegion, now, organizationId]
+      );
+      result = updated.rows[0]!;
+    } else {
+      const inserted = await client.query<OrgPolicyRow>(
+        `INSERT INTO org_policies (id, organization_id, retention_days, legal_hold_enabled, residency_region, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          `op-${uuidv4()}`,
+          organizationId,
+          patch.retentionDays ?? null,
+          patch.legalHoldEnabled ? 1 : 0,
+          patch.residencyRegion ?? null,
+          now,
+          now,
+        ]
+      );
+      result = inserted.rows[0]!;
+    }
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
   }
 }
 
 export default {
   hasLegalHold,
   requireNoLegalHold,
+  requireNoLegalHoldInTransaction,
+  lockOrganizationPolicy,
   getOrgPolicy,
   getAllOrgPolicies,
   upsertOrgPolicy,

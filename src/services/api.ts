@@ -3220,7 +3220,10 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify({ confirmation: true, organizationName, reason }),
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ code: 'ORG_DELETE_FAILED' }));
+      throw createApiError(body, 'ORG_DELETE_FAILED', res.status);
+    }
   },
 
   getOrganizationBillingDetails: async (orgId: string): Promise<any> => {

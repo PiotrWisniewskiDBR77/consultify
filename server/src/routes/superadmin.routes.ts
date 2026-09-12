@@ -27,7 +27,9 @@ import { validateBody, validateParams } from '../middleware/validation.middlewar
 import {
   getAllOrgPolicies,
   getOrgPolicy,
-  requireNoLegalHold,
+  lockOrganizationPolicy,
+  OrgPoliciesError,
+  requireNoLegalHoldInTransaction,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
 import {
@@ -824,29 +826,19 @@ router.delete(
     if ((RESERVED_ORGANIZATION_IDS as readonly string[]).includes(id)) {
       return res.status(400).json({ code: 'ORG_ID_RESERVED' });
     }
-    try {
-      await requireNoLegalHold(id, 'Organization deletion');
-    } catch (e: any) {
-      if (e?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({
-          ...mapAppErrorResponse(e, req, 'error'),
-          code: 'CROSS_TENANT_DENIED',
-          guidance: 'Tenant is in compliance hold. Contact the compliance team before retrying.',
-        });
-      }
-      throw e;
-    }
-
     const submittedName =
       typeof req.body?.organizationName === 'string' ? req.body.organizationName.trim() : '';
 
     const client = await acquirePgClient();
     try {
+      await client.query('BEGIN');
+      await lockOrganizationPolicy(client, id);
       const currentOrg = await client.query<{ id: string; name: string | null }>(
-        'SELECT id, name FROM organizations WHERE id = $1',
+        'SELECT id, name FROM organizations WHERE id = $1 FOR UPDATE',
         [id]
       );
       if (currentOrg.rowCount === 0) {
+        await client.query('ROLLBACK');
         return res.status(404).json({ code: 'ORG_NOT_FOUND' });
       }
       const actualName = (currentOrg.rows[0]!.name || '').trim();
@@ -856,32 +848,29 @@ router.delete(
         // zdanie z serwera do UI jako dług; kod jest wystarczający dla
         // wywołującego (OrganizationsView.tsx pokazuje własny, juz istniejacy
         // komunikat toast), a maszynowy `code` niesie pełną semantykę.
+        await client.query('ROLLBACK');
         return res.status(428).json({ code: 'ORG_NAME_CONFIRMATION_REQUIRED' });
       }
 
-      await client.query('BEGIN');
-      try {
-        const result = await deleteOrganizationDataInTransaction(client, id);
-        await client.query('COMMIT');
+      await requireNoLegalHoldInTransaction(client, id, 'ORG_DELETION');
+      const result = await deleteOrganizationDataInTransaction(client, id);
+      await client.query('COMMIT');
 
-        await req.emitAuditEvent?.({
-          actorType: 'USER',
-          action: 'delete',
-          resourceType: 'organization',
-          resourceId: id,
-          before: { name: actualName },
-          metadata: { deletedCounts: result.deletedCounts, passes: result.passes },
-        });
+      await req.emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'delete',
+        resourceType: 'organization',
+        resourceId: id,
+        before: { name: actualName },
+        metadata: { deletedCounts: result.deletedCounts, passes: result.passes },
+      });
 
-        // Brak literalnego zdania w odpowiedzi (celowo, patrz bramka J0 —
-        // liczy każdy nowy tekst w polach error/message jako dług). Pola
-        // success i deletedCounts niosą pełną semantykę bez nowego zdania.
-        return res.json({ success: true, deletedCounts: result.deletedCounts });
-      } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-      }
+      return res.json({ success: true, deletedCounts: result.deletedCounts });
     } catch (err: any) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      if (err instanceof OrgPoliciesError) {
+        return res.status(err.statusCode).json({ code: err.code });
+      }
       if (err?.code === 'ORG_NOT_FOUND') {
         return res.status(404).json({ code: 'ORG_NOT_FOUND' });
       }
