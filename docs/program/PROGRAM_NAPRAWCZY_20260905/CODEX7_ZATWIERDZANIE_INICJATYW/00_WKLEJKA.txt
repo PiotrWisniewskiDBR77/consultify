@@ -1,0 +1,45 @@
+NOWY BLOK — CODEX 7 — „ZATWIERDZANIE INICJATYW" (decyzja GO komitetu, za flaga OFF)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX7_ZATWIERDZANIE_INICJATYW/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj. Bezpieczniki Z1-Z24:
+CODEX4_DLUG_MVP/01_INSTRUKCJA.md §0 — przeczytaj tez je.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex7-zatwierdzanie
+MARKER=45c07b024c
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt && git -C "$V" worktree add "$WT" -b codex/zatwierdzanie-inicjatyw-20260913 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex7-zatwierdzanie/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex7-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+
+Zasoby wylaczne: kontener cx-codex7-pg (6458), bazy cx7_*, API 4217, preview 5217, harness 5598,
+migracje 20262190-20262199, artefakty ~/Developer/codex-wt/codex7-artefakty. NIETYKALNE cudze:
+cx-codex2b-pg (6454), cx-codex4-pg (6455), cx-codex5-pg (6456), cx-codex6-pg (6457),
+cx-codex1/2/3-pg (6451-6453), consultify-pg18 (54418 — tylko SELECT/pg_dump i CREATE DATABASE cx7_*).
+
+★ ZADANIE: dzis nie da sie zatwierdzic inicjatywy („Brakuje aktualnej decyzji GO komitetu", a decyzji
+ nie ma jak wystawic). Budujesz mechanike wariantu B: decyzja komitetu jako OSOBNY rekord z wersja;
+ zatwierdzenie inicjatywy wymaga AKTUALNEJ decyzji GO; istotna zmiana tresci inicjatywy uniewaznia
+ decyzje. Do tego: odmowy z kodem i zrozumialym zdaniem en+pl (naprawa defektu D-1: dzis niepowolany
+ dostaje 404 bez powodu i bez jezyka — ma byc 403, jesli rekord jest dla niego widoczny), slad audytu,
+ idempotencja, kontrola obcej organizacji, dowod mutacyjny na kazda bramke.
+ KROK 0 OBOWIAZKOWY: zmierz, co juz istnieje (trasa gates/definition/decisions, bramka initiative.review,
+ lejek initiativeReadinessCheckLabel) — NIE buduj drugiego magazynu decyzji obok istniejacego.
+ Flaga ENABLE_INITIATIVE_APPROVAL_V2 domyslnie OFF; przy OFF zachowanie bit w bit jak dzis (z testem).
+
+★ ZAKAZY: nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji · nie projektujesz nowych
+ ekranow, paneli ani kolorow (podpinasz ISTNIEJACY przycisk „Zatwierdz inicjatywe"; brak miejsca na
+ decyzje = STOP i opis) · nie dotykasz magazynu kanonicznego inicjatyw (blok 2b) ani slownikow statusow
+ w innych modulach · migracje tylko addytywne z zakresu 20262190-20262199 · ZAKAZ git stash
+ i --no-verify · ZAKAZ pelnego tsc frontu (esbuild per plik; tsc serwera wymagany) · testy PER PLIK,
+ --retry=0, env w jednej linii · znaczniki commita: [ODMROZENIE 05_INITIATIVES DEC-465]
+ [ODMROZENIE WSPOLNE DEC-465].
+
+★ RAPORT (jedyny nowy dokument; logi POZA repo): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX7_ZATWIERDZANIE_INICJATYW/98_RAPORT.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.

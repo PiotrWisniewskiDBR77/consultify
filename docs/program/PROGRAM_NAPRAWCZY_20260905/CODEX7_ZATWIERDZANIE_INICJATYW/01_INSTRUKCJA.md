@@ -3,7 +3,7 @@ doc_id: codex7-zatwierdzanie-inicjatyw
 status: WYDANY (wydać 13.09, po odbiorze bloku 5)
 truth_type: codex-block-instruction
 established: 2026-09-12
-marker: <<MARKER_SHA_7>>
+marker: 45c07b024c
 baza: origin/integracja/20260911
 ---
 
@@ -27,7 +27,7 @@ bez rekordu decyzji — odrzucony, bo znika ślad audytu. Wariant C = pełny obi
 Obowiązują Z1–Z24 z `CODEX4_DLUG_MVP/01_INSTRUKCJA.md` (§0), z różnicami: kontener `cx-codex7-pg`
 (port **6458**), bazy `cx7_*`, API **4217**, preview **5217**, harness **5598**, migracje
 **20262190–20262199**, artefakty `~/Developer/codex-wt/codex7-artefakty`, gałąź
-`codex/zatwierdzanie-inicjatyw-20260913` z markera `<<MARKER_SHA_7>>`.
+`codex/zatwierdzanie-inicjatyw-20260913` z markera `45c07b024c`.
 Znaczniki commita: `[ODMROZENIE 05_INITIATIVES DEC-465] [ODMROZENIE WSPOLNE DEC-465]`.
 **Flaga:** `ENABLE_INITIATIVE_APPROVAL_V2`, **domyślnie OFF**; przy OFF zachowanie **bit w bit**
 jak dziś (z komunikatem o braku decyzji GO) — to jest warunek scalenia, nie życzenie.

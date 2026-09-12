@@ -1,0 +1,45 @@
+NOWY BLOK — CODEX 6 — „GOTOWOSC PILOTAZU" (pusta organizacja → pierwsza wartosc, seed EN, limiter AI)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX6_GOTOWOSC_PILOTAZU/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj. Bezpieczniki Z1-Z24 sa w
+CODEX4_DLUG_MVP/01_INSTRUKCJA.md §0 — przeczytaj tez je (instrukcja 6 sie do nich odwoluje).
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex6-gotowosc-pilotazu
+MARKER=45c07b024c
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt && git -C "$V" worktree add "$WT" -b codex/gotowosc-pilotazu-20260912 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex6-gotowosc-pilotazu/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex6-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+
+Zasoby wylaczne: kontener cx-codex6-pg (6457), bazy cx6_*, API 4216, preview 5216, harness 5597,
+migracje 20262180-20262189, artefakty ~/Developer/codex-wt/codex6-artefakty. NIETYKALNE cudze:
+cx-codex2b-pg (6454), cx-codex4-pg (6455), cx-codex5-pg (6456), cx-codex1/2/3-pg (6451-6453),
+consultify-pg18 (54418 — tylko SELECT/pg_dump i CREATE DATABASE cx6_* TEMPLATE consultify_staging_1009).
+
+★ ZADANIE (kolejnosc E1→E2→E5→E3→E4; MINIMUM bloku: E1 i E2 udowodnione):
+ E1 swieza organizacja przechodzi droge rejestracja→kontekst→wywiad→ocena→inicjatywa→zadanie→wynik
+    bez ekranu bledu, bez pustego stanu bez akcji, bez martwego przycisku; test Playwright + zrzuty.
+ E2 seed pilotazu PO ANGIELSKU (zespol, inicjatywy, zadania, wskazniki, wywiad, ocena) jako skrypt
+    --dry-run domyslnie + manifest + idempotencja; zapis przez sciezki aplikacji, nie surowe INSERT.
+ E5 dziennik zgloszen: zgloszenie z ekranu Feedback zapisuje sie z kontekstem i da sie je odczytac
+    (poczta jest martwa — nie opieraj na e-mailu).
+ E3 limiter kosztu AI z budzetem per organizacja (domyslnie 50 USD/mies.), zrozumialy komunikat po
+    wyczerpaniu, za flaga domyslnie OFF.
+ E4 eksport i usuniecie organizacji z interfejsu — zmierz co dziala, napraw BRAKI, kontrola negatywna.
+
+★ ZAKAZY: nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji (takze ze skryptow —
+ uruchomi je nadzorca) · nie dotykasz /Users/piotrwisniewski/Developer/Consultify poza symlinkiem ·
+ nie polszczysz aplikacji (DEC-461: budujemy po angielsku) · ZAKAZ git stash i --no-verify ·
+ ZAKAZ pelnego tsc frontu (esbuild per plik; tsc serwera wymagany) · testy PER PLIK, --retry=0,
+ env w jednej linii · kazda naprawa z testem mutacyjnym RED→GREEN · KROK 0 kazdego etapu = zmierz
+ premise · znaczniki commita: [ODMROZENIE WSPOLNE DEC-468] (+ modul, jesli hook go wskaze).
+
+★ RAPORT (jedyny nowy dokument; logi POZA repo): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX6_GOTOWOSC_PILOTAZU/98_RAPORT.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.

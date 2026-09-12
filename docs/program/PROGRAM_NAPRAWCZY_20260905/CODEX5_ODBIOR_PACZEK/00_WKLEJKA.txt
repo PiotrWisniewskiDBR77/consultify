@@ -1,0 +1,45 @@
+NOWY BLOK — CODEX 5 — „ODBIOR PACZEK 2b i 4" (blok adwersaryjny: masz OBALIC, nie potwierdzic)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX5_ODBIOR_PACZEK/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM (bez markera — odbierasz TIP linii integracyjnej):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex5-odbior
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku
+git -C "$V" worktree add "$WT" -b codex/odbior-paczek-20260912 origin/integracja/20260911
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex5-odbior/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex5-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+# ↑ to SHA jest SHA odbioru — wpisz je do raportu i w nazwe katalogu przyrzadu.
+# WARUNEK WEJSCIA: w `git -C "$WT" log --oneline -30` widzisz scalenie bloku 2b ORAZ bloku 4.
+# Brakuje ktoregos → odbierasz ten, ktory jest, i piszesz w raporcie, czego nie bylo. Nie czekasz.
+
+Zasoby wylaczne: kontener cx-codex5-pg (6456), bazy cx5_*, API 4215, preview 5215, harness 5596,
+artefakty ~/Developer/codex-wt/codex5-artefakty. NIETYKALNE cudze: cx-codex2b-pg (6454),
+cx-codex4-pg (6455), cx-codex6-pg (6457), cx-codex1/2/3-pg (6451-6453), consultify-pg18 (54418 —
+tylko SELECT/pg_dump i CREATE DATABASE cx5_* TEMPLATE consultify_staging_1009).
+
+★ ZADANIE — odbior trojwarstwowy dwoch paczek scalonych za flagami OFF:
+ W1 kod kontra kontrakt: kazdy punkt „definicji ukonczenia" z instrukcji 2b i 4 → ZROBIONE /
+    CZESCIOWO / NIEWYKONANE / NIEMIERZALNE, z plik:linia. Trzy pytania obalajace: czy istnieje
+    realny wolacz, czy flaga ma implementacje, czy zapis idzie tam skad czyta ekran.
+ W2 runtime na lokalnym stanowisku: 6 pisarzy 2b przy fladze OFF i ON (parytet OFF bit w bit,
+    idempotencja, obca organizacja = odmowa + wiersz nietkniety); paczka 4: oba dawne 500, close→reopen
+    z wlasnymi zrzutami jasny+ciemny, WLASNY pomiar pakietu startowego, skrypty E4 w trybie probnym.
+ W3 bramka 4-krokowa na scalonej linii (6 krokow, progi w docs/program/PLAN_CODEX_2DNI_20260912.md §3),
+    z pomiarem ROZNICOWYM: ten sam zbior testow na SHA odbioru i na SHA sprzed scalen — osobno
+    „nowe czerwone" i „zastane czerwone".
+
+★ ZAKAZY: NIE naprawiasz kodu (ten blok tylko mierzy; wyjatek: przyrzad w scripts/dev/odbior-5-<sha8>/,
+ testy mierzace i raport) · nie pushujesz · ZERO polaczen do Railway/stagingu/demo/produkcji ·
+ nie dotykasz /Users/piotrwisniewski/Developer/Consultify poza symlinkiem · ZAKAZ git stash
+ i --no-verify · testy PER PLIK, --retry=0, env w jednej linii · pelny tsc frontu TYLKO raz, w bramce,
+ nigdy rownolegle · „nie renderuje sie" bez zrzutu = nic nie znaczy · jeden kontekst przegladarki na
+ cala serie, token wygasa po 60 min · brak danych wejsciowych = NIEZMIERZONE, nigdy PASS ·
+ znacznik commita: [ODMROZENIE WSPOLNE DEC-468].
+
+★ RAPORT (8 sekcji, w tym „czego nie zmierzylem"): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX5_ODBIOR_PACZEK/98_ODBIOR.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.

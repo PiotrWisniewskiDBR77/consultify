@@ -3,7 +3,7 @@ doc_id: codex6-gotowosc-pilotazu
 status: WYDANY
 truth_type: codex-block-instruction
 established: 2026-09-12
-marker: <<MARKER_SHA_6>>
+marker: 45c07b024c
 baza: origin/integracja/20260911
 ---
 
@@ -23,7 +23,7 @@ osobną falą; nie polszczysz niczego przy okazji.
 Obowiązują Z1–Z24 z `CODEX4_DLUG_MVP/01_INSTRUKCJA.md` (§0) **bez zmian**, z trzema różnicami:
 zasoby wyłączne to kontener `cx-codex6-pg` (port **6457**), bazy `cx6_*`, API **4216**, preview **5216**,
 harness **5597**, migracje **20262180–20262189**, artefakty `~/Developer/codex-wt/codex6-artefakty`;
-gałąź `codex/gotowosc-pilotazu-20260912` z markera `<<MARKER_SHA_6>>`; znaczniki commita
+gałąź `codex/gotowosc-pilotazu-20260912` z markera `45c07b024c`; znaczniki commita
 `[ODMROZENIE WSPOLNE DEC-468]` plus moduł wskazany przez hook, jeśli go wskaże.
 Przypomnienie szczególnie ważne tutaj: **ZERO połączeń do demo i stagingu** — skrypty, które piszesz,
 uruchomi nadzorca; ty testujesz je wyłącznie na kopii lokalnej.
