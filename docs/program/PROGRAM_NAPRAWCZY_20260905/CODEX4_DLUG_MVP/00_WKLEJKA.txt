@@ -1,0 +1,52 @@
+NOWY BLOK — CODEX 4 — „DLUG MVP" (cztery etapy: dwa 5xx, reopen karty, pakiet startowy, narzedzia)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta, NIE z katalogu roboczego:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX4_DLUG_MVP/01_INSTRUKCJA.md
+Przeczytaj wynik w CALOSCI, dopiero potem cokolwiek uruchamiaj.
+
+★ KATALOG ROBOCZY TWORZYSZ SAM — dokladnie tak (NIE w /private/tmp):
+WT=/Users/piotrwisniewski/Developer/codex-wt/codex4-dlug-mvp
+MARKER=<<MARKER_SHA>>
+df -h /   # ponizej 5 GB wolnego = STOP calego bloku; potem marker:
+git -C "$V" merge-base --is-ancestor "$MARKER" origin/integracja/20260911 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+mkdir -p /Users/piotrwisniewski/Developer/codex-wt && git -C "$V" worktree add "$WT" -b codex/dlug-mvp-20260912 "$MARKER"
+printf '[core]\n\tbare = false\n' > "$V/worktrees/codex4-dlug-mvp/config.worktree"
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+mkdir -p "$WT"/../codex4-{scratch,artefakty} && git -C "$WT" rev-parse HEAD
+
+Galaz bazowa: origin/integracja/20260911 (NIE staging, NIE demo, NIE Londyn). Zasoby wylaczne:
+kontener cx-codex4-pg (6455), bazy z prefiksem cx4_, harness 5595, API 4214, preview 5214,
+migracje 20262170-20262179, artefakty ~/Developer/codex-wt/codex4-artefakty.
+NIETYKALNE cudze: cx-codex1-inicjatywy-pg (6451), cx-codex2-pg (6452), cx-codex3-pg (6453),
+cx-codex2b-pg (6454 — blok 2b trwa rownolegle), consultify-pg18 (54418: tylko SELECT/pg_dump
+i CREATE DATABASE cx4_* TEMPLATE consultify_staging_1009; zaden DROP poza wlasnym cx4_*).
+
+★ ZADANIE (E1-E4, kazdy etap konczysz commitem i sekcja raportu):
+ E1 dwa zastane 5xx: legacy GET /api/my-work/inbox (500 na 4/4 wariantach) i POST /api/tasks/:id/assign
+    dla zadania bez projektu (500) — ma byc 200 albo swiadome 4xx z kodem, nigdy 500.
+ E2 karta dzialania zamykana nieodwracalnie: trasa POST /api/action-cards/:id/reopen + akcja
+    „Reopen card" w tym samym miejscu co „Close card" (en+pl), zrzuty jasny i ciemny robisz SAM.
+ E3 pakiet startowy 5,37 MB eager (manualChunks wylaczone) → cel eager ≤ 2 MB bez zmiany wygladu,
+    pomiar PRZED→PO tym samym przyrzadem na 16 modulach.
+ E4 narzedzia (uruchamia nadzorca, nie ty): staging w test-suite.yml; skrypt kont pilotazu na demo
+    (4 osoby, poczta wylaczona, --dry-run domyslnie + manifest); skrypt sprzatania 20 klonow
+    „Atelier Toys" ze stagingu (STOP gdy w klonie jest czlowiek).
+
+★ ZAKAZY (pelna lista Z1-Z24 w instrukcji):
+ - NIE pushujesz nic i nigdzie. Push i wdrozenie robi nadzorca.
+ - ZERO polaczen do Railway, stagingu, demo i produkcji — w kazda strone, takze ze skryptow.
+ - NIE dotykasz /Users/piotrwisniewski/Developer/Consultify poza symlinkiem node_modules wyzej.
+ - NIE dotykasz magazynu kanonicznego inicjatyw (blok 2b), bramek istnienia, effectiveAccessService,
+   demoSeedService. Zmiany wygladu tylko te jawnie dopuszczone w E2.
+ - ZAKAZ git stash (cp do codex4-scratch), ZAKAZ --no-verify, ZAKAZ pelnego tsc frontu
+   (esbuild per plik; tsc serwera wymagany). Testy PER PLIK, env w jednej linii, --retry=0.
+ - Kazda naprawa z testem mutacyjnym RED→GREEN; KROK 0 kazdego etapu = zmierz premisa.
+ - Znaczniki w commitach (inaczej hook odrzuci): E1 [ODMROZENIE 07_MY_WORK_AGENT DEC-468]
+   [ODMROZENIE WSPOLNE DEC-468] · E2 [ODMROZENIE 06_EXECUTION DEC-468] [ODMROZENIE WSPOLNE DEC-468]
+   · E3/E4 [ODMROZENIE WSPOLNE DEC-468].
+
+★ RAPORT (jedyny nowy dokument w repo, 8 sekcji; logi POZA repo): docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX4_DLUG_MVP/98_RAPORT.md
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.
