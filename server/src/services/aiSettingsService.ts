@@ -24,6 +24,7 @@ import {
 } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import aiBudgetService from './aiBudgetService.js';
 
 // Mutable bindings so tests can inject a mock db (see setDependencies below).
 // The single-arg DbPromise overloads used throughout this file (dbAll(sql,
@@ -81,6 +82,12 @@ const logAudit = async (opts: {
   ip?: string | null;
   userAgent?: string | null;
 }) => {
+  await dbRun(`CREATE TABLE IF NOT EXISTS ai_settings_audit (
+    id TEXT PRIMARY KEY, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    level TEXT NOT NULL, actor_id TEXT NOT NULL, actor_role TEXT NOT NULL,
+    target_id TEXT NOT NULL, setting_key TEXT NOT NULL, old_value TEXT, new_value TEXT,
+    ip_address TEXT, user_agent TEXT
+  )`, []);
   await dbRun(
     `INSERT INTO ai_settings_audit (id, level, actor_id, actor_role, target_id, setting_key, old_value, new_value, ip_address, user_agent)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -122,7 +129,7 @@ const DEFAULT_ORG = {
   enabled_model_ids: [],
   max_ai_calls_per_day: 100,
   max_tokens_per_month: 500000,
-  monthly_budget_usd: 0,
+  monthly_budget_usd: 50,
   hard_limit_usd: 0,
   freeze_on_limit: false,
   web_search_enabled: true,
@@ -295,7 +302,8 @@ class AISettingsService {
       const row = await dbGet('SELECT * FROM organization_ai_settings WHERE organization_id = ?', [
         orgId,
       ]);
-      if (!row) return { ...DEFAULT_ORG, organization_id: orgId };
+      const budget = await aiBudgetService.ensureDefaultOrganizationCostBudget(orgId, 'system', 50);
+      if (!row) return { ...DEFAULT_ORG, organization_id: orgId, monthly_budget_usd: Number(budget.budgetLimit ?? 50) };
       return {
         organization_id: row.organization_id,
         policy_level: row.policy_level,
@@ -306,7 +314,7 @@ class AISettingsService {
         enabled_model_ids: parseJSON(row.enabled_model_ids, DEFAULT_ORG.enabled_model_ids),
         max_ai_calls_per_day: row.max_ai_calls_per_day,
         max_tokens_per_month: row.max_tokens_per_month,
-        monthly_budget_usd: row.monthly_budget_usd,
+        monthly_budget_usd: Number(budget.budgetLimit ?? 50),
         hard_limit_usd: row.hard_limit_usd,
         freeze_on_limit: !!row.freeze_on_limit,
         web_search_enabled: !!row.web_search_enabled,
@@ -384,6 +392,14 @@ class AISettingsService {
         actorId,
       ]
     );
+
+    if (settings.monthly_budget_usd !== undefined) {
+      await aiBudgetService.setOrganizationMonthlyCostBudget(
+        orgId,
+        Number(settings.monthly_budget_usd),
+        actorId
+      );
+    }
 
     await logAudit({
       level: 'admin',

@@ -313,6 +313,7 @@ router.get(
 router.get(
   '/org/:orgId/budget-usage',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
     const normalizedRole = String(req.user?.role || '').trim().toLowerCase();
@@ -334,6 +335,7 @@ router.get(
 router.put(
   '/org/:orgId',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateOrgSettings) {
       return respondServiceNotConfigured(req as Request, res, 'ai-settings');

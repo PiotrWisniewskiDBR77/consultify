@@ -60,7 +60,7 @@ describe.skipIf(!enabled)('CODEX6 E4 transactional legal-hold deletion guard', (
     try {
       await blocker.query('BEGIN');
       await blocker.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [concurrentOrgId]);
-      const deletion = request(app).delete(`/api/organizations/${concurrentOrgId}`).set('Authorization', `Bearer ${concurrentToken}`).send({ confirmation: true, organizationName: concurrentOrgName, reason: 'concurrent hold proof' });
+      const deletion = request(app).delete(`/api/organizations/${concurrentOrgId}`).set('Authorization', `Bearer ${concurrentToken}`).send({ confirmation: true, organizationName: concurrentOrgName, reason: 'concurrent hold proof' }).then((response) => response);
       await new Promise((resolve) => setTimeout(resolve, 100));
       await blocker.query('UPDATE org_policies SET legal_hold_enabled=1 WHERE organization_id=$1', [concurrentOrgId]);
       await blocker.query('COMMIT');

@@ -325,13 +325,31 @@ const aiBudgetService = {
     });
   },
 
+  async setOrganizationMonthlyCostBudget(
+    organizationId: string,
+    budgetLimit: number,
+    createdBy: string
+  ) {
+    await ensureTables();
+    const result = await dbRun(
+      `UPDATE ai_budgets SET budget_limit = ?, hard_limit = 1, is_active = true, updated_at = ?
+       WHERE organization_id = ? AND (user_id IS NULL OR user_id = '')
+         AND budget_type = 'cost' AND period = 'monthly'`,
+      [budgetLimit, new Date().toISOString(), organizationId]
+    );
+    if ((result.changes ?? 0) === 0) {
+      return this.ensureDefaultOrganizationCostBudget(organizationId, createdBy, budgetLimit);
+    }
+    return this.ensureDefaultOrganizationCostBudget(organizationId, createdBy, budgetLimit);
+  },
+
   async checkBudget(
     organizationId: string,
     userId: string,
     usage: { tokens: number; cost: number }
   ) {
     await ensureTables();
-    const budgets = await dbAll<Row>(
+    let budgets = await dbAll<Row>(
       'SELECT * FROM ai_budgets WHERE organization_id = ? AND is_active = true',
       [organizationId]
     );
@@ -348,13 +366,16 @@ const aiBudgetService = {
           : '';
       if (anchorMonth && anchorMonth !== currentMonth) {
         await dbRun(
-          'UPDATE ai_budgets SET current_usage = 0, last_reset_at = ?, updated_at = ? WHERE id = ?',
+          `UPDATE ai_budgets SET current_usage = 0, last_reset_at = ?, updated_at = ?
+           WHERE id = ? AND COALESCE(last_reset_at, created_at)::date < date_trunc('month', CURRENT_TIMESTAMP)::date`,
           [now.toISOString(), now.toISOString(), budget.id]
         );
-        budget.current_usage = 0;
-        budget.last_reset_at = now.toISOString();
       }
     }
+    budgets = await dbAll<Row>(
+      'SELECT * FROM ai_budgets WHERE organization_id = ? AND is_active = true',
+      [organizationId]
+    );
 
     let allowed = true;
     const warnings: string[] = [];
@@ -427,6 +448,7 @@ const aiBudgetService = {
     _options: { startDate?: string; endDate?: string; groupBy?: string }
   ) {
     await ensureTables();
+    await this.checkBudget(organizationId, '', { tokens: 0, cost: 0 });
     const rows = await dbAll<Row>(
       'SELECT * FROM ai_budgets WHERE organization_id = ? AND is_active = true',
       [organizationId]

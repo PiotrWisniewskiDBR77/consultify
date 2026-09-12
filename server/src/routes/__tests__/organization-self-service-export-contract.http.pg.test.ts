@@ -34,6 +34,8 @@ describe.skipIf(!enabled)('CODEX6 E4 safe and complete tenant export contract', 
     childSecret: `fixture-child-secret-${suffix}`,
     nestedToken: `fixture-nested-token-${suffix}`,
     camelApiKey: `fixture-camel-api-key-${suffix}`,
+    textJsonSecret: `fixture-text-json-secret-${suffix}`,
+    encryptedSecret: `fixture-encrypted-secret-${suffix}`,
   };
   let pool: Pool;
   let app: express.Express;
@@ -51,14 +53,15 @@ describe.skipIf(!enabled)('CODEX6 E4 safe and complete tenant export contract', 
     await pool.query(`INSERT INTO initiatives(id,organization_id,name,status) VALUES ($1,$2,'Safe export initiative','DRAFT'),($3,$4,'Other export initiative','DRAFT')`, [initiativeId, orgId, otherInitiativeId, otherOrgId]);
     await pool.query(`INSERT INTO staffing_plans(id,initiative_id,organization_id,name) VALUES ($1,$2,$3,'Own staffing plan'),($4,$5,$6,'Other staffing plan')`, [staffingPlanId, initiativeId, orgId, otherStaffingPlanId, otherInitiativeId, otherOrgId]);
     await pool.query(`INSERT INTO staffing_plan_roles(id,staffing_plan_id,role_name) VALUES ('own-staffing-role',$1,'Own export role'),('other-staffing-role',$2,'Other export role')`, [staffingPlanId, otherStaffingPlanId]);
-    await pool.query(`CREATE TABLE ${quoteIdentifier(rootTable)} (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), access_token TEXT, payload TEXT, metadata JSONB)`);
+    await pool.query(`CREATE TABLE ${quoteIdentifier(rootTable)} (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), access_token TEXT, payload TEXT, config_json TEXT, metadata JSONB)`);
     await pool.query(`CREATE TABLE ${quoteIdentifier(childTable)} (id TEXT PRIMARY KEY, root_id TEXT NOT NULL REFERENCES ${quoteIdentifier(rootTable)}(id), mfa_secret TEXT, note TEXT)`);
     await pool.query(`CREATE TABLE ${quoteIdentifier(largeTable)} (id INTEGER PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), label TEXT)`);
-    await pool.query(`CREATE TABLE ${quoteIdentifier(sharedUserRowsTable)} (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), user_id TEXT NOT NULL REFERENCES users(id), note TEXT)`);
+    await pool.query(`CREATE TABLE ${quoteIdentifier(sharedUserRowsTable)} (id TEXT PRIMARY KEY, org_id TEXT NOT NULL REFERENCES organizations(id), user_id TEXT NOT NULL REFERENCES users(id), note TEXT)`);
     await pool.query(`CREATE TABLE ${quoteIdentifier(businessSessionsTable)} (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), summary TEXT)`);
-    await pool.query(`INSERT INTO ${quoteIdentifier(rootTable)}(id,organization_id,access_token,payload,metadata) VALUES ('own-root',$1,$2,'own-payload',jsonb_build_object('refresh_token',$3::text,'apiKey',$4::text,'legal_value','kept')),('other-root',$5,'other-token','other-payload','{}')`, [orgId, sentinels.accessToken, sentinels.nestedToken, sentinels.camelApiKey, otherOrgId]);
+    await pool.query(`INSERT INTO ${quoteIdentifier(rootTable)}(id,organization_id,access_token,payload,config_json,metadata) VALUES ('own-root',$1,$2,'own-payload',json_build_object('clientSecret',$3::text,'legalValue','kept')::text,jsonb_build_object('refresh_token',$4::text,'apiKey',$5::text,'legal_value','kept')),('other-root',$6,'other-token','other-payload','{}','{}')`, [orgId, sentinels.accessToken, sentinels.textJsonSecret, sentinels.nestedToken, sentinels.camelApiKey, otherOrgId]);
+    await pool.query(`INSERT INTO integration_secrets(id,organization_id,secret_key,encrypted_value) VALUES ($1,$2,'clientSecret',$3)`, [`cx6-secret-${suffix}`, orgId, sentinels.encryptedSecret]);
     await pool.query(`INSERT INTO ${quoteIdentifier(childTable)}(id,root_id,mfa_secret,note) VALUES ('own-child','own-root',$1,'own-child-note'),('other-child','other-root','other-child-secret','other-child-note')`, [sentinels.childSecret]);
-    await pool.query(`INSERT INTO ${quoteIdentifier(sharedUserRowsTable)}(id,organization_id,user_id,note) VALUES ('shared-own',$1,$2,'shared-own-note'),('shared-other',$3,$2,'shared-other-note')`, [orgId, adminId, otherOrgId]);
+    await pool.query(`INSERT INTO ${quoteIdentifier(sharedUserRowsTable)}(id,org_id,user_id,note) VALUES ('shared-own',$1,$2,'shared-own-note'),('shared-other',$3,$2,'shared-other-note')`, [orgId, adminId, otherOrgId]);
     await pool.query(`INSERT INTO ${quoteIdentifier(businessSessionsTable)}(id,organization_id,summary) VALUES ('business-session-own',$1,'business-session-own-summary'),('business-session-other',$2,'business-session-other-summary')`, [orgId, otherOrgId]);
     await pool.query(`INSERT INTO ${quoteIdentifier(largeTable)}(id,organization_id,label) SELECT value,$1,'large-' || value FROM generate_series(1,20001) value`, [orgId]);
 
@@ -77,6 +80,7 @@ describe.skipIf(!enabled)('CODEX6 E4 safe and complete tenant export contract', 
     await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(largeTable)}`).catch(() => undefined);
     await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(sharedUserRowsTable)}`).catch(() => undefined);
     await pool.query(`DROP TABLE IF EXISTS ${quoteIdentifier(businessSessionsTable)}`).catch(() => undefined);
+    await pool.query('DELETE FROM integration_secrets WHERE id=$1', [`cx6-secret-${suffix}`]).catch(() => undefined);
     await pool.query('DELETE FROM staffing_plan_roles WHERE staffing_plan_id IN ($1,$2)', [staffingPlanId, otherStaffingPlanId]).catch(() => undefined);
     await pool.query('DELETE FROM staffing_plans WHERE organization_id IN ($1,$2)', [orgId, otherOrgId]).catch(() => undefined);
     await pool.query('DELETE FROM initiatives WHERE organization_id IN ($1,$2)', [orgId, otherOrgId]).catch(() => undefined);
@@ -114,6 +118,9 @@ describe.skipIf(!enabled)('CODEX6 E4 safe and complete tenant export contract', 
       expect.objectContaining({ table: 'users', classes: expect.arrayContaining(['authentication']), count: expect.any(Number) }),
       expect.objectContaining({ table: rootTable, classes: ['credential_or_security_material'], count: 1 }),
       expect.objectContaining({ table: childTable, classes: ['credential_or_security_material'], count: 1 }),
+    ]));
+    expect(body.securityManifest.excludedTables).toEqual(expect.arrayContaining([
+      expect.objectContaining({ table: 'integration_secrets' }),
     ]));
   }, 120_000);
 

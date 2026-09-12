@@ -140,7 +140,7 @@ const USER_EXPORT_COLUMNS = new Set([
 const normalizedSecurityName = (name: string): string =>
   name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 const SECURITY_COLUMN_PATTERN = /(^|_)(password|passcode|secret|token|credential|mfa|otp|api_key|private_key|access_key|recovery|backup_codes?|hash|salt|cookie|authorization)($|_)/i;
-const SECURITY_TABLE_PATTERN = /^(user_sessions?|auth_sessions?|refresh_tokens?|password_reset_tokens?|oauth_(tokens?|credentials?)|api_keys?|mfa_(secrets?|challenges?)|credentials?|secrets?)$/i;
+const SECURITY_TABLE_PATTERN = /^(user_sessions?|auth_sessions?|refresh_tokens?|password_reset_tokens?|oauth_(tokens?|credentials?)|api_keys?|mfa_(secrets?|challenges?)|credentials?|secrets?|integration_secrets)$/i;
 const EXPORT_POLICY_VERSION = 'tenant-export-safe-v3';
 const QUERY_KEY_BATCH_SIZE = 500;
 
@@ -190,6 +190,13 @@ function projection(columns: string[]): string {
 }
 
 function sanitizeExportValue(value: unknown): unknown {
+  if (typeof value === 'string' && /^[\[{]/.test(value.trim())) {
+    try {
+      return JSON.stringify(sanitizeExportValue(JSON.parse(value)));
+    } catch {
+      return value;
+    }
+  }
   if (Array.isArray(value)) return value.map(sanitizeExportValue);
   if (value && typeof value === 'object' && !(value instanceof Date)) {
     return Object.fromEntries(
@@ -246,6 +253,12 @@ export async function exportOrganizationData(
   }
 
   const kolumny = await discoverOrganizationScopedColumns(client);
+  const organizationScopeByTable = new Map<string, string[]>();
+  for (const scoped of kolumny) {
+    const current = organizationScopeByTable.get(scoped.tabela) || [];
+    if (!current.includes(scoped.kolumna)) current.push(scoped.kolumna);
+    organizationScopeByTable.set(scoped.tabela, current);
+  }
   const rawRows = new Map<string, Map<string, Record<string, unknown>>>();
   const queue: string[] = [];
   const addRows = (table: string, rows: Record<string, unknown>[]) => {
@@ -286,7 +299,8 @@ export async function exportOrganizationData(
           edge.childColumns.some((column) => !childColumns.includes(column))) {
         throw new Error(`EXPORT_SECURITY_EDGE_UNSUPPORTED:${parentTable}:${edge.childTable}`);
       }
-      const childHasOrganizationScope = (allColumns.get(edge.childTable) || []).includes('organization_id');
+      const childOrganizationColumns = organizationScopeByTable.get(edge.childTable) || [];
+      const childHasOrganizationScope = childOrganizationColumns.length > 0;
       // A user may belong to more than one tenant. A user FK without an explicit tenant
       // discriminator cannot prove ownership of the child row, so it must not be traversed.
       if (parentTable === 'users' && !childHasOrganizationScope) continue;
@@ -303,7 +317,7 @@ export async function exportOrganizationData(
         ).join(',');
         // eslint-disable-next-line no-await-in-loop
         const result = await client.query(
-          `SELECT ${projection(childColumns)} FROM ${qi(edge.childTable)} WHERE (${edge.childColumns.map(qi).join(',')}) IN (${placeholders})${childHasOrganizationScope ? ` AND ${qi('organization_id')}::text = $${params.length + 1}` : ''}`,
+          `SELECT ${projection(childColumns)} FROM ${qi(edge.childTable)} WHERE (${edge.childColumns.map(qi).join(',')}) IN (${placeholders})${childHasOrganizationScope ? ` AND (${childOrganizationColumns.map((column) => `${qi(column)}::text = $${params.length + 1}`).join(' OR ')})` : ''}`,
           childHasOrganizationScope ? [...params, organizationId] : params
         );
         addRows(edge.childTable, result.rows);
