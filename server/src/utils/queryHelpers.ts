@@ -244,6 +244,18 @@ export function getCurrentPgTransactionClient(): PgTransactionClient | undefined
 export async function withPgTransaction<T>(
   fn: (client: PgTransactionClient) => Promise<T>
 ): Promise<T> {
+  const { getApplicationTransactionClient } = await import('../database/PostgresDatabase.js');
+  const applicationClient = getApplicationTransactionClient();
+  if (applicationClient) {
+    const wrapped: PgTransactionClient = {
+      query: async <R = unknown>(sql: string, params: unknown[] = []) => {
+        const result = await applicationClient.query(adaptQuery(sql), params as unknown[]);
+        return { rows: (result.rows as R[]) || [], rowCount: result.rowCount ?? 0 };
+      },
+    };
+    return pgTransactionContext.run(wrapped, () => fn(wrapped));
+  }
+
   const inherited = pgTransactionContext.getStore();
   if (inherited) return fn(inherited);
   const client = new PgClient(databaseConfig.postgres as ConstructorParameters<typeof PgClient>[0]);

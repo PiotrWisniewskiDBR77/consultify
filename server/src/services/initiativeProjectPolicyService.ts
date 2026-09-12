@@ -85,7 +85,7 @@ export async function resolveOrCreateSystemPortfolioProject(
         id,
         orgId,
         SYSTEM_PORTFOLIO_PROJECT_NAME,
-        'Starter workspace.',
+        'Run your first interview, assessment, and initiative here.',
         opts.createdBy ?? null,
       ]
     );

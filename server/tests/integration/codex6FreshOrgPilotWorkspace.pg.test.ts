@@ -24,7 +24,7 @@ describe('CODEX6 E1 fresh organization pilot workspace', NO_RETRY, () => {
   beforeAll(async () => {
     expect(process.env.DB_TYPE).toBe('postgres');
     await assertRealPostgresTestEnvironment();
-    const { ApiGateway } = await import('../../src/routes/Gateway.js');
+    const { ApiGateway } = await import('../../src/Gateway.js');
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
 
@@ -47,6 +47,7 @@ describe('CODEX6 E1 fresh organization pilot workspace', NO_RETRY, () => {
 
   afterAll(async () => {
     if (organizationId) {
+      await pool.query('DELETE FROM initiatives WHERE organization_id=$1', [organizationId]);
       await pool.query(
         `DELETE FROM interview_questions WHERE session_id IN
            (SELECT id FROM interview_sessions WHERE organization_id=$1)`,
@@ -108,5 +109,44 @@ describe('CODEX6 E1 fresh organization pilot workspace', NO_RETRY, () => {
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({ name: 'Pilot discovery interview' });
     expect(response.body.projectId || response.body.project_id).toBeTruthy();
+  });
+
+  it('persists a complete initiative card and accepts the canonical submit transition', async () => {
+    const project = await pool.query('SELECT id FROM projects WHERE organization_id=$1 LIMIT 1', [
+      organizationId,
+    ]);
+    const created = await request(app)
+      .post('/api/initiatives')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Stabilize pilot delivery',
+        description: 'Create a visible weekly delivery cadence for the pilot area.',
+        summary: 'Create a visible weekly delivery cadence for the pilot area.',
+        hypothesis: 'A named cadence will reduce delivery variance.',
+        projectId: project.rows[0].id,
+        ownerBusinessId: userId,
+        ownerExecutionId: userId,
+        scopeIn: ['Pilot area'],
+        scopeOut: ['Other production areas'],
+        sourceType: 'manual',
+      });
+    expect(created.status).toBe(200);
+
+    const row = await pool.query(
+      'SELECT description,owner_business_id,scope_in FROM initiatives WHERE id=$1',
+      [created.body.id]
+    );
+    expect(row.rows[0]).toMatchObject({
+      description: 'Create a visible weekly delivery cadence for the pilot area.',
+      owner_business_id: userId,
+    });
+    expect(JSON.parse(row.rows[0].scope_in)).toEqual(['Pilot area']);
+
+    const submitted = await request(app)
+      .patch(`/api/initiatives/${created.body.id}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'PENDING_APPROVAL', reason: 'Ready for pilot review' });
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.status).toBe('PENDING_APPROVAL');
   });
 });

@@ -315,7 +315,7 @@ export async function createInitiative(
   const newSql = `
     INSERT INTO initiatives (
       id, organization_id, project_id, program_id, name, title, category, priority, impact, effort,
-      axis, area, summary, hypothesis, status,
+      axis, area, summary, description, hypothesis, status,
       business_value, cost_capex, cost_opex, expected_roi,
       value_driver, confidence_level, value_timing,
       planned_start_date, planned_end_date,
@@ -323,7 +323,7 @@ export async function createInitiative(
       problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
       source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const newParams = [
     id,
@@ -339,6 +339,7 @@ export async function createInitiative(
     data.axis ?? null,
     data.area ?? null,
     data.summary ?? null,
+    data.description ?? null,
     data.hypothesis ?? data.description ?? null,
     status,
     data.businessValue ?? null,

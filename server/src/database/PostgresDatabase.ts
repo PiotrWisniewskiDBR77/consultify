@@ -6,6 +6,8 @@
  * Provides SQLite-compatible interface for PostgreSQL
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 import { Client, Pool, type PoolClient, type PoolConfig, type QueryResultRow } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
@@ -26,6 +28,16 @@ let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 let ensuredMissingDatabaseOnce = false;
 let testDatabaseOverride: string | null = null;
+type ApplicationTransactionScope = { client: PoolClient; tail: Promise<void> };
+const applicationTransactionScope = new AsyncLocalStorage<ApplicationTransactionScope>();
+
+export function getApplicationTransactionClient(): PoolClient | null {
+  return applicationTransactionScope.getStore()?.client || null;
+}
+
+export async function waitForApplicationTransactionQueue(): Promise<void> {
+  await applicationTransactionScope.getStore()?.tail;
+}
 
 export function resolveNotificationReadColumn(
   columns: Iterable<string>
@@ -729,7 +741,28 @@ async function executeWithLogging<T>(
   try {
     const pool = poolFn(); // Triggers getPool() which may start initDb and set initDbPromise
     if (initDbPromise) await initDbPromise;
-    const res = await pool.query(sql, safeParams);
+    const transactionScope = applicationTransactionScope.getStore();
+    const transactionClient = transactionScope?.client;
+    let res;
+    if (transactionClient) {
+      const savepoint = `app_query_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      const run = transactionScope.tail.then(async () => {
+        await transactionClient.query(`SAVEPOINT ${savepoint}`);
+        try {
+          const queryResult = await transactionClient.query(sql, safeParams);
+          await transactionClient.query(`RELEASE SAVEPOINT ${savepoint}`);
+          return queryResult;
+        } catch (error) {
+          await transactionClient.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+          await transactionClient.query(`RELEASE SAVEPOINT ${savepoint}`);
+          throw error;
+        }
+      });
+      transactionScope.tail = run.then(() => undefined, () => undefined);
+      res = await run;
+    } else {
+      res = await pool.query(sql, safeParams);
+    }
 
     const duration = Date.now() - start;
     recordQueryPerformance(method.toLowerCase(), duration);
@@ -3925,6 +3958,14 @@ export async function withPgTransaction<T>(
     query: <R = unknown>(sql: string, params?: unknown[]) => Promise<QueryResult<R>>
   ) => Promise<T>
 ): Promise<T> {
+  const outerScope = applicationTransactionScope.getStore();
+  if (outerScope) {
+    await outerScope.tail;
+    return fn(async <R = unknown>(sql: string, params: unknown[] = []) => {
+      const res = await outerScope.client.query(sql, sanitizeParams(params));
+      return { rows: res.rows as R[], rowCount: res.rowCount ?? 0 };
+    });
+  }
   const pool = getPool();
   if (initDbPromise) await initDbPromise;
   const client = await pool.connect();
@@ -3943,6 +3984,33 @@ export async function withPgTransaction<T>(
       logger.error('[Postgres] withPgTransaction ROLLBACK failed:', rollbackErr);
     }
     throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Run ordinary application services on one pinned PostgreSQL transaction.
+ * Intended for bounded, in-process orchestration such as the governed pilot
+ * seed; nested application transactions are rejected.
+ */
+export async function withApplicationTransaction<T>(work: () => Promise<T>): Promise<T> {
+  if (applicationTransactionScope.getStore()) {
+    throw new Error('Nested application transaction is not supported');
+  }
+  const activePool = getPool();
+  if (initDbPromise) await initDbPromise;
+  const client = await activePool.connect();
+  try {
+    await client.query('BEGIN');
+    const scope: ApplicationTransactionScope = { client, tail: Promise.resolve() };
+    const result = await applicationTransactionScope.run(scope, work);
+    await scope.tail;
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
     client.release();
   }

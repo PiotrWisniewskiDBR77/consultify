@@ -48,7 +48,11 @@
 import crypto from 'crypto';
 import type { PoolClient } from 'pg';
 
-import { getPoolClientForPinnedTransaction } from '../../database/PostgresDatabase.js';
+import {
+  getApplicationTransactionClient,
+  getPoolClientForPinnedTransaction,
+  waitForApplicationTransactionQueue,
+} from '../../database/PostgresDatabase.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -263,6 +267,11 @@ function computeDefinitionHash(definition: KpiDefinitionFields): string {
 }
 
 async function withPinnedTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+  const outerClient = getApplicationTransactionClient();
+  if (outerClient) {
+    await waitForApplicationTransactionQueue();
+    return work(outerClient);
+  }
   const client = await getPoolClientForPinnedTransaction();
   let began = false;
   try {
