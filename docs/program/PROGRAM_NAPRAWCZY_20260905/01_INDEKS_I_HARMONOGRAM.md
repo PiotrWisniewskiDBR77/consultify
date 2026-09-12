@@ -814,3 +814,10 @@ W17 typefix31319 ended exit2:192vs192, identical file/TS-code multiplicities, no
 Combined build active15524 (npm run build,8GiB; W17_AI_COMBINED_BUILD.log), root AI front10 rerun active70763 (AI_EVALUATION_INTEGRATED_FRONT.json/log). Do not restart. Full server/front typechecks after AI still pending. Dist is being rebuilt; do not assert old or new browser result without completion/identity. Scope moved to read-only C6 pre-review; C6 and CLOSED authors continue. Full MVP ACTIVE, no live operations.
 
 Root integrated AI frontend70763 exit0,10/10PASS,0fail/skip JSON verified. Combined build15524 remains active.
+
+
+## Combined candidate gates and built-runtime dispatch
+Servertsc84281 completed exit0. Combined frontend incremental tsc ACTIVE9266, W17_AI_COMBINED_FRONT_TSC.log, sourceac98ccaaf3b92a76daa84e75478def8cd87b417c/docsdc41189ccf. Preserve current source during check; do not restart. Build15524 exit0 and front10PASS already recorded.
+Scope assigned independent built candidate Interview full-cycle/no-op-reload/Refresh: new API5294 and preview5295 (root lsof both free), rootdist+rootGateway source, local6455cx4_pilot, unique synthetic fixture. External launcher copies allowed, no root source/config edits, old4214/5214 unchanged. Must verify actual proxy/requestchain and dist hash, preserve controlled evaluator and local DBguard. No staging/realAI/fullMVP claim.
+CLOSED author confirmed real browser RED two unsolicitedPUT403 after opening own synthetic CLOSED initiative, full SQL row unchanged,0pageerror. Existing C8 API has inherited404; new API5293 allocated after freecheck to same6459 and ownfrontend5292, source withIE00, no restart4218/migrations/legacy-record edits.
+Root read C6_EXPORT_PRE_REVIEW.md fully: no new snapshot lock/ACK sourceblocker; columnTypes drift gap accepted by author. Contract export still WIP/incomplete, realPG proof pending. Full MVP ACTIVE.
