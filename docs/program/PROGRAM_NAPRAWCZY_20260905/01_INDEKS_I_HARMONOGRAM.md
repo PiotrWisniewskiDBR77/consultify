@@ -724,3 +724,12 @@ Root zweryfikował W17_DECK_RUNTIME_REOPEN.md oraz surowe readback.json/content-
 To rozszerza poprzedni dowód komponentowy na rzeczywisty lokalny browser/API/PG. Nie jest dowodem staging ani całego backendu kandydata. W17_DECK_BASELINE_REVIEW.md pozostaje pakietem naprawy jednego writera, persisted baseline, CAS/conflict, restore/AI i kolejki in-flight; pełne W17 nie zamyka się wraz z tym błędem. Scope otrzymał read-only audyt pełnego mianownika akcji DeckBuilder, z pierwszeństwem niezależnego odbioru finalnego W05.
 
 IE00 autor zgłosił utworzenie inicjatywy przez rzeczywisty InitiativesHub, request i RETURN; dalszy UI edit/review/approve trwa, bez finalnego ACCEPT. W05 kończy scoped session-read oraz pełny UI. Dwa bloki implementacyjne pozostają IE00 i W05; C6 export i naprawa W17 czekają na zwolnienie slotu. Cel pełnego MVP ACTIVE, bez promocji ani działań live.
+
+
+## Root — weryfikacja zapisów UI IE00 i W05, 12.09.2026
+
+Root odczytał IE00 ui-vertical.json i ui-final-sql.jsonl: sześć komend UI request/RETURN/edit/review/resubmit/approve ma HTTP201, wersje agregatu18–23, niezmieniony Decision ID oraz poprawioną kartę summary-scope v4. Utworzenie przez Hub jest odrębnym dowodem; osiem kart przed request przygotowano przez API. Liczne poboczne404/503 pozostają w logu; nie ma pełnego fresh-org ani całego IE00 PASS. Autor aktualizuje checkpoint i domyka mutacje/OFF/legacy/finalSHA.
+
+Root odczytał W05 ui-final-pass/cycle-evidence.json i obejrzał cycle-10-manager-reload.png: ten sam assignment/session przechodzi submit/send-back/edit/resubmit/approve, SQL approved/completed, poprawiona odpowiedź EUR4800, trzy wpisy historii (submission/send_back/submission). Ekran po reload pokazuje Approved i poprawioną odpowiedź. To dowód pierwszego cyklu W05, nie końcowy niezależny ACCEPT ani świeża organizacja.
+
+Do autora W05 przekazano konkretne obserwacje do klasyfikacji: wielokrotne403 własnego assignment detail respondenta i insights oraz polski missingItems label w danych EN. Nie upoważnia to do poszerzania insights. B/revoke przy otwartej karcie, końcowe mutacje i finalSHA nadal trwają. Root przygotował integrację zmian testów z zachowaniem wcześniejszego typedmock14cd86a504. Kandydat f7bc8677cc pozostaje bez nowej implementacji IE00/W05. Cel pełnegoMVP ACTIVE.
