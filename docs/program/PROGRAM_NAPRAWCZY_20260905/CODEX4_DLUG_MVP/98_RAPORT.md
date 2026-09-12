@@ -239,3 +239,11 @@ Krok1: StudioUnavailableView, AuthView, ProductEntryPage przez istniejący lazyW
 Wspólny boot po kroku1 na kodzie E2+zmiana: **2459398B**, 3chunki. Cel≤2000000B jeszcze NIEosiągnięty. Build0 (35.65s,heap8GB). Pierwszy baseline przy domyślnym heap4GB zakończył się OOM; powtórka przy8GB przeszła38.44s. Oba wyniki zachowane poza repo.
 
 Dowody poza repo: codex4-artefakty/e3-before-chunks.json, e3-marker-build-8gb.json/log, e3-step1-current-chunks.json, e3-step1-current-build.json/log, e3-step1-module-map.json. Niezależny source review: brak znalezionego blokera kroku1; odbiór przeglądarkowy i limit pakietu pozostają NIEUDOWODNIONE dla zakończeniaE3. Następny krok: odroczenie SDKgłosowego, zachowanie anulowania sesji, odbiór wspólnej wersji PRZED/PO. Nie przenosimy tej częściowej dostawy do statusuE3PASS.
+
+## E3 — krok 2, nadal PARTIAL
+
+SDK GoogleGenAI ładowany przy rozpoczęciu voice w Teresie i Annie. Unmount unieważnia token próby; opóźniony start nie otwiera mikrofonu/sesji po stop lub unmount. Niezależny review wykrył brak unieważnienia przy unmount; naprawiono przed commitem. Nowe testy rzeczywistego oczekiwania (teardown AudioContext i voice-context fetch, nie udawane opóźnienie importu): RED4FAIL/3PASS → GREEN7/7. Istniejące Teresa13/13 i capability/barge-in7/7 PASS. Brak dowodu rzeczywistej rozmowy z zewnętrznym dostawcą w tym lokalnym teście.
+
+Build PASS36.95s, wspólny boot **2182459B** (App624783, AppProviders1240409,index317267); cel2000000B nadal nieosiągnięty. Zmniejszenie od baseline około61.1%. Nie ogłaszamy E3PASS. Logi codex4-artefakty/e3-step2-build.json/log, e3-voice-*-red/green.log oraz e3-voice-existing-*.log.
+
+Przegląd baseline:15rzeczywistych modułów sidebar, dodatkowo coldMyWork i3karty =19PNG obejrzanych niezależnie, bez pustych ekranów. Oryginalna premisa16pozycji niepotwierdzona. Realny defekt: otwarcie CLOSED inicjatywy wykonuje automatyczny PUT403; GET renderuje kartę, widoczne Unsaved. Pozostaje osobnym problemem produktu; nie ukrywamy go zmianą fixture. Końcowy pomiar czasu i before/after jeszcze trwa; wspólny boot nie oznacza całego JS pierwszego zalogowanego ekranu.

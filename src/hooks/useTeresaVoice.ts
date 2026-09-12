@@ -6,7 +6,6 @@
  */
 
 import type { LiveServerMessage, Session } from '@google/genai';
-import { GoogleGenAI, Modality } from '@google/genai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TERESA_VOICE_CONFIG } from '../config/teresaVoice';
@@ -142,6 +141,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
   useEffect(() => {
     return () => {
+      attemptRef.current += 1;
       void teardownVoice();
     };
   }, [teardownVoice]);
@@ -183,6 +183,9 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
     try {
       if (!AudioContextCtor) throw new Error('AudioContext unavailable');
+
+      const { GoogleGenAI, Modality } = await import('@google/genai');
+      if (attemptRef.current !== token) return;
 
       const ai = new GoogleGenAI({
         apiKey: effectiveKey,

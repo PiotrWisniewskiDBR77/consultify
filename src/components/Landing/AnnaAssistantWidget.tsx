@@ -1,5 +1,4 @@
 import type { LiveServerMessage, Session } from '@google/genai';
-import { GoogleGenAI, Modality } from '@google/genai';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -927,6 +926,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
 
   useEffect(() => {
     return () => {
+      voiceAttemptRef.current += 1;
       void teardownVoice();
     };
   }, [teardownVoice]);
@@ -1022,6 +1022,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       if (!AudioContextCtor) {
         throw new Error('AudioContext unavailable');
       }
+
+      const { GoogleGenAI, Modality } = await import('@google/genai');
+      if (voiceAttemptRef.current !== voiceAttemptToken) return;
 
       const ai = new GoogleGenAI({
         apiKey: voiceApiKey,
