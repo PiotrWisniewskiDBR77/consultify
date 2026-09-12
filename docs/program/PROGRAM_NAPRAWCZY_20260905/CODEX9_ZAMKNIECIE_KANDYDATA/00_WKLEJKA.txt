@@ -1,0 +1,44 @@
+NOWY BLOK — CODEX 9 — „ZAMKNIECIE KANDYDATA MVP" (zamroz, zmierz, udowodnij)
+
+★ PIERWSZA KOMENDA — instrukcja z vaulta:
+V=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+git -C "$V" fetch origin --prune && git -C "$V" show \
+ origin/integracja/20260911:docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX9_ZAMKNIECIE_KANDYDATA/01_INSTRUKCJA.md
+Przeczytaj w CALOSCI, dopiero potem cokolwiek uruchamiaj.
+
+★ PRACUJESZ NA SWOJEJ GALEZI KANDYDATA: codex/integrator-mvp-20260912
+ (zawiera juz ie00-governance w calosci, C2b, C4 E1-E4, C8 E0, deck autosave, ocene AI Wywiadu).
+ Zasoby wylaczne tego bloku: kontener cx-codex9-pg (6460), bazy cx9_*, API 4219, preview 5219.
+
+★ ZASADA NADRZEDNA: OD TERAZ NIE DOKLADASZ DO KANDYDATA NOWEGO ZAKRESU.
+ Nowa robota idzie na osobne galezie i czeka. Do kandydata wolno dopisac wylacznie naprawe
+ czerwonego wyniku bramki — z powodem zapisanym w raporcie. Kandydat rosl w ostatnich godzinach
+ szybciej, niz da sie go wdrozyc; wdrozenia nie robi sie na ruchomym celu.
+
+★ ZADANIE:
+ 1. ZAMROZENIE: zapisz SHA kandydata (rev-parse HEAD), drzewo czyste, potwierdz komendami rodowod
+    (linia 7c7dd88091 jest przodkiem; ie00-governance zawarta w calosci). Wypisz przyjete dostawy
+    (paczka → SHA scalenia → zakres) i osobno rzeczy SWIADOMIE NIEPRZYJETE (C6 HOLD itd.) z powodem.
+ 2. BRAMKA sekwencyjnie: tsc serwera 0 · front tsc <=192 (jeden bieg, 8 GiB, potwierdz ze proces nie
+    zostal zabity) · pomiar-jezyka --baseline bez wzrostu · vite build + drzewo czyste (podaj rozmiar
+    App-*.js i sume eager JS) · check-list-canon i check-artefakt nie gorzej niz baza (322 / 8-0-117) ·
+    testy PER PLIK. KAZDA czerwien mierzysz TAKZE na 7c7dd88091 i klasyfikujesz NOWA / ZASTANA.
+    Nowa = naprawiasz. Zastana = wiersz w raporcie.
+ 3. DOWOD na zywym stanowisku (jeden kontekst przegladarki, token odswiezony, warunek na zmieniona
+    tresc): 16 modulow montuje tresc z czasami, 0 bledow konsoli produktu, 0x5xx · PARYTET FLAG OFF
+    bit w bit jak 7c7dd88091 dla ENABLE_INITIATIVE_UNIFIED_WRITE i ENABLE_INITIATIVE_APPROVAL_V2
+    (to warunek wdrozenia) · trzy naprawy C4 na rekordach zastanych (legacy skrzynka bez 500,
+    przypisanie zadania bez projektu bez 500, karta dziala: zamkniecie I ponowne otwarcie) ·
+    Finanse: pozycja widoczna, „wkrotce", zero 404/500 · ZIMNY START zmierzony uczciwie (mniej JS
+    bez poprawy czasu to NIE jest sukces). Zrzuty evidence/kandydat-<sha8>/ jasny i ciemny.
+ 4. RAPORT: docs/program/PROGRAM_NAPRAWCZY_20260905/CODEX9_ZAMKNIECIE_KANDYDATA/98_KANDYDAT.md —
+    werdykt w PIERWSZYM zdaniu (gotowy do wdrozenia / niegotowy i dlaczego), przyjete i nieprzyjete,
+    surowa bramka z tabela NOWE vs ZASTANE, dowody z liczbami, RYZYKA WDROZENIA (co moze pojsc zle
+    na stagingu i po czym poznam to w 10 minut), CZEGO NIE SPRAWDZILES.
+
+★ ZAKAZY: nie pushujesz (push i wdrozenie robi nadzorca) · ZERO polaczen do Railway/stagingu/demo/
+ produkcji · nie przestawiasz domyslnych wartosci flag · ZAKAZ git stash i --no-verify · testy PER
+ PLIK, --retry=0, env w jednej linii · znacznik commita [ODMROZENIE WSPOLNE DEC-475] (+ modul, jesli
+ hook go wskaze).
+
+Jezeli cokolwiek tu rozni sie od instrukcji — WIAZACA JEST INSTRUKCJA.
