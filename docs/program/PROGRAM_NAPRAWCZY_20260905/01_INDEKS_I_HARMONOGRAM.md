@@ -733,3 +733,10 @@ Root odczytał IE00 ui-vertical.json i ui-final-sql.jsonl: sześć komend UI req
 Root odczytał W05 ui-final-pass/cycle-evidence.json i obejrzał cycle-10-manager-reload.png: ten sam assignment/session przechodzi submit/send-back/edit/resubmit/approve, SQL approved/completed, poprawiona odpowiedź EUR4800, trzy wpisy historii (submission/send_back/submission). Ekran po reload pokazuje Approved i poprawioną odpowiedź. To dowód pierwszego cyklu W05, nie końcowy niezależny ACCEPT ani świeża organizacja.
 
 Do autora W05 przekazano konkretne obserwacje do klasyfikacji: wielokrotne403 własnego assignment detail respondenta i insights oraz polski missingItems label w danych EN. Nie upoważnia to do poszerzania insights. B/revoke przy otwartej karcie, końcowe mutacje i finalSHA nadal trwają. Root przygotował integrację zmian testów z zachowaniem wcześniejszego typedmock14cd86a504. Kandydat f7bc8677cc pozostaje bez nowej implementacji IE00/W05. Cel pełnegoMVP ACTIVE.
+
+
+## W17 — mapa akcji i uruchomiony manual baseline, 12.09.2026
+
+Root przeczytał W17_DECK_ACTION_COVERAGE.md; osobne aliasy i dynamiczne podmenu nie mogą być zamknięte jednym PASS. Niepodłączone quickactions nie są mandatem przywrócenia UI. Root uruchomił cztery istniejące test files na e4184a1786:21/21 PASS,4.08s, exit0. W tym jeden source-text test, reszta helper/registry/render-boundary; brak dowodu persistence i plików. W17_DECK_MANUAL_BASELINE_RESULT.md rozdziela poziomy. Real autosave i component restore/accept/in-flight nadal RED.
+
+W05 autor ustalił różnicę revoke-hash jako równoległy evaluate-answers aktualizujący ai_review_snapshot_json/ai_reviewed_at/updated_at; pełny diff zachowany i test odmowy powtarzany po zakończeniu aktywnego wywołania. Root zobaczył org-only predicate w evaluateSessionAnswers i zlecił scope niezależną kontrolę nadrzędnych guardów/bazy bez wywołania providera. To osobne potencjalne znalezienie security, nie udowodniony exploit ani rozszerzenie WIP przed finalSHA. IE00 i W05 kończą swoje paczki; ciężki slot przekazują bezpośrednio. Cel pełnegoMVP ACTIVE.
