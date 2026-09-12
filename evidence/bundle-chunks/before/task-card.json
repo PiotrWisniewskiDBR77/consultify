@@ -1,0 +1,50 @@
+{
+  "capturedAt": "2026-09-12T09:11:24.704Z",
+  "name": "Task card",
+  "phase": "before",
+  "url": "/my-work",
+  "timing": {
+    "firstChangedMs": 2,
+    "stableMs": 1208
+  },
+  "readyFromTriggerMs": 1314,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3315,
+  "totalCaptureMs": 3407,
+  "scriptBytes": {
+    "requestCount": 0,
+    "decodedBodyBytes": 0,
+    "encodedBodyBytes": 0,
+    "transferBytes": 0,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 17,
+  "apiRequests": [
+    "GET /api/initiatives/e33b0b36-f9c9-5cc9-b516-ae04f7311de2/transition-preflight",
+    "GET /api/my-work/personal-tasks?includeDone=true",
+    "GET /api/health/data-context",
+    "GET /api/my-work/focus/state",
+    "GET /api/my-work/context-summary",
+    "GET /api/my-work/personal-tasks/62aef7e9-e13b-4863-976e-dfad798cfc78",
+    "GET /api/users",
+    "GET /api/initiatives",
+    "GET /api/my-work/personal-tasks/62aef7e9-e13b-4863-976e-dfad798cfc78",
+    "GET /api/my-work/link-graph/backlinks?type=task&id=62aef7e9-e13b-4863-976e-dfad798cfc78&limit=100",
+    "GET /api/tasks/62aef7e9-e13b-4863-976e-dfad798cfc78/risk-alternatives",
+    "GET /api/v8/my-work/notebook/pages?q=Verify+launch+readiness&limit=5",
+    "GET /api/my-work/object-attachments/task/62aef7e9-e13b-4863-976e-dfad798cfc78",
+    "GET /api/tasks/62aef7e9-e13b-4863-976e-dfad798cfc78/comments",
+    "GET /api/capabilities/effective",
+    "GET /api/my-work/my-ideas/suggest?q=Verify+launch+readiness+Review+the+local+release+evidence.&limit=5",
+    "GET /api/v8/my-work/notebook/pages?q=Verify+launch+readiness+Review+the+local+release+evidence.&limit=5"
+  ],
+  "scriptRequests": [],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nMy Work\nTasks\nData\nModel\n1\nLocal Reviewer\nLR\nIdeas\nNotebook\nInbox\nCalendar\nTasks\nDecisions\nVaults\nList\nVerify launch readiness\nVerify launch readiness\nTo Do\nSaved\nAI\nStart\nSections\nEdit\nPreview\nWork with AI\nDescription & Scope\nChecklist\nDependencies\nEvidence\nAttachments & Links\nStrategy\nEdited\nDescription & Scope\nRELATED TONo linked source — standalone task\nTASK DESCRIPTION\nAI\nRELEVANT IDEAS\n\nNo suggestions\n\nSave ideas from chat to build your private library.\nRELEVANT NOTES\n\nNo suggestions\n\nSave notes to build your personal knowledge base.\nEXPECTED OUTCOME\nAI\n\nReview this draft, then save the task to persist it.\n\nRegenerate\nEdit\nACTIONS\nBlock\nReassign\nPROPERTIES\nProperty\tValue\nStatus\tTo Do\nPriority\tMedium\nDue date\tSep 30, 2026\nOwner\tLocal Reviewer\nSource\t—\nRELATIONS\nSOURCES AND ASSUMPTIONS\nCOMMENTS\nHISTORY\n1"
+}

@@ -1,0 +1,82 @@
+{
+  "capturedAt": "2026-09-12T09:10:54.036Z",
+  "name": "Execution",
+  "phase": "before",
+  "url": "/execution?tab=list&view=table",
+  "timing": {
+    "firstChangedMs": 402,
+    "stableMs": 1607
+  },
+  "readyFromTriggerMs": 1777,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3778,
+  "totalCaptureMs": 3845,
+  "scriptBytes": {
+    "requestCount": 2,
+    "decodedBodyBytes": 576834,
+    "encodedBodyBytes": 151075,
+    "transferBytes": 151675,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/apiUtils-xFXo3FwE.js",
+      "initiatorType": "script",
+      "startTime": 30681.20000000298,
+      "responseEnd": 30683.40000000596,
+      "duration": 2.2000000029802322,
+      "decodedBodySize": 2150,
+      "encodedBodySize": 1078,
+      "transferSize": 1378,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/ExecutionHub-C2Dr28Kv.js",
+      "initiatorType": "script",
+      "startTime": 30681.20000000298,
+      "responseEnd": 30693.10000000149,
+      "duration": 11.899999998509884,
+      "decodedBodySize": 574684,
+      "encodedBodySize": 149997,
+      "transferSize": 150297,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 21,
+  "apiRequests": [
+    "GET /api/action-cards?status=OPEN&sourceKind=execution_delay",
+    "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+    "GET /api/initiatives",
+    "GET /api/initiatives/runtime-v1/execution-cases",
+    "GET /api/v8/execution-control/risk-signals",
+    "GET /api/v8/execution-control/delay-signals",
+    "GET /api/v8/execution-control/budget/overspend-signals",
+    "GET /api/v8/execution-control/manager/lanes/action-queue/problems",
+    "GET /api/v8/execution-control/manager/lanes/decisions/problems",
+    "GET /api/v8/execution-control/manager/lanes/blockers/problems",
+    "GET /api/v8/execution-control/manager/lanes/workload/problems",
+    "GET /api/v8/execution-control/manager/lanes/risk/problems",
+    "GET /api/v8/execution-control/manager/lanes/people-change/problems",
+    "GET /api/v8/execution-control/timeline-warnings",
+    "GET /api/v8/execution-control/capacity/leveling-alerts",
+    "GET /api/v8/execution-control/capacity/timeline",
+    "GET /api/raid",
+    "GET /api/execution-control/capacity/resource-plan?weeks=8",
+    "GET /api/tasks",
+    "GET /api/decisions",
+    "GET /api/report-builder/definitions?kind=EXECUTION_PACK"
+  ],
+  "scriptRequests": [
+    "/assets/apiUtils-xFXo3FwE.js",
+    "/assets/ExecutionHub-C2Dr28Kv.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nExecution\nData\nModel\n1\nLocal Reviewer\nLR\nDashboard\nDeliveries\nWork\nResources\nDecisions & risks\nReports\nActive\nAll\nAll\n4\nAt risk\n2\nOverdue\n1\n\t\nINITIATIVE\n\t\nLEVEL\n\t\nSTATUS\n\t\nASSIGNEE\n\t\nPLANNED START / END\n\t\nVARIANCE (DAYS)\n\t\nRAG\n\t\n\n\t\nPredictive Maintenance for CNC Line\n\t\nRollout\n\t\nIn execution\n\t\nSM\nSarah Mitchell\n\t\n06/04/2026 → 31/03/2027\n\t\n+61\n\t\nAt risk\n\t\n\n\t\nMES Rollout Line 3\n\t\nRollout\n\t\nIn execution\n\t\nSM\nSarah Mitchell\n\t\n04/05/2026 → 30/06/2027\n\t\n+61\n\t\nAt risk\n\t\n\n\t\nWarehouse Automation Pilot\n\t\nPilot Preparation\n\t\nIn execution\n\t\nJW\nJames Whitfield\n\t\n02/03/2026 → 29/01/2027\n\t\n0\n\t\nOn track\n\t\n\n\t\nSkills Matrix and Upskilling\n\t\nValue Realization\n\t\nOn hold\n\t\nJW\nJames Whitfield\n\t\n02/02/2026 → 18/12/2026\n\t\n-42\n\t\nBlocked\n\t\nEXECUTION"
+}

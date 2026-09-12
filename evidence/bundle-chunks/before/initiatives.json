@@ -1,0 +1,162 @@
+{
+  "capturedAt": "2026-09-12T09:10:50.187Z",
+  "name": "Initiatives",
+  "phase": "before",
+  "url": "/initiatives",
+  "timing": {
+    "firstChangedMs": 1,
+    "stableMs": 1207
+  },
+  "readyFromTriggerMs": 1344,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3344,
+  "totalCaptureMs": 3434,
+  "scriptBytes": {
+    "requestCount": 9,
+    "decodedBodyBytes": 308467,
+    "encodedBodyBytes": 90147,
+    "transferBytes": 92847,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/InitiativesHub-aNSlDhYS.js",
+      "initiatorType": "script",
+      "startTime": 27197.80000000447,
+      "responseEnd": 27208.80000000447,
+      "duration": 11,
+      "decodedBodySize": 280735,
+      "encodedBodySize": 78785,
+      "transferSize": 79085,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/useOrganizationMemberNames-Jg_dezoA.js",
+      "initiatorType": "script",
+      "startTime": 27197.90000000596,
+      "responseEnd": 27202,
+      "duration": 4.0999999940395355,
+      "decodedBodySize": 974,
+      "encodedBodySize": 974,
+      "transferSize": 1274,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/organizations.api-DzPHhEpy.js",
+      "initiatorType": "script",
+      "startTime": 27198,
+      "responseEnd": 27202.5,
+      "duration": 4.5,
+      "decodedBodySize": 2431,
+      "encodedBodySize": 705,
+      "transferSize": 1005,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/initiativeDuplicateDetection-Bmw76LL4.js",
+      "initiatorType": "script",
+      "startTime": 27198.10000000149,
+      "responseEnd": 27202.5,
+      "duration": 4.399999998509884,
+      "decodedBodySize": 4301,
+      "encodedBodySize": 1981,
+      "transferSize": 2281,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/InitiativeLifecycleActions-jkAl-GGw.js",
+      "initiatorType": "script",
+      "startTime": 27198.10000000149,
+      "responseEnd": 27202.40000000596,
+      "duration": 4.300000004470348,
+      "decodedBodySize": 10434,
+      "encodedBodySize": 3685,
+      "transferSize": 3985,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/Banner-Df6Asw39.js",
+      "initiatorType": "script",
+      "startTime": 27198.20000000298,
+      "responseEnd": 27202.60000000149,
+      "duration": 4.399999998509884,
+      "decodedBodySize": 2511,
+      "encodedBodySize": 926,
+      "transferSize": 1226,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/executionFeatureFlags-BMdSRr5J.js",
+      "initiatorType": "script",
+      "startTime": 27198.30000000447,
+      "responseEnd": 27205.40000000596,
+      "duration": 7.100000001490116,
+      "decodedBodySize": 1813,
+      "encodedBodySize": 859,
+      "transferSize": 1159,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/DocumentCardMenu5-CaJO34Q8.js",
+      "initiatorType": "script",
+      "startTime": 27198.30000000447,
+      "responseEnd": 27205.60000000149,
+      "duration": 7.299999997019768,
+      "decodedBodySize": 1544,
+      "encodedBodySize": 768,
+      "transferSize": 1068,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/documentCardContracts-BwsfYyH1.js",
+      "initiatorType": "script",
+      "startTime": 27198.40000000596,
+      "responseEnd": 27205.60000000149,
+      "duration": 7.199999995529652,
+      "decodedBodySize": 3724,
+      "encodedBodySize": 1464,
+      "transferSize": 1764,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 10,
+  "apiRequests": [
+    "GET /api/mfa/status",
+    "GET /api/llm/providers/health?timeoutMs=4000",
+    "GET /api/organizations/current",
+    "GET /api/organizations/468b234c-66c4-54e1-b626-5e0fb3a92f6a/members",
+    "GET /api/v8/planning/pending-decisions",
+    "GET /api/initiatives/runtime-v1/initiatives",
+    "GET /api/initiatives",
+    "GET /api/users",
+    "GET /api/initiatives/runtime-v1/initiatives",
+    "GET /api/initiatives"
+  ],
+  "scriptRequests": [
+    "/assets/useOrganizationMemberNames-Jg_dezoA.js",
+    "/assets/organizations.api-DzPHhEpy.js",
+    "/assets/Banner-Df6Asw39.js",
+    "/assets/initiativeDuplicateDetection-Bmw76LL4.js",
+    "/assets/InitiativeLifecycleActions-jkAl-GGw.js",
+    "/assets/executionFeatureFlags-BMdSRr5J.js",
+    "/assets/DocumentCardMenu5-CaJO34Q8.js",
+    "/assets/documentCardContracts-BwsfYyH1.js",
+    "/assets/InitiativesHub-aNSlDhYS.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nInitiatives\nData\nModel\n1\nLocal Reviewer\nLR\nInitiatives\nPlan\nLoad\nPriority\nAll priorities\nCritical\nHigh\nMedium\nLow\nStatus\nActive\nAll\nNew initiative\nAll\n12\nPending approval\n1\nIn execution\n4\nINITIATIVE\n\t\nSTATUS\n\t\nNEXT GATE\n\t\nREADINESS\n\t\nOWNER\n\t\nAREA / AXIS\n\t\nNEXT ACTION\n\t\nEXPECTED IMPACT\n\t\nPLANNED WINDOW\n\t\nHEALTH\n\t\nUPDATED\n\t\n\n\nP11 weryfikacja zapisu po czystce\nTest zapisu po sprzataniu organizacji testowych (P11, 2026-09-10).\n\t\nDraft\n\t\nDefinition\n\t\nNot evaluated\n\t\nJames Whitfield\n\t\n—\n\t\nComplete the definition\n\t\nTest zapisu po sprzataniu organizacji testowych (P11, 2026-09-10).\nConfidence: Unknown\n\t\n—\n\t\nNot applicable\n\t\n2 days ago\n\t\n\n\nCybersecurity Hardening OT\nSegment the OT network, retire unsupported controller firmware and monitor vendor remote access.\n\t\nProposed\n\t\nDefinition\n\t\nNot evaluated\n\t\nRobert Chen\n\t\nInformation Technology\n\t\nComplete the definition\n\t\n—\nConfidence: Unknown\n\t\n—\n\t\nNot applicable\n\t\n3 days ago\n\t\n\n\nCustomer Portal for Order Tracking\nA self-service portal exposing delivery date, production stage and dispatch tracking for every open order.\n\t\nDraft\n\t\nDefinition\n\t\nNot evaluated\n\t\nMichael Grant\n\t\nCommercial\n\t\nComplete the definition\n\t\n—\nConfidence: Unknown\n\t\n—\n\t\nNot applicable\n\t\n3 days ago\n\t\n\n\nDigital Work Instructions\nTablet-based work instructions served from the current revision, replacing laminated folders at the station.\n\t\nPending approval\n\t\nPortfolio\n\t\nNot evaluated\n\t\nSarah Mitchell\n\t\nDigital Manufacturing\n\t\nPrepare the portfolio decision\n\t\n—\nConfidence: Unknown\n\t\n—\n\t\nNot applicable\n\t\n3 days ago\n\t\n\n"
+}

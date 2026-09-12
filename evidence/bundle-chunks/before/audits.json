@@ -1,0 +1,106 @@
+{
+  "capturedAt": "2026-09-12T09:10:46.751Z",
+  "name": "Audits",
+  "phase": "before",
+  "url": "/audit-programs?tab=library",
+  "timing": {
+    "firstChangedMs": 403,
+    "stableMs": 1609
+  },
+  "readyFromTriggerMs": 1744,
+  "observationWindowMs": 2000,
+  "observedFromTriggerMs": 3744,
+  "totalCaptureMs": 3793,
+  "scriptBytes": {
+    "requestCount": 5,
+    "decodedBodyBytes": 89792,
+    "encodedBodyBytes": 26827,
+    "transferBytes": 28327,
+    "zeroTransferCount": 0,
+    "zeroBodySizeCount": 0
+  },
+  "scriptResourceTiming": [
+    {
+      "url": "http://127.0.0.1:5214/assets/AuditsMethodHub-D24CHbh5.js",
+      "initiatorType": "script",
+      "startTime": 23396.90000000596,
+      "responseEnd": 23402,
+      "duration": 5.0999999940395355,
+      "decodedBodySize": 72612,
+      "encodedBodySize": 20448,
+      "transferSize": 20748,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditsMethodApi-ZFgMSHyP.js",
+      "initiatorType": "script",
+      "startTime": 23397,
+      "responseEnd": 23401.10000000149,
+      "duration": 4.100000001490116,
+      "decodedBodySize": 6832,
+      "encodedBodySize": 2089,
+      "transferSize": 2389,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditsScaleAndPolishFlag-D_5ZNvxF.js",
+      "initiatorType": "script",
+      "startTime": 23397.10000000149,
+      "responseEnd": 23401,
+      "duration": 3.899999998509884,
+      "decodedBodySize": 857,
+      "encodedBodySize": 857,
+      "transferSize": 1157,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/Menu2PresetDropdown-BkZ041G7.js",
+      "initiatorType": "script",
+      "startTime": 23397.10000000149,
+      "responseEnd": 23401.20000000298,
+      "duration": 4.100000001490116,
+      "decodedBodySize": 2432,
+      "encodedBodySize": 1066,
+      "transferSize": 1366,
+      "responseStatus": 200,
+      "deliveryType": ""
+    },
+    {
+      "url": "http://127.0.0.1:5214/assets/auditRoleLabels-COYn6xP2.js",
+      "initiatorType": "script",
+      "startTime": 23397.20000000298,
+      "responseEnd": 23401.20000000298,
+      "duration": 4,
+      "decodedBodySize": 7059,
+      "encodedBodySize": 2367,
+      "transferSize": 2667,
+      "responseStatus": 200,
+      "deliveryType": ""
+    }
+  ],
+  "sameTarget": false,
+  "instrumentError": null,
+  "pageErrors": [],
+  "productConsole": [],
+  "httpErrors": [],
+  "apiRequestCount": 6,
+  "apiRequests": [
+    "GET /api/mfa/status",
+    "GET /api/llm/providers/health?timeoutMs=4000",
+    "GET /api/organizations/current",
+    "GET /api/audits/packs",
+    "GET /api/audits/programs",
+    "GET /api/users"
+  ],
+  "scriptRequests": [
+    "/assets/auditsScaleAndPolishFlag-D_5ZNvxF.js",
+    "/assets/auditsMethodApi-ZFgMSHyP.js",
+    "/assets/Menu2PresetDropdown-BkZ041G7.js",
+    "/assets/auditRoleLabels-COYn6xP2.js",
+    "/assets/AuditsMethodHub-D24CHbh5.js"
+  ],
+  "text": "?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nAudits\nData\nModel\n1\nLocal Reviewer\nLR\nLibrary\nSessions\nConclusions\nReports\nInitiatives\nVerification: All\n1\nNew audit\nFrozen until wave 2: uploading audit assumptions and the question generator.\nAll\n1\nVerified\n0\nPending review\n0\nTITLE\n\t\nSOURCE\n\t\nVERSION\n\t\nSOURCE TYPE\n\t\nVERIFICATION\n\t\nPUBLICATION STATUS\n\t\nCRITERIA\n\t\nUPDATED\n\t\n\n\nOperational Excellence Audit 2026\n\t\nNorthwind Operational Excellence Programme — internal audit procedure\n\t\nv1\n\t\nInternal procedure\n\t\nUnverified\n\t\nPublished\n\t\n7\n\t\n08/09/2026\n\t"
+}
