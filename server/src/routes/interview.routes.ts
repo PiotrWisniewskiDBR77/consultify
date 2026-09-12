@@ -1,3 +1,4 @@
+import { requireInterviewAssignmentReviewRead } from '../services/interviewAssignmentReviewAccess.js';
 /**
  * Interview Routes - v2.0 ClickUp-like Redesign
  *
@@ -153,7 +154,7 @@ router.get(
 /** GET /interview/assignments/:id - Get single assignment with details */
 router.get(
   '/assignments/:id',
-  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
+  requireInterviewAssignmentReviewRead,
   InterviewController.getAssignment
 );
 
@@ -172,23 +173,25 @@ router.delete(
 );
 
 /** POST /interview/assignments/:id/send-back - Admin send back incomplete submission */
+router.get('/assignments/:id/review-access', InterviewController.getAssignmentReviewAccess);
+
 router.post(
   '/assignments/:id/send-back',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  // Persisted project review policy is enforced by the shared controller, then rechecked under lock.
   InterviewController.sendBackAssignment
 );
 
 /** GET /interview/assignments/:id/answer-history - #48B previous-version read (send-back snapshots) */
 router.get(
   '/assignments/:id/answer-history',
-  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
+  requireInterviewAssignmentReviewRead,
   InterviewController.getAnswerHistory
 );
 
 /** POST /interview/assignments/:id/approve - Admin/PM approve submission */
 router.post(
   '/assignments/:id/approve',
-  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  // Persisted project review policy is enforced by the shared controller, then rechecked under lock.
   InterviewController.approveAssignment
 );
 

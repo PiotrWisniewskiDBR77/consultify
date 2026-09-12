@@ -743,7 +743,7 @@ export const InterviewHub: React.FC = () => {
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
   const [managedAssignments, setManagedAssignments] = useState<InterviewAssignment[]>([]);
   const [overdueAssignments, setOverdueAssignments] = useState<InterviewAssignment[]>([]);
-  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(true);
   const allowDemoData = shouldAllowDemoData();
 
   // Modal state
@@ -1708,33 +1708,66 @@ export const InterviewHub: React.FC = () => {
     }
   }, [sessionIdFromUrl, sessions, handleViewSession]);
 
-  // Open assignment from URL (deep link from notifications)
+  // A scoped reviewer may open a notification without an organization-wide list grant.
   useEffect(() => {
-    if (!assignmentIdFromUrl) return;
-    const allAssignments = [...myAssignments, ...managedAssignments];
-    if (allAssignments.length === 0) return;
-    const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
-    if (!assignment) return;
-    const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
-    const shouldOpenInSessions =
-      isManagerView &&
-      Boolean(assignment.sessionId || assignment.session?.id) &&
-      ['in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(
-        assignment.status
+    if (!assignmentIdFromUrl || isLoading || permissionsLoading || assignmentsLoading) return;
+    let cancelled = false;
+    const open = async () => {
+      const listed = [...myAssignments, ...managedAssignments].find(
+        (a) => a.id === assignmentIdFromUrl
       );
-    const resolvedTab = shouldOpenInSessions
-      ? 'sessions'
-      : isManagerView
-        ? 'managed'
-        : 'my_assignments';
-    setActiveTab(resolvedTab);
-    void openInterviewAssignmentFull(assignment, isManagerView);
-    const next = new URLSearchParams(searchParams);
-    next.delete('assignmentId');
-    next.set('tab', resolvedTab);
-    setSearchParams(next, { replace: true });
+      try {
+        const assignment =
+          listed ||
+          (await Api.get(`/interview/assignments/${encodeURIComponent(assignmentIdFromUrl)}`));
+        if (cancelled || assignment?.id !== assignmentIdFromUrl) return;
+        const isManagerView =
+          !listed || managedAssignments.some((a) => a.id === assignmentIdFromUrl);
+        const shouldOpenInSessions =
+          isManagerView &&
+          Boolean(assignment.sessionId || assignment.session?.id) &&
+          ['in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(
+            assignment.status
+          );
+        const resolvedTab = !permissionsCanViewManaged
+          ? 'my_assignments'
+          : shouldOpenInSessions
+            ? 'sessions'
+            : isManagerView
+              ? 'managed'
+              : 'my_assignments';
+        setActiveTab(resolvedTab);
+        await openInterviewAssignmentFull(assignment, isManagerView);
+        if (cancelled) return;
+        const next = new URLSearchParams(searchParams);
+        next.delete('assignmentId');
+        next.set('tab', resolvedTab);
+        setSearchParams(next, { replace: true });
+      } catch (error) {
+        if (!cancelled)
+          toast.error(
+            getSafeInterviewErrorMessage(error, t('interview.hub.couldNotCompleteTheAction'))
+          );
+      }
+    };
+    void open();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignmentIdFromUrl, myAssignments, managedAssignments, searchParams, setSearchParams]);
+  }, [
+    assignmentIdFromUrl,
+    isLoading,
+    assignmentsLoading,
+    permissionsLoading,
+    permissionsCanViewManaged,
+    myAssignments,
+    managedAssignments,
+    searchParams,
+    setSearchParams,
+    currentUser?.id,
+    currentOrganization?.id,
+  ]);
 
   // Open insight from URL
   useEffect(() => {
