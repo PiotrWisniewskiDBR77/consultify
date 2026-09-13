@@ -460,6 +460,27 @@ describe('Organization export disclosure through the row action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
     fireEvent.click(await screen.findByText('Export Data'));
   }
+  /**
+   * BRAMKA K2 (13.09) — dlaczego NIE `findByRole('status')`.
+   * Zakładka organizacji renderuje STAŁY komunikat `role="status"` o wyłączonym
+   * kasowaniu (`DESTRUCTIVE_DELETION_DISABLED_COPY`, OrganizationsView.tsx).
+   * `findByRole('status')` trafiał w niego NATYCHMIAST — zanim asynchroniczny
+   * eksport zdążył ustawić swój komunikat — więc test czytał treść o kasowaniu
+   * zamiast o kompletności eksportu (a gdy oba już były w DOM, leciało
+   * „Found multiple elements"). Produkt był cały czas w porządku; pytanie było
+   * niejednoznaczne i wyścigowe. Ten helper CZEKA na komunikat eksportu i
+   * odróżnia go od stałego baneru.
+   */
+  const STANDING_DELETION_BANNER_COPY =
+    'Automated deletion is disabled until retention and legal-hold rules are approved.';
+  const findExportNotice = () =>
+    waitFor(() => {
+      const notice = screen
+        .getAllByRole('status')
+        .find((element) => element.textContent !== STANDING_DELETION_BANNER_COPY);
+      if (!notice) throw new Error('export disclosure notice has not been rendered yet');
+      return notice;
+    });
   it.each(['complete', 'partial', 'unknown', 'contradictory'] as const)(
     'downloads original bytes and discloses %s scope',
     async (state) => {
@@ -472,7 +493,7 @@ describe('Organization export disclosure through the row action', () => {
       vi.mocked(Api.exportOrganizationData).mockResolvedValue(blob);
       render(<OrganizationsView />);
       await clickExport();
-      const notice = await screen.findByRole('status');
+      const notice = await findExportNotice();
       expect(notice.textContent).toContain(
         state === 'complete'
           ? 'complete under its declared scope'
@@ -512,7 +533,7 @@ describe('Organization export disclosure through the row action', () => {
     );
     render(<OrganizationsView />);
     await clickExport();
-    expect((await screen.findByRole('status')).textContent).toContain(
+    expect((await findExportNotice()).textContent).toContain(
       'Completeness could not be verified'
     );
     expect(toast.success).not.toHaveBeenCalled();
@@ -566,7 +587,7 @@ describe('Organization export disclosure through the row action', () => {
     await act(async () => {
       resolveExport(new NodeBlob([JSON.stringify(fixture())]) as unknown as Blob);
     });
-    await screen.findByRole('status');
+    await findExportNotice();
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
   });
   it.each(['malformed', 'denied'] as const)(
@@ -588,7 +609,7 @@ describe('Organization export disclosure through the row action', () => {
         new NodeBlob([JSON.stringify(fixture())]) as unknown as Blob
       );
       await clickExport();
-      await screen.findByRole('status');
+      await findExportNotice();
       expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledTimes(1);
     }
   );
