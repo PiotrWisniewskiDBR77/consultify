@@ -1716,6 +1716,24 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
+        {/* S1.14b (pomiar 13.09, staging): the module is called "Materials" in the
+            sidebar and its own buttons say "Back to Materials", but /materials and
+            /materials/documents were never routes — both showed "Page not found".
+            The real address is /presentations (ReportsAndPresentationsHub). These
+            keep the name the product uses pointing at the screen it means. */}
+        <Route
+          path="/materials"
+          element={<Navigate to={`${ROUTES.PRESENTATIONS}?tab=all`} replace />}
+        />
+        <Route
+          path="/materials/documents"
+          element={<Navigate to={`${ROUTES.PRESENTATIONS}?tab=documents`} replace />}
+        />
+        <Route
+          path="/materials/*"
+          element={<Navigate to={`${ROUTES.PRESENTATIONS}?tab=all`} replace />}
+        />
+
         {/* 05.09.2026: podział na projekty = fala 2 (decyzja właściciela) —
             `/projects` (Zwornik #78: stakeholder registry + finance rollup)
             and its My Work tab deep link both retire to the My Work root;
