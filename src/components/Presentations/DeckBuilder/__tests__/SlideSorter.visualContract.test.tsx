@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { DeckCard } from '../../wizard/types';
@@ -24,6 +25,12 @@ const card: DeckCard = {
   animations: { entrance: 'none', block_stagger: false },
   is_locked: false,
 };
+
+const cards = [
+  card,
+  { ...card, card_id: 'slide-2', order_index: 1, title: 'Delivery plan' },
+  { ...card, card_id: 'slide-3', order_index: 2, title: 'Risks' },
+];
 
 describe('SlideSorter visual and accessibility contract', () => {
   it('contains the complete 16:9 composition and exposes a readable truthful title', () => {
@@ -99,5 +106,97 @@ describe('SlideSorter visual and accessibility contract', () => {
 
     expect(onAddCard).toHaveBeenCalledOnce();
     expect(onAddCard).toHaveBeenCalledWith();
+  });
+
+  it('keeps Move actions inside the context menu and reachable by click and keyboard', async () => {
+    const user = userEvent.setup();
+    const onReorder = vi.fn();
+    const onDuplicate = vi.fn();
+    const onDelete = vi.fn();
+    const onToggleLock = vi.fn();
+    render(
+      <SlideSorter
+        cards={cards}
+        activeIndex={1}
+        onSelect={vi.fn()}
+        onReorder={onReorder}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onAddCard={vi.fn()}
+        onToggleLock={onToggleLock}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 2 actions' }));
+    expect(screen.getByRole('button', { name: /duplicate$/i })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Lock slide' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /delete$/i })).toBeVisible();
+
+    const move = screen.getByRole('button', { name: 'Move' });
+    move.focus();
+    await user.keyboard('{Enter}');
+    const back = screen.getByRole('button', { name: /back$/i });
+    expect(back).toHaveFocus();
+    await user.keyboard('{Tab}');
+    expect(screen.getByRole('button', { name: 'To top' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'To top' }));
+    expect(onReorder).toHaveBeenLastCalledWith(1, 0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 2 actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    fireEvent.click(screen.getByRole('button', { name: 'To bottom' }));
+    expect(onReorder).toHaveBeenLastCalledWith(1, 2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 2 actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    fireEvent.click(screen.getByRole('button', { name: /back$/i }));
+    expect(screen.getByRole('button', { name: 'Move' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: /duplicate$/i })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Lock slide' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /delete$/i })).toBeVisible();
+  });
+
+  it('preserves move guards and treats cancelled or invalid positions as no-ops', () => {
+    const onReorder = vi.fn();
+    const prompt = vi.spyOn(window, 'prompt');
+    const { rerender } = render(
+      <SlideSorter
+        cards={cards}
+        activeIndex={0}
+        onSelect={vi.fn()}
+        onReorder={onReorder}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+        onAddCard={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 1 actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    expect(screen.getByRole('button', { name: 'To top' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /back$/i }));
+
+    rerender(
+      <SlideSorter
+        cards={cards}
+        activeIndex={1}
+        onSelect={vi.fn()}
+        onReorder={onReorder}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+        onAddCard={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 2 actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    prompt.mockReturnValueOnce(null);
+    fireEvent.click(screen.getByRole('button', { name: 'To position…' }));
+    expect(onReorder).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Slide 2 actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    prompt.mockReturnValueOnce('not-a-number');
+    fireEvent.click(screen.getByRole('button', { name: 'To position…' }));
+    expect(onReorder).not.toHaveBeenCalled();
   });
 });

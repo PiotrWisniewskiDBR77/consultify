@@ -1,4 +1,5 @@
 import {
+  ChevronLeft,
   ChevronRight,
   Copy,
   GripVertical,
@@ -12,7 +13,7 @@ import {
   Trash2,
   Unlock,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type DeckCard, INTENT_COLORS } from '../wizard/types';
@@ -53,6 +54,18 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
   const [contextMenuIndex, setContextMenuIndex] = useState<number | null>(null);
   const [showMoveSubmenu, setShowMoveSubmenu] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const moveTriggerRef = useRef<HTMLButtonElement>(null);
+  const moveBackRef = useRef<HTMLButtonElement>(null);
+  const moveSubmenuWasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (showMoveSubmenu) {
+      moveBackRef.current?.focus();
+    } else if (moveSubmenuWasOpenRef.current) {
+      moveTriggerRef.current?.focus();
+    }
+    moveSubmenuWasOpenRef.current = showMoveSubmenu;
+  }, [showMoveSubmenu]);
 
   const closeContextMenu = () => {
     setContextMenuIndex(null);
@@ -275,121 +288,136 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               {/* Context Menu */}
               {contextMenuIndex === index && (
                 <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDuplicate(index);
-                      closeContextMenu();
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
-                  >
-                    <Copy size={12} /> {t('presentations.builder.duplicate')}
-                  </button>
-
-                  {onToggleLock && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleLock(card.card_id);
-                        closeContextMenu();
-                      }}
-                      className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
-                    >
-                      {card.is_locked ? (
-                        <>
-                          <Unlock size={12} />{' '}
-                          {t('presentations.builder.unlockSlideAction', 'Unlock slide')}
-                        </>
-                      ) : (
-                        <>
-                          <Lock size={12} />{' '}
-                          {t('presentations.builder.lockSlideAction', 'Lock slide')}
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Move ▸ submenu (na górę / na dół / na pozycję) */}
-                  <div
-                    className="relative"
-                    onMouseEnter={() => setShowMoveSubmenu(true)}
-                    onMouseLeave={() => setShowMoveSubmenu(false)}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowMoveSubmenu((v) => !v);
-                      }}
-                      className="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between gap-2 hover:bg-c-surface-raised text-c-text"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Move size={12} /> {t('presentations.builder.move', 'Move')}
-                      </span>
-                      <ChevronRight size={12} />
-                    </button>
-                    {showMoveSubmenu && (
-                      <div className="absolute right-full top-0 mr-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReorder(index, 0);
-                            closeContextMenu();
-                          }}
-                          disabled={index === 0}
-                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {t('presentations.builder.moveToTop', 'To top')}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReorder(index, cards.length - 1);
-                            closeContextMenu();
-                          }}
-                          disabled={index === cards.length - 1}
-                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {t('presentations.builder.moveToBottom', 'To bottom')}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const raw = window.prompt(
-                              t(
-                                'presentations.builder.moveToPositionPrompt',
-                                'Move to position (1-{{count}})',
-                                { count: cards.length }
-                              ),
-                              String(index + 1)
-                            );
-                            if (raw !== null) {
-                              const parsed = parseInt(raw, 10);
-                              if (Number.isFinite(parsed)) {
-                                const target = Math.min(Math.max(parsed - 1, 0), cards.length - 1);
-                                onReorder(index, target);
-                              }
+                  {showMoveSubmenu ? (
+                    <>
+                      <button
+                        ref={moveBackRef}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMoveSubmenu(false);
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
+                      >
+                        <ChevronLeft size={12} /> {t('common.back', 'Back')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReorder(index, 0);
+                          closeContextMenu();
+                        }}
+                        disabled={index === 0}
+                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {t('presentations.builder.moveToTop', 'To top')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReorder(index, cards.length - 1);
+                          closeContextMenu();
+                        }}
+                        disabled={index === cards.length - 1}
+                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {t('presentations.builder.moveToBottom', 'To bottom')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const raw = window.prompt(
+                            t(
+                              'presentations.builder.moveToPositionPrompt',
+                              'Move to position (1-{{count}})',
+                              { count: cards.length }
+                            ),
+                            String(index + 1)
+                          );
+                          if (raw !== null) {
+                            const parsed = parseInt(raw, 10);
+                            if (Number.isFinite(parsed)) {
+                              const target = Math.min(Math.max(parsed - 1, 0), cards.length - 1);
+                              onReorder(index, target);
                             }
+                          }
+                          closeContextMenu();
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text"
+                      >
+                        {t('presentations.builder.moveToPosition', 'To position…')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDuplicate(index);
+                          closeContextMenu();
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
+                      >
+                        <Copy size={12} /> {t('presentations.builder.duplicate')}
+                      </button>
+
+                      {onToggleLock && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleLock(card.card_id);
                             closeContextMenu();
                           }}
-                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text"
+                          className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
                         >
-                          {t('presentations.builder.moveToPosition', 'To position…')}
+                          {card.is_locked ? (
+                            <>
+                              <Unlock size={12} />{' '}
+                              {t('presentations.builder.unlockSlideAction', 'Unlock slide')}
+                            </>
+                          ) : (
+                            <>
+                              <Lock size={12} />{' '}
+                              {t('presentations.builder.lockSlideAction', 'Lock slide')}
+                            </>
+                          )}
                         </button>
-                      </div>
-                    )}
-                  </div>
+                      )}
 
-                  <div className="h-px bg-c-border-subtle my-1" />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(index);
-                      closeContextMenu();
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
-                  >
-                    <Trash2 size={12} /> {t('presentations.builder.delete')}
-                  </button>
+                      <button
+                        ref={moveTriggerRef}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMoveSubmenu(true);
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between gap-2 hover:bg-c-surface-raised text-c-text"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Move size={12} /> {t('presentations.builder.move', 'Move')}
+                        </span>
+                        <ChevronRight size={12} />
+                      </button>
+
+                      <div className="h-px bg-c-border-subtle my-1" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(index);
+                          closeContextMenu();
+                        }}
+                        className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
+                      >
+                        <Trash2 size={12} /> {t('presentations.builder.delete')}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
