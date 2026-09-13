@@ -7,10 +7,11 @@ vi.unmock('react-router-dom');
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 
-const { mutationFetch, initiatives, executionCases } = vi.hoisted(() => ({
+const { mutationFetch, getInitiatives, initiatives, executionCases } = vi.hoisted(() => ({
   mutationFetch: vi.fn(),
+  getInitiatives: vi.fn(),
   initiatives: [
     {
       id: 'initiative-a', name: 'Alpha', description: 'Forecast case', status: 'IN_EXECUTION',
@@ -95,7 +96,7 @@ vi.mock('@/services/api', () => ({
   clearGlobalTransportFailure: vi.fn(), getHeaders: () => ({}), resetAuthLoopGuard: vi.fn(),
   shouldAllowDemoData: () => false,
   Api: {
-    getInitiatives: vi.fn(async () => initiatives), getTasks: vi.fn(async () => []),
+    getInitiatives, getTasks: vi.fn(async () => []),
     raidList: vi.fn(async () => []), get: vi.fn(async () => []),
     post: mutationFetch, put: mutationFetch, delete: mutationFetch,
   },
@@ -157,9 +158,20 @@ const LocationProbe = () => {
   );
 };
 
+const HistoryControls = () => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate(-1)}>←</button>
+      <button type="button" onClick={() => navigate(1)}>→</button>
+    </>
+  );
+};
+
 describe('E1b Execution Bank views', () => {
   beforeEach(() => {
     mutationFetch.mockClear();
+    getInitiatives.mockReset().mockResolvedValue(initiatives);
     localStorage.clear();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 })));
   });
@@ -278,5 +290,101 @@ describe('E1b Execution Bank views', () => {
       'data-execution-case-id'
     );
     expect(mutationFetch).not.toHaveBeenCalled();
+  });
+
+  it('refetches the same Initiative evidence at controlled asOf on browser Back and Forward', async () => {
+    getInitiatives.mockImplementation(async (_projectId, options) => {
+      const asOf = String(options?.asOf);
+      const forecastEnd = asOf.startsWith('2028-01-31') ? '2028-03-01' : '2028-03-10';
+      return initiatives.map((initiative) =>
+        initiative.id === 'initiative-a'
+          ? {
+              ...initiative,
+              progressEvidence: {
+                value: 42,
+                observedAt: '2028-01-15T12:00:00.000Z',
+                asOf,
+                source: {
+                  system: 'initiative_history',
+                  recordId: 'progress-42',
+                  formulaId: null,
+                  formulaVersion: null,
+                },
+                completeness: 'KNOWN',
+                staleness: 'UNKNOWN',
+                reason: 'FRESHNESS_POLICY_MISSING',
+              },
+              forecastEndEvidence: {
+                value: forecastEnd,
+                observedAt: '2028-01-15T12:00:00.000Z',
+                asOf,
+                source: {
+                  system: 'initiative_history',
+                  recordId: `forecast-${forecastEnd}`,
+                  formulaId: null,
+                  formulaVersion: null,
+                },
+                completeness: 'KNOWN',
+                staleness: 'UNKNOWN',
+                reason: 'FRESHNESS_POLICY_MISSING',
+              },
+            }
+          : initiative
+      );
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          '/execution',
+          '/execution?tab=list&view=table&asOf=2028-01-31',
+          '/execution?tab=list&view=table&asOf=2028-03-31',
+        ]}
+        initialIndex={2}
+      >
+        <ExecutionHub />
+        <HistoryControls />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Alpha');
+    await waitFor(() =>
+      expect(getInitiatives).toHaveBeenCalledWith(undefined, {
+        asOf: '2028-03-31T00:00:00.000Z',
+        includeExecutionEvidence: true,
+      })
+    );
+    expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('29 days');
+
+    fireEvent.click(screen.getByRole('button', { name: '←' }));
+    await waitFor(() =>
+      expect(getInitiatives).toHaveBeenCalledWith(undefined, {
+        asOf: '2028-01-31T00:00:00.000Z',
+        includeExecutionEvidence: true,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days')
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '←' }));
+    await waitFor(() => {
+      const currentRead = getInitiatives.mock.calls.find(
+        ([, options]) =>
+          options?.asOf !== '2028-01-31T00:00:00.000Z' &&
+          options?.asOf !== '2028-03-31T00:00:00.000Z'
+      );
+      expect(currentRead?.[1]?.includeExecutionEvidence).toBe(true);
+      expect(Date.parse(String(currentRead?.[1]?.asOf))).toBeLessThanOrEqual(Date.now());
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '→' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('20 days')
+    );
+    fireEvent.click(screen.getByRole('button', { name: '→' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('execution-bank-variance-case-a')).toHaveTextContent('29 days')
+    );
   });
 });

@@ -160,6 +160,59 @@ describe('E1b executionBankModel', () => {
     expect(row.currentPlanFinish).toMatchObject({ status: 'KNOWN', value: '2028-03-20' });
   });
 
+  it('uses per-field Initiative evidence ahead of the legacy Execution Case forecast and preserves provenance', () => {
+    const [row] = buildExecutionBankRows(
+      [
+        {
+          ...initiatives[0],
+          progress: 99,
+          progressEvidence: {
+            value: 42,
+            observedAt: '2028-01-14T10:00:00.000Z',
+            asOf: '2028-01-31T00:00:00.000Z',
+            source: {
+              system: 'initiative_history',
+              recordId: 'progress-receipt',
+              formulaId: null,
+              formulaVersion: null,
+            },
+            completeness: 'KNOWN',
+            staleness: 'UNKNOWN',
+            reason: 'FRESHNESS_POLICY_MISSING',
+          },
+          forecastEndEvidence: {
+            value: '2028-04-01',
+            observedAt: '2028-01-15T10:00:00.000Z',
+            asOf: '2028-01-31T00:00:00.000Z',
+            source: {
+              system: 'initiative_history',
+              recordId: 'forecast-end-receipt',
+              formulaId: null,
+              formulaVersion: null,
+            },
+            completeness: 'KNOWN',
+            staleness: 'UNKNOWN',
+            reason: 'FRESHNESS_POLICY_MISSING',
+          },
+        },
+      ],
+      [cases[0]],
+      { asOf: '2028-01-31T00:00:00.000Z' }
+    );
+
+    expect(row.progress).toMatchObject({
+      status: 'KNOWN',
+      value: 42,
+      meta: { source: 'initiative_history:progress-receipt', completeness: 'KNOWN' },
+    });
+    expect(row.forecastFinish).toMatchObject({
+      status: 'KNOWN',
+      value: '2028-04-01',
+      meta: { source: 'initiative_history:forecast-end-receipt' },
+    });
+    expect(row.varianceDays).toMatchObject({ status: 'KNOWN', value: 51 });
+  });
+
   it('builds real 1/3/6/12 calendar-month windows with weekly and monthly resolution plus leap-week drilldown', () => {
     expect(buildExecutionCalendarWindow('2027-12-15', 1)).toMatchObject({
       start: '2027-12-01',

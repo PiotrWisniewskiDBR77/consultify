@@ -16,6 +16,16 @@ export type ExecutionBankUnknownReason =
   | 'FORECAST_OBSERVATION_MISSING'
   | 'FORECAST_OBSERVATION_INVALID'
   | 'FORECAST_AFTER_AS_OF'
+  | 'NO_EVENT_HISTORY_BEFORE_AS_OF'
+  | 'SOURCE_CONFLICT'
+  | 'OBSERVATION_MISSING'
+  | 'OBSERVATION_INVALID'
+  | 'VALUE_MISSING'
+  | 'VALUE_INVALID'
+  | 'INCOMPLETE_TASK_INPUTS'
+  | 'TASK_PROGRESS_OBSERVATION_UNPROVEN'
+  | 'TASK_PROGRESS_MISMATCH'
+  | 'FRESHNESS_POLICY_MISSING'
   | 'ACTUAL_MISSING'
   | 'ACTUAL_INVALID'
   | 'CONFIDENCE_MISSING'
@@ -41,6 +51,21 @@ export type ExecutionBankEvidence<T> =
       meta: ExecutionBankEvidenceMeta;
     };
 
+export interface ExecutionBankInitiativeEvidenceSource<T> {
+  value: T | null;
+  observedAt: string | null;
+  asOf: string;
+  source: {
+    system: string;
+    recordId: string | null;
+    formulaId: string | null;
+    formulaVersion: number | null;
+  };
+  completeness: ExecutionBankCompleteness;
+  staleness: ExecutionBankStaleness;
+  reason?: ExecutionBankUnknownReason | string | null;
+}
+
 export interface ExecutionBankInitiativeSource {
   id: string;
   name: string;
@@ -49,11 +74,16 @@ export interface ExecutionBankInitiativeSource {
   ownerId?: string | null;
   ownerName?: string | null;
   progress?: number | null;
+  progressEvidence?: ExecutionBankInitiativeEvidenceSource<number> | null;
   confidence?: string | number | null;
   baselineStartDate?: string | null;
   baselineEndDate?: string | null;
   currentPlanStartDate?: string | null;
   currentPlanEndDate?: string | null;
+  forecastStartDate?: string | null;
+  forecastEndDate?: string | null;
+  forecastStartEvidence?: ExecutionBankInitiativeEvidenceSource<string> | null;
+  forecastEndEvidence?: ExecutionBankInitiativeEvidenceSource<string> | null;
   actualStartDate?: string | null;
   actualEndDate?: string | null;
   updatedAt?: string | null;
@@ -239,7 +269,7 @@ const forecastEvidence = (
   asOf: string,
   field: 'start' | 'finish'
 ): ExecutionBankEvidence<string> => {
-  const provenance = source?.forecastSource?.trim() || 'execution-case';
+  const provenance = source?.forecastSource?.trim() || 'legacy-execution-case-forecast';
   const evidenceMeta = meta(
     asOf,
     provenance,
@@ -256,6 +286,51 @@ const forecastEvidence = (
   if (!Number.isFinite(observed)) return unknown('FORECAST_OBSERVATION_INVALID', evidenceMeta);
   if (observed > Date.parse(asOf)) return unknown('FORECAST_AFTER_AS_OF', evidenceMeta);
   return known(parsed, evidenceMeta);
+};
+
+const initiativeSourceEvidence = <T>(
+  evidence: ExecutionBankInitiativeEvidenceSource<T> | null | undefined,
+  asOf: string,
+  formulaId: string,
+  normalize: (value: T) => T | null,
+  missingReason: ExecutionBankUnknownReason,
+  invalidReason: ExecutionBankUnknownReason
+): ExecutionBankEvidence<T> | null => {
+  if (!evidence) return null;
+  const source = [evidence.source?.system, evidence.source?.recordId].filter(Boolean).join(':') || 'initiative';
+  const evidenceMeta = meta(
+    asOf,
+    source,
+    evidence.source?.formulaId || formulaId,
+    {
+      value: evidence.value as string | number | boolean | null,
+      observedAt: evidence.observedAt,
+      sourceRecordId: evidence.source?.recordId ?? null,
+      reason: evidence.reason ?? null,
+    },
+    evidence.completeness,
+    evidence.staleness
+  );
+  evidenceMeta.formula.version = evidence.source?.formulaVersion ?? 1;
+  if (evidence.value == null || evidence.completeness === 'UNKNOWN') {
+    const reason =
+      evidence.reason === 'VALUE_MISSING'
+        ? missingReason
+        : evidence.reason === 'VALUE_INVALID'
+          ? invalidReason
+          : ((evidence.reason as ExecutionBankUnknownReason | null) ?? missingReason);
+    return unknown<T>(reason, evidenceMeta);
+  }
+  const normalized = normalize(evidence.value);
+  if (normalized == null) return unknown<T>(invalidReason, evidenceMeta);
+  const evidenceAsOf = Date.parse(evidence.asOf);
+  if (!Number.isFinite(evidenceAsOf) || evidenceAsOf !== Date.parse(asOf)) {
+    return unknown<T>('SOURCE_CONFLICT', evidenceMeta);
+  }
+  const observedAt = evidence.observedAt ? Date.parse(evidence.observedAt) : Number.NaN;
+  if (!Number.isFinite(observedAt)) return unknown<T>('OBSERVATION_MISSING', evidenceMeta);
+  if (observedAt > Date.parse(asOf)) return unknown<T>('FORECAST_AFTER_AS_OF', evidenceMeta);
+  return known(normalized, evidenceMeta);
 };
 
 const dayNumber = (date: string) => Date.parse(`${date}T00:00:00.000Z`) / DAY_MS;
@@ -303,20 +378,38 @@ const buildRow = (
     'CURRENT_PLAN_MISSING',
     'CURRENT_PLAN_INVALID'
   );
-  const forecastStart = forecastEvidence(
-    executionCase?.forecastStartDate,
-    executionCase?.forecastObservedAt,
-    executionCase,
-    asOf,
-    'start'
-  );
-  const forecastFinish = forecastEvidence(
-    executionCase?.forecastEndDate,
-    executionCase?.forecastObservedAt,
-    executionCase,
-    asOf,
-    'finish'
-  );
+  const forecastStart =
+    initiativeSourceEvidence(
+      initiative?.forecastStartEvidence,
+      asOf,
+      'execution.bank.forecast-start',
+      (value) => isoDate(value),
+      'FORECAST_MISSING',
+      'FORECAST_INVALID'
+    ) ??
+    forecastEvidence(
+      executionCase?.forecastStartDate,
+      executionCase?.forecastObservedAt,
+      executionCase,
+      asOf,
+      'start'
+    );
+  const forecastFinish =
+    initiativeSourceEvidence(
+      initiative?.forecastEndEvidence,
+      asOf,
+      'execution.bank.forecast-finish',
+      (value) => isoDate(value),
+      'FORECAST_MISSING',
+      'FORECAST_INVALID'
+    ) ??
+    forecastEvidence(
+      executionCase?.forecastEndDate,
+      executionCase?.forecastObservedAt,
+      executionCase,
+      asOf,
+      'finish'
+    );
   const actualStart = dateEvidence(
     initiative?.actualStartDate,
     asOf,
@@ -334,17 +427,28 @@ const buildRow = (
     'ACTUAL_INVALID'
   );
 
-  const progressMeta = meta(asOf, 'initiative.progress', 'execution.bank.progress', {
+  const progressMeta = meta(asOf, 'legacy-initiative-progress-unproven', 'execution.bank.progress', {
     value: initiative?.progress ?? null,
-  });
+  }, 'PARTIAL');
   const progress =
-    initiative?.progress == null
+    initiativeSourceEvidence(
+      initiative?.progressEvidence,
+      asOf,
+      'execution.bank.progress',
+      (value) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
+      },
+      'PROGRESS_MISSING',
+      'PROGRESS_INVALID'
+    ) ??
+    (initiative?.progress == null
       ? unknown<number>('PROGRESS_MISSING', progressMeta)
       : Number.isFinite(Number(initiative.progress)) &&
           Number(initiative.progress) >= 0 &&
           Number(initiative.progress) <= 100
         ? known(Number(initiative.progress), progressMeta)
-        : unknown<number>('PROGRESS_INVALID', progressMeta);
+        : unknown<number>('PROGRESS_INVALID', progressMeta));
   const confidenceMeta = meta(asOf, 'initiative.confidence', 'execution.bank.confidence', {
     value: initiative?.confidence ?? null,
   });

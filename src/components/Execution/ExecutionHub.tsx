@@ -737,6 +737,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? new Date(requested).toISOString()
       : new Date().toISOString();
   });
+  const executionBankAsOfFromUrlRef = React.useRef(
+    Boolean(searchParams.get('asOf') && Number.isFinite(Date.parse(searchParams.get('asOf')!)))
+  );
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -1034,15 +1037,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // browser Back/Forward. Ref chroni wejściowy URL przed nadpisaniem przez
   // stan poprzedniego renderu w sąsiednim efekcie synchronizacji.
   useEffect(() => {
-    const hasNavigationInput = ['tab', 'open', 'initiativeId', 'executionCaseId'].some((key) =>
-      searchParams.has(key)
-    );
+    const hasNavigationInput =
+      executionBankAsOfFromUrlRef.current ||
+      ['tab', 'open', 'initiativeId', 'executionCaseId', 'asOf'].some((key) =>
+        searchParams.has(key)
+      );
     if (!hasNavigationInput) return;
     applyingNavigationRef.current = true;
     const navigation = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
     const requestedAsOf = searchParams.get('asOf');
     if (requestedAsOf && Number.isFinite(Date.parse(requestedAsOf))) {
       setExecutionBankAsOf(new Date(requestedAsOf).toISOString());
+      executionBankAsOfFromUrlRef.current = true;
+    } else if (executionBankAsOfFromUrlRef.current) {
+      setExecutionBankAsOf(new Date().toISOString());
+      executionBankAsOfFromUrlRef.current = false;
     }
     const requestedScope = searchParams.get('scope');
     if (requestedScope === 'active' || requestedScope === 'all') setScope(requestedScope);
@@ -1321,7 +1330,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         // (realizacja + handoff), nie jako warunek istnienia (decyzja CTO
         // C5.1: wszystkie inicjatywy w toku, handoff = opcjonalna bramka).
         const [response, executionCasesResponse] = await Promise.all([
-          Api.getInitiatives(),
+          Api.getInitiatives(undefined, {
+            asOf: executionBankAsOf,
+            includeExecutionEvidence: true,
+          }),
           listExecutionCases(),
         ]);
         // NAPRAWA odbioru 06.09 (audytor, DEC-441) — ZNALEZISKO-RODZEŃSTWO
@@ -1440,6 +1452,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     activeTab,
     allowDemoData,
     currentProjectId,
+    executionBankAsOf,
     executionDemoData.initiatives,
     executionTruthRefreshKey,
     t,
@@ -2092,11 +2105,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               ? `${owner.firstName ?? ''} ${owner.lastName ?? ''}`.trim() || null
               : null,
             progress: (initiative as any).progress ?? null,
+            progressEvidence: (initiative as any).progressEvidence ?? null,
             confidence: (initiative as any).confidenceLevel ?? null,
             baselineStartDate: (initiative as any).baselineStartDate ?? null,
             baselineEndDate: (initiative as any).baselineEndDate ?? null,
             currentPlanStartDate: initiative.plannedStartDate ?? null,
             currentPlanEndDate: initiative.plannedEndDate ?? null,
+            forecastStartDate: (initiative as any).forecastStartDate ?? null,
+            forecastEndDate: (initiative as any).forecastEndDate ?? null,
+            forecastStartEvidence: (initiative as any).forecastStartEvidence ?? null,
+            forecastEndEvidence: (initiative as any).forecastEndEvidence ?? null,
             actualStartDate: (initiative as any).actualStartDate ?? null,
             actualEndDate: (initiative as any).actualEndDate ?? null,
             updatedAt: (initiative as any).updatedAt ?? null,

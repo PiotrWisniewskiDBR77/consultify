@@ -7056,9 +7056,16 @@ export const Api = {
   // PHASE 6: AI INTEGRATION
   // ==========================================
   // --- INITIATIVES (Phase 2) ---
-  getInitiatives: async (projectId?: string): Promise<any[]> => {
-    let url = `${API_URL}/initiatives`;
-    if (projectId) url += `?projectId=${encodeURIComponent(projectId)}`;
+  getInitiatives: async (
+    projectId?: string,
+    options?: { asOf?: string; includeExecutionEvidence?: boolean }
+  ): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (projectId) params.set('projectId', projectId);
+    if (options?.includeExecutionEvidence) params.set('includeExecutionEvidence', '1');
+    if (options?.asOf) params.set('asOf', options.asOf);
+    const query = params.toString();
+    const url = `${API_URL}/initiatives${query ? `?${query}` : ''}`;
     const res = await fetchWithRetry(url, { headers: getHeaders() });
     return normalizeInitiativeList(await handleResponse(res, 'Failed to fetch initiatives'));
   },
