@@ -13,7 +13,12 @@ import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import {
+  AccessCodeRegistrationError,
+  registerWithAccessCode,
+} from '../services/accessCodeRegistrationService.js';
 import AccessCodeService from '../services/accessCodeService.js';
+import { buildOrgSuspendedResponseBody } from '../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
@@ -416,109 +421,41 @@ router.post(
   '/codes/register',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { code, email, password, firstName, lastName, _phone } = req.body;
-
-    const accessCode = await dbGet<{
-      id: string;
-      organization_id: string;
-      role: string;
-      max_uses: number;
-      current_uses: number;
-      expires_at: string | null;
-      is_active: number;
-      org_id: string;
-      org_name: string;
-    }>(
-      `SELECT ac.*, o.id as org_id, o.name as org_name
-        FROM access_codes ac
-        JOIN organizations o ON ac.organization_id = o.id
-        WHERE ac.code = ?`,
-      [code]
-    );
-
-    if (!accessCode) {
-      return res.status(404).json({ error: 'Invalid access code' });
-    }
-
-    // Validate code
-    const isExpired = accessCode.expires_at && new Date(accessCode.expires_at) < new Date();
-    const isMaxedOut = accessCode.max_uses !== -1 && accessCode.current_uses >= accessCode.max_uses;
-
-    if (accessCode.is_active === 0) {
-      return res.status(400).json({ error: 'This access code has been deactivated' });
-    }
-    if (isExpired) {
-      return res.status(400).json({ error: 'This access code has expired' });
-    }
-    if (isMaxedOut) {
-      return res.status(400).json({ error: 'This access code has reached its usage limit' });
-    }
-
-    // Check if user already exists
-    const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [
-      email,
-    ]);
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    const newUserId = uuidv4();
-    const hashedPassword = bcrypt.hashSync(password, 8);
-
-    // Create user
-    const userResult = await dbRun(
-      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        newUserId,
-        accessCode.org_id,
+    try {
+      const registration = await registerWithAccessCode({
+        code,
         email,
-        hashedPassword,
+        password,
         firstName,
         lastName,
-        accessCode.role,
-        'active',
-      ]
-    );
-
-    if (!userResult.success) {
-      throw new Error(userResult.error || 'Failed to create user');
+      });
+      return res.json({
+        success: true,
+        user: {
+          id: registration.userId,
+          email: registration.email,
+          firstName: registration.firstName,
+          lastName: registration.lastName,
+          role: registration.role,
+          organizationId: registration.organizationId,
+          companyName: registration.organizationName,
+        },
+        message: 'Registration successful',
+      });
+    } catch (error) {
+      if (!(error instanceof AccessCodeRegistrationError)) throw error;
+      if (error.reason === 'INVALID_CODE') return res.status(404).json({ error: error.message });
+      if (error.reason === 'ORGANIZATION_BLOCKED') {
+        return res.status(403).json(buildOrgSuspendedResponseBody(error.blockingStatus));
+      }
+      if (error.reason === 'CODE_ORG_MISMATCH') {
+        return res.status(400).json({
+          error: error.message,
+          errorCode: 'ACCESS_CODE_ORG_MISMATCH',
+        });
+      }
+      return res.status(400).json({ error: error.message });
     }
-
-    // Update code usage
-    const usageResult = await dbRun(
-      `UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`,
-      [accessCode.id]
-    );
-
-    if (!usageResult.success) {
-      throw new Error(usageResult.error || 'Failed to update code usage');
-    }
-
-    // Track code usage
-    const trackResult = await dbRun(
-      `INSERT INTO access_code_usage (id, code_id, user_id, used_at)
-            VALUES (?, ?, ?, datetime('now'))`,
-      [uuidv4(), accessCode.id, newUserId]
-    );
-
-    if (!trackResult.success) {
-      throw new Error(trackResult.error || 'Failed to track code usage');
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        id: newUserId,
-        email: email,
-        firstName: firstName,
-        lastName: lastName,
-        role: accessCode.role,
-        organizationId: accessCode.org_id,
-        companyName: accessCode.org_name,
-      },
-      message: 'Registration successful',
-    });
   })
 );
 
