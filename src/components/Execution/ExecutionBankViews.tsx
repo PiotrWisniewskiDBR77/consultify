@@ -668,7 +668,7 @@ const BankGantt = ({
   <div className="h-full overflow-auto" data-testid="execution-bank-gantt">
     <HorizonControls calendarWindow={calendarWindow} onHorizonChange={onHorizonChange} />
     <div className="min-w-[980px] px-4 pb-4">
-      <div className="grid grid-cols-[220px_minmax(730px,1fr)] items-end border-b border-c-border-subtle pb-2">
+      <div className="grid grid-cols-[220px_minmax(730px,1fr)] gap-3 items-end border-b border-c-border-subtle pb-2">
         <span className="text-[11px] font-semibold uppercase text-c-text-muted">
           Initiative schedule
         </span>
