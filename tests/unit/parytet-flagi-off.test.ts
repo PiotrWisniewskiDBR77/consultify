@@ -19,7 +19,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
+import type { PoolClient } from 'pg';
+
 import { isInitiativeUnifiedReadEnabled } from '../../server/src/domain/initiatives-execution/initiativeUnifiedReader';
+import { exportOrganizationData } from '../../server/src/services/organizationExportService';
+import { ORGANIZATION_EXPORT_TABLES } from '../../server/src/services/organizationExportContract';
 import { definitionApprovalEnabled } from '../../server/src/routes/pmo/definitionApprovalAdapter';
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -158,5 +162,120 @@ describe('K3 parytet: trasy bazy 60051310d7 nadal istnieją w kandydacie', () =>
     expect(source, `${file}: brak ${method.toUpperCase()} ${route} — trasa zniknęła względem bazy`).toContain(
       needle
     );
+  });
+});
+
+/**
+ * K3b — REGRESJE PARYTETU ZMIERZONE NA ŻYWYM STANOWISKU (2026-09-13).
+ *
+ * Stanowisko: jedna baza (ścisły migrator kandydata), dwa API na tej samej
+ * bazie, flagi NIEUSTAWIONE — baza 60051310d7 na 4305, kandydat na 4306.
+ * Poniższe przypadki zamrażają to, co pomiar pokazał jako złamany parytet,
+ * żeby regresja nie wróciła cicho przy kolejnym scaleniu.
+ */
+describe('K3b parytet: eksport organizacji znosi rozjazd kolumn zamiast dawać 500', () => {
+  const ORGANIZATIONS = ORGANIZATION_EXPORT_TABLES.find(
+    (entry) => entry.schema === 'public' && entry.table === 'organizations'
+  )!;
+  /** Kolumny kontraktu, których NIE MA baza ze ścisłego migratora (000_initdb… nigdy nie biegnie). */
+  const BRAKUJACE = [
+    'trial_extension_count',
+    'trial_warning_sent_at',
+    'onboarding_accept_idempotency_key',
+  ];
+
+  /** Atrapa katalogu Postgresa: odpowiada dokładnie na trzy zapytania systemowe eksportu. */
+  function katalog(pominieteKolumny: string[] = []) {
+    const wyslaneSql: string[] = [];
+    const kolumny = Object.entries(ORGANIZATIONS.columnTypes).filter(
+      ([name]) => !pominieteKolumny.includes(name)
+    );
+    const client = {
+      query: async (sql: string, args: unknown[]) => {
+        wyslaneSql.push(sql);
+        if (sql.includes('format_type('))
+          return {
+            rows: kolumny.map(([column_name, data_type]) => ({
+              schema_name: 'public',
+              table_name: 'organizations',
+              column_name,
+              data_type,
+            })),
+          };
+        if (sql.includes("con.contype='p'"))
+          return {
+            rows: [
+              { schema_name: 'public', table_name: 'organizations', columns: ORGANIZATIONS.primaryKey },
+            ],
+          };
+        if (sql.includes("con.contype='f'"))
+          return {
+            rows: ORGANIZATIONS.foreignKeys.map((fk) => ({
+              child_schema: 'public',
+              child_table: 'organizations',
+              parent_schema: fk.parentSchema,
+              parent_table: fk.parentTable,
+              child_columns: fk.columns,
+              parent_columns: fk.parentColumns,
+              delete_action: fk.deleteAction,
+            })),
+          };
+        return { rows: [{ id: args[0], name: 'Parytet K3b' }] };
+      },
+    } as unknown as PoolClient;
+    return { client, wyslaneSql };
+  }
+
+  it('układ A (kolumny SĄ w bazie): eksport kompletny, zero pominięć', async () => {
+    const { client } = katalog();
+    const wynik = await exportOrganizationData(client, 'org-a', [ORGANIZATIONS]);
+    expect(wynik.organization).not.toBeNull();
+    expect(wynik.skipped).toEqual([]);
+  });
+
+  it('układ B (kolumn NIE MA): 200 z eksportem częściowym, nigdy wyjątek', async () => {
+    const { client, wyslaneSql } = katalog(BRAKUJACE);
+    const wynik = await exportOrganizationData(client, 'org-a', [ORGANIZATIONS]);
+    // Regresja brzmiała: korzeń pominięty -> organization null -> 500 ORG_EXPORT_FAILED.
+    expect(wynik.organization).not.toBeNull();
+    for (const kolumna of BRAKUJACE) {
+      expect(wynik.skipped).toContainEqual({
+        tabela: 'organizations',
+        kolumna,
+        reason: 'declared_column_missing_in_schema',
+      });
+      expect(wyslaneSql.find((sql) => sql.includes('FROM "public"."organizations"'))).not.toContain(
+        kolumna
+      );
+    }
+    expect(wynik.securityManifest.unresolvedTables).toContainEqual({
+      table: 'organizations',
+      reason: 'schema_column_drift_partial_export',
+    });
+    expect(wynik.securityManifest.complete).toBe(false);
+  });
+});
+
+describe('K3b parytet: ścieżki, które pomiar wskazał jako zmienione', () => {
+  it('StaffingPlanController przy fladze OFF sprawdza plan w pełnym zakresie dzierżawcy', () => {
+    // Pomiar: PUT na ISTNIEJĄCYM planie = 200 na obu API; 404 dostaje wyłącznie
+    // plan nieistniejący (baza kłamała `{"success":true}`). Warunkiem tej
+    // równoważności jest zakres zapytania: id + initiative_id + organization_id
+    // (wszystkie trzy kolumny są NOT NULL, więc legalny plan zawsze się trafia).
+    const source = readSource('server/src/controllers/StaffingPlanController.ts').replace(/\s+/g, '');
+    expect(source).toContain(
+      "SELECTidFROMstaffing_plansWHEREid=?ANDinitiative_id=?ANDorganization_id=?"
+    );
+  });
+
+  it('GET /api/initiatives/:id nie wypuszcza aliasów SQL forecast_*_day', () => {
+    const source = readSource('server/src/services/v8/planningPortfolioReadService.ts').replace(
+      /\s+/g,
+      ''
+    );
+    // Alias musi zostać ZDJĘTY z wiersza przed rozsypaniem go do odpowiedzi.
+    expect(source).toContain('forecast_start_date_day:forecastStartDay');
+    expect(source).toContain('forecast_end_date_day:forecastEndDay');
+    expect(source).not.toContain('return{...initiative,');
   });
 });

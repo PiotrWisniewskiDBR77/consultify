@@ -42,4 +42,19 @@ describe('planning Initiative detail operational forecast aliases', () => {
     expect(detail?.forecastStartDate).toBe('2026-10-10');
     expect(detail?.forecastEndDate).toBeNull();
   });
+
+  // K3b — REGRESJA PARYTETU: `GET /api/initiatives/:id` wypuszczał surowe
+  // aliasy SQL obok pól camelCase. Alias jest szczegółem zapytania, nie
+  // kolumną `initiatives`; baza 60051310d7 tych pól nie zwracała i żaden
+  // konsument ich nie czyta.
+  it('nie wypuszcza surowych aliasów SQL forecast_*_day do odpowiedzi', async () => {
+    const detail = await getInitiativeDetailRead('initiative-forecast-1', 'org-1', 'en');
+
+    expect(detail).not.toHaveProperty('forecast_start_date_day');
+    expect(detail).not.toHaveProperty('forecast_end_date_day');
+    expect(Object.keys(detail || {}).filter((key) => key.endsWith('_day'))).toEqual([]);
+    // Kolumny realne zostają — usuwamy alias, nie dane.
+    expect(detail).toHaveProperty('forecast_start_date');
+    expect(detail).toHaveProperty('forecast_end_date');
+  });
 });

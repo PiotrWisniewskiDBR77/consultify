@@ -59,6 +59,64 @@ function sanitize(value: unknown): unknown {
   return value;
 }
 
+/**
+ * Column-level contract drift, classified so a drifted column degrades the
+ * export of ONE column instead of dropping the whole tenant table.
+ *
+ * Reason this exists (K3b parity measurement, 2026-09-13): the declared
+ * contract lists 59 `organizations` columns; a database built by the strict
+ * migrator has 56 (`trial_extension_count`, `trial_warning_sent_at`,
+ * `onboarding_accept_idempotency_key` live only in `000_initdb_core_tables.sql`,
+ * which the schema chain never executes). The all-or-nothing drift check then
+ * skipped the tenant ROOT table, left `result.organization = null` and turned a
+ * working export into HTTP 500 `ORG_EXPORT_FAILED`.
+ *
+ * Fail-closed direction is preserved per column:
+ *   - a declared column missing in the database cannot be selected -> omitted;
+ *   - a declared column whose type drifted is no longer the column the policy
+ *     classified -> omitted;
+ *   - a column present in the database but NOT declared stays unclassified and
+ *     is never exported (it was never in `projection`) -> recorded.
+ * Nothing undeclared becomes exportable; only the blast radius shrinks from
+ * "whole table" to "this column".
+ */
+interface ColumnContractDrift {
+  missing: string[];
+  typeMismatch: string[];
+  undeclared: string[];
+}
+
+function columnContractDrift(
+  policy: OrganizationExportTableContract,
+  table: { columns: string[]; types: Record<string, string> }
+): ColumnContractDrift {
+  const present = new Set(table.columns);
+  const declared = new Set([
+    ...policy.projection,
+    ...policy.excludedColumns,
+    ...Object.keys(policy.columnTypes),
+  ]);
+  return {
+    missing: [...declared].filter((column) => !present.has(column)),
+    typeMismatch: table.columns.filter(
+      (column) => declared.has(column) && policy.columnTypes[column] !== table.types[column]
+    ),
+    undeclared: table.columns.filter((column) => !declared.has(column)),
+  };
+}
+
+const driftIsEmpty = (drift: ColumnContractDrift): boolean =>
+  drift.missing.length === 0 && drift.typeMismatch.length === 0 && drift.undeclared.length === 0;
+
+/** Tables whose row content is filtered by a projector that READS columns. */
+const contentPrivacyProjected = (policy: OrganizationExportTableContract): boolean =>
+  Boolean(
+    policy.interviewPrivacy ||
+      policy.personalTaskPrivacy ||
+      policy.decisionPrivacyKind ||
+      policy.canonicalLineageColumns
+  );
+
 interface CatalogColumn {
   schema_name: string;
   table_name: string;
@@ -189,22 +247,40 @@ export async function exportOrganizationData(
       unresolved(name, 'ownership_contract_unresolved');
       continue;
     }
-    const projection = policy.projection.filter((column) => !credential.test(normalized(column)));
-    const declared = new Set([...policy.projection, ...policy.excludedColumns]);
+    const drift = columnContractDrift(policy, table);
+    // A column we cannot read as classified is dropped from the projection.
+    const untrusted = new Set([...drift.missing, ...drift.typeMismatch]);
+    const projection = policy.projection.filter(
+      (column) => !credential.test(normalized(column)) && !untrusted.has(column)
+    );
+    // Table-level drift still fails closed: without the ownership column the
+    // tenant scope cannot be proved, and a drifted primary key changes row
+    // identity and the deterministic order of the export.
+    //
+    // A privacy-projected table keeps the ORIGINAL all-or-nothing rule. Its
+    // projector decides what may leave the tenant by READING columns
+    // (`is_anonymous`, `session_id`, `owner_id`, …); silently dropping a
+    // drifted one of those would let the projector mis-classify a row and
+    // widen disclosure. Per-column degradation is therefore allowed only
+    // where no content-privacy decision depends on the columns.
     if (
       (policy.ownerColumn && !table.columns.includes(policy.ownerColumn)) ||
       projection.length === 0 ||
-      projection.some((column) => !table.columns.includes(column)) ||
-      [...declared, ...Object.keys(policy.columnTypes)].some(
-        (column) => !table.columns.includes(column)
-      ) ||
-      table.columns.some(
-        (column) => !declared.has(column) || policy.columnTypes[column] !== table.types[column]
-      ) ||
+      policy.primaryKey.some((column) => untrusted.has(column)) ||
+      (!driftIsEmpty(drift) && contentPrivacyProjected(policy)) ||
       JSON.stringify(pks.get(key) || []) !== JSON.stringify(policy.primaryKey)
     ) {
       unresolved(name, 'schema_projection_or_primary_key_drift');
       continue;
+    }
+    if (!driftIsEmpty(drift)) {
+      for (const column of drift.missing)
+        result.skipped.push({ tabela: name, kolumna: column, reason: 'declared_column_missing_in_schema' });
+      for (const column of drift.typeMismatch)
+        result.skipped.push({ tabela: name, kolumna: column, reason: 'declared_column_type_drift' });
+      for (const column of drift.undeclared)
+        result.skipped.push({ tabela: name, kolumna: column, reason: 'undeclared_column_not_exported' });
+      unresolved(name, 'schema_column_drift_partial_export');
     }
     const actualEdges = foreignKeys.rows.filter(
       (edge) => identity(edge.child_schema, edge.child_table) === key
@@ -269,14 +345,14 @@ export async function exportOrganizationData(
         !provedEdge ||
         !parentCatalog.columns.includes(parent.ownerColumn) ||
         !table.columns.includes(edge.childColumn) ||
-        [...parent.projection, ...parent.excludedColumns, ...Object.keys(parent.columnTypes)].some(
-          (column) => !parentCatalog.columns.includes(column)
-        ) ||
-        parentCatalog.columns.some(
-          (column) =>
-            parent.columnTypes[column] !== parentCatalog.types[column] ||
-            ![...parent.projection, ...parent.excludedColumns].includes(column)
-        ) ||
+        // The ownership predicate reads the parent's OWNER column through a
+        // proved foreign key; drift in the parent's other columns is recorded
+        // and degraded where the parent itself is exported (see
+        // columnContractDrift) and must not silently unresolve this child.
+        columnContractDrift(parent, parentCatalog).typeMismatch.includes(parent.ownerColumn) ||
+        (contentPrivacyProjected(parent) &&
+          !driftIsEmpty(columnContractDrift(parent, parentCatalog))) ||
+        parent.primaryKey.some((column) => !parentCatalog.columns.includes(column)) ||
         JSON.stringify(pks.get(identity(edge.parentSchema, edge.parentTable)) || []) !==
           JSON.stringify(parent.primaryKey) ||
         JSON.stringify(
