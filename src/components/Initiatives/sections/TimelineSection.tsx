@@ -43,7 +43,7 @@ import { OperationalForecastEditor } from './OperationalForecastEditor';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
 import type { InitiativeSectionProps, TimelineMilestone, TimelinePhase } from './types';
-import { getTimelineMode, TIMELINE_MODE_META } from './types';
+import { getTimelineMode, isInitiativeTimelineLocked, TIMELINE_MODE_META } from './types';
 
 // ==========================================
 // HELPERS
@@ -516,7 +516,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     setTimelineMilestones,
     timelinePhases,
     setTimelinePhases,
-    timelineLocked,
+    timelineLocked: contextTimelineLocked,
     baselineVersion,
     estimatedDurationMonths,
     raidItems,
@@ -589,7 +589,11 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   const plannerRef = useRef<TimelinePlannerHandle | null>(null);
 
   // Derived values
-  const mode = getTimelineMode(status);
+  const canonicalLifecycle =
+    initiative?.documentOrigin === 'initiatives-runtime-v1' ? initiative?.lifecycle : null;
+  const timelineLocked =
+    contextTimelineLocked || isInitiativeTimelineLocked(status, canonicalLifecycle);
+  const mode = getTimelineMode(status, canonicalLifecycle);
   const modeMeta = TIMELINE_MODE_META[mode];
 
   const plannedStart = startDate || initiative?.plannedStartDate || initiative?.planned_start_date;
