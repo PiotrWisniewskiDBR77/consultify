@@ -375,10 +375,10 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
 
 const rowBucket = (row: ExecutionBankRow, buckets: readonly ExecutionCalendarBucket[]) => {
   if (row.displayFinish.status !== 'KNOWN') return null;
+  const finish = row.displayFinish.value;
   return (
     buckets.find(
-      (bucket) =>
-        row.displayFinish.value >= bucket.start && row.displayFinish.value < bucket.endExclusive
+      (bucket) => finish >= bucket.start && finish < bucket.endExclusive
     ) ?? null
   );
 };
