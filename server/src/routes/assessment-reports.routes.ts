@@ -3082,6 +3082,67 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
  * (stanowisko lokalne: `method_sessions` = 0). Bez tych tras ekran raportu
  * oceny zastanej nie ma z czego pobrać pliku.
  */
+/**
+ * Język STAŁYCH napisów raportu (DEC-461: domyślnie `en`, `pl` tylko na
+ * jawne żądanie). Kolejność, pierwsza trafiona wygrywa:
+ *   1. `?lang=` w URL (jawny wybór — np. link z ekranu, gdzie użytkownik
+ *      przełączył język podglądu);
+ *   2. `users.language` żądającego (kolumna z migracji
+ *      `20260726_users_language_preference.sql` — realnie istnieje na
+ *      lokalnej kopii stagingu, zweryfikowane `\d users`);
+ *   3. `organizations.default_language` organizacji (istnieje realnie —
+ *      `\d organizations`; PUSTA dla DBR77 w danych testowych, więc spada do
+ *      domyślnej);
+ *   4. `en`.
+ * Każdy krok bazy jest best-effort: błąd zapytania NIGDY nie wywraca
+ * eksportu, tylko cofa do następnego kandydata (fail-safe w stronę `en`, bo
+ * to jest teraz domyślny język aplikacji — odwrotnie niż
+ * `languagePolicy.ts`, które jest SSOT WYŁĄCZNIE dla odpowiedzi czatu AI
+ * Teresy, nie dla plików eksportu).
+ */
+function parseExplicitReportLanguage(value: unknown): 'pl' | 'en' | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized.startsWith('pl')) return 'pl';
+  if (normalized.startsWith('en')) return 'en';
+  return null;
+}
+
+async function resolveAssessmentReportLanguage(
+  req: AuthRequest,
+  organizationId: string
+): Promise<'pl' | 'en'> {
+  const explicit = parseExplicitReportLanguage(req.query?.lang);
+  if (explicit) return explicit;
+
+  try {
+    const userId = req.user?.id;
+    if (userId) {
+      const row = await get<{ language: string | null }>(
+        `SELECT language FROM users WHERE id = ?`,
+        [userId]
+      );
+      const fromUser = parseExplicitReportLanguage(row?.language ?? null);
+      if (fromUser) return fromUser;
+    }
+  } catch {
+    /* users.language niedostępne — schodzimy do organizacji, potem do 'en' */
+  }
+
+  try {
+    const org = await get<{ default_language: string | null }>(
+      `SELECT default_language FROM organizations WHERE id = ?`,
+      [organizationId]
+    );
+    const fromOrg = parseExplicitReportLanguage(org?.default_language ?? null);
+    if (fromOrg) return fromOrg;
+  } catch {
+    /* organizations.default_language niedostępne — 'en' */
+  }
+
+  return 'en';
+}
+
 const eksportOceny = (
   format: 'docx' | 'pptx' | 'pdf',
   mime: string
@@ -3091,13 +3152,15 @@ const eksportOceny = (
       const organizationId = requireRequestOrganizationId(req, res);
       if (!organizationId) return;
       const { assessmentId } = req.params;
+      const language = await resolveAssessmentReportLanguage(req, organizationId);
 
       const { assessmentLegacyReportContractService } = await import(
         '../services/assessment/assessmentLegacyReportContractService.js'
       );
       const { contract, organizationName } = await assessmentLegacyReportContractService.build(
         organizationId,
-        assessmentId
+        assessmentId,
+        language
       );
 
       let buffer: Buffer;
@@ -3108,7 +3171,9 @@ const eksportOceny = (
         const { renderDocumentSchemaToDocxBuffer } = await import(
           '../services/documentStudio/documentDocxRenderer.js'
         );
-        buffer = await renderDocumentSchemaToDocxBuffer(buildAssessmentDrdReportSchema(contract));
+        buffer = await renderDocumentSchemaToDocxBuffer(
+          buildAssessmentDrdReportSchema(contract, organizationName)
+        );
       } else {
         const { buildAssessmentDeckModel } = await import(
           '../services/assessment/assessmentDeckModel.js'
@@ -3128,7 +3193,14 @@ const eksportOceny = (
       }
 
       const label = contract.sessionLabel.displayName ?? contract.sessionId;
-      const rdzen = format === 'docx' ? 'Raport_z_oceny' : 'Prezentacja_z_oceny';
+      const rdzen =
+        language === 'pl'
+          ? format === 'docx'
+            ? 'Raport_z_oceny'
+            : 'Prezentacja_z_oceny'
+          : format === 'docx'
+            ? 'Assessment_Report'
+            : 'Assessment_Presentation';
       const safeLabel = label
         .normalize('NFC')
         .replace(/[^\p{L}\p{N}._-]+/gu, '_')

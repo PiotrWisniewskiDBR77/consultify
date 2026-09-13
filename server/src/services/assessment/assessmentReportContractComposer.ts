@@ -45,8 +45,21 @@ export interface ReportContractInput {
   readonly outputId: string | null;
   readonly revision: number;
   readonly generatedAt: string;
+  /** Kiedy dane oceny (odpowiedzi) zostały ostatnio zmienione — może być
+   * WCZEŚNIEJSZE niż `generatedAt` (data wydania pliku = dziś). Ekran/plik
+   * pokazuje obie daty, żeby czytelnik nie mylił "wygenerowano teraz" z
+   * "dane są sprzed tygodni". Opcjonalne — trasa jądra metodycznego (poza
+   * zakresem S1.4b) tego pola nie podaje. */
+  readonly assessmentUpdatedAt?: string | null;
   readonly methodVersion: string;
   readonly sourceKind: ReportContractSourceKind;
+  /** Język STAŁYCH napisów raportu (nagłówki, etykiety, okładka) — DEC-461:
+   * domyślnie `en`, `pl` tylko na jawne żądanie. Treść narracyjna
+   * (`executiveSummary`, komentarze obszarów…) NIE jest tym objęta — pisze ją
+   * zawsze po polsku `assessmentNarrativeComposer.ts` (poza zakresem S1.4b).
+   * Opcjonalne, żeby trasa jądra metodycznego (poza zakresem tej naprawy)
+   * mogła nie podawać nic i zachować dotychczasowe polskie renderowanie. */
+  readonly language?: 'pl' | 'en';
   readonly sessionLabel: {
     readonly displayName: string | null;
     readonly source: 'project' | 'assessment' | null;
@@ -121,8 +134,10 @@ export function composeReportContract(input: ReportContractInput) {
     outputId: input.outputId,
     revision: input.revision,
     generatedAt: input.generatedAt,
+    assessmentUpdatedAt: input.assessmentUpdatedAt ?? null,
     methodVersion: input.methodVersion,
     sourceKind: input.sourceKind,
+    language: input.language ?? 'pl',
     sessionLabel: input.sessionLabel,
     businessProfile: input.businessProfile,
     employment: input.employment,

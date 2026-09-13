@@ -723,6 +723,10 @@ export interface DocumentSchema {
   /** Deterministic DRD cover metadata. Optional so every legacy schema remains unchanged. */
   drdReportMetadata?: {
     clientName: string;
+    /** Nazwa sesji/oceny (np. "DRD Assessment - Jul 12, 2026") — drukowana
+     * jako podtytuł pod tytułem (S1.4b: tytuł = organizacja, podtytuł =
+     * sesja). `null`, gdy sesja nie ma własnej nazwy różnej od organizacji. */
+    sessionLabel?: string | null;
     businessProfile?: string | null;
     employment?: string | null;
     assessmentPeriod?: string | null;
@@ -731,6 +735,10 @@ export interface DocumentSchema {
     methodology: string;
     sessionSignature: string;
     issuedAt: string;
+    /** Kiedy dane SAMEJ oceny były ostatnio zmienione — może być wcześniejsze
+     * niż `issuedAt` (data wygenerowania TEGO pliku). Okładka pokazuje obie,
+     * gdy się różnią (S1.4b). */
+    assessmentUpdatedAt?: string | null;
   };
   /**
    * Lifecycle status — Epic E5. Optional on the type to keep historical

@@ -23,9 +23,17 @@
 import DRD_STRUCTURE from '../../data/drdStructure.js';
 import {
   areaAverage,
+  areaLabel,
+  axisLabel,
   priorityForGap,
   type AssessmentReportContract,
 } from './assessmentDrdReportSchemaService.js';
+import {
+  formatReportDate,
+  reportI18n,
+  type ReportI18nShape,
+  type ReportLanguage,
+} from './assessmentReportI18n.js';
 
 export const DECK_GEOMETRY = Object.freeze({
   slideW: 10,
@@ -105,14 +113,10 @@ export interface DeckModel {
   readonly organizationName: string;
   readonly generatedAt: string;
   readonly confidentiality: string;
+  readonly language: ReportLanguage;
   readonly slides: readonly DeckSlide[];
 }
 
-const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
 
 const G = DECK_GEOMETRY;
 const CONTENT_W = G.slideW - 2 * G.margin;
@@ -181,6 +185,11 @@ function procent(value: number | null): string {
 
 interface AxisStat {
   readonly axisId: number;
+  /** Nazwa osi w JĘZYKU RAPORTU (EN-first ze struktury DRD dla `en`, nakładka
+   * PL dla `pl` — patrz `axisLabel()` w `assessmentDrdReportSchemaService.ts`,
+   * ta sama zasada). Pole zostaje `namePL` z nazwy historycznej (konsumowane
+   * przez istniejące testy/wywołania), ale NIESIE etykietę dla bieżącego
+   * `language`, nie zawsze polską. */
   readonly namePL: string;
   readonly current: number | null;
   readonly target: number | null;
@@ -190,12 +199,15 @@ interface AxisStat {
   readonly criticalCount: number;
 }
 
-export function policzOsie(contract: AssessmentReportContract): AxisStat[] {
+export function policzOsie(
+  contract: AssessmentReportContract,
+  language: ReportLanguage = 'pl'
+): AxisStat[] {
   return contract.chapters.map((chapter) => {
     const gaps = chapter.matrix.areas.flatMap((area) => (area.gap === null ? [] : [area.gap]));
     return {
       axisId: chapter.axisId,
-      namePL: chapter.axisNamePL ?? chapter.axisName,
+      namePL: language === 'pl' ? (chapter.axisNamePL ?? chapter.axisName) : chapter.axisName,
       current: areaAverage(chapter.matrix.areas, 'currentLevel', chapter.maxLevel),
       target: areaAverage(chapter.matrix.areas, 'targetLevel', chapter.maxLevel),
       assessed: chapter.matrix.areas.filter((area) => area.currentLevel !== null).length,
@@ -215,9 +227,16 @@ export function buildAssessmentDeckModel(
   contract: AssessmentReportContract,
   organizationName: string | null
 ): DeckModel {
-  const clientName = contract.sessionLabel.displayName ?? 'Klient do uzupełnienia';
-  const org = organizationName ?? clientName;
-  const osie = policzOsie(contract);
+  const language: ReportLanguage = contract.language ?? 'pl';
+  const t = reportI18n(language);
+  const clientName = contract.sessionLabel.displayName ?? t.deckClientMissing;
+  // S1.4b fix #1: `org` (organization name) drives the visible cover TITLE
+  // (see slide 1 below) — `clientName` (session/assessment name) used to be
+  // the cover title; it now shows up as the first cover bullet instead, and
+  // stays the "Przedmiot oceny"/"Subject of assessment" row on the context
+  // slide (unchanged there).
+  const org = organizationName?.trim() || clientName;
+  const osie = policzOsie(contract, language);
   const ocenione = contract.chapters.reduce(
     (sum, chapter) => sum + chapter.matrix.areas.filter((area) => area.currentLevel !== null).length,
     0
@@ -235,24 +254,26 @@ export function buildAssessmentDeckModel(
       left.area.unitId.localeCompare(right.area.unitId)
   );
   const krytyczne = luki.filter((entry) => entry.gap >= 3);
-  const dataPL = PL_DATE.format(new Date(contract.generatedAt));
+  const dataWydania = formatReportDate(new Date(contract.generatedAt), language);
 
   const slides: DeckSlide[] = [];
 
-  // 1 — okładka
+  // 1 — okładka. S1.4b fix #1: TITLE = nazwa organizacji (`org`), nie nazwa
+  // sesji — sesja przenosi się do pierwszego bullet-a poniżej.
   slides.push({
     id: 'cover',
-    kicker: 'Raport z oceny dojrzałości cyfrowej',
-    title: clientName,
+    kicker: t.deckReportKicker,
+    title: org,
     cover: true,
     bodies: [
       {
         kind: 'bullets',
         rect: { x: G.margin, y: 3.1, w: CONTENT_W, h: 1.4 },
         items: [
-          `Metodyka: ${contract.methodVersion}`,
-          `Data wydania: ${dataPL}`,
-          `Zakres: ${DRD_STRUCTURE.length} osi, ${wszystkie} obszarów`,
+          clientName,
+          t.deckMethodologyBullet(contract.methodVersion),
+          t.deckIssuedBullet(dataWydania),
+          t.deckScopeBullet(DRD_STRUCTURE.length, wszystkie),
         ],
       },
     ],
@@ -262,20 +283,13 @@ export function buildAssessmentDeckModel(
   // 2 — agenda
   slides.push({
     id: 'agenda',
-    kicker: 'Plan prezentacji',
+    kicker: t.deckAgendaKicker,
     title: 'Agenda',
     bodies: [
       {
         kind: 'bullets',
         rect: fullRect(),
-        items: [
-          'Kontekst oceny i źródło danych',
-          'Wynik ogólny — profil siedmiu osi',
-          'Oś po osi: co zmierzono i gdzie jest luka',
-          'Rejestr luk — obszary o największym dystansie',
-          'Priorytety wynikające z luk',
-          'Następne kroki',
-        ],
+        items: [...t.deckAgendaItems],
       },
     ],
     takeaway: null,
@@ -284,28 +298,26 @@ export function buildAssessmentDeckModel(
   // 3 — kontekst
   slides.push({
     id: 'kontekst',
-    kicker: 'Kontekst',
-    title: 'Skąd pochodzi ten wynik',
+    kicker: t.deckContextKicker,
+    title: t.deckContextTitle,
     bodies: [
       {
         kind: 'table',
         rect: fullRect(),
-        head: ['Pole', 'Wartość'],
+        head: [...t.deckContextHeaders],
         widths: [0.32, 0.68],
         rows: mieszczaceSieWiersze([
-          ['Organizacja', org],
-          ['Przedmiot oceny', clientName],
-          ['Profil działalności', contract.businessProfile ?? 'Brak danych w ocenie'],
-          ['Zatrudnienie', contract.employment ?? 'Brak danych w ocenie'],
-          ['Okres oceny', contract.assessmentPeriod ?? 'Brak danych w ocenie'],
-          ['Oceniający', contract.assessor ?? 'Brak danych w ocenie'],
+          [t.deckContextOrganization, org],
+          [t.deckContextSubject, clientName],
+          [t.deckContextBusinessProfile, contract.businessProfile ?? t.deckNoDataInAssessment],
+          [t.deckContextEmployment, contract.employment ?? t.deckNoDataInAssessment],
+          [t.deckContextAssessmentPeriod, contract.assessmentPeriod ?? t.deckNoDataInAssessment],
+          [t.deckContextAssessor, contract.assessor ?? t.deckNoDataInAssessment],
           [
-            'Źródło wyniku',
-            contract.sourceKind === 'legacy'
-              ? 'Ocena prowadzona w warsztacie DRD — poziomy zadeklarowane, bez załączonych dowodów'
-              : 'Zamrożony Output jądra metodycznego',
+            t.deckContextSourceLabel,
+            contract.sourceKind === 'legacy' ? t.deckContextSourceLegacy : t.deckContextSourceCore,
           ],
-          ['Pokrycie', `${ocenione} z ${wszystkie} obszarów ma zapisany poziom`],
+          [t.deckContextCoverageLabel, t.deckContextCoverage(ocenione, wszystkie)],
         ], fullRect()),
       },
     ],
@@ -315,21 +327,21 @@ export function buildAssessmentDeckModel(
   // 4 — wynik ogólny (wykres natywny)
   slides.push({
     id: 'wynik-ogolny',
-    kicker: 'Wynik ogólny',
-    title: 'Profil dojrzałości na siedmiu osiach',
+    kicker: t.deckOverallKicker,
+    title: t.deckOverallTitle,
     bodies: [
       {
         kind: 'chart',
         rect: fullRect(true),
         categories: osie.map((axis) => `${axis.axisId}. ${skrot(axis.namePL, 3)}`),
         series: [
-          { label: 'Poziom obecny', values: osie.map((axis) => axis.current ?? 0) },
-          { label: 'Poziom docelowy', values: osie.map((axis) => axis.target ?? 0) },
+          { label: t.deckSeriesCurrent, values: osie.map((axis) => axis.current ?? 0) },
+          { label: t.deckSeriesTarget, values: osie.map((axis) => axis.target ?? 0) },
         ],
         maxValue: 100,
       },
     ],
-    takeaway: `Luk krytycznych (dystans co najmniej 3 poziomy): ${krytyczne.length} z ${luki.length} zmierzonych obszarów.`,
+    takeaway: t.deckOverallTakeaway(krytyczne.length, luki.length),
   });
 
   // 5–11 — jedna oś na slajd
@@ -344,14 +356,16 @@ export function buildAssessmentDeckModel(
       .slice(0, 4);
     // Notatka bierze się z WŁASNEGO pola kontraktu, nie z wycinania napisu ze
     // złożonego zdania — pierwsze podejście (slice po „Notatka oceniającego:")
-    // dokleiło do cytatu następny fakt silnika i urwało go w połowie.
+    // dokleiło do cytatu następny fakt silnika i urwało go w połowie. Sama
+    // notatka (`assessorNote`) to treść oceniającego, nie stały napis — S1.4b
+    // jej nie tłumaczy, patrz `assessmentReportI18n.ts` nagłówek pliku.
     const notatka = chapter.areaComments.find((comment) => comment.assessorNote);
     const notatkaTekst = notatka?.assessorNote
       ? `${notatka.unitId}: ${skrot(notatka.assessorNote, 12)}`
       : null;
     slides.push({
       id: `os-${chapter.axisId}`,
-      kicker: `Oś ${chapter.axisId} z ${DRD_STRUCTURE.length}`,
+      kicker: t.deckAxisOf(chapter.axisId, DRD_STRUCTURE.length),
       title: skrot(stat.namePL, 8),
       bodies: [
         {
@@ -361,7 +375,7 @@ export function buildAssessmentDeckModel(
             h: contentH(true) * 0.42,
           },
           value: `${procent(stat.current)} → ${procent(stat.target)}`,
-          caption: `Poziom obecny wobec docelowego; oceniono ${stat.assessed} z ${stat.total} obszarów.`,
+          caption: t.deckAxisStatCaption(stat.assessed, stat.total),
         },
         {
           kind: 'bullets',
@@ -371,23 +385,26 @@ export function buildAssessmentDeckModel(
             h: contentH(true) * 0.54,
           },
           items: [
-            `Największa luka na osi: ${stat.maxGap ?? '—'}`,
-            `Obszary z luką co najmniej 3: ${stat.criticalCount}`,
+            t.deckAxisMaxGap(stat.maxGap ?? '—'),
+            t.deckAxisCriticalCount(stat.criticalCount),
             ...(notatkaTekst ? [notatkaTekst] : []),
           ],
         },
         {
           kind: 'table',
           rect: halfRect('right', true),
-          head: ['Obszar', 'Ob.', 'Doc.', 'Luka'],
+          head: [...t.deckAxisTableHeaders],
           widths: [0.58, 0.14, 0.14, 0.14],
-          rows: mieszczaceSieWiersze(najwieresztaWiersze(najwieksze), halfRect('right', true)),
+          rows: mieszczaceSieWiersze(
+            najwieresztaWiersze(najwieksze, t, language),
+            halfRect('right', true)
+          ),
         },
       ],
       takeaway:
         stat.maxGap === null
-          ? 'Brak zmierzonych luk na tej osi.'
-          : `Priorytet osi: ${priorityForGap(stat.maxGap)}.`,
+          ? t.deckAxisTakeawayNoGaps
+          : t.deckAxisTakeawayPriority(priorityForGap(stat.maxGap, language)),
     });
   }
 
@@ -397,47 +414,49 @@ export function buildAssessmentDeckModel(
   // poziomu: etykiety osi 3–7 są w korpusie metodyki po angielsku
   // („Expert", „Data from Physical…"), a angielskie słowo w polskiej
   // prezentacji dla klienta to defekt, nie detal. W raporcie DOCX etykieta
-  // zostaje — tam jest miejsce, żeby ją opisać wraz z osią.
+  // zostaje — tam jest miejsce, żeby ją opisać wraz z osią. Dla `en` to
+  // ograniczenie nie istnieje (cały raport jest po angielsku), więc etykieta
+  // ("level 3") jest tam bezpieczna.
   const rejestrWiersze = mieszczaceSieWiersze(
     lukiMalejaco.map(({ chapter, area, gap }) => [
-      `${area.unitId} ${skrot(area.unitNamePL ?? area.unitName, 6)}`,
-      skrot(chapter.axisNamePL ?? chapter.axisName, 4),
+      `${area.unitId} ${skrot(areaLabel(area, language), 6)}`,
+      skrot(axisLabel(chapter, language), 4),
       String(gap),
-      area.targetLevel === null ? '—' : `poziom ${area.targetLevel}`,
+      area.targetLevel === null ? '—' : `${t.deckGapRegisterLevelPrefix} ${area.targetLevel}`,
     ]),
     rejestrRect
   );
   slides.push({
     id: 'rejestr-luk',
-    kicker: 'Macierz DRD',
-    title: 'Obszary o największej luce',
+    kicker: t.deckGapRegisterKicker,
+    title: t.deckGapRegisterTitle,
     bodies: [
       {
         kind: 'table',
         rect: rejestrRect,
-        head: ['Obszar', 'Oś', 'Luka', 'Poziom docelowy'],
+        head: [...t.deckGapRegisterHeaders],
         widths: [0.42, 0.3, 0.1, 0.18],
         rows: rejestrWiersze,
       },
     ],
-    takeaway: `Rejestr obejmuje ${luki.length} obszarów ze zmierzoną luką; pokazano ${rejestrWiersze.length} największych.`,
+    takeaway: t.deckGapRegisterTakeaway(luki.length, rejestrWiersze.length),
   });
 
   // 13 — priorytety
   const priorytety = new Map<string, number>();
   for (const entry of luki) {
-    const key = priorityForGap(entry.gap);
+    const key = priorityForGap(entry.gap, language);
     priorytety.set(key, (priorytety.get(key) ?? 0) + 1);
   }
   slides.push({
     id: 'priorytety',
-    kicker: 'Priorytety',
-    title: 'Co wynika z rozkładu luk',
+    kicker: t.deckPrioritiesKicker,
+    title: t.deckPrioritiesTitle,
     bodies: [
       {
         kind: 'table',
         rect: halfRect('left'),
-        head: ['Priorytet', 'Liczba obszarów'],
+        head: [...t.deckPrioritiesHeaders],
         widths: [0.6, 0.4],
         rows: [...priorytety.entries()].map(([key, count]) => [key, String(count)]),
       },
@@ -445,11 +464,11 @@ export function buildAssessmentDeckModel(
         kind: 'bullets',
         rect: halfRect('right'),
         items: [
-          contract.programDecisionLine?.direction ?? 'Kierunek: brak danych w ocenie',
-          contract.programDecisionLine?.priority ?? 'Priorytet: brak danych w ocenie',
+          contract.programDecisionLine?.direction ?? t.deckPrioritiesDirectionMissing,
+          contract.programDecisionLine?.priority ?? t.deckPrioritiesPriorityMissing,
           contract.sourceKind === 'legacy'
-            ? 'Rekomendacje per obszar nie zostały zapisane w tej ocenie — priorytet wynika wyłącznie z wielkości luki.'
-            : 'Rekomendacje per obszar pochodzą z findingów zamrożonego Outputu.',
+            ? t.deckPrioritiesRecommendationLegacy
+            : t.deckPrioritiesRecommendationCore,
         ],
       },
     ],
@@ -459,8 +478,8 @@ export function buildAssessmentDeckModel(
   // 14 — następne kroki
   slides.push({
     id: 'nastepne-kroki',
-    kicker: 'Następne kroki',
-    title: 'Od wyniku do działania',
+    kicker: t.deckNextStepsKicker,
+    title: t.deckNextStepsTitle,
     bodies: [
       {
         kind: 'bullets',
@@ -469,15 +488,13 @@ export function buildAssessmentDeckModel(
         // obszary są. „Uzupełnić 0 obszarów…" to zdanie, które nic nie znaczy,
         // a na slajdzie dla zarządu wygląda jak niedopilnowany generator.
         items: [
-          `Potwierdzić poziomy w ${krytyczne.length} obszarach z luką co najmniej 3 i uzupełnić dowody.`,
+          t.deckNextStepsConfirm(krytyczne.length),
           ...(wszystkie - ocenione > 0
-            ? [
-                `Uzupełnić ${wszystkie - ocenione} obszarów bez zapisanego poziomu albo świadomie je pominąć z uzasadnieniem.`,
-              ]
-            : ['Wszystkie obszary metodyki mają zapisany poziom — zakres oceny jest zamknięty.']),
-          'Przypisać właściciela do każdego obszaru o priorytecie krytycznym.',
-          'Ustalić horyzont czasowy — ocena go nie zawiera i nie jest tu dopisywany.',
-          'Zatwierdzić raport i przenieść luki do rejestru inicjatyw.',
+            ? [t.deckNextStepsFillMissing(wszystkie - ocenione)]
+            : [t.deckNextStepsAllCovered]),
+          t.deckNextStepsOwner,
+          t.deckNextStepsHorizon,
+          t.deckNextStepsApprove,
         ],
       },
     ],
@@ -485,21 +502,24 @@ export function buildAssessmentDeckModel(
   });
 
   return {
-    title: `Raport z oceny dojrzałości cyfrowej — ${clientName}`,
+    title: t.deckTitle(org),
     clientName,
     organizationName: org,
     generatedAt: contract.generatedAt,
-    confidentiality: `Poufne — ${clientName}`,
+    language,
+    confidentiality: t.deckConfidentiality(org),
     slides,
   };
 }
 
 function najwieresztaWiersze(
-  areas: readonly AssessmentReportContract['chapters'][number]['matrix']['areas'][number][]
+  areas: readonly AssessmentReportContract['chapters'][number]['matrix']['areas'][number][],
+  t: ReportI18nShape,
+  language: ReportLanguage
 ): string[][] {
-  if (areas.length === 0) return [['Brak zmierzonych obszarów', '—', '—', '—']];
+  if (areas.length === 0) return [[...t.deckNoAreasFallbackRow]];
   return areas.map((area) => [
-    `${area.unitId} ${skrot(area.unitNamePL ?? area.unitName, 5)}`,
+    `${area.unitId} ${skrot(areaLabel(area, language), 5)}`,
     area.currentLevel === null ? '—' : String(area.currentLevel),
     area.targetLevel === null ? '—' : String(area.targetLevel),
     area.gap === null ? '—' : String(area.gap),

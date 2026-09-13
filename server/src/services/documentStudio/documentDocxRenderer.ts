@@ -68,6 +68,11 @@ import {
   type DocumentSection,
   summarizeDocumentChartBlock,
 } from './documentStudioTypes.js';
+import {
+  formatReportDate,
+  normalizeReportLanguage,
+  reportI18n,
+} from '../assessment/assessmentReportI18n.js';
 
 /**
  * Optional render-time inputs that the orchestrator (export pipeline)
@@ -1438,39 +1443,57 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   return out;
 }
 
-// W3 (nadzorca 2026-08-28): DRD cover dates render in Polish long form
-// ("26 sierpnia 2026"), matching the wzorzec — never the ISO
-// `YYYY-MM-DD` technical form. Scoped to `renderDrdCoverBlock` only
-// (its sole caller already gates on `isDrdReportProfile`), so every other
-// document type keeps rendering `generatedAt`/dates exactly as before —
-// see `renderCoverBlock`'s own `.toISOString().slice(0, 10)` a few dozen
-// lines up, which this change does not touch.
-const DRD_ISSUED_DATE_FORMAT = new Intl.DateTimeFormat('pl-PL', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
+// W3 (nadzorca 2026-08-28): DRD cover dates render in a LONG form
+// ("26 sierpnia 2026" / "26 August 2026"), never the ISO `YYYY-MM-DD`
+// technical form. Scoped to `renderDrdCoverBlock` only (its sole caller
+// already gates on `isDrdReportProfile`), so every other document type
+// keeps rendering `generatedAt`/dates exactly as before — see
+// `renderCoverBlock`'s own `.toISOString().slice(0, 10)` a few dozen lines
+// up, which this change does not touch. S1.4b: the pl/en formatters
+// themselves now live in `assessmentReportI18n.ts#formatReportDate` (one
+// shared pair instead of a third private copy here).
 
 function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
   const metadata = ctx.schema.drdReportMetadata;
-  const missing = 'Do uzupełnienia — dane nie są zapisane w sesji oceny.';
+  // S1.4b: the cover used to be hardcoded Polish regardless of
+  // `schema.language` (DEC-461: report defaults to English, Polish only on
+  // explicit choice) — every label here now comes from the shared en/pl
+  // dictionary (`assessmentReportI18n.ts`), keyed by the SAME `schema.language`
+  // the rest of the renderer already reads (see `isPolish` a few lines above
+  // `renderCoverBlock`).
+  const language = normalizeReportLanguage(ctx.schema.language);
+  const t = reportI18n(language);
+  const missing = t.coverMissing;
   const issuedDate = metadata?.issuedAt ? new Date(metadata.issuedAt) : null;
+  const issuedDateText =
+    issuedDate && !Number.isNaN(issuedDate.getTime())
+      ? formatReportDate(issuedDate, language)
+      : missing;
+  // S1.4b fix #3: "Data wydania"/"Issued" is ALWAYS the moment this file was
+  // generated (`issuedAt`). When the underlying assessment data was last
+  // touched on a DIFFERENT calendar day, append that separately
+  // ("· Assessment updated: …") so the reader never confuses "I received
+  // this today" with "the data is weeks old".
+  const updatedDate = metadata?.assessmentUpdatedAt ? new Date(metadata.assessmentUpdatedAt) : null;
+  const updatedSameDay =
+    issuedDate &&
+    updatedDate &&
+    !Number.isNaN(updatedDate.getTime()) &&
+    issuedDate.toISOString().slice(0, 10) === updatedDate.toISOString().slice(0, 10);
+  const issuedRowValue =
+    updatedDate && !Number.isNaN(updatedDate.getTime()) && !updatedSameDay
+      ? `${issuedDateText}${t.coverAssessmentUpdatedSuffix(formatReportDate(updatedDate, language))}`
+      : issuedDateText;
   const rows: Array<[string, string, boolean]> = [
-    ['Klient', metadata?.clientName ?? ctx.schema.audience[0] ?? missing, false],
-    ['Profil działalności', metadata?.businessProfile ?? missing, !metadata?.businessProfile],
-    ['Zatrudnienie', metadata?.employment ?? missing, !metadata?.employment],
-    ['Okres oceny', metadata?.assessmentPeriod ?? missing, !metadata?.assessmentPeriod],
-    ['Oceniający', metadata?.assessor ?? missing, !metadata?.assessor],
-    ['Sponsor po stronie klienta', metadata?.clientSponsor ?? missing, !metadata?.clientSponsor],
-    ['Metodyka', metadata?.methodology ?? missing, !metadata?.methodology],
-    ['Sygnatura sesji', metadata?.sessionSignature ?? missing, !metadata?.sessionSignature],
-    [
-      'Data wydania',
-      issuedDate && !Number.isNaN(issuedDate.getTime())
-        ? DRD_ISSUED_DATE_FORMAT.format(issuedDate)
-        : missing,
-      !metadata?.issuedAt,
-    ],
+    [t.coverClient, metadata?.clientName ?? ctx.schema.audience[0] ?? missing, false],
+    [t.coverBusinessProfile, metadata?.businessProfile ?? missing, !metadata?.businessProfile],
+    [t.coverEmployment, metadata?.employment ?? missing, !metadata?.employment],
+    [t.coverAssessmentPeriod, metadata?.assessmentPeriod ?? missing, !metadata?.assessmentPeriod],
+    [t.coverAssessor, metadata?.assessor ?? missing, !metadata?.assessor],
+    [t.coverClientSponsor, metadata?.clientSponsor ?? missing, !metadata?.clientSponsor],
+    [t.coverMethodology, metadata?.methodology ?? missing, !metadata?.methodology],
+    [t.coverSessionSignature, metadata?.sessionSignature ?? missing, !metadata?.sessionSignature],
+    [t.coverIssuedDate, issuedRowValue, !metadata?.issuedAt],
   ];
   const metadataTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -1502,6 +1525,20 @@ function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
         })
     ),
   });
+  // S1.4b fix #1: subtitle right under the title is the SESSION/assessment
+  // name (e.g. "DRD Assessment - Jul 12, 2026") — the title itself is now
+  // the organization (`ctx.schema.title`, set by
+  // `buildAssessmentDrdReportSchema`). Only rendered when it carries
+  // information distinct from the title (see `sessionLabel` construction in
+  // that file) — otherwise it would just echo the title back.
+  const subtitleParagraph = metadata?.sessionLabel
+    ? [
+        new Paragraph({
+          style: DOCX_STYLE_IDS.SUBTITLE,
+          children: [new TextRun({ text: metadata.sessionLabel, font: ctx.bodyFont })],
+        }),
+      ]
+    : [];
   return [
     new Paragraph({
       style: DRD_DOCX_STYLE_IDS.KICKER,
@@ -1518,7 +1555,7 @@ function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
       style: DRD_DOCX_STYLE_IDS.KICKER,
       children: [
         new TextRun({
-          text: 'OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER',
+          text: t.coverKicker2,
           color: DRD_REPORT_PALETTE.teal,
           font: ctx.bodyFont,
         }),
@@ -1528,15 +1565,7 @@ function renderDrdCoverBlock(ctx: RenderContext): (Paragraph | Table)[] {
       style: DOCX_STYLE_IDS.TITLE,
       children: [new TextRun({ text: ctx.schema.title, font: ctx.headingFont })],
     }),
-    new Paragraph({
-      style: DOCX_STYLE_IDS.SUBTITLE,
-      children: [
-        new TextRun({
-          text: metadata?.clientName ?? ctx.schema.audience[0] ?? missing,
-          font: ctx.bodyFont,
-        }),
-      ],
-    }),
+    ...subtitleParagraph,
     metadataTable,
     new Paragraph({ children: [new PageBreak()] }),
   ];
