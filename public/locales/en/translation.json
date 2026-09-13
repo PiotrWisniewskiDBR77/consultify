@@ -6568,7 +6568,8 @@
       "plantAnIdea": "Plant an idea",
       "untitled2": "Untitled",
       "ideasByTags": "Ideas by Tags",
-      "title3": "Open in Process Flow"
+      "title3": "Open in Process Flow",
+      "toastTeamChat": "Team chat thread created. The idea is now marked Promoted."
     },
     "decisionReviewNext": {
       "toastError": "Failed to load queue",
@@ -26058,7 +26059,8 @@
       "startTrial": "Start Free Trial",
       "completeSetup": "Complete Setup",
       "goToBilling": "Go to Billing",
-      "contactSales": "Contact Sales"
+      "contactSales": "Contact Sales",
+      "completeProfile": "Complete your profile"
     },
     "blocked": {
       "ORG_NOT_FOUND": "Organization not found. Please log in again to refresh your session.",
@@ -26078,7 +26080,13 @@
       "SUBSCRIPTION_CANCELLED": "Your subscription has been cancelled.",
       "INSUFFICIENT_TOKENS": "Insufficient tokens. Add a payment method or upgrade your plan.",
       "BETA_LOCKED": "This feature is currently in beta and is not yet available on your account. Please contact your administrator to request access.",
-      "default": "This action is blocked in your current access level."
+      "default": "This action is blocked in your current access level.",
+      "TRIAL_EXPORT_DISABLED": "Export is available on paid plans.",
+      "TRIAL_UPLOAD_DISABLED": "Uploading files is available on paid plans.",
+      "TRIAL_INVITES_DISABLED": "Inviting teammates is available on paid plans.",
+      "PUBLIC_SHARE_DISABLED": "Public sharing is available on paid plans.",
+      "TRIAL_AI_MEMORY_DISABLED": "AI memory is available on paid plans.",
+      "AI_AUTOPILOT_DISABLED": "AI autopilot is available on paid plans."
     },
     "beta": {
       "title": "Access restricted",
@@ -31303,7 +31311,14 @@
       "orgTypeOption": {
         "OPERATING": "Operating company",
         "CONSULTING": "Consulting / advisory"
-      }
+      },
+      "badgeComplete": "Your organization",
+      "headingComplete": "Complete your organization profile",
+      "submitComplete": "Save and continue",
+      "submittingComplete": "Saving…",
+      "completed": "Profile completed. Teresa is unlocked.",
+      "bullet1Complete": "This is the shared space for your decisions, knowledge and the team's work.",
+      "memoryRequiredComplete": "Confirming organization memory is required to finish the profile."
     },
     "contextStore": {
       "saved": "Saved",
@@ -33183,7 +33198,8 @@
       "financial_model": "Financial Model",
       "budget": "Budget",
       "valuation": "Valuation",
-      "analysis": "Financial Analysis"
+      "analysis": "Financial Analysis",
+      "failed": "Could not create the output. Please try again."
     }
   },
   "rap": {

@@ -32,7 +32,7 @@ export interface ConvertToDialogProps {
     session: MyWorkSession,
     targetType: string,
     budgetConfig?: BudgetConversionConfig
-  ) => void;
+  ) => void | Promise<void>;
 }
 
 const TARGET_LABELS: Record<ConvertTargetType, { en: string; pl: string }> = {
@@ -57,6 +57,13 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
     initialTargetType ?? 'initiative'
   );
   const [creating, setCreating] = useState(false);
+  // S1.14b/B1: the confirm handler used to fire `onConvert` WITHOUT awaiting it and
+  // close the dialog immediately, so a rejected conversion (e.g. the 400 the
+  // Idea→Initiative path returned on every organization) surfaced only as an
+  // unhandled promise rejection in the console — the user saw the popover vanish
+  // and nothing happen. The dialog now awaits the conversion and stays open with a
+  // readable reason when it fails.
+  const [convertError, setConvertError] = useState<string | null>(null);
   const [budgetConfig, setBudgetConfig] = useState<BudgetConversionConfig>({
     periodStart: '',
     periodEnd: '',
@@ -79,18 +86,21 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
     )
       return;
     setCreating(true);
+    setConvertError(null);
     try {
       const session = await materializeMyWorkSession(sources);
       trackFunnelEvent('artifact_convert_clicked', {
         from: sources.map((s) => s.type).join(','),
         to: targetType,
       });
-      onConvert(session, targetType, targetType === 'budget' ? budgetConfig : undefined);
+      await onConvert(session, targetType, targetType === 'budget' ? budgetConfig : undefined);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to create session';
+      const msg = err instanceof Error ? err.message : '';
       console.error('[ConvertToDialog]', msg);
-      throw err;
+      setConvertError(
+        msg || t('traceability.convertTo.failed', 'Could not create the output. Please try again.')
+      );
     } finally {
       setCreating(false);
     }
@@ -258,6 +268,15 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
             </fieldset>
           )}
         </div>
+
+        {convertError && (
+          <div
+            role="alert"
+            className="mx-5 mb-4 rounded-lg border border-c-border-subtle bg-black/[0.03] px-3 py-2 text-xs text-c-text-secondary dark:bg-white/[0.04]"
+          >
+            {convertError}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">

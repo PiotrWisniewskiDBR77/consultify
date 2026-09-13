@@ -5693,7 +5693,8 @@
       "plantAnIdea": "Zasiej pomysł",
       "untitled2": "Bez tytułu",
       "ideasByTags": "Pomysły wg tagów",
-      "title3": "Otwórz w Process Flow"
+      "title3": "Otwórz w Process Flow",
+      "toastTeamChat": "Wątek czatu zespołu utworzony. Pomysł ma teraz etap Promoted."
     },
     "decisionReviewNext": {
       "toastError": "Nie udało się załadować kolejki",
@@ -27307,7 +27308,8 @@
       "startTrial": "Rozpocznij okres próbny",
       "completeSetup": "Dokończ konfigurację",
       "goToBilling": "Przejdź do rozliczeń",
-      "contactSales": "Skontaktuj się ze sprzedażą"
+      "contactSales": "Skontaktuj się ze sprzedażą",
+      "completeProfile": "Uzupełnij profil"
     },
     "blocked": {
       "ORG_NOT_FOUND": "Organizacja nie znaleziona. Zaloguj się ponownie, aby odświeżyć sesję.",
@@ -27327,7 +27329,13 @@
       "SUBSCRIPTION_CANCELLED": "Twoja subskrypcja została anulowana.",
       "INSUFFICIENT_TOKENS": "Niewystarczająca liczba tokenów. Dodaj metodę płatności lub zmień plan.",
       "BETA_LOCKED": "Ta funkcja jest obecnie w wersji beta i nie została jeszcze udostępniona na Twoim koncie. Aby uzyskać dostęp, skontaktuj się ze swoim administratorem.",
-      "default": "Ta akcja jest zablokowana na Twoim poziomie dostępu."
+      "default": "Ta akcja jest zablokowana na Twoim poziomie dostępu.",
+      "TRIAL_EXPORT_DISABLED": "Eksport jest dostępny w planach płatnych.",
+      "TRIAL_UPLOAD_DISABLED": "Wgrywanie plików jest dostępne w planach płatnych.",
+      "TRIAL_INVITES_DISABLED": "Zapraszanie osób jest dostępne w planach płatnych.",
+      "PUBLIC_SHARE_DISABLED": "Udostępnianie publiczne jest dostępne w planach płatnych.",
+      "TRIAL_AI_MEMORY_DISABLED": "Pamięć AI jest dostępna w planach płatnych.",
+      "AI_AUTOPILOT_DISABLED": "Autopilot AI jest dostępny w planach płatnych."
     },
     "beta": {
       "title": "Brak dostępu",
@@ -31416,7 +31424,14 @@
       "orgTypeOption": {
         "OPERATING": "Firma operacyjna",
         "CONSULTING": "Konsulting / advisory"
-      }
+      },
+      "badgeComplete": "Twoja organizacja",
+      "headingComplete": "Uzupełnij profil organizacji",
+      "submitComplete": "Zapisz i kontynuuj",
+      "submittingComplete": "Zapisywanie…",
+      "completed": "Profil uzupełniony. Teresa odblokowana.",
+      "bullet1Complete": "To wspólna przestrzeń na decyzje, wiedzę i pracę zespołu.",
+      "memoryRequiredComplete": "Potwierdzenie pamięci organizacji jest wymagane, aby dokończyć profil."
     },
     "contextStore": {
       "saved": "Zapisano",
@@ -33370,7 +33385,8 @@
       "financial_model": "Model finansowy",
       "budget": "Budżet",
       "valuation": "Wycena",
-      "analysis": "Analiza finansowa"
+      "analysis": "Analiza finansowa",
+      "failed": "Nie udało się utworzyć outputu. Spróbuj ponownie."
     }
   },
   "rap": {
