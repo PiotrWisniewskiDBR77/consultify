@@ -80,9 +80,15 @@ export function resolveExecutionBankNextStep(
   if (!row.executionCaseId) {
     return {
       key: 'NO_EXECUTION_CASE',
+      /*
+       * K5-4: zdanie jest teraz OSTATNIM zdaniem prozy bloku 3, tuż po
+       * `summary.noCase` („…with no execution case behind it yet."), więc
+       * otwierające „No execution case yet." powtarzało zdanie obok. Zostaje
+       * sama treść kroku.
+       */
       note: t(
         'execution.bank.preview.next.noExecutionCase',
-        'No execution case yet. Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.'
+        'Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.'
       ),
       hasAction: false,
     };

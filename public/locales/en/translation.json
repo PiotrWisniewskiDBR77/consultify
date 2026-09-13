@@ -14938,14 +14938,14 @@
         "reportingDate": "Reporting date",
         "updatedAt": "Updated {{date}}",
         "detailsLabel": "Execution context",
-        "factLabel": "Execution fact",
-        "valueLabel": "Reported value",
-        "whatsNext": "What's next",
+        "openUnavailable": "The initiative record linked to this execution case is not available.",
         "fact": {
           "case": "Execution case",
           "caseMissing": "Not linked yet",
           "owner": "Owner",
           "phase": "Execution phase",
+          "progress": "Progress",
+          "health": "Health",
           "baselineFinish": "Baseline finish",
           "currentPlanFinish": "Current plan finish",
           "forecastFinish": "Forecast finish",
@@ -14953,7 +14953,7 @@
           "variance": "Variance"
         },
         "next": {
-          "noExecutionCase": "No execution case yet. Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.",
+          "noExecutionCase": "Execution starts when this initiative is handed off from its initiative record — schedule, forecast and progress are reported only after that.",
           "setBaseline": "Set the schedule baseline on the execution case. Without it variance has nothing to measure against.",
           "reportForecast": "Report a forecast finish date. The baseline is set, but there is no forecast to compare it with.",
           "reportProgress": "Report progress on the execution case. The schedule is complete, but no progress has been reported.",
