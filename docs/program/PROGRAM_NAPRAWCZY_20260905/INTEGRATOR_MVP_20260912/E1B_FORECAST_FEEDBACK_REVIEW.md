@@ -9,3 +9,9 @@ A mounted Timeline regression reproduces refresh unmount and requires confirmati
 Corrected finding: a read-only runner read the Timeline label before waiting for Version 51, creating a transient Unknown observation. Fresh evidence and signed canonical GET preserve own forecastEndDate:null; the loaded Timeline displays Not scheduled. No registered-read/editor change is justified. The real remaining defect is the Bank label: preserved VALUE_CLEARED falls back to Data unavailable. Execution agent owns its bounded label/type fix. Do not repeat completed writes to satisfy incorrect harness assumptions. Retain the fixture until this continuity test and feedback browser acceptance finish, then apply the owned exact-ID cleanup.
 
 No full MVP gate or deployment acceptance is promoted by this bounded proof.
+
+## Built browser receipt on bcd6dd90d8
+
+Frontend build exit0, index SHA256 86d14903c4f0b5b7f478f5f23f4ab5aaa9750a788c3587bc1c5a682ed2ebbc4d. Separate visible UX Save v51→v52 returned200/APPLIED; canonical readback preserved end2026-10-02. Browser found role=status / aria-live=polite with Operational forecast saved across card refresh; no page errors. Reload displayed Version52/date and the neutral locked-schedule copy, with the old approved-baseline assertion absent. Raw result SHA256 b08f610b33e30b74f1ad2a1ec735560f3bf128bfff0e9d25f5ccb3045937fdeb at e1b-native-feedback-save-v51-v1/result.json in the runtime scratch directory.
+
+Root inspected saved-toast-after-refresh.png: loading state visible but toast not discernible in the pixels. DOM/ARIA proof is accepted narrowly; pixel visibility remains NOT_PROVEN. Reviewer will inspect animation/timing before the planned final Clear alongside the Bank fix. No extra retry writes merely for screenshots. Fixture now version52; do not assume51.
