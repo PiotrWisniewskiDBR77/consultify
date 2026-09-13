@@ -88,3 +88,68 @@ tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx
 
 ## SHA raportu
 Zapisano i zacommitowano w KANDYDACIE (patrz commit `bramka(K2): ...` w tej samej gałęzi).
+
+---
+
+# Naprawy 13.09 (agent Opus, zamknięcie czerwieni K2)
+
+Zakres: WYŁĄCZNIE zamknięcie czerwieni bramki. **Zero zmian w kodzie produktu** —
+wszystkie cztery naprawy leżą w plikach testowych; czerwień A zamknięta samym
+pomiarem na żywej Postgres (nic nie zmieniono).
+
+## Stanowisko pomiarowe A (żywa Postgres)
+
+- kontener `k2-pg` (`pgvector/pgvector:pg16`, `127.0.0.1:6470`), pusta baza `consultify` + `CREATE EXTENSION vector`;
+- migracje strict z kandydata: `NODE_ENV=test RUN_DB_TESTS=1 DB_TYPE=postgres DATABASE_URL=postgresql://postgres:k2@127.0.0.1:6470/consultify npx tsx server/scripts/migrate.postgres.ts` → `✅ Postgres migrations complete`, EXIT=0, **1809 tabel** w `public`;
+- pułapka potwierdzona: `assertNoLocalDatabaseOutsideTests` (`server/src/config/databaseTargetResolver.ts:252`) przepuszcza localhost TYLKO przy `NODE_ENV=test` / `CI=true` / `VITEST` — bez tego `getDatabaseType()` robi `process.exit(1)`. To jest cała przyczyna czerwieni A: **brak środowiska, nie defekt kodu**;
+- po pomiarze `docker rm -f k2-pg`.
+
+### Wyniki 4 plików A (`--retry=0`, per plik, `RUN_DB_TESTS=1 DB_TYPE=postgres DATABASE_URL=…`)
+
+| plik | PRZED (bez bazy) | PO (żywa PG) |
+|---|---|---|
+| `server/src/controllers/__tests__/InitiativeController.e1bEvidence.test.ts` | `process.exit unexpectedly called with "1"` | **4 passed (4)**, EXIT=0 |
+| `server/src/controllers/__tests__/InitiativeController.e1bNativeForecast.test.ts` | j.w. | **1 passed (1)**, EXIT=0 |
+| `server/src/controllers/__tests__/InitiativeController.e1bNullableProgress.test.ts` | j.w. | **2 passed (2)**, EXIT=0 |
+| `server/src/routes/pmo/__tests__/initiativeForecastCanonical.routes.test.ts` | j.w. | **9 passed (9)**, EXIT=0 |
+
+Razem **16 testów zielonych**, zero czerwieni. Klasyfikacja A: **harness/środowisko** — nazwa pliku bez `.pg.` przy realnym wymogu bazy (do rozważenia osobno: przemianowanie, ŻEBY bramka nie musiała zgadywać; poza zakresem tej naprawy).
+
+## Tabela napraw B–E
+
+| czerwień | klasyfikacja | co zmieniono (plik:linia) | dowód przed/po | mutacja | SHA |
+|---|---|---|---|---|---|
+| **A** — 4 pliki na żywej PG | **środowisko (harness)** | nic — tylko pomiar | `process.exit(1)` → 4+1+2+9 = **16 passed**, EXIT=0 ×4 | n/d (brak zmiany) | — |
+| **B** — `executionBankEvidenceReadService.adversarial.test.ts` | **TEST** (licznik zdezaktualizowany przez późniejszy, poprawny commit produktu) | `server/src/services/initiative/__tests__/executionBankEvidenceReadService.adversarial.test.ts:350` — `toHaveLength(4)` → `toHaveLength(5)` + komentarz z pięcioma źródłami | `expected […(5)] to have a length of 4 but got 5` → **13 passed (13)**, EXIT=0 | `created_at AS observed_at` zamiast `EXTRACT(EPOCH …)` w kwerendzie `ie_command_receipts` → **1 failed \| 12 passed**; przywrócone | `6875ce9331` |
+| **C** — `ExecutionControlSurface.raidSygnaly.test.tsx` | **TEST** (asercja czekała na naprawę hooka, która weszła) | `src/components/Execution/__tests__/ExecutionControlSurface.raidSygnaly.test.tsx:705-714` — `toHaveBeenCalledTimes(1)` → `(0)`, nazwa testu i komentarz przepisane | `expected "vi.fn()" to be called 1 times, but got 0` → **26 passed (26)**, EXIT=0 | zdjęcie bramki roli w `src/hooks/useOrganizationMemberNames.ts` → `expected +0 times, but got 1 times`; przywrócone | `4e40e269ee` |
+| **D** — `ExecutionHub.daneRealne.source.test.ts` | **TEST** (literał wołania zamiast reguły) | `src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts:53-60` — `toContain('Api.getInitiatives()')` → regexp „pierwszy argument pusty lub `undefined`" + negatyw na KAŻDY niepusty pierwszy argument | `expect(fn).toContain('Api.getInitiatives()')` → **12 passed (12)**, EXIT=0 | `Api.getInitiatives(currentProjectId, {…})` w `ExecutionHub.tsx` → **1 failed \| 11 passed**; przywrócone | `e00a3231d3` |
+| **E** — `OrganizationsView.honesty.test.tsx` (11 testów) | **TEST** (scalony na czerwono przez Codexa — pytanie niejednoznaczne i wyścigowe) | `tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx:463-484` — helper `findExportNotice()`; 4 wołania `findByRole('status')` przestawione na helper | `expected 'Automated deletion is disabled until …' to contain 'complete under its declared scope'` (11 failed \| 11 passed) → **22 passed (22)**, EXIT=0 | zdjęcie `setExportNotice(disclosure.message)` w `OrganizationsView.tsx` → **13 failed \| 9 passed**; przywrócone | `c75423b907` |
+
+## Rozstrzygnięcia, które trzeba znać
+
+### C — czy kandydat celowo przestał wołać katalog osób dla MEMBER-a? TAK, i to jest POPRAWA.
+- `server/src/routes/organization/organizations.routes.ts:74-78`: `GET /:orgId/members` stoi za `requireRole('ADMIN','OWNER','SUPERADMIN')` — MEMBER dostawał tam **403 ZAWSZE**.
+- Kandydat obwarował hook `useOrganizationMemberNames` warunkiem `isAdminOwnerOrSuperAdminRole` → dla MEMBER-a 0 wołań zamiast 1 (to są te „14× GET 403 organization members" z raportów Codexa).
+- **Skutek dla użytkownika: ŻADEN.** Mapa nazwisk MEMBER-a i tak była pusta (403 → `catch` → `{}`); kolumna „Właściciel" renderuje się identycznie. Znika wyłącznie strzał skazany na odmowę.
+- Zmiana jest udokumentowana w kodzie (`server/.../organizations.routes.ts` komentarz przy trasie) i pokryta NOWYM testem `src/hooks/__tests__/useOrganizationMemberNames.access.test.tsx` (zielony). Sam test C zapowiadał to w komentarzu: „żeby naprawa hooka miała gdzie odbić".
+
+### D — czy kandydat filtruje listę inicjatyw po projekcie? NIE. Regresji NIE MA.
+- `src/components/Execution/ExecutionHub.tsx` (`loadInitiatives`) woła `Api.getInitiatives(undefined, { asOf: executionBankAsOf, includeExecutionEvidence: true })`.
+- Pierwszy argument (`projectId`) jest nadal **pusty**; doszedł tylko DRUGI argument (okno „as of" + dowody dla Banku realizacji). Portfel organizacji (43 z 72 inicjatyw bez projektu) pokazuje się bez zmian, DEC-469 nienaruszone.
+- Czerwony był wyłącznie literał `toContain('Api.getInitiatives()')`. Asercja przepisana na regułę, więc nie zestarzeje się przy kolejnym argumencie, a mutacja dowodzi, że dalej łapie prawdziwe zawężenie.
+
+### E — czy winne było scalenie? NIE.
+- Test uruchomiony w tymczasowym worktree na rc2 `5de710ff46`: **11 failed | 11 passed (22)** — dokładnie tak samo jak w kandydacie. `git diff 5de710ff46 HEAD` na plikach testu, `OrganizationsView.tsx` i `public/locales/en/translation.json` = **pusty**.
+- To nie i18n i nie mock: zakładka organizacji ma STAŁY `role="status"` z `DESTRUCTIVE_DELETION_DISABLED_COPY` (`OrganizationsView.tsx:1157`, dodany w `9d0036467e`/`c65f430a60`). `findByRole('status')` trafiał w niego natychmiast, zanim asynchroniczny eksport zdążył ustawić swój komunikat.
+- Wniosek: **Codex scalił czerwony test**. Produkt (ujawnianie kompletności eksportu) działa — dowodzi tego mutacja: zdjęcie `setExportNotice` wywraca 13 testów.
+
+## Liczby końcowe (po wszystkich czterech commitach)
+
+| bramka | wynik |
+|---|---|
+| `cd server && npx tsc --noEmit -p tsconfig.json` | **0** `error TS`, EXIT=0 |
+| `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit -p tsconfig.json \| grep -c 'error TS'` | **189** (próg ≤189) |
+| `bash scripts/check-list-canon.sh` | **322** naruszenia (baseline 357), EXIT=0 |
+| `NODE_OPTIONS=--max-old-space-size=8192 npm run build` | EXIT=0, „built in 39.11s"; SHA256 `dist/index.html` = `64c3ccace9b999e17b4a54563f317adb566c33d92f30a9ec3557792a9eb5a0ce` — **BIT W BIT ten sam co w pomiarze bramki przed naprawami**, czyli żadna z czterech zmian nie weszła do paczki produkcyjnej (dowód, że naprawy są wyłącznie testowe) |
+| sąsiedzi B/C/D | 14 plików `ExecutionControlSurface*`/`ExecutionHub*` = **124 passed**; `executionBankEvidenceReadService.test.ts` + `executionBankNativeForecast.root-review.test.ts` + `useOrganizationMemberNames{,.access}` + `OrganizationsView.deleteApprovedOut` = **57 passed** (6 plików) |
+
