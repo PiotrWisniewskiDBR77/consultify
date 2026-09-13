@@ -28,6 +28,7 @@ const card = (cardKey: string): InitiativeCardVersionReadModel => ({
   content: content[cardKey],
   evidenceRefs: [`evidence:${cardKey}:v2`],
   waiverDecisionId: null,
+  reviewedBy: 'named-reviewer',
   publishedBy: 'owner',
   publishedAt: '2026-08-09T20:00:00.000Z',
 });
@@ -69,7 +70,7 @@ describe('server Definition readiness', () => {
     );
   });
   it('respects explicit reviewRequired=false for an extra required card without weakening baseline reviews',()=>{
-    const profile=configuredCardProfile({id:'t',updatedAt:'2026-09-12',sectionConfig:{initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:'p',policyVersion:1},cards:INITIATIVE_CARD_KEYS.map((cardKey,position)=>({cardKey,position,included:true,requiredness:cardKey==='technical-specification'?'REQUIRED':'OPTIONAL',requiredFields:cardKey==='technical-specification'?['requirements']:[],reviewRequired:false,reviewerIds:[]}))}}});
+    const profile=configuredCardProfile({id:'t',updatedAt:'2026-09-12',sectionConfig:{initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:'p',policyVersion:1},cards:INITIATIVE_CARD_KEYS.map((cardKey,position)=>({cardKey,position,included:true,requiredness:cardKey==='technical-specification'?'REQUIRED':'OPTIONAL',requiredFields:cardKey==='technical-specification'?['requirements']:[],reviewRequired:Object.hasOwn(content,cardKey),reviewerIds:Object.hasOwn(content,cardKey)?['named-reviewer']:[]}))}}});
     const extra={...card('technical-specification'),content:{requirements:'Tested interface'},reviewState:'NOT_REQUESTED' as const};
     expect(evaluateDefinitionReadiness([...Object.keys(content).map(card),extra],true,'CURRENT',profile).readiness).toBe('READY');
     expect(evaluateDefinitionReadiness([...Object.keys(content).map(key=>({...card(key),reviewState:'NOT_REQUESTED' as const})),extra],true,'CURRENT',profile).readiness).not.toBe('READY');

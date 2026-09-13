@@ -1,3 +1,4 @@
+import { DEFINITION_REQUIRED_CARD_KEYS } from './definitionReadiness.js';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -65,6 +66,11 @@ export function configuredCardProfile(template: {
   if (!parsed.success)
     throw new MaterialCommandRuleError('CARD_PROFILE_CONFIGURATION_MISSING', 409);
   const profile = parsed.data;
+  if (DEFINITION_REQUIRED_CARD_KEYS.some(key => {
+    const card = profile.cards.find(item => item.cardKey === key);
+    return !card?.reviewRequired || card.reviewerIds.length === 0;
+  })) throw new MaterialCommandRuleError('CARD_PROFILE_BASELINE_REVIEW_REQUIRED', 409);
+
   if (
     new Set(profile.cards.map((card) => card.cardKey)).size !== 26 ||
     new Set(profile.cards.map((card) => card.position)).size !== 26

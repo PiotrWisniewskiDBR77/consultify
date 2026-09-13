@@ -268,6 +268,15 @@ const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'plan', 'capacity', 'workReport']);
+const resolvePreparationLens = (params: URLSearchParams) => {
+  const requested = params.get('lens') || params.get('tab');
+  return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
+    ? 'portfolioHealth'
+    : ['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')
+      ? 'analysis'
+      : 'list';
+};
+
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -285,14 +294,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const requestedTab = searchParams.get('tab') as ModuleTab | null;
     return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
-  const [preparationLens, setPreparationLens] = useState(() => {
-    const requested = searchParams.get('lens') || searchParams.get('tab');
-    return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
-      ? 'portfolioHealth'
-      : ['analysis', 'portfolio', 'observability', 'portfolioHealth'].includes(requested || '')
-        ? 'analysis'
-        : 'list';
-  });
+  const [preparationLens, setPreparationLens] = useState(() => resolvePreparationLens(searchParams));
+  useEffect(() => {
+    setPreparationLens(resolvePreparationLens(searchParams));
+  }, [searchParams]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdoptingClassic, setIsAdoptingClassic] = useState(false);
   // DEC-420: "Adopt classic initiative" przeniesiony z rzędu Menu 3 do kebaba

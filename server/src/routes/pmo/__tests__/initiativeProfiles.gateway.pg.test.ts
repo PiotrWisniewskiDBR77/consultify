@@ -1,3 +1,4 @@
+import { DEFINITION_REQUIRED_CARD_KEYS } from '../../../domain/initiatives-execution/definitionReadiness.js';
 /** @vitest-environment node */
 import {randomUUID} from 'node:crypto';
 import {writeFileSync} from 'node:fs';
@@ -13,7 +14,7 @@ const org=randomUUID(),foreignOrg=randomUUID(),owner=randomUUID(),reviewer=rando
 let app: ReturnType<typeof express>;let keys:string[];let initiativeId:string,templateId:string;const tokens:Record<string,string>={};const ids:Array<{initiativeId:string,templateId:string}>=[];const evidence:unknown[]=[];
 const base='/api/initiatives/runtime-v1';
 const auth=(actor=owner)=>({Authorization:`Bearer ${tokens[actor]}`});
-const profileConfig=()=>({initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:policy,policyVersion:1},cards:keys.map((cardKey,position)=>({cardKey,position,included:true,requiredness:cardKey==='summary-scope'?'REQUIRED':'OPTIONAL',requiredFields:cardKey==='summary-scope'?['problem']:[],reviewRequired:cardKey==='summary-scope',reviewerIds:cardKey==='summary-scope'?[reviewer]:[]}))}});
+const profileConfig=()=>({initiativeCardProfile:{profileKey:'technology',version:1,policy:{policyId:policy,policyVersion:1},cards:keys.map((cardKey,position)=>({cardKey,position,included:true,requiredness:cardKey==='summary-scope'?'REQUIRED':'OPTIONAL',requiredFields:cardKey==='summary-scope'?['problem']:[],reviewRequired:DEFINITION_REQUIRED_CARD_KEYS.includes(cardKey),reviewerIds:DEFINITION_REQUIRED_CARD_KEYS.includes(cardKey)?[reviewer]:[]}))}});
 async function preview(actor=owner){return request(app).get(`${base}/initiatives/${initiativeId}/card-profile-preview`).query({templateId}).set(auth(actor));}
 const body=(p:any)=>({expectedVersion:1,clientRequestId:randomUUID(),registryVersion:1,profile:{templateId,version:p.profile.version,contentHash:p.profile.contentHash},cards:p.profile.cards.map((c:any)=>({cardKey:c.cardKey,included:c.included,position:c.position,requiredness:c.requiredness,waiverDecisionId:null}))});
 const apply=(payload:any,actor=owner)=>request(app).post(`${base}/initiatives/${initiativeId}/card-selection`).set(auth(actor)).send(payload);
@@ -72,4 +73,18 @@ describe('IE01 real Gateway JWT profile boundaries',()=>{
  });
  it('keeps validation400 and stale409 distinct from actual authority403',async()=>{const p=await preview();const invalid={...body(p.body),registryVersion:9};expect((await apply(invalid)).status).toBe(400);const stale={...body(p.body),expectedVersion:999};expect((await apply(stale)).status).toBe(409);expect((await state())[0].version).toBe(1);});
 
+ it.each(DEFINITION_REQUIRED_CARD_KEYS)('rejects disabled mandatory review for %s before selection or receipt mutation', async cardKey => {
+  const valid = await preview(); expect(valid.status).toBe(200);
+  const command = body(valid.body); const before = await state();
+  const invalid = profileConfig(); const card = invalid.initiativeCardProfile.cards.find(card => card.cardKey === cardKey)!;
+  card.reviewRequired = false; card.reviewerIds = [];
+  await pool.query('UPDATE initiative_templates SET section_config=$1 WHERE id=$2 AND organization_id=$3',[JSON.stringify(invalid),templateId,org]);
+  const rejectedPreview = await preview(); expect(rejectedPreview.status).toBe(409);
+  expect(rejectedPreview.body.code).toBe('CARD_PROFILE_BASELINE_REVIEW_REQUIRED');
+  const rejectedApply = await apply(command); expect(rejectedApply.status).toBe(409);
+  expect(rejectedApply.body.code).toBe('CARD_PROFILE_BASELINE_REVIEW_REQUIRED');
+  expect(await state()).toEqual(before);
+  expect((await pool.query('SELECT * FROM ie_initiative_card_selection WHERE organization_id=$1 AND initiative_id=$2',[org,initiativeId])).rows).toEqual([]);
+  expect((await pool.query('SELECT * FROM ie_command_receipts WHERE organization_id=$1 AND aggregate_id=$2',[org,initiativeId])).rows).toEqual([]);
+ });
 });

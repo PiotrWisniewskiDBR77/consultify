@@ -12,9 +12,10 @@
  * ręcznie 06.09.2026 przy tym dyżurze (patrz meldunek).
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
+vi.unmock('react-router-dom');
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -150,4 +151,18 @@ describe('IE01 preparation navigation', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('0 initiatives in the current scope')).toBeInTheDocument();
   });
+});
+
+it('restores the preparation lens in both directions through router history', async () => {
+  function HistoryControls() {
+    const navigate = useNavigate();
+    return <><button onClick={() => navigate(1)}>→</button><button onClick={() => navigate(-1)}>←</button></>;
+  }
+  render(<MemoryRouter initialEntries={['/initiatives?lens=list','/initiatives?lens=analysis']} initialIndex={0}><HistoryControls/><InitiativesHub/></MemoryRouter>);
+  expect(await screen.findByRole('combobox', {name:'Initiative workspace'})).toHaveValue('list');
+  fireEvent.click(screen.getByRole('button',{name:'→'}));
+  await waitFor(() => expect(screen.getByRole('combobox', {name:'Initiative workspace'})).toHaveValue('analysis'));
+  expect(screen.getByRole('heading',{name:'Preparation overview'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'←'}));
+  await waitFor(() => expect(screen.getByRole('combobox', {name:'Initiative workspace'})).toHaveValue('list'));
 });

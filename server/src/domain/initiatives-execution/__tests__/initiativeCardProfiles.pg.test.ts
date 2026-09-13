@@ -1,3 +1,4 @@
+import { DEFINITION_REQUIRED_CARD_KEYS } from '../definitionReadiness.js';
 import { reviewInitiativeCard } from '../reviewInitiativeCard';
 import { publishInitiativeCard } from '../publishInitiativeCard';
 /** @vitest-environment node */
@@ -24,7 +25,7 @@ const authority = async () => {};
 // Domain fixtures isolate the transaction checks; route tests must prove real reviewer resolution.
 const configureInitiativeCards = (uow: MaterialCommandUnitOfWork, envelope: any, check: any) => configureWithAuthority(uow,envelope,check,async()=>{});
 const templateConfig = (profileKey: typeof CARD_PROFILE_KEYS[number]) => ({ initiativeCardProfile: {
-  profileKey, version: 1, policy:{policyId:'local-test-policy',policyVersion:1}, cards: keys.map((cardKey, position) => ({ cardKey, position, included: true, requiredness: cardKey === 'summary-scope' ? 'REQUIRED' : 'OPTIONAL', requiredFields: cardKey === 'summary-scope' ? ['problem'] : [], reviewRequired: cardKey === 'summary-scope', reviewerIds:cardKey === 'summary-scope' ? ['local-profile-reviewer'] : [] }))
+  profileKey, version: 1, policy:{policyId:'local-test-policy',policyVersion:1}, cards: keys.map((cardKey, position) => ({ cardKey, position, included: true, requiredness: cardKey === 'summary-scope' ? 'REQUIRED' : 'OPTIONAL', requiredFields: cardKey === 'summary-scope' ? ['problem'] : [], reviewRequired: DEFINITION_REQUIRED_CARD_KEYS.includes(cardKey), reviewerIds:DEFINITION_REQUIRED_CARD_KEYS.includes(cardKey) ? ['local-profile-reviewer'] : [] }))
 } });
 const command = () => ({ organizationId: org, actorId: owner, aggregateType: 'initiative', aggregateId: initiativeId, expectedVersion: 1, clientRequestId: randomUUID(), correlationId: randomUUID(), policyId: 'local-test-policy', policyVersion: 1, commandType: 'initiative.cards.configure', payload: { registryVersion: 1, cards: profile.cards.map(card => ({ cardKey: card.cardKey, position: card.position, included: card.included, requiredness: card.requiredness, waiverDecisionId: null as string | null })), profile: { templateId, version: profile.version, contentHash: profile.contentHash } } });
 async function unchanged() {

@@ -802,6 +802,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [canonicalDraftDirty, setCanonicalDraftDirty] = useState(false);
   const updateCanonicalDraftState = useCallback(() => setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0), [initiativeId, currentUser?.id]);
   const [canonicalFinding, setCanonicalFinding] = useState<{ cardKey: string; field?: string; requestId: number }>();
+  const [navigationInitiativeId, setNavigationInitiativeId] = useState(initiativeId);
+  // Reset record-local navigation before effects can serialize the previous card into the new URL.
+  // Keep the actor/initiative-keyed draft store intact when switching between open records.
+  if (navigationInitiativeId !== initiativeId) {
+    setNavigationInitiativeId(initiativeId);
+    setActiveNSection(readInitiativeDeepLinkId() === initiativeId
+      ? readInitiativeCardDeepLink(window.location.search).cardKey || 'initiative-definition'
+      : 'initiative-definition');
+    setCanonicalFinding(undefined);
+    setCanonicalDraftDirty(Object.keys(canonicalDraftStore.current[JSON.stringify([initiativeId, currentUser?.id])] || {}).length > 0);
+  }
+
   const navigateCanonicalFinding = useCallback((target: { cardKey: string; field?: string; requestId: number }) => {
     setCanonicalFinding(target);
     setActiveNSection(target.cardKey);

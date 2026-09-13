@@ -109,3 +109,26 @@ it('keeps a canonical Gates deep link while the document is pending and renders 
   expect(fixture.write).not.toHaveBeenCalled();
   expect(fixture.amend).not.toHaveBeenCalled();
 });
+
+it('opens the requested card when the same document mount switches to another initiative', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  const firstId = '11111111-1111-4111-8111-111111111111';
+  const secondId = '22222222-2222-4222-8222-222222222222';
+  const setUrl = (id: string, card: string) => {
+    const search = `?mode=doc&open=${id}&card=${card}&return=preparation`;
+    window.history.replaceState(null, '', `/initiatives${search}`);
+    Object.assign(window.location, { href:`http://localhost:3000/initiatives${search}`, search });
+  };
+  Object.assign(fixture.record, {id:firstId, documentOrigin:'initiatives-runtime-v1', canonicalVersion:1, status:'DRAFT', name:'First initiative'});
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  setUrl(firstId, 'summary-scope');
+  const view = render(<InitiativeDocumentView initiativeId={firstId} />);
+  await waitFor(() => expect(fixture.read).toHaveBeenCalled());
+  await waitFor(() => expect(screen.queryByRole('heading', {name:'Definition approval'})).not.toBeInTheDocument());
+  Object.assign(fixture.record, {id:secondId, name:'Second initiative'});
+  setUrl(secondId, 'gates-approvals');
+  view.rerender(<InitiativeDocumentView initiativeId={secondId} />);
+  await waitFor(() => expect(screen.getByRole('heading', {name:'Definition approval'})).toBeVisible());
+  expect(new URL(window.location.href).searchParams.get('card')).toBe('gates-approvals');
+  expect(fixture.write).not.toHaveBeenCalled(); expect(fixture.amend).not.toHaveBeenCalled();
+});

@@ -27,6 +27,8 @@ const REQUIREMENTS = {
   stakeholders: ['ownerId', 'sponsorId'],
 } as const;
 
+export const DEFINITION_REQUIRED_CARD_KEYS: readonly string[] = Object.keys(REQUIREMENTS);
+
 function hasValue(value: unknown): boolean {
   if (typeof value === 'string') return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
