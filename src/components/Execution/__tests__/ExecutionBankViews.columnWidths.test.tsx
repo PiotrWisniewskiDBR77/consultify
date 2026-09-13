@@ -209,7 +209,6 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
       'forecastFinish',
       'varianceDays',
       'blockerCount',
-      'pendingDecisionCount',
       'updatedAt',
     ]) {
       const th = container.querySelector<HTMLTableCellElement>(`th[data-column-id="${id}"]`);
@@ -224,7 +223,9 @@ describe('Bank Realizacji — kolumna tytułowa szeroka, liczbowe wąskie', () =
       container.querySelectorAll<HTMLTableCellElement>('th[data-column-id]')
     );
 
-    expect(headers.length).toBe(15);
+    // 15 kolumn w deklaracji; 3 wtórne (Delivery profile, Pending decisions, Constraint)
+    // sa domyslnie schowane w pstryczku (decyzja CTO 13.09 po uwadze wlasciciela o kolumnach).
+    expect(headers.length).toBe(12);
     for (const th of headers) {
       const width = Number.parseInt(th.style.width, 10);
       expect(width, th.dataset.columnId).toBeGreaterThanOrEqual(90);

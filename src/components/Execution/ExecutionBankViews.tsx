@@ -378,6 +378,7 @@ const BankTable = ({
       {
         id: 'deliveryProfile',
         label: 'Delivery profile',
+        defaultVisible: false,
         dataType: 'number',
         // 155 px = zmierzona podłoga NAGŁÓWKA („DELIVERY PROFILE", 16 znaków);
         // niżej i tak nie zejdzie, więc deklarujemy to, co realnie dostanie.
@@ -389,7 +390,7 @@ const BankTable = ({
       },
       {
         id: 'progress',
-        label: 'Progress / confidence',
+        label: 'Progress',
         dataType: 'number',
         align: 'right',
         width: '190px',
@@ -501,6 +502,7 @@ const BankTable = ({
       {
         id: 'pendingDecisionCount',
         label: 'Pending decisions',
+        defaultVisible: false,
         dataType: 'number',
         align: 'right',
         width: '160px',
@@ -512,6 +514,7 @@ const BankTable = ({
       {
         id: 'resourceConstraint',
         label: 'Constraint',
+        defaultVisible: false,
         dataType: 'text',
         width: '160px',
         render: (source) => (
