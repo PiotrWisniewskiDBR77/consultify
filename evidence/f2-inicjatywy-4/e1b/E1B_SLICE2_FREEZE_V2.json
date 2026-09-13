@@ -1,0 +1,163 @@
+{
+  "checkpoint": "F2-1 E1b slice 2 V2 privacy correction",
+  "status": "PARTIAL_HOLD_FULL_E1",
+  "head": "73a42abe5eebf84c2a8e387cb3a7eca5ded4565a",
+  "branch": "codex/inicjatywy-cztery-przyciski-20260913",
+  "priorV1HoldEvidence": [
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/E1B_SLICE2_CHECKPOINT.md",
+      "sha256": "4ab84838cb5ec45bf0138c4d8b5e7cae430d658d372c9215ad730b1da59d9e42",
+      "gitBlob": "0f515195296d9ee57e84194c258d42585b6c124f",
+      "bytes": 6232
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/E1B_SLICE2_FREEZE_V1.json",
+      "sha256": "1c0eb099d055f9de5b6eb9c1cd96b03fcff3daddb09082c18af83958b8c674a9",
+      "gitBlob": "2f611f43d39aa4b69fba016197847a77d3e465e0",
+      "bytes": 6179
+    }
+  ],
+  "sourceAndTestFiles": [
+    {
+      "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+      "sha256": "d53659f9179b00d7d7ac90cfcf149981a97fdaaed55a29dff2457090ce5dad1d",
+      "gitBlob": "324a5b061fb31e7c379c08988826795e3a170f9c",
+      "bytes": 311426
+    },
+    {
+      "path": "server/src/services/initiative/portfolioConsultingAnalysisRuntimeService.ts",
+      "sha256": "794d65dc639acf721a8111c67ade6ae37ef667516014f1819d6787c8c5a05e88",
+      "gitBlob": "de20aa6b53fba98173cf5d5806cbc8f5856b2164",
+      "bytes": 13692
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts",
+      "sha256": "b8d6f53561bf20172af749c9eaeefd4d14e48fbfe269634c4ada69c24c74b842",
+      "gitBlob": "6fe955c88531e6f695f5345f497edac608d53f44",
+      "bytes": 7607
+    },
+    {
+      "path": "server/src/services/initiative/__tests__/portfolioConsultingAnalysisRuntimeService.test.ts",
+      "sha256": "38d39d5e8dd115b8434f1b420d108d9173e8a563e6b4a7a924ba46c4e5cf3180",
+      "gitBlob": "393078654b510c92cf1dbe6a787d6fd7bed1acfd",
+      "bytes": 12931
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.gateway.pg.test.ts",
+      "sha256": "59820ceda753f20dcbd03e9903ce334068308e338fd7fbcb67c4aa597ffebbee",
+      "gitBlob": "a22ec5574afaf2dc030bf6a4583691adfe9cd2d0",
+      "bytes": 20509
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/E1B_SLICE2_CHECKPOINT_V2.md",
+      "sha256": "0c9c64a003608681b30aab3065010abaf23453e95faece174df048d42e3c493c",
+      "gitBlob": "d3efe56d2ca3c621bcf043f9bbc68d6fd6c972c8",
+      "bytes": 4492
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-privacy-red-v1.json",
+      "sha256": "2f1d942b4f2906f56d48e9b4a7dd029d9a2a99eeacf89a48f4b17cab1251c08a",
+      "gitBlob": "4c62a89c4bcef6e9a594789177f51bc5768dd3a3",
+      "bytes": 5699
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-focused-green-v2.json",
+      "sha256": "57ead83d8fe8c12c85028e4419f9013bccfc08765a18bdf80446a795a18d3718",
+      "gitBlob": "c99733410564a1abb8d394890dd5919515b7f4f3",
+      "bytes": 16142
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-realpg-green-v2.json",
+      "sha256": "8d48fabf2b43592b3054c0b560d288f90669ced1100293580c846452b1e1ac5f",
+      "gitBlob": "3fa387a8f3bf2ed94c78c888c019936692450a21",
+      "bytes": 2018
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-new-v2.json",
+      "sha256": "3c762ab3cad4ec5a8e85bd1025689b0d0f381df73a1d9218001b6751cced7d38",
+      "gitBlob": "b85c674607f9c068d8e735f0776d41dc5acf00c4",
+      "bytes": 29585
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-route-base.json",
+      "sha256": "509141a5650784071d1ed89f44399348dcc8ec35f9b19c9d83facd3b39b39e47",
+      "gitBlob": "d7a521b9f7c0b3d77eabc34eba8d73dcdd7465f4",
+      "bytes": 436986
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-route-candidate-final.json",
+      "sha256": "6704c677d06c6afbb3c3d7a0bb74ab183221398d16e3d69d8c01c2ea0f6543ba",
+      "gitBlob": "f2ea76703acd81e8ca7ab9b85478c64f6660759f",
+      "bytes": 445269
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-server-tsc-v2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-server-tsc-v2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56",
+      "bytes": 2
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-real-model-gate.txt",
+      "sha256": "d4af33da6af37028e075b6e06162675fed606815ed88159180fcd38bf7f5bcaa",
+      "gitBlob": "980d69aafcdddcfd56bbd5bdaa383b18527e4881",
+      "bytes": 494
+    }
+  ],
+  "privacyContract": "standard OrganizationContextService projection; restricted claims and their source refs never enter model/persistence/public analysis",
+  "privacyRed": {
+    "reportedSuites": 4,
+    "testsPassed": 7,
+    "testsFailed": 2
+  },
+  "focusedResult": {
+    "files": 4,
+    "reportedSuites": 10,
+    "testsPassed": 40,
+    "testsFailed": 0
+  },
+  "realPgResult": {
+    "files": 1,
+    "reportedSuites": 2,
+    "testsPassed": 3,
+    "testsFailed": 0,
+    "cleanupCategoriesZero": 11,
+    "modelGateway": "stub",
+    "lowerPrivilegeReadCapability": "initiative.view"
+  },
+  "eslintNewResult": {
+    "files": 4,
+    "exit": 0,
+    "errors": 0,
+    "warnings": 12
+  },
+  "eslintRouteParity": {
+    "base": {
+      "errors": 246,
+      "warnings": 48
+    },
+    "candidate": {
+      "errors": 246,
+      "warnings": 48
+    },
+    "addedDiagnostics": 0
+  },
+  "serverTypeScriptExit": 0,
+  "diffCheckExit": 0,
+  "realModelQuality": "EVIDENCE_MISSING",
+  "qualifications": [
+    "No semantic redaction claim; restricted context is excluded before the model call",
+    "Real configured model was not called; no provider credential was available",
+    "RealPG model gateway is a stub",
+    "Concurrent exactly-once model spend is not proven",
+    "No review queue or item-resolution UI",
+    "Full E1 remains HOLD"
+  ]
+}
