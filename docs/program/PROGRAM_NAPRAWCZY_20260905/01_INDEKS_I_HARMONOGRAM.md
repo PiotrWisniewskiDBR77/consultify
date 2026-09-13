@@ -886,3 +886,9 @@ Actual built preview5292 + API5293: open Milestones, explicitly switch Preview a
 Build and served index SHA256 `0f11413090329945b83286b07283407eb187ca44caea9b19bb6af70595fff1dc`. Raw runtime: `codex4-scratch/ie01-rc2-runtime-20260913/ui-native-card-split-v3/result.json`, `milestones-preview.png`, `milestones-reload.png`. Earlier v1 incorrectly assumed DEFINED opened Preview; v2 used button locator for actual radio. Both instrument failures retained; no product change between attempts.
 
 Native runtime-v1 Tasks and Milestones now separate; legacy keeps combined. Independent initial gate fixture was unreachable and is corrected explicitly in follow-up acceptance. Full milestone owner/evidence/dependency work, full IE01, full MVP and deployment remain OPEN.
+
+### C6 reviewed target-kind and v9 compatibility repairs — 2026-09-13
+
+Root frontend commit04932b0094f28254e64a6fdbeca590af02969560 recognizes exact v9 while preserving unknown-version/structure/count rejection. Normal hooks PASS. Root matched disclosure RED3/4→GREEN4/4, independent4/4. C6 uncommitted writer/route/resolver now persist actual targetKind, dedupe by kind and organization, and require Decision handoff kind for Decision content authorization. Independent resolver/writer49/49 and actual Express handler18/18 PASS (data/child services mocked), server tsc exit0. This is not real handoff SQL/ApiGateway/JWT acceptance. See C6_SOL_TARGET_KIND_DISCLOSURE_FOLLOWUP.md and preserved raw evidence.
+
+C6 integration remains HOLD for absent runtime immutable Finding↔generation receipt; helper and tests in progress do not close that gap. Manual/historical Finding creation must remain functional; missing receipt denies export content. Root served build remains native-split c98da8bc/index0f114130, preceding the one-line v9 disclosure source commit; no new UI build claim for disclosure. E1b author self-review moving to independent Sol review; complete MVP and live deployment remain OPEN.
