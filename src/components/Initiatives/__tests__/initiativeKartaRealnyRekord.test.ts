@@ -148,11 +148,10 @@ describe('karta inicjatywy — ladowanie realnego rekordu', () => {
     expect(mapped.id).toBe(REAL_ID);
     expect(mapped.canonicalVersion).toBe(1);
     expect(mapped.lifecycle).toBe('IN_EXECUTION');
-    // Karta czyta `displayStatus` PRZED `status`; słownik rejestru
-    // ('IN_EXECUTION') nie jest wartością `InitiativeStatus` i zostałby ścięty
-    // do DRAFT — realny rekord „W realizacji" pokazałby się jako „Szkic".
-    expect(mapped.displayStatus).toBe('EXECUTING');
-    expect(mapped.status).toBe('EXECUTING');
+    // Wspólny kontrakt statusów zachowuje kanoniczne `IN_EXECUTION` w modelu
+    // karty, a surowy cykl rejestru pozostaje dostępny w `lifecycle`.
+    expect(mapped.displayStatus).toBe('IN_EXECUTION');
+    expect(mapped.status).toBe('IN_EXECUTION');
     expect(String(mapped.expectedOutcome)).toContain('10 minut');
   });
 });

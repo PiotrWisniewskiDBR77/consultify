@@ -289,6 +289,7 @@ export type TimelineMode =
   | 'PLANNING'
   | 'READY_TO_LOCK'
   | 'BASELINED'
+  | 'TRACKING'
   | 'CLOSED'
   | 'COMPLETED';
 
@@ -437,7 +438,35 @@ export interface TimelineRow {
  * Derive timeline mode from initiative status.
  * The mode controls which sub-view the TimelineSection renders.
  */
-export function getTimelineMode(status: string): TimelineMode {
+const CANONICAL_TIMELINE_MODES: Readonly<Record<string, TimelineMode>> = {
+  REGISTERED_DRAFT: 'ESTIMATE',
+  DEFINED: 'ESTIMATE',
+  ANALYZING: 'ESTIMATE',
+  READY_FOR_DECISION: 'ESTIMATE',
+  APPROVED_BACKLOG: 'READY_TO_LOCK',
+  SCHEDULED: 'BASELINED',
+  IN_EXECUTION: 'TRACKING',
+  DELIVERED: 'COMPLETED',
+  BENEFITS_TRACKING: 'COMPLETED',
+  EFFECTIVENESS_REVIEWED: 'COMPLETED',
+  CLOSED: 'COMPLETED',
+  ARCHIVED: 'COMPLETED',
+};
+
+const CANONICAL_UNLOCKED_TIMELINE_STATES = new Set([
+  'REGISTERED_DRAFT',
+  'DEFINED',
+  'ANALYZING',
+  'READY_FOR_DECISION',
+  'APPROVED_BACKLOG',
+]);
+
+export function getTimelineMode(status: string, canonicalLifecycle?: string | null): TimelineMode {
+  const lifecycle = String(canonicalLifecycle ?? '')
+    .trim()
+    .toUpperCase();
+  if (lifecycle) return CANONICAL_TIMELINE_MODES[lifecycle] ?? 'CLOSED';
+
   const modeMap: Record<string, TimelineMode> = {
     DRAFT: 'ESTIMATE',
     PENDING_REVIEW: 'ESTIMATE',
@@ -454,6 +483,22 @@ export function getTimelineMode(status: string): TimelineMode {
     ARCHIVED: 'COMPLETED',
   };
   return modeMap[status] || 'ESTIMATE';
+}
+
+/** Canonical lifecycle is authoritative when present; an unknown future value stays locked. */
+export function isInitiativeTimelineLocked(
+  status: string,
+  canonicalLifecycle?: string | null
+): boolean {
+  const lifecycle = String(canonicalLifecycle ?? '')
+    .trim()
+    .toUpperCase();
+  if (lifecycle) return !CANONICAL_UNLOCKED_TIMELINE_STATES.has(lifecycle);
+  return ['SCHEDULED', 'IN_EXECUTION', 'EXECUTING', 'BLOCKED', 'DONE', 'CLOSED'].includes(
+    String(status || '')
+      .trim()
+      .toUpperCase()
+  );
 }
 
 /**
@@ -492,6 +537,12 @@ export const TIMELINE_MODE_META: Record<
     labelPl: 'Śledzenie',
     color: 'text-c-info bg-c-info/10',
     icon: 'Activity',
+  },
+  CLOSED: {
+    label: 'Locked',
+    labelPl: 'Zablokowany',
+    color: 'text-slate-500 bg-slate-500/10',
+    icon: 'Lock',
   },
   COMPLETED: {
     label: 'Completed',

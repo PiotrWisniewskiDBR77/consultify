@@ -261,18 +261,19 @@ import {
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
 import { TasksMilestonesSection } from './sections/TasksMilestonesSection';
-import type {
-  Decision,
-  GateReadinessCheck,
-  GateRoleAssignment,
-  HistoryEvent,
-  PendingApproval,
-  RaidItem,
-  SectionTypeInfo,
-  StatusHistoryEntry,
-  TaskItem,
-  UserInfo,
-  Watcher,
+import {
+  type Decision,
+  type GateReadinessCheck,
+  type GateRoleAssignment,
+  type HistoryEvent,
+  isInitiativeTimelineLocked,
+  type PendingApproval,
+  type RaidItem,
+  type SectionTypeInfo,
+  type StatusHistoryEntry,
+  type TaskItem,
+  type UserInfo,
+  type Watcher,
 } from './sections/types';
 import { SuggestedChangesPanel } from './Wizard/SuggestedChangesPanel';
 
@@ -5370,7 +5371,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setTimelineMilestones,
       timelinePhases,
       setTimelinePhases,
-      timelineLocked: ['SCHEDULED', 'IN_EXECUTION', 'IN_EXECUTION', 'DONE', 'CLOSED'].includes(status),
+      timelineLocked: isInitiativeTimelineLocked(
+        status,
+        initiative?.documentOrigin === 'initiatives-runtime-v1' ? initiative?.lifecycle : null
+      ),
       baselineVersion: initiative?.baselineVersion ?? null,
       estimatedDurationMonths,
       setEstimatedDurationMonths,
