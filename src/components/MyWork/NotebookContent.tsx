@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
 import * as apiModule from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { maybeSnapshotNotebookPage } from '@/services/notebookVersionSnapshot';
 import { useAppStore } from '@/store/useAppStore';
 import type {
   NotebookCounts,
@@ -1714,6 +1715,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           // only after the backend responds").
           setSaveState('saved');
           setConflictServerPage(null);
+
+          // S1.14b/B6: nothing in the app ever created a notebook version, so
+          // "Version history" was permanently empty and "Restore" unreachable.
+          // A successful save is the only honest moment to record one; the
+          // helper throttles (first save, then ≥10 min AND ≥200 chars of
+          // movement) and never throws — a failed snapshot must not turn a save
+          // the user already sees as "Saved" into an error.
+          void maybeSnapshotNotebookPage({
+            pageId: persistedDraft.id,
+            title: persistedDraft.title,
+            contentJson: persistedDraft.contentJson,
+            contentText: persistedDraft.contentText,
+          });
 
           const textLen = (persistedDraft.contentText || '').length;
           if (textLen > 200 && persistedDraft.id) {
