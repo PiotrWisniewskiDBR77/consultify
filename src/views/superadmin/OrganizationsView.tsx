@@ -12,7 +12,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Trash2,
   Users,
   X,
   XCircle,
@@ -65,6 +64,9 @@ interface OrganizationsViewProps {
 type OrganizationRow = Organization & {
   organization_name?: string;
 };
+
+const DESTRUCTIVE_DELETION_DISABLED_COPY =
+  'Automated deletion is disabled until retention and legal-hold rules are approved.';
 
 type JsonRecord = Record<string, unknown> & {
   data?: JsonRecord | unknown[];
@@ -247,50 +249,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     if (!value) return fallback;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
-  };
-
-  // Organization Actions
-  // [ODMROZENIE 14_ADMIN DEC-457] Podpiecie istniejacego handlera: backend
-  // (DELETE /api/superadmin/organizations/:id) juz wymagal confirmation+reason
-  // (requireConfirmation('delete_organization','critical')) — ten handler ich
-  // nigdy nie wysylal, wiec kazde kliknieccie Delete konczylo sie 428 i
-  // przycisk faktycznie nigdy nie dzialal. P5 (kryterium 12, S2.7) wymaga
-  // dodatkowo wpisania nazwy organizacji jako potwierdzenia nieodwracalnej
-  // operacji — window.prompt zamiast window.confirm, bez nowego ekranu.
-  const handleDeleteOrg = async (id: string, name: string) => {
-    const typedName = window.prompt(
-      `This will PERMANENTLY delete "${name}" and ALL of its data (users, projects, initiatives, tasks — everything). This cannot be undone.\n\nType the exact organization name to confirm:`
-    );
-    if (typedName === null) return;
-    if (typedName.trim() !== name) {
-      toast.error('Organization name did not match — deletion cancelled.');
-      return;
-    }
-    setProcessingId(id);
-    try {
-      setActionError(null);
-      await Api.deleteOrganization(id, {
-        organizationName: name,
-        reason: 'Superadmin console deletion, confirmed by typing the organization name',
-      });
-      const refreshedOrganizations = await Api.getOrganizations();
-      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
-        throw new Error('Organization deletion could not be confirmed by read-back');
-      }
-      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
-      setOrganizations(normalizedOrganizations);
-      setLoadErrors((prev) => ({ ...prev, organizations: null }));
-      if (normalizedOrganizations.some((org) => org.id === id)) {
-        throw new Error('Organization deletion was not confirmed by the server');
-      }
-      toast.success('Organization deleted');
-    } catch (err) {
-      const message = normalizeApiErrorMessage(err, 'Failed to delete organization');
-      setActionError(message);
-      toast.error(message);
-    } finally {
-      setProcessingId(null);
-    }
   };
 
   // [ODMROZENIE 14_ADMIN DEC-460] Podpiecie gotowego klienta Api.exportOrganizationData
@@ -768,14 +726,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               >
                 <Edit2 size={16} />
               </button>
-              <button
-                onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
-                disabled={processingId === org.id}
-                className="p-1.5 hover:bg-danger-500/20 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors disabled:opacity-60"
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
             </div>
           );
         },
@@ -816,11 +766,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         preview: () => setSelectedOrg(org),
         edit: () => startInlineEdit(org),
       },
-      destructive: {
-        label: 'Delete',
-        icon: Trash2,
-        onClick: () => handleDeleteOrg(org.id, getOrgName(org)),
-      },
+      destructive: { note: DESTRUCTIVE_DELETION_DISABLED_COPY },
     };
   };
 
@@ -1207,6 +1153,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
+          </div>
+
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200"
+          >
+            {DESTRUCTIVE_DELETION_DISABLED_COPY}
           </div>
 
           {/* Organizations Table */}
