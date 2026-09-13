@@ -267,7 +267,13 @@ interface InitiativesHubProps {
 const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const PORTFOLIO_HEALTH_ENABLED = import.meta.env.VITE_WAVE3_INITIATIVES_PORTFOLIO_HEALTH === 'true';
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'plan', 'capacity', 'workReport']);
+// K5-8: "Work report" (4th Menu 2 tab) stays hidden until Codex ships the real
+// creator (F2-1 E4). Flag default OFF — do not remove the read-view component,
+// Codex replaces it behind this same flag.
+const FOUR_BUTTONS_ENABLED = import.meta.env.VITE_INITIATIVES_FOUR_BUTTONS === 'true';
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(
+  FOUR_BUTTONS_ENABLED ? ['list', 'plan', 'capacity', 'workReport'] : ['list', 'plan', 'capacity']
+);
 const resolvePreparationLens = (params: URLSearchParams) => {
   const requested = params.get('lens') || params.get('tab');
   return requested === 'portfolioHealth' && PORTFOLIO_HEALTH_ENABLED
@@ -844,11 +850,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         label: t('initiatives.tabs.capacity', 'Load'),
         icon: <Users size={16} />,
       },
-      {
-        id: 'workReport' as ModuleTab,
-        label: t('initiatives.tabs.workReport', 'Work report'),
-        icon: <Activity size={16} />,
-      },
+      ...(FOUR_BUTTONS_ENABLED
+        ? [
+            {
+              id: 'workReport' as ModuleTab,
+              label: t('initiatives.tabs.workReport', 'Work report'),
+              icon: <Activity size={16} />,
+            },
+          ]
+        : []),
     ],
     [t]
   );
@@ -1983,7 +1993,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
-    if ((activeTab === 'list' && preparationLens === 'analysis') || activeTab === 'workReport') {
+    if (
+      (activeTab === 'list' && preparationLens === 'analysis') ||
+      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
+    ) {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}
