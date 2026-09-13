@@ -997,3 +997,6 @@ Candidate2ff754d84b: reviewed17/17 source hashes exact, root combined24/24PASS a
 
 
 Native governed API chain reached same-ID IN_EXECUTION49, accepted handoff and ACTIVEExecutionCase; no legacy initiatives row in authorSQLreadback. See INTEGRATOR_MVP_20260912/E1B_NATIVE_GOVERNED_FLOW_API_CHECKPOINT.md. Visiblecard repair/acceptance and strictfixturecleanup pending; nofreshorg/deployment/fullgatePASS.
+
+
+Native card reachability integrated at96db009a37 after independent34/34 and exact6/6 hash verification. Combined build passed; visible same-ID forecast acceptance active. See INTEGRATOR_MVP_20260912/E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
