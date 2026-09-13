@@ -862,3 +862,10 @@ Built audit failure surfaced nested ApiError [object Object]. Source freeze rele
 IE01 author reports Gateway8PASS covering named reviewer/foreign/revoked/stale, servertsc0 and guard mutation RED; final frozenpacket/review/current UI remains pending. Realizacja E1 current gap review assigned; full E1-E6 closure remains required. Source-aware Decision export WIP23unit is not privacycomplete: root identified filters.customPrompt/topic_focus source provenance checks still needed. Full MVP ACTIVE; no live/push/deploy.
 
 ApiError final follow-up: source/readable built2PASS then DATABASE_ERROR language RED1/4→client11PASS, independent reali18next ENPL2PASS and actualbuilt OWNEREN1PASS. New servedindex7a6c8fa7497be7d2294976428088bbde0c85f58a31022b7d53fa031d4ed333e5,225asset hashes match. All three reports in INTEGRATOR_MVP_20260912. Underlyingaudit500/full E4 remain OPEN. Normal commit next. Piotr requests Sol: execution_sol agent started read-only E1 fullcanonpreflight in clean codex-execution-bank-20260912 from691982; coding waits IE01 checkpoint freeze.
+
+
+### IE01 reviewed repairs integrated — 2026-09-13
+
+RC2 merge 55823322b391cb8bc471b74a1a74f01ecd698a20 integrates initiative journey and repair commit ea59dd1fbab2ff7fa42e7285839318d148496970. All three introduced review findings closed: mandatory named baseline review, same-mounted A→B card navigation, preparation lens browser history. Independent baseline evidence domain19/Gateway16 and navigation/CLOSED/drafts20 PASS; integrated navigation/profile/readiness13 PASS and server tsc exit0. All11 repair git blob hashes match accepted commit. Build running; no deploy or full IE01 acceptance. Original retained gaps, including full26 semantics and lifecycle/operational acceptance, remain OPEN. Receipts saved in INTEGRATOR_MVP_20260912.
+
+Integrated verification complete: servertsc0, bounded13/13, existing ApiError 5/5 PASS. Build initial4GB OOM134, unchanged source rebuild8GB exit0; index SHA256 efb97bf8ef167c8e656588998842367d6ddb12a89f435ee20bb8e2d72922c8ab. Runtime/browser acceptance on this merged build remains OPEN; no deploy.
