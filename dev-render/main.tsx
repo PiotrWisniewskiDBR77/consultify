@@ -344,6 +344,11 @@ const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-
 // ekranu (dev-render/screens/execution-tab.tsx), tab podany wprost w propie
 // per rejestr — patrz komentarz w pliku ekranu za "DLACZEGO".
 const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
+// K5 (2026-09-13) — zrzuty odbiorowe napraw banku realizacji na danych
+// odwzorowujących żywy staging (patrz nagłówek pliku ekranu).
+const K5NaprawyRealizacjaScreen = React.lazy(() => import('./screens/k5-naprawy-realizacja'));
+const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
+const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
 // const ExecutionExportPrezentacjaScreen = React.lazy(
 //   () => import('./screens/execution-export-prezentacja')
@@ -2013,6 +2018,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   // (rejestr grafiki pokrywał dotąd tylko "Raporty"). Dane: patrz nagłówek
   // dev-render/screens/execution-tab.tsx (demo-fallback/local-review, zero
   // ręcznego mockowania fetch — realne ścieżki degradacji produktu w DEV).
+  'k5-naprawy-realizacja': {
+    label:
+      'K5 — Realizacja → bank (REALNY <ExecutionHub initialTab="list">) na danych 1:1 ze stagingu: 4 realizacje ACTIVE bez rekordu inicjatywy + 6 inicjatyw w toku bez handoffu. &lang=en&theme=light|dark',
+    render: () => <K5NaprawyRealizacjaScreen />,
+  },
+  'k5-naprawy-inicjatywy': {
+    label:
+      'K5 — Inicjatywy → siatka/kanban/oś czasu/kebab (REALNY <InitiativesHub>), parytet kropki priorytetu i cichy pasek ostrzeżeń. &lang=en&theme=light|dark',
+    render: () => <K5NaprawyInicjatywyScreen />,
+  },
+  'k5-naprawy-ostrzezenia': {
+    label:
+      'K5-I4 — pasek „Top Warnings" (REALNY <ExecutionTimelineView>): cichy tint + kropka zamiast wypełnionej czerwieni, „Blocked" tylko dla faktycznie zablokowanych. &theme=light|dark',
+    render: () => <K5NaprawyOstrzezeniaScreen />,
+  },
   'execution-tab-list': {
     label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
     render: () => <ExecutionTabScreen tab="list" />,

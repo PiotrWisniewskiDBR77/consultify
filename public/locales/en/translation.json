@@ -14926,6 +14926,11 @@
     }
   },
   "execution": {
+    "bank": {
+      "noExecutionCase": "No execution case yet",
+      "noExecutionCaseHint": "In execution, but not handed over yet — no execution case to report against.",
+      "lifecycleUnknownHint": "Linked initiative record is not available"
+    },
     "review": {
       "roles": {
         "executionManager": "Execution Manager",

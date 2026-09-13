@@ -138,6 +138,9 @@ import {
 } from './executionBankModel';
 import {
   describeExecutionBankUnknown,
+  executionBankExecutionStateLabel,
+  executionBankLifecycleLabel,
+  executionBankOwnerLabel,
   ExecutionBankViews,
   formatExecutionBankDate,
 } from './ExecutionBankViews';
@@ -876,6 +879,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // F5 kontrakt — definicje raportów z rejestru report_definitions (null = jeszcze nie pobrano;
   // [] = pobrano, ale puste → używamy fallbacku hardkodu). Patrz reportContract.ts / migracja 910.
   const [reportDefinitions, setReportDefinitions] = useState<ReportDefinitionDto[] | null>(null);
+
+  /**
+   * K5-R1 — identyfikator osoby → NAZWISKO. Ten sam katalog, którym nazwiska
+   * rozwiązują Wyniki i Finanse; bank realizacji brał dotąd `ownerId` wprost
+   * na ekran (surowy UUID w kolumnie OWNER, „D2" na awatarze kanbana).
+   */
+  const resolveOwnerName = useOrganizationMemberNames();
 
   // Data state
   const initRetryRef = React.useRef(0);
@@ -2178,7 +2188,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const executionBankRowsBeforePreset = useMemo(() => {
     const statusFilters = activeStatusFilter ? [activeStatusFilter] : undefined;
-    const activeStates = scope === 'active' ? ['ACTIVE', 'PAUSED', 'CLOSING'] : undefined;
     const dataIssues = summaryFilters.flatMap((filter) => {
       if (filter.column !== 'data') return [];
       if (filter.value === 'missing_baseline') return ['MISSING_BASELINE' as const];
@@ -2186,10 +2195,41 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       if (filter.value === 'unknown_progress') return ['UNKNOWN_PROGRESS' as const];
       return [];
     });
-    return filterExecutionBankRows(executionBankRowsAll, {
+    /**
+     * K5-R2 — ZAKRES „Aktywne" LICZONY DWIEMA MIARAMI, bo wiersz banku ma dwa
+     * rodowody.
+     *
+     * POMIAR (żywy staging 2026-09-13, org DBR77 `a3e05d4a-…`): bank pokazywał
+     * 4 wiersze, a rejestr Inicjatyw w tym samym czasie 12 „In execution".
+     * Różnica NIE była błędem odczytu — filtr `executionStates:
+     * ['ACTIVE','PAUSED','CLOSING']` porównuje stan REALIZACJI, a inicjatywa
+     * bez realizacji ma ten stan `'UNKNOWN'` (`buildRow`: `executionCase?.state
+     * || 'UNKNOWN'`). Czyli KAŻDA inicjatywa w toku BEZ handoffu wypadała z
+     * banku po cichu — dokładnie odwrotnie niż mówi decyzja CTO C5.1
+     * („moduł pokazuje WSZYSTKIE inicjatywy w toku, handoff jest opcjonalną
+     * bramką jakości, nie warunkiem istnienia wiersza") i DEC-469 (stan
+     * zastany ma być widoczny, nie ukryty).
+     *
+     * Liczby z bazy stagingu tego dnia: 8 inicjatyw `IN_EXECUTION` w tabeli
+     * `initiatives`, 5 realizacji w `ie_aggregate_state` (4 ACTIVE + 1 CLOSED),
+     * przy czym 4 ACTIVE wskazują na aggregaty `demo-story-…`, których w
+     * `initiatives` NIE MA. Stąd jednocześnie „4 wiersze" i „12 w toku".
+     *
+     * REGUŁA: wiersz Z realizacją oceniamy stanem realizacji; wiersz BEZ
+     * realizacji — cyklem życia inicjatywy (`ACTIVE_EXECUTION_STATUSES`).
+     * Kolumna „Execution phase" mówi wtedy wprost „No execution case yet".
+     */
+    const scoped =
+      scope === 'active'
+        ? executionBankRowsAll.filter((row) =>
+            row.executionCaseId
+              ? ['ACTIVE', 'PAUSED', 'CLOSING'].includes(row.executionState)
+              : ACTIVE_EXECUTION_STATUSES.includes(row.lifecycleStatus as InitiativeStatus)
+          )
+        : executionBankRowsAll;
+    return filterExecutionBankRows(scoped, {
       search: searchQuery,
       lifecycleStatuses: statusFilters,
-      executionStates: activeStates,
       dataIssues: dataIssues.length ? dataIssues : undefined,
     });
   }, [activeStatusFilter, executionBankRowsAll, scope, searchQuery, summaryFilters]);
@@ -5653,10 +5693,22 @@ Please return:
           ? `${selectedBankRow.progress.value}%`
           : describeExecutionBankUnknown(selectedBankRow.progress.reason)
         : '';
-      const bankDateLabel = (evidence: ExecutionBankRow['baselineFinish']) =>
-        evidence.status === 'KNOWN'
-          ? formatExecutionBankDate(evidence.value)
-          : describeExecutionBankUnknown(evidence.reason);
+      /*
+       * K5-R3: w TABELI WŁAŚCIWOŚCI klucz już nazywa pole, więc wartość „Baseline
+       * not set" w wierszu „Baseline finish" powtarzałaby to samo słowo dwa razy.
+       * Brak = myślnik, powód idzie w podpowiedź (`title`) — jak w komórkach
+       * tabeli. Wyjątek: `VALUE_CLEARED` („Not scheduled") to stan, nie brak.
+       */
+      const bankDateLabel = (evidence: ExecutionBankRow['baselineFinish']) => {
+        if (evidence.status === 'KNOWN') return formatExecutionBankDate(evidence.value);
+        const reason = describeExecutionBankUnknown(evidence.reason);
+        if (evidence.reason === 'VALUE_CLEARED') return reason;
+        return (
+          <span className="text-c-text-muted" title={reason} aria-label={reason}>
+            —
+          </span>
+        );
+      };
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5682,6 +5734,7 @@ Please return:
               )}
               <ExecutionBankViews
                 rows={executionBankRows}
+                resolveOwnerName={resolveOwnerName}
                 view={bankView}
                 selected={
                   selectedBankRow
@@ -5703,69 +5756,155 @@ Please return:
             </div>
 
             <JedenPrawyPanel
+              /*
+               * K5-R4 — `rekord` musi być SAMYM `<StandardPreview>`, nie
+               * opakowanym w `<div>`.
+               *
+               * DEFEKT ZE ZRZUTU (staging 2026-09-13): nagłówek panelu brzmiał
+               * „Record" zamiast nazwy inicjatywy, a na ekranie były DWA „×"
+               * i przycisk „Open" wewnątrz karty. Przyczyna: `JedenPrawyPanel`
+               * czyta `rekord.props` (`title`/`onOpenFull`/`onTogglePin`) i
+               * robi `cloneElement(rekord, { embedded: true })`. Gdy `rekord`
+               * był `<div>`, wszystkie te propsy trafiały w próżnię —
+               * `title` spadał na domyślne „Record", a `embedded` na `<div>`
+               * (ostrzeżenie Reacta w konsoli), więc `StandardPreview` nadal
+               * rysował WŁASNY nagłówek pod nagłówkiem powłoki.
+               *
+               * Znaczniki `data-*` (używane przez testy i harness) jadą teraz
+               * w `children` podglądu — panel nadal je wystawia, a powłoka
+               * dostaje prawdziwe propsy.
+               */
               rekord={
                 selectedBankRow ? (
-                  <div
-                    data-testid="execution-bank-preview"
-                    data-initiative-id={selectedBankRow.initiativeId}
-                    data-execution-case-id={selectedBankRow.executionCaseId ?? undefined}
-                  >
-                    <StandardPreview
-                      title={selectedBankRow.name || t('execution.initiativeLabel', 'Initiative')}
-                      onClose={() => {
-                        setSelectedExecutionBankRowId(null);
-                        const next = new URLSearchParams(searchParams);
-                        next.delete('selection');
-                        if (next.toString() !== searchParams.toString()) {
-                          updateExecutionSearch(next, 'user');
-                        }
-                      }}
-                      onOpenFull={() => openBankRow(selectedBankRow)}
-                      meta={{
-                        pills: [
-                          {
-                            label: selectedBankRow.lifecycleStatus,
-                            tone: statusChipTone(selectedBankRow.lifecycleStatus),
-                          },
-                          {
-                            label: selectedBankRow.executionState,
-                            tone: statusChipTone(selectedBankRow.executionState),
-                          },
-                          { label: progressLabel, tone: 'neutral' },
-                        ],
-                        trailing: (
-                          <span className="text-[11px] font-semibold text-c-text-secondary">
-                            Reporting date{' '}
-                            {formatExecutionBankDate(executionBankCalendarWindow.asOf)}
-                          </span>
+                  <StandardPreview
+                    title={selectedBankRow.name || t('execution.initiativeLabel', 'Initiative')}
+                    onClose={() => {
+                      setSelectedExecutionBankRowId(null);
+                      const next = new URLSearchParams(searchParams);
+                      next.delete('selection');
+                      if (next.toString() !== searchParams.toString()) {
+                        updateExecutionSearch(next, 'user');
+                      }
+                    }}
+                    /* K5-R4: „Open" prowadziło donikąd dla wierszy, których
+                       rekordu inicjatywy nie ma w portfelu (`openBankRow`
+                       kończyło się cichym `return`). Zamiast martwego
+                       przycisku — wyłączony z powodem. */
+                    {...(selectedBankInitiative
+                      ? { onOpenFull: () => openBankRow(selectedBankRow) }
+                      : {
+                          openDisabledReason:
+                            'The initiative record linked to this execution case is not available.',
+                        })}
+                    meta={{
+                      pills: [
+                        ...(selectedBankRow.lifecycleStatus &&
+                        selectedBankRow.lifecycleStatus !== 'UNKNOWN'
+                          ? [
+                              {
+                                label: executionBankLifecycleLabel(
+                                  selectedBankRow.lifecycleStatus
+                                ),
+                                tone: statusChipTone(selectedBankRow.lifecycleStatus),
+                              },
+                            ]
+                          : []),
+                        selectedBankRow.executionCaseId
+                          ? {
+                              label: executionBankExecutionStateLabel(
+                                selectedBankRow.executionState
+                              ),
+                              tone: statusChipTone(selectedBankRow.executionState),
+                            }
+                          : { label: 'No execution case yet', tone: 'neutral' as const },
+                        {
+                          /* K5-R3: pigułka meta niosła „Progress Progress not
+                             reported" — etykieta doklejona do zdania, które już
+                             samo mówiło o postępie. Chip pokazuje WARTOŚĆ. */
+                          label:
+                            selectedBankRow.progress.status === 'KNOWN'
+                              ? `Progress ${selectedBankRow.progress.value}%`
+                              : 'Progress —',
+                          tone: 'neutral' as const,
+                        },
+                      ],
+                      trailing: (
+                        <span className="text-[11px] font-semibold text-c-text-secondary">
+                          Reporting date{' '}
+                          {formatExecutionBankDate(executionBankCalendarWindow.asOf)}
+                        </span>
+                      ),
+                    }}
+                    /*
+                     * K5-R3 — WŁAŚCIWOŚCI jako klucz–wartość, nie akapit prozy.
+                     *
+                     * Było: siedem pól sklejonych `join('\n')` w pole `text`,
+                     * nad którym `StandardPreview` liczył słowa („~32 words").
+                     * Kanon podglądu ma na to osobny blok (`details.properties`
+                     * → `ArtifactPropertiesTable`, SPEC-A §11.2); licznik słów
+                     * przy tabeli znika sam. Opis inicjatywy zostaje prozą — bo
+                     * nią jest.
+                     */
+                    details={{
+                      text: selectedBankRow.description?.trim() || undefined,
+                      /* Bank realizacji jest w całości po angielsku (DEC-461);
+                         nagłówki kolumn idą tą samą drogą co w Wynikach. */
+                      propertyLabel: 'Property',
+                      valueLabel: 'Value',
+                      properties: [
+                        {
+                          id: 'execution-case',
+                          label: 'Execution case',
+                          value: selectedBankRow.executionCaseId
+                            ? `Linked · v${selectedBankRow.executionCaseVersion ?? '—'}`
+                            : 'Not linked yet',
+                        },
+                        {
+                          id: 'owner',
+                          label: 'Owner',
+                          value: executionBankOwnerLabel(selectedBankRow, resolveOwnerName),
+                        },
+                        {
+                          id: 'baseline-finish',
+                          label: 'Baseline finish',
+                          value: bankDateLabel(selectedBankRow.baselineFinish),
+                          mono: true,
+                        },
+                        {
+                          id: 'current-plan-finish',
+                          label: 'Current plan finish',
+                          value: bankDateLabel(selectedBankRow.currentPlanFinish),
+                          mono: true,
+                        },
+                        {
+                          id: 'forecast-finish',
+                          label: 'Forecast finish',
+                          value: bankDateLabel(selectedBankRow.forecastFinish),
+                          mono: true,
+                        },
+                        {
+                          id: 'actual-finish',
+                          label: 'Actual finish',
+                          value: bankDateLabel(selectedBankRow.actualFinish),
+                          mono: true,
+                        },
+                      ],
+                      onCopy: () =>
+                        void navigator.clipboard?.writeText(
+                          `${selectedBankRow.name} — ${progressLabel}`
                         ),
-                      }}
-                      details={{
-                        text: [
-                          selectedBankRow.executionCaseId
-                            ? `Execution Case linked · Version ${selectedBankRow.executionCaseVersion ?? 'not reported'}`
-                            : 'No Execution Case linked',
-                          `Lifecycle: ${selectedBankRow.lifecycleStatus}`,
-                          `Execution state: ${selectedBankRow.executionState}`,
-                          `Baseline: ${bankDateLabel(selectedBankRow.baselineFinish)}`,
-                          `Current plan: ${bankDateLabel(selectedBankRow.currentPlanFinish)}`,
-                          `Forecast: ${bankDateLabel(selectedBankRow.forecastFinish)}`,
-                          `Actual: ${bankDateLabel(selectedBankRow.actualFinish)}`,
-                          '',
-                          selectedBankRow.description?.trim() ||
-                            t('common.noDescription', 'No description'),
-                        ].join('\n'),
-                        onCopy: () =>
-                          void navigator.clipboard?.writeText(
-                            `${selectedBankRow.name} — ${progressLabel}`
-                          ),
-                      }}
-                      relations={sourceRelations}
-                    />
-                    <div data-testid="execution-bank-progress" className="sr-only">
-                      {progressLabel}
+                    }}
+                    relations={sourceRelations}
+                  >
+                    <div
+                      data-testid="execution-bank-preview"
+                      data-initiative-id={selectedBankRow.initiativeId}
+                      data-execution-case-id={selectedBankRow.executionCaseId ?? undefined}
+                      className="sr-only"
+                    >
+                      <span data-testid="execution-bank-progress">{progressLabel}</span>
                     </div>
-                  </div>
+                  </StandardPreview>
                 ) : null
               }
             />
