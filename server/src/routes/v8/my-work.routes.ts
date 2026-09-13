@@ -183,6 +183,7 @@ function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string
     `(SELECT COALESCE(NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''), u.email)
         FROM users u WHERE u.id = ${prefix}owner_user_id) as "ownerDisplayName"`,
     `${prefix}organization_id as "organizationId"`,
+    notebookSelectExpr(cols, tableAlias, 'notebook_id', '"notebookId"', 'NULL'),
     `${prefix}project_id as "projectId"`,
     `${prefix}visibility`,
     `${prefix}title`,

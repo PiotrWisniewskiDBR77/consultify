@@ -201,6 +201,40 @@ describe('V8 My Work notebook routes', () => {
     expect(res.body.data[0].attachments[0].storageKey).toBeUndefined();
   });
 
+  it('returns the optional parent notebook identity from the V8 single-page read', async () => {
+    mockGetTableColumns.mockResolvedValue(
+      new Map([
+        ['id', { name: 'id' }],
+        ['notebook_id', { name: 'notebook_id' }],
+      ])
+    );
+    let selectedSql = '';
+    mockQueryOne.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM notebook_pages')) {
+        selectedSql = sql;
+        return {
+          id: 'note-1',
+          ownerUserId: USER_ID,
+          organizationId: ORG,
+          notebookId: 'notebook-1',
+          visibility: 'private',
+          title: 'Notebook item',
+          contentJson: JSON.stringify({ type: 'doc', content: [] }),
+          tags: '[]',
+          status: 'active',
+          pinned: 0,
+        };
+      }
+      return null;
+    });
+
+    const res = await request(createApp()).get('/api/v8/my-work/notebook/pages/note-1');
+
+    expect(res.status).toBe(200);
+    expect(selectedSql).toContain('notebook_id as "notebookId"');
+    expect(res.body.data).toMatchObject({ id: 'note-1', notebookId: 'notebook-1' });
+  });
+
   it('lists notebook pages even when optional notebook columns are missing', async () => {
     mockGetTableColumns.mockResolvedValue(
       new Map(

@@ -22,7 +22,7 @@
  * at module scope of the test file keeps ordering correct.
  */
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderResult } from '@testing-library/react';
 import { vi } from 'vitest';
@@ -46,11 +46,22 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
-// ── react-router: keep real behaviour but silence navigation ──────────────────
+// ── react-router: keep real MemoryRouter behaviour ────────────────────────────
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: () => vi.fn() };
+  return actual;
 });
+
+function RouterLocationProbe() {
+  const location = useLocation();
+  return (
+    <output data-testid="hub-router-location">
+      {location.pathname}
+      {location.search}
+      {location.hash}
+    </output>
+  );
+}
 
 // ── ModuleHub stub: render tabs (labels) + command rows + children ────────────
 // Path used by every hub is '@/components/shared/ModuleHub/ModuleHub'.
@@ -89,8 +100,22 @@ vi.mock('@/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
 // trivial element. Mirrors tests/components/MyWork/NotebookContent.*'s approach of
 // mocking `notebook/extensions`.
 vi.mock('@/components/MyWork/NotebookContent', () => ({
-  NotebookContent: ({ notebookTitle }: { notebookTitle?: string }) => (
-    <div data-testid="stub-notebook-content">{notebookTitle}</div>
+  NotebookContent: ({
+    notebookTitle,
+    notebookId,
+    openPageId,
+  }: {
+    notebookTitle?: string;
+    notebookId?: string | null;
+    openPageId?: string | null;
+  }) => (
+    <div
+      data-testid="stub-notebook-content"
+      data-notebook-id={notebookId || ''}
+      data-open-page-id={openPageId || ''}
+    >
+      {notebookTitle}
+    </div>
   ),
 }));
 vi.mock('@/components/Initiatives/InitiativeDocumentView', () => ({
@@ -126,6 +151,22 @@ const APP_STORE_STATE: Record<string, unknown> = {
   myWorkIntent: null,
   myWorkEvent: null,
 };
+export function setHubSmokeIdentity(userId: string, organizationId: string): void {
+  APP_STORE_STATE.currentUser = {
+    id: userId,
+    email: `${userId}@example.com`,
+    name: userId,
+    role: 'admin',
+    isAuthenticated: true,
+    organizationId,
+  };
+  APP_STORE_STATE.currentOrganization = { id: organizationId, name: organizationId };
+  APP_STORE_STATE.organization = { id: organizationId, name: organizationId };
+}
+
+export function resetHubSmokeIdentity(): void {
+  setHubSmokeIdentity('smoke-user', 'smoke-org');
+}
 const appStoreProxy = new Proxy(APP_STORE_STATE, {
   get(target, prop: string) {
     if (prop in target) return (target as any)[prop];
@@ -200,7 +241,10 @@ export function renderHub(element: React.ReactElement, initialPath = '/'): Rende
     <QueryClientProvider client={queryClient}>
       <FeatureFlagsProvider>
         <AccessPolicyProvider>
-          <MemoryRouter initialEntries={[initialPath]}>{element}</MemoryRouter>
+          <MemoryRouter initialEntries={[initialPath]}>
+            <RouterLocationProbe />
+            {element}
+          </MemoryRouter>
         </AccessPolicyProvider>
       </FeatureFlagsProvider>
     </QueryClientProvider>
