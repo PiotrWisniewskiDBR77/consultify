@@ -18,7 +18,6 @@ import {
   Clock,
   ExternalLink,
   FileText,
-  Gauge,
   GripVertical,
   LayoutDashboard,
   Link2,
@@ -36,7 +35,7 @@ import {
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
@@ -131,11 +130,20 @@ import { ExecutionActionCards } from './ExecutionActionCards';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
+import { executionFunctionLabel, executionModuleTabIds } from './executionModuleTabs';
 import {
-  executionModuleTabIds,
-  isExecutionDeepLinkTabAllowed,
-  resolveExecutionDeepLinkTab,
-} from './executionModuleTabs';
+  executionFunctionIdForSurface,
+  executionInitiativeIdFromDocument,
+  executionNavigationCommit,
+  executionSubviewForSurface,
+  parseExecutionNavigationState,
+  serializeExecutionNavigationState,
+  shouldPreserveExecutionNavigationInput,
+  type ExecutionBankView,
+  type ExecutionDocumentIdentity,
+  type ExecutionNavigationIssue,
+  type ExecutionNavigationState,
+} from './executionNavigationState';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 // 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
 // dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
@@ -683,7 +691,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const { t, i18n } = useTranslation();
   const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const routeLocation = useLocation();
+  const [searchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
@@ -712,6 +721,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [navigationIssue, setNavigationIssue] = useState<ExecutionNavigationIssue | null>(null);
+  const applyingNavigationRef = React.useRef(false);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
     list: 'wszystkie',
     work: 'all',
@@ -931,8 +942,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }>
   >([]);
   const [isLoadingActionQueue, setIsLoadingActionQueue] = useState(false);
-  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
-
   // Executive aggregate snapshot (Module 7, sections 7.1–7.6)
   const [execPeriod, setExecPeriod] = useState<ExecPeriod>('week');
   const [execIncludeAI, setExecIncludeAI] = useState(true);
@@ -977,145 +986,103 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
   }, [sharedInitiativeRefreshVersion]);
 
+  const toHubView = useCallback((view: ExecutionBankView): ViewMode => {
+    if (view === 'gantt') return 'timeline';
+    return view;
+  }, []);
+  const toNavigationView = useCallback((view: ViewMode): ExecutionBankView => {
+    if (view === 'timeline') return 'gantt';
+    if (view === 'grid' || view === 'kanban') return 'kanban';
+    if (view === 'calendar') return 'calendar';
+    return 'table';
+  }, []);
+  const updateExecutionSearch = useCallback(
+    (next: URLSearchParams, intent: 'user' | 'url-sync') => {
+      const commit = executionNavigationCommit(next, routeLocation, intent);
+      navigate(commit.to, commit.options);
+    },
+    [navigate, routeLocation]
+  );
+
+  // URL jest pełnym stanem nawigacji: ten efekt obsługuje cold reload oraz
+  // browser Back/Forward. Ref chroni wejściowy URL przed nadpisaniem przez
+  // stan poprzedniego renderu w sąsiednim efekcie synchronizacji.
   useEffect(() => {
-    if (deepLinkHandled) return;
-    const openId = String(searchParams.get('open') || '').trim();
-    const mode = String(searchParams.get('mode') || '')
-      .trim()
-      .toLowerCase();
-    const targetTab = String(searchParams.get('tab') || '')
-      .trim()
-      .toLowerCase();
-    const targetView = String(searchParams.get('view') || '')
-      .trim()
-      .toLowerCase();
-    // DEC-426 (1.1-E-1): deep-link `?kokpit=ryzyka|rozstrzygniecia` na Kokpicie
-    // menedżera (Menu 3 — patrz `getExecutionMenu3().summary`). Czytane raz,
-    // niezależnie od tego, którą gałęzią niżej trafi `tab` — dalej tylko czeka
-    // aż użytkownik faktycznie jest na zakładce `summary`.
-    const targetKokpit = String(searchParams.get('kokpit') || '')
-      .trim()
-      .toLowerCase();
-    if (targetKokpit === 'ryzyka' || targetKokpit === 'rozstrzygniecia') {
-      setCanonicalMenu3Preset((current) => ({ ...current, summary: targetKokpit }));
+    const hasNavigationInput = ['tab', 'open', 'initiativeId', 'executionCaseId'].some((key) =>
+      searchParams.has(key)
+    );
+    if (!hasNavigationInput) return;
+    applyingNavigationRef.current = true;
+    const navigation = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
+    setActiveTab(navigation.surfaceTab as ModuleTab);
+    setViewMode(toHubView(navigation.view));
+    setActiveDocumentId(navigation.documentIdentity?.id ?? null);
+    setIsSidePanelOpen(false);
+    setNavigationIssue(navigation.issue);
+    if (navigation.preset && navigation.surfaceTab === 'summary') {
+      setCanonicalMenu3Preset((current) => ({ ...current, summary: navigation.preset! }));
     }
-
-    // A canonical Initiative deep link wins over the list-tab default. The
-    // executionCaseId may remain in the URL as correlation metadata, but the
-    // visible document identity is always the Initiative ID.
-    if (openId && (mode === 'doc' || mode === 'initiative')) {
-      setActiveTab('list');
-      setViewMode('table');
-      setActiveDocumentId(openId);
-      setIsSidePanelOpen(false);
-      setDeepLinkHandled(true);
-      return;
-    }
-
-    // #77 / Z94 — „Kokpit menedżera" (Summary one-look) ma być OSIĄGALNY.
-    // Do 2026-09-05 wartość `summary` nie była na tej liście, więc deep-link
-    // `/execution?tab=summary` cicho lądował na `tab=list` — a ponieważ w całym
-    // pliku nie było ANI JEDNEGO przycisku prowadzącego do tej zakładki, ekran
-    // był zbudowany i całkowicie nieosiągalny (odbiór na żywo 05.09).
-    // Wpuszczamy `summary` TYLKO przy włączonej fladze — przy fladze OFF
-    // (domyślnie wszędzie, reguła #7) deep-link nadal degraduje się do listy,
-    // zamiast pokazywać pustą powierzchnię.
-    if (isExecutionDeepLinkTabAllowed(targetTab, { summaryOneLookEnabled })) {
-      // 1.12-R1 (C): alias starych linków „Sterowania" → `control`.
-      setActiveTab(resolveExecutionDeepLinkTab(targetTab) as ModuleTab);
-      setViewMode(targetView === 'grid' ? 'grid' : 'table');
-      setDeepLinkHandled(true);
-      return;
-    }
-
-    // Rollout consolidation: /rollout redirects to /execution?tab=rollout
-    if (targetTab === 'rollout') {
-      setActiveTab('rollout' as ModuleTab);
-      setDeepLinkHandled(true);
-      return;
-    }
-  }, [deepLinkHandled, searchParams, summaryOneLookEnabled]);
+  }, [searchParams, summaryOneLookEnabled, toHubView]);
 
   useEffect(() => {
-    if (!deepLinkHandled) return;
-    const next = new URLSearchParams(searchParams);
-    let changed = false;
-    // Only strip the *transient* deep-link triggers here. `view` is persistent UI
-    // state owned by the tab/view-sync effect below — deleting it here made the two
-    // effects ping-pong (this one removes `view`, the other re-adds it), which is an
-    // infinite setSearchParams loop ("Maximum update depth exceeded").
-    if (next.has('open')) {
-      next.delete('open');
-      changed = true;
+    if (applyingNavigationRef.current) {
+      applyingNavigationRef.current = false;
+      return;
     }
-    if (next.has('mode')) {
-      next.delete('mode');
-      changed = true;
-    }
-    if (changed) {
-      setSearchParams(next, { replace: true });
-    }
-  }, [deepLinkHandled, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    const next = new URLSearchParams(searchParams);
-    let changed = false;
-    const currentTab = String(next.get('tab') || '')
-      .trim()
-      .toLowerCase();
-    const desiredTab = String(activeTab || '')
-      .trim()
-      .toLowerCase();
-    if (desiredTab && currentTab !== desiredTab) {
-      next.set('tab', desiredTab);
-      changed = true;
-    }
-    const currentView = String(next.get('view') || '')
-      .trim()
-      .toLowerCase();
-    const desiredView = String(viewMode || '')
-      .trim()
-      .toLowerCase();
-    if (desiredView && currentView !== desiredView) {
-      next.set('view', desiredView);
-      changed = true;
-    }
-    const currentInitiativeScope = String(next.get('initiativeId') || '').trim();
-    const desiredInitiativeScope =
-      activeDocumentId && !activeDocumentId.startsWith('report:') ? activeDocumentId : '';
-    if (desiredInitiativeScope) {
-      if (currentInitiativeScope !== desiredInitiativeScope) {
-        next.set('initiativeId', desiredInitiativeScope);
-        changed = true;
-      }
-    } else if (currentInitiativeScope) {
-      next.delete('initiativeId');
-      changed = true;
-    }
-    // DEC-426 (1.1-E-1): `?kokpit=ryzyka|rozstrzygniecia` odzwierciedla chip
-    // Menu 3 Kokpitu menedżera; poza zakładką `summary` param znika (nie
-    // zaśmieca URL innych zakładek Realizacji).
-    const currentKokpit = String(next.get('kokpit') || '').trim();
-    const desiredKokpit = activeTab === 'summary' ? canonicalMenu3Preset.summary || 'ryzyka' : '';
-    if (desiredKokpit) {
-      if (currentKokpit !== desiredKokpit) {
-        next.set('kokpit', desiredKokpit);
-        changed = true;
-      }
-    } else if (currentKokpit) {
-      next.delete('kokpit');
-      changed = true;
-    }
-    if (!changed) return;
-    setSearchParams(next, { replace: true });
+    if (shouldPreserveExecutionNavigationInput(navigationIssue)) return;
+    const current = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
+    const initiativeId = executionInitiativeIdFromDocument(activeDocumentId);
+    const documentIdentity: ExecutionDocumentIdentity | null = initiativeId
+      ? { kind: 'initiative', id: initiativeId }
+      : activeDocumentId?.startsWith('work:')
+        ? { kind: 'work', id: activeDocumentId }
+        : activeDocumentId?.startsWith('report:')
+          ? { kind: 'report', id: activeDocumentId }
+          : activeDocumentId
+            ? { kind: 'intelligence', id: activeDocumentId }
+            : null;
+    const next = serializeExecutionNavigationState(
+      {
+        ...current,
+        functionId: executionFunctionIdForSurface(String(activeTab)),
+        subview:
+          navigationIssue === 'SUMMARY_DISABLED'
+            ? 'summary'
+            : executionSubviewForSurface(String(activeTab)),
+        surfaceTab: activeTab as any,
+        view: toNavigationView(viewMode),
+        initiativeId,
+        documentIdentity,
+        preset:
+          activeTab === ('summary' as ModuleTab)
+            ? canonicalMenu3Preset.summary || 'ryzyka'
+            : current.preset,
+        issue: navigationIssue,
+      },
+      searchParams
+    );
+    if (next.toString() === searchParams.toString()) return;
+    updateExecutionSearch(next, 'url-sync');
   }, [
     activeDocumentId,
     activeTab,
     canonicalMenu3Preset.summary,
+    navigationIssue,
     searchParams,
-    setSearchParams,
+    summaryOneLookEnabled,
+    toNavigationView,
+    updateExecutionSearch,
     viewMode,
   ]);
+
+  const pushExecutionNavigation = useCallback(
+    (updates: Partial<ExecutionNavigationState>) => {
+      const current = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
+      const next = serializeExecutionNavigationState({ ...current, ...updates }, searchParams);
+      if (next.toString() !== searchParams.toString()) updateExecutionSearch(next, 'user');
+    },
+    [searchParams, summaryOneLookEnabled, updateExecutionSearch]
+  );
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -2248,12 +2215,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
-        const query = new URLSearchParams();
-        query.set('open', encodeURIComponent(id));
-        query.set('mode', 'doc');
-        query.set('initiativeId', encodeURIComponent(id));
-        query.set('tab', String(activeTab || 'list'));
-        query.set('view', String(viewMode || 'table'));
+        const current = parseExecutionNavigationState(searchParams, { summaryOneLookEnabled });
+        const query = serializeExecutionNavigationState(
+          {
+            ...current,
+            functionId: executionFunctionIdForSurface(String(activeTab)),
+            subview: executionSubviewForSurface(String(activeTab)),
+            surfaceTab: activeTab as any,
+            view: toNavigationView(viewMode),
+            initiativeId: id,
+            documentIdentity: { kind: 'initiative', id },
+            issue: null,
+          },
+          searchParams
+        );
         const url = `${window.location.origin}${ROUTES.EXECUTION}?${query.toString()}`;
         await navigator.clipboard.writeText(url);
         toast.success(t('common.copied', 'Copied'));
@@ -2261,7 +2236,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         toast.error(t('common.copyFailed', 'Copy failed'));
       }
     },
-    [activeTab, t, viewMode]
+    [activeTab, searchParams, summaryOneLookEnabled, t, toNavigationView, viewMode]
   );
 
   const execReportsIntelligenceEnabled = isExecutionFlagEnabled('execReportsIntelligence');
@@ -2330,41 +2305,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setActiveDocumentId(docId);
   }, [execReportsIntelligenceEnabled, t]);
 
-  // Tab configuration — KOLEJNOŚĆ pozycji Menu 2 pochodzi z
-  // `executionModuleTabIds`, z tego samego źródła co lista wartości `?tab=`
-  // wpuszczanych przez deep-link (patrz nagłówek executionModuleTabs.ts).
-  // Wcześniej te dwie listy stały osobno i rozjechały się: „Kokpit menedżera"
-  // nie miał ani pozycji w Menu 2, ani wpisu w liście deep-linku, więc ekran
-  // — zbudowany, z włączoną flagą — był nieosiągalny (odbiór na żywo 05.09).
+  // Menu 2 pokazuje dokładnie cztery funkcje właścicielskie. Zasoby, Kokpit
+  // i Rollout pozostają osiągalnymi podwidokami, ale nie tworzą kolejnych
+  // równorzędnych funkcji.
   const tabs = useMemo(() => {
-    // Etykieta kokpitu z istniejącego klucza `execution.tabs.summary`
-    // (pl „Kokpit" / en „Dashboard" — oba realnie przetłumaczone w locales,
-    // nie sam klucz-atrapa).
     const definitions: Record<string, { label: string; icon: React.ReactNode }> = {
-      summary: { label: t('execution.tabs.summary', 'Dashboard'), icon: <Gauge size={16} /> },
       list: {
-        label: t('execution.tabs.moduleBar.list', 'Deliveries'),
+        label: executionFunctionLabel('list', isPolish),
         icon: <LayoutDashboard size={16} />,
       },
       work: {
-        label: t('execution.tabs.moduleBar.work', 'Work'),
+        label: executionFunctionLabel('work', isPolish),
         icon: <ClipboardList size={16} />,
       },
-      resources: {
-        label: t('execution.tabs.moduleBar.resources', 'Resources'),
-        icon: <Users size={16} />,
-      },
-      // 1.12-R1 (C): „Sterowanie" → „Decyzje i ryzyka". Zakładka przestała
-      // być rejestrem pustych sygnałów `runtime-v1` (0 rekordów), a stała się
-      // rejestrem decyzji (25 otwartych) i RAID (16) — nazwa mówi, co jest
-      // w środku. Identyfikator zakładki (`control`) NIE zmienia się, więc
-      // stare linki `?tab=control` działają dalej.
       control: {
-        label: t('execution.tabs.moduleBar.decisionsRisks', 'Decisions & risks'),
+        label: executionFunctionLabel('control', isPolish),
         icon: <Target size={16} />,
       },
       reports: {
-        label: t('execution.tabs.moduleBar.reports', 'Reports'),
+        label: executionFunctionLabel('reports', isPolish),
         icon: <FileText size={16} />,
       },
     };
@@ -2373,7 +2332,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       label: definitions[id].label,
       icon: definitions[id].icon,
     }));
-  }, [summaryOneLookEnabled, t]);
+  }, [isPolish, summaryOneLookEnabled]);
 
   // Table columns
   const columns: TableColumn[] = useMemo(
@@ -2848,45 +2807,64 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       });
       setActiveDocumentId(row.id);
       setIsSidePanelOpen(false);
+      pushExecutionNavigation({
+        initiativeId: row.id,
+        documentIdentity: { kind: 'initiative', id: row.id },
+      });
     },
-    [isPolish]
+    [isPolish, pushExecutionNavigation]
   );
 
-  const handleOpenReport = useCallback((report: { id: string; title: string }) => {
-    const docId = `report:${report.id}`;
-    const doc: OpenDocument = {
-      id: docId,
-      type: 'report',
-      subType: 'execution',
-      name: report.title,
-      status: 'DRAFT',
-    };
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === docId)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(docId);
-    setIsSidePanelOpen(false);
-  }, []);
+  const handleOpenReport = useCallback(
+    (report: { id: string; title: string }) => {
+      const docId = `report:${report.id}`;
+      const doc: OpenDocument = {
+        id: docId,
+        type: 'report',
+        subType: 'execution',
+        name: report.title,
+        status: 'DRAFT',
+      };
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === docId)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(docId);
+      setIsSidePanelOpen(false);
+      pushExecutionNavigation({
+        initiativeId: null,
+        documentIdentity: { kind: 'report', id: docId },
+      });
+    },
+    [pushExecutionNavigation]
+  );
 
-  const handleOpenWorkDocument = useCallback((row: ExecutionWorkDocumentRef) => {
-    const docId = `work:${row.executionCaseId}:${row.id}`;
-    const doc: OpenDocument = {
-      id: docId,
-      type: row.kind === 'TASK' ? 'task' : 'decision',
-      subType: row.kind,
-      name: row.title,
-      status:
-        row.status === 'IN_EXECUTION'
-          ? 'IN_EXECUTION'
-          : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
-            ? 'DONE'
-            : 'DRAFT',
-    };
-    setOpenDocuments((prev) => (prev.some((item) => item.id === docId) ? prev : [...prev, doc]));
-    setActiveDocumentId(docId);
-    setIsSidePanelOpen(false);
-  }, []);
+  const handleOpenWorkDocument = useCallback(
+    (row: ExecutionWorkDocumentRef) => {
+      const docId = `work:${row.executionCaseId}:${row.id}`;
+      const doc: OpenDocument = {
+        id: docId,
+        type: row.kind === 'TASK' ? 'task' : 'decision',
+        subType: row.kind,
+        name: row.title,
+        status:
+          row.status === 'IN_EXECUTION'
+            ? 'IN_EXECUTION'
+            : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
+              ? 'DONE'
+              : 'DRAFT',
+      };
+      setOpenDocuments((prev) => (prev.some((item) => item.id === docId) ? prev : [...prev, doc]));
+      setActiveDocumentId(docId);
+      setIsSidePanelOpen(false);
+      pushExecutionNavigation({
+        initiativeId: null,
+        executionCaseId: row.executionCaseId,
+        documentIdentity: { kind: 'work', id: docId },
+      });
+    },
+    [pushExecutionNavigation]
+  );
 
   const handleOpenSidePanel = useCallback((row: FullInitiative) => {
     setActiveDocumentId(null);
@@ -2953,13 +2931,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
     setIsSidePanelOpen(false);
-  }, []);
+    pushExecutionNavigation({ initiativeId: null, documentIdentity: null });
+  }, [pushExecutionNavigation]);
 
-  const handleMainTabChange = useCallback((tab: ModuleTab) => {
-    setActiveTab(tab);
-    setActiveDocumentId(null);
-    setIsSidePanelOpen(false);
-  }, []);
+  const handleMainTabChange = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTab(tab);
+      setActiveDocumentId(null);
+      setIsSidePanelOpen(false);
+      setNavigationIssue(null);
+      pushExecutionNavigation({
+        functionId: executionFunctionIdForSurface(String(tab)),
+        subview: executionSubviewForSurface(String(tab)),
+        surfaceTab: tab as any,
+        initiativeId: null,
+        documentIdentity: null,
+        preset: null,
+        issue: null,
+      });
+    },
+    [pushExecutionNavigation]
+  );
 
   const handleRemoveFilter = useCallback(
     (id: string) => {
@@ -3094,6 +3086,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleViewModeChange = useCallback(
     (nextViewMode: ViewMode) => {
       setViewMode(nextViewMode);
+      pushExecutionNavigation({ view: toNavigationView(nextViewMode) });
       if (nextViewMode === 'timeline') {
         trackFunnelEvent('execution_timeline_viewed', {
           tab: activeTab,
@@ -3101,7 +3094,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         });
       }
     },
-    [activeTab, currentProjectId]
+    [activeTab, currentProjectId, pushExecutionNavigation, toNavigationView]
   );
 
   const handleCreateInitiative = useCallback(() => {
@@ -5932,7 +5925,7 @@ Please return:
       <ExecutionActionCards />
       <StandardModuleBar
         tabs={tabs}
-        activeTab={activeTab}
+        activeTab={executionFunctionIdForSurface(String(activeTab))}
         onTabChange={handleMainTabChange}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -6065,6 +6058,39 @@ Please return:
           setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }));
         }}
       >
+        {navigationIssue === 'SUMMARY_DISABLED' && (
+          <Callout
+            variant="warning"
+            title={t('execution.navigation.summaryDisabled.title', 'Dashboard unavailable')}
+          >
+            {t(
+              'execution.navigation.summaryDisabled.body',
+              'The dashboard is disabled in this environment. Reports remain available.'
+            )}
+          </Callout>
+        )}
+        {(navigationIssue === 'UNKNOWN_TAB' || navigationIssue === 'UNKNOWN_SUBVIEW') && (
+          <Callout
+            variant="warning"
+            title={t('execution.navigation.unknown.title', 'Navigation target unavailable')}
+          >
+            {t(
+              'execution.navigation.unknown.body',
+              'This saved view is not available. The execution bank is shown.'
+            )}
+          </Callout>
+        )}
+        {navigationIssue === 'UNSUPPORTED_ENTITY' && (
+          <Callout
+            variant="warning"
+            title={t('execution.navigation.unsupported.title', 'Item type unavailable')}
+          >
+            {t(
+              'execution.navigation.unsupported.body',
+              'This item type cannot be opened in Execution.'
+            )}
+          </Callout>
+        )}
         {renderContent()}
       </StandardModuleBar>
       <InitiativeCompactPanel
