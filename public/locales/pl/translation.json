@@ -10430,6 +10430,9 @@
     }
   },
   "initiatives": {
+    "register": {
+      "archiveLocked": "Zmiany cyklu życia i archiwizacja są wykonywane w kontrolowanym procesie."
+    },
     "fullView": {
       "loading": "Ładowanie inicjatywy…",
       "untitled": "Inicjatywa bez tytułu",
@@ -14099,6 +14102,11 @@
     }
   },
   "execution": {
+    "bank": {
+      "noExecutionCase": "Brak realizacji",
+      "noExecutionCaseHint": "W toku, ale bez przekazania do realizacji — nie ma z czego raportować.",
+      "lifecycleUnknownHint": "Powiązany rekord inicjatywy jest niedostępny"
+    },
     "review": {
       "roles": {
         "executionManager": "Menedżer realizacji",

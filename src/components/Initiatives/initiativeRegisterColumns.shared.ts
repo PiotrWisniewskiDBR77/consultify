@@ -433,16 +433,43 @@ export const createInitiativeRegisterColumns = (
   return [...base.slice(0, insertAt), sourceColumn, ...base.slice(insertAt)];
 };
 
+/**
+ * K5-I2 — kebab wiersza rejestru Inicjatyw.
+ *
+ * DEFEKT ZE ZRZUTU (staging 2026-09-13, konto po angielsku): pierwsza pozycja
+ * kebaba brzmiała „Otwórz", druga „Open preview", a wyszarzone „Archive"
+ * niosło polskie zdanie „Zmiany lifecycle i archiwizacja są wykonywane
+ * w kontrolowanym procesie." — trzy napisy, dwa języki, jedno menu. Oba
+ * literały były wpisane na sztywno, więc żaden pomiar i18n ich nie widział
+ * (klucza nie było, więc nie mógł być „nieprzetłumaczony").
+ *
+ * Plik nie jest komponentem, więc `t` bierzemy z instancji `i18n` — tak samo
+ * jak reszta tego modułu (`executionTypeLabel`, `enumLabel`).
+ */
 export const createInitiativeRegisterRowMenu = <T extends InitiativeRegisterRow>(options: {
   row: T;
   onOpen: (row: T) => void;
   onPreview: (row: T) => void;
-}): StandardRowMenu => ({
-  primary: [
-    { id: 'open', label: 'Otwórz', icon: ExternalLink, onClick: () => options.onOpen(options.row) },
-  ],
-  universalHandlers: {
-    preview: () => options.onPreview(options.row),
-    archiveNote: 'Zmiany lifecycle i archiwizacja są wykonywane w kontrolowanym procesie.',
-  },
-});
+}): StandardRowMenu => {
+  const tr = (key: string, fallback: string): string => {
+    const value = i18n.t(key, { defaultValue: fallback });
+    return typeof value === 'string' ? value : fallback;
+  };
+  return {
+    primary: [
+      {
+        id: 'open',
+        label: tr('common.open', 'Open'),
+        icon: ExternalLink,
+        onClick: () => options.onOpen(options.row),
+      },
+    ],
+    universalHandlers: {
+      preview: () => options.onPreview(options.row),
+      archiveNote: tr(
+        'initiatives.register.archiveLocked',
+        'Lifecycle changes and archiving run through a controlled process.'
+      ),
+    },
+  };
+};

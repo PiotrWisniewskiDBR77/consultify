@@ -31,6 +31,7 @@ import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
 import { getLocalizedStatusLabel } from '../../services/initiativeLifecycle';
 import { FullInitiative, InitiativeStatus } from '../../types';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { isBlockedInitiative } from './executionRealData';
 import { formatListDate, localeListy } from '@/utils/listDateFormat';
 
 // ============================================
@@ -370,7 +371,12 @@ interface TimelineWarning {
   daysOverdue?: number;
 }
 
-function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning[] {
+/**
+ * Eksport (K5-I4): funkcja jest czysta i to ONA decyduje, co trafia do paska
+ * „Top Warnings" — test pilnuje jej reguły „Blocked" bez montowania całej osi
+ * czasu (framer-motion, fetch, CPM).
+ */
+export function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning[] {
   const warnings: TimelineWarning[] = [];
   const now = new Date();
 
@@ -386,12 +392,27 @@ function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning
         initiativeName: init.name,
         type: 'overdue',
         severity: daysOverdue > 14 ? 'critical' : daysOverdue > 7 ? 'high' : 'medium',
-        message: `${daysOverdue}d overdue`,
+        /* K5-I4: „179d overdue" było sklejeniem liczby ze skrótem jednostki
+           (rodzina defektu „8dni"). Pełne słowo, liczba mnoga policzona. */
+        message: `${daysOverdue} ${daysOverdue === 1 ? 'day' : 'days'} overdue`,
         daysOverdue,
       });
     }
 
-    if (init.status === InitiativeStatus.IN_EXECUTION) {
+    /*
+     * K5-I4 — „Blocked" TYLKO dla faktycznie zablokowanych.
+     *
+     * BYŁO: `if (init.status === IN_EXECUTION)` — czyli KAŻDA inicjatywa
+     * w realizacji lądowała w pasku ostrzeżeń jako „Blocked". Na zrzucie
+     * stagingu 2026-09-13 dawało to 9 z 10 ostrzeżeń o treści „Blocked" dla
+     * inicjatyw, których nikt nie zablokował. Ostrzeżenie, które zapala się
+     * zawsze, przestaje być ostrzeżeniem.
+     *
+     * JEST: ta sama reguła, którą moduł liczy wszędzie indziej —
+     * `isBlockedInitiative` (status BLOCKED albo flaga `onHold` nałożona na
+     * realizację), plus jawny `blockedReason`, gdy backend go poda.
+     */
+    if (isBlockedInitiative(init as never) || Boolean(init.blockedReason)) {
       warnings.push({
         initiativeId: init.id,
         initiativeName: init.name,
@@ -621,12 +642,24 @@ const WarningsStrip: React.FC<{
   const { t } = useTranslation();
   if (warnings.length === 0) return null;
 
-  const sevColors = {
-    critical: 'bg-danger-500/20 text-danger-400 border-danger-500/30',
-    high: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    low: 'bg-slate-500/20 text-c-text-secondary border-slate-500/30',
+  /*
+   * K5-I4 — JEDEN cichy kształt pigułki, semantykę niesie KROPKA.
+   *
+   * BYŁO: „179d overdue" stało na wypełnionej czerwieni
+   * (`bg-danger-500/20 text-danger-400`), a „Blocked" obok na bursztynie —
+   * dwa różne kształty w jednym pasku, przy czym czerwony tekst na czerwonym
+   * tle nie wyrabiał kontrastu AA w motywie jasnym. Kanon A4/TRIADA: sygnał
+   * to KROPKA + tonowany tekst, nigdy wypełniona pigułka (ta sama zasada,
+   * przez którą powstał `standard/PriorityCell`).
+   */
+  const sevDot = {
+    critical: 'bg-danger-500',
+    high: 'bg-amber-500',
+    medium: 'bg-amber-500',
+    low: 'bg-slate-400',
   };
+  const chipShell =
+    'border-c-border-subtle bg-c-surface text-c-text-secondary';
 
   return (
     <div className="shrink-0 px-4 py-2 border-b border-c-border-subtle bg-amber-50/50 dark:bg-amber-900/10">
@@ -644,9 +677,15 @@ const WarningsStrip: React.FC<{
               onWarningClick(w.initiativeId);
               trackFunnelEvent('execution_warning_clicked', { type: w.type, severity: w.severity });
             }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors hover:opacity-80 ${sevColors[w.severity]}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors hover:bg-c-surface-raised ${chipShell}`}
           >
-            <span className="font-medium truncate max-w-[200px]">{w.initiativeName}</span>
+            <span
+              aria-hidden="true"
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${sevDot[w.severity]}`}
+            />
+            <span className="font-medium truncate max-w-[200px] text-c-text">
+              {w.initiativeName}
+            </span>
             <span className="opacity-70">·</span>
             <span>{w.message}</span>
           </button>

@@ -74,6 +74,14 @@ describe('Execution Bank explicit forecast clearing', () => {
       .getByTestId('execution-bank-table-item-initiative:initiative-missing')
       .closest('tr');
     expect(clearedRow).toHaveTextContent('Not scheduled');
-    expect(missingRow).toHaveTextContent('Forecast not available');
+    /*
+     * K5-R2: brak prognozy to LUKA DANYCH, więc komórka pokazuje ciche „—",
+     * a powód („Forecast not available") żyje w podpowiedzi (`title`) i w
+     * `aria-label`. Świadome wyczyszczenie prognozy (`VALUE_CLEARED`) to STAN,
+     * nie luka — dlatego „Not scheduled" zostaje widoczne jako tekst. Ten test
+     * pilnuje obu połówek: że powód nie zniknął i że nie krzyczy z komórki.
+     */
+    expect(missingRow).not.toHaveTextContent('Forecast not available');
+    expect(missingRow?.querySelector('[title="Forecast not available"]')).not.toBeNull();
   });
 });

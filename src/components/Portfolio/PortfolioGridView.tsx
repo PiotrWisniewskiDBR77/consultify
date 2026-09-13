@@ -29,6 +29,7 @@ import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import { formatRoiDisplay } from '../../utils/safeFormat';
 import type { RowAction, RowActionSection } from '../shared/RowActionsMenu';
 import { StandardGridCard, type StandardGridCard as StandardGridCardData } from '../standard';
+import { priorityToneStyle } from '../standard/PriorityCell';
 import type { StatusTone } from '../ui/primitives/chips/StatusChip';
 
 // ============================================
@@ -51,12 +52,6 @@ const STATUS_TONE: Record<string, StatusTone> = {
   ARCHIVED: 'neutral',
 };
 
-const PRIORITY_TONE: Record<string, 'danger' | 'warning' | 'accent' | 'neutral'> = {
-  CRITICAL: 'danger',
-  HIGH: 'warning',
-  MEDIUM: 'accent',
-  LOW: 'neutral',
-};
 
 const formatCurrency = (amount: number) => {
   if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
@@ -72,11 +67,25 @@ function axisAccentVar(axis: string): string | undefined {
 }
 
 function toGridCard(initiative: PortfolioInitiative, t: (key: string) => string): StandardGridCardData {
+  /*
+   * K5-I1 — kropka priorytetu z JEDNEJ skali (`standard/PriorityCell`).
+   *
+   * BYŁO: `PRIORITY_TONE.MEDIUM = 'accent'`, czyli zmienna akcentu MARKI
+   * (Harvard Crimson #85182F). Na zrzucie stagingu ta sama inicjatywa miała
+   * kropkę BORDOWĄ na karcie grid, NIEBIESKĄ na kanbanie i POMARAŃCZOWĄ
+   * w panelu Właściwości artefaktu — a crimson jest zarezerwowany dla marki
+   * i semantyki krytycznej, nigdy dla danej (tailwind.config.js §15.1).
+   * Etykieta szła surowym enumem („MEDIUM"), podczas gdy kanban tłumaczył
+   * ją przez `initiatives.priority.*` — ten sam napis w dwóch postaciach.
+   */
+  const priorityKey = String(initiative.priority ?? '').toLowerCase();
   const chips: StandardGridCardData['chips'] = [
     {
       id: 'priority',
-      label: initiative.priority,
-      tone: PRIORITY_TONE[initiative.priority] ?? 'neutral',
+      label: priorityKey
+        ? t(`initiatives.priority.${priorityKey}`)
+        : t('initiatives.kanban.notApplicable'),
+      dotClassName: priorityToneStyle(initiative.priority).dot,
     },
   ];
   if (initiative.isCriticalPath) {

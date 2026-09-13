@@ -59,6 +59,22 @@ export interface StandardGridCardChip {
   label: string;
   icon?: LucideIcon;
   tone?: ChipTone;
+  /**
+   * K5-I1 — kolor kropki podany KLASĄ TOKENOWĄ (np. `bg-blue-500`), gdy chip
+   * dziedziczy skalę z innego kanonicznego komponentu i musi trafić w ten sam
+   * piksel co on.
+   *
+   * POWÓD: kropka „Medium" miała TRZY różne kolory na trzech powierzchniach
+   * jednego modułu — niebieską na kanbanie (`PRIORITY_STYLES`), BORDOWĄ na
+   * karcie grid (bo `tone: 'accent'` sięga po zmienną akcentu MARKI, czyli
+   * Harvard Crimson — zakazany jako dana) i pomarańczową w panelu
+   * Właściwości artefaktu. `tone` nie umiał wskazać skali priorytetu, bo ta
+   * żyje w klasach Tailwinda (`standard/PriorityCell`), nie w zmiennych
+   * tokenów semantycznych.
+   * Podany `dotClassName` WYGRYWA z `tone` — kolor bierze się z jednego
+   * miejsca, nie z dwóch.
+   */
+  dotClassName?: string;
 }
 
 /** Metryka stopki (budżet, ROI, termin…) — cichy tekst, kolor tylko gdy sygnał. */
@@ -211,12 +227,17 @@ export const StandardGridCard: React.FC<StandardGridCardProps> = ({
               chip.tone && chip.tone !== 'neutral'
                 ? CHIP_TONE_VAR[chip.tone as Exclude<ChipTone, 'neutral'>]
                 : undefined;
+            const dot = chip.dotClassName ? (
+              <ChipDot colorClassName={chip.dotClassName} />
+            ) : toneVar ? (
+              <ChipDot colorVar={toneVar} />
+            ) : null;
             return (
               <MetaChip
                 key={chip.id}
                 label={
                   <span className="inline-flex items-center gap-1">
-                    {toneVar ? <ChipDot colorVar={toneVar} /> : null}
+                    {dot}
                     {chip.label}
                   </span>
                 }

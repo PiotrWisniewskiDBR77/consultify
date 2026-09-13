@@ -11265,6 +11265,9 @@
     }
   },
   "initiatives": {
+    "register": {
+      "archiveLocked": "Lifecycle changes and archiving run through a controlled process."
+    },
     "fullView": {
       "loading": "Loading initiative…",
       "untitled": "Untitled initiative",
@@ -14926,6 +14929,11 @@
     }
   },
   "execution": {
+    "bank": {
+      "noExecutionCase": "No execution case yet",
+      "noExecutionCaseHint": "In execution, but not handed over yet — no execution case to report against.",
+      "lifecycleUnknownHint": "Linked initiative record is not available"
+    },
     "review": {
       "roles": {
         "executionManager": "Execution Manager",

@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,9 +11,9 @@ import {
   type TableColumn,
 } from '@/components/standard';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { memberNameOrUnknown, type MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
 
 import type {
-  ExecutionBankEvidence,
   ExecutionBankHorizonMonths,
   ExecutionBankRow,
   ExecutionCalendarBucket,
@@ -35,6 +36,24 @@ export interface ExecutionBankViewsProps {
   onOpen: (row: ExecutionBankRow) => void;
   onHorizonChange: (months: ExecutionBankHorizonMonths) => void;
   onDrilldownMonth: (month: string | null) => void;
+  /**
+   * K5-R1 — identyfikator osoby → NAZWISKO (katalog członków organizacji).
+   *
+   * POWÓD (pomiar 2026-09-13, żywy staging, org DBR77): kolumna OWNER
+   * pokazywała surowy UUID `d2b6a316-…` w KAŻDYM wierszu, a awatar kanbana
+   * skrót „D2". Źródło: `buildRow` bierze `ownerId` z
+   * `executionCase.executionManagerId`, a `ownerName` WYŁĄCZNIE z rekordu
+   * inicjatywy — którego dla tych realizacji nie ma (`/api/initiatives` ich
+   * nie zna, patrz nota przy `caseAvailabilityLabel`). Widok robił wtedy
+   * `ownerName ?? ownerId`, czyli wypuszczał kod techniczny na ekran (łamie
+   * P4 kanonu: zero kodów technicznych w UI).
+   *
+   * Ten resolver to ta sama droga, którą nazwiska rozwiązują Wyniki i Finanse
+   * (`useOrganizationMemberNames`). Gdy katalog nie zna identyfikatora
+   * (konto usunięte — a tak jest z `d2b6a316-…`, brak wiersza w `users`),
+   * pokazujemy „Unknown user", NIGDY UUID-a.
+   */
+  resolveOwnerName?: MemberNameResolver;
 }
 
 const UNKNOWN_LABELS: Record<string, string> = {
@@ -70,25 +89,120 @@ const readableDate = (value: string) => {
     timeZone: 'UTC',
   }).format(parsed);
 };
-const evidenceLabel = <T,>(evidence: ExecutionBankEvidence<T>, suffix = '') =>
-  evidence.status === 'KNOWN'
-    ? `${String(evidence.value)}${suffix}`
-    : unknownLabel(evidence.reason);
-const dateEvidenceLabel = (evidence: ExecutionBankEvidence<string>) =>
-  evidence.status === 'KNOWN' ? readableDate(evidence.value) : unknownLabel(evidence.reason);
 export const describeExecutionBankUnknown = unknownLabel;
 export const formatExecutionBankDate = readableDate;
 const caseAvailabilityLabel = (row: ExecutionBankRow) =>
-  row.executionCaseId ? 'Execution Case linked' : 'No Execution Case';
+  row.executionCaseId ? 'Execution Case linked' : 'No execution case yet';
 
 const temporalClass = 'text-xs tabular-nums text-c-text-secondary';
+
+/**
+ * K5-R2 — LUKA DANYCH jako ciche „—" z podpowiedzią, nie trzy linie prozy.
+ *
+ * POWÓD (zrzut żywego stagingu 2026-09-13): każda z czterech komórek
+ * czasowych w każdym wierszu niosła całe zdanie („Progress not reported",
+ * „Baseline not set", „Forecast not available", „Confidence not reported"),
+ * przez co tabela czytała się jak lista wymówek, a wiersz urósł do trzech
+ * linijek. Kanon C7: brak wartości = myślnik. Powód braku nie znika — idzie
+ * do `title` (podpowiedź) i do `aria-label`, więc audyt danych dalej ma go
+ * pod ręką, tylko nie krzyczy z każdej komórki.
+ *
+ * WYJĄTEK `VALUE_CLEARED`: „Not scheduled" to STAN, nie luka — ktoś świadomie
+ * wyczyścił prognozę i jest na to pokwitowanie (`ie_command_receipts`).
+ * Zostaje widoczne jako tekst.
+ */
+const GapCell: React.FC<{ reason: string; className?: string }> = ({ reason, className }) => {
+  const label = unknownLabel(reason);
+  if (reason === 'VALUE_CLEARED') {
+    return <span className={`text-c-text-muted ${className ?? ''}`}>{label}</span>;
+  }
+  return (
+    <span className={`text-c-text-muted ${className ?? ''}`} title={label} aria-label={label}>
+      —
+    </span>
+  );
+};
+
+/**
+ * K5-R2 — etykiety statusów po ludzku.
+ *
+ * POWÓD: kolumny LIFECYCLE i EXECUTION PHASE renderowały surowy enum
+ * (`UNKNOWN`, `ACTIVE`, `IN_EXECUTION`) wprost z bazy — kod techniczny na
+ * ekranie. `UNKNOWN` dostaje osobne traktowanie: to nie jest status, tylko
+ * brak podłączonego rekordu, więc idzie w ciche „—" z podpowiedzią.
+ */
+const LIFECYCLE_LABELS: Readonly<Record<string, string>> = {
+  DRAFT: 'Draft',
+  PENDING_APPROVAL: 'Pending approval',
+  APPROVED: 'Approved',
+  IN_EXECUTION: 'In execution',
+  CLOSED: 'Closed',
+  REJECTED: 'Rejected',
+  ARCHIVED: 'Archived',
+  CANCELLED: 'Cancelled',
+  ON_HOLD: 'On hold',
+};
+const EXECUTION_STATE_LABELS: Readonly<Record<string, string>> = {
+  ACTIVE: 'Active',
+  PAUSED: 'Paused',
+  CLOSING: 'Closing',
+  CLOSED: 'Closed',
+};
+const humanizeCode = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/^./, (first) => first.toUpperCase());
+export const executionBankLifecycleLabel = (value: string) =>
+  LIFECYCLE_LABELS[value] ?? humanizeCode(value);
+export const executionBankExecutionStateLabel = (value: string) =>
+  EXECUTION_STATE_LABELS[value] ?? humanizeCode(value);
+
+/**
+ * Dwa napisy tego ekranu, które użytkownik REALNIE czyta jako ZDANIE (reszta
+ * banku to nazwy kolumn i etykiety enumów). Idą przez klucze i18n — żeby
+ * pomiar języka nie rósł i żeby konto PL dostało polską podpowiedź —
+ * z angielskim `defaultValue` (DEC-461: staging jest po angielsku).
+ *
+ * `t` bierzemy z `useTranslation()` w komponencie, NIE z importu `@/i18n`:
+ * ten drugi ciągnie bootstrap i18n, który w trzech istniejących zestawach
+ * testów banku wywracał cały plik („No 'initReactI18next' export…"), bo
+ * mockują one `react-i18next` bez tego eksportu.
+ */
+type BankT = (key: string, defaultValue: string) => string;
+const LIFECYCLE_UNKNOWN_HINT_KEY = 'execution.bank.lifecycleUnknownHint';
+const LIFECYCLE_UNKNOWN_HINT_EN = 'Linked initiative record is not available';
+
+const OwnerLabel = ({
+  row,
+  resolveOwnerName,
+}: {
+  row: ExecutionBankRow;
+  resolveOwnerName?: MemberNameResolver;
+}) => <span>{executionBankOwnerLabel(row, resolveOwnerName)}</span>;
+
+/** Nazwa właściciela do pokazania — NIGDY identyfikator (K5-R1). */
+export const executionBankOwnerLabel = (
+  row: ExecutionBankRow,
+  resolveOwnerName?: MemberNameResolver
+): string => {
+  if (row.ownerName?.trim()) return row.ownerName.trim();
+  if (!row.ownerId) return '—';
+  return memberNameOrUnknown(resolveOwnerName, row.ownerId, false);
+};
 
 const BankTable = ({
   rows,
   selected,
   onSelect,
   onOpen,
-}: Pick<ExecutionBankViewsProps, 'rows' | 'selected' | 'onSelect' | 'onOpen'>) => {
+  resolveOwnerName,
+}: Pick<
+  ExecutionBankViewsProps,
+  'rows' | 'selected' | 'onSelect' | 'onOpen' | 'resolveOwnerName'
+>) => {
+  const { t: translate } = useTranslation();
+  const t = translate as unknown as BankT;
   const columns = useMemo<TableColumn[]>(
     () => [
       {
@@ -104,7 +218,12 @@ const BankTable = ({
               data-execution-case-id={row.executionCaseId ?? undefined}
             >
               <div className="text-sm font-semibold text-c-text">{row.name}</div>
-              <div className="text-[11px] text-c-text-muted">{caseAvailabilityLabel(row)}</div>
+              {/* K5-R2: dla wiersza BEZ realizacji ten sam komunikat stoi już
+                  w kolumnie „Execution phase" — nie powtarzamy go dwa razy
+                  w jednym wierszu. */}
+              {row.executionCaseId ? (
+                <div className="text-[11px] text-c-text-muted">{caseAvailabilityLabel(row)}</div>
+              ) : null}
             </div>
           );
         },
@@ -115,10 +234,21 @@ const BankTable = ({
         width: '140px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
+          if (!row.lifecycleStatus || row.lifecycleStatus === 'UNKNOWN') {
+            return (
+              <span
+                className="text-c-text-muted"
+                title={t(LIFECYCLE_UNKNOWN_HINT_KEY, LIFECYCLE_UNKNOWN_HINT_EN)}
+                aria-label={t(LIFECYCLE_UNKNOWN_HINT_KEY, LIFECYCLE_UNKNOWN_HINT_EN)}
+              >
+                —
+              </span>
+            );
+          }
           return (
             <EntityStatusChip
               status={row.lifecycleStatus}
-              label={row.lifecycleStatus}
+              label={executionBankLifecycleLabel(row.lifecycleStatus)}
               tone={statusChipTone(row.lifecycleStatus)}
             />
           );
@@ -130,14 +260,29 @@ const BankTable = ({
         width: '150px',
         render: (source) => {
           const row = source as unknown as ExecutionBankRow;
+          if (!row.executionCaseId) {
+            return (
+              <span
+                className="text-c-text-muted"
+                title={t(
+                  'execution.bank.noExecutionCaseHint',
+                  'In execution, but not handed over yet — no execution case to report against.'
+                )}
+              >
+                {t('execution.bank.noExecutionCase', 'No execution case yet')}
+              </span>
+            );
+          }
           return (
             <div>
               <EntityStatusChip
                 status={row.executionState}
-                label={row.executionState}
+                label={executionBankExecutionStateLabel(row.executionState)}
                 tone={statusChipTone(row.executionState)}
               />
-              <div className="mt-1 text-[11px] text-c-text-muted">{row.executionPhase ?? '—'}</div>
+              {row.executionPhase ? (
+                <div className="mt-1 text-[11px] text-c-text-muted">{row.executionPhase}</div>
+              ) : null}
             </div>
           );
         },
@@ -146,10 +291,12 @@ const BankTable = ({
         id: 'ownerName',
         label: 'Owner',
         width: '150px',
-        render: (source) => {
-          const row = source as unknown as ExecutionBankRow;
-          return <span>{row.ownerName ?? row.ownerId ?? '—'}</span>;
-        },
+        render: (source) => (
+          <OwnerLabel
+            row={source as unknown as ExecutionBankRow}
+            resolveOwnerName={resolveOwnerName}
+          />
+        ),
       },
       {
         id: 'deliveryProfile',
@@ -169,9 +316,15 @@ const BankTable = ({
           return (
             <div>
               <div data-testid={`execution-bank-progress-${row.executionCaseId}`}>
-                {evidenceLabel(row.progress, '%')}
+                {row.progress.status === 'KNOWN' ? (
+                  `${row.progress.value}%`
+                ) : (
+                  <GapCell reason={row.progress.reason} />
+                )}
               </div>
-              <div className="text-[11px] text-c-text-muted">{evidenceLabel(row.confidence)}</div>
+              {row.confidence.status === 'KNOWN' ? (
+                <div className="text-[11px] text-c-text-muted">{String(row.confidence.value)}</div>
+              ) : null}
             </div>
           );
         },
@@ -180,21 +333,27 @@ const BankTable = ({
         id: 'baselineFinish',
         label: 'Baseline finish',
         width: '160px',
-        render: (source) => (
-          <span className={temporalClass}>
-            {dateEvidenceLabel((source as unknown as ExecutionBankRow).baselineFinish)}
-          </span>
-        ),
+        render: (source) => {
+          const evidence = (source as unknown as ExecutionBankRow).baselineFinish;
+          return evidence.status === 'KNOWN' ? (
+            <span className={temporalClass}>{readableDate(evidence.value)}</span>
+          ) : (
+            <GapCell reason={evidence.reason} className={temporalClass} />
+          );
+        },
       },
       {
         id: 'forecastFinish',
         label: 'Forecast finish',
         width: '170px',
-        render: (source) => (
-          <span className={temporalClass}>
-            {dateEvidenceLabel((source as unknown as ExecutionBankRow).forecastFinish)}
-          </span>
-        ),
+        render: (source) => {
+          const evidence = (source as unknown as ExecutionBankRow).forecastFinish;
+          return evidence.status === 'KNOWN' ? (
+            <span className={temporalClass}>{readableDate(evidence.value)}</span>
+          ) : (
+            <GapCell reason={evidence.reason} className={temporalClass} />
+          );
+        },
       },
       {
         id: 'varianceDays',
@@ -207,9 +366,11 @@ const BankTable = ({
               data-testid={`execution-bank-variance-${row.executionCaseId}`}
               className={temporalClass}
             >
-              {row.varianceDays.status === 'KNOWN'
-                ? `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`
-                : unknownLabel(row.varianceDays.reason)}
+              {row.varianceDays.status === 'KNOWN' ? (
+                `${row.varianceDays.value} ${Math.abs(row.varianceDays.value) === 1 ? 'day' : 'days'} · ${row.varianceDays.reference?.toLowerCase()}`
+              ) : (
+                <GapCell reason={row.varianceDays.reason} />
+              )}
             </span>
           );
         },
@@ -223,11 +384,11 @@ const BankTable = ({
           return row.health.status === 'KNOWN' ? (
             <EntityStatusChip
               status={row.health.value}
-              label={row.health.value}
+              label={humanizeCode(row.health.value)}
               tone={statusChipTone(row.health.value)}
             />
           ) : (
-            <span>{unknownLabel(row.health.reason)}</span>
+            <GapCell reason={row.health.reason} />
           );
         },
       },
@@ -269,19 +430,28 @@ const BankTable = ({
         id: 'updatedAt',
         label: 'Updated / actions',
         width: '190px',
-        render: (source) => (
-          <span className={temporalClass}>
-            {dateEvidenceLabel((source as unknown as ExecutionBankRow).updatedAt)}
-          </span>
-        ),
+        render: (source) => {
+          const evidence = (source as unknown as ExecutionBankRow).updatedAt;
+          return evidence.status === 'KNOWN' ? (
+            <span className={temporalClass}>{readableDate(evidence.value)}</span>
+          ) : (
+            <GapCell reason={evidence.reason} className={temporalClass} />
+          );
+        },
       },
     ],
-    []
+    [resolveOwnerName, t]
   );
   const rowMenu = (source: Record<string, unknown>): StandardRowMenu => {
     const row = source as unknown as ExecutionBankRow;
     return {
-      primary: [{ id: 'open', label: 'Open', onClick: () => onOpen(row) }],
+      /* K5-R5: „Open" stało bez ikony obok „Open preview" z ikoną — dwie
+         pozycje jednego bloku, dwa różne kształty. Ikona `ExternalLink` to ta
+         sama, którą rejestr Inicjatyw daje swojemu „Open"
+         (`initiativeRegisterColumns.shared.ts`). */
+      primary: [
+        { id: 'open', label: 'Open', icon: ExternalLink, onClick: () => onOpen(row) },
+      ],
       universalHandlers: { preview: () => onSelect(row) },
     };
   };
@@ -307,12 +477,18 @@ const BankTable = ({
   );
 };
 
-const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | 'onSelect'>) => {
+const BankKanban = ({
+  rows,
+  onSelect,
+  resolveOwnerName,
+}: Pick<ExecutionBankViewsProps, 'rows' | 'onSelect' | 'resolveOwnerName'>) => {
   const stateIds = ['ACTIVE', 'PAUSED', 'CLOSING', 'CLOSED', 'UNKNOWN'];
   const extra = rows.map((row) => row.executionState).filter((state) => !stateIds.includes(state));
   const columns: StandardKanbanColumn[] = [...stateIds, ...new Set(extra)].map((id) => ({
     id,
-    label: id,
+    /* K5-R2: nagłówek kolumny po ludzku; `UNKNOWN` to nie stan realizacji,
+       tylko brak podłączonej realizacji — nazywamy to wprost. */
+    label: id === 'UNKNOWN' ? 'No execution case' : executionBankExecutionStateLabel(id),
     tone:
       id === 'CLOSED'
         ? 'success'
@@ -325,26 +501,51 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
   const cards = (columnId: string): StandardKanbanCard[] =>
     rows
       .filter((row) => row.executionState === columnId)
-      .map((row) => ({
+      .map((row) => {
+        /* K5-R1: awatar „D2" brał dwa pierwsze znaki UUID-a. Skrót liczymy
+           dopiero z ROZWIĄZANEJ nazwy; gdy nazwy nie ma, karta nie dostaje
+           awatara wcale (lepiej pusto niż kod). */
+        const ownerLabel = executionBankOwnerLabel(row, resolveOwnerName);
+        const hasOwnerName = ownerLabel !== '—' && ownerLabel !== 'Unknown user';
+        return {
         id: row.id,
         columnId,
         title: row.name,
         description: row.description ?? undefined,
         chips: [
-          { id: 'lifecycle', label: row.lifecycleStatus, tone: 'neutral' },
-          {
-            id: 'health',
-            label: row.health.status === 'KNOWN' ? row.health.value : 'Unknown',
-            tone:
-              row.health.status === 'KNOWN' && row.health.value === 'CRITICAL'
-                ? 'danger'
-                : 'neutral',
-          },
+          ...(row.lifecycleStatus && row.lifecycleStatus !== 'UNKNOWN'
+            ? [
+                {
+                  id: 'lifecycle',
+                  label: executionBankLifecycleLabel(row.lifecycleStatus),
+                  tone: 'neutral' as const,
+                },
+              ]
+            : []),
+          ...(row.health.status === 'KNOWN'
+            ? [
+                {
+                  id: 'health',
+                  label: humanizeCode(row.health.value),
+                  tone: (row.health.value === 'CRITICAL' ? 'danger' : 'neutral') as
+                    | 'danger'
+                    | 'neutral',
+                },
+              ]
+            : []),
         ],
         projectLabel: caseAvailabilityLabel(row),
-        dueLabel: dateEvidenceLabel(row.displayFinish),
-        ownerName: row.ownerName ?? row.ownerId ?? undefined,
-        ownerInitials: (row.ownerName ?? row.ownerId ?? '?').slice(0, 2).toUpperCase(),
+        dueLabel:
+          row.displayFinish.status === 'KNOWN' ? readableDate(row.displayFinish.value) : undefined,
+        ownerName: hasOwnerName ? ownerLabel : undefined,
+        ownerInitials: hasOwnerName
+          ? ownerLabel
+              .split(/\s+/)
+              .map((part) => part[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase()
+          : undefined,
         urgency:
           row.health.status === 'KNOWN' && row.health.value === 'CRITICAL'
             ? 'critical'
@@ -361,7 +562,8 @@ const BankKanban = ({ rows, onSelect }: Pick<ExecutionBankViewsProps, 'rows' | '
             {row.executionCaseId ? 'Native case identity retained' : 'Initiative awaiting a case'}
           </span>
         ),
-      }));
+        };
+      });
   return (
     <StandardKanban
       columns={columns}
