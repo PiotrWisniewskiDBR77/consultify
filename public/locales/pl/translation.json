@@ -2160,6 +2160,19 @@
         "untitledArtifact": "Artefakt bez nazwy"
       },
       "autosaveOffline": "Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.",
+      "artifactCommands": {
+        "undo": "Cofnij",
+        "redo": "Ponów",
+        "newSlide": "Nowy slajd",
+        "textBox": "Pole tekstowe",
+        "image": "Obraz",
+        "theme": "Motyw",
+        "duplicateSlide": "Duplikuj slajd",
+        "toggleSlideLock": "Zablokuj / odblokuj",
+        "deleteSlide": "Usuń slajd",
+        "duplicateObject": "Duplikuj obiekt",
+        "deleteObject": "Usuń obiekt"
+      },
       "agentActivityPanel": {
         "aiActivity": "Aktywność AI",
         "theFullActivityHistoryCannot": "Nie można wyświetlić pełnej historii aktywności",
