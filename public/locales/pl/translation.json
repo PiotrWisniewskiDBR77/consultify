@@ -7521,6 +7521,7 @@
       "interviewCompleted": "Wywiad zakończony!",
       "requiredAnswer": "Wymagana odpowiedź",
       "cannotSubmitCompleteTheRequired": "Nie można wysłać: uzupełnij wymagane odpowiedzi.",
+      "aiAnswerReviewUnavailable": "Ocena odpowiedzi przez AI jest chwilowo niedostępna. Spróbuj ponownie.",
       "failedToSubmit": "Nie udało się zatwierdzić",
       "interviewSentBackForRevision": "Wywiad odesłany do poprawy.",
       "failedToSendBack": "Nie udało się odesłać.",

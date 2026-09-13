@@ -1,0 +1,358 @@
+{
+  "contract": "interview_answer_approval_c_backend_freeze_v5",
+  "base": "cfea70de8a02df900f22416e0728de383d1bde26",
+  "head": "5592994734f85cbfc3ddced317a55c0ad7741e73",
+  "priorBackendCommit": "5592994734f85cbfc3ddced317a55c0ad7741e73",
+  "status": "FROZEN_FOR_INDEPENDENT_REVIEW",
+  "manifestSelfExcluded": true,
+  "reviewEvidenceGapClosed": "direct_command_table_readback_and_language_ratchet",
+  "behaviorEvidence": {
+    "exactReturnedAnswerManager": {
+      "suites": "2/2",
+      "tests": "1/9",
+      "pending": "8/9",
+      "exit": 0,
+      "artifact": "V4_RETURNED_ANSWER_MANAGER_EXACT_GREEN.json",
+      "sha256": "62d62c689f6cd6346f589e985c9f88ab690f92e11a3c7ab57025aaee38bbefe4"
+    },
+    "focused": {
+      "suites": "18/18",
+      "tests": "151/151",
+      "exit": 0,
+      "artifact": "FOCUSED_GREEN.json",
+      "sha256": "86e00961df7387efc48933dab67bdb74076598a2eabcccc6d77bf933d1a46533"
+    },
+    "realPg": {
+      "suites": "4/4",
+      "tests": "15/15",
+      "exit": 0,
+      "artifact": "REALPG_SERVICE_RACE_GREEN.json",
+      "sha256": "236fe5bc44a0d5dc4e80335abe032cf6190325d7453dfea632e6160af147d152"
+    },
+    "signedGatewayPg": {
+      "suites": "2/2",
+      "tests": "3/3",
+      "exit": 0,
+      "artifact": "SIGNED_GATEWAY_PG_GREEN.json",
+      "sha256": "c0b8c79d22db6c747d4510d077655fb68064d56c6a47f9cec6f07303f2f73a76"
+    },
+    "serverTsc": {
+      "exit": 0,
+      "bytes": 119,
+      "sha256": "965c1762debc8c5a9482570ec9a9a0d6506d4b361f279ce4cb715810e8c3708d"
+    },
+    "prettier": {
+      "exit": 0,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    "eslint": {
+      "exit": 0,
+      "errors": 0,
+      "sha256": "d66db90bced5d53d0e6e18c742eb0dd5705bcdc6b511753ec928027b543b1a91"
+    },
+    "diffCheck": {
+      "exit": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "languageRatchet": {
+      "exit": 0,
+      "artifact": "LANGUAGE_RATCHET_GREEN.log",
+      "sha256": "84bc82461aa93ad87a9a1004810d484e8aca73c5bccf26b27c7e2881ccdf68f3"
+    },
+    "i18nContent": {
+      "suites": "2/2",
+      "tests": "3/3",
+      "exit": 0,
+      "artifact": "I18N_CONTENT_GREEN.json",
+      "sha256": "2b95b0bbe9d576edcfc9b802acf7ac2749079bf98eecf441f9fa6716934cc2d4"
+    }
+  },
+  "retainedEvidenceHold": {
+    "artifact": "V3_REALPG_SERVICE_RACE_EVIDENCE_HOLD.json",
+    "reason": "late command count was joined through decision rows",
+    "sha256": "3a1a2441ff8f9d37f50b4394e1b72f04503c33c5b967e475a36655b194e16bf2"
+  },
+  "sourceSchemaArtifact": {
+    "path": "/Users/piotrwisniewski/Developer/cto-codex/staging-schema-20260913.sql",
+    "sha256": "bf580feb5a9edd7960a2b38708fa31e5d8b16c7014ec82870f700882aa4aba78"
+  },
+  "files": [
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/DIFF_CHECK_GREEN.log",
+      "kind": "evidence",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/EMPTY_DB_STRICT_MIGRATION_FIRST.log",
+      "kind": "evidence",
+      "bytes": 41120,
+      "sha256": "e2db35aeff050feacc81a0153550c1854122f49973593841f905bdfcb0384e00",
+      "gitBlob": "a4d549a9720ac3ab75d9cb84a43f49279a514c1a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/EMPTY_DB_STRICT_MIGRATION_SECOND.log",
+      "kind": "evidence",
+      "bytes": 554,
+      "sha256": "947b793f3c91f8d185998d7a584aa81c87b391ec8f27d76e11cadbe2154f7847",
+      "gitBlob": "7417c7cbecd2eceb4077d804314277fc9ac9f77a"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/ESLINT_GREEN.log",
+      "kind": "evidence",
+      "bytes": 62434,
+      "sha256": "d66db90bced5d53d0e6e18c742eb0dd5705bcdc6b511753ec928027b543b1a91",
+      "gitBlob": "c10cb2919b679a9df21cf842528a15f407528968"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/FOCUSED_GREEN.json",
+      "kind": "evidence",
+      "bytes": 54052,
+      "sha256": "86e00961df7387efc48933dab67bdb74076598a2eabcccc6d77bf933d1a46533",
+      "gitBlob": "38508aeca348c937380c3ea7c68d2b2bc30542cc"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/I18N_CONTENT_GREEN.json",
+      "kind": "evidence",
+      "bytes": 2026,
+      "sha256": "2b95b0bbe9d576edcfc9b802acf7ac2749079bf98eecf441f9fa6716934cc2d4",
+      "gitBlob": "64d3935e48e493b4dbd465bbffd1ec0e6d3f784e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/LANGUAGE_RATCHET_GREEN.log",
+      "kind": "evidence",
+      "bytes": 248,
+      "sha256": "84bc82461aa93ad87a9a1004810d484e8aca73c5bccf26b27c7e2881ccdf68f3",
+      "gitBlob": "8548f712b8ea9b8ab8d5a849e70f06c012319113"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V2.json",
+      "kind": "evidence",
+      "bytes": 6271,
+      "sha256": "21ec34c13a3923c7398c983807ba2f9c2b85872df6d956c08385df90768598e8",
+      "gitBlob": "197dfa1f4526fb03e82e0bd3e06d535388c27224"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V3.json",
+      "kind": "evidence",
+      "bytes": 7250,
+      "sha256": "1ec5da90dcf6e72c5d4e3aa04ac3ddff452a634ee80c3bfa6679e920433974e7",
+      "gitBlob": "d6c5dec0e5f35c0ee613dc57a4cd06605df7b6b9"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/P1_RACE_HARNESS_HOLD_V4.json",
+      "kind": "evidence",
+      "bytes": 4567,
+      "sha256": "aec8bb4ce41eda4f89d16f8f0d773b1eefc8ef5cff36a1add2e5589e9da37f90",
+      "gitBlob": "2956cd521f7cb3f2a177e839aca9a802c986d314"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/PRETTIER_GREEN.log",
+      "kind": "evidence",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "gitBlob": "4aa0d16e7a0ff5c16269bf45771cebe89cc2e81d"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/README.md",
+      "kind": "evidence",
+      "bytes": 10322,
+      "sha256": "19fd19f451e3c226b5ceb3680f6410bc4bd4194584112599b5f6523b891c79a9",
+      "gitBlob": "257b77e10420df72de7c4d1bb849c7634bfa25ed"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_CASCADE_CLEANUP.log",
+      "kind": "evidence",
+      "bytes": 284,
+      "sha256": "29575212f18aa27a57847f39839c542805ca9f15d4925ddd230717daee96056d",
+      "gitBlob": "c4a1dd69e76f57eca266a33542bbdc5a3d6ed4a5"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_LEFT_JOIN_LOCK_QUALIFIED_RED_V3.json",
+      "kind": "evidence",
+      "bytes": 997,
+      "sha256": "d4bc8168f66f3aec36314d0e60edbf7daa2f0c337b435efd5239bd35e88a67ac",
+      "gitBlob": "964880abd5d1a47bb4130048d86c1847e7c4e906"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_RACE_HARNESS_HOLD_V3.json",
+      "kind": "evidence",
+      "bytes": 3135,
+      "sha256": "3722e48eea71260ca103610161201fd91694ed25baf9f3a1125784f88c58365d",
+      "gitBlob": "d95098c7e29c3084751c79767b2ca9a3215f3dbf"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/REALPG_SERVICE_RACE_GREEN.json",
+      "kind": "evidence",
+      "bytes": 7514,
+      "sha256": "236fe5bc44a0d5dc4e80335abe032cf6190325d7453dfea632e6160af147d152",
+      "gitBlob": "a41ad7a8a1b299fdee22d2f0a40137ea7f425cd4"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/SERVER_TSC_GREEN.log",
+      "kind": "evidence",
+      "bytes": 119,
+      "sha256": "965c1762debc8c5a9482570ec9a9a0d6506d4b361f279ce4cb715810e8c3708d",
+      "gitBlob": "50c70c10ca91b3797a7ce1e29327b659b793414e"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/SIGNED_GATEWAY_PG_GREEN.json",
+      "kind": "evidence",
+      "bytes": 2046,
+      "sha256": "c0b8c79d22db6c747d4510d077655fb68064d56c6a47f9cec6f07303f2f73a76",
+      "gitBlob": "e86ea8ae865eedcb0ead722b958a9e5921d806c3"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_CATALOG_READBACK.log",
+      "kind": "evidence",
+      "bytes": 244,
+      "sha256": "1a14545aef8c2b5aac65c45373098db1569cfa4e22598b4f9fc96c0c0625b8a3",
+      "gitBlob": "f7c39fc3054abb21168e10a885b8b4faeeb6eb7c"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_MIGRATION_FIRST.log",
+      "kind": "evidence",
+      "bytes": 499,
+      "sha256": "cb9dc357d07010e0969e76ffe696cae0451109fc2d71e6c6e16fe6e94ab55513",
+      "gitBlob": "d265ab3e9c38e4694c7a86bbdd16dfc7fa1a71d0"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/STAGING_SCHEMA_MIGRATION_SECOND.log",
+      "kind": "evidence",
+      "bytes": 455,
+      "sha256": "2bc5e5665794c6909cbed3e9dcb8a219725666d10aa70b1a92f71200e9379ef9",
+      "gitBlob": "8751450548c8390d7cf713a3e03bf8704584e7dc"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/V3_REALPG_SERVICE_RACE_EVIDENCE_HOLD.json",
+      "kind": "evidence",
+      "bytes": 7505,
+      "sha256": "3a1a2441ff8f9d37f50b4394e1b72f04503c33c5b967e475a36655b194e16bf2",
+      "gitBlob": "3fa05a2447edea4f5875bcf5e7f6ee1e49399290"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTEGRATOR_MVP_20260912/INTERVIEW_ANSWER_APPROVAL_BACKEND_EVIDENCE_20260913/V4_RETURNED_ANSWER_MANAGER_EXACT_GREEN.json",
+      "kind": "evidence",
+      "bytes": 4582,
+      "sha256": "62d62c689f6cd6346f589e985c9f88ab690f92e11a3c7ab57025aaee38bbefe4",
+      "gitBlob": "62469c8f075c65e53f53e068ee6195313d9b3215"
+    },
+    {
+      "path": "docs/program/PROGRAM_NAPRAWCZY_20260905/INTERVIEW_ANSWER_APPROVAL_IMPLEMENTATION_PLAN_20260913.md",
+      "kind": "documentation",
+      "bytes": 15227,
+      "sha256": "d1bed6f4b13f0219cf84ff56e51c6631a2fda47c90632c5d2a4d5f1c227b035f",
+      "gitBlob": "b358d046eef5feb632b7babe7768ca263b8f311f"
+    },
+    {
+      "path": "public/locales/en/translation.json",
+      "kind": "source",
+      "bytes": 2219553,
+      "sha256": "383f3c96f1a8f6154e44b2e02a52a4cc96737efb2441faf92d9fd5847523b39c",
+      "gitBlob": "8c36c095261f0d4024c0959631f97c17578cc879"
+    },
+    {
+      "path": "public/locales/pl/translation.json",
+      "kind": "source",
+      "bytes": 2372538,
+      "sha256": "6f4e9f5539a1855c78d72814d5eae0a530d84c0c3bb1ad3258633b73fa98cf6a",
+      "gitBlob": "b3ab8ecf54c7126b0e2547516784488565b14975"
+    },
+    {
+      "path": "server/src/controllers/InterviewController.ts",
+      "kind": "source",
+      "bytes": 411446,
+      "sha256": "3009e840f04399e005219dcaf57db445a83437ad84bac364a048f0435b1b3d4b",
+      "gitBlob": "5e2b0d35e29931c5653bd99b2abf1d9406d13be4"
+    },
+    {
+      "path": "server/src/routes/interview.routes.ts",
+      "kind": "source",
+      "bytes": 21178,
+      "sha256": "27cf32a88c072761813b35fd9c4e9de8d2c71be995446071b1bb4d1245fbb905",
+      "gitBlob": "7098674f4e22d661d70c477def5c87db8271d24d"
+    },
+    {
+      "path": "server/src/routes/v8/__tests__/interview.routes.test.ts",
+      "kind": "test",
+      "bytes": 62973,
+      "sha256": "0c1b8f0292c8baf7d0918d6aba4bb87d91f22f4c30f7d25d3f8b188abab09f7b",
+      "gitBlob": "9493a5ccdc17ab6fcc923614fa07c34ebd7cbdce"
+    },
+    {
+      "path": "server/src/routes/v8/__tests__/interviewAnswerApproval.gateway.pg.test.ts",
+      "kind": "test",
+      "bytes": 10005,
+      "sha256": "d0dd7df3b0481ee391d26c041cf19b7bfbbc38007c6252b41ff3e2635acea986",
+      "gitBlob": "cb732b502c1eb5af864feff6db1340fce0665c42"
+    },
+    {
+      "path": "server/src/routes/v8/interview.routes.ts",
+      "kind": "source",
+      "bytes": 79216,
+      "sha256": "8ec53926cc9ef02f43c2ae4e6d29f61b5964b17ea5ca2ad838a53a205b8eaab8",
+      "gitBlob": "ee6883fb8a81ff1500ea347684ffd13e99579a03"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionEvidenceRace.realpg.test.ts",
+      "kind": "test",
+      "bytes": 40053,
+      "sha256": "98884e83feb990b46a309ae4aafb652e5b75f3426c60586ec2c3a86453ef63f5",
+      "gitBlob": "e4afede90e691aca6e6b85534ce1958833aa7be7"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionService.realpg.test.ts",
+      "kind": "test",
+      "bytes": 16150,
+      "sha256": "fb8b2d5cd1fbcf6b623b5e8ff8efa8b09c6e2b69f190d1a766fe18838a92462b",
+      "gitBlob": "aa34b78db3ad50a65ef89a98c0a24c17c8089bd3"
+    },
+    {
+      "path": "server/src/services/interview/__tests__/interviewAnswerDecisionService.test.ts",
+      "kind": "test",
+      "bytes": 24986,
+      "sha256": "a01913d73493e0b8d5f518ee2364503b84530ea91089d66a31b11f71259485c1",
+      "gitBlob": "16830f8d963e59a17d5c53630862bb7ef597360b"
+    },
+    {
+      "path": "server/src/services/interview/interviewAnswerDecisionService.ts",
+      "kind": "source",
+      "bytes": 38039,
+      "sha256": "5588e88125f0e82edef2b2a8c7b001cc0aa73ffd4a1997e3190f5ba8f77a8aaf",
+      "gitBlob": "4d4f84e472b0633be6fe3a950d727fab5af74a74"
+    },
+    {
+      "path": "src/services/api/v8/interview.ts",
+      "kind": "source",
+      "bytes": 31793,
+      "sha256": "6450c43dfaed0b8287c7709fab2910e40393d50fd10ca5dff90f83d7f8fc7af1",
+      "gitBlob": "99c9e043c1c694187ddbbb311d7bddef8b132e8b"
+    },
+    {
+      "path": "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+      "kind": "test",
+      "bytes": 61339,
+      "sha256": "c3004fadf351c7d88e08be15d527dd9fc12868153cf3a047f7959273d0784b62",
+      "gitBlob": "cdb720fdd49e2c71a79e5b724c68d97cffd44237"
+    },
+    {
+      "path": "tests/unit/services/v8-interview-api.test.ts",
+      "kind": "test",
+      "bytes": 16260,
+      "sha256": "05ea93657c090c0ed3e6bf1e361830403ddeb5e35af683fba6546e161aa2f8fc",
+      "gitBlob": "f9a7c8c46c465b1c69ec41b83a197c96535eb224"
+    }
+  ],
+  "languageRepair": {
+    "rawEnglishFindings": 4,
+    "apiContract": "stable code plus messageKey",
+    "interviewK5en": "50/51",
+    "repositoryK5en": "1821/1822",
+    "locales": [
+      "en",
+      "pl"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+DELETE 1
+DELETE 0
+DELETE 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+DELETE 1
+{"commands" : 0, "decisions" : 0}
+DELETE 1
+DELETE 1
+DELETE 1
+DELETE 1
+{"organizations" : 0, "users" : 0, "sessions" : 0, "questions" : 0, "commands" : 0, "decisions" : 0}

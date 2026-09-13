@@ -125,6 +125,21 @@ export interface V8InterviewAssignment {
   };
 }
 
+export interface V8InterviewAnswerApproval {
+  questionId: string;
+  submissionId: string;
+  answerUpdatedAt: string;
+  answerDigest: string;
+  policyMode: 'ai' | 'manager' | 'two_stage';
+  policyVersion: number;
+  status: 'pending' | 'stages_complete' | 'sent_back';
+  nextStage: 'ai' | 'manager' | null;
+  latestDecision: 'approved' | 'sent_back' | null;
+  reason: string | null;
+  decidedAt: string | null;
+  actor: { type: 'ai' | 'human' | 'system'; id: string } | null;
+}
+
 export interface V8InterviewManageAssignmentPayload {
   assigneeUserId: string;
   templateId: string;
@@ -635,14 +650,41 @@ export const V8InterviewApi = {
       payload ?? {}
     ),
 
-  submitAssignment: (id: string) =>
+  submitAssignment: (id: string, payload?: { submissionId: string; clientRequestId: string }) =>
     v8Post<{
       assignment: V8InterviewAssignment;
       session: V8InterviewSession;
       completenessPercent: number;
       entersContext: boolean;
       aiReview?: V8InterviewSessionEvaluation | null;
-    }>(`/interview/assignments/${encodeURIComponent(id)}/submit`, {}),
+      answerApproval?: V8InterviewAnswerApproval[];
+    }>(`/interview/assignments/${encodeURIComponent(id)}/submit`, payload ?? {}),
+
+  getAnswerApprovals: (id: string) =>
+    v8Get<{ assignmentId: string; approvals: V8InterviewAnswerApproval[] }>(
+      `/interview/assignments/${encodeURIComponent(id)}/answer-approvals`
+    ),
+
+  retryAiAnswerApprovals: (id: string, clientRequestId: string) =>
+    v8Post<{
+      assignmentId: string;
+      approvals: V8InterviewAnswerApproval[];
+      aiReview: V8InterviewSessionEvaluation | null;
+      idempotentReplay: boolean;
+    }>(`/interview/assignments/${encodeURIComponent(id)}/answer-approvals/retry-ai`, {
+      clientRequestId,
+    }),
+
+  decideAnswerApprovals: (
+    id: string,
+    payload: {
+      submissionId: string;
+      clientRequestId: string;
+      answers: Array<{ questionId: string; expectedAnswerUpdatedAt: string }>;
+      decision: 'approved' | 'sent_back';
+      reason?: string | null;
+    }
+  ) => v8Post(`/interview/assignments/${encodeURIComponent(id)}/answer-decisions`, payload),
 
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),
