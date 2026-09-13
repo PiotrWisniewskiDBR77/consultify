@@ -682,7 +682,13 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       // (12 pozycji, 4 MVP + 8 Fala 2) i przełącza widok na katalog, ten sam
       // efekt co pigułka Raporty|Definicje w Menu 2 (`ExecutionReportsSurface`
       // synchronizuje `registerMode` z `activePreset==='definitions'`).
-      ['definitions', t('execution.menu3.reports.definitions', 'Definitions')],
+      // K5-6 (odbiór 13.09): etykieta „Definitions" nie mówiła właścicielowi,
+      // co jest za tym chipem („Definitions 12" nie tłumaczy, co zrobić) —
+      // 12 pozycji to SZABLONY raportów, z których cztery generują migawkę
+      // (akcja „Generate report" w kebabie wiersza). Zmiana jest wyłącznie
+      // w warstwie etykiet (i18n), identyfikator presetu zostaje
+      // `definitions` — `registerMode`/liczniki bez zmian.
+      ['definitions', t('execution.menu3.reports.definitions', 'Report templates')],
     ].map(([id, label]) => ({ id, label })),
     // DEC-426 (1.1-E-1, właściciel 06.09): Kokpit menedżera nie miał Menu 3 —
     // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są

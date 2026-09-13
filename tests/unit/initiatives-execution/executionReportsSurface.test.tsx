@@ -221,7 +221,7 @@ describe('ExecutionReportsSurface', () => {
   it('uses only an exact PUBLISHED Definition version and supports its governed lifecycle', async () => {
     render(<Harness />);
     // Przełącznik Raporty|Definicje — teraz w Menu 2 (`onRegisterFilterControl`).
-    fireEvent.click(await screen.findByRole('tab', { name: 'Definicje' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Szablony' }));
     const definitionRow = (await screen.findByText('Weekly execution')).closest('tr')!;
     fireEvent.click(definitionRow);
     expect(screen.getAllByText('owner 1').length).toBeGreaterThan(0);

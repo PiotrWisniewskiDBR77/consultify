@@ -351,6 +351,7 @@ const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank')
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
+const K5RaportyRealizacjaScreen = React.lazy(() => import('./screens/k5-raporty-realizacja'));
 // const ExecutionExportPrezentacjaScreen = React.lazy(
 //   () => import('./screens/execution-export-prezentacja')
 // );
@@ -2049,6 +2050,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'execution-tab-list': {
     label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
     render: () => <ExecutionTabScreen tab="list" />,
+  },
+  'k5-raporty-realizacja': {
+    label:
+      'K5-6 — Realizacja → zakładka „Reports" (REALNY <ExecutionHub initialTab="reports">): katalog 12 definicji + rejestr migawek (&runs=0 pusty | &runs=2). &lang=en&theme=light|dark',
+    render: () => <K5RaportyRealizacjaScreen />,
   },
   'p2b-realizacja-empty': {
     label:

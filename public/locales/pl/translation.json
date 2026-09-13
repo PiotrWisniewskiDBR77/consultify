@@ -15011,7 +15011,7 @@
         "published": "Opublikowane",
         "failed": "Nieudane",
         "recent": "Ostatnie uruchomienia",
-        "definitions": "Definicje"
+        "definitions": "Szablony raportów"
       },
       "governance": {
         "decisions": "Decyzje",
@@ -51624,8 +51624,8 @@
     }
   },
   "executionReports": {
-    "definitionsHeading": "Definicje raportów",
-    "definitionsHelp": "Cztery definicje — po jednej na poziom raportowania — generują migawkę. Pozostałe są widoczne w katalogu i wchodzą w Fali 2.",
+    "definitionsHeading": "Szablony raportów",
+    "definitionsHelp": "Cztery szablony — po jednym na poziom raportowania — generują raport. Użyj menu wiersza („Wygeneruj raport\"), żeby zbudować migawkę; pozostałe są widoczne i wchodzą w Fali 2.",
     "subtitle": "Zamrożona migawka danych realizacji",
     "back": "Wróć do rejestru raportów",
     "level": {
@@ -51665,7 +51665,7 @@
       "body": "Ta definicja jest widoczna w katalogu, ale nie generuje jeszcze migawki."
     },
     "menu2": {
-      "addReport": "Dodaj raport",
+      "addReport": "Nowy raport",
       "addReportCustom": "Własny raport…"
     },
     "action": {
@@ -51756,12 +51756,13 @@
       "unavailable": "Brak danych — źródło nie odpowiedziało.",
       "milestones": "Brak danych — kamienie milowe nie istnieją jeszcze jako osobny obiekt (pakiet R3); pokazujemy daty końcowe inicjatyw.",
       "definitions": {
-        "title": "Brak definicji raportów",
+        "title": "Brak szablonów raportów",
         "body": "Katalog nie odpowiedział. Odśwież ekran albo utwórz wersjonowaną definicję kontraktową."
       },
       "runs": {
         "title": "Brak raportów",
-        "body": "Brak raportów. Dodaj raport, żeby zobaczyć migawkę z realnych danych realizacji."
+        "body": "Każdy raport to migawka wygenerowana z jednego z szablonów raportów, na żywych danych realizacji.",
+        "action": "Nowy raport"
       }
     },
     "narrative": {
@@ -52024,7 +52025,7 @@
     "registerToggle": "Widok rejestru raportów",
     "tab": {
       "runs": "Raporty",
-      "definitions": "Definicje"
+      "definitions": "Szablony"
     },
     "advancedContract": "Zaawansowany kontrakt definicji",
     "advancedJson": "Zaawansowany kontrakt JSON",
@@ -52036,7 +52037,7 @@
       "audience": "Odbiorcy",
       "author": "Autor",
       "cadence": "Częstotliwość",
-      "definition": "Definicja raportu",
+      "definition": "Szablon raportu",
       "level": "Poziom",
       "period": "Okres",
       "status": "Status",
