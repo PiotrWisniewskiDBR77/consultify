@@ -962,3 +962,8 @@ Root verified the new canonical forecast API has no component caller. Follow-on 
 ### Canonical forecast API integrated — 2026-09-13
 
 Root da5cb31a85 integrates independently accepted API writer53a8eae767; exact9/9 blobs and root17/17PASS. Actual Gateway/PG7/7; full user flow remains open. See INTEGRATOR_MVP_20260912/E1B_CANONICAL_FORECAST_INTEGRATED_ACCEPTANCE.md. Next card/editor implementation assigned in isolated worktree at da5cb31a85; reviewer traces native same-ID path.
+
+
+### Execution unavailable data integrated — 2026-09-13
+
+Root42e7fc215b integrates accepted UI packet5c6cf66b5b: independent10/10PASS,8/8 hashes exact. Built-browser proof pending after combined build. See INTEGRATOR_MVP_20260912/EXECUTION_UNAVAILABLE_COUNTS_INTEGRATED_ACCEPTANCE.md. Forecast card implementation and native path review active in parallel.
