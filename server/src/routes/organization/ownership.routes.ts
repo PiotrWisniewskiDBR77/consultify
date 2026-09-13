@@ -43,7 +43,7 @@ async function requireOrganizationAdministrator(req: AuthRequest, res: Response)
     [orgId, userId],
     { fallback: false }
   );
-  const role = String(membership?.role || req.user?.role || '').toUpperCase();
+  const role = String(membership?.role || '').toUpperCase();
   if (!membership || String(membership.status || '').toUpperCase() !== 'ACTIVE' || !['OWNER', 'ADMIN'].includes(role)) {
     res.status(403).json({ error: 'ORG_ADMIN_REQUIRED' });
     return null;
@@ -58,7 +58,7 @@ router.get(
     const client = await acquirePgClient();
     try {
       const result = await withOrganizationExportSnapshot(client, req.params.orgId, (snapshot) =>
-        exportOrganizationData(snapshot, req.params.orgId)
+        exportOrganizationData(snapshot, req.params.orgId, undefined, { actorId: req.user?.id })
       );
       const format = req.query.format === 'csv' ? 'csv' : 'json';
       res.setHeader('Content-Disposition', `attachment; filename="organization-export-${req.params.orgId}.${format}"`);

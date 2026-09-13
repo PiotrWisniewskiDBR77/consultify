@@ -106,3 +106,8 @@ closePool, CQRS Project writer z nieistniejącą kolumną summary, początkowo n
 lokalna schema polityk oraz mutant z nieużywanym parametrem. Ten ostatni nie jest
 dowodem izolacji tenantów; kwalifikowana mutacja zachowuje parametr i zwraca dwa
 rzeczywiste rekordy. Żaden z tych przypadków nie został zamaskowany mockiem bramki.
+
+
+## 2026-09-12 — separate Interview/privacy checkpoint after47e024
+
+Five explicit public Interview contracts with actor-conditional D18 projection; real session/question writer→JSON/CSV→unchanged SQL for5families. Two realHTTPmutation RED1→GREEN1 (wall/parent), privacyunit6PASS, contractregression9PASS. Persisted-role fallback removed; endpointauthority9PASS, including separately authorized disposable CHECKdrift. Baselineauth9PASS already denied, so no reproduced fallback exploit. Full14section report and denominator names: external c6-export-artefakty/C6_INTERVIEW_CHECKPOINT_REPORT.md and interview-red-green-manifest.json. Base0025 remains held; root prerequisite reconciliation required, no blanketmerge. Partial original inventory8EXPORT/4security/1911UNRESOLVED; full E4 and businessv8 still NOT_PROVEN.

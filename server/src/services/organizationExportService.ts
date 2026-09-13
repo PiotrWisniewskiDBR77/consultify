@@ -1,4 +1,5 @@
 import type { PoolClient } from 'pg';
+import { projectInterviewExportRow } from './organizationExportInterviewPrivacy.js';
 
 import {
   assertNotReservedOrganizationId,
@@ -64,7 +65,8 @@ interface CatalogEdge {
 export async function exportOrganizationData(
   client: PoolClient,
   organizationId: string,
-  contract: readonly OrganizationExportTableContract[] = ORGANIZATION_EXPORT_TABLES
+  contract: readonly OrganizationExportTableContract[] = ORGANIZATION_EXPORT_TABLES,
+  options: { actorId?: string } = {}
 ): Promise<OrganizationExportResult> {
   assertNotReservedOrganizationId(organizationId);
   const columns = await client.query<CatalogColumn>(
@@ -151,6 +153,7 @@ export async function exportOrganizationData(
   };
   const unresolved = (table: string, reason: string) =>
     result.securityManifest.unresolvedTables.push({ table, reason });
+  const interviewRows = new Map<string, Record<string, unknown>[]>();
   for (const [key, table] of tables) {
     const name = publicKey(table.schema, table.table);
     const policy = policies.get(key);
@@ -288,6 +291,7 @@ export async function exportOrganizationData(
       `SELECT ${projection.map(qi).join(',')} FROM ${qualified(table.schema, table.table)} AS export_row WHERE ${predicate} ORDER BY ${order}`,
       [organizationId]
     );
+    if (policy.interviewPrivacy) interviewRows.set(key, rows.rows);
     const safeRows = rows.rows.map((row) => sanitize(row) as Record<string, unknown>);
     if (!result.securityManifest.includedSchemas.includes(table.schema))
       result.securityManifest.includedSchemas.push(table.schema);
@@ -299,6 +303,47 @@ export async function exportOrganizationData(
       result.tables[name] = safeRows;
       result.rowCounts[name] = safeRows.length;
       result.totalRows += safeRows.length;
+    }
+  }
+  // Use only a session whose full contract and tenant-scoped read succeeded in
+  // this same pinned snapshot. Missing/drifted/cross-org parents fail closed.
+  const sessionRows = interviewRows.get(identity('public', 'interview_sessions'));
+  const sessions = new Map((sessionRows || []).map((row) => [String(row.id), row]));
+  for (const policy of contract.filter((entry) => entry.interviewPrivacy)) {
+    const key = identity(policy.schema, policy.table);
+    const rawRows = interviewRows.get(key);
+    if (!rawRows) continue;
+    const name = publicKey(policy.schema, policy.table);
+    const safeRows: Record<string, unknown>[] = [];
+    let missingParent = false;
+    for (const row of rawRows) {
+      const kind = policy.interviewPrivacy!;
+      const parent =
+        kind === 'session' || kind === 'assignment' ? row : sessions.get(String(row.session_id));
+      if (!parent) {
+        missingParent = true;
+        continue;
+      }
+      const safe = projectInterviewExportRow(
+        kind,
+        row,
+        {
+          is_anonymous: parent.is_anonymous,
+          respondentId: kind === 'assignment' ? parent.assignee_user_id : parent.owner_id,
+        },
+        options.actorId
+      );
+      safeRows.push(sanitize(safe) as Record<string, unknown>);
+    }
+    if (missingParent) unresolved(name, 'interview_privacy_parent_missing_or_outside_tenant');
+    result.totalRows -= result.rowCounts[name] || 0;
+    if (safeRows.length) {
+      result.tables[name] = safeRows;
+      result.rowCounts[name] = safeRows.length;
+      result.totalRows += safeRows.length;
+    } else {
+      delete result.tables[name];
+      delete result.rowCounts[name];
     }
   }
   for (const policy of contract) {

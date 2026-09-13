@@ -758,7 +758,7 @@ router.get(
     const client = await acquirePgClient();
     try {
       const result = await withOrganizationExportSnapshot(client, id, (snapshot) =>
-        exportOrganizationData(snapshot, id)
+        exportOrganizationData(snapshot, id, undefined, { actorId: req.user?.id })
       );
       await req.emitAuditEvent?.({
         actorType: 'USER',
