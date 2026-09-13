@@ -4,10 +4,7 @@ import { ResourceNotFoundError } from './resources.js';
 import { MilestoneNotFoundError } from './milestones.js';
 import { evaluateScheduleShift, isSameScheduledDay } from './scheduleBaseline.js';
 import { BudgetItemNotFoundError } from './budgetItems.js';
-import {
-  InitiativeForecastProjectionNotFoundError,
-  type InitiativeForecastProjectionWrite,
-} from './initiativeForecast.js';
+import type { InitiativeForecastProjectionWrite } from './initiativeForecast.js';
 import type { Pool, PoolClient } from 'pg';
 
 import type {
@@ -64,6 +61,11 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     actorId: string;
     clientRequestId: string;
     reason: string;
+    canonicalBefore?: import('./initiativeForecast.js').InitiativeForecastDates;
+    canonicalFieldPresence?: {
+      forecastStartDate: boolean;
+      forecastEndDate: boolean;
+    };
     forecastStartDate?: string | null;
     forecastEndDate?: string | null;
   }): Promise<InitiativeForecastProjectionWrite> {
@@ -83,8 +85,6 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
          ) AS initiative_forecast_date_text`,
       [input.organizationId, input.initiativeId]
     );
-    if (current.rowCount !== 1) throw new InitiativeForecastProjectionNotFoundError();
-
     const asDate = (value: string | Date | null): string | null => {
       if (value === null) return null;
       if (value instanceof Date) {
@@ -95,9 +95,56 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       }
       return String(value).slice(0, 10);
     };
-    const before = {
+    if (current.rowCount === 0) {
+      const clock = await this.client.query<{ observed_at: number }>(
+        `SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::double precision AS observed_at`
+      );
+      requireSingleRow(clock, 'Initiative forecast canonical observation clock');
+      const before = input.canonicalBefore ?? {
+        forecastStartDate: null,
+        forecastEndDate: null,
+      };
+      return {
+        before,
+        after: {
+          forecastStartDate: hasStart ? (input.forecastStartDate ?? null) : before.forecastStartDate,
+          forecastEndDate: hasEnd ? (input.forecastEndDate ?? null) : before.forecastEndDate,
+        },
+        receiptId: input.clientRequestId,
+        observedAt: new Date(Number(clock.rows[0].observed_at) * 1000).toISOString(),
+      };
+    }
+    if (current.rowCount !== 1) {
+      throw new MaterialCommandRuleError(
+        'INITIATIVE_FORECAST_SOURCE_CONFLICT',
+        409,
+        'Initiative forecast projection identity is ambiguous'
+      );
+    }
+
+    const moduleBefore = {
       forecastStartDate: asDate(current.rows[0].forecast_start_date),
       forecastEndDate: asDate(current.rows[0].forecast_end_date),
+    };
+    if (
+      (input.canonicalFieldPresence?.forecastStartDate &&
+        input.canonicalBefore?.forecastStartDate !== moduleBefore.forecastStartDate) ||
+      (input.canonicalFieldPresence?.forecastEndDate &&
+        input.canonicalBefore?.forecastEndDate !== moduleBefore.forecastEndDate)
+    ) {
+      throw new MaterialCommandRuleError(
+        'INITIATIVE_FORECAST_SOURCE_CONFLICT',
+        409,
+        'Canonical and module Initiative forecast projections conflict'
+      );
+    }
+    const before = {
+      forecastStartDate: input.canonicalFieldPresence?.forecastStartDate
+        ? (input.canonicalBefore?.forecastStartDate ?? null)
+        : moduleBefore.forecastStartDate,
+      forecastEndDate: input.canonicalFieldPresence?.forecastEndDate
+        ? (input.canonicalBefore?.forecastEndDate ?? null)
+        : moduleBefore.forecastEndDate,
     };
     const updated = await this.client.query<{
       forecast_start_date: string | null;

@@ -148,6 +148,59 @@ describe('E1b Initiative execution evidence projection', () => {
     });
   });
 
+  it('preserves module history evidence when an older canonical receipt has no changedFields contract', () => {
+    const result = projectExecutionBankInitiativeEvidence({
+      current: current({
+        forecastEndAuthority: 'canonical',
+        aggregateVersion: 7,
+        forecastEndPresent: true,
+      }),
+      receipts: [
+        receipt({
+          id: 'legacy-canonical-without-field-mask',
+          system: 'ie_command_receipts',
+          action: 'initiative.forecast.update',
+          newValue: { forecastEndDate: '2028-06-30' },
+          aggregateVersion: 7,
+        }),
+        receipt({
+          id: 'module-history-proof',
+          action: 'reforecast',
+          newValue: { forecastEndDate: '2028-06-30' },
+          observedAt: '2028-03-21T00:00:00.000Z',
+        }),
+      ],
+      tasks: [],
+      asOf: AS_OF,
+    });
+
+    expect(result.forecastEndEvidence).toMatchObject({
+      value: '2028-06-30',
+      completeness: 'KNOWN',
+      source: { system: 'initiative_history', recordId: 'module-history-proof' },
+    });
+  });
+
+  it('marks a canonical and module forecast mismatch as an explicit source conflict', () => {
+    const result = projectExecutionBankInitiativeEvidence({
+      current: current({
+        forecastEndAuthority: 'canonical',
+        forecastEndPresent: true,
+        forecastEndSourceConflict: true,
+      }),
+      receipts: [],
+      tasks: [],
+      asOf: AS_OF,
+    });
+
+    expect(result.forecastEndEvidence).toMatchObject({
+      value: null,
+      completeness: 'UNKNOWN',
+      reason: 'SOURCE_CONFLICT',
+      source: { system: 'ie_aggregate_state+initiatives' },
+    });
+  });
+
   it.each([
     { label: 'object', malformed: {} },
     { label: 'number', malformed: 20280630 },

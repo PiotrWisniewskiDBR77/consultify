@@ -4,6 +4,7 @@ export type ExecutionBankEvidenceCompleteness = 'KNOWN' | 'PARTIAL' | 'UNKNOWN';
 export type ExecutionBankEvidenceStaleness = 'CURRENT' | 'STALE' | 'UNKNOWN';
 export type ExecutionBankEvidenceReason =
   | 'VALUE_MISSING'
+  | 'VALUE_CLEARED'
   | 'VALUE_INVALID'
   | 'OBSERVATION_MISSING'
   | 'OBSERVATION_INVALID'
@@ -42,15 +43,30 @@ export type ExecutionBankEvidenceCurrentRow = {
   progress: number | string | null;
   forecastStartDate: string | Date | null;
   forecastEndDate: string | Date | null;
+  aggregateVersion?: number | null;
+  forecastStartPresent?: boolean;
+  forecastEndPresent?: boolean;
+  forecastStartSourceConflict?: boolean;
+  forecastEndSourceConflict?: boolean;
+  forecastStartAuthority?: 'canonical' | 'module';
+  forecastEndAuthority?: 'canonical' | 'module';
 };
+
+type Field = 'progress' | 'forecastStartDate' | 'forecastEndDate';
 
 export type ExecutionBankEvidenceReceipt = {
   id: string;
-  system: 'initiative_history' | 'execution_audit_log' | 'manager_action_audit_log';
+  system:
+    | 'initiative_history'
+    | 'execution_audit_log'
+    | 'manager_action_audit_log'
+    | 'ie_command_receipts';
   action: string;
   oldValue: unknown;
   newValue: unknown;
   observedAt: string | Date | number;
+  aggregateVersion?: number | null;
+  changedFields?: readonly Field[];
 };
 
 export type ExecutionBankEvidenceTaskInput = {
@@ -73,8 +89,6 @@ type ProjectEvidenceInput = {
   tasks: readonly ExecutionBankEvidenceTaskInput[];
   asOf: string;
 };
-
-type Field = 'progress' | 'forecastStartDate' | 'forecastEndDate';
 
 const unavailableSource = (system: string): ExecutionBankEvidenceSource => ({
   system,
@@ -153,6 +167,12 @@ const explicitReceiptValue = (
 ): { present: boolean; value: unknown } => {
   const action = receipt.action.trim().toLowerCase();
   const payload = parsePayload(receipt.newValue);
+  if (receipt.system === 'ie_command_receipts') {
+    if (action !== 'initiative.forecast.update') return { present: false, value: null };
+    if (!receipt.changedFields?.includes(field)) return { present: false, value: null };
+    if (!own(payload, field)) return { present: false, value: null };
+    return { present: true, value: (payload as Record<string, unknown>)[field] };
+  }
   if (field === 'progress') {
     if (!['progress', 'progress_updated'].includes(action)) return { present: false, value: null };
     if (own(payload, 'progress')) return { present: true, value: (payload as any).progress };
@@ -174,9 +194,7 @@ const explicitReceiptValue = (
   return { present: false, value: null };
 };
 
-const sourceForReceipt = (
-  receipt: ExecutionBankEvidenceReceipt
-): ExecutionBankEvidenceSource => ({
+const sourceForReceipt = (receipt: ExecutionBankEvidenceReceipt): ExecutionBankEvidenceSource => ({
   system: receipt.system,
   recordId: receipt.id,
   formulaId: null,
@@ -189,12 +207,44 @@ const selectReceiptEvidence = <T>(args: {
   receipts: readonly ExecutionBankEvidenceReceipt[];
   asOf: string;
   normalize: (value: unknown) => T | null;
+  present?: boolean;
+  currentVersion?: number | null;
+  authority?: 'canonical' | 'module';
+  allowModuleReceiptFallback?: boolean;
+  sourceConflict?: boolean;
 }): ExecutionBankSourceEvidence<T> => {
-  if (args.value == null) return unknownEvidence<T>(args.asOf, 'VALUE_MISSING');
-  const candidates = args.receipts
+  const extractedCandidates = args.receipts
     .map((receipt) => ({ receipt, extracted: explicitReceiptValue(receipt, args.field) }))
     .filter((candidate) => candidate.extracted.present);
-  if (!candidates.length) return unknownEvidence<T>(args.asOf, 'OBSERVATION_MISSING');
+  const canonicalCandidates = extractedCandidates.filter(
+    (candidate) => candidate.receipt.system === 'ie_command_receipts'
+  );
+  const moduleCandidates = extractedCandidates.filter(
+    (candidate) => candidate.receipt.system !== 'ie_command_receipts'
+  );
+  const candidates =
+    args.authority === 'canonical'
+      ? canonicalCandidates.length
+        ? canonicalCandidates
+        : args.allowModuleReceiptFallback
+          ? moduleCandidates
+          : []
+      : args.authority === 'module'
+        ? moduleCandidates
+        : extractedCandidates;
+  if (args.sourceConflict && !candidates.length) {
+    return unknownEvidence<T>(args.asOf, 'SOURCE_CONFLICT', {
+      system: 'ie_aggregate_state+initiatives',
+      recordId: null,
+      formulaId: null,
+      formulaVersion: null,
+    });
+  }
+  if (!candidates.length) {
+    return args.value == null
+      ? unknownEvidence<T>(args.asOf, 'VALUE_MISSING')
+      : unknownEvidence<T>(args.asOf, 'OBSERVATION_MISSING');
+  }
   const normalizedCandidates = candidates.map((candidate) => ({
     ...candidate,
     instant: normalizeInstant(candidate.receipt.observedAt),
@@ -203,11 +253,39 @@ const selectReceiptEvidence = <T>(args: {
     const invalid = normalizedCandidates.find((candidate) => !candidate.instant)!;
     return unknownEvidence<T>(args.asOf, 'OBSERVATION_INVALID', sourceForReceipt(invalid.receipt));
   }
+  const ahead = normalizedCandidates
+    .filter(
+      (candidate) =>
+        candidate.receipt.system === 'ie_command_receipts' &&
+        args.currentVersion != null &&
+        (candidate.receipt.aggregateVersion == null ||
+          !Number.isInteger(candidate.receipt.aggregateVersion) ||
+          candidate.receipt.aggregateVersion > args.currentVersion)
+    )
+    .sort(
+      (a, b) =>
+        (b.receipt.aggregateVersion ?? Number.MAX_SAFE_INTEGER) -
+          (a.receipt.aggregateVersion ?? Number.MAX_SAFE_INTEGER) ||
+        b.receipt.id.localeCompare(a.receipt.id)
+    )[0];
+  if (ahead) {
+    return unknownEvidence<T>(args.asOf, 'SOURCE_CONFLICT', sourceForReceipt(ahead.receipt));
+  }
   normalizedCandidates.sort((a, b) => {
+    if (a.receipt.system === 'ie_command_receipts' && b.receipt.system === 'ie_command_receipts') {
+      const byVersion = (b.receipt.aggregateVersion ?? -1) - (a.receipt.aggregateVersion ?? -1);
+      if (byVersion) return byVersion;
+    }
     const byTime = Date.parse(b.instant!) - Date.parse(a.instant!);
     return byTime || b.receipt.id.localeCompare(a.receipt.id);
   });
   const latest = normalizedCandidates[0];
+  if (args.present === false) {
+    return unknownEvidence<T>(args.asOf, 'SOURCE_CONFLICT', sourceForReceipt(latest.receipt));
+  }
+  if (args.sourceConflict) {
+    return unknownEvidence<T>(args.asOf, 'SOURCE_CONFLICT', sourceForReceipt(latest.receipt));
+  }
   if (Date.parse(latest.instant!) > Date.parse(args.asOf)) {
     return unknownEvidence<T>(
       args.asOf,
@@ -216,6 +294,17 @@ const selectReceiptEvidence = <T>(args: {
     );
   }
   const receiptValue = args.normalize(latest.extracted.value);
+  if (args.value == null && latest.extracted.value === null) {
+    return {
+      value: null,
+      observedAt: latest.instant,
+      asOf: args.asOf,
+      source: sourceForReceipt(latest.receipt),
+      completeness: 'UNKNOWN',
+      staleness: 'UNKNOWN',
+      reason: 'VALUE_CLEARED',
+    };
+  }
   if (receiptValue == null || receiptValue !== args.value) {
     return unknownEvidence<T>(args.asOf, 'SOURCE_CONFLICT', sourceForReceipt(latest.receipt));
   }
@@ -297,10 +386,7 @@ const taskProgressEvidence = (
       formulaVersion: 1,
     });
   }
-  const weighted = normalized.reduce(
-    (sum, task) => sum + task.progress! * task.weight,
-    0
-  );
+  const weighted = normalized.reduce((sum, task) => sum + task.progress! * task.weight, 0);
   const totalWeight = normalized.reduce((sum, task) => sum + task.weight, 0);
   const calculated = totalWeight > 0 ? Math.round(weighted / totalWeight) : null;
   if (calculated == null || calculated !== currentProgress) {
@@ -352,32 +438,42 @@ export function projectExecutionBankInitiativeEvidence(
   const rawStart = input.current.forecastStartDate;
   const start = normalizeDate(rawStart);
   const forecastStartEvidence =
-    rawStart == null || rawStart === ''
-      ? unknownEvidence<string>(asOf, 'VALUE_MISSING')
-      : start == null
-        ? unknownEvidence<string>(asOf, 'VALUE_INVALID')
-        : selectReceiptEvidence({
-            field: 'forecastStartDate',
-            value: start,
-            receipts: input.receipts,
-            asOf,
-            normalize: normalizeDate,
-          });
+    rawStart != null && rawStart !== '' && start == null
+      ? unknownEvidence<string>(asOf, 'VALUE_INVALID')
+      : selectReceiptEvidence({
+          field: 'forecastStartDate',
+          value: start,
+          receipts: input.receipts,
+          asOf,
+          normalize: normalizeDate,
+          present: input.current.forecastStartPresent,
+          currentVersion: input.current.aggregateVersion,
+          authority: input.current.forecastStartAuthority,
+          allowModuleReceiptFallback:
+            input.current.forecastStartAuthority === 'canonical' &&
+            input.current.forecastStartSourceConflict !== true,
+          sourceConflict: input.current.forecastStartSourceConflict,
+        });
 
   const rawEnd = input.current.forecastEndDate;
   const end = normalizeDate(rawEnd);
   const forecastEndEvidence =
-    rawEnd == null || rawEnd === ''
-      ? unknownEvidence<string>(asOf, 'VALUE_MISSING')
-      : end == null
-        ? unknownEvidence<string>(asOf, 'VALUE_INVALID')
-        : selectReceiptEvidence({
-            field: 'forecastEndDate',
-            value: end,
-            receipts: input.receipts,
-            asOf,
-            normalize: normalizeDate,
-          });
+    rawEnd != null && rawEnd !== '' && end == null
+      ? unknownEvidence<string>(asOf, 'VALUE_INVALID')
+      : selectReceiptEvidence({
+          field: 'forecastEndDate',
+          value: end,
+          receipts: input.receipts,
+          asOf,
+          normalize: normalizeDate,
+          present: input.current.forecastEndPresent,
+          currentVersion: input.current.aggregateVersion,
+          authority: input.current.forecastEndAuthority,
+          allowModuleReceiptFallback:
+            input.current.forecastEndAuthority === 'canonical' &&
+            input.current.forecastEndSourceConflict !== true,
+          sourceConflict: input.current.forecastEndSourceConflict,
+        });
 
   return { progressEvidence, forecastStartEvidence, forecastEndEvidence };
 }
@@ -389,6 +485,12 @@ type InitiativeDbRow = {
   forecast_end_date: string | Date | null;
 };
 
+type CanonicalInitiativeDbRow = {
+  initiative_id: string;
+  aggregate_version: number | string;
+  payload_json: unknown;
+};
+
 type ReceiptDbRow = {
   id: string;
   initiative_id: string;
@@ -397,6 +499,15 @@ type ReceiptDbRow = {
   new_value: unknown;
   observed_at: string | Date | number;
   system: ExecutionBankEvidenceReceipt['system'];
+};
+
+type CanonicalReceiptDbRow = {
+  id: string;
+  initiative_id: string;
+  aggregate_version: number | string;
+  response_json: unknown;
+  observed_at: string | Date | number;
+  system: 'ie_command_receipts';
 };
 
 type TaskDbRow = {
@@ -420,53 +531,76 @@ export async function readExecutionBankInitiativeEvidence(
   const placeholders = initiativeIds.map(() => '?').join(', ');
   const commonParams = [input.organizationId, ...initiativeIds];
 
-  const currentRows = await query<InitiativeDbRow>(
-    `SELECT i.id AS initiative_id, i.progress, i.forecast_start_date, i.forecast_end_date
-       FROM initiatives i
-      WHERE i.organization_id = ? AND i.id IN (${placeholders})`,
-    commonParams
+  const [moduleRows, canonicalRows] = await Promise.all([
+    query<InitiativeDbRow>(
+      `SELECT i.id AS initiative_id, i.progress, i.forecast_start_date, i.forecast_end_date
+         FROM initiatives i
+        WHERE i.organization_id = ? AND i.id IN (${placeholders})`,
+      commonParams
+    ),
+    query<CanonicalInitiativeDbRow>(
+      `SELECT aggregate_id AS initiative_id, version AS aggregate_version, payload_json
+         FROM ie_aggregate_state
+        WHERE organization_id = ? AND aggregate_type = 'initiative'
+          AND aggregate_id IN (${placeholders})`,
+      commonParams
+    ),
+  ]);
+  const moduleById = new Map(moduleRows.map((row) => [row.initiative_id, row]));
+  const canonicalById = new Map(canonicalRows.map((row) => [row.initiative_id, row]));
+  const returnedIds = initiativeIds.filter(
+    (initiativeId) => moduleById.has(initiativeId) || canonicalById.has(initiativeId)
   );
-  if (!currentRows.length) return {};
-  const returnedIds = currentRows.map((row) => row.initiative_id);
+  if (!returnedIds.length) return {};
   const returnedPlaceholders = returnedIds.map(() => '?').join(', ');
   const returnedParams = [input.organizationId, ...returnedIds];
+  const moduleIds = returnedIds.filter((initiativeId) => moduleById.has(initiativeId));
+  const modulePlaceholders = moduleIds.map(() => '?').join(', ');
+  const moduleParams = [input.organizationId, ...moduleIds];
 
-  const [historyRows, auditRows, managerRows, taskRows] = await Promise.all([
-    query<ReceiptDbRow>(
-      `SELECT h.id, h.initiative_id, h.action, h.old_value, h.new_value,
+  const [historyRows, auditRows, managerRows, taskRows, canonicalReceiptRows] = await Promise.all([
+    moduleIds.length
+      ? query<ReceiptDbRow>(
+          `SELECT h.id, h.initiative_id, h.action, h.old_value, h.new_value,
               EXTRACT(EPOCH FROM h.changed_at)::double precision AS observed_at,
               'initiative_history' AS system
          FROM initiative_history h
          JOIN initiatives i ON i.id = h.initiative_id
-        WHERE i.organization_id = ? AND h.initiative_id IN (${returnedPlaceholders})
+        WHERE i.organization_id = ? AND h.initiative_id IN (${modulePlaceholders})
           AND h.action IN ('progress_updated', 'reforecast')`,
-      returnedParams
-    ),
-    query<ReceiptDbRow>(
-      `SELECT e.id, e.initiative_id, e.field_changed AS action, e.old_value, e.new_value,
+          moduleParams
+        )
+      : Promise.resolve([]),
+    moduleIds.length
+      ? query<ReceiptDbRow>(
+          `SELECT e.id, e.initiative_id, e.field_changed AS action, e.old_value, e.new_value,
               EXTRACT(EPOCH FROM e.changed_at)::double precision AS observed_at,
               'execution_audit_log' AS system
          FROM execution_audit_log e
          JOIN initiatives i ON i.id = e.initiative_id
         WHERE e.organization_id = ? AND i.organization_id = ?
-          AND e.initiative_id IN (${returnedPlaceholders})
+          AND e.initiative_id IN (${modulePlaceholders})
           AND e.field_changed IN ('progress', 'replan', 'smooth')`,
-      [input.organizationId, ...returnedParams]
-    ),
-    query<ReceiptDbRow>(
-      `SELECT m.id, m.entity_id AS initiative_id, m.action, m.old_value, m.new_value,
+          [input.organizationId, ...moduleParams]
+        )
+      : Promise.resolve([]),
+    moduleIds.length
+      ? query<ReceiptDbRow>(
+          `SELECT m.id, m.entity_id AS initiative_id, m.action, m.old_value, m.new_value,
               EXTRACT(EPOCH FROM m.created_at)::double precision AS observed_at,
               'manager_action_audit_log' AS system
          FROM manager_action_audit_log m
          JOIN initiatives i ON i.id = m.entity_id
         WHERE m.organization_id = ? AND i.organization_id = ?
           AND m.entity_type = 'INITIATIVE'
-          AND m.entity_id IN (${returnedPlaceholders})
+          AND m.entity_id IN (${modulePlaceholders})
           AND m.action = 'manager_scope_reduction'`,
-      [input.organizationId, ...returnedParams]
-    ),
-    query<TaskDbRow>(
-      `SELECT t.id, t.initiative_id, t.progress, t.priority,
+          [input.organizationId, ...moduleParams]
+        )
+      : Promise.resolve([]),
+    moduleIds.length
+      ? query<TaskDbRow>(
+          `SELECT t.id, t.initiative_id, t.progress, t.priority,
               ph.id AS progress_receipt_id,
               ph.new_value AS progress_receipt_value,
               ph.progress_observed_at
@@ -481,9 +615,20 @@ export async function readExecutionBankInitiativeEvidence(
             LIMIT 1
          ) ph ON TRUE
         WHERE t.organization_id = ? AND i.organization_id = ?
-          AND t.initiative_id IN (${returnedPlaceholders})`,
-      [input.organizationId, input.organizationId, ...returnedParams]
-    ).catch(() => []),
+          AND t.initiative_id IN (${modulePlaceholders})`,
+          [input.organizationId, input.organizationId, ...moduleParams]
+        ).catch(() => [])
+      : Promise.resolve([]),
+    query<CanonicalReceiptDbRow>(
+      `SELECT client_request_id AS id, aggregate_id AS initiative_id, aggregate_version,
+              response_json, EXTRACT(EPOCH FROM created_at)::double precision AS observed_at,
+              'ie_command_receipts' AS system
+         FROM ie_command_receipts
+        WHERE organization_id = ? AND aggregate_type = 'initiative'
+          AND command_type = 'initiative.forecast.update'
+          AND aggregate_id IN (${returnedPlaceholders})`,
+      returnedParams
+    ),
   ]);
 
   const receiptsByInitiative = new Map<string, ExecutionBankEvidenceReceipt[]>();
@@ -496,6 +641,32 @@ export async function readExecutionBankInitiativeEvidence(
       oldValue: row.old_value,
       newValue: row.new_value,
       observedAt: row.observed_at,
+    });
+    receiptsByInitiative.set(row.initiative_id, receipts);
+  }
+  for (const row of canonicalReceiptRows) {
+    const response = parsePayload(row.response_json);
+    const after = own(response, 'after')
+      ? parsePayload((response as Record<string, unknown>).after)
+      : null;
+    const rawChangedFields = own(response, 'changedFields')
+      ? (response as Record<string, unknown>).changedFields
+      : null;
+    const changedFields = Array.isArray(rawChangedFields)
+      ? rawChangedFields.filter(
+          (field): field is Field => field === 'forecastStartDate' || field === 'forecastEndDate'
+        )
+      : [];
+    const receipts = receiptsByInitiative.get(row.initiative_id) ?? [];
+    receipts.push({
+      id: row.id,
+      system: 'ie_command_receipts',
+      action: 'initiative.forecast.update',
+      oldValue: null,
+      newValue: after,
+      observedAt: row.observed_at,
+      aggregateVersion: Number(row.aggregate_version),
+      changedFields,
     });
     receiptsByInitiative.set(row.initiative_id, receipts);
   }
@@ -514,19 +685,50 @@ export async function readExecutionBankInitiativeEvidence(
   }
 
   return Object.fromEntries(
-    currentRows.map((row) => [
-      row.initiative_id,
-      projectExecutionBankInitiativeEvidence({
-        current: {
-          initiativeId: row.initiative_id,
-          progress: row.progress,
-          forecastStartDate: row.forecast_start_date,
-          forecastEndDate: row.forecast_end_date,
-        },
-        receipts: receiptsByInitiative.get(row.initiative_id) ?? [],
-        tasks: tasksByInitiative.get(row.initiative_id) ?? [],
-        asOf,
-      }),
-    ])
+    returnedIds.map((initiativeId) => {
+      const moduleRow = moduleById.get(initiativeId);
+      const canonicalRow = canonicalById.get(initiativeId);
+      const canonicalPayload = canonicalRow ? parsePayload(canonicalRow.payload_json) : null;
+      const canonicalStartPresent = own(canonicalPayload, 'forecastStartDate');
+      const canonicalEndPresent = own(canonicalPayload, 'forecastEndDate');
+      const canonicalStart = canonicalStartPresent
+        ? ((canonicalPayload as Record<string, unknown>).forecastStartDate as string | Date | null)
+        : null;
+      const canonicalEnd = canonicalEndPresent
+        ? ((canonicalPayload as Record<string, unknown>).forecastEndDate as string | Date | null)
+        : null;
+      const moduleStart = moduleRow?.forecast_start_date ?? null;
+      const moduleEnd = moduleRow?.forecast_end_date ?? null;
+      const currentStart = canonicalStartPresent ? canonicalStart : moduleStart;
+      const currentEnd = canonicalEndPresent ? canonicalEnd : moduleEnd;
+      const canonicalVersion = canonicalRow ? Number(canonicalRow.aggregate_version) : null;
+      return [
+        initiativeId,
+        projectExecutionBankInitiativeEvidence({
+          current: {
+            initiativeId,
+            progress: moduleRow?.progress ?? null,
+            forecastStartDate: currentStart,
+            forecastEndDate: currentEnd,
+            aggregateVersion: Number.isInteger(canonicalVersion) ? canonicalVersion : null,
+            forecastStartPresent: canonicalStartPresent || moduleRow !== undefined,
+            forecastEndPresent: canonicalEndPresent || moduleRow !== undefined,
+            forecastStartAuthority: moduleRow !== undefined ? 'module' : 'canonical',
+            forecastEndAuthority: moduleRow !== undefined ? 'module' : 'canonical',
+            forecastStartSourceConflict:
+              canonicalStartPresent && moduleRow !== undefined
+                ? normalizeDate(canonicalStart) !== normalizeDate(moduleStart)
+                : false,
+            forecastEndSourceConflict:
+              canonicalEndPresent && moduleRow !== undefined
+                ? normalizeDate(canonicalEnd) !== normalizeDate(moduleEnd)
+                : false,
+          },
+          receipts: receiptsByInitiative.get(initiativeId) ?? [],
+          tasks: tasksByInitiative.get(initiativeId) ?? [],
+          asOf,
+        }),
+      ] as const;
+    })
   );
 }

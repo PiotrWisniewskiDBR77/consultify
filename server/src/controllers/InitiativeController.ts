@@ -507,18 +507,6 @@ export class InitiativeController {
         archived: Boolean((i as any).archived),
       }));
 
-      if (wantsExecutionEvidence) {
-        const evidenceByInitiativeId = await readExecutionBankInitiativeEvidence({
-          organizationId: orgId,
-          initiativeIds: initiatives.map((initiative) => String(initiative.id)),
-          asOf: evidenceAsOf,
-        });
-        for (const initiative of initiatives) {
-          const evidence = evidenceByInitiativeId[String(initiative.id)];
-          if (evidence) Object.assign(initiative, evidence);
-        }
-      }
-
       // FIX-6 [ODMROZENIE 05_INITIATIVES DEC-453] [ODMROZENIE 06_EXECUTION DEC-453]:
       // `listInitiativeHeaders` zna WYLACZNIE projectId/status/search. Ten blok
       // dokleja jego naglowki PO `ORDER BY`/`LIMIT`/`OFFSET` i po WSZYSTKICH
@@ -580,6 +568,18 @@ export class InitiativeController {
             // renderuja plakietke zrodla z tego pola).
             recordSource: header.source,
           } as (typeof initiatives)[number]);
+        }
+      }
+
+      if (wantsExecutionEvidence) {
+        const evidenceByInitiativeId = await readExecutionBankInitiativeEvidence({
+          organizationId: orgId,
+          initiativeIds: initiatives.map((initiative) => String(initiative.id)),
+          asOf: evidenceAsOf,
+        });
+        for (const initiative of initiatives) {
+          const evidence = evidenceByInitiativeId[String(initiative.id)];
+          if (evidence) Object.assign(initiative, evidence);
         }
       }
 

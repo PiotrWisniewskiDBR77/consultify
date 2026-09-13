@@ -3,7 +3,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  InitiativeForecastProjectionNotFoundError,
   type InitiativeForecastTransaction,
   updateInitiativeForecast,
 } from '../initiativeForecast.js';
@@ -96,6 +95,7 @@ describe('Initiative forecast canonical command — independent adversarial cont
       response: {
         initiativeId,
         receiptId: 'history-forecast-review',
+        changedFields: ['forecastEndDate'],
         after: { forecastStartDate: '2026-09-10', forecastEndDate: '2026-10-15' },
       },
     });
@@ -105,6 +105,8 @@ describe('Initiative forecast canonical command — independent adversarial cont
       actorId: 'actor-forecast-review',
       clientRequestId: 'request-forecast-review',
       reason: 'Supplier delivery moved',
+      canonicalBefore: { forecastStartDate: null, forecastEndDate: null },
+      canonicalFieldPresence: { forecastStartDate: false, forecastEndDate: false },
       forecastEndDate: '2026-10-15',
     });
     expect(transaction.persistAggregate).toHaveBeenCalledWith(
@@ -117,10 +119,11 @@ describe('Initiative forecast canonical command — independent adversarial cont
         title: 'Preserved title',
         governance: { policyId: 'policy-review', policyVersion: 7 },
         cardRefs: { summary: { version: 3 } },
-        forecastStartDate: '2026-09-10',
         forecastEndDate: '2026-10-15',
       })
     );
+    const persistedPayload = transaction.persistAggregate.mock.calls[0][5];
+    expect(Object.prototype.hasOwnProperty.call(persistedPayload, 'forecastStartDate')).toBe(false);
     expect(transaction.appendOutbox).toHaveBeenCalledWith(
       expect.objectContaining({
         aggregateType: 'initiative',
@@ -156,44 +159,51 @@ describe('Initiative forecast canonical command — independent adversarial cont
       response: storedResponse,
     });
 
-    await expect(updateInitiativeForecast(unitOfWork as any, exactEnvelope)).resolves.toMatchObject({
-      status: 'REPLAYED',
-      aggregateVersion: 5,
-      response: storedResponse,
-    });
+    await expect(updateInitiativeForecast(unitOfWork as any, exactEnvelope)).resolves.toMatchObject(
+      {
+        status: 'REPLAYED',
+        aggregateVersion: 5,
+        response: storedResponse,
+      }
+    );
     expect(transaction.getAggregateVersion).not.toHaveBeenCalled();
     expect(transaction.writeInitiativeForecastProjection).not.toHaveBeenCalled();
     expect(transaction.persistAggregate).not.toHaveBeenCalled();
 
     await expect(
-      updateInitiativeForecast(
-        unitOfWork as any,
-        {
-          ...exactEnvelope,
-          payload: { forecastEndDate: '2026-11-01', reason: 'Changed reuse' },
-        }
-      )
+      updateInitiativeForecast(unitOfWork as any, {
+        ...exactEnvelope,
+        payload: { forecastEndDate: '2026-11-01', reason: 'Changed reuse' },
+      })
     ).rejects.toMatchObject({ expectedVersion: 4, currentVersion: 5 });
     expect(transaction.writeInitiativeForecastProjection).not.toHaveBeenCalled();
   });
 
-  it('fails closed when the same-ID module projection is absent and never invents a row', async () => {
+  it('persists through the canonical writer when the optional module projection is absent', async () => {
     const { transaction, unitOfWork } = commandHarness();
-    transaction.writeInitiativeForecastProjection.mockRejectedValueOnce(
-      new InitiativeForecastProjectionNotFoundError()
+    transaction.writeInitiativeForecastProjection.mockResolvedValueOnce({
+      before: { forecastStartDate: null, forecastEndDate: null },
+      after: { forecastStartDate: null, forecastEndDate: '2026-10-15' },
+      receiptId: 'request-forecast-review',
+      observedAt: '2026-09-13T12:00:00.000Z',
+    });
+
+    const result = await updateInitiativeForecast(
+      unitOfWork as any,
+      envelope({ forecastEndDate: '2026-10-15', reason: 'Native-only forecast' }) as any
     );
 
-    await expect(
-      updateInitiativeForecast(
-        unitOfWork as any,
-        envelope({ forecastStartDate: null, reason: 'Clear absent projection' }) as any
-      )
-    ).rejects.toMatchObject({ rule: 'INITIATIVE_FORECAST_PROJECTION_NOT_FOUND' });
-
-    expect(transaction.persistAggregate).not.toHaveBeenCalled();
-    expect(transaction.appendAudit).not.toHaveBeenCalled();
-    expect(transaction.appendOutbox).not.toHaveBeenCalled();
-    expect(transaction.saveReceipt).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      status: 'APPLIED',
+      response: {
+        receiptId: 'request-forecast-review',
+        changedFields: ['forecastEndDate'],
+      },
+    });
+    expect(transaction.persistAggregate).toHaveBeenCalledOnce();
+    expect(transaction.appendAudit).toHaveBeenCalledOnce();
+    expect(transaction.appendOutbox).toHaveBeenCalledOnce();
+    expect(transaction.saveReceipt).toHaveBeenCalledOnce();
   });
 
   it('rejects malformed dates and extra command fields before opening a transaction', async () => {
@@ -303,5 +313,56 @@ describe('Initiative forecast canonical command — independent adversarial cont
       forecastEndDate: '2026-09-13',
     });
     expect(result.after).toEqual(result.before);
+  });
+
+  it('uses the transaction timestamp and performs no module write when the compatibility row is absent', async () => {
+    const query = vi.fn(async (sql: string, params?: unknown[]) => {
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') {
+        return { rows: [], rowCount: null };
+      }
+      if (/SELECT forecast_start_date, forecast_end_date/.test(sql)) {
+        expect(params).toEqual([organizationId, initiativeId]);
+        return { rows: [], rowCount: 0 };
+      }
+      if (/EXTRACT\(EPOCH FROM CURRENT_TIMESTAMP\)/.test(sql)) {
+        return { rows: [{ observed_at: 1_789_300_800.123 }], rowCount: 1 };
+      }
+      throw new Error(`Unexpected SQL in native forecast harness: ${sql}`);
+    });
+    const client = { query, release: vi.fn() };
+    const unitOfWork = new PostgresMaterialCommandUnitOfWork({
+      connect: vi.fn().mockResolvedValue(client),
+    } as any);
+
+    const result = await unitOfWork.transaction((transaction) =>
+      (transaction as InitiativeForecastTransaction).writeInitiativeForecastProjection({
+        organizationId,
+        initiativeId,
+        actorId: 'actor-forecast-review',
+        clientRequestId: 'request-native-review',
+        reason: 'Native-only forecast update',
+        canonicalBefore: {
+          forecastStartDate: '2026-09-13',
+          forecastEndDate: '2026-10-01',
+        },
+        canonicalFieldPresence: {
+          forecastStartDate: true,
+          forecastEndDate: true,
+        },
+        forecastEndDate: '2026-10-15',
+      })
+    );
+
+    expect(result).toEqual({
+      before: { forecastStartDate: '2026-09-13', forecastEndDate: '2026-10-01' },
+      after: { forecastStartDate: '2026-09-13', forecastEndDate: '2026-10-15' },
+      receiptId: 'request-native-review',
+      observedAt: '2026-09-13T12:00:00.123Z',
+    });
+    expect(
+      query.mock.calls.some(([sql]) =>
+        /UPDATE initiatives|INSERT INTO initiative_history/.test(sql)
+      )
+    ).toBe(false);
   });
 });

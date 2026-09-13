@@ -45,6 +45,7 @@ export type InitiativeForecastProjectionWrite = {
 
 export type InitiativeForecastResponse = InitiativeForecastProjectionWrite & {
   initiativeId: string;
+  changedFields: Array<'forecastStartDate' | 'forecastEndDate'>;
 };
 
 export interface InitiativeForecastTransaction extends MaterialCommandTransaction {
@@ -54,6 +55,11 @@ export interface InitiativeForecastTransaction extends MaterialCommandTransactio
     actorId: string;
     clientRequestId: string;
     reason: string;
+    canonicalBefore?: InitiativeForecastDates;
+    canonicalFieldPresence?: {
+      forecastStartDate: boolean;
+      forecastEndDate: boolean;
+    };
     forecastStartDate?: string | null;
     forecastEndDate?: string | null;
   }): Promise<InitiativeForecastProjectionWrite>;
@@ -129,12 +135,34 @@ export async function updateInitiativeForecast(
       );
     }
 
+    const canonicalDate = (field: 'forecastStartDate' | 'forecastEndDate'): string | null => {
+      const value = current.payload[field];
+      if (value == null) return null;
+      const parsed = z.string().date().safeParse(value);
+      if (!parsed.success) {
+        throw new MaterialCommandRuleError(
+          'INITIATIVE_FORECAST_CURRENT_INVALID',
+          409,
+          'Current canonical Initiative forecast contains an invalid date'
+        );
+      }
+      return parsed.data;
+    };
+
     const projection = await transaction.writeInitiativeForecastProjection({
       organizationId: envelope.organizationId,
       initiativeId: envelope.aggregateId,
       actorId: envelope.actorId,
       clientRequestId: envelope.clientRequestId,
       reason: payload.reason,
+      canonicalBefore: {
+        forecastStartDate: canonicalDate('forecastStartDate'),
+        forecastEndDate: canonicalDate('forecastEndDate'),
+      },
+      canonicalFieldPresence: {
+        forecastStartDate: hasOwn(current.payload, 'forecastStartDate'),
+        forecastEndDate: hasOwn(current.payload, 'forecastEndDate'),
+      },
       ...(hasOwn(payload, 'forecastStartDate')
         ? { forecastStartDate: payload.forecastStartDate }
         : {}),
@@ -153,12 +181,20 @@ export async function updateInitiativeForecast(
     }
     const mutation = {
       ...current.payload,
-      forecastStartDate: projection.after.forecastStartDate,
-      forecastEndDate: projection.after.forecastEndDate,
+      ...(hasOwn(payload, 'forecastStartDate')
+        ? { forecastStartDate: projection.after.forecastStartDate }
+        : {}),
+      ...(hasOwn(payload, 'forecastEndDate')
+        ? { forecastEndDate: projection.after.forecastEndDate }
+        : {}),
     };
     const response: InitiativeForecastResponse = {
       initiativeId: envelope.aggregateId,
       ...projection,
+      changedFields: [
+        ...(hasOwn(payload, 'forecastStartDate') ? (['forecastStartDate'] as const) : []),
+        ...(hasOwn(payload, 'forecastEndDate') ? (['forecastEndDate'] as const) : []),
+      ],
     };
 
     return {
