@@ -12208,7 +12208,7 @@
       "milestones": "Kamienie milowe",
       "scheduleReadiness": "Gotowość harmonogramu",
       "awaitingPmoApproval": "Harmonogram czeka na zatwierdzenie PMO (Schedule Lock). Po zatwierdzeniu daty zostaną zamrożone jako baseline.",
-      "timelineLockedBaseline": "Harmonogram zamrożony. Daty odzwierciedlają zatwierdzony baseline{{version}}.",
+      "timelineLockedBaseline": "Edycja harmonogramu jest zablokowana na tym etapie.",
       "baselineVsActual": "Baseline vs Rzeczywistość",
       "planned": "Planowane",
       "actual": "Rzeczywiste",

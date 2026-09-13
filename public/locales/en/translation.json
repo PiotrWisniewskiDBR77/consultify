@@ -13052,7 +13052,7 @@
       "milestones": "Milestones",
       "scheduleReadiness": "Schedule Readiness",
       "awaitingPmoApproval": "Timeline awaiting PMO approval (Schedule Lock). After approval, dates will be frozen as baseline.",
-      "timelineLockedBaseline": "Timeline is locked. Dates reflect the approved baseline{{version}}.",
+      "timelineLockedBaseline": "Schedule editing is locked at this stage.",
       "baselineVsActual": "Baseline vs Actual",
       "planned": "Planned",
       "actual": "Actual",

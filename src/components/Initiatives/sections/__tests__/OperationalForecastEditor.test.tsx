@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RuntimeApiError } from '@/services/initiatives-execution/runtimeApi';
@@ -191,6 +192,39 @@ describe('operational forecast editor in the real Initiative Timeline', () => {
     expect(context.setEndDate).not.toHaveBeenCalled();
     expect(await screen.findByText('Version 8')).toBeInTheDocument();
     expect(screen.getByTestId('current-forecast-end')).toHaveTextContent('15/01/2027');
+  });
+
+  it('announces the confirmed save before a card refresh unmounts the editor', async () => {
+    runtimeApi.updateInitiativeForecast.mockResolvedValue({
+      aggregateVersion: 8,
+      response: {
+        after: { forecastStartDate: '2026-10-10', forecastEndDate: '2027-01-15' },
+      },
+    });
+    const context = makeContext();
+    const view = render(
+      <InitiativeContext.Provider value={context}>
+        <TimelineSection sectionType={'timeline' as any} expanded onToggle={vi.fn()} />
+      </InitiativeContext.Provider>
+    );
+    context.fetchAll = vi.fn(async () => {
+      view.unmount();
+    });
+    await screen.findByText('Version 7');
+    fireEvent.click(screen.getByLabelText('Change forecast end'));
+    fireEvent.change(screen.getByLabelText('New end (leave empty to clear)'), {
+      target: { value: '2027-01-15' },
+    });
+    fireEvent.change(screen.getByLabelText('Reason for correction'), {
+      target: { value: 'Supplier delay' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save forecast' }));
+    await waitFor(() => expect(context.fetchAll).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId('operational-forecast-editor')).not.toBeInTheDocument();
+    expect(toast.success).toHaveBeenCalledWith('Operational forecast saved.');
+    expect(vi.mocked(toast.success).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(context.fetchAll).mock.invocationCallOrder[0]
+    );
   });
 
   it('distinguishes explicit clear from an omitted forecast field', async () => {

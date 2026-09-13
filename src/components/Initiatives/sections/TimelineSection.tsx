@@ -2128,7 +2128,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {(mode === 'BASELINED' || mode === 'TRACKING') && (
         <>
           {timelineLocked && (
-            <Callout variant="success">
+            <Callout variant="info">
               {t('initiatives.timelineSection.timelineLockedBaseline', {
                 version: baselineVersion ? ` v${baselineVersion}` : '',
               })}

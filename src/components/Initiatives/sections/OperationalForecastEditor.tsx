@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -317,10 +318,11 @@ export const OperationalForecastEditor: React.FC = () => {
       setChangeEnd(false);
       setReason('');
       requestIdentityRef.current = null;
-      setNotice({
-        kind: 'success',
-        message: isPolish ? 'Prognoza operacyjna została zapisana.' : 'Operational forecast saved.',
-      });
+      const successMessage = isPolish
+        ? 'Prognoza operacyjna została zapisana.'
+        : 'Operational forecast saved.';
+      setNotice({ kind: 'success', message: successMessage });
+      toast.success(successMessage);
       bumpInitiativeRefresh();
       try {
         await fetchAll();

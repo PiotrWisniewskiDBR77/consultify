@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RuntimeApiError } from '@/services/initiatives-execution/runtimeApi';
@@ -271,6 +272,7 @@ describe('OperationalForecastEditor independent stale-scope and date integrity r
     expect(screen.getByText('Version 11')).toBeInTheDocument();
     expect(screen.getByTestId('current-forecast-end')).toHaveTextContent('01/06/2027');
     expect(refreshStore.bumpInitiativeRefresh).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
     expect(contextA.fetchAll).not.toHaveBeenCalled();
     expect(contextB.fetchAll).not.toHaveBeenCalled();
   });
