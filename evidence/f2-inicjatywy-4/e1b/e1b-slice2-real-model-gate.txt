@@ -1,0 +1,11 @@
+F2-1 E1b Slice 2 real-model gate — 2026-09-13 America/Chicago
+Status: EVIDENCE_MISSING
+
+Credential-safe checks:
+- OPENAI_API_KEY: UNSET
+- OPENROUTER_API_KEY: UNSET
+- GEMINI_API_KEY: UNSET
+- GOOGLE_AI_API_KEY: UNSET
+- cx-codex6-pg active llm_providers rows with a nonempty, non-placeholder api_key: 0
+
+No configured real-model call was executed. Unit model stubs and the configured gateway test are orchestration/provenance evidence only; they are not two-organization model-quality evidence.

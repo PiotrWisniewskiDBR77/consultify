@@ -1,0 +1,149 @@
+{
+  "checkpoint": "F2-1 E1b slice 2 V1",
+  "status": "PARTIAL_HOLD_FULL_E1",
+  "head": "73a42abe5eebf84c2a8e387cb3a7eca5ded4565a",
+  "branch": "codex/inicjatywy-cztery-przyciski-20260913",
+  "sourceAndTestFiles": [
+    {
+      "path": "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts",
+      "sha256": "d53659f9179b00d7d7ac90cfcf149981a97fdaaed55a29dff2457090ce5dad1d",
+      "gitBlob": "324a5b061fb31e7c379c08988826795e3a170f9c",
+      "bytes": 311426
+    },
+    {
+      "path": "server/src/services/initiative/portfolioConsultingAnalysisRuntimeService.ts",
+      "sha256": "87cf87dc97190196de345d67b5ae8fd74ba25949de093629c1071cfc296f7612",
+      "gitBlob": "333ebfc23f3be10ced5ea502b25bad66d55b46c3",
+      "bytes": 13789
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts",
+      "sha256": "b8d6f53561bf20172af749c9eaeefd4d14e48fbfe269634c4ada69c24c74b842",
+      "gitBlob": "6fe955c88531e6f695f5345f497edac608d53f44",
+      "bytes": 7607
+    },
+    {
+      "path": "server/src/services/initiative/__tests__/portfolioConsultingAnalysisRuntimeService.test.ts",
+      "sha256": "4de0646de8b8bb9dfff3f5459ce527002a9d230d8096c17e5a16a4a236e211b8",
+      "gitBlob": "4ed97d9932cbb2ca72979c7306388922597e5701",
+      "bytes": 11160
+    },
+    {
+      "path": "server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.gateway.pg.test.ts",
+      "sha256": "1865afc3520d8124887c646c9515106e9c256b94444f7d99c8e5413696dd8233",
+      "gitBlob": "13fe17768aff3d70e89e8bd15a8995f981d29356",
+      "bytes": 17301
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/E1B_SLICE2_CHECKPOINT.md",
+      "sha256": "4ab84838cb5ec45bf0138c4d8b5e7cae430d658d372c9215ad730b1da59d9e42",
+      "gitBlob": "0f515195296d9ee57e84194c258d42585b6c124f",
+      "bytes": 6232
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-route-red-v1.json",
+      "sha256": "6eade8d44c89a545be6e267f5b8208da3f06fd597fcd9a8c6e94ff5b5a319a7f",
+      "gitBlob": "bdc9a4da931345c1e37afc26523437910fe92f8b",
+      "bytes": 2759
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-focused-green-final.json",
+      "sha256": "24999c322aca9d738065f2dd9eedb273d0fc504305a5377c7c181000e8e9464c",
+      "gitBlob": "6adcbba42c9c731dc80df8b4f1984767d3d22e95",
+      "bytes": 15753
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-realpg-historical-fail-v1.json",
+      "sha256": "e75174bc5b77592ec8bf5d4e83ce4c3f30b6c5c393367fac54fd8682305eddba",
+      "gitBlob": "849014e1fb2c434e86720b7b81c4a516a74d119a",
+      "bytes": 2119
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-realpg-green-final.json",
+      "sha256": "13dc4047697282d387e3943e4fecb9d668d48b96bd7ac2c08ba1bc2aa69c3256",
+      "gitBlob": "c7764479f27f4c55e12f12837de0fdd30708c44d",
+      "bytes": 2022
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-new-final.json",
+      "sha256": "a82713d668c3417ca894e209a24ee38496992f8783fd0d01b92a79a87468cd31",
+      "gitBlob": "5e88758341ca710cba05bc16659737e525c72973",
+      "bytes": 27755
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-route-base.json",
+      "sha256": "509141a5650784071d1ed89f44399348dcc8ec35f9b19c9d83facd3b39b39e47",
+      "gitBlob": "d7a521b9f7c0b3d77eabc34eba8d73dcdd7465f4",
+      "bytes": 436986
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-eslint-route-candidate-final.json",
+      "sha256": "6704c677d06c6afbb3c3d7a0bb74ab183221398d16e3d69d8c01c2ea0f6543ba",
+      "gitBlob": "f2ea76703acd81e8ca7ab9b85478c64f6660759f",
+      "bytes": 445269
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-server-tsc-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-server-tsc-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56",
+      "bytes": 2
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-slice2-real-model-gate.txt",
+      "sha256": "d4af33da6af37028e075b6e06162675fed606815ed88159180fcd38bf7f5bcaa",
+      "gitBlob": "980d69aafcdddcfd56bbd5bdaa383b18527e4881",
+      "bytes": 494
+    }
+  ],
+  "focusedCommand": "npx vitest run server/src/domain/initiatives-execution/__tests__/portfolioConsultingAnalysis.e1b.test.ts server/src/domain/initiatives-execution/__tests__/portfolioDecisionDisposition.e1b.test.ts server/src/services/initiative/__tests__/portfolioConsultingAnalysisRuntimeService.test.ts server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts --reporter=json --outputFile=evidence/f2-inicjatywy-4/e1b/e1b-slice2-focused-green-final.json",
+  "focusedResult": {
+    "files": 4,
+    "reportedSuites": 10,
+    "testsPassed": 39,
+    "testsFailed": 0
+  },
+  "realPgCommand": "credential-safe /tmp wrapper: npx vitest run server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.gateway.pg.test.ts --reporter=json --outputFile=evidence/f2-inicjatywy-4/e1b/e1b-slice2-realpg-green-final.json",
+  "realPgResult": {
+    "files": 1,
+    "reportedSuites": 2,
+    "testsPassed": 3,
+    "testsFailed": 0,
+    "cleanupCategoriesZero": 11,
+    "modelGateway": "stub"
+  },
+  "eslintNewResult": {
+    "files": 4,
+    "exit": 0,
+    "errors": 0,
+    "warnings": 12
+  },
+  "eslintRouteParity": {
+    "base": {
+      "errors": 246,
+      "warnings": 48
+    },
+    "candidate": {
+      "errors": 246,
+      "warnings": 48
+    },
+    "addedDiagnostics": 0
+  },
+  "serverTypeScriptExit": 0,
+  "diffCheckExit": 0,
+  "realModelQuality": "EVIDENCE_MISSING",
+  "qualifications": [
+    "Real configured model was not called; no provider credential was available",
+    "RealPG model gateway is a stub and proves orchestration, persistence and auth only",
+    "Concurrent exactly-once model spend is not proven",
+    "No review queue or item-resolution UI",
+    "Full E1 remains HOLD"
+  ]
+}
