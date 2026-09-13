@@ -21,6 +21,8 @@ HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Codex
 skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF nie ma; robi go
 agent nadzorcy. **Dysk: 1,3 GB wolne** (pomiar 13.09), nie 35 GB jak w poprzednim wpisie rejestru.
 
+**DEC-478 (właściciel, 13.09, odpowiedź „A”):** pilotaż na stagingu startuje BEZ pełnego eksportu danych organizacji — usuwanie organizacji = bezpieczna odmowa 410 (C6-DEL-OFF w kandydacie), eksport częściowy dostępny, pełny eksport = fala 2 (gałąź `codex/c6-export-contract-20260912`). Kryterium S2.7 pojemnika 2 zamknięte na czas pilotażu tą decyzją. Konta pilotażu 13.09: `pawel.mroczkowski@dbr77.com`, `justyna.laskowska@dbr77.com` (staging, DBR77, hasła ręcznie, punkt cofnięcia `consultify-secrets/pilot-20260913-*`).
+
 **DEC-477 (integrator, mandat właściciela z 09.09 i 13.09).** Poprawki W17 (Materiały/prezentacje/
 notatnik) zostają w kandydacie — wycięcie = przebudowa 147 commitów; ujawnione właścicielowi wprost.
 
