@@ -261,6 +261,86 @@ router.post('/complete', async (req: AuthRequest, res: Response) => {
 });
 
 /**
+ * POST /api/onboarding/context
+ *
+ * S1.14b / B4 (pomiar 13.09, staging): the front has called this route since
+ * Phase E (`src/services/api.ts` saveOnboardingContext, `users.api.ts`), but the
+ * server NEVER defined it — `POST /api/onboarding/context` answered 404
+ * API_ROUTE_NOT_FOUND, so "Generate My Strategy" died on its first step and the
+ * only wizard that could set `onboarding_status='ORG_SETUP_COMPLETED'` from that
+ * screen could not be finished. Phantom wołacz, zero implementacji serwerowej
+ * (grep: dwa wołacze w `src/`, zero definicji w `server/src`).
+ *
+ * This persists the supplied context on the organization (merged into
+ * `attribution_data.onboardingContext`) and marks org setup complete — the one
+ * field the trial AI gate reads (`accessPolicyService.ts`, TRIAL + 'ai_call').
+ * It does NOT generate anything: `POST /api/onboarding/generate-plan` and
+ * `/accept-plan` remain undefined on the server and are reported as a separate,
+ * owner-level gap rather than invented here.
+ */
+router.post('/context', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const orgId = getOrganizationId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!orgId) {
+      // Kod, nie zdanie: tekst dla uzytkownika bierze sie z katalogu i18n
+      // frontu (bramka jezykowa J0 liczy angielskie zdania serwera w UI).
+      return res.status(400).json({ error: 'ORG_CONTEXT_REQUIRED', code: 'ORG_CONTEXT_REQUIRED' });
+    }
+
+    const body = (req.body || {}) as Record<string, unknown>;
+    const str = (value: unknown, max = 4000): string | null => {
+      const normalized = String(value ?? '').trim();
+      return normalized ? normalized.slice(0, max) : null;
+    };
+
+    const context = {
+      role: str(body.role, 200),
+      industry: str(body.industry, 200),
+      problems: str(body.problems),
+      urgency: str(body.urgency, 50),
+      targets: str(body.targets),
+      savedAt: new Date().toISOString(),
+      savedBy: userId,
+    };
+
+    const existingRow = await db.query(
+      `SELECT attribution_data FROM organizations WHERE id = $1`,
+      [orgId]
+    );
+    let attribution: Record<string, unknown> = {};
+    const rawAttribution = existingRow?.rows?.[0]?.attribution_data;
+    if (rawAttribution) {
+      try {
+        attribution =
+          typeof rawAttribution === 'string' ? JSON.parse(rawAttribution) : rawAttribution;
+      } catch {
+        attribution = {};
+      }
+    }
+    if (!attribution || typeof attribution !== 'object') attribution = {};
+    attribution.onboardingContext = context;
+
+    await db.query(
+      `UPDATE organizations
+          SET attribution_data = $1,
+              onboarding_status = 'ORG_SETUP_COMPLETED',
+              updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2`,
+      [JSON.stringify(attribution), orgId]
+    );
+
+    return res.json({ success: true, organizationId: orgId, context });
+  } catch (error) {
+    logger.error('Error saving onboarding context:', error);
+    return res.status(500).json({ error: 'ONBOARDING_CONTEXT_SAVE_FAILED', code: 'ONBOARDING_CONTEXT_SAVE_FAILED' });
+  }
+});
+
+/**
  * POST /api/onboarding/skip
  * Skip org setup wizard — marks organization onboarding as completed
  */
