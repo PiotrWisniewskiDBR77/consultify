@@ -24288,15 +24288,39 @@
     }
   },
   "chatProposal": {
+    "ariaLabel": "Governed execution proposal",
+    "stepCount": "{{count}} steps",
+    "stepCount_one": "{{count}} step",
+    "stepCount_other": "{{count}} steps",
+    "expiresAt": "Expires {{when}}",
+    "rejectionReason": "Reason",
+    "reviewer": "Reviewed by {{name}}",
     "step": {
+      "untitled": "Step",
       "more": "more"
     },
     "state": {
+      "proposed": "Proposal drafted",
+      "pendingReview": "Awaiting review",
+      "approved": "Approved",
+      "executing": "Executing",
+      "executed": "Executed",
       "failed": "Failed",
+      "audited": "Audited",
+      "closed": "Closed",
+      "rejected": "Rejected",
       "unknown": "unknown"
     },
+    "risk": {
+      "high": "High risk",
+      "medium": "Medium risk",
+      "low": "Low risk"
+    },
     "action": {
-      "reject": "Reject"
+      "approve": "Approve",
+      "reject": "Reject",
+      "execute": "Execute",
+      "inspect": "View run"
     }
   },
   "focusMode": {

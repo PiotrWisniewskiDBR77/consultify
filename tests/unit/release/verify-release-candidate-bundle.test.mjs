@@ -203,6 +203,9 @@ test('rejects destructive and unclassified migration statements without comment/
     'DROP POLICY p ON base;',
     'DROP MATERIALIZED VIEW mv;',
     'DROP TRIGGER t ON base;',
+    'DROP TRIGGER IF EXISTS t ON base;',
+    'DROP TRIGGER IF EXISTS t ON base; CREATE TRIGGER t BEFORE UPDATE ON other FOR EACH ROW EXECUTE FUNCTION reject_change();',
+    'DROP TRIGGER IF EXISTS t ON base; CREATE TRIGGER other BEFORE UPDATE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
     'TRUNCATE base;',
     'ALTER TABLE base DROP COLUMN id;',
     'ALTER TABLE base DROP CONSTRAINT c;',
@@ -240,6 +243,7 @@ test('rejects destructive and unclassified migration statements without comment/
     'ALTER TABLE base ADD COLUMN safe text; CREATE INDEX safe_idx ON base(safe);',
     'CREATE TABLE child(id text, parent_id text REFERENCES base(id) ON DELETE CASCADE);',
     'CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
+    'DROP TRIGGER IF EXISTS immutable ON base; CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
     'BEGIN; ALTER TABLE base ADD COLUMN guarded text; COMMIT;',
   ]) {
     const x = fx(sql),

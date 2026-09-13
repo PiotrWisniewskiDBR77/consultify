@@ -681,14 +681,26 @@ class ManagementReportRepository {
 
   async getBoardDecisions(projectId) {
     return new Promise((resolve, reject) => {
+      // Column/type mapping notes (verified against the live Postgres schema):
+      //  - decisions has no `requested_by`; the requester is `created_by` (NOT NULL).
+      //    Aliased to requested_by / "requestedByName" so managementReportsService's
+      //    decisionsRequired mapping keeps working.
+      //  - the decision-type column is `type`, not `decision_type` (aliased below).
+      //  - escalation_level is TEXT ('none' | 'amber' | 'red'), not an integer;
+      //    the old `>= 2` (red level) maps to `= 'red'`.
+      //  - status values are stored lowercase ('pending' | 'escalated' | ...), so the
+      //    old `= 'PENDING'` matched nothing; use the same set as the other board queries.
       this.db.all(
         `
-                SELECT d.*, u.first_name || ' ' || u.last_name as "requestedByName"
+                SELECT d.*,
+                       d.type AS decision_type,
+                       d.created_by AS requested_by,
+                       u.first_name || ' ' || u.last_name as "requestedByName"
                 FROM decisions d
-                LEFT JOIN users u ON d.requested_by = u.id
-                WHERE d.project_id = ? 
-                  AND d.status = 'PENDING'
-                  AND (d.escalation_level >= 2 OR d.decision_type IN ('BUDGET', 'SCOPE', 'STRATEGIC'))
+                LEFT JOIN users u ON d.created_by = u.id
+                WHERE d.project_id = ?
+                  AND d.status IN ('pending', 'escalated')
+                  AND (d.escalation_level = 'red' OR d.type IN ('BUDGET', 'SCOPE', 'STRATEGIC'))
                 ORDER BY d.created_at ASC
             `,
         [projectId],

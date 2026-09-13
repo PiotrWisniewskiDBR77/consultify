@@ -33,6 +33,7 @@ import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { formatListDateTime } from '../../../utils/listDateFormat';
 import { isMfaMvpEnabled } from '../../../utils/mfaMvpFlag';
 import { DegradedState } from '../../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from '../shared';
@@ -334,10 +335,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
-  };
+  // Data+godzina przez SSOT `listDateFormat` (kanon TRIADA), a nie
+  // `toLocaleString()` bez argumentu: ten zapis brał locale z przeglądarki, więc
+  // polskie konto dostawało amerykańskie `8/31/2026, 9:18:49 AM` obok polskiego
+  // tekstu UI. SSOT daje `31/08/2026 09:18` — jeden format w całej aplikacji.
+  // Fallback zostaje `Unknown date`, a NIE domyślne `—` z SSOT: kontrakt pilnuje
+  // test `SecurityOverviewPage.honesty` — nieparsowalny znacznik czasu ma się
+  // przyznać, że daty nie zna, a nie zniknąć w myślniku obok poprawnych dat.
+  const formatTimestamp = (timestamp: string) =>
+    formatListDateTime(timestamp, t('settings.securityOverview.unknownDate', 'Unknown date'));
 
   const colorMap = {
     violet: {
@@ -573,7 +579,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
                     <div>
-                      <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
+                      <p className="text-sm text-c-text">{event.device || 'Unknown Device'}</p>
                       <p className="text-xs text-c-text-muted">
                         {event.location || 'Unknown'} · {event.ip || ''}
                       </p>

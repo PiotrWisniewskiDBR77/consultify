@@ -70,6 +70,11 @@ const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
 const AssessmentPresentationViewScreen = React.lazy(() => import('./screens/assessment-presentation-view'));
+const ParsePxPercentWidthScreen = React.lazy(() => import('./screens/parsepx-percent-width'));
+const ParsePxZywyWorkbenchScreen = React.lazy(() => import('./screens/parsepx-zywy-workbench'));
+const UstawieniaBezpieczenstwoFixScreen = React.lazy(
+  () => import('./screens/ustawienia-bezpieczenstwo-fix')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -341,6 +346,21 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'ustawienia-bezpieczenstwo-fix': {
+    label:
+      'ODBIOR/Ustawienia — REALNY <SecurityOverviewPage>: dowod naprawy text-white (bialy na bialym w light) + daty PL zamiast US. &theme=light|dark',
+    render: () => <UstawieniaBezpieczenstwoFixScreen />,
+  },
+  'parsepx-zywy-workbench': {
+    label:
+      'GRAFIKA/parsePx — REALNY <SourceProposalRegistrationWorkbench> (jedyny zywy z 8 plikow ze zgloszenia)',
+    render: () => <ParsePxZywyWorkbenchScreen />,
+  },
+  'parsepx-percent-width': {
+    label:
+      'GRAFIKA/parsePx — REALNY <StandardTable> z tablicami kolumn 1:1 z plikow produkcyjnych: dowod, ze width w % zwija sie do NNpx. &case=<klucz>',
+    render: () => <ParsePxPercentWidthScreen />,
+  },
   'audyty-piec-powierzchni': {
     label:
       'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',

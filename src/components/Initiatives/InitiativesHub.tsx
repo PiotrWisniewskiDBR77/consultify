@@ -359,7 +359,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
-  const allowDemoData = shouldAllowDemoData();
+  // Owner-review escape hatch for the isolated local Vite runtime. This stays
+  // explicit in the URL and is compiled out of production builds.
+  const allowDemoData =
+    shouldAllowDemoData() ||
+    (import.meta.env.DEV &&
+      new URLSearchParams(window.location.search).get('sampleData') === 'initiatives');
 
   const initiativesDemoData = useMemo(() => {
     const currentUserAny = currentUser as any;
@@ -383,9 +388,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
     null;
 
-  const mergeShowcaseInitiatives = useCallback((items: PortfolioInitiative[]) => {
-    return items;
-  }, []);
+  const mergeShowcaseInitiatives = useCallback(
+    (items: PortfolioInitiative[]) => {
+      if (!allowDemoData) return items;
+
+      const canonicalIds = new Set(items.map((item) => String(item.id)));
+      return [
+        ...items,
+        ...initiativesDemoData.initiatives.filter(
+          (initiative) => !canonicalIds.has(String(initiative.id))
+        ),
+      ];
+    },
+    [allowDemoData, initiativesDemoData.initiatives]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -468,8 +484,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             displayName: currentUserDisplayName,
           })
         );
+        const mergedRows = mergeShowcaseInitiatives(canonicalRows);
         const response: { initiatives: PortfolioInitiative[] } = {
-          initiatives: canonicalRows.filter((initiative) => {
+          initiatives: mergedRows.filter((initiative) => {
             if (
               scope === 'active' &&
               [
@@ -510,7 +527,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setInitiatives(allowed);
 
         // Duplicate detection uses the same canonical source of truth, including history.
-        setAllInitiatives(canonicalRows);
+        setAllInitiatives(mergedRows);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         const isNetworkError = isInitiativesNetworkError(error);
@@ -523,6 +540,36 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           setTimeout(() => fetchData(), delay);
           return;
         }
+        if (allowDemoData) {
+          const demoRows = mergeShowcaseInitiatives([]);
+          const visibleDemoRows = demoRows.filter((initiative) => {
+            if (
+              scope === 'active' &&
+              [InitiativeStatus.DONE, InitiativeStatus.CANCELLED, InitiativeStatus.ARCHIVED].includes(
+                initiative.status as InitiativeStatus
+              )
+            ) {
+              return false;
+            }
+            if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
+            if (
+              searchQuery &&
+              !`${initiative.name ?? ''} ${initiative.summary ?? ''}`
+                .toLocaleLowerCase()
+                .includes(searchQuery.toLocaleLowerCase())
+            ) {
+              return false;
+            }
+            return true;
+          });
+          setInitiatives(visibleDemoRows);
+          setAllInitiatives(demoRows);
+          setLoadError(null);
+          setLoadErrorCode(null);
+          setV8PlanningDegraded(true);
+          return;
+        }
+
         setInitiatives([]);
         setAllInitiatives([]);
         setLoadError(
@@ -541,9 +588,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       currentProjectId,
       activeStatusFilter,
       activeLifecyclePreset,
+      allowDemoData,
       currentUserDisplayName,
       currentUserId,
       filters.priority,
+      mergeShowcaseInitiatives,
       searchQuery,
       scope,
       t,

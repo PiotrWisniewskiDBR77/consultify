@@ -26,7 +26,13 @@ on:
         type: choice
         options:
           - staging
+          - demo
           - production
+      confirm_demo:
+        description: 'Type yes to promote the last verified staging SHA to demo'
+        required: false
+        default: 'no'
+        type: string
       confirm_production:
         description: 'Type yes to allow production deployment'
         required: false
@@ -176,6 +182,120 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git tag -f "$STAGING_TAG" "$GITHUB_SHA"
           git push origin -f "refs/tags/$STAGING_TAG"
+
+  promote-demo:
+    name: Promote Last Verified Staging SHA to Demo
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'demo' && github.event.inputs.confirm_demo == 'yes'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: demo
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_DEMO_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_DEMO_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_DEMO_ENVIRONMENT }}
+      APP_SERVICE: ${{ vars.RAILWAY_DEMO_APP_SERVICE }}
+      API_HEALTH_URL: ${{ vars.DEMO_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.DEMO_FRONTEND_URL }}
+    steps:
+      - name: Install required tools
+        run: |
+          apk add --no-cache bash curl git >/dev/null
+
+      - uses: actions/checkout@v5.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve immutable promotion source
+        id: source
+        env:
+          STAGING_TAG: staging-deployed
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          git show-ref --verify --quiet "refs/tags/$STAGING_TAG" || {
+            echo "Demo promotion blocked: missing '$STAGING_TAG'." >&2
+            exit 1
+          }
+          source_sha="$(git rev-parse "refs/tags/$STAGING_TAG^{commit}")"
+          git checkout --detach "$source_sha"
+          test "$(git rev-parse HEAD)" = "$source_sha"
+          test -z "$(git status --porcelain)"
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Validate demo configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$APP_SERVICE"
+          test -n "$FRONTEND_URL"
+
+      - name: Validate demo target mapping
+        env:
+          DEPLOY_ENVIRONMENT: demo
+          GIT_REF: refs/tags/staging-deployed
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
+
+      - name: Deploy immutable staging SHA to demo
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          deploy_message="demo promotion $SOURCE_SHA"
+          railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$deploy_message"
+          attempt=0
+          while [ "$attempt" -lt 120 ]; do
+            deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
+            if ! printf '%s' "$deployment_json" | grep -F "$deploy_message" >/dev/null 2>&1; then
+              attempt=$((attempt + 1))
+              sleep 5
+              continue
+            fi
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
+            echo "demo deployment status: $status"
+            case "$status" in
+              SUCCESS) break ;;
+              FAILED|CRASHED|REMOVED)
+                printf '%s\n' "$deployment_json"
+                exit 1
+                ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 5
+          done
+          [ "$attempt" -lt 120 ] || {
+            echo "Timed out waiting for demo deployment" >&2
+            exit 1
+          }
+
+      - name: Verify demo deployment
+        run: |
+          set -euo pipefail
+          fetch_url() {
+            url="$1"
+            attempt=0
+            while [ "$attempt" -lt 12 ]; do
+              if curl -fsSL "$url" >/dev/null; then
+                return 0
+              fi
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+            echo "Healthcheck failed for $url" >&2
+            return 1
+          }
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            fetch_url "$API_HEALTH_URL"
+          fi
+          fetch_url "$FRONTEND_URL"
+
+      - name: Dump demo runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true
 
   deploy-production:
     name: Deploy Production

@@ -20,7 +20,12 @@ case "$environment" in
   staging)
     expected_refs="refs/heads/develop refs/heads/staging"
     expected_environment="staging"
-    allowed_hosts="demo.consultify.ai stage.consultinity.ai"
+    allowed_hosts="staging.consultify.ai"
+    ;;
+  demo)
+    expected_refs="refs/tags/staging-deployed"
+    expected_environment="demo"
+    allowed_hosts="demo.consultify.ai"
     ;;
   production)
     expected_refs="refs/heads/main"
@@ -28,7 +33,7 @@ case "$environment" in
     allowed_hosts="consultify.ai www.consultify.ai"
     ;;
   *)
-    fail "unknown DEPLOY_ENVIRONMENT '$environment' (expected staging or production)"
+    fail "unknown DEPLOY_ENVIRONMENT '$environment' (expected staging, demo, or production)"
     ;;
 esac
 

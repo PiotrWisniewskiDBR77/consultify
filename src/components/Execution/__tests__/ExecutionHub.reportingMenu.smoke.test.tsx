@@ -4,39 +4,43 @@
  * Regression guard for the Execution → Reporting row-menu declaration.
  * StandardTable uses the same composed sections for kebab and context menu,
  * so keeping one declaration here preserves their parity.
+ *
+ * The guard points at ExecutionReportsSurface: it is the component the
+ * 'reports' tab actually renders. The former ExecutionHub-internal report
+ * catalog (renderReportsCatalog + buildReportRowMenu) sat behind an earlier
+ * unconditional `return <ExecutionReportsSurface />` and was unreachable, so
+ * it was deleted together with this guard's old anchor.
  */
 
 import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-const executionHubSource = readFileSync(new URL('../ExecutionHub.tsx', import.meta.url), 'utf8');
-const reportingMenuSource = executionHubSource.slice(
-  executionHubSource.indexOf('const buildReportRowMenu'),
-  executionHubSource.indexOf('const portfolioInitiatives')
+const reportsSurfaceSource = readFileSync(
+  new URL('../ExecutionReportsSurface.tsx', import.meta.url),
+  'utf8'
 );
 
-describe('ExecutionHub Reporting row menu', () => {
-  it('declares one context Open full and delegates the only preview to the manage block', () => {
-    expect(reportingMenuSource).not.toContain("id: 'open_preview'");
-    expect(reportingMenuSource.match(/id: 'open_full'/g)).toHaveLength(1);
-    expect(
-      reportingMenuSource.match(/preview: \(\) => setReportPreviewId\(report\.id\)/g)
-    ).toHaveLength(1);
+describe('ExecutionReportsSurface row menus', () => {
+  it('declares one context Open per table and delegates preview to the manage block', () => {
+    // No hand-rolled preview entry — StandardTable composes block 4 itself.
+    expect(reportsSurfaceSource).not.toContain("id: 'open_preview'");
+    expect(reportsSurfaceSource).not.toContain("id: 'open-preview'");
 
-    const composedActionOrder = [
-      ...Array.from(reportingMenuSource.matchAll(/id: '(open_[^']+)'/g), (match) => match[1]),
-      ...(reportingMenuSource.includes('universalHandlers:') &&
-      reportingMenuSource.includes('preview: () => setReportPreviewId(report.id)')
-        ? ['open_preview']
-        : []),
-    ];
+    const rowMenus = reportsSurfaceSource.match(/rowMenu=\{\([^)]*\) => \(\{[\s\S]*?\}\)\}/g) ?? [];
+    // Definitions register + Runs register.
+    expect(rowMenus).toHaveLength(2);
 
-    expect(composedActionOrder).toEqual(['open_full', 'open_preview']);
+    for (const menu of rowMenus) {
+      expect(menu.match(/id: '[^']+'/g)).toHaveLength(1);
+      expect(menu.match(/universalHandlers: \{ preview: \(\) =>/g)).toHaveLength(1);
+    }
   });
 
-  it('passes that single contract to StandardTable for both row-menu entry points', () => {
-    expect(executionHubSource.match(/buildReportRowMenu\(r\)/g)).toHaveLength(1);
-    expect(executionHubSource).toContain('rowMenu={(row) => {');
+  it('the Execution hub no longer carries its own report catalog kebab', () => {
+    const executionHubSource = readFileSync(new URL('../ExecutionHub.tsx', import.meta.url), 'utf8');
+    expect(executionHubSource).not.toContain('buildReportRowMenu');
+    expect(executionHubSource).not.toContain('renderReportsCatalog');
+    expect(executionHubSource).toContain('<ExecutionReportsSurface');
   });
 });

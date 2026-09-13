@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
@@ -29,6 +30,17 @@ import { TableSettingsPopover } from './TableSettingsPopover';
 export interface TableColumn {
   id: string;
   label: string;
+  /**
+   * Szerokość kolumny — WYŁĄCZNIE w pikselach: `'260px'` albo samo `'260'`.
+   *
+   * Tabela ma `table-layout: fixed` i pracuje na liczbach (zero-sum resize,
+   * zapamiętywanie układu w localStorage), więc `width` jest tu parsowane do
+   * liczby pikseli (`parsePx`), a nie przekazywane do CSS jak jest. Wartości
+   * względne (`'30%'`, `'20rem'`, `'auto'`) są ODRZUCANE i zastąpione
+   * szerokością domyślną (260 px dla `title`/`name`, 140 px dla pozostałych) —
+   * w dev z ostrzeżeniem w konsoli. Nie da się więc rozłożyć kolumn
+   * procentowo; jeśli kolumna ma być szeroka, podaj piksele.
+   */
   width?: string;
   /**
    * Opt-in leading selection column. When set to 'select', the HEADER renders a
@@ -57,6 +69,24 @@ export interface TableColumn {
 // Canon §3.3 — map column.align to a Tailwind text-align utility (left = default).
 const alignToClass = (align?: TableColumn['align']): string =>
   align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+
+/**
+ * Głośny (ale jednorazowy per wartość) sygnał w dev, gdy ekran poda `width`
+ * w innej jednostce niż piksele. Cisza była tu gorsza od hałasu: zła jednostka
+ * zwijała kolumnę do kilkunastu pikseli i nikt nie wiedział dlaczego. Produkcja
+ * = zero kosztu, cały blok znika przy budowie (`import.meta.env.DEV`).
+ */
+const zgloszoneSzerokosci = new Set<string>();
+const warnNonPxColumnWidth = (raw: string): void => {
+  if (!import.meta.env.DEV) return;
+  if (zgloszoneSzerokosci.has(raw)) return;
+  zgloszoneSzerokosci.add(raw);
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[FilterableTable] TableColumn.width = "${raw}" — obsługiwane są WYŁĄCZNIE piksele ` +
+      `("260px" albo "260"). Użyto szerokości domyślnej (260 px dla title/name, 140 px dla reszty).`
+  );
+};
 
 // Row data
 export interface TableRow {
@@ -640,11 +670,38 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     }
   }, [storageKey]);
 
+  /**
+   * `TableColumn.width` → liczba PIKSELI dla `table-fixed`.
+   *
+   * KONTRAKT (patrz jsdoc przy `TableColumn.width`): jedyna dopuszczalna
+   * jednostka to piksele — `'260px'` albo samo `'260'`. Wartość względna
+   * (`'30%'`, `'20rem'`, `'auto'`, `calc()`) NIE jest tu obsługiwana i
+   * ŚWIADOMIE spada do fallbacku (260 px dla `title`/`name`, 140 px dla
+   * reszty), zamiast przemycać swoją liczbę jako piksele.
+   *
+   * Do 2026-08-30 fallback był ostatnią linią `Number(value.replace(/[^\d.]/g,''))`,
+   * czyli `'30%'` → `30` → kolumna tytułowa szeroka na 30 px. W `table-fixed`
+   * daje to nagłówek nachodzący na sąsiedni i treść uciętą do jednego znaku
+   * („O…" zamiast „Ocena gotowości — obszar 1"); `min-width: 200px` z `<th>`
+   * NIE ratuje sytuacji, bo przeglądarka pomija min/max-width komórek przy
+   * `table-layout: fixed` (zmierzone: 43 px realnej szerokości). Objaw widziano
+   * już raz — commit 45e2a15408 („fix(results): column width props must be px,
+   * not %") załatał wtedy JEDNO wywołanie w ResultsHub, a nie ten parser, więc
+   * defekt odrósł w 12 plikach. Naprawa jest tutaj, w SSOT: autor kolumny nie
+   * musi znać wewnętrznej jednostki, bo zła jednostka daje kanoniczną wartość
+   * domyślną, a nie cichy rozjazd.
+   */
   const parsePx = useCallback((value?: string, fallback = 140) => {
-    if (!value) return fallback;
-    const m = String(value).match(/(\d+)\s*px/i);
-    if (m?.[1]) return Number(m[1]);
-    const n = Number(String(value).replace(/[^\d.]/g, ''));
+    if (value == null) return fallback;
+    const raw = String(value).trim();
+    if (!raw) return fallback;
+    // Wyłącznie „<liczba>" albo „<liczba>px" (dopuszczalna spacja przed px).
+    const m = raw.match(/^(\d+(?:\.\d+)?)\s*(?:px)?$/i);
+    if (!m) {
+      warnNonPxColumnWidth(raw);
+      return fallback;
+    }
+    const n = Number(m[1]);
     return Number.isFinite(n) && n > 0 ? n : fallback;
   }, []);
 
@@ -923,7 +980,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     if (hours < 1) return t('sharedComponents.filterableTable.justNow');
     if (hours < 24) return t('sharedComponents.filterableTable.hoursAgo', { count: hours });
     if (days < 7) return t('sharedComponents.filterableTable.daysAgo', { count: days });
-    return d.toLocaleDateString();
+    // Bez jawnego locale `toLocaleDateString()` bierze locale przeglądarki, nie
+    // język konta — polskie konto dostawało `8/13/2026`. SSOT: `formatListDate`.
+    return formatListDate(d);
   };
 
   return (

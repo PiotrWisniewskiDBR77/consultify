@@ -48,10 +48,9 @@ tests/
 /odpowiedzi/
 /public/videos/
 /public/videos/**
-/public/images/
-/public/images/**
-/public/assets/
-/public/assets/**
+# Runtime frontend images and assets must remain in the Railway build context.
+# Vite copies these directories into /app/dist; excluding them here produces
+# successful deployments whose landing-page images return ASSET_NOT_FOUND.
 /public/screenshots/
 /public/screenshots/**
 /public/demo/

@@ -339,6 +339,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
   }, [
     resolvedLocation.domain,
     resolvedLocation.screen,
+    currentUser.organizationId,
     handleLocationChange,
     i18n?.language,
     i18n?.resolvedLanguage,

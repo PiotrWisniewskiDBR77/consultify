@@ -25396,15 +25396,41 @@
     }
   },
   "chatProposal": {
+    "ariaLabel": "Nadzorowana propozycja wykonania",
+    "stepCount": "{{count}} kroków",
+    "stepCount_one": "{{count}} krok",
+    "stepCount_few": "{{count}} kroki",
+    "stepCount_many": "{{count}} kroków",
+    "stepCount_other": "{{count}} kroku",
+    "expiresAt": "Wygasa {{when}}",
+    "rejectionReason": "Powód",
+    "reviewer": "Przejrzał(a): {{name}}",
     "step": {
+      "untitled": "Krok",
       "more": "więcej"
     },
     "state": {
+      "proposed": "Propozycja przygotowana",
+      "pendingReview": "Oczekuje na przegląd",
+      "approved": "Zatwierdzona",
+      "executing": "W realizacji",
+      "executed": "Wykonana",
       "failed": "Błąd",
+      "audited": "Po audycie",
+      "closed": "Zamknięta",
+      "rejected": "Odrzucona",
       "unknown": "nieznana"
     },
+    "risk": {
+      "high": "Wysokie ryzyko",
+      "medium": "Średnie ryzyko",
+      "low": "Niskie ryzyko"
+    },
     "action": {
-      "reject": "Odrzuć"
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "execute": "Uruchom",
+      "inspect": "Zobacz przebieg"
     }
   },
   "focusMode": {

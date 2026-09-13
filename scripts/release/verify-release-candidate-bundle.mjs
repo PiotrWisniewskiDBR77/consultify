@@ -105,8 +105,21 @@ function lexicalStatements(sql) {
 }
 
 export function classifyMigrationSql(sql) {
-  return lexicalStatements(sql).map((statement) => {
-    const normalized = statement.replace(/\s+/g, ' ').trim().toUpperCase();
+  const statements = lexicalStatements(sql);
+  const normalizedStatements = statements.map((statement) =>
+    statement.replace(/\s+/g, ' ').trim().toUpperCase()
+  );
+  const triggerCreates = new Map();
+  for (const normalized of normalizedStatements) {
+    const match = normalized.match(
+      /^CREATE\s+(?:CONSTRAINT\s+)?TRIGGER\s+([A-Z0-9_".]+)\b[\s\S]*\bON\s+([A-Z0-9_".]+)\b/
+    );
+    if (!match) continue;
+    const key = `${match[1]}\u0000${match[2]}`;
+    triggerCreates.set(key, (triggerCreates.get(key) ?? 0) + 1);
+  }
+
+  return normalizedStatements.map((normalized) => {
     if (normalized.startsWith('__LEXICAL_ERROR_'))
       return { classification: 'UNCLASSIFIED', code: 'MIGRATION_LEXICAL_ERROR' };
     // `ON DELETE CASCADE` is a normal FK action inside an additive CREATE;
@@ -115,6 +128,14 @@ export function classifyMigrationSql(sql) {
     // schema/data rather than rejecting the token wherever it appears.
     if (/^(?:DROP|TRUNCATE)\b.*\bCASCADE\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_CASCADE' };
+    const droppedTrigger = normalized.match(
+      /^DROP\s+TRIGGER\s+IF\s+EXISTS\s+([A-Z0-9_".]+)\s+ON\s+([A-Z0-9_".]+)$/
+    );
+    if (
+      droppedTrigger &&
+      triggerCreates.get(`${droppedTrigger[1]}\u0000${droppedTrigger[2]}`) === 1
+    )
+      return { classification: 'ALLOW', code: 'SAFE_ATOMIC_TRIGGER_REPLACE' };
     if (
       /^DROP\s+(?:INDEX|SEQUENCE|POLICY|MATERIALIZED\s+VIEW|TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|PROCEDURE|VIEW|TRIGGER)\b/.test(
         normalized
