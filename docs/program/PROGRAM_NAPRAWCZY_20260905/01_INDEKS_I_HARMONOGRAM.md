@@ -983,3 +983,9 @@ Binding SSOT review confirms forecast owned by Execution and one Initiative iden
 
 
 Native forecast independent RED captured:6collected/0PASS, same missingprojection failure in everycase, not6separatebugs. See INTEGRATOR_MVP_20260912/E1B_NATIVE_FORECAST_ROOT_RED.md. Agent implements native read/write; root adversarial coverage preserves version/asOf/clear distinctions.
+
+
+Native reader root candidate V2 independently PASS8/8 exit0, raw E1B_NATIVE_FORECAST_ROOT_CANDIDATE_V2.json SHA2992a4ef9507d8f55627386ca8a8dd7c2b679f8ae5b6caaffd09f93e1523c412. This is injected-query readbehavior, not actualGateway/PG. Root source review requires two writer corrections before acceptance: native response clock_timestamp differs from persisted receipt DEFAULT CURRENT_TIMESTAMP; native end-only mutation mustnot silently turn absentstart into explicitnull. Author notified to preserve untouchedfields and assert exact timestamp+absence on actualnative path. UI author reports15/15+DATE alias1/1GREEN, frontendtsc session44254 active; independent finalfreeze stillpending.
+
+
+Root independently compared E1B_OPERATIONAL_FORECAST_UI_FRONTEND_TSC_20260913T102500Z.log against integratedbaseline:192/192 normalized(path,TS-code),added[],removed[]. E1B_OPERATIONAL_FORECAST_UI_ROOT_TSC_DELTA.json saved. Author confirmed terminal44254 exit2, notglobalPASS; serveralias tsc next. Native source now usesCURRENT_TIMESTAMP and preservesonly suppliedfields; actualnativewriterreadback stillpending.
