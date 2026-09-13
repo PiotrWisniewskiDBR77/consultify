@@ -940,3 +940,10 @@ Fourteen captured Execution403 responses are intentional server denials for ordi
 ### Reader and approved-out deletion integrated — 2026-09-13
 
 Root9d003646 includes E1b75f322858 (all14 blobs matched) and C6 approved-out deletion9d003646. Build PASS and actual Bank5checkpoints; signedJWT Gateway reader/guard3/3PASS, C6 actualGateway2/2 plus rootfocused3/3PASS. Original whole legacywriter Gateway test8/12 reveals retiredreplan409 and missing canonical forecast command; replacement assigned separate worktree, no guard bypass. Full details, reset incident, evidence limitations and runtime identities: INTEGRATOR_MVP_20260912/E1B_C6_INTEGRATED_READER_AND_DELETE_CHECKPOINT.md. Full MVP/deployment remains open.
+
+
+### C6 real menu correction — 2026-09-13
+
+Real StandardTable conversion and the built screenshot exposed a disabled Delete entry missed by the previous mock. Root removed the row-menu destructive property and strengthened the test: behavioral RED → 3/3 focused GREEN, build PASS. Actual browser GREEN/cleanup pending; see INTEGRATOR_MVP_20260912/C6_REAL_MENU_CORRECTION_ACCEPTANCE.md. No deployment or full E4 acceptance.
+
+C6 menu follow-up: actual built GREEN confirmed no Delete controls/dialogs, policy text visible, real export GET200/download13052bytes with exact target and truthful partial manifest (unresolved90). Root inspected screenshot. Fixture cleanup pending; unrelated system-health404 retained.

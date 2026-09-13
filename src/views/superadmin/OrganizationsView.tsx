@@ -766,7 +766,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         preview: () => setSelectedOrg(org),
         edit: () => startInlineEdit(org),
       },
-      destructive: { note: DESTRUCTIVE_DELETION_DISABLED_COPY },
     };
   };
 

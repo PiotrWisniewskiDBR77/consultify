@@ -31,32 +31,40 @@ vi.mock('@/components/shared/InfoButton', () => ({ InfoButton: () => null }));
 vi.mock('@/views/superadmin/SuperAdminOrgDetailsModal', () => ({
   SuperAdminOrgDetailsModal: () => null,
 }));
-vi.mock('@/components/standard/StandardTable', () => ({
-  StandardTable: ({ columns, data, rowMenu }: any) => (
-    <div data-testid="organization-table">
-      {data.map((row: any) => {
-        const actions = columns.find((column: any) => column.id === 'actions');
-        const menu = rowMenu?.(row);
-        return (
-          <div key={row.id}>
-            <span>{row.name}</span>
-            {actions?.render?.(row)}
-            {menu?.primary?.map((item: any) => (
-              <button key={item.id} type="button" onClick={item.onClick} disabled={item.disabled}>
-                {item.label}
-              </button>
-            ))}
-            {menu?.destructive?.onClick ? (
-              <button type="button" onClick={menu.destructive.onClick}>
-                {menu.destructive.label}
-              </button>
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-  ),
-}));
+vi.mock('@/components/standard/StandardTable', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/components/standard/StandardTable')>();
+  return {
+    StandardTable: ({ columns, data, rowMenu }: any) => (
+      <div data-testid="organization-table">
+        {data.map((row: any) => {
+          const actions = columns.find((column: any) => column.id === 'actions');
+          const menu = rowMenu?.(row);
+          return (
+            <div key={row.id}>
+              <span>{row.name}</span>
+              {actions?.render?.(row)}
+              {menu
+                ? actual
+                    .rowMenuToSections(menu, (_key: string, fallback: string) => fallback, false)
+                    .flatMap((section) => section.actions)
+                    .map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={item.onClick}
+                        disabled={item.disabled}
+                      >
+                        {item.label}
+                      </button>
+                    ))
+                : null}
+            </div>
+          );
+        })}
+      </div>
+    ),
+  };
+});
 
 import { OrganizationsView } from '../OrganizationsView';
 
