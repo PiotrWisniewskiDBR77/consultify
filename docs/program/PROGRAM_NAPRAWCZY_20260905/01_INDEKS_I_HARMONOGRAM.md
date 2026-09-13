@@ -874,3 +874,15 @@ Integrated verification complete: servertsc0, bounded13/13, existing ApiError 5/
 ### E1a Execution navigation integrated — 2026-09-13
 
 Commit 8991ceb703dc0d466eb3a96e096f053a5eeb14f1 integrates four Menu2 functions, legacy subviews, typed document/cold initiative identity and history preservation. Independent source24 plus15distinct regressions and actual mountedHub/MemoryRouter6PASS; integrated30/30PASS. All8accepted source/testhashes match. Normal integration commit hooks passed on fullstageddelta (author sparse lacked.husky, so authorcommit hook result is not relied upon; sparse corrected). Initialmounted5/1 was globalnooprouter harness error, not productRED. Historical37/34counts discarded; authoritative reviews E1A_SOL_INDEPENDENT_REVIEW.md/E1A_MOUNTED_NAVIGATION_REVIEW.md. Frontend tsc remains 192 existing diagnostics with unchanged file/code counts. Build PASS (8 GiB Node heap). Actual built navigation four checkpoints PASS, no page errors; seven HTTP403 retained and two telemetry POSTs, no business mutation tested. Served/local index SHA256 2d17b133a2d11819aa690eb3d22dbfff11cc29f3c48bf4e1bfef696ed28c1427. See E1A_RC2_BUILT_NAVIGATION_REVIEW.md. E1b-d/lifecycle/full MVP/deploy remain OPEN.
+
+### Native Tasks/Milestones integrated — 2026-09-13
+
+# IE01 native card split — integrated verification
+
+Source commit `60bd526b92caa51c4de145ddb2c38f645787dd5e`, integration `c98da8bc7c3d0b59283db25c56d18db1ba9b405a`. Source normal hooks passed. Independent and integrated seven-file tests each 30/30 PASS. Full build exit0. Frontend typecheck initial default-heap OOM134 retained; unchanged-source 8GB retry exit2, 192 vs192 existing file/code diagnostics. This is not a clean typecheck.
+
+Actual built preview5292 + API5293: open Milestones, explicitly switch Preview and verify Add milestone disappears, Tasks → Milestones → reload retains native card URL. Four navigation checkpoints PASS, no page errors. Screenshot inspected. Existing organization-members403 and planning/legacy/suggested-changes/attachments404 remain; not accepted by this check. Existing local DEFINED fixture has no milestones; this does not prove milestone persistence or a fresh full journey.
+
+Build and served index SHA256 `0f11413090329945b83286b07283407eb187ca44caea9b19bb6af70595fff1dc`. Raw runtime: `codex4-scratch/ie01-rc2-runtime-20260913/ui-native-card-split-v3/result.json`, `milestones-preview.png`, `milestones-reload.png`. Earlier v1 incorrectly assumed DEFINED opened Preview; v2 used button locator for actual radio. Both instrument failures retained; no product change between attempts.
+
+Native runtime-v1 Tasks and Milestones now separate; legacy keeps combined. Independent initial gate fixture was unreachable and is corrected explicitly in follow-up acceptance. Full milestone owner/evidence/dependency work, full IE01, full MVP and deployment remain OPEN.
