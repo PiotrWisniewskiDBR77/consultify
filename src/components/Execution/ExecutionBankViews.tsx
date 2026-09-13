@@ -50,6 +50,7 @@ const UNKNOWN_LABELS: Record<string, string> = {
   FORECAST_OBSERVATION_MISSING: 'Forecast observation date missing',
   FORECAST_OBSERVATION_INVALID: 'Forecast observation date is invalid',
   FORECAST_AFTER_AS_OF: 'Forecast is newer than the reporting date',
+  VALUE_CLEARED: 'Not scheduled',
   ACTUAL_MISSING: 'Actual date not reported',
   ACTUAL_INVALID: 'Actual date is invalid',
   CONFIDENCE_MISSING: 'Confidence not reported',
