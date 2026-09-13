@@ -162,3 +162,45 @@ it('switches native Tasks and Milestones in the mounted document even without a 
   expect(screen.queryByText('Native task row')).not.toBeInTheDocument();
   expect(fixture.write).not.toHaveBeenCalled(); expect(fixture.amend).not.toHaveBeenCalled();
 });
+
+it('does not expose the native milestone writer when the actual document gate denies card edits', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  Object.assign(fixture.record, {
+    id:'33333333-3333-4333-8333-333333333333',
+    documentOrigin:'initiatives-runtime-v1',
+    canonicalVersion:1,
+    status:'DRAFT',
+    name:'Read-only milestone initiative'
+  });
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  const search = `?mode=doc&open=${fixture.record.id}&card=milestones&return=preparation`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location,{href:`http://localhost:3000/initiatives${search}`,search});
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} />);
+  await waitFor(() => expect(screen.getAllByText('Native milestone row').at(-1)).toBeVisible());
+  expect(screen.queryByText('Add milestone')).not.toBeInTheDocument();
+  expect(fixture.gate.capabilities.cards.canEditCards).toBe(false);
+  expect(fixture.write).not.toHaveBeenCalled();
+  expect(fixture.amend).not.toHaveBeenCalled();
+});
+
+it('keeps the legacy mounted Tasks and Milestones card combined', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  Object.assign(fixture.record, {
+    id:'44444444-4444-4444-8444-444444444444',
+    documentOrigin:undefined,
+    canonicalVersion:undefined,
+    status:'DRAFT',
+    name:'Legacy combined initiative'
+  });
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  const search = `?mode=doc&open=${fixture.record.id}&card=tasks&return=preparation`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location,{href:`http://localhost:3000/initiatives${search}`,search});
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} />);
+  await waitFor(() => expect(screen.getAllByRole('heading', {name:'Tasks'}).at(-1)).toBeVisible());
+  expect(await screen.findByText('Native task row')).toBeVisible();
+  expect(await screen.findByText('Native milestone row')).toBeVisible();
+  expect(fixture.write).not.toHaveBeenCalled();
+  expect(fixture.amend).not.toHaveBeenCalled();
+});

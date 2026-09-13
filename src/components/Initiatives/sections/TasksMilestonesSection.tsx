@@ -78,6 +78,13 @@ type MilestoneItem = {
   isGate?: boolean;
 };
 
+export type TasksMilestonesPresentation = 'tasks' | 'milestones' | 'combined';
+
+type TasksMilestonesSectionProps = InitiativeSectionProps & {
+  /** `combined` preserves the legacy registry surface; canonical cards select one owner explicitly. */
+  presentation?: TasksMilestonesPresentation;
+};
+
 // ==========================================
 // STATUS CONFIG
 // ==========================================
@@ -276,7 +283,10 @@ const formatDueDate = (value?: string) => formatListDate(value);
 // MAIN SECTION COMPONENT
 // ==========================================
 
-export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
+export const TasksMilestonesSection: React.FC<TasksMilestonesSectionProps> = ({
+  readonly,
+  presentation = 'combined',
+}) => {
   const { t } = useTranslation();
   const {
     tasks,
@@ -291,6 +301,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     tasksAiRequest,
     clearTasksAiRequest,
   } = useInitiativeContext();
+  const showTasks = presentation !== 'milestones';
+  const showMilestones = presentation !== 'tasks';
 
   const [menuTaskId, setMenuTaskId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -309,7 +321,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
-  const [milestonesLoading, setMilestonesLoading] = useState(true);
+  const [milestonesLoading, setMilestonesLoading] = useState(showMilestones);
   const [milestonesLoadError, setMilestonesLoadError] = useState(false);
   const [showCreateMilestoneModal, setShowCreateMilestoneModal] = useState(false);
   const [newMilestoneName, setNewMilestoneName] = useState('');
@@ -636,7 +648,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   );
 
   useEffect(() => {
-    if (!tasksAiRequest) return;
+    if (!showTasks || !tasksAiRequest) return;
     const run = async () => {
       try {
         if (tasksAiRequest.mode === 'analyze') {
@@ -652,7 +664,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     };
     void run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasksAiRequest?.nonce]);
+  }, [showTasks, tasksAiRequest?.nonce]);
 
   const sortedTasks = useMemo(() => {
     const list = [...tasks];
@@ -732,15 +744,18 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   }, [showCreateModal]);
 
   useEffect(() => {
-    if (showCreateMilestoneModal) {
+    if (showMilestones && showCreateMilestoneModal) {
       setTimeout(() => createMilestoneTitleInputRef.current?.focus(), 20);
     }
-  }, [showCreateMilestoneModal]);
+  }, [showMilestones, showCreateMilestoneModal]);
 
   // EXE-02/03/04 gap-fill: load existing milestones for this initiative
   // (endpoint already existed and was consumed read-only in
   // InitiativeDrawer.tsx; this section had no reader and no writer at all).
   useEffect(() => {
+    if (!showMilestones) {
+      return;
+    }
     if (!initiativeId) {
       setMilestonesLoading(false);
       return;
@@ -764,7 +779,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     return () => {
       cancelled = true;
     };
-  }, [initiativeId]);
+  }, [initiativeId, showMilestones]);
 
   const createTaskArtifact = useCallback(
     async (
@@ -1053,7 +1068,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
 
   // When "New Task" button in toolbar triggers showCreateTask, auto-add a task card
   useEffect(() => {
-    if (showCreateTask && !addTriggered.current) {
+    if (showTasks && showCreateTask && !addTriggered.current) {
       addTriggered.current = true;
       handleStartInlineAdd();
       setShowCreateTask(false);
@@ -1061,15 +1076,160 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         addTriggered.current = false;
       }, 300);
     }
-  }, [showCreateTask, handleStartInlineAdd, setShowCreateTask]);
+  }, [showTasks, showCreateTask, handleStartInlineAdd, setShowCreateTask]);
 
   // Cleanup: remove legacy client-side demo rows if they exist in state.
   useEffect(() => {
-    if (!initiativeId) return;
+    if (!showTasks || !initiativeId) return;
     const hasLegacyDemo = tasks.some((t) => String(t.id).startsWith('demo-task-'));
     if (!hasLegacyDemo) return;
     setTasks((prev) => prev.filter((t) => !String(t.id).startsWith('demo-task-')));
-  }, [initiativeId, tasks, setTasks]);
+  }, [showTasks, initiativeId, tasks, setTasks]);
+
+  if (!showTasks) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+              {t('initiatives.tasksMilestonesSection.milestonesHeading', 'Milestones')}
+            </h2>
+            {milestones.length > 0 && (
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+                {milestones.length}
+              </span>
+            )}
+          </div>
+          {!readonly && (
+            <button
+              onClick={handleStartInlineMilestoneAdd}
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              <Flag size={12} />
+              {t('initiatives.tasksMilestonesSection.addMilestone', 'Add milestone')}
+            </button>
+          )}
+        </div>
+
+        {milestonesLoading ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('initiatives.tasksMilestonesSection.milestonesLoading', 'Loading milestones…')}
+          </p>
+        ) : milestonesLoadError ? (
+          <p className="text-xs text-danger-500 dark:text-danger-400">
+            {t(
+              'initiatives.tasksMilestonesSection.milestonesLoadError',
+              'Could not load milestones'
+            )}
+          </p>
+        ) : milestones.length === 0 ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('initiatives.tasksMilestonesSection.noMilestonesYet', 'No milestones yet')}
+          </p>
+        ) : (
+          <ul className="divide-y divide-slate-200/40 dark:divide-navy-700/40 rounded-xl border border-slate-200 dark:border-navy-700/40">
+            {milestones.map((milestone) => (
+              <li
+                key={milestone.id}
+                data-milestone-id={milestone.id}
+                className="flex items-center justify-between gap-2 px-3 py-2 text-xs"
+              >
+                <span className="inline-flex items-center gap-1.5 min-w-0 text-slate-700 dark:text-slate-200">
+                  <Flag size={11} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                  <span className="truncate">{milestone.name}</span>
+                </span>
+                <span className="shrink-0 inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                  {milestone.targetDate ? (
+                    <>
+                      <Calendar size={11} />
+                      {formatDueDate(milestone.targetDate)}
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!readonly && showCreateMilestoneModal && (
+          <div className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl">
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/70 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {t('initiatives.tasksMilestonesSection.newMilestoneTitle', 'New milestone')}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowCreateMilestoneModal(false);
+                    setNewMilestoneName('');
+                    setNewMilestoneDate('');
+                  }}
+                  className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-navy-800"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                    {t('initiatives.tasksMilestonesSection.title')}
+                  </label>
+                  <input
+                    ref={createMilestoneTitleInputRef}
+                    value={newMilestoneName}
+                    onChange={(event) => setNewMilestoneName(event.target.value)}
+                    placeholder={t(
+                      'initiatives.tasksMilestonesSection.milestoneNamePlaceholder',
+                      'e.g. Go-live approved'
+                    )}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                    {t('initiatives.tasksMilestonesSection.targetDate', 'Target date')}
+                  </label>
+                  <input
+                    type="date"
+                    value={newMilestoneDate}
+                    onChange={(event) => setNewMilestoneDate(event.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700/70 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowCreateMilestoneModal(false);
+                    setNewMilestoneName('');
+                    setNewMilestoneDate('');
+                  }}
+                  className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
+                >
+                  {t('initiatives.tasksMilestonesSection.cancel')}
+                </button>
+                <button
+                  onClick={() => void handleCreateInlineMilestone()}
+                  disabled={isCreatingMilestone || !newMilestoneName.trim()}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+                >
+                  {isCreatingMilestone
+                    ? t('initiatives.tasksMilestonesSection.creating')
+                    : t('initiatives.tasksMilestonesSection.createMilestone', 'Create milestone')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -1098,13 +1258,15 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                 <Plus size={12} />
                 {t('initiatives.tasksMilestonesSection.addTask')}
               </button>
-              <button
-                onClick={handleStartInlineMilestoneAdd}
-                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-              >
-                <Flag size={12} />
-                {t('initiatives.tasksMilestonesSection.addMilestone', 'Add milestone')}
-              </button>
+              {showMilestones && (
+                <button
+                  onClick={handleStartInlineMilestoneAdd}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                >
+                  <Flag size={12} />
+                  {t('initiatives.tasksMilestonesSection.addMilestone', 'Add milestone')}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -1684,58 +1846,65 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           </tbody>
         </table>
       </div>
-
       {/* EXE-02/03/04 gap-fill: minimal milestones list. Section previously had
           no reader or writer for initiative_milestones — only tasks. */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2.5">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-            {t('initiatives.tasksMilestonesSection.milestonesHeading', 'Milestones')}
-          </h3>
-          {milestones.length > 0 && (
-            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
-              {milestones.length}
-            </span>
+      {showMilestones && (
+        <div className="space-y-2">
+          {showTasks && (
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {t('initiatives.tasksMilestonesSection.milestonesHeading', 'Milestones')}
+              </h3>
+              {milestones.length > 0 && (
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+                  {milestones.length}
+                </span>
+              )}
+            </div>
+          )}
+          {milestonesLoading ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('initiatives.tasksMilestonesSection.milestonesLoading', 'Loading milestones…')}
+            </p>
+          ) : milestonesLoadError ? (
+            <p className="text-xs text-danger-500 dark:text-danger-400">
+              {t(
+                'initiatives.tasksMilestonesSection.milestonesLoadError',
+                'Could not load milestones'
+              )}
+            </p>
+          ) : milestones.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('initiatives.tasksMilestonesSection.noMilestonesYet', 'No milestones yet')}
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-200/40 dark:divide-navy-700/40 rounded-xl border border-slate-200 dark:border-navy-700/40">
+              {milestones.map((m) => (
+                <li
+                  key={m.id}
+                  data-milestone-id={m.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2 text-xs"
+                >
+                  <span className="inline-flex items-center gap-1.5 min-w-0 text-slate-700 dark:text-slate-200">
+                    <Flag size={11} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="truncate">{m.name}</span>
+                  </span>
+                  <span className="shrink-0 inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                    {m.targetDate ? (
+                      <>
+                        <Calendar size={11} />
+                        {formatDueDate(m.targetDate)}
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        {milestonesLoading ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('initiatives.tasksMilestonesSection.milestonesLoading', 'Loading milestones…')}
-          </p>
-        ) : milestonesLoadError ? (
-          <p className="text-xs text-danger-500 dark:text-danger-400">
-            {t(
-              'initiatives.tasksMilestonesSection.milestonesLoadError',
-              'Could not load milestones'
-            )}
-          </p>
-        ) : milestones.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('initiatives.tasksMilestonesSection.noMilestonesYet', 'No milestones yet')}
-          </p>
-        ) : (
-          <ul className="divide-y divide-slate-200/40 dark:divide-navy-700/40 rounded-xl border border-slate-200 dark:border-navy-700/40">
-            {milestones.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
-                <span className="inline-flex items-center gap-1.5 min-w-0 text-slate-700 dark:text-slate-200">
-                  <Flag size={11} className="shrink-0 text-slate-400 dark:text-slate-500" />
-                  <span className="truncate">{m.name}</span>
-                </span>
-                <span className="shrink-0 inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                  {m.targetDate ? (
-                    <>
-                      <Calendar size={11} />
-                      {formatDueDate(m.targetDate)}
-                    </>
-                  ) : (
-                    '—'
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
 
       {!readonly && showCreateModal && (
         <div className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1820,7 +1989,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         </div>
       )}
 
-      {!readonly && showCreateMilestoneModal && (
+      {showMilestones && !readonly && showCreateMilestoneModal && (
         <div className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/70 flex items-center justify-between">

@@ -11,7 +11,7 @@ const nativeSection: Partial<Record<InitiativeCardKey, string[]>> = {
   'financial-analysis': ['financial-analysis'], 'financial-impact': ['financial-impact'],
   'people-team': ['team'], 'roles-raci': ['raci'], stakeholders: ['raci'],
   'resources-capacity': ['resources'], dependencies: ['dependencies'], 'risk-raid': ['risk-raid'],
-  milestones: ['tasks'], timeline: ['timeline'], tasks: ['tasks'], decisions: ['decisions'],
+  milestones: ['milestones'], timeline: ['timeline'], tasks: ['tasks'], decisions: ['decisions'],
   'gates-approvals': ['gates'], 'feasibility-completeness': ['gates'],
   'capabilities-training': ['competencies'], 'attachments-materials': ['attachments-links'],
   'comments-activity-history': ['comments', 'activity-log'],
