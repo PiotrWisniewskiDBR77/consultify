@@ -1028,3 +1028,5 @@ Settled style measurement corrected the early screenshot interpretation: slide c
 
 ### Integrator — W17 action batches and export quality gate
 SlideSorter Move fix integrated at `57cc0592f9`, built and accepted with normal keyboard/pointer interactions: three writes v5→v8 matched UI/API/PostgreSQL after hard reload and all controls were in bounds. Notebook added nine reload-persistent rich-format actions; twenty registry actions now have runtime proof. Presentation export fixture reached quality `canExport:true`, score70, P1=0 at version10 while approval/export remain open. A protected no-email, role-aware access-code registration path for a distinct ADMIN reviewer was identified and is being exercised locally. No deployment, full Materials/Notebook denominator, professional-file,16-module, S1/S2 or pilot gate is promoted.
+
+Actual reviewer registration exposed PRODUCT_RED: the role-aware public route created an ADMIN user and consumed the access code but omitted `organization_members`, so normal login returned403. No approval or export occurred. Atomic membership/rollback correction is assigned in isolation; final PPTX remains OPEN.
