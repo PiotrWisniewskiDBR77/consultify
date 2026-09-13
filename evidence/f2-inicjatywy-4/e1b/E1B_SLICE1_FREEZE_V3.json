@@ -1,0 +1,89 @@
+{
+  "checkpoint": "F2-1 E1b slice 1 V3",
+  "status": "PARTIAL_HOLD_FULL_E1",
+  "baseShellCommit": "a7ec0d9d623f1a26d51647008b8464c9299dae64",
+  "branch": "codex/inicjatywy-cztery-przyciski-20260913",
+  "sourceAndTestFiles": [
+    {
+      "path": "server/src/domain/initiatives-execution/portfolioConsultingAnalysis.ts",
+      "sha256": "f66626d0c8d447d767c439956781064f16e3d312275f10bed2b038468ab07b2d",
+      "gitBlob": "2b795277a3df8bc213f1b6dccdfb8ba7176485c9",
+      "bytes": 24266
+    },
+    {
+      "path": "server/src/domain/initiatives-execution/portfolioDecision.ts",
+      "sha256": "410951d3484522861bb0811afa36385f67de999535ce9cb07908b770c2c30677",
+      "gitBlob": "0c0e5a62b89d93a9750cfb5fc3ad3135b0598c43",
+      "bytes": 14200
+    },
+    {
+      "path": "server/src/domain/initiatives-execution/__tests__/portfolioConsultingAnalysis.e1b.test.ts",
+      "sha256": "554afeaf7f06e635431db2a5537fc3bb20f745041952f06c70270008b6c93084",
+      "gitBlob": "95749965a04773a9224cdcebe8f099af83c2a15b",
+      "bytes": 21273
+    },
+    {
+      "path": "server/src/domain/initiatives-execution/__tests__/portfolioDecisionDisposition.e1b.test.ts",
+      "sha256": "05059dd00a5430e57c63f8a40175f1c2e3732908cba50b64a07561c1d806cbb0",
+      "gitBlob": "85cd912d65471d4c6ec91ad4f3d37bd567215af4",
+      "bytes": 7470
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/E1B_SLICE1_CHECKPOINT.md",
+      "sha256": "8a640947ac09360152abf23fc427014245e6e3691b46f3f1de05ee61155c74c8",
+      "gitBlob": "3fa578672d1066d412b3e8fd383f49a72f61b53a",
+      "bytes": 4914
+    }
+  ],
+  "evidenceArtifacts": [
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/portfolio-decision-disposition-red-v1.json",
+      "sha256": "d63b416bd10320511cf9dd620bdafd23f4f420ea13cabba6db1b81a5bbe5f11e",
+      "gitBlob": "12833ac62b590a02814ad2cf273cfd2e6b3644b2",
+      "bytes": 2025
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-domain-green-v3-final.json",
+      "sha256": "e87b2edba0979aa9581dd71faa71bed45d6eb454ed1baea0baf404c68ea369a8",
+      "gitBlob": "fdd36c262f6186c1182c501d8f4c9c604db8f145",
+      "bytes": 10161
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/e1b-domain-eslint-v3-final.json",
+      "sha256": "48a83bbc9db344b9e4d564fd8fe8bbf7f8614771e2f39e7a5e36fbdea2d1639b",
+      "gitBlob": "c3a70213b2a1810c0e7ade3bc8ace8244d8e25ae",
+      "bytes": 46505
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/server-tsc-v3-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/f2-inicjatywy-4/e1b/server-tsc-v3-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "gitBlob": "573541ac9702dd3969c9bc859d2b91ec1f7e6e56",
+      "bytes": 2
+    }
+  ],
+  "focusedCommand": "npx vitest run server/src/domain/initiatives-execution/__tests__/portfolioDecisionDisposition.e1b.test.ts server/src/domain/initiatives-execution/__tests__/portfolioConsultingAnalysis.e1b.test.ts --reporter=json --outputFile=evidence/f2-inicjatywy-4/e1b/e1b-domain-green-v3-final.json",
+  "focusedResult": {
+    "testFiles": 2,
+    "testsPassed": 26,
+    "testsFailed": 0
+  },
+  "eslintResult": {
+    "files": 4,
+    "errors": 0,
+    "warnings": 25
+  },
+  "serverTypeScriptExit": 0,
+  "qualifications": [
+    "No HTTP route or production snapshot builder",
+    "No configured real model or real-model quality proof",
+    "No UI review queue",
+    "No concurrent exactly-once model-spend proof",
+    "Full E1 remains HOLD"
+  ]
+}
