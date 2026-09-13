@@ -142,7 +142,7 @@ import {
 } from './ExecutionBankViews';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
-import { ExecutionManagementView } from './ExecutionManagementView';
+import { ExecutionManagementView, type ManagerLaneState } from './ExecutionManagementView';
 import { executionFunctionLabel, executionModuleTabIds } from './executionModuleTabs';
 import {
   type ExecutionBankView,
@@ -710,6 +710,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
   const currentUser = useAppStore((s) => s.currentUser);
+  const currentOrganizationId = useAppStore((s) => s.currentOrganization?.id ?? null);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
@@ -979,10 +980,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
 
-  const [managerLaneCounts, setManagerLaneCounts] = useState<
-    Record<string, { total: number; critical: number; warning: number }>
-  >({});
-  const [managerV8Degraded, setManagerV8Degraded] = useState(false);
+  const [managerLaneRead, setManagerLaneRead] = useState<{
+    scopeKey: string | null;
+    lanes: Record<string, ManagerLaneState>;
+    v8Degraded: boolean;
+  }>({ scopeKey: null, lanes: {}, v8Degraded: false });
 
   useEffect(() => {
     setOpenDocuments((prev) =>
@@ -1565,40 +1567,88 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       'risk',
       'people-change',
     ] as const;
+    if (activeTab !== ('people_change' as ModuleTab)) {
+      setManagerLaneRead((current) =>
+        current.scopeKey === null ? current : { scopeKey: null, lanes: {}, v8Degraded: false }
+      );
+      return;
+    }
+
     const pid = currentProjectId || undefined;
-    Promise.allSettled(
-      LANES.map(async (laneId) => {
-        try {
-          const resp = await V8ExecutionControlApi.getManagerProblems(laneId, pid);
-          const data = (resp as any)?.data || resp;
-          const problems: Array<{ severity: string }> = data?.problems || [];
-          return {
-            laneId,
-            total: problems.length,
-            critical: problems.filter((p) => p.severity === 'critical').length,
-            warning: problems.filter((p) => p.severity === 'warning').length,
-          };
-        } catch (err: any) {
-          if ([404, 501].includes(Number(err?.status))) {
-            setManagerV8Degraded(true);
-          }
-          return { laneId, total: 0, critical: 0, warning: 0 };
-        }
-      })
-    ).then((results) => {
-      const counts: Record<string, { total: number; critical: number; warning: number }> = {};
-      for (const r of results) {
-        if (r.status === 'fulfilled') {
-          counts[r.value.laneId] = {
-            total: r.value.total,
-            critical: r.value.critical,
-            warning: r.value.warning,
-          };
-        }
-      }
-      setManagerLaneCounts(counts);
+    const scopeKey = [
+      currentOrganizationId ?? '',
+      currentUser?.id ?? '',
+      currentUser?.role ?? '',
+      pid ?? '',
+      executionTruthRefreshKey,
+    ].join(':');
+    let cancelled = false;
+    setManagerLaneRead({
+      scopeKey,
+      lanes: Object.fromEntries(LANES.map((laneId) => [laneId, { status: 'loading' }])),
+      v8Degraded: false,
     });
-  }, [currentProjectId, executionTruthRefreshKey]);
+
+    void Promise.allSettled(
+      LANES.map((laneId) => V8ExecutionControlApi.getManagerProblems(laneId, pid))
+    ).then((results) => {
+      if (cancelled) return;
+      const lanes: Record<string, ManagerLaneState> = {};
+      let v8Degraded = false;
+      results.forEach((result, index) => {
+        const laneId = LANES[index];
+        if (result.status === 'rejected') {
+          lanes[laneId] = { status: 'unavailable' };
+          if ([404, 501].includes(Number((result.reason as { status?: unknown })?.status))) {
+            v8Degraded = true;
+          }
+          return;
+        }
+        const response = result.value as { data?: unknown };
+        const data = (response?.data ?? response) as { problems?: unknown } | null;
+        if (
+          !Array.isArray(data?.problems) ||
+          !data.problems.every(
+            (problem) => problem !== null && typeof problem === 'object' && !Array.isArray(problem)
+          )
+        ) {
+          lanes[laneId] = { status: 'unavailable' };
+          return;
+        }
+        const problems = data.problems as Array<{ severity?: unknown }>;
+        lanes[laneId] = {
+          status: 'available',
+          total: problems.length,
+          critical: problems.filter((problem) => problem.severity === 'critical').length,
+          warning: problems.filter((problem) => problem.severity === 'warning').length,
+        };
+      });
+      setManagerLaneRead({ scopeKey, lanes, v8Degraded });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeTab,
+    currentOrganizationId,
+    currentProjectId,
+    currentUser?.id,
+    currentUser?.role,
+    executionTruthRefreshKey,
+  ]);
+
+  const managerLaneScopeKey = [
+    currentOrganizationId ?? '',
+    currentUser?.id ?? '',
+    currentUser?.role ?? '',
+    currentProjectId ?? '',
+    executionTruthRefreshKey,
+  ].join(':');
+  const managerLaneStates =
+    managerLaneRead.scopeKey === managerLaneScopeKey ? managerLaneRead.lanes : {};
+  const managerLaneV8Degraded =
+    managerLaneRead.scopeKey === managerLaneScopeKey && managerLaneRead.v8Degraded;
 
   useEffect(() => {
     let cancelled = false;
@@ -5959,8 +6009,8 @@ Please return:
     if (activeTab === ('people_change' as ModuleTab)) {
       return (
         <ExecutionManagementView
-          managerLaneCounts={managerLaneCounts}
-          v8Degraded={managerV8Degraded}
+          managerLaneStates={managerLaneStates}
+          v8Degraded={managerLaneV8Degraded}
           projectId={currentProjectId || undefined}
           searchQuery={searchQuery}
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}

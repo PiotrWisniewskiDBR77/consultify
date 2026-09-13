@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
+import { isAdminOwnerOrSuperAdminRole, normalizeAppRole } from '@/utils/roleGuards';
 
 /**
  * Identyfikator osoby → NAZWISKO, z realnej listy członków organizacji.
@@ -57,7 +58,9 @@ export function readMemberLabel(member: RawMember): string | null {
 }
 
 /** Czysta (testowalna) budowa mapy `userId → etykieta` z odpowiedzi API. */
-export function buildMemberNameMap(members: ReadonlyArray<RawMember> | null | undefined): Record<string, string> {
+export function buildMemberNameMap(
+  members: ReadonlyArray<RawMember> | null | undefined
+): Record<string, string> {
   const map: Record<string, string> = {};
   (members ?? []).forEach((member) => {
     if (!member || typeof member !== 'object') return;
@@ -87,23 +90,40 @@ export function memberNameOrUnknown(
 
 export function useOrganizationMemberNames(): MemberNameResolver {
   const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  const currentUser = useAppStore((s) => s.currentUser);
+  const organizationId = currentOrganization?.id ?? '';
+  const userId = currentUser?.id ?? '';
+  const role = normalizeAppRole(currentUser?.role);
+  const canReadMemberDirectory = isAdminOwnerOrSuperAdminRole(currentUser?.role);
+  const scopeKey = `${organizationId}:${userId}:${role}`;
+  const [memberNames, setMemberNames] = useState<{
+    scopeKey: string;
+    byId: Record<string, string>;
+  }>({ scopeKey: '', byId: {} });
 
   useEffect(() => {
-    if (!currentOrganization?.id) return;
+    setMemberNames({ scopeKey, byId: {} });
+    if (!organizationId || !userId || !canReadMemberDirectory) return;
     let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+    OrganizationApi.getOrganizationMembers(organizationId)
       .then((members) => {
         if (cancelled) return;
-        setMemberNameById(buildMemberNameMap(members as unknown as RawMember[]));
+        setMemberNames({
+          scopeKey,
+          byId: buildMemberNameMap(members as unknown as RawMember[]),
+        });
       })
       .catch(() => {
-        if (!cancelled) setMemberNameById({});
+        if (!cancelled) setMemberNames({ scopeKey, byId: {} });
       });
     return () => {
       cancelled = true;
     };
-  }, [currentOrganization?.id]);
+  }, [canReadMemberDirectory, organizationId, scopeKey, userId]);
 
-  return useCallback((userId: string) => memberNameById[userId] || null, [memberNameById]);
+  return useCallback(
+    (memberId: string) =>
+      memberNames.scopeKey === scopeKey ? memberNames.byId[memberId] || null : null,
+    [memberNames, scopeKey]
+  );
 }
