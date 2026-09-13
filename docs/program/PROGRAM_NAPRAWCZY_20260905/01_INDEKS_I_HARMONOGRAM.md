@@ -1000,3 +1000,6 @@ Native governed API chain reached same-ID IN_EXECUTION49, accepted handoff and A
 
 
 Native card reachability integrated at96db009a37 after independent34/34 and exact6/6 hash verification. Combined build passed; visible same-ID forecast acceptance active. See INTEGRATOR_MVP_20260912/E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md.
+
+
+Built native Timeline remains RED after source96db009a37: canonical navigation renders but actual component is missing due to legacy right-column filtering. Runtime-only composition correction assigned; previous injected-renderer test is insufficient. See updated E1B_NATIVE_CARD_REACHABILITY_INTEGRATED.md. No forecast mutation or full acceptance.
