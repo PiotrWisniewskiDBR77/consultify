@@ -130,6 +130,7 @@ import { ExecutionActionCards } from './ExecutionActionCards';
 import {
   buildExecutionBankRows,
   buildExecutionCalendarWindow,
+  executionBankBaselineSource,
   type ExecutionBankCaseSource,
   type ExecutionBankHorizonMonths,
   type ExecutionBankRow,
@@ -2157,8 +2158,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             progress: (initiative as any).progress ?? null,
             progressEvidence: (initiative as any).progressEvidence ?? null,
             confidence: (initiative as any).confidenceLevel ?? null,
-            baselineStartDate: (initiative as any).baselineStartDate ?? null,
-            baselineEndDate: (initiative as any).baselineEndDate ?? null,
+            ...executionBankBaselineSource(initiative as unknown as Record<string, unknown>),
             currentPlanStartDate: initiative.plannedStartDate ?? null,
             currentPlanEndDate: initiative.plannedEndDate ?? null,
             forecastStartDate: (initiative as any).forecastStartDate ?? null,

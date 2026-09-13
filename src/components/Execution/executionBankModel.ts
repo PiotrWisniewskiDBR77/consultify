@@ -9,6 +9,9 @@ export type ExecutionBankUnknownReason =
   | 'PROGRESS_INVALID'
   | 'BASELINE_MISSING'
   | 'BASELINE_INVALID'
+  | 'BASELINE_OBSERVATION_MISSING'
+  | 'BASELINE_OBSERVATION_INVALID'
+  | 'BASELINE_AFTER_AS_OF'
   | 'CURRENT_PLAN_MISSING'
   | 'CURRENT_PLAN_INVALID'
   | 'FORECAST_MISSING'
@@ -79,6 +82,9 @@ export interface ExecutionBankInitiativeSource {
   confidence?: string | number | null;
   baselineStartDate?: string | null;
   baselineEndDate?: string | null;
+  scheduleBaselineId?: string | null;
+  baselineVersion?: number | string | null;
+  baselineObservedAt?: string | null;
   currentPlanStartDate?: string | null;
   currentPlanEndDate?: string | null;
   forecastStartDate?: string | null;
@@ -90,6 +96,25 @@ export interface ExecutionBankInitiativeSource {
   updatedAt?: string | null;
 }
 
+export function executionBankBaselineSource(
+  initiative: Record<string, unknown>
+): Pick<
+  ExecutionBankInitiativeSource,
+  | 'baselineStartDate'
+  | 'baselineEndDate'
+  | 'scheduleBaselineId'
+  | 'baselineVersion'
+  | 'baselineObservedAt'
+> {
+  return {
+    baselineStartDate: (initiative.baselineStartDate as string | null | undefined) ?? null,
+    baselineEndDate: (initiative.baselineEndDate as string | null | undefined) ?? null,
+    scheduleBaselineId: (initiative.scheduleBaselineId as string | null | undefined) ?? null,
+    baselineVersion: (initiative.baselineVersion as number | string | null | undefined) ?? null,
+    baselineObservedAt: (initiative.baselineSetAt as string | null | undefined) ?? null,
+  };
+}
+
 export interface ExecutionBankCaseSource {
   executionCaseId: string;
   initiativeId: string;
@@ -99,6 +124,10 @@ export interface ExecutionBankCaseSource {
   executionPhase?: string | null;
   executionManagerId?: string | null;
   deliveryProfile?: string | null;
+  handoffPackageId?: string | null;
+  handoffPackageVersion?: number | string | null;
+  acceptedBaseline?: Record<string, unknown> | null;
+  acceptedAt?: string | null;
   forecastStartDate?: string | null;
   forecastEndDate?: string | null;
   forecastObservedAt?: string | null;
@@ -263,6 +292,233 @@ const dateEvidence = (
   return parsed ? known(parsed, evidenceMeta) : unknown(invalid, evidenceMeta);
 };
 
+type BaselineEvidencePair = {
+  start: ExecutionBankEvidence<string>;
+  finish: ExecutionBankEvidence<string>;
+};
+
+const nonEmptyString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
+const positiveInteger = (value: unknown): number | null => {
+  if (value == null || value === '' || typeof value === 'boolean') return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const baselinePair = (
+  asOf: string,
+  source: string,
+  inputs: ExecutionBankEvidenceMeta['inputs'],
+  startValue: string | null,
+  finishValue: string | null,
+  reason?: ExecutionBankUnknownReason
+): BaselineEvidencePair => {
+  const startMeta = meta(asOf, source, 'execution.bank.baseline-start', {
+    ...inputs,
+    value: startValue,
+  });
+  const finishMeta = meta(asOf, source, 'execution.bank.baseline-finish', {
+    ...inputs,
+    value: finishValue,
+  });
+  if (reason) {
+    return {
+      start: unknown(reason, startMeta),
+      finish: unknown(reason, finishMeta),
+    };
+  }
+  return {
+    start: known(startValue as string, startMeta),
+    finish: known(finishValue as string, finishMeta),
+  };
+};
+
+const nativeAcceptedBaseline = (
+  executionCase: ExecutionBankCaseSource | null,
+  asOf: string
+): { kind: 'ABSENT' | 'VALID' | 'INVALID' | 'AFTER_AS_OF'; evidence: BaselineEvidencePair } => {
+  const missing = baselinePair(
+    asOf,
+    executionCase ? `ie_aggregate_state:${executionCase.executionCaseId}` : 'ie_aggregate_state',
+    {},
+    null,
+    null,
+    'BASELINE_MISSING'
+  );
+  if (!executionCase?.acceptedBaseline) return { kind: 'ABSENT', evidence: missing };
+  const baseline = executionCase.acceptedBaseline.baseline;
+  if (baseline == null) {
+    return { kind: 'ABSENT', evidence: missing };
+  }
+  if (typeof baseline !== 'object' || Array.isArray(baseline)) {
+    return {
+      kind: 'INVALID',
+      evidence: baselinePair(
+        asOf,
+        `ie_aggregate_state:${executionCase.executionCaseId}`,
+        {},
+        null,
+        null,
+        'BASELINE_INVALID'
+      ),
+    };
+  }
+  const raw = baseline as Record<string, unknown>;
+  const rawStart = raw.plannedStartDate;
+  const rawFinish = raw.plannedEndDate;
+  if ((rawStart == null || rawStart === '') && (rawFinish == null || rawFinish === '')) {
+    return { kind: 'ABSENT', evidence: missing };
+  }
+  const start = isoDate(rawStart);
+  const finish = isoDate(rawFinish);
+  const executionCaseVersion = positiveInteger(executionCase.version);
+  const handoffPackageId = nonEmptyString(executionCase.handoffPackageId);
+  const handoffPackageVersion = positiveInteger(executionCase.handoffPackageVersion);
+  const observedAt = nonEmptyString(executionCase.acceptedAt);
+  const inputs = {
+    executionCaseVersion,
+    handoffPackageId,
+    handoffPackageVersion,
+    observedAt,
+    startValue: start,
+    finishValue: finish,
+  };
+  const source = `ie_aggregate_state:${executionCase.executionCaseId}`;
+  if (!start || !finish || dayNumber(start) > dayNumber(finish)) {
+    return {
+      kind: 'INVALID',
+      evidence: baselinePair(asOf, source, inputs, start, finish, 'BASELINE_INVALID'),
+    };
+  }
+  if (!observedAt) {
+    return {
+      kind: 'INVALID',
+      evidence: baselinePair(asOf, source, inputs, start, finish, 'BASELINE_OBSERVATION_MISSING'),
+    };
+  }
+  const observedTime = Date.parse(observedAt);
+  if (
+    !Number.isFinite(observedTime) ||
+    !executionCaseVersion ||
+    !handoffPackageId ||
+    !handoffPackageVersion
+  ) {
+    return {
+      kind: 'INVALID',
+      evidence: baselinePair(asOf, source, inputs, start, finish, 'BASELINE_OBSERVATION_INVALID'),
+    };
+  }
+  if (observedTime > Date.parse(asOf)) {
+    return {
+      kind: 'AFTER_AS_OF',
+      evidence: baselinePair(asOf, source, inputs, start, finish, 'BASELINE_AFTER_AS_OF'),
+    };
+  }
+  return { kind: 'VALID', evidence: baselinePair(asOf, source, inputs, start, finish) };
+};
+
+const baselineEvidence = (
+  initiative: ExecutionBankInitiativeSource | undefined,
+  executionCase: ExecutionBankCaseSource | null,
+  asOf: string
+): BaselineEvidencePair => {
+  const native = nativeAcceptedBaseline(executionCase, asOf);
+  const rawStart = initiative?.baselineStartDate;
+  const rawFinish = initiative?.baselineEndDate;
+  const modulePresent = Boolean(
+    (rawStart != null && rawStart !== '') || (rawFinish != null && rawFinish !== '')
+  );
+  if (!modulePresent) return native.evidence;
+
+  const start = isoDate(rawStart);
+  const finish = isoDate(rawFinish);
+  const sourceId = nonEmptyString(initiative?.scheduleBaselineId);
+  const source = sourceId
+    ? `initiative_schedule_baselines:${sourceId}`
+    : 'initiative.schedule-baseline';
+  const observedAt = nonEmptyString(initiative?.baselineObservedAt);
+  const inputs = {
+    baselineVersion: positiveInteger(initiative?.baselineVersion),
+    observedAt,
+    startValue: start,
+    finishValue: finish,
+  };
+  const fieldEvidence = (
+    field: 'start' | 'finish',
+    rawValue: unknown,
+    value: string | null
+  ): ExecutionBankEvidence<string> => {
+    const fieldMeta = meta(asOf, source, `execution.bank.baseline-${field}`, {
+      ...inputs,
+      value,
+    });
+    if (rawValue == null || rawValue === '') return unknown('BASELINE_MISSING', fieldMeta);
+    return value ? known(value, fieldMeta) : unknown('BASELINE_INVALID', fieldMeta);
+  };
+  let moduleEvidence: BaselineEvidencePair = {
+    start: fieldEvidence('start', rawStart, start),
+    finish: fieldEvidence('finish', rawFinish, finish),
+  };
+  if (start && finish && dayNumber(start) > dayNumber(finish)) {
+    moduleEvidence = baselinePair(asOf, source, inputs, start, finish, 'BASELINE_INVALID');
+  }
+  if (observedAt) {
+    const observedTime = Date.parse(observedAt);
+    if (!Number.isFinite(observedTime)) {
+      return {
+        start:
+          moduleEvidence.start.status === 'KNOWN'
+            ? unknown('BASELINE_OBSERVATION_INVALID', moduleEvidence.start.meta)
+            : moduleEvidence.start,
+        finish:
+          moduleEvidence.finish.status === 'KNOWN'
+            ? unknown('BASELINE_OBSERVATION_INVALID', moduleEvidence.finish.meta)
+            : moduleEvidence.finish,
+      };
+    }
+    if (observedTime > Date.parse(asOf)) {
+      return native.kind === 'VALID'
+        ? native.evidence
+        : {
+            start:
+              moduleEvidence.start.status === 'KNOWN'
+                ? unknown('BASELINE_AFTER_AS_OF', moduleEvidence.start.meta)
+                : moduleEvidence.start,
+            finish:
+              moduleEvidence.finish.status === 'KNOWN'
+                ? unknown('BASELINE_AFTER_AS_OF', moduleEvidence.finish.meta)
+                : moduleEvidence.finish,
+          };
+    }
+  }
+  if (native.kind !== 'VALID') return moduleEvidence;
+  const resolveField = (
+    field: 'start' | 'finish',
+    moduleField: ExecutionBankEvidence<string>,
+    nativeField: ExecutionBankEvidence<string>
+  ): ExecutionBankEvidence<string> => {
+    if (moduleField.status === 'UNKNOWN' && moduleField.reason === 'BASELINE_MISSING') {
+      return nativeField;
+    }
+    if (moduleField.status === 'UNKNOWN' || nativeField.status === 'UNKNOWN') return moduleField;
+    if (moduleField.value === nativeField.value) return moduleField;
+    return unknown(
+      'SOURCE_CONFLICT',
+      meta(
+        asOf,
+        `${moduleField.meta.source}|${nativeField.meta.source}`,
+        `execution.bank.baseline-${field}`,
+        { moduleValue: moduleField.value, nativeValue: nativeField.value }
+      )
+    );
+  };
+  return {
+    start: resolveField('start', moduleEvidence.start, native.evidence.start),
+    finish: resolveField('finish', moduleEvidence.finish, native.evidence.finish),
+  };
+};
+
 const forecastEvidence = (
   value: string | null | undefined,
   observedAt: string | null | undefined,
@@ -298,7 +554,8 @@ const initiativeSourceEvidence = <T>(
   invalidReason: ExecutionBankUnknownReason
 ): ExecutionBankEvidence<T> | null => {
   if (!evidence) return null;
-  const source = [evidence.source?.system, evidence.source?.recordId].filter(Boolean).join(':') || 'initiative';
+  const source =
+    [evidence.source?.system, evidence.source?.recordId].filter(Boolean).join(':') || 'initiative';
   const evidenceMeta = meta(
     asOf,
     source,
@@ -347,22 +604,9 @@ const buildRow = (
   executionCase: ExecutionBankCaseSource | null,
   asOf: string
 ): ExecutionBankRow => {
-  const baselineStart = dateEvidence(
-    initiative?.baselineStartDate,
-    asOf,
-    'initiative.schedule-baseline',
-    'execution.bank.baseline-start',
-    'BASELINE_MISSING',
-    'BASELINE_INVALID'
-  );
-  const baselineFinish = dateEvidence(
-    initiative?.baselineEndDate,
-    asOf,
-    'initiative.schedule-baseline',
-    'execution.bank.baseline-finish',
-    'BASELINE_MISSING',
-    'BASELINE_INVALID'
-  );
+  const baseline = baselineEvidence(initiative, executionCase, asOf);
+  const baselineStart = baseline.start;
+  const baselineFinish = baseline.finish;
   const currentPlanStart = dateEvidence(
     initiative?.currentPlanStartDate,
     asOf,
@@ -428,9 +672,15 @@ const buildRow = (
     'ACTUAL_INVALID'
   );
 
-  const progressMeta = meta(asOf, 'legacy-initiative-progress-unproven', 'execution.bank.progress', {
-    value: initiative?.progress ?? null,
-  }, 'PARTIAL');
+  const progressMeta = meta(
+    asOf,
+    'legacy-initiative-progress-unproven',
+    'execution.bank.progress',
+    {
+      value: initiative?.progress ?? null,
+    },
+    'PARTIAL'
+  );
   const progress =
     initiativeSourceEvidence(
       initiative?.progressEvidence,
