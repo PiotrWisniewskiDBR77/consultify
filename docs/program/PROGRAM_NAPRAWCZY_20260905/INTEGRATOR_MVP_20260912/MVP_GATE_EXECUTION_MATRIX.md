@@ -104,3 +104,15 @@ This appendix supersedes earlier delivery status only where an exact new result 
 | S2.7 | C6 author now has real helper/canonical-writer lock tests:7 GREEN and writer-first INSERT/UPDATE mutation RED. | These are not HTTP423/file proof; classified business export, JSON/CSV/UI, delete/receipts, retention and agreement still require completion. No C6 candidate integrated. |
 
 S1.1 and historical owner/file acceptances remain preserved. S1.3/5/6/7/9/10/11 and S2.1/4/5/6/8/9/10/11/12/13/14 receive no new full-gate PASS in this update. In particular, no staging deployment, actual mail delivery, real provider budget measurement, four-person completion or14-day pilot was performed in these local integration checks. Existing decisions are not questions to reopen. Full MVP remains ACTIVE; Wave2 scope stays in its existing plan.
+
+
+## Evidence update — integrated native forecast/editor source 2ff754d84b, 2026-09-13
+
+This updates delivery facts only; no complete S1/S2 gate is promoted. Prior OPEN/HOLD notes for individual deliveries must be read with their later acceptance receipts.
+
+- S1.2 / S1.11 / conditional Initiatives and Execution: canonical forecast writer, native-only receipt-backed read, operational editor and unavailable counts are integrated. See E1B_NATIVE_EDITOR_INTEGRATED_ACCEPTANCE.md and EXECUTION_UNAVAILABLE_COUNTS_INTEGRATED_ACCEPTANCE.md. Root integrated editor/native 24/24; native actual Gateway/PG 11/11; combined build exit0. These do not close full user-flow acceptance. Native card resolver/Timeline lifecycle source review found a remaining canonical-header shadow and mode mapping gap; bounded repair assigned with independent review.
+- S1.8: source2ff754d84b combined build passed, dist299d2277efd290e7311841cea4bf1cebb7918ddc37a9ebccd519a6d107b8b446. Existing 192 frontend diagnostics remain; no clean global typecheck or performance-under-3s claim.
+- S2.2: actual local same-ID source-proposal/registration/cards/remediation/Definition request succeeded through initiative version19. Runner then failed assuming a quorum queue entry under a policy that does not enforce gate quorum. Preserve this as harness failure, not successful full flow or proven product rejection. Continue via the configured authority decision path without modifying policy or creating legacy module copies. Native visibility test cohort explicitly enables existing unified read locally; no default flag or live change.
+- S2.7: C6 delete OFF and built menu correction are accepted only within C6_DELETE_OFF_BUILT_BROWSER_ACCEPTANCE_V1.md. Deletion approval does not exist; retention/backup/legal-hold/complete export gates remain governed by C6_REMAINING_EXPORT_DELETION_GATE_AUDIT_20260913.md.
+
+All other remaining requirements in this matrix are preserved, including W17 full action denominator and three difficult scenarios per tool, professional generated files, fresh organization and onboarding, actual mail delivery, security/AI budget/performance, staging rollout, 7-day observation and 4-person 14-day pilot. No deployment, pilot start or full-MVP completion is claimed.
