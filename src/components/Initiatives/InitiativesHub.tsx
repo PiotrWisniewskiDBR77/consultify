@@ -122,6 +122,7 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
 import { CapacityScenarioSurface } from './CapacityScenarioSurface';
+import { InitiativeConsultingAnalysisView } from './InitiativeConsultingAnalysisView';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -2078,10 +2079,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )
       : filteredInitiatives;
 
-    if (
-      (activeTab === 'list' && preparationLens === 'analysis') ||
-      (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED)
-    ) {
+    if (initiativesFourButtonsEnabled && activeTab === 'list' && preparationLens === 'analysis') {
+      return (
+        <InitiativeConsultingAnalysisView
+          scopeKey={initiativeFetchScopeKey}
+          authorityId={currentUserId ?? ''}
+          onNavigatePlan={() => setActiveTab('plan')}
+          onNavigateCapacity={() => setActiveTab('capacity')}
+        />
+      );
+    }
+
+    if (activeTab === 'workReport' && FOUR_BUTTONS_ENABLED) {
       return (
         <InitiativePreparationReadView
           initiatives={searchedInitiatives}

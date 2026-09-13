@@ -1,0 +1,1 @@
+cd9b00f442e32d3e755ed8ec5b6adb49e568e8286dcf01264f2ca3d19b53f045 pgvector/pgvector:pg18 {"5432/tcp":[{"HostIp":"127.0.0.1","HostPort":"6455"}]} [{"Destination":"/var/lib/postgresql","Driver":"local","Mode":"z","Name":"cx-f21-s3-pg-data","Propagation":"","RW":true,"Source":"/var/lib/docker/volumes/cx-f21-s3-pg-data/_data","Type":"volume"}]

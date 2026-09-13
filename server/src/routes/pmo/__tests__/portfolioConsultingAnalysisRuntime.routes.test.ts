@@ -4,6 +4,14 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const portfolioDecisionDomain = vi.hoisted(() => ({ decidePortfolio: vi.fn() }));
+vi.mock('../../../domain/initiatives-execution/portfolioDecision.js', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../../../domain/initiatives-execution/portfolioDecision.js')
+  >()),
+  decidePortfolio: portfolioDecisionDomain.decidePortfolio,
+}));
+
 import { createInitiativesExecutionRuntimeRouter } from '../initiativesExecutionRuntime.routes.js';
 
 const organizationId = 'org-portfolio-analysis';
@@ -56,7 +64,7 @@ describe('Portfolio consulting analysis runtime routes', () => {
   const authorize = vi.fn();
   const resolvePolicy = vi.fn();
   const unitOfWork = { transaction: vi.fn() };
-  const reader = { findPortfolioScenario: vi.fn() };
+  const reader = { findPortfolioScenario: vi.fn(), findById: vi.fn() };
 
   const app = () => {
     const api = express();
@@ -92,13 +100,26 @@ describe('Portfolio consulting analysis runtime routes', () => {
       version: 3,
       scenario: { scope: { portfolioId: 'portfolio-a' } },
     });
+    reader.findById.mockResolvedValue({
+      version: 5,
+      initiative: { initiativeId: 'initiative-a', projectId: 'portfolio-a' },
+    });
     authorize.mockResolvedValue(true);
-    resolvePolicy.mockResolvedValue({ policyId: 'policy-a', version: 2 });
+    resolvePolicy.mockResolvedValue({
+      policyId: 'policy-a',
+      version: 2,
+      config: { enforceGateGovernance: false, selfApproval: false },
+    });
     buildSnapshot.mockResolvedValue(snapshot);
     analysisReader.find.mockResolvedValue(null);
     capture.mockResolvedValue({ status: 'APPLIED', aggregateVersion: 1, response: {} });
     run.mockResolvedValue({ analysisId, status: 'PENDING_REVIEW', snapshot });
     unitOfWork.transaction.mockImplementation(async (work: (tx: unknown) => unknown) => work({}));
+    portfolioDecisionDomain.decidePortfolio.mockResolvedValue({
+      status: 'APPLIED',
+      aggregateVersion: 6,
+      response: { decisionId: 'decision-a' },
+    });
   });
 
   afterEach(() => {
@@ -231,5 +252,48 @@ describe('Portfolio consulting analysis runtime routes', () => {
     expect(reader.findPortfolioScenario).not.toHaveBeenCalled();
     expect(analysisReader.find).not.toHaveBeenCalled();
     expect(buildSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('forwards the exact structured DEC479 disposition to the canonical decision command', async () => {
+    const disposition = {
+      kind: 'PARKING',
+      reason: 'Wait for signed capacity agreement',
+      returnCondition: 'Capacity agreement is signed',
+      inputSnapshot: {
+        analysisId,
+        analysisVersion: 2,
+        itemId: 'decision-a',
+        asOf: '2026-09-13T12:00:00.000Z',
+      },
+    };
+    const response = await request(app())
+      .post('/api/initiatives/runtime-v1/initiatives/initiative-a/gates/portfolio/decisions')
+      .send({
+        expectedVersion: 5,
+        clientRequestId: 'decision-request-a',
+        decisionId: 'decision-a',
+        outcome: 'REJECTED',
+        rationale: disposition.reason,
+        conditions: [],
+        mergeTargetInitiativeId: null,
+        disposition,
+      });
+
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    expect(portfolioDecisionDomain.decidePortfolio).toHaveBeenCalledWith(
+      unitOfWork,
+      expect.objectContaining({
+        organizationId,
+        actorId,
+        aggregateId: 'initiative-a',
+        expectedVersion: 5,
+        commandType: 'initiative.portfolio.decide',
+        payload: expect.objectContaining({
+          decisionId: 'decision-a',
+          outcome: 'REJECTED',
+          disposition,
+        }),
+      })
+    );
   });
 });

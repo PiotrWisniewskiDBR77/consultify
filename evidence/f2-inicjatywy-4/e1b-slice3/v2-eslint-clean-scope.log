@@ -1,0 +1,23 @@
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/server/src/routes/pmo/__tests__/portfolioConsultingAnalysisRuntime.routes.test.ts
+  73:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  91:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/src/components/Initiatives/__tests__/InitiativeConsultingAnalysisView.behavior.test.tsx
+  355:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  372:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  416:7   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  474:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  675:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/src/components/Initiatives/__tests__/InitiativesHub.fourButtonsE1.test.tsx
+  21:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/piotrwisniewski/Developer/codex-wt/inicjatywy-cztery-przyciski-20260913/src/services/initiatives-execution/runtimeApi.ts
+   210:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   211:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   247:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1440:7   warning  Unexpected console statement              no-console
+
+✖ 12 problems (0 errors, 12 warnings)
+

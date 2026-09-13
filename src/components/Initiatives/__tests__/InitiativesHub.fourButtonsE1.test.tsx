@@ -42,6 +42,10 @@ const {
   getInitiative,
   listRegisteredInitiatives,
   listLegacyInitiatives,
+  createPortfolioAnalysis,
+  readPortfolioAnalysis,
+  listPortfolioScenarioRegister,
+  listGovernedOrganizationContextVersions,
   apiGet,
   portfolioStoreState,
   appStoreState,
@@ -53,6 +57,10 @@ const {
   getInitiative: vi.fn(),
   listRegisteredInitiatives: vi.fn(),
   listLegacyInitiatives: vi.fn(),
+  createPortfolioAnalysis: vi.fn(),
+  readPortfolioAnalysis: vi.fn(),
+  listPortfolioScenarioRegister: vi.fn(),
+  listGovernedOrganizationContextVersions: vi.fn(),
   apiGet: vi.fn(),
   portfolioStoreState: { refreshTrigger: 0 },
   appStoreState: {
@@ -69,6 +77,10 @@ vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) =>
   ...(await importOriginal<typeof import('@/services/initiatives-execution/runtimeApi')>()),
   listRegisteredInitiatives,
   listLegacyInitiatives,
+  createPortfolioAnalysis,
+  readPortfolioAnalysis,
+  listPortfolioScenarioRegister,
+  listGovernedOrganizationContextVersions,
 }));
 
 vi.mock('@/services/api/v8/planning', () => ({
@@ -144,6 +156,12 @@ beforeEach(() => {
   listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
   listLegacyInitiatives.mockReset();
   listLegacyInitiatives.mockResolvedValue([]);
+  createPortfolioAnalysis.mockReset();
+  readPortfolioAnalysis.mockReset();
+  listPortfolioScenarioRegister.mockReset();
+  listPortfolioScenarioRegister.mockResolvedValue({ scenarios: [] });
+  listGovernedOrganizationContextVersions.mockReset();
+  listGovernedOrganizationContextVersions.mockResolvedValue([]);
   apiGet.mockReset();
   apiGet.mockResolvedValue({});
 });
@@ -237,10 +255,18 @@ describe('F2-1 E1 four-button Initiatives navigation', () => {
     renderHubAt('/initiatives?lens=portfolio');
     await screen.findByTestId('initiatives-hub');
     expect(screen.getByTestId('standard-chip-analysis')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('region', { name: 'Preparation overview' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Initiative analysis' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('standard-chip-list'));
     expect(await screen.findByTestId('standard-chip-list')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('routes the enabled analysis lens to the governed Table and Preview workspace', async () => {
+    renderHubAt('/initiatives?lens=analysis');
+    await screen.findByTestId('initiatives-analysis-table');
+
+    expect(screen.queryByRole('region', { name: 'Preparation overview' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Run portfolio analysis' })).toBeInTheDocument();
   });
 
   it('shows current and archived canonical rows in mutually exclusive register scopes', async () => {

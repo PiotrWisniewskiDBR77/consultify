@@ -1,0 +1,14 @@
+{
+  "exitCode": 2,
+  "diagnostics": 191,
+  "files": 56,
+  "changedPathDiagnostics": [
+    {
+      "file": "src/components/Initiatives/InitiativesHub.tsx",
+      "line": 686,
+      "column": 17,
+      "code": "TS2345"
+    }
+  ],
+  "qualification": "The only diagnostic on a changed path is InitiativeHub.tsx:686 TS2345. The exact expression and line are present unchanged in HEAD before Slice 3; no Slice 3 addition is implicated."
+}

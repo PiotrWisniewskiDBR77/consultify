@@ -527,6 +527,19 @@ const PortfolioDecideSchema = z.object({
   conditions: z.array(z.string().min(1)).default([]),
   mergeTargetInitiativeId: z.string().min(1).nullable().default(null),
   governanceQuorumRef: GovernanceQuorumRefSchema.optional(),
+  disposition: z
+    .object({
+      kind: z.enum(['IN', 'PARKING', 'ARCHIVE']),
+      reason: z.string().trim().min(1),
+      returnCondition: z.string().trim().min(1).nullable(),
+      inputSnapshot: z.object({
+        analysisId: z.string().trim().min(1),
+        analysisVersion: z.number().int().positive(),
+        itemId: z.string().trim().min(1),
+        asOf: z.string().datetime(),
+      }),
+    })
+    .optional(),
 });
 const PlanScenarioSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -3771,6 +3784,7 @@ export function createInitiativesExecutionRuntimeRouter(
           conditions: parsed.data.conditions,
           mergeTargetInitiativeId: parsed.data.mergeTargetInitiativeId,
           selfApprovalAllowed: Boolean(policy.config.selfApproval),
+          disposition: parsed.data.disposition,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
