@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { RegisteredInitiativeReadModel } from '@/services/initiatives-execution/runtimeApi';
 
-import { canonicalInitiativeSections } from '../canonicalInitiativeSections';
 import { resolveInitiativeDocumentRecord } from '../initiativeDocumentSource';
 import type { InitiativeContextValue } from '../sections/InitiativeContext';
 import { InitiativeContext } from '../sections/InitiativeContext';
@@ -134,31 +133,6 @@ describe('native canonical Initiative detail and Timeline reachability', () => {
     expect(
       screen.getByText('initiatives.timelineSection.timelineLockedBaseline')
     ).toBeInTheDocument();
-  });
-
-  it('keeps the real Timeline renderer mounted inside the canonical 26-card projection', () => {
-    const nativeTimeline = {
-      id: 'timeline',
-      icon: () => null,
-      label: { en: 'Timeline', pl: 'Harmonogram' },
-      component: <TimelineSection sectionType={'timeline' as any} expanded onToggle={vi.fn()} />,
-    } as any;
-    const canonical = canonicalInitiativeSections(
-      [nativeTimeline],
-      () => null,
-      (_key, fallback) => fallback
-    );
-    const timelineCard = canonical.find((section) => section.id === 'timeline');
-
-    render(
-      <InitiativeContext.Provider value={timelineContext('SCHEDULED', 'APPROVED')}>
-        {timelineCard?.component}
-      </InitiativeContext.Provider>
-    );
-
-    expect(timelineCard).toBeDefined();
-    expect(screen.getByTestId('operational-forecast-editor')).toBeInTheDocument();
-    expect(screen.queryByTestId('baseline-timeline-planner')).not.toBeInTheDocument();
   });
 
   it('fails closed for an unknown future canonical lifecycle', () => {

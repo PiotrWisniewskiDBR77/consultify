@@ -49,6 +49,7 @@ const fixture = vi.hoisted(() => ({
   read: vi.fn<() => Promise<Record<string, any>>>(),
   amend: vi.fn<(id: string, command: Record<string, unknown>) => Promise<any>>(),
   write: vi.fn<(id: string, payload: Record<string, unknown>) => Promise<any>>(),
+  updateForecast: vi.fn<(id: string, payload: Record<string, unknown>) => Promise<any>>(),
   gate: {
     capabilities: {
       cards: { canEditCards: false },
@@ -75,6 +76,24 @@ vi.mock('@/services/initiatives-execution/runtimeApi', async (original) => ({
   ...(await original<any>()),
   amendRegisteredInitiative: (id: string, command: Record<string, unknown>) =>
     fixture.amend(id, command),
+  readRegisteredInitiative: async (id: string) => ({
+    version: fixture.record.canonicalVersion ?? 1,
+    updatedAt: '2026-09-13T12:00:00.000Z',
+    initiative: {
+      initiativeId: id,
+      lifecycleState: fixture.record.lifecycle ?? fixture.record.status,
+      title: fixture.record.name,
+      projectId: 'project-1',
+      readiness: 'READY',
+    },
+  }),
+  readInitiativeCapabilities: async () => ({
+    executionWrites: {
+      forecast: { available: true, denialCode: null },
+    },
+  }),
+  updateInitiativeForecast: (id: string, payload: Record<string, unknown>) =>
+    fixture.updateForecast(id, payload),
 }));
 vi.mock('@/services/initiativeWriteTruth', () => ({
   saveInitiativeWriteTruth: (id: string, payload: Record<string, unknown>) =>
@@ -200,6 +219,43 @@ it('keeps the legacy mounted Tasks and Milestones card combined', async () => {
   await waitFor(() => expect(screen.getAllByRole('heading', {name:'Tasks'}).at(-1)).toBeVisible());
   expect(await screen.findByText('Native task row')).toBeVisible();
   expect(await screen.findByText('Native milestone row')).toBeVisible();
+  expect(document.querySelector('[data-nmode-section-item="timeline"]')).not.toBeInTheDocument();
+  expect(fixture.write).not.toHaveBeenCalled();
+  expect(fixture.amend).not.toHaveBeenCalled();
+});
+
+it('renders the real operational forecast editor in the mounted canonical Timeline card', async () => {
+  localStorage.clear();
+  fixture.read.mockReset();
+  fixture.write.mockClear();
+  fixture.amend.mockClear();
+  fixture.updateForecast.mockClear();
+  Object.assign(fixture.record, {
+    id: '55555555-5555-4555-8555-555555555555',
+    documentOrigin: 'initiatives-runtime-v1',
+    canonicalVersion: 49,
+    lifecycle: 'IN_EXECUTION',
+    status: 'IN_EXECUTION',
+    name: 'Native operational forecast initiative',
+  });
+  fixture.read.mockImplementation(async () => ({ ...fixture.record }));
+  const search = `?mode=doc&open=${fixture.record.id}&card=timeline&return=execution`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location, {
+    href: `http://localhost:3000/initiatives${search}`,
+    search,
+  });
+
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} sourceModule="execution" />);
+
+  // Framer's initial opacity does not complete in jsdom; component identity and
+  // content prove that the mounted document composed the real Timeline renderer.
+  expect(await screen.findByTestId('operational-forecast-editor')).toBeInTheDocument();
+  expect(screen.getByText('Operational forecast')).toBeInTheDocument();
+  expect(
+    screen.queryByText('No published content is available for this card.')
+  ).not.toBeInTheDocument();
+  expect(fixture.updateForecast).not.toHaveBeenCalled();
   expect(fixture.write).not.toHaveBeenCalled();
   expect(fixture.amend).not.toHaveBeenCalled();
 });

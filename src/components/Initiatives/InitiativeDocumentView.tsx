@@ -6005,10 +6005,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       enabledNModeSectionIds,
       initiativeSectionsCompleteEnabled
     );
-    const milestonesSection = sectionPresentation.find((section) => section.id === 'milestones');
+    // The legacy Initiative board contract keeps right-column cards out of its
+    // left navigation. Runtime-v1 projects the canonical 26-card document,
+    // where Milestones and Timeline are native business cards. Reuse their
+    // existing renderers after the legacy filter instead of manufacturing
+    // placeholder cards in the canonical projection.
+    const runtimeNativeSections = sectionPresentation.filter(
+      (section) => section.id === 'milestones' || section.id === 'timeline'
+    );
     return withGroup(
-      isRuntimeOnlyRecord && milestonesSection
-        ? [...availableContractSections, milestonesSection]
+      isRuntimeOnlyRecord
+        ? [
+            ...availableContractSections,
+            ...runtimeNativeSections.filter(
+              (section) =>
+                !availableContractSections.some((candidate) => candidate.id === section.id)
+            ),
+          ]
         : availableContractSections
     );
   }, [
