@@ -21,6 +21,8 @@ HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Codex
 skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF nie ma; robi go
 agent nadzorcy. **Dysk: 1,3 GB wolne** (pomiar 13.09), nie 35 GB jak w poprzednim wpisie rejestru.
 
+**DEC-491 (właściciel, 13.09, odbiór K5 część 2):** Realizacja na kandydacie = **TAK z jednym warunkiem** — „preview nie jest zgodne ze standardem, reszta ok”; podgląd banku Realizacji przerabiany na powłokę kanonu podglądu (6 bloków), wejdzie kolejnym wdrożeniem. **Promocja demo:** `gh workflow run railway-deploy.yml --ref staging -f environment=demo -f confirm_demo=yes` (run 34775911503) → **demo health = 0f0107b93c (14:02)**, tag `demo-safe-20260913-kandydat` = 0f0107b93c, cofnięcie `demo-safe-20260913-pre-kandydat` = 60051310d7. K4 WYKONANE (staging+demo). Prototypy do akceptu: ryzyko/decyzje (artefakt 8c073b0a), Agent z klockami (artefakt e8fbe5ec, wstępne OK właściciela).
+
 **DEC-489 (właściciel, P8):** zatwierdzenia = **rozszerzenie istniejącego silnika** (bramki, poziomy, quorum, delegacje); role projektu z PMO stają się źródłem, z którego silnik wylicza zatwierdzających; bez nowego kontraktu od zera.
 
 **DEC-490 (właściciel, P9):** statusy inicjatyw = **12 etapów silnika runtime jako jedyna prawda**; 7 etykiet legacy wygaszane (jednorazowe przemapowanie z zachowaniem informacji); „Done/Delivered” osobno od „Closed”; „Rejected” znika jako status — to rozstrzygnięcie z powodem (DEC-479); każdy status ma jedno zdanie „co robi” i listę dozwolonych przejść. Seria pytań fali 2 zamknięta 9/9 (DEC-482…490).
