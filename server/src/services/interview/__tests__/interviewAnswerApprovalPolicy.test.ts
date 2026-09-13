@@ -3,26 +3,33 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
   deriveInterviewAnswerApprovalProgress,
+  INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION,
   resolveInterviewAnswerApprovalPolicy,
   withInterviewAnswerApprovalMode,
 } from '../interviewAnswerApprovalPolicy.js';
 
 describe('Interview answer approval organization policy', () => {
-  it('defaults missing, malformed and unknown policy to manager approval', () => {
-    for (const input of [
-      undefined,
-      null,
-      '{bad json',
-      {},
-      { interview: {} },
-      {
-        interview: { answerApproval: { mode: 'automatic' } },
-      },
-    ]) {
+  it('fails closed to manager for missing, invalid, future-version and unknown policy', () => {
+    for (const [input, compatibility, configuredVersion] of [
+      [undefined, 'default_missing', null],
+      [null, 'default_missing', null],
+      ['{bad json', 'default_missing', null],
+      [{}, 'default_missing', null],
+      [{ interview: {} }, 'default_missing', null],
+      [{ interview: { answerApproval: { version: '1', mode: 'ai' } } }, 'invalid_version', null],
+      [
+        { interview: { answerApproval: { version: 2, mode: 'ai' } } },
+        'unsupported_future_version',
+        2,
+      ],
+      [{ interview: { answerApproval: { version: 1, mode: 'automatic' } } }, 'invalid_mode', 1],
+    ] as const) {
       expect(resolveInterviewAnswerApprovalPolicy(input)).toEqual({
         mode: DEFAULT_INTERVIEW_ANSWER_APPROVAL_MODE,
         stages: ['manager'],
         source: 'default',
+        compatibility,
+        configuredVersion,
       });
     }
   });
@@ -34,72 +41,118 @@ describe('Interview answer approval organization policy', () => {
   ] as const)('resolves %s into its exact ordered stages', (mode, stages) => {
     expect(
       resolveInterviewAnswerApprovalPolicy({
-        policy: JSON.stringify({ interview: { answerApproval: { mode } } }),
+        policy: JSON.stringify({
+          interview: {
+            answerApproval: { version: INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION, mode },
+          },
+        }),
       })
-    ).toEqual({ mode, stages, source: 'organization_policy' });
+    ).toEqual({
+      mode,
+      stages,
+      source: 'organization_policy',
+      compatibility: 'supported',
+      configuredVersion: 1,
+    });
   });
 
-  it('updates only the Interview answer policy key and preserves sibling policy', () => {
+  it('preserves sibling policy and refuses to rewrite invalid or future policy versions', () => {
     expect(
       withInterviewAnswerApprovalMode(
         {
           region: 'eu',
-          interview: { privacy: 'strict', answerApproval: { note: 'keep me' } },
+          interview: {
+            privacy: 'strict',
+            answerApproval: { version: 1, note: 'keep me' },
+          },
         },
         'two_stage'
       )
     ).toEqual({
-      region: 'eu',
-      interview: {
-        privacy: 'strict',
-        answerApproval: { note: 'keep me', version: 1, mode: 'two_stage' },
+      ok: true,
+      policy: {
+        region: 'eu',
+        interview: {
+          privacy: 'strict',
+          answerApproval: { note: 'keep me', version: 1, mode: 'two_stage' },
+        },
       },
+    });
+    expect(
+      withInterviewAnswerApprovalMode(
+        { interview: { answerApproval: { version: 2, mode: 'ai', future: 'keep' } } },
+        'manager'
+      )
+    ).toEqual({
+      ok: false,
+      code: 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_UNSUPPORTED',
+      configuredVersion: 2,
+    });
+    expect(
+      withInterviewAnswerApprovalMode(
+        { interview: { answerApproval: { version: 'v1', mode: 'ai' } } },
+        'manager'
+      )
+    ).toEqual({
+      ok: false,
+      code: 'INTERVIEW_ANSWER_APPROVAL_POLICY_VERSION_INVALID',
+      configuredVersion: 'v1',
     });
   });
 
   it('requires AI before manager in two-stage mode and does not treat one stage as final', () => {
     const policy = resolveInterviewAnswerApprovalPolicy({
-      interview: { answerApproval: { mode: 'two_stage' } },
+      interview: { answerApproval: { version: 1, mode: 'two_stage' } },
     });
     expect(deriveInterviewAnswerApprovalProgress(policy, [])).toEqual({
       status: 'pending',
       nextStage: 'ai',
     });
     expect(
-      deriveInterviewAnswerApprovalProgress(policy, [{ stage: 'manager', decision: 'approved' }])
+      deriveInterviewAnswerApprovalProgress(policy, [
+        { receiptId: 'receipt-1', ordinal: 1, stage: 'manager', decision: 'approved' },
+      ])
     ).toEqual({ status: 'pending', nextStage: 'ai' });
     expect(
       deriveInterviewAnswerApprovalProgress(policy, [
-        { stage: 'manager', decision: 'approved' },
-        { stage: 'ai', decision: 'approved' },
+        { receiptId: 'receipt-1', ordinal: 1, stage: 'manager', decision: 'approved' },
+        { receiptId: 'receipt-2', ordinal: 2, stage: 'ai', decision: 'approved' },
       ])
     ).toEqual({ status: 'pending', nextStage: 'manager' });
     expect(
-      deriveInterviewAnswerApprovalProgress(policy, [{ stage: 'ai', decision: 'approved' }])
+      deriveInterviewAnswerApprovalProgress(policy, [
+        { receiptId: 'receipt-1', ordinal: 1, stage: 'ai', decision: 'approved' },
+      ])
     ).toEqual({ status: 'pending', nextStage: 'manager' });
     expect(
       deriveInterviewAnswerApprovalProgress(policy, [
-        { stage: 'ai', decision: 'approved' },
-        { stage: 'manager', decision: 'approved' },
+        { receiptId: 'receipt-2', ordinal: 2, stage: 'manager', decision: 'approved' },
+        { receiptId: 'receipt-1', ordinal: 1, stage: 'ai', decision: 'approved' },
       ])
     ).toEqual({ status: 'stages_complete', nextStage: null });
   });
 
-  it('keeps a stage rejection explicit until a newer decision for that stage exists', () => {
+  it('orders receipts by ordinal and receipt ID and keeps send-back explicit until superseded', () => {
     const policy = resolveInterviewAnswerApprovalPolicy({
-      interview: { answerApproval: { mode: 'manager' } },
+      interview: { answerApproval: { version: 1, mode: 'manager' } },
     });
     expect(
       deriveInterviewAnswerApprovalProgress(policy, [
-        { stage: 'manager', decision: 'approved' },
-        { stage: 'manager', decision: 'rejected' },
+        { receiptId: 'receipt-a', ordinal: 1, stage: 'manager', decision: 'approved' },
+        { receiptId: 'receipt-z', ordinal: 2, stage: 'manager', decision: 'sent_back' },
       ])
-    ).toEqual({ status: 'rejected', nextStage: 'manager' });
+    ).toEqual({ status: 'sent_back', nextStage: 'manager' });
     expect(
       deriveInterviewAnswerApprovalProgress(policy, [
-        { stage: 'manager', decision: 'rejected' },
-        { stage: 'manager', decision: 'approved' },
+        { receiptId: 'receipt-z', ordinal: 2, stage: 'manager', decision: 'sent_back' },
+        { receiptId: 'receipt-b', ordinal: 3, stage: 'manager', decision: 'approved' },
       ])
     ).toEqual({ status: 'stages_complete', nextStage: null });
+    expect(
+      deriveInterviewAnswerApprovalProgress(policy, [
+        { receiptId: 'receipt-z', ordinal: 4, stage: 'manager', decision: 'sent_back' },
+        { receiptId: 'receipt-a', ordinal: 4, stage: 'manager', decision: 'approved' },
+      ])
+    ).toEqual({ status: 'sent_back', nextStage: 'manager' });
   });
 });

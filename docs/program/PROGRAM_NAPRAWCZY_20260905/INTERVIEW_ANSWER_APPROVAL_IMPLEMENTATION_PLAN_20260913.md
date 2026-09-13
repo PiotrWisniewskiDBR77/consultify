@@ -2,9 +2,14 @@
 
 ## Decision
 
-**MIGRATION_REQUIRED.** No migration is included in this branch. Per the CTO
-instruction, schema-dependent implementation stops until the additive contract
-below is explicitly approved.
+**MIGRATION_AUTHORIZED, NOT INCLUDED IN THIS REVIEW-FINDINGS COMMIT.** Wpis 2
+08:20 authorizes exactly one additive migration:
+`server/migrations/20262170_interview_answer_decisions.sql`. It may use only
+`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, and
+`CREATE INDEX IF NOT EXISTS`; it may not alter types, drop objects, edit old
+migrations, or backfill data. The next commit must prove an idempotent double
+run on both an empty database migrated from zero and the restored local
+schema-only staging dump. It must not run against staging or demo.
 
 The organization policy itself does not require a migration. It can use the
 existing versioned `organization_ai_policy.policy` JSONB document under:
@@ -21,7 +26,10 @@ existing versioned `organization_ai_policy.policy` JSONB document under:
 ```
 
 Allowed modes are `ai`, `manager`, and ordered `two_stage` (`ai` then
-`manager`). A missing, malformed, or unknown value resolves to `manager`.
+`manager`). Version `1` is the only supported policy version. A missing,
+malformed, unknown-mode, invalid-version, or future-version policy resolves
+fail-closed to `manager`. A policy writer must refuse an invalid or future
+version; it must never overwrite or downgrade it to version `1`.
 
 ## Existing system audit
 
@@ -72,41 +80,60 @@ Allowed modes are `ai`, `manager`, and ordered `two_stage` (`ai` then
   submit/send-back/approve. They do not prove each answer or organization modes.
 - The older draft
   `docs/product/INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
-  says AI may not auto-approve. The newer Wpis 1 requirement explicitly adds an
-  `ai` mode. This is an open CTO decision. The safe work in this branch models
-  policy stages only: it does not make an automatic final decision, persist an
-  approval or add a writer. The implementation must record the product-policy
-  resolution in binding documentation before any AI-only writer is built.
+  says AI may not auto-approve. The newer Wpis 1 and Wpis 2 08:20 supersede that
+  draft only for per-answer sufficiency: `ai` lets the AI quality stage decide
+  whether an exact answer revision is sufficient, `manager` requires the
+  manager, and `two_stage` records the AI proposal before the manager decides.
+  Completing an AI quality stage is not an automatic final assignment or
+  Interview approval. Assignment roll-up remains blocked until the durable
+  per-answer writer and projection prove every answer's frozen policy; it must
+  never infer approval from `stages_complete` in this pure helper.
 
 ## Minimal additive schema contract requiring CTO approval
 
-Add one append-only table, tentatively
-`interview_answer_approval_events`; do not alter `interview_questions`:
+The authorized migration must add a parent command receipt and append-only
+answer decisions; it must not alter `interview_questions`.
 
-| Column                                                  | Contract                                                                                        |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `id`                                                    | immutable event/receipt ID                                                                      |
-| `organization_id`                                       | tenant scope on every read/write/index                                                          |
-| `assignment_id`, `session_id`, `question_id`            | exact Interview identity                                                                        |
-| `submission_id`                                         | groups every answer snapshot in one assignment submission                                       |
-| `answer_updated_at`                                     | existing question CAS token captured at submit                                                  |
-| `answer_digest`                                         | digest of the complete canonical answer snapshot                                                |
-| `answer_snapshot_json`                                  | immutable answer value/context/evidence/voice/AI contribution and question/template version     |
-| `event_type`                                            | `submitted`, `ai_approved`, `ai_rejected`, `manager_approved`, `manager_rejected`, `superseded` |
-| `stage`                                                 | nullable `ai` or `manager`                                                                      |
-| `decision`                                              | nullable `approved` or `rejected`                                                               |
-| `reason`                                                | human-readable rejection/limitation reason                                                      |
-| `policy_mode`, `policy_version`, `policy_snapshot_json` | policy frozen with the decision                                                                 |
-| `actor_type`, `actor_id`                                | `ai` with model provenance or authenticated human                                               |
-| `client_request_id`, `request_fingerprint`              | idempotent replay and changed-payload conflict                                                  |
-| `metadata_json`                                         | AI score/model/prompt or structured manager missing items                                       |
-| `created_at`                                            | server/DB observation time                                                                      |
+`interview_answer_decision_commands` is the idempotency boundary for one
+multi-answer submission/decision command:
+
+| Column                                                    | Contract                                                                                                        |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `id`, `organization_id`, `assignment_id`, `submission_id` | immutable command and tenant-scoped Interview identity                                                          |
+| `client_request_id`, `request_fingerprint`                | unique replay key per organization and exact whole-command fingerprint                                          |
+| `expected_answer_count`, `answer_manifest_digest`         | proves the command's complete question/revision denominator                                                     |
+| `status`, `response_json`                                 | one atomic terminal response replayed for the whole command; never reconstruct a partial replay from event rows |
+| `created_at`, `completed_at`                              | server/DB observation time                                                                                      |
+
+`interview_answer_decisions` holds the immutable per-answer receipts:
+
+| Column                                                  | Contract                                                                                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `id`                                                    | immutable event/receipt ID                                                                        |
+| `organization_id`                                       | tenant scope on every read/write/index                                                            |
+| `assignment_id`, `session_id`, `question_id`            | exact Interview identity                                                                          |
+| `submission_id`                                         | groups every answer snapshot in one assignment submission                                         |
+| `answer_updated_at`                                     | existing question CAS token captured at submit                                                    |
+| `answer_digest`                                         | digest of the complete canonical answer snapshot                                                  |
+| `answer_snapshot_json`                                  | immutable answer value/context/evidence/voice/AI contribution and question/template version       |
+| `command_id`, `ordinal`                                 | parent command plus a positive, command-local monotonic receipt order                             |
+| `event_type`                                            | `submitted`, `ai_approved`, `ai_sent_back`, `manager_approved`, `manager_sent_back`, `superseded` |
+| `stage`                                                 | nullable `ai` or `manager`                                                                        |
+| `decision`                                              | nullable `approved` or `sent_back`                                                                |
+| `reason`                                                | human-readable send-back/limitation reason                                                        |
+| `policy_mode`, `policy_version`, `policy_snapshot_json` | policy frozen with the decision                                                                   |
+| `actor_type`, `actor_id`                                | `ai` with model provenance or authenticated human                                                 |
+| `metadata_json`                                         | AI score/model/prompt or structured manager missing items                                         |
+| `created_at`                                            | server/DB observation time                                                                        |
 
 Required constraints/indexes:
 
-- unique `(organization_id, client_request_id)`;
+- command unique `(organization_id, client_request_id)` and changed-fingerprint
+  conflict before any answer receipt is appended;
+- decision unique `(organization_id, command_id, question_id, event_type)` and
+  `(organization_id, command_id, ordinal)`;
 - tenant-first lookup by `(organization_id, assignment_id, submission_id)` and
-  `(organization_id, question_id, created_at)`;
+  `(organization_id, question_id, ordinal, id)`;
 - foreign keys to assignment/session/question with cascade matching current
   Interview lifecycle;
 - stage/decision/event checks;
@@ -114,7 +141,11 @@ Required constraints/indexes:
 
 The exact answer snapshot/digest means an edit or resubmission cannot inherit a
 decision from an older answer. The existing `updated_at` CAS is retained; no
-second mutable answer-version column is necessary.
+second mutable answer-version column is necessary. Projection order is always
+`ordinal ASC, id ASC`; array or query return order is never authority. The
+parent receipt commits the full response only after the complete expected
+answer count is present, so exact replays return the whole command result and a
+changed fingerprint conflicts atomically.
 
 ## Implementation after schema approval
 
@@ -130,9 +161,10 @@ second mutable answer-version column is necessary.
    `server/src/routes/interview.routes.ts`, guarded by current tenant/reviewer
    access and exact `expectedAnswerUpdatedAt` plus `clientRequestId`.
 4. **Stage rules** — `manager` requires manager approval; `ai` requires an AI
-   receipt for the exact digest; `two_stage` requires AI approval before manager
-   approval. A rejection remains visible and blocks finalization for that
-   submission.
+   sufficiency receipt for the exact digest; `two_stage` requires the AI
+   proposal before the manager decision. `sent_back` remains visible and blocks
+   finalization for that submission. AI stage completion alone never writes the
+   final assignment decision.
 5. **Assignment finalization** — retain the existing assignment as the
    downstream compatibility gate, but allow `approved/completed` only when every
    submitted answer satisfies its frozen policy. Never synthesize per-answer
@@ -154,7 +186,10 @@ second mutable answer-version column is necessary.
 
 `server/src/services/interview/interviewAnswerApprovalPolicy.ts` supplies the
 pure policy parser/updater and ordered-stage evaluator. It reads the existing
-organization policy shape, defaults to manager, preserves unrelated keys and
-reports only whether configured stages are complete. It does not equate an AI
-stage with final Interview approval, perform database writes or introduce a
-schema fallback.
+organization policy shape, defaults fail-closed to manager, refuses to rewrite
+invalid/future policy versions, preserves unrelated keys and reports only
+whether configured stages are complete. Decision receipts carry an explicit
+positive ordinal and receipt ID and are ordered deterministically rather than
+by input-array order. It uses the production `sent_back` vocabulary. It does
+not equate an AI stage with final Interview approval, perform database writes or
+introduce a schema fallback.
