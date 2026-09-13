@@ -1,4 +1,3 @@
-import { requireInterviewAssignmentReviewRead } from '../services/interviewAssignmentReviewAccess.js';
 /**
  * Interview Routes - v2.0 ClickUp-like Redesign
  *
@@ -6,7 +5,6 @@ import { requireInterviewAssignmentReviewRead } from '../services/interviewAssig
  * Task-list style questions with status, confidence, tags
  * Notes, Evidence, Summary (ONLY facts, no recommendations)
  */
-
 import { Router } from 'express';
 import multer from 'multer';
 
@@ -16,6 +14,7 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { requireInterviewAssignmentReviewRead } from '../services/interviewAssignmentReviewAccess.js';
 
 const router = Router();
 const templateSourceUpload = multer({
@@ -174,6 +173,18 @@ router.delete(
 
 /** POST /interview/assignments/:id/send-back - Admin send back incomplete submission */
 router.get('/assignments/:id/review-access', InterviewController.getAssignmentReviewAccess);
+
+/** GET /interview/assignments/:id/answer-approvals - Redacted per-answer approval projection */
+router.get('/assignments/:id/answer-approvals', InterviewController.getAnswerApprovals);
+
+/** POST /interview/assignments/:id/answer-approvals/retry-ai - Retry a pending AI stage */
+router.post(
+  '/assignments/:id/answer-approvals/retry-ai',
+  InterviewController.retryAiAnswerApprovals
+);
+
+/** POST /interview/assignments/:id/answer-decisions - Manager decision for exact answer revisions */
+router.post('/assignments/:id/answer-decisions', InterviewController.decideAnswerApprovals);
 
 router.post(
   '/assignments/:id/send-back',

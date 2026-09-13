@@ -89,28 +89,45 @@ describe('V8InterviewApi', () => {
     await V8InterviewApi.sendBackAssignment('asg-4', { reason: 'Missing answers' });
     await V8InterviewApi.approveAssignment('asg-5');
 
+    expect(v8Post).toHaveBeenNthCalledWith(1, '/interview/assignments/asg-1/start', {
+      projectId: 'proj-1',
+    });
+    expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg-2/submit', {});
+    expect(v8Post).toHaveBeenNthCalledWith(3, '/interview/sessions/sess-1/evaluate-answers', {
+      language: 'pl',
+    });
+    expect(v8Post).toHaveBeenNthCalledWith(4, '/interview/assignments/asg-3/remind', {});
+    expect(v8Post).toHaveBeenNthCalledWith(5, '/interview/assignments/asg-4/send-back', {
+      reason: 'Missing answers',
+    });
+    expect(v8Post).toHaveBeenNthCalledWith(6, '/interview/assignments/asg-5/approve', {});
+  });
+
+  it('reads and decides per-answer approvals through the mounted V8 Interview routes', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ assignmentId: 'asg/1', approvals: [] });
+    vi.mocked(v8Post).mockResolvedValue({ assignmentId: 'asg/1', decisions: [] } as any);
+    const decision = {
+      submissionId: 'submission-1',
+      clientRequestId: 'request-1',
+      answers: [{ questionId: 'question-1', expectedAnswerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+      decision: 'approved' as const,
+    };
+
+    await V8InterviewApi.getAnswerApprovals('asg/1');
+    await V8InterviewApi.retryAiAnswerApprovals('asg/1', 'retry-1');
+    await V8InterviewApi.decideAnswerApprovals('asg/1', decision);
+
+    expect(v8Get).toHaveBeenCalledWith('/interview/assignments/asg%2F1/answer-approvals');
     expect(v8Post).toHaveBeenNthCalledWith(
       1,
-      '/interview/assignments/asg-1/start',
-      { projectId: 'proj-1' }
-    );
-    expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg-2/submit', {});
-    expect(v8Post).toHaveBeenNthCalledWith(
-      3,
-      '/interview/sessions/sess-1/evaluate-answers',
-      { language: 'pl' }
+      '/interview/assignments/asg%2F1/answer-approvals/retry-ai',
+      { clientRequestId: 'retry-1' }
     );
     expect(v8Post).toHaveBeenNthCalledWith(
-      4,
-      '/interview/assignments/asg-3/remind',
-      {}
+      2,
+      '/interview/assignments/asg%2F1/answer-decisions',
+      decision
     );
-    expect(v8Post).toHaveBeenNthCalledWith(
-      5,
-      '/interview/assignments/asg-4/send-back',
-      { reason: 'Missing answers' }
-    );
-    expect(v8Post).toHaveBeenNthCalledWith(6, '/interview/assignments/asg-5/approve', {});
   });
 
   it('uses the existing assignment id for escalation and reassignment writes', async () => {
@@ -181,11 +198,14 @@ describe('V8 Interview Findings CRUD (P10 canon)', () => {
       next_action: 'Conduct follow-up interviews',
     });
 
-    expect(v8Post).toHaveBeenCalledWith('/interview/insights/i-1/findings', expect.objectContaining({
-      finding_statement: 'Users face friction',
-      confidence_level: 'medium',
-      limits: 'Small sample size',
-    }));
+    expect(v8Post).toHaveBeenCalledWith(
+      '/interview/insights/i-1/findings',
+      expect.objectContaining({
+        finding_statement: 'Users face friction',
+        confidence_level: 'medium',
+        limits: 'Small sample size',
+      })
+    );
     expect(result).toHaveProperty('id', 'f-1');
   });
 
@@ -353,7 +373,10 @@ describe('V8InterviewApi insight methods', () => {
 
     await V8InterviewApi.createInsight({ sessionIds: ['sess-1'], promptType: 'summary' });
 
-    expect(v8Post).toHaveBeenCalledWith('/interview/insights', { sessionIds: ['sess-1'], promptType: 'summary' });
+    expect(v8Post).toHaveBeenCalledWith('/interview/insights', {
+      sessionIds: ['sess-1'],
+      promptType: 'summary',
+    });
   });
 
   it('regenerateInsight calls v8Post on /:id/regenerate', async () => {
@@ -401,7 +424,10 @@ describe('V8InterviewApi insight methods', () => {
 
     await V8InterviewApi.createInsightComment('ins-1', { content: 'Nice', priority: 'high' });
 
-    expect(v8Post).toHaveBeenCalledWith('/interview/insights/ins-1/comments', { content: 'Nice', priority: 'high' });
+    expect(v8Post).toHaveBeenCalledWith('/interview/insights/ins-1/comments', {
+      content: 'Nice',
+      priority: 'high',
+    });
   });
 
   it('deleteInsightComment calls v8Delete on /:id/comments/:commentId', async () => {

@@ -1,0 +1,14 @@
+{
+  "classification": "QUALIFIED_BEHAVIOR_RED",
+  "scope": "actual Interview submit HTTP path against PostgreSQL 18",
+  "testFullName": "Interview answer evidence revision serialization — real PostgreSQL rejects a material answer PATCH that was queued behind the actual submit transition",
+  "observed": {
+    "submitHttpStatus": 500,
+    "postgresCode": "0A000",
+    "postgresMessage": "FOR UPDATE cannot be applied to the nullable side of an outer join"
+  },
+  "cause": "Three assignment lock queries used a bare FOR UPDATE after LEFT JOIN interview_assignment_members.",
+  "repair": "All three queries lock only the authoritative assignment row with FOR UPDATE OF a; a focused unit assertion prevents recurrence.",
+  "rawCapture": "The failing verbose terminal output was observed and reported contemporaneously but was not redirected. REALPG_RACE_HARNESS_HOLD_V3.json is a separate earlier harness timeout and is not this product RED.",
+  "greenEvidence": "REALPG_SERVICE_RACE_GREEN.json"
+}
