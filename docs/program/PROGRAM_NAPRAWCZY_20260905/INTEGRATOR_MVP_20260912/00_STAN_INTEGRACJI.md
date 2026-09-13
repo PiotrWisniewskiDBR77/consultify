@@ -1,5 +1,13 @@
 # Stan integracji MVP — 12.09.2026
 
+## Przekazanie kandydata do CTO — 13.09.2026
+
+Kandydat `codex/integrator-mvp-20260912-rc2` został zamrożony na `5de710ff46` (tag `kandydat-mvp-20260913`): 147 commitów nad linią, 207 plików kodu i 0 migracji. Pomiar patch-id potwierdził, że zawiera już wszystkie sześć nocnych gałęzi W17 oraz C6-DEL-OFF `a90fa4f115`; następnie został przejęty na linię integracyjną jako `cfea70de8a`, z kopiami backup obu refów. To kandydat lokalny: staging i demo pozostały na `60051310d7`, bez wdrożenia i bez odbioru pełnego MVP.
+
+Poza zmierzonym rc2/cfea pozostały `codex/c6-export-contract-20260912` — dokładnie +19 patchy, nadal HOLD — oraz `codex/zatwierdzanie-inicjatyw-20260913` — +1, DEC-474, fala 2. Commit zabezpieczający C6 z 13.09, `4c5c76f00c175dcad5121d5481e82a4dafb55faf`, ma patch-id już reprezentowany w cfea, więc nie zmienia +19; osobny snapshot z 13.09, `70c1f549f8b6e863a3a3dd6fdbc31a1afe46145b` (`ie01-card-split-red-sol`), jest +1 wobec cfea i ma wyłącznie backup ref — wymaga jawnej klasyfikacji przed jakimkolwiek włączeniem i nie jest częścią odbioru cfea.
+
+Kandydat pozostaje czerwony: bramka K2 zapisuje werdykt RED z trzema czerwieniami klasy `NOWA`, dwoma grupami `TYLKO-KANDYDAT` (w tym 11/11 nowych testów ujawniania kompletności eksportu) oraz czterema testami `NIEZMIERZONE`, które mimo nazw bez `.pg.` wymagają PostgreSQL; frontend miał 189 zastanych diagnostyk wobec limitu i bazy 192, a build przeszedł. Osobny historyczny actual-built RED miał dokładnie 14× GET 403: siedem odmów przy pierwszym ładowaniu i te same siedem po przeładowaniu, każdorazowo 1× `organization members` + 6× manager lanes. Późniejszy naprawiony build Banku mierzy 0 eager manager requests i 0 full-member-directory requests; sześć 403 zachowano tylko na instrumentowanej, historycznej powierzchni Manager, więc 14 nie opisuje obecnego zachowania Banku i nie uzasadnia osłabienia backend ACL.
+
 Cel: pełny MVP właściciela i klienta według S1/S2 i obowiązujących decyzji. Pełna Fala 2 pozostaje dalszym zakresem planu. Plan przyjęty niezależnie; produkt nadal NIEODEBRANY.
 
 Izolowany branch `codex/integrator-mvp-20260912`, baza `7c7dd88091f2a28ad73b55a6fc63d85261991b17`. Owner WIP nietknięty. Brak push/deploy/live.
