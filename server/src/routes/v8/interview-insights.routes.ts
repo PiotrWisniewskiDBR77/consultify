@@ -926,7 +926,7 @@ router.post(
     let initiativeRef: {
       id: string;
       type: 'linked' | 'created';
-      targetType?: 'initiative' | 'decision' | 'task';
+      targetType: 'initiative' | 'decision' | 'task';
       url?: string;
     };
     // #59 — dedup parity with the canonical AI Initiative Wizard (POST
@@ -1156,6 +1156,7 @@ router.post(
     await recordHandoff(insightId, findingId, payload, initiativeRef.id, {
       organizationId,
       actorUserId: userId,
+      targetKind: initiativeRef.targetType,
       targetRefType: 'linked',
       status: 'linked',
     });

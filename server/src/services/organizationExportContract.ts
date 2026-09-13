@@ -1,4 +1,5 @@
 import { ORGANIZATION_EXPORT_CANONICAL_TABLES } from './organizationExportCanonicalContract.js';
+import { ORGANIZATION_EXPORT_DECISION_TABLES } from './organizationExportDecisionContract.js';
 import { ORGANIZATION_EXPORT_INTERVIEW_TABLES } from './organizationExportInterviewContract.js';
 import type { InterviewExportKind } from './organizationExportInterviewPrivacy.js';
 import { ORGANIZATION_EXPORT_TASK_TABLES } from './organizationExportTaskContract.js';
@@ -21,6 +22,7 @@ export interface OrganizationExportTableContract {
   canonicalLineageColumns?: string[];
   interviewPrivacy?: InterviewExportKind;
   personalTaskPrivacy?: boolean;
+  decisionPrivacyKind?: 'decision' | 'insight' | 'finding' | 'pointer' | 'handoff';
   ownerColumn?: string;
   ownerVia?: {
     parentSchema: string;
@@ -33,7 +35,7 @@ export interface OrganizationExportTableContract {
   excludedColumns: string[];
   source: string;
 }
-export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v8-20260912';
+export const ORGANIZATION_EXPORT_POLICY_VERSION = 'tenant-export-contract-v9-20260912';
 // Original inventory: 1802 public +121 v8; 1 EXPORT /4 EXCLUDE_SECURITY /1918 UNRESOLVED.
 // Unlisted relations remain UNRESOLVED; a new migration cannot silently authorize export.
 export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContract[] = [
@@ -41,6 +43,7 @@ export const ORGANIZATION_EXPORT_TABLES: readonly OrganizationExportTableContrac
   ...ORGANIZATION_EXPORT_INTERVIEW_TABLES,
   ...ORGANIZATION_EXPORT_CANONICAL_TABLES,
   ...ORGANIZATION_EXPORT_TASK_TABLES,
+  ...ORGANIZATION_EXPORT_DECISION_TABLES,
   {
     schema: 'public',
     table: 'organizations',

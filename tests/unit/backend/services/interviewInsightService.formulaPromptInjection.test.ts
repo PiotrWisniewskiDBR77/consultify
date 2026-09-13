@@ -50,13 +50,29 @@ vi.mock('../../../../server/src/services/ai/llmService.js', () => ({
 // context-lineage write. We stub all three generically; none of this touches a
 // real database, and none of it is what this test is proving.
 const mockDbGet = vi.fn().mockResolvedValue({ title: 'Wąskie gardło w akceptacji zamówień' });
-const mockDbRun = vi.fn().mockResolvedValue(undefined);
+const mockDbRun = vi.fn().mockResolvedValue({ changes: 1 });
 const mockDbAll = vi.fn().mockResolvedValue([]);
 vi.mock('../../../../server/src/database/Database.js', () => ({
   getDatabase: () => ({ get: mockDbGet, run: mockDbRun, all: mockDbAll, query: mockDbRun }),
 }));
 
 const IMPORT_PATH = '../../../../server/src/services/InterviewInsightService.js';
+
+// Private generator calls carry the same run ownership input as create/regenerate.
+// This suite proves prompt content; database CAS behavior is outside this suite.
+const promptGenerationAttempt = () => {
+  const generationRun = {
+    version: 1,
+    runId: 'prompt-fixture-run',
+    status: 'generating',
+    startedAt: '2026-09-13T00:00:00.000Z',
+  };
+  return {
+    runId: generationRun.runId,
+    startedAt: generationRun.startedAt,
+    expectedContextJson: JSON.stringify({ generationRun }),
+  };
+};
 
 /** Minimal fake session data — the exact shape `fetchSessionData` returns. */
 const FAKE_SESSION_DATA = [
@@ -71,7 +87,8 @@ const FAKE_SESSION_DATA = [
       {
         id: 'ans-1',
         question_text: 'Jak wygląda proces akceptacji zamówień?',
-        answer_text: 'Akceptacja zajmuje 5 dni, głównie z powodu ręcznych przekazań między działami.',
+        answer_text:
+          'Akceptacja zajmuje 5 dni, głównie z powodu ręcznych przekazań między działami.',
         category: 'process',
         status: 'answered',
         confidence_score: 0.9,
@@ -101,13 +118,15 @@ const VALID_V6_RESPONSE = {
   issues: [
     {
       title: 'Brak jednego właściciela procesu akceptacji',
-      description: 'Odpowiedzialność rozproszona między trzy działy, co utrudnia eskalację opóźnień.',
+      description:
+        'Odpowiedzialność rozproszona między trzy działy, co utrudnia eskalację opóźnień.',
       severity: 'high',
       evidence_refs: ['ans-1'],
     },
     {
       title: 'Brak SLA na poszczególne etapy akceptacji',
-      description: 'Żaden z etapów nie ma zdefiniowanego czasu granicznego, co uniemożliwia monitoring.',
+      description:
+        'Żaden z etapów nie ma zdefiniowanego czasu granicznego, co uniemożliwia monitoring.',
       severity: 'medium',
       evidence_refs: ['ans-1'],
     },
@@ -141,7 +160,7 @@ describe('O-INJ-07 — Insight generator: capture the REAL first-pass prompt sen
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbGet.mockResolvedValue({ title: 'Wąskie gardło w akceptacji zamówień' });
-    mockDbRun.mockResolvedValue(undefined);
+    mockDbRun.mockResolvedValue({ changes: 1 });
     mockDbAll.mockResolvedValue([]);
     mockGenerateResponse.mockResolvedValue({
       content: JSON.stringify(VALID_V6_RESPONSE),
@@ -177,7 +196,8 @@ describe('O-INJ-07 — Insight generator: capture the REAL first-pass prompt sen
       },
       undefined, // contextDocumentPack
       'user-1',
-      undefined // generationPreferences
+      undefined, // generationPreferences
+      promptGenerationAttempt()
     );
 
     // The FIRST call is the actual generation call (a possible 2nd call would be
@@ -254,7 +274,8 @@ describe('O-INJ-07 — Insight generator: capture the REAL first-pass prompt sen
       },
       undefined,
       'user-1',
-      undefined
+      undefined,
+      promptGenerationAttempt()
     );
 
     expect(mockGenerateResponse.mock.calls.length).toBeGreaterThanOrEqual(2);

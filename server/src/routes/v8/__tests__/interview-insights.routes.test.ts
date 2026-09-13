@@ -15,6 +15,7 @@ const mockBuildHandoffPayload = vi.fn();
 const mockRecordHandoff = vi.fn();
 const mockCheckSimilarInitiatives = vi.fn();
 const mockCreateInitiative = vi.fn();
+const mockCreateDecision = vi.fn();
 const permissionMockState = vi.hoisted(() => ({
   registeredPermissionKeys: [] as string[],
 }));
@@ -107,6 +108,10 @@ vi.mock('../../../services/initiativeService.js', () => ({
   default: { createInitiative: (...args: unknown[]) => mockCreateInitiative(...args) },
 }));
 
+vi.mock('../../../services/decisionService.js', () => ({
+  default: { createDecision: (...args: unknown[]) => mockCreateDecision(...args) },
+}));
+
 vi.mock('../../../utils/dbSchema.js', () => ({
   getTableColumns: vi.fn().mockResolvedValue(new Set()),
 }));
@@ -149,6 +154,7 @@ describe('V8 interview insights candidate routes', () => {
       truncated: false,
     });
     mockCreateInitiative.mockResolvedValue({ id: 'init_default' });
+    mockCreateDecision.mockResolvedValue({ id: 'decision_default' });
   });
 
   it('GET /candidates returns V8 envelope with candidate list', async () => {
@@ -474,6 +480,33 @@ describe('V8 interview insights candidate routes', () => {
     expect(res.body.data?.duplicateWarning).toBeNull();
     expect(mockCheckSimilarInitiatives).not.toHaveBeenCalled();
     expect(mockCreateInitiative).not.toHaveBeenCalled();
+  });
+
+  it('POST /handoff records a Decision receipt with the Decision target kind', async () => {
+    mockGetFinding.mockResolvedValue({
+      id: 'finding_1',
+      finding_statement: 'Approve the operating model.',
+      confidence_level: 'high',
+      limits: 'Scoped to interview sample.',
+      next_action: 'Ask the owner to decide.',
+      evidence_pointers: [{ isTombstone: false, excerpt: 'Decision is pending.' }],
+      readback_status: 'confirmed_by_client',
+    });
+    mockCreateDecision.mockResolvedValue({ id: 'decision_1' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/insight_1/findings/finding_1/handoff')
+      .send({ target_type: 'decision' });
+
+    expect(res.status).toBe(200);
+    expect(mockCreateDecision).toHaveBeenCalledTimes(1);
+    expect(mockRecordHandoff).toHaveBeenCalledWith(
+      'insight_1',
+      'finding_1',
+      expect.anything(),
+      'decision_1',
+      expect.objectContaining({ targetKind: 'decision', targetRefType: 'linked', status: 'linked' })
+    );
   });
 
   // -------------------------------------------------------------------------
