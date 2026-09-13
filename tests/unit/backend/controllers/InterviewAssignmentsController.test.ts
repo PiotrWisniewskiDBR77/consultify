@@ -7,12 +7,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockLockedAssignmentQuery = vi.fn();
 const mockLlmCall = vi.fn();
 const mockGetTableColumns = vi.fn();
+const mockApplyAnswerDecision = vi.fn();
+const mockReadAnswerApprovals = vi.fn();
+const mockAssertReviewAccess = vi.fn();
+const mockReviewAccess = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
-  queryOne: (...args: unknown[]) => mockQueryOne(...args),
+  queryOne: (sql: unknown, ...args: unknown[]) =>
+    String(sql).includes('FROM interview_assignments a') && String(sql).includes('FOR UPDATE')
+      ? mockLockedAssignmentQuery(sql, ...args)
+      : mockQueryOne(sql, ...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   withPgTransaction: (fn: () => unknown) => fn(),
 }));
@@ -30,11 +38,35 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../../server/src/services/ai/llmService.js', () => ({
-  llmService: { call: (...args: unknown[]) => mockLlmCall(...args) },
+  llmService: {
+    resolveModelConfig: vi.fn().mockResolvedValue({
+      id: 'test-interview-model',
+      provider: 'test-provider',
+    }),
+    call: (...args: unknown[]) => mockLlmCall(...args),
+  },
 }));
 
 vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
   getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
+}));
+
+vi.mock('../../../../server/src/services/interview/interviewAnswerDecisionService.js', () => ({
+  applyInterviewAnswerDecisionCommand: (...args: unknown[]) => mockApplyAnswerDecision(...args),
+  readInterviewAnswerApprovalProjection: (...args: unknown[]) => mockReadAnswerApprovals(...args),
+  InterviewAnswerDecisionCommandError: class InterviewAnswerDecisionCommandError extends Error {
+    constructor(
+      public readonly code: string,
+      message: string
+    ) {
+      super(message);
+    }
+  },
+}));
+
+vi.mock('../../../../server/src/services/interviewAssignmentReviewAccess.js', () => ({
+  assertInterviewAssignmentReviewAccess: (...args: unknown[]) => mockAssertReviewAccess(...args),
+  interviewAssignmentReviewAccess: (...args: unknown[]) => mockReviewAccess(...args),
 }));
 
 vi.mock('uuid', () => ({
@@ -52,8 +84,40 @@ describe('InterviewController assignments', () => {
     mockQueryOne.mockReset();
     mockQueryRun.mockReset();
     mockQueryRun.mockResolvedValue({ changes: 1 });
+    mockLockedAssignmentQuery.mockReset().mockResolvedValue({ id: 'a1' });
     mockLlmCall.mockReset();
     mockGetTableColumns.mockReset();
+    mockApplyAnswerDecision.mockReset().mockResolvedValue({
+      commandId: 'command-submit',
+      assignmentId: 'a1',
+      sessionId: 's1',
+      submissionId: 'uuid-123',
+      policyMode: 'manager',
+      policyVersion: 1,
+      status: 'applied',
+      observedAt: '2026-09-13T12:00:00.000Z',
+      decisions: [],
+      idempotentReplay: false,
+    });
+    mockReadAnswerApprovals.mockReset().mockResolvedValue([
+      {
+        questionId: 'q1',
+        submissionId: 'submission-1',
+        status: 'stages_complete',
+      },
+    ]);
+    mockAssertReviewAccess.mockReset().mockResolvedValue({
+      canReview: true,
+      assignmentId: 'a1',
+      sessionId: 's1',
+      projectId: 'p1',
+    });
+    mockReviewAccess.mockReset().mockResolvedValue({
+      canReview: true,
+      assignmentId: 'a1',
+      sessionId: 's1',
+      projectId: 'p1',
+    });
     mockGetTableColumns.mockResolvedValue(
       new Set([
         'ai_review_snapshot_json',
@@ -141,11 +205,10 @@ describe('InterviewController assignments', () => {
       expect.objectContaining({
         entersContext: false,
         completenessPercent: 20,
-        aiReview: expect.objectContaining({
-          overallVerdict: 'empty',
-        }),
+        aiReview: null,
       })
     );
+    expect(mockLlmCall).not.toHaveBeenCalled();
   });
 
   it('submitAssignment: >=50% still stays submitted (approval is separate)', async () => {
@@ -198,11 +261,10 @@ describe('InterviewController assignments', () => {
       expect.objectContaining({
         entersContext: false,
         completenessPercent: 50,
-        aiReview: expect.objectContaining({
-          overallVerdict: 'empty',
-        }),
+        aiReview: null,
       })
     );
+    expect(mockLlmCall).not.toHaveBeenCalled();
   });
 
   it('submitAssignment: treats re-submit of an already submitted assignment as idempotent', async () => {
@@ -262,6 +324,19 @@ describe('InterviewController assignments', () => {
     );
   });
 
+  it('submitAssignment: does not authorize the creator when they are not the assignee or team lead', async () => {
+    mockReq.params.id = 'a-created-only';
+    mockReq.user.id = 'creator-1';
+    mockQueryOne.mockResolvedValue(null);
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockApplyAnswerDecision).not.toHaveBeenCalled();
+  });
+
   // L-07 / SPEC_13 §5.1 — hard submit floor (objective insufficiency).
   it('submitAssignment: HARD-BLOCKS (422) when a required question is unanswered, without flipping status', async () => {
     mockReq.params.id = 'a-block';
@@ -306,6 +381,7 @@ describe('InterviewController assignments', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         code: 'OBJECTIVE_INSUFFICIENCY',
+        messageKey: 'interview.workspace.cannotSubmitCompleteTheRequired',
         reason: 'required_missing',
         requiredMissingCount: 1,
         blockedItems: expect.arrayContaining([expect.objectContaining({ questionId: 'q1' })]),
@@ -322,32 +398,10 @@ describe('InterviewController assignments', () => {
     ).toBe(false);
   });
 
-  // L-07 / SPEC_13 §5.1 — hard floor edge case (b):
-  // AI verdict "insufficient" WITH questions present (none required-missing) → 422.
-  it('submitAssignment: HARD-BLOCKS (422) when AI verdict is insufficient even with questions present', async () => {
-    mockReq.params.id = 'a-ai-insuff';
-    // AI returns an "insufficient" overall verdict with insufficient per-question
-    // evaluations. No required question is missing — the block comes from the AI floor.
-    mockLlmCall.mockResolvedValue({
-      object: {
-        overallScore: 1.4,
-        overallVerdict: 'insufficient',
-        recommendations: ['Provide concrete details.'],
-        questionEvaluations: [
-          {
-            questionId: 'q1',
-            score: 1,
-            verdict: 'insufficient',
-            feedback: 'Too vague.',
-            fixType: 'make_specific',
-          },
-        ],
-      },
-    });
+  it('submitAssignment: manager policy submits a weak answer without calling the LLM', async () => {
+    mockReq.params.id = 'a-manager-weak';
     mockQueryAll
-      // #1 updateSessionProgress
       .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
-      // #2 submit gate questions — answered but not required
       .mockResolvedValueOnce([
         {
           id: 'q1',
@@ -357,42 +411,37 @@ describe('InterviewController assignments', () => {
           answer_text: 'idk',
         },
       ]);
-
     mockQueryOne
       .mockResolvedValueOnce({
-        id: 'a-ai-insuff',
+        id: 'a-manager-weak',
         organization_id: 'org-1',
         assignee_user_id: 'user-1',
-        session_id: 's-ai-insuff',
+        session_id: 's-manager-weak',
         task_id: null,
         status: 'in_progress',
         created_by: 'user-2',
       })
-      .mockResolvedValueOnce({ id: 's-ai-insuff', organization_id: 'org-1', status: 'active' })
-      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 });
+      .mockResolvedValueOnce({ id: 's-manager-weak', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 })
+      .mockResolvedValueOnce({
+        id: 'a-manager-weak',
+        status: 'submitted',
+        session_id: 's-manager-weak',
+      })
+      .mockResolvedValueOnce({ id: 's-manager-weak', status: 'submitted' });
 
     const { InterviewController } =
       await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
-    expect(mockRes.status).toHaveBeenCalledWith(422);
+    expect(mockRes.status).not.toHaveBeenCalledWith(422);
+    expect(mockLlmCall).not.toHaveBeenCalled();
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        code: 'OBJECTIVE_INSUFFICIENCY',
-        reason: 'ai_insufficient',
-        requiredMissingCount: 0,
-        blockedItems: expect.arrayContaining([expect.objectContaining({ questionId: 'q1' })]),
+        aiReview: null,
+        answerApproval: expect.objectContaining({ policyMode: 'manager' }),
       })
     );
-    // Status must NOT flip — draft stays editable.
-    expect(
-      mockQueryRun.mock.calls.some(
-        (call) =>
-          typeof call[0] === 'string' &&
-          String(call[0]).includes('UPDATE interview_assignments') &&
-          String(call[0]).includes('status = ?')
-      )
-    ).toBe(false);
   });
 
   // L-07 / SPEC_13 §5.1 — hard floor edge case (c):
@@ -481,6 +530,16 @@ describe('InterviewController assignments', () => {
           status: 'answered',
           answer_text: 'A thorough, specific, and actionable answer.',
         },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'A thorough, specific, and actionable answer.',
+        },
       ]);
 
     mockQueryOne
@@ -508,7 +567,25 @@ describe('InterviewController assignments', () => {
           questionEvaluations: [],
         }),
       })
+      .mockResolvedValueOnce({ id: 's-ok', status: 'submitted', assignment_id: 'a-ok' })
+      .mockResolvedValueOnce({
+        id: 'a-ok',
+        status: 'submitted',
+        session_id: 's-ok',
+        ai_review_snapshot_json: null,
+      })
       .mockResolvedValueOnce({ id: 's-ok', status: 'submitted', assignment_id: 'a-ok' });
+    mockApplyAnswerDecision
+      .mockResolvedValueOnce({
+        commandId: 'submit-command',
+        assignmentId: 'a-ok',
+        sessionId: 's-ok',
+        submissionId: 'uuid-123',
+        policyMode: 'ai',
+        policyVersion: 1,
+        decisions: [{ questionId: 'q1', answerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+      })
+      .mockResolvedValue({ status: 'applied', decisions: [] });
 
     const { InterviewController } =
       await import('../../../../server/src/controllers/InterviewController.js');
@@ -546,6 +623,416 @@ describe('InterviewController assignments', () => {
       })
     );
   });
+
+  it('submitAssignment: records mixed AI verdicts per answer and returns the assignment for revision', async () => {
+    mockReq.params.id = 'a-mixed';
+    const rubric = (scores: number[]) =>
+      ['concreteness', 'evidence', 'depth', 'measurability', 'coherence'].map(
+        (criterion, index) => ({
+          criterion,
+          score: scores[index],
+          justification: `${criterion} evidence`,
+        })
+      );
+    mockLlmCall.mockResolvedValue({
+      object: {
+        recommendations: ['Expand the second answer.'],
+        questionEvaluations: [
+          { questionId: 'q1', rubric: rubric([4, 4, 4, 4, 4]), feedback: 'Sufficient.' },
+          {
+            questionId: 'q2',
+            rubric: rubric([2, 2, 2, 2, 2]),
+            feedback: 'Add a concrete example.',
+            fixType: 'make_specific',
+          },
+        ],
+      },
+    });
+    mockQueryAll
+      .mockResolvedValueOnce([
+        { category: 'general', status: 'answered' },
+        { category: 'general', status: 'answered' },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Strong answer',
+        },
+        {
+          id: 'q2',
+          question_text: 'Question two',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Thin answer',
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Strong answer',
+        },
+        {
+          id: 'q2',
+          question_text: 'Question two',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Thin answer',
+        },
+      ]);
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-mixed',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-mixed',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-mixed', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 2, total_questions: 2 })
+      .mockResolvedValueOnce({ id: 'a-mixed', status: 'submitted', session_id: 's-mixed' })
+      .mockResolvedValueOnce({ id: 's-mixed', status: 'submitted' })
+      .mockResolvedValueOnce({ id: 'a-mixed', status: 'sent_back', session_id: 's-mixed' })
+      .mockResolvedValueOnce({ id: 's-mixed', status: 'active' });
+    mockApplyAnswerDecision
+      .mockResolvedValueOnce({
+        commandId: 'submit-command',
+        assignmentId: 'a-mixed',
+        sessionId: 's-mixed',
+        submissionId: 'uuid-123',
+        policyMode: 'two_stage',
+        policyVersion: 1,
+        decisions: [
+          {
+            questionId: 'q1',
+            answerUpdatedAt: '2026-09-13T12:00:00.000Z',
+          },
+          {
+            questionId: 'q2',
+            answerUpdatedAt: '2026-09-13T12:01:00.000Z',
+          },
+        ],
+      })
+      .mockResolvedValue({ status: 'applied', decisions: [] });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockApplyAnswerDecision).toHaveBeenCalledTimes(3);
+    expect(mockLockedAssignmentQuery).toHaveBeenCalled();
+    expect(
+      mockLockedAssignmentQuery.mock.calls.every(([sql]) => String(sql).includes('FOR UPDATE OF a'))
+    ).toBe(true);
+    expect(mockApplyAnswerDecision).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        stage: 'ai',
+        decision: 'approved',
+        answers: [{ questionId: 'q1', expectedAnswerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+        actor: { type: 'ai', id: expect.stringContaining('interview-rubric:') },
+        metadata: expect.objectContaining({
+          modelId: 'test-interview-model',
+          providerId: 'test-provider',
+        }),
+      })
+    );
+    expect(mockApplyAnswerDecision).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        stage: 'ai',
+        decision: 'sent_back',
+        reason: 'Add a concrete example.',
+        answers: [{ questionId: 'q2', expectedAnswerUpdatedAt: '2026-09-13T12:01:00.000Z' }],
+      })
+    );
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'sent_back'"),
+      expect.any(Array)
+    );
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ assignment: expect.objectContaining({ status: 'sent_back' }) })
+    );
+  });
+
+  it('submitAssignment: does not expose transaction-local AI receipts when a later lifecycle transition rolls back', async () => {
+    mockReq.params.id = 'a-ai-rollback';
+    const rubric = (score: number) =>
+      ['concreteness', 'evidence', 'depth', 'measurability', 'coherence'].map((criterion) => ({
+        criterion,
+        score,
+        justification: `${criterion} evidence`,
+      }));
+    mockLlmCall.mockResolvedValue({
+      object: {
+        recommendations: [],
+        questionEvaluations: [
+          { questionId: 'q1', rubric: rubric(4), feedback: 'Sufficient.' },
+          { questionId: 'q2', rubric: rubric(1), feedback: 'Revise this answer.' },
+        ],
+      },
+    });
+    const questions = [
+      {
+        id: 'q1',
+        question_text: 'Question one',
+        is_required: 1,
+        status: 'answered',
+        answer_text: 'Strong answer',
+      },
+      {
+        id: 'q2',
+        question_text: 'Question two',
+        is_required: 1,
+        status: 'answered',
+        answer_text: 'Thin answer',
+      },
+    ];
+    mockQueryAll
+      .mockResolvedValueOnce([
+        { category: 'general', status: 'answered' },
+        { category: 'general', status: 'answered' },
+      ])
+      .mockResolvedValueOnce(questions)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(questions);
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ai-rollback',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-ai-rollback',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-ai-rollback', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 2, total_questions: 2 })
+      .mockResolvedValueOnce({
+        id: 'a-ai-rollback',
+        status: 'submitted',
+        session_id: 's-ai-rollback',
+      })
+      .mockResolvedValueOnce({ id: 's-ai-rollback', status: 'submitted' });
+    mockApplyAnswerDecision
+      .mockResolvedValueOnce({
+        commandId: 'submit-command',
+        assignmentId: 'a-ai-rollback',
+        sessionId: 's-ai-rollback',
+        submissionId: 'uuid-123',
+        policyMode: 'two_stage',
+        policyVersion: 1,
+        decisions: [
+          { questionId: 'q1', answerUpdatedAt: '2026-09-13T12:00:00.000Z' },
+          { questionId: 'q2', answerUpdatedAt: '2026-09-13T12:01:00.000Z' },
+        ],
+      })
+      .mockResolvedValue({ status: 'applied', decisions: [{ id: 'transaction-only' }] });
+    mockQueryRun.mockImplementation(async (sql: unknown) => ({
+      changes:
+        String(sql).includes('UPDATE interview_assignments') &&
+        String(sql).includes("status = 'sent_back'")
+          ? 0
+          : 1,
+    }));
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockApplyAnswerDecision).toHaveBeenCalledTimes(3);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignment: expect.objectContaining({ status: 'submitted' }),
+        aiReview: null,
+        aiAnswerApproval: [],
+      })
+    );
+  });
+
+  it('submitAssignment: leaves the AI stage pending when no exact AI result is available', async () => {
+    mockReq.params.id = 'a-ai-unavailable';
+    mockLlmCall.mockRejectedValue(new Error('provider unavailable'));
+    mockQueryAll
+      .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Answered',
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Answered',
+        },
+      ]);
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ai-unavailable',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-ai-unavailable',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({
+        id: 's-ai-unavailable',
+        organization_id: 'org-1',
+        status: 'active',
+      })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 })
+      .mockResolvedValueOnce({
+        id: 'a-ai-unavailable',
+        status: 'submitted',
+        session_id: 's-ai-unavailable',
+      })
+      .mockResolvedValueOnce({ id: 's-ai-unavailable', status: 'submitted' });
+    mockApplyAnswerDecision.mockResolvedValueOnce({
+      commandId: 'submit-command',
+      assignmentId: 'a-ai-unavailable',
+      sessionId: 's-ai-unavailable',
+      submissionId: 'uuid-123',
+      policyMode: 'ai',
+      policyVersion: 1,
+      decisions: [{ questionId: 'q1', answerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+    });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockApplyAnswerDecision).toHaveBeenCalledTimes(1);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ aiReview: null, aiAnswerApproval: [] })
+    );
+  });
+
+  it.each([
+    ['missing', []],
+    [
+      'foreign',
+      [
+        {
+          questionId: 'q-foreign',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'Foreign result.',
+        },
+      ],
+    ],
+    [
+      'duplicate',
+      [
+        {
+          questionId: 'q1',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'First result.',
+        },
+        {
+          questionId: 'q1',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'Duplicate result.',
+        },
+      ],
+    ],
+  ])(
+    'submitAssignment: leaves %s provider question coverage pending without AI receipts',
+    async (_case, questionEvaluations) => {
+      mockReq.params.id = `a-ai-submit-coverage-${_case}`;
+      mockLlmCall.mockResolvedValueOnce({ object: { recommendations: [], questionEvaluations } });
+      const questions = [
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'Answer one',
+        },
+      ];
+      mockQueryAll
+        .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
+        .mockResolvedValueOnce(questions)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce(questions);
+      mockQueryOne
+        .mockResolvedValueOnce({
+          id: `a-ai-submit-coverage-${_case}`,
+          organization_id: 'org-1',
+          assignee_user_id: 'user-1',
+          session_id: `s-ai-submit-coverage-${_case}`,
+          task_id: null,
+          status: 'in_progress',
+          created_by: 'user-2',
+        })
+        .mockResolvedValueOnce({
+          id: `s-ai-submit-coverage-${_case}`,
+          organization_id: 'org-1',
+          status: 'active',
+        })
+        .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 })
+        .mockResolvedValueOnce({
+          id: `a-ai-submit-coverage-${_case}`,
+          status: 'submitted',
+          session_id: `s-ai-submit-coverage-${_case}`,
+        })
+        .mockResolvedValueOnce({
+          id: `s-ai-submit-coverage-${_case}`,
+          status: 'submitted',
+        });
+      mockApplyAnswerDecision.mockResolvedValueOnce({
+        commandId: `submit-command-${_case}`,
+        assignmentId: `a-ai-submit-coverage-${_case}`,
+        sessionId: `s-ai-submit-coverage-${_case}`,
+        submissionId: 'uuid-123',
+        policyMode: 'ai',
+        policyVersion: 1,
+        decisions: [{ questionId: 'q1', answerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+      });
+
+      const { InterviewController } =
+        await import('../../../../server/src/controllers/InterviewController.js');
+      await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+      expect(mockApplyAnswerDecision).toHaveBeenCalledTimes(1);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ aiReview: null, aiAnswerApproval: [] })
+      );
+    }
+  );
 
   // L-07 / SPEC_13 §5.1 — hard floor edge case (e):
   // AI eval failure (LLM throws) must NOT bypass the deterministic required-missing
@@ -698,6 +1185,7 @@ describe('InterviewController assignments', () => {
   });
 
   it('sendBackAssignment: reopens assignment as in_progress with feedback', async () => {
+    mockReadAnswerApprovals.mockResolvedValueOnce([]);
     mockReq.params.id = 'a4';
     mockReq.body = {
       reason: 'Add more detail',
@@ -757,6 +1245,33 @@ describe('InterviewController assignments', () => {
         }),
       })
     );
+  });
+
+  it('sendBackAssignment: refuses blanket send-back when per-answer approval receipts exist', async () => {
+    mockReq.params.id = 'a-ledger';
+    mockReq.body = { reason: 'Revise the answer' };
+    mockReq.user.role = 'ADMIN';
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ledger',
+        organization_id: 'org-1',
+        session_id: 's-ledger',
+        status: 'submitted',
+      })
+      .mockResolvedValueOnce({
+        id: 's-ledger',
+        organization_id: 'org-1',
+        status: 'submitted',
+      });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await expect(
+      InterviewController.sendBackAssignment(mockReq, mockRes, mockNext)
+    ).rejects.toMatchObject({ code: 'INTERVIEW_ANSWER_DECISION_REQUIRED', statusCode: 409 });
+    expect(
+      mockQueryRun.mock.calls.some(([sql]) => String(sql).includes("SET status = 'in_progress'"))
+    ).toBe(false);
   });
 
   it('approveAssignment: stores manager vs AI decision memory', async () => {
@@ -838,6 +1353,337 @@ describe('InterviewController assignments', () => {
     );
   });
 
+  it('approveAssignment: blocks roll-up while any frozen per-answer stage is incomplete', async () => {
+    mockReq.params.id = 'a-incomplete';
+    mockReq.user.role = 'ADMIN';
+    mockReadAnswerApprovals.mockResolvedValueOnce([
+      { questionId: 'q1', submissionId: 'submission-1', status: 'pending' },
+    ]);
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-incomplete',
+        organization_id: 'org-1',
+        session_id: 's-incomplete',
+        status: 'submitted',
+        review_decision_memory_json: '[]',
+      })
+      .mockResolvedValueOnce({
+        id: 's-incomplete',
+        organization_id: 'org-1',
+        status: 'submitted',
+        answered_questions: 1,
+        total_questions: 1,
+      });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await expect(
+      InterviewController.approveAssignment(mockReq, mockRes, mockNext)
+    ).rejects.toMatchObject({ code: 'INTERVIEW_ANSWER_APPROVAL_INCOMPLETE', statusCode: 409 });
+    expect(
+      mockQueryRun.mock.calls.some(([sql]) => String(sql).includes("SET status = 'approved'"))
+    ).toBe(false);
+  });
+
+  it('decideAnswerApprovals: rechecks manager authority under the same transaction', async () => {
+    mockReq.params.id = 'a-review';
+    mockReq.user.role = 'ADMIN';
+    mockReq.body = {
+      submissionId: 'submission-1',
+      clientRequestId: 'request-manager-1',
+      answers: [{ questionId: 'q1', expectedAnswerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+      decision: 'approved',
+    };
+    mockAssertReviewAccess.mockResolvedValue({
+      canReview: true,
+      assignmentId: 'a-review',
+      sessionId: 's-review',
+      projectId: 'p-review',
+    });
+    mockApplyAnswerDecision.mockResolvedValueOnce({
+      assignmentId: 'a-review',
+      submissionId: 'submission-1',
+      status: 'applied',
+      decisions: [{ questionId: 'q1', decision: 'approved' }],
+    });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.decideAnswerApprovals(mockReq, mockRes, mockNext);
+
+    expect(mockAssertReviewAccess).toHaveBeenCalledTimes(2);
+    expect(mockAssertReviewAccess).toHaveBeenNthCalledWith(2, mockReq.user, 'a-review', {
+      lock: true,
+      expectedSessionId: 's-review',
+      expectedProjectId: 'p-review',
+    });
+    expect(mockApplyAnswerDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: 'manager',
+        actor: { type: 'human', id: 'user-1' },
+      })
+    );
+  });
+
+  it('retryAiAnswerApprovals: returns 503 and preserves the pending stage when the provider is unavailable', async () => {
+    mockReq.params.id = 'a-ai-retry';
+    mockReq.body = { clientRequestId: 'retry-ai-1' };
+    mockLlmCall.mockRejectedValueOnce(new Error('provider unavailable'));
+    mockQueryOne.mockResolvedValueOnce({
+      id: 'a-ai-retry',
+      session_id: 's-ai-retry',
+      status: 'submitted',
+    });
+    mockReadAnswerApprovals.mockResolvedValueOnce([
+      {
+        questionId: 'q1',
+        submissionId: 'submission-ai-1',
+        answerUpdatedAt: '2026-09-13T12:00:00.000Z',
+        nextStage: 'ai',
+      },
+    ]);
+    mockQueryAll.mockResolvedValueOnce([
+      {
+        id: 'q1',
+        question_text: 'Question one',
+        status: 'answered',
+        answer_text: 'Answer one',
+      },
+    ]);
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.retryAiAnswerApprovals(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(503);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'INTERVIEW_ANSWER_AI_UNAVAILABLE',
+        messageKey: 'interview.workspace.aiAnswerReviewUnavailable',
+      })
+    );
+    expect(mockApplyAnswerDecision).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing', []],
+    [
+      'foreign',
+      [
+        {
+          questionId: 'q-foreign',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'Foreign result.',
+        },
+      ],
+    ],
+    [
+      'duplicate',
+      [
+        {
+          questionId: 'q1',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'First result.',
+        },
+        {
+          questionId: 'q1',
+          rubric: [
+            { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+            { criterion: 'evidence', score: 4, justification: 'Supported.' },
+            { criterion: 'depth', score: 4, justification: 'Detailed.' },
+            { criterion: 'measurability', score: 4, justification: 'Measured.' },
+            { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+          ],
+          feedback: 'Duplicate result.',
+        },
+      ],
+    ],
+  ])(
+    'retryAiAnswerApprovals: rejects %s provider question coverage without receipts',
+    async (_case, questionEvaluations) => {
+      mockReq.params.id = 'a-ai-retry-coverage';
+      mockReq.body = { clientRequestId: `retry-ai-coverage-${_case}` };
+      mockLlmCall.mockResolvedValueOnce({ object: { recommendations: [], questionEvaluations } });
+      mockQueryOne.mockResolvedValueOnce({
+        id: 'a-ai-retry-coverage',
+        session_id: 's-ai-retry-coverage',
+        status: 'submitted',
+      });
+      mockReadAnswerApprovals.mockResolvedValueOnce([
+        {
+          questionId: 'q1',
+          submissionId: 'submission-ai-coverage',
+          answerUpdatedAt: '2026-09-13T12:00:00.000Z',
+          nextStage: 'ai',
+        },
+      ]);
+      mockQueryAll.mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'Question one',
+          status: 'answered',
+          answer_text: 'Answer one',
+        },
+      ]);
+
+      const { InterviewController } =
+        await import('../../../../server/src/controllers/InterviewController.js');
+      await InterviewController.retryAiAnswerApprovals(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(503);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'INTERVIEW_ANSWER_AI_UNAVAILABLE',
+          messageKey: 'interview.workspace.aiAnswerReviewUnavailable',
+        })
+      );
+      expect(mockApplyAnswerDecision).not.toHaveBeenCalled();
+    }
+  );
+
+  it('retryAiAnswerApprovals: applies an exact AI verdict with resolved model provenance', async () => {
+    mockReq.params.id = 'a-ai-retry-ok';
+    mockReq.body = { clientRequestId: 'retry-ai-ok-1' };
+    mockLlmCall.mockResolvedValueOnce({
+      object: {
+        recommendations: [],
+        questionEvaluations: [
+          {
+            questionId: 'q1',
+            rubric: [
+              { criterion: 'concreteness', score: 4, justification: 'Specific.' },
+              { criterion: 'evidence', score: 4, justification: 'Supported.' },
+              { criterion: 'depth', score: 4, justification: 'Detailed.' },
+              { criterion: 'measurability', score: 4, justification: 'Measured.' },
+              { criterion: 'coherence', score: 4, justification: 'Coherent.' },
+            ],
+            feedback: 'Sufficient.',
+          },
+        ],
+      },
+    });
+    mockQueryOne.mockResolvedValueOnce({
+      id: 'a-ai-retry-ok',
+      session_id: 's-ai-retry-ok',
+      status: 'submitted',
+    });
+    mockReadAnswerApprovals
+      .mockResolvedValueOnce([
+        {
+          questionId: 'q1',
+          submissionId: 'submission-ai-ok',
+          answerUpdatedAt: '2026-09-13T12:00:00.000Z',
+          nextStage: 'ai',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          questionId: 'q1',
+          submissionId: 'submission-ai-ok',
+          nextStage: null,
+          status: 'stages_complete',
+        },
+      ]);
+    mockQueryAll.mockResolvedValueOnce([
+      {
+        id: 'q1',
+        question_text: 'Question one',
+        status: 'answered',
+        answer_text: 'Answer one',
+      },
+    ]);
+    mockApplyAnswerDecision.mockResolvedValueOnce({ status: 'applied', decisions: [] });
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.retryAiAnswerApprovals(mockReq, mockRes, mockNext);
+
+    expect(mockApplyAnswerDecision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: 'ai',
+        decision: 'approved',
+        actor: { type: 'ai', id: expect.stringContaining('interview-rubric:') },
+        metadata: expect.objectContaining({
+          modelId: 'test-interview-model',
+          providerId: 'test-provider',
+        }),
+      })
+    );
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignmentId: 'a-ai-retry-ok',
+        approvals: [expect.objectContaining({ status: 'stages_complete' })],
+      })
+    );
+  });
+
+  it('getAnswerApprovals: redacts decision actor identity for the respondent', async () => {
+    mockReq.params.id = 'a-own';
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-own',
+        assignee_user_id: 'user-1',
+        created_by: 'manager-1',
+        session_id: 's-own',
+      })
+      .mockResolvedValueOnce(null);
+    mockReadAnswerApprovals.mockResolvedValueOnce([
+      {
+        questionId: 'q1',
+        submissionId: 'submission-1',
+        status: 'sent_back',
+        actor: { type: 'human', id: 'manager-secret' },
+      },
+    ]);
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.getAnswerApprovals(mockReq, mockRes, mockNext);
+
+    expect(mockAssertReviewAccess).not.toHaveBeenCalled();
+    expect(mockRes.json).toHaveBeenCalledWith({
+      assignmentId: 'a-own',
+      approvals: [expect.objectContaining({ questionId: 'q1', actor: null })],
+    });
+  });
+
+  it('getAnswerApprovals: requires review access for the assignment creator who is not a respondent', async () => {
+    mockReq.params.id = 'a-created';
+    mockReq.user.id = 'creator-1';
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-created',
+        assignee_user_id: 'respondent-1',
+        session_id: 's-created',
+      })
+      .mockResolvedValueOnce(null);
+    mockAssertReviewAccess.mockRejectedValueOnce(
+      Object.assign(new Error('Forbidden'), {
+        code: 'INTERVIEW_REVIEW_FORBIDDEN',
+        statusCode: 403,
+      })
+    );
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await expect(
+      InterviewController.getAnswerApprovals(mockReq, mockRes, mockNext)
+    ).rejects.toMatchObject({ code: 'INTERVIEW_REVIEW_FORBIDDEN' });
+    expect(mockReadAnswerApprovals).not.toHaveBeenCalled();
+  });
+
   it.each(['submitted', 'completed'])(
     'updateQuestion: rejects edits when session is %s',
     async (sessionStatus) => {
@@ -848,18 +1694,27 @@ describe('InterviewController assignments', () => {
         expectedUpdatedAt: '2026-08-22T20:00:00.000Z',
       };
 
-      mockQueryOne.mockResolvedValueOnce({
-        session_id: 's1',
-        session_status: sessionStatus,
-        owner_id: 'user-1',
-      });
+      mockQueryAll.mockResolvedValueOnce([]);
+      mockQueryOne
+        .mockResolvedValueOnce({ session_id: 's1' })
+        .mockResolvedValueOnce({ assignment_id: null })
+        .mockResolvedValueOnce({
+          id: 's1',
+          assignment_id: null,
+          status: sessionStatus,
+          owner_id: 'user-1',
+        })
+        .mockResolvedValueOnce({ session_id: 's1' });
 
       const { InterviewController } =
         await import('../../../../server/src/controllers/InterviewController.js');
       await InterviewController.updateQuestion(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Session is locked' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Session is locked',
+        code: 'INTERVIEW_SESSION_LOCKED',
+      });
       expect(
         mockQueryRun.mock.calls.some(
           (call) =>
@@ -869,6 +1724,52 @@ describe('InterviewController assignments', () => {
       ).toBe(false);
     }
   );
+
+  it('updateQuestion: blocks edits to an approved sibling while another answer is returned', async () => {
+    mockReq.params.questionId = 'q-approved';
+    mockReq.body = {
+      answerText: 'Changed after approval',
+      status: 'answered',
+      expectedUpdatedAt: '2026-08-22T20:00:00.000Z',
+    };
+    mockQueryAll.mockResolvedValueOnce([
+      { id: 'a-returned', session_id: 's-returned', status: 'sent_back' },
+    ]);
+    mockQueryOne
+      .mockResolvedValueOnce({ session_id: 's-returned' })
+      .mockResolvedValueOnce({ assignment_id: 'a-returned' })
+      .mockResolvedValueOnce({
+        id: 's-returned',
+        assignment_id: 'a-returned',
+        status: 'active',
+        owner_id: 'user-1',
+      })
+      .mockResolvedValueOnce({ session_id: 's-returned' });
+    mockReadAnswerApprovals.mockResolvedValueOnce([
+      {
+        questionId: 'q-returned',
+        status: 'sent_back',
+      },
+      {
+        questionId: 'q-approved',
+        status: 'stages_complete',
+      },
+    ]);
+
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.updateQuestion(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(409);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'INTERVIEW_ANSWER_REVISION_NOT_RETURNED' })
+    );
+    expect(
+      mockQueryRun.mock.calls.some(([sql]) =>
+        String(sql).toLowerCase().includes('update interview_questions')
+      )
+    ).toBe(false);
+  });
 
   it('updateSession: allows status-only completion updates for ad-hoc sessions', async () => {
     mockReq.params.id = 's-ad-hoc';

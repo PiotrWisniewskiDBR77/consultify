@@ -18,6 +18,9 @@ const mockGetOverdueAssignments = vi.fn();
 const mockResolveInterviewManagerScope = vi.fn();
 const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
+const mockGetAnswerApprovals = vi.fn();
+const mockRetryAiAnswerApprovals = vi.fn();
+const mockDecideAnswerApprovals = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
@@ -43,6 +46,9 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
   InterviewController: {
     startAssignment: (...args: unknown[]) => mockStartAssignment(...args),
     submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
+    getAnswerApprovals: (...args: unknown[]) => mockGetAnswerApprovals(...args),
+    retryAiAnswerApprovals: (...args: unknown[]) => mockRetryAiAnswerApprovals(...args),
+    decideAnswerApprovals: (...args: unknown[]) => mockDecideAnswerApprovals(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
@@ -588,6 +594,79 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.completenessPercent).toBe(50);
     expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockSubmitAssignment).toHaveBeenCalled();
+  });
+
+  it('GET /api/v8/interview/assignments/:id/answer-approvals exposes the controller projection in the V8 envelope', async () => {
+    mockGetAnswerApprovals.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        assignmentId: req.params.id,
+        approvals: [{ questionId: 'question-1', status: 'pending', nextStage: 'manager' }],
+      });
+    });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/assignments/asg-approval/answer-approvals')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      assignmentId: 'asg-approval',
+      approvals: [{ questionId: 'question-1', status: 'pending', nextStage: 'manager' }],
+    });
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
+    expect(mockGetAnswerApprovals).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST /api/v8/interview/assignments/:id/answer-decisions reaches the shared guarded controller', async () => {
+    mockDecideAnswerApprovals.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        assignmentId: req.params.id,
+        submissionId: req.body.submissionId,
+        decisions: [{ questionId: req.body.answers[0].questionId, decision: req.body.decision }],
+      });
+    });
+    const body = {
+      submissionId: 'submission-1',
+      clientRequestId: 'request-1',
+      answers: [{ questionId: 'question-1', expectedAnswerUpdatedAt: '2026-09-13T12:00:00.000Z' }],
+      decision: 'approved',
+    };
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-approval/answer-decisions')
+      .set('Authorization', 'Bearer x')
+      .send(body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      assignmentId: 'asg-approval',
+      submissionId: 'submission-1',
+      decisions: [{ questionId: 'question-1', decision: 'approved' }],
+    });
+    expect(mockDecideAnswerApprovals).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST /api/v8/interview/assignments/:id/answer-approvals/retry-ai reaches the guarded retry controller', async () => {
+    mockRetryAiAnswerApprovals.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        assignmentId: req.params.id,
+        approvals: [{ questionId: 'question-1', nextStage: 'manager' }],
+        idempotentReplay: false,
+      });
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-approval/answer-approvals/retry-ai')
+      .set('Authorization', 'Bearer x')
+      .send({ clientRequestId: 'retry-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      assignmentId: 'asg-approval',
+      approvals: [{ questionId: 'question-1', nextStage: 'manager' }],
+      idempotentReplay: false,
+    });
+    expect(mockRetryAiAnswerApprovals).toHaveBeenCalledTimes(1);
   });
 
   it('POST /api/v8/interview/assignments/:id/remind wraps response in V8 envelope', async () => {

@@ -30,6 +30,7 @@ interface InterviewAnswerDecisionCommandBase {
   metadata?: {
     modelId?: string;
     modelVersion?: string;
+    providerId?: string;
     promptVersion?: string;
     score?: number;
   };
@@ -139,6 +140,7 @@ interface ExistingDecisionRow {
   id: string;
   assignment_id: string;
   question_id: string;
+  submission_id: string;
   answer_updated_at: unknown;
   answer_digest: string;
   ordinal: number | string;
@@ -199,6 +201,21 @@ function answerSnapshot(
   assignment: LockedAssignmentRow,
   evidenceRows: readonly EvidenceRow[]
 ): JsonObject {
+  let answerPayload: JsonObject = {};
+  if (
+    row.answer_payload !== null &&
+    row.answer_payload !== undefined &&
+    row.answer_payload !== ''
+  ) {
+    const parsed = parseObject(row.answer_payload);
+    if (!parsed) {
+      throw new InterviewAnswerDecisionCommandError(
+        'COMMAND_INVALID',
+        `Answer payload is invalid for question ${row.id}`
+      );
+    }
+    answerPayload = parsed;
+  }
   return {
     schemaVersion: 1,
     questionId: row.id,
@@ -210,7 +227,7 @@ function answerSnapshot(
     answerType: row.answer_type,
     answerText: row.answer_text,
     answerMode: row.answer_mode,
-    answerPayload: parseObject(row.answer_payload) ?? {},
+    answerPayload,
     contextNote: row.context_note,
     voiceTranscript: row.voice_transcript,
     voiceTranscriptStatus: row.voice_transcript_status,
@@ -390,7 +407,8 @@ function assertCommandShape(input: ApplyInterviewAnswerDecisionCommandInput): vo
   }
   if (
     Object.entries(input.metadata ?? {}).some(([key, value]) => {
-      if (!['modelId', 'modelVersion', 'promptVersion', 'score'].includes(key)) return true;
+      if (!['modelId', 'modelVersion', 'providerId', 'promptVersion', 'score'].includes(key))
+        return true;
       if (key === 'score') return typeof value !== 'number' || !Number.isFinite(value);
       return typeof value !== 'string' || value.length === 0 || value.length > 200;
     })
@@ -400,7 +418,33 @@ function assertCommandShape(input: ApplyInterviewAnswerDecisionCommandInput): vo
       'Decision provenance metadata is invalid'
     );
   }
-  if (input.commandType === 'submit') return;
+  if (input.commandType === 'submit') {
+    if (input.actor.type !== 'human') {
+      throw new InterviewAnswerDecisionCommandError(
+        'COMMAND_INVALID',
+        'Interview answer submission requires a human respondent actor'
+      );
+    }
+    return;
+  }
+  if (input.stage === 'manager' && input.actor.type !== 'human') {
+    throw new InterviewAnswerDecisionCommandError(
+      'COMMAND_INVALID',
+      'Manager answer decisions require a human actor'
+    );
+  }
+  if (
+    input.stage === 'ai' &&
+    (input.actor.type !== 'ai' ||
+      !nonBlank(input.metadata?.modelId) ||
+      !nonBlank(input.metadata?.providerId) ||
+      !nonBlank(input.metadata?.promptVersion))
+  ) {
+    throw new InterviewAnswerDecisionCommandError(
+      'COMMAND_INVALID',
+      'AI answer decisions require an AI actor and model and prompt provenance'
+    );
+  }
   const ids = input.answers.map((answer) => answer.questionId);
   if (ids.some((id) => !nonBlank(id)) || new Set(ids).size !== ids.length) {
     throw new InterviewAnswerDecisionCommandError(
@@ -522,6 +566,8 @@ export async function applyInterviewAnswerDecisionCommand(
          FROM interview_evidence
          WHERE organization_id = ? AND session_id = ?
            AND question_id IN (${questionRows.map(() => '?').join(', ')})
+           AND COALESCE(evidence_role, 'supporting') NOT IN
+             ('answer_text', 'voice_transcript', 'context_note')
          ORDER BY question_id, created_at, id`,
         [input.organizationId, input.sessionId, ...questionRows.map((row) => row.id)]
       );
@@ -547,7 +593,7 @@ export async function applyInterviewAnswerDecisionCommand(
       }
 
       const existingDecisions = await queryHelpers.queryAll<ExistingDecisionRow>(
-        `SELECT id, assignment_id, question_id, answer_updated_at, answer_digest,
+        `SELECT id, assignment_id, question_id, submission_id, answer_updated_at, answer_digest,
                 ordinal, event_type, stage, decision, policy_mode,
                 policy_version, policy_snapshot_json
        FROM interview_answer_decisions
@@ -561,14 +607,65 @@ export async function applyInterviewAnswerDecisionCommand(
           'Submission identity belongs to another Interview assignment'
         );
       }
-      let policy: ResolvedInterviewAnswerApprovalPolicy;
-      if (input.commandType === 'submit') {
-        if (existingDecisions.length > 0) {
+      if (input.commandType === 'submit' && existingDecisions.length > 0) {
+        throw new InterviewAnswerDecisionCommandError(
+          'SUBMISSION_CONFLICT',
+          'Submission identity has already been used'
+        );
+      }
+      let commandQuestionRows = questionRows;
+      if (input.commandType === 'submit' && assignmentStatus === 'sent_back') {
+        const priorRows = await queryHelpers.queryAll<ExistingDecisionRow>(
+          `SELECT d.id, d.assignment_id, d.question_id, d.submission_id,
+                  d.answer_updated_at, d.answer_digest, d.ordinal, d.event_type,
+                  d.stage, d.decision, d.policy_mode, d.policy_version,
+                  d.policy_snapshot_json, c.assignment_sequence
+           FROM interview_answer_decisions d
+           JOIN interview_answer_decision_commands c
+             ON c.organization_id = d.organization_id AND c.id = d.command_id
+           WHERE d.organization_id = ? AND d.assignment_id = ?
+           ORDER BY c.assignment_sequence, d.ordinal, d.id`,
+          [input.organizationId, input.assignmentId]
+        );
+        commandQuestionRows = questionRows.filter((row) => {
+          const submitted = priorRows
+            .filter(
+              (candidate) =>
+                candidate.question_id === row.id && candidate.event_type === 'submitted'
+            )
+            .sort(
+              (left, right) =>
+                Number(left.assignment_sequence) - Number(right.assignment_sequence) ||
+                Number(left.ordinal) - Number(right.ordinal) ||
+                left.id.localeCompare(right.id)
+            )
+            .at(-1);
+          if (!submitted) return false;
+          const revisionRows = priorRows.filter(
+            (candidate) =>
+              candidate.question_id === row.id &&
+              candidate.submission_id === submitted.submission_id
+          );
+          const wasSentBack = revisionRows.some((candidate) => candidate.decision === 'sent_back');
+          if (!wasSentBack) return false;
+          const currentDigest = digest(answerSnapshot(row, lockedAssignment, evidenceRows));
+          if (currentDigest === submitted.answer_digest) {
+            throw new InterviewAnswerDecisionCommandError(
+              'SUBMISSION_SENT_BACK',
+              `Question ${row.id} must be edited before resubmission`
+            );
+          }
+          return true;
+        });
+        if (commandQuestionRows.length === 0) {
           throw new InterviewAnswerDecisionCommandError(
-            'SUBMISSION_CONFLICT',
-            'Submission identity has already been used'
+            'SUBMISSION_SENT_BACK',
+            'No returned answer has a changed revision to resubmit'
           );
         }
+      }
+      let policy: ResolvedInterviewAnswerApprovalPolicy;
+      if (input.commandType === 'submit') {
         const organizationPolicy = await queryHelpers.queryOne<{ policy: unknown }>(
           `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
           [input.organizationId]
@@ -703,7 +800,7 @@ export async function applyInterviewAnswerDecisionCommand(
       const firstOrdinal =
         existingDecisions.reduce((max, row) => Math.max(max, Number(row.ordinal) || 0), 0) + 1;
       const eventType = eventTypeFor(input);
-      const receipts = questionRows.map((row, index): InterviewAnswerDecisionReceipt => {
+      const receipts = commandQuestionRows.map((row, index): InterviewAnswerDecisionReceipt => {
         const answerUpdatedAt = instant(row.updated_at);
         if (!answerUpdatedAt) {
           throw new InterviewAnswerDecisionCommandError(
@@ -768,7 +865,7 @@ export async function applyInterviewAnswerDecisionCommand(
       );
 
       for (const [index, receipt] of receipts.entries()) {
-        const row = questionRows[index];
+        const row = commandQuestionRows[index];
         if (!row) {
           throw new InterviewAnswerDecisionCommandError(
             'ANSWER_REVISION_CONFLICT',
