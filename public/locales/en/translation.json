@@ -8379,6 +8379,7 @@
       "interviewCompleted": "Interview completed!",
       "requiredAnswer": "Required answer",
       "cannotSubmitCompleteTheRequired": "Cannot submit: complete the required answers.",
+      "aiAnswerReviewUnavailable": "AI answer review is temporarily unavailable. Try again.",
       "failedToSubmit": "Failed to submit",
       "interviewSentBackForRevision": "Interview sent back for revision.",
       "failedToSendBack": "Failed to send back.",

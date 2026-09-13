@@ -370,7 +370,12 @@ describe('Interview answer decision service', () => {
           clientRequestId: 'request-ai',
           stage: 'ai',
           actor: { type: 'ai', id: 'model-run-1' },
-          metadata: { modelId: 'model-1', modelVersion: '1', promptVersion: 'p1', score: 0.9 },
+          metadata: {
+            modelId: 'model-1',
+            providerId: 'test-provider',
+            promptVersion: 'p1',
+            score: 0.9,
+          },
         })
       )
     ).resolves.toMatchObject({ policyMode: 'two_stage', policyVersion: 1 });
@@ -408,6 +413,7 @@ describe('Interview answer decision service', () => {
           clientRequestId: 'request-q2-ai',
           stage: 'ai',
           actor: { type: 'ai', id: 'model-run-2' },
+          metadata: { modelId: 'model-2', providerId: 'test-provider', promptVersion: 'p1' },
         })
       )
     ).resolves.toMatchObject({
@@ -448,6 +454,105 @@ describe('Interview answer decision service', () => {
         })
       )
     ).resolves.toMatchObject({ submissionId: 'submission-2' });
+  });
+
+  it('resubmits only a changed returned answer and preserves an unchanged completed answer', async () => {
+    await submit('manager');
+    await applyInterviewAnswerDecisionCommand(
+      decisionInput(['question-a'], {
+        clientRequestId: 'request-return-a',
+        decision: 'sent_back',
+        reason: 'Add a concrete example',
+      })
+    );
+    await applyInterviewAnswerDecisionCommand(
+      decisionInput(['question-b'], { clientRequestId: 'request-approve-b' })
+    );
+    const completedB = await readInterviewAnswerApprovalProjection({
+      organizationId: 'org-1',
+      assignmentId: 'assignment-1',
+    });
+    expect(completedB.find((row) => row.questionId === 'question-b')).toMatchObject({
+      submissionId: 'submission-1',
+      status: 'stages_complete',
+    });
+
+    database.questions[0] = {
+      ...database.questions[0],
+      answer_text: 'Answer question-a with a concrete example',
+      updated_at: new Date('2026-09-13T12:08:00.000Z'),
+    };
+    if (database.assignment) database.assignment.status = 'sent_back';
+    const resubmitted = await applyInterviewAnswerDecisionCommand(
+      submissionInput({ submissionId: 'submission-2', clientRequestId: 'request-resubmit-a' })
+    );
+    expect(resubmitted.decisions.map((row) => row.questionId)).toEqual(['question-a']);
+
+    const projection = await readInterviewAnswerApprovalProjection({
+      organizationId: 'org-1',
+      assignmentId: 'assignment-1',
+    });
+    expect(projection).toEqual([
+      expect.objectContaining({
+        questionId: 'question-a',
+        submissionId: 'submission-2',
+        status: 'pending',
+      }),
+      expect.objectContaining({
+        questionId: 'question-b',
+        submissionId: 'submission-1',
+        status: 'stages_complete',
+      }),
+    ]);
+  });
+
+  it('fails closed for actor-stage mismatches, missing AI provenance and malformed answer payload', async () => {
+    await expect(
+      applyInterviewAnswerDecisionCommand(
+        submissionInput({ actor: { type: 'system', id: 'scheduler' } })
+      )
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    expect(mocks.queryRun).not.toHaveBeenCalled();
+
+    await submit('two_stage');
+    await expect(
+      applyInterviewAnswerDecisionCommand(
+        decisionInput(['question-a'], {
+          clientRequestId: 'request-ai-human',
+          stage: 'ai',
+          actor: { type: 'human', id: 'manager-1' },
+          metadata: { modelId: 'model', providerId: 'test-provider', promptVersion: 'p1' },
+        })
+      )
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    await expect(
+      applyInterviewAnswerDecisionCommand(
+        decisionInput(['question-a'], {
+          clientRequestId: 'request-ai-no-provenance',
+          stage: 'ai',
+          actor: { type: 'ai', id: 'model-run' },
+        })
+      )
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    await expect(
+      applyInterviewAnswerDecisionCommand(
+        decisionInput(['question-a'], {
+          clientRequestId: 'request-manager-ai',
+          actor: { type: 'ai', id: 'model-run' },
+        })
+      )
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+
+    database.decisions = [];
+    database.commands.clear();
+    if (database.assignment) database.assignment.status = 'in_progress';
+    database.questions[0] = { ...database.questions[0], answer_payload: '{' };
+    await expect(
+      applyInterviewAnswerDecisionCommand(
+        submissionInput({ submissionId: 'malformed', clientRequestId: 'request-malformed' })
+      )
+    ).rejects.toMatchObject({ code: 'COMMAND_INVALID' });
+    expect(database.commands.size).toBe(0);
   });
 
   it('rejects manager-before-AI, duplicate submission IDs and cross-assignment reuse', async () => {
@@ -541,11 +646,18 @@ describe('Interview answer decision service', () => {
     )?.[0];
     expect(projectionSql).not.toContain('answer_snapshot_json');
 
-    database.questions = database.questions.map((row, index) => ({
-      ...row,
-      answer_text: `${String(row.answer_text)} revised`,
-      updated_at: new Date(`2026-09-13T12:1${index}:00.000Z`),
-    }));
+    await applyInterviewAnswerDecisionCommand(
+      decisionInput(['question-b'], {
+        clientRequestId: 'request-return-b',
+        decision: 'sent_back',
+        reason: 'Clarify the result',
+      })
+    );
+    database.questions[1] = {
+      ...database.questions[1],
+      answer_text: `${String(database.questions[1]?.answer_text)} revised`,
+      updated_at: new Date('2026-09-13T12:11:00.000Z'),
+    };
     if (database.assignment) database.assignment.status = 'sent_back';
     await applyInterviewAnswerDecisionCommand(
       submissionInput({ submissionId: 'submission-2', clientRequestId: 'request-submit-2' })
@@ -557,9 +669,9 @@ describe('Interview answer decision service', () => {
     expect(superseding).toEqual([
       expect.objectContaining({
         questionId: 'question-a',
-        submissionId: 'submission-2',
-        status: 'pending',
-        nextStage: 'manager',
+        submissionId: 'submission-1',
+        status: 'stages_complete',
+        nextStage: null,
       }),
       expect.objectContaining({
         questionId: 'question-b',
