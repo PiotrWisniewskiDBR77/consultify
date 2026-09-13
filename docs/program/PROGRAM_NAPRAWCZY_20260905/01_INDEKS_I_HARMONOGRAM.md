@@ -21,6 +21,10 @@ HOLD) i `codex/zatwierdzanie-inicjatyw-20260913` (+1, DEC-474 → fala 2). Codex
 skrzynki Z-1..Z-3 (jego baza była 11 commitów za linią) — dowodu parytetu flag OFF nie ma; robi go
 agent nadzorcy. **Dysk: 1,3 GB wolne** (pomiar 13.09), nie 35 GB jak w poprzednim wpisie rejestru.
 
+**DEC-489 (właściciel, P8):** zatwierdzenia = **rozszerzenie istniejącego silnika** (bramki, poziomy, quorum, delegacje); role projektu z PMO stają się źródłem, z którego silnik wylicza zatwierdzających; bez nowego kontraktu od zera.
+
+**DEC-490 (właściciel, P9):** statusy inicjatyw = **12 etapów silnika runtime jako jedyna prawda**; 7 etykiet legacy wygaszane (jednorazowe przemapowanie z zachowaniem informacji); „Done/Delivered” osobno od „Closed”; „Rejected” znika jako status — to rozstrzygnięcie z powodem (DEC-479); każdy status ma jedno zdanie „co robi” i listę dozwolonych przejść. Seria pytań fali 2 zamknięta 9/9 (DEC-482…490).
+
 **DEC-482 (właściciel, 13.09, rozmowa pytanie po pytaniu, P1):** pierwszy kupujący fali 2 = **partner Big3 kupujący dla swoich zespołów** (A; wbrew rekomendacji CTO „C”). Konsekwencja: pakiet zaufania enterprise jest warunkiem pierwszej rozmowy.
 
 **DEC-483 (właściciel, P2):** pakiet enterprise **teraz**, jako trzeci równoległy tor Codexa (obok F2-1 i PMO): SSO (zostaje w planie po dwóch zmianach zdania), pełny eksport organizacji, audyt każdej decyzji AI, SOC 2 jako proces. Języki w fali 2: **tylko niemiecki** obok PL/EN. Agent z klockami i Spotkania przesuwają się o kilka tygodni.
