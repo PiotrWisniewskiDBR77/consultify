@@ -260,6 +260,7 @@ import {
 } from './sections/initiativeCardContract';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import { ResourcesSection } from './sections/ResourcesSection';
+import { TasksMilestonesSection } from './sections/TasksMilestonesSection';
 import type {
   Decision,
   GateReadinessCheck,
@@ -398,11 +399,33 @@ export function getInitiativePersistedSectionKey(
  */
 type SectionAiContract = { ai: true } | { none: true; reason: string };
 
+const NATIVE_MILESTONES_SECTION_TYPE: SectionTypeInfo = {
+  id: 'milestones',
+  key: 'milestones',
+  name: 'Milestones',
+  namePl: 'Kamienie milowe',
+  description: null,
+  descriptionPl: null,
+  category: 'content',
+  columnPosition: 'left',
+  defaultOrder: 0,
+  icon: null,
+  iconColor: null,
+  iconBg: null,
+  componentKey: 'TasksMilestonesSection',
+  isSystem: true,
+  isActive: true,
+};
+
 const SECTION_AI_CONTRACT: Record<string, SectionAiContract> = {
   // ── Kontrakt realny (13) — sekcje z generatorem w runSectionAi ─────────────
   'initiative-definition': { ai: true }, // Overview + Problem Definition (scope card)
   'target-state-scope': { ai: true }, // Target State & Success + Scope & Kill Criteria
   tasks: { ai: true }, // Tasks & Milestones
+  milestones: {
+    none: true,
+    reason: 'kamienie milowe pochodzą z rejestru milestone, bez generatora',
+  },
   decisions: { ai: true }, // Decisions
   'risk-raid': { ai: true }, // RAID Log
   gates: { ai: true }, // Gates (readiness)
@@ -5718,6 +5741,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
+        id: 'milestones',
+        icon: Flag,
+        label: { en: 'Milestones', pl: 'Kamienie milowe' },
+        component: null,
+      },
+      {
         id: 'decisions',
         icon: Scale,
         label: { en: 'Decisions', pl: 'Decyzje' },
@@ -5914,6 +5943,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // 0 — Zakres i plan / Scope & Plan
       'initiative-definition': 0,
       tasks: 0,
+      milestones: 0,
       timeline: 0,
       'deliverables-milestones': 0,
       dependencies: 0,
@@ -5966,12 +5996,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ),
     }));
 
+    const availableContractSections = wybierzDostepneSekcjeBoarduInicjatywy(
+      contractSections,
+      enabledNModeSectionIds,
+      initiativeSectionsCompleteEnabled
+    );
+    const milestonesSection = sectionPresentation.find((section) => section.id === 'milestones');
     return withGroup(
-      wybierzDostepneSekcjeBoarduInicjatywy(
-        contractSections,
-        enabledNModeSectionIds,
-        initiativeSectionsCompleteEnabled
-      )
+      isRuntimeOnlyRecord && milestonesSection
+        ? [...availableContractSections, milestonesSection]
+        : availableContractSections
     );
   }, [
     isPolish,
@@ -5990,6 +6024,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     enabledNModeSectionIds,
     initiativeSectionsCompleteEnabled,
     pendingSuggestedChangesCount,
+    isRuntimeOnlyRecord,
   ]);
 
   // ==========================================
@@ -7839,13 +7874,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'tasks': {
-          const TasksComp = SECTION_REGISTRY['tasks'];
           const tasksST = [...leftSections, ...rightSections].find((s) => s.key === 'tasks');
           component = (
             <div className="space-y-6">
               {/* Tasks section */}
-              {tasksST && TasksComp && (
-                <TasksComp sectionType={tasksST} expanded={true} onToggle={() => {}} />
+              {tasksST && (
+                <TasksMilestonesSection
+                  sectionType={tasksST}
+                  expanded={true}
+                  onToggle={() => {}}
+                  presentation={isRuntimeOnlyRecord ? 'tasks' : 'combined'}
+                  readonly={!canEditCards}
+                />
               )}
               {/* Effort Profile */}
               {initiative?.effortProfile && (
@@ -7875,6 +7915,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               )}
             </div>
+          );
+          break;
+        }
+
+        case 'milestones': {
+          const tasksST = [...leftSections, ...rightSections].find((s) => s.key === 'tasks');
+          component = (
+            <TasksMilestonesSection
+              sectionType={tasksST || NATIVE_MILESTONES_SECTION_TYPE}
+              expanded={true}
+              onToggle={() => {}}
+              presentation="milestones"
+              readonly={!canEditCards}
+            />
           );
           break;
         }
@@ -9434,7 +9488,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // długiem kontraktu (renderuje się dalej, na końcu listy — nie znika).
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    const poza = sekcjeBoarduPozaKontraktem(nModeSectionsWithContent.map((s) => s.id));
+    const poza = sekcjeBoarduPozaKontraktem(
+      nModeSectionsWithContent.filter((section) => section.id !== 'milestones').map((s) => s.id)
+    );
     if (poza.length > 0) {
       // eslint-disable-next-line no-console
       console.warn(
@@ -9455,15 +9511,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // i w teście kompletności). Wyprowadzenie, nie ziarno stanu: ziarno
         // przegrywało wyścig z efektem czytającym localStorage.
         if (!true) return nModeSectionsWithContent;
-        const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(
-          nModeSectionsWithContent.map((s) => s.id)
+        // `milestones` is a native owner adapter for the canonical 26-card view,
+        // outside the legacy 24-section board ordering contract.
+        const legacyBoardSections = nModeSectionsWithContent.filter(
+          (section) => section.id !== 'milestones'
         );
+        const nativeMilestonesSection = nModeSectionsWithContent.find(
+          (section) => section.id === 'milestones'
+        );
+        const kolejnosc = uporzadkujSekcjeBoarduInicjatywy(legacyBoardSections.map((s) => s.id));
         const wgId = new Map(nModeSectionsWithContent.map((s) => [s.id, s]));
         const wynik = kolejnosc
           .map((id) => wgId.get(id))
           .filter((s): s is NModeSection => Boolean(s));
-        return wynik.length === nModeSectionsWithContent.length
-          ? wynik
+        return wynik.length === legacyBoardSections.length
+          ? nativeMilestonesSection
+            ? [...wynik, nativeMilestonesSection]
+            : wynik
           : nModeSectionsWithContent;
       }
 

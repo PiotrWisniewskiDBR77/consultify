@@ -84,7 +84,7 @@ vi.mock('@/services/initiativeWriteTruth', () => ({
 vi.mock('@/services/api', () => ({
   API_URL: '/api',
   getHeaders: () => ({}),
-  Api: new Proxy({}, { get: () => async (path: unknown) => String(path).endsWith('/cards') ? {initiativeVersion:1,cards:[]} : String(path).endsWith('/gates/definition/readiness') ? {readiness:'BLOCKED',findings:[]} : [] }),
+  Api: new Proxy({}, { get: () => async (path: unknown) => String(path).endsWith('/cards') ? {initiativeVersion:1,cards:[]} : String(path).endsWith('/gates/definition/readiness') ? {readiness:'BLOCKED',findings:[]} : String(path).endsWith('/milestones') ? {milestones:[{id:'ms-native-1',name:'Native milestone row',targetDate:'2026-10-01',status:'PENDING'}]} : String(path).startsWith('/tasks?') ? [{id:'task-native-1',title:'Native task row',status:'todo',priority:'medium',source:'manual'}] : [] }),
 }));
 vi.mock('@/services/initiatives-execution/definitionApprovalApi', () => ({
  readDefinitionApproval: async () => ({enabled:true, actorId:'u-1', initiativeId:fixture.record.id, lifecycleState:'REGISTERED_DRAFT', capabilities:{edit:false,review:false,request:false,decide:false}, participants:[],authorities:[],decision:null}),
@@ -131,4 +131,75 @@ it('opens the requested card when the same document mount switches to another in
   await waitFor(() => expect(screen.getByRole('heading', {name:'Definition approval'})).toBeVisible());
   expect(new URL(window.location.href).searchParams.get('card')).toBe('gates-approvals');
   expect(fixture.write).not.toHaveBeenCalled(); expect(fixture.amend).not.toHaveBeenCalled();
+});
+
+it('switches native Tasks and Milestones in the mounted document even without a template task section', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  Object.assign(fixture.record, {documentOrigin:'initiatives-runtime-v1', canonicalVersion:1, status:'DRAFT', name:'Milestone split initiative'});
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  const search = `?mode=doc&open=${fixture.record.id}&card=milestones&return=preparation`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location,{href:`http://localhost:3000/initiatives${search}`,search});
+  const historySpy = vi.spyOn(window.history, 'replaceState');
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} />);
+  await waitFor(() => expect(screen.getAllByRole('heading', {name:'Milestones'}).at(-1)).toBeVisible());
+  await waitFor(() => expect(screen.getAllByText('Native milestone row').at(-1)).toBeVisible());
+  expect(new URL(window.location.href).searchParams.get('card')).toBe('milestones');
+  const tasksNav = document.querySelector<HTMLButtonElement>('[data-nmode-section-item="tasks"]');
+  expect(tasksNav).toBeTruthy();
+  historySpy.mockClear();
+  fireEvent.click(tasksNav!);
+  await waitFor(() => expect(historySpy.mock.calls.some(call => String(call[2]).includes('card=tasks'))).toBe(true));
+  await waitFor(() => expect(screen.getAllByRole('heading', {name:'Tasks'}).at(-1)).toBeVisible());
+  expect(await screen.findByText('Native task row')).toBeVisible();
+  expect(screen.queryByText('Native milestone row')).not.toBeInTheDocument();
+  const milestonesNav = document.querySelector<HTMLButtonElement>('[data-nmode-section-item="milestones"]');
+  expect(milestonesNav).toBeTruthy();
+  historySpy.mockClear();
+  fireEvent.click(milestonesNav!);
+  await waitFor(() => expect(historySpy.mock.calls.some(call => String(call[2]).includes('card=milestones'))).toBe(true));
+  await waitFor(() => expect(screen.getAllByText('Native milestone row').at(-1)).toBeVisible());
+  expect(screen.queryByText('Native task row')).not.toBeInTheDocument();
+  expect(fixture.write).not.toHaveBeenCalled(); expect(fixture.amend).not.toHaveBeenCalled();
+});
+
+it('does not expose the native milestone writer in the actual document Preview mode', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  Object.assign(fixture.record, {
+    id:'33333333-3333-4333-8333-333333333333',
+    documentOrigin:'initiatives-runtime-v1',
+    canonicalVersion:1,
+    status:'CLOSED',
+    name:'Read-only milestone initiative'
+  });
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  const search = `?mode=doc&open=${fixture.record.id}&card=milestones&return=preparation`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location,{href:`http://localhost:3000/initiatives${search}`,search});
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} />);
+  await waitFor(() => expect(screen.getAllByText('Native milestone row').at(-1)).toBeVisible());
+  await waitFor(() => expect(screen.queryByText('Add milestone')).not.toBeInTheDocument());
+  expect(fixture.write).not.toHaveBeenCalled();
+  expect(fixture.amend).not.toHaveBeenCalled();
+});
+
+it('keeps the legacy mounted Tasks and Milestones card combined', async () => {
+  localStorage.clear(); fixture.read.mockReset(); fixture.write.mockClear(); fixture.amend.mockClear();
+  Object.assign(fixture.record, {
+    id:'44444444-4444-4444-8444-444444444444',
+    documentOrigin:undefined,
+    canonicalVersion:undefined,
+    status:'DRAFT',
+    name:'Legacy combined initiative'
+  });
+  fixture.read.mockImplementation(async () => ({...fixture.record}));
+  const search = `?mode=doc&open=${fixture.record.id}&card=tasks&return=preparation`;
+  window.history.replaceState(null, '', `/initiatives${search}`);
+  Object.assign(window.location,{href:`http://localhost:3000/initiatives${search}`,search});
+  render(<InitiativeDocumentView initiativeId={fixture.record.id} />);
+  await waitFor(() => expect(screen.getAllByRole('heading', {name:'Tasks'}).at(-1)).toBeVisible());
+  expect(await screen.findByText('Native task row')).toBeVisible();
+  expect(await screen.findByText('Native milestone row')).toBeVisible();
+  expect(fixture.write).not.toHaveBeenCalled();
+  expect(fixture.amend).not.toHaveBeenCalled();
 });
