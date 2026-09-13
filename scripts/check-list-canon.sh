@@ -140,6 +140,42 @@ violations_for() {
       ;;
   esac
 
+  # ── K5-7 (2026-09-13) — trzy reguły dopisane po odbiorze właściciela ──────
+  # Powód: „wszędzie preview i tabele nie są całkiem zgodne z formułą".
+  # Naprawa poszła do komponentów wspólnych, ale bramka musi pilnować, żeby
+  # ekran nie obszedł ich z powrotem — inaczej dług odrasta (pamięć projektu:
+  # „naprawa per-wywołanie odrasta").
+
+  # 4) Tabela kanonu BEZ typów kolumn (odchylenie T1).
+  # Kolumna bez `dataType` nie ma ani podłogi, ani sufitu swojej roli — jej
+  # szerokość rozstrzyga dopiero pomiar treści. Deklaracja typu jest tańsza
+  # i jednoznaczna, więc nowa tabela ma go podawać.
+  if grep -Eq '<(StandardTable|FilterableTable)[ >]' "$f" 2>/dev/null; then
+    if grep -Eq '^\s*(id|label):' "$f" 2>/dev/null && ! grep -Eq 'dataType:' "$f" 2>/dev/null; then
+      echo "R4|-|tabela kanonu deklaruje kolumny BEZ dataType (kanon §3.3 — typ kolumny daje jej podłogę i sufit)"
+    fi
+  fi
+
+  # 5) WŁASNY pusty blok „Relations" (odchylenie P1).
+  # Blok bez danych ma być UKRYTY — robi to `PreviewRelations`. Plik, który
+  # pisze ten napis SAM, odtwarza pustą ramkę poza kanonem.
+  if grep -Eq "No relations|Brak powiązań|Brak powiazan" "$f" 2>/dev/null; then
+    if ! grep -Eq 'PreviewRelations' "$f" 2>/dev/null; then
+      echo "R5|-|wlasny pusty stan Relations poza PreviewRelations — blok bez danych ma byc UKRYTY (TRIADA A7)"
+    fi
+  fi
+
+  # 6) WŁASNA stopka podglądu bez pilla kanonu (pułapka #36, D21).
+  # Ekran budujący `footer` na `PreviewPaneShell` i stylujący przyciski sam
+  # (`rounded-lg`) wraca do kształtu, który raz już cofnął kanon.
+  if grep -Eq '<PreviewPaneShell[ >]' "$f" 2>/dev/null; then
+    if grep -Eq 'footer=' "$f" 2>/dev/null && grep -Eq 'rounded-lg' "$f" 2>/dev/null; then
+      if ! grep -Eq 'actionPillClass|PreviewActionBar|PreviewActionButton' "$f" 2>/dev/null; then
+        echo "R6|-|własna stopka podglądu z rounded-lg bez actionPillClass/PreviewActionBar (kanon §7.3b)"
+      fi
+    fi
+  fi
+
   # 3) previewStyles.ts — pill regression guard (#36, decyzja Piotra D21 07-12:
   # akcje w preview = pill/rounded-full, NIE rounded-lg; to już raz się cofnęło).
   if [ "$bn" = "previewStyles.ts" ]; then
@@ -200,6 +236,9 @@ narrow_scope() {
     printf '%s\n' "$all" | grep -E '/previewStyles\.ts$' || true
     printf '%s\n' "$all" | tr '\n' '\0' \
       | xargs -0 grep -lE '<table[ >/]|<thead[ >]|<tbody[ >]|role="table"|role="grid"|role="columnheader"' 2>/dev/null || true
+    # K5-7: prefiltr dla reguł R4/R5/R6 — bez tego pełny skan by ich nie widział.
+    printf '%s\n' "$all" | tr '\n' '\0' \
+      | xargs -0 grep -lE '<(StandardTable|FilterableTable|PreviewPaneShell)[ >]|No relations|Brak powiązań|Brak powiazan' 2>/dev/null || true
     baseline_paths
   } | grep -v '^$' | sort -u
 }

@@ -61,7 +61,7 @@ describe('ExecutionHub Portfolio preview — source relation (real render)', () 
     expect(screen.queryByText(/·/)).toBeNull();
   });
 
-  it('(c) leaves the relations section empty when there is no sourceType', () => {
+  it('(c) hides the relations block entirely when there is no sourceType', () => {
     const relations = buildExecutionSourceRelations(
       { sourceType: undefined, sourceFramework: 'DRD' },
       SOURCE_PREFIX
@@ -69,7 +69,10 @@ describe('ExecutionHub Portfolio preview — source relation (real render)', () 
     render(<StandardPreview title="Initiative C" relations={relations} />);
 
     expect(relations).toEqual([]);
-    expect(screen.getByText('No relations')).toBeInTheDocument();
+    // K5-7 (2026-09-13, odchylenie P1 z odbioru właściciela): blok bez danych
+    // jest UKRYTY (TRIADA §A7), a nie renderowany jako pusta ramka
+    // „No relations". Zmiana w komponencie wspólnym `PreviewRelations`.
+    expect(screen.queryByText('No relations')).toBeNull();
     expect(screen.queryByText(/Source:/)).toBeNull();
   });
 });

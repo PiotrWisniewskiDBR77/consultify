@@ -67,22 +67,30 @@ const codes = (props: { actions?: StandardPreviewActions; details?: StandardPrev
 
 // ── Blok 5: Relations obowiązkowe (§6) ─────────────────────────────────────
 
-describe('R03-1 · Relations jest blokiem obowiązkowym', () => {
-  it('renderuje empty state, gdy ekran NIE poda propa relations', () => {
-    // To był defekt: brak propa kasował cały blok, więc panel nie miał gdzie
-    // powiedzieć „brak powiązań".
+/**
+ * ZMIANA REGUŁY (K5-7, 2026-09-13, odbiór właściciela na stagingu
+ * `cf3fded7e4`): „Relations zawsze jako blok, także empty state" (R03) było
+ * lokalnym ustaleniem sprzed TRIADY i STOI Z NIĄ W SPRZECZNOŚCI. TRIADA §A7
+ * i TABLE_AND_PREVIEW_CANON §7.0 mówią: „blok bez danych = UKRYTY, nie pusty
+ * box". Właściciel zgłosił to jako odchylenie P1 — pusta ramka „No relations"
+ * na SZEŚCIU podglądach naraz (Inicjatywy, Plan, Load, bank, Work, Risk).
+ * TRIADA jest nadrzędna dla anatomii, więc rozstrzygnięcie: blok znika.
+ * Asercje odwrócone świadomie — to nie jest naprawa testu pod kod.
+ */
+describe('R03-1 · Relations: blok bez danych jest UKRYTY (K5-7)', () => {
+  it('brak propa relations nie renderuje pustej ramki', () => {
     render(<StandardPreview title="Bez relacji" />);
-    expect(screen.getByText('No relations')).toBeInTheDocument();
+    expect(screen.queryByText('No relations')).toBeNull();
   });
 
-  it('renderuje empty state dla pustej tablicy', () => {
+  it('pusta tablica nie renderuje pustej ramki', () => {
     render(<StandardPreview title="Pusto" relations={[]} />);
-    expect(screen.getByText('No relations')).toBeInTheDocument();
+    expect(screen.queryByText('No relations')).toBeNull();
   });
 
-  it('respektuje własną etykietę pustego stanu', () => {
+  it('etykieta pustego stanu nie wskrzesza bloku bez danych', () => {
     render(<StandardPreview title="X" relationsEmptyLabel="Brak powiązań" />);
-    expect(screen.getByText('Brak powiązań')).toBeInTheDocument();
+    expect(screen.queryByText('Brak powiązań')).toBeNull();
   });
 
   it('renderuje realne relacje, gdy są', () => {
@@ -114,12 +122,14 @@ describe('R03-1 · kolejność bloków', () => {
         meta={{ pills: [{ label: 'Pending', tone: 'warning' }] }}
         details={{ text: 'Body of the details block' }}
         ai={{ hints: ['Summarize'], onRunHint: vi.fn() }}
-        relations={[]}
+        relations={[{ label: 'Initiative A' }]}
         actions={baseActions}
       />
     );
     const text = container.textContent ?? '';
-    const order = ['Pending', 'Body of the details block', 'Summarize', 'No relations', 'Approve'];
+    // K5-7: pusty blok Relations jest ukryty, więc kolejność sprawdzamy na
+    // realnym powiązaniu — inaczej test mierzyłby nieobecny blok.
+    const order = ['Pending', 'Body of the details block', 'Summarize', 'Initiative A', 'Approve'];
     const positions = order.map((needle) => text.indexOf(needle));
     expect(positions.every((p) => p >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
