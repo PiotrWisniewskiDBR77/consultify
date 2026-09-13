@@ -2,6 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import {
+  createFindingGenerationReceiptPayload,
+  FINDING_GENERATION_INVALIDATION_ACTION,
+  FINDING_GENERATION_RECEIPT_ACTION,
+  FINDING_GENERATION_RECEIPT_ENTITY_TYPE,
+  findingGenerationInvalidationId,
+  findingGenerationReceiptId,
+  type FindingGenerationSnapshotFinding,
+  type FindingGenerationSnapshotPointer,
+} from '../interviewInsightFindingGenerationReceipt.js';
 import type {
   Insight,
   InsightIssue,
@@ -266,7 +276,7 @@ function defaultNextActionForSection(
   }
 }
 
-function buildEvidenceSnippetMap(insight: Insight): Record<string, string> {
+function buildEvidenceSnippetMap(insight: BackfillInsightSource): Record<string, string> {
   const map: Record<string, string> = {};
   for (const entry of insight.evidenceMap || []) {
     if (entry?.answer_id && entry?.answer_snippet) {
@@ -277,7 +287,7 @@ function buildEvidenceSnippetMap(insight: Insight): Record<string, string> {
 }
 
 function buildBackfillPointers(params: {
-  insight: Insight;
+  insight: BackfillInsightSource;
   evidenceRefs?: string[];
   evidenceSnippets?: Record<string, string>;
 }): CreateFindingInput['evidence_pointers'] {
@@ -438,6 +448,106 @@ async function recordAuditEvent(params: {
       new Date().toISOString(),
     ]
   );
+}
+
+interface GenerationAuditIdentityRow {
+  id: string;
+  organization_id: string;
+  insight_id: string;
+  finding_id?: string | null;
+  entity_type: string;
+  entity_id?: string | null;
+  action: string;
+}
+
+function hasExactGenerationAuditIdentity(
+  row: GenerationAuditIdentityRow,
+  params: {
+    id: string;
+    organizationId: string;
+    insightId: string;
+    findingId: string;
+    action: string;
+  }
+): boolean {
+  return (
+    row.id === params.id &&
+    row.organization_id === params.organizationId &&
+    row.insight_id === params.insightId &&
+    row.finding_id === params.findingId &&
+    row.entity_type === FINDING_GENERATION_RECEIPT_ENTITY_TYPE &&
+    row.entity_id === params.findingId &&
+    row.action === params.action
+  );
+}
+
+async function invalidateGenerationReceiptIfPresent(params: {
+  organizationId: string;
+  insightId: string;
+  findingId: string;
+  actorUserId?: string | null;
+}): Promise<void> {
+  const receiptId = findingGenerationReceiptId(params.findingId);
+  const receipt = await queryHelpers.queryOne<GenerationAuditIdentityRow>(
+    `SELECT id, organization_id, insight_id, finding_id, entity_type, entity_id, action
+     FROM interview_insight_audit_log
+     WHERE id = ?
+     FOR SHARE`,
+    [receiptId]
+  );
+  if (!receipt) return;
+  if (
+    !hasExactGenerationAuditIdentity(receipt, {
+      id: receiptId,
+      organizationId: params.organizationId,
+      insightId: params.insightId,
+      findingId: params.findingId,
+      action: FINDING_GENERATION_RECEIPT_ACTION,
+    })
+  ) {
+    throw new Error('Generation receipt identity does not match the semantic mutation target');
+  }
+
+  const invalidationId = findingGenerationInvalidationId(params.findingId);
+  const inserted = await queryHelpers.queryRun(
+    `INSERT INTO interview_insight_audit_log
+     (id, organization_id, insight_id, finding_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (id) DO NOTHING`,
+    [
+      invalidationId,
+      params.organizationId,
+      params.insightId,
+      params.findingId,
+      FINDING_GENERATION_RECEIPT_ENTITY_TYPE,
+      params.findingId,
+      FINDING_GENERATION_INVALIDATION_ACTION,
+      params.actorUserId || null,
+      JSON.stringify({ version: 1, receiptType: 'finding_generation_invalidation' }),
+      new Date().toISOString(),
+    ]
+  );
+  if (inserted.changes === 1) return;
+
+  const existing = await queryHelpers.queryOne<GenerationAuditIdentityRow>(
+    `SELECT id, organization_id, insight_id, finding_id, entity_type, entity_id, action
+     FROM interview_insight_audit_log
+     WHERE id = ?
+     FOR SHARE`,
+    [invalidationId]
+  );
+  if (
+    !existing ||
+    !hasExactGenerationAuditIdentity(existing, {
+      id: invalidationId,
+      organizationId: params.organizationId,
+      insightId: params.insightId,
+      findingId: params.findingId,
+      action: FINDING_GENERATION_INVALIDATION_ACTION,
+    })
+  ) {
+    throw new Error('Generation invalidation marker identity does not match the mutation target');
+  }
 }
 
 async function loadFindingRows(insightId: string): Promise<FindingRow[]> {
@@ -608,31 +718,65 @@ async function insertPointer(
   };
 }
 
-async function ensureBackfilledFindings(
-  insightId: string,
-  insight?: Insight | null
-): Promise<void> {
-  await ensureTables();
-  const countRow = await queryHelpers.queryOne<{ count: number }>(
-    `SELECT COUNT(*) as count FROM interview_insight_findings WHERE insight_id = ?`,
-    [insightId]
-  );
-  if ((countRow?.count || 0) > 0) return;
+interface GeneratedFindingCandidate {
+  sectionType: 'theme' | 'issue' | 'opportunity';
+  sectionIndex: number;
+  sourceKey: string;
+  statement: string;
+  confidence: P10ConfidenceLevel;
+  limits: string;
+  nextAction: string;
+  pointers?: CreateFindingInput['evidence_pointers'];
+}
 
-  const resolvedInsight = insight ?? (await getInsightById(insightId).catch(() => null));
-  if (!resolvedInsight || resolvedInsight.status === 'generating') return;
+type BackfillInsightSource = Pick<
+  Insight,
+  | 'organizationId'
+  | 'createdBy'
+  | 'sourceSessionIds'
+  | 'themes'
+  | 'issues'
+  | 'opportunities'
+  | 'evidenceMap'
+  | 'status'
+>;
 
+interface LockedBackfillInsightRow {
+  id: string;
+  organization_id: string;
+  status: InsightStatus;
+  error_message?: string | null;
+  generation_context_json?: string | null;
+  updated_at: string | Date;
+  created_by?: string | null;
+  source_session_ids?: string | null;
+  themes_json?: string | null;
+  issues_json?: string | null;
+  opportunities_json?: string | null;
+  evidence_map_json?: string | null;
+}
+
+interface CompletedLockedGeneration {
+  runId: string;
+  startedAt: string;
+  completedAt: string;
+  contextJson: string;
+}
+
+function safeArray<T>(value: unknown): T[] {
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildBackfillCandidates(
+  resolvedInsight: BackfillInsightSource
+): GeneratedFindingCandidate[] {
   const evidenceSnippets = buildEvidenceSnippetMap(resolvedInsight);
-  const candidates: Array<{
-    sectionType: 'theme' | 'issue' | 'opportunity';
-    sectionIndex: number;
-    sourceKey: string;
-    statement: string;
-    confidence: P10ConfidenceLevel;
-    limits: string;
-    nextAction: string;
-    pointers?: CreateFindingInput['evidence_pointers'];
-  }> = [];
+  const candidates: GeneratedFindingCandidate[] = [];
 
   (resolvedInsight.themes || []).forEach((theme: InsightTheme, index) => {
     const confidence = deriveThemeConfidence(theme);
@@ -694,7 +838,279 @@ async function ensureBackfilledFindings(
     });
   });
 
-  for (const candidate of candidates.filter((item) => item.statement)) {
+  return candidates.filter((item) => item.statement);
+}
+
+function lockedBackfillSource(row: LockedBackfillInsightRow): BackfillInsightSource {
+  return {
+    organizationId: String(row.organization_id),
+    createdBy: row.created_by == null ? '' : String(row.created_by),
+    sourceSessionIds: safeArray<unknown>(row.source_session_ids).map(String),
+    themes: safeArray<InsightTheme>(row.themes_json),
+    issues: safeArray<InsightIssue>(row.issues_json),
+    opportunities: safeArray<InsightOpportunity>(row.opportunities_json),
+    evidenceMap: safeArray<NonNullable<Insight['evidenceMap']>[number]>(row.evidence_map_json),
+    status: row.status,
+  };
+}
+
+function normalizedExplicitTime(value: unknown): string | null {
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.toISOString() : null;
+  if (
+    typeof value !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+  ) {
+    return null;
+  }
+  const millis = Date.parse(value);
+  return Number.isFinite(millis) ? new Date(millis).toISOString() : null;
+}
+
+function completedLockedGeneration(
+  row: LockedBackfillInsightRow
+): CompletedLockedGeneration | null {
+  if (
+    row.status !== 'completed' ||
+    (row.error_message != null && String(row.error_message).trim() !== '') ||
+    typeof row.generation_context_json !== 'string'
+  ) {
+    return null;
+  }
+  try {
+    const context = JSON.parse(row.generation_context_json) as Record<string, unknown>;
+    const run =
+      context?.generationRun && typeof context.generationRun === 'object'
+        ? (context.generationRun as Record<string, unknown>)
+        : null;
+    if (
+      !run ||
+      run.version !== 1 ||
+      run.status !== 'completed' ||
+      typeof run.runId !== 'string' ||
+      !run.runId
+    ) {
+      return null;
+    }
+    const startedAt = normalizedExplicitTime(run.startedAt);
+    const completedAt = normalizedExplicitTime(run.completedAt);
+    const contextCreatedAt = normalizedExplicitTime(context.createdAt);
+    const updatedAt = normalizedExplicitTime(row.updated_at);
+    if (
+      !startedAt ||
+      !completedAt ||
+      !contextCreatedAt ||
+      !updatedAt ||
+      startedAt !== contextCreatedAt ||
+      completedAt !== updatedAt ||
+      Date.parse(startedAt) > Date.parse(completedAt)
+    ) {
+      return null;
+    }
+    return {
+      runId: run.runId,
+      startedAt,
+      completedAt,
+      contextJson: row.generation_context_json,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function hasCompletedGenerationCandidate(insight: Insight): boolean {
+  const run = insight.generationContext?.generationRun;
+  return Boolean(
+    run &&
+    run.version === 1 &&
+    run.status === 'completed' &&
+    typeof run.runId === 'string' &&
+    run.runId
+  );
+}
+
+async function insertGeneratedBackfillFinding(params: {
+  insightId: string;
+  source: BackfillInsightSource;
+  candidate: GeneratedFindingCandidate;
+  generation: CompletedLockedGeneration | null;
+}): Promise<void> {
+  const existingByKey = await queryHelpers.queryOne<{ id: string }>(
+    `SELECT id FROM interview_insight_findings WHERE insight_id = ? AND source_key = ? LIMIT 1`,
+    [params.insightId, params.candidate.sourceKey]
+  );
+  // A creation receipt is immutable. Never stamp or replace it for an
+  // existing source-key row, including a row from an older generation.
+  if (existingByKey?.id) return;
+
+  const findingId = `finding_${uuidv4()}`;
+  const now = new Date().toISOString();
+  const limitsJson = JSON.stringify(splitLines(params.candidate.limits));
+  const nextActionJson = JSON.stringify(splitLines(params.candidate.nextAction));
+  const uniquePointers = Array.from(
+    new Map(
+      (params.candidate.pointers ?? []).map((pointer) => [dedupeKey(pointer), pointer] as const)
+    ).values()
+  );
+  await queryHelpers.queryRun(
+    `INSERT INTO interview_insight_findings
+     (id, organization_id, insight_id, source_section_type, source_section_index, source_key, finding_statement, confidence_level, limits_text, limits_json, next_action_text, next_action_json, review_status, created_by, updated_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
+    [
+      findingId,
+      params.source.organizationId,
+      params.insightId,
+      params.candidate.sectionType,
+      params.candidate.sectionIndex,
+      params.candidate.sourceKey,
+      params.candidate.statement,
+      params.candidate.confidence,
+      params.candidate.limits,
+      limitsJson,
+      params.candidate.nextAction,
+      nextActionJson,
+      params.source.createdBy || null,
+      params.source.createdBy || null,
+      now,
+      now,
+    ]
+  );
+
+  for (const pointer of uniquePointers) {
+    const result = await insertPointer(
+      {
+        organizationId: params.source.organizationId,
+        insightId: params.insightId,
+        findingId,
+        actorUserId: params.source.createdBy || null,
+      },
+      pointer
+    );
+    // Returning an error after the INSERT would commit a partial transaction.
+    if (result.error) throw new Error(result.error);
+  }
+
+  await recordAuditEvent({
+    organizationId: params.source.organizationId,
+    insightId: params.insightId,
+    findingId,
+    entityType: 'finding',
+    entityId: findingId,
+    action: 'backfilled_from_generated',
+    actorUserId: params.source.createdBy || null,
+    detail: {
+      sourceSectionType: params.candidate.sectionType,
+      sourceSectionIndex: params.candidate.sectionIndex,
+      confidenceLevel: params.candidate.confidence,
+      evidenceCount: uniquePointers.length,
+    },
+  });
+
+  if (!params.generation) return;
+
+  const finding = await queryHelpers.queryOne<FindingGenerationSnapshotFinding>(
+    `SELECT id, organization_id, insight_id, source_section_type, source_section_index, source_key,
+            finding_statement, confidence_level, limits_text, limits_json,
+            next_action_text, next_action_json, created_by,
+            created_at AT TIME ZONE 'UTC' AS created_at
+     FROM interview_insight_findings
+     WHERE id = ? AND insight_id = ? AND organization_id = ?
+     LIMIT 1`,
+    [findingId, params.insightId, params.source.organizationId]
+  );
+  const pointerRows = await queryHelpers.queryAll<FindingGenerationSnapshotPointer>(
+    `SELECT id, organization_id, insight_id, finding_id, pointer_type, source_ref,
+            source_fingerprint, captured_excerpt,
+            captured_at AT TIME ZONE 'UTC' AS captured_at,
+            pointer_state, removal_reason,
+            removed_at AT TIME ZONE 'UTC' AS removed_at,
+            duplicate_observed_count, metadata_json, created_by,
+            created_at AT TIME ZONE 'UTC' AS created_at
+     FROM interview_insight_evidence_pointers
+     WHERE finding_id = ? AND insight_id = ? AND organization_id = ?
+     ORDER BY id ASC`,
+    [findingId, params.insightId, params.source.organizationId]
+  );
+  if (!finding || pointerRows.length !== uniquePointers.length) {
+    throw new Error('Generation receipt source readback is incomplete');
+  }
+  const payload = createFindingGenerationReceiptPayload({
+    organizationId: params.source.organizationId,
+    insightId: params.insightId,
+    findingId,
+    generationRunId: params.generation.runId,
+    generationStartedAt: params.generation.startedAt,
+    generationCompletedAt: params.generation.completedAt,
+    generationContextJson: params.generation.contextJson,
+    finding,
+    pointers: pointerRows,
+  });
+  await queryHelpers.queryRun(
+    `INSERT INTO interview_insight_audit_log
+     (id, organization_id, insight_id, finding_id, entity_type, entity_id, action, actor_user_id, detail_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      findingGenerationReceiptId(findingId),
+      params.source.organizationId,
+      params.insightId,
+      findingId,
+      FINDING_GENERATION_RECEIPT_ENTITY_TYPE,
+      findingId,
+      FINDING_GENERATION_RECEIPT_ACTION,
+      params.source.createdBy || null,
+      JSON.stringify(payload),
+      now,
+    ]
+  );
+}
+
+async function backfillFromLockedInsight(insightId: string): Promise<void> {
+  await queryHelpers.withPgTransaction(async () => {
+    const row = await queryHelpers.queryOne<LockedBackfillInsightRow>(
+      `SELECT id, organization_id, status, error_message, generation_context_json,
+              updated_at,
+              created_by, source_session_ids, themes_json, issues_json,
+              opportunities_json, evidence_map_json
+       FROM interview_insights
+       WHERE id = ?
+       FOR UPDATE`,
+      [insightId]
+    );
+    if (!row || row.status === 'generating') return;
+
+    // The lock serializes concurrent backfill attempts. Recheck after it is
+    // acquired so an earlier winner cannot be overwritten or re-receipted.
+    const countRow = await queryHelpers.queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM interview_insight_findings WHERE insight_id = ?`,
+      [insightId]
+    );
+    if ((countRow?.count || 0) > 0) return;
+
+    const generation = completedLockedGeneration(row);
+    // The pre-lock Insight can be stale. A run that became generating or
+    // failed while this call waited must not create even an unreceipted
+    // generated Finding from output that no longer belongs to a completed run.
+    if (!generation) return;
+
+    const source = lockedBackfillSource(row);
+    const candidates = buildBackfillCandidates(source);
+    for (const candidate of candidates) {
+      for (const pointer of candidate.pointers ?? []) {
+        if (!isValidP10EvidencePointerType(pointer.type)) {
+          throw new Error(`Invalid evidence pointer type: ${pointer.type}`);
+        }
+      }
+    }
+    for (const candidate of candidates) {
+      await insertGeneratedBackfillFinding({ insightId, source, candidate, generation });
+    }
+  });
+}
+
+async function backfillLegacyInsight(
+  insightId: string,
+  resolvedInsight: BackfillInsightSource
+): Promise<void> {
+  for (const candidate of buildBackfillCandidates(resolvedInsight)) {
     await addFinding(
       insightId,
       {
@@ -714,6 +1130,29 @@ async function ensureBackfilledFindings(
       }
     );
   }
+}
+
+async function ensureBackfilledFindings(
+  insightId: string,
+  insight?: Insight | null
+): Promise<void> {
+  await ensureTables();
+  const countRow = await queryHelpers.queryOne<{ count: number }>(
+    `SELECT COUNT(*) as count FROM interview_insight_findings WHERE insight_id = ?`,
+    [insightId]
+  );
+  if ((countRow?.count || 0) > 0) return;
+
+  const resolvedInsight = insight ?? (await getInsightById(insightId).catch(() => null));
+  if (!resolvedInsight || resolvedInsight.status === 'generating') return;
+
+  // Only a current completed run can create a receipt. Historical/manual
+  // behavior stays available through the legacy unreceipted path.
+  if (!hasCompletedGenerationCandidate(resolvedInsight)) {
+    await backfillLegacyInsight(insightId, resolvedInsight);
+    return;
+  }
+  await backfillFromLockedInsight(insightId);
 }
 
 export function validateLifecycleTransition(
@@ -771,12 +1210,18 @@ export async function addFinding(
   if (!input.finding_statement?.trim()) return { error: 'finding_statement is required' };
   if (!input.limits?.trim()) return { error: 'limits is required' };
   if (!input.next_action?.trim()) return { error: 'next_action is required' };
+  for (const pointer of input.evidence_pointers ?? []) {
+    if (!isValidP10EvidencePointerType(pointer.type)) {
+      return { error: `Invalid evidence pointer type: ${pointer.type}` };
+    }
+  }
 
   const meta = await resolveInsightMeta(insightId, {
     organizationId: options?.organizationId,
     actorUserId: options?.actorUserId || null,
   });
   if (!meta.organizationId) return { error: 'Insight not found' };
+  const organizationId = meta.organizationId;
 
   const existingByKey = options?.sourceKey
     ? await queryHelpers.queryOne<{ id: string }>(
@@ -788,55 +1233,100 @@ export async function addFinding(
   const findingId = existingByKey?.id || `finding_${uuidv4()}`;
   const now = new Date().toISOString();
 
-  if (!existingByKey?.id) {
-    await queryHelpers.queryRun(
-      `INSERT INTO interview_insight_findings
+  if (existingByKey?.id) {
+    await queryHelpers.withPgTransaction(async () => {
+      const updated = await queryHelpers.queryRun(
+        `UPDATE interview_insight_findings
+         SET finding_statement = ?,
+             confidence_level = ?,
+             limits_text = ?,
+             limits_json = ?,
+             next_action_text = ?,
+             next_action_json = ?,
+             updated_by = ?,
+             updated_at = ?
+         WHERE id = ? AND insight_id = ? AND organization_id = ?`,
+        [
+          input.finding_statement.trim(),
+          input.confidence_level,
+          input.limits.trim(),
+          JSON.stringify(splitLines(input.limits)),
+          input.next_action.trim(),
+          JSON.stringify(splitLines(input.next_action)),
+          meta.actorUserId,
+          now,
+          findingId,
+          insightId,
+          organizationId,
+        ]
+      );
+      if (updated?.changes === 0) throw new Error('Finding changed before source-key update');
+
+      const seenKeys = new Set<string>();
+      for (const pointer of input.evidence_pointers ?? []) {
+        const dedupe = dedupeKey(pointer);
+        if (seenKeys.has(dedupe)) continue;
+        seenKeys.add(dedupe);
+        const result = await insertPointer(
+          {
+            organizationId,
+            insightId,
+            findingId,
+            actorUserId: meta.actorUserId,
+          },
+          pointer
+        );
+        if (result.error) throw new Error(result.error);
+      }
+
+      await recordAuditEvent({
+        organizationId,
+        insightId,
+        findingId,
+        entityType: 'finding',
+        entityId: findingId,
+        action: options?.auditAction || 'created',
+        actorUserId: meta.actorUserId,
+        detail: {
+          sourceSectionType: options?.sourceSectionType || 'manual',
+          sourceSectionIndex: options?.sourceSectionIndex ?? null,
+          confidenceLevel: input.confidence_level,
+          evidenceCount: input.evidence_pointers?.length || 0,
+        },
+      });
+      await invalidateGenerationReceiptIfPresent({
+        organizationId,
+        insightId,
+        findingId,
+        actorUserId: meta.actorUserId,
+      });
+    });
+    return { finding: await getFinding(insightId, findingId) };
+  }
+
+  await queryHelpers.queryRun(
+    `INSERT INTO interview_insight_findings
        (id, organization_id, insight_id, source_section_type, source_section_index, source_key, finding_statement, confidence_level, limits_text, limits_json, next_action_text, next_action_json, review_status, created_by, updated_by, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
-      [
-        findingId,
-        meta.organizationId,
-        insightId,
-        options?.sourceSectionType || 'manual',
-        options?.sourceSectionIndex ?? null,
-        options?.sourceKey ?? null,
-        input.finding_statement.trim(),
-        input.confidence_level,
-        input.limits.trim(),
-        JSON.stringify(splitLines(input.limits)),
-        input.next_action.trim(),
-        JSON.stringify(splitLines(input.next_action)),
-        meta.actorUserId,
-        meta.actorUserId,
-        now,
-        now,
-      ]
-    );
-  } else {
-    await queryHelpers.queryRun(
-      `UPDATE interview_insight_findings
-       SET finding_statement = ?,
-           confidence_level = ?,
-           limits_text = ?,
-           limits_json = ?,
-           next_action_text = ?,
-           next_action_json = ?,
-           updated_by = ?,
-           updated_at = ?
-       WHERE id = ?`,
-      [
-        input.finding_statement.trim(),
-        input.confidence_level,
-        input.limits.trim(),
-        JSON.stringify(splitLines(input.limits)),
-        input.next_action.trim(),
-        JSON.stringify(splitLines(input.next_action)),
-        meta.actorUserId,
-        now,
-        findingId,
-      ]
-    );
-  }
+    [
+      findingId,
+      organizationId,
+      insightId,
+      options?.sourceSectionType || 'manual',
+      options?.sourceSectionIndex ?? null,
+      options?.sourceKey ?? null,
+      input.finding_statement.trim(),
+      input.confidence_level,
+      input.limits.trim(),
+      JSON.stringify(splitLines(input.limits)),
+      input.next_action.trim(),
+      JSON.stringify(splitLines(input.next_action)),
+      meta.actorUserId,
+      meta.actorUserId,
+      now,
+      now,
+    ]
+  );
 
   const seenKeys = new Set<string>();
   for (const raw of input.evidence_pointers ?? []) {
@@ -845,7 +1335,7 @@ export async function addFinding(
     seenKeys.add(dedupe);
     const result = await insertPointer(
       {
-        organizationId: meta.organizationId,
+        organizationId,
         insightId,
         findingId,
         actorUserId: meta.actorUserId,
@@ -856,7 +1346,7 @@ export async function addFinding(
   }
 
   await recordAuditEvent({
-    organizationId: meta.organizationId,
+    organizationId,
     insightId,
     findingId,
     entityType: 'finding',
@@ -900,44 +1390,54 @@ export async function updateFinding(
   if (!nextAction) return { error: 'next_action cannot be empty' };
 
   const now = new Date().toISOString();
-  await queryHelpers.queryRun(
-    `UPDATE interview_insight_findings
-     SET finding_statement = ?,
-         confidence_level = ?,
-         limits_text = ?,
-         limits_json = ?,
-         next_action_text = ?,
-         next_action_json = ?,
-         updated_by = ?,
-         updated_at = ?
-     WHERE id = ? AND insight_id = ?`,
-    [
-      nextStatement,
-      input.confidence_level ?? finding.confidence_level,
-      nextLimits,
-      JSON.stringify(splitLines(nextLimits)),
-      nextAction,
-      JSON.stringify(splitLines(nextAction)),
-      actorUserId || null,
-      now,
-      findingId,
-      insightId,
-    ]
-  );
+  await queryHelpers.withPgTransaction(async () => {
+    const updated = await queryHelpers.queryRun(
+      `UPDATE interview_insight_findings
+       SET finding_statement = ?,
+           confidence_level = ?,
+           limits_text = ?,
+           limits_json = ?,
+           next_action_text = ?,
+           next_action_json = ?,
+           updated_by = ?,
+           updated_at = ?
+       WHERE id = ? AND insight_id = ? AND organization_id = ?`,
+      [
+        nextStatement,
+        input.confidence_level ?? finding.confidence_level,
+        nextLimits,
+        JSON.stringify(splitLines(nextLimits)),
+        nextAction,
+        JSON.stringify(splitLines(nextAction)),
+        actorUserId || null,
+        now,
+        findingId,
+        insightId,
+        finding.organizationId,
+      ]
+    );
+    if (updated?.changes === 0) throw new Error('Finding changed before semantic update');
 
-  await recordAuditEvent({
-    organizationId: finding.organizationId,
-    insightId,
-    findingId,
-    entityType: 'finding',
-    entityId: findingId,
-    action: 'updated',
-    actorUserId: actorUserId || null,
-    detail: {
-      changedFields: Object.keys(input).filter(
-        (key) => (input as Record<string, unknown>)[key] !== undefined
-      ),
-    },
+    await recordAuditEvent({
+      organizationId: finding.organizationId,
+      insightId,
+      findingId,
+      entityType: 'finding',
+      entityId: findingId,
+      action: 'updated',
+      actorUserId: actorUserId || null,
+      detail: {
+        changedFields: Object.keys(input).filter(
+          (key) => (input as Record<string, unknown>)[key] !== undefined
+        ),
+      },
+    });
+    await invalidateGenerationReceiptIfPresent({
+      organizationId: finding.organizationId,
+      insightId,
+      findingId,
+      actorUserId,
+    });
   });
 
   return { finding: await getFinding(insightId, findingId) };
@@ -1005,6 +1505,9 @@ export async function addEvidencePointer(
 ): Promise<{ pointer?: P10EvidencePointer; error?: string }> {
   const finding = await getFinding(insightId, findingId);
   if (!finding) return { error: 'Finding not found' };
+  if (!isValidP10EvidencePointerType(input.type)) {
+    return { error: `Invalid evidence pointer type: ${input.type}` };
+  }
 
   if (input.type === 'operator_note' && isNotebookSourceRef(input.sourceRef)) {
     const pageId = parseNotebookSourceRef(input.sourceRef);
@@ -1013,38 +1516,50 @@ export async function addEvidencePointer(
     }
   }
 
-  if (input.type === 'survey_linkage') {
-    scheduleSurveyLinkageValidation(insightId, findingId, input.sourceRef);
-  }
+  const result = await queryHelpers.withPgTransaction(async () => {
+    const inserted = await insertPointer(
+      {
+        organizationId: finding.organizationId,
+        insightId,
+        findingId,
+        actorUserId: actorUserId || null,
+      },
+      input
+    );
+    if (inserted.error) throw new Error(inserted.error);
 
-  const result = await insertPointer(
-    {
+    const updated = await queryHelpers.queryRun(
+      `UPDATE interview_insight_findings
+       SET updated_at = ?, updated_by = ?
+       WHERE id = ? AND insight_id = ? AND organization_id = ?`,
+      [new Date().toISOString(), actorUserId || null, findingId, insightId, finding.organizationId]
+    );
+    if (updated?.changes === 0) throw new Error('Finding changed before pointer addition');
+    await recordAuditEvent({
       organizationId: finding.organizationId,
       insightId,
       findingId,
+      entityType: 'evidence_pointer',
+      entityId: inserted.pointer?.pointerId || null,
+      action: 'added',
       actorUserId: actorUserId || null,
-    },
-    input
-  );
-  if (result.error) return result;
-
-  await queryHelpers.queryRun(
-    `UPDATE interview_insight_findings SET updated_at = ?, updated_by = ? WHERE id = ?`,
-    [new Date().toISOString(), actorUserId || null, findingId]
-  );
-  await recordAuditEvent({
-    organizationId: finding.organizationId,
-    insightId,
-    findingId,
-    entityType: 'evidence_pointer',
-    entityId: result.pointer?.pointerId || null,
-    action: 'added',
-    actorUserId: actorUserId || null,
-    detail: {
-      type: input.type,
-      sourceRef: input.sourceRef,
-    },
+      detail: {
+        type: input.type,
+        sourceRef: input.sourceRef,
+      },
+    });
+    await invalidateGenerationReceiptIfPresent({
+      organizationId: finding.organizationId,
+      insightId,
+      findingId,
+      actorUserId,
+    });
+    return inserted;
   });
+
+  if (input.type === 'survey_linkage') {
+    scheduleSurveyLinkageValidation(insightId, findingId, input.sourceRef);
+  }
 
   return result;
 }
@@ -1087,29 +1602,49 @@ export async function removeEvidencePointer(
     return { success: false, error: 'removal_reason is required for pointer removal' };
   }
 
-  const now = new Date().toISOString();
-  await queryHelpers.queryRun(
-    `UPDATE interview_insight_evidence_pointers
-     SET pointer_state = 'removed',
-         removal_reason = ?,
-         removed_at = ?,
-         updated_at = ?
-     WHERE id = ? AND finding_id = ?`,
-    [input.removal_reason.trim(), now, now, input.pointerId, findingId]
-  );
-  await queryHelpers.queryRun(
-    `UPDATE interview_insight_findings SET updated_at = ?, updated_by = ? WHERE id = ?`,
-    [now, actorUserId || null, findingId]
-  );
-  await recordAuditEvent({
-    organizationId: finding.organizationId,
-    insightId,
-    findingId,
-    entityType: 'evidence_pointer',
-    entityId: input.pointerId,
-    action: 'tombstoned',
-    actorUserId: actorUserId || null,
-    detail: { removalReason: input.removal_reason.trim() },
+  await queryHelpers.withPgTransaction(async () => {
+    const now = new Date().toISOString();
+    const removed = await queryHelpers.queryRun(
+      `UPDATE interview_insight_evidence_pointers
+       SET pointer_state = 'removed',
+           removal_reason = ?,
+           removed_at = ?,
+           updated_at = ?
+       WHERE id = ? AND finding_id = ? AND insight_id = ? AND organization_id = ?`,
+      [
+        input.removal_reason.trim(),
+        now,
+        now,
+        input.pointerId,
+        findingId,
+        insightId,
+        finding.organizationId,
+      ]
+    );
+    if (removed?.changes === 0) throw new Error('Pointer changed before removal');
+    const updated = await queryHelpers.queryRun(
+      `UPDATE interview_insight_findings
+       SET updated_at = ?, updated_by = ?
+       WHERE id = ? AND insight_id = ? AND organization_id = ?`,
+      [now, actorUserId || null, findingId, insightId, finding.organizationId]
+    );
+    if (updated?.changes === 0) throw new Error('Finding changed before pointer removal');
+    await recordAuditEvent({
+      organizationId: finding.organizationId,
+      insightId,
+      findingId,
+      entityType: 'evidence_pointer',
+      entityId: input.pointerId,
+      action: 'tombstoned',
+      actorUserId: actorUserId || null,
+      detail: { removalReason: input.removal_reason.trim() },
+    });
+    await invalidateGenerationReceiptIfPresent({
+      organizationId: finding.organizationId,
+      insightId,
+      findingId,
+      actorUserId,
+    });
   });
 
   return { success: true };
@@ -1272,6 +1807,7 @@ export async function recordHandoff(
     organizationId?: string;
     actorUserId?: string | null;
     targetRefType?: string;
+    targetKind?: 'initiative' | 'decision' | 'task';
     status?: string;
   }
 ): Promise<void> {
@@ -1279,12 +1815,13 @@ export async function recordHandoff(
   const organizationId = options?.organizationId || finding?.organizationId;
   if (!organizationId) return;
 
+  const targetKind = options?.targetKind || 'initiative';
   const existing = targetInitiativeId
     ? await queryHelpers.queryOne<{ id: string }>(
         `SELECT id FROM interview_insight_handoffs
-         WHERE insight_id = ? AND finding_id = ? AND target_kind = 'initiative' AND target_id = ?
+         WHERE insight_id = ? AND finding_id = ? AND target_kind = ? AND target_id = ? AND organization_id = ?
          LIMIT 1`,
-        [insightId, findingId, targetInitiativeId]
+        [insightId, findingId, targetKind, targetInitiativeId, organizationId]
       )
     : null;
   if (existing?.id) return;
@@ -1293,12 +1830,13 @@ export async function recordHandoff(
   await queryHelpers.queryRun(
     `INSERT INTO interview_insight_handoffs
      (id, organization_id, insight_id, finding_id, target_kind, target_id, target_ref_type, status, payload_json, operator_decision_json, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'initiative', ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       uuidv4(),
       organizationId,
       insightId,
       findingId,
+      targetKind,
       targetInitiativeId || null,
       options?.targetRefType || (targetInitiativeId ? 'linked' : 'handoff_request'),
       options?.status || 'pending',
@@ -1318,6 +1856,7 @@ export async function recordHandoff(
     action: 'created',
     actorUserId: options?.actorUserId || null,
     detail: {
+      targetKind,
       targetInitiativeId: targetInitiativeId || null,
       targetRefType: options?.targetRefType || (targetInitiativeId ? 'linked' : 'handoff_request'),
     },

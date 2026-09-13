@@ -1,8 +1,13 @@
 import type { PoolClient } from 'pg';
+import {
+  canExportInterviewDecisionContent,
+  projectDecisionSourceIdentity,
+} from './organizationExportDecisionPrivacy.js';
 import { projectPersonalTaskExport } from './organizationExportTaskPrivacy.js';
 import { verifiedManualInitiativeContent } from './organizationExportManualInitiativeContent.js';
 import { projectCanonicalExportLineage } from './organizationExportCanonicalLineage.js';
 import { projectInterviewExportRow } from './organizationExportInterviewPrivacy.js';
+import { readFindingReceiptSnapshot } from './organizationExportFindingReceiptSource.js';
 
 import {
   assertNotReservedOrganizationId,
@@ -20,6 +25,17 @@ const identity = (schema: string, table: string) => `${schema}\0${table}`;
 const publicKey = (schema: string, table: string) =>
   schema === 'public' ? table : `${schema}.${table}`;
 const qualified = (schema: string, table: string) => `${qi(schema)}.${qi(table)}`;
+const decisionSourceTimestampKinds = new Set(['finding', 'pointer', 'handoff']);
+const snapshotColumn = (
+  column: string,
+  dataType: string,
+  decisionPrivacyKind: OrganizationExportTableContract['decisionPrivacyKind']
+) =>
+  decisionPrivacyKind &&
+  decisionSourceTimestampKinds.has(decisionPrivacyKind) &&
+  dataType === 'timestamp without time zone'
+    ? `${qi(column)} AT TIME ZONE 'UTC' AS ${qi(column)}`
+    : qi(column);
 const normalized = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 const credential =
   /(^|_)(password|passcode|secret|token|credential|mfa|otp|api_key|private_key|access_key|recovery|backup_codes?|hash|salt|cookie|authorization)($|_)/i;
@@ -158,6 +174,7 @@ export async function exportOrganizationData(
     result.securityManifest.unresolvedTables.push({ table, reason });
   const interviewRows = new Map<string, Record<string, unknown>[]>();
   const canonicalRows = new Map<string, Record<string, unknown>[]>();
+  const decisionRows = new Map<string, Record<string, unknown>[]>();
   for (const [key, table] of tables) {
     const name = publicKey(table.schema, table.table);
     const policy = policies.get(key);
@@ -292,11 +309,16 @@ export async function exportOrganizationData(
       predicate = `EXISTS (SELECT 1 FROM ${qualified(edge.parentSchema, edge.parentTable)} AS owner_scope WHERE owner_scope.${qi(edge.parentColumn)}=export_row.${qi(edge.childColumn)} AND owner_scope.${qi(parent.ownerColumn)}::text=$1)`;
     }
     const rows = await client.query(
-      `SELECT ${projection.map(qi).join(',')} FROM ${qualified(table.schema, table.table)} AS export_row WHERE ${predicate} ORDER BY ${order}`,
+      `SELECT ${projection
+        .map((column) => snapshotColumn(column, table.types[column], policy.decisionPrivacyKind))
+        .join(
+          ','
+        )} FROM ${qualified(table.schema, table.table)} AS export_row WHERE ${predicate} ORDER BY ${order}`,
       [organizationId]
     );
     if (policy.interviewPrivacy) interviewRows.set(key, rows.rows);
     if (policy.canonicalLineageColumns) canonicalRows.set(key, rows.rows);
+    if (policy.decisionPrivacyKind) decisionRows.set(policy.decisionPrivacyKind, rows.rows);
     const safeRows = rows.rows.map(
       (row) =>
         sanitize(
@@ -304,13 +326,17 @@ export async function exportOrganizationData(
             ? projectCanonicalExportLineage(row, policy.canonicalLineageColumns)
             : policy.personalTaskPrivacy
               ? projectPersonalTaskExport(row)
-              : row
+              : policy.decisionPrivacyKind
+                ? projectDecisionSourceIdentity(row)
+                : row
         ) as Record<string, unknown>
     );
     if (policy.canonicalLineageColumns && rows.rows.length)
       unresolved(name, 'canonical_content_privacy_unresolved_lineage_only');
     if (policy.personalTaskPrivacy && rows.rows.length)
       unresolved(name, 'task_source_or_supplemental_content_privacy_unresolved');
+    if (policy.decisionPrivacyKind && rows.rows.length)
+      unresolved(name, 'decision_source_or_supplemental_content_privacy_unresolved');
     if (!result.securityManifest.includedSchemas.includes(table.schema))
       result.securityManifest.includedSchemas.push(table.schema);
     if (key === identity('public', 'organizations')) {
@@ -322,6 +348,45 @@ export async function exportOrganizationData(
       result.rowCounts[name] = safeRows.length;
       result.totalRows += safeRows.length;
     }
+  }
+  const decisions = decisionRows.get('decision');
+  if (decisions?.length) {
+    const auditKey = identity('public', 'interview_insight_audit_log');
+    const auditCatalog = tables.get(auditKey);
+    // Internal, writer-specific authorization evidence only. The audit table's
+    // unresolved export ownership remains untouched in the public manifest.
+    const receiptSnapshot = await readFindingReceiptSnapshot(
+      client,
+      organizationId,
+      (decisionRows.get('finding') || []).map((row) => String(row.id)),
+      auditCatalog
+        ? {
+            ...auditCatalog,
+            primaryKey: pks.get(auditKey) || [],
+            foreignKeyCount: foreignKeys.rows.filter(
+              (edge) => identity(edge.child_schema, edge.child_table) === auditKey
+            ).length,
+          }
+        : undefined
+    );
+    const sources = {
+      ...receiptSnapshot,
+      handoffs: decisionRows.get('handoff') || [],
+      findings: decisionRows.get('finding') || [],
+      insights: decisionRows.get('insight') || [],
+      pointers: decisionRows.get('pointer') || [],
+      questions: interviewRows.get(identity('public', 'interview_questions')) || [],
+      sessions: interviewRows.get(identity('public', 'interview_sessions')) || [],
+    };
+    result.tables.decisions = decisions.map((row) => {
+      const safe = projectDecisionSourceIdentity(row);
+      if (canExportInterviewDecisionContent(row, organizationId, options.actorId, sources)) {
+        safe.title = row.title;
+        safe.description = row.description;
+        safe.export_payload_scope = 'verified_interview_handoff_body_supplemental_unresolved';
+      }
+      return sanitize(safe) as Record<string, unknown>;
+    });
   }
   const stateRows = canonicalRows.get(identity('public', 'ie_aggregate_state')) || [];
   const verifiedManual = verifiedManualInitiativeContent(

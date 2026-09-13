@@ -19,6 +19,7 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+  withPgTransaction: (fn: () => Promise<unknown>) => fn(),
 }));
 
 vi.mock('../../InterviewInsightService.js', () => ({
@@ -108,7 +109,9 @@ beforeEach(() => {
           (row) =>
             row.insight_id === params[0] &&
             row.finding_id === params[1] &&
-            row.target_id === params[2]
+            row.target_kind === params[2] &&
+            row.target_id === params[3] &&
+            row.organization_id === params[4]
         ) || null
       );
     }
@@ -214,11 +217,12 @@ beforeEach(() => {
         organization_id: params[1],
         insight_id: params[2],
         finding_id: params[3],
-        target_id: params[4],
-        target_ref_type: params[5],
-        status: params[6],
-        payload_json: params[7],
-        created_at: params[10],
+        target_kind: params[4],
+        target_id: params[5],
+        target_ref_type: params[6],
+        status: params[7],
+        payload_json: params[8],
+        created_at: params[11],
       });
       return;
     }
@@ -402,5 +406,55 @@ describe('interviewInsightFindingsService', () => {
     });
 
     await expect(getHandoffLog('ins-1')).resolves.toHaveLength(1);
+  });
+
+  it('binds Decision handoff kind in dedupe and persisted receipt', async () => {
+    const created = await addFinding(
+      'ins-1',
+      {
+        finding_statement: 'Ready for a Decision',
+        confidence_level: 'high',
+        limits: 'Scoped to reviewed interviews',
+        next_action: 'Create a decision',
+        evidence_pointers: [
+          {
+            type: 'question_answer',
+            sourceRef: 'answer:decision',
+            sourceFingerprint: 'answer:decision',
+          },
+        ],
+      },
+      { organizationId: 'org-1', actorUserId: 'user-1' }
+    );
+    const payload = (await buildHandoffPayload('ins-1', created.finding!.id)).payload!;
+
+    await recordHandoff('ins-1', created.finding!.id, payload, 'shared-target-id', {
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      targetKind: 'decision',
+      targetRefType: 'linked',
+      status: 'linked',
+    });
+
+    const lookup = mockQueryOne.mock.calls.find(([sql]) =>
+      String(sql).includes('FROM interview_insight_handoffs')
+    );
+    expect(lookup?.[0]).toMatch(/organization_id\s*=\s*\?/);
+    expect(lookup?.[0]).toMatch(/target_kind\s*=\s*\?/);
+    expect(lookup?.[1]).toEqual(
+      expect.arrayContaining([
+        'ins-1',
+        created.finding!.id,
+        'org-1',
+        'decision',
+        'shared-target-id',
+      ])
+    );
+
+    const insert = mockQueryRun.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO interview_insight_handoffs')
+    );
+    expect(insert?.[0]).not.toMatch(/VALUES\s*\([^)]*'initiative'/s);
+    expect(insert?.[1]).toEqual(expect.arrayContaining(['decision', 'shared-target-id']));
   });
 });
