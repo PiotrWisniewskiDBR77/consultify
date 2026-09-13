@@ -124,20 +124,32 @@ ChipBase.displayName = 'ChipBase';
  * hex/rgba, so Tailwind opacity utilities don't apply — inline keeps it
  * exact in both themes).
  */
-export const ChipDot: React.FC<{ colorVar?: string; size?: ChipSize; className?: string }> = ({
-  colorVar,
-  size = 'sm',
-  className,
-}) => (
+export const ChipDot: React.FC<{
+  colorVar?: string;
+  /**
+   * K5-I1 — kolor kropki podany KLASĄ TOKENOWĄ (np. `bg-blue-500`), gdy skala
+   * żyje w Tailwindzie, a nie w zmiennych tokenów semantycznych (tak jest ze
+   * skalą priorytetu w `standard/PriorityCell`).
+   *
+   * DLACZEGO OSOBNY PROP, A NIE `className`: `cn` tutaj jest w stylu clsx — NIE
+   * scala klas Tailwinda. Klasa koloru podana przez `className` lądowała więc
+   * OBOK domyślnego `bg-c-text-muted` i przegrywała kolejnością w arkuszu
+   * (zmierzone: kropka „Medium" wychodziła slate-500 zamiast blue-500).
+   * `colorClassName` ZASTĘPUJE warstwę koloru zamiast się z nią kłócić.
+   */
+  colorClassName?: string;
+  size?: ChipSize;
+  className?: string;
+}> = ({ colorVar, colorClassName, size = 'sm', className }) => (
   <span
     aria-hidden="true"
     className={cn(
       'shrink-0 rounded-full',
       size === 'sm' ? 'h-1.5 w-1.5' : 'h-2 w-2',
-      !colorVar && 'bg-c-text-muted',
+      colorClassName ?? (!colorVar ? 'bg-c-text-muted' : undefined),
       className
     )}
-    style={colorVar ? { backgroundColor: colorVar } : undefined}
+    style={colorVar && !colorClassName ? { backgroundColor: colorVar } : undefined}
   />
 );
 

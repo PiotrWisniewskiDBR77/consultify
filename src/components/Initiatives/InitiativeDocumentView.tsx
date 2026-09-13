@@ -194,6 +194,7 @@ import {
 */
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
 import { PracujZAI } from '../standard/PracujZAI';
+import { priorityToneStyle } from '../standard/PriorityCell';
 import { StickyStosKartyN } from '../standard/StickyStosKartyN';
 import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
@@ -6124,39 +6125,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const currentStatusDot = currentStatusMeta?.dotColor || 'bg-c-border-strong';
     const currentStatusLabel = statusPillLabel;
 
-    // Helper: get metadata for current priority
-    const priorityMeta: Record<
-      string,
-      { dot: string; bg: string; text: string; label: string; labelPl: string }
-    > = {
+    /*
+     * K5-I1 — kropka priorytetu z JEDNEJ skali (`standard/PriorityCell`).
+     *
+     * BYŁO: `medium.dot = 'bg-amber-400'`, czyli ta sama „Średnia" świeciła tu
+     * POMARAŃCZOWO (nie do odróżnienia od „Wysokiej"), na kanbanie NIEBIESKO,
+     * a na karcie grid BORDOWO. `low` świeciło zielono, choć kanon daje
+     * priorytetowi niskiemu kolor neutralny (zielony = „dobrze", a niski
+     * priorytet nie jest oceną). Kolory `bg`/`text` z tej mapy NIE MAJĄ już
+     * konsumenta (wartości stoją na neutralnej pigułce `propPill` — patrz nota
+     * niżej), więc zostaje sama kropka, wzięta ze wspólnej skali.
+     */
+    const priorityMeta: Record<string, { dot: string; label: string; labelPl: string }> = {
       critical: {
-        dot: 'bg-danger-500',
-        bg: 'bg-danger-100 dark:bg-danger-500/20',
-        text: 'text-danger-800 dark:text-danger-400',
+        dot: priorityToneStyle('critical').dot,
         label: 'Critical',
         labelPl: 'Krytyczny',
       },
-      high: {
-        dot: 'bg-amber-500',
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-600',
-        label: 'High',
-        labelPl: 'Wysoki',
-      },
-      medium: {
-        dot: 'bg-amber-400',
-        bg: 'bg-amber-400/10',
-        text: 'text-amber-600',
-        label: 'Medium',
-        labelPl: 'Średni',
-      },
-      low: {
-        dot: 'bg-emerald-500',
-        bg: 'bg-emerald-500/10',
-        text: 'text-emerald-600',
-        label: 'Low',
-        labelPl: 'Niski',
-      },
+      high: { dot: priorityToneStyle('high').dot, label: 'High', labelPl: 'Wysoki' },
+      medium: { dot: priorityToneStyle('medium').dot, label: 'Medium', labelPl: 'Średni' },
+      low: { dot: priorityToneStyle('low').dot, label: 'Low', labelPl: 'Niski' },
     };
     const currentPriorityMeta = priorityMeta[priority] || priorityMeta.medium;
 
