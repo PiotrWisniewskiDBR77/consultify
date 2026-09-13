@@ -68,6 +68,7 @@ export {
   standardPreviewShortcuts,
 } from './StandardPreview';
 export {
+  OverflowTooltip,
   type RowAction,
   type RowActionSection,
   rowMenuToSections,
