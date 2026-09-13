@@ -141,6 +141,7 @@ import {
 } from './executionBankModel';
 import { buildExecutionBankPreviewDeclaration } from './executionBankPreviewDeclaration';
 import type { ExecutionBankPreviewT } from './executionBankPreviewModel';
+import { buildExecutionPreviewHead } from './executionPreviewHead';
 import { describeExecutionBankUnknown, ExecutionBankViews } from './ExecutionBankViews';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
@@ -6048,7 +6049,15 @@ Please return:
                         ? undefined
                         : t('execution.summary.riskNoInitiative', 'No linked initiative to open')
                     }
-                    meta={{
+                    /*
+                     * K5-5 — blok 2 tego podglądu miał SAME chipy: termin
+                     * ryzyka stał wyłącznie w tabeli właściwości, więc strefa,
+                     * którą kanon §7.3 pkt 2 przeznacza na termin, była pusta.
+                     * Budowniczy `buildExecutionPreviewHead` jest ten sam, co w
+                     * Pracy, Zarządzaniu ryzykiem i Raportach — góra podglądu
+                     * nie ma już czterech różnych kształtów w jednym module.
+                     */
+                    {...buildExecutionPreviewHead({
                       pills: [
                         {
                           label: raidTypeLabel(selectedSummaryRisk.type, isPolish),
@@ -6062,7 +6071,13 @@ Please return:
                           tone: selectedSummaryRiskLevelTone,
                         },
                       ],
-                    }}
+                      term: {
+                        label: t('execution.governance.columns.due', 'Due'),
+                        value: selectedSummaryRisk.dueDate
+                          ? formatListDate(selectedSummaryRisk.dueDate)
+                          : t('execution.governance.preview.noDueShort', 'No due date'),
+                      },
+                    })}
                     details={{
                       label: t('execution.governance.columns.type', 'Typ'),
                       text:

@@ -348,6 +348,7 @@ const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 // odwzorowujących żywy staging (patrz nagłówek pliku ekranu).
 const K5NaprawyRealizacjaScreen = React.lazy(() => import('./screens/k5-naprawy-realizacja'));
 const K5PreviewBankScreen = React.lazy(() => import('./screens/k5-preview-bank'));
+const K5PreviewWorkScreen = React.lazy(() => import('./screens/k5-preview-work'));
 const K5NaprawyInicjatywyScreen = React.lazy(() => import('./screens/k5-naprawy-inicjatywy'));
 const K5NaprawyOstrzezeniaScreen = React.lazy(() => import('./screens/k5-naprawy-ostrzezenia'));
 const P2bRealizacjaEmptyScreen = React.lazy(() => import('./screens/p2b-realizacja-empty'));
@@ -2036,6 +2037,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'K5-3 — podgląd wiersza banku Realizacji na powłoce kanonu (REALNY <ExecutionHub initialTab="list">): jeden wiersz Z realizacją (baza odniesienia + prognoza + wariancja) i jeden BEZ realizacji. &lang=en&theme=light|dark',
     render: () => <K5PreviewBankScreen />,
+  },
+  'k5-preview-work': {
+    label:
+      'K5-5 — góra podglądów Realizacji (bloki 1–2) po wyrównaniu do kanonu: REALNY <ExecutionHub initialTab="work"> z zadaniem ZAMKNIĘTYM i OTWARTYM (osoba + termin); Menu 1 przełącza na Risk management i Reports. &lang=en&theme=light|dark',
+    render: () => <K5PreviewWorkScreen />,
   },
   'k5-naprawy-inicjatywy': {
     label:

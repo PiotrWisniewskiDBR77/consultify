@@ -154,11 +154,16 @@ describe('E1b/R1 — „Otwórz zadanie" (wiersz z /api/tasks) nie ucieka do /my
     fireEvent.click(pozycjaOtworz);
 
     // Panel podglądu wiersza (StandardPreview embedded) pokazuje się W
-    // MIEJSCU — treść karty (rekomendacja, właściwości) widoczna bez żadnej
+    // MIEJSCU — treść karty (blok treści, właściwości) widoczna bez żadnej
     // nawigacji poza `/execution`, zero 404.
-    await waitFor(() =>
-      expect(screen.getByText('Check completeness and the next step.')).toBeInTheDocument()
-    );
+    //
+    // K5-5: kotwicą był tu napis „Check completeness and the next step." —
+    // domyślne ZDANIE z karty meta, które właściciel odrzucił przy odbiorze
+    // (blok 2 ma nieść stan, nie prozę; `executionPreviewHead.tsx`). Test
+    // sprawdzał obecność podglądu przez treść, której kanon tam nie chce,
+    // więc kotwicą jest teraz nagłówek bloku treści — element powłoki, a nie
+    // przypadkowy napis.
+    await waitFor(() => expect(screen.getByText('Work details')).toBeInTheDocument());
     expect(screen.getByText('Without initiative')).toBeInTheDocument();
     expect(navigateSpy).not.toHaveBeenCalled();
     // Gdyby handler nadal próbował ładować kartę przez `TaskDetailView` →
